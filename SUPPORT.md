@@ -1,25 +1,13 @@
-# TODO: The maintainer of this repo has not yet edited this file
-
-**REPO OWNER**: Do you want Customer Service & Support (CSS) support for this product/project?
-
-- **No CSS support:** Fill out this template with information about how to file issues and get help.
-- **Yes CSS support:** Fill out an intake form at [aka.ms/spot](https://aka.ms/spot). CSS will work with/help you to determine next steps. More details also available at [aka.ms/onboardsupport](https://aka.ms/onboardsupport).
-- **Not sure?** Fill out a SPOT intake as though the answer were "Yes". CSS will help you decide.
-
-*Then remove this first heading from this SUPPORT.MD file before publishing your repo.*
-
 # Support
 
 ## How to file issues and get help  
 
-This project uses GitHub Issues to track bugs and feature requests. Please search the existing 
-issues before filing new issues to avoid duplicates.  For new issues, file your bug or 
-feature request as a new Issue.
+This project has been created to accelerate the development of Trusted Research Environments by Microsoft and it's partners while working with customers. This project does not have a dedicated team of maintainers outside of those who are working on an active engagements and as such issues will be responded to on a best efforts basis. No guarantees can be offered as to response times on issues, feature requests, or to the long term road map for the project.
 
-For help and questions about using this project, please **REPO MAINTAINER: INSERT INSTRUCTIONS HERE 
-FOR HOW TO ENGAGE REPO OWNERS OR COMMUNITY FOR HELP. COULD BE A STACK OVERFLOW TAG OR OTHER
-CHANNEL. WHERE WILL YOU HELP PEOPLE?**.
+Taking the above statement into account the team involved in this effort wish for the project to evolve into a stable, production ready resource with active contributors from Microsoft and the wider community. 
+
+This project uses GitHub Issues to track bugs and feature requests. Please search the existing issues before filing new issues to avoid duplicates.  For new issues, file your bug or feature request as a new Issue.
 
 ## Microsoft Support Policy  
 
-Support for this **PROJECT or PRODUCT** is limited to the resources listed above.
+Support for this project is limited to the resources listed above.
