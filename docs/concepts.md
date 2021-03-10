@@ -22,7 +22,7 @@ A service provide one or more capabilities to you as a user of the TRE or to the
 
 The types of services required for a research project varies greatly why extensibility is a key aspect of the Azure TRE solution so new services can be developed by you and your organization to fit your needs.
 
-Some workspace services are available from outside the protected network, such as a Virtual Desktop. Others such as Azure Machine Learning might need access restricting to via a Virtual Desktop.
+Some workspace services are accessible from outside the protected network, such as a Virtual Desktop. But no data will be permitted to be transferred outside the protected network. Others such as Azure Machine Learning might need access restricting to via a Virtual Desktop.
 
 Below are examples of services that are available in the Azure TRE solution.
 
