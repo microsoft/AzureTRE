@@ -28,6 +28,8 @@ Below are examples of services that are available in the Azure TRE solution.
 
 ### Shared services
 
+These are services and resource shared by all workspaces.
+
 - Firewall
 - Python Package Mirror
 - Git Mirror
