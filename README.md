@@ -14,6 +14,10 @@ This project is currently in development. The aim is to bring together learnings
 
 It is important before deployment of the solution that the [Support Policy](SUPPORT.md) is read and understood.
 
+## Support
+
+For details of support expectations, please review our [Support Policy](./SUPPORT.md).
+
 ## Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
