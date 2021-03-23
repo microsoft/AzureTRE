@@ -137,7 +137,7 @@ Needs to understand the security posture of the TRE to ensure that the organizat
 
 Example tasks:
 
-- Use the AzTRE documentation to understand the security posture of the TRE.
+- Use the Azure TRE documentation to understand the security posture of the TRE.
 - Work with Azure administrator and TRE administrator to enforce the required security and privacy controls on the TRE.
 - Commission penetration testing.
 - Work with organization Information Governance committee to validate and sign-off Azure TRE deployment
