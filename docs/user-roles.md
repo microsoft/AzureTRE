@@ -11,12 +11,12 @@ While we have defined 8 different user roles for the Azure TRE solution, not all
 | Role | Key task | TRE RBAC |
 |------|----------|----------|
 | Azure administrator | Deploy the TRE | |
-| TRE administrator | Administrate the TRE | ✔ |
+| TRE administrator | Administer the TRE | ✔ |
 | TRE workspace owner | Own a workspace | ✔ |
 | Researcher | Perform research on the data | ✔ |
 | TRE service integrator | Integrate additional workspace services | |
 | Azure TRE developer | Extend the TRE OSS solution | |
-| Data engineer | Move data to the TRE | |
+| Data engineer | Move data to and potentially from the TRE | |
 | Information security officer | Validate and sign-off TRE deployment | |
 
 ## Azure administrator
@@ -48,14 +48,13 @@ Example tasks:
 
 - Manage workspace owner users.
 - Provision workspaces
-- Manage shared services. (e.g. Avaiable packages in Package mirror shared service.)
+- Manage shared services. (e.g. avaiable packages in package mirror shared service.)
 - Monitor workspace usage and billing.
 - Set and manage quotas.
 
 Expected skills:
 
 - Limited or no Azure knowledge expected.
-- Python.
 
 ## TRE workspace owner
 
@@ -72,7 +71,6 @@ Example tasks:
 Expected skills:
 
 - Limited or no Azure knowledge expected.
-- Python.
 
 ## Researcher
 
@@ -95,7 +93,8 @@ Integrates workspace service types with an Azure TRE instance. This involves ext
 
 Example tasks:
 
-- Integrate a workspace service type with your Azure TRE instance
+- Integrate a workspace service type with your Azure TRE instance.
+- Implement Infrastructure as Code templates for new workspace service types.
 
 Expected skills:
 
@@ -109,14 +108,14 @@ Software developer who contributes to the development of the Azure TRE solution.
 
 Example tasks:
 
-- Modify the deployment service, management API and other components of the AzTRE solution.
+- Modify the deployment service, management API and other components of the Azure TRE solution.
 - Contribute to the Azure TRE OSS solution.
 
 Expected skills:
 
-- Git, GitHub
-- Python, C#, Java
-- Infrastructure as Code (Terraform, ARM)
+- Infrastructure as Code (Terraform, ARM, Git)
+- Python, C#, PowerShell, Bash
+- Azure administration
 
 ## Data engineer
 
