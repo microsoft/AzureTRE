@@ -48,7 +48,7 @@ Example tasks:
 
 - Manage workspace owner users.
 - Provision workspaces
-- Manage shared services. (e.g. avaiable packages in package mirror shared service.)
+- Manage shared services e.g., available packages in package mirror shared service.
 - Monitor workspace usage and billing.
 - Set and manage quotas.
 
