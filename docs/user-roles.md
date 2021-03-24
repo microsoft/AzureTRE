@@ -47,7 +47,7 @@ Day-to-day running and operations of the Azure TRE instance without touching Azu
 Example tasks:
 
 - Manage workspace owner users.
-- Provision workspaces
+- Provision workspaces.
 - Manage shared services e.g., available packages in package mirror shared service.
 - Monitor workspace usage and billing.
 - Set and manage quotas.
