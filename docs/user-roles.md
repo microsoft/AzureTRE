@@ -6,7 +6,7 @@ Before you deploy a Trusted Research Environment based on the Azure TRE solution
 
 ## Role overview
 
-While we have defined 8 different user roles for the Azure TRE solution, not all of them are required in all scenarios. Three of the roles are currently available for Role Bases Access Control within the TRE.  
+While we have defined 8 different user roles for the Azure TRE solution, not all of them are required in all scenarios. Three of the roles support role-based access control (RBAC) within the TRE.  
 
 | Role | Key task | TRE RBAC |
 |------|----------|----------|
