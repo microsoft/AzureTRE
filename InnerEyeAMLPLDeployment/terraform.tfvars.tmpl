@@ -1,0 +1,12 @@
+resource_name_prefix = "tredev"
+tag = "Azure Trusted Research Environment"
+location = "westeurope"
+address_space = "10.1.0.0/16"
+default_address_space = "10.1.0.0/24"
+fw_address_space = "10.1.1.0/26"
+inference_address_space = "10.1.2.0/26"
+username = "AzureTre"
+password = "Pa55w0rd"
+allowedURLs = ["graph.windows.net", "ml.azure.com", "login.microsoftonline.com", "aadcdn.msftauth.net", "*privatelink.api.azureml.ms", "graph.microsoft.com", "management.azure.com", "*privatelink.file.core.windows.net", "*privatelink.vaultcore.azure.net", "*privatelink.notebooks.azure.net", "*privatelink.azurecr.io", "*privatelink.blob.core.windows.net", "viennaglobal.azurecr.io"]
+allowedInnerEyeURLs = ["*.anaconda.com", "*.anaconda.org", "binstar-cio-packages-prod.s3.amazonaws.com", "github.com", "*pypi.org", "*pythonhosted.org", "github-cloud.githubusercontent.com"]
+allowedServiceTags = ["Storage.WestEurope", "AzureContainerRegistry"]

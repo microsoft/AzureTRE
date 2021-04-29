@@ -1,0 +1,36 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "value": "westeurope"
+        },
+        "workspace_name": {
+            "value": "treml"
+        },
+        "cluster_name": {
+            "value": "trecomputeinstance"
+        },
+        "vnet_name": {
+            "value": "trevnet"
+        },
+        "subnet_name": {
+            "value": "default"
+        },
+        "admin_username": {
+            "value": "azureuser"
+        },
+        "admin_user_password": {
+            "value": "Azur3Tr3910!"
+        },
+        "vm_size_sku": {
+            "value": "Standard_D4_v2"
+        },
+        "min_node_count": {
+            "value": 0
+        },
+        "max_node_count": {
+            "value": 1
+        }
+    }
+}
