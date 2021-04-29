@@ -1,3 +1,13 @@
+## Project Status
+
+**This project is currently under development.** 
+
+The aim is to bring together learnings from past customer engagements where TREs have been built into a single reference solution.  It is unlikely that the solution will be deployed "as is", but rather taken by customer, partner, and Microsoft engineering teams and extended to meet an organizations specific requirements.
+
+This project does not have a dedicated team of maintainers outside of those who are working on an active engagements and as such issues will be responded to on a best efforts basis. No guarantees can be offered as to response times on issues, feature requests, or to the long term road map for the project.
+
+It is important before deployment of the solution that the [Support Policy](SUPPORT.md) is read and understood.
+
 # Azure Trusted Research Environment
 
 Across the health industry, be it a pharmaceutical company interrogating clinical trial results, or a public health provider analyzing electronic health records, there is the need to enable researchers, analysts, and developers to work with sensitive data sets.
@@ -7,12 +17,6 @@ Trusted Research Environments (TREs) enforce a secure boundary around distinct w
 Workspaces can be configured with a variety of tools to enable tasks such as the development of machine learning models, data engineering, data analysis, and software development. Authorized users should be able to deploy and configure their tools without a dependency on IT teams.
 
 A successful Trusted Research Environments enables users to be as productive, if not more productive than they would be working in environments without strict information governance controls.
-
-## Project Status
-
-This project is currently in development. The aim is to bring together learnings from past customer engagements where TREs have been built into a single reference solution.  It is unlikely that the solution will be deployed "as is", but rather taken by customer, partner, and Microsoft engineering teams and extended to meet an organizations specific requirements.
-
-It is important before deployment of the solution that the [Support Policy](SUPPORT.md) is read and understood.
 
 ## Support
 
