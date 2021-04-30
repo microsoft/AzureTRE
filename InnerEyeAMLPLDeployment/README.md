@@ -10,6 +10,15 @@ With some limitations listed below, we were able to successfully perform the fol
 
 ![AML in a closed VNet](./assets/PrivateAML.png)
 
+### Pre-Requisites
+- Brew: https://docs.brew.sh/Installation
+- brew install terraform
+- brew install azure-cli
+- az login
+- az account set --subscription <subscription>
+- brew install jq
+
+
 ### Setup
 
 A Terraform script [main.tf](./main.tf) creates all the resources described in the above architecture diagram. To setup the full environment:
