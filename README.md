@@ -2,7 +2,7 @@
 
 **This project is currently under development.**
 
-The aim is to bring together learnings from past customer engagements where TREs have been built into a single reference solution.  It is unlikely that the solution will be deployed "as is", but rather taken by customer, partner, and Microsoft engineering teams and extended to meet an organizations specific requirements.
+The aim is to bring together learnings from past customer engagements where TREs have been built into a single reference solution.  This is a solution accelerator aiming to be a great starting point for a customized TRE solution. You're encouraged to download and customize the solution to meet your requirements
 
 This project does not have a dedicated team of maintainers outside of those who are working on an active engagements and as such issues will be responded to on a best efforts basis. No guarantees can be offered as to response times on issues, feature requests, or to the long term road map for the project.
 
