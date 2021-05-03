@@ -5,7 +5,7 @@ title: "[BUG]"
 labels: 'bug'
 assignees: ''
 ---
-Remember to label the issue with the appropriate area, and also assign it to yourself if you plan to work in the issue in the near future.
+Remember to label the issue with the appropriate area, and also assign it to yourself if you plan to work on the issue in the near future.
 
 **Describe the bug**
 A clear and concise description of what the bug is.
