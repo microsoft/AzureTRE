@@ -1,5 +1,5 @@
 ---
-name: User Story
+name: User story
 about: User story with acceptance criteria
 title: ''
 labels: ''
