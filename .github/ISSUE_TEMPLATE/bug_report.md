@@ -10,8 +10,7 @@ Remember to label the issue with the appropriate area, and also assign it to you
 **Describe the bug**
 A clear and concise description of what the bug is.
 
-**To Reproduce**
-Steps to reproduce the behavior:
+**Steps to reproduce**
 
 1. Go to '...'
 1. Click on '....'
