@@ -4,7 +4,7 @@
 
 The aim is to bring together learnings from past customer engagements where TREs have been built into a single reference solution.  This is a solution accelerator aiming to be a great starting point for a customized TRE solution. You're encouraged to download and customize the solution to meet your requirements
 
-This project does not have a dedicated team of maintainers outside of those who are working on an active engagements and as such issues will be responded to on a best efforts basis. No guarantees can be offered as to response times on issues, feature requests, or to the long term road map for the project.
+This project does not have a dedicated team of maintainers but relies on you and the community to maintain and enhance the solution. Microsoft will on project-to-project basis continue to extend the solution in collaboration with customers and partners. No guarantees can be offered as to response times on issues, feature requests, or to the long term road map for the project.
 
 It is important before deployment of the solution that the [Support Policy](SUPPORT.md) is read and understood.
 
