@@ -1,4 +1,14 @@
-# Azure Trusted Research Environment
+# Project Status
+
+**This project is currently under development.**
+
+The aim is to bring together learnings from past customer engagements where TREs have been built into a single reference solution.  This is a solution accelerator aiming to be a great starting point for a customized TRE solution. You're encouraged to download and customize the solution to meet your requirements
+
+This project does not have a dedicated team of maintainers but relies on you and the community to maintain and enhance the solution. Microsoft will on project-to-project basis continue to extend the solution in collaboration with customers and partners. No guarantees can be offered as to response times on issues, feature requests, or to the long term road map for the project.
+
+It is important before deployment of the solution that the [Support Policy](SUPPORT.md) is read and understood.
+
+## Azure Trusted Research Environment
 
 Across the health industry, be it a pharmaceutical company interrogating clinical trial results, or a public health provider analyzing electronic health records, there is the need to enable researchers, analysts, and developers to work with sensitive data sets.
 
@@ -8,17 +18,11 @@ Workspaces can be configured with a variety of tools to enable tasks such as the
 
 A successful Trusted Research Environments enables users to be as productive, if not more productive than they would be working in environments without strict information governance controls.
 
-## Project Status
-
-This project is currently in development. The aim is to bring together learnings from past customer engagements where TREs have been built into a single reference solution.  It is unlikely that the solution will be deployed "as is", but rather taken by customer, partner, and Microsoft engineering teams and extended to meet an organizations specific requirements.
-
-It is important before deployment of the solution that the [Support Policy](SUPPORT.md) is read and understood.
-
-## Support
+### Support
 
 For details of support expectations, please review our [Support Policy](./SUPPORT.md).
 
-## Contributing
+### Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
 Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
@@ -32,7 +36,7 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
 contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
 
-## Trademarks
+### Trademarks
 
 This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft trademarks or logos is subject to and must follow [Microsoft's Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
