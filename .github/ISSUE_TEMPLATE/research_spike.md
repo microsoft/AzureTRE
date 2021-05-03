@@ -1,5 +1,5 @@
 ---
-name: Research Spike
+name: Research spike
 about: Research for architecture alternatives
 title: '[SPIKE]'
 labels: 'spike'
