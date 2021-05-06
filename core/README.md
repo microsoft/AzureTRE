@@ -2,6 +2,12 @@
 
 ## TRE API
 
+### Endpoints
+
+#### /ping
+
+- Check if API is alive
+
 ### Run locally
 
 Install the requirements on the dev machine
