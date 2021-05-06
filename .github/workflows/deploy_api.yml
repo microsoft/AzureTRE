@@ -1,0 +1,36 @@
+name: Deploy API to Azure App Service
+
+on:
+  push:
+  pull_request:
+    branches: [develop]
+
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: Dev
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Deploy Web App
+      uses: azure/CLI@v1
+      with:
+        azcliversion: 2.20.0
+        inlineScript: |
+          cd core/api
+          az webapp up --sku S1 -n TREAPIService -g TRERG --location westeurope
+
+    - name: Set startup command for Web App
+      uses: azure/CLI@v1
+      with:
+        azcliversion: 2.20.0
+        inlineScript: |
+          az webapp config set -n TREAPIService -g TRERG --startup-file='gunicorn -w 2 -k uvicorn.workers.UvicornWorker main:app'

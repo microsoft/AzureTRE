@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from .routers import ping
+from routers import ping
 
 
 app = FastAPI()
