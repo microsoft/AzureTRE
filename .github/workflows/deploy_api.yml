@@ -1,10 +1,6 @@
 name: Deploy API to Azure App Service
 
 on:
-  push:
-  pull_request:
-    branches: [develop]
-
   workflow_dispatch:
 
 jobs:
