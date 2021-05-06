@@ -2,9 +2,9 @@ name: Linting
 
 on:
   push:
-    branches-ignore: [main]
+    branches-ignore: [develop]
   pull_request:
-    branches: [main]
+    branches: [develop]
 
   workflow_dispatch:
 
@@ -23,7 +23,7 @@ jobs:
         uses: github/super-linter@v3
         env:
           VALIDATE_ALL_CODEBASE: false
-          DEFAULT_BRANCH: main
+          DEFAULT_BRANCH: develop
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_MARKDOWN: true
           VALIDATE_PYTHON_FLAKE8: true
