@@ -19,9 +19,10 @@ venv/Scripts/activate       # windows
 pip install -r core/api/requirements.txt
 ```
 
-Run the webserver locally - from a terminal in the core directory
+Run the webserver locally
 
 ```cmd
+cd core
 uvicorn api.main:app
 ```
 
