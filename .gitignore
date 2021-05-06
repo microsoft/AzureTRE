@@ -167,3 +167,6 @@ terraform.rc
 
 # pycharm
 .idea/
+
+# vscode
+.vscode/
