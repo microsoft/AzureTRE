@@ -39,6 +39,16 @@ module "network" {
   address_space         = var.address_space
 }
 
+module "appgateway" {
+  source                = "./appgateway"
+  resource_name_prefix  = var.resource_name_prefix
+  environment           = var.environment
+  tre_id                = local.tre_id
+  location              = var.location
+  resource_group_name   = azurerm_resource_group.core.name
+  app_gw_subnet         = module.network.app_gw
+}
+
 module "api-webapp" {
   source                = "./api-webapp"
   resource_name_prefix  = var.resource_name_prefix
@@ -48,6 +58,7 @@ module "api-webapp" {
   resource_group_name   = azurerm_resource_group.core.name
   web_app_subnet        = module.network.web_app
   shared_subnet         = module.network.shared
+  app_gw_subnet         = module.network.app_gw
   core_vnet             = module.network.core
   log_analytics_workspace_id = azurerm_log_analytics_workspace.tre.id
 }
