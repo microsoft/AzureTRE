@@ -59,3 +59,14 @@ module "keyvault" {
   core_vnet             = module.network.core
   tenant_id             = data.azurerm_client_config.current.tenant_id
 }
+
+module "firewall" {
+  source                = "./firewall"
+  resource_name_prefix  = var.resource_name_prefix
+  environment           = var.environment
+  tre_id                = local.tre_id
+  location              = var.location
+  resource_group_name   = azurerm_resource_group.core.name
+  firewall_subnet       = module.network.azure_firewall
+  shared_subnet         = module.network.shared
+}
