@@ -1,7 +1,6 @@
 resource "azurerm_app_service_plan" "core" {
-
-  name                = "asp-core"
-  resource_group_name = azurerm_resource_group.core.name
+  name                = "plan-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+  resource_group_name = var.resource_group_name
   location            = var.location
   reserved            = true
   kind                = "linux"
@@ -13,16 +12,15 @@ resource "azurerm_app_service_plan" "core" {
 }
 
 resource "azurerm_application_insights" "core" {
-  name                = "ai-core"
-  resource_group_name = azurerm_resource_group.core.name
+  name                = "appi-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+  resource_group_name = var.resource_group_name
   location            = var.location
   application_type    = "web"
-
 }
-resource "azurerm_app_service" "management_api" {
 
-  name                = "webapp-management-api-${var.tre_id}"
-  resource_group_name = azurerm_resource_group.core.name
+resource "azurerm_app_service" "management_api" {
+  name                = "api-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+  resource_group_name = var.resource_group_name
   location            = var.location
   app_service_plan_id = azurerm_app_service_plan.core.id
 
@@ -35,14 +33,10 @@ resource "azurerm_app_service" "management_api" {
   app_settings = {
 
     "APPINSIGHTS_INSTRUMENTATIONKEY" = azurerm_application_insights.core.instrumentation_key
-
-    "DOCKER_REGISTRY_SERVER_USERNAME" = var.container_registry_username
-    "DOCKER_REGISTRY_SERVER_URL"      = "https://${var.container_registry_dns_name}"
-    "DOCKER_REGISTRY_SERVER_PASSWORD" = var.container_registry_password
-
   }
+
   site_config {
-    linux_fx_version            = "DOCKER|${local.management_api_image_name}"
+    app_command_line            = "gunicorn -w 2 -k uvicorn.workers.UvicornWorker main:app"
     remote_debugging_enabled    = false
     scm_use_main_ip_restriction = true
     cors {
@@ -72,21 +66,19 @@ resource "azurerm_app_service" "management_api" {
       }
     }
   }
-
 }
 
-
 resource "azurerm_user_assigned_identity" "management_api" {
-  name =  "msi-management-api"
-  resource_group_name = azurerm_resource_group.core.name
-  location = azurerm_resource_group.core.location
+  name                = "id-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+  resource_group_name = var.resource_group_name
+  location            = var.location
 }
 
 resource "azurerm_private_endpoint" "management_api_private_endpoint" {
-  name                = "pe-management-api"
-  resource_group_name = azurerm_resource_group.core.name
-  location            = azurerm_resource_group.core.location
-  subnet_id           = azurerm_subnet.private_endpoints.id
+  name                = "pe-api-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+  resource_group_name = var.resource_group_name
+  location            = var.location
+  subnet_id           = var.shared_subnet
   private_service_connection {
     private_connection_resource_id = azurerm_app_service.management_api.id
     name                           = "pe-webapp-management-api"
@@ -99,26 +91,23 @@ resource "azurerm_private_endpoint" "management_api_private_endpoint" {
   }
 }
 
-
 resource "azurerm_private_dns_zone" "azurewebsites" {
   name                = "privatelink.azurewebsites.net"
-  resource_group_name = azurerm_resource_group.core.name
-
+  resource_group_name = var.resource_group_name
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "azurewebsites" {
-  resource_group_name   = azurerm_resource_group.core.name
-  virtual_network_id    = azurerm_virtual_network.core.id
+  resource_group_name   = var.resource_group_name
+  virtual_network_id    = var.core_vnet
   private_dns_zone_name = azurerm_private_dns_zone.azurewebsites.name
   name                  = "azurewebsites-link"
   registration_enabled  = false
-
-
 }
+
 resource "azurerm_monitor_diagnostic_setting" "webapp_management_api" {
-  name                       = "diagnostics-webapp-shared-api"
+  name                       = "diag-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
   target_resource_id         = azurerm_app_service.management_api.id
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.tre.id
+  log_analytics_workspace_id = var.log_analytics_workspace_id
 
   log {
     category = "AppServiceHTTPLogs"
