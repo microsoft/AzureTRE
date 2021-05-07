@@ -104,6 +104,11 @@ resource "azurerm_private_dns_zone_virtual_network_link" "azurewebsites" {
   registration_enabled  = false
 }
 
+resource "azurerm_app_service_virtual_network_swift_connection" "api-integrated-vnet" {
+  app_service_id = azurerm_app_service.management_api.id
+  subnet_id      = var.web_app_subnet
+}
+
 resource "azurerm_monitor_diagnostic_setting" "webapp_management_api" {
   name                       = "diag-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
   target_resource_id         = azurerm_app_service.management_api.id
