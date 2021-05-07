@@ -47,3 +47,15 @@ module "api-webapp" {
   core_vnet             = module.network.core
   log_analytics_workspace_id = azurerm_log_analytics_workspace.tre.id
 }
+
+module "keyvault" {
+  source                = "./keyvault"
+  resource_name_prefix  = var.resource_name_prefix
+  environment           = var.environment
+  tre_id                = local.tre_id
+  location              = var.location
+  resource_group_name   = azurerm_resource_group.core.name
+  shared_subnet         = module.network.shared
+  core_vnet             = module.network.core
+  tenant_id             = data.azurerm_client_config.current.tenant_id
+}

@@ -81,7 +81,7 @@ resource "azurerm_private_endpoint" "management_api_private_endpoint" {
   subnet_id           = var.shared_subnet
   private_service_connection {
     private_connection_resource_id = azurerm_app_service.management_api.id
-    name                           = "pe-webapp-management-api"
+    name                           = "psc-api-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
     subresource_names              = ["sites"]
     is_manual_connection           = false
   }
