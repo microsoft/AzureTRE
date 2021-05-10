@@ -86,6 +86,17 @@ module "firewall" {
   shared_subnet         = module.network.shared
 }
 
+module "routetable" {
+  source                = "./routetable"
+  resource_name_prefix  = var.resource_name_prefix
+  environment           = var.environment
+  tre_id                = local.tre_id
+  location              = var.location
+  resource_group_name   = azurerm_resource_group.core.name
+  shared_subnet         = module.network.shared
+  firewall_private_ip_address         = module.firewall.firewall_private_ip_address
+}
+
 module "acr" {
   source                = "./acr"
   resource_name_prefix  = var.resource_name_prefix
