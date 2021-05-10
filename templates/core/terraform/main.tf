@@ -47,3 +47,10 @@ module "api-webapp" {
   core_vnet             = module.network.core
   log_analytics_workspace_id = azurerm_log_analytics_workspace.tre.id
 }
+
+module "state-store" {
+  source = "./state-store"
+  name = "tre-${var.resource_name_prefix}"
+  location = var.location
+  resource_group_name = azurerm_resource_group.core.name
+}
