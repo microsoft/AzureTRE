@@ -6,12 +6,12 @@ Pre commit hooks help you lint your python code on each git commit, to avoid hav
 
 1. Install flake8, pre-commit etc.
 
-```cmd
-pip install -r requirements.txt
-```
+    ```cmd
+    pip install -r requirements.txt
+    ```
 
 2. Enable pre-commit hooks
 
-```cmd
-pre-commit install
-```
+    ```cmd
+    pre-commit install
+    ```

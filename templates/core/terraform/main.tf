@@ -13,8 +13,12 @@ provider "azurerm" {
 }
 
 resource "azurerm_resource_group" "core" {
-  location = var.location
-  name     =  "rg-${var.resource_name_prefix}-${var.environment}-${local.tre_id}"
+  location  = var.location
+  name      = "rg-${var.resource_name_prefix}-${var.environment}-${local.tre_id}"
+  tags      = {
+              environment   = "Azure Trusted Research Environment"
+              Source        = "https://github.com/microsoft/AzureTRE/"
+  }
 }
 
 resource "azurerm_log_analytics_workspace" "tre" {
@@ -35,6 +39,16 @@ module "network" {
   address_space         = var.address_space
 }
 
+module "appgateway" {
+  source                = "./appgateway"
+  resource_name_prefix  = var.resource_name_prefix
+  environment           = var.environment
+  tre_id                = local.tre_id
+  location              = var.location
+  resource_group_name   = azurerm_resource_group.core.name
+  app_gw_subnet         = module.network.app_gw
+}
+
 module "api-webapp" {
   source                = "./api-webapp"
   resource_name_prefix  = var.resource_name_prefix
@@ -44,8 +58,54 @@ module "api-webapp" {
   resource_group_name   = azurerm_resource_group.core.name
   web_app_subnet        = module.network.web_app
   shared_subnet         = module.network.shared
+  app_gw_subnet         = module.network.app_gw
   core_vnet             = module.network.core
   log_analytics_workspace_id = azurerm_log_analytics_workspace.tre.id
+}
+
+module "keyvault" {
+  source                = "./keyvault"
+  resource_name_prefix  = var.resource_name_prefix
+  environment           = var.environment
+  tre_id                = local.tre_id
+  location              = var.location
+  resource_group_name   = azurerm_resource_group.core.name
+  shared_subnet         = module.network.shared
+  core_vnet             = module.network.core
+  tenant_id             = data.azurerm_client_config.current.tenant_id
+}
+
+module "firewall" {
+  source                = "./firewall"
+  resource_name_prefix  = var.resource_name_prefix
+  environment           = var.environment
+  tre_id                = local.tre_id
+  location              = var.location
+  resource_group_name   = azurerm_resource_group.core.name
+  firewall_subnet       = module.network.azure_firewall
+  shared_subnet         = module.network.shared
+}
+
+module "routetable" {
+  source                = "./routetable"
+  resource_name_prefix  = var.resource_name_prefix
+  environment           = var.environment
+  tre_id                = local.tre_id
+  location              = var.location
+  resource_group_name   = azurerm_resource_group.core.name
+  shared_subnet         = module.network.shared
+  firewall_private_ip_address         = module.firewall.firewall_private_ip_address
+}
+
+module "acr" {
+  source                = "./acr"
+  resource_name_prefix  = var.resource_name_prefix
+  environment           = var.environment
+  tre_id                = local.tre_id
+  location              = var.location
+  resource_group_name   = azurerm_resource_group.core.name
+  core_vnet             = module.network.core
+  shared_subnet         = module.network.shared
 }
 
 module "state-store" {

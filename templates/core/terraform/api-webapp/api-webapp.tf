@@ -24,10 +24,6 @@ resource "azurerm_app_service" "management_api" {
   location            = var.location
   app_service_plan_id = azurerm_app_service_plan.core.id
 
-  identity {
-    type         = "UserAssigned"
-    identity_ids = [azurerm_user_assigned_identity.management_api.id]
-  }
 
   https_only = true
   app_settings = {
@@ -68,12 +64,6 @@ resource "azurerm_app_service" "management_api" {
   }
 }
 
-resource "azurerm_user_assigned_identity" "management_api" {
-  name                = "id-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
-  resource_group_name = var.resource_group_name
-  location            = var.location
-}
-
 resource "azurerm_private_endpoint" "management_api_private_endpoint" {
   name                = "pe-api-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
   resource_group_name = var.resource_group_name
@@ -81,7 +71,7 @@ resource "azurerm_private_endpoint" "management_api_private_endpoint" {
   subnet_id           = var.shared_subnet
   private_service_connection {
     private_connection_resource_id = azurerm_app_service.management_api.id
-    name                           = "pe-webapp-management-api"
+    name                           = "psc-api-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
     subresource_names              = ["sites"]
     is_manual_connection           = false
   }
@@ -102,6 +92,11 @@ resource "azurerm_private_dns_zone_virtual_network_link" "azurewebsites" {
   private_dns_zone_name = azurerm_private_dns_zone.azurewebsites.name
   name                  = "azurewebsites-link"
   registration_enabled  = false
+}
+
+resource "azurerm_app_service_virtual_network_swift_connection" "api-integrated-vnet" {
+  app_service_id = azurerm_app_service.management_api.id
+  subnet_id      = var.web_app_subnet
 }
 
 resource "azurerm_monitor_diagnostic_setting" "webapp_management_api" {

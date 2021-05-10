@@ -8,8 +8,6 @@ variable "environment" {
   description = "The stage of the development lifecycle for the workload that the resource supports. Examples: prod, dev, qa, stage, test"
 }
 
-variable "tag" {}
-
 variable "location" {
   type        = string
   description = "Azure region for deployment of core TRE services"

@@ -32,6 +32,16 @@ resource "azurerm_subnet" "web_app" {
   resource_group_name                            = var.resource_group_name
   address_prefixes                               = [local.web_app_subnet_address_prefix]
   enforce_private_link_endpoint_network_policies = true
+  enforce_private_link_service_network_policies  = true
+
+  delegation {
+    name = "delegation"
+
+    service_delegation {
+      name    = "Microsoft.Web/serverFarms"
+      actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
+    }
+  }
 }
 
 resource "azurerm_subnet" "shared" {

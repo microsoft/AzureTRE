@@ -3,8 +3,5 @@ variable "environment" {}
 variable "tre_id" {}
 variable "location" {}
 variable "resource_group_name" {}
-variable "web_app_subnet" {}
 variable "core_vnet" {}
 variable "shared_subnet" {}
-variable "app_gw_subnet" {}
-variable "log_analytics_workspace_id" {}
