@@ -1,4 +1,4 @@
-name: Linting
+name: Build Validation - Develop
 
 on:
   push:
@@ -42,7 +42,7 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Test with pytest
-        run: python -m pytest test --junit-xml pytest.xml
+        run: python -m pytest --junit-xml pytest.xml
 
       - name: Upload Unit Test Results
         if: always()
