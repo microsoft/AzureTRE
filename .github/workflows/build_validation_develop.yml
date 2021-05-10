@@ -1,10 +1,10 @@
-name: Build Validation - Develop
+name: Build Validation
 
 on:
   push:
     branches-ignore: [develop, main]
   pull_request:
-    branches: [develop]
+    branches: [develop, main]
 
   workflow_dispatch:
 
