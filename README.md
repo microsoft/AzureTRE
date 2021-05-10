@@ -1,6 +1,8 @@
 # Project Status
 
-**This project is currently under development.**
+**This project is currently under active development, and not yet ready for production deployments.**
+
+Development is currently being carried out in the [Develop](https://github.com/microsoft/AzureTRE/tree/develop/) branch.
 
 The aim is to bring together learnings from past customer engagements where TREs have been built into a single reference solution.  This is a solution accelerator aiming to be a great starting point for a customized TRE solution. You're encouraged to download and customize the solution to meet your requirements
 
