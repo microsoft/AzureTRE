@@ -2,7 +2,7 @@ name: Build Validation - Develop
 
 on:
   push:
-    branches-ignore: [develop]
+    branches-ignore: [develop, main]
   pull_request:
     branches: [develop]
 
