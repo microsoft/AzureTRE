@@ -1,12 +1,8 @@
 name: Build Validation
 
 on:
-  push:
-    branches-ignore: [develop, main]
   pull_request:
     branches: [develop, main]
-
-  workflow_dispatch:
 
 jobs:
   build:
