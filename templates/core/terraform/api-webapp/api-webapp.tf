@@ -24,10 +24,6 @@ resource "azurerm_app_service" "management_api" {
   location            = var.location
   app_service_plan_id = azurerm_app_service_plan.core.id
 
-  identity {
-    type         = "UserAssigned"
-    identity_ids = [azurerm_user_assigned_identity.management_api.id]
-  }
 
   https_only = true
   app_settings = {
@@ -66,12 +62,6 @@ resource "azurerm_app_service" "management_api" {
       }
     }
   }
-}
-
-resource "azurerm_user_assigned_identity" "management_api" {
-  name                = "id-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
-  resource_group_name = var.resource_group_name
-  location            = var.location
 }
 
 resource "azurerm_private_endpoint" "management_api_private_endpoint" {
