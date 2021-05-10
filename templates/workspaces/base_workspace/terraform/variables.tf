@@ -13,7 +13,18 @@ variable "location" {
   description = "Azure region for deployment of core TRE services"
 }
 
+variable "core_vnet" {
+  type        = string
+  description = "Core VNET"
+}
+
+variable "core_resource_group_name" {
+  type        = string
+  description = "TRE Core Resource Group Name"
+}
+
+
 variable "address_space" {
   type        = string
-  description = "Core services VNET Address Space"
+  description = "Workspace services VNET Address Space"
 }
