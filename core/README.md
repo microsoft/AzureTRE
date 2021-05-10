@@ -33,3 +33,19 @@ Run the API Tests locally
 ```cmd
 pytest
 ```
+
+### Deploy manually to Azure App Service
+
+- Install [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
+- Login to Azure with your credentials `az login`
+- Change the directory to api `cd api`
+- Deploy to Azure App Service `az webapp up --sku S1 -n MyUniqueAppName -g MyResourceGroup -l westeurope` This will create a Resource Group, App Service Plan and App Service if they do not exist. If App Service exists, it will deploy the solution to it.
+- Configure App Service startup command `az webapp config set --startup-file='gunicorn -w 2 -k uvicorn.workers.UvicornWorker main:app'`
+
+### Setup CI/CD deployment to Azure App Service
+
+- Install [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
+- Login to Azure with your credentials `az login`
+- Create a resource group that you want to automatically deploy the solution to `az group create -g MyResourceGroup -l westeurope`
+- Create a service credential to run the pipeline with `az ad sp create-for-rbac --name MySPNName --role Contributor --scope /subscriptions/{MySubscriptionId}/resourceGroups/{MyResourceGroup} --sdk-auth`
+- In your repository, use Add secret to create a new secret named AZURE_CREDENTIALS and paste the entire JSON object produced by the az ad sp create-for-rbac command as the secret value and save the secret.
