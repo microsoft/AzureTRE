@@ -26,15 +26,15 @@ resource "azurerm_cosmosdb_sql_database" "tre-db" {
   throughput          = 400
 }
 
-resource "azurerm_private_dns_zone" "statestore" {
-  name                = "privatelink.statestore.azure.net"
+resource "azurerm_private_dns_zone" "cosmos" {
+  name                = "privatelink.documents.azure.com"
   resource_group_name = var.resource_group_name
 }
 
-resource "azurerm_private_dns_zone_virtual_network_link" "statestorelink" {
-  name                  = "statestorelink"
+resource "azurerm_private_dns_zone_virtual_network_link" "cosmos_documents_dns_link" {
+  name                  = "cosmos_documents_dns_link"
   resource_group_name   = var.resource_group_name
-  private_dns_zone_name = azurerm_private_dns_zone.statestore.name
+  private_dns_zone_name = azurerm_private_dns_zone.cosmos.name
   virtual_network_id    = var.core_vnet
 }
 
@@ -46,7 +46,7 @@ resource "azurerm_private_endpoint" "sspe" {
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group"
-    private_dns_zone_ids = [azurerm_private_dns_zone.statestore.id]
+    private_dns_zone_ids = [azurerm_private_dns_zone.cosmos.id]
   }
 
   private_service_connection {
