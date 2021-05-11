@@ -1,14 +1,5 @@
-variable "name" {
-  type        = string
-  description = "Name of state store"
-}
-
-variable "location" {
-  type        = string
-  description = "location"
-}
-
-variable "resource_group_name" {
-  type        = string
-  description = "Resource group name"
-}
+variable "resource_name_prefix" {}
+variable "environment" {}
+variable "tre_id" {}
+variable "location" {}
+variable "resource_group_name" {}
