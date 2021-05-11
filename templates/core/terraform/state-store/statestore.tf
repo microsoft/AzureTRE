@@ -20,7 +20,7 @@ resource "azurerm_cosmosdb_account" "tre-db-account" {
 }
 
 resource "azurerm_cosmosdb_sql_database" "tre-db" {
-  name                = "tre"
+  name                = "cosmos-sql-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
   resource_group_name = var.resource_group_name
   account_name        = azurerm_cosmosdb_account.tre-db-account.name
   throughput          = 400
