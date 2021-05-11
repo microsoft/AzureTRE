@@ -1,5 +1,5 @@
 resource "azurerm_cosmosdb_account" "tre-db-account" {
-  name                = var.name
+  name                = "cosmos-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
   location            = var.location
   resource_group_name = var.resource_group_name
   offer_type          = "Standard"
