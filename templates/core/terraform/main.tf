@@ -109,10 +109,12 @@ module "acr" {
 }
 
 module "state-store" {
-  source                = "./state-store"
-  resource_name_prefix  = var.resource_name_prefix
-  environment           = var.environment
-  tre_id                = local.tre_id
-  location              = var.location
-  resource_group_name   = azurerm_resource_group.core.name
+  source                         = "./state-store"
+  resource_name_prefix           = var.resource_name_prefix
+  environment                    = var.environment
+  tre_id                         = local.tre_id
+  location                       = var.location
+  resource_group_name            = azurerm_resource_group.core.name
+  shared_subnet                  = module.network.shared
+  core_vnet                      = module.network.core
 }
