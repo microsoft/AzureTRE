@@ -6,7 +6,7 @@ One or more workspace services are deployed into a workspace to provide resource
 
 The workspaces and the services can be deployed and managed via the Management API.
 
-![Concepts](./assets/concepts.png)
+![Concepts](./assets/treconcepts.png)
 
 ## Workspace
 
