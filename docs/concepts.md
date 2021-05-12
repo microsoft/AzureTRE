@@ -41,4 +41,6 @@ These are services and resource shared by all workspaces.
 
 ## Composition Service
 
-The composition service offers an abstraction over the lower-level Azure resources to allow for TRE users to provision resources in terms of workspaces and workspace services. The composition service exposes resources – based on above concepts – as an HTTP API where users and applications can model the desired representation of the TRE, i.e., define which workspaces should contain which workspace services. The composition service reconciles the desired state with the actual state by invoking Azure resource deployments.
+The composition service offers an abstraction over the lower-level Azure resources to allow for TRE users to provision resources in terms of workspaces and workspace services.
+The composition service exposes resources – based on above concepts – as an HTTP API where users and applications can model the desired representation of the TRE, i.e., define which workspaces should contain which workspace services.
+The composition service reconciles the desired state with the actual state by invoking Azure resource deployments.
