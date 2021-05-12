@@ -1,3 +1,7 @@
+output "core_id" {
+  value = "${var.resource_name_prefix}-${var.environment}-${local.tre_id}"
+}
+
 output "core_resource_group_name" {
   value = azurerm_resource_group.core.name
 }

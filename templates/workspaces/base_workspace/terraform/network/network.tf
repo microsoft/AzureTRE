@@ -1,5 +1,5 @@
 resource "azurerm_virtual_network" "ws" {
-  name                = "vnet-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+  name                = "vnet-${var.core_id}-ws-${var.ws_id}"
   location            = var.location
   resource_group_name = var.resource_group_name
   address_space       = [var.address_space]
@@ -11,6 +11,7 @@ resource "azurerm_subnet" "services" {
   virtual_network_name                           = azurerm_virtual_network.ws.name
   resource_group_name                            = var.resource_group_name
   address_prefixes                               = [local.services_subnet_address_prefix]
+  # notice that private endpoints do not adhere to NSG rules
   enforce_private_link_endpoint_network_policies = true
 }
 
@@ -20,14 +21,14 @@ data "azurerm_virtual_network" "core" {
 }
 
 resource "azurerm_virtual_network_peering" "ws-core-peer" {
-  name                      = "ws-core-peer-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+  name                      = "ws-core-peer-${var.core_id}-ws-${var.ws_id}"
   resource_group_name       = var.resource_group_name
   virtual_network_name      = azurerm_virtual_network.ws.name
   remote_virtual_network_id = data.azurerm_virtual_network.core.id
 }
 
 resource "azurerm_virtual_network_peering" "core-ws-peer" {
-  name                      = "core-ws-peer-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+  name                      = "core-ws-peer-${var.core_id}-ws-${var.ws_id}"
   resource_group_name       = var.core_resource_group_name
   virtual_network_name      = var.core_vnet
   remote_virtual_network_id = azurerm_virtual_network.ws.id

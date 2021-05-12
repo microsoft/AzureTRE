@@ -1,28 +1,17 @@
-variable "resource_name_prefix" {
-  type        = string
-  description = "Resource name prefix"
-}
-
-variable "environment" {
-  type        = string
-  description = "The stage of the development lifecycle for the workload that the resource supports. Examples: prod, dev, qa, stage, test"
-}
-
 variable "location" {
   type        = string
   description = "Azure region for deployment of core TRE services"
 }
 
-variable "core_vnet" {
+variable "core_id" {
   type        = string
-  description = "Core VNET"
+  description = "ID of the TRE Core (e.g. tre-dev-1111)"
 }
 
-variable "core_resource_group_name" {
+variable "ws_id" {
   type        = string
-  description = "TRE Core Resource Group Name"
+  description = "Workspace ID (sequential)"
 }
-
 
 variable "address_space" {
   type        = string

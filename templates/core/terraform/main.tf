@@ -16,8 +16,10 @@ resource "azurerm_resource_group" "core" {
   location  = var.location
   name      = "rg-${var.resource_name_prefix}-${var.environment}-${local.tre_id}"
   tags      = {
-              environment   = "Azure Trusted Research Environment"
-              Source        = "https://github.com/microsoft/AzureTRE/"
+              project       = "Azure Trusted Research Environment"
+              environment   = var.environment
+              core_id       = "${var.resource_name_prefix}-${var.environment}-${local.tre_id}"
+              source        = "https://github.com/microsoft/AzureTRE/"
   }
 }
 
