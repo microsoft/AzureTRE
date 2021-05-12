@@ -13,11 +13,6 @@ variable "location" {
   description = "Azure region for deployment of core TRE services"
 }
 
-variable "tre_dns_suffix" {
-  type        = string
-  description = "DNS suffix for the environment. E.g. .dre.myorg.com or .drelocal - must have >= 2 labels such as x.drelocal"
-}
-
 variable "address_space" {
   type        = string
   description = "Core services VNET Address Space"
