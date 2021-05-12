@@ -29,10 +29,16 @@ resource "azurerm_app_service" "management_api" {
   app_settings = {
 
     "APPINSIGHTS_INSTRUMENTATIONKEY" = azurerm_application_insights.core.instrumentation_key
+    "WEBSITES_PORT" = "8000"
+
+    "DOCKER_REGISTRY_SERVER_USERNAME" = var.docker_registry_username
+    "DOCKER_REGISTRY_SERVER_URL"      = var.docker_registry_server_url
+    "DOCKER_REGISTRY_SERVER_PASSWORD" = var.docker_registry_password
+
   }
 
   site_config {
-    app_command_line            = "gunicorn -w 2 -k uvicorn.workers.UvicornWorker main:app"
+    linux_fx_version            = "DOCKER|${var.management_api_image_repository}:${var.management_api_image_tag}"
     remote_debugging_enabled    = false
     scm_use_main_ip_restriction = true
     cors {
@@ -202,4 +208,8 @@ resource "azurerm_monitor_diagnostic_setting" "webapp_management_api" {
       enabled = false
     }
   }
+}
+
+output "management_api_fqdn" {
+  value = azurerm_app_service.management_api.default_site_hostname
 }

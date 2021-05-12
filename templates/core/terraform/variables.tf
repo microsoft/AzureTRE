@@ -17,3 +17,31 @@ variable "address_space" {
   type        = string
   description = "Core services VNET Address Space"
 }
+
+variable "management_api_image_repository" {
+  type        = string
+  description = "Repository for management API image"
+  default     = "microsoft/azuretre/management-api"
+}
+
+variable "management_api_image_tag" {
+  type        = string
+  description = "Tag for management API image"
+  default     = "main-latest"
+}
+
+variable "docker_registry_server_url" {
+  type        = string
+  description = "Docker registry server_url"
+  default     = "https://docker.pkg.github.com"
+}
+
+variable "docker_registry_username" {
+  type        = string
+  description = "Docker registry username (GitHub username for default images)"
+}
+
+variable "docker_registry_password" {
+  type        = string
+  description = "Docker registry password (GitHub PAT token for default images)"
+}
