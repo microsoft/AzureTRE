@@ -36,7 +36,7 @@ jobs:
           elif [ $GITHUB_EVENT_NAME == 'push' ] && [ $GITHUB_REF == 'refs/heads/main' ]; then
             TAG='main-latest'
           else
-            TAG=$(jq --raw-output .pull_request.number $GITHUB_EVENT_PATH)
+            TAG=$GITHUB_SHA
           fi
 
           docker build -t ${{ env.REPOSITORY_NAME}}:$TAG core/api/  

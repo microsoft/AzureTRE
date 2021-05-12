@@ -45,7 +45,7 @@ docker build -t tre-management-api .
 
 To run:
 ```cmd
-docker run -it -e PORT=8000 -p 8000:8000 tre-management-api
+docker run -it -p 8000:8000 tre-management-api
 ```
 
 This will start the API on [http://127.0.0.1:8000](http://127.0.0.1:8000) and you can interact with the swagger on [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
