@@ -30,10 +30,10 @@ variable "management_api_image_tag" {
   default     = "main-latest"
 }
 
-variable "docker_registry_server_url" {
+variable "docker_registry_server" {
   type        = string
-  description = "Docker registry server_url"
-  default     = "https://docker.pkg.github.com"
+  description = "Docker registry server"
+  default     = "docker.pkg.github.com"
 }
 
 variable "docker_registry_username" {

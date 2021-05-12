@@ -47,6 +47,7 @@ resource "azurerm_application_gateway" "agw" {
     port                  = 443
     protocol              = "Https"
     request_timeout       = 60
+    pick_host_name_from_backend_address = true
   }
 
   http_listener {
@@ -70,7 +71,7 @@ resource "azurerm_application_gateway" "agw" {
 
     path_rule {
       name = "api"
-      paths = ["/api/*"]
+      paths = ["/*"]
       backend_address_pool_name = local.management_api_backend_address_pool_name
       backend_http_settings_name = local.http_setting_name
     } 

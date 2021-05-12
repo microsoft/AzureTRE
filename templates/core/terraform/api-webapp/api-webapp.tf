@@ -32,13 +32,13 @@ resource "azurerm_app_service" "management_api" {
     "WEBSITES_PORT" = "8000"
 
     "DOCKER_REGISTRY_SERVER_USERNAME" = var.docker_registry_username
-    "DOCKER_REGISTRY_SERVER_URL"      = var.docker_registry_server_url
+    "DOCKER_REGISTRY_SERVER_URL"      = "https://${var.docker_registry_server}"
     "DOCKER_REGISTRY_SERVER_PASSWORD" = var.docker_registry_password
 
   }
 
   site_config {
-    linux_fx_version            = "DOCKER|${var.management_api_image_repository}:${var.management_api_image_tag}"
+    linux_fx_version            = "DOCKER|${var.docker_registry_server}/${var.management_api_image_repository}:${var.management_api_image_tag}"
     remote_debugging_enabled    = false
     scm_use_main_ip_restriction = true
     cors {

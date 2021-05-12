@@ -10,6 +10,6 @@ variable "app_gw_subnet" {}
 variable "log_analytics_workspace_id" {}
 variable "management_api_image_repository" {}
 variable "management_api_image_tag" {}
-variable "docker_registry_server_url" {}
+variable "docker_registry_server" {}
 variable "docker_registry_username" {}
 variable "docker_registry_password" {}
