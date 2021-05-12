@@ -34,6 +34,22 @@ Run the API Tests locally
 pytest
 ```
 
+### Build and run in docker
+
+From the root of the repository, build the container image:
+
+```cmd
+cd core/api
+docker build -t tre-management-api .
+```
+
+To run:
+```cmd
+docker run -it -p 8000:8000 tre-management-api
+```
+
+This will start the API on [http://127.0.0.1:8000](http://127.0.0.1:8000) and you can interact with the swagger on [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+
 ### Deploy manually to Azure App Service
 
 - Install [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
