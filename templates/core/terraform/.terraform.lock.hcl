@@ -2,21 +2,22 @@
 # Manual edits may be lost in future updates.
 
 provider "registry.terraform.io/hashicorp/azurerm" {
-  version     = "2.46.0"
-  constraints = "2.46.0"
+  version     = "2.58.0"
+  constraints = "2.58.0"
   hashes = [
-    "h1:lWovJczej2IP+aL24Fs4mz6brz7eoMxuqzxhEa2I/rc=",
-    "h1:oprQ0h2inTISrOX35GtPDGr3chFSkqOkJlczqKJ2qsM=",
-    "zh:049938dab6f78a642a7c4147f99f146dc25824c738d0b18d448c665880d105fa",
-    "zh:139de4a46bbfc18b5403fa2264878a056fd8593d860942233913e54233c7327d",
-    "zh:19ceb7fc964265cb7e7f708e32b72a00089ed0398ae1f0014b5832078bd5be79",
-    "zh:6bf0b5ed0313188af6347354d8fe693abc708199eb732c19d876ae9cbef202ab",
-    "zh:ab2bb2f60e3daba204d3d8d47905b4815921a1455197bbd7530d71c604720a14",
-    "zh:c08b5cd280cb73504ace949f086db8420a7aee054833c6761d406829c18c6a15",
-    "zh:d5eccbc19d62c57c69d15c7f84b9ea3d83d1b78856fe4bc52b31dda8f91480cf",
-    "zh:e2b29b094a1ce46356dcc3e13693c0c651afc2a47d213d68ed6973b9fb40bae7",
-    "zh:f353830b47cced07d20dac1f2158962002f644a0240d3aa21fd5ec5e9e42c119",
-    "zh:f36ff78ae9de95f4216bb420ee4365cee7d70e95fac608fb650ae5aed5c04c1d",
+    "h1:LIFQ6lMWek0p1qDAuaNotZ0JDCAubZ638S46zclBmCw=",
+    "h1:d/LH/NYd5aRsGnIkIGLkUumViivxGNrUgrwzFpiI4Hc=",
+    "zh:0805f532ea1bae43592110622f4b0ad5e4881aa917a5c169ff53b756cfb1b3d8",
+    "zh:0e4c8816a261052113b2081325eefccedfdea19cd42ccaa60bedabaf96ccdc72",
+    "zh:2122526526d81099e9e65bc1553b0938f0e1c74f5e0b560efbe996b7e0bbd69a",
+    "zh:29d652150ee99d982ce8ca88202a5d3c6cfb648e0731d64e52d510e6f09ef1bb",
+    "zh:716f419d144af5a3c0635bd0b853b76507870dc2f6aac318b4814c82925d7520",
+    "zh:8fa36cf4c4ed2a72cc0b25c2df819f36aeb803a0bb98da0d15e6bf74dbc4f584",
+    "zh:9c56446d6731bbe7d32b4d4887b8a1167fa1f6d8614f2aedb3af27eb683f1897",
+    "zh:ce95378ee6ab7eb0d9fd33174f829b501a73ca4616b1821788e1ac95b77c3b25",
+    "zh:eee7b9f8fd005b960b58294af986c3cb093ee658d4854d2acf5896df0d4a3618",
+    "zh:f3c085b883aab4ce6ce272fdf4ad9d9e624d6dab6e358ac60795698cf6f4edac",
+    "zh:ffc8cd59ea484dfabc255ed6b72d463074263951471e435ef582f0017b5f8f3a",
   ]
 }
 

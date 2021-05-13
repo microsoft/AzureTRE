@@ -15,7 +15,7 @@ resource "azurerm_application_gateway" "agw" {
   sku {
     name     = "Standard_v2"
     tier     = "Standard_v2"
-    capacity = 2
+    capacity = 1
   }
 
   gateway_ip_configuration {
@@ -32,17 +32,23 @@ resource "azurerm_application_gateway" "agw" {
     name                 = local.frontend_ip_configuration_name
     public_ip_address_id = azurerm_public_ip.appgwpip.id
   }
-
+  
   backend_address_pool {
     name = local.backend_address_pool_name
+  }
+
+  backend_address_pool {
+    name = local.management_api_backend_address_pool_name
+    fqdns =  [var.management_api_fqdn]
   }
 
   backend_http_settings {
     name                  = local.http_setting_name
     cookie_based_affinity = "Disabled"
-    port                  = 80
-    protocol              = "Http"
+    port                  = 443
+    protocol              = "Https"
     request_timeout       = 60
+    pick_host_name_from_backend_address = true
   }
 
   http_listener {
@@ -54,10 +60,22 @@ resource "azurerm_application_gateway" "agw" {
 
   request_routing_rule {
     name                       = local.request_routing_rule_name
-    rule_type                  = "Basic"
+    rule_type                  = "PathBasedRouting"
     http_listener_name         = local.listener_name
-    backend_address_pool_name  = local.backend_address_pool_name
-    backend_http_settings_name = local.http_setting_name
+    url_path_map_name          = local.management_api_url_path_map_name_pool_name
+  }
+
+  url_path_map {
+    name = local.management_api_url_path_map_name_pool_name
+    default_backend_address_pool_name  = local.backend_address_pool_name
+    default_backend_http_settings_name = local.http_setting_name
+
+    path_rule {
+      name = "api"
+      paths = ["/*"]
+      backend_address_pool_name = local.management_api_backend_address_pool_name
+      backend_http_settings_name = local.http_setting_name
+    } 
   }
 }
 
