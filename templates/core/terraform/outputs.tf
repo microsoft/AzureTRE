@@ -9,3 +9,7 @@ output "core_resource_group_name" {
 output "log_analytics_name" {
   value = azurerm_log_analytics_workspace.tre.name
 }
+
+output "azure_tre_fqdn" {
+  value = module.appgateway.app_gateway_fqdn
+}
