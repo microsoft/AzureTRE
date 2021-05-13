@@ -10,7 +10,7 @@ Clone the repository to to your local machine ( `git clone https://github.com/mi
 
 ![Clone Options](../docs/assets/clone_options.png)
 
-### Pre-requisites:
+### Pre-requisites
 
 You will require the following pre requisites installed. They will already be present if using GitHub CodeSpaces, or use our Dev Container in VSCode.
 - Terraform >= v0.15.3. The following instructions use local terraform state, you may want to consider [storing you state remotely in Azure](https://docs.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage)
@@ -39,7 +39,7 @@ management_api_image_tag = "develop-latest"
 ### Log into your chosen Azure subscription
 Login and selct the azure subscription you wish to deploy to:
 
-```
+```cmd
 az login
 az account list
 az account set -s <subscription_name_or_id>
