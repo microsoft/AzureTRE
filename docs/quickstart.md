@@ -6,7 +6,7 @@ The AzureTRE uses Terraform infrastructure as code templates that pull down Dock
 The most straightforward way to get up and running is to deploy direct from the `microsoft/AzureTRE` repository. Production deployments should take advantage of your chosen DevOps CD tooling.
 
 ### Clone the repository
-Clone the repository to to your local machine ( `git clone https://github.com/microsoft/AzureTRE.git` ) or you may choose to use our preconfigured dev container via GitHub Codespaces.
+Clone the repository to your local machine ( `git clone https://github.com/microsoft/AzureTRE.git` ) or you may choose to use our preconfigured dev container via GitHub Codespaces.
 
 ![Clone Options](../docs/assets/clone_options.png)
 
@@ -18,7 +18,7 @@ You will require the following pre requisites installed. They will already be pr
 
 You will also need:
 - An Azure Subscription
-- GitHub user id and [personal access token](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token) with scope `packages:read`. This token is used to by the web apps pull the Docker images. This can be any GitHub account, and does not need to be part of the Microsoft GitHub organisation.
+- GitHub user id and [personal access token](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token) with scope `packages:read`. This token is used to pull the web app Docker images. This can be any GitHub account, and does not need to be part of the Microsoft GitHub organisation.
 
 
 ### Configuring variables
@@ -37,7 +37,7 @@ management_api_image_tag = "develop-latest"
 ```
 
 ### Log into your chosen Azure subscription
-Login and selct the azure subscription you wish to deploy to:
+Login and select the azure subscription you wish to deploy to:
 
 ```cmd
 az login
@@ -71,7 +71,7 @@ terraform apply azuretre-dev.tfplan
 
 ### Access the AzureTRE deployment
 
-Do get the AzureTRE URL run the following command:
+To get the AzureTRE URL run the following command:
 
 ```cmd
 terraform output azure_tre_fqdn
@@ -79,7 +79,7 @@ terraform output azure_tre_fqdn
 
 ## Deleting the AzureTRE deployment
 
-To remove the AzureTRE and it's resources from your Azure subscription run:
+To remove the AzureTRE and its resources from your Azure subscription run:
 
 ```cmd
 terraform destroy -var-file dev.tfvars
