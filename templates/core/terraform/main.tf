@@ -127,3 +127,13 @@ module "state-store" {
   shared_subnet        = module.network.shared
   core_vnet            = module.network.core
 }
+
+module "bastion" {
+  source               = "./bastion"
+  resource_name_prefix = var.resource_name_prefix
+  environment          = var.environment
+  tre_id               = local.tre_id
+  location             = var.location
+  resource_group_name  = azurerm_resource_group.core.name
+  bastion_subnet        = module.network.bastion
+}
