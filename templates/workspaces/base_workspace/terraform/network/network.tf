@@ -146,19 +146,19 @@ resource "azurerm_network_security_rule" "allow-outbound-to-internet" {
 
 resource "azurerm_network_security_rule" "allow-inbound-from-bastion" {
   access                       = "Allow"
-  destination_address_prefixes = data.azurerm_subnet.bastion.address_prefixes
+  destination_address_prefixes = azurerm_subnet.services.address_prefixes
   destination_port_ranges = [
     "22",
     "3389",
   ]
   direction                   = "Inbound"
-  name                        = "allow-inbound-from_bastion"
+  name                        = "allow-inbound-from-bastion"
   network_security_group_name = azurerm_network_security_group.ws.name
   priority                    = 110
   protocol                    = "Tcp"
   resource_group_name         = var.resource_group_name
   source_address_prefixes = [
-    azurerm_subnet.services.address_prefix
+    data.azurerm_subnet.bastion.address_prefix
   ]
   source_port_range = "*"
 }
