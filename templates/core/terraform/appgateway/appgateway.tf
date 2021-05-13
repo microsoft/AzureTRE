@@ -4,6 +4,7 @@ resource "azurerm_public_ip" "appgwpip" {
   location              = var.location
   allocation_method     = "Static"
   sku                   = "Standard"
+  domain_name_label     = "${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
 }
 
 resource "azurerm_application_gateway" "agw" {
@@ -76,4 +77,13 @@ resource "azurerm_application_gateway" "agw" {
       backend_http_settings_name = local.http_setting_name
     } 
   }
+}
+
+data "azurerm_public_ip" "appgwpip_data" {
+  name                  = "pip-agw-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+  resource_group_name   = var.resource_group_name
+}
+
+output "app_gateway_fqdn" {
+  value = "https://${data.azurerm_public_ip.appgwpip_data.fqdn}"
 }

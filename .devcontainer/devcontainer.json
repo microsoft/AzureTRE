@@ -1,5 +1,5 @@
 {
-	"name": "Python 3",
+	"name": "AzureTRE",
 	"build": {
 		"dockerfile": "Dockerfile",
 		"context": "..",
@@ -28,6 +28,12 @@
 	},
 
 	// Add the IDs of extensions you want installed when the container is created.
-	"extensions": ["ms-python.python"],
-	"forwardPorts": []
+	"extensions": ["ms-python.python", "hashicorp.terraform", "github.vscode-pull-request-github"],
+	"forwardPorts": [],
+	"runArgs": [
+        // Keep command history 
+        "-v", "load-tests-bashhistory:/home/vscode/commandhistory",
+        // Mount docker socket for docker builds
+        "-v", "/var/run/docker.sock:/var/run/docker.sock"
+	]
 }
