@@ -15,6 +15,7 @@ jobs:
     - name: Clean management-api
       uses: smartsquaregmbh/delete-old-packages@v0.3.1
       with:
-        version-pattern: "([1-9,a-z])" # The regex needs to be escaped!
+        version-pattern: "\\b[0-9a-f]{5,40}\\b" # The regex needs to be escaped!
         names: |
           management-api
+        keep: 0
