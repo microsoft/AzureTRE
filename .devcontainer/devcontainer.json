@@ -28,7 +28,7 @@
 	},
 
 	// Add the IDs of extensions you want installed when the container is created.
-	"extensions": ["ms-python.python", "hashicorp.terraform"],
+	"extensions": ["ms-python.python", "hashicorp.terraform", "github.vscode-pull-request-github"],
 	"forwardPorts": [],
 	"runArgs": [
         // Keep command history 
