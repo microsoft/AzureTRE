@@ -1,0 +1,20 @@
+name: Nightly Cleanup
+
+on:
+  schedule:
+    # 1am https://crontab.guru/#0_1_*_*_*
+    - cron: "0 1 * * *"
+  workflow_dispatch:
+
+jobs:
+  nightly_cleanup:
+    runs-on: ubuntu-latest
+    environment: Dev
+
+    steps:
+    - name: Clean management-api
+      uses: smartsquaregmbh/delete-old-packages@v0.3.1
+      with:
+        version-pattern: "([1-9,a-z])" # The regex needs to be escaped!
+        names: |
+          management-api
