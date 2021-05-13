@@ -72,12 +72,12 @@ resource "azurerm_network_security_rule" "deny-outbound-override" {
   source_port_range           = "*"
 }
 
-resource "azurerm_network_security_rule" "deny_all_inbound_override" {
+resource "azurerm_network_security_rule" "deny-all-inbound-override" {
   access                      = "Deny"
   destination_address_prefix  = "*"
   destination_port_range      = "*"
   direction                   = "Inbound"
-  name                        = "deny-all-inbound-override"
+  name                        = "deny-inbound-override"
   network_security_group_name = azurerm_network_security_group.ws.name
   priority                    = 900
   protocol                    = "*"
@@ -86,9 +86,11 @@ resource "azurerm_network_security_rule" "deny_all_inbound_override" {
   source_port_range           = "*"
 }
 
-resource "azurerm_network_security_rule" "inbound-within-services-subnet" {
+resource "azurerm_network_security_rule" "allow-inbound-within-services-subnet" {
   access                      = "Allow"
   destination_port_range      = "*"
+  destination_address_prefix  = azurerm_subnet.services.address_prefix
+  source_address_prefix       = azurerm_subnet.services.address_prefix
   direction                   = "Inbound"
   name                        = "inbound-within-services-subnet"
   network_security_group_name = azurerm_network_security_group.ws.name
@@ -98,9 +100,11 @@ resource "azurerm_network_security_rule" "inbound-within-services-subnet" {
   source_port_range           = "*"
 }
 
-resource "azurerm_network_security_rule" "outbound-within-services-subnet" {
+resource "azurerm_network_security_rule" "allow-outbound-within-services-subnet" {
   access                      = "Allow"
   destination_port_range      = "*"
+  destination_address_prefix  = azurerm_subnet.services.address_prefix
+  source_address_prefix       = azurerm_subnet.services.address_prefix
   direction                   = "Outbound"
   name                        = "outbound-within-services-subnet"
   network_security_group_name = azurerm_network_security_group.ws.name
@@ -110,7 +114,7 @@ resource "azurerm_network_security_rule" "outbound-within-services-subnet" {
   source_port_range           = "*"
 }
 
-resource "azurerm_network_security_rule" "to-shared-services" {
+resource "azurerm_network_security_rule" "allow-outbound-to-shared-services" {
   access                      = "Allow"
   destination_address_prefix  = data.azurerm_subnet.shared.address_prefix
   destination_port_range      = "*"
@@ -125,7 +129,7 @@ resource "azurerm_network_security_rule" "to-shared-services" {
 }
 
 
-resource "azurerm_network_security_rule" "to_internet" {
+resource "azurerm_network_security_rule" "allow-outbound-to-internet" {
   access                      = "Allow"
   destination_address_prefix  = "INTERNET"
   destination_port_range      = "443"
