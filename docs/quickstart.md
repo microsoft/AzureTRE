@@ -6,19 +6,19 @@ The AzureTRE uses Terraform infrastructure as code templates that pull down Dock
 The most straightforward way to get up and running is to deploy direct from the `microsoft/AzureTRE` repository. Production deployments should take advantage of your chosen DevOps CD tooling.
 
 ### Clone the repository
-Clone the repository to your local machine ( `git clone https://github.com/microsoft/AzureTRE.git` ) or you may choose to use our preconfigured dev container via GitHub Codespaces.
+Clone the repository to your local machine ( `git clone https://github.com/microsoft/AzureTRE.git` ), or you may choose to use our preconfigured dev container via GitHub Codespaces.
 
 ![Clone Options](../docs/assets/clone_options.png)
 
 ### Pre-requisites
 
-You will require the following pre requisites installed. They will already be present if using GitHub CodeSpaces, or use our Dev Container in VSCode.
+You will require the following pre-requisites installed. They will already be present if using GitHub CodeSpaces, or use our Dev Container in VSCode.
 - Terraform >= v0.15.3. The following instructions use local terraform state, you may want to consider [storing you state remotely in Azure](https://docs.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage)
 - Azure CLI >= 2.21.0
 
 You will also need:
 - An Azure Subscription
-- GitHub user id and [personal access token](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token) with scope `packages:read`. This token is used to pull the web app Docker images. This can be any GitHub account, and does not need to be part of the Microsoft GitHub organisation.
+- A GitHub userid and [personal access token](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token) with scope `packages:read`. This token is used to pull the web app Docker images. This can be any GitHub account, and does not need to be part of the Microsoft GitHub organisation.
 
 
 ### Configuring variables
@@ -26,7 +26,7 @@ In order to run this Terraform configuration you need to set the environment var
 
 Make a copy of the `.terraform.tfvars.tmpl` file, rename it using the format `<environment>.tfvars`. We will use `dev.tfvars`.
 
-Edit the terraform.tfvars as required. As `resource_name_prefix` and `environment` are used in Azure resource names they must be alpha numberic `(a-z,0-9)`. The defaults are as follows:
+Edit the `terraform.tfvars` as required. As `resource_name_prefix` and `environment` are used in Azure resource names they must be alpha-numeric `(a-z,0-9)`. The defaults are as follows:
 
 ```hcl
 resource_name_prefix     = "tre"
@@ -49,7 +49,7 @@ See [https://docs.microsoft.com/en-us/azure/developer/terraform/get-started-clou
 
 ### Initialise Terraform and deploy
 
-To initalise terraform, from the root of the repository run:
+To initialize terraform, from the root of the repository run:
 
 ```cmd
 cd templates/core/terraform
