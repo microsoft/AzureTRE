@@ -39,7 +39,7 @@ pytest
 From the root of the repository, build the container image:
 
 ```cmd
-cd core/api
+cd core
 docker build -t tre-management-api .
 ```
 
