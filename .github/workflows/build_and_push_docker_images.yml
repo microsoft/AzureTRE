@@ -3,11 +3,11 @@ name: Docker build and push
 on:
   pull_request:
     paths:
-      - core/api/**
+      - core/**
   push:
     branches: [ develop, main ]
     paths:
-      - core/api/**
+      - core/**
   workflow_dispatch:
 
 jobs:

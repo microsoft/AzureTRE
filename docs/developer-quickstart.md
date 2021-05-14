@@ -27,7 +27,7 @@
     uvicorn api.main:app --reload
     ```
 
-The API will be available at https://localhost:8000/api in your browser.
+The API will be available at [https://localhost:8000/api](https://localhost:8000/api) in your browser.
 
 ## Develop and run in a DevContainer
 
@@ -41,7 +41,7 @@ The API will be available at https://localhost:8000/api in your browser.
     uvicorn api.main:app --reload
     ```
 
-The API will be available at https://localhost:8000/api in your browser.
+The API will be available at [https://localhost:8000/api](https://localhost:8000/api) in your browser.
 
 ## Deploy with docker
 
@@ -50,14 +50,15 @@ You must have docker and docker-compose tools installed, and an Azure Cosmos DB 
 Then run:
 
 ```cmd
+cd core
 docker-compose up -d app
 ```
 
-The API will be available at https://localhost:8000/api in your browser.
+The API will be available at [https://localhost:8000/api](https://localhost:8000/api) in your browser.
 
 ## Run tests
 
-Tests are written with pytest and located in the `tests` folder 
+Tests are written with pytest and located in the `tests` folder
 
 Run all tests with:
 
@@ -75,7 +76,7 @@ pre-commit install
 
 ## API Endpoints
 
-API endpoints documentation and swagger are available at https://localhost:8000/docs
+API endpoints documentation and swagger are available at [https://localhost:8000/docs](https://localhost:8000/docs)
 
 ## Project Structure
 
