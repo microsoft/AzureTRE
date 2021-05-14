@@ -1,9 +1,9 @@
 FROM python:3.8
 
-COPY requirements.txt .
+COPY api/requirements.txt .
 RUN pip3 install -r requirements.txt
 
-COPY core /api
+COPY . /api
 
 WORKDIR /api
 
