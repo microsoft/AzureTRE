@@ -171,3 +171,6 @@ terraform.rc
 
 # vscode
 .vscode/
+
+# node
+node_modules
