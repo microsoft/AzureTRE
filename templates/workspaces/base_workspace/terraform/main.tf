@@ -12,6 +12,12 @@ provider "azurerm" {
     features {}
 }
 
+terraform {
+  backend "azurerm" {
+    key = "AzureTRE"
+  }
+}
+
 resource "azurerm_resource_group" "ws" {
   location  = var.location
   name      = "rg-${var.core_id}-ws-${var.ws_id}"

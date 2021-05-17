@@ -12,6 +12,12 @@ provider "azurerm" {
     features {}
 }
 
+terraform {
+  backend "azurerm" {
+    key = "AzureTRE"
+  }
+}
+
 module "storage" {
   source                = "./storage"
   workspace_id          = var.workspace_id
