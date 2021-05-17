@@ -22,7 +22,7 @@ You will require the following pre requisites installed. They will already be pr
 You will also need:
 
 - An Azure Subscription
-- GitHub user id and [personal access token](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token) with scope `packages:read`. This token is used to pull the web app Docker images. This can be any GitHub account, and does not need to be part of the Microsoft GitHub organisation. Notice that you might need to enable SSO authorization on the token, depending on the requirements set by your ogranization.
+- GitHub user id and [personal access token](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token) with scope `packages:read` and SSO authorization, if required by your organization. This token is used to pull the web app Docker images. This can be any GitHub account, and does not need to be part of the Microsoft GitHub organization.
 
 ### Configuring variables
 
