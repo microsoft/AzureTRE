@@ -54,7 +54,7 @@ esac
 echo -e "\n\e[34m»»» 🤖 \e[96mCreating resource group and storage account\e[0m..."
 az group create --resource-group $TF_VAR_mgmt_res_group --location $TF_VAR_region -o table
 az storage account create --resource-group $TF_VAR_mgmt_res_group \
---name $TF_VAR_state_storage --location $TF_VAR_region \
+--name $TF_VAR_state_storage --location $TF_VAR_location \
 --kind StorageV2 --sku Standard_LRS -o table
 
 # Blob container
