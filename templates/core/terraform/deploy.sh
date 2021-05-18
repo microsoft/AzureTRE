@@ -1,10 +1,10 @@
-cat > bootstrap_backend.tf <<TRE_BACKEND
+cat >core_backend.tf <<TRE_BACKEND
 terraform {
   backend "azurerm" {
     resource_group_name  = "$TF_VAR_mgmt_res_group"
     storage_account_name = "$TF_VAR_state_storage"
     container_name       = "$TF_VAR_state_container"
-    key                  = "$TF_VAR_resource_name_prefix$TF_VAR_environment$1"
+    key                  = "$TF_VAR_resource_name_prefix$TF_VAR_environment"
   }
 }
 TRE_BACKEND
