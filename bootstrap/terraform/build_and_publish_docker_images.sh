@@ -2,7 +2,7 @@
 set -e
 
 echo -e "\n\e[34m╔══════════════════════════════════╗"
-echo -e "║\e[33m    Buidl andPublish Docker Images 🚀\e[34m    ║"
+echo -e "║\e[33m    Build and Publish Docker Images 🚀\e[34m    ║"
 echo -e "║\e[32m        \e[34m          ║"
 echo -e "╚══════════════════════════════════╝"
 echo -e "\n\e[34m»»» ✅ \e[96mChecking pre-reqs\e[0m..."
