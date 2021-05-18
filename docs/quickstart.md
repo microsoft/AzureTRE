@@ -91,13 +91,12 @@ This Terraform creates & configures the following:
 
 Copy [.env.sample](../templates/core/terraform/.env.sample) to `.env` and set values for all variables:
 
-
 - `TF_VAR_environment` - name of the environment, e.g. dev, test or live
 - `TF_VAR_address_space` -Address space for the TRE core virtual network
 
 ### Deploy
 
-The deployment of the TRE is done via Terraform. 
+The deployment of the TRE is done via Terraform.
 
 - From bash change to the core template directory `cd ./templates/core/terraform`
 - Run `./deploy.sh`
@@ -114,6 +113,4 @@ terraform output azure_tre_fqdn
 
 To remove the AzureTRE and its resources from your Azure subscription run:
 
-```cmd
-terraform destroy -var-file dev.tfvars
-```
+- Run `./destroy.sh`

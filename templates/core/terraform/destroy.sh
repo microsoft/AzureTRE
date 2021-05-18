@@ -69,8 +69,5 @@ export TF_VAR_management_api_image_tag=$TF_VAR_resource_name_prefix
 echo -e "\n\e[34m»»» ✨ \e[96mTerraform init\e[0m..."
 terraform init -input=false -backend=true -reconfigure
 
-echo -e "\n\e[34m»»» 📜 \e[96mTerraform plan\e[0m...\n"
-terraform plan
-
-echo -e "\n\e[34m»»» 🚀 \e[96mTerraform apply\e[0m...\n"
-terraform apply -auto-approve
+echo -e "\n\e[34m»»» 🚀 \e[96mTerraform destroy\e[0m...\n"
+terraform destroy -auto-approve
