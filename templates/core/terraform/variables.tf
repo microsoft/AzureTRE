@@ -33,15 +33,14 @@ variable "management_api_image_tag" {
 variable "docker_registry_server" {
   type        = string
   description = "Docker registry server"
-  default     = "docker.pkg.github.com"
 }
 
 variable "docker_registry_username" {
   type        = string
-  description = "Docker registry username (GitHub username for default images)"
+  description = "Docker registry username"
 }
 
 variable "docker_registry_password" {
   type        = string
-  description = "Docker registry password (GitHub PAT token for default images)"
+  description = "Docker registry password"
 }
