@@ -19,7 +19,7 @@ venv/Scripts/activate       # windows
 pip install -r core/api/requirements.txt
 ```
 
-Run the webserver locally
+Run the web server locally
 
 ```cmd
 cd core
@@ -64,4 +64,4 @@ This will start the API on [http://127.0.0.1:8000](http://127.0.0.1:8000) and yo
 - Login to Azure with your credentials `az login`
 - Create a resource group that you want to automatically deploy the solution to `az group create -g MyResourceGroup -l westeurope`
 - Create a service credential to run the pipeline with `az ad sp create-for-rbac --name MySPNName --role Contributor --scope /subscriptions/{MySubscriptionId}/resourceGroups/{MyResourceGroup} --sdk-auth`
-- In your repository, use Add secret to create a new secret named AZURE_CREDENTIALS and paste the entire JSON object produced by the az ad sp create-for-rbac command as the secret value and save the secret.
+- In your repository, use Add secret to create a new secret named AZURE_CREDENTIALS and paste the entire JSON object produced by the `az ad sp create-for-rbac` command as the secret value and save the secret.

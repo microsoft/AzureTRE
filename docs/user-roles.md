@@ -26,7 +26,7 @@ Provisions the Azure TRE solution in an Azure subscription and performs tasks th
 Example tasks:
 
 - Provision Azure TRE solution instances.
-- 2nd line support for TRE administrators, TRE workspace owners and Researchers when Azure TRE troubleshooting is required.
+- Second line support for TRE administrators, TRE workspace owners and Researchers when Azure TRE troubleshooting is required.
 - Work with the data engineer to connect the Azure TRE with the data platform.
 - Troubleshoot provisioning issues and failed deployments.
 - Manage TRE administrator users.
