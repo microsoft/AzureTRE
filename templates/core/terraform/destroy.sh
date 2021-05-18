@@ -70,4 +70,4 @@ echo -e "\n\e[34m»»» ✨ \e[96mTerraform init\e[0m..."
 terraform init -input=false -backend=true -reconfigure
 
 echo -e "\n\e[34m»»» 🚀 \e[96mTerraform destroy\e[0m...\n"
-terraform destroy -auto-approve
+terraform destroy
