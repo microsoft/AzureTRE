@@ -21,7 +21,7 @@ You will also need:
 - An Azure Subscription
 - GitHub user id and [personal access token](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token) with scope `packages:read`. This token is used to pull the web app Docker images. This can be any GitHub account, and does not need to be part of the Microsoft GitHub organisation.
 
-## Bootstrap Environment
+## Management Infrastructure
 
 ### Log into your chosen Azure subscription
 Login and select the azure subscription you wish to deploy to:
@@ -34,15 +34,11 @@ az account set -s <subscription_name_or_id>
 
 ### Configuration
 
-Before running any of the scripts, the bootstrap configuration variables need to be set. This is done in an `.env` file, and this file is read and parsed by scripts.
+Before running any of the scripts, the configuration variables need to be set. This is done in an `.env` file, and this file is read and parsed by scripts.
 
 Note. `.tfvars` file is not used, this is intentional. The dotenv format is easier to parse, meaning we can use the values for bash scripts and other purposes
 
-To change to the directory containing the bootstrap scripts for a terraform envionment:
-
-- In bash run `cd ./bootstrap/terraform`
-
-Copy [.env.sample](../bootstrap/terraform/.env.sample) to `.env` in the  and set values for all variables:
+Copy [.env.sample](../devops/terraform/.env.sample) to `.env` in the  and set values for all variables:
 
 - `TF_VAR_state_storage` - The name of the storage account to hold Terraform state.
 - `TF_VAR_mgmt_res_group` - The shared resource group for all hub resources, including the storage account.
@@ -57,7 +53,7 @@ As a principal we want all our resources defined in Terraform, including the sto
 
 To solve this a bootstrap script is used which creates the initial storage account and resource group using the Azure CLI. Then Terraform is initialized using this storage account as a backend, and the storage account imported into state
 
-- From bash run `./bootstrap.sh`
+- From bash run `make bootstrap`
 
 This script should never need running a second time even if the other management resources are modified
 
@@ -65,7 +61,7 @@ This script should never need running a second time even if the other management
 
 The deployment of the rest of the shared management resources is done via Terraform, and the various .tf files in the root of this repo.
 
-- From bash run `./deploy.sh`
+- From bash run `make mgmt-deploy`
 
 This Terraform creates & configures the following:
 
@@ -75,9 +71,10 @@ This Terraform creates & configures the following:
 
 ### Build and push docker images
 
-To build and push the docker images required by the TRE and publish them to the container registry created during the bootstrap stageFix type run:
+To build and push the docker images required by the TRE and publish them to the container registry created in the previous step. Fix type run:
 
-- From bash run `./build_and_publish_docker_images.sh.sh`
+- From bash run `make build-images`
+- From bash run `make push-images`
 
 ## TRE Deployment
 
@@ -92,8 +89,7 @@ Copy [.env.sample](../templates/core/terraform/.env.sample) to `.env` and set va
 
 The deployment of the TRE is done via Terraform.
 
-- From bash change to the core template directory `cd ./templates/core/terraform`
-- Run `./deploy.sh`
+- Run `make tre-deploy`
 
 ### Access the AzureTRE deployment
 
@@ -107,4 +103,4 @@ terraform output azure_tre_fqdn
 
 To remove the AzureTRE and its resources from your Azure subscription run:
 
-- Run `./destroy.sh`
+- Run `make tre-destroy`
