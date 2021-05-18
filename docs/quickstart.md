@@ -75,15 +75,9 @@ This Terraform creates & configures the following:
 
 ### Build and push docker images
 
-To build and push the docker images run:
+To build and push the docker images required by the TRE and publish them to the container registry created during the bootstrap stageFix type run:
 
 - From bash run `./build_and_publish_docker_images.sh.sh`
-
-This Terraform creates & configures the following:
-
-- Resource Group (also in bootstrap).
-- Storage Account for holding Terraform state (also in bootstrap).
-- Azure Container Registry.
 
 ## TRE Deployment
 
