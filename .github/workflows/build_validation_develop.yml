@@ -26,7 +26,6 @@ jobs:
           VALIDATE_PYTHON_FLAKE8: true
           VALIDATE_YAML: true
           VALIDATE_TERRAFORM: true
-          RUN_LOCAL: true
 
       - name: Set up Python 3.8
         uses: actions/setup-python@v2
