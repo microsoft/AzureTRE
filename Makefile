@@ -2,10 +2,10 @@
 
 SHELL:=/bin/bash
 
-all: bootstrap-init mgmt-deploy build_images push_images deploy-tre
+all: bootstrap mgmt-deploy build-images push-images tre-deploy
 
 bootstrap:
-	echo -e "\n\e[34m»»» 🧩 \e[Bootstrap Terraform\e[0m..." \
+	echo -e "\n\e[34m»»» 🧩 \e[96mBootstrap Terraform\e[0m..." \
 	&& . ./devops/scripts/check_dependancies.sh \
 	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
 	&& cd ./devops/terraform && ./bootstrap.sh
@@ -17,19 +17,19 @@ mgmt-deploy:
 	&& cd ./devops/terraform  &&  ./deploy.sh  
 
 mgmt-destroy:
-	echo -e "\n\e[34m»»» 🧩 \e[Destroying management infrastructure\e[0m..." \
+	echo -e "\n\e[34m»»» 🧩 \e[96mDestroying management infrastructure\e[0m..." \
 	. ./devops/scripts/check_dependancies.sh \
 	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
 	&& cd ./devops/terraform  && ./destroy.sh
 
 build-images:
-	echo -e "\n\e[34m»»» 🧩 \e[Building Images\e[0m..." \
+	echo -e "\n\e[34m»»» 🧩 \e[96mBuilding Images\e[0m..." \
 	&& . ./devops/scripts/check_dependancies.sh \
 	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
 	&& ./devops/scripts/build_images.sh
 
 push-images:
-	echo -e "\n\e[34m»»» 🧩 \e[Pushing Images\e[0m..." \
+	echo -e "\n\e[34m»»» 🧩 \e[96mPushing Images\e[0m..." \
 	. ./devops/scripts/check_dependancies.sh \
 	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
 	&& ./devops/scripts/push_images.sh
