@@ -1,4 +1,4 @@
-# AzureTRE Deployment QuickStart
+# Azure TRE Deployment QuickStart
 
 
 The AzureTRE uses Terraform infrastructure as code templates that pull down Docker container images to run the web applications.
