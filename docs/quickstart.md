@@ -80,7 +80,7 @@ To build and push the docker images required by the TRE and publish them to the 
 
 ### Configuring variables
 
-Copy [.env.sample](../templates/core/terraform/.env.sample) to `.env` and set values for all variables:
+Copy [/templates/core/terraform/.env.sample](../templates/core/terraform/.env.sample) to `/templates/core/terraform/.env` and set values for all variables:
 
 - `TF_VAR_environment` - name of the environment, e.g. dev, test or live
 - `TF_VAR_address_space` -Address space for the TRE core virtual network
