@@ -47,7 +47,7 @@ Copy [.env.sample](../devops/terraform/.env.sample) to `.env` in the  and set va
 - `TF_VAR_location` - Azure region to deploy all resources into.
 - `TF_VAR_image_tag` - Default tag for docker images that will be pushed to the container registry and deployed with the TRE
 
-### Bootstrap of Backend State
+### Bootstrap of backend state
 
 As a principal we want all our resources defined in Terraform, including the storage account using by Terraform to hold backend state. This results in a chicken and egg problem.
 
