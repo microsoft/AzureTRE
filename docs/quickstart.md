@@ -45,7 +45,7 @@ Copy [.env.sample](../devops/terraform/.env.sample) to `.env` in the  and set va
 - `TF_VAR_state_container` - Name of the blob container to hold Terraform state (default: `tfstate`).
 - `TF_VAR_prefix` - A prefix added to all resources, pick your project name or other prefix to give the resources unique names.
 - `TF_VAR_location` - Azure region to deploy all resources into.
-- `TF_VAR_image_tag` - Default tag for docker images that will be pushed to the container registry and deployed with the TRE
+- `TF_VAR_image_tag` - Default tag for docker images that will be pushed to the container registry and deployed with the Azure TRE
 
 ### Bootstrap of backend state
 
