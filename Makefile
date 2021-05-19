@@ -56,7 +56,7 @@ base-workspace-deploy:
 	&& cd ./templates/workspaces/base_workspace/terraform/ && ./deploy.sh 
 
 base-workspace-destroy:
-	echo -e "\n\e[34m»»» 🧩 \e[96mDeploying Base Workspace\e[0m..." \
+	echo -e "\n\e[34m»»» 🧩 \e[96mDestroying Base Workspace\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh \
 	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
 	&& . ./devops/scripts/load_env.sh ./templates/workspaces/base_workspace/terraform/.env \
