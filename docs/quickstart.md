@@ -49,7 +49,7 @@ Copy [/devops/terraform/.env.sample](../devops/terraform/.env.sample) to `/devop
 
 ### Bootstrap of backend state
 
-As a principal we want all our resources defined in Terraform, including the storage account using by Terraform to hold backend state. This results in a chicken and egg problem.
+As a principle we want all our resources defined in Terraform, including the storage account used by Terraform to hold backend state. This results in a chicken and egg problem.
 
 To solve this a bootstrap script is used which creates the initial storage account and resource group using the Azure CLI. Then Terraform is initialized using this storage account as a backend, and the storage account imported into state
 
