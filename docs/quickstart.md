@@ -36,7 +36,7 @@ az account set -s <subscription_name_or_id>
 
 Before running any of the scripts, the configuration variables need to be set. This is done in an `.env` file, and this file is read and parsed by scripts.
 
-Note. `.tfvars` file is not used, this is intentional. The dotenv format is easier to parse, meaning we can use the values for bash scripts and other purposes
+Note. `.tfvars` file is not used, this is intentional. The `.env` file format is easier to parse, meaning we can use the values for bash scripts and other purposes
 
 Copy [.env.sample](../devops/terraform/.env.sample) to `.env` in the  and set values for all variables:
 
