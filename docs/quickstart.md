@@ -38,7 +38,7 @@ Before running any of the scripts, the configuration variables need to be set. T
 
 Note. `.tfvars` file is not used, this is intentional. The `.env` file format is easier to parse, meaning we can use the values for bash scripts and other purposes
 
-Copy [.env.sample](../devops/terraform/.env.sample) to `.env` in the  and set values for all variables:
+Copy [/devops/terraform/.env.sample](../devops/terraform/.env.sample) to `/devops/terraform/.env` in the  and set values for all variables:
 
 - `TF_VAR_state_storage` - The name of the storage account to hold Terraform state.
 - `TF_VAR_mgmt_res_group` - The shared resource group for all hub resources, including the storage account.
