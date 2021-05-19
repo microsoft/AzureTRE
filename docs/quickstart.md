@@ -59,7 +59,7 @@ This script should never need running a second time even if the other management
 
 ### Management Resource Deployment
 
-The deployment of the rest of the shared management resources is done via Terraform, and the various .tf files in the root of this repo.
+The deployment of the rest of the shared management resources is done via Terraform, and the various `.tf` files in the root of this repo.
 
 - From bash run `make mgmt-deploy`
 
