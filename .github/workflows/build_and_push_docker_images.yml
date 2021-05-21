@@ -21,14 +21,14 @@ jobs:
       - name: Login to Packages Container registry
         uses: docker/login-action@v1 
         with:
-          registry: docker.pkg.github.com
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ${{ secrets.docker_registry_server }}
+          username: ${{ secrets.docker_registry_username }}
+          password: ${{ secrets.docker_registry_password }}
 
       - name: Build & publish image
         env:
           DOCKER_BUILDKIT: 1
-          REPOSITORY_NAME: docker.pkg.github.com/microsoft/azuretre/management-api
+          REPOSITORY_NAME: ${{ secrets.docker_registry_server }}/microsoft/azuretre/management-api
         run: |
           echo $GITHUB_REF
           if [ $GITHUB_EVENT_NAME == 'push' ] && [ $GITHUB_REF == 'refs/heads/develop' ]; then
