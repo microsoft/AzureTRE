@@ -9,8 +9,7 @@ resource "azurerm_function_app" "procesorfunction" {
   
   app_settings = {
         https_only = true
-        FUNCTIONS_WORKER_RUNTIME = "node"
-        WEBSITE_NODE_DEFAULT_VERSION = "~14"
+        FUNCTIONS_WORKER_RUNTIME = "python"
         FUNCTION_APP_EDIT_MODE = "readonly"
     }
 }
