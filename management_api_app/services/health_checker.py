@@ -1,8 +1,8 @@
 from azure.core import exceptions
 from azure.cosmos import CosmosClient
-from api.core.config import STATE_STORE_ENDPOINT, STATE_STORE_KEY
-from api.models.schemas.health import StatusEnum
-from api.resources import strings
+from core.config import STATE_STORE_ENDPOINT, STATE_STORE_KEY
+from models.schemas.health import StatusEnum
+from resources import strings
 
 
 def get_state_store_status() -> (StatusEnum, str):

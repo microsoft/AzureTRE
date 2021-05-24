@@ -2,8 +2,8 @@ import pytest
 from mock import patch
 from fastapi import FastAPI
 from httpx import AsyncClient
-from api.resources import strings
-from api.models.schemas.health import StatusEnum
+from resources import strings
+from models.schemas.health import StatusEnum
 
 
 pytestmark = pytest.mark.asyncio

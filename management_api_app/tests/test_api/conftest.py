@@ -6,7 +6,7 @@ from asgi_lifespan import LifespanManager
 
 @pytest.fixture
 def app() -> FastAPI:
-    from api.main import get_application
+    from main import get_application
     return get_application()
 
 

@@ -1,7 +1,7 @@
 from datetime import datetime
 from fastapi import APIRouter
-from api.models.schemas.ping import Pong
-from api.resources import strings
+from models.schemas.ping import Pong
+from resources import strings
 
 
 router = APIRouter()

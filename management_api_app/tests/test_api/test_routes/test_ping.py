@@ -1,7 +1,7 @@
 import pytest
 from fastapi import FastAPI
 from httpx import AsyncClient
-from api.resources import strings
+from resources import strings
 
 
 pytestmark = pytest.mark.asyncio

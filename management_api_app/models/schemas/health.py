@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import List
 from pydantic import BaseModel
-from api.resources import strings
+from resources import strings
 
 
 class StatusEnum(str, Enum):
