@@ -58,6 +58,17 @@ resource "azurerm_application_gateway" "agw" {
     protocol                       = "Http"
   }
 
+  probe {
+    name                                      = "management-api"
+    pick_host_name_from_backend_http_settings = true
+    interval                                  = 10
+    protocol                                  = "Https"
+    path                                      = "/api/health"
+    timeout                                   = 10
+    unhealthy_threshold                       = 2
+    minimum_servers                           = 0
+  }
+
   request_routing_rule {
     name                       = local.request_routing_rule_name
     rule_type                  = "PathBasedRouting"
@@ -72,7 +83,7 @@ resource "azurerm_application_gateway" "agw" {
 
     path_rule {
       name = "api"
-      paths = ["/*"]
+      paths = ["/api/*"]
       backend_address_pool_name = local.management_api_backend_address_pool_name
       backend_http_settings_name = local.http_setting_name
     } 

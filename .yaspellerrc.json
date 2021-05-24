@@ -4,6 +4,7 @@
         "**/*devcontainer*",
         ".git",
         ".gitignore",
+        ".gitattributes",
         "node_modules",
         "LICENSE",
         "**/.dockerignore",
@@ -53,7 +54,11 @@
         "tfvars",
         "tmpl",
         "TREs",
-        "Xamarin"
+        "Xamarin",
+        "devcontainer",
+        "DevContainer",
+        "endpoints",
+        "pytest"
     ],
     "ignoreText": [
         // Code sections (anything between ``` and ``` or ` and `)

@@ -4,26 +4,28 @@ The Azure TRE uses Terraform infrastructure as code templates that pull down Doc
 
 The most straightforward way to get up and running is to deploy direct from the `microsoft/AzureTRE` repository. Production deployments should take advantage of your chosen DevOps CD tooling.
 
-## Pre-requisites
+## Prerequisites
 
-You will require the following pre requisites installed. They will already be present if using GitHub Codespaces, or use our Dev Container in VS Code.
+You will require the following prerequisites installed. They will already be present if using GitHub Codespaces, or use our Dev Container in VS Code.
+
 - Terraform >= v0.15.3. The following instructions use local terraform state, you may want to consider [storing you state remotely in Azure](https://docs.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage)
 - Azure CLI >= 2.21.0
 - Docker
 
 You will also need:
+
 - An Azure Subscription
-- GitHub user id and [personal access token](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token) with scope `packages:read`. This token is used to pull the web app Docker images. This can be any GitHub account, and does not need to be part of the Microsoft GitHub organisation.
+- A GitHub user id and [personal access token](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token) with scope `packages:read`. This token is used to pull the web app Docker images. This can be any GitHub account, and does not need to be part of the Microsoft GitHub organisation.
 
 ## Clone the repository
 
-Clone the repository to your local machine ( `git clone https://github.com/microsoft/AzureTRE.git` ) or you may choose to use our pre-configured dev container via GitHub Codespaces.
+Clone the repository to your local machine ( `git clone https://github.com/microsoft/AzureTRE.git` ), or you may choose to use our pre-configured dev container via GitHub Codespaces.
 
 ![Clone Options](../docs/assets/clone_options.png)
 
 ## Management Infrastructure
 
-In the following steps we will create management infrastructure in your subscription. This includes resources, such as a storage accoutn and container registry that will enable deployment the Azure TRE. Once the infrastructure is deployed we will build the container images required for deployment.
+In the following steps we will create management infrastructure in your subscription. This includes resources, such as a storage account and container registry that will enable deployment the Azure TRE. Once the infrastructure is deployed we will build the container images required for deployment.
 
 ### Log into your chosen Azure subscription
 Login and select the azure subscription you wish to deploy to:
@@ -49,11 +51,11 @@ Copy [/devops/terraform/.env.sample](../devops/terraform/.env.sample) to `/devop
 - `TF_VAR_location` - Azure region to deploy all resources into.
 - `TF_VAR_image_tag` - Default tag for docker images that will be pushed to the container registry and deployed with the Azure TRE
 
-### Bootstrap of backend state
+### Bootstrap of back-end state
 
-As a principle we want all our resources defined in Terraform, including the storage account used by Terraform to hold backend state. This results in a chicken and egg problem.
+As a principle we want all our resources defined in Terraform, including the storage account used by Terraform to hold back-end state. This results in a chicken and egg problem.
 
-To solve this a bootstrap script is used which creates the initial storage account and resource group using the Azure CLI. Then Terraform is initialized using this storage account as a backend, and the storage account imported into state
+To solve this a bootstrap script is used which creates the initial storage account and resource group using the Azure CLI. Then Terraform is initialized using this storage account as a back-end, and the storage account imported into state
 
 - From bash run `make bootstrap`
 
