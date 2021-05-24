@@ -1,11 +1,26 @@
 locals {
-  backend_address_pool_name      = "beap-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
-  management_api_backend_address_pool_name = "beap-${var.resource_name_prefix}-${var.environment}-${var.tre_id}-management-api"
-  management_api_url_path_map_name_pool_name = "upm-${var.resource_name_prefix}-${var.environment}-${var.tre_id}-management-api"
-  frontend_port_name             = "feport-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
-  frontend_ip_configuration_name = "feip-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
-  http_setting_name              = "be-htst-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
-  listener_name                  = "httplstn-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
-  request_routing_rule_name      = "rqrt-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
-  redirect_configuration_name    = "rdrcfg-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+  staticweb_storage_name         = "st${var.resource_name_prefix}${var.environment}${var.tre_id}"
+
+  staticweb_backend_pool_name    = "beap-staticweb"
+  api_backend_pool_name = "beap-api"
+  app_path_map_name = "upm-application"
+  redirect_path_map_name = "upm-redirect"
+
+  insecure_frontend_port_name    = "feport-insecure"
+  secure_frontend_port_name      = "feport-secure"
+
+  frontend_ip_configuration_name = "feip-public"
+
+  api_http_setting_name          = "be-htst-api"
+  staticweb_http_setting_name    = "be-htst-staticweb"
+  api_probe_name                 = "hp-api"
+
+  insecure_listener_name         = "httplstn-insecure"
+  secure_listener_name           = "httplstn-secure"
+
+  redirect_request_routing_rule_name = "rqrt-redirect"
+  request_routing_rule_name      = "rqrt-application"
+  redirect_configuration_name    = "rdrcfg-tosecure"
+
+  certificate_name               = "cert-primary"
 }
