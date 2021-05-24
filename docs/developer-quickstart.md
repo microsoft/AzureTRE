@@ -38,6 +38,7 @@ The API will be available at [https://localhost:8000/api](https://localhost:8000
 
     ```cmd
     cd management_api_app
+    pip install -r requirements.txt
     uvicorn main:app --reload
     ```
 
@@ -51,7 +52,6 @@ Then run:
 
 ```cmd
 cd management_api_app
-pip install -r requirements.txt
 docker compose up -d app
 ```
 
