@@ -101,8 +101,7 @@ resource "azurerm_application_gateway" "agw" {
     pick_host_name_from_backend_http_settings = true
     interval = 15
     protocol = "Https"
-    # TODO: change path to specific health-check endpoint
-    path = "/api/"
+    path = "/api/ping"
     timeout = "30"
     unhealthy_threshold = "3"
   }
@@ -124,7 +123,6 @@ resource "azurerm_application_gateway" "agw" {
     protocol                       = "Http"
   }
 
-  # Routing rule for application traffic
   request_routing_rule {
     name                       = local.request_routing_rule_name
     rule_type                  = "PathBasedRouting"
