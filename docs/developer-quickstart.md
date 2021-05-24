@@ -33,7 +33,7 @@ The API will be available at [https://localhost:8000/api](https://localhost:8000
 
 1. [Create a Cosmos DB Database in Azure](https://docs.microsoft.com/en-us/azure/cosmos-db/create-cosmosdb-resources-portal)
 1. Open the project in Visual Studio Code in the DevContainer
-1. Copy `.env.tmpl` in the **core** folder to `.env` and configure the variables
+1. Copy `.env.tmpl` in the **management_api_app** folder to `.env` and configure the variables
 1. Start the web API
 
     ```cmd
