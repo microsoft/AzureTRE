@@ -7,11 +7,13 @@ The most straightforward way to get up and running is to deploy direct from the 
 ## Prerequisites
 
 You will require the following prerequisites installed. They will already be present if using GitHub Codespaces, or use our Dev Container in VS Code.
+
 - Terraform >= v0.15.3. The following instructions use local terraform state, you may want to consider [storing you state remotely in Azure](https://docs.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage)
 - Azure CLI >= 2.21.0
 - Docker
 
 You will also need:
+
 - An Azure Subscription
 - A GitHub user id and [personal access token](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token) with scope `packages:read`. This token is used to pull the web app Docker images. This can be any GitHub account, and does not need to be part of the Microsoft GitHub organisation.
 
