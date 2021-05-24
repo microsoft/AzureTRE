@@ -54,7 +54,11 @@
         "tfvars",
         "tmpl",
         "TREs",
-        "Xamarin"
+        "Xamarin",
+        "devcontainer",
+        "DevContainer",
+        "endpoints",
+        "pytest"
     ],
     "ignoreText": [
         // Code sections (anything between ``` and ``` or ` and `)

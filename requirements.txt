@@ -1,6 +1,6 @@
 # requirements for api
 Click==7.1.2
-fastapi[all]==0.63.0
+fastapi[all]==0.65.1
 uvicorn[standard]==0.13.4
 gunicorn==20.1.0
 azure-core==1.13.0
