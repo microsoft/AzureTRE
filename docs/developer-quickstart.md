@@ -51,6 +51,7 @@ Then run:
 
 ```cmd
 cd management_api_app
+pip install -r requirements.txt
 docker compose up -d app
 ```
 
