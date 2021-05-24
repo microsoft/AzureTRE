@@ -4,6 +4,7 @@ from azure.servicebus import ServiceBusClient, ServiceBusMessage
 CONNECTION_STR = ""
 QUEUE_NAME = "workspacequeue"
 
+
 def send_single_message(sender):
     message = ServiceBusMessage("Test Message")
     sender.send_messages(message)
