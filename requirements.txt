@@ -14,3 +14,9 @@ httpx~=0.18.1
 asgi-lifespan~=1.0.1
 pre-commit==2.12.1
 mock==4.0.3
+
+# requirements for processor function
+azure-functions
+
+# requirements for servicebus send sample 
+azure-functions

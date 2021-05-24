@@ -177,3 +177,6 @@ terraform.rc
 
 # node
 node_modules
+
+local.settings.json
+sample.dat
