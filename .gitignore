@@ -155,6 +155,9 @@ override.tf.json
 *_override.tf
 *_override.tf.json
 
+# generated backend files
+*_backend.tf
+
 # Include override files you do wish to add to version control using negated pattern
 #
 # !example_override.tf
@@ -171,3 +174,6 @@ terraform.rc
 
 # vscode
 .vscode/
+
+# node
+node_modules
