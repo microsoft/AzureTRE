@@ -37,7 +37,7 @@ The API will be available at [https://localhost:8000/api](https://localhost:8000
 1. Start the web API
 
     ```cmd
-    cd core
+    cd management_api_app
     uvicorn main:app --reload
     ```
 
@@ -50,8 +50,8 @@ You must have docker and docker-compose tools installed, and an Azure Cosmos DB 
 Then run:
 
 ```cmd
-cd core
-docker-compose up -d app
+cd management_api_app
+docker compose up -d app
 ```
 
 The API will be available at [https://localhost:8000/api](https://localhost:8000/api) in your browser.
