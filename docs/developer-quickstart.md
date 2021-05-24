@@ -19,7 +19,7 @@
     pip install -r requirements.txt
     ```
 
-1. Copy `.env.tmpl` in the **core** folder to `.env` and configure the variables
+1. Copy `.env.tmpl` in the **management_api_app** folder to `.env` and configure the variables
 1. Start the web API
 
     ```cmd
