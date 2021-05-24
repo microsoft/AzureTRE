@@ -4,6 +4,7 @@
         "**/*devcontainer*",
         ".git",
         ".gitignore",
+        ".gitattributes",
         "node_modules",
         "LICENSE",
         "**/.dockerignore",
