@@ -12,5 +12,4 @@ async def test_frw_validation_error_format(app: FastAPI):
 
     assert response.status_code == HTTP_404_NOT_FOUND
 
-    error_data = response.json()
-    assert "errors" in error_data
+    assert "errors" in response.json()

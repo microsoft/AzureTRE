@@ -9,7 +9,7 @@ from models.schemas.health import StatusEnum
 pytestmark = pytest.mark.asyncio
 
 
-@patch("api.routes.health.get_state_store_status")
+@patch("api.routes.health.create_state_store_status")
 async def test_health_response_contains_cosmos_status(health_check_mock, app: FastAPI, client: AsyncClient) -> None:
     message = ""
     health_check_mock.return_value = StatusEnum.ok, message

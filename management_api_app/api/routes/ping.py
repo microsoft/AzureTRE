@@ -7,6 +7,6 @@ from resources import strings
 router = APIRouter()
 
 
-@router.get("", name="ping:get-server-alive")
+@router.get("/ping", name="ping:get-server-alive")
 async def ping_server() -> Pong:
     return Pong(message=strings.PONG, time=datetime.now())

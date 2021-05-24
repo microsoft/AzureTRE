@@ -5,7 +5,7 @@ from models.schemas.health import StatusEnum
 from resources import strings
 
 
-def get_state_store_status() -> (StatusEnum, str):
+def create_state_store_status() -> (StatusEnum, str):
     status = StatusEnum.ok
     message = ""
     try:
