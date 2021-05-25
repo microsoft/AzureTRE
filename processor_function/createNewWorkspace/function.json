@@ -6,7 +6,7 @@
       "type": "serviceBusTrigger",
       "direction": "in",
       "queueName": "workspacequeue",
-      "connection": "sbdctredev9701_SERVICEBUS"
+      "connection": "servicebusconnection"
     }
   ]
 }
