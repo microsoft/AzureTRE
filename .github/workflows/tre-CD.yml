@@ -50,15 +50,14 @@ jobs:
           TF_VAR_address_space=${{ env.TF_VAR_address_space }}
           EOF
 
-          export ARM_CLIENT_ID=$(echo $AZURE_CREDENTIALS | jq -r '.clientId')
-          export ARM_CLIENT_SECRET=$(echo $AZURE_CREDENTIALS | jq -r '.clientSecret')
-          export ARM_SUBSCRIPTION_ID=$(echo $AZURE_CREDENTIALS | jq -r '.subscriptionId')
-          export ARM_TENANT_ID=$(echo $AZURE_CREDENTIALS | jq -r '.tenantId')
-      env:
-        AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-
     - name: Make bootstrap for terraform
       shell: bash
+      env:
+        AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
       run: |
-          echo $ARM_TENANT_ID
+          export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
+          export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
+          export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
+          export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
+
           make bootstrap
