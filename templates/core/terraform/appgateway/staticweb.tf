@@ -5,7 +5,7 @@ resource "azurerm_storage_account" "staticweb" {
     resource_group_name = var.resource_group_name
     location = var.location
     account_kind = "StorageV2"
-    access_tier = "Standard"
+    account_tier = "Standard"
     account_replication_type = "LRS"
     enable_https_traffic_only = true
     allow_blob_public_access = false
