@@ -51,5 +51,7 @@ jobs:
           EOF
 
     - name: Make bootstrap for terraform
-      run: |
+      with:
+        azcliversion: 2.0.72
+        inlineScript: |
           make bootstrap
