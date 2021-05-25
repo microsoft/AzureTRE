@@ -50,6 +50,7 @@ module "appgateway" {
   resource_group_name  = azurerm_resource_group.core.name
   app_gw_subnet        = module.network.app_gw
   management_api_fqdn  = module.api-webapp.management_api_fqdn
+  keyvault_id          = module.keyvault.keyvault_id
 }
 
 module "api-webapp" {

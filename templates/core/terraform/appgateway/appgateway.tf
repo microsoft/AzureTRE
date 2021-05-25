@@ -187,7 +187,3 @@ data "azurerm_public_ip" "appgwpip_data" {
   name                  = "pip-agw-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
   resource_group_name   = var.resource_group_name
 }
-
-output "app_gateway_fqdn" {
-  value = "https://${data.azurerm_public_ip.appgwpip_data.fqdn}"
-}
