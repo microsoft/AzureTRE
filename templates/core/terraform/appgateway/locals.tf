@@ -8,4 +8,5 @@ locals {
   listener_name                  = "httplstn-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
   request_routing_rule_name      = "rqrt-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
   redirect_configuration_name    = "rdrcfg-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+  probe_name                     = "probe-management-api"
 }
