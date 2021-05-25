@@ -66,10 +66,11 @@ module "api-webapp" {
   log_analytics_workspace_id      = azurerm_log_analytics_workspace.tre.id
   management_api_image_repository = var.management_api_image_repository
   management_api_image_tag        = var.management_api_image_tag
-  docker_registry_server      = var.docker_registry_server
+  docker_registry_server          = var.docker_registry_server
   docker_registry_username        = var.docker_registry_username
   docker_registry_password        = var.docker_registry_password
-
+  state_store_endpoint            = module.state-store.endpoint
+  state_store_key                 = module.state-store.primary_key
 }
 
 module "keyvault" {

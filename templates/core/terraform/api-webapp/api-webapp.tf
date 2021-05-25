@@ -34,7 +34,8 @@ resource "azurerm_app_service" "management_api" {
     "DOCKER_REGISTRY_SERVER_USERNAME" = var.docker_registry_username
     "DOCKER_REGISTRY_SERVER_URL"      = "https://${var.docker_registry_server}"
     "DOCKER_REGISTRY_SERVER_PASSWORD" = var.docker_registry_password
-
+    "STATE_STORE_ENDPOINT"            = var.state_store_endpoint
+    "STATE_STORE_KEY"                 = var.state_store_key
   }
 
   site_config {
