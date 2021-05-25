@@ -26,11 +26,14 @@ jobs:
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    - name: Make .env files
-      uses: azure/CLI@v1
+    - name: Install Terraform
+      uses: little-core-labs/install-terraform@v2.0.0
       with:
-        azcliversion: 2.20.0
-        inlineScript: |
+          version: 0.13.4
+
+    - name: Make .env files
+      shell: bash
+      run: |
           env_file="devops/terraform/.env"
           cat <<EOF > $env_file
           TF_VAR_state_storage=${{ env.TF_VAR_state_storage }}
@@ -48,8 +51,5 @@ jobs:
           EOF
 
     - name: Make bootstrap for terraform
-      uses: hashicorp/terraform-github-actions@master
-      with:
-        azcliversion: 2.20.0
-        inlineScript: |
+      run: |
           make bootstrap
