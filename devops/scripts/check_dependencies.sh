@@ -15,7 +15,7 @@ fi
 
 docker version > /dev/null 2>&1
 if [ $? -ne 0 ] && [ "$1" != "nodocker" ]; then
-  echo -e "\e[31m»»» ⚠️ Docker is not installed! 😥 Please go to hhttps://docs.docker.com/engine/install/ to set it up"
+  echo -e "\e[31m»»» ⚠️ Docker is not installed! 😥 Please go to https://docs.docker.com/engine/install/ to set it up"
   exit
 fi
 
