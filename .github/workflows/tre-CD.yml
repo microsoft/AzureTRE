@@ -60,4 +60,5 @@ jobs:
     - name: Make bootstrap for terraform
       shell: bash
       run: |
+          echo $ARM_TENANT_ID
           make bootstrap
