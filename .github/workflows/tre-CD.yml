@@ -31,7 +31,7 @@ jobs:
       with:
         azcliversion: 2.20.0
         inlineScript: |
-          env_file="/devops/terraform/.env"
+          env_file="devops/terraform/.env"
           cat <<EOF > $env_file
           TF_VAR_state_storage=${{ env.TF_VAR_state_storage }}
           TF_VAR_mgmt_res_group=${{ env.TF_VAR_mgmt_res_group }}
@@ -41,7 +41,7 @@ jobs:
           TF_VAR_image_tag=${{ env.TF_VAR_image_tag }}
           EOF
 
-          env_file="/templates/core/terraform/.env"
+          env_file="templates/core/terraform/.env"
           cat <<EOF > $env_file
           TF_VAR_environment=${{ env.TF_VAR_environment }}
           TF_VAR_address_space=${{ env.TF_VAR_address_space }}
