@@ -49,6 +49,7 @@ resource "azurerm_application_gateway" "agw" {
     protocol              = "Https"
     request_timeout       = 60
     pick_host_name_from_backend_address = true
+    probe_name            = local.probe_name
   }
 
   http_listener {
@@ -59,7 +60,7 @@ resource "azurerm_application_gateway" "agw" {
   }
 
   probe {
-    name                                      = "management-api"
+    name                                      = local.probe_name
     pick_host_name_from_backend_http_settings = true
     interval                                  = 10
     protocol                                  = "Https"

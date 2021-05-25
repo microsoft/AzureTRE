@@ -80,7 +80,8 @@ module "api-webapp" {
   docker_registry_server          = var.docker_registry_server
   docker_registry_username        = var.docker_registry_username
   docker_registry_password        = var.docker_registry_password
-
+  state_store_endpoint            = module.state-store.endpoint
+  state_store_key                 = module.state-store.primary_key
 }
 
 module "processor_function" {
