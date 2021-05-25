@@ -61,3 +61,8 @@ jobs:
           export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
 
           make bootstrap
+          make mgmt-deploy
+          make build-images
+          make push-images
+          make tre-deploy
+
