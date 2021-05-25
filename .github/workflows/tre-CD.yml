@@ -10,11 +10,11 @@ jobs:
     environment: Dev
     env:
       TF_VAR_environment: "dev"
-      TF_VAR_address_space: "10.1.0.0/16"
-      TF_VAR_state_storage: "dcmystorage"
-      TF_VAR_mgmt_res_group: "dcTFStorage"
+      TF_VAR_address_space: "10.0.0.0/16"
+      TF_VAR_state_storage: "stgmsfttretfstate"
+      TF_VAR_mgmt_res_group: "rg-msft-tre-tfstate"
       TF_VAR_state_container: "tfstate"
-      TF_VAR_resource_name_prefix: "dctre"
+      TF_VAR_resource_name_prefix: "msfttre"
       TF_VAR_location: "westeurope"
       TF_VAR_image_tag: "v1"
 
