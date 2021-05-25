@@ -7,13 +7,14 @@ echo -e "╚══════════════════════�
 
 echo -e "\n\e[34m»»» ✅ \e[96mChecking pre-reqs\e[0m..."
 
+
 if [ $? -ne 0 ]; then
   echo -e "\e[31m»»» ⚠️ Azure CLI is not installed! 😥 Please go to http://aka.ms/cli to set it up"
   exit
 fi
 
 docker version > /dev/null 2>&1
-if [ $? -ne 0 ]; then
+if [ $? -ne 0 ] && [ "$1" != "nodocker" ]; then
   echo -e "\e[31m»»» ⚠️ Docker is not installed! 😥 Please go to hhttps://docs.docker.com/engine/install/ to set it up"
   exit
 fi
@@ -22,7 +23,7 @@ fi
 export SUB_NAME=$(az account show --query name -o tsv)
 export SUB_ID=$(az account show --query id -o tsv)
 export TENANT_ID=$(az account show --query tenantId -o tsv)
-if [ -z $SUB_NAME ]; then
+if [ -z "$SUB_NAME" ]; then
   echo -e "\n\e[31m»»» ⚠️ You are not logged in to Azure!"
   exit
 fi
