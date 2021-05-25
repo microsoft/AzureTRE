@@ -36,7 +36,7 @@ jobs:
           TF_VAR_state_storage=${{ env.TF_VAR_state_storage }}
           TF_VAR_mgmt_res_group=${{ env.TF_VAR_mgmt_res_group }}
           TF_VAR_state_container=${{ env.TF_VAR_state_container }}
-          TF_VAR_location=${{ env.TF_VAR_resource_name_prefix }}
+          TF_VAR_location=${{ env.TF_VAR_location }}
           TF_VAR_resource_name_prefix=${{ env.TF_VAR_resource_name_prefix }}
           TF_VAR_image_tag=${{ env.TF_VAR_image_tag }}
           EOF
