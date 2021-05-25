@@ -1,0 +1,34 @@
+name: AzureTRE Continuous Delivery
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: Dev
+    env:
+      TF_VAR_environment: "dev"
+      TF_VAR_address_space: "10.1.0.0/16"
+      TF_VAR_state_storage: "dcmystorage"
+      TF_VAR_mgmt_res_group: "dcTFStorage"
+      TF_VAR_state_container: "tfstate"
+      TF_VAR_resource_name_prefix: "dctre"
+      TF_VAR_location: "westeurope"
+      TF_VAR_image_tag: "v1"
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Make bootstrap for terraform
+      uses: azure/CLI@v1
+      with:
+        azcliversion: 2.20.0
+        inlineScript: |
+          make bootstrap
