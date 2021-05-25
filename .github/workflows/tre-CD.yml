@@ -51,6 +51,7 @@ jobs:
           EOF
 
     - name: Make bootstrap for terraform
+      uses: azure/CLI@v1
       with:
         azcliversion: 2.0.72
         inlineScript: |
