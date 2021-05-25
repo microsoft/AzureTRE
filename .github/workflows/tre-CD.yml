@@ -26,6 +26,27 @@ jobs:
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+    - name: Make .env files
+      uses: azure/CLI@v1
+      with:
+        azcliversion: 2.20.0
+        inlineScript: |
+          env_file="/devops/terraform/.env"
+          cat <<EOF > $env_file
+          TF_VAR_state_storage=${{ env.TF_VAR_state_storage }}
+          TF_VAR_mgmt_res_group=${{ env.TF_VAR_mgmt_res_group }}
+          TF_VAR_state_container=${{ env.TF_VAR_state_container }}
+          TF_VAR_location=${{ env.TF_VAR_resource_name_prefix }}
+          TF_VAR_resource_name_prefix=${{ env.TF_VAR_resource_name_prefix }}
+          TF_VAR_image_tag=${{ env.TF_VAR_image_tag }}
+          EOF
+
+          env_file="/templates/core/terraform/.env"
+          cat <<EOF > $env_file
+          TF_VAR_environment=${{ env.TF_VAR_environment }}
+          TF_VAR_address_space=${{ env.TF_VAR_address_space }}
+          EOF
+
     - name: Make bootstrap for terraform
       uses: azure/CLI@v1
       with:
