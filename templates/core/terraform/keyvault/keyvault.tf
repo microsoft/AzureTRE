@@ -6,7 +6,7 @@ resource "azurerm_key_vault" "kv" {
   purge_protection_enabled = true
   tenant_id           = var.tenant_id
 }
-/*
+
 data "azurerm_client_config" "deployer" {}
 
 resource "azurerm_key_vault_access_policy" "deploy_user" {
@@ -18,7 +18,7 @@ resource "azurerm_key_vault_access_policy" "deploy_user" {
   secret_permissions = [ "Get", "List", "Set", "Delete" ]
   certificate_permissions = [ "Get", "List", "Update", "Create", "Import", "Delete" ]
 }
-*/
+
 resource "azurerm_private_dns_zone" "vaultcore" {
   name                = "privatelink.vaultcore.azure.net"
   resource_group_name = var.resource_group_name
