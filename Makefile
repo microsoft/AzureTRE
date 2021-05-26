@@ -47,17 +47,3 @@ tre-destroy:
 	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
 	&& . ./devops/scripts/load_env.sh ./templates/core/terraform/.env \
 	&& cd ./templates/core/terraform/ && ./destroy.sh 
-
-base-workspace-deploy:
-	echo -e "\n\e[34m»»» 🧩 \e[96mDeploying Base Workspace\e[0m..." \
-	&& . ./devops/scripts/check_dependencies.sh nodocker \
-	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
-	&& . ./devops/scripts/load_env.sh ./templates/workspaces/base_workspace/terraform/.env \
-	&& cd ./templates/workspaces/base_workspace/terraform/ && ./deploy.sh 
-
-base-workspace-destroy:
-	echo -e "\n\e[34m»»» 🧩 \e[96mDestroying Base Workspace\e[0m..." \
-	&& . ./devops/scripts/check_dependencies.sh nodocker \
-	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
-	&& . ./devops/scripts/load_env.sh ./templates/workspaces/base_workspace/terraform/.env \
-	&& cd ./templates/workspaces/base_workspace/terraform/ && ./destroy.sh 
