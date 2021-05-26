@@ -44,6 +44,39 @@ resource "azurerm_subnet" "web_app" {
   }
 }
 
+resource "azurerm_subnet" "aci" {
+  name                                           = "AciSubnet"
+  virtual_network_name                           = azurerm_virtual_network.core.name
+  resource_group_name                            = var.resource_group_name
+  address_prefixes                               = [local.aci_subnet_address_prefix]
+  enforce_private_link_endpoint_network_policies = true
+  enforce_private_link_service_network_policies  = true
+
+  delegation {
+    name = "acidelegationservice"
+
+    service_delegation {
+      name    = "Microsoft.ContainerInstance/containerGroups"
+      actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
+    }
+  }
+}
+
+resource "azurerm_network_profile" "aciprofile" {
+  name                = "aciprofile"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+
+  container_network_interface {
+    name = "acr-frontal-nic"
+
+    ip_configuration {
+      name      = "acrfrontal"
+      subnet_id = azurerm_subnet.aci.id
+    }
+  }
+}
+
 resource "azurerm_subnet" "shared" {
   name                                           = "SharedSubnet"
   virtual_network_name                           = azurerm_virtual_network.core.name
