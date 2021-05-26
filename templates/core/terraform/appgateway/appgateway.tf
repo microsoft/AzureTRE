@@ -63,7 +63,7 @@ resource "azurerm_application_gateway" "agw" {
   # Backend pool with the static website in storage account.
   backend_address_pool {
     name = local.staticweb_backend_pool_name
-    fqdns = [ azurerm_storage_account.staticweb.primary_web_endpoint ]
+    fqdns = [ azurerm_storage_account.staticweb.primary_web_host ]
   }
 
   # Backend pool with the API App Service.
