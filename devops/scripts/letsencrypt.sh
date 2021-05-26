@@ -3,6 +3,11 @@ set -e
 
 script_dir=$(realpath $(dirname "${BASH_SOURCE[0]}"))
 
+if [[ -z ${STORAGE_ACCOUNT} ]]; then
+  echo "STORAGE_ACCOUNT not set"
+  exit 1
+fi
+
 staticenabled=$(az storage blob service-properties show -o tsv \
     --account-name "${STORAGE_ACCOUNT}" \
     --auth-mode login \
@@ -56,13 +61,13 @@ fi
 
 ledir=$(pwd)/letsencrypt
 
-mkdir -p $(ledir)/logs
+mkdir -p "${ledir}/logs"
 
 # Initiate the ACME challange
 /opt/certbot/bin/certbot certonly \
-    --config-dir $(ledir) \
-    --work-dir $(ledir) \
-    --logs-dir $(ledir)/logs \
+    --config-dir ${ledir} \
+    --work-dir ${ledir} \
+    --logs-dir ${ledir}/logs \
     --manual \
     --preferred-challenges=http \
     --manual-auth-hook ${script_dir}/auth-hook.sh \
@@ -73,7 +78,7 @@ mkdir -p $(ledir)/logs
     --register-unsafely-without-email
 
 # Convert the generated certificate to a .pfx
-CERT_DIR="$(ledir)/live/$FQDN"
+CERT_DIR="${ledir}/live/$FQDN"
 CERT_PASSWORD=$(openssl rand -base64 30)
 openssl pkcs12 -export \
     -inkey "${CERT_DIR}/privkey.pem" \
@@ -93,7 +98,7 @@ if [[ -n ${KEYVAULT} ]]; then
     az network application-gateway ssl-cert update \
         --resource-group "${RESOURCE_GROUP}" \
         --gateway-name "${APPLICATION_GATEWAY}" \
-        --name 'letsencrypt' \
+        --name 'cert-primary' \
         --key-vault-secret-id "${sid}"
 
 else
