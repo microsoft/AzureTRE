@@ -126,7 +126,7 @@ resource "azurerm_application_gateway" "agw" {
   request_routing_rule {
     name                       = local.request_routing_rule_name
     rule_type                  = "PathBasedRouting"
-    http_listener_name         = local.listener_name
+    http_listener_name         = local.secure_listener_name
     url_path_map_name          = local.app_path_map_name
   }
 
@@ -134,7 +134,7 @@ resource "azurerm_application_gateway" "agw" {
   request_routing_rule {
     name                       = local.redirect_request_routing_rule_name
     rule_type                  = "PathBasedRouting"
-    http_listener_name         = local.listener_name
+    http_listener_name         = local.insecure_listener_name
     url_path_map_name          = local.redirect_path_map_name
   }
 
@@ -146,10 +146,10 @@ resource "azurerm_application_gateway" "agw" {
 
     path_rule {
       name = "api"
-      paths = ["/api/*"]
-      backend_address_pool_name = local.management_api_backend_address_pool_name
-      backend_http_settings_name = local.http_setting_name
-    } 
+      paths = [ "/api/*", "/docs/*", "/openapi.json" ]
+      backend_address_pool_name = local.api_backend_pool_name
+      backend_http_settings_name = local.api_http_setting_name
+    }
   }
 
   # Redirect any HTTP traffic to HTTPS unless its the ACME challenge path used for LetsEncrypt validation.
