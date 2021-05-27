@@ -3,6 +3,7 @@ from typing import List
 from azure.cosmos import CosmosClient, ContainerProxy, PartitionKey
 
 from core.config import STATE_STORE_RESOURCES_CONTAINER
+from db.errors import EntityDoesNotExist
 from db.repositories.base import BaseRepository
 from models.domain.resource import Resource
 from resources import strings
@@ -20,9 +21,18 @@ class WorkspaceRepository(BaseRepository):
     def container(self) -> ContainerProxy:
         return self._container
 
-    def get_all_active_resources(self) -> List[Resource]:
+    def get_all_active_workspaces(self) -> List[Resource]:
         workspaces = []
         if self.container:
             query = f'SELECT * from c WHERE c.resourceType = "{strings.RESOURCE_TYPE_WORKSPACE}" AND c.status != "{strings.RESOURCE_STATUS_DELETED}"'
             workspaces = list(self.container.query_items(query=query, enable_cross_partition_query=True))
         return workspaces
+
+    def get_workspace_by_workspace_id(self, workspace_id: str):
+        workspaces = []
+        if self.container:
+            query = f'SELECT * from c WHERE c.resourceType = "{strings.RESOURCE_TYPE_WORKSPACE}" AND c.status != "{strings.RESOURCE_STATUS_DELETED}" and c.id = "{workspace_id}"'
+            workspaces = list(self.container.query_items(query=query, enable_cross_partition_query=True))
+        if workspaces:
+            return workspaces[0]
+        raise EntityDoesNotExist
