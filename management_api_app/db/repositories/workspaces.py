@@ -24,14 +24,19 @@ class WorkspaceRepository(BaseRepository):
     def get_all_active_workspaces(self) -> List[Resource]:
         workspaces = []
         if self.container:
-            query = f'SELECT * from c WHERE c.resourceType = "{strings.RESOURCE_TYPE_WORKSPACE}" AND c.status != "{strings.RESOURCE_STATUS_DELETED}"'
+            query = f'SELECT * from c ' \
+                    f'WHERE c.resourceType = "{strings.RESOURCE_TYPE_WORKSPACE}" ' \
+                    f'AND c.status != "{strings.RESOURCE_STATUS_DELETED}"'
             workspaces = list(self.container.query_items(query=query, enable_cross_partition_query=True))
         return workspaces
 
     def get_workspace_by_workspace_id(self, workspace_id: str):
         workspaces = []
         if self.container:
-            query = f'SELECT * from c WHERE c.resourceType = "{strings.RESOURCE_TYPE_WORKSPACE}" AND c.status != "{strings.RESOURCE_STATUS_DELETED}" and c.id = "{workspace_id}"'
+            query = f'SELECT * from c ' \
+                    f'WHERE c.resourceType = "{strings.RESOURCE_TYPE_WORKSPACE}" ' \
+                    f'AND c.status != "{strings.RESOURCE_STATUS_DELETED}" ' \
+                    f'AND c.id = "{workspace_id}"'
             workspaces = list(self.container.query_items(query=query, enable_cross_partition_query=True))
         if workspaces:
             return workspaces[0]
