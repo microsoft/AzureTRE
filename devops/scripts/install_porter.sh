@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -xeuo pipefail
 
+# This script is a modified version of https://cdn.porter.sh/latest/install-linux.sh
+#
 # Installs the porter CLI for a single user.
 # PORTER_HOME:      Location where Porter is installed (defaults to ~/.porter).
 # PORTER_MIRROR:       Base URL where Porter assets, such as binaries and atom feeds, are downloaded. This lets you
@@ -23,13 +25,9 @@ cp $PORTER_HOME/porter $PORTER_HOME/runtimes/porter-runtime
 echo Installed `$PORTER_HOME/porter version`
 
 $PORTER_HOME/porter mixin install exec --version $PKG_PERMALINK
-$PORTER_HOME/porter mixin install kubernetes --version $PKG_PERMALINK
-$PORTER_HOME/porter mixin install helm --version $PKG_PERMALINK
 $PORTER_HOME/porter mixin install arm --version $PKG_PERMALINK
 $PORTER_HOME/porter mixin install terraform --version $PKG_PERMALINK
 $PORTER_HOME/porter mixin install az --version $PKG_PERMALINK
-$PORTER_HOME/porter mixin install aws --version $PKG_PERMALINK
-$PORTER_HOME/porter mixin install gcloud --version $PKG_PERMALINK
 
 $PORTER_HOME/porter plugin install azure --version $PKG_PERMALINK
 
