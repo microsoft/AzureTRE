@@ -29,5 +29,9 @@ terraform init -input=false -backend=true -reconfigure
 
 # Import the storage account & res group into state
 echo -e "\n\e[34m»»» 📤 \e[96mImporting resources to state\e[0m..."
-terraform import azurerm_resource_group.mgmt "/subscriptions/$SUB_ID/resourceGroups/$TF_VAR_mgmt_res_group"
-terraform import azurerm_storage_account.state_storage "/subscriptions/$SUB_ID/resourceGroups/$TF_VAR_mgmt_res_group/providers/Microsoft.Storage/storageAccounts/$TF_VAR_state_storage"
+{
+  terraform import azurerm_resource_group.mgmt "/subscriptions/$SUB_ID/resourceGroups/$TF_VAR_mgmt_res_group"
+  terraform import azurerm_storage_account.state_storage "/subscriptions/$SUB_ID/resourceGroups/$TF_VAR_mgmt_res_group/providers/Microsoft.Storage/storageAccounts/$TF_VAR_state_storage"
+} || {
+  echo "State already imported"
+}

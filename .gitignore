@@ -178,4 +178,11 @@ terraform.rc
 # node
 node_modules
 
+# certificate folder
 letsencrypt/
+
+local.settings.json
+sample.dat
+
+# CNAB
+.cnab/

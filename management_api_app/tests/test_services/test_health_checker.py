@@ -1,7 +1,7 @@
 from mock import patch
 from azure.core.exceptions import ServiceRequestError
 
-from models.schemas.health import StatusEnum
+from models.schemas.status import StatusEnum
 from resources import strings
 from services import health_checker
 

@@ -6,21 +6,21 @@ all: bootstrap mgmt-deploy build-images push-images tre-deploy
 
 bootstrap:
 	echo -e "\n\e[34m»»» 🧩 \e[96mBootstrap Terraform\e[0m..." \
-	&& . ./devops/scripts/check_dependencies.sh \
+	&& . ./devops/scripts/check_dependencies.sh nodocker \
 	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
 	&& cd ./devops/terraform && ./bootstrap.sh
 
 mgmt-deploy:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDeploying management infrastructure\e[0m..." \
-	&& . ./devops/scripts/check_dependencies.sh \
+	&& . ./devops/scripts/check_dependencies.sh nodocker \
 	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
-	&& cd ./devops/terraform  &&  ./deploy.sh  
+	&& cd ./devops/terraform && ./deploy.sh
 
 mgmt-destroy:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDestroying management infrastructure\e[0m..." \
-	. ./devops/scripts/check_dependencies.sh \
+	. ./devops/scripts/check_dependencies.sh nodocker \
 	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
-	&& cd ./devops/terraform  && ./destroy.sh
+	&& cd ./devops/terraform && ./destroy.sh
 
 build-images:
 	echo -e "\n\e[34m»»» 🧩 \e[96mBuilding Images\e[0m..." \
@@ -36,10 +36,10 @@ push-images:
 
 tre-deploy:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDeploying TRE\e[0m..." \
-	&& . ./devops/scripts/check_dependencies.sh \
+	&& . ./devops/scripts/check_dependencies.sh nodocker \
 	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
 	&& . ./devops/scripts/load_env.sh ./templates/core/terraform/.env \
-	&& cd ./templates/core/terraform/ && ./deploy.sh 
+	&& cd ./templates/core/terraform/ && ./deploy.sh
 
 letsencrypt:
 	echo -e "\n\e[34m»»» 🧩 \e[96mRequesting LetsEncrypt SSL certificate\e[0m..." \
@@ -49,21 +49,14 @@ letsencrypt:
 
 tre-destroy:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDestroying TRE\e[0m..." \
-	&& . ./devops/scripts/check_dependencies.sh \
+	&& . ./devops/scripts/check_dependencies.sh nodocker \
 	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
 	&& . ./devops/scripts/load_env.sh ./templates/core/terraform/.env \
 	&& cd ./templates/core/terraform/ && ./destroy.sh
 
-base-workspace-deploy:
-	echo -e "\n\e[34m»»» 🧩 \e[96mDeploying Base Workspace\e[0m..." \
+publish-vanilla-workspace:
+	echo -e "\n\e[34m»»» 🧩 \e[96mPublishing vanilla workspace bundle\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh \
+	&& . ./devops/scripts/install_porter.sh \
 	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
-	&& . ./devops/scripts/load_env.sh ./templates/workspaces/base_workspace/terraform/.env \
-	&& cd ./templates/workspaces/base_workspace/terraform/ && ./deploy.sh 
-
-base-workspace-destroy:
-	echo -e "\n\e[34m»»» 🧩 \e[96mDestroying Base Workspace\e[0m..." \
-	&& . ./devops/scripts/check_dependencies.sh \
-	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
-	&& . ./devops/scripts/load_env.sh ./templates/workspaces/base_workspace/terraform/.env \
-	&& cd ./templates/workspaces/base_workspace/terraform/ && ./destroy.sh 
+	&& ./devops/scripts/publish_vanilla_workspace.sh

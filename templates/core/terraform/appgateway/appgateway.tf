@@ -101,7 +101,7 @@ resource "azurerm_application_gateway" "agw" {
     pick_host_name_from_backend_http_settings = true
     interval = 15
     protocol = "Https"
-    path = "/api/ping"
+    path = "/api/health"
     timeout = "30"
     unhealthy_threshold = "3"
   }
