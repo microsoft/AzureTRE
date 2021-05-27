@@ -19,6 +19,6 @@ First of all thank you. Azure TRE is a collective effort to make it easier to cr
 
 ## **Do you want to contribute to Azure TRE?**
 
-* Awesome, please make sure the steps you offer are independently verified first. Add screenshots when appropriate. File a PR when ready.
+* Great, please create an issue were the community can discuss the change. Then fork the repository, make your change and then create a PR. Make sure the solution is tested and provide steps on how to test the change in the PR.
 
 Thanks! :heart: :heart: :heart:
