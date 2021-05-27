@@ -1,4 +1,4 @@
-.PHONY: bootstrap-init mgmt-deploy mgmt-destroy build_images push_images deploy-tre destroy-tre
+.PHONY: bootstrap-init mgmt-deploy mgmt-destroy build_images push_images deploy-tre destroy-tre letsencrypt
 
 SHELL:=/bin/bash
 
