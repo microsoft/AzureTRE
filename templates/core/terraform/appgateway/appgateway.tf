@@ -49,6 +49,7 @@ resource "azurerm_application_gateway" "agw" {
     protocol              = "Https"
     request_timeout       = 60
     pick_host_name_from_backend_address = true
+    probe_name            = local.probe_name
   }
 
   http_listener {
@@ -59,7 +60,7 @@ resource "azurerm_application_gateway" "agw" {
   }
 
   probe {
-    name                                      = "management-api"
+    name                                      = local.probe_name
     pick_host_name_from_backend_http_settings = true
     interval                                  = 10
     protocol                                  = "Https"
@@ -83,7 +84,7 @@ resource "azurerm_application_gateway" "agw" {
 
     path_rule {
       name = "api"
-      paths = ["/api/*"]
+      paths = ["/api/*", "/docs*", "/openapi.json"]
       backend_address_pool_name = local.management_api_backend_address_pool_name
       backend_http_settings_name = local.http_setting_name
     } 
