@@ -3,7 +3,7 @@ import logging
 from azure.cosmos import CosmosClient
 from fastapi import FastAPI
 
-from core.config import STATE_STORE_ENDPOINT, STATE_STORE_KEY
+from core import config
 
 
 async def close_db_connection(app: FastAPI) -> None:
@@ -11,10 +11,10 @@ async def close_db_connection(app: FastAPI) -> None:
 
 
 async def connect_to_db(app: FastAPI) -> None:
-    logging.debug(f"Connecting to {STATE_STORE_ENDPOINT}")
+    logging.debug(f"Connecting to {config.STATE_STORE_ENDPOINT}")
 
     try:
-        cosmos_client = CosmosClient(STATE_STORE_ENDPOINT, STATE_STORE_KEY)
+        cosmos_client = CosmosClient(config.STATE_STORE_ENDPOINT, config.STATE_STORE_KEY)
         app.state.cosmos_client = cosmos_client
         logging.debug("Connection established")
     except Exception as e:
@@ -25,4 +25,4 @@ async def connect_to_db(app: FastAPI) -> None:
 async def bootstrap_database(app: FastAPI) -> None:
     client = app.state.cosmos_client
     if client:
-        app.state.state_database = client.create_database_if_not_exists(id="AzureTRE")
+        app.state.state_database = client.create_database_if_not_exists(id=config.STATE_STORE_DATABASE)
