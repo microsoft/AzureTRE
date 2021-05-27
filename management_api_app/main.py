@@ -1,5 +1,6 @@
 import logging
 
+import uvicorn
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException
@@ -29,3 +30,7 @@ if DEBUG:
 else:
     logging.basicConfig(level=logging.WARNING)
 app = get_application()
+
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)

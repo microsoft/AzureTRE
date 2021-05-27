@@ -1,10 +1,10 @@
-from azure.cosmos import CosmosClient
+from azure.cosmos import DatabaseProxy
 
 
 class BaseRepository:
-    def __init__(self, client: CosmosClient) -> None:
-        self._client = client
+    def __init__(self, database: DatabaseProxy) -> None:
+        self._database = database
 
     @property
-    def client(self) -> CosmosClient:
-        return self._client
+    def database(self) -> DatabaseProxy:
+        return self._database

@@ -18,4 +18,11 @@ async def connect_to_db(app: FastAPI) -> None:
         app.state.cosmos_client = cosmos_client
         logging.debug("Connection established")
     except Exception as e:
+        app.state.cosmos_client = None
         logging.debug(f"Connection to state store could not be established: {e}")
+
+
+async def bootstrap_database(app: FastAPI) -> None:
+    client = app.state.cosmos_client
+    if client:
+        app.state.state_database = client.create_database_if_not_exists(id="AzureTRE")

@@ -2,13 +2,13 @@ from typing import Callable
 
 from fastapi import FastAPI
 
-from db.events import close_db_connection, connect_to_db
+from db.events import close_db_connection, connect_to_db, bootstrap_database
 
 
 def create_start_app_handler(app: FastAPI) -> Callable:
     async def start_app() -> None:
         await connect_to_db(app)
-        # await bootstrap_database(app)
+        await bootstrap_database(app)
 
     return start_app
 
