@@ -14,13 +14,13 @@ mgmt-deploy:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDeploying management infrastructure\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
 	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
-	&& cd ./devops/terraform  &&  ./deploy.sh  
+	&& cd ./devops/terraform && ./deploy.sh
 
 mgmt-destroy:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDestroying management infrastructure\e[0m..." \
 	. ./devops/scripts/check_dependencies.sh nodocker \
 	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
-	&& cd ./devops/terraform  && ./destroy.sh
+	&& cd ./devops/terraform && ./destroy.sh
 
 build-images:
 	echo -e "\n\e[34m»»» 🧩 \e[96mBuilding Images\e[0m..." \
@@ -39,11 +39,18 @@ tre-deploy:
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
 	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
 	&& . ./devops/scripts/load_env.sh ./templates/core/terraform/.env \
-	&& cd ./templates/core/terraform/ && ./deploy.sh 
+	&& cd ./templates/core/terraform/ && ./deploy.sh
 
 tre-destroy:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDestroying TRE\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
 	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
 	&& . ./devops/scripts/load_env.sh ./templates/core/terraform/.env \
-	&& cd ./templates/core/terraform/ && ./destroy.sh 
+	&& cd ./templates/core/terraform/ && ./destroy.sh
+
+publish-vanilla-workspace:
+	echo -e "\n\e[34m»»» 🧩 \e[96mPublishing vanilla workspace bundle\e[0m..." \
+	&& . ./devops/scripts/check_dependencies.sh \
+	&& . ./devops/scripts/install_porter.sh \
+	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
+	&& ./devops/scripts/publish_vanilla_workspace.sh
