@@ -1,6 +1,6 @@
 from typing import List
 
-from azure.cosmos import ContainerProxy, DatabaseProxy, PartitionKey
+from azure.cosmos import CosmosClient, ContainerProxy, PartitionKey
 
 from core.config import STATE_STORE_RESOURCES_CONTAINER
 from db.repositories.base import BaseRepository
@@ -9,10 +9,12 @@ from resources import strings
 
 
 class WorkspaceRepository(BaseRepository):
-    def __init__(self, database: DatabaseProxy):
-        super().__init__(database)
-        if database:
-            self._container = database.create_container_if_not_exists(id=STATE_STORE_RESOURCES_CONTAINER, partition_key=PartitionKey(path="/appId"))
+    def __init__(self, client: CosmosClient):
+        super().__init__(client)
+        if self.database:
+            self._container = self.database.create_container_if_not_exists(id=STATE_STORE_RESOURCES_CONTAINER, partition_key=PartitionKey(path="/appId"))
+        else:
+            self._container = None
 
     @property
     def container(self) -> ContainerProxy:
