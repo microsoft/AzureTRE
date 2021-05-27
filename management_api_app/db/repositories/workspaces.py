@@ -1,6 +1,6 @@
 from typing import List
 
-from azure.cosmos import CosmosClient, ContainerProxy, PartitionKey
+from azure.cosmos import ContainerProxy, CosmosClient, PartitionKey
 
 from core.config import STATE_STORE_RESOURCES_CONTAINER
 from db.errors import EntityDoesNotExist
