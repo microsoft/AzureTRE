@@ -14,7 +14,8 @@
         "**/requirements.txt",
         "**/*.py",
         "**/*.yml",
-        "**/*.yaml"
+        "**/*.yaml",
+        "**/*.sh"
     ],
     "fileExtensions": [
         ".md"

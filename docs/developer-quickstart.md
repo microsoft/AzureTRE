@@ -19,7 +19,7 @@
     pip install -r requirements.txt
     ```
 
-1. Copy `.env.tmpl` in the **core** folder to `.env` and configure the variables
+1. Copy `.env.tmpl` in the **management_api_app** folder to `.env` and configure the variables
 1. Start the web API
 
     ```cmd
@@ -33,11 +33,12 @@ The API will be available at [https://localhost:8000/api](https://localhost:8000
 
 1. [Create a Cosmos DB Database in Azure](https://docs.microsoft.com/en-us/azure/cosmos-db/create-cosmosdb-resources-portal)
 1. Open the project in Visual Studio Code in the DevContainer
-1. Copy `.env.tmpl` in the **core** folder to `.env` and configure the variables
+1. Copy `.env.tmpl` in the **management_api_app** folder to `.env` and configure the variables
 1. Start the web API
 
     ```cmd
-    cd core
+    cd management_api_app
+    pip install -r requirements.txt
     uvicorn main:app --reload
     ```
 
@@ -50,8 +51,8 @@ You must have docker and docker-compose tools installed, and an Azure Cosmos DB 
 Then run:
 
 ```cmd
-cd core
-docker-compose up -d app
+cd management_api_app
+docker compose up -d app
 ```
 
 The API will be available at [https://localhost:8000/api](https://localhost:8000/api) in your browser.

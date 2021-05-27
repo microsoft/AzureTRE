@@ -1,1 +1,0 @@
-terraform destroy -auto-approve
