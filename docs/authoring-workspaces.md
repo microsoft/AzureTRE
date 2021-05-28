@@ -77,7 +77,7 @@ The required actions are the main two of CNAB spec:
 * `install` - Deploys/repairs the workspace Azure resources, and must be **idempotent**
 * `uninstall` - Tears down (deletes) the Azure resources of the workspace and its services
 
-## Supporter Porter mixins
+## Supported Porter mixins
 
 The deployment runner of Azure TRE supports the following [Porter mixins](https://porter.sh/mixins/):
 
