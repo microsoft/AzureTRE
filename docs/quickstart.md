@@ -120,4 +120,4 @@ To remove the Azure TRE and its resources from your Azure subscription run:
 - Run `make tre-destroy`
 
 
-[letsencryt]: https://letsencrypt.org/ "A nonprofit Certificate Authority providing TLS certificates to 260 million websites."
+[letsencrypt]: https://letsencrypt.org/ "A nonprofit Certificate Authority providing TLS certificates to 260 million websites."
