@@ -16,18 +16,28 @@ STATE_STORE_RESOURCES_CONTAINER = "Resources"
 
 
 def create_workspace_resource(resource_id: str):
-    return {"id": resource_id, "description": "some description", "status": "deployed", "resourceType": "workspace"}
+    return {
+        "id": resource_id,
+        "description": "some description",
+        "status": "deployed",
+        "resourceType": "workspace",
+        "resourceSpecId": "123",
+        "data": "{}"
+    }
 
 
 def main():
     client = CosmosClient(STATE_STORE_ENDPOINT, STATE_STORE_KEY)
     database = client.create_database_if_not_exists(STATE_STORE_DATABASE)
+
+    for container in database.list_containers():
+        database.delete_container(container["id"])
+
     container = database.create_container_if_not_exists(STATE_STORE_RESOURCES_CONTAINER, partition_key=PartitionKey(path="/appId"), offer_throughput=400)
 
     # Create workspace resources
-    container.create_item(body=create_workspace_resource(str(uuid.uuid4())))
-    container.create_item(body=create_workspace_resource(str(uuid.uuid4())))
-    container.create_item(body=create_workspace_resource(str(uuid.uuid4())))
+    for _ in range(3):
+        container.create_item(body=create_workspace_resource(str(uuid.uuid4())))
 
 
 if __name__ == "__main__":

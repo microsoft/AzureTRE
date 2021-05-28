@@ -1,3 +1,4 @@
+import uuid
 from typing import List
 
 from azure.cosmos import ContainerProxy, CosmosClient, PartitionKey
@@ -5,7 +6,8 @@ from azure.cosmos import ContainerProxy, CosmosClient, PartitionKey
 from core.config import STATE_STORE_RESOURCES_CONTAINER
 from db.errors import EntityDoesNotExist
 from db.repositories.base import BaseRepository
-from models.domain.resource import Resource
+from models.domain.resource import Resource, ResourceType, Status
+from models.schemas.resource import WorkspaceInCreate
 from resources import strings
 
 
@@ -30,7 +32,7 @@ class WorkspaceRepository(BaseRepository):
             workspaces = list(self.container.query_items(query=query, enable_cross_partition_query=True))
         return workspaces
 
-    def get_workspace_by_workspace_id(self, workspace_id: str):
+    def get_workspace_by_workspace_id(self, workspace_id: str) -> Resource:
         workspaces = []
         if self.container:
             query = f'SELECT * from c ' \
@@ -41,3 +43,18 @@ class WorkspaceRepository(BaseRepository):
         if workspaces:
             return workspaces[0]
         raise EntityDoesNotExist
+
+    def create_workspace(self, workspace_create: WorkspaceInCreate) -> Resource:
+        workspace = []
+        if self.container:
+            workspace = Resource(
+                id=str(uuid.uuid4()),
+                description=workspace_create.description,
+                data=workspace_create.data,
+                resourceType=ResourceType.Workspace,
+                resourceSpecId=workspace_create.resourceSpecId,
+                status=Status.NotDeployed
+            )
+            self.container.create_item(body=workspace.dict())
+
+        return workspace

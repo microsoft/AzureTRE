@@ -10,3 +10,10 @@ class ResourceInResponse(BaseModel):
 
 class ResourcesInList(BaseModel):
     resources: List[Resource]
+
+
+class WorkspaceInCreate(BaseModel):
+    description: str
+    resourceSpecId: str
+    data: str
+    adminUserIdOrEmail: str
