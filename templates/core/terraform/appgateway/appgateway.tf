@@ -184,6 +184,7 @@ resource "azurerm_application_gateway" "agw" {
 }
 
 data "azurerm_public_ip" "appgwpip_data" {
+  depends_on            = [azurerm_application_gateway.agw]
   name                  = "pip-agw-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
   resource_group_name   = var.resource_group_name
 }
