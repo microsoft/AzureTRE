@@ -12,3 +12,5 @@ VERSION = "0.0.0"
 # State store configuration
 STATE_STORE_ENDPOINT: str = config("STATE_STORE_ENDPOINT", default="")      # cosmos db endpoint
 STATE_STORE_KEY: str = config("STATE_STORE_KEY", default="")                # cosmos db access key
+STATE_STORE_DATABASE = "AzureTRE"
+STATE_STORE_RESOURCES_CONTAINER = "Resources"

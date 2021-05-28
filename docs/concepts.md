@@ -2,11 +2,11 @@
 
 Trusted Research Environments enforce a secure boundary around distinct workspaces to enable information governance controls to be enforced. Each workspace is accessible by a set of authorized users, prevents the exfiltration of sensitive data, and has access to one or more datasets provided by the data platform.
 
-One or more workspace services are deployed into a workspace to provide resources accessible by the workspace users.
+One or more workspace services are deployed into a workspace to provide resources accessible by the [workspace users](./user-roles.md).
 
-The workspaces and the services can be deployed and managed via the Management API.
+The workspaces and the services can be deployed and managed via the API of the Composition Service.
 
-![Concepts](./assets/concepts.png)
+![Concepts](./assets/treconcepts.png)
 
 ## Workspace
 
@@ -18,11 +18,11 @@ Multiple workspaces can be created within a single Trusted Research Environment 
 
 ## Service
 
-A service provide one or more capabilities to you as a user of the TRE or to the TRE itself.  Depending on the type of the service it is scoped to the environment and shared across all workspaces or scoped to a specific workspace.
+A service provide one or more capabilities to you as a user of the TRE or to the TRE itself.  Depending on the type of the service it is scoped to the environment and shared across all workspaces (Shared service) or scoped to a specific workspace (Workspace service).
 
-The types of services required for a research project varies greatly why extensibility is a key aspect of the Azure TRE solution so new services can be developed by you and your organization to fit your needs.
+The types of services required for a research project varies greatly why extensibility is a key aspect of the Azure TRE solution. New services can be developed by you and your organization to fit your needs.
 
-Some workspace services are accessible from outside the protected network, such as a Virtual Desktop. But no data will be permitted to be transferred outside the protected network. Others such as Azure Machine Learning might need access restricting to via a Virtual Desktop.
+Some workspace services are accessible from outside the protected network, such as a Virtual Desktop. But no data will be permitted to be transferred outside the protected network. Other services such as Azure Machine Learning might need access restricting to via a Virtual Desktop.
 
 Below are examples of services that are available in the Azure TRE solution.
 
@@ -31,7 +31,7 @@ Below are examples of services that are available in the Azure TRE solution.
 These are services and resource shared by all workspaces.
 
 - Firewall
-- Python Package Mirror
+- Application Package Mirror
 - Git Mirror
 
 ### Workspace services
@@ -39,10 +39,8 @@ These are services and resource shared by all workspaces.
 - Virtual Desktop
 - Azure Machine Learning
 
-## Workspace Service Resources
+## Composition Service
 
-Some workspace services allow users to create their own instances of the resources provided by the service in the current workspace. For example, the Virtual Desktop service allow each user to deploy their own virtual machines with remote access and storage.
-
-## Management API
-
-The Management API is an HTTP API surface that allows you to provision and manage workspaces and services within the TRE. By using the Management API you can integrate the TRE services lifecycle into your workflows and provide access to the services from your custom applications.
+The composition service offers an abstraction over the lower-level Azure resources to allow for TRE users to provision resources in terms of workspaces and workspace services.
+The composition service exposes resources – based on above concepts – as an HTTP API where users and applications can model the desired representation of the TRE, i.e., define which workspaces should contain which workspace services.
+The composition service reconciles the desired state with the actual state by invoking Azure resource deployments.
