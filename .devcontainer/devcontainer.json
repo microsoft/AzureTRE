@@ -31,9 +31,13 @@
 	"extensions": ["ms-python.python", "hashicorp.terraform", "github.vscode-pull-request-github"],
 	"forwardPorts": [],
 	"runArgs": [
-        // Keep command history 
-        "-v", "load-tests-bashhistory:/home/vscode/commandhistory",
-        // Mount docker socket for docker builds
-        "-v", "/var/run/docker.sock:/var/run/docker.sock"
+		"--name", "tre"
+	],
+	// If .bash_history file doesn't exist, docker will create it as root and the vscode user won't have permission, so we need to create it first.
+	"initializeCommand": "touch .bash_history",
+	"mounts": [
+		"source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
+		"source=${localEnv:HOME}/.azure,target=/home/vscode/.azure,type=bind,consistency=cached",
+		"source=${localWorkspaceFolder}/.bash_history,target=/home/vscode/.bash_history,type=bind"
 	]
 }
