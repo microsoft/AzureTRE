@@ -6,6 +6,7 @@ from httpx import AsyncClient
 from starlette import status
 
 from db.errors import EntityDoesNotExist
+from resources import strings
 
 
 pytestmark = pytest.mark.asyncio
@@ -16,7 +17,7 @@ pytestmark = pytest.mark.asyncio
 async def test_workspaces_get_empty_list_when_no_resources_exist(get_workspaces_mock, app: FastAPI, client: AsyncClient) -> None:
     get_workspaces_mock.return_value = []
 
-    response = await client.get(app.url_path_for("workspaces:get-active-workspaces"))
+    response = await client.get(app.url_path_for(strings.API_GET_ALL_WORKSPACES))
     assert response.json() == {"resources": []}
 
 
@@ -28,7 +29,7 @@ async def test_workspaces_get_list_returns_correct_data_when_resources_exist(get
     ]
     get_workspaces_mock.return_value = resources
 
-    response = await client.get(app.url_path_for("workspaces:get-active-workspaces"))
+    response = await client.get(app.url_path_for(strings.API_GET_ALL_WORKSPACES))
     resources_from_response = response.json()["resources"]
     assert len(resources_from_response) == len(resources)
     assert all((resource in resources for resource in resources_from_response))
@@ -39,7 +40,7 @@ async def test_workspaces_get_list_returns_correct_data_when_resources_exist(get
 async def test_workspaces_id_get_returns_404_if_resource_is_not_found(get_workspace_mock, app: FastAPI, client: AsyncClient):
     get_workspace_mock.side_effect = EntityDoesNotExist
 
-    response = await client.get(app.url_path_for("workspaces:get-workspace", workspace_id="not_important"))
+    response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id="not_important"))
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
@@ -48,6 +49,6 @@ async def test_workspaces_id_get_returns_workspace_if_found(get_workspace_mock, 
     sample_workspace = {"id": "63396b88-7ce6-440b-932c-827ebbae6d51", "description": "some description", "resourceType": "workspace", "status": "not_deployed"}
     get_workspace_mock.return_value = sample_workspace
 
-    response = await client.get(app.url_path_for("workspaces:get-workspace", workspace_id="not important"))
+    response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id="not important"))
     actual_resource = response.json()["resource"]
     assert actual_resource["id"] == sample_workspace["id"]

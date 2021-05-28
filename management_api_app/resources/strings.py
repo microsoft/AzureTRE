@@ -1,5 +1,11 @@
 PONG = "pong"
 
+# API Descriptions
+API_GET_HEALTH_STATUS = "Get health status"
+API_GET_ALL_WORKSPACES = "Get all workspaces"
+API_GET_WORKSPACE_BY_ID = "Get workspace by Id"
+API_GET_STATUS_OF_SERVICES = "Get status of services"
+
 # State store status
 OK = "OK"
 NOT_OK = "Not OK"
