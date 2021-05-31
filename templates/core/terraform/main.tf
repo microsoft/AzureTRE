@@ -84,6 +84,15 @@ module "api-webapp" {
   state_store_key                 = module.state-store.primary_key
 }
 
+module "identity" {
+  source               = "./user-assigned-identity"
+  resource_name_prefix = var.resource_name_prefix
+  environment          = var.environment
+  tre_id               = local.tre_id
+  location             = var.location
+  resource_group_name  = azurerm_resource_group.core.name
+}
+
 module "processor_function" {
   source                     = "./processor_function"
   resource_name_prefix       = var.resource_name_prefix
@@ -94,6 +103,15 @@ module "processor_function" {
   app_service_plan_id        = module.api-webapp.app_service_plan_id
   storage_account_name       = module.storage.storage_account_name
   storage_account_access_key = module.storage.storage_account_access_key
+  storage_state_path         = module.storage.storage_state_path
+  identity_id                = module.identity.identity_id
+  core_vnet                  = module.network.core
+  aci_subnet                 = module.network.aci
+  docker_registry_username   = var.docker_registry_username
+  docker_registry_password   = var.docker_registry_password
+  docker_registry_server     = var.docker_registry_server
+  servicebus_connection_string = module.servicebus.connection_string
+  workspacequeue               = module.servicebus.workspacequeue
 }
 
 module "servicebus" {

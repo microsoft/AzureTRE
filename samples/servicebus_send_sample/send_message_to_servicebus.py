@@ -4,11 +4,13 @@ from azure.servicebus import ServiceBusClient, ServiceBusMessage
 CONNECTION_STR = ""
 QUEUE_NAME = "workspacequeue"
 
+with open('createWorkspace.json', 'r') as file:
+    data = file.read().replace('\n', '')
 
 def send_single_message(sender):
-    message = ServiceBusMessage("Test Message")
+    message = ServiceBusMessage(data)
     sender.send_messages(message)
-    print("Sent a test message")
+    print("Sent: "+data)
 
 
 def main():

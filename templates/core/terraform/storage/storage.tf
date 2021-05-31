@@ -6,8 +6,8 @@ resource "azurerm_storage_account" "stg" {
   account_replication_type = "LRS"
 }
 
-resource "azurerm_storage_share" "cnabstate" {
-  name                 = "cnabstate"
+resource "azurerm_storage_share" "storage_state_path" {
+  name                 = "cnab-state"
   storage_account_name = azurerm_storage_account.stg.name
   quota                = 50
 }
