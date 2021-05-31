@@ -18,8 +18,9 @@ class ResourceType(str, Enum):
 
 class Resource(AzureTREModel):
     id: str
-    description: str
-    data: str
+    resource_name: str
+    resource_version: str
+    resource_parameters: dict
     resourceType: ResourceType
-    resourceSpecId: str
     status: Status
+    isDeleted: bool = False

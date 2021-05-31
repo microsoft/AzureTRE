@@ -12,8 +12,7 @@ class ResourcesInList(BaseModel):
     resources: List[Resource]
 
 
-class WorkspaceInCreate(BaseModel):
-    description: str
-    resourceSpecId: str
-    data: str
-    adminUserIdOrEmail: str
+class ResourceInCreate(BaseModel):
+    name: str
+    version: str
+    parameters: dict
