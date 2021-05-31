@@ -9,7 +9,7 @@ Azure TRE workspaces are [Porter](https://porter.sh/) bundles that in turn are b
 
 * [Docker installed](https://docs.docker.com/get-docker/)
 * [Porter installed](https://porter.sh/install)
-* TRE instance deployed to test against
+* Azure TRE instance deployed to test against
 
 ## Workspace bundle manifest
 
