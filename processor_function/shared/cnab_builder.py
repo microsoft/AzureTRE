@@ -59,7 +59,7 @@ def get_network_profile():
     if net_results:
         net_result = net_results.next()
     else:
-        print('No network profile found')
+        logging.info('No network profile found')
 
     network_profile = ContainerGroupNetworkProfile(id=net_result.id)
     return network_profile
