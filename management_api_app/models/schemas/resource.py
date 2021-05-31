@@ -1,7 +1,7 @@
 from typing import List
 from pydantic import BaseModel
 
-from models.domain.resource import Resource
+from models.domain.resource import Resource, ResourceSpec
 
 
 class ResourceInResponse(BaseModel):
@@ -13,6 +13,5 @@ class ResourcesInList(BaseModel):
 
 
 class ResourceInCreate(BaseModel):
-    name: str
-    version: str
+    resourceSpec: ResourceSpec
     parameters: dict

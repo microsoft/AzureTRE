@@ -16,11 +16,15 @@ class ResourceType(str, Enum):
     Service = strings.RESOURCE_TYPE_SERVICE
 
 
+class ResourceSpec(AzureTREModel):
+    name: str
+    version: str
+
+
 class Resource(AzureTREModel):
     id: str
-    resource_name: str
-    resource_version: str
-    resource_parameters: dict
+    resourceSpec: ResourceSpec
+    parameters: dict
     resourceType: ResourceType
     status: Status
     isDeleted: bool = False

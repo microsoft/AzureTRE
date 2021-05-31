@@ -18,9 +18,11 @@ STATE_STORE_RESOURCES_CONTAINER = "Resources"
 def create_workspace_resource(resource_id: str):
     return {
         "id": resource_id,
-        "resource_name": "tre-workspace-vanilla",
-        "resource_version": "0.1.0",
-        "resource_parameters": {
+        "resourceSpec": {
+            "name": "tre-workspace-vanilla",
+            "version": "0.1.0"
+        },
+        "parameters": {
             "location": "europe"
         },
         "resourceType": "workspace",

@@ -6,7 +6,7 @@ from azure.cosmos import ContainerProxy, CosmosClient
 from core.config import STATE_STORE_RESOURCES_CONTAINER
 from db.errors import EntityDoesNotExist, UnableToAccessDatabase
 from db.repositories.base import BaseRepository
-from models.domain.resource import Resource, ResourceType, Status
+from models.domain.resource import Resource, ResourceSpec, ResourceType, Status
 from models.schemas.resource import ResourceInCreate
 from resources import strings
 
@@ -48,9 +48,8 @@ class WorkspaceRepository(BaseRepository):
         try:
             workspace = Resource(
                 id=str(uuid.uuid4()),
-                resource_name=workspace_create.name,
-                resource_version=workspace_create.version,
-                resource_parameters=workspace_create.parameters,
+                resourceSpec=ResourceSpec(name=workspace_create.resourceSpec.name, version=workspace_create.resourceSpec.version),
+                parameters=workspace_create.parameters,
                 resourceType=ResourceType.Workspace,
                 status=Status.NotDeployed
             )

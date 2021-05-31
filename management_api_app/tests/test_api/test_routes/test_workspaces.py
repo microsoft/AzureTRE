@@ -26,9 +26,11 @@ async def test_workspaces_get_list_returns_correct_data_when_resources_exist(get
     resources = [
         {
             "id": "afa000d3-82da-4bfc-b6e9-9a7853ef753e",
-            "resource_name": "tre-workspace-vanilla",
-            "resource_version": "0.1.0",
-            "resource_parameters": {
+            "resourceSpec": {
+                "name": "tre-workspace-vanilla",
+                "version": "0.1.0"
+            },
+            "parameters": {
                 "location": "europe"
             },
             "resourceType": "workspace",
@@ -37,9 +39,11 @@ async def test_workspaces_get_list_returns_correct_data_when_resources_exist(get
         },
         {
             "id": "e87e30a6-e11b-4cf1-b523-8d278f8f492d",
-            "resource_name": "tre-workspace-vanilla",
-            "resource_version": "0.1.0",
-            "resource_parameters": {
+            "resourceSpec": {
+                "name": "tre-workspace-vanilla",
+                "version": "0.1.0"
+            },
+            "parameters": {
                 "location": "europe"
             },
             "resourceType": "workspace",
@@ -68,9 +72,11 @@ async def test_workspaces_id_get_returns_404_if_resource_is_not_found(get_worksp
 async def test_workspaces_id_get_returns_workspace_if_found(get_workspace_mock, app: FastAPI, client: AsyncClient):
     sample_workspace = {
         "id": "afa000d3-82da-4bfc-b6e9-9a7853ef753e",
-        "resource_name": "tre-workspace-vanilla",
-        "resource_version": "0.1.0",
-        "resource_parameters": {
+        "resourceSpec": {
+            "name": "tre-workspace-vanilla",
+            "version": "0.1.0",
+        },
+        "parameters": {
             "location": "europe"
         },
         "resourceType": "workspace",
