@@ -56,4 +56,4 @@ class WorkspaceRepository(BaseRepository):
             self.container.create_item(body=workspace.dict())
             return workspace
         except Exception:
-            raise EntityDoesNotExist
+            raise UnableToAccessDatabase
