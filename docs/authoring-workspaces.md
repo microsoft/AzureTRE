@@ -100,7 +100,7 @@ Workspace bundles are stored in [Azure Container Registry (ACR)](https://azure.m
 
 For reference, see the vanilla workspace bundle publish workflow step and scripts:
 
-1. `Publish vanilla workspace bundle` step in [TRE CD workflow (tre-CD.yml)](../.github/workflows/tre-CD.yml)
+1. `Publish vanilla workspace bundle` step in [Azure TRE continuous delivery workflow (tre-CD.yml)](../.github/workflows/tre-CD.yml)
 1. `publish-vanilla-workspace` target in [Makefile](../Makefile)
 1. [`publish_vanilla_workspace.sh` script](../devops/scripts/publish_vanilla_workspace.sh)
 
