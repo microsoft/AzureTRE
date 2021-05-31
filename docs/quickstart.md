@@ -28,6 +28,7 @@ Clone the repository to your local machine ( `git clone https://github.com/micro
 In the following steps we will create management infrastructure in your subscription. This includes resources, such as a storage account and container registry that will enable deployment the Azure TRE. Once the infrastructure is deployed we will build the container images required for deployment.
 
 ### Log into your chosen Azure subscription
+
 Login and select the azure subscription you wish to deploy to:
 
 ```cmd
@@ -92,16 +93,17 @@ Copy [/templates/core/terraform/.env.sample](../templates/core/terraform/.env.sa
 ### Deploy
 
 The deployment of the Azure TRE is done via Terraform. Run:
-```bash
+
+```cmd
 make tre-deploy
 ```
 
-The Azure TRE is initially deployed with an invalid self-signed SSL certificate. This certificate is stored in the deployed KeyVault. To update
-the certificate in KeyVault needs to be repaced with one valid for the configured domain name. To use a certificate from [Let's Encrypt][letsencrypt],
-simply run the command:
-```bash
+The Azure TRE is initially deployed with an invalid self-signed SSL certificate. This certificate is stored in the deployed KeyVault. To update the certificate in KeyVault needs to be repaced with one valid for the configured domain name. To use a certificate from [Let's Encrypt][letsencrypt], simply run the command:
+
+```cmd
 make letsencrypt
 ```
+
 Note that there are rate limits with Let's Encrypt, so this should not be run when not needed.
 
 ### Access the Azure TRE deployment
@@ -118,6 +120,5 @@ terraform output azure_tre_fqdn
 To remove the Azure TRE and its resources from your Azure subscription run:
 
 - Run `make tre-destroy`
-
 
 [letsencrypt]: https://letsencrypt.org/ "A nonprofit Certificate Authority providing TLS certificates to 260 million websites."
