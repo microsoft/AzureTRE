@@ -28,8 +28,8 @@ The credentials are provided as environment variables by the deployment runner. 
 
 * `AZURE_TENANT_ID`
 * `AZURE_SUBSCRIPTION_ID`
-* `AZURE_SP_CLIENT_ID`
-* `AZURE_SP_PASSWORD`
+* `AZURE_CLIENT_ID`
+* `AZURE_CLIENT_SECRET`
 
 The names of the Porter credentials (`name` field in `porter.yaml`) can be freely chosen by the author.
 
@@ -37,14 +37,14 @@ Example:
 
 ```yaml
 credentials:
-- name: azure_tenant_id
-  env: AZURE_TENANT_ID
-- name: azure_subscription_id
-  env: AZURE_SUBSCRIPTION_ID
-- name: azure_service_principal_client_id
-  env: AZURE_SP_CLIENT_ID
-- name: azure_service_principal_password
-  env: AZURE_SP_PASSWORD
+  - name: azure_tenant_id
+    env: AZURE_TENANT_ID
+  - name: azure_subscription_id
+    env: AZURE_SUBSCRIPTION_ID
+  - name: azure_service_principal_client_id
+    env: AZURE_CLIENT_ID
+  - name: azure_service_principal_password
+    env: AZURE_CLIENT_SECRET
 ```
 
 ### Parameters

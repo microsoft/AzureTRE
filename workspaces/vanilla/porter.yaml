@@ -4,23 +4,19 @@ description: "A vanilla Azure TRE workspace"
 registry: azuretre
 
 credentials:
-- name: azure_tenant_id
-  env: AZURE_TENANT_ID
-- name: azure_subscription_id
-  env: AZURE_SUBSCRIPTION_ID
-- name: azure_service_principal_client_id
-  env: AZURE_SP_CLIENT_ID
-- name: azure_service_principal_password
-  env: AZURE_SP_PASSWORD
+  - name: azure_tenant_id
+    env: AZURE_TENANT_ID
+  - name: azure_subscription_id
+    env: AZURE_SUBSCRIPTION_ID
+  - name: azure_service_principal_client_id
+    env: AZURE_CLIENT_ID
+  - name: azure_service_principal_password
+    env: AZURE_CLIENT_SECRET
 
 parameters:
   - name: core_id
     type: string
-    description: "Unique 4-digit TRE core ID"
-  - name: core_name
-    type: string
-    description: "TRE core name prefix with environment identifier"
-    default: "tre-dev"
+    description: "The ID of the parent TRE instance e.g., mytre-dev-3142"
   - name: workspace_id
     type: string
     description: "Unique 4-digit workspace ID"
@@ -65,7 +61,6 @@ install:
         azure_service_principal_client_id: "{{ bundle.credentials.azure_service_principal_client_id }}"
         azure_service_principal_password: "{{ bundle.credentials.azure_service_principal_password }}"
         core_id: "{{ bundle.parameters.core_id }}"
-        core_name: "{{ bundle.parameters.core_name }}"
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         location: "{{ bundle.parameters.location }}"
         address_space: "{{ bundle.parameters.address_space }}"
@@ -93,7 +88,6 @@ plan:
           - "'azure_service_principal_client_id={{ bundle.credentials.azure_service_principal_client_id }}'"
           - "'azure_service_principal_password={{ bundle.credentials.azure_service_principal_password }}'"
           - "'core_id={{ bundle.parameters.core_id }}'"
-          - "'core_name={{ bundle.parameters.core_name }}'"
           - "'workspace_id={{ bundle.parameters.workspace_id }}'"
           - "'location={{ bundle.parameters.location }}'"
           - "'address_space={{ bundle.parameters.address_space }}'"
@@ -107,7 +101,6 @@ uninstall:
         azure_service_principal_client_id: "{{ bundle.credentials.azure_service_principal_client_id }}"
         azure_service_principal_password: "{{ bundle.credentials.azure_service_principal_password }}"
         core_id: "{{ bundle.parameters.core_id }}"
-        core_name: "{{ bundle.parameters.core_name }}"
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         location: "{{ bundle.parameters.location }}"
         address_space: "{{ bundle.parameters.address_space }}"
