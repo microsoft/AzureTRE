@@ -19,12 +19,6 @@ variable "core_id" {
   description = "Unique 4-digit TRE core ID"
 }
 
-variable "core_name" {
-  type = string
-  description = "TRE core name prefix with environment identifier"
-  default = "tre-dev"
-}
-
 variable "workspace_id" {
   type        = string
   description = "Unique 4-digit workspace ID"
