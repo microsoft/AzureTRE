@@ -17,8 +17,8 @@
 
     * `AZURE_TENANT_ID`
     * `AZURE_SUBSCRIPTION_ID`
-    * `AZURE_SP_CLIENT_ID` - Service principal client ID
-    * `AZURE_SP_PASSWORD` - Service principal client password
+    * `AZURE_CLIENT_ID` - Service principal client ID
+    * `AZURE_CLIENT_SECRET` - Service principal client secret (password)
 
 1. Create credentials set named "azure":
 

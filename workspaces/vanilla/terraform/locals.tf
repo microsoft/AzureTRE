@@ -9,7 +9,6 @@ resource "random_string" "unique_id" {
 }
 
 locals {
-  core_name_and_id          = "${var.core_name}-${var.core_id}"
-  core_vnet                 = "vnet-${var.core_name}-${var.core_id}"
-  core_resource_group_name  = "rg-${var.core_name}-${var.core_id}"
+  core_vnet                 = "vnet-${var.core_id}"
+  core_resource_group_name  = "rg-${var.core_id}"
 }

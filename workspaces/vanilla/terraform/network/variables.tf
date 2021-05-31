@@ -1,4 +1,4 @@
-variable "core_name_and_id" {}
+variable "core_id" {}
 variable "workspace_id" {}
 variable "location" {}
 variable "resource_group_name" {}
