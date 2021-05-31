@@ -64,7 +64,7 @@ Similarly to `core_id`, `workspace_id` is used in the resource names of the work
 
 All the values for the required parameters will be provided by the deployment runner.
 
-Any **custon parameters** are picked up by the TRE management API and will be queried from the user deploying the workspace bundle so make sure to write clear descriptions of the parameters as these are shown in the user interface to guide the user.
+Any **custon parameters** are picked up by the Azure TRE management API and will be queried from the user deploying the workspace bundle so make sure to write clear descriptions of the parameters as these are shown in the user interface to guide the user.
 
 ### Output
 
