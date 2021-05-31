@@ -1,7 +1,7 @@
 # Authoring workspaces
 
 <!-- markdownlint-disable-next-line MD013 -->
-TRE workspaces are [Porter](https://porter.sh/) bundles that in turn are based on [Cloud Native Application Bundles (CNAB)](https://cnab.io/). Workspace authors are free to choose the technology stack for provisioning resources (e.g., ARM templates, Terraform etc.), but TRE framework sets certain requirements for the bundle manifests, which specify the credentials, input and output parameters, deployment actions among other things. The document describes those requirements.
+Azure TRE workspaces are [Porter](https://porter.sh/) bundles that in turn are based on [Cloud Native Application Bundles (CNAB)](https://cnab.io/). Workspace authors are free to choose the technology stack for provisioning resources (e.g., ARM templates, Terraform etc.), but the Azure TRE framework sets certain requirements for the bundle manifests, which specify the credentials, input and output parameters, deployment actions among other things. The document describes those requirements.
 
 **Use [the vanilla workspace bundle](../workspaces/vanilla/README.md) and [others](../workspaces/) as reference** or as the basis for your new bundle. To start from scratch follow the Porter [Quickstart Guide](https://porter.sh/quickstart/) ([`porter create` CLI command](https://porter.sh/cli/porter_create/) will generate a new bundle in the current directory).
 
