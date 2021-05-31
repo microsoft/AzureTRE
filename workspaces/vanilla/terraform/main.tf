@@ -19,10 +19,10 @@ provider "azurerm" {
 
 resource "azurerm_resource_group" "ws" {
   location = var.location
-  name     = "rg-${local.core_name_and_id}-ws-${var.workspace_id}"
+  name     = "rg-${var.core_id}-ws-${var.workspace_id}"
   tags     = {
     project = "Azure Trusted Research Environment"
-    core_id = local.core_name_and_id
+    core_id = var.core_id
     source  = "https://github.com/microsoft/AzureTRE/"
   }
 }
@@ -30,7 +30,7 @@ resource "azurerm_resource_group" "ws" {
 module "network" {
   source                   = "./network"
   workspace_id             = var.workspace_id
-  core_name_and_id         = local.core_name_and_id
+  core_id                  = var.core_id
   location                 = var.location
   resource_group_name      = azurerm_resource_group.ws.name
   address_space            = var.address_space

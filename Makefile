@@ -1,4 +1,4 @@
-.PHONY: bootstrap-init mgmt-deploy mgmt-destroy build_api_image build_cnab_image push_api_image push_cnab_image deploy-tre destroy-tre
+.PHONY: bootstrap-init mgmt-deploy mgmt-destroy build_images push_images deploy-tre destroy-tre letsencrypt
 
 SHELL:=/bin/bash
 
@@ -14,13 +14,13 @@ mgmt-deploy:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDeploying management infrastructure\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
 	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
-	&& cd ./devops/terraform  &&  ./deploy.sh  
+	&& cd ./devops/terraform && ./deploy.sh
 
 mgmt-destroy:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDestroying management infrastructure\e[0m..." \
 	. ./devops/scripts/check_dependencies.sh nodocker \
 	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
-	&& cd ./devops/terraform  && ./destroy.sh
+	&& cd ./devops/terraform && ./destroy.sh
 
 build-api-image:
 	echo -e "\n\e[34m»»» 🧩 \e[96mBuilding Images\e[0m..." \
@@ -51,11 +51,24 @@ tre-deploy:
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
 	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
 	&& . ./devops/scripts/load_env.sh ./templates/core/terraform/.env \
-	&& cd ./templates/core/terraform/ && ./deploy.sh 
+	&& cd ./templates/core/terraform/ && ./deploy.sh
+
+letsencrypt:
+	echo -e "\n\e[34m»»» 🧩 \e[96mRequesting LetsEncrypt SSL certificate\e[0m..." \
+	&& chmod 755 ./devops/scripts/letsencrypt.sh ./devops/scripts/auth-hook.sh ./devops/scripts/cleanup-hook.sh \
+	&& . ./devops/scripts/get-coreenv.sh \
+	&& ./devops/scripts/letsencrypt.sh
 
 tre-destroy:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDestroying TRE\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
 	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
 	&& . ./devops/scripts/load_env.sh ./templates/core/terraform/.env \
-	&& cd ./templates/core/terraform/ && ./destroy.sh 
+	&& cd ./templates/core/terraform/ && ./destroy.sh
+
+publish-vanilla-workspace:
+	echo -e "\n\e[34m»»» 🧩 \e[96mPublishing vanilla workspace bundle\e[0m..." \
+	&& . ./devops/scripts/check_dependencies.sh \
+	&& . ./devops/scripts/install_porter.sh \
+	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
+	&& ./devops/scripts/publish_vanilla_workspace.sh
