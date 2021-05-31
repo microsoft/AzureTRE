@@ -1,8 +1,8 @@
-.PHONY: bootstrap-init mgmt-deploy mgmt-destroy build_images push_images deploy-tre destroy-tre letsencrypt
+.PHONY: bootstrap-init mgmt-deploy mgmt-destroy build-api-image push-api-image build-cnab-image push-cnab-image deploy-tre destroy-tre letsencrypt
 
 SHELL:=/bin/bash
 
-all: bootstrap mgmt-deploy build_api_image build_cnab_image push_api_image push_cnab_image tre-deploy
+all: bootstrap mgmt-deploy build-api-image push-api-image build-cnab-image push-cnab-image tre-deploy
 
 bootstrap:
 	echo -e "\n\e[34m»»» 🧩 \e[96mBootstrap Terraform\e[0m..." \
