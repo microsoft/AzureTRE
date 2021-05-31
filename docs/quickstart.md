@@ -92,14 +92,14 @@ Copy [/templates/core/terraform/.env.sample](../templates/core/terraform/.env.sa
 ### Deploy
 
 The deployment of the Azure TRE is done via Terraform. Run:
-```
+```bash
 make tre-deploy
 ```
 
-The Azure TRE is initially deployed with an invalid self-signed SSL certificate. This certificate is stored in the deployed KeyVault. To update 
-the certificate in KeyVault needs to be repaced with one valid for the configured domain name. To use a certificate from [Let's Encrypt][letsencrypt], 
+The Azure TRE is initially deployed with an invalid self-signed SSL certificate. This certificate is stored in the deployed KeyVault. To update
+the certificate in KeyVault needs to be repaced with one valid for the configured domain name. To use a certificate from [Let's Encrypt][letsencrypt],
 simply run the command:
-```
+```bash
 make letsencrypt
 ```
 Note that there are rate limits with Let's Encrypt, so this should not be run when not needed.

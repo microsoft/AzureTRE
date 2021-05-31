@@ -14,7 +14,9 @@ STATE_STORE_ENDPOINT: str = config("STATE_STORE_ENDPOINT", default="")      # Co
 STATE_STORE_KEY: str = config("STATE_STORE_KEY", default="")                # Cosmos DB access key
 STATE_STORE_DATABASE = "AzureTRE"
 STATE_STORE_RESOURCES_CONTAINER = "Resources"
+STATE_STORE_BUNDLE_SPECS_CONTAINER = "ResourceSpecs"
 
 # Service bus configuration
 SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE: str = config("SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE", default="")
 SERVICE_BUS_RESOURCE_REQUEST_QUEUE: str = config("SERVICE_BUS_RESOURCE_REQUEST_QUEUE", default="")
+
