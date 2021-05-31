@@ -24,8 +24,28 @@ async def test_workspaces_get_empty_list_when_no_resources_exist(get_workspaces_
 @patch("api.routes.workspaces.WorkspaceRepository.get_all_active_workspaces")
 async def test_workspaces_get_list_returns_correct_data_when_resources_exist(get_workspaces_mock, app: FastAPI, client: AsyncClient) -> None:
     resources = [
-        {"id": "63396b88-7ce6-440b-932c-827ebbae6d51", "description": "some description", "resourceType": "workspace", "status": "not_deployed"},
-        {"id": "63396b88-7ce6-440b-932c-827ebbae6d52", "description": "some description", "resourceType": "workspace", "status": "not_deployed"}
+        {
+            "id": "afa000d3-82da-4bfc-b6e9-9a7853ef753e",
+            "resource_name": "tre-workspace-vanilla",
+            "resource_version": "0.1.0",
+            "resource_parameters": {
+                "location": "europe"
+            },
+            "resourceType": "workspace",
+            "status": "not_deployed",
+            "isDeleted": False
+        },
+        {
+            "id": "e87e30a6-e11b-4cf1-b523-8d278f8f492d",
+            "resource_name": "tre-workspace-vanilla",
+            "resource_version": "0.1.0",
+            "resource_parameters": {
+                "location": "europe"
+            },
+            "resourceType": "workspace",
+            "status": "not_deployed",
+            "isDeleted": False
+        },
     ]
     get_workspaces_mock.return_value = resources
 
@@ -46,7 +66,17 @@ async def test_workspaces_id_get_returns_404_if_resource_is_not_found(get_worksp
 
 @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
 async def test_workspaces_id_get_returns_workspace_if_found(get_workspace_mock, app: FastAPI, client: AsyncClient):
-    sample_workspace = {"id": "63396b88-7ce6-440b-932c-827ebbae6d51", "description": "some description", "resourceType": "workspace", "status": "not_deployed"}
+    sample_workspace = {
+        "id": "afa000d3-82da-4bfc-b6e9-9a7853ef753e",
+        "resource_name": "tre-workspace-vanilla",
+        "resource_version": "0.1.0",
+        "resource_parameters": {
+            "location": "europe"
+        },
+        "resourceType": "workspace",
+        "status": "not_deployed",
+        "isDeleted": False
+    }
     get_workspace_mock.return_value = sample_workspace
 
     response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id="not important"))
