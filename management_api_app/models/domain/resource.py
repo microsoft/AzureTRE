@@ -1,5 +1,4 @@
 from enum import Enum
-from uuid import UUID
 from models.domain.azuretremodel import AzureTREModel
 from resources import strings
 
@@ -17,8 +16,15 @@ class ResourceType(str, Enum):
     Service = strings.RESOURCE_TYPE_SERVICE
 
 
+class ResourceSpec(AzureTREModel):
+    name: str
+    version: str
+
+
 class Resource(AzureTREModel):
-    id: UUID
-    description: str
+    id: str
+    resourceSpec: ResourceSpec
+    parameters: dict
     resourceType: ResourceType
     status: Status
+    isDeleted: bool = False

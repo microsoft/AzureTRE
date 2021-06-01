@@ -186,3 +186,6 @@ sample.dat
 
 # CNAB
 .cnab/
+
+# Dev container shell history
+.bash_history

@@ -7,6 +7,6 @@ from resources import strings
 router = APIRouter()
 
 
-@router.get("/health", name="health:get-server-alive")
+@router.get("/health", name=strings.API_GET_HEALTH_STATUS)
 async def ping_server() -> Pong:
     return Pong(message=strings.PONG, time=datetime.now())
