@@ -5,7 +5,7 @@ from db.errors import UnableToAccessDatabase
 
 
 class BaseRepository:
-    def __init__(self, client: CosmosClient, container_name: str) -> None:
+    def __init__(self, client: CosmosClient, container_name: str = None) -> None:
         self._client: CosmosClient = client
         self._container: ContainerProxy = self.get_container(container_name)
 
