@@ -28,16 +28,14 @@ async def create_workspace(workspace_create: ResourceInCreate, workspace_repo: W
 
     try:
         workspace = workspace_repo.create_workspace(workspace_create)
-        service_bus = ServiceBus()
-        service_bus.send_resource_request_message(workspace.dict())
     except UnableToAccessDatabase:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
 
     try:
         service_bus = ServiceBus()
-        service_bus.send_resource_request_message(str(workspace.dict()))
-    except:
-        raise
+        await service_bus.send_resource_request_message(str(workspace.dict()))
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
 
     return ResourceInResponse(resource=workspace)
 
