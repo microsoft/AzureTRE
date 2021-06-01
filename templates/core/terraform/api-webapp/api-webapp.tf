@@ -4,6 +4,7 @@ resource "azurerm_app_service_plan" "core" {
   location            = var.location
   reserved            = true
   kind                = "linux"
+
   sku {
     tier     = "PremiumV3"
     capacity = 1
@@ -23,38 +24,42 @@ resource "azurerm_app_service" "management_api" {
   resource_group_name = var.resource_group_name
   location            = var.location
   app_service_plan_id = azurerm_app_service_plan.core.id
-
-
   https_only = true
+
   app_settings = {
+    "APPINSIGHTS_INSTRUMENTATIONKEY"        = azurerm_application_insights.core.instrumentation_key
+    "WEBSITES_PORT"                         = "8000"
+    "WEBSITE_VNET_ROUTE_ALL"                = 1
 
-    "APPINSIGHTS_INSTRUMENTATIONKEY" = azurerm_application_insights.core.instrumentation_key
-    "WEBSITES_PORT" = "8000"
-
-    "DOCKER_REGISTRY_SERVER_USERNAME" = var.docker_registry_username
-    "DOCKER_REGISTRY_SERVER_URL"      = "https://${var.docker_registry_server}"
-    "DOCKER_REGISTRY_SERVER_PASSWORD" = var.docker_registry_password
-    "STATE_STORE_ENDPOINT"            = var.state_store_endpoint
-    "STATE_STORE_KEY"                 = var.state_store_key
-    "WEBSITE_VNET_ROUTE_ALL"          = 1
+    "DOCKER_REGISTRY_SERVER_USERNAME"       = var.docker_registry_username
+    "DOCKER_REGISTRY_SERVER_URL"            = "https://${var.docker_registry_server}"
+    "DOCKER_REGISTRY_SERVER_PASSWORD"       = var.docker_registry_password
+    "STATE_STORE_ENDPOINT"                  = var.state_store_endpoint
+    "STATE_STORE_KEY"                       = var.state_store_key
+    "SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE" = "sb-${var.resource_name_prefix}-${var.environment}-${var.tre_id}.servicebus.windows.net"
+    "SERVICE_BUS_RESOURCE_REQUEST_QUEUE"    = var.service_bus_resource_request_queue
   }
 
   site_config {
     linux_fx_version            = "DOCKER|${var.docker_registry_server}/${var.management_api_image_repository}:${var.management_api_image_tag}"
     remote_debugging_enabled    = false
     scm_use_main_ip_restriction = true
+
     cors {
       allowed_origins     = []
       support_credentials = false
     }
+
     always_on       = true
     min_tls_version = "1.2"
+
     ip_restriction {
       action     = "Deny"
       ip_address = "0.0.0.0/0"
       name       = "Deny all"
       priority   = 2147483647
     }
+
     websockets_enabled = false
   }
 
@@ -77,12 +82,14 @@ resource "azurerm_private_endpoint" "management_api_private_endpoint" {
   resource_group_name = var.resource_group_name
   location            = var.location
   subnet_id           = var.shared_subnet
+
   private_service_connection {
     private_connection_resource_id = azurerm_app_service.management_api.id
     name                           = "psc-api-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
     subresource_names              = ["sites"]
     is_manual_connection           = false
   }
+
   private_dns_zone_group {
     name                 = "privatelink.azurewebsites.net"
     private_dns_zone_ids = [azurerm_private_dns_zone.azurewebsites.id]
@@ -116,7 +123,6 @@ resource "azurerm_monitor_diagnostic_setting" "webapp_management_api" {
     category = "AppServiceHTTPLogs"
     enabled  = true
 
-
     retention_policy {
       days    = 1
       enabled = false
@@ -124,7 +130,6 @@ resource "azurerm_monitor_diagnostic_setting" "webapp_management_api" {
   }
 
   log {
-
     category = "AppServiceConsoleLogs"
     enabled  = true
 
@@ -134,9 +139,7 @@ resource "azurerm_monitor_diagnostic_setting" "webapp_management_api" {
     }
   }
 
-
   log {
-
     category = "AppServiceAppLogs"
     enabled  = true
 
@@ -146,10 +149,7 @@ resource "azurerm_monitor_diagnostic_setting" "webapp_management_api" {
     }
   }
 
-
-
   log {
-
     category = "AppServiceFileAuditLogs"
     enabled  = true
 
@@ -160,7 +160,6 @@ resource "azurerm_monitor_diagnostic_setting" "webapp_management_api" {
   }
 
   log {
-
     category = "AppServiceAuditLogs"
     enabled  = true
 
@@ -171,7 +170,6 @@ resource "azurerm_monitor_diagnostic_setting" "webapp_management_api" {
   }
 
   log {
-
     category = "AppServiceIPSecAuditLogs"
     enabled  = true
 
@@ -182,7 +180,6 @@ resource "azurerm_monitor_diagnostic_setting" "webapp_management_api" {
   }
 
   log {
-
     category = "AppServicePlatformLogs"
     enabled  = true
 

@@ -62,28 +62,29 @@ module "appgateway" {
   app_gw_subnet        = module.network.app_gw
   management_api_fqdn  = module.api-webapp.management_api_fqdn
   keyvault_id          = module.keyvault.keyvault_id
-  depends_on           = [module.keyvault] 
+  depends_on           = [module.keyvault]
 }
 
 module "api-webapp" {
-  source                          = "./api-webapp"
-  resource_name_prefix            = var.resource_name_prefix
-  environment                     = var.environment
-  tre_id                          = local.tre_id
-  location                        = var.location
-  resource_group_name             = azurerm_resource_group.core.name
-  web_app_subnet                  = module.network.web_app
-  shared_subnet                   = module.network.shared
-  app_gw_subnet                   = module.network.app_gw
-  core_vnet                       = module.network.core
-  log_analytics_workspace_id      = azurerm_log_analytics_workspace.tre.id
-  management_api_image_repository = var.management_api_image_repository
-  management_api_image_tag        = var.management_api_image_tag
-  docker_registry_server          = var.docker_registry_server
-  docker_registry_username        = var.docker_registry_username
-  docker_registry_password        = var.docker_registry_password
-  state_store_endpoint            = module.state-store.endpoint
-  state_store_key                 = module.state-store.primary_key
+  source                             = "./api-webapp"
+  resource_name_prefix               = var.resource_name_prefix
+  environment                        = var.environment
+  tre_id                             = local.tre_id
+  location                           = var.location
+  resource_group_name                = azurerm_resource_group.core.name
+  web_app_subnet                     = module.network.web_app
+  shared_subnet                      = module.network.shared
+  app_gw_subnet                      = module.network.app_gw
+  core_vnet                          = module.network.core
+  log_analytics_workspace_id         = azurerm_log_analytics_workspace.tre.id
+  management_api_image_repository    = var.management_api_image_repository
+  management_api_image_tag           = var.management_api_image_tag
+  docker_registry_server             = var.docker_registry_server
+  docker_registry_username           = var.docker_registry_username
+  docker_registry_password           = var.docker_registry_password
+  state_store_endpoint               = module.state-store.endpoint
+  state_store_key                    = module.state-store.primary_key
+  service_bus_resource_request_queue = module.servicebus.workspacequeue
 }
 
 module "identity" {
@@ -96,22 +97,22 @@ module "identity" {
 }
 
 module "processor_function" {
-  source                     = "./processor_function"
-  resource_name_prefix       = var.resource_name_prefix
-  environment                = var.environment
-  tre_id                     = local.tre_id
-  location                   = var.location
-  resource_group_name        = azurerm_resource_group.core.name
-  app_service_plan_id        = module.api-webapp.app_service_plan_id
-  storage_account_name       = module.storage.storage_account_name
-  storage_account_access_key = module.storage.storage_account_access_key
-  storage_state_path         = module.storage.storage_state_path
-  identity_id                = module.identity.identity_id
-  core_vnet                  = module.network.core
-  aci_subnet                 = module.network.aci
-  docker_registry_username   = var.docker_registry_username
-  docker_registry_password   = var.docker_registry_password
-  docker_registry_server     = var.docker_registry_server
+  source                       = "./processor_function"
+  resource_name_prefix         = var.resource_name_prefix
+  environment                  = var.environment
+  tre_id                       = local.tre_id
+  location                     = var.location
+  resource_group_name          = azurerm_resource_group.core.name
+  app_service_plan_id          = module.api-webapp.app_service_plan_id
+  storage_account_name         = module.storage.storage_account_name
+  storage_account_access_key   = module.storage.storage_account_access_key
+  storage_state_path           = module.storage.storage_state_path
+  identity_id                  = module.identity.identity_id
+  core_vnet                    = module.network.core
+  aci_subnet                   = module.network.aci
+  docker_registry_username     = var.docker_registry_username
+  docker_registry_password     = var.docker_registry_password
+  docker_registry_server       = var.docker_registry_server
   servicebus_connection_string = module.servicebus.connection_string
   workspacequeue               = module.servicebus.workspacequeue
 }
