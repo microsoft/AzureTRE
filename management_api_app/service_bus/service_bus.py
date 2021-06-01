@@ -1,5 +1,6 @@
 from azure.identity import DefaultAzureCredential
-from azure.servicebus import ServiceBusClient, ServiceBusMessage
+from azure.servicebus import ServiceBusMessage
+from azure.servicebus.aio import ServiceBusClient
 from core import config
 
 class ServiceBus():
