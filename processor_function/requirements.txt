@@ -1,1 +1,4 @@
 azure-functions
+azure-mgmt-containerinstance
+azure-mgmt-network
+msrest

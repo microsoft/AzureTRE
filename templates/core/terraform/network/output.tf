@@ -21,3 +21,7 @@ output "web_app" {
 output "shared" {
   value = azurerm_subnet.shared.id
 }
+
+output "aci" {
+  value = azurerm_subnet.aci.id
+}

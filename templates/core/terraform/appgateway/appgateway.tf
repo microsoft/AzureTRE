@@ -10,7 +10,7 @@ resource "azurerm_public_ip" "appgwpip" {
 resource "azurerm_user_assigned_identity" "agw_id" {
   resource_group_name = var.resource_group_name
   location = var.location
-  name = "msi-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+  name = "msi-agw-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
 }
 
 resource "azurerm_application_gateway" "agw" {

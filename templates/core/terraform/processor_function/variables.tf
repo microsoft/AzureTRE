@@ -6,3 +6,12 @@ variable "resource_group_name" {}
 variable "app_service_plan_id" {}
 variable "storage_account_name" {}
 variable "storage_account_access_key" {}
+variable "storage_state_path" {}
+variable "identity_id" {}
+variable "core_vnet" {}
+variable "aci_subnet" {}
+variable "docker_registry_username" {}
+variable "docker_registry_password" {}
+variable "docker_registry_server" {}
+variable "servicebus_connection_string" {}
+variable "workspacequeue" {}
