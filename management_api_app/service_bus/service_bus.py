@@ -1,4 +1,4 @@
-from azure.identity import EnvironmentCredential
+from azure.identity import DefaultAzureCredential
 from azure.servicebus import ServiceBusClient, ServiceBusMessage
 from core import config
 
@@ -11,13 +11,10 @@ class ServiceBus():
         """
         Sends the given message to the resource request queue.
 
-        EnvironmentCredentials class requires environment variables AZURE_TENANT_ID, AZURE_CLIENT_ID, and
-        AZURE_CLIENT_SECRET specified.
-
         :param resource_request_message: The message to send.
         :type resource_request_message: str
         """
-        credential = EnvironmentCredential()
+        credential = DefaultAzureCredential()
         service_bus_client = ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential)
 
         async with service_bus_client:
