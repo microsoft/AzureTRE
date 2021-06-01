@@ -34,7 +34,7 @@ async def create_workspace(workspace_create: ResourceInCreate, workspace_repo: W
     try:
         service_bus = ServiceBus()
         await service_bus.send_resource_request_message(str(workspace.dict()))
-    except Exception as e:
+    except:
         # TODO: Rollback DB change
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
 
