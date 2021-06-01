@@ -27,8 +27,9 @@ resource "azurerm_app_service" "management_api" {
   https_only = true
 
   app_settings = {
-    "APPINSIGHTS_INSTRUMENTATIONKEY" = azurerm_application_insights.core.instrumentation_key
-    "WEBSITES_PORT" = "8000"
+    "APPINSIGHTS_INSTRUMENTATIONKEY"        = azurerm_application_insights.core.instrumentation_key
+    "WEBSITES_PORT"                         = "8000"
+    "WEBSITE_VNET_ROUTE_ALL"                = 1
 
     "DOCKER_REGISTRY_SERVER_USERNAME"       = var.docker_registry_username
     "DOCKER_REGISTRY_SERVER_URL"            = "https://${var.docker_registry_server}"
