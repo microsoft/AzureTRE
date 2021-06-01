@@ -29,3 +29,6 @@ RESOURCE_STATUS_DELETED = "deleted"
 # Resource Type
 RESOURCE_TYPE_WORKSPACE = "workspace"
 RESOURCE_TYPE_SERVICE = "service"
+
+# Service bus
+SERVICE_BUS_GENERAL_ERROR_MESSAGE = "Service bus failure"
