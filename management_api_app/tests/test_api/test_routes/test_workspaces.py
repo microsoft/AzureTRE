@@ -64,8 +64,17 @@ async def test_workspaces_get_list_returns_correct_data_when_resources_exist(get
 async def test_workspaces_id_get_returns_404_if_resource_is_not_found(get_workspace_mock, app: FastAPI, client: AsyncClient):
     get_workspace_mock.side_effect = EntityDoesNotExist
 
-    response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id="not_important"))
+    response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id="000000d3-82da-4bfc-b6e9-9a7853ef753e"))
     assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+# [GET] /workspaces/{workspace_id}
+@patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+async def test_workspaces_id_get_returns_422_if_workspace_id_is_not_a_uuid(get_workspace_mock, app: FastAPI, client: AsyncClient):
+    get_workspace_mock.side_effect = EntityDoesNotExist
+
+    response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id="not_valid"))
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
 @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
@@ -85,6 +94,6 @@ async def test_workspaces_id_get_returns_workspace_if_found(get_workspace_mock, 
     }
     get_workspace_mock.return_value = sample_workspace
 
-    response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id="not important"))
+    response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id="afa000d3-82da-4bfc-b6e9-9a7853ef753e"))
     actual_resource = response.json()["resource"]
     assert actual_resource["id"] == sample_workspace["id"]

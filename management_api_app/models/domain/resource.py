@@ -1,4 +1,5 @@
 from enum import Enum
+
 from models.domain.azuretremodel import AzureTREModel
 from resources import strings
 

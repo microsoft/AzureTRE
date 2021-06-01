@@ -1,4 +1,5 @@
 from fastapi import Depends, HTTPException, Path
+from pydantic import UUID4
 from starlette.status import HTTP_404_NOT_FOUND
 
 from db.errors import EntityDoesNotExist
@@ -8,7 +9,7 @@ from models.domain.resource import Resource
 from resources import strings
 
 
-async def get_workspace_by_workspace_id_from_path(workspace_id: str = Path(..., min_length=1), workspaces_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository))) -> Resource:
+async def get_workspace_by_workspace_id_from_path(workspace_id: UUID4 = Path(...), workspaces_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository))) -> Resource:
     try:
         return workspaces_repo.get_workspace_by_workspace_id(workspace_id)
     except EntityDoesNotExist:
