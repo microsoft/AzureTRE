@@ -14,6 +14,7 @@ from azure.core.pipeline.transport import HttpRequest
 
 from azure.identity import DefaultAzureCredential
 
+
 class AzureIdentityCredentialAdapter(BasicTokenAuthentication):
     def __init__(self, credential=None, resource_id="https://management.azure.com/.default", **kwargs):
         """Adapt any azure-identity credential to work with SDK that needs azure.common.credentials or msrestazure.

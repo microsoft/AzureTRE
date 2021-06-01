@@ -1,9 +1,8 @@
-import json
-import sys
 import time
 import os
 import uuid
 import logging
+from typing import List
 
 from azure.mgmt.containerinstance import ContainerInstanceManagementClient
 from azure.identity import DefaultAzureCredential
@@ -22,95 +21,90 @@ from azure.mgmt.network import NetworkManagementClient
 from shared.azure_identity_credential_adapter import AzureIdentityCredentialAdapter
 
 
-RESOURCE_GROUP_NAME = os.environ["RESOURCE_GROUP_NAME"]
-SUBSCRIPTION_ID = os.environ["CNAB_AZURE_SUBSCRIPTION_ID"]
-CONTAINER_GROUP_NAME = ""
-LOCATION = ""
-MESSAGE = ""
+class CNABBuilder:
+    def __init__(self, resource_request_message: dict):
+        self._resource_group_name = os.environ["RESOURCE_GROUP_NAME"]
+        self._subscription_id = os.environ["CNAB_AZURE_SUBSCRIPTION_ID"]
+        self._message = resource_request_message
+        self._container_group_name = ""
+        self._location = ""
 
+    def _build_porter_cmd_line(self) -> str:
+        porter_parameters = ""
+        for key in self._message['parameters']:
+            porter_parameters += " --param " + key + "=" + self._message['parameters'][key]
 
-def build_porter_cmd_line() -> str:
-    porter_parameters = ""
-    for key in MESSAGE['parameters']:
-        porter_parameters += " --param " + key + "=" + MESSAGE['parameters'][key]
+        start_command_line = "/bin/bash -c porter " + self._message['operation'] + " CNAB --tag " + self._message[
+            'bundle-name'] + porter_parameters + " -d azure && porter show CNAB"
 
-    start_command_line = "/bin/bash -c porter " + MESSAGE['operation'] + " CNAB --tag " + MESSAGE[
-        'bundle-name'] + porter_parameters + " -d azure && porter show CNAB"
+        logging.info("Creating a runner with:" + start_command_line)
+        return start_command_line
 
-    logging.info("Creating a runner with:" + start_command_line)
-    return start_command_line
+    def _build_cnab_env_variables(self) -> List[str]:
+        env_variables = []
+        for key, value in os.environ.items():
+            if key.startswith("CNAB_AZURE"):
+                env_variables.append(EnvironmentVariable(name=key, value=value))
 
+        env_variables.append(EnvironmentVariable(name="CNAB_AZURE_RESOURCE_GROUP", value=self._resource_group_name))
+        env_variables.append(EnvironmentVariable(name="CNAB_AZURE_LOCATION", value=self._location))
 
-def build_cnab_env_variables() -> str:
-    env_variables = []
-    for key, value in os.environ.items():
-        if key.startswith("CNAB_AZURE"):
-            env_variables.append(EnvironmentVariable(name=key, value=value))
+        return env_variables
 
-    env_variables.append(EnvironmentVariable(name="CNAB_AZURE_RESOURCE_GROUP", value=RESOURCE_GROUP_NAME))
-    env_variables.append(EnvironmentVariable(name="CNAB_AZURE_LOCATION", value=LOCATION))
+    def _get_network_profile(self) -> ContainerGroupNetworkProfile:
+        default_credential = DefaultAzureCredential()
 
-    return env_variables
+        network_client = NetworkManagementClient(default_credential, self._subscription_id)
 
+        net_results = network_client.network_profiles.list(resource_group_name=self._resource_group_name)
 
-def get_network_profile() -> ContainerGroupNetworkProfile:
-    default_credential = DefaultAzureCredential()
+        if net_results:
+            net_result = net_results.next()
+        else:
+            raise Exception("No network profile")
 
-    network_client = NetworkManagementClient(default_credential, SUBSCRIPTION_ID)
+        network_profile = ContainerGroupNetworkProfile(id=net_result.id)
+        return network_profile
 
-    net_results = network_client.network_profiles.list(resource_group_name=RESOURCE_GROUP_NAME)
+    def _setup_aci_deployment(self) -> ContainerGroup:
 
-    if net_results:
-        net_result = net_results.next()
-    else:
-        logging.info('No network profile found')
+        self._location = self._message['parameters']['location']
+        self._container_group_name = "aci-cnab-" + str(uuid.uuid4())
+        container_image_name = self._message['CNAB-image']
 
-    network_profile = ContainerGroupNetworkProfile(id=net_result.id)
-    return network_profile
+        image_registry_credentials = [ImageRegistryCredential(server=os.environ["REGISTRY_SERVER"],
+                                                              username=os.environ["REGISTRY_USER_NAME"],
+                                                              password=os.environ["REGISTRY_USER_PASSWORD"])]
 
+        managed_identity = ContainerGroupIdentity(type='UserAssigned',
+                                                  user_assigned_identities={
+                                                      os.environ["CNAB_AZURE_USER_MSI_RESOURCE_ID"]: {}})
 
-def setup_aci_deployment() -> ContainerGroup:
-    global LOCATION
-    global CONTAINER_GROUP_NAME
-    
-    LOCATION = MESSAGE['parameters']['location']
-    CONTAINER_GROUP_NAME = "aci-cnab-" + str(uuid.uuid4())
-    container_image_name = MESSAGE['CNAB-image']
+        container_resource_requests = ResourceRequests(memory_in_gb=1, cpu=1.0)
+        container_resource_requirements = ResourceRequirements(requests=container_resource_requests)
 
-    image_registry_credentials = [ImageRegistryCredential(server=os.environ["REGISTRY_SERVER"],
-                                                          username=os.environ["REGISTRY_USER_NAME"],
-                                                          password=os.environ["REGISTRY_USER_PASSWORD"])]
+        container = Container(name=self._container_group_name,
+                              image=container_image_name,
+                              resources=container_resource_requirements,
+                              command=self._build_porter_cmd_line().split(),
+                              environment_variables=self._build_cnab_env_variables())
 
-    managed_identity = ContainerGroupIdentity(type='UserAssigned',
-                                              user_assigned_identities={
-                                                  os.environ["CNAB_AZURE_USER_MSI_RESOURCE_ID"]: {}})
+        group = ContainerGroup(location=self._location,
+                               containers=[container],
+                               image_registry_credentials=image_registry_credentials,
+                               os_type=OperatingSystemTypes.linux,
+                               network_profile=self._get_network_profile(),
+                               restart_policy=ContainerGroupRestartPolicy.never,
+                               identity=managed_identity)
+        return group
 
-    container_resource_requests = ResourceRequests(memory_in_gb=1, cpu=1.0)
-    container_resource_requirements = ResourceRequirements(requests=container_resource_requests)
+    def deploy_aci(self):
+        group = self._setup_aci_deployment()
 
-    container = Container(name=CONTAINER_GROUP_NAME,
-                          image=container_image_name,
-                          resources=container_resource_requirements,
-                          command=build_porter_cmd_line().split(),
-                          environment_variables=build_cnab_env_variables())
+        credential = AzureIdentityCredentialAdapter()
+        aci_client = ContainerInstanceManagementClient(credential, self._subscription_id)
+        result = aci_client.container_groups.create_or_update(self._resource_group_name, self._container_group_name, group)
 
-    group = ContainerGroup(location=LOCATION,
-                           containers=[container],
-                           image_registry_credentials=image_registry_credentials,
-                           os_type=OperatingSystemTypes.linux,
-                           network_profile=get_network_profile(),
-                           restart_policy=ContainerGroupRestartPolicy.never,
-                           identity=managed_identity)
-    return group
-
-
-def deploy_aci():
-    group = setup_aci_deployment()
-    
-    credential = AzureIdentityCredentialAdapter()
-    aci_client = ContainerInstanceManagementClient(credential, SUBSCRIPTION_ID)
-    result = aci_client.container_groups.create_or_update(RESOURCE_GROUP_NAME, CONTAINER_GROUP_NAME, group)
-
-    while result.done() is False:
-        logging.info('-- Deploying -- ' + CONTAINER_GROUP_NAME + " to " + RESOURCE_GROUP_NAME)
-        time.sleep(1)
+        while result.done() is False:
+            logging.info('-- Deploying -- ' + self._container_group_name + " to " + self._resource_group_name)
+            time.sleep(1)
