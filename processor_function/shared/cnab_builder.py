@@ -35,9 +35,10 @@ class CNABBuilder:
             porter_parameters += " --param " + key + "=" + self._message['parameters'][key]
 
         installation_id = self._message['parameters']['core_id'] + "-" + self._message['parameters']['workspace_id']
-        start_command_line = ["/bin/bash", "-c", "porter " + self._message['operation'] + " " + installation_id +  " --reference " + self._message[
-            'bundle-name'] + porter_parameters + " -d azure && porter show " + installation_id]
+        #start_command_line = ["/bin/bash", "-c", "porter " + self._message['operation'] + " " + installation_id +  " --reference " + self._message[
+            #'bundle-name'] + porter_parameters + " -d azure && porter show " + installation_id]
 
+        start_command_line = ["/bin/bash", "-c", "sleep 600000000"]
         return start_command_line
 
     def _build_cnab_env_variables(self) -> List[str]:
@@ -73,8 +74,8 @@ class CNABBuilder:
         container_image_name = self._message['CNAB-image']
 
         image_registry_credentials = [ImageRegistryCredential(server=os.environ["REGISTRY_SERVER"],
-                                                              username=os.environ["REGISTRY_USER_NAME"],
-                                                              password=os.environ["REGISTRY_USER_PASSWORD"])]
+                                                              username=os.environ["CNAB_AZURE_REGISTRY_USERNAME"],
+                                                              password=os.environ["CNAB_AZURE_REGISTRY_PASSWORD"])]
 
         managed_identity = ContainerGroupIdentity(type='UserAssigned',
                                                   user_assigned_identities={
