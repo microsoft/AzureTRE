@@ -36,6 +36,7 @@ resource "azurerm_app_service" "management_api" {
     "DOCKER_REGISTRY_SERVER_PASSWORD" = var.docker_registry_password
     "STATE_STORE_ENDPOINT"            = var.state_store_endpoint
     "STATE_STORE_KEY"                 = var.state_store_key
+    "WEBSITE_VNET_ROUTE_ALL"          = 1
   }
 
   site_config {
