@@ -4,7 +4,7 @@ resource "azurerm_user_assigned_identity" "id" {
   resource_group_name = var.resource_group_name
   location            = var.location
 
-  name = "id-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+  name = "msi-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
 }
 
 resource "azurerm_role_assignment" "contributor" {
