@@ -8,10 +8,7 @@ from models.domain.resource import Resource
 from resources import strings
 
 
-async def get_workspace_by_workspace_id_from_path(
-        workspace_id: str = Path(..., min_length=1),
-        workspaces_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository))
-) -> Resource:
+async def get_workspace_by_workspace_id_from_path(workspace_id: str = Path(..., min_length=1), workspaces_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository))) -> Resource:
     try:
         return workspaces_repo.get_workspace_by_workspace_id(workspace_id)
     except EntityDoesNotExist:
