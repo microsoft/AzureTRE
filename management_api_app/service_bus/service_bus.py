@@ -3,6 +3,7 @@ from azure.servicebus import ServiceBusMessage
 from azure.servicebus.aio import ServiceBusClient
 from core import config
 
+
 class ServiceBus():
     """
     Implements methods to operate the service bus in the core infrastructure of Azure TRE.
