@@ -1,11 +1,12 @@
 {
     "CNAB-image": "msfttreacr.azurecr.io/microsoft/azuretre/cnab-aci:v1",
-    "bundle-name": "msfttreacr.azurecr.io/microsoft/azuretre/porter-example-exec-outputs-bundle:0.1.0",
+    "bundle-name": "msfttreacr.azurecr.io/microsoft/azuretre/workspaces/tre-workspace-vanilla:v0.1.0",
     "operation": "create",
     "parameters": 
       {"location": "westeurope",
-      "core_id":"msfttre-dev-0959",
-      "workspace_id":"2718",
+      "core_id":"9075",
+      "core_name": "msfttre-dev-9075",
+      "workspace_id":"2",
       "address_space":"10.2.1.0/24"
       }
   }
