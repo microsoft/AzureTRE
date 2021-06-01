@@ -15,4 +15,4 @@ variable "docker_registry_username" {}
 variable "docker_registry_password" {}
 variable "state_store_endpoint" {}
 variable "state_store_key" {}
-
+variable "service_bus_resource_request_queue" {}
