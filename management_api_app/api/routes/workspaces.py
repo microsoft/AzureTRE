@@ -7,7 +7,7 @@ from db.repositories.workspaces import WorkspaceRepository
 from models.domain.resource import Resource
 from models.schemas.resource import ResourcesInList, ResourceInResponse, ResourceInCreate
 from resources import strings
-from service_bus import ServiceBus
+from service_bus.service_bus import ServiceBus
 
 
 router = APIRouter()
