@@ -29,15 +29,15 @@ class CNABBuilder:
         self._container_group_name = ""
         self._location = ""
 
-    def _build_porter_cmd_line(self) -> str:
+    def _build_porter_cmd_line(self) -> List[str]:
         porter_parameters = ""
         for key in self._message['parameters']:
             porter_parameters += " --param " + key + "=" + self._message['parameters'][key]
 
-        start_command_line = "/bin/bash -c porter " + self._message['operation'] + " CNAB --tag " + self._message[
-            'bundle-name'] + porter_parameters + " -d azure && porter show CNAB"
+        installation_id = self._message['parameters']['core_id'] + "-" + self._message['parameters']['workspace_id']
+        start_command_line = ["/bin/bash", "-c", "porter " + self._message['operation'] + " " + installation_id +  " --reference " + self._message[
+            'bundle-name'] + porter_parameters + " -d azure && porter show " + installation_id]
 
-        logging.info("Creating a runner with:" + start_command_line)
         return start_command_line
 
     def _build_cnab_env_variables(self) -> List[str]:
@@ -86,7 +86,7 @@ class CNABBuilder:
         container = Container(name=self._container_group_name,
                               image=container_image_name,
                               resources=container_resource_requirements,
-                              command=self._build_porter_cmd_line().split(),
+                              command=self._build_porter_cmd_line(),
                               environment_variables=self._build_cnab_env_variables())
 
         group = ContainerGroup(location=self._location,
