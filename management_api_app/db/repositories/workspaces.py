@@ -6,10 +6,10 @@ from pydantic import UUID4
 
 from core.config import STATE_STORE_RESOURCES_CONTAINER
 from db.errors import EntityDoesNotExist
+from db.query_builder import QueryBuilder
 from db.repositories.base import BaseRepository
 from models.domain.resource import Resource, ResourceSpec, ResourceType, Status
 from models.schemas.resource import ResourceInCreate
-from resources import strings
 
 
 class WorkspaceRepository(BaseRepository):
@@ -21,17 +21,12 @@ class WorkspaceRepository(BaseRepository):
         return self._container
 
     def get_all_active_workspaces(self) -> List[Resource]:
-        query = f'SELECT * from c ' \
-                f'WHERE c.resourceType = "{strings.RESOURCE_TYPE_WORKSPACE}" ' \
-                f'AND c.isDeleted = false'
+        query = QueryBuilder().select_active_resources(ResourceType.Workspace).build()
         workspaces = list(self.container.query_items(query=query, enable_cross_partition_query=True))
         return workspaces
 
     def get_workspace_by_workspace_id(self, workspace_id: UUID4) -> Resource:
-        query = f'SELECT * from c ' \
-                f'WHERE c.resourceType = "{strings.RESOURCE_TYPE_WORKSPACE}" ' \
-                f'AND c.isDeleted = false ' \
-                f'AND c.id = "{workspace_id}"'
+        query = QueryBuilder().select_active_resources(ResourceType.Workspace).with_id(workspace_id).build()
         workspaces = list(self.container.query_items(query=query, enable_cross_partition_query=True))
 
         if workspaces:
