@@ -36,13 +36,13 @@ build-cnab-image:
 
 push-api-image:
 	echo -e "\n\e[34m»»» 🧩 \e[96mPushing Images\e[0m..." \
-	. ./devops/scripts/check_dependencies.sh \
+	&& . ./devops/scripts/check_dependencies.sh \
 	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
 	&& ./devops/scripts/push_images.sh api
 
 push-cnab-image:
 	echo -e "\n\e[34m»»» 🧩 \e[96mPushing Images\e[0m..." \
-	. ./devops/scripts/check_dependencies.sh \
+	&& . ./devops/scripts/check_dependencies.sh \
 	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
 	&& ./devops/scripts/push_images.sh cnab
 
@@ -55,6 +55,7 @@ tre-deploy:
 
 letsencrypt:
 	echo -e "\n\e[34m»»» 🧩 \e[96mRequesting LetsEncrypt SSL certificate\e[0m..." \
+	&& . ./devops/scripts/check_dependencies.sh nodocker,certbot \
 	&& chmod 755 ./devops/scripts/letsencrypt.sh ./devops/scripts/auth-hook.sh ./devops/scripts/cleanup-hook.sh \
 	&& . ./devops/scripts/get-coreenv.sh \
 	&& ./devops/scripts/letsencrypt.sh

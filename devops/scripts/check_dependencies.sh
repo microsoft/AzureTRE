@@ -14,11 +14,16 @@ if [ $? -ne 0 ]; then
 fi
 
 docker version > /dev/null 2>&1
-if [ $? -ne 0 ] && [ "$1" != "nodocker" ]; then
+if [ $? -ne 0 ] && [[ "$1" != *"nodocker"* ]]; then
   echo -e "\e[31m»»» ⚠️ Docker is not installed! 😥 Please go to https://docs.docker.com/engine/install/ to set it up"
   exit
 fi
 
+/opt/certbot/bin/certbot --version > /dev/null 2>&1
+if [ $? -ne 0 ] && [[ "$1" == *"certbot"* ]]; then
+  echo -e "\e[31m»»» ⚠️ Certbot is not installed! 😥 Please go to https://certbot.eff.org/lets-encrypt/pip-other to set it up"
+  exit
+fi
 
 export SUB_NAME=$(az account show --query name -o tsv)
 export SUB_ID=$(az account show --query id -o tsv)
