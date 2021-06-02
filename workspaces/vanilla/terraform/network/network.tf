@@ -15,6 +15,24 @@ resource "azurerm_subnet" "services" {
   enforce_private_link_endpoint_network_policies = true
 }
 
+resource "azurerm_subnet" "webapps" {
+  name                 = "WebAppsSubnet"
+  virtual_network_name = azurerm_virtual_network.ws.name
+  resource_group_name  = var.resource_group_name
+  address_prefixes     = [local.webapps_subnet_address_prefix]
+  # notice that private endpoints do not adhere to NSG rules
+  enforce_private_link_endpoint_network_policies = true
+
+  delegation {
+    name = "delegation"
+
+    service_delegation {
+      name    = "Microsoft.Web/serverFarms"
+      actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
+    }
+  }
+}
+
 data "azurerm_virtual_network" "core" {
   name                = var.core_vnet
   resource_group_name = var.core_resource_group_name
