@@ -24,12 +24,12 @@ resource "azurerm_app_service" "management_api" {
   resource_group_name = var.resource_group_name
   location            = var.location
   app_service_plan_id = azurerm_app_service_plan.core.id
-  https_only = true
+  https_only          = true
 
   app_settings = {
-    "APPINSIGHTS_INSTRUMENTATIONKEY"        = azurerm_application_insights.core.instrumentation_key
-    "WEBSITES_PORT"                         = "8000"
-    "WEBSITE_VNET_ROUTE_ALL"                = 1
+    "APPINSIGHTS_INSTRUMENTATIONKEY" = azurerm_application_insights.core.instrumentation_key
+    "WEBSITES_PORT"                  = "8000"
+    "WEBSITE_VNET_ROUTE_ALL"         = 1
 
     "DOCKER_REGISTRY_SERVER_USERNAME"       = var.docker_registry_username
     "DOCKER_REGISTRY_SERVER_URL"            = "https://${var.docker_registry_server}"
@@ -38,6 +38,8 @@ resource "azurerm_app_service" "management_api" {
     "STATE_STORE_KEY"                       = var.state_store_key
     "SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE" = "sb-${var.resource_name_prefix}-${var.environment}-${var.tre_id}.servicebus.windows.net"
     "SERVICE_BUS_RESOURCE_REQUEST_QUEUE"    = var.service_bus_resource_request_queue
+    CORE_ID                                 = "${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+    RESOURCE_LOCATION                       = var.location
   }
 
   site_config {
