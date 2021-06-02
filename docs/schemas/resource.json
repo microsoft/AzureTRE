@@ -42,7 +42,7 @@
                 "Deleted"
             ]
         },
-        "markedForDeletion": {
+        "isDeleted": {
             "type": "boolean",
             "description": "Is the resource marked for deletion?"
         },

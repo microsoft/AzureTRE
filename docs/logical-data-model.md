@@ -13,7 +13,7 @@
 | `description` | The description of the resource. Rendered in the UI. |
 | `resourceType` | Resource type. Workspace or Service. |
 | `status` | Resource status. |
-| `markedForDeletion` | Is the resource marked for deletion. |
+| `isDeleted` | Is the resource marked for deletion. |
 | `properties` | Resource properties list.|
 | `etag` | The resource etag. |
 
