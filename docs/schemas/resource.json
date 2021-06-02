@@ -12,7 +12,11 @@
             "description": "Parent resource id.",
             "format": "uuid"
         },
-        "version": {
+        "specificationVersion": {
+            "type": "string",
+            "description": "Resource specification version."
+        },
+        "ResourceVersion": {
             "type": "string",
             "description": "Resource version."
         },
@@ -59,12 +63,13 @@
     "required": [
         "id",
         "parentId",
-        "version",
+        "specificationVersion",
+        "resourceVersion",
         "title",
         "description",
         "resourceType",
         "status",
-        "markedForDeletion",
+        "isDeleted",
         "properties",
         "etag"
     ],

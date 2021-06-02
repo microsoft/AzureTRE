@@ -8,7 +8,8 @@
 | --- | ----------------- |
 | `id` | A unique resource id. |
 | `parentId` | The parent resource id. |
-| `version` | Resource version. |
+| `specificationVersion` | Resource specification version. |
+| `resourceVersion` | Resource version. |
 | `title` | The name (title) of the resource. Rendered in the UI. |
 | `description` | The description of the resource. Rendered in the UI. |
 | `resourceType` | Resource type. Workspace or Service. |
