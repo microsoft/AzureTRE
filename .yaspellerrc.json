@@ -15,7 +15,8 @@
         "**/*.py",
         "**/*.yml",
         "**/*.yaml",
-        "**/*.sh"
+        "**/*.sh",
+        "**/.env.tmpl"
     ],
     "fileExtensions": [
         ".md"
