@@ -1,5 +1,4 @@
 from enum import Enum
-from typing import List
 
 from models.domain.azuretremodel import AzureTREModel
 from resources import strings
@@ -18,20 +17,12 @@ class ResourceType(str, Enum):
     Service = strings.RESOURCE_TYPE_SERVICE
 
 
-class Parameter(AzureTREModel):
-    name: str
-    value: str
-
-
-class ResourceSpec(AzureTREModel):
-    name: str
-    version: str
-    parameters: List[Parameter]
-
-
 class Resource(AzureTREModel):
     id: str
-    resourceSpec: ResourceSpec
-    resourceType: ResourceType
+    displayName: str
+    description: str
+    resourceSpecName: str
+    resourceSpecVersion: str
+    resourceSpecParameters: dict
     status: Status = Status.NotDeployed
     isDeleted: bool = False

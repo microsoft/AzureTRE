@@ -8,7 +8,7 @@ from core import config
 from db.errors import EntityDoesNotExist
 from db.query_builder import QueryBuilder
 from db.repositories.base import BaseRepository
-from models.domain.resource import Parameter, ResourceSpec, ResourceType
+from models.domain.resource import ResourceType
 from models.domain.workspace import Workspace
 from models.schemas.workspace import WorkspaceInCreate
 
@@ -36,19 +36,21 @@ class WorkspaceRepository(BaseRepository):
             raise EntityDoesNotExist
 
     def create_workspace(self, workspace_create: WorkspaceInCreate) -> Workspace:
+        resource_spec_parameters = {
+            "location": config.RESOURCE_LOCATION,
+            "workspace_id": "0001",         # TODO: Calculate this value - Issue #166
+            "core_id": config.CORE_ID,
+            "address_space": "10.2.1.0/24"  # TODO: Calculate this value - Issue #52
+        }
+
         workspace = Workspace(
             id=str(uuid.uuid4()),
-            friendlyName=workspace_create.friendlyName,
+            displayName=workspace_create.displayName,
             description=workspace_create.description,
-            resourceSpec=ResourceSpec(
-                name=workspace_create.workspaceType,
-                version="0.1.0",    # TODO: Calculate latest - Issue #167
-                parameters=[
-                    Parameter(name="location", value=config.RESOURCE_LOCATION),
-                    Parameter(name="workspace_id", value="0001"),   # TODO: Calculate this value - Issue #166
-                    Parameter(name="core_id", value=config.CORE_ID),
-                    Parameter(name="address_space", value="10.2.1.0/24"),   # TODO: Calculate this value - Issue #52
-                ]),
+            resourceSpecName=workspace_create.workspaceType,
+            resourceSpecVersion="0.1.0",    # TODO: Calculate latest - Issue #167
+            resourceSpecParameters=resource_spec_parameters
         )
+
         self.container.create_item(body=workspace.dict())
         return workspace

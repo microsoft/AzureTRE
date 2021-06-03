@@ -7,33 +7,19 @@ from models.domain.workspace import Workspace
 def get_sample_workspace(workspace_id: str, spec_workspace_id: str = "0001") -> dict:
     return {
         "id": workspace_id,
-        "resourceSpec": {
-            "name": "tre-workspace-vanilla",
-            "version": "0.1.0",
-            "parameters": [
-                {
-                    "name": "location",
-                    "value": "westeurope"
-                },
-                {
-                    "name": "workspace_id",
-                    "value": spec_workspace_id
-                },
-                {
-                    "name": "core_id",
-                    "value": "mytre-dev-1234"
-                },
-                {
-                    "name": "address_space",
-                    "value": "10.2.1.0/24"
-                }
-            ]
+        "displayName": "my workspace",
+        "description": "some description",
+        "resourceSpecName": "tre-workspace-vanilla",
+        "resourceSpecVersion": "0.1.0",
+        "resourceSpecParameters": {
+            "location": "westeurope",
+            "workspace_id": spec_workspace_id,
+            "core_id": "mytre-dev-1234",
+            "address_space": "10.2.1.0/24"
         },
-        "resourceType": "workspace",
         "status": "not_deployed",
         "isDeleted": False,
-        "friendlyName": "my workspace",
-        "description": "some description",
+        "resourceType": "workspace",
         "workspaceURL": ""
     }
 
@@ -64,16 +50,18 @@ class WorkspacesInList(BaseModel):
 
 
 class WorkspaceInCreate(BaseModel):
-    friendlyName: str
+    displayName: str
     workspaceType: str
     description: str
+    parameters: dict = {}
 
     class Config:
         schema_extra = {
             "example": {
-                "friendlyName": "My workspace",
+                "displayName": "My workspace",
                 "description": "workspace for team X",
                 "workspaceType": "tre-workspace-vanilla",
+                "parameters": {}
             }
         }
 
