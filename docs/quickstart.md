@@ -88,8 +88,7 @@ Build and push the docker images required by the Azure TRE and publish them to t
 Copy [/templates/core/terraform/.env.sample](../templates/core/terraform/.env.sample) to `/templates/core/terraform/.env` and set values for all variables:
 
 - `TF_VAR_address_space` - Address space for the Azure TRE core virtual network
-- `TF_VAR_tre_id` - Globally unique identifier, `tre_id` can be found in the resource names of the Azure TRE instance; for example a `tre_id` of `mytre-dev-3142` will result in a resource group name for Azure TRE instance of `rg-mytre-dev-3142`. This must me less than 12 characters. 
- 
+- `TF_VAR_tre_id` - Globally unique identifier, `tre_id` can be found in the resource names of the Azure TRE instance; for example a `tre_id` of `mytre-dev-3142` will result in a resource group name for Azure TRE instance of `rg-mytre-dev-3142`. This must me less than 12 characters.
 
 ### Deploy
 
