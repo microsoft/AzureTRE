@@ -48,9 +48,9 @@ Copy [/devops/terraform/.env.sample](../devops/terraform/.env.sample) to `/devop
 - `TF_VAR_state_storage` - The name of the storage account to hold Terraform state.
 - `TF_VAR_mgmt_res_group` - The shared resource group for all management resources, including the storage account.
 - `TF_VAR_state_container` - Name of the blob container to hold Terraform state (default: `tfstate`).
-- `TF_VAR_resource_name_prefix` - A prefix added to all resources, pick your project name or other prefix to give the resources unique names, for example `cityhospitaltre`.
 - `TF_VAR_location` - Azure region to deploy all resources into.
 - `TF_VAR_image_tag` - Default tag for docker images that will be pushed to the container registry and deployed with the Azure TRE
+- `TF_VAR_acr_name` - Globally unique name for the ACR that will be create to store deployment images.
 
 ### Bootstrap of back-end state
 
@@ -87,8 +87,9 @@ Build and push the docker images required by the Azure TRE and publish them to t
 
 Copy [/templates/core/terraform/.env.sample](../templates/core/terraform/.env.sample) to `/templates/core/terraform/.env` and set values for all variables:
 
-- `TF_VAR_environment` - name of the environment, e.g. dev, test or live
-- `TF_VAR_address_space` -Address space for the Azure TRE core virtual network
+- `TF_VAR_address_space` - Address space for the Azure TRE core virtual network
+- `TF_VAR_tre_id` - Globally unique identifier, `tre_id` can be found in the resource names of the Azure TRE instance; for example a `tre_id` of `mytre-dev-3142` will result in a resource group name for Azure TRE instance of `rg-mytre-dev-3142`. This must me less than 12 characters. 
+ 
 
 ### Deploy
 

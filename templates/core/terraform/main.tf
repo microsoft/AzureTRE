@@ -14,17 +14,16 @@ provider "azurerm" {
 
 resource "azurerm_resource_group" "core" {
   location = var.location
-  name     = "rg-${var.resource_name_prefix}-${var.environment}-${local.tre_id}"
+  name     = "rg-${var.tre_id}"
   tags = {
     project     = "Azure Trusted Research Environment"
-    environment = var.environment
-    core_id     = "${var.resource_name_prefix}-${var.environment}-${local.tre_id}"
+    tre_id     = "${var.tre_id}"
     source      = "https://github.com/microsoft/AzureTRE/"
   }
 }
 
 resource "azurerm_log_analytics_workspace" "tre" {
-  name                = "log-${var.resource_name_prefix}-${var.environment}-${local.tre_id}"
+  name                = "log-${var.tre_id}"
   resource_group_name = azurerm_resource_group.core.name
   location            = var.location
   retention_in_days   = 30
@@ -33,9 +32,7 @@ resource "azurerm_log_analytics_workspace" "tre" {
 
 module "network" {
   source               = "./network"
-  resource_name_prefix = var.resource_name_prefix
-  environment          = var.environment
-  tre_id               = local.tre_id
+  tre_id               = var.tre_id
   location             = var.location
   resource_group_name  = azurerm_resource_group.core.name
   address_space        = var.address_space
@@ -43,9 +40,7 @@ module "network" {
 
 module "storage" {
   source               = "./storage"
-  resource_name_prefix = var.resource_name_prefix
-  environment          = var.environment
-  tre_id               = local.tre_id
+  tre_id               = var.tre_id
   location             = var.location
   resource_group_name  = azurerm_resource_group.core.name
   shared_subnet        = module.network.shared
@@ -54,9 +49,7 @@ module "storage" {
 
 module "appgateway" {
   source               = "./appgateway"
-  resource_name_prefix = var.resource_name_prefix
-  environment          = var.environment
-  tre_id               = local.tre_id
+  tre_id               = var.tre_id
   location             = var.location
   resource_group_name  = azurerm_resource_group.core.name
   app_gw_subnet        = module.network.app_gw
@@ -67,9 +60,7 @@ module "appgateway" {
 
 module "api-webapp" {
   source                             = "./api-webapp"
-  resource_name_prefix               = var.resource_name_prefix
-  environment                        = var.environment
-  tre_id                             = local.tre_id
+  tre_id                             = var.tre_id
   location                           = var.location
   resource_group_name                = azurerm_resource_group.core.name
   web_app_subnet                     = module.network.web_app
@@ -89,18 +80,14 @@ module "api-webapp" {
 
 module "identity" {
   source               = "./user-assigned-identity"
-  resource_name_prefix = var.resource_name_prefix
-  environment          = var.environment
-  tre_id               = local.tre_id
+  tre_id               = var.tre_id
   location             = var.location
   resource_group_name  = azurerm_resource_group.core.name
 }
 
 module "processor_function" {
   source                       = "./processor_function"
-  resource_name_prefix         = var.resource_name_prefix
-  environment                  = var.environment
-  tre_id                       = local.tre_id
+  tre_id                       = var.tre_id
   location                     = var.location
   resource_group_name          = azurerm_resource_group.core.name
   app_service_plan_id          = module.api-webapp.app_service_plan_id
@@ -119,9 +106,7 @@ module "processor_function" {
 
 module "servicebus" {
   source               = "./servicebus"
-  resource_name_prefix = var.resource_name_prefix
-  environment          = var.environment
-  tre_id               = local.tre_id
+  tre_id               = var.tre_id
   location             = var.location
   resource_group_name  = azurerm_resource_group.core.name
   shared_subnet        = module.network.shared
@@ -131,9 +116,7 @@ module "servicebus" {
 
 module "keyvault" {
   source               = "./keyvault"
-  resource_name_prefix = var.resource_name_prefix
-  environment          = var.environment
-  tre_id               = local.tre_id
+  tre_id               = var.tre_id
   location             = var.location
   resource_group_name  = azurerm_resource_group.core.name
   shared_subnet        = module.network.shared
@@ -143,9 +126,7 @@ module "keyvault" {
 
 module "firewall" {
   source               = "./firewall"
-  resource_name_prefix = var.resource_name_prefix
-  environment          = var.environment
-  tre_id               = local.tre_id
+  tre_id               = var.tre_id
   location             = var.location
   resource_group_name  = azurerm_resource_group.core.name
   firewall_subnet      = module.network.azure_firewall
@@ -154,9 +135,7 @@ module "firewall" {
 
 module "routetable" {
   source                      = "./routetable"
-  resource_name_prefix        = var.resource_name_prefix
-  environment                 = var.environment
-  tre_id                      = local.tre_id
+  tre_id                      = var.tre_id
   location                    = var.location
   resource_group_name         = azurerm_resource_group.core.name
   shared_subnet               = module.network.shared
@@ -165,9 +144,7 @@ module "routetable" {
 
 module "acr" {
   source               = "./acr"
-  resource_name_prefix = var.resource_name_prefix
-  environment          = var.environment
-  tre_id               = local.tre_id
+  tre_id               = var.tre_id
   location             = var.location
   resource_group_name  = azurerm_resource_group.core.name
   core_vnet            = module.network.core
@@ -176,9 +153,7 @@ module "acr" {
 
 module "state-store" {
   source               = "./state-store"
-  resource_name_prefix = var.resource_name_prefix
-  environment          = var.environment
-  tre_id               = local.tre_id
+  tre_id               = var.tre_id
   location             = var.location
   resource_group_name  = azurerm_resource_group.core.name
   shared_subnet        = module.network.shared
@@ -187,9 +162,7 @@ module "state-store" {
 
 module "bastion" {
   source               = "./bastion"
-  resource_name_prefix = var.resource_name_prefix
-  environment          = var.environment
-  tre_id               = local.tre_id
+  tre_id               = var.tre_id
   location             = var.location
   resource_group_name  = azurerm_resource_group.core.name
   bastion_subnet        = module.network.bastion

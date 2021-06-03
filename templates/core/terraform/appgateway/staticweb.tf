@@ -14,7 +14,7 @@ resource "azurerm_storage_account" "staticweb" {
       error_404_document = "404.html"
     }
     tags = {
-        environment = var.environment
+        tre_id = var.tre_id
     }
 }
 

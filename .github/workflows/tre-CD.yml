@@ -10,14 +10,13 @@ jobs:
     runs-on: ubuntu-latest
     environment: Dev
     env:
-      TF_VAR_environment: "dev"
       TF_VAR_address_space: "10.0.0.0/16"
       TF_VAR_state_storage: "stgmsfttretfstate"
       TF_VAR_mgmt_res_group: "rg-msft-tre-tfstate"
       TF_VAR_state_container: "tfstate"
-      TF_VAR_resource_name_prefix: "msfttre"
       TF_VAR_location: "westeurope"
       TF_VAR_image_tag: "v1"
+      TF_VAR_acr_name: "msfttreacr"
 
     steps:
     - uses: actions/checkout@v2
@@ -41,13 +40,12 @@ jobs:
           TF_VAR_mgmt_res_group=${{ env.TF_VAR_mgmt_res_group }}
           TF_VAR_state_container=${{ env.TF_VAR_state_container }}
           TF_VAR_location=${{ env.TF_VAR_location }}
-          TF_VAR_resource_name_prefix=${{ env.TF_VAR_resource_name_prefix }}
           TF_VAR_image_tag=${{ env.TF_VAR_image_tag }}
+          TF_VAR_acr_name=${{ env.TF_VAR_acr_name }}
           EOF
 
           env_file="templates/core/terraform/.env"
           cat <<EOF > $env_file
-          TF_VAR_environment=${{ env.TF_VAR_environment }}
           TF_VAR_address_space=${{ env.TF_VAR_address_space }}
           EOF
 

@@ -12,6 +12,7 @@ resource "azurerm_resource_group" "mgmt" {
   location = var.location
 }
 
+
 # Holds Terraform shared state (already exists, created by bootstrap.sh)
 resource "azurerm_storage_account" "state_storage" {
   name                     = var.state_storage
@@ -27,7 +28,7 @@ resource "azurerm_storage_account" "state_storage" {
 # Shared container registry
 #
 resource "azurerm_container_registry" "shared_acr" {
-  name                = "${var.resource_name_prefix}acr"
+  name                = var.acr_name
   resource_group_name = azurerm_resource_group.mgmt.name
   location            = azurerm_resource_group.mgmt.location
   sku                 = var.acr_sku
