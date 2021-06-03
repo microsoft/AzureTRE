@@ -1,21 +1,32 @@
+import json
 from azure.identity.aio import DefaultAzureCredential
 from azure.servicebus import ServiceBusMessage
 from azure.servicebus.aio import ServiceBusClient
+
 from core import config
+from models.domain.resource import Resource
 
 
-class ServiceBus():
+class ServiceBus:
     """
     Implements methods to operate the service bus in the core infrastructure of Azure TRE.
     """
+    @staticmethod
+    def _create_request_message(resource: Resource) -> str:
+        return json.dumps({
+            "action": "install",
+            "name": resource.resourceSpecName,
+            "version": resource.resourceSpecVersion,
+            "parameters": resource.resourceSpecParameters
+        })
 
-    async def send_resource_request_message(self, resource_request_message: str):
+    async def send_resource_request_message(self, resource: Resource):
         """
-        Sends the given message to the resource request queue.
+        Sends a resource request message for the resource to the service bus
+        :param resource: resource to deploy
+        """
+        resource_request_message = self._create_request_message(resource)
 
-        :param resource_request_message: The message to send.
-        :type resource_request_message: str
-        """
         credential = DefaultAzureCredential()
         service_bus_client = ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential)
 
