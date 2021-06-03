@@ -4,7 +4,7 @@ resource "azurerm_public_ip" "appgwpip" {
   location              = var.location
   allocation_method     = "Static"
   sku                   = "Standard"
-  domain_name_label     = "${var.tre_id}"
+  domain_name_label     = var.tre_id
 }
 
 resource "azurerm_user_assigned_identity" "agw_id" {
