@@ -1,5 +1,5 @@
 from typing import List
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from models.domain.workspace import Workspace
 
@@ -50,10 +50,10 @@ class WorkspacesInList(BaseModel):
 
 
 class WorkspaceInCreate(BaseModel):
-    displayName: str
-    workspaceType: str
-    description: str
-    parameters: dict = {}
+    displayName: str = Field(title="Friendly name for workspace")
+    workspaceType: str = Field(title="Workspace type", description="Bundle name")
+    description: str = Field(title="Workspace description")
+    parameters: dict = Field({}, title="Workspace parameters", description="Values for the parameters required by the workspace resource specification")
 
     class Config:
         schema_extra = {
