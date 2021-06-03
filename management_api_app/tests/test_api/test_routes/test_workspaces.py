@@ -6,6 +6,7 @@ from httpx import AsyncClient
 from starlette import status
 
 from db.errors import EntityDoesNotExist
+from models.schemas.workspace import get_sample_workspace
 from resources import strings
 
 
@@ -23,46 +24,7 @@ async def test_workspaces_get_empty_list_when_no_resources_exist(get_workspaces_
 
 @patch("api.routes.workspaces.WorkspaceRepository.get_all_active_workspaces")
 async def test_workspaces_get_list_returns_correct_data_when_resources_exist(get_workspaces_mock, app: FastAPI, client: AsyncClient) -> None:
-    workspaces = [
-        {
-            "id": "933ad738-7265-4b5f-9eae-a1a62928772e",
-            "resourceSpec": {
-                "name": "My workspace",
-                "version": "0.1.0",
-                "parameters": [
-                    {"name": "location", "value": "westeurope"},
-                    {"name": "workspace_id", "value": "0001"},
-                    {"name": "core_id", "value": "mytre-dev-1234"},
-                    {"name": "address_space", "value": "10.2.1.0/24"}
-                ]
-            },
-            "resourceType": "workspace",
-            "status": "not_deployed",
-            "isDeleted": False,
-            "friendlyName": "my friendly name",
-            "description": "some description",
-            "workspaceURL": ""
-        },
-        {
-            "id": "2fdc9fba-726e-4db6-a1b8-9018a2165748",
-            "resourceSpec": {
-                "name": "My workspace",
-                "version": "0.1.0",
-                "parameters": [
-                    {"name": "location", "value": "westeurope"},
-                    {"name": "workspace_id", "value": "0002"},
-                    {"name": "core_id", "value": "mytre-dev-3142"},
-                    {"name": "address_space", "value": "10.2.1.0/24"}
-                ]
-            },
-            "resourceType": "workspace",
-            "status": "not_deployed",
-            "isDeleted": False,
-            "friendlyName": "my friendly name",
-            "description": "some description",
-            "workspaceURL": ""
-        }
-    ]
+    workspaces = [get_sample_workspace("2fdc9fba-726e-4db6-a1b8-9018a2165748"), get_sample_workspace("000000d3-82da-4bfc-b6e9-9a7853ef753e")]
     get_workspaces_mock.return_value = workspaces
 
     response = await client.get(app.url_path_for(strings.API_GET_ALL_WORKSPACES))
@@ -91,27 +53,10 @@ async def test_workspaces_id_get_returns_422_if_workspace_id_is_not_a_uuid(get_w
 
 @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
 async def test_workspaces_id_get_returns_workspace_if_found(get_workspace_mock, app: FastAPI, client: AsyncClient):
-    sample_workspace = {
-        "id": "933ad738-7265-4b5f-9eae-a1a62928772e",
-        "resourceSpec": {
-            "name": "My workspace",
-            "version": "0.1.0",
-            "parameters": [
-                {"name": "location", "value": "westeurope"},
-                {"name": "workspace_id", "value": "0001"},
-                {"name": "core_id", "value": "mytre-dev-1234"},
-                {"name": "address_space", "value": "10.2.1.0/24"}
-            ]
-        },
-        "resourceType": "workspace",
-        "status": "not_deployed",
-        "isDeleted": False,
-        "friendlyName": "hello",
-        "description": "some description",
-        "workspaceURL": ""
-    }
+    workspace_id = "933ad738-7265-4b5f-9eae-a1a62928772e"
+    sample_workspace = get_sample_workspace(workspace_id=workspace_id)
     get_workspace_mock.return_value = sample_workspace
 
-    response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id="afa000d3-82da-4bfc-b6e9-9a7853ef753e"))
+    response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id=workspace_id))
     actual_resource = response.json()["workspace"]
     assert actual_resource["id"] == sample_workspace["id"]
