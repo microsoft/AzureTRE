@@ -9,7 +9,6 @@
 			"NODE_VERSION": "lts/*"
 		}
 	},
-
 	// Set *default* container specific settings.json values on container create.
 	"settings": {
 		"terminal.integrated.defaultProfile.linux": "/bin/bash",
@@ -26,12 +25,17 @@
 		"python.linting.pydocstylePath": "/usr/local/py-utils/bin/pydocstyle",
 		"python.linting.pylintPath": "/usr/local/py-utils/bin/pylint"
 	},
-
 	// Add the IDs of extensions you want installed when the container is created.
-	"extensions": ["ms-python.python", "hashicorp.terraform", "github.vscode-pull-request-github"],
+	"extensions": [
+		"ms-python.python",
+		"hashicorp.terraform",
+		"github.vscode-pull-request-github",
+		"ms-kubernetes-tools.porter-vscode"
+	],
 	"forwardPorts": [],
 	"runArgs": [
-		"--name", "tre"
+		"--name",
+		"tre"
 	],
 	// If .bash_history file doesn't exist, docker will create it as root and the vscode user won't have permission, so we need to create it first.
 	"initializeCommand": "touch .bash_history",

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0.0-DRAFT+TODO",
+  "name": "vanilla",
+  "created": "2021-06-03T11:54:54.0225968Z",
+  "modified": "2021-06-03T11:54:54.0225968Z",
+  "parameters": [
+    {
+      "name": "address_space",
+      "source": {
+        "env": "address_space"
+      }
+    },
+    {
+      "name": "tre_id",
+      "source": {
+        "env": "tre_id"
+      }
+    },
+    {
+      "name": "location",
+      "source": {
+        "env": "location"
+      }
+    },
+    {
+      "name": "workspace_id",
+      "source": {
+        "env": "workspace_id"
+      }
+    }
+  ]
+}
