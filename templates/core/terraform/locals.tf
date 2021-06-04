@@ -7,7 +7,3 @@ resource "random_string" "unique_id" {
   length      = 4
   min_numeric = 4
 }
-
-locals {
-  tre_id                                = random_string.unique_id.result
-}

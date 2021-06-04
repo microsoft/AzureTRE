@@ -1,11 +1,10 @@
-variable "resource_name_prefix" {
+variable "tre_id" {
   type        = string
-  description = "Resource name prefix"
-}
-
-variable "environment" {
-  type        = string
-  description = "The stage of the development lifecycle for the workload that the resource supports. Examples: prod, dev, qa, stage, test"
+  description = "Unique identifier for the TRE, such as projectx-dev-1234"
+  validation {
+    condition     = length(var.tre_id) < 12
+    error_message = "The tre_id value must be < 12 chars."
+  }
 }
 
 variable "location" {

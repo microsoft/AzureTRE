@@ -1,7 +1,7 @@
 data "azurerm_subscription" "current" {}
 
 resource "azurerm_function_app" "procesorfunction" {
-  name                       = "processor-func-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+  name                       = "processor-func-${var.tre_id}"
   location                   = var.location
   resource_group_name        = var.resource_group_name
   app_service_plan_id        = var.app_service_plan_id

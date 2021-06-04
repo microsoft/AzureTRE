@@ -1,5 +1,5 @@
 resource "azurerm_route_table" "rt" {
-  name                          = "rt-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+  name                          = "rt-${var.tre_id}"
   resource_group_name           = var.resource_group_name
   location                      = var.location
   disable_bgp_route_propagation = false
