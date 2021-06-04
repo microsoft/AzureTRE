@@ -43,11 +43,9 @@ RUN apt-get install -y python3 python3-venv libaugeas0 \
     && /opt/certbot/bin/pip install certbot
 
 # Install Porter
-RUN export PORTER_HOME=/home/vscode/.porter && curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && chown -R vscode /home/vscode/.porter/
+RUN export PORTER_HOME=/home/vscode/.porter && curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && /home/vscode/.porter/porter mixin install docker  && chown -R vscode /home/vscode/.porter/
 
 ENV PATH /home/vscode/.porter/:$PATH
-
-RUN /home/vscode/.porter/porter mixin install docker 
 
 # Install requirements
 COPY requirements.txt /tmp/pip-tmp/

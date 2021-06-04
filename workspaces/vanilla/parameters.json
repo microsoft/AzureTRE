@@ -7,25 +7,25 @@
     {
       "name": "address_space",
       "source": {
-        "env": "address_space"
+        "env": "ADDRESS_SPACE"
       }
     },
     {
       "name": "tre_id",
       "source": {
-        "env": "tre_id"
+        "env": "TRE_ID"
       }
     },
     {
       "name": "location",
       "source": {
-        "env": "location"
+        "env": "LOCATION"
       }
     },
     {
       "name": "workspace_id",
       "source": {
-        "env": "workspace_id"
+        "env": "WORKSPACE_ID"
       }
     }
   ]
