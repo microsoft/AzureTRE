@@ -6,25 +6,15 @@ variable "azure_subscription_id" {
   type = string
 }
 
-variable "azure_service_principal_client_id" {
+variable "azure_client_id" {
   type = string
 }
 
-variable "azure_service_principal_password" {
+variable "azure_client_secret" {
   type = string
 }
 
-variable "resource_name_prefix" {
-  type        = string
-  description = "Resource name prefix"
-}
-
-variable "environment" {
-  type        = string
-  description = "The stage of the development lifecycle for the workload that the resource supports. Examples: prod, dev, qa, stage, test"
-}
-
-variable "core_id" {
+variable "tre_id" {
   type        = string
   description = "Unique TRE ID"
 }

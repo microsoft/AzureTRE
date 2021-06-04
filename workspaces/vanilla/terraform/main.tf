@@ -22,17 +22,18 @@ resource "azurerm_resource_group" "ws" {
   name     = "rg-${local.workspace_resource_name_suffix}"
   tags = {
     project = "Azure Trusted Research Environment"
-    tre_id = var.tre_id
+    tre_id  = var.tre_id
     source  = "https://github.com/microsoft/AzureTRE/"
   }
 }
 
 module "network" {
-  source                         = "./network"
-  address_space                  = var.address_space
-  core_resource_name_suffix      = local.core_resource_name_suffix
-  workspace_resource_name_suffix = local.workspace_resource_name_suffix
-  depends_on = [
-    azurerm_resource_group.ws
-  ]
+  source                   = "./network"
+  workspace_id             = var.workspace_id
+  tre_id                   = var.tre_id
+  location                 = var.location
+  resource_group_name      = azurerm_resource_group.ws.name
+  address_space            = var.address_space
+  core_vnet                = local.core_vnet
+  core_resource_group_name = local.core_resource_group_name
 }

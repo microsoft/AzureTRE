@@ -68,7 +68,7 @@ tre-destroy:
 	&& cd ./templates/core/terraform/ && ./destroy.sh
 
 
-publish-vanilla-workspace:
+vanilla-workspace-porter-publish:
 	echo -e "\n\e[34m»»» 🧩 \e[96mPublishing vanilla workspace bundle\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
