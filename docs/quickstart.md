@@ -84,7 +84,7 @@ Build and push the docker images required by the Azure TRE and publish them to t
 make build-api-image
 make build-cnab-image
 make push-api-image
-push-cnab-image
+make push-cnab-image
 ```
 
 ## Deploy an Azure TRE instance
