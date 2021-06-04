@@ -7,10 +7,10 @@ data "azurerm_firewall" "fw" {
 
 
 resource "azurerm_firewall_network_rule_collection" "networkrulecollection" {
-  name                = "networkrulecollection-${local.service_resource_name_suffix}"
+  name                = "nrc-${local.service_resource_name_suffix}"
   azure_firewall_name = data.azurerm_firewall.fw.name
   resource_group_name = data.azurerm_firewall.fw.resource_group_name
-  priority            = tonumber("1${local.service_id}")
+  priority            = 1001
   action              = "Allow"
 
   rule {
@@ -32,10 +32,10 @@ resource "azurerm_firewall_network_rule_collection" "networkrulecollection" {
 }
 
 resource "azurerm_firewall_application_rule_collection" "apprulecollection" {
-  name                = "apprulecollection-${local.service_resource_name_suffix}"
+  name                = "arc-${local.service_resource_name_suffix}"
   azure_firewall_name = data.azurerm_firewall.fw.name
   resource_group_name = data.azurerm_firewall.fw.resource_group_name
-  priority            = tonumber("2${local.service_id}")
+  priority            = 1002
   action              = "Allow"
 
   rule {
@@ -55,4 +55,8 @@ resource "azurerm_firewall_application_rule_collection" "apprulecollection" {
       type = "Http"
     }
   }
+
+  depends_on = [
+    azurerm_firewall_network_rule_collection.networkrulecollection
+  ]
 }
