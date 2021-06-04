@@ -19,9 +19,9 @@
 
 ### Either install using the makefile
 
-3. Run `make vanilla-workspace-porter-build`
+3. Run `make workspaces-vanilla-porter-build`
 
-4. Run `make vanilla-workspace-porter-install`
+4. Run `make workspaces-vanilla-porter-install`
 
 ### Or install using porter
 
@@ -41,7 +41,7 @@
 5. Install the bundle:
 
     ```plaintext
-    porter install --param tre_id=mytre-dev-3142 --param workspace_id=0a9e --param location=westeurope --cred azure --debug
+    porter install -p ./parameters.json --cred ./azure.json --debug
     ```
 
 ### Custom actions
@@ -54,7 +54,7 @@ This Porter bundle implements the following custom actions:
 To run the custom actions, use `invoke --action` argument, for example:
 
 ```plaintext
-porter invoke --action plan --param tre_id=mytre-dev-3142 --param workspace_id=0a9e --param location=westeurope --cred azure --debug
+porter invoke --action plan -p ./parameters.json --cred ./azure.json --debug
 ```
 
 ### Clean up

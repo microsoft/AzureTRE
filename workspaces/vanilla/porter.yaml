@@ -5,13 +5,13 @@ registry: azuretre
 
 credentials:
   - name: azure_tenant_id
-    env: AZURE_TENANT_ID
+    env: ARM_TENANT_ID
   - name: azure_subscription_id
-    env: AZURE_SUBSCRIPTION_ID
-  - name: azure_service_principal_client_id
-    env: AZURE_CLIENT_ID
-  - name: azure_service_principal_password
-    env: AZURE_CLIENT_SECRET
+    env: ARM_SUBSCRIPTION_ID
+  - name: azure_client_id
+    env: ARM_CLIENT_ID
+  - name: azure_client_secret
+    env: ARM_CLIENT_SECRET
 
 parameters:
   - name: tre_id
@@ -43,6 +43,7 @@ outputs:
       - install
 
 mixins:
+  - az
   - exec
   - terraform:
       clientVersion: 0.15.4
@@ -58,14 +59,8 @@ install:
   - terraform:
       description: "Deploy workspace"
       vars:
-        azure_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
-        azure_subscription_id: "{{ bundle.credentials.azure_subscription_id }}"
-        azure_service_principal_client_id: "{{ bundle.credentials.azure_service_principal_client_id }}"
-        azure_service_principal_password: "{{ bundle.credentials.azure_service_principal_password }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
         workspace_id: "{{ bundle.parameters.workspace_id }}"
-        environment: "{{ bundle.parameters.environment }}"
-        resource_name_prefix: "{{ bundle.parameters.resource_name_prefix }}"
         location: "{{ bundle.parameters.location }}"
         address_space: "{{ bundle.parameters.address_space }}"
 
@@ -76,39 +71,11 @@ upgrade:
       arguments:
         - "This workspace does not implement upgrade action"
 
-show:
-  - terraform:
-      description: "Invoke 'terraform show'"
-
-plan:
-  - terraform:
-      description: "Invoke 'terraform plan'"
-      flags:
-        no-color:
-        out: "/dev/null"
-        var:
-          - "'azure_tenant_id={{ bundle.credentials.azure_tenant_id }}'"
-          - "'azure_subscription_id={{ bundle.credentials.azure_subscription_id }}'"
-          - "'azure_service_principal_client_id={{ bundle.credentials.azure_service_principal_client_id }}'"
-          - "'azure_service_principal_password={{ bundle.credentials.azure_service_principal_password }}'"
-          - "'tre_id={{ bundle.parameters.tre_id }}'"
-          - "'workspace_id={{ bundle.parameters.workspace_id }}'"
-          - "'environment={{ bundle.parameters.environment }}"
-          - "'resource_name_prefix={{ bundle.parameters.resource_name_prefix }}"
-          - "'location={{ bundle.parameters.location }}'"
-          - "'address_space={{ bundle.parameters.address_space }}'"
-
 uninstall:
   - terraform:
       description: "Tear down workspace"
       vars:
-        azure_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
-        azure_subscription_id: "{{ bundle.credentials.azure_subscription_id }}"
-        azure_service_principal_client_id: "{{ bundle.credentials.azure_service_principal_client_id }}"
-        azure_service_principal_password: "{{ bundle.credentials.azure_service_principal_password }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
         workspace_id: "{{ bundle.parameters.workspace_id }}"
-        environment: "{{ bundle.parameters.environment }}"
-        resource_name_prefix: "{{ bundle.parameters.resource_name_prefix }}"
         location: "{{ bundle.parameters.location }}"
         address_space: "{{ bundle.parameters.address_space }}"

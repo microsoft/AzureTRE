@@ -11,27 +11,15 @@
       }
     },
     {
-      "name": "core_id",
+      "name": "tre_id",
       "source": {
-        "env": "core_id"
-      }
-    },
-    {
-      "name": "environment",
-      "source": {
-        "env": "environment"
+        "env": "tre_id"
       }
     },
     {
       "name": "location",
       "source": {
         "env": "location"
-      }
-    },
-    {
-      "name": "resource_name_prefix",
-      "source": {
-        "env": "resource_name_prefix"
       }
     },
     {
