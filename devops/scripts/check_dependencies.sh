@@ -25,6 +25,12 @@ if [ $? -ne 0 ] && [[ "$1" == *"certbot"* ]]; then
   exit
 fi
 
+porter --version > /dev/null 2>&1
+if [ $? -ne 0 ] && [[ "$1" == *"porter"* ]]; then
+  echo -e "\e[31m»»» ⚠️ Porter is not installed! 😥 Please go to https://porter.sh/install/ to set it up"
+  exit
+fi
+
 export SUB_NAME=$(az account show --query name -o tsv)
 export SUB_ID=$(az account show --query id -o tsv)
 export TENANT_ID=$(az account show --query tenantId -o tsv)

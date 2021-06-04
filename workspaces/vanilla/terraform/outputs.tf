@@ -1,3 +1,3 @@
-output "ws_resource_group_name" {
-  value = azurerm_resource_group.ws.name
+output "workspace_resource_name_suffix" {
+  value = local.workspace_resource_name_suffix
 }

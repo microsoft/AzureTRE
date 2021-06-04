@@ -3,26 +3,21 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=2.46.0"
+      version = "=2.61.0"
     }
   }
 }
 
 provider "azurerm" {
-  tenant_id       = var.azure_tenant_id
-  subscription_id = var.azure_subscription_id
-  client_id       = var.azure_service_principal_client_id
-  client_secret   = var.azure_service_principal_password
-
   features {}
 }
 
 resource "azurerm_resource_group" "ws" {
   location = var.location
-  name     = "rg-${var.tre_id}-ws-${var.workspace_id}"
-  tags     = {
+  name     = "rg-${local.workspace_resource_name_suffix}"
+  tags = {
     project = "Azure Trusted Research Environment"
-    tre_id = var.tre_id
+    tre_id  = var.tre_id
     source  = "https://github.com/microsoft/AzureTRE/"
   }
 }
@@ -30,7 +25,7 @@ resource "azurerm_resource_group" "ws" {
 module "network" {
   source                   = "./network"
   workspace_id             = var.workspace_id
-  tre_id                  = var.tre_id
+  tre_id                   = var.tre_id
   location                 = var.location
   resource_group_name      = azurerm_resource_group.ws.name
   address_space            = var.address_space
