@@ -36,15 +36,17 @@ class WorkspaceRepository(BaseRepository):
             raise EntityDoesNotExist
 
     def create_workspace(self, workspace_create: WorkspaceInCreate) -> Workspace:
+        full_workspace_id = str(uuid.uuid4())
+
         resource_spec_parameters = {
             "location": config.RESOURCE_LOCATION,
-            "workspace_id": "0001",         # TODO: Calculate this value - Issue #166
+            "workspace_id": full_workspace_id[-4:],
             "tre_id": config.TRE_ID,
             "address_space": "10.2.1.0/24"  # TODO: Calculate this value - Issue #52
         }
 
         workspace = Workspace(
-            id=str(uuid.uuid4()),
+            id=full_workspace_id,
             displayName=workspace_create.displayName,
             description=workspace_create.description,
             resourceSpecName=workspace_create.workspaceType,
