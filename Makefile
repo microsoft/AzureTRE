@@ -168,6 +168,6 @@ services-azureml-porter-publish:
 	echo -e "\n\e[34m»»» 🧩 \e[96mPublishing Azure ML Service bundle\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
-	&&  cd ./workspaces/services/azureml/ && ../../devops/scripts/publish_bundle.sh
+	&&  cd ./workspaces/services/azureml/ && ../../../devops/scripts/publish_bundle.sh
 
 

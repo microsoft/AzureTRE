@@ -1,4 +1,4 @@
-cat > workspace_backend.tf <<TRE_BACKEND
+cat > service_backend.tf <<TRE_BACKEND
 terraform {
   backend "azurerm" {
     resource_group_name  = "$TF_VAR_mgmt_res_group"

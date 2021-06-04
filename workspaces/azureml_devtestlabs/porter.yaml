@@ -55,6 +55,16 @@ install:
         cred: ./azure.json
         parameter-set: ./parameters.json
         debug:
+  - exec:
+      description: "Install Azure ML Service"
+      command: porter
+      arguments:
+        - install
+      flags:
+        reference: marcustreacr.azurecr.io/tre-service-azureml:v0.1.0
+        cred: ./azure.json
+        parameter-set: ./parameters_service_azureml.json
+        debug:
 
 upgrade:
   - exec:
