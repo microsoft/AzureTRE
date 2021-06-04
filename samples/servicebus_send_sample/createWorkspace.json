@@ -4,7 +4,7 @@
     "operation": "create",
     "parameters": 
       {"location": "westeurope",
-      "core_id":"9075",
+      "tre_id":"9075",
       "core_name": "msfttre-dev-9075",
       "workspace_id":"2",
       "address_space":"10.2.1.0/24"

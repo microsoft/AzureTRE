@@ -37,7 +37,7 @@
 1. Install the bundle:
 
     ```plaintext
-    porter install --param core_id=mytre-dev-3142 --param workspace_id=2718 --param location=westeurope --cred azure --debug
+    porter install --param tre_id=mytre-dev-3142 --param workspace_id=0a9e --param location=westeurope --cred azure --debug
     ```
 
 ### Custom actions
@@ -50,7 +50,7 @@ This Porter bundle implements the following custom actions:
 To run the custom actions, use `invoke --action` argument, for example:
 
 ```plaintext
-porter invoke --action plan --param core_id=mytre-dev-3142 --param workspace_id=2718 --param location=westeurope --cred azure --debug
+porter invoke --action plan --param tre_id=mytre-dev-3142 --param workspace_id=0a9e --param location=westeurope --cred azure --debug
 ```
 
 ### Clean up
@@ -58,5 +58,5 @@ porter invoke --action plan --param core_id=mytre-dev-3142 --param workspace_id=
 Uninstall the bundle:
 
 ```plaintext
-porter uninstall --param core_id=mytre-dev-3142 --param workspace_id=2718 --param location=westeurope --cred azure --debug
+porter uninstall --param tre_id=mytre-dev-3142 --param workspace_id=0a9e --param location=westeurope --cred azure --debug
 ```

@@ -1,5 +1,5 @@
 resource "azurerm_public_ip" "bastion" {
-  name                = "pip-bas-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+  name                = "pip-bas-${var.tre_id}"
   resource_group_name = var.resource_group_name
   location            = var.location
   allocation_method   = "Static"
@@ -7,7 +7,7 @@ resource "azurerm_public_ip" "bastion" {
 }
 
 resource "azurerm_bastion_host" "bastion" {
-  name                = "bas-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+  name                = "bas-${var.tre_id}"
   resource_group_name = var.resource_group_name
   location            = var.location
 

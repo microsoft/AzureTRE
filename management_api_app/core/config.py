@@ -9,6 +9,10 @@ PROJECT_NAME: str = config("PROJECT_NAME", default="Azure TRE API")
 DEBUG: bool = config("DEBUG", cast=bool, default=False)
 VERSION = "0.0.0"
 
+# Resource Info
+RESOURCE_LOCATION: str = config("RESOURCE_LOCATION", default="")
+TRE_ID: str = config("TRE_ID", default="")
+
 # State store configuration
 STATE_STORE_ENDPOINT: str = config("STATE_STORE_ENDPOINT", default="")      # Cosmos DB endpoint
 STATE_STORE_KEY: str = config("STATE_STORE_KEY", default="")                # Cosmos DB access key

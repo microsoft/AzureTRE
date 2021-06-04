@@ -14,9 +14,9 @@ variable "azure_service_principal_password" {
   type = string
 }
 
-variable "core_id" {
+variable "tre_id" {
   type        = string
-  description = "Unique 4-digit TRE core ID"
+  description = "Unique TRE ID"
 }
 
 variable "workspace_id" {

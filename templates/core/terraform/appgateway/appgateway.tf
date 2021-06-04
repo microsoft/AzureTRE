@@ -1,20 +1,20 @@
 resource "azurerm_public_ip" "appgwpip" {
-  name                  = "pip-agw-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+  name                  = "pip-agw-${var.tre_id}"
   resource_group_name   = var.resource_group_name
   location              = var.location
   allocation_method     = "Static"
   sku                   = "Standard"
-  domain_name_label     = "${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+  domain_name_label     = var.tre_id
 }
 
 resource "azurerm_user_assigned_identity" "agw_id" {
   resource_group_name = var.resource_group_name
   location = var.location
-  name = "msi-agw-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+  name = "msi-agw-${var.tre_id}"
 }
 
 resource "azurerm_application_gateway" "agw" {
-  name                = "agw-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+  name                = "agw-${var.tre_id}"
   resource_group_name = var.resource_group_name
   location            = var.location
 
@@ -185,6 +185,6 @@ resource "azurerm_application_gateway" "agw" {
 
 data "azurerm_public_ip" "appgwpip_data" {
   depends_on            = [azurerm_application_gateway.agw]
-  name                  = "pip-agw-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+  name                  = "pip-agw-${var.tre_id}"
   resource_group_name   = var.resource_group_name
 }

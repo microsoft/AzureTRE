@@ -1,5 +1,5 @@
 resource "azurerm_key_vault" "kv" {
-  name                = "kv-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+  name                = "kv-${var.tre_id}"
   location            = var.location
   resource_group_name = var.resource_group_name
   sku_name            = "standard"
@@ -32,7 +32,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "vaultcorelink" {
 }
 
 resource "azurerm_private_endpoint" "kvpe" {
-  name                = "pe-kv-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+  name                = "pe-kv-${var.tre_id}"
   location            = var.location
   resource_group_name = var.resource_group_name
   subnet_id           = var.shared_subnet
@@ -43,7 +43,7 @@ resource "azurerm_private_endpoint" "kvpe" {
   }
 
   private_service_connection {
-    name                           = "psc-kv-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+    name                           = "psc-kv-${var.tre_id}"
     private_connection_resource_id = azurerm_key_vault.kv.id
     is_manual_connection           = false
     subresource_names              = ["Vault"]

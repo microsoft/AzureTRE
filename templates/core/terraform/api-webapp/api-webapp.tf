@@ -1,5 +1,5 @@
 resource "azurerm_app_service_plan" "core" {
-  name                = "plan-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+  name                = "plan-${var.tre_id}"
   resource_group_name = var.resource_group_name
   location            = var.location
   reserved            = true
@@ -13,14 +13,14 @@ resource "azurerm_app_service_plan" "core" {
 }
 
 resource "azurerm_application_insights" "core" {
-  name                = "appi-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+  name                = "appi-${var.tre_id}"
   resource_group_name = var.resource_group_name
   location            = var.location
   application_type    = "web"
 }
 
 resource "azurerm_app_service" "management_api" {
-  name                = "api-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+  name                = "api-${var.tre_id}"
   resource_group_name = var.resource_group_name
   location            = var.location
   app_service_plan_id = azurerm_app_service_plan.core.id
@@ -36,9 +36,9 @@ resource "azurerm_app_service" "management_api" {
     "DOCKER_REGISTRY_SERVER_PASSWORD"       = var.docker_registry_password
     "STATE_STORE_ENDPOINT"                  = var.state_store_endpoint
     "STATE_STORE_KEY"                       = var.state_store_key
-    "SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE" = "sb-${var.resource_name_prefix}-${var.environment}-${var.tre_id}.servicebus.windows.net"
+    "SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE" = "sb-${var.tre_id}.servicebus.windows.net"
     "SERVICE_BUS_RESOURCE_REQUEST_QUEUE"    = var.service_bus_resource_request_queue
-    CORE_ID                                 = "${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+    TRE_ID                                 = "${var.tre_id}"
     RESOURCE_LOCATION                       = var.location
   }
 
@@ -80,14 +80,14 @@ resource "azurerm_app_service" "management_api" {
 }
 
 resource "azurerm_private_endpoint" "management_api_private_endpoint" {
-  name                = "pe-api-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+  name                = "pe-api-${var.tre_id}"
   resource_group_name = var.resource_group_name
   location            = var.location
   subnet_id           = var.shared_subnet
 
   private_service_connection {
     private_connection_resource_id = azurerm_app_service.management_api.id
-    name                           = "psc-api-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+    name                           = "psc-api-${var.tre_id}"
     subresource_names              = ["sites"]
     is_manual_connection           = false
   }
@@ -117,7 +117,7 @@ resource "azurerm_app_service_virtual_network_swift_connection" "api-integrated-
 }
 
 resource "azurerm_monitor_diagnostic_setting" "webapp_management_api" {
-  name                       = "diag-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+  name                       = "diag-${var.tre_id}"
   target_resource_id         = azurerm_app_service.management_api.id
   log_analytics_workspace_id = var.log_analytics_workspace_id
 
