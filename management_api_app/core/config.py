@@ -11,7 +11,7 @@ VERSION = "0.0.0"
 
 # Resource Info
 RESOURCE_LOCATION: str = config("RESOURCE_LOCATION", default="")
-CORE_ID: str = config("CORE_ID", default="")
+TRE_ID: str = config("TRE_ID", default="")
 
 # State store configuration
 STATE_STORE_ENDPOINT: str = config("STATE_STORE_ENDPOINT", default="")      # Cosmos DB endpoint

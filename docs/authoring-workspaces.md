@@ -53,14 +53,14 @@ This section describes the mandatory [(input) parameters](https://porter.sh/auth
 
 | Parameter | Type | Description | Example value |
 | --------- | ---- | ----------- | ------------- |
-| `core_id` | string | The ID of the parent TRE instance. | `mytre-dev-3142` |
+| `tre_id` | string | Unique ID of for the TRE instance. | `mytre-dev-3142` |
 | `workspace_id` | string | Unique 4-character long, alphanumeric workspace ID. | `0a9e` |
 | `location` | string | Azure location (region) to deploy the workspace resource to. | `westeurope` |
 | `address_space` | string | VNet address space for the workspace services. | `10.2.1.0/24` |
 
-"Core" in `core_id` refers to the Azure TRE instance and its base (core) infrastrure. `core_id` can be found in the resource names of the Azure TRE instance; for example the resource group name of the Azure TRE instance based on the example in the above table would be "`rg-mytre-dev-3142`".
+`tre_id` can be found in the resource names of the Azure TRE instance; for example the resource group name of the Azure TRE instance based on the example in the above table would be "`rg-mytre-dev-3142`".
 
-Similarly to `core_id`, `workspace_id` is used in the resource names of the workspace. The resource group name of the workspace must be of form "`rg-<core_id>-ws-<workspace_id>`", for example: "`rg-mytre-dev-3142-ws-0a9e`".
+Similarly to `tre_id`, `workspace_id` is used in the resource names of the workspace. The resource group name of the workspace must be of form "`rg-<tre_id>-ws-<workspace_id>`", for example: "`rg-mytre-dev-3142-ws-0a9e`".
 
 All the values for the required parameters will be provided by the deployment runner.
 

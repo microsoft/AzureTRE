@@ -1,5 +1,5 @@
 locals {
-  staticweb_storage_name         = "stweb${var.resource_name_prefix}${var.environment}${var.tre_id}"
+  staticweb_storage_name         = lower(replace("stweb${var.tre_id}","-",""))
 
   staticweb_backend_pool_name    = "beap-staticweb"
   api_backend_pool_name = "beap-api"

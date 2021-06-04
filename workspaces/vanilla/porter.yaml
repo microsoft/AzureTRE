@@ -14,7 +14,7 @@ credentials:
     env: AZURE_CLIENT_SECRET
 
 parameters:
-  - name: core_id
+  - name: tre_id
     type: string
     description: "The ID of the parent TRE instance e.g., mytre-dev-3142"
   - name: workspace_id
@@ -62,7 +62,7 @@ install:
         azure_subscription_id: "{{ bundle.credentials.azure_subscription_id }}"
         azure_service_principal_client_id: "{{ bundle.credentials.azure_service_principal_client_id }}"
         azure_service_principal_password: "{{ bundle.credentials.azure_service_principal_password }}"
-        core_id: "{{ bundle.parameters.core_id }}"
+        tre_id: "{{ bundle.parameters.tre_id }}"
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         location: "{{ bundle.parameters.location }}"
         address_space: "{{ bundle.parameters.address_space }}"
@@ -89,7 +89,7 @@ plan:
           - "'azure_subscription_id={{ bundle.credentials.azure_subscription_id }}'"
           - "'azure_service_principal_client_id={{ bundle.credentials.azure_service_principal_client_id }}'"
           - "'azure_service_principal_password={{ bundle.credentials.azure_service_principal_password }}'"
-          - "'core_id={{ bundle.parameters.core_id }}'"
+          - "'tre_id={{ bundle.parameters.tre_id }}'"
           - "'workspace_id={{ bundle.parameters.workspace_id }}'"
           - "'location={{ bundle.parameters.location }}'"
           - "'address_space={{ bundle.parameters.address_space }}'"
@@ -102,7 +102,7 @@ uninstall:
         azure_subscription_id: "{{ bundle.credentials.azure_subscription_id }}"
         azure_service_principal_client_id: "{{ bundle.credentials.azure_service_principal_client_id }}"
         azure_service_principal_password: "{{ bundle.credentials.azure_service_principal_password }}"
-        core_id: "{{ bundle.parameters.core_id }}"
+        tre_id: "{{ bundle.parameters.tre_id }}"
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         location: "{{ bundle.parameters.location }}"
         address_space: "{{ bundle.parameters.address_space }}"

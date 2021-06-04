@@ -1,5 +1,5 @@
 resource "azurerm_storage_account" "stg" {
-  name                     = lower(replace("stg-${var.resource_name_prefix}-${var.environment}-${var.tre_id}","-",""))
+  name                     = lower(replace("stg-${var.tre_id}","-",""))
   resource_group_name      = var.resource_group_name
   location                 = var.location
   account_tier             = "Standard"
@@ -25,7 +25,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "blobcorelink" {
 }
 
 resource "azurerm_private_endpoint" "blobpe" {
-  name                = "pe-blob-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+  name                = "pe-blob-${var.tre_id}"
   location            = var.location
   resource_group_name = var.resource_group_name
   subnet_id           = var.shared_subnet
@@ -36,7 +36,7 @@ resource "azurerm_private_endpoint" "blobpe" {
   }
 
   private_service_connection {
-    name                           = "psc-stg-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+    name                           = "psc-stg-${var.tre_id}"
     private_connection_resource_id = azurerm_storage_account.stg.id
     is_manual_connection           = false
     subresource_names              = ["Blob"]
@@ -56,7 +56,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "filecorelink" {
 }
 
 resource "azurerm_private_endpoint" "filepe" {
-  name                = "pe-file-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+  name                = "pe-file-${var.tre_id}"
   location            = var.location
   resource_group_name = var.resource_group_name
   subnet_id           = var.shared_subnet
@@ -67,7 +67,7 @@ resource "azurerm_private_endpoint" "filepe" {
   }
 
   private_service_connection {
-    name                           = "psc-filestg-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+    name                           = "psc-filestg-${var.tre_id}"
     private_connection_resource_id = azurerm_storage_account.stg.id
     is_manual_connection           = false
     subresource_names              = ["file"]
