@@ -2,13 +2,51 @@
   "specs": [
     {
       "name": "tre-workspace-vanilla",
-      "version": "0.1.0", 
-      "id": "a7a7a7bd-7f4e-4a4e-b970-dc86a6b31dfb", 
+      "version": "0.1.0",
+      "id": "a7a7a7bd-7f4e-4a4e-b970-dc86a6b31dfb",
+      "latest": true,
       "fields": [
-          {"name": "location", "required": true},
-          {"name": "tre_id", "required": true},
-          {"name": "workspace_id", "required": true},
-          {"name": "address_space", "required": true}]    
+        {
+          "name": "location",
+          "required": true
+        },
+        {
+          "name": "tre_id",
+          "required": true
+        },
+        {
+          "name": "workspace_id",
+          "required": true
+        },
+        {
+          "name": "address_space",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "tre-workspace-vanilla",
+      "version": "0.1.1",
+      "id": "a7a7a7bd-7f4e-9a9b-b970-dc86a6b31dfb",
+      "latest": false,
+      "fields": [
+        {
+          "name": "location",
+          "required": true
+        },
+        {
+          "name": "tre_id",
+          "required": true
+        },
+        {
+          "name": "workspace_id",
+          "required": true
+        },
+        {
+          "name": "address_space",
+          "required": true
+        }
+      ]
     }
   ]
 }

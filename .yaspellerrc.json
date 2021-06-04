@@ -26,6 +26,7 @@
     "ignoreUppercase": true,
     "ignoreDigits": true,
     "dictionary": [
+        "tre",
         "api",
         "AspNet",
         "az",

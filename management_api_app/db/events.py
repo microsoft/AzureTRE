@@ -12,7 +12,8 @@ async def connect_to_db(app: FastAPI) -> None:
     logging.debug(f"Connecting to {config.STATE_STORE_ENDPOINT}")
 
     try:
-        cosmos_client = CosmosClient(config.STATE_STORE_ENDPOINT, config.STATE_STORE_KEY)
+        cosmos_client = CosmosClient(config.STATE_STORE_ENDPOINT, config.STATE_STORE_KEY,
+                                     connection_verify=False)
         app.state.cosmos_client = cosmos_client
         logging.debug("Connection established")
     except Exception as e:
@@ -30,7 +31,7 @@ async def create_resource_specs(database: DatabaseProxy):
     resource_spec_file = Path('db') / "bootstrapping_data" / "resource_specs.json"
     with open(str(resource_spec_file.resolve())) as f:
         resource_specs = json.load(f)
-        container_name = config.STATE_STORE_BUNDLE_SPECS_CONTAINER
+        container_name = config.STATE_STORE_RESOURCE_SPECS_CONTAINER
 
         containers = list(database.query_containers(
             {
