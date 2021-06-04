@@ -9,6 +9,6 @@ resource "random_string" "unique_id" {
 }
 
 locals {
-  core_vnet                 = "vnet-${var.tre_id}"
-  core_resource_group_name  = "rg-${var.tre_id}"
+  core_resource_name_suffix      = "${var.resource_name_prefix}-${var.environment}-${var.core_id}"
+  workspace_resource_name_suffix = "${local.core_resource_name_suffix}-ws-${var.workspace_id}"
 }

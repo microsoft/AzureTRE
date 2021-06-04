@@ -45,7 +45,7 @@ outputs:
 mixins:
   - exec
   - terraform:
-      clientVersion: 0.14.7
+      clientVersion: 0.15.4
 
 customActions:
   show:
@@ -64,6 +64,8 @@ install:
         azure_service_principal_password: "{{ bundle.credentials.azure_service_principal_password }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
         workspace_id: "{{ bundle.parameters.workspace_id }}"
+        environment: "{{ bundle.parameters.environment }}"
+        resource_name_prefix: "{{ bundle.parameters.resource_name_prefix }}"
         location: "{{ bundle.parameters.location }}"
         address_space: "{{ bundle.parameters.address_space }}"
 
@@ -91,6 +93,8 @@ plan:
           - "'azure_service_principal_password={{ bundle.credentials.azure_service_principal_password }}'"
           - "'tre_id={{ bundle.parameters.tre_id }}'"
           - "'workspace_id={{ bundle.parameters.workspace_id }}'"
+          - "'environment={{ bundle.parameters.environment }}"
+          - "'resource_name_prefix={{ bundle.parameters.resource_name_prefix }}"
           - "'location={{ bundle.parameters.location }}'"
           - "'address_space={{ bundle.parameters.address_space }}'"
 
@@ -104,5 +108,7 @@ uninstall:
         azure_service_principal_password: "{{ bundle.credentials.azure_service_principal_password }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
         workspace_id: "{{ bundle.parameters.workspace_id }}"
+        environment: "{{ bundle.parameters.environment }}"
+        resource_name_prefix: "{{ bundle.parameters.resource_name_prefix }}"
         location: "{{ bundle.parameters.location }}"
         address_space: "{{ bundle.parameters.address_space }}"

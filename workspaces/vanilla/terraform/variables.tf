@@ -14,7 +14,17 @@ variable "azure_service_principal_password" {
   type = string
 }
 
-variable "tre_id" {
+variable "resource_name_prefix" {
+  type        = string
+  description = "Resource name prefix"
+}
+
+variable "environment" {
+  type        = string
+  description = "The stage of the development lifecycle for the workload that the resource supports. Examples: prod, dev, qa, stage, test"
+}
+
+variable "core_id" {
   type        = string
   description = "Unique TRE ID"
 }

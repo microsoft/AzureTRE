@@ -42,6 +42,9 @@ RUN apt-get install -y python3 python3-venv libaugeas0 \
     && /opt/certbot/bin/pip install --upgrade pip \
     && /opt/certbot/bin/pip install certbot
 
+# Install Porter
+RUN curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && mv ~/.porter/porter /usr/local/bin/
+
 # Install requirements
 COPY requirements.txt /tmp/pip-tmp/
 RUN pip3 --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requirements.txt && rm -rf /tmp/pip-tmp

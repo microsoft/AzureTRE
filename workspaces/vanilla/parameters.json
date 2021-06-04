@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0.0-DRAFT+TODO",
+  "name": "vanilla",
+  "created": "2021-06-03T11:54:54.0225968Z",
+  "modified": "2021-06-03T11:54:54.0225968Z",
+  "parameters": [
+    {
+      "name": "address_space",
+      "source": {
+        "env": "address_space"
+      }
+    },
+    {
+      "name": "core_id",
+      "source": {
+        "env": "core_id"
+      }
+    },
+    {
+      "name": "environment",
+      "source": {
+        "env": "environment"
+      }
+    },
+    {
+      "name": "location",
+      "source": {
+        "env": "location"
+      }
+    },
+    {
+      "name": "resource_name_prefix",
+      "source": {
+        "env": "resource_name_prefix"
+      }
+    },
+    {
+      "name": "workspace_id",
+      "source": {
+        "env": "workspace_id"
+      }
+    }
+  ]
+}
