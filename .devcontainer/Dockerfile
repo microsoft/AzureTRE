@@ -47,6 +47,8 @@ RUN export PORTER_HOME=/home/vscode/.porter && curl -L https://cdn.porter.sh/lat
 
 ENV PATH /home/vscode/.porter/:$PATH
 
+RUN /home/vscode/.porter/porter mixin install docker 
+
 # Install requirements
 COPY requirements.txt /tmp/pip-tmp/
 RUN pip3 --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requirements.txt && rm -rf /tmp/pip-tmp

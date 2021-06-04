@@ -107,5 +107,28 @@ workspaces-vanilla-porter-publish:
 	&& ./devops/scripts/publish_vanilla_workspace.sh
 
 
+workspaces-azureml_devtestlabs-porter-build:
+	echo -e "\n\e[34m»»» 🧩 \e[Building azureml_devtestlabs workspace bundle\e[0m..." \
+	&& . ./devops/scripts/check_dependencies.sh porter \
+	&& cd ./workspaces/azureml_devtestlabs/ && porter build --debug
+
+workspaces-azureml_devtestlabs-porter-install:
+	echo -e "\n\e[34m»»» 🧩 \e[96mDeploying azureml_devtestlabs with Porter\e[0m..." \
+	&& . ./devops/scripts/check_dependencies.sh porter \
+	&& . ./devops/scripts/load_env.sh ./workspaces/azureml_devtestlabs/.env \
+	&& cd ./workspaces/azureml_devtestlabs/ && porter install  --allow-docker-host-access -p ./parameters.json --cred ./azure.json --debug
+
+workspaces-azureml_devtestlabs-porter-uninstall:
+	echo -e "\n\e[34m»»» 🧩 \e[96mUninstalling Base Workspace with Porter\e[0m..." \
+	&& . ./devops/scripts/check_dependencies.sh porter \
+	&& . ./devops/scripts/load_env.sh ./workspaces/azureml_devtestlabs/.env \
+	&& cd ./workspaces/azureml_devtestlabs/ && porter uninstall  --allow-docker-host-access -p ./parameters.json --cred ./azure.json --debug
+
+workspaces-azureml_devtestlabs-porter-publish:
+	echo -e "\n\e[34m»»» 🧩 \e[96mPublishing azureml_devtestlabs workspace bundle\e[0m..." \
+	&& . ./devops/scripts/check_dependencies.sh porter \
+	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
+	&& az acr login --name $TF_VAR_acr_name \
+	&& porter publish --dir ./workspaces/azureml_devtestlabs/ --file ./workspaces/azureml_devtestlabs/porter.yaml --registry "$TF_VAR_acr_name.azurecr.io/microsoft/azuretre/workspaces" --debug
 
 
