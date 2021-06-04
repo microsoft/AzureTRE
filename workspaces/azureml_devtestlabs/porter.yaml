@@ -30,6 +30,9 @@ parameters:
     type: string
     description: "VNet address space for the workspace services"
     default: "10.2.1.0/24"
+  - name: acr_name
+    type: string
+    description: "Name of the azure container registry"
 
 mixins:
   - exec
@@ -41,7 +44,7 @@ install:
       command: docker
       arguments:
         - login
-        - marcustreacr.azurecr.io
+        - "{{ bundle.parameters.acr_name }}.azurecr.io"
       flags:
         u: "{{ bundle.credentials.azure_client_id }}"
         p: "{{ bundle.credentials.azure_client_secret }}"
@@ -51,9 +54,9 @@ install:
       arguments:
         - install
       flags:
-        reference: marcustreacr.azurecr.io/tre-workspace-vanilla:v0.1.0
+        reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-workspace-vanilla:v0.1.0"
         cred: ./azure.json
-        parameter-set: ./parameters.json
+        parameter-set: ./parameters_workspace_vanilla.json
         debug:
   - exec:
       description: "Install Azure ML Service"
@@ -61,7 +64,7 @@ install:
       arguments:
         - install
       flags:
-        reference: marcustreacr.azurecr.io/tre-service-azureml:v0.1.0
+        reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-service-azureml:v0.1.0"
         cred: ./azure.json
         parameter-set: ./parameters_service_azureml.json
         debug:
@@ -80,17 +83,27 @@ uninstall:
       command: docker
       arguments:
         - login
-        - marcusacr.azurecr.io
+        - "{{ bundle.parameters.acr_name }}.azurecr.io"
       flags:
         u: "{{ bundle.credentials.azure_client_id }}"
         p: "{{ bundle.credentials.azure_client_secret }}"
+  - exec:
+      description: "Uninstall Azure ML service"
+      command: porter
+      arguments:
+        - uninstall
+      flags:
+        reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-service-azureml:v0.1.0"
+        cred: ./azure.json
+        parameter-set: ./parameters.json
+        debug:
   - exec:
       description: "Uninstall vanilla workspace"
       command: porter
       arguments:
         - uninstall
       flags:
-        reference: marcusacr.azurecr.io/tre-workspace-vanilla:v0.1.0
+        reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-workspace-vanilla:v0.1.0"
         cred: ./azure.json
         parameter-set: ./parameters.json
         debug:

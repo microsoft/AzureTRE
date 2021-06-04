@@ -27,12 +27,6 @@
       "source": {
         "env": "WORKSPACE_ID"
       }
-    },
-    {
-      "name": "acr_name",
-      "source": {
-        "env": "ACR_NAME"
-      }
     }
   ]
 }
