@@ -43,7 +43,7 @@ RUN apt-get install -y python3 python3-venv libaugeas0 \
     && /opt/certbot/bin/pip install certbot
 
 # Install Porter
-RUN curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && mv ~/.porter/porter /usr/local/bin/
+RUN export PORTER_HOME=/home/vscode/.porter/ curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ln -s ~/.porter/porter /usr/local/bin/
 
 # Install requirements
 COPY requirements.txt /tmp/pip-tmp/
