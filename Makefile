@@ -106,7 +106,7 @@ workspaces-vanilla-porter-publish:
 	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
 	&&  cd ./workspaces/vanilla/ && ../../devops/scripts/publish_bundle.sh
 
-
+# Workspace: Azure ML and DevTest Labs
 workspaces-azureml_devtestlabs-porter-build:
 	echo -e "\n\e[34m»»» 🧩 \e[Building azureml_devtestlabs workspace bundle\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh porter \
@@ -130,7 +130,7 @@ workspaces-azureml_devtestlabs-porter-publish:
 	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
 	&&  cd ./workspaces/azureml_devtestlabs/ && ../../devops/scripts/publish_bundle.sh
 
-# Azure ML Service
+# Service: Azure ML
 services-azureml-tf-deploy:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDeploying Azure ML Service with Terraform\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh \
@@ -169,5 +169,11 @@ services-azureml-porter-publish:
 	&& . ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
 	&&  cd ./workspaces/services/azureml/ && ../../../devops/scripts/publish_bundle.sh
+	&& . ./devops/scripts/check_dependencies.sh \
+	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
+	&& . ./devops/scripts/load_env.sh ./templates/core/terraform/.env \
+	&& . ./devops/scripts/load_env.sh ./workspaces/vanilla/terraform/.env \
+	&& cd ./workspaces/vanilla/terraform/ && ./destroy.sh 
+
 
 
