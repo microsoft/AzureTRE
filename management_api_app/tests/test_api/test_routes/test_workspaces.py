@@ -15,7 +15,7 @@ from resources import strings
 pytestmark = pytest.mark.asyncio
 
 
-def get_sample_workspace_object(workspace_id):
+def create_sample_workspace_object(workspace_id):
     return Workspace(
         id=workspace_id,
         description="My workspace",
@@ -24,6 +24,15 @@ def get_sample_workspace_object(workspace_id):
         resourceSpecParameters={},
         status=Status.NotDeployed,
     )
+
+
+def create_sample_workspace_input_data():
+    return {
+        "displayName": "My workspace",
+        "description": "workspace for team X",
+        "workspaceType": "tre-workspace-vanilla",
+        "parameters": {}
+    }
 
 
 # [GET] /workspaces
@@ -80,13 +89,8 @@ async def test_workspaces_id_get_returns_workspace_if_found(get_workspace_mock, 
 @patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item")
 async def test_workspaces_post_creates_workspace(create_workspace_item_mock, save_workspace_mock, send_resource_request_message_mock, app: FastAPI, client: AsyncClient):
     workspace_id = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
-    create_workspace_item_mock.return_value = get_sample_workspace_object(workspace_id)
-    input_data = {
-        "displayName": "My workspace",
-        "description": "workspace for team X",
-        "workspaceType": "tre-workspace-vanilla",
-        "parameters": {}
-    }
+    create_workspace_item_mock.return_value = create_sample_workspace_object(workspace_id)
+    input_data = create_sample_workspace_input_data()
 
     response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE), json=input_data)
 
@@ -101,13 +105,8 @@ async def test_workspaces_post_creates_workspace(create_workspace_item_mock, sav
 @patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item")
 async def test_workspaces_post_returns_202_on_successful_create(create_workspace_item_mock, save_workspace_mock, send_resource_request_message_mock, app: FastAPI, client: AsyncClient):
     workspace_id = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
-    create_workspace_item_mock.return_value = get_sample_workspace_object(workspace_id)
-    input_data = {
-        "displayName": "My workspace",
-        "description": "workspace for team X",
-        "workspaceType": "tre-workspace-vanilla",
-        "parameters": {}
-    }
+    create_workspace_item_mock.return_value = create_sample_workspace_object(workspace_id)
+    input_data = create_sample_workspace_input_data()
 
     response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE), json=input_data)
 
@@ -120,13 +119,9 @@ async def test_workspaces_post_returns_202_on_successful_create(create_workspace
 @patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item")
 async def test_workspaces_post_returns_503_if_service_bus_call_fails(create_workspace_item_mock, save_workspace_mock, send_resource_request_message_mock, app: FastAPI, client: AsyncClient):
     workspace_id = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
-    create_workspace_item_mock.return_value = get_sample_workspace_object(workspace_id)
-    input_data = {
-        "displayName": "My workspace",
-        "description": "workspace for team X",
-        "workspaceType": "tre-workspace-vanilla",
-        "parameters": {}
-    }
+    create_workspace_item_mock.return_value = create_sample_workspace_object(workspace_id)
+    input_data = create_sample_workspace_input_data()
+
     send_resource_request_message_mock.side_effect = Exception
 
     response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE), json=input_data)
