@@ -16,18 +16,16 @@ class WorkspaceRepository(BaseRepository):
     def __init__(self, client: CosmosClient):
         super().__init__(client, config.STATE_STORE_RESOURCES_CONTAINER)
 
+    @staticmethod
+    def _active_workspaces_query():
+        return 'SELECT * FROM c WHERE c.resourceType = "workspace" AND c.isDeleted = false'
+
     def get_all_active_workspaces(self) -> List[Workspace]:
-        query = 'SELECT * FROM c ' \
-                'WHERE c.resourceType = "workspace" ' \
-                'AND c.isDeleted = false'
+        query = self._active_workspaces_query()
         return self._query(query=query)
 
     def get_workspace_by_workspace_id(self, workspace_id: UUID4) -> Workspace:
-
-        query = f'SELECT * FROM c ' \
-                f'WHERE c.resourceType = "workspace" ' \
-                f'AND c.isDeleted = false ' \
-                f'AND c.id="{workspace_id}"'
+        query = self._active_workspaces_query() + f' AND c.id="{workspace_id}"'
         workspaces = self._query(query=query)
         if len(workspaces) != 1:
             raise EntityDoesNotExist
