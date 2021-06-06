@@ -14,7 +14,7 @@ class WorkspaceTemplateRepository(BaseRepository):
 
     @staticmethod
     def _workspace_template_by_name_query(name: str) -> str:
-        return f'SELECT * FROM c WHERE c.resourceType = "workspace" AND c.name = {name}'
+        return f'SELECT * FROM c WHERE c.resourceType = "workspace" AND c.name = "{name}"'
 
     def get_workspace_templates_by_name(self, name: str) -> List[ResourceTemplate]:
         query = self._workspace_template_by_name_query(name)
@@ -28,8 +28,10 @@ class WorkspaceTemplateRepository(BaseRepository):
         return workspace_templates[0]
 
     def get_workspace_template_by_name_and_version(self, name: str, version: str) -> ResourceTemplate:
-        query = self._workspace_template_by_name_query(name) + f' AND c.version = {version}'
+        query = self._workspace_template_by_name_query(name) + f' AND c.version = "{version}"'
         workspace_templates = self._query(query=query)
+        print(len(workspace_templates))
+        print(workspace_templates)
         if len(workspace_templates) != 1:
             raise EntityDoesNotExist
         return workspace_templates[0]

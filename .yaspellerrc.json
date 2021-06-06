@@ -60,7 +60,11 @@
         "devcontainer",
         "DevContainer",
         "endpoints",
-        "pytest"
+        "pytest",
+        "tre",
+        "VNet",
+        "resourceType",
+        "isCurrent"
     ],
     "ignoreText": [
         // Code sections (anything between ``` and ``` or ` and `)
