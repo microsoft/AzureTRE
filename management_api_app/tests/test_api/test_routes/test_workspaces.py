@@ -127,3 +127,13 @@ async def test_workspaces_post_returns_503_if_service_bus_call_fails(create_work
     response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE), json=input_data)
 
     assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+
+
+@patch("api.routes.workspaces.WorkspaceRepository._get_template_version")
+async def test_workspaces_post_returns_400_if_template_does_not_exist(get_template_version_mock, app: FastAPI, client: AsyncClient):
+    get_template_version_mock.side_effect = EntityDoesNotExist
+    input_data = create_sample_workspace_input_data()
+
+    response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE), json=input_data)
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST

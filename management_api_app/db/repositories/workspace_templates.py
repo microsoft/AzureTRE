@@ -20,14 +20,14 @@ class WorkspaceTemplateRepository(BaseRepository):
         query = self._workspace_template_by_name_query(name)
         return self._query(query=query)
 
-    def get_current_workspace_template_by_name(self, name: str) -> ResourceTemplate:
+    def get_current_workspace_template_by_name(self, name: str) -> dict:
         query = self._workspace_template_by_name_query(name) + ' AND c.isCurrent = true'
         workspace_templates = self._query(query=query)
         if len(workspace_templates) != 1:
             raise EntityDoesNotExist
         return workspace_templates[0]
 
-    def get_workspace_template_by_name_and_version(self, name: str, version: str) -> ResourceTemplate:
+    def get_workspace_template_by_name_and_version(self, name: str, version: str) -> dict:
         query = self._workspace_template_by_name_query(name) + f' AND c.version = "{version}"'
         workspace_templates = self._query(query=query)
         print(len(workspace_templates))
