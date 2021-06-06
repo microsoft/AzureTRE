@@ -115,3 +115,17 @@ def test_get_current_by_name_raises_entity_does_not_exist_if_no_template_found(c
 
     with pytest.raises(EntityDoesNotExist):
         template_repo.get_current_workspace_template_by_name(name="test")
+
+
+@patch('db.repositories.workspace_templates.WorkspaceTemplateRepository._query')
+@patch('azure.cosmos.CosmosClient')
+def test_get_workspace_template_names_returns_unique_template_names(cosmos_client_mock, wt_query_mock):
+    template_repo = WorkspaceTemplateRepository(cosmos_client_mock)
+    wt_query_mock.return_value = [
+        {"name": "template1"},
+        {"name": "template1"},
+        {"name": "template2"}
+    ]
+
+    template_names = template_repo.get_workspace_template_names()
+    assert template_names == ["template1", "template2"]

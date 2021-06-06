@@ -35,3 +35,9 @@ class WorkspaceTemplateRepository(BaseRepository):
         if len(workspace_templates) != 1:
             raise EntityDoesNotExist
         return workspace_templates[0]
+
+    def get_workspace_template_names(self) -> List[str]:
+        query = 'SELECT * FROM c'
+        workspace_templates = self._query(query=query)
+        workspace_template_names = [template["name"] for template in workspace_templates]
+        return list(set(workspace_template_names))
