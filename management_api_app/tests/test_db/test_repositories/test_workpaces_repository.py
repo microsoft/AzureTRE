@@ -58,13 +58,13 @@ def test_create_workspace_item_creates_a_workspace_with_the_right_values(cosmos_
 
     assert workspace.displayName == display_name
     assert workspace.description == description
-    assert workspace.resourceSpecName == workspace_type
+    assert workspace.resourceTemplateName == workspace_type
     assert workspace.resourceType == ResourceType.Workspace
     assert workspace.status == Status.NotDeployed
-    assert "location" in workspace.resourceSpecParameters
-    assert "workspace_id" in workspace.resourceSpecParameters
-    assert "tre_id" in workspace.resourceSpecParameters
-    assert "address_space" in workspace.resourceSpecParameters
+    assert "location" in workspace.resourceTemplateParameters
+    assert "workspace_id" in workspace.resourceTemplateParameters
+    assert "tre_id" in workspace.resourceTemplateParameters
+    assert "address_space" in workspace.resourceTemplateParameters
 
 
 @patch('db.repositories.workspaces.WorkspaceRepository._get_template_version')
@@ -85,9 +85,9 @@ def test_save_workspace_saves_the_items_to_the_database(cosmos_client_mock):
     workspace_repo.container.create_item = MagicMock()
     workspace = Workspace(
         id="1234",
-        resourceSpecName="vanilla-tre",
-        resourceSpecVersion="0.1.0",
-        resourceSpecParameters={},
+        resourceTemplateName="vanilla-tre",
+        resourceTemplateVersion="0.1.0",
+        resourceTemplateParameters={},
         status=Status.NotDeployed,
     )
 

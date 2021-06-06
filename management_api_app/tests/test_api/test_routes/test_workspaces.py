@@ -19,9 +19,9 @@ def create_sample_workspace_object(workspace_id):
     return Workspace(
         id=workspace_id,
         description="My workspace",
-        resourceSpecName="tre-workspace-vanilla",
-        resourceSpecVersion="0.1.0",
-        resourceSpecParameters={},
+        resourceTemplateName="tre-workspace-vanilla",
+        resourceTemplateVersion="0.1.0",
+        resourceTemplateParameters={},
         status=Status.NotDeployed,
     )
 

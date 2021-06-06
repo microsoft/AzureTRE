@@ -57,9 +57,9 @@ class WorkspaceRepository(BaseRepository):
             id=full_workspace_id,
             displayName=workspace_create.displayName,
             description=workspace_create.description,
-            resourceSpecName=workspace_create.workspaceType,
-            resourceSpecVersion=template_version,
-            resourceSpecParameters=resource_spec_parameters,
+            resourceTemplateName=workspace_create.workspaceType,
+            resourceTemplateVersion=template_version,
+            resourceTemplateParameters=resource_spec_parameters,
             status=Status.NotDeployed
         )
 
