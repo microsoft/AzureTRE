@@ -8,7 +8,8 @@ Create an SPN that will be used to provision resources in your Azure subscriptio
 az account set -s {SubID}
 az ad sp create-for-rbac -n "MyTREAppDeployment" --role Owner --scopes /subscriptions/{SubID} --sdk-auth
 ```
-Save JSON the output in a GitHub secret called `AZURE_CREDENTIALS`. 
+
+Save JSON the output in a GitHub secret called `AZURE_CREDENTIALS`.
 
 You will also need to create the following secrets:
 
