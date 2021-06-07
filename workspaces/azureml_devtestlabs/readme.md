@@ -1,11 +1,13 @@
 # Azure ML Worksapce
 
-This deploys a TRE workspace with a private Azure ML deployment. 
+This deploys a TRE workspace with a private Azure ML deployment.
 
-## Firewall Rules:
+## Firewall Rules
+
 Please be aware that the following Firewall rules are opened for the workspace:
 
-URLs: 
+URLs:
+
 - graph.windows.net
 - ml.azure.com
 - login.microsoftonline.com
@@ -20,7 +22,8 @@ URLs:
 - *privatelink.blob.core.windows.net
 - viennaglobal.azurecr.io
 
-Service Tags: 
+Service Tags:
+
 - Storage.WestEurope
 - AzureContainerRegistry
 
@@ -36,8 +39,8 @@ Service Tags:
 
     `make services-azureml-porter-publish`
 
-## To deploy:
+## To deploy
 
 - Once prerequisites are installed, create a copy of `workspaces/azureml_devtestlabs/.env.sample` called `.env` in the  `workspaces/azureml_devtestlabs/` directory. Update the environment variable values to match your installation.
 
-- Run:` make workspaces-azureml_devtestlabs-porter-install`
+- Run: `make workspaces-azureml_devtestlabs-porter-install`
