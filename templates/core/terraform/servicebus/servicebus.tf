@@ -11,7 +11,7 @@ resource "azurerm_servicebus_queue" "workspacequeue" {
   resource_group_name = var.resource_group_name
   namespace_name      = azurerm_servicebus_namespace.sb.name
 
-  enable_partitioning = true
+  enable_partitioning = false
 }
 
 resource "azurerm_private_dns_zone" "servicebus" {
