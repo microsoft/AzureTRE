@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0-DRAFT+TODO",
-  "name": "vanilla",
+  "name": "workspace-azureml_devtestlabs",
   "created": "2021-06-03T11:54:54.0225968Z",
   "modified": "2021-06-03T11:54:54.0225968Z",
   "parameters": [
@@ -32,6 +32,24 @@
       "name": "acr_name",
       "source": {
         "env": "ACR_NAME"
+      }
+    },
+    {
+      "name": "tfstate_container_name",
+      "source": {
+        "env": "TF_VAR_tfstate_container_name"
+      }
+    },
+    {
+      "name": "tfstate_resource_group_name",
+      "source": {
+        "env": "TF_VAR_tfstate_resource_group_name"
+      }
+    },
+    {
+      "name": "tfstate_storage_account_name",
+      "source": {
+        "env": "TF_VAR_tfstate_storage_account_name"
       }
     }
   ]

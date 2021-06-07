@@ -1,19 +1,13 @@
 {
   "schemaVersion": "1.0.0-DRAFT+TODO",
-  "name": "vanilla",
-  "created": "2021-06-03T11:54:54.0225968Z",
-  "modified": "2021-06-03T11:54:54.0225968Z",
+  "name": "workspace-vanilla",
+  "created": "2021-06-04T13:37:29.5071039+03:00",
+  "modified": "2021-06-04T13:37:29.5071039+03:00",
   "parameters": [
     {
       "name": "address_space",
       "source": {
         "env": "ADDRESS_SPACE"
-      }
-    },
-    {
-      "name": "tre_id",
-      "source": {
-        "env": "TRE_ID"
       }
     },
     {
@@ -23,9 +17,33 @@
       }
     },
     {
+      "name": "tre_id",
+      "source": {
+        "env": "TRE_ID"
+      }
+    },
+    {
       "name": "workspace_id",
       "source": {
         "env": "WORKSPACE_ID"
+      }
+    },
+    {
+      "name": "tfstate_container_name",
+      "source": {
+        "env": "TF_VAR_tfstate_container_name"
+      }
+    },
+    {
+      "name": "tfstate_resource_group_name",
+      "source": {
+        "env": "TF_VAR_tfstate_resource_group_name"
+      }
+    },
+    {
+      "name": "tfstate_storage_account_name",
+      "source": {
+        "env": "TF_VAR_tfstate_storage_account_name"
       }
     }
   ]

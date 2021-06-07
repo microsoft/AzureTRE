@@ -15,6 +15,24 @@
       "source": {
         "env": "TRE_ID"
       }
+    },
+    {
+      "name": "tfstate_container_name",
+      "source": {
+        "env": "TF_VAR_tfstate_container_name"
+      }
+    },
+    {
+      "name": "tfstate_resource_group_name",
+      "source": {
+        "env": "TF_VAR_tfstate_resource_group_name"
+      }
+    },
+    {
+      "name": "tfstate_storage_account_name",
+      "source": {
+        "env": "TF_VAR_tfstate_storage_account_name"
+      }
     }
   ]
 }

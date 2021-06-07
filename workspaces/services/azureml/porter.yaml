@@ -18,18 +18,19 @@ parameters:
     type: string
   - name: tre_id
     type: string
-  - name: tfstate
-    type: file
-    path: /cnab/app/terraform/terraform.tfstate
-    source:
-      output: tfstate
-
-outputs:
-  - name: tfstate
-    type: file
-    path: /cnab/app/terraform/terraform.tfstate
-    applyTo:
-      - install
+  - name: tfstate_resource_group_name
+    env: TF_VAR_tfstate_resource_group_name
+    type: string
+    description: "Resource group containing the Terraform state storage account"
+  - name: tfstate_storage_account_name
+    env:  TF_VAR_tfstate_storage_account_name
+    type: string
+    description: "The name of the Terraform state storage account"
+  - name: tfstate_container_name
+    env: TF_VAR_tfstate_container_name
+    type: string
+    default: "tfstate"
+    description: "The name of the Terraform state storage container"
 
 mixins:
   - exec
@@ -42,7 +43,11 @@ install:
       vars:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
-
+      backendConfig:
+        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
+        container_name: "{{ bundle.parameters.tfstate_container_name }}"
+        key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.workspace_id }}-svc-azureml"
 
 upgrade:
   - exec:
@@ -57,3 +62,8 @@ uninstall:
       vars:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
+      backendConfig:
+        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
+        container_name: "{{ bundle.parameters.tfstate_container_name }}"
+        key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.workspace_id }}-svc-azureml"
