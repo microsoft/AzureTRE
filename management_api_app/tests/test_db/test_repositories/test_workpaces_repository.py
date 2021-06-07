@@ -43,26 +43,40 @@ def test_get_workspace_by_id_throws_entity_does_not_exist_if_item_does_not_exist
         workspace_repo.get_workspace_by_workspace_id(workspace_id)
 
 
+@patch('db.repositories.workspaces.WorkspaceRepository._get_template_version')
 @patch('azure.cosmos.CosmosClient')
-def test_create_workspace_item_creates_a_workspace_with_the_right_values(cosmos_client_mock):
+def test_create_workspace_item_creates_a_workspace_with_the_right_values(cosmos_client_mock, template_version_mock):
     workspace_repo = db.repositories.workspaces.WorkspaceRepository(cosmos_client_mock)
 
     workspace_type = "vanilla-tre"
     display_name = "my workspace"
     description = "some description"
     workspace_to_create = WorkspaceInCreate(workspaceType=workspace_type, displayName=display_name, description=description)
+    template_version_mock.return_value = "0.1.0"
 
     workspace = workspace_repo.create_workspace_item(workspace_to_create)
 
     assert workspace.displayName == display_name
     assert workspace.description == description
-    assert workspace.resourceSpecName == workspace_type
+    assert workspace.resourceTemplateName == workspace_type
     assert workspace.resourceType == ResourceType.Workspace
     assert workspace.status == Status.NotDeployed
-    assert "location" in workspace.resourceSpecParameters
-    assert "workspace_id" in workspace.resourceSpecParameters
-    assert "tre_id" in workspace.resourceSpecParameters
-    assert "address_space" in workspace.resourceSpecParameters
+    assert "location" in workspace.resourceTemplateParameters
+    assert "workspace_id" in workspace.resourceTemplateParameters
+    assert "tre_id" in workspace.resourceTemplateParameters
+    assert "address_space" in workspace.resourceTemplateParameters
+
+
+@patch('db.repositories.workspaces.WorkspaceRepository._get_template_version')
+@patch('azure.cosmos.CosmosClient')
+def test_create_workspace_item_raises_value_error_if_template_is_invalid(cosmos_client_mock, template_version_mock):
+    workspace_repo = db.repositories.workspaces.WorkspaceRepository(cosmos_client_mock)
+
+    workspace_to_create = WorkspaceInCreate(workspaceType="vanilla-tre", displayName="my workspace", description="some description")
+    template_version_mock.side_effect = EntityDoesNotExist
+
+    with pytest.raises(ValueError):
+        workspace_repo.create_workspace_item(workspace_to_create)
 
 
 @patch('azure.cosmos.CosmosClient')
@@ -71,9 +85,9 @@ def test_save_workspace_saves_the_items_to_the_database(cosmos_client_mock):
     workspace_repo.container.create_item = MagicMock()
     workspace = Workspace(
         id="1234",
-        resourceSpecName="vanilla-tre",
-        resourceSpecVersion="0.1.0",
-        resourceSpecParameters={},
+        resourceTemplateName="vanilla-tre",
+        resourceTemplateVersion="0.1.0",
+        resourceTemplateParameters={},
         status=Status.NotDeployed,
     )
 

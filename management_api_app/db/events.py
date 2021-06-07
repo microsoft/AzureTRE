@@ -18,19 +18,18 @@ async def connect_to_db(app: FastAPI) -> None:
     except Exception as e:
         logging.debug(f"Connection to state store could not be established: {e}")
 
+
 # Bootstrapping is temporary while the API does not have a register spec api implemented.
-
-
-async def create_resource_specs(database: DatabaseProxy):
+async def create_resource_templates(database: DatabaseProxy):
     """
-    Creates a resource spec container if one does not exist and populate it with a canonical spec.
+    Creates a workspace template container if one does not exist and populate it with a canonical spec.
     :param database: DatabaseProxy for STATE_STORE_DATABASE
     :returns: None
     """
-    resource_spec_file = Path('db') / "bootstrapping_data" / "resource_specs.json"
+    resource_spec_file = Path('db') / "bootstrapping_data" / "resource_templates.json"
     with open(str(resource_spec_file.resolve())) as f:
-        resource_specs = json.load(f)
-        container_name = config.STATE_STORE_BUNDLE_SPECS_CONTAINER
+        resource_templates = json.load(f)
+        container_name = config.STATE_STORE_RESOURCE_TEMPLATES_CONTAINER
 
         containers = list(database.query_containers(
             {
@@ -47,12 +46,12 @@ async def create_resource_specs(database: DatabaseProxy):
                 partition_key=PartitionKey(path="/id"),
                 offer_throughput=400
             )
-            for spec in resource_specs["specs"]:
-                container.create_item(body=spec)
+            for template in resource_templates["templates"]:
+                container.create_item(body=template)
 
 
 async def bootstrap_database(app: FastAPI) -> None:
     client: CosmosClient = app.state.cosmos_client
     if client:
         database_proxy = client.create_database_if_not_exists(id=config.STATE_STORE_DATABASE)
-        await create_resource_specs(database_proxy)
+        await create_resource_templates(database_proxy)

@@ -22,7 +22,16 @@ async def retrieve_active_workspaces(workspace_repo: WorkspaceRepository = Depen
 
 @router.post("/workspaces", status_code=status.HTTP_202_ACCEPTED, response_model=WorkspaceIdInResponse, name=strings.API_CREATE_WORKSPACE)
 async def create_workspace(workspace_create: WorkspaceInCreate, workspace_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository))) -> WorkspaceIdInResponse:
-    workspace = workspace_repo.create_workspace_item(workspace_create)
+    try:
+        workspace = workspace_repo.create_workspace_item(workspace_create)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    try:
+        workspace_repo.save_workspace(workspace)
+    except Exception as e:
+        logging.debug(e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
 
     try:
         workspace_repo.save_workspace(workspace)
