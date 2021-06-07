@@ -21,8 +21,8 @@ class BaseRepository:
         except Exception:
             raise UnableToAccessDatabase
 
-    def _query(self, query: str):
+    def query(self, query: str):
         return list(self.container.query_items(query=query, enable_cross_partition_query=True))
 
-    def _create_item(self, item: BaseModel):
+    def create_item(self, item: BaseModel):
         self.container.create_item(body=item.dict())

@@ -4,6 +4,8 @@ The Azure TRE uses Terraform infrastructure as code templates that pull down Doc
 
 The most straightforward way to get up and running is to deploy direct from the `microsoft/AzureTRE` repository. Production deployments should take advantage of your chosen DevOps CD tooling.
 
+> The quickstart assumes usage of Linux or WSL on Windows.
+
 ## Prerequisites
 
 You will require the following prerequisites installed. They will already be present if using GitHub Codespaces, or use our Dev Container in VS Code.
@@ -49,7 +51,7 @@ Copy [/devops/terraform/.env.sample](../devops/terraform/.env.sample) to `/devop
 - `TF_VAR_mgmt_res_group` - The shared resource group for all management resources, including the storage account.
 - `TF_VAR_state_container` - Name of the blob container to hold Terraform state (default: `tfstate`).
 - `TF_VAR_location` - Azure region to deploy all resources into.
-- `TF_VAR_image_tag` - Default tag for docker images that will be pushed to the container registry and deployed with the Azure TRE
+- `TF_VAR_image_tag` - Default tag for docker images that will be pushed to the container registry and deployed with the Azure TRE.
 - `TF_VAR_acr_name` - Globally unique name for the ACR that will be create to store deployment images.
 
 ### Bootstrap of back-end state
@@ -76,10 +78,14 @@ This Terraform creates & configures the following:
 
 ### Build and push docker images
 
-Build and push the docker images required by the Azure TRE and publish them to the container registry created in the previous step:
+Build and push the docker images required by the Azure TRE and publish them to the container registry created in the previous step. Run the following commands in bash:
 
-- From bash run `make build-images`
-- From bash run `make push-images`
+```bash
+make build-api-image
+make build-cnab-image
+make push-api-image
+make push-cnab-image
+```
 
 ## Deploy an Azure TRE instance
 

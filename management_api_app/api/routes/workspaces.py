@@ -28,9 +28,14 @@ async def create_workspace(workspace_create: WorkspaceInCreate, workspace_repo: 
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     try:
+        workspace_repo.save_workspace(workspace)
+    except Exception as e:
+        logging.debug(e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
+
+    try:
         service_bus = ServiceBus()
         await service_bus.send_resource_request_message(workspace)
-        workspace_repo.save_workspace(workspace)
     except Exception as e:
         # TODO: Rollback DB change, issue #154
         logging.debug(e)
