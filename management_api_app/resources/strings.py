@@ -9,6 +9,8 @@ API_CREATE_WORKSPACE = "Create a workspace"
 
 API_GET_STATUS_OF_SERVICES = "Get status of services"
 
+API_GET_WORKSPACE_TEMPLATES = "Get workspace template names"
+
 # State store status
 OK = "OK"
 NOT_OK = "Not OK"
