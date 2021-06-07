@@ -1,5 +1,3 @@
-variable "resource_name_prefix" {}
-variable "environment" {}
 variable "tre_id" {}
 variable "location" {}
 variable "resource_group_name" {}
@@ -15,4 +13,4 @@ variable "docker_registry_username" {}
 variable "docker_registry_password" {}
 variable "state_store_endpoint" {}
 variable "state_store_key" {}
-
+variable "service_bus_resource_request_queue" {}

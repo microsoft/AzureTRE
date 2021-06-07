@@ -1,5 +1,5 @@
 resource "azurerm_cosmosdb_account" "tre-db-account" {
-  name                = "cosmos-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+  name                = "cosmos-${var.tre_id}"
   location            = var.location
   resource_group_name = var.resource_group_name
   offer_type          = "Standard"
@@ -20,7 +20,7 @@ resource "azurerm_cosmosdb_account" "tre-db-account" {
 }
 
 resource "azurerm_cosmosdb_sql_database" "tre-db" {
-  name                = "cosmos-sql-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+  name                = "cosmos-sql-${var.tre_id}"
   resource_group_name = var.resource_group_name
   account_name        = azurerm_cosmosdb_account.tre-db-account.name
   throughput          = 400
@@ -39,7 +39,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "cosmos_documents_dns_l
 }
 
 resource "azurerm_private_endpoint" "sspe" {
-  name                = "pe-ss-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+  name                = "pe-ss-${var.tre_id}"
   location            = var.location
   resource_group_name = var.resource_group_name
   subnet_id           = var.shared_subnet
@@ -50,7 +50,7 @@ resource "azurerm_private_endpoint" "sspe" {
   }
 
   private_service_connection {
-    name                           = "psc-ss-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+    name                           = "psc-ss-${var.tre_id}"
     private_connection_resource_id = azurerm_cosmosdb_account.tre-db-account.id
     is_manual_connection           = false
     subresource_names              = ["Sql"]

@@ -1,5 +1,10 @@
+
+locals {
+    acr_name        = lower(replace("acr${var.tre_id}","-",""))
+}
+
 resource "azurerm_container_registry" "acr" {
-  name                     = "acr${var.resource_name_prefix}${var.environment}${var.tre_id}"
+  name                     = local.acr_name
   resource_group_name      = var.resource_group_name
   location                 = var.location
   sku                      = "Premium"
@@ -19,7 +24,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "acrlink" {
 }
 
 resource "azurerm_private_endpoint" "acrpe" {
-  name                = "pe-acr-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+  name                = "pe-acr-${var.tre_id}"
   location            = var.location
   resource_group_name = var.resource_group_name
   subnet_id           = var.shared_subnet
@@ -30,7 +35,7 @@ resource "azurerm_private_endpoint" "acrpe" {
   }
 
   private_service_connection {
-    name                           = "psc-acr-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+    name                           = "psc-acr-${var.tre_id}"
     private_connection_resource_id = azurerm_container_registry.acr.id
     is_manual_connection           = false
     subresource_names              = ["registry"]

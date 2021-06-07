@@ -1,5 +1,5 @@
 resource "azurerm_virtual_network" "ws" {
-  name                = "vnet-${var.core_id}-ws-${var.workspace_id}"
+  name                = "vnet-${var.tre_id}-ws-${var.workspace_id}"
   location            = var.location
   resource_group_name = var.resource_group_name
   address_space       = [var.address_space]
@@ -15,20 +15,38 @@ resource "azurerm_subnet" "services" {
   enforce_private_link_endpoint_network_policies = true
 }
 
+resource "azurerm_subnet" "webapps" {
+  name                 = "WebAppsSubnet"
+  virtual_network_name = azurerm_virtual_network.ws.name
+  resource_group_name  = var.resource_group_name
+  address_prefixes     = [local.webapps_subnet_address_prefix]
+  # notice that private endpoints do not adhere to NSG rules
+  enforce_private_link_endpoint_network_policies = true
+
+  delegation {
+    name = "delegation"
+
+    service_delegation {
+      name    = "Microsoft.Web/serverFarms"
+      actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
+    }
+  }
+}
+
 data "azurerm_virtual_network" "core" {
   name                = var.core_vnet
   resource_group_name = var.core_resource_group_name
 }
 
 resource "azurerm_virtual_network_peering" "ws-core-peer" {
-  name                      = "ws-core-peer-${var.core_id}-ws-${var.workspace_id}"
+  name                      = "ws-core-peer-${var.tre_id}-ws-${var.workspace_id}"
   resource_group_name       = var.resource_group_name
   virtual_network_name      = azurerm_virtual_network.ws.name
   remote_virtual_network_id = data.azurerm_virtual_network.core.id
 }
 
 resource "azurerm_virtual_network_peering" "core-ws-peer" {
-  name                      = "core-ws-peer-${var.core_id}-ws-${var.workspace_id}"
+  name                      = "core-ws-peer-${var.tre_id}-ws-${var.workspace_id}"
   resource_group_name       = var.core_resource_group_name
   virtual_network_name      = var.core_vnet
   remote_virtual_network_id = azurerm_virtual_network.ws.id
@@ -164,7 +182,7 @@ resource "azurerm_network_security_rule" "allow-inbound-from-bastion" {
 }
 
 data "azurerm_route_table" "rt" {
-  name                = "rt-${var.core_id}"
+  name                = "rt-${var.tre_id}"
   resource_group_name = var.core_resource_group_name
 }
 

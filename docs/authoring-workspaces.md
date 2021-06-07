@@ -26,10 +26,10 @@ A workspace bundle requires the following [credentials](https://porter.sh/author
 
 The credentials are provided as environment variables by the deployment runner. The bundle author must use the following environment variable names:
 
-* `AZURE_TENANT_ID`
-* `AZURE_SUBSCRIPTION_ID`
-* `AZURE_CLIENT_ID`
-* `AZURE_CLIENT_SECRET`
+* `ARM_TENANT_ID`
+* `ARM_SUBSCRIPTION_ID`
+* `ARM_CLIENT_ID`
+* `ARM_CLIENT_SECRET`
 
 The names of the Porter credentials (`name` field in `porter.yaml`) can be freely chosen by the author.
 
@@ -38,13 +38,13 @@ Example:
 ```yaml
 credentials:
   - name: azure_tenant_id
-    env: AZURE_TENANT_ID
+    env: ARM_TENANT_ID
   - name: azure_subscription_id
-    env: AZURE_SUBSCRIPTION_ID
-  - name: azure_service_principal_client_id
-    env: AZURE_CLIENT_ID
-  - name: azure_service_principal_password
-    env: AZURE_CLIENT_SECRET
+    env: ARM_SUBSCRIPTION_ID
+  - name: azure_client_id
+    env: ARM_CLIENT_ID
+  - name: azure_client_secret
+    env: ARM_CLIENT_SECRET
 ```
 
 ### Parameters
@@ -53,14 +53,14 @@ This section describes the mandatory [(input) parameters](https://porter.sh/auth
 
 | Parameter | Type | Description | Example value |
 | --------- | ---- | ----------- | ------------- |
-| `core_id` | string | The ID of the parent TRE instance. | `mytre-dev-3142` |
-| `workspace_id` | string | Unique 4-digit workspace ID. | `2718` |
+| `tre_id` | string | Unique ID of for the TRE instance. | `mytre-dev-3142` |
+| `workspace_id` | string | Unique 4-character long, alphanumeric workspace ID. | `0a9e` |
 | `location` | string | Azure location (region) to deploy the workspace resource to. | `westeurope` |
 | `address_space` | string | VNet address space for the workspace services. | `10.2.1.0/24` |
 
-"Core" in `core_id` refers to the Azure TRE instance and its base (core) infrastrure. `core_id` can be found in the resource names of the Azure TRE instance; for example the resource group name of the Azure TRE instance based on the example in the above table would be "`rg-mytre-dev-3142`".
+`tre_id` can be found in the resource names of the Azure TRE instance; for example the resource group name of the Azure TRE instance based on the example in the above table would be "`rg-mytre-dev-3142`".
 
-Similarly to `core_id`, `workspace_id` is used in the resource names of the workspace. The resource group name of the workspace must be of form "`rg-<core_id>-ws-<workspace_id>`", for example: "`rg-mytre-dev-3142-ws-2718`".
+Similarly to `tre_id`, `workspace_id` is used in the resource names of the workspace. The resource group name of the workspace must be of form "`rg-<tre_id>-ws-<workspace_id>`", for example: "`rg-mytre-dev-3142-ws-0a9e`".
 
 All the values for the required parameters will be provided by the deployment runner.
 
@@ -101,7 +101,7 @@ Workspace bundles are stored in [Azure Container Registry (ACR)](https://azure.m
 For reference, see the vanilla workspace bundle publish workflow step and scripts:
 
 1. `Publish vanilla workspace bundle` step in [Azure TRE continuous delivery workflow (tre-CD.yml)](../.github/workflows/tre-CD.yml)
-1. `publish-vanilla-workspace` target in [Makefile](../Makefile)
+1. `workspaces-vanilla-porter-publish` target in [Makefile](../Makefile)
 1. [`publish_vanilla_workspace.sh` script](../devops/scripts/publish_vanilla_workspace.sh)
 
 > **TBD:** After end-to-end workspace deployment scenario is implemented we will have a script or other automated means of publishing a bundle **with the metadata schema** (that is likely a reduced and slightly modified copy of the Porter manifest in Cosmos DB) and we can refer to that here.

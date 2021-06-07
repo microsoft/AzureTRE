@@ -1,0 +1,32 @@
+{
+  "templates": [
+    {
+      "id": "a7a7a7bd-7f4e-4a4e-b970-dc86a6b31dfb",
+      "name": "tre-workspace-vanilla",
+      "description": "vanilla workspace bundle",
+      "version": "0.1.0", 
+      "parameters": [
+        {
+          "name": "location",
+          "type": "string"
+        },
+        {
+          "name": "tre_id",
+          "type": "string"
+        },
+        {
+          "name": "workspace_id",
+          "type": "string"
+        },
+        {
+          "name": "address_space",
+          "type": "string",
+          "default": "10.2.1.0/24",
+          "description": "VNet address space for the workspace services"
+        }
+      ],
+      "resourceType": "workspace",
+      "current": true
+    }
+  ]
+}

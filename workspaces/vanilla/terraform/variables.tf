@@ -1,27 +1,11 @@
-variable "azure_tenant_id" {
-  type = string
-}
-
-variable "azure_subscription_id" {
-  type = string
-}
-
-variable "azure_service_principal_client_id" {
-  type = string
-}
-
-variable "azure_service_principal_password" {
-  type = string
-}
-
-variable "core_id" {
+variable "tre_id" {
   type        = string
-  description = "Unique 4-digit TRE core ID"
+  description = "Unique TRE ID"
 }
 
 variable "workspace_id" {
   type        = string
-  description = "Unique 4-digit workspace ID"
+  description = "Unique 4-character long, alphanumeric workspace ID"
 }
 
 variable "location" {

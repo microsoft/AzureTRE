@@ -10,53 +10,53 @@
   * Shared subnet
   * Azure Bastion subnet
   * Route table
+* Azure storage account with a container for Terraform backend (for storing the state)
 
 ## Build and run locally
 
-1. Populate environment variables based on the output of the service principal creation script:
+### Set environment variables
 
-    * `AZURE_TENANT_ID`
-    * `AZURE_SUBSCRIPTION_ID`
-    * `AZURE_CLIENT_ID` - Service principal client ID
-    * `AZURE_CLIENT_SECRET` - Service principal client secret (password)
+1. Create a copy of `/workspaces/vanilla/.env.sample` called `/workspaces/vanilla/.env`
 
-1. Create credentials set named "azure":
+1. Update the `.env` file with the workspace parameters and Azure service principal credentials.
 
-    ```plaintext
-    porter credentials generate azure
+### Build and install
+
+**Option 1:** Using the Makefile:
+
+```cmd
+make workspaces-vanilla-porter-build
+```
+
+```cmd
+make workspaces-vanilla-porter-install
+```
+
+**Option 2:** Using Porter commands:
+
+1. Load the environment variables into your current session:
+
+    ```cmd
+    . ./devops/scripts/load_env.sh ./workspaces/vanilla/.env
     ```
-
-    * When prompted for the environment variables, enter the name of the environment variable (e.g., `AZURE_TENANT_ID`), not the value! This will generate an `azure.json` file in your Porter home folder.
 
 1. Build the bundle:
 
-    ```plaintext
+    ```cmd
+    cd ./workspaces/vanilla/
     porter build --debug
     ```
 
 1. Install the bundle:
 
     ```plaintext
-    porter install --param core_id=3142 --param workspace_id=2718 --param location=westeurope --cred azure --debug
+    porter install --parameter-set ./parameters.json --cred ./azure.json --debug
     ```
-
-### Custom actions
-
-This Porter bundle implements the following custom actions:
-
-* **show**: Invokes "`terraform show`" to display human-readable output from a state or plan file
-* **plan**: Invokes "`terraform plan`" to create an execution plan
-
-To run the custom actions, use `invoke --action` argument, for example:
-
-```plaintext
-porter invoke --action show --param core_id=3142 --param workspace_id=2718 --param location=westeurope --cred azure --debug
-```
 
 ### Clean up
 
-Uninstall the bundle:
+Uninstall the bundle with Porter uninstall command:
 
 ```plaintext
-porter uninstall --param core_id=3142 --param workspace_id=2718 --param location=westeurope --cred azure --debug
+porter uninstall --parameter-set ./parameters.json --cred ./azure.json --debug
 ```

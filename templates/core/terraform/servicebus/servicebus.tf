@@ -1,5 +1,5 @@
 resource "azurerm_servicebus_namespace" "sb" {
-  name                = "sb-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+  name                = "sb-${var.tre_id}"
   location            = var.location
   resource_group_name = var.resource_group_name
   sku                 = "Premium"
@@ -11,7 +11,7 @@ resource "azurerm_servicebus_queue" "workspacequeue" {
   resource_group_name = var.resource_group_name
   namespace_name      = azurerm_servicebus_namespace.sb.name
 
-  enable_partitioning = true
+  enable_partitioning = false
 }
 
 resource "azurerm_private_dns_zone" "servicebus" {
@@ -27,7 +27,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "servicebuslink" {
 }
 
 resource "azurerm_private_endpoint" "sbpe" {
-  name                = "pe-sb-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+  name                = "pe-sb-${var.tre_id}"
   location            = var.location
   resource_group_name = var.resource_group_name
   subnet_id           = var.shared_subnet
@@ -38,7 +38,7 @@ resource "azurerm_private_endpoint" "sbpe" {
   }
 
   private_service_connection {
-    name                           = "psc-sb-${var.resource_name_prefix}-${var.environment}-${var.tre_id}"
+    name                           = "psc-sb-${var.tre_id}"
     private_connection_resource_id = azurerm_servicebus_namespace.sb.id
     is_manual_connection           = false
     subresource_names              = ["namespace"]

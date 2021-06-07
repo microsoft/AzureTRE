@@ -12,9 +12,12 @@ def no_database():
     with patch('core.events.connect_to_db') as connect_db_mock:
         connect_db_mock.return_value = None
 
-        with patch('core.events.bootstrap_database') as bootstrap_mock:
-            bootstrap_mock.return_value = None
-            yield
+        with patch('db.repositories.base.BaseRepository._get_container') as container_mock:
+            container_mock.return_value = None
+
+            with patch('core.events.bootstrap_database') as bootstrap_mock:
+                bootstrap_mock.return_value = None
+                yield
 
 
 @pytest.fixture
