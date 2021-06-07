@@ -35,19 +35,18 @@ class CNABBuilder:
             porter_parameters += " --param " + key + "=" + self._message['parameters'][key]
 
         installation_id = self._message['parameters']['tre_id'] + "-" + self._message['parameters']['workspace_id']
-        start_command_line = ["/bin/bash", "-c"
-                    , "porter " 
-                    + self._message['action'] + " " 
-                    + installation_id 
-                    +  " --reference " 
-                    + os.environ["REGISTRY_SERVER"]
-                    + os.environ["WORKSPACES_PATH"]
-                    + self._message['name'] + ":"
-                    + "v" + self._message['version'] + " "
-                    + porter_parameters 
-                    + " -d azure && porter show " + installation_id]
+        start_command_line = ["/bin/bash", "-c", "porter "
+                              + self._message['action'] + " "
+                              + installation_id
+                              + " --reference "
+                              + os.environ["REGISTRY_SERVER"]
+                              + os.environ["WORKSPACES_PATH"]
+                              + self._message['name'] + ":"
+                              + "v" + self._message['version'] + " "
+                              + porter_parameters
+                              + " -d azure && porter show " + installation_id]
 
-        #start_command_line = ["/bin/bash", "-c", "sleep 600000000"]
+        # start_command_line = ["/bin/bash", "-c", "sleep 600000000"]
         return start_command_line
 
     def _build_cnab_env_variables(self) -> List[str]:
@@ -113,7 +112,8 @@ class CNABBuilder:
 
         credential = AzureIdentityCredentialAdapter()
         aci_client = ContainerInstanceManagementClient(credential, self._subscription_id)
-        result = aci_client.container_groups.create_or_update(self._resource_group_name, self._container_group_name, group)
+        result = aci_client.container_groups.create_or_update(self._resource_group_name, self._container_group_name,
+                                                              group)
 
         while result.done() is False:
             logging.info('-- Deploying -- ' + self._container_group_name + " to " + self._resource_group_name)
