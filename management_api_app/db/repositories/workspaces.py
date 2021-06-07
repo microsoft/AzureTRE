@@ -22,12 +22,12 @@ class WorkspaceRepository(BaseRepository):
 
     def get_all_active_workspaces(self) -> List[Workspace]:
         query = self._active_workspaces_query()
-        return self._query(query=query)
+        return self.query(query=query)
 
     def get_workspace_by_workspace_id(self, workspace_id: UUID4) -> Workspace:
         query = self._active_workspaces_query() + f' AND c.id="{workspace_id}"'
-        workspaces = self._query(query=query)
-        if len(workspaces) != 1:
+        workspaces = self.query(query=query)
+        if not workspaces:
             raise EntityDoesNotExist
         return workspaces[0]
 
@@ -55,4 +55,4 @@ class WorkspaceRepository(BaseRepository):
         return workspace
 
     def save_workspace(self, workspace: Workspace):
-        self._create_item(workspace)
+        self.create_item(workspace)
