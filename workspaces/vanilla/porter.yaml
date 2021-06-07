@@ -29,39 +29,36 @@ parameters:
     type: string
     description: "VNet address space for the workspace services"
     default: "10.2.1.0/24"
-  - name: tfstate
-    type: file
-    path: /cnab/app/terraform/terraform.tfstate
-    source:
-      output: tfstate
-
-outputs:
-  - name: tfstate
-    type: file
-    path: /cnab/app/terraform/terraform.tfstate
-    applyTo:
-      - install
+  - name: tfstate_resource_group_name
+    type: string
+    description: "Resource group containing the Terraform state storage account"
+  - name: tfstate_storage_account_name
+    type: string
+    description: "The name of the Terraform state storage account"
+  - name: tfstate_container_name
+    type: string
+    default: "tfstate"
+    description: "The name of the Terraform state storage container"
 
 mixins:
   - exec
   - terraform:
       clientVersion: 0.15.4
 
-customActions:
-  show:
-    description: "Invoke 'terraform show'"
-    modifies: false
-  plan:
-    description: "Invoke 'terraform plan'"
-
 install:
   - terraform:
       description: "Deploy workspace"
+      input: false
       vars:
         tre_id: "{{ bundle.parameters.tre_id }}"
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         location: "{{ bundle.parameters.location }}"
         address_space: "{{ bundle.parameters.address_space }}"
+      backendConfig:
+        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
+        container_name: "{{ bundle.parameters.tfstate_container_name }}"
+        key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.workspace_id }}"
 
 upgrade:
   - exec:
@@ -73,8 +70,14 @@ upgrade:
 uninstall:
   - terraform:
       description: "Tear down workspace"
+      input: false
       vars:
         tre_id: "{{ bundle.parameters.tre_id }}"
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         location: "{{ bundle.parameters.location }}"
         address_space: "{{ bundle.parameters.address_space }}"
+      backendConfig:
+        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
+        container_name: "{{ bundle.parameters.tfstate_container_name }}"
+        key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.workspace_id }}"

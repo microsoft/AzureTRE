@@ -9,9 +9,9 @@ def get_sample_workspace(workspace_id: str, spec_workspace_id: str = "0001") -> 
         "id": workspace_id,
         "displayName": "my workspace",
         "description": "some description",
-        "resourceSpecName": "tre-workspace-vanilla",
-        "resourceSpecVersion": "0.1.0",
-        "resourceSpecParameters": {
+        "resourceTemplateName": "tre-workspace-vanilla",
+        "resourceTemplateVersion": "0.1.0",
+        "resourceTemplateParameters": {
             "location": "westeurope",
             "workspace_id": spec_workspace_id,
             "tre_id": "mytre-dev-1234",

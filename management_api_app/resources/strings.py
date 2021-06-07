@@ -9,6 +9,9 @@ API_CREATE_WORKSPACE = "Create a workspace"
 
 API_GET_STATUS_OF_SERVICES = "Get status of services"
 
+API_GET_WORKSPACE_TEMPLATES = "Get workspace template names"
+API_GET_WORKSPACE_TEMPLATE_BY_NAME = "Get workspace template by name"
+
 # State store status
 OK = "OK"
 NOT_OK = "Not OK"
@@ -16,8 +19,9 @@ COSMOS_DB = "Cosmos DB"
 STATE_STORE_ENDPOINT_NOT_RESPONDING = "State Store endpoint is not responding"
 UNSPECIFIED_ERROR = "Unspecified error"
 
-# Workspace strings
+# Error strings
 WORKSPACE_DOES_NOT_EXIST = "Workspace does not exist"
+WORKSPACE_TEMPLATE_DOES_NOT_EXIST = "Workspace template does not exist"
 
 # Resource Status
 RESOURCE_STATUS_NOT_DEPLOYED = "not_deployed"

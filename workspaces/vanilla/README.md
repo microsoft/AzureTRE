@@ -10,57 +10,53 @@
   * Shared subnet
   * Azure Bastion subnet
   * Route table
+* Azure storage account with a container for Terraform backend (for storing the state)
 
 ## Build and run locally
 
-1. Create a copy of `.env.sample` called `.env`
+### Set environment variables
 
-1. Update the `.env` with the workspace parameters and azure service principal credentials.
+1. Create a copy of `/workspaces/vanilla/.env.sample` called `/workspaces/vanilla/.env`
 
-### Either install using the makefile
+1. Update the `.env` file with the workspace parameters and Azure service principal credentials.
 
-3. Run `make workspaces-vanilla-porter-build`
+### Build and install
 
-4. Run `make workspaces-vanilla-porter-install`
+**Option 1:** Using the Makefile:
 
-### Or install using porter
+```cmd
+make workspaces-vanilla-porter-build
+```
 
-3. Load the environment variables into your current session:
+```cmd
+make workspaces-vanilla-porter-install
+```
+
+**Option 2:** Using Porter commands:
+
+1. Load the environment variables into your current session:
 
     ```cmd
-    . ./devops/scripts/load_env.sh ./workspaces/vanilla/.env 
+    . ./devops/scripts/load_env.sh ./workspaces/vanilla/.env
     ```
 
-4. Build the bundle:
+1. Build the bundle:
 
     ```cmd
     cd ./workspaces/vanilla/
     porter build --debug
     ```
 
-5. Install the bundle:
+1. Install the bundle:
 
     ```plaintext
-    porter install -p ./parameters.json --cred ./azure.json --debug
+    porter install --parameter-set ./parameters.json --cred ./azure.json --debug
     ```
-
-### Custom actions
-
-This Porter bundle implements the following custom actions:
-
-* **show**: Invokes "`terraform show`" to display human-readable output from a state or plan file
-* **plan**: Invokes "`terraform plan`" to create an execution plan
-
-To run the custom actions, use `invoke --action` argument, for example:
-
-```plaintext
-porter invoke --action plan -p ./parameters.json --cred ./azure.json --debug
-```
 
 ### Clean up
 
-Uninstall the bundle:
+Uninstall the bundle with Porter uninstall command:
 
 ```plaintext
-porter uninstall --param tre_id=mytre-dev-3142 --param workspace_id=0a9e --param location=westeurope --cred azure --debug
+porter uninstall --parameter-set ./parameters.json --cred ./azure.json --debug
 ```

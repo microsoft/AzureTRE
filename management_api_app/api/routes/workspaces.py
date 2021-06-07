@@ -1,7 +1,10 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
 
-from api.dependencies.workspaces import get_repository, get_workspace_by_workspace_id_from_path
+from api.dependencies.database import get_repository
+from api.dependencies.workspaces import get_workspace_by_workspace_id_from_path
 from db.repositories.workspaces import WorkspaceRepository
 from models.domain.workspace import Workspace
 from models.schemas.workspace import WorkspaceInCreate, WorkspaceIdInResponse, WorkspacesInList, WorkspaceInResponse
@@ -20,13 +23,23 @@ async def retrieve_active_workspaces(workspace_repo: WorkspaceRepository = Depen
 
 @router.post("/workspaces", status_code=status.HTTP_202_ACCEPTED, response_model=WorkspaceIdInResponse, name=strings.API_CREATE_WORKSPACE)
 async def create_workspace(workspace_create: WorkspaceInCreate, workspace_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository))) -> WorkspaceIdInResponse:
-    workspace = workspace_repo.create_workspace(workspace_create)
+    try:
+        workspace = workspace_repo.create_workspace_item(workspace_create)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    try:
+        workspace_repo.save_workspace(workspace)
+    except Exception as e:
+        logging.debug(e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
 
     try:
         service_bus = ServiceBus()
         await service_bus.send_resource_request_message(workspace)
-    except Exception:
+    except Exception as e:
         # TODO: Rollback DB change, issue #154
+        logging.debug(e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
 
     return WorkspaceIdInResponse(workspaceId=workspace.id)
