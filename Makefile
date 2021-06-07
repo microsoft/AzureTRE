@@ -169,11 +169,5 @@ services-azureml-porter-publish:
 	&& . ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
 	&&  cd ./workspaces/services/azureml/ && ../../../devops/scripts/publish_bundle.sh
-	&& . ./devops/scripts/check_dependencies.sh \
-	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
-	&& . ./devops/scripts/load_env.sh ./templates/core/terraform/.env \
-	&& . ./devops/scripts/load_env.sh ./workspaces/vanilla/terraform/.env \
-	&& cd ./workspaces/vanilla/terraform/ && ./destroy.sh 
-
 
 
