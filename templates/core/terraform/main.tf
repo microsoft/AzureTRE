@@ -85,15 +85,6 @@ module "identity" {
   resource_group_name  = azurerm_resource_group.core.name
 }
 
-module "identity" {
-  source               = "./user-assigned-identity"
-  resource_name_prefix = var.resource_name_prefix
-  environment          = var.environment
-  tre_id               = local.tre_id
-  location             = var.location
-  resource_group_name  = azurerm_resource_group.core.name
-}
-
 module "processor_function" {
   source                       = "./processor_function"
   tre_id                       = var.tre_id
