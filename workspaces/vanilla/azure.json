@@ -7,25 +7,25 @@
     {
       "name": "azure_client_id",
       "source": {
-        "env": "AZURE_CLIENT_ID"
+        "env": "ARM_CLIENT_ID"
       }
     },
     {
       "name": "azure_client_secret",
       "source": {
-        "env": "AZURE_CLIENT_SECRET"
+        "env": "ARM_CLIENT_SECRET"
       }
     },
     {
       "name": "azure_subscription_id",
       "source": {
-        "env": "AZURE_SUBSCRIPTION_ID"
+        "env": "ARM_SUBSCRIPTION_ID"
       }
     },
     {
       "name": "azure_tenant_id",
       "source": {
-        "env": "AZURE_TENANT_ID"
+        "env": "ARM_TENANT_ID"
       }
     }
   ]
