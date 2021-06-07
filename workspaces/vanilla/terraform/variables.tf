@@ -5,7 +5,7 @@ variable "tre_id" {
 
 variable "workspace_id" {
   type        = string
-  description = "Unique 4-digit workspace ID"
+  description = "Unique 4-character long, alphanumeric workspace ID"
 }
 
 variable "location" {
