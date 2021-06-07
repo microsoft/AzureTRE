@@ -99,7 +99,6 @@ async def test_workspaces_post_creates_workspace(create_workspace_item_mock, sav
     assert response.json()["workspaceId"] == workspace_id
 
 
-@pytest.mark.skip("assert called once fails on github")
 @patch("service_bus.service_bus.ServiceBus.send_resource_request_message")
 @patch("api.routes.workspaces.WorkspaceRepository.save_workspace")
 @patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item")

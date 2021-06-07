@@ -3,7 +3,8 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
 
-from api.dependencies.workspaces import get_repository, get_workspace_by_workspace_id_from_path
+from api.dependencies.database import get_repository
+from api.dependencies.workspaces import get_workspace_by_workspace_id_from_path
 from db.repositories.workspaces import WorkspaceRepository
 from models.domain.workspace import Workspace
 from models.schemas.workspace import WorkspaceInCreate, WorkspaceIdInResponse, WorkspacesInList, WorkspaceInResponse
@@ -26,12 +27,6 @@ async def create_workspace(workspace_create: WorkspaceInCreate, workspace_repo: 
         workspace = workspace_repo.create_workspace_item(workspace_create)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-
-    try:
-        workspace_repo.save_workspace(workspace)
-    except Exception as e:
-        logging.debug(e)
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
 
     try:
         workspace_repo.save_workspace(workspace)
