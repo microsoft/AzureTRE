@@ -34,11 +34,20 @@ class CNABBuilder:
         for key in self._message['parameters']:
             porter_parameters += " --param " + key + "=" + self._message['parameters'][key]
 
-        installation_id = self._message['parameters']['core_id'] + "-" + self._message['parameters']['workspace_id']
-        #start_command_line = ["/bin/bash", "-c", "porter " + self._message['operation'] + " " + installation_id +  " --reference " + self._message[
-            #'bundle-name'] + porter_parameters + " -d azure && porter show " + installation_id]
+        installation_id = self._message['parameters']['tre_id'] + "-" + self._message['parameters']['workspace_id']
+        start_command_line = ["/bin/bash", "-c"
+                    , "porter " 
+                    + self._message['action'] + " " 
+                    + installation_id 
+                    +  " --reference " 
+                    + os.environ["REGISTRY_SERVER"]
+                    + os.environ["WORKSPACES_PATH"]
+                    + self._message['name'] + ":"
+                    + "v" + self._message['version'] + " "
+                    + porter_parameters 
+                    + " -d azure && porter show " + installation_id]
 
-        start_command_line = ["/bin/bash", "-c", "sleep 600000000"]
+        #start_command_line = ["/bin/bash", "-c", "sleep 600000000"]
         return start_command_line
 
     def _build_cnab_env_variables(self) -> List[str]:
@@ -71,7 +80,7 @@ class CNABBuilder:
 
         self._location = self._message['parameters']['location']
         self._container_group_name = "aci-cnab-" + str(uuid.uuid4())
-        container_image_name = self._message['CNAB-image']
+        container_image_name = os.environ['CNAB_IMAGE']
 
         image_registry_credentials = [ImageRegistryCredential(server=os.environ["REGISTRY_SERVER"],
                                                               username=os.environ["CNAB_AZURE_REGISTRY_USERNAME"],
