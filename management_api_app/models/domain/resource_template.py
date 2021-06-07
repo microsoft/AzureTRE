@@ -19,3 +19,4 @@ class ResourceTemplate(AzureTREModel):
     version: str
     parameters: List[Parameter]
     resourceType: ResourceType
+    current: bool

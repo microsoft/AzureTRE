@@ -22,8 +22,8 @@ class WorkspaceRepository(BaseRepository):
         return 'SELECT * FROM c WHERE c.resourceType = "workspace" AND c.isDeleted = false'
 
     def _get_template_version(self, template_name):
-        wt_repo = WorkspaceTemplateRepository(self._client)
-        template = wt_repo.get_current_workspace_template_by_name(template_name)
+        workspace_template_repo = WorkspaceTemplateRepository(self._client)
+        template = workspace_template_repo.get_current_workspace_template_by_name(template_name)
         return template["version"]
 
     def get_all_active_workspaces(self) -> List[Workspace]:
@@ -43,7 +43,7 @@ class WorkspaceRepository(BaseRepository):
         try:
             template_version = self._get_template_version(workspace_create.workspaceType)
         except EntityDoesNotExist:
-            raise ValueError(f'The workspace type "{workspace_create.workspaceType}" does not exist')
+            raise ValueError(f"The workspace type '{workspace_create.workspaceType}' does not exist")
 
         resource_spec_parameters = {
             "location": config.RESOURCE_LOCATION,
