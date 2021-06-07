@@ -39,9 +39,6 @@ parameters:
     type: string
     default: "tfstate"
     description: "The name of the Terraform state storage container"
-  - name: tfstate_key
-    type: string
-    description: "Terraform state key"
 
 mixins:
   - exec
@@ -61,7 +58,7 @@ install:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.tfstate_key }}"
+        key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.workspace_id }}"
 
 upgrade:
   - exec:
@@ -83,4 +80,4 @@ uninstall:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.tfstate_key }}"
+        key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.workspace_id }}"

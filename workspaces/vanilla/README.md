@@ -37,7 +37,7 @@ make workspaces-vanilla-porter-install
 1. Load the environment variables into your current session:
 
     ```cmd
-    . ./devops/scripts/load_env.sh ./workspaces/vanilla/.env 
+    . ./devops/scripts/load_env.sh ./workspaces/vanilla/.env
     ```
 
 1. Build the bundle:
