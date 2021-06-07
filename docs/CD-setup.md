@@ -1,14 +1,20 @@
-# Continous delivery with GitHub Actions
+# Continuous delivery with GitHub Actions
 
 ## Setup
 
-Create an SPN that will be used to provision resource in your Azure subscription:
+Create an SPN that will be used to provision resources in your Azure subscription:
 
 ```cmd
 az account set -s {SubID}
-az ad sp create-for-rbac -n "MyTREAppDeployment" --role Contributor --scopes /subscriptions/{SubID} --sdk-auth
+az ad sp create-for-rbac -n "MyTREAppDeployment" --role Owner --scopes /subscriptions/{SubID} --sdk-auth
 ```
+Save JSON the output in a GitHub secret called `AZURE_CREDENTIALS`. 
 
-The output includes credentials that you must protect. Create a create a new Actions seceret in your GitHub repository and paste the JSON output.
+You will also need to create the following secrets:
 
-You can now reference the seceret in your GitHub actions by setting the environment (e.g. `environment: Dev`) and then retrieving the secert: `creds: ${{ secrets.AZURE_CREDENTIALS }}`
+- `TRE_ID`
+- `ACR_NAME`
+- `MGMT_RESOURCE_GROUP`
+- `STATE_STORAGE_ACCOUNT_NAME`
+
+The `Deploy TRE` workflow can then be run.
