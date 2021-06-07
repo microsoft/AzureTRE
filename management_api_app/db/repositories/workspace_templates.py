@@ -35,7 +35,8 @@ class WorkspaceTemplateRepository(BaseRepository):
         return workspace_templates[0]
 
     def get_workspace_template_names(self) -> List[str]:
-        query = 'SELECT * FROM c'
-        workspace_templates = self._query(query=query)
+        query = 'SELECT c.name FROM c'
+        workspace_templates = self.query(query=query)
+        print(workspace_templates)
         workspace_template_names = [template["name"] for template in workspace_templates]
         return list(set(workspace_template_names))
