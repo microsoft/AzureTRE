@@ -76,6 +76,10 @@ module "api-webapp" {
   state_store_endpoint               = module.state-store.endpoint
   state_store_key                    = module.state-store.primary_key
   service_bus_resource_request_queue = module.servicebus.workspacequeue
+
+  depends_on = [
+    module.network
+  ]
 }
 
 module "identity" {

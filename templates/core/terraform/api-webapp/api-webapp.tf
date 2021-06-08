@@ -38,7 +38,7 @@ resource "azurerm_app_service" "management_api" {
     "STATE_STORE_KEY"                       = var.state_store_key
     "SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE" = "sb-${var.tre_id}.servicebus.windows.net"
     "SERVICE_BUS_RESOURCE_REQUEST_QUEUE"    = var.service_bus_resource_request_queue
-    TRE_ID                                 = "${var.tre_id}"
+    TRE_ID                                  = "${var.tre_id}"
     RESOURCE_LOCATION                       = var.location
   }
 
@@ -79,6 +79,11 @@ resource "azurerm_app_service" "management_api" {
   }
 }
 
+data "azurerm_private_dns_zone" "azurewebsites" {
+  name                = "privatelink.azurewebsites.net"
+  resource_group_name = var.resource_group_name
+}
+
 resource "azurerm_private_endpoint" "management_api_private_endpoint" {
   name                = "pe-api-${var.tre_id}"
   resource_group_name = var.resource_group_name
@@ -94,22 +99,10 @@ resource "azurerm_private_endpoint" "management_api_private_endpoint" {
 
   private_dns_zone_group {
     name                 = "privatelink.azurewebsites.net"
-    private_dns_zone_ids = [azurerm_private_dns_zone.azurewebsites.id]
+    private_dns_zone_ids = [data.azurerm_private_dns_zone.azurewebsites.id]
   }
 }
 
-resource "azurerm_private_dns_zone" "azurewebsites" {
-  name                = "privatelink.azurewebsites.net"
-  resource_group_name = var.resource_group_name
-}
-
-resource "azurerm_private_dns_zone_virtual_network_link" "azurewebsites" {
-  resource_group_name   = var.resource_group_name
-  virtual_network_id    = var.core_vnet
-  private_dns_zone_name = azurerm_private_dns_zone.azurewebsites.name
-  name                  = "azurewebsites-link"
-  registration_enabled  = false
-}
 
 resource "azurerm_app_service_virtual_network_swift_connection" "api-integrated-vnet" {
   app_service_id = azurerm_app_service.management_api.id

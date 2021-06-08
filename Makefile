@@ -106,6 +106,14 @@ workspaces-vanilla-porter-publish:
 	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
 	&& ./devops/scripts/publish_vanilla_workspace.sh
 
+shared_services-gitea-tf-deploy:
+	echo -e "\n\e[34m»»» 🧩 \e[96mDeploying Gitea with Terraform\e[0m..." \
+	&& . ./devops/scripts/check_dependencies.sh \
+	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
+	&& . ./devops/scripts/load_env.sh ./templates/core/terraform/.env \
+	&& cd ./templates/shared_services/gitea/terraform/ && ./deploy.sh
+
+
 
 
 

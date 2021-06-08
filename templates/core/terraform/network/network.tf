@@ -85,3 +85,4 @@ resource "azurerm_subnet" "shared" {
   # notice that private endpoints do not adhere to NSG rules
   enforce_private_link_endpoint_network_policies = true
 }
+
