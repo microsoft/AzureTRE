@@ -1,6 +1,8 @@
-FROM debian:stretch-slim
+FROM cnab-aci
 
 ARG BUNDLE_DIR
+
+USER root
 
 RUN apt-get update && apt-get install -y ca-certificates
 
@@ -18,11 +20,5 @@ RUN apt-get update && apt-get install -y ca-certificates
 # PORTER_MIXINS
 
 # Use the BUNDLE_DIR build argument to copy files into the bundle
-
-RUN curl -L https://cdn.porter.sh/latest/install-linux.sh | bash 
-
-ENV PATH /root/.porter/:$PATH
-
-RUN porter mixin install docker 
 
 COPY . $BUNDLE_DIR
