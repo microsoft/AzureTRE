@@ -9,6 +9,7 @@ from models.domain.resource_template import ResourceTemplate
 
 def get_sample_workspace_template(name: str, version: str = "1.0") -> ResourceTemplate:
     return ResourceTemplate(
+        id="a7a7a7bd-7f4e-4a4e-b970-dc86a6b31dfb",
         name=name,
         description="some description",
         version=version,

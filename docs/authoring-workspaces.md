@@ -26,10 +26,10 @@ A workspace bundle requires the following [credentials](https://porter.sh/author
 
 The credentials are provided as environment variables by the deployment runner. The bundle author must use the following environment variable names:
 
-* `AZURE_TENANT_ID`
-* `AZURE_SUBSCRIPTION_ID`
-* `AZURE_CLIENT_ID`
-* `AZURE_CLIENT_SECRET`
+* `ARM_TENANT_ID`
+* `ARM_SUBSCRIPTION_ID`
+* `ARM_CLIENT_ID`
+* `ARM_CLIENT_SECRET`
 
 The names of the Porter credentials (`name` field in `porter.yaml`) can be freely chosen by the author.
 
@@ -38,13 +38,13 @@ Example:
 ```yaml
 credentials:
   - name: azure_tenant_id
-    env: AZURE_TENANT_ID
+    env: ARM_TENANT_ID
   - name: azure_subscription_id
-    env: AZURE_SUBSCRIPTION_ID
-  - name: azure_service_principal_client_id
-    env: AZURE_CLIENT_ID
-  - name: azure_service_principal_password
-    env: AZURE_CLIENT_SECRET
+    env: ARM_SUBSCRIPTION_ID
+  - name: azure_client_id
+    env: ARM_CLIENT_ID
+  - name: azure_client_secret
+    env: ARM_CLIENT_SECRET
 ```
 
 ### Parameters
@@ -101,7 +101,7 @@ Workspace bundles are stored in [Azure Container Registry (ACR)](https://azure.m
 For reference, see the vanilla workspace bundle publish workflow step and scripts:
 
 1. `Publish vanilla workspace bundle` step in [Azure TRE continuous delivery workflow (tre-CD.yml)](../.github/workflows/tre-CD.yml)
-1. `publish-vanilla-workspace` target in [Makefile](../Makefile)
+1. `workspaces-vanilla-porter-publish` target in [Makefile](../Makefile)
 1. [`publish_vanilla_workspace.sh` script](../devops/scripts/publish_vanilla_workspace.sh)
 
 > **TBD:** After end-to-end workspace deployment scenario is implemented we will have a script or other automated means of publishing a bundle **with the metadata schema** (that is likely a reduced and slightly modified copy of the Porter manifest in Cosmos DB) and we can refer to that here.

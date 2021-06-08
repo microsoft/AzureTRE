@@ -5,7 +5,7 @@
       "name": "tre-workspace-vanilla",
       "description": "vanilla workspace bundle",
       "version": "0.1.0", 
-      "properties": [
+      "parameters": [
         {
           "name": "location",
           "type": "string"
