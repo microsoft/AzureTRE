@@ -92,7 +92,7 @@ workspaces-vanilla-porter-install:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDeploying Base Workspace with Porter\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./workspaces/vanilla/.env \
-	&& cd ./workspaces/vanilla/ && porter install -p ./parameters.json --param porter_driver="docker"--cred ./azure.json --debug
+	&& cd ./workspaces/vanilla/ && porter install -p ./parameters.json --cred ./azure.json --debug
 
 workspaces-vanilla-porter-uninstall:
 	echo -e "\n\e[34m»»» 🧩 \e[96mUninstalling Base Workspace with Porter\e[0m..." \
@@ -116,7 +116,7 @@ workspaces-azureml_devtestlabs-porter-install:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDeploying azureml_devtestlabs with Porter\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./workspaces/azureml_devtestlabs/.env \
-	&& cd ./workspaces/azureml_devtestlabs/ && porter install  --allow-docker-host-access -p ./parameters.json --cred ./azure.json --debug
+	&& cd ./workspaces/azureml_devtestlabs/ && porter install  --allow-docker-host-access --param porter_driver="docker" -p ./parameters.json --cred ./azure.json --debug
 
 workspaces-azureml_devtestlabs-porter-uninstall:
 	echo -e "\n\e[34m»»» 🧩 \e[96mUninstalling Base Workspace with Porter\e[0m..." \
