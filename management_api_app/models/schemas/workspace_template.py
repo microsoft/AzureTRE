@@ -1,5 +1,5 @@
 from typing import List
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from models.domain.resource import ResourceType
 from models.domain.resource_template import ResourceTemplate, Parameter
@@ -37,12 +37,40 @@ class WorkspaceTemplateNamesInList(BaseModel):
         }
 
 
+class WorkspaceTemplateInCreate(BaseModel):
+
+    name: str = Field(title="Name of workspace template")
+    version: str = Field(title="Version of workspace template")
+    description: str = Field(title=" Description of workspace template")
+    properties: dict = Field({}, title="Workspace template properties",
+                             description="Values for the properties required by the workspace template")
+    resourceType: str = Field(title="Type of workspace template")
+    current: bool = Field(title="Mark this version as current")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "name": "My workspace template",
+                "version": "0.0.1",
+                "description": "workspace template for great product",
+                "properties": {},
+                "resourceType": "workspace",
+                "current": "true"
+            }
+        }
+
+
+class WorkspaceTemplateIdInResponse(BaseModel):
+    resourceTemplateId: str
+
+
 class WorkspaceTemplateInResponse(BaseModel):
     workspaceTemplate: ResourceTemplate
 
     class Config:
         schema_extra = {
             "example": {
+                "resourceTemplateId": "49a7445c-aae6-41ec-a539-30dfa90ab1ae",
                 "workspaceTemplate": get_sample_workspace_template()
             }
         }

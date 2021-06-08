@@ -2,8 +2,8 @@ import pytest
 from mock import patch
 
 from fastapi import FastAPI
-from httpx import AsyncClient
 from starlette import status
+from httpx import AsyncClient
 
 from db.errors import EntityDoesNotExist, UnableToAccessDatabase
 from models.schemas.workspace_template import get_sample_workspace_template_object
@@ -27,7 +27,20 @@ async def test_workspace_templates_returns_template_names(get_workspace_template
         assert name in actual_template_names
 
 
+@patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_current_workspace_template_by_name")
+async def test_post_workspace_templates_does_not_create_a_template_with_bad_payload(_, app: FastAPI, client: AsyncClient):
+    input_data = """
+                    {
+                        "blah": "blah"
+                    }
+    """
+
+    response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_data)
+
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 # [GET] /workspace-templates/{template_name}
+
+
 @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_current_workspace_template_by_name")
 async def test_workspace_templates_by_name_returns_workspace_template(get_workspace_template_by_name_mock, app: FastAPI, client: AsyncClient):
     get_workspace_template_by_name_mock.return_value = get_sample_workspace_template_object(template_name="template1")
