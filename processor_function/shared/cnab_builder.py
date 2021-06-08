@@ -34,8 +34,15 @@ class CNABBuilder:
         for key in self._message['parameters']:
             porter_parameters += " --param " + key + "=" + self._message['parameters'][key]
 
+        for key, value in os.environ.items():
+            if key.startswith("param_"):
+                porter_parameters += " --param " + key.replace('param_','') + "=" + value
+
         installation_id = self._message['parameters']['tre_id'] + "-" + self._message['parameters']['workspace_id']
-        start_command_line = ["/bin/bash", "-c", "porter "
+        start_command_line = ["/bin/bash", "-c", "az login --identity "
+                              + "&& TOKEN=$(az acr login --name msfttreacr --expose-token --output tsv --query accessToken) "
+                              + "&& docker login msfttreacr.azurecr.io --username 00000000-0000-0000-0000-000000000000 --password $TOKEN "
+                              + "&& porter "
                               + self._message['action'] + " "
                               + installation_id
                               + " --reference "
@@ -44,6 +51,7 @@ class CNABBuilder:
                               + self._message['name'] + ":"
                               + "v" + self._message['version'] + " "
                               + porter_parameters
+                              + " --cred ./home/porter/azure.json"
                               + " -d azure && porter show " + installation_id]
 
         # start_command_line = ["/bin/bash", "-c", "sleep 600000000"]
@@ -54,6 +62,9 @@ class CNABBuilder:
         for key, value in os.environ.items():
             if key.startswith("CNAB_AZURE"):
                 env_variables.append(EnvironmentVariable(name=key, value=value))
+            if key.startswith("SEC_"):
+                env_variables.append(EnvironmentVariable(name=key.replace('SEC_',''), secure_value=value))
+
 
         env_variables.append(EnvironmentVariable(name="CNAB_AZURE_RESOURCE_GROUP", value=self._resource_group_name))
         env_variables.append(EnvironmentVariable(name="CNAB_AZURE_LOCATION", value=self._location))
@@ -73,17 +84,17 @@ class CNABBuilder:
             raise Exception("No network profile")
 
         network_profile = ContainerGroupNetworkProfile(id=net_result.id)
+
         return network_profile
 
     def _setup_aci_deployment(self) -> ContainerGroup:
-
-        self._location = self._message['parameters']['location']
+        self._location = self._message['parameters']['azure_location']
         self._container_group_name = "aci-cnab-" + str(uuid.uuid4())
         container_image_name = os.environ['CNAB_IMAGE']
 
         image_registry_credentials = [ImageRegistryCredential(server=os.environ["REGISTRY_SERVER"],
-                                                              username=os.environ["CNAB_AZURE_REGISTRY_USERNAME"],
-                                                              password=os.environ["CNAB_AZURE_REGISTRY_PASSWORD"])]
+                                                              username=os.environ["SEC_CNAB_AZURE_REGISTRY_USERNAME"],
+                                                              password=os.environ["SEC_CNAB_AZURE_REGISTRY_PASSWORD"])]
 
         managed_identity = ContainerGroupIdentity(type='UserAssigned',
                                                   user_assigned_identities={
@@ -102,9 +113,10 @@ class CNABBuilder:
                                containers=[container],
                                image_registry_credentials=image_registry_credentials,
                                os_type=OperatingSystemTypes.linux,
-                               network_profile=self._get_network_profile(),
+                               # network_profile=self._get_network_profile(),
                                restart_policy=ContainerGroupRestartPolicy.never,
                                identity=managed_identity)
+
         return group
 
     def deploy_aci(self):

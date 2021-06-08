@@ -6,6 +6,8 @@ RUN rc-update add docker boot
 RUN adduser -S $USER -s /bin/bash
 USER $USER
 
+COPY azure.json /home/$USER/
+
 # Install Porter & Azure CNAB driver.
 ENV ACC_CLOUD='true'
 RUN curl https://raw.githubusercontent.com/deislabs/cnab-azure-driver/main/install-in-azure-cloudshell.sh | /bin/bash
