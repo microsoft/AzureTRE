@@ -36,7 +36,7 @@ class CNABBuilder:
 
         for key, value in os.environ.items():
             if key.startswith("param_"):
-                porter_parameters += " --param " + key.replace('param_','') + "=" + value
+                porter_parameters += " --param " + key.replace('param_', '') + "=" + value
 
         installation_id = self._message['parameters']['tre_id'] + "-" + self._message['parameters']['workspace_id']
         start_command_line = ["/bin/bash", "-c", "az login --identity "
@@ -63,8 +63,7 @@ class CNABBuilder:
             if key.startswith("CNAB_AZURE"):
                 env_variables.append(EnvironmentVariable(name=key, value=value))
             if key.startswith("SEC_"):
-                env_variables.append(EnvironmentVariable(name=key.replace('SEC_',''), secure_value=value))
-
+                env_variables.append(EnvironmentVariable(name=key.replace('SEC_', ''), secure_value=value))
 
         env_variables.append(EnvironmentVariable(name="CNAB_AZURE_RESOURCE_GROUP", value=self._resource_group_name))
         env_variables.append(EnvironmentVariable(name="CNAB_AZURE_LOCATION", value=self._location))
