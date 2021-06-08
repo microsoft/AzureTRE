@@ -23,6 +23,7 @@ UNSPECIFIED_ERROR = "Unspecified error"
 # Error strings
 WORKSPACE_DOES_NOT_EXIST = "Workspace does not exist"
 WORKSPACE_TEMPLATE_DOES_NOT_EXIST = "Workspace template does not exist"
+WORKSPACE_TEMPLATE_VERSION_EXISTS = "A template with this version already exists"
 
 # Resource Status
 RESOURCE_STATUS_NOT_DEPLOYED = "not_deployed"
