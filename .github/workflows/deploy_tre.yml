@@ -5,7 +5,7 @@ on:
     # 1am each night https://crontab.guru/#0_1_*_*_*
     - cron: "0 1 * * *"
   push:
-    branches: [ develop, main ]
+    branches: [ develop, main, marrobi/issue192-1 ]
   workflow_dispatch:
 
 jobs:
@@ -36,7 +36,7 @@ jobs:
         TF_VAR_state_container: ${{ secrets.TF_STATE_CONTAINER }}
         TF_VAR_location: ${{ secrets.LOCATION }}
         TF_VAR_acr_name: ${{ secrets.ACR_NAME }}
-        TF_VAR_address_space: ${{ secrets.TF_STATE_CONTAINER }}
+        TF_VAR_address_space: ${{ secrets.ADDRESS_SPACE }}
         AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
       run: |
           export env
