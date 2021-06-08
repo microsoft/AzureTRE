@@ -3,6 +3,8 @@ version: 0.1.0
 description: "A Azure TRE workspace with Azure Machine Learning and Dev Test Labs"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
+required:
+  - docker
 
 credentials:
   - name: azure_tenant_id
@@ -66,7 +68,6 @@ install:
       arguments:
         - install
       flags:
-        d: azure
         reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-workspace-vanilla:v0.1.0"
         cred: ./azure.json
         parameter-set: ./parameters_workspace_vanilla.json
@@ -77,7 +78,6 @@ install:
       arguments:
         - install
       flags:
-        d: azure
         reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-service-azureml:v0.1.0"
         cred: ./azure.json
         parameter-set: ./parameters_service_azureml.json
@@ -107,7 +107,6 @@ uninstall:
       arguments:
         - uninstall
       flags:
-        d: azure
         reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-service-azureml:v0.1.0"
         cred: ./azure.json
         parameter-set: ./parameters.json
@@ -118,7 +117,6 @@ uninstall:
       arguments:
         - uninstall
       flags:
-        d: azure
         reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-workspace-vanilla:v0.1.0"
         cred: ./azure.json
         parameter-set: ./parameters_workspace_vanilla.json
