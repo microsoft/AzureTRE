@@ -61,7 +61,7 @@ def test_create_workspace_item_creates_a_workspace_with_the_right_values(cosmos_
     assert workspace.resourceTemplateName == workspace_type
     assert workspace.resourceType == ResourceType.Workspace
     assert workspace.status == Status.NotDeployed
-    assert "location" in workspace.resourceTemplateParameters
+    assert "azure_location" in workspace.resourceTemplateParameters
     assert "workspace_id" in workspace.resourceTemplateParameters
     assert "tre_id" in workspace.resourceTemplateParameters
     assert "address_space" in workspace.resourceTemplateParameters

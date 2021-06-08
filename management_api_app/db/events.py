@@ -12,7 +12,12 @@ async def connect_to_db(app: FastAPI) -> None:
     logging.debug(f"Connecting to {config.STATE_STORE_ENDPOINT}")
 
     try:
-        cosmos_client = CosmosClient(config.STATE_STORE_ENDPOINT, config.STATE_STORE_KEY)
+        if config.DEBUG:
+            # ignore TLS(setup is pain) when on devcontainer and connecting to cosmosdb on windows host.
+            cosmos_client = CosmosClient(config.STATE_STORE_ENDPOINT, config.STATE_STORE_KEY,
+                                         connection_verify=False)
+        else:
+            cosmos_client = CosmosClient(config.STATE_STORE_ENDPOINT, config.STATE_STORE_KEY)
         app.state.cosmos_client = cosmos_client
         logging.debug("Connection established")
     except Exception as e:

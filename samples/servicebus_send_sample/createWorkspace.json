@@ -1,11 +1,13 @@
 {
-  "action":"install",
-  "name":"tre-workspace-vanilla",
-  "version":"0.1.0",
-  "parameters":{
-    "location":"westeurope",
-    "workspace_id":"6354",
-    "tre_id":"msfttre-dev-9075",
-    "address_space":"10.2.1.0/24"
+    "CNAB-image": "msfttreacr.azurecr.io/microsoft/azuretre/cnab-aci:v1",
+    "bundle-name": "msfttreacr.azurecr.io/microsoft/azuretre/workspaces/tre-workspace-vanilla:v0.1.0",
+    "operation": "create",
+    "parameters": 
+      {
+        "azure_location": "westeurope",
+        "tre_id":"9075",
+        "core_name": "msfttre-dev-9075",
+        "workspace_id":"2",
+        "address_space":"10.2.1.0/24"
+      }
   }
-}
