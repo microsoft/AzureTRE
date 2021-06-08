@@ -33,10 +33,10 @@ jobs:
         TF_VAR_tre_id: ${{ secrets.TRE_ID }}
         TF_VAR_state_storage: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
         TF_VAR_mgmt_res_group: ${{ secrets.MGMT_RESOURCE_GROUP }}
-        TF_VAR_state_container: "tfstate"
-        TF_VAR_location: "westeurope"
+        TF_VAR_state_container: ${{ secrets.TF_STATE_CONTAINER }}
+        TF_VAR_location: ${{ secrets.LOCATION }}
         TF_VAR_acr_name: ${{ secrets.ACR_NAME }}
-        TF_VAR_address_space: "10.1.0.0/16"
+        TF_VAR_address_space: ${{ secrets.TF_STATE_CONTAINER }}
         AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
       run: |
           export env
@@ -64,11 +64,11 @@ jobs:
       shell: bash
       env:
         TRE_ID: ${{ secrets.TRE_ID }}
-        LOCATION: "westeurope"
+        LOCATION: ${{ secrets.LOCATION }}
         WORKSPACE_ID: "0001"
         ADDRESS_SPACE: "10.2.1.0/24"
         TF_VAR_acr_name: ${{ secrets.ACR_NAME }}
-        TF_VAR_tfstate_container_name: "tfstate"
+        TF_VAR_tfstate_container_name: ${{ secrets.TF_STATE_CONTAINER }}
         TF_VAR_tfstate_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
         TF_VAR_tfstate_storage_account_name: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
         AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}

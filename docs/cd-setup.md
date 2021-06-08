@@ -1,4 +1,4 @@
-# Continuous delivery with GitHub Actions
+# Continuous Delivery with GitHub Actions
 
 ## Setup
 
@@ -17,5 +17,10 @@ You will also need to create the following secrets:
 - `ACR_NAME`
 - `MGMT_RESOURCE_GROUP`
 - `STATE_STORAGE_ACCOUNT_NAME`
+- `TF_STATE_CONTAINER`
+- `LOCATION`
+- `ADDRESS_SPACE`
+
+For descriptions of what each of these variables are, and example values, please review [docs/developer-quickstart.md](docs/developer-quickstart.md).
 
 The `Deploy TRE` workflow can then be run.
