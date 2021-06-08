@@ -14,17 +14,11 @@ URLs:
 - aadcdn.msftauth.net
 - graph.microsoft.com
 - management.azure.com
-- *privatelink.api.azureml.ms
-- *privatelink.file.core.windows.net
-- *privatelink.vaultcore.azure.net
-- *privatelink.notebooks.azure.net
-- *privatelink.azurecr.io
-- *privatelink.blob.core.windows.net
 - viennaglobal.azurecr.io
 
 Service Tags:
 
-- Storage.WestEurope
+- Storage.`{AzureRegion}`
 - AzureContainerRegistry
 
 ## Prerequisites
