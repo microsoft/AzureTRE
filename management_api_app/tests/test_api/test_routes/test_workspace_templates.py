@@ -49,12 +49,12 @@ async def test_post_does_not_create_a_template_with_bad_payload(app: FastAPI, cl
 
 
 @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_current_workspace_template_by_name")
-async def test_when_updating_current_and_template_not_found_return_404(mock, app: FastAPI, client: AsyncClient):
+async def test_when_updating_current_and_template_not_found_create_one(mock, app: FastAPI, client: AsyncClient):
     mock.side_effect = EntityDoesNotExist
 
     response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=payload)
 
-    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.status_code == status.HTTP_201_CREATED
 
 
 @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_workspace_template_by_name_and_version")

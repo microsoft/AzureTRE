@@ -34,7 +34,8 @@ async def create_workspace_template(workspace_template_create: WorkspaceTemplate
         try:
             template = workspace_template_repo.get_current_workspace_template_by_name(workspace_template_create.name)
         except EntityDoesNotExist:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.WORKSPACE_TEMPLATE_DOES_NOT_EXIST)
+            # first registration
+            pass
     else:
         try:
             template = workspace_template_repo.get_workspace_template_by_name_and_version(workspace_template_create.name,
