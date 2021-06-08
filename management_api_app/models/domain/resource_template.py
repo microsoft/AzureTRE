@@ -20,6 +20,6 @@ class ResourceTemplate(AzureTREModel):
     name: str = Field(title="Unique template name")
     description: str = Field(title="Template description")
     version: str = Field(title="Template version")
-    parameters: List[Parameter] = Field(title="Template parameters")
+    properties: List[dict] = Field(title="Template parameters")
     resourceType: ResourceType = Field(title="Type of resource this template is for (workspace/service)")
     current: bool = Field(title="Is this the current version of this template")
