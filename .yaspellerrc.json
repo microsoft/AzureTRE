@@ -64,7 +64,19 @@
         "tre",
         "VNet",
         "resourceType",
-        "isCurrent"
+        "isCurrent",
+        "msfttreacr",
+        "azurecr",
+        "io",
+        "azuretre",
+        "cnab",
+        "aci",
+        "westeurope",
+        "idempotent",
+        "Versioning",
+        "mixins",
+        "yml",
+        "microsoft"
     ],
     "ignoreText": [
         // Code sections (anything between ``` and ``` or ` and `)
