@@ -69,6 +69,9 @@ class CNABBuilder:
         return env_variables
 
     def _setup_aci_deployment(self) -> ContainerGroup:
+
+        # Prepares a Container Group and a Container for deployment to ACI
+
         self._location = self._message['parameters']['azure_location']
         self._container_group_name = "aci-cnab-" + str(uuid.uuid4())
         container_image_name = os.environ['CNAB_IMAGE']
@@ -100,6 +103,10 @@ class CNABBuilder:
         return group
 
     def deploy_aci(self):
+
+
+        # Deploys a CNAB container into ACI with parameters to run porter
+
         group = self._setup_aci_deployment()
 
         credential = AzureIdentityCredentialAdapter()
