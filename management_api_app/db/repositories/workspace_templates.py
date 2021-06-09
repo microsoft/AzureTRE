@@ -50,7 +50,7 @@ class WorkspaceTemplateRepository(BaseRepository):
             name=workspace_template_create.name,
             description=workspace_template_create.description,
             version=workspace_template_create.version,
-            properties=workspace_template_create.parameters,
+            properties=workspace_template_create.properties,
             resourceType=workspace_template_create.resourceType,
             current=workspace_template_create.current
         )

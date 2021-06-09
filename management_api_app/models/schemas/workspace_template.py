@@ -42,7 +42,7 @@ class WorkspaceTemplateInCreate(BaseModel):
     name: str = Field(title="Name of workspace template")
     version: str = Field(title="Version of workspace template")
     description: str = Field(title=" Description of workspace template")
-    parameters: List[dict] = Field([{"location": "westeurope"}], title="Workspace template properties",
+    properties: List[dict] = Field([{}], title="Workspace template properties",
                                    description="Values for the properties required by the workspace template")
     resourceType: str = Field(title="Type of workspace template")
     current: bool = Field(title="Mark this version as current")
