@@ -26,12 +26,19 @@ Service Tags:
 - A deployed TRE instance
 
 - A Vanilla Workspace Bundle published
-
+    `make workspaces-vanilla-porter-build`
     `make workspaces-vanilla-porter-publish`
 
-- A Azure ML Service bundle publised
-
+- A Azure ML Service bundle published
+    `make services-azureml-porter-build`  
     `make services-azureml-porter-publish`
+
+- A DevTest Labs Service bundle published
+    `make services-devtestlabs-porter-build`  
+    `make services-devtestlabs-porter-publish`
+
+- A Azure ML DevTest Labs Workspace bundle built
+    `make services-devtestlabs-porter-build`
 
 ## To deploy
 

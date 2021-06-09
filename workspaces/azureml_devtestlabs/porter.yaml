@@ -86,6 +86,17 @@ install:
         cred: ./azure.json
         parameter-set: ./parameters_service_azureml.json
         debug:
+  - exec:
+      description: "Install Dev Test Labs Virtual Desktop Service"
+      command: porter
+      arguments:
+        - install
+      flags:
+        d: "{{ bundle.parameters.porter_driver }}"
+        reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-service-devtestlabs:v0.1.0"
+        cred: ./azure.json
+        parameter-set: ./parameters_service_devtestlabs.json
+        debug:
 
 upgrade:
   - exec:
@@ -106,16 +117,27 @@ uninstall:
         u: "{{ bundle.credentials.azure_client_id }}"
         p: "{{ bundle.credentials.azure_client_secret }}"
   - exec:
-      description: "Uninstall Azure ML service"
+      description: "Uninstall Dev Test Labs Virtual Desktop Service"
       command: porter
       arguments:
         - uninstall
       flags:
         d: "{{ bundle.parameters.porter_driver }}"
-        reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-service-azureml:v0.1.0"
+        reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-service-devtestlabs:v0.1.0"
         cred: ./azure.json
-        parameter-set: ./parameters.json
+        parameter-set: ./parameters_service_devtestlabs.json
         debug:
+  - exec:
+        description: "Uninstall Azure ML service"
+        command: porter
+        arguments:
+          - uninstall
+        flags:
+          d: "{{ bundle.parameters.porter_driver }}"
+          reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-service-azureml:v0.1.0"
+          cred: ./azure.json
+          parameter-set: ./parameters.json
+          debug:
   - exec:
       description: "Uninstall vanilla workspace"
       command: porter
