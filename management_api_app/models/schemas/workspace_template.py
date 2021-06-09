@@ -12,7 +12,7 @@ def get_sample_workspace_template_object(template_name: str = "tre-workspace-van
         description="vanilla workspace bundle",
         version="0.1.0",
         properties=[
-            Parameter(name="location", type="string"),
+            Parameter(name="azure_location", type="string"),
             Parameter(name="tre_id", type="string"),
             Parameter(name="workspace_id", type="string"),
             Parameter(name="address_space", type="string", default="10.2.1.0/24", description="VNet address space for the workspace services")
@@ -50,21 +50,17 @@ class WorkspaceTemplateInCreate(BaseModel):
     class Config:
         schema_extra = {
             "example": {
-                "name": "My workspace template",
+                "name": "my-tre-workspace",
                 "version": "0.0.1",
                 "description": "workspace template for great product",
                 "properties": [{
-                    "name": "location",
+                    "name": "azure_location",
                     "type": "string"
                 }],
                 "resourceType": "workspace",
                 "current": "true"
             }
         }
-
-
-class WorkspaceTemplateIdInResponse(BaseModel):
-    resourceTemplateId: str
 
 
 class WorkspaceTemplateInResponse(BaseModel):

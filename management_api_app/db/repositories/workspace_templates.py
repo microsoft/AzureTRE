@@ -55,7 +55,7 @@ class WorkspaceTemplateRepository(BaseRepository):
             current=workspace_template_create.current
         )
         self.create_item(resource_template)
-        return item_id
+        return resource_template
 
     def update_item(self, resource_template: ResourceTemplate):
         self.container.upsert_item(resource_template)

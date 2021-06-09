@@ -1,4 +1,5 @@
 import json
+import copy
 import pytest
 from mock import patch
 
@@ -13,12 +14,12 @@ from resources import strings
 
 pytestmark = pytest.mark.asyncio
 payload = {
-    "name": "My workspace template",
+    "name": "my-tre-workspace",
     "version": "0.0.1",
     "description": "workspace template for great product",
-    "properties": {"blah": "blah"},
+    "properties": [{"blah": "blah"}],
     "resourceType": "workspace",
-    "current": "true"
+    "current": True
 }
 
 # [GET] /workspace-templates
@@ -53,12 +54,15 @@ async def test_post_does_not_create_a_template_with_bad_payload(app: FastAPI, cl
 @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_current_workspace_template_by_name")
 async def test_when_updating_current_and_template_not_found_create_one(get_current_mock, create_item_mock, app: FastAPI, client: AsyncClient):
     get_current_mock.side_effect = EntityDoesNotExist
-    create_item_mock.return_value = "1234"
+
+    response_content = copy.deepcopy(payload)
+    response_content["id"] = "1234"
+    create_item_mock.return_value = response_content
 
     response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=payload)
 
     assert response.status_code == status.HTTP_201_CREATED
-    assert json.loads(response.text)["resourceTemplateId"] == "1234"
+    assert json.loads(response.text)["workspaceTemplate"] == response_content
 
 
 @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.update_item")
@@ -68,14 +72,17 @@ async def test_when_updating_current_and_template_found_update_and_add(get_curre
                                                                        update_item_mock,
                                                                        app: FastAPI, client: AsyncClient):
     get_current_mock.return_value = {"current": "true"}
-    create_item_mock.return_value = "1234"
+
+    response_content = copy.deepcopy(payload)
+    response_content["id"] = "1234"
+    create_item_mock.return_value = response_content
 
     response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=payload)
 
     expected_template = {"current": "false"}
     update_item_mock.assert_called_once_with(expected_template)
     assert response.status_code == status.HTTP_201_CREATED
-    assert json.loads(response.text)["resourceTemplateId"] == "1234"
+    assert json.loads(response.text)["workspaceTemplate"] == response_content
 
 
 @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_workspace_template_by_name_and_version")
@@ -91,14 +98,17 @@ async def test_when_not_updating_current_and_same_template_exists_gives_409(mock
 @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.create_workspace_template_item")
 @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_workspace_template_by_name_and_version")
 async def test_when_not_updating_current_a_unique_template_is_saved(get_mock, create_mock, app: FastAPI, client: AsyncClient):
-    payload["current"] = "false"
+    payload["current"] = False
     get_mock.side_effect = EntityDoesNotExist
-    create_mock.return_value = "1234"
+
+    response_content = copy.deepcopy(payload)
+    response_content["id"] = "1234"
+    create_mock.return_value = response_content
 
     response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=payload)
 
     assert response.status_code == status.HTTP_201_CREATED
-    assert json.loads(response.text)["resourceTemplateId"] == "1234"
+    assert json.loads(response.text)["workspaceTemplate"] == response_content
 
 
 @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_current_workspace_template_by_name")

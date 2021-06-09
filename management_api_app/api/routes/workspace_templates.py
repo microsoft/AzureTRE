@@ -8,7 +8,6 @@ from db.errors import EntityDoesNotExist
 from db.repositories.workspace_templates import WorkspaceTemplateRepository
 from models.schemas.workspace_template import (
     WorkspaceTemplateNamesInList,
-    WorkspaceTemplateIdInResponse,
     WorkspaceTemplateInCreate,
     WorkspaceTemplateInResponse
 )
@@ -25,23 +24,23 @@ async def get_workspace_templates(workspace_template_repo: WorkspaceTemplateRepo
 
 
 @router.post("/workspace-templates", status_code=status.HTTP_201_CREATED,
-             response_model=WorkspaceTemplateIdInResponse,
+             response_model=WorkspaceTemplateInResponse,
              name=strings.API_CREATE_WORKSPACE_TEMPLATES)
 async def create_workspace_template(workspace_template_create: WorkspaceTemplateInCreate, workspace_template_repo: WorkspaceTemplateRepository =
-                                    Depends(get_repository(WorkspaceTemplateRepository))) -> WorkspaceTemplateIdInResponse:
+                                    Depends(get_repository(WorkspaceTemplateRepository))) -> WorkspaceTemplateInResponse:
     create_new_current = workspace_template_create.current
     if create_new_current:
         try:
             template = workspace_template_repo.get_current_workspace_template_by_name(workspace_template_create.name)
         except EntityDoesNotExist:
             # first registration
-            item_id = workspace_template_repo.create_workspace_template_item(workspace_template_create)
-            return WorkspaceTemplateIdInResponse(resourceTemplateId=item_id)
+            template_created = workspace_template_repo.create_workspace_template_item(workspace_template_create)
+            return WorkspaceTemplateInResponse(workspaceTemplate=template_created)
         if template:
             template["current"] = "false"
             workspace_template_repo.update_item(template)
-            item_id = workspace_template_repo.create_workspace_template_item(workspace_template_create)
-            return WorkspaceTemplateIdInResponse(resourceTemplateId=item_id)
+            template_created = workspace_template_repo.create_workspace_template_item(workspace_template_create)
+            return WorkspaceTemplateInResponse(workspaceTemplate=template_created)
     else:
         try:
             template = workspace_template_repo.get_workspace_template_by_name_and_version(workspace_template_create.name,
@@ -49,8 +48,8 @@ async def create_workspace_template(workspace_template_create: WorkspaceTemplate
             if template:
                 raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_TEMPLATE_VERSION_EXISTS)
         except EntityDoesNotExist:
-            item_id = workspace_template_repo.create_workspace_template_item(workspace_template_create)
-            return WorkspaceTemplateIdInResponse(resourceTemplateId=item_id)
+            template_created = workspace_template_repo.create_workspace_template_item(workspace_template_create)
+            return WorkspaceTemplateInResponse(workspaceTemplate=template_created)
 
 
 @router.get("/workspace-templates/{template_name}", response_model=WorkspaceTemplateInResponse, name=strings.API_GET_WORKSPACE_TEMPLATE_BY_NAME)
