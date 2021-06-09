@@ -14,7 +14,7 @@ def get_sample_workspace_template(name: str, version: str = "1.0") -> ResourceTe
         description="some description",
         version=version,
         resourceType=ResourceType.Workspace,
-        parameters=[],
+        properties=[],
         current=False
     )
 
