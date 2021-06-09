@@ -86,7 +86,7 @@ workspaces-vanilla-tf-destroy:
 workspaces-vanilla-porter-build:
 	echo -e "\n\e[34m»»» 🧩 \e[Building vanilla workspace bundle\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh porter \
-	&& cd ./workspaces/vanilla/ && porter build
+	&& cd ./workspaces/vanilla/ && porter build --debug
 
 workspaces-vanilla-porter-install:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDeploying Base Workspace with Porter\e[0m..." \
@@ -104,8 +104,70 @@ workspaces-vanilla-porter-publish:
 	echo -e "\n\e[34m»»» 🧩 \e[96mPublishing vanilla workspace bundle\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
-	&& ./devops/scripts/publish_vanilla_workspace.sh
+	&&  cd ./workspaces/vanilla/ && ../../devops/scripts/publish_bundle.sh
 
+# Workspace: Azure ML and DevTest Labs
+workspaces-azureml_devtestlabs-porter-build:
+	echo -e "\n\e[34m»»» 🧩 \e[Building azureml_devtestlabs workspace bundle\e[0m..." \
+	&& . ./devops/scripts/check_dependencies.sh porter \
+	&& cd ./workspaces/azureml_devtestlabs/ && porter build --debug
 
+workspaces-azureml_devtestlabs-porter-install:
+	echo -e "\n\e[34m»»» 🧩 \e[96mDeploying azureml_devtestlabs with Porter\e[0m..." \
+	&& . ./devops/scripts/check_dependencies.sh porter \
+	&& . ./devops/scripts/load_env.sh ./workspaces/azureml_devtestlabs/.env \
+	&& cd ./workspaces/azureml_devtestlabs/ && porter install  --allow-docker-host-access --param porter_driver="docker" -p ./parameters.json --cred ./azure.json --debug
+
+workspaces-azureml_devtestlabs-porter-uninstall:
+	echo -e "\n\e[34m»»» 🧩 \e[96mUninstalling Base Workspace with Porter\e[0m..." \
+	&& . ./devops/scripts/check_dependencies.sh porter \
+	&& . ./devops/scripts/load_env.sh ./workspaces/azureml_devtestlabs/.env \
+	&& cd ./workspaces/azureml_devtestlabs/ && porter uninstall  --allow-docker-host-access -p ./parameters.json --cred ./azure.json --debug
+
+workspaces-azureml_devtestlabs-porter-publish:
+	echo -e "\n\e[34m»»» 🧩 \e[96mPublishing azureml_devtestlabs workspace bundle\e[0m..." \
+	&& . ./devops/scripts/check_dependencies.sh porter \
+	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
+	&&  cd ./workspaces/azureml_devtestlabs/ && ../../devops/scripts/publish_bundle.sh
+
+# Service: Azure ML
+services-azureml-tf-deploy:
+	echo -e "\n\e[34m»»» 🧩 \e[96mDeploying Azure ML Service with Terraform\e[0m..." \
+	&& . ./devops/scripts/check_dependencies.sh \
+	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
+	&& . ./devops/scripts/load_env.sh ./templates/core/terraform/.env \
+	&& . ./devops/scripts/load_env.sh ./workspaces/services/azureml/terraform/.env \
+	&& cd ./workspaces/services/azureml/terraform/ && ./deploy.sh
+
+services-azureml-tf-destroy:
+	echo -e "\n\e[34m»»» 🧩 \e[96mDestroying Azure ML Service\e[0m..." \
+	&& . ./devops/scripts/check_dependencies.sh \
+	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
+	&& . ./devops/scripts/load_env.sh ./templates/core/terraform/.env \
+	&& . ./devops/scripts/load_env.sh ./workspaces/services/azureml/terraform/.env \
+	&& cd ./workspaces/services/azureml/terraform/ && ./destroy.sh 
+
+services-azureml-porter-build:
+	echo -e "\n\e[34m»»» 🧩 \e[Building Azure ML Servicee bundle\e[0m..." \
+	&& . ./devops/scripts/check_dependencies.sh porter \
+	&& cd ./workspaces/services/azureml/ && porter build --debug
+
+services-azureml-porter-install:
+	echo -e "\n\e[34m»»» 🧩 \e[96mDeploying Azure ML Service with Porter\e[0m..." \
+	&& . ./devops/scripts/check_dependencies.sh porter \
+	&& . ./devops/scripts/load_env.sh ./workspaces/services/azureml/.env \
+	&& cd ./workspaces/services/azureml/ && porter install -p ./parameters.json --cred ./azure.json --debug
+
+services-azureml-porter-uninstall:
+	echo -e "\n\e[34m»»» 🧩 \e[96mUninstalling Azure ML Service with Porter\e[0m..." \
+	&& . ./devops/scripts/check_dependencies.sh porter \
+	&& . ./devops/scripts/load_env.sh ./workspaces/services/azureml/.env \
+	&& cd ./workspaces/services/azureml/ && porter uninstall -p ./parameters.json --cred ./azure.json --debug
+
+services-azureml-porter-publish:
+	echo -e "\n\e[34m»»» 🧩 \e[96mPublishing Azure ML Service bundle\e[0m..." \
+	&& . ./devops/scripts/check_dependencies.sh porter \
+	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
+	&&  cd ./workspaces/services/azureml/ && ../../../devops/scripts/publish_bundle.sh
 
 

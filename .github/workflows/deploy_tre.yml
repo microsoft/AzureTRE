@@ -1,0 +1,87 @@
+name: Deploy Azure TRE
+
+on:
+  schedule:
+    # 1am each night https://crontab.guru/#0_1_*_*_*
+    - cron: "0 1 * * *"
+  push:
+    branches: [ develop, main ]
+  workflow_dispatch:
+
+jobs:
+  deploy_tre:
+    name: Deploy TRE
+    runs-on: ubuntu-latest
+    environment: Dev
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Install Terraform
+      uses: little-core-labs/install-terraform@v2.0.0
+      with:
+          version: 0.15.4
+
+    - name: Deploy TRE
+      shell: bash
+      env:
+        TF_VAR_tre_id: ${{ secrets.TRE_ID }}
+        TF_VAR_state_storage: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+        TF_VAR_mgmt_res_group: ${{ secrets.MGMT_RESOURCE_GROUP }}
+        TF_VAR_state_container: ${{ secrets.TF_STATE_CONTAINER }}
+        TF_VAR_location: ${{ secrets.LOCATION }}
+        TF_VAR_acr_name: ${{ secrets.ACR_NAME }}
+        TF_VAR_address_space: ${{ secrets.ADDRESS_SPACE }}
+        AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+      run: |
+          export env
+          export USE_ENV_VARS_NOT_FILES=true
+          export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
+          export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
+          export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
+          export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
+
+          echo $GITHUB_REF
+          if [ $GITHUB_EVENT_NAME == 'push' ] && [ $GITHUB_REF == 'refs/heads/develop' ]; then
+            TF_VAR_image_tag='develop-latest'
+          elif [ $GITHUB_EVENT_NAME == 'push' ] && [ $GITHUB_REF == 'refs/heads/main' ]; then
+            TF_VAR_image_tag='main-latest'
+          else
+            TF_VAR_image_tag=$GITHUB_SHA
+          fi
+
+          export TF_VAR_image_tag
+
+          make all
+              
+    
+    - name: Publish and deploy vanilla workspace bundle
+      shell: bash
+      env:
+        TRE_ID: ${{ secrets.TRE_ID }}
+        LOCATION: ${{ secrets.LOCATION }}
+        WORKSPACE_ID: "0001"
+        ADDRESS_SPACE: "10.2.1.0/24"
+        TF_VAR_acr_name: ${{ secrets.ACR_NAME }}
+        TF_VAR_tfstate_container_name: ${{ secrets.TF_STATE_CONTAINER }}
+        TF_VAR_tfstate_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
+        TF_VAR_tfstate_storage_account_name: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+        AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+      run: |
+          export USE_ENV_VARS_NOT_FILES=true
+          export env
+          export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
+          export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
+          export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
+          export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
+
+          curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
+          export PATH=~/.porter/:$PATH
+
+          make workspaces-vanilla-porter-publish
+          make workspaces-vanilla-porter-install

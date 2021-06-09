@@ -1,3 +1,4 @@
+import uuid
 from typing import List
 
 from azure.cosmos import CosmosClient
@@ -6,6 +7,7 @@ from core import config
 from db.errors import EntityDoesNotExist
 from db.repositories.base import BaseRepository
 from models.domain.resource_template import ResourceTemplate
+from models.schemas.workspace_template import WorkspaceTemplateInCreate
 
 
 class WorkspaceTemplateRepository(BaseRepository):
@@ -40,3 +42,20 @@ class WorkspaceTemplateRepository(BaseRepository):
         print(workspace_templates)
         workspace_template_names = [template["name"] for template in workspace_templates]
         return list(set(workspace_template_names))
+
+    def create_workspace_template_item(self, workspace_template_create: WorkspaceTemplateInCreate):
+        item_id = str(uuid.uuid4())
+        resource_template = ResourceTemplate(
+            id=item_id,
+            name=workspace_template_create.name,
+            description=workspace_template_create.description,
+            version=workspace_template_create.version,
+            properties=workspace_template_create.parameters,
+            resourceType=workspace_template_create.resourceType,
+            current=workspace_template_create.current
+        )
+        self.create_item(resource_template)
+        return resource_template
+
+    def update_item(self, resource_template: ResourceTemplate):
+        self.container.upsert_item(resource_template)
