@@ -25,8 +25,8 @@ resource "azurerm_function_app" "procesorfunction" {
     CNAB_AZURE_VERBOSE                    = "true"
     CNAB_AZURE_PROPAGATE_CREDENTIALS      = "true"
     CNAB_AZURE_MSI_TYPE                   = "user"
-    REGISTRY_USER_NAME                    = var.docker_registry_username
-    REGISTRY_USER_PASSWORD                = var.docker_registry_password
+    CNAB_AZURE_REGISTRY_USERNAME          = var.docker_registry_username
+    CNAB_AZURE_REGISTRY_PASSWORD          = var.docker_registry_password
     REGISTRY_SERVER                       = var.docker_registry_server
     servicebusconnection                  = var.servicebus_connection_string
     queueName                             = var.workspacequeue

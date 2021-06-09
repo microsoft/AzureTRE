@@ -7,7 +7,7 @@
         "azure_location": "westeurope",
         "tre_id":"9075",
         "core_name": "msfttre-dev-9075",
-        "workspace_id":"2",
+        "workspace_id":"0004",
         "address_space":"10.2.1.0/24"
       }
   }

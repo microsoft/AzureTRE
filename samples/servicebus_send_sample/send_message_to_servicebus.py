@@ -1,7 +1,9 @@
+import os
+
 from azure.servicebus import ServiceBusClient, ServiceBusMessage
 
 
-CONNECTION_STR = ""
+CONNECTION_STR = os.environ['SERVICEBUSCONNECTION']
 QUEUE_NAME = "workspacequeue"
 
 
