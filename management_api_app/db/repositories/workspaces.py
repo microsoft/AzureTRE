@@ -45,12 +45,17 @@ class WorkspaceRepository(BaseRepository):
         except EntityDoesNotExist:
             raise ValueError(f"The workspace type '{workspace_create.workspaceType}' does not exist")
 
+        # system generated parameters
         resource_spec_parameters = {
-            "location": config.RESOURCE_LOCATION,
+            "azure_location": config.RESOURCE_LOCATION,
             "workspace_id": full_workspace_id[-4:],
             "tre_id": config.TRE_ID,
             "address_space": "10.2.1.0/24"  # TODO: Calculate this value - Issue #52
         }
+
+        # user provided parameters
+        for parameter in workspace_create.parameters:
+            resource_spec_parameters[parameter] = workspace_create.parameters[parameter]
 
         workspace = Workspace(
             id=full_workspace_id,

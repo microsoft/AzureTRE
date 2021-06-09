@@ -30,7 +30,8 @@
 		"ms-python.python",
 		"hashicorp.terraform",
 		"github.vscode-pull-request-github",
-		"ms-kubernetes-tools.porter-vscode"
+		"ms-kubernetes-tools.porter-vscode",
+		"davidanson.vscode-markdownlint"
 	],
 	"forwardPorts": [],
 	"runArgs": [
