@@ -16,7 +16,6 @@ from azure.mgmt.containerinstance.models import (ContainerGroup,
                                                  ResourceRequests,
                                                  ResourceRequirements,
                                                  OperatingSystemTypes)
-from azure.mgmt.network import NetworkManagementClient
 
 from shared.azure_identity_credential_adapter import AzureIdentityCredentialAdapter
 
@@ -29,7 +28,7 @@ class CNABBuilder:
         self._container_group_name = ""
         self._location = ""
 
-    def _build_porter_cmd_line(self) -> List[str]:
+    def _build_porter_command(self) -> List[str]:
         porter_parameters = ""
         for key in self._message['parameters']:
             porter_parameters += " --param " + key + "=" + self._message['parameters'][key]
@@ -39,23 +38,22 @@ class CNABBuilder:
                 porter_parameters += " --param " + key.replace('param_', '') + "=" + value
 
         installation_id = self._message['parameters']['tre_id'] + "-" + self._message['parameters']['workspace_id']
-        start_command_line = ["/bin/bash", "-c", "az login --identity "
-                              + "&& TOKEN=$(az acr login --name msfttreacr --expose-token --output tsv --query accessToken) "
-                              + "&& docker login msfttreacr.azurecr.io --username 00000000-0000-0000-0000-000000000000 --password $TOKEN "
-                              + "&& porter "
-                              + self._message['action'] + " "
-                              + installation_id
-                              + " --reference "
-                              + os.environ["REGISTRY_SERVER"]
-                              + os.environ["WORKSPACES_PATH"]
-                              + self._message['name'] + ":"
-                              + "v" + self._message['version'] + " "
-                              + porter_parameters
-                              + " --cred ./home/porter/azure.json"
-                              + " -d azure && porter show " + installation_id]
+        command_line = ["/bin/bash", "-c", "az login --identity "
+            + "&& TOKEN=$(az acr login --name msfttreacr --expose-token --output tsv --query accessToken) "
+            + "&& docker login msfttreacr.azurecr.io --username 00000000-0000-0000-0000-000000000000 --password $TOKEN "
+            + "&& porter "
+            + self._message['action'] + " "
+            + installation_id
+            + " --reference "
+            + os.environ["REGISTRY_SERVER"]
+            + os.environ["WORKSPACES_PATH"]
+            + self._message['name'] + ":"
+            + "v" + self._message['version'] + " "
+            + porter_parameters
+            + " --cred ./home/porter/azure.json"
+            + " --driver azure && porter show " + installation_id]
 
-        # start_command_line = ["/bin/bash", "-c", "sleep 600000000"]
-        return start_command_line
+        return command_line
 
     def _build_cnab_env_variables(self) -> List[str]:
         env_variables = []
@@ -69,22 +67,6 @@ class CNABBuilder:
         env_variables.append(EnvironmentVariable(name="CNAB_AZURE_LOCATION", value=self._location))
 
         return env_variables
-
-    def _get_network_profile(self) -> ContainerGroupNetworkProfile:
-        default_credential = DefaultAzureCredential()
-
-        network_client = NetworkManagementClient(default_credential, self._subscription_id)
-
-        net_results = network_client.network_profiles.list(resource_group_name=self._resource_group_name)
-
-        if net_results:
-            net_result = net_results.next()
-        else:
-            raise Exception("No network profile")
-
-        network_profile = ContainerGroupNetworkProfile(id=net_result.id)
-
-        return network_profile
 
     def _setup_aci_deployment(self) -> ContainerGroup:
         self._location = self._message['parameters']['azure_location']
@@ -105,14 +87,13 @@ class CNABBuilder:
         container = Container(name=self._container_group_name,
                               image=container_image_name,
                               resources=container_resource_requirements,
-                              command=self._build_porter_cmd_line(),
+                              command=self._build_porter_command(),
                               environment_variables=self._build_cnab_env_variables())
 
         group = ContainerGroup(location=self._location,
                                containers=[container],
                                image_registry_credentials=image_registry_credentials,
                                os_type=OperatingSystemTypes.linux,
-                               # network_profile=self._get_network_profile(),
                                restart_policy=ContainerGroupRestartPolicy.never,
                                identity=managed_identity)
 
