@@ -17,6 +17,17 @@ variable "address_space" {
   description = "Core services VNET Address Space"
 }
 
+variable "deployment_processor_azure_client_id" {
+  description = "The client (app) ID of the service principal used for deploying resources"
+  type        = string
+}
+
+variable "deployment_processor_azure_client_secret" {
+  description = "The client secret (app password) of the service principal used for deploying resources"
+  type        = string
+  sensitive   = true
+}
+
 variable "management_api_image_repository" {
   type        = string
   description = "Repository for management API image"
@@ -42,4 +53,5 @@ variable "docker_registry_username" {
 variable "docker_registry_password" {
   type        = string
   description = "Docker registry password"
+  sensitive   = true
 }

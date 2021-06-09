@@ -1,10 +1,10 @@
 resource "azurerm_key_vault" "kv" {
-  name                = "kv-${var.tre_id}"
-  location            = var.location
-  resource_group_name = var.resource_group_name
-  sku_name            = "standard"
+  name                     = "kv-${var.tre_id}"
+  location                 = var.location
+  resource_group_name      = var.resource_group_name
+  sku_name                 = "standard"
   purge_protection_enabled = true
-  tenant_id           = var.tenant_id
+  tenant_id                = var.tenant_id
 }
 
 data "azurerm_client_config" "deployer" {}
@@ -48,4 +48,16 @@ resource "azurerm_private_endpoint" "kvpe" {
     is_manual_connection           = false
     subresource_names              = ["Vault"]
   }
+}
+
+resource "azurerm_key_vault_secret" "deployment_client_id" {
+  name         = "deployment_processor_azure_client_id"
+  value        = var.deployment_processor_azure_client_id
+  key_vault_id = azurerm_key_vault.kv.id
+}
+
+resource "azurerm_key_vault_secret" "deployment_client_secret" {
+  name         = "deployment_processor_azure_client_secret"
+  value        = var.deployment_processor_azure_client_secret
+  key_vault_id = azurerm_key_vault.kv.id
 }

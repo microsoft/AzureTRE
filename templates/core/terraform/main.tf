@@ -115,13 +115,15 @@ module "servicebus" {
 }
 
 module "keyvault" {
-  source               = "./keyvault"
-  tre_id               = var.tre_id
-  location             = var.location
-  resource_group_name  = azurerm_resource_group.core.name
-  shared_subnet        = module.network.shared
-  core_vnet            = module.network.core
-  tenant_id            = data.azurerm_client_config.current.tenant_id
+  source                                   = "./keyvault"
+  tre_id                                   = var.tre_id
+  location                                 = var.location
+  resource_group_name                      = azurerm_resource_group.core.name
+  shared_subnet                            = module.network.shared
+  core_vnet                                = module.network.core
+  tenant_id                                = data.azurerm_client_config.current.tenant_id
+  deployment_processor_azure_client_id     = var.deployment_processor_azure_client_id
+  deployment_processor_azure_client_secret = var.deployment_processor_azure_client_secret
 }
 
 module "firewall" {
