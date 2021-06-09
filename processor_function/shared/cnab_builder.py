@@ -5,11 +5,9 @@ import logging
 from typing import List
 
 from azure.mgmt.containerinstance import ContainerInstanceManagementClient
-from azure.identity import DefaultAzureCredential
 from azure.mgmt.containerinstance.models import (ContainerGroup,
                                                  Container,
                                                  ContainerGroupRestartPolicy,
-                                                 ContainerGroupNetworkProfile,
                                                  EnvironmentVariable,
                                                  ImageRegistryCredential,
                                                  ContainerGroupIdentity,
@@ -39,29 +37,32 @@ class CNABBuilder:
 
         installation_id = self._message['parameters']['tre_id'] + "-" + self._message['parameters']['workspace_id']
         command_line = ["/bin/bash", "-c", "az login --identity "
-            + "&& TOKEN=$(az acr login --name msfttreacr --expose-token --output tsv --query accessToken) "
-            + "&& docker login msfttreacr.azurecr.io --username 00000000-0000-0000-0000-000000000000 --password $TOKEN "
-            + "&& porter "
-            + self._message['action'] + " "
-            + installation_id
-            + " --reference "
-            + os.environ["REGISTRY_SERVER"]
-            + os.environ["WORKSPACES_PATH"]
-            + self._message['name'] + ":"
-            + "v" + self._message['version'] + " "
-            + porter_parameters
-            + " --cred ./home/porter/azure.json"
-            + " --driver azure && porter show " + installation_id]
+                        + "&& TOKEN=$(az acr login --name msfttreacr --expose-token --output tsv --query accessToken) "
+                        + "&& docker login msfttreacr.azurecr.io --username 00000000-0000-0000-0000-000000000000 --password $TOKEN "
+                        + "&& porter "
+                        + self._message['action'] + " "
+                        + installation_id
+                        + " --reference "
+                        + os.environ["REGISTRY_SERVER"]
+                        + os.environ["WORKSPACES_PATH"]
+                        + self._message['name'] + ":"
+                        + "v" + self._message['version'] + " "
+                        + porter_parameters
+                        + " --cred ./home/porter/azure.json"
+                        + " --driver azure && porter show " + installation_id]
 
         return command_line
 
-    def _build_cnab_env_variables(self) -> List[str]:
-        env_variables = []
-        for key, value in os.environ.items():
-            if key.startswith("CNAB_AZURE"):
-                env_variables.append(EnvironmentVariable(name=key, value=value))
-            if key.startswith("SEC_"):
-                env_variables.append(EnvironmentVariable(name=key.replace('SEC_', ''), secure_value=value))
+    @staticmethod
+    def _get_environment_variable(key, value):
+        if key.startswith("CNAB_AZURE"):
+            return EnvironmentVariable(key=key, value=value)
+        if key.startswith("SEC_"):
+            return EnvironmentVariable(key=key.replace("SEC_", ""), secure_value=value)
+
+    def _build_cnab_env_variables(self) -> List[EnvironmentVariable]:
+        env_variables = [self._get_environment_variable(key, value) for key, value in os.environ.items()
+                         if key.startswith("CNAB_AZURE") or key.startswith("SEC_")]
 
         env_variables.append(EnvironmentVariable(name="CNAB_AZURE_RESOURCE_GROUP", value=self._resource_group_name))
         env_variables.append(EnvironmentVariable(name="CNAB_AZURE_LOCATION", value=self._location))
@@ -69,8 +70,10 @@ class CNABBuilder:
         return env_variables
 
     def _setup_aci_deployment(self) -> ContainerGroup:
-
-        # Prepares a Container Group and a Container for deployment to ACI
+        """
+        Prepares a Container Group and a Container for deployment to ACI
+        :return: The prepared container group
+        """
 
         self._location = self._message['parameters']['azure_location']
         self._container_group_name = "aci-cnab-" + str(uuid.uuid4())
@@ -103,9 +106,9 @@ class CNABBuilder:
         return group
 
     def deploy_aci(self):
-
-
-        # Deploys a CNAB container into ACI with parameters to run porter
+        """
+        Deploys a CNAB container into ACI with parameters to run porter
+        """
 
         group = self._setup_aci_deployment()
 
