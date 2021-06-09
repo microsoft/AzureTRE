@@ -56,9 +56,9 @@ class CNABBuilder:
     @staticmethod
     def _get_environment_variable(key, value):
         if key.startswith("CNAB_AZURE"):
-            return EnvironmentVariable(key=key, value=value)
+            return EnvironmentVariable(name=key, value=value)
         if key.startswith("SEC_"):
-            return EnvironmentVariable(key=key.replace("SEC_", ""), secure_value=value)
+            return EnvironmentVariable(name=key.replace("SEC_", ""), secure_value=value)
 
     def _build_cnab_env_variables(self) -> List[EnvironmentVariable]:
         env_variables = [self._get_environment_variable(key, value) for key, value in os.environ.items()
@@ -84,8 +84,7 @@ class CNABBuilder:
                                                               password=os.environ["SEC_CNAB_AZURE_REGISTRY_PASSWORD"])]
 
         managed_identity = ContainerGroupIdentity(type='UserAssigned',
-                                                  user_assigned_identities={
-                                                      os.environ["CNAB_AZURE_USER_MSI_RESOURCE_ID"]: {}})
+                                                  user_assigned_identities={os.environ["CNAB_AZURE_USER_MSI_RESOURCE_ID"]: {}})
 
         container_resource_requests = ResourceRequests(memory_in_gb=1, cpu=1.0)
         container_resource_requirements = ResourceRequirements(requests=container_resource_requests)

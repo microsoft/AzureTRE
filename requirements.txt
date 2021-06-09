@@ -20,6 +20,9 @@ mock==4.0.3
 
 # Requirements for processor function
 azure-functions
+azure-mgmt-containerinstance
+azure-mgmt-network
+msrest
 
 # Requirements for service bus send sample
 azure-functions
