@@ -76,6 +76,7 @@ module "api-webapp" {
   state_store_endpoint               = module.state-store.endpoint
   state_store_key                    = module.state-store.primary_key
   service_bus_resource_request_queue = module.servicebus.workspacequeue
+  managed_identity                   = module.identity.managed_identity 
 }
 
 module "identity" {
@@ -83,6 +84,7 @@ module "identity" {
   tre_id               = var.tre_id
   location             = var.location
   resource_group_name  = azurerm_resource_group.core.name
+  servicebus_namespace = module.servicebus.servicebus_namespace 
 }
 
 module "processor_function" {

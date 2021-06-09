@@ -1,6 +1,6 @@
 """
 This script adds resources to your cosmos database for local, manual, testing purposes
-NOTE: This script is not required for the tests to run, but assists in creating resources to test the API manually
+NOTE: This script is not required for the test_processor_function to run, but assists in creating resources to test the API manually
 """
 import uuid
 

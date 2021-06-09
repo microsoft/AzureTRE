@@ -22,7 +22,7 @@ parameters:
     description: "Unique 4-character long, alphanumeric workspace ID"
     minLength: 4
     maxLength: 4
-  - name: location
+  - name: azure_location
     type: string
     description: "Azure location (region) to deploy to"
   - name: address_space
@@ -52,7 +52,7 @@ install:
       vars:
         tre_id: "{{ bundle.parameters.tre_id }}"
         workspace_id: "{{ bundle.parameters.workspace_id }}"
-        location: "{{ bundle.parameters.location }}"
+        location: "{{ bundle.parameters.azure_location }}"
         address_space: "{{ bundle.parameters.address_space }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
@@ -74,7 +74,7 @@ uninstall:
       vars:
         tre_id: "{{ bundle.parameters.tre_id }}"
         workspace_id: "{{ bundle.parameters.workspace_id }}"
-        location: "{{ bundle.parameters.location }}"
+        location: "{{ bundle.parameters.azure_location }}"
         address_space: "{{ bundle.parameters.address_space }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"

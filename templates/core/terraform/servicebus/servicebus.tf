@@ -44,3 +44,7 @@ resource "azurerm_private_endpoint" "sbpe" {
     subresource_names              = ["namespace"]
   }
 }
+
+output "servicebus_namespace" {
+  value = azurerm_servicebus_namespace.sb
+}

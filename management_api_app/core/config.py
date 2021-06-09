@@ -23,3 +23,6 @@ STATE_STORE_RESOURCE_TEMPLATES_CONTAINER = "ResourceTemplates"
 # Service bus configuration
 SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE: str = config("SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE", default="")
 SERVICE_BUS_RESOURCE_REQUEST_QUEUE: str = config("SERVICE_BUS_RESOURCE_REQUEST_QUEUE", default="")
+
+# Managed identity configuration
+MANAGED_IDENTITY_CLIENT_ID: str = config("MANAGED_IDENTITY_CLIENT_ID", default="")
