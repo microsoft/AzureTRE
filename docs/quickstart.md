@@ -53,6 +53,7 @@ Copy [/devops/terraform/.env.sample](../devops/terraform/.env.sample) to `/devop
 - `TF_VAR_location` - Azure region to deploy all resources into.
 - `TF_VAR_image_tag` - Default tag for docker images that will be pushed to the container registry and deployed with the Azure TRE.
 - `TF_VAR_acr_name` - Globally unique name for the ACR that will be create to store deployment images.
+- `DEPLOYMENT_PROCESSOR_SERVICE_PRINCIPAL_NAME` - The name of the service principal used by the deployment processor.
 
 ### Bootstrap of back-end state
 

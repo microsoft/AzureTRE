@@ -38,6 +38,7 @@ jobs:
         TF_VAR_acr_name: ${{ secrets.ACR_NAME }}
         TF_VAR_address_space: ${{ secrets.ADDRESS_SPACE }}
         AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+        DEPLOYMENT_PROCESSOR_SERVICE_PRINCIPAL_NAME: sp-${{ secrets.TRE_ID }}-deployment-processor
       run: |
           export env
           export USE_ENV_VARS_NOT_FILES=true
@@ -58,8 +59,7 @@ jobs:
           export TF_VAR_image_tag
 
           make all
-              
-    
+
     - name: Publish and deploy vanilla workspace bundle
       shell: bash
       env:
