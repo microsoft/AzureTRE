@@ -11,7 +11,7 @@
       }
     },
     {
-      "name": "location",
+      "name": "azure_location",
       "source": {
         "env": "LOCATION"
       }
