@@ -15,6 +15,7 @@ class ServiceBus:
     def _create_request_message(resource: Resource) -> str:
         return json.dumps({
             "action": "install",
+            "id": resource.id,
             "name": resource.resourceTemplateName,
             "version": resource.resourceTemplateVersion,
             "parameters": resource.resourceTemplateParameters
