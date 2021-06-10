@@ -13,7 +13,7 @@
     {
       "name": "azure_location",
       "source": {
-        "env": "AZURE_LOCATION"
+        "env": "LOCATION"
       }
     },
     {
