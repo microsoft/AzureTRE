@@ -3,7 +3,7 @@ set -e
 
 # This script creates a service principal, for deploying resources (workspaces and workspace services), and adds its
 # client (app) ID and client secret (app password) to Key Vault. Running the script requires that Azure CLI login has
-# been done with the credentials that allow creation of the service principal and has privileges to access the Key Vault.
+# been done with the credentials that allow creation of the service principal and have privileges to access the Key Vault.
 #
 # If a service principal already exists, the client secret gets changed but the ID will remain the same.
 #
