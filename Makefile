@@ -51,6 +51,7 @@ tre-deploy:
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
 	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
 	&& . ./devops/scripts/load_env.sh ./templates/core/terraform/.env \
+	&& . ./devops/scripts/create_sp_for_deployer.sh \
 	&& cd ./templates/core/terraform/ && ./deploy.sh
 
 letsencrypt:

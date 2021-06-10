@@ -12,12 +12,6 @@ az storage account create --resource-group $TF_VAR_mgmt_res_group \
 SA_KEY=$(az storage account keys list --account-name $TF_VAR_state_storage --query "[0].value" -o tsv)
 az storage container create --account-name $TF_VAR_state_storage --name $TF_VAR_state_container --account-key $SA_KEY -o table
 
-# Service principal for deploying resources (workspaces and workspace services)
-# Provided to the deployment processor via Terraform
-. ../scripts/create_service_principal.sh $DEPLOYMENT_PROCESSOR_SERVICE_PRINCIPAL_NAME $SUB_ID
-export TF_VAR_deployment_processor_azure_client_id=$NEW_AZURE_CLIENT_ID
-export TF_VAR_deployment_processor_azure_client_secret=$NEW_AZURE_CLIENT_SECRET
-
 cat > bootstrap_backend.tf <<BOOTSTRAP_BACKEND
 terraform {
   backend "azurerm" {
