@@ -17,7 +17,7 @@ payload = {
     "name": "my-tre-workspace",
     "version": "0.0.1",
     "description": "workspace template for great product",
-    "properties": [{"blah": "blah"}],
+    "parameters": [{"blah": "blah"}],
     "resourceType": "workspace",
     "current": True
 }
