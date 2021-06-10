@@ -14,9 +14,9 @@ resource "azurerm_key_vault_access_policy" "deploy_user" {
   tenant_id    = data.azurerm_client_config.deployer.tenant_id
   object_id    = data.azurerm_client_config.deployer.object_id
 
-  key_permissions = [ "Get", "List", "Update", "Create", "Import", "Delete" ]
-  secret_permissions = [ "Get", "List", "Set", "Delete" ]
-  certificate_permissions = [ "Get", "List", "Update", "Create", "Import", "Delete" ]
+  key_permissions = [ "Get", "List", "Update", "Create", "Import", "Delete", ]
+  secret_permissions = [ "Get", "List", "Set", "Delete", ]
+  certificate_permissions = [ "Get", "List", "Update", "Create", "Import", "Delete", ]
 }
 
 resource "azurerm_private_dns_zone" "vaultcore" {
