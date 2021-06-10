@@ -49,15 +49,3 @@ resource "azurerm_private_endpoint" "kvpe" {
     subresource_names              = ["Vault"]
   }
 }
-
-resource "azurerm_key_vault_secret" "deployment_client_id" {
-  name         = "deployment-processor-azure-client-id"
-  value        = var.deployment_processor_azure_client_id
-  key_vault_id = azurerm_key_vault.kv.id
-}
-
-resource "azurerm_key_vault_secret" "deployment_client_secret" {
-  name         = "deployment-processor-azure-client-secret"
-  value        = var.deployment_processor_azure_client_secret
-  key_vault_id = azurerm_key_vault.kv.id
-}

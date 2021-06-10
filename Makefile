@@ -51,8 +51,8 @@ tre-deploy:
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
 	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
 	&& . ./devops/scripts/load_env.sh ./templates/core/terraform/.env \
-	&& . ./devops/scripts/create_sp_for_deployer.sh \
-	&& cd ./templates/core/terraform/ && ./deploy.sh
+	&& cd ./templates/core/terraform/ && ./deploy.sh \
+	&& cd ../../../ && ./devops/scripts/create_sp_for_deployer.sh
 
 letsencrypt:
 	echo -e "\n\e[34m»»» 🧩 \e[96mRequesting LetsEncrypt SSL certificate\e[0m..." \

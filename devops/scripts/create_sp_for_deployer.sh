@@ -1,20 +1,17 @@
 #!/bin/bash
 set -e
 
-# This script creates a service principal for deploying resources (workspaces and workspace services).
-# Provided to the deployment processor via Terraform.
+# This script creates a service principal, for deploying resources (workspaces and workspace services), and adds its
+# client (app) ID and client secret (app password) to Key Vault. Running the script requires that Azure CLI login has
+# been done with the credentials that allow creation of the service principal and has privileges to access the Key Vault.
 #
-# If a service principal already exists, the client secret (app password) gets changed but the ID will remain the same.
+# If a service principal already exists, the client secret gets changed but the ID will remain the same.
 #
 # Required environment variables set before running this script are:
 #
 #   - $SUB_ID - Azure subscription ID
+#   - TF_VAR_tre_id - TRE ID, used to construct the name of the Key Vault
 #   - $DEPLOYMENT_PROCESSOR_SERVICE_PRINCIPAL_NAME - The name for the service principal
-#
-# The client (app) ID and client secret (app password) are inserted in the following environment variables:
-#
-#   - TF_VAR_deployment_processor_azure_client_id
-#   - TF_VAR_deployment_processor_azure_client_secret
 #
 # Make sure to run the script in the current process (not in a new process/environment) so that the environment variables
 # get carried over. Use the dot or source syntax to do this:
@@ -35,5 +32,7 @@ az_output=`az ad sp create-for-rbac --name $DEPLOYMENT_PROCESSOR_SERVICE_PRINCIP
 client_id=`echo "$az_output" | jq -r '.clientId'`
 client_secret=`echo "$az_output" | jq -r '.clientSecret'`
 
-export TF_VAR_deployment_processor_azure_client_id=$client_id
-export TF_VAR_deployment_processor_azure_client_secret=$client_secret
+echo -e "\n\e[34m»»» 🤖 \e[96mCreating (or updating) service principal ID and secret to Key Vault\e[0m..."
+key_vault_name="kv-$TF_VAR_tre_id"
+az keyvault secret set --name deployment-processor-azure-client-id --vault-name $key_vault_name --value $client_id
+az keyvault secret set --name deployment-processor-azure-client-secret --vault-name $key_vault_name --value $client_secret > /dev/null

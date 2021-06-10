@@ -124,8 +124,6 @@ module "keyvault" {
   shared_subnet                            = module.network.shared
   core_vnet                                = module.network.core
   tenant_id                                = data.azurerm_client_config.current.tenant_id
-  deployment_processor_azure_client_id     = var.deployment_processor_azure_client_id
-  deployment_processor_azure_client_secret = var.deployment_processor_azure_client_secret
 }
 
 module "firewall" {
