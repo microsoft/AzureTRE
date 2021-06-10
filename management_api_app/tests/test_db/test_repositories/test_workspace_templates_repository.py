@@ -158,7 +158,7 @@ def test_create_item(cosmos_mock, uuid_mock, create_mock):
         version="0.0.1",
         resourceType=ResourceType.Workspace,
         parameters=[],
-        current=False 
+        current=False
     )
     create_mock.assert_called_once_with(expected_resouce_template)
     assert expected_resouce_template == returned_template
