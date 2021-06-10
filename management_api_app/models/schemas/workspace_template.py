@@ -11,7 +11,7 @@ def get_sample_workspace_template_object(template_name: str = "tre-workspace-van
         name=template_name,
         description="vanilla workspace bundle",
         version="0.1.0",
-        properties=[
+        parameters=[
             Parameter(name="azure_location", type="string"),
             Parameter(name="tre_id", type="string"),
             Parameter(name="workspace_id", type="string"),
@@ -42,8 +42,8 @@ class WorkspaceTemplateInCreate(BaseModel):
     name: str = Field(title="Name of workspace template")
     version: str = Field(title="Version of workspace template")
     description: str = Field(title=" Description of workspace template")
-    parameters: List[dict] = Field([{"location": "westeurope"}], title="Workspace template properties",
-                                   description="Values for the properties required by the workspace template")
+    parameters: List[dict] = Field([{}], title="Workspace template parameters",
+                                   description="Values for the parameters required by the workspace template")
     resourceType: str = Field(title="Type of workspace template")
     current: bool = Field(title="Mark this version as current")
 
@@ -53,7 +53,7 @@ class WorkspaceTemplateInCreate(BaseModel):
                 "name": "my-tre-workspace",
                 "version": "0.0.1",
                 "description": "workspace template for great product",
-                "properties": [{
+                "parameters": [{
                     "name": "azure_location",
                     "type": "string"
                 }],

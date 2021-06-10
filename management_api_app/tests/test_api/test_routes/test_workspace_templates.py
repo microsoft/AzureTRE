@@ -17,7 +17,7 @@ payload = {
     "name": "my-tre-workspace",
     "version": "0.0.1",
     "description": "workspace template for great product",
-    "properties": [{"blah": "blah"}],
+    "parameters": [{"blah": "blah"}],
     "resourceType": "workspace",
     "current": True
 }
@@ -52,7 +52,12 @@ async def test_post_does_not_create_a_template_with_bad_payload(app: FastAPI, cl
 
 @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.create_workspace_template_item")
 @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_current_workspace_template_by_name")
-async def test_when_updating_current_and_template_not_found_create_one(get_current_mock, create_item_mock, app: FastAPI, client: AsyncClient):
+@patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_workspace_template_by_name_and_version")
+async def test_when_updating_current_and_template_not_found_create_one(get_name_ver_mock,
+                                                                       get_current_mock,
+                                                                       create_item_mock,
+                                                                       app: FastAPI, client: AsyncClient):
+    get_name_ver_mock.side_effect = EntityDoesNotExist
     get_current_mock.side_effect = EntityDoesNotExist
 
     response_content = copy.deepcopy(payload)
@@ -65,12 +70,16 @@ async def test_when_updating_current_and_template_not_found_create_one(get_curre
     assert json.loads(response.text)["workspaceTemplate"] == response_content
 
 
-@patch("api.routes.workspace_templates.WorkspaceTemplateRepository.update_item")
 @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.create_workspace_template_item")
+@patch("api.routes.workspace_templates.WorkspaceTemplateRepository.update_item")
 @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_current_workspace_template_by_name")
-async def test_when_updating_current_and_template_found_update_and_add(get_current_mock, create_item_mock,
+@patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_workspace_template_by_name_and_version")
+async def test_when_updating_current_and_template_found_update_and_add(get_name_ver_mock,
+                                                                       get_current_mock,
                                                                        update_item_mock,
+                                                                       create_item_mock,
                                                                        app: FastAPI, client: AsyncClient):
+    get_name_ver_mock.side_effect = EntityDoesNotExist
     get_current_mock.return_value = {"current": "true"}
 
     response_content = copy.deepcopy(payload)
@@ -86,8 +95,7 @@ async def test_when_updating_current_and_template_found_update_and_add(get_curre
 
 
 @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_workspace_template_by_name_and_version")
-async def test_when_not_updating_current_and_same_template_exists_gives_409(mock, app: FastAPI, client: AsyncClient):
-    payload["current"] = "false"
+async def test_same_name_and_version_template_not_allowed(mock, app: FastAPI, client: AsyncClient):
     mock.return_value = ["exists"]
 
     response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=payload)

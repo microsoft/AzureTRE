@@ -1,10 +1,11 @@
-from mock import patch
 import pytest
+from mock import MagicMock, patch
 
 from db.repositories.workspace_templates import WorkspaceTemplateRepository
 from db.errors import EntityDoesNotExist
 from models.domain.resource import ResourceType
 from models.domain.resource_template import ResourceTemplate
+from models.schemas.workspace_template import WorkspaceTemplateInCreate
 
 
 def get_sample_workspace_template(name: str, version: str = "1.0") -> ResourceTemplate:
@@ -14,7 +15,7 @@ def get_sample_workspace_template(name: str, version: str = "1.0") -> ResourceTe
         description="some description",
         version=version,
         resourceType=ResourceType.Workspace,
-        properties=[],
+        parameters=[],
         current=False
     )
 
@@ -133,3 +134,43 @@ def test_get_workspace_template_names_returns_unique_template_names(cosmos_clien
     assert len(template_names) == 2
     assert "template1" in template_names
     assert "template2" in template_names
+
+
+@patch('db.repositories.workspace_templates.WorkspaceTemplateRepository.create_item')
+@patch('uuid.uuid4')
+@patch('azure.cosmos.CosmosClient')
+def test_create_item(cosmos_mock, uuid_mock, create_mock):
+    template_repo = WorkspaceTemplateRepository(cosmos_mock)
+    uuid_mock.return_value = "1234"
+    payload = WorkspaceTemplateInCreate(
+        name="name",
+        description="some description",
+        version="0.0.1",
+        resourceType=ResourceType.Workspace,
+        parameters=[],
+        current=False
+    )
+    returned_template = template_repo.create_workspace_template_item(payload)
+    expected_resouce_template = ResourceTemplate(
+        id="1234",
+        name="name",
+        description="some description",
+        version="0.0.1",
+        resourceType=ResourceType.Workspace,
+        parameters=[],
+        current=False
+    )
+    create_mock.assert_called_once_with(expected_resouce_template)
+    assert expected_resouce_template == returned_template
+
+
+@patch('db.repositories.workspace_templates.WorkspaceTemplateRepository.container')
+@patch('azure.cosmos.CosmosClient')
+def test_updating_an_item(cosmos_mock, container_mock):
+    container_mock.upsert_item = MagicMock()
+    template_repo = WorkspaceTemplateRepository(cosmos_mock)
+    resource_template = get_sample_workspace_template("blah", "blah")
+
+    template_repo.update_item(resource_template)
+
+    container_mock.upsert_item.assert_called_once_with(resource_template)
