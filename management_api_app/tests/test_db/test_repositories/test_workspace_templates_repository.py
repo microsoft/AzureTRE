@@ -15,7 +15,7 @@ def get_sample_workspace_template(name: str, version: str = "1.0") -> ResourceTe
         description="some description",
         version=version,
         resourceType=ResourceType.Workspace,
-        properties=[],
+        parameters=[],
         current=False
     )
 
@@ -147,7 +147,7 @@ def test_create_item(cosmos_mock, uuid_mock, create_mock):
         description="some description",
         version="0.0.1",
         resourceType=ResourceType.Workspace,
-        properties=[],
+        parameters=[],
         current=False
     )
     returned_template = template_repo.create_workspace_template_item(payload)
@@ -157,7 +157,7 @@ def test_create_item(cosmos_mock, uuid_mock, create_mock):
         description="some description",
         version="0.0.1",
         resourceType=ResourceType.Workspace,
-        properties=[],
+        parameters=[],
         current=False
     )
     create_mock.assert_called_once_with(expected_resouce_template)
