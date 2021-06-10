@@ -13,15 +13,6 @@ set -e
 #   - TF_VAR_tre_id - TRE ID, used to construct the name of the Key Vault
 #   - DEPLOYMENT_PROCESSOR_SERVICE_PRINCIPAL_NAME - The name for the service principal
 #
-# Make sure to run the script in the current process (not in a new process/environment) so that the environment variables
-# get carried over. Use the dot or source syntax to do this:
-#
-#     $ . ./create_sp_for_deployer.sh
-#
-#       - OR -
-#
-#     $ source ./create_sp_for_deployer.sh
-#
 
 echo -e "\n\e[34m»»» 🤖 \e[96mCreating service principal\e[0m..."
 az account set --subscription $SUB_ID
