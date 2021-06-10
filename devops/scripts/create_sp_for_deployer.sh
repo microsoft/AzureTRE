@@ -9,9 +9,9 @@ set -e
 #
 # Required environment variables set before running this script are:
 #
-#   - $SUB_ID - Azure subscription ID
+#   - SUB_ID - Azure subscription ID
 #   - TF_VAR_tre_id - TRE ID, used to construct the name of the Key Vault
-#   - $DEPLOYMENT_PROCESSOR_SERVICE_PRINCIPAL_NAME - The name for the service principal
+#   - DEPLOYMENT_PROCESSOR_SERVICE_PRINCIPAL_NAME - The name for the service principal
 #
 # Make sure to run the script in the current process (not in a new process/environment) so that the environment variables
 # get carried over. Use the dot or source syntax to do this:
