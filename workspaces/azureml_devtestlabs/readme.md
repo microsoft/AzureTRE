@@ -37,6 +37,9 @@ Service Tags:
     `make services-devtestlabs-porter-build`  
     `make services-devtestlabs-porter-publish`
 
+- CNAB image built (contains azure driver)
+    `make build-cnab-image`
+
 - A Azure ML DevTest Labs Workspace bundle built
     `make services-devtestlabs-porter-build`
 

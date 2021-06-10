@@ -5,7 +5,7 @@ on:
     # 1am each night https://crontab.guru/#0_1_*_*_*
     - cron: "0 1 * * *"
   push:
-    branches: [ develop, main ]
+    branches: [ develop, main, marrobi/issue206 ]
   workflow_dispatch:
 
 jobs:
@@ -59,7 +59,18 @@ jobs:
 
           make all
               
-    
+  deploy_vanilla_workspace:
+    name: Deploy Vanilla Workspace
+    needs: deploy_tre
+    runs-on: ubuntu-latest
+    environment: Dev
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2 
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}  
     - name: Publish and deploy vanilla workspace bundle
       shell: bash
       env:
@@ -85,3 +96,43 @@ jobs:
 
           make workspaces-vanilla-porter-publish
           make workspaces-vanilla-porter-install
+
+  deploy_azureml_devtestlabs_workspace:
+    name: Deploy Azure ML and DevTest Labs Workspace
+    needs: deploy_tre
+    runs-on: ubuntu-latest
+    environment: Dev
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}    
+    - name: Publish and deploy azureml_devtestlabs workspace bundle
+      shell: bash
+      env:
+        TRE_ID: ${{ secrets.TRE_ID }}
+        LOCATION: ${{ secrets.LOCATION }}
+        WORKSPACE_ID: "0002"
+        ADDRESS_SPACE: "10.2.2.0/24"
+        TF_VAR_acr_name: ${{ secrets.ACR_NAME }}
+        ACR_NAME: ${{ secrets.ACR_NAME }}
+        TF_VAR_tfstate_container_name: ${{ secrets.TF_STATE_CONTAINER }}
+        TF_VAR_tfstate_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
+        TF_VAR_tfstate_storage_account_name: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+        AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+        
+      run: |
+          export USE_ENV_VARS_NOT_FILES=true
+          export env
+          export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
+          export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
+          export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
+          export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
+          
+          curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
+          export PATH=~/.porter/:$PATH
+      
+          make workspaces-azureml_devtestlabs-porter-publish
+          make workspaces-azureml_devtestlabs-porter-install

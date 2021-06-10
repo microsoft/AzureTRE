@@ -23,6 +23,7 @@ parameters:
     type: string
     description: "Unique 4-digit workspace ID"
   - name: azure_location
+    env: LOCATION
     type: string
     description: "Azure location (region) to deploy to"
   - name: address_space
