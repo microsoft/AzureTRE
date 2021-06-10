@@ -5,12 +5,13 @@ from azure.cosmos import CosmosClient
 from pydantic import UUID4
 
 from core import config
+from resources import strings
 from db.errors import EntityDoesNotExist
-from db.repositories.base import BaseRepository
-from db.repositories.workspace_templates import WorkspaceTemplateRepository
-from models.domain.resource import Status
 from models.domain.workspace import Workspace
+from db.repositories.base import BaseRepository
+from models.domain.resource import Deployment, Status
 from models.schemas.workspace import WorkspaceInCreate
+from db.repositories.workspace_templates import WorkspaceTemplateRepository
 
 
 class WorkspaceRepository(BaseRepository):
@@ -64,7 +65,7 @@ class WorkspaceRepository(BaseRepository):
             resourceTemplateName=workspace_create.workspaceType,
             resourceTemplateVersion=template_version,
             resourceTemplateParameters=resource_spec_parameters,
-            status=Status.NotDeployed
+            deployment=Deployment(status=Status.NotDeployed, message=strings.RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE)
         )
 
         return workspace
