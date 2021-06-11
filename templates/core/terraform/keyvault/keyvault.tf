@@ -1,10 +1,10 @@
 resource "azurerm_key_vault" "kv" {
   name                     = "kv-${var.tre_id}"
+  tenant_id                = var.tenant_id
   location                 = var.location
   resource_group_name      = var.resource_group_name
   sku_name                 = "standard"
   purge_protection_enabled = true
-  tenant_id                = var.tenant_id
 }
 
 data "azurerm_client_config" "deployer" {}
@@ -17,6 +17,16 @@ resource "azurerm_key_vault_access_policy" "deploy_user" {
   key_permissions = [ "Get", "List", "Update", "Create", "Import", "Delete", ]
   secret_permissions = [ "Get", "List", "Set", "Delete", ]
   certificate_permissions = [ "Get", "List", "Update", "Create", "Import", "Delete", ]
+}
+
+resource "azurerm_key_vault_access_policy" "managed_identity" {
+  key_vault_id = azurerm_key_vault.kv.id
+  tenant_id    = var.managed_identity_tenant_id
+  object_id    = var.managed_identity_object_id
+
+  key_permissions = [ "Get", "List", ]
+  secret_permissions = [ "Get", "List", ]
+  certificate_permissions = [ "Get", "List", ]
 }
 
 resource "azurerm_private_dns_zone" "vaultcore" {

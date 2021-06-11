@@ -117,13 +117,19 @@ module "servicebus" {
 }
 
 module "keyvault" {
-  source              = "./keyvault"
-  tre_id              = var.tre_id
-  location            = var.location
-  resource_group_name = azurerm_resource_group.core.name
-  shared_subnet       = module.network.shared
-  core_vnet           = module.network.core
-  tenant_id           = data.azurerm_client_config.current.tenant_id
+  source                     = "./keyvault"
+  tre_id                     = var.tre_id
+  location                   = var.location
+  resource_group_name        = azurerm_resource_group.core.name
+  shared_subnet              = module.network.shared
+  core_vnet                  = module.network.core
+  tenant_id                  = data.azurerm_client_config.current.tenant_id
+  managed_identity_tenant_id = module.identity.managed_identity.tenant_id
+  managed_identity_object_id = module.identity.managed_identity.principal_id
+
+  depends_on = [
+    module.identity
+  ]
 }
 
 module "firewall" {
@@ -145,12 +151,12 @@ module "routetable" {
 }
 
 module "acr" {
-  source               = "./acr"
-  tre_id               = var.tre_id
-  location             = var.location
-  resource_group_name  = azurerm_resource_group.core.name
-  core_vnet            = module.network.core
-  shared_subnet        = module.network.shared
+  source              = "./acr"
+  tre_id              = var.tre_id
+  location            = var.location
+  resource_group_name = azurerm_resource_group.core.name
+  core_vnet           = module.network.core
+  shared_subnet       = module.network.shared
 }
 
 module "state-store" {
@@ -163,9 +169,9 @@ module "state-store" {
 }
 
 module "bastion" {
-  source               = "./bastion"
-  tre_id               = var.tre_id
-  location             = var.location
-  resource_group_name  = azurerm_resource_group.core.name
-  bastion_subnet        = module.network.bastion
+  source              = "./bastion"
+  tre_id              = var.tre_id
+  location            = var.location
+  resource_group_name = azurerm_resource_group.core.name
+  bastion_subnet      = module.network.bastion
 }
