@@ -108,7 +108,7 @@ workspaces-vanilla-porter-publish:
 
 # Workspace: Azure ML and DevTest Labs
 workspaces-azureml_devtestlabs-porter-build:
-	echo -e "\n\e[34m»»» 🧩 \e[Building azureml_devtestlabs workspace bundle\e[0m..." \
+	echo -e "\n\e[34m»»» 🧩 \e[96mBuilding azureml_devtestlabs workspace bundle\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh porter \
 	&& cd ./workspaces/azureml_devtestlabs/ && porter build --debug
 
@@ -171,3 +171,43 @@ services-azureml-porter-publish:
 	&&  cd ./workspaces/services/azureml/ && ../../../devops/scripts/publish_bundle.sh
 
 
+
+# Service: DevTest Labs
+services-devtestlabs-tf-deploy:
+	echo -e "\n\e[34m»»» 🧩 \e[96mDeploying DevTest Labs with Terraform\e[0m..." \
+	&& . ./devops/scripts/check_dependencies.sh \
+	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
+	&& . ./devops/scripts/load_env.sh ./templates/core/terraform/.env \
+	&& . ./devops/scripts/load_env.sh ./workspaces/services/devtestlabs/terraform/.env \
+	&& cd ./workspaces/services/devtestlabs/terraform/ && ./deploy.sh
+
+services-devtestlabs-tf-destroy:
+	echo -e "\n\e[34m»»» 🧩 \e[96mDestroying DevTest Labs Service\e[0m..." \
+	&& . ./devops/scripts/check_dependencies.sh \
+	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
+	&& . ./devops/scripts/load_env.sh ./templates/core/terraform/.env \
+	&& . ./devops/scripts/load_env.sh ./workspaces/services/devtestlabs/terraform/.env \
+	&& cd ./workspaces/services/devtestlabs/terraform/ && ./destroy.sh 
+
+services-devtestlabs-porter-build:
+	echo -e "\n\e[34m»»» 🧩 \e[96mBuilding DevTest Labs Service bundle\e[0m..." \
+	&& . ./devops/scripts/check_dependencies.sh porter \
+	&& cd ./workspaces/services/devtestlabs/ && porter build --debug
+
+services-devtestlabs-porter-install:
+	echo -e "\n\e[34m»»» 🧩 \e[96mDeploying DevTest Labs Service with Porter\e[0m..." \
+	&& . ./devops/scripts/check_dependencies.sh porter \
+	&& . ./devops/scripts/load_env.sh ./workspaces/services/devtestlabs/.env \
+	&& cd ./workspaces/services/devtestlabs/ && porter install -p ./parameters.json --cred ./azure.json --debug
+
+services-devtestlabs-porter-uninstall:
+	echo -e "\n\e[34m»»» 🧩 \e[96mUninstalling DevTest Labs Service with Porter\e[0m..." \
+	&& . ./devops/scripts/check_dependencies.sh porter \
+	&& . ./devops/scripts/load_env.sh ./workspaces/services/devtestlabs/.env \
+	&& cd ./workspaces/services/devtestlabs/ && porter uninstall -p ./parameters.json --cred ./azure.json --debug
+
+services-devtestlabs-porter-publish:
+	echo -e "\n\e[34m»»» 🧩 \e[96mPublishing DevTest Labs Service bundle\e[0m..." \
+	&& . ./devops/scripts/check_dependencies.sh porter \
+	&& . ./devops/scripts/load_env.sh ./devops/terraform/.env \
+	&&  cd ./workspaces/services/devtestlabs/ && ../../../devops/scripts/publish_bundle.sh
