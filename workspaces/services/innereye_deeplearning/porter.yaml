@@ -1,6 +1,6 @@
-name: tre-service-azureml
+name: tre-service-innereye-deeplearning
 version: 0.1.0
-description: "An Azure TRE service for Azure Machine Learning"
+description: "An Azure TRE service for InnerEye Deep Learning"
 registry: azuretre
 
 credentials:
@@ -17,6 +17,8 @@ parameters:
   - name: workspace_id
     type: string
   - name: tre_id
+    type: string
+  - name: azureml_workspace_name
     type: string
   - name: tfstate_resource_group_name
     type: string
@@ -41,11 +43,12 @@ install:
       vars:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
+        azureml_workspace_name: "{{ bundle.parameters.azureml_workspace_name }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.workspace_id }}-svc-azureml"
+        key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.workspace_id }}-svc-innereye_deeplearning"
 
 upgrade:
   - exec:
@@ -60,8 +63,10 @@ uninstall:
       vars:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
+        azureml_workspace_name: "{{ bundle.parameters.azureml_workspace_name }}"
+
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.workspace_id }}-svc-azureml"
+        key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.workspace_id }}-svc-innereye_deeplearning"

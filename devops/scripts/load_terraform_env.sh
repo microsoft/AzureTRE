@@ -7,5 +7,5 @@ if [ ! -f $1 ]; then
     #exit
   fi
 else
-  export $(egrep -v '^#' $1 | sed 's/.*/TF_VAR_&/' | xargs)
+  export $(egrep -v '^#' $1 | sed 's/.*/TF_VAR_\L&/' | xargs)
 fi
