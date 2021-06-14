@@ -2,14 +2,16 @@ import logging
 
 import uvicorn
 from fastapi import FastAPI
-from fastapi.exceptions import RequestValidationError
+from fastapi_utils.tasks import repeat_every
 from starlette.exceptions import HTTPException
+from fastapi.exceptions import RequestValidationError
 
+from api.routes.api import router as api_router
 from api.errors.http_error import http_error_handler
 from api.errors.validation_error import http422_error_handler
-from api.routes.api import router as api_router
 from core.config import API_PREFIX, DEBUG, PROJECT_NAME, VERSION
 from core.events import create_start_app_handler, create_stop_app_handler
+from service_bus.deployment_status_update import receive_message_and_update_deployment
 
 
 def get_application() -> FastAPI:
@@ -30,6 +32,12 @@ if DEBUG:
 else:
     logging.basicConfig(level=logging.WARNING)
 app = get_application()
+
+
+@app.on_event("startup")
+@repeat_every(seconds=20, wait_first=True, logger=logging.getLogger())
+def update_deployment_status() -> None:
+    receive_message_and_update_deployment()
 
 
 if __name__ == "__main__":

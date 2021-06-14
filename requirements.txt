@@ -1,6 +1,7 @@
 # Requirements for API
 Click==7.1.2
 fastapi[all]==0.65.1
+fastapi-utils==0.2.1
 uvicorn[standard]==0.13.4
 gunicorn==20.1.0
 aiohttp==3.7.4

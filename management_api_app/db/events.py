@@ -6,22 +6,7 @@ from azure.cosmos import CosmosClient, PartitionKey, DatabaseProxy
 from fastapi import FastAPI
 
 from core import config
-
-
-async def connect_to_db(app: FastAPI) -> None:
-    logging.debug(f"Connecting to {config.STATE_STORE_ENDPOINT}")
-
-    try:
-        if config.DEBUG:
-            # ignore TLS(setup is pain) when on devcontainer and connecting to cosmosdb on windows host.
-            cosmos_client = CosmosClient(config.STATE_STORE_ENDPOINT, config.STATE_STORE_KEY,
-                                         connection_verify=False)
-        else:
-            cosmos_client = CosmosClient(config.STATE_STORE_ENDPOINT, config.STATE_STORE_KEY)
-        app.state.cosmos_client = cosmos_client
-        logging.debug("Connection established")
-    except Exception as e:
-        logging.debug(f"Connection to state store could not be established: {e}")
+from api.dependencies.database import get_db_client
 
 
 # Bootstrapping is temporary while the API does not have a register spec api implemented.
@@ -56,7 +41,10 @@ async def create_resource_templates(database: DatabaseProxy):
 
 
 async def bootstrap_database(app: FastAPI) -> None:
-    client: CosmosClient = app.state.cosmos_client
-    if client:
-        database_proxy = client.create_database_if_not_exists(id=config.STATE_STORE_DATABASE)
-        await create_resource_templates(database_proxy)
+    try:
+        client: CosmosClient = get_db_client(app)
+        if client:
+            database_proxy = client.create_database_if_not_exists(id=config.STATE_STORE_DATABASE)
+            await create_resource_templates(database_proxy)
+    except Exception as e:
+        logging.debug(e)

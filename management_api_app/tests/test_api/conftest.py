@@ -8,16 +8,12 @@ from asgi_lifespan import LifespanManager
 
 @pytest.fixture(autouse=True)
 def no_database():
-    """ overrides connecting to the database for all tests """
-    with patch('core.events.connect_to_db') as connect_db_mock:
-        connect_db_mock.return_value = None
-
-        with patch('db.repositories.base.BaseRepository._get_container') as container_mock:
-            container_mock.return_value = None
-
-            with patch('core.events.bootstrap_database') as bootstrap_mock:
-                bootstrap_mock.return_value = None
-                yield
+    """ overrides connecting to the database for all tests"""
+    with patch('api.dependencies.database.connect_to_db', return_value=None):
+        with patch('api.dependencies.database.get_db_client', return_value=None):
+            with patch('db.repositories.base.BaseRepository._get_container', return_value=None):
+                with patch('core.events.bootstrap_database', return_value=None):
+                    yield
 
 
 @pytest.fixture
