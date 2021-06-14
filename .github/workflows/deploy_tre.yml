@@ -38,6 +38,7 @@ jobs:
         TF_VAR_acr_name: ${{ secrets.ACR_NAME }}
         TF_VAR_address_space: ${{ secrets.ADDRESS_SPACE }}
         AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+        AZURE_CONTRIBUTOR_SP: ${{ secrets.AZURE_CONTRIBUTOR_SP }}
       run: |
           export env
           export USE_ENV_VARS_NOT_FILES=true
@@ -45,6 +46,9 @@ jobs:
           export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
           export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
           export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
+
+          export CONTRIBUTOR_SP_CLIENT_ID=$(echo "$AZURE_CONTRIBUTOR_SP" | jq -r '.clientId')
+          export CONTRIBUTOR_SP_CLIENT_SECRET=$(echo "$AZURE_CONTRIBUTOR_SP" | jq -r '.clientSecret')
 
           echo $GITHUB_REF
           if [ $GITHUB_EVENT_NAME == 'push' ] && [ $GITHUB_REF == 'refs/heads/develop' ]; then
@@ -58,7 +62,7 @@ jobs:
           export TF_VAR_image_tag
 
           make all
-              
+
   deploy_vanilla_workspace:
     name: Deploy Vanilla Workspace
     needs: deploy_tre
@@ -66,11 +70,11 @@ jobs:
     environment: Dev
     steps:
     - name: Checkout
-      uses: actions/checkout@v2 
+      uses: actions/checkout@v2
     - name: Azure Login
       uses: azure/login@v1
       with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}  
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
     - name: Publish and deploy vanilla workspace bundle
       shell: bash
       env:
@@ -108,7 +112,7 @@ jobs:
     - name: Azure Login
       uses: azure/login@v1
       with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}    
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
     - name: Publish and deploy azureml_devtestlabs workspace bundle
       shell: bash
       env:
@@ -122,7 +126,7 @@ jobs:
         TF_VAR_tfstate_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
         TF_VAR_tfstate_storage_account_name: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
         AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-        
+
       run: |
           export USE_ENV_VARS_NOT_FILES=true
           export env
@@ -130,10 +134,10 @@ jobs:
           export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
           export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
           export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
-          
+
           curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
           export PATH=~/.porter/:$PATH
-      
+
           make services-azureml-porter-publish
           make services-devtestlabs-porter-publish
           make workspaces-azureml_devtestlabs-porter-publish
