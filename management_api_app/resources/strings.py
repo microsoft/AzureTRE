@@ -36,5 +36,8 @@ RESOURCE_STATUS_DELETED = "deleted"
 RESOURCE_TYPE_WORKSPACE = "workspace"
 RESOURCE_TYPE_SERVICE = "service"
 
+# Deployments
+RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE = "This resource has not yet been deployed"
+
 # Service bus
 SERVICE_BUS_GENERAL_ERROR_MESSAGE = "Service bus failure"
