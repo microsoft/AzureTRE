@@ -40,4 +40,4 @@ You will also need to create the following secrets:
 - `LOCATION`
 - `ADDRESS_SPACE`
 
-For descriptions of what each of these variables are, and example values, please review [docs/developer-quickstart.md](docs/developer-quickstart.md).
+For descriptions of what each of these variables are, and example values, please review [Developer quickstart guide](./developer-quickstart.md).
