@@ -90,12 +90,15 @@ porter-build:
 	echo -e "\n\e[34m»»» 🧩 \e[96mBuilding ${DIR} bundle\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ./devops/scripts/load_env.sh ${DIR}/.env \
 	&& cd ${DIR} && porter build --debug
 
 porter-install:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDeploying ${DIR} with Porter\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& . ./devops/scripts/load_env.sh ${DIR}/.env \
 	&& cd ${DIR} && porter install -p ./parameters.json --cred ./azure.json --param porter_driver=docker  --allow-docker-host-access --debug
 
@@ -103,6 +106,7 @@ porter-uninstall:
 	echo -e "\n\e[34m»»» 🧩 \e[96mUninstalling DevTest Labs Service with Porter\e[0m..." \
 	&& ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& . ./devops/scripts/load_env.sh ${DIR}/.env \
 	&& cd ${DIR} && porter uninstall -p ./parameters.json --cred ./azure.json --debug
 
@@ -110,6 +114,8 @@ porter-publish:
 	echo -e "\n\e[34m»»» 🧩 \e[96mPublishing DevTest Labs Service bundle\e[0m..." \
 	&& ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ./devops/scripts/load_env.sh ${DIR}/.env \
 	&& az acr login --name $${ACR_NAME}	\
 	&& cd ${DIR} \
 	&& porter publish --registry "$${ACR_NAME}.azurecr.io" --debug	
