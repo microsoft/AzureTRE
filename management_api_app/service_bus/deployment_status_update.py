@@ -11,8 +11,8 @@ from resources import strings
 
 async def receive_message_and_update_deployment() -> None:
     """
-    Receives message from deployment status update queue and updates the status for
-    a Resource in the state stroe.
+    Receives messages from the deployment status update queue and updates the status for
+    the associated resource in the state store.
     """
     credential = DefaultAzureCredential(managed_identity_client_id=config.MANAGED_IDENTITY_CLIENT_ID)
     service_bus_client = ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential)
