@@ -1,0 +1,67 @@
+[
+  {
+    "environmentName": "AzureCloud",
+    "homeTenantId": "72f988bf-86f1-41af-91ab-2d7cd011db47",
+    "id": "8f987318-0ccb-4831-bde1-5cb0146f2d91",
+    "isDefault": true,
+    "managedByTenants": [],
+    "name": "InnerEye TRE Testing",
+    "state": "Enabled",
+    "tenantId": "72f988bf-86f1-41af-91ab-2d7cd011db47",
+    "user": {
+      "assignedIdentityInfo": "MSI",
+      "name": "systemAssignedIdentity",
+      "type": "servicePrincipal"
+    }
+  }
+]
+WARNING: You can perform manual login using the provided access token below, for example: 'docker login loginServer -u 00000000-0000-0000-0000-000000000000 -p accessToken'
+WARNING! Using --password via the CLI is insecure. Use --password-stdin.
+Login Succeeded
+installing cse-msr-dev-42cc...
+time="2021-06-14T20:18:03Z" level=debug msg="Delete Resources: true" func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).processConfiguration" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:130"
+time="2021-06-14T20:18:03Z" level=debug msg="Client ID: " func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).processConfiguration" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:134"
+time="2021-06-14T20:18:03Z" level=debug msg="Client Secret Set: false" func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).processConfiguration" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:138"
+time="2021-06-14T20:18:03Z" level=debug msg="Tenant ID: " func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).processConfiguration" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:148"
+time="2021-06-14T20:18:03Z" level=debug msg="Application ID: " func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).processConfiguration" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:152"
+time="2021-06-14T20:18:03Z" level=debug msg="Subscription ID: 8f987318-0ccb-4831-bde1-5cb0146f2d91" func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).processConfiguration" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:180"
+time="2021-06-14T20:18:03Z" level=debug msg="Resource Group: rg-msfttre-dev-9075" func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).processConfiguration" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:184"
+time="2021-06-14T20:18:03Z" level=debug msg="Location: westeurope" func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).processConfiguration" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:186"
+time="2021-06-14T20:18:03Z" level=debug msg="Generated ACI Name: cnab-azure-831b1f86-ae60-4c19-af1e-3af30ec28014" func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).processConfiguration" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:208"
+time="2021-06-14T20:18:03Z" level=debug msg="MSI Type: user" func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).processConfiguration" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:211"
+time="2021-06-14T20:18:03Z" level=debug msg="User MSI Resource ID: e/subscriptions/8f987318-0ccb-4831-bde1-5cb0146f2d91/resourceGroups/rg-msfttre-dev-9075/providers/Microsoft.ManagedIdentity/userAssignedIdentities/msi-msfttre-dev-9075" func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).processConfiguration" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:236"
+time="2021-06-14T20:18:03Z" level=debug msg="Propagate Credentials: true" func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).processConfiguration" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:260"
+Running install action on cse-msr-dev-42cc
+time="2021-06-14T20:18:03Z" level=debug msg="Attempting to Login with MSI" func=github.com/deislabs/cnab-azure-driver/pkg/azure.LoginToAzure file="/home/vsts/work/1/s/pkg/azure/login_info.go:95"
+time="2021-06-14T20:18:03Z" level=debug msg="Logged in with MSI" func=github.com/deislabs/cnab-azure-driver/pkg/azure.LoginToAzure file="/home/vsts/work/1/s/pkg/azure/login_info.go:102"
+time="2021-06-14T20:18:03Z" level=debug msg="Checking if Subscription ID: 8f987318-0ccb-4831-bde1-5cb0146f2d91 exists" func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).setAzureSubscriptionID" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:464"
+Creating Azure Container Instance To Execute Bundle
+time="2021-06-14T20:18:07Z" level=debug msg="Image: msfttreacr.azurecr.io/microsoft/azuretre/workspaces/tre-workspace-vanilla@sha256:7c43b448aaf4e13e799e315c61ab5aae4eb3055b7fc1a9f48c372250bdb7a817" func=github.com/deislabs/cnab-azure-driver/pkg/driver.imageWithDigest file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:1256"
+time="2021-06-14T20:18:09Z" level=debug msg="Bundle Has File Inputs:false" func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).runInvocationImageUsingACI" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:634"
+time="2021-06-14T20:18:09Z" level=debug msg="Processing File Input: /cnab/app/image-map.json" func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).runInvocationImageUsingACI" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:653"
+time="2021-06-14T20:18:09Z" level=debug msg="Processing File Input: /cnab/app/relocation-mapping.json" func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).runInvocationImageUsingACI" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:653"
+time="2021-06-14T20:18:09Z" level=debug msg="Processing File Input: /cnab/bundle.json" func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).runInvocationImageUsingACI" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:653"
+time="2021-06-14T20:18:09Z" level=debug msg="Processing File Input: /cnab/claim.json" func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).runInvocationImageUsingACI" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:653"
+time="2021-06-14T20:18:09Z" level=debug msg="Setting Container Group Environment Variable: Name:AZURE_MSI_TYPEValue:user" func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).createMSIEnvVars" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:1166"
+time="2021-06-14T20:18:09Z" level=debug msg="Setting Container Group Environment Variable: Name:AZURE_USER_MSI_RESOURCE_IDValue:/subscriptions/8f987318-0ccb-4831-bde1-5cb0146f2d91/resourceGroups/rg-msfttre-dev-9075/providers/Microsoft.ManagedIdentity/userAssignedIdentities/msi-msfttre-dev-9075" func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).createMSIEnvVars" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:1173"
+time="2021-06-14T20:18:09Z" level=debug msg="Setting Container Group Environment Variable: Name:AZURE_SUBSCRIPTION_IDValue:8f987318-0ccb-4831-bde1-5cb0146f2d91" func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).createAzureEnvironmentEnvVars" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:1194"
+time="2021-06-14T20:18:09Z" level=debug msg="Setting Container Group Environment Variable: Name: CNAB_REVISION" func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).runInvocationImageUsingACI" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:691"
+time="2021-06-14T20:18:09Z" level=debug msg="Setting Container Group Environment Variable: Name: ARM_CLIENT_ID" func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).runInvocationImageUsingACI" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:691"
+time="2021-06-14T20:18:09Z" level=debug msg="Setting Container Group Environment Variable: Name: ARM_CLIENT_SECRET" func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).runInvocationImageUsingACI" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:691"
+time="2021-06-14T20:18:09Z" level=debug msg="Setting Container Group Environment Variable: Name: CNAB_BUNDLE_VERSION" func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).runInvocationImageUsingACI" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:691"
+time="2021-06-14T20:18:09Z" level=debug msg="Setting Container Group Environment Variable: Name: CNAB_INSTALLATION_NAME" func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).runInvocationImageUsingACI" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:691"
+time="2021-06-14T20:18:09Z" level=debug msg="Setting Container Group Environment Variable: Name: TFSTATE_STORAGE_ACCOUNT_NAME" func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).runInvocationImageUsingACI" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:691"
+time="2021-06-14T20:18:09Z" level=debug msg="Setting Container Group Environment Variable: Name: ADDRESS_SPACE" func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).runInvocationImageUsingACI" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:691"
+time="2021-06-14T20:18:09Z" level=debug msg="Setting Container Group Environment Variable: Name: ARM_SUBSCRIPTION_ID" func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).runInvocationImageUsingACI" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:691"
+time="2021-06-14T20:18:09Z" level=debug msg="Setting Container Group Environment Variable: Name: PORTER_DEBUG" func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).runInvocationImageUsingACI" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:691"
+time="2021-06-14T20:18:09Z" level=debug msg="Setting Container Group Environment Variable: Name: TFSTATE_RESOURCE_GROUP_NAME" func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).runInvocationImageUsingACI" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:691"
+time="2021-06-14T20:18:09Z" level=debug msg="Setting Container Group Environment Variable: Name: AZURE_LOCATION" func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).runInvocationImageUsingACI" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:691"
+time="2021-06-14T20:18:09Z" level=debug msg="Setting Container Group Environment Variable: Name: WORKSPACE_ID" func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).runInvocationImageUsingACI" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:691"
+time="2021-06-14T20:18:09Z" level=debug msg="Setting Container Group Environment Variable: Name: TFSTATE_CONTAINER_NAME" func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).runInvocationImageUsingACI" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:691"
+time="2021-06-14T20:18:09Z" level=debug msg="Setting Container Group Environment Variable: Name: TRE_ID" func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).runInvocationImageUsingACI" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:691"
+time="2021-06-14T20:18:09Z" level=debug msg="Setting Container Group Environment Variable: Name: ARM_TENANT_ID" func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).runInvocationImageUsingACI" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:691"
+time="2021-06-14T20:18:09Z" level=debug msg="Setting Container Group Environment Variable: Name: CNAB_ACTION" func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).runInvocationImageUsingACI" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:691"
+time="2021-06-14T20:18:09Z" level=debug msg="Setting Container Group Environment Variable: Name: CNAB_BUNDLE_NAME" func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).runInvocationImageUsingACI" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:691"
+time="2021-06-14T20:18:09Z" level=debug msg="Setting Container Group Environment Variable: Name: CNAB_CLAIMS_VERSION" func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).runInvocationImageUsingACI" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:691"
+time="2021-06-14T20:18:09Z" level=debug msg="State Path: /cnab/state/tre-workspace-vanilla/cse-msr-dev-42cc" func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).runInvocationImageUsingACI" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:698"
+time="2021-06-14T20:18:10Z" level=debug msg="Creating ACI for CNAB action" func="github.com/deislabs/cnab-azure-driver/pkg/driver.(*aciDriver).createInstance" file="/home/vsts/work/1/s/pkg/driver/aci-driver.go:1011"

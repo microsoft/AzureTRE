@@ -14,8 +14,11 @@ from azure.mgmt.containerinstance.models import (ContainerGroup,
                                                  ResourceRequests,
                                                  ResourceRequirements,
                                                  OperatingSystemTypes)
+from azure.cli.core import get_default_cli
 
 from shared.azure_identity_credential_adapter import AzureIdentityCredentialAdapter
+from shared.service_bus import ServiceBus
+from shared.azhelper import az_cli
 
 
 class CNABBuilder:
@@ -25,6 +28,7 @@ class CNABBuilder:
         self._message = resource_request_message
         self._container_group_name = ""
         self._location = ""
+        self._id = ""
 
     def _build_porter_command(self) -> List[str]:
         porter_parameters = ""
@@ -76,7 +80,8 @@ class CNABBuilder:
         """
 
         self._location = self._message['parameters']['azure_location']
-        self._container_group_name = "aci-cnab-" + str(uuid.uuid4())
+        self._id = self._message['id']
+        self._container_group_name = "aci-cnab-" + self._id
         container_image_name = os.environ['CNAB_IMAGE']
 
         image_registry_credentials = [ImageRegistryCredential(server=os.environ["REGISTRY_SERVER"],
@@ -103,7 +108,7 @@ class CNABBuilder:
                                identity=managed_identity)
 
         return group
-
+    
     def deploy_aci(self):
         """
         Deploys a CNAB container into ACI with parameters to run porter
@@ -113,9 +118,30 @@ class CNABBuilder:
 
         credential = AzureIdentityCredentialAdapter()
         aci_client = ContainerInstanceManagementClient(credential, self._subscription_id)
+        
+        service_bus = ServiceBus()
+        service_bus.send_status_update_message(self._id,"ACI Deployment started","Deploying ACI container: " + self._container_group_name)
+        
         result = aci_client.container_groups.create_or_update(self._resource_group_name, self._container_group_name,
                                                               group)
-
+        
         while result.done() is False:
             logging.info('-- Deploying -- ' + self._container_group_name + " to " + self._resource_group_name)
             time.sleep(1)
+
+        service_bus.send_status_update_message(self._id,"ACI container deployed","")
+
+        aci_response = ""
+        
+        while "Error" not in aci_response and "Success" not in aci_response:
+            logging.info("Waiting for runner to execute")
+            time.sleep(20)
+            aci_response = az_cli("container logs -n " + self._container_group_name + " -g " + self._resource_group_name)
+            logging.info(aci_response)
+
+        #if "Error" in aci_response:
+        #    logging.info(aci_response.split("Error",1)[1])
+        #elif "Success" in aci_response:
+        #    logging.info(aci_response.split("Success",1)[1])
+
+        

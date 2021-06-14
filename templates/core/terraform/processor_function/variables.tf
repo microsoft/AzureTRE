@@ -13,3 +13,4 @@ variable "docker_registry_password" {}
 variable "docker_registry_server" {}
 variable "servicebus_connection_string" {}
 variable "workspacequeue" {}
+variable "service_bus_deployment_status_update_queue" {}

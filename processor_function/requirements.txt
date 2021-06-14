@@ -2,3 +2,5 @@ azure-functions
 azure-mgmt-containerinstance
 azure-mgmt-network
 msrest
+azure-identity==1.6.0
+azure-servicebus==7.2.0

@@ -104,6 +104,7 @@ module "processor_function" {
   docker_registry_server       = var.docker_registry_server
   servicebus_connection_string = module.servicebus.connection_string
   workspacequeue               = module.servicebus.workspacequeue
+  service_bus_deployment_status_update_queue = module.servicebus.service_bus_deployment_status_update_queue
 }
 
 module "servicebus" {
