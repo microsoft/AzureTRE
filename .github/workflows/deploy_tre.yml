@@ -142,5 +142,5 @@ jobs:
       
           make porter-publish DIR=./workspaces/services/azureml
           make porter-publish DIR=./workspaces/services/devtestlabs
-          make porter-publish DIR=./workspaces/azureml-devtestlabs
-          make porter-install DIR=./workspaces/azureml-devtestlabs
+          make porter-publish DIR=./workspaces/azureml_devtestlabs
+          make porter-install DIR=./workspaces/azureml_devtestlabs
