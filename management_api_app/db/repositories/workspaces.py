@@ -25,7 +25,7 @@ class WorkspaceRepository(BaseRepository):
     def _get_template_version(self, template_name):
         workspace_template_repo = WorkspaceTemplateRepository(self._client)
         template = workspace_template_repo.get_current_workspace_template_by_name(template_name)
-        return template["version"]
+        return template.version
 
     def get_all_active_workspaces(self) -> List[Workspace]:
         query = self._active_workspaces_query()
