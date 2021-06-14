@@ -1,6 +1,7 @@
 from typing import List
 from pydantic import BaseModel, Field
 
+from models.domain.azuretremodel import AzureTREModel
 from models.domain.workspace import Workspace
 
 
@@ -38,7 +39,7 @@ class WorkspaceInResponse(BaseModel):
         }
 
 
-class WorkspacesInList(BaseModel):
+class WorkspacesInList(AzureTREModel):
     workspaces: List[Workspace]
 
     class Config:

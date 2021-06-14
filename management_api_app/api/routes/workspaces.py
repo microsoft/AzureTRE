@@ -1,6 +1,7 @@
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import ValidationError
 from starlette import status
 
 from api.dependencies.database import get_repository
@@ -17,22 +18,36 @@ router = APIRouter()
 
 @router.get("/workspaces", response_model=WorkspacesInList, name=strings.API_GET_ALL_WORKSPACES)
 async def retrieve_active_workspaces(workspace_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository))) -> WorkspacesInList:
-    workspaces = workspace_repo.get_all_active_workspaces()
-    return WorkspacesInList(workspaces=workspaces)
+    try:
+        workspaces = workspace_repo.get_all_active_workspaces()
+        return WorkspacesInList(workspaces=workspaces)
+    except ValidationError as e:
+        logging.debug(e)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"{strings.INVALID_WORKSPACE_REQUESTS_IN_DB} -- {str(e)}")
+    except Exception as e:
+        logging.debug(e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.INVALID_TEMPLATES_IN_DB)
 
 
 @router.post("/workspaces", status_code=status.HTTP_202_ACCEPTED, response_model=WorkspaceIdInResponse, name=strings.API_CREATE_WORKSPACE)
 async def create_workspace(workspace_create: WorkspaceInCreate, workspace_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository))) -> WorkspaceIdInResponse:
     try:
         workspace = workspace_repo.create_workspace_item(workspace_create)
+    except ValidationError as e:
+        logging.debug(e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.INVALID_TEMPLATES_IN_DB)
     except ValueError as e:
+        logging.debug(e)
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        logging.debug(e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.UNABLE_TO_READ_TEMPLATES)
 
     try:
         workspace_repo.save_workspace(workspace)
     except Exception as e:
         logging.debug(e)
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.UNABLE_TO_SAVE_THE_WORKSPACE_REQUEST)
 
     try:
         service_bus = ServiceBus()
