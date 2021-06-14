@@ -55,6 +55,7 @@ tre-deploy:
 	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
 	&& cd ./templates/core/terraform/ && ./deploy.sh
+	&& cd ../../../ && ./devops/scripts/set_contributor_sp_secrets.sh
 
 letsencrypt:
 	echo -e "\n\e[34m»»» 🧩 \e[96mRequesting LetsEncrypt SSL certificate\e[0m..." \

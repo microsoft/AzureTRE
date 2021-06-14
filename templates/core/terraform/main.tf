@@ -16,9 +16,9 @@ resource "azurerm_resource_group" "core" {
   location = var.location
   name     = "rg-${var.tre_id}"
   tags = {
-    project     = "Azure Trusted Research Environment"
-    tre_id     = "${var.tre_id}"
-    source      = "https://github.com/microsoft/AzureTRE/"
+    project = "Azure Trusted Research Environment"
+    tre_id  = "${var.tre_id}"
+    source  = "https://github.com/microsoft/AzureTRE/"
   }
 }
 
@@ -76,7 +76,7 @@ module "api-webapp" {
   state_store_endpoint               = module.state-store.endpoint
   state_store_key                    = module.state-store.primary_key
   service_bus_resource_request_queue = module.servicebus.workspacequeue
-  managed_identity                   = module.identity.managed_identity 
+  managed_identity                   = module.identity.managed_identity
 }
 
 module "identity" {
@@ -84,7 +84,7 @@ module "identity" {
   tre_id               = var.tre_id
   location             = var.location
   resource_group_name  = azurerm_resource_group.core.name
-  servicebus_namespace = module.servicebus.servicebus_namespace 
+  servicebus_namespace = module.servicebus.servicebus_namespace
 }
 
 module "processor_function" {
@@ -117,22 +117,28 @@ module "servicebus" {
 }
 
 module "keyvault" {
-  source               = "./keyvault"
-  tre_id               = var.tre_id
-  location             = var.location
-  resource_group_name  = azurerm_resource_group.core.name
-  shared_subnet        = module.network.shared
-  core_vnet            = module.network.core
-  tenant_id            = data.azurerm_client_config.current.tenant_id
+  source                     = "./keyvault"
+  tre_id                     = var.tre_id
+  location                   = var.location
+  resource_group_name        = azurerm_resource_group.core.name
+  shared_subnet              = module.network.shared
+  core_vnet                  = module.network.core
+  tenant_id                  = data.azurerm_client_config.current.tenant_id
+  managed_identity_tenant_id = module.identity.managed_identity.tenant_id
+  managed_identity_object_id = module.identity.managed_identity.principal_id
+
+  depends_on = [
+    module.identity
+  ]
 }
 
 module "firewall" {
-  source               = "./firewall"
-  tre_id               = var.tre_id
-  location             = var.location
-  resource_group_name  = azurerm_resource_group.core.name
-  firewall_subnet      = module.network.azure_firewall
-  shared_subnet        = module.network.shared
+  source              = "./firewall"
+  tre_id              = var.tre_id
+  location            = var.location
+  resource_group_name = azurerm_resource_group.core.name
+  firewall_subnet     = module.network.azure_firewall
+  shared_subnet       = module.network.shared
 }
 
 module "routetable" {
@@ -145,12 +151,12 @@ module "routetable" {
 }
 
 module "acr" {
-  source               = "./acr"
-  tre_id               = var.tre_id
-  location             = var.location
-  resource_group_name  = azurerm_resource_group.core.name
-  core_vnet            = module.network.core
-  shared_subnet        = module.network.shared
+  source              = "./acr"
+  tre_id              = var.tre_id
+  location            = var.location
+  resource_group_name = azurerm_resource_group.core.name
+  core_vnet           = module.network.core
+  shared_subnet       = module.network.shared
 }
 
 module "state-store" {
@@ -163,9 +169,9 @@ module "state-store" {
 }
 
 module "bastion" {
-  source               = "./bastion"
-  tre_id               = var.tre_id
-  location             = var.location
-  resource_group_name  = azurerm_resource_group.core.name
-  bastion_subnet        = module.network.bastion
+  source              = "./bastion"
+  tre_id              = var.tre_id
+  location            = var.location
+  resource_group_name = azurerm_resource_group.core.name
+  bastion_subnet      = module.network.bastion
 }
