@@ -5,9 +5,20 @@ import pytest
 
 import db.repositories.workspaces
 from db.errors import EntityDoesNotExist
-from models.domain.resource import Status, ResourceType
+from models.domain.resource import Deployment, Status, ResourceType
 from models.domain.workspace import Workspace
 from models.schemas.workspace import WorkspaceInCreate
+
+
+def create_sample_workspace(workspace_id) -> dict:
+    return Workspace(
+        id=workspace_id,
+        description="My workspace",
+        resourceTemplateName="tre-workspace-vanilla",
+        resourceTemplateVersion="0.1.0",
+        resourceTemplateParameters={},
+        deployment=Deployment(status=Status.NotDeployed, message=""),
+    ).dict()
 
 
 @patch('azure.cosmos.CosmosClient')
@@ -25,7 +36,7 @@ def test_get_all_active_workspaces_calls_db_with_correct_query(cosmos_client_moc
 def test_get_workspace_by_id_calls_db_with_correct_query(cosmos_client_mock):
     workspace_repo = db.repositories.workspaces.WorkspaceRepository(cosmos_client_mock)
     workspace_id = uuid.uuid4()
-    workspace_repo.container.query_items = MagicMock(return_value=[{"id": str(workspace_id)}])
+    workspace_repo.container.query_items = MagicMock(return_value=[create_sample_workspace(str(workspace_id))])
     expected_query = f'SELECT * FROM c WHERE c.resourceType = "workspace" AND c.isDeleted = false AND c.id="{str(workspace_id)}"'
 
     workspace_repo.get_workspace_by_workspace_id(workspace_id)
@@ -88,7 +99,7 @@ def test_save_workspace_saves_the_items_to_the_database(cosmos_client_mock):
         resourceTemplateName="vanilla-tre",
         resourceTemplateVersion="0.1.0",
         resourceTemplateParameters={},
-        status=Status.NotDeployed,
+        deployment=Deployment(status=Status.NotDeployed, message=""),
     )
 
     workspace_repo.save_workspace(workspace)

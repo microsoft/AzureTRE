@@ -25,8 +25,8 @@ class ResourceType(str, Enum):
 
 
 class Deployment(AzureTREModel):
-    status: Status
-    message: str
+    status: Status = Field(Status.NotDeployed, title="Deployment status")
+    message: str = Field("", title="Additional deployment information")
 
 
 class Resource(AzureTREModel):
