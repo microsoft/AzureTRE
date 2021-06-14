@@ -38,3 +38,4 @@ RESOURCE_TYPE_SERVICE = "service"
 
 # Service bus
 SERVICE_BUS_GENERAL_ERROR_MESSAGE = "Service bus failure"
+DEPLOYMENT_STATUS_MESSAGE_FORMAT_INCORRECT = "Service bus message is not formatted correctly."

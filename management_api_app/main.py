@@ -35,9 +35,9 @@ app = get_application()
 
 
 @app.on_event("startup")
-@repeat_every(seconds=20, wait_first=True, logger=logging.getLogger())
-def update_deployment_status() -> None:
-    receive_message_and_update_deployment()
+@repeat_every(seconds=20, wait_first=False, logger=logging.getLogger())
+async def update_deployment_status() -> None:
+    await receive_message_and_update_deployment()
 
 
 if __name__ == "__main__":
