@@ -140,7 +140,7 @@ jobs:
           curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
           export PATH=~/.porter/:$PATH
       
-          make porter-publish ./workspaces/services/azureml
-          make porter-publish ./workspaces/services/devtestlabs
+          make porter-publish DIR=./workspaces/services/azureml
+          make porter-publish DIR=./workspaces/services/devtestlabs
           make porter-publish DIR=./workspaces/azureml-devtestlabs
           make porter-install DIR=./workspaces/azureml-devtestlabs

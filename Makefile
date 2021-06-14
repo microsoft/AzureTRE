@@ -103,7 +103,7 @@ porter-install:
 	&& cd ${DIR} && porter install -p ./parameters.json --cred ./azure.json --param porter_driver=docker  --allow-docker-host-access --debug
 
 porter-uninstall:
-	echo -e "\n\e[34m»»» 🧩 \e[96mUninstalling DevTest Labs Service with Porter\e[0m..." \
+	echo -e "\n\e[34m»»» 🧩 \e[96mUninstalling ${DIR} with Porter\e[0m..." \
 	&& ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
@@ -111,7 +111,7 @@ porter-uninstall:
 	&& cd ${DIR} && porter uninstall -p ./parameters.json --cred ./azure.json --debug
 
 porter-publish:
-	echo -e "\n\e[34m»»» 🧩 \e[96mPublishing DevTest Labs Service bundle\e[0m..." \
+	echo -e "\n\e[34m»»» 🧩 \e[96mPublishing ${DIR} bundle\e[0m..." \
 	&& ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
