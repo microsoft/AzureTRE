@@ -22,19 +22,19 @@ resource "azurerm_resource_group" "core" {
   }
 }
 
-resource "azurerm_log_analytics_workspace" "tre" {
+resource "azurerm_application_insights" "core" {
+  name                = "appi-${var.tre_id}"
+  resource_group_name = azurerm_resource_group.core.name
+  location            = var.location
+  application_type    = "web"
+}
+
+resource "azurerm_log_analytics_workspace" "core" {
   name                = "log-${var.tre_id}"
   resource_group_name = azurerm_resource_group.core.name
   location            = var.location
   retention_in_days   = 30
   sku                 = "pergb2018"
-}
-
-resource "azurerm_application_insights" "core" {
-  name                = "appi-${var.tre_id}"
-  resource_group_name = var.resource_group_name
-  location            = var.location
-  application_type    = "web"
 }
 
 module "network" {
@@ -75,7 +75,7 @@ module "api-webapp" {
   app_gw_subnet                      = module.network.app_gw
   core_vnet                          = module.network.core
   app_insights_instrumentation_key   = azurerm_application_insights.core.instrumentation_key
-  log_analytics_workspace_id         = azurerm_log_analytics_workspace.tre.id
+  log_analytics_workspace_id         = azurerm_log_analytics_workspace.core.id
   management_api_image_repository    = var.management_api_image_repository
   management_api_image_tag           = var.management_api_image_tag
   docker_registry_server             = var.docker_registry_server
