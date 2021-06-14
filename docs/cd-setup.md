@@ -18,7 +18,7 @@ Two service principals need to be created: One to authorize the workflow itself 
     az ad sp create-for-rbac --name "MyTREAppDeployment" --role Owner --scopes /subscriptions/<subscription ID> --sdk-auth
     ```
 
-1. Save the JSON output in a [GitHub secret](https://docs.github.com/en/actions/reference/encrypted-secrets) called `AZURE_CREDENTIALS`.
+1. Save the JSON output in a [GitHub **Environment** secret](https://docs.github.com/en/actions/reference/encrypted-secrets) called `AZURE_CREDENTIALS`.
 
 1. Create the service principal, used by the deployment processor, that has contributor privileges:
 
@@ -26,7 +26,7 @@ Two service principals need to be created: One to authorize the workflow itself 
     az ad sp create-for-rbac --name "sp-msfttre-deployment-processor" --role Contributor --scopes /subscriptions/<subscription ID> --sdk-auth
     ```
 
-1. Save the JSON output in a GitHub secret called `AZURE_CONTRIBUTOR_SP`.
+1. Save the JSON output in a GitHub **Environment** secret called `AZURE_CONTRIBUTOR_SP`.
 
 ## Set other sercrets
 
