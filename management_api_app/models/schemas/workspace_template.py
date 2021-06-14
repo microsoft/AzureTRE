@@ -42,9 +42,7 @@ class WorkspaceTemplateInCreate(BaseModel):
     name: str = Field(title="Name of workspace template")
     version: str = Field(title="Version of workspace template")
     description: str = Field(title=" Description of workspace template")
-    parameters: List[dict] = Field([{}], title="Workspace template parameters",
-                                   description="Values for the parameters required by the workspace template")
-    resourceType: str = Field(title="Type of workspace template")
+    parameters: List[Parameter] = Field([], title="Workspace template parameters", description="Description of the parameters needed for the template")
     current: bool = Field(title="Mark this version as current")
 
     class Config:
@@ -57,7 +55,6 @@ class WorkspaceTemplateInCreate(BaseModel):
                     "name": "azure_location",
                     "type": "string"
                 }],
-                "resourceType": "workspace",
                 "current": "true"
             }
         }

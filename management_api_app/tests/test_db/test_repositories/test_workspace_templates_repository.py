@@ -20,7 +20,7 @@ def get_sample_workspace_template(name: str, version: str = "1.0") -> ResourceTe
     )
 
 
-@patch('db.repositories.workspace_templates.WorkspaceTemplateRepository.query')
+@patch('db.repositories.workspace_templates.WorkspaceTemplateRepository.query', return_value=[])
 @patch('azure.cosmos.CosmosClient')
 def test_get_by_name_queries_db(cosmos_client_mock, wt_query_mock):
     template_repo = WorkspaceTemplateRepository(cosmos_client_mock)

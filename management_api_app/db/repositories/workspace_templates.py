@@ -2,11 +2,12 @@ import uuid
 from typing import List
 
 from azure.cosmos import CosmosClient
+from pydantic import parse_obj_as
 
 from core import config
 from db.errors import EntityDoesNotExist
 from db.repositories.base import BaseRepository
-from models.domain.resource_template import ResourceTemplate
+from models.domain.resource_template import ResourceTemplate, ResourceType
 from models.schemas.workspace_template import WorkspaceTemplateInCreate
 
 
@@ -20,21 +21,22 @@ class WorkspaceTemplateRepository(BaseRepository):
 
     def get_workspace_templates_by_name(self, name: str) -> List[ResourceTemplate]:
         query = self._workspace_template_by_name_query(name)
-        return self.query(query=query)
+        resource_templates = self.query(query=query)
+        return parse_obj_as(List[ResourceTemplate], resource_templates)
 
     def get_current_workspace_template_by_name(self, name: str) -> ResourceTemplate:
         query = self._workspace_template_by_name_query(name) + ' AND c.current = true'
         workspace_templates = self.query(query=query)
         if len(workspace_templates) != 1:
             raise EntityDoesNotExist
-        return workspace_templates[0]
+        return parse_obj_as(ResourceTemplate, workspace_templates[0])
 
     def get_workspace_template_by_name_and_version(self, name: str, version: str) -> ResourceTemplate:
         query = self._workspace_template_by_name_query(name) + f' AND c.version = "{version}"'
         workspace_templates = self.query(query=query)
         if len(workspace_templates) != 1:
             raise EntityDoesNotExist
-        return workspace_templates[0]
+        return parse_obj_as(ResourceTemplate, workspace_templates[0])
 
     def get_workspace_template_names(self) -> List[str]:
         query = 'SELECT c.name FROM c'
@@ -51,7 +53,7 @@ class WorkspaceTemplateRepository(BaseRepository):
             description=workspace_template_create.description,
             version=workspace_template_create.version,
             parameters=workspace_template_create.parameters,
-            resourceType=workspace_template_create.resourceType,
+            resourceType=ResourceType.Workspace,
             current=workspace_template_create.current
         )
         self.create_item(resource_template)
