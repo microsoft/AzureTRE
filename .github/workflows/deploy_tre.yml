@@ -94,8 +94,8 @@ jobs:
           curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
           export PATH=~/.porter/:$PATH
 
-          make workspaces-vanilla-porter-publish
-          make workspaces-vanilla-porter-install
+          make porter-publish DIR=./workspaces/vanilla
+          make porter-install DIR=./workspaces/vanilla
 
   deploy_azureml_devtestlabs_workspace:
     name: Deploy Azure ML and DevTest Labs Workspace
@@ -134,7 +134,7 @@ jobs:
           curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
           export PATH=~/.porter/:$PATH
       
-          make services-azureml-porter-publish
-          make services-devtestlabs-porter-publish
-          make workspaces-azureml_devtestlabs-porter-publish
-          make workspaces-azureml_devtestlabs-porter-install
+          make porter-publish ./workspaces/services/azureml
+          make porter-publish ./workspaces/services/devtestlabs
+          make porter-publish DIR=./workspaces/azureml-devtestlabs
+          make porter-install DIR=./workspaces/azureml-devtestlabs
