@@ -2,3 +2,4 @@ azure-functions
 azure-mgmt-containerinstance
 azure-mgmt-network
 msrest
+opencensus-ext-azure==1.0.8
