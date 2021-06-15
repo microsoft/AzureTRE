@@ -127,7 +127,7 @@ class CNABBuilder:
             logging.info('-- Deploying -- ' + self._container_group_name + " to " + self._resource_group_name)
             time.sleep(1)
 
-        service_bus.send_status_update_message(self._id, "ACI container deployed","")
+        service_bus.send_status_update_message(self._id, "ACI container deployed", "")
 
         logs = aci_client.container.list_logs(self._resource_group_name, self._container_group_name, self._container_group_name)
 
