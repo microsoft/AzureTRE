@@ -1,9 +1,9 @@
-variable "state_storage" {
+variable "mgmt_storage_account_name" {
   type        = string
   description = "Storage account created by bootstrap to hold all Terraform state"
 }
 
-variable "mgmt_res_group" {
+variable "mgmt_resource_group_name" {
   type        = string
   description = "Shared management resource group"
 }

@@ -19,15 +19,13 @@ parameters:
   - name: tre_id
     type: string
   - name: tfstate_resource_group_name
-    env: TF_VAR_tfstate_resource_group_name
     type: string
     description: "Resource group containing the Terraform state storage account"
   - name: tfstate_storage_account_name
-    env:  TF_VAR_tfstate_storage_account_name
     type: string
     description: "The name of the Terraform state storage account"
   - name: tfstate_container_name
-    env: TF_VAR_tfstate_container_name
+    env: tfstate_container_name
     type: string
     default: "tfstate"
     description: "The name of the Terraform state storage container"

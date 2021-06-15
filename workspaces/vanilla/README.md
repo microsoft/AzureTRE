@@ -25,11 +25,11 @@
 **Option 1:** Using the Makefile:
 
 ```cmd
-make workspaces-vanilla-porter-build
+make porter-build DIR=./workspaces/vanilla
 ```
 
 ```cmd
-make workspaces-vanilla-porter-install
+make porter-install DIR=./workspaces/vanilla
 ```
 
 **Option 2:** Using Porter commands:
