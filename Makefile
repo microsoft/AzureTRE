@@ -7,7 +7,6 @@ all: bootstrap mgmt-deploy build-api-image push-api-image build-cnab-image push-
 bootstrap:
 	echo -e "\n\e[34m»»» 🧩 \e[96mBootstrap Terraform\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
-	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& cd ./devops/terraform && ./bootstrap.sh
 
