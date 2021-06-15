@@ -46,13 +46,15 @@ def initialize_logging(logging_level: int):
     logger.setLevel(logging_level)
 
 
-if config.DEBUG:
-    initialize_logging(logging.DEBUG)
-else:
-    initialize_logging(logging.INFO)
-
-
 app = get_application()
+
+
+@app.on_event("startup")
+async def initialize_logging_on_startup():
+    if config.DEBUG:
+        initialize_logging(logging.DEBUG)
+    else:
+        initialize_logging(logging.INFO)
 
 
 @app.on_event("startup")
