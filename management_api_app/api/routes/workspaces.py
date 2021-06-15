@@ -5,11 +5,12 @@ from starlette import status
 
 from api.dependencies.database import get_repository
 from api.dependencies.workspaces import get_workspace_by_workspace_id_from_path
-from db.repositories.workspaces import WorkspaceRepository
+from db.repositories.workspaces import WorkspaceRepository, WorkspaceTemplateRepository
 from models.domain.workspace import Workspace
 from models.schemas.workspace import WorkspaceInCreate, WorkspaceIdInResponse, WorkspacesInList, WorkspaceInResponse
 from resources import strings
 from service_bus.service_bus import ServiceBus
+from validation.validate_request import ValidateRequest
 
 
 router = APIRouter()
@@ -22,7 +23,12 @@ async def retrieve_active_workspaces(workspace_repo: WorkspaceRepository = Depen
 
 
 @router.post("/workspaces", status_code=status.HTTP_202_ACCEPTED, response_model=WorkspaceIdInResponse, name=strings.API_CREATE_WORKSPACE)
-async def create_workspace(workspace_create: WorkspaceInCreate, workspace_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository))) -> WorkspaceIdInResponse:
+async def create_workspace(workspace_create: WorkspaceInCreate,
+                           workspace_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository)),
+                           workspace_template_repo: WorkspaceTemplateRepository = Depends(get_repository(WorkspaceTemplateRepository))) -> WorkspaceIdInResponse:
+
+    ValidateRequest.validate_request(workspace_create, workspace_template_repo)
+
     try:
         workspace = workspace_repo.create_workspace_item(workspace_create)
     except ValueError as e:
