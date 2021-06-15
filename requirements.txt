@@ -25,5 +25,8 @@ azure-mgmt-containerinstance
 azure-mgmt-network
 msrest
 
+# Shared requirements
+opencensus-ext-azure==1.0.8
+
 # Requirements for service bus send sample
 azure-functions
