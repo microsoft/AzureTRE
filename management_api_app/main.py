@@ -30,6 +30,11 @@ def get_application() -> FastAPI:
 
 
 def initialize_logging(logging_level : int):
+    """
+    Adds the Application Insights handler for the root logger and sets the given logging level.
+
+    :param logging_level: The logging level to set e.g., logging.WARNING.
+    """
     logger = logging.getLogger()
     app_insights_instrumentation_key = os.getenv("APPINSIGHTS_INSTRUMENTATIONKEY")
 
