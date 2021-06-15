@@ -39,5 +39,5 @@ jobs:
             TAG=$GITHUB_SHA
           fi
 
-          docker build -t ${{ env.REPOSITORY_NAME}}:$TAG core/  
+          docker build -t ${{ env.REPOSITORY_NAME}}:$TAG management_api_app/
           docker push ${{ env.REPOSITORY_NAME}}:$TAG
