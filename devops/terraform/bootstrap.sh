@@ -15,8 +15,8 @@ az storage container create --account-name $TF_VAR_mgmt_storage_account_name --n
 cat > bootstrap_backend.tf <<BOOTSTRAP_BACKEND
 terraform {
   backend "azurerm" {
-    resource_group_name  = "$TF_VAR_TF_VAR_mgmt_resource_group_name"
-    storage_account_name = "$TF_VAR_TF_VAR_mgmt_storage_account_name"
+    resource_group_name  = "$TF_VAR_mgmt_resource_group_name"
+    storage_account_name = "$TF_VAR_mgmt_storage_account_name"
     container_name       = "$TF_VAR_terraform_state_container_name"
     key                  = "bootstrap.tfstate"
   }
