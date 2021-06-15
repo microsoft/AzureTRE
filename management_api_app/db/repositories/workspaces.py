@@ -71,3 +71,6 @@ class WorkspaceRepository(BaseRepository):
 
     def save_workspace(self, workspace: Workspace):
         self.create_item(workspace)
+
+    def update_workspace(self, workspace: Workspace):
+        self.container.upsert_item(workspace)
