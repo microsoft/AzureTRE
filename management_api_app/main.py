@@ -1,8 +1,10 @@
 import logging
+import os
 
 import uvicorn
 from fastapi import FastAPI
 from fastapi_utils.tasks import repeat_every
+from opencensus.ext.azure.log_exporter import AzureLogHandler
 from starlette.exceptions import HTTPException
 from fastapi.exceptions import RequestValidationError
 
@@ -27,10 +29,25 @@ def get_application() -> FastAPI:
     return application
 
 
+def initialize_logging(logging_level : int):
+    logger = logging.getLogger()
+    app_insights_instrumentation_key = os.getenv("APPINSIGHTS_INSTRUMENTATIONKEY")
+
+    try:
+        logger.addHandler(AzureLogHandler(connection_string=f"InstrumentationKey={app_insights_instrumentation_key}"))
+    except ValueError:
+        logger.error("Application Insights instrumentation key missing")
+
+    logging.basicConfig(level=logging_level)
+    logger.setLevel(logging_level)
+
+
 if DEBUG:
-    logging.basicConfig(level=logging.DEBUG)
+    initialize_logging(logging.DEBUG)
 else:
-    logging.basicConfig(level=logging.WARNING)
+    initialize_logging(logging.INFO)
+
+
 app = get_application()
 
 
