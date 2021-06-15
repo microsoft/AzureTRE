@@ -14,11 +14,9 @@ from azure.mgmt.containerinstance.models import (ContainerGroup,
                                                  ResourceRequests,
                                                  ResourceRequirements,
                                                  OperatingSystemTypes)
-from azure.cli.core import get_default_cli
 
 from shared.azure_identity_credential_adapter import AzureIdentityCredentialAdapter
 from shared.service_bus import ServiceBus
-from shared.azhelper import az_cli
 
 
 class CNABBuilder:
@@ -124,24 +122,25 @@ class CNABBuilder:
         
         result = aci_client.container_groups.create_or_update(self._resource_group_name, self._container_group_name,
                                                               group)
-        
+
         while result.done() is False:
             logging.info('-- Deploying -- ' + self._container_group_name + " to " + self._resource_group_name)
             time.sleep(1)
 
         service_bus.send_status_update_message(self._id,"ACI container deployed","")
 
-        aci_response = ""
+        logs = aci_client.container.list_logs(self._resource_group_name,self._container_group_name, self._container_group_name)
         
-        while "Error" not in aci_response and "Success" not in aci_response:
-            logging.info("Waiting for runner to execute")
-            time.sleep(20)
-            aci_response = az_cli("container logs -n " + self._container_group_name + " -g " + self._resource_group_name)
-            logging.info(aci_response)
+        while "Error" not in logs.content and "Success" not in logs.content:
+            time.sleep(5)
+            logs = aci_client.container.list_logs(self._resource_group_name,self._container_group_name, self._container_group_name)
+            if "Error" in logs.content:
+                service_bus.send_status_update_message(self._id,"Deployment failed",logs.content)
+                print(logs.content.split("Error",1)[1])
+            elif "Success" in logs.content:
+                service_bus.send_status_update_message(self._id,"Deployment succeeded",logs.content)
+                print(logs.content.split("Success",1)[1])
+            else:
+                print("Waiting for runner to execute")
 
-        #if "Error" in aci_response:
-        #    logging.info(aci_response.split("Error",1)[1])
-        #elif "Success" in aci_response:
-        #    logging.info(aci_response.split("Success",1)[1])
-
-        
+        logging.info("Message processed")
