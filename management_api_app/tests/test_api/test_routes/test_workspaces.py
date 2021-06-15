@@ -6,7 +6,7 @@ from httpx import AsyncClient
 from starlette import status
 
 from db.errors import EntityDoesNotExist
-from models.domain.resource import Status
+from models.domain.resource import Status, Deployment
 from models.domain.workspace import Workspace
 from models.schemas.workspace import get_sample_workspace
 from resources import strings
@@ -22,7 +22,7 @@ def create_sample_workspace_object(workspace_id):
         resourceTemplateName="tre-workspace-vanilla",
         resourceTemplateVersion="0.1.0",
         resourceTemplateParameters={},
-        status=Status.NotDeployed,
+        deployment=Deployment(status=Status.NotDeployed, message="")
     )
 
 

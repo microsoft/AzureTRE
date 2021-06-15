@@ -34,18 +34,18 @@ parameters:
     type: string
     description: "Name of the azure container registry"
   - name: tfstate_resource_group_name
-    env: TF_VAR_tfstate_resource_group_name
     type: string
     description: "Resource group containing the Terraform state storage account"
+    env: MGMT_RESOURCE_GROUP_NAME
   - name: tfstate_storage_account_name
-    env:  TF_VAR_tfstate_storage_account_name
     type: string
     description: "The name of the Terraform state storage account"
+    env: MGMT_STORAGE_ACCOUNT_NAME
   - name: tfstate_container_name
-    env: TF_VAR_tfstate_container_name
     type: string
     default: "tfstate"
     description: "The name of the Terraform state storage container"
+    env: TERRAFORM_STATE_CONTAINER_NAME
   - name: porter_driver
     default: "azure"
     type: string

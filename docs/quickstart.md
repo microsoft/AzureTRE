@@ -45,14 +45,14 @@ Before running any of the scripts, the configuration variables need to be set. T
 
 Note. `.tfvars` file is not used, this is intentional. The `.env` file format is easier to parse, meaning we can use the values for bash scripts and other purposes
 
-Copy [/devops/terraform/.env.sample](../devops/terraform/.env.sample) to `/devops/terraform/.env` and set values for all variables:
+Copy [/devops/.env.sample](../devops/.env.sample) to `/devops/.env` and set values for all variables:
 
-- `TF_VAR_state_storage` - The name of the storage account to hold Terraform state.
-- `TF_VAR_mgmt_res_group` - The shared resource group for all management resources, including the storage account.
-- `TF_VAR_state_container` - Name of the blob container to hold Terraform state (default: `tfstate`).
-- `TF_VAR_location` - Azure region to deploy all resources into.
-- `TF_VAR_image_tag` - Default tag for docker images that will be pushed to the container registry and deployed with the Azure TRE.
-- `TF_VAR_acr_name` - Globally unique name for the ACR that will be create to store deployment images.
+- `MGMT_STORAGE_ACCOUNT_NAME` - The name of the storage account to hold terraform state and other deployment artifacts.
+- `MGMT_RESOURCE_GROUP_NAME` - The shared resource group for all management resources, including the storage account.
+- `TERRAFORM_STATE_CONTAINER_NAME` - Name of the blob container to hold Terraform state (default: `tfstate`).
+- `LOCATION` - Azure region to deploy all resources into.
+- `IMAGE_TAG` - Default tag for docker images that will be pushed to the container registry and deployed with the Azure TRE.
+- `ACR_NAME` - Globally unique name for the ACR that will be create to store deployment images.
 
 ### Bootstrap of back-end state
 
@@ -91,10 +91,10 @@ make push-cnab-image
 
 ### Configuring variables
 
-Copy [/templates/core/terraform/.env.sample](../templates/core/terraform/.env.sample) to `/templates/core/terraform/.env` and set values for all variables:
+Copy [/templates/core/.env.sample](../templates/core/.env.sample) to `/templates/core/.env` and set values for all variables:
 
-- `TF_VAR_address_space` - Address space for the Azure TRE core virtual network
-- `TF_VAR_tre_id` - Globally unique identifier, `tre_id` can be found in the resource names of the Azure TRE instance; for example, a `tre_id` of `mytre-dev-3142` will result in a resource group name for Azure TRE instance of `rg-mytre-dev-3142`. This must be less than 12 characters (Alphanumeric, underscore, and hyphen allowed).
+- `ADDRESS_SPACE` - Address space for the Azure TRE core virtual network
+- `TRE_ID` - Globally unique identifier, `TRE_ID` can be found in the resource names of the Azure TRE instance; for example, a `TRE_ID` of `mytre-dev-3142` will result in a resource group name for Azure TRE instance of `rg-mytre-dev-3142`. This must be less than 12 characters (Alphanumeric, underscore, and hyphen allowed).
 
 ### Deploy
 

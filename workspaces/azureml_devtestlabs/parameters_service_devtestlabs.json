@@ -19,19 +19,19 @@
     {
       "name": "tfstate_container_name",
       "source": {
-        "env": "TF_VAR_tfstate_container_name"
+        "env": "TERRAFORM_STATE_CONTAINER_NAME"
       }
     },
     {
       "name": "tfstate_resource_group_name",
       "source": {
-        "env": "TF_VAR_tfstate_resource_group_name"
+        "env": "MGMT_RESOURCE_GROUP_NAME"
       }
     },
     {
       "name": "tfstate_storage_account_name",
       "source": {
-        "env": "TF_VAR_tfstate_storage_account_name"
+        "env": "MGMT_STORAGE_ACCOUNT_NAME"
       }
     }
   ]

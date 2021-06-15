@@ -12,13 +12,6 @@ resource "azurerm_app_service_plan" "core" {
   }
 }
 
-resource "azurerm_application_insights" "core" {
-  name                = "appi-${var.tre_id}"
-  resource_group_name = var.resource_group_name
-  location            = var.location
-  application_type    = "web"
-}
-
 resource "azurerm_app_service" "management_api" {
   name                = "api-${var.tre_id}"
   resource_group_name = var.resource_group_name
@@ -27,7 +20,7 @@ resource "azurerm_app_service" "management_api" {
   https_only          = true
 
   app_settings = {
-    "APPINSIGHTS_INSTRUMENTATIONKEY" = azurerm_application_insights.core.instrumentation_key
+    "APPINSIGHTS_INSTRUMENTATIONKEY" = var.app_insights_instrumentation_key
     "WEBSITES_PORT"                  = "8000"
     "WEBSITE_VNET_ROUTE_ALL"         = 1
 

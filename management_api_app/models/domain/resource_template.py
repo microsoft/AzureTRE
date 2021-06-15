@@ -1,4 +1,4 @@
-from typing import List, Optional, Any
+from typing import List, Any
 
 from pydantic import Field
 
@@ -11,7 +11,7 @@ class Parameter(AzureTREModel):
     type: str = Field(title="Parameter type")
     default: Any = Field(title="Default value for the parameter")
     applyTo: str = Field("All Actions", title="The actions that the parameter applies to e.g. install, delete etc")
-    description: Optional[str] = Field(title="Parameter description")
+    description: str = Field("", title="Parameter description")
     required: bool = Field(False, title="Is the parameter required")
 
 
@@ -20,6 +20,6 @@ class ResourceTemplate(AzureTREModel):
     name: str = Field(title="Unique template name")
     description: str = Field(title="Template description")
     version: str = Field(title="Template version")
-    parameters: List[dict] = Field(title="Template parameters")
+    parameters: List[Parameter] = Field(title="Template parameters")
     resourceType: ResourceType = Field(title="Type of resource this template is for (workspace/service)")
     current: bool = Field(title="Is this the current version of this template")
