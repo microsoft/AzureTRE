@@ -16,7 +16,8 @@
         "**/*.yml",
         "**/*.yaml",
         "**/*.sh",
-        "**/.env.tmpl"
+        "**/.env.tmpl",
+        "**/requirements-dev.txt"
     ],
     "fileExtensions": [
         ".md"
