@@ -39,6 +39,10 @@ parameters:
     type: string
     default: "tfstate"
     description: "The name of the Terraform state storage container"
+  - name: porter_driver
+    default: "azure"
+    type: string
+    description: "The porter driver - azure or docker"
 
 mixins:
   - exec
