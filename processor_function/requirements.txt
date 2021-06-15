@@ -1,5 +1,5 @@
-azure-functions
-azure-mgmt-containerinstance
-azure-mgmt-network
-msrest
+azure-functions==1.7.2
+azure-mgmt-containerinstance==7.0.0
+azure-mgmt-network==19.0.0
+msrest==0.6.21
 opencensus-ext-azure==1.0.8
