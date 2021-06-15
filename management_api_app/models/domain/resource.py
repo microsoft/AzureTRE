@@ -25,8 +25,8 @@ class ResourceType(str, Enum):
 
 
 class Deployment(AzureTREModel):
-    status: Status
-    message: str
+    status: Status = Field(Status.NotDeployed, title="Deployment status")
+    message: str = Field("", title="Additional deployment status information")
 
 
 class Resource(AzureTREModel):
@@ -39,5 +39,5 @@ class Resource(AzureTREModel):
     resourceTemplateName: str = Field(title="Resource template name", description="The resource template (bundle) to deploy")
     resourceTemplateVersion: str = Field(title="Resource template version", description="The version of the resource template (bundle) to deploy")
     resourceTemplateParameters: dict = Field({}, title="Resource template parameters", description="Parameters for the deployment")
-    deployment: Deployment = Field("", title="Deployment", description="Fields related to deployment of this resource")
+    deployment: Deployment = Field(title="Deployment", description="Fields related to deployment of this resource")
     isDeleted: bool = Field(False, title="Is deleted", description="Marks the resource request as deleted (NOTE: this is not the deployment status)")

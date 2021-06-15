@@ -5,7 +5,7 @@ import pytest
 
 import db.repositories.workspaces
 from db.errors import EntityDoesNotExist
-from models.domain.resource import Status, ResourceType
+from models.domain.resource import Deployment, Status, ResourceType
 from models.domain.workspace import Workspace
 from models.schemas.workspace import WorkspaceInCreate
 
@@ -88,7 +88,7 @@ def test_save_workspace_saves_the_items_to_the_database(cosmos_client_mock):
         resourceTemplateName="vanilla-tre",
         resourceTemplateVersion="0.1.0",
         resourceTemplateParameters={},
-        status=Status.NotDeployed,
+        deployment=Deployment(status=Status.NotDeployed, message="")
     )
 
     workspace_repo.save_workspace(workspace)
