@@ -1,5 +1,5 @@
 # Dev requirements
-azure-functions
+azure-functions==1.7.2
 asgi-lifespan~=1.0.1
 flake8==3.9.2
 httpx~=0.18.1
