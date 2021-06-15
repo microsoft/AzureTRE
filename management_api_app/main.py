@@ -29,7 +29,7 @@ def get_application() -> FastAPI:
     return application
 
 
-def initialize_logging(logging_level : int):
+def initialize_logging(logging_level: int):
     """
     Adds the Application Insights handler for the root logger and sets the given logging level.
 
