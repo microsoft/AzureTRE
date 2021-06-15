@@ -1,6 +1,6 @@
 import time
 import os
-import uuid
+
 import logging
 from typing import List
 
@@ -106,7 +106,7 @@ class CNABBuilder:
                                identity=managed_identity)
 
         return group
-    
+
     def deploy_aci(self):
         """
         Deploys a CNAB container into ACI with parameters to run porter
@@ -116,10 +116,10 @@ class CNABBuilder:
 
         credential = AzureIdentityCredentialAdapter()
         aci_client = ContainerInstanceManagementClient(credential, self._subscription_id)
-        
+
         service_bus = ServiceBus()
-        service_bus.send_status_update_message(self._id,"ACI Deployment started","Deploying ACI container: " + self._container_group_name)
-        
+        service_bus.send_status_update_message(self._id, "ACI Deployment started", "Deploying ACI container: " + self._container_group_name)
+
         result = aci_client.container_groups.create_or_update(self._resource_group_name, self._container_group_name,
                                                               group)
 
@@ -127,19 +127,19 @@ class CNABBuilder:
             logging.info('-- Deploying -- ' + self._container_group_name + " to " + self._resource_group_name)
             time.sleep(1)
 
-        service_bus.send_status_update_message(self._id,"ACI container deployed","")
+        service_bus.send_status_update_message(self._id, "ACI container deployed","")
 
-        logs = aci_client.container.list_logs(self._resource_group_name,self._container_group_name, self._container_group_name)
-        
+        logs = aci_client.container.list_logs(self._resource_group_name, self._container_group_name, self._container_group_name)
+
         while "Error" not in logs.content and "Success" not in logs.content:
             time.sleep(5)
-            logs = aci_client.container.list_logs(self._resource_group_name,self._container_group_name, self._container_group_name)
+            logs = aci_client.container.list_logs(self._resource_group_name, self._container_group_name, self._container_group_name)
             if "Error" in logs.content:
-                service_bus.send_status_update_message(self._id,"Deployment failed",logs.content)
-                print(logs.content.split("Error",1)[1])
+                service_bus.send_status_update_message(self._id, "Deployment failed", logs.content)
+                print(logs.content.split("Error", 1)[1])
             elif "Success" in logs.content:
-                service_bus.send_status_update_message(self._id,"Deployment succeeded",logs.content)
-                print(logs.content.split("Success",1)[1])
+                service_bus.send_status_update_message(self._id, "Deployment succeeded", logs.content)
+                print(logs.content.split("Success", 1)[1])
             else:
                 print("Waiting for runner to execute")
 
