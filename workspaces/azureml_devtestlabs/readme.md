@@ -26,25 +26,25 @@ Service Tags:
 - A deployed TRE instance
 
 - A Vanilla Workspace Bundle published
-    `make workspaces-vanilla-porter-build`
-    `make workspaces-vanilla-porter-publish`
+    `make porter-build DIR=./workspaces/vanilla`
+    `make porter-publish DIR=./workspaces/vanilla`
 
 - A Azure ML Service bundle published
-    `make services-azureml-porter-build`  
-    `make services-azureml-porter-publish`
+    `make porter-build DIR=./workspaces/services/azureml`  
+    `make porter-publish DIR=./workspaces/services/azureml`
 
 - A DevTest Labs Service bundle published
-    `make services-devtestlabs-porter-build`  
-    `make services-devtestlabs-porter-publish`
+    `make porter-build DIR=./workspaces/services/devtestlabs`  
+    `make porter-publish DIR=./workspaces/services/devtestlabs`
 
 - CNAB image built (contains azure driver)
     `make build-cnab-image`
 
 - A Azure ML DevTest Labs Workspace bundle built
-    `make services-devtestlabs-porter-build`
+    `make porter-build DIR=./workspaces/azureml-devtestlabs`
 
 ## To deploy
 
 - Once prerequisites are installed, create a copy of `workspaces/azureml_devtestlabs/.env.sample` called `.env` in the  `workspaces/azureml_devtestlabs/` directory. Update the environment variable values to match your installation.
 
-- Run: `make workspaces-azureml_devtestlabs-porter-install`
+- Run: `make porter-install DIR=./workspaces/azureml-devtestlabs`

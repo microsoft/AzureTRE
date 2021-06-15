@@ -1,10 +1,10 @@
 cat > service_backend.tf <<TRE_BACKEND
 terraform {
   backend "azurerm" {
-    resource_group_name  = "$TF_VAR_mgmt_res_group"
-    storage_account_name = "$TF_VAR_state_storage"
-    container_name       = "$TF_VAR_state_container"
-    key                  = "${TF_VAR_tre_id}${TF_VAR_workspace_id}azureml"
+    resource_group_name  = "$TF_VAR_mgmt_resource_group_name"
+    storage_account_name = "$TF_VAR_mgmt_storage_account_name"
+    container_name       = "$TF_VAR_terraform_state_container_name"
+    key                  = "${TRE_ID}${WORKSPACE_ID}azureml"
   }
 }
 TRE_BACKEND
