@@ -2,9 +2,11 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
+from pydantic import ValidationError
 
 from api.dependencies.database import get_repository
 from api.dependencies.workspaces import get_workspace_by_workspace_id_from_path
+from api.errors.validation_error import ValidationError
 from db.repositories.workspaces import WorkspaceRepository, WorkspaceTemplateRepository
 from models.domain.workspace import Workspace
 from models.schemas.workspace import WorkspaceInCreate, WorkspaceIdInResponse, WorkspacesInList, WorkspaceInResponse
@@ -26,8 +28,10 @@ async def retrieve_active_workspaces(workspace_repo: WorkspaceRepository = Depen
 async def create_workspace(workspace_create: WorkspaceInCreate,
                            workspace_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository)),
                            workspace_template_repo: WorkspaceTemplateRepository = Depends(get_repository(WorkspaceTemplateRepository))) -> WorkspaceIdInResponse:
-
-    ValidateRequest.validate_request(workspace_create, workspace_template_repo)
+    try:
+        ValidateRequest.validate_workspace_request(workspace_create, workspace_template_repo)
+    except ValidationError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Error")
 
     try:
         workspace = workspace_repo.create_workspace_item(workspace_create)

@@ -43,9 +43,6 @@ RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE = "This resource has not yet been deployed"
 SERVICE_BUS_GENERAL_ERROR_MESSAGE = "Service bus failure"
 
 # Validation strings
-VALIDATION_PARAMETERS = "parameters"
 VALIDATION_ERRORS = "validationErrors"
-VALIDATION_NAME = "name"
-VALIDATION_REQUIRED = "required"
 WORKSPACE_TEMPLATE_X_DOES_NOT_EXIST = "Workspace template \'{}\' does not exist"
 PARAMETER_X_IS_REQUIRED = "Parameter name \'{}\' is required"
