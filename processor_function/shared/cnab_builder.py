@@ -17,6 +17,7 @@ from azure.mgmt.containerinstance.models import (ContainerGroup,
 
 from shared.azure_identity_credential_adapter import AzureIdentityCredentialAdapter
 from shared.service_bus import ServiceBus
+from resources import strings
 
 
 class CNABBuilder:
@@ -106,6 +107,20 @@ class CNABBuilder:
                                identity=managed_identity)
 
         return group
+    
+    def _aci_run_completed() -> bool:
+        logs = aci_client.container.list_logs(self._resource_group_name, self._container_group_name, self._container_group_name)
+        if "Error" in logs.content:
+            service_bus.send_status_update_message(self._id, strings.DEPLOYMENT_FAILED, logs.content)
+            loggin.error(logs.content.split("Error", 1)[1])
+            return True
+        elif "Success" in logs.content:
+            service_bus.send_status_update_message(self._id, strings.DEPLOYMENT_SUCCEEDED, logs.content)
+            logging.info(logs.content.split("Success", 1)[1])
+            return True
+        else:
+            logging.info(strings.WAITING_FOR_RUNNER)
+            return False
 
     def deploy_aci(self):
         """
@@ -118,29 +133,20 @@ class CNABBuilder:
         aci_client = ContainerInstanceManagementClient(credential, self._subscription_id)
 
         service_bus = ServiceBus()
-        service_bus.send_status_update_message(self._id, "ACI Deployment started", "Deploying ACI container: " + self._container_group_name)
+        service_bus.send_status_update_message(self._id, strings.DEPLOYING, "Deploying ACI container: " + self._container_group_name)
 
         result = aci_client.container_groups.create_or_update(self._resource_group_name, self._container_group_name,
                                                               group)
 
-        while result.done() is False:
-            logging.info('-- Deploying -- ' + self._container_group_name + " to " + self._resource_group_name)
+        while not result.done():
+            logging.info(strings.DEPLOYING + self._container_group_name + " to " + self._resource_group_name)
             time.sleep(1)
 
-        service_bus.send_status_update_message(self._id, "ACI container deployed", "")
+        service_bus.send_status_update_message(self._id, strings.DEPLOYING, "ACI container deployed " + self._container_group_name)
 
         logs = aci_client.container.list_logs(self._resource_group_name, self._container_group_name, self._container_group_name)
 
-        while "Error" not in logs.content and "Success" not in logs.content:
-            time.sleep(5)
-            logs = aci_client.container.list_logs(self._resource_group_name, self._container_group_name, self._container_group_name)
-            if "Error" in logs.content:
-                service_bus.send_status_update_message(self._id, "Deployment failed", logs.content)
-                loggin.error(logs.content.split("Error", 1)[1])
-            elif "Success" in logs.content:
-                service_bus.send_status_update_message(self._id, "Deployment succeeded", logs.content)
-                logging.info(logs.content.split("Success", 1)[1])
-            else:
-                logging.info("Waiting for runner to execute")
+        while not _aci_run_completed():
+            time.sleep(10)
 
-        logging.info("Message processed")
+        logging.info(strings.MESSAGE_PROCESSED)
