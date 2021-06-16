@@ -14,6 +14,7 @@ resource "azurerm_function_app" "procesorfunction" {
     FUNCTIONS_WORKER_RUNTIME              = "python"
     FUNCTION_APP_EDIT_MODE                = "readonly"
     RESOURCE_GROUP_NAME                   = var.resource_group_name
+    APP_INSIGHTS_INSTRUMENTATION_KEY      = var.app_insights_instrumentation_key
     VNET_NAME                             = var.core_vnet
     ACI_SUBNET                            = var.aci_subnet
     CNAB_AZURE_STATE_STORAGE_ACCOUNT_NAME = var.storage_account_name

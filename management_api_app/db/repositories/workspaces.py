@@ -2,7 +2,7 @@ import uuid
 from typing import List
 
 from azure.cosmos import CosmosClient
-from pydantic import UUID4
+from pydantic import parse_obj_as, UUID4
 
 from core import config
 from resources import strings
@@ -25,18 +25,19 @@ class WorkspaceRepository(BaseRepository):
     def _get_template_version(self, template_name):
         workspace_template_repo = WorkspaceTemplateRepository(self._client)
         template = workspace_template_repo.get_current_workspace_template_by_name(template_name)
-        return template["version"]
+        return template.version
 
     def get_all_active_workspaces(self) -> List[Workspace]:
         query = self._active_workspaces_query()
-        return self.query(query=query)
+        workspaces = self.query(query=query)
+        return parse_obj_as(List[Workspace], workspaces)
 
     def get_workspace_by_workspace_id(self, workspace_id: UUID4) -> Workspace:
         query = self._active_workspaces_query() + f' AND c.id="{workspace_id}"'
         workspaces = self.query(query=query)
         if not workspaces:
             raise EntityDoesNotExist
-        return workspaces[0]
+        return parse_obj_as(Workspace, workspaces[0])
 
     def create_workspace_item(self, workspace_create: WorkspaceInCreate) -> Workspace:
         full_workspace_id = str(uuid.uuid4())
