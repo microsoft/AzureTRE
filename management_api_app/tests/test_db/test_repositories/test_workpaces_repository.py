@@ -53,7 +53,7 @@ def test_get_workspace_by_id_throws_entity_does_not_exist_if_item_does_not_exist
 @patch('db.repositories.workspaces.WorkspaceRepository._get_current_workspace_template')
 @patch('azure.cosmos.CosmosClient')
 @patch("api.routes.workspaces.WorkspaceRepository._validate_workspace_parameters")
-def test_create_workspace_item_creates_a_workspace_with_the_right_values(_validate_workspace_parameters_mock, cosmos_client_mock,_get_current_workspace_template_mock):
+def test_create_workspace_item_creates_a_workspace_with_the_right_values(_validate_workspace_parameters_mock, cosmos_client_mock, _get_current_workspace_template_mock):
     workspace_repo = db.repositories.workspaces.WorkspaceRepository(cosmos_client_mock)
 
     workspace_type = "vanilla-tre"
@@ -115,27 +115,27 @@ def test_save_workspace_saves_the_items_to_the_database(cosmos_client_mock):
 @patch('azure.cosmos.CosmosClient')
 def test_validate_workspace_parameters_no_parameters(cosmos_client_mock):
     workspace_repo = db.repositories.workspaces.WorkspaceRepository(cosmos_client_mock)
-    
+
     template_parameters = []
     supplied_request_parameters = {}
-    
+
     workspace_repo._validate_workspace_parameters(template_parameters, supplied_request_parameters)
 
 
 @patch('azure.cosmos.CosmosClient')
 def test_validate_workspace_parameters_valid_parameters(cosmos_client_mock):
-    workspace_repo = db.repositories.workspaces.WorkspaceRepository(cosmos_client_mock)  
-    
+    workspace_repo = db.repositories.workspaces.WorkspaceRepository(cosmos_client_mock)
+
     template_parameters = [Parameter(name="a", type="string", default="a", applyto="a", description="b", required=True)]
     supplied_request_parameters = {"a": "b"}
-    
+
     workspace_repo._validate_workspace_parameters(template_parameters, supplied_request_parameters)
 
 
 @patch('azure.cosmos.CosmosClient')
 def test_validate_workspace_parameters_wrong_type(cosmos_client_mock):
-    workspace_repo = db.repositories.workspaces.WorkspaceRepository(cosmos_client_mock) 
-    
+    workspace_repo = db.repositories.workspaces.WorkspaceRepository(cosmos_client_mock)
+
     template_parameters = [Parameter(name="a", type="string", default="a", applyto="a", description="b", required=True)]
     supplied_request_parameters = {"a": 50}
 
@@ -145,8 +145,8 @@ def test_validate_workspace_parameters_wrong_type(cosmos_client_mock):
 
 @patch('azure.cosmos.CosmosClient')
 def test_validate_workspace_parameters_extra_parameter(cosmos_client_mock):
-    workspace_repo = db.repositories.workspaces.WorkspaceRepository(cosmos_client_mock) 
-    
+    workspace_repo = db.repositories.workspaces.WorkspaceRepository(cosmos_client_mock)
+
     template_parameters = [Parameter(name="a", type="string", default="a", applyto="a", description="b", required=True)]
     supplied_request_parameters = {"a": "b", "b": "c"}
 
@@ -156,8 +156,8 @@ def test_validate_workspace_parameters_extra_parameter(cosmos_client_mock):
 
 @patch('azure.cosmos.CosmosClient')
 def test_validate_workspace_parameters_missing_parameter(cosmos_client_mock):
-    workspace_repo = db.repositories.workspaces.WorkspaceRepository(cosmos_client_mock) 
-    
+    workspace_repo = db.repositories.workspaces.WorkspaceRepository(cosmos_client_mock)
+
     template_parameters = [Parameter(name="a", type="string", default="a", applyto="a", description="b", required=True)]
     supplied_request_parameters = {}
 

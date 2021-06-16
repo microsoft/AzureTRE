@@ -34,7 +34,7 @@ class WorkspaceRepository(BaseRepository):
             return 'string'
         if s == 'int':
             return 'integer'
-        return 'invalid' 
+        return 'invalid'
 
     @staticmethod
     def _validate_workspace_parameters(template_parameters: List[Parameter], supplied_request_parameters: dict):
@@ -61,13 +61,13 @@ class WorkspaceRepository(BaseRepository):
 
         if missing_required:
             errors['Missing required parameters'] = missing_required
-        
+
         if extra_parameters:
             errors['Invalid extra parameters'] = extra_parameters
 
         if wrong_type:
             errors['Parameters with wrong type'] = wrong_type
-        
+
         if errors:
             raise WorkspaceValidationError(errors)
 
