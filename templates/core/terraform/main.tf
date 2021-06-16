@@ -22,7 +22,14 @@ resource "azurerm_resource_group" "core" {
   }
 }
 
-resource "azurerm_log_analytics_workspace" "tre" {
+resource "azurerm_application_insights" "core" {
+  name                = "appi-${var.tre_id}"
+  resource_group_name = azurerm_resource_group.core.name
+  location            = var.location
+  application_type    = "web"
+}
+
+resource "azurerm_log_analytics_workspace" "core" {
   name                = "log-${var.tre_id}"
   resource_group_name = azurerm_resource_group.core.name
   location            = var.location
@@ -67,7 +74,8 @@ module "api-webapp" {
   shared_subnet                      = module.network.shared
   app_gw_subnet                      = module.network.app_gw
   core_vnet                          = module.network.core
-  log_analytics_workspace_id         = azurerm_log_analytics_workspace.tre.id
+  app_insights_instrumentation_key   = azurerm_application_insights.core.instrumentation_key
+  log_analytics_workspace_id         = azurerm_log_analytics_workspace.core.id
   management_api_image_repository    = var.management_api_image_repository
   management_api_image_tag           = var.management_api_image_tag
   docker_registry_server             = var.docker_registry_server
@@ -88,22 +96,23 @@ module "identity" {
 }
 
 module "processor_function" {
-  source                       = "./processor_function"
-  tre_id                       = var.tre_id
-  location                     = var.location
-  resource_group_name          = azurerm_resource_group.core.name
-  app_service_plan_id          = module.api-webapp.app_service_plan_id
-  storage_account_name         = module.storage.storage_account_name
-  storage_account_access_key   = module.storage.storage_account_access_key
-  storage_state_path           = module.storage.storage_state_path
-  identity_id                  = module.identity.identity_id
-  core_vnet                    = module.network.core
-  aci_subnet                   = module.network.aci
-  docker_registry_username     = var.docker_registry_username
-  docker_registry_password     = var.docker_registry_password
-  docker_registry_server       = var.docker_registry_server
-  servicebus_connection_string = module.servicebus.connection_string
-  workspacequeue               = module.servicebus.workspacequeue
+  source                           = "./processor_function"
+  tre_id                           = var.tre_id
+  location                         = var.location
+  resource_group_name              = azurerm_resource_group.core.name
+  app_insights_instrumentation_key = azurerm_application_insights.core.instrumentation_key
+  app_service_plan_id              = module.api-webapp.app_service_plan_id
+  storage_account_name             = module.storage.storage_account_name
+  storage_account_access_key       = module.storage.storage_account_access_key
+  storage_state_path               = module.storage.storage_state_path
+  identity_id                      = module.identity.identity_id
+  core_vnet                        = module.network.core
+  aci_subnet                       = module.network.aci
+  docker_registry_username         = var.docker_registry_username
+  docker_registry_password         = var.docker_registry_password
+  docker_registry_server           = var.docker_registry_server
+  servicebus_connection_string     = module.servicebus.connection_string
+  workspacequeue                   = module.servicebus.workspacequeue
 }
 
 module "servicebus" {
