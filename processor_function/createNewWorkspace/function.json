@@ -6,7 +6,7 @@
       "type": "serviceBusTrigger",
       "direction": "in",
       "queueName": "%SERVICE_BUS_RESOURCE_REQUEST_QUEUE%",
-      "connection": "servicebusconnection"
+      "connection": "SERVICE_BUS_CONNECTION_STRING"
     }
   ]
 }

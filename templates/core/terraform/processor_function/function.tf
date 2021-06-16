@@ -29,8 +29,8 @@ resource "azurerm_function_app" "procesorfunction" {
     CNAB_AZURE_REGISTRY_USERNAME          = var.docker_registry_username
     CNAB_AZURE_REGISTRY_PASSWORD          = var.docker_registry_password
     REGISTRY_SERVER                       = var.docker_registry_server
-    servicebusconnection                  = var.servicebus_connection_string
-    SERVICE_BUS_RESOURCE_REQUEST_QUEUE    = var.workspacequeue
+    SERVICE_BUS_CONNECTION_STRING         = var.service_bus_connection_string
+    SERVICE_BUS_RESOURCE_REQUEST_QUEUE    = var.service_bus_resource_request_queue
     SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE = var.service_bus_deployment_status_update_queue
   }
 }

@@ -19,7 +19,7 @@ class ServiceBus:
             "message": message
         })
 
-        service_bus_client = ServiceBusClient.from_connection_string(conn_str=os.environ["servicebusconnection"])
+        service_bus_client = ServiceBusClient.from_connection_string(conn_str=os.environ["SERVICE_BUS_CONNECTION_STRING"])
 
         with service_bus_client:
             sender = service_bus_client.get_queue_sender(queue_name=os.environ["SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE"])

@@ -136,11 +136,11 @@ class CNABBuilder:
             logs = aci_client.container.list_logs(self._resource_group_name, self._container_group_name, self._container_group_name)
             if "Error" in logs.content:
                 service_bus.send_status_update_message(self._id, "Deployment failed", logs.content)
-                print(logs.content.split("Error", 1)[1])
+                loggin.error(logs.content.split("Error", 1)[1])
             elif "Success" in logs.content:
                 service_bus.send_status_update_message(self._id, "Deployment succeeded", logs.content)
-                print(logs.content.split("Success", 1)[1])
+                logging.info(logs.content.split("Success", 1)[1])
             else:
-                print("Waiting for runner to execute")
+                logging.info("Waiting for runner to execute")
 
         logging.info("Message processed")
