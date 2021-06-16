@@ -107,8 +107,8 @@ class CNABBuilder:
                                identity=managed_identity)
 
         return group
-    
-    def _aci_run_completed() -> bool:
+
+    def _aci_run_completed(self) -> bool:
         logs = aci_client.container.list_logs(self._resource_group_name, self._container_group_name, self._container_group_name)
         if "Error" in logs.content:
             service_bus.send_status_update_message(self._id, strings.DEPLOYMENT_FAILED, logs.content)
@@ -144,9 +144,7 @@ class CNABBuilder:
 
         service_bus.send_status_update_message(self._id, strings.DEPLOYING, "ACI container deployed " + self._container_group_name)
 
-        logs = aci_client.container.list_logs(self._resource_group_name, self._container_group_name, self._container_group_name)
-
-        while not _aci_run_completed():
+        while not self._aci_run_completed():
             time.sleep(10)
 
         logging.info(strings.MESSAGE_PROCESSED)
