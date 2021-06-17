@@ -4,7 +4,7 @@ terraform {
     resource_group_name  = "$TF_VAR_mgmt_resource_group_name"
     storage_account_name = "$TF_VAR_mgmt_storage_account_name"
     container_name       = "$TF_VAR_terraform_state_container_name"
-    key                  = "$TRE_ID$WORKSPACE_ID"
+    key                  = "$TF_VAR_tre_id$TF_VAR_workspace_id"
   }
 }
 TRE_BACKEND
