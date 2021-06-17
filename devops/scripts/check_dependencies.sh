@@ -15,7 +15,7 @@ fi
 
 if [[ "$1" != *"nodocker"* ]]; then
   echo -e "\n\e[96mChecking for Docker\e[0m..."
-  docker version > /dev/null 2>&1
+  sudo docker version > /dev/null 2>&1
   if [ $? -ne 0 ]; then
     echo -e "\e[31m»»» ⚠️ Docker is not installed! 😥 Please go to https://docs.docker.com/engine/install/ to set it up"
     exit

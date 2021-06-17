@@ -26,31 +26,33 @@ build-api-image:
 	echo -e "\n\e[34m»»» 🧩 \e[96mBuilding API Image\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& docker build -t "$${ACR_NAME}.azurecr.io/microsoft/azuretre/management-api:$${IMAGE_TAG}" ./management_api_app/
+	&& sudo docker build -t "$${ACR_NAME}.azurecr.io/microsoft/azuretre/management-api:$${IMAGE_TAG}" ./management_api_app/
 
 build-cnab-image:
 	echo -e "\n\e[34m»»» 🧩 \e[96mBuilding CNAB Image\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& docker build -t "$${ACR_NAME}.azurecr.io/microsoft/azuretre/cnab-aci:$${IMAGE_TAG}" ./CNAB_container/
+	&& sudo docker build -t "$${ACR_NAME}.azurecr.io/microsoft/azuretre/cnab-aci:$${IMAGE_TAG}" ./CNAB_container/
 
 push-api-image:
 	echo -e "\n\e[34m»»» 🧩 \e[96mPushing Images\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& az acr login -n $${ACR_NAME} \
-	&& docker push "$${ACR_NAME}.azurecr.io/microsoft/azuretre/management-api:$${IMAGE_TAG}"
+	&& sudo az acr login -n $${ACR_NAME} \
+	&& sudo docker push "$${ACR_NAME}.azurecr.io/microsoft/azuretre/management-api:$${IMAGE_TAG}"
 
 push-cnab-image:
 	echo -e "\n\e[34m»»» 🧩 \e[96mPushing Images\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& az acr login -n $${ACR_NAME} \
-	&& docker push "$${ACR_NAME}.azurecr.io/microsoft/azuretre/cnab-aci:$${IMAGE_TAG}"
+	&& sudo az acr login -n $${ACR_NAME} \
+	&& sudo docker push "$${ACR_NAME}.azurecr.io/microsoft/azuretre/cnab-aci:$${IMAGE_TAG}"
 
 tre-deploy:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDeploying TRE\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
+	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
 	&& cd ./templates/core/terraform/ && ./deploy.sh \
