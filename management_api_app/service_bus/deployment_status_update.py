@@ -11,7 +11,6 @@ from azure.identity.aio import DefaultAzureCredential
 from core import config
 from resources import strings
 from db.errors import EntityDoesNotExist
-from models.domain.resource import Status
 from api.dependencies.database import get_db_client
 from db.repositories.workspaces import WorkspaceRepository
 from models.domain.workspace import DeploymentStatusUpdateMessage, Workspace
@@ -61,7 +60,7 @@ def create_updated_deployment_document(workspace: Workspace, message: Deployment
     Returns:
         [Workspace]: Workspace with the deployment sub doc updated
     """
-    workspace.deployment.status = Status.from_str(message.status)
+    workspace.deployment.status = message.status
     workspace.deployment.message = message.message
     return workspace
 

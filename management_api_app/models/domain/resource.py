@@ -15,10 +15,6 @@ class Status(str, Enum):
     Deleting = strings.RESOURCE_STATUS_DELETING
     Deleted = strings.RESOURCE_STATUS_DELETED
 
-    @staticmethod
-    def from_str(str):
-        return {data.value: data.name for data in Status}.get(str, Status.NotDeployed)
-
 
 class ResourceType(str, Enum):
     """
