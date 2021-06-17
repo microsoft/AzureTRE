@@ -1,6 +1,7 @@
 variable "tre_id" {}
 variable "location" {}
 variable "resource_group_name" {}
+variable "app_insights_instrumentation_key" {}
 variable "app_service_plan_id" {}
 variable "storage_account_name" {}
 variable "storage_account_access_key" {}
@@ -11,5 +12,6 @@ variable "aci_subnet" {}
 variable "docker_registry_username" {}
 variable "docker_registry_password" {}
 variable "docker_registry_server" {}
-variable "servicebus_connection_string" {}
-variable "workspacequeue" {}
+variable "service_bus_connection_string" {}
+variable "service_bus_resource_request_queue" {}
+variable "service_bus_deployment_status_update_queue" {}

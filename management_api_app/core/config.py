@@ -26,3 +26,6 @@ SERVICE_BUS_RESOURCE_REQUEST_QUEUE: str = config("SERVICE_BUS_RESOURCE_REQUEST_Q
 
 # Managed identity configuration
 MANAGED_IDENTITY_CLIENT_ID: str = config("MANAGED_IDENTITY_CLIENT_ID", default="")
+
+# Logging and monitoring
+APP_INSIGHTS_INSTRUMENTATION_KEY: str = config("APPINSIGHTS_INSTRUMENTATIONKEY", default="")
