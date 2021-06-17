@@ -83,7 +83,8 @@ def update_status_in_database(workspace_repo: WorkspaceRepository, message: Depl
     except EntityDoesNotExist:
         # Marking as true as this message will never succeed anyways and should be removed from the queue.
         result = True
-        logging.error(strings.DEPLOYMENT_STATUS_ID_NOT_FOUND)
+        error_string = strings.DEPLOYMENT_STATUS_ID_NOT_FOUND.format(message.id)
+        logging.error(error_string)
     except Exception as e:
         logging.error(strings.STATE_STORE_ENDPOINT_NOT_RESPONDING + " " + str(e))
     return result

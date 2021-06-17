@@ -84,7 +84,8 @@ async def test_when_updating_non_existent_workspace_error_is_logged(app, sb_clie
     repo().get_workspace_by_workspace_id.side_effect = EntityDoesNotExist
 
     await receive_message_and_update_deployment(app)
-    logging_mock.assert_called_once_with(strings.DEPLOYMENT_STATUS_ID_NOT_FOUND)
+    expected_error_message = strings.DEPLOYMENT_STATUS_ID_NOT_FOUND.format(message["id"])
+    logging_mock.assert_called_once_with(expected_error_message)
     sb_client().get_queue_receiver().complete_message.assert_called_once_with(payload)
 
 

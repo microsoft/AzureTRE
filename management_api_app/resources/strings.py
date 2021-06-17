@@ -42,4 +42,4 @@ RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE = "This resource has not yet been deployed"
 # Service bus
 SERVICE_BUS_GENERAL_ERROR_MESSAGE = "Service bus failure"
 DEPLOYMENT_STATUS_MESSAGE_FORMAT_INCORRECT = "Service bus message is not formatted correctly."
-DEPLOYMENT_STATUS_ID_NOT_FOUND = "Service bus message refers to resource which does not exist"
+DEPLOYMENT_STATUS_ID_NOT_FOUND = "Service bus message refers to resource id = {} which does not exist"
