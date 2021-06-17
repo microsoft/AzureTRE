@@ -49,6 +49,10 @@ ENV PATH /home/vscode/.porter/:$PATH
 
 # Install requirements
 COPY requirements.txt /tmp/pip-tmp/
+COPY requirements-dev.txt /tmp/pip-tmp/
+COPY management_api_app/requirements.txt /tmp/pip-tmp/management_api_app/
+COPY processor_function/requirements.txt /tmp/pip-tmp/processor_function/
+
 RUN pip3 --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requirements.txt && rm -rf /tmp/pip-tmp
 
 RUN usermod -a -G docker vscode
