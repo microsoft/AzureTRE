@@ -109,7 +109,7 @@ class CNABBuilder:
         return group
 
     def _aci_run_completed(self, aci_client, service_bus) -> bool:
-        logs = aci_client.container.list_logs(self._resource_group_name, self._container_group_name, self._container_group_name)
+        logs = aci_client.containers.list_logs(self._resource_group_name, self._container_group_name, self._container_group_name)
         if "Error" in logs.content:
             service_bus.send_status_update_message(self._id, strings.DEPLOYMENT_FAILED, logs.content)
             logging.error(logs.content.split("Error", 1)[1])
