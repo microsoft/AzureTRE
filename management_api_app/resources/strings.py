@@ -41,3 +41,8 @@ RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE = "This resource has not yet been deployed"
 
 # Service bus
 SERVICE_BUS_GENERAL_ERROR_MESSAGE = "Service bus failure"
+
+# Workspace creation validation
+MISSING_REQUIRED_PARAMETERS = "Missing required parameters"
+INVALID_EXTRA_PARAMETER = "Invalid extra parameters"
+PARAMETERS_WITH_WRONG_TYPE = "Parameters with wrong type"

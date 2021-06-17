@@ -60,13 +60,13 @@ class WorkspaceRepository(BaseRepository):
                     wrong_type.append({"parameter": parameter, "expected_type": template_parameter.type, "supplied_type": supplied_parameter_type})
 
         if missing_required:
-            errors['Missing required parameters'] = missing_required
+            errors[strings.MISSING_REQUIRED_PARAMETERS] = missing_required
 
         if extra_parameters:
-            errors['Invalid extra parameters'] = extra_parameters
+            errors[strings.INVALID_EXTRA_PARAMETER] = extra_parameters
 
         if wrong_type:
-            errors['Parameters with wrong type'] = wrong_type
+            errors[strings.PARAMETERS_WITH_WRONG_TYPE] = wrong_type
 
         if errors:
             raise WorkspaceValidationError(errors)
