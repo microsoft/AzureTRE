@@ -9,38 +9,29 @@ from models.domain.resource import Status
 from models.domain.workspace import Workspace
 from models.domain.resource import Deployment
 
-from service_bus.deployment_status_update import receive_message_and_update_deployment
 from resources import strings
+from service_bus.deployment_status_update import receive_message_and_update_deployment
 
 pytestmark = pytest.mark.asyncio
 
+testdata = [
+    ('bad', 'bad'),
+    ('{"good": "json", "bad": "message"}', '{"good": "json", "bad": "message"}'),
+]
 
+
+@pytest.mark.parametrize("in_payload,expected_payload", testdata)
 @patch('logging.error')
 @patch('service_bus.deployment_status_update.ServiceBusClient')
 @patch('fastapi.FastAPI')
-async def test_receiving_bad_json_logs_error(app, sb_client, logging_mock):
-    payload = 'bad'
-    sb_client().get_queue_receiver().receive_messages = AsyncMock(return_value=[payload])
+async def test_receiving_bad_json_logs_error(app, sb_client, logging_mock, in_payload, expected_payload):
+    sb_client().get_queue_receiver().receive_messages = AsyncMock(return_value=[in_payload])
     sb_client().get_queue_receiver().complete_message = AsyncMock()
 
     await receive_message_and_update_deployment(app)
 
     logging_mock.assert_called_once_with(strings.DEPLOYMENT_STATUS_MESSAGE_FORMAT_INCORRECT)
-    sb_client().get_queue_receiver().complete_message.assert_called_once_with(payload)
-
-
-@patch('logging.error')
-@patch('service_bus.deployment_status_update.ServiceBusClient')
-@patch('fastapi.FastAPI')
-async def test_receiving_bad_message_logs_error(app, sb_client, logging_mock):
-    payload = '{"good": "json", "bad": "message"}'
-    sb_client().get_queue_receiver().receive_messages = AsyncMock(return_value=[payload])
-    sb_client().get_queue_receiver().complete_message = AsyncMock()
-
-    await receive_message_and_update_deployment(app)
-
-    logging_mock.assert_called_once_with(strings.DEPLOYMENT_STATUS_MESSAGE_FORMAT_INCORRECT)
-    sb_client().get_queue_receiver().complete_message.assert_called_once_with(payload)
+    sb_client().get_queue_receiver().complete_message.assert_called_once_with(expected_payload)
 
 
 def create_sample_workspace_object(workspace_id):
