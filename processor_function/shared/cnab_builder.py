@@ -111,14 +111,15 @@ class CNABBuilder:
     def _aci_run_completed(self, aci_client, service_bus) -> bool:
         logs = aci_client.containers.list_logs(self._resource_group_name, self._container_group_name, self._container_group_name)
         if "Error" in logs.content:
-            service_bus.send_status_update_message(self._id, strings.DEPLOYMENT_FAILED, logs.content)
+            service_bus.send_status_update_message(self._id, strings.RESOURCE_STATUS_DEPLOYMENT_FAILED, logs.content)
             logging.error(logs.content.split("Error", 1)[1])
             return True
         elif "Success" in logs.content:
-            service_bus.send_status_update_message(self._id, strings.DEPLOYMENT_SUCCEEDED, logs.content)
+            service_bus.send_status_update_message(self._id, strings.RESOURCE_STATUS_DEPLOYED, logs.content)
             logging.info(logs.content.split("Success", 1)[1])
             return True
         else:
+            service_bus.send_status_update_message(self._id, strings.RESOURCE_STATUS_DEPLOYING, strings.WAITING_FOR_RUNNER)
             logging.info(strings.WAITING_FOR_RUNNER)
             return False
 
@@ -133,16 +134,16 @@ class CNABBuilder:
         aci_client = ContainerInstanceManagementClient(credential, self._subscription_id)
 
         service_bus = ServiceBus()
-        service_bus.send_status_update_message(self._id, strings.DEPLOYING, "Deploying ACI container: " + self._container_group_name)
+        service_bus.send_status_update_message(self._id, strings.RESOURCE_STATUS_DEPLOYING, "Deploying ACI container: " + self._container_group_name)
 
         result = aci_client.container_groups.create_or_update(self._resource_group_name, self._container_group_name,
                                                               group)
 
         while not result.done():
-            logging.info(strings.DEPLOYING + self._container_group_name + " to " + self._resource_group_name)
+            logging.info(strings.RESOURCE_STATUS_DEPLOYING + self._container_group_name + " to " + self._resource_group_name)
             time.sleep(1)
 
-        service_bus.send_status_update_message(self._id, strings.DEPLOYING, "ACI container deployed " + self._container_group_name)
+        service_bus.send_status_update_message(self._id, strings.RESOURCE_STATUS_DEPLOYING, "ACI container deployed " + self._container_group_name)
 
         while not self._aci_run_completed(aci_client, service_bus):
             time.sleep(10)
