@@ -34,7 +34,7 @@ In the following steps we will create management infrastructure in your subscrip
 
 ### Log into your chosen Azure subscription
 
-Login and select the azure subscription you wish to deploy to:
+Login and select the Azure subscription you wish to deploy to:
 
 ```cmd
 az login
@@ -44,18 +44,20 @@ az account set -s <subscription_name_or_id>
 
 ### Configuration
 
-Before running any of the scripts, the configuration variables need to be set. This is done in an `.env` file, and this file is read and parsed by scripts.
+Before running any of the scripts, the configuration variables need to be set. This is done in an `.env` file, and this file is read and parsed by the scripts.
 
 > Note: `.tfvars` file is not used, this is intentional. The `.env` file format is easier to parse, meaning we can use the values for bash scripts and other purposes.
 
-Copy [/devops/.env.sample](../devops/.env.sample) to `/devops/.env` and set values for all variables described in the table below:
+Copy [/devops/.env.sample](../devops/.env.sample) to `/devops/.env`.
+
+```cmd
+cp devops/.env.sample devops/.env
+```
+
+ Then, open the `.env` file in a text editor and set the values for the required variables described in the table below:
 
 | Environment variable name | Description |
 | ------------------------- | ----------- |
-| `ARM_TENANT_ID` | *Optional for manual deployment.* The Azure tenant ID. |
-| `ARM_SUBSCRIPTION_ID` | The Azure subscription ID for all resources. |
-| `ARM_CLIENT_ID` | *Optional for manual deployment.* The client (app) ID of a service principal with "Owner" role to the subscription. Used by the GitHub Actions workflows to deploy TRE. |
-| `ARM_CLIENT_SECRET` | *Optional for manual deployment.* The client secret (app password) of a service principal with "Owner" role to the subscription. Used by the GitHub Actions workflows to deploy TRE. |
 | `LOCATION` | The Azure location (region) for all resources. |
 | `MGMT_RESOURCE_GROUP_NAME` | The shared resource group for all management resources, including the storage account. |
 | `MGMT_STORAGE_ACCOUNT_NAME` | The name of the storage account to hold the Terraform state and other deployment artifacts. |
@@ -67,6 +69,17 @@ Copy [/devops/.env.sample](../devops/.env.sample) to `/devops/.env` and set valu
 
 <!-- markdownlint-disable-next-line MD013 -->
 > *) The creation of the service principal with "Contributor" role is explained in [CD setup guide](./cd-setup.md#create-service-principals). `tre-deploy` target in [Makefile](../Makefile) runs [a script](../devops/scripts/set_contributor_sp_secrets.sh) that inserts the client ID and secret into a Key Vault created in the same very step. If the script fails, the system will be up and running, but the deployment processor function will not be able to deploy workspace resources.
+
+#### Optional environment variables
+
+The below environment variables have to be set when deploying from a CD pipeline or similar setup.
+
+| Environment variable name | Description |
+| ------------------------- | ----------- |
+| `ARM_TENANT_ID` | *Optional for manual deployment.* The Azure tenant ID. |
+| `ARM_SUBSCRIPTION_ID` | *Optional for manual deployment.* The Azure subscription ID for all resources. |
+| `ARM_CLIENT_ID` | *Optional for manual deployment.* The client (app) ID of a service principal with "Owner" role to the subscription. Used by the GitHub Actions workflows to deploy TRE. |
+| `ARM_CLIENT_SECRET` | *Optional for manual deployment.* The client secret (app password) of a service principal with "Owner" role to the subscription. Used by the GitHub Actions workflows to deploy TRE. |
 
 ### Bootstrap of back-end state
 
