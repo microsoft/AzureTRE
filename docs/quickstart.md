@@ -1,8 +1,10 @@
 # Azure TRE Deployment QuickStart
 
-The Azure TRE uses Terraform infrastructure as code templates that pull down Docker container images to run the web applications.
+By following this quickstart, you will deploy a new Azure TRE instance for development and testing purposes.
 
-The most straightforward way to get up and running is to deploy direct from the `microsoft/AzureTRE` repository. Production deployments should take advantage of your chosen DevOps CD tooling.
+The most straightforward way to get up and running is to deploy direct from the `microsoft/AzureTRE` repository.
+
+Production deployments should take advantage of your chosen DevOps CD tooling.
 
 > The quickstart assumes usage of Linux or WSL on Windows.
 
