@@ -33,9 +33,11 @@ def main(msg: func.ServiceBusMessage):
     service_bus = ServiceBus()
     id = ""
 
-    
-    resource_request_message = json.loads(msg.get_body().decode('utf-8'))
-    id = resource_request_message['id']
-    cnab_builder = CNABBuilder(resource_request_message)
-    cnab_builder.deploy_aci()
-
+    try:
+        resource_request_message = json.loads(msg.get_body().decode('utf-8'))
+        id = resource_request_message['id']
+        cnab_builder = CNABBuilder(resource_request_message)
+        cnab_builder.deploy_aci()
+    except Exception:
+        service_bus.send_status_update_message(id, strings.RESOURCE_STATUS_DEPLOYMENT_FAILED, strings.UNKNOWN_EXCEPTION)
+        logging.error("CNAB ACI provisioning failed")
