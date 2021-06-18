@@ -154,7 +154,7 @@ def test_create_item(cosmos_mock, uuid_mock, create_mock):
         current=False
     )
     returned_template = template_repo.create_workspace_template_item(payload)
-    expected_resouce_template = ResourceTemplate(
+    expected_resource_template = ResourceTemplate(
         id="1234",
         name="name",
         description="some description",
@@ -163,8 +163,8 @@ def test_create_item(cosmos_mock, uuid_mock, create_mock):
         parameters=[],
         current=False
     )
-    create_mock.assert_called_once_with(expected_resouce_template)
-    assert expected_resouce_template == returned_template
+    create_mock.assert_called_once_with(expected_resource_template)
+    assert expected_resource_template == returned_template
 
 
 @patch('db.repositories.workspace_templates.WorkspaceTemplateRepository.container')
