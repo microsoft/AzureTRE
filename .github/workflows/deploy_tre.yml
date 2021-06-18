@@ -5,7 +5,6 @@ on:
     # 1am each night https://crontab.guru/#0_1_*_*_*
     - cron: "0 1 * * *"
   push:
-    branches: [ develop, main ]
   workflow_dispatch:
 
 jobs:
@@ -58,7 +57,7 @@ jobs:
           else
             IMAGE_TAG=$GITHUB_SHA
           fi
-
+          echo $IMAGE_TAG
           export IMAGE_TAG
           export TF_VAR_tre_id=$TRE_ID
           export TF_VAR_mgmt_storage_account_name=$MGMT_STORAGE_ACCOUNT_NAME
@@ -68,6 +67,8 @@ jobs:
           export TF_VAR_acr_name=$ACR_NAME
           export TF_VAR_address_space=$ADDRESS_SPACE
 
+          echo $IMAGE_TAG
+          echo $GITHUB_SHA
           make all
 
   deploy_vanilla_workspace:
