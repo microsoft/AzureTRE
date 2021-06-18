@@ -14,6 +14,7 @@ class Status(str, Enum):
     Deployed = strings.RESOURCE_STATUS_DEPLOYED
     Deleting = strings.RESOURCE_STATUS_DELETING
     Deleted = strings.RESOURCE_STATUS_DELETED
+    Failed = strings.RESOURCE_STATUS_FAILED
 
 
 class ResourceType(str, Enum):

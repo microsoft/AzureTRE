@@ -31,6 +31,7 @@ resource "azurerm_app_service" "management_api" {
     "STATE_STORE_KEY"                       = var.state_store_key
     "SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE" = "sb-${var.tre_id}.servicebus.windows.net"
     "SERVICE_BUS_RESOURCE_REQUEST_QUEUE"    = var.service_bus_resource_request_queue
+    "SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE" = var.service_bus_deployment_status_update_queue
     "MANAGED_IDENTITY_CLIENT_ID"            = var.managed_identity.client_id
     TRE_ID                                  = var.tre_id
     RESOURCE_LOCATION                       = var.location
