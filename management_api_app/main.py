@@ -16,7 +16,16 @@ from service_bus.deployment_status_update import receive_message_and_update_depl
 
 
 def get_application() -> FastAPI:
-    application = FastAPI(title=config.PROJECT_NAME, debug=config.DEBUG, version=config.VERSION)
+    application = FastAPI(
+        title=config.PROJECT_NAME,
+        debug=config.DEBUG,
+        version=config.VERSION,
+        swagger_ui_init_oauth = {
+            "usePkceWithAuthorizationCodeGrant": True,
+            "clientId": config.CLIENT_ID,
+            "scopes": [ "openid", "offline_access", "api://{}/user_impersonation".format(config.API_CLIENT_ID) ]
+        },
+    )
 
     application.add_event_handler("startup", create_start_app_handler(application))
     application.add_event_handler("shutdown", create_stop_app_handler(application))
