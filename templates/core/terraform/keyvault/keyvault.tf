@@ -8,22 +8,7 @@ resource "azurerm_key_vault" "kv" {
   sku_name                 = "standard"
   purge_protection_enabled = true
 
-  access_policy {
-    tenant_id    = data.azurerm_client_config.deployer.tenant_id
-    object_id    = data.azurerm_client_config.deployer.object_id
-
-    key_permissions = [
-      "Get", "List", "Update", "Create", "Import", "Delete",
-    ]
-
-    secret_permissions = [
-      "Get", "List", "Set", "Delete",
-    ]
-
-    storage_permissions = [
-      "Get", "List", "Update", "Create", "Import", "Delete",
-    ]
-  }
+ 
 
 }
 
