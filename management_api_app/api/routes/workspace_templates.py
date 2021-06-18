@@ -23,14 +23,10 @@ async def get_workspace_templates(workspace_template_repo: WorkspaceTemplateRepo
     return WorkspaceTemplateNamesInList(templateNames=workspace_template_names)
 
 
-@router.post("/workspace-templates", status_code=status.HTTP_201_CREATED,
-             response_model=WorkspaceTemplateInResponse,
-             name=strings.API_CREATE_WORKSPACE_TEMPLATES)
-async def create_workspace_template(workspace_template_create: WorkspaceTemplateInCreate, workspace_template_repo: WorkspaceTemplateRepository =
-                                    Depends(get_repository(WorkspaceTemplateRepository))) -> WorkspaceTemplateInResponse:
+@router.post("/workspace-templates", status_code=status.HTTP_201_CREATED, response_model=WorkspaceTemplateInResponse, name=strings.API_CREATE_WORKSPACE_TEMPLATES)
+async def create_workspace_template(workspace_template_create: WorkspaceTemplateInCreate, workspace_template_repo: WorkspaceTemplateRepository = Depends(get_repository(WorkspaceTemplateRepository))) -> WorkspaceTemplateInResponse:
     try:
-        template = workspace_template_repo.get_workspace_template_by_name_and_version(workspace_template_create.name,
-                                                                                      workspace_template_create.version)
+        template = workspace_template_repo.get_workspace_template_by_name_and_version(workspace_template_create.name, workspace_template_create.version)
         if template:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_TEMPLATE_VERSION_EXISTS)
     except EntityDoesNotExist:
@@ -38,7 +34,7 @@ async def create_workspace_template(workspace_template_create: WorkspaceTemplate
         if create_new_current:
             try:
                 template = workspace_template_repo.get_current_workspace_template_by_name(workspace_template_create.name)
-                template["current"] = "false"
+                template.current = False
                 workspace_template_repo.update_item(template)
             except EntityDoesNotExist:
                 # first registration
