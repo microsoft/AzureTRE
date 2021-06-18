@@ -10,16 +10,17 @@ Production deployments should take advantage of your chosen DevOps CD tooling.
 
 ## Prerequisites
 
-You will require the following prerequisites installed. They will already be present if using GitHub Codespaces, or use our Dev Container in VS Code.
+You will require the following prerequisites installed.
 
-- Terraform >= v0.15.3. The following instructions use local Terraform state, you may want to consider [storing you state remotely in Azure](https://docs.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage)
+- Terraform >= v0.15.3
 - Azure CLI >= 2.21.0
 - Docker
+
+> The above prerequisites will already be present if you are using GitHub Codespaces, or the provided Dev Container in VS Code.
 
 You will also need:
 
 - An Azure Subscription
-- A GitHub user id and [personal access token](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token) with scope `packages:read`. This token is used to pull the web app Docker images. This can be any GitHub account, and does not need to be part of the Microsoft GitHub organisation.
 
 ## Clone the repository
 
