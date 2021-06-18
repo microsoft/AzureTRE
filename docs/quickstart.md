@@ -30,7 +30,7 @@ Clone the repository to your local machine ( `git clone https://github.com/micro
 
 ## Management Infrastructure
 
-In the following steps we will create management infrastructure in your subscription. This includes resources, such as a storage account and container registry that will enable deployment the Azure TRE. Once the infrastructure is deployed we will build the container images required for deployment.
+In the following steps we will create management infrastructure in your subscription. This includes resources, such as a storage account and container registry that will enable deployment the Azure TRE. Once the infrastructure is deployed we will build the container images required for deployment. The management infrastructure can serve multiple Azure TRE deployments.
 
 ### Log into your chosen Azure subscription
 
