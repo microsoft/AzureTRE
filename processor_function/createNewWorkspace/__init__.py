@@ -6,6 +6,8 @@ import azure.functions as func
 
 from opencensus.ext.azure.log_exporter import AzureLogHandler
 from shared.cnab_builder import CNABBuilder
+from shared.service_bus import ServiceBus
+from resources import strings
 
 
 def initialize_logging(logging_level: int):
@@ -28,10 +30,12 @@ def initialize_logging(logging_level: int):
 
 def main(msg: func.ServiceBusMessage):
     initialize_logging(logging.INFO)
+    service_bus = ServiceBus()
+    id = ""
 
-    try:
-        resource_request_message = json.loads(msg.get_body().decode('utf-8'))
-        cnab_builder = CNABBuilder(resource_request_message)
-        cnab_builder.deploy_aci()
-    except Exception:
-        logging.error("CNAB ACI provisioning failed")
+    
+    resource_request_message = json.loads(msg.get_body().decode('utf-8'))
+    id = resource_request_message['id']
+    cnab_builder = CNABBuilder(resource_request_message)
+    cnab_builder.deploy_aci()
+
