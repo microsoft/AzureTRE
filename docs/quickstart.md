@@ -21,6 +21,8 @@ You will require the following prerequisites installed.
 You will also need:
 
 - An Azure Subscription
+- An Azure Active Directory Service Principal  
+  (Instructions later in this quickstart)
 
 ## Clone the repository
 
@@ -67,8 +69,14 @@ cp devops/.env.sample devops/.env
 | `CONTRIBUTOR_SP_CLIENT_ID` * | The client (app) ID of a service principal with "Contributor" role to the subscription. Used by the deployment processor function to deploy workspaces and workspace services. |
 | `CONTRIBUTOR_SP_CLIENT_SECRET` * | The client secret (app password) of a service principal with "Contributor" role to the subscription. Used by the deployment processor function to deploy workspaces and workspace services. |
 
+To create a new service principal with the Contributor role, run the following command. Make note of the `clientId` and `clientSecret` values returned and add them to the respective variables in the `.env` file.
+
+```cmd
+az ad sp create-for-rbac --name "sp-aztre-deployment-processor" --role Contributor --scopes /subscriptions/<subscription ID> --sdk-auth
+```
+
 <!-- markdownlint-disable-next-line MD013 -->
-> *) The creation of the service principal with "Contributor" role is explained in [CD setup guide](./cd-setup.md#create-service-principals). `tre-deploy` target in [Makefile](../Makefile) runs [a script](../devops/scripts/set_contributor_sp_secrets.sh) that inserts the client ID and secret into a Key Vault created in the same very step. If the script fails, the system will be up and running, but the deployment processor function will not be able to deploy workspace resources.
+> *) The creation of the service principal with "Contributor" role is explained in [CD setup guide](./cd-setup.md#create-service-principals).  The `tre-deploy` target in the [Makefile](../Makefile) runs [a script](../devops/scripts/set_contributor_sp_secrets.sh) that inserts the client ID and secret into a Key Vault created in the same very step. If the script fails, the system will be up and running, but the deployment processor function will not be able to deploy workspace resources.
 
 #### Optional environment variables
 
