@@ -62,7 +62,7 @@ module "appgateway" {
   app_gw_subnet        = module.network.app_gw
   management_api_fqdn  = module.api-webapp.management_api_fqdn
   keyvault_id          = module.keyvault.keyvault_id
-  depends_on           = [module.keyvault.azurerm_key_vault_access_policy]
+  depends_on           = [module.keyvault]
 }
 
 module "api-webapp" {
