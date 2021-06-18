@@ -1,6 +1,6 @@
 import time
 import os
-import uuid
+
 import logging
 from typing import List
 
@@ -16,6 +16,8 @@ from azure.mgmt.containerinstance.models import (ContainerGroup,
                                                  OperatingSystemTypes)
 
 from shared.azure_identity_credential_adapter import AzureIdentityCredentialAdapter
+from shared.service_bus import ServiceBus
+from resources import strings
 
 
 class CNABBuilder:
@@ -25,6 +27,7 @@ class CNABBuilder:
         self._message = resource_request_message
         self._container_group_name = ""
         self._location = ""
+        self._id = ""
 
     def _build_porter_command(self) -> List[str]:
         porter_parameters = ""
@@ -76,7 +79,8 @@ class CNABBuilder:
         """
 
         self._location = self._message['parameters']['azure_location']
-        self._container_group_name = "aci-cnab-" + str(uuid.uuid4())
+        self._id = self._message['id']
+        self._container_group_name = "aci-cnab-" + self._id
         container_image_name = os.environ['CNAB_IMAGE']
 
         image_registry_credentials = [ImageRegistryCredential(server=os.environ["REGISTRY_SERVER"],
@@ -104,6 +108,21 @@ class CNABBuilder:
 
         return group
 
+    def _aci_run_completed(self, aci_client, service_bus) -> bool:
+        logs = aci_client.containers.list_logs(self._resource_group_name, self._container_group_name, self._container_group_name)
+        if "Error" in logs.content:
+            service_bus.send_status_update_message(self._id, strings.RESOURCE_STATUS_DEPLOYMENT_FAILED, logs.content)
+            logging.error(logs.content.split("Error", 1)[1])
+            return True
+        elif "Success" in logs.content:
+            service_bus.send_status_update_message(self._id, strings.RESOURCE_STATUS_DEPLOYED, logs.content)
+            logging.info(logs.content.split("Success", 1)[1])
+            return True
+        else:
+            service_bus.send_status_update_message(self._id, strings.RESOURCE_STATUS_DEPLOYING, strings.WAITING_FOR_RUNNER)
+            logging.info(strings.WAITING_FOR_RUNNER)
+            return False
+
     def deploy_aci(self):
         """
         Deploys a CNAB container into ACI with parameters to run porter
@@ -113,9 +132,20 @@ class CNABBuilder:
 
         credential = AzureIdentityCredentialAdapter()
         aci_client = ContainerInstanceManagementClient(credential, self._subscription_id)
+
+        service_bus = ServiceBus()
+        service_bus.send_status_update_message(self._id, strings.RESOURCE_STATUS_DEPLOYING, "Deploying ACI container: " + self._container_group_name)
+
         result = aci_client.container_groups.create_or_update(self._resource_group_name, self._container_group_name,
                                                               group)
 
-        while result.done() is False:
-            logging.info('-- Deploying -- ' + self._container_group_name + " to " + self._resource_group_name)
+        while not result.done():
+            logging.info(strings.RESOURCE_STATUS_DEPLOYING + self._container_group_name + " to " + self._resource_group_name)
             time.sleep(1)
+
+        service_bus.send_status_update_message(self._id, strings.RESOURCE_STATUS_DEPLOYING, "ACI container deployed " + self._container_group_name)
+
+        while not self._aci_run_completed(aci_client, service_bus):
+            time.sleep(10)
+
+        logging.info(strings.MESSAGE_PROCESSED)

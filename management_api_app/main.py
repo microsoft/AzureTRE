@@ -67,8 +67,8 @@ async def initialize_logging_on_startup():
 
 @app.on_event("startup")
 @repeat_every(seconds=20, wait_first=True, logger=logging.getLogger())
-def update_deployment_status() -> None:
-    receive_message_and_update_deployment()
+async def update_deployment_status() -> None:
+    await receive_message_and_update_deployment(app)
 
 
 if __name__ == "__main__":

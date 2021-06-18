@@ -31,6 +31,7 @@ RESOURCE_STATUS_DEPLOYING = "deploying"
 RESOURCE_STATUS_DEPLOYED = "deployed"
 RESOURCE_STATUS_DELETING = "deleting"
 RESOURCE_STATUS_DELETED = "deleted"
+RESOURCE_STATUS_FAILED = "failed"
 
 # Resource Type
 RESOURCE_TYPE_WORKSPACE = "workspace"
@@ -41,3 +42,5 @@ RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE = "This resource has not yet been deployed"
 
 # Service bus
 SERVICE_BUS_GENERAL_ERROR_MESSAGE = "Service bus failure"
+DEPLOYMENT_STATUS_MESSAGE_FORMAT_INCORRECT = "Service bus message is not formatted correctly."
+DEPLOYMENT_STATUS_ID_NOT_FOUND = "Service bus message refers to resource id = {} which does not exist"

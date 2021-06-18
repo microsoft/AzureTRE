@@ -8,7 +8,7 @@ from models.domain.resource_template import ResourceTemplate
 from models.schemas.workspace_template import WorkspaceTemplateInCreate
 
 
-def get_sample_workspace_template(name: str, version: str = "1.0") -> dict:
+def sample_workspace_template(name: str, version: str = "1.0") -> ResourceTemplate:
     return ResourceTemplate(
         id="a7a7a7bd-7f4e-4a4e-b970-dc86a6b31dfb",
         name=name,
@@ -17,7 +17,11 @@ def get_sample_workspace_template(name: str, version: str = "1.0") -> dict:
         resourceType=ResourceType.Workspace,
         parameters=[],
         current=False
-    ).dict()
+    )
+
+
+def sample_workspace_template_as_dict(name: str, version: str = "1.0") -> dict:
+    return sample_workspace_template(name, version).dict()
 
 
 @patch('db.repositories.workspace_templates.WorkspaceTemplateRepository.query')
@@ -25,7 +29,7 @@ def get_sample_workspace_template(name: str, version: str = "1.0") -> dict:
 def test_get_by_name_queries_db(cosmos_client_mock, wt_query_mock):
     template_repo = WorkspaceTemplateRepository(cosmos_client_mock)
     expected_query = 'SELECT * FROM c WHERE c.resourceType = "workspace" AND c.name = "test"'
-    wt_query_mock.return_value = [get_sample_workspace_template(name="test")]
+    wt_query_mock.return_value = [sample_workspace_template_as_dict(name="test")]
 
     template_repo.get_workspace_templates_by_name(name="test")
 
@@ -38,8 +42,8 @@ def test_get_by_name_returns_all_matching_templates(cosmos_client_mock, wt_query
     template_repo = WorkspaceTemplateRepository(cosmos_client_mock)
     template_name = "test"
     workspace_templates_in_db = [
-        get_sample_workspace_template(name=template_name, version="0.1.0"),
-        get_sample_workspace_template(name=template_name, version="0.2.0"),
+        sample_workspace_template_as_dict(name=template_name, version="0.1.0"),
+        sample_workspace_template_as_dict(name=template_name, version="0.2.0"),
     ]
     wt_query_mock.return_value = workspace_templates_in_db
 
@@ -53,7 +57,7 @@ def test_get_by_name_returns_all_matching_templates(cosmos_client_mock, wt_query
 def test_get_by_name_and_version_queries_db(cosmos_client_mock, wt_query_mock):
     template_repo = WorkspaceTemplateRepository(cosmos_client_mock)
     expected_query = 'SELECT * FROM c WHERE c.resourceType = "workspace" AND c.name = "test" AND c.version = "1.0"'
-    wt_query_mock.return_value = [get_sample_workspace_template(name="test", version="1.0")]
+    wt_query_mock.return_value = [sample_workspace_template_as_dict(name="test", version="1.0")]
 
     template_repo.get_workspace_template_by_name_and_version(name="test", version="1.0")
 
@@ -66,7 +70,7 @@ def test_get_by_name_and_version_returns_matching_template(cosmos_client_mock, w
     template_repo = WorkspaceTemplateRepository(cosmos_client_mock)
     template_name = "test"
     template_version = "1.0"
-    workspace_templates_in_db = [get_sample_workspace_template(name=template_name, version=template_version)]
+    workspace_templates_in_db = [sample_workspace_template_as_dict(name=template_name, version=template_version)]
     wt_query_mock.return_value = workspace_templates_in_db
 
     template = template_repo.get_workspace_template_by_name_and_version(name=template_name, version=template_version)
@@ -91,7 +95,7 @@ def test_get_by_name_and_version_raises_entity_does_not_exist_if_no_template_fou
 def test_get_current_by_name_queries_db(cosmos_client_mock, wt_query_mock):
     template_repo = WorkspaceTemplateRepository(cosmos_client_mock)
     expected_query = 'SELECT * FROM c WHERE c.resourceType = "workspace" AND c.name = "test" AND c.current = true'
-    wt_query_mock.return_value = [get_sample_workspace_template(name="test")]
+    wt_query_mock.return_value = [sample_workspace_template_as_dict(name="test")]
 
     template_repo.get_current_workspace_template_by_name(name="test")
 
@@ -103,7 +107,7 @@ def test_get_current_by_name_queries_db(cosmos_client_mock, wt_query_mock):
 def test_get_current_by_name_returns_matching_template(cosmos_client_mock, wt_query_mock):
     template_repo = WorkspaceTemplateRepository(cosmos_client_mock)
     template_name = "test"
-    wt_query_mock.return_value = [get_sample_workspace_template(name=template_name)]
+    wt_query_mock.return_value = [sample_workspace_template_as_dict(name=template_name)]
 
     template = template_repo.get_current_workspace_template_by_name(name=template_name)
 
@@ -146,7 +150,6 @@ def test_create_item(cosmos_mock, uuid_mock, create_mock):
         name="name",
         description="some description",
         version="0.0.1",
-        resourceType=ResourceType.Workspace,
         parameters=[],
         current=False
     )
@@ -169,8 +172,7 @@ def test_create_item(cosmos_mock, uuid_mock, create_mock):
 def test_updating_an_item(cosmos_mock, container_mock):
     container_mock.upsert_item = MagicMock()
     template_repo = WorkspaceTemplateRepository(cosmos_mock)
-    resource_template = get_sample_workspace_template("blah", "blah")
-
+    resource_template = sample_workspace_template("blah", "blah")
     template_repo.update_item(resource_template)
 
-    container_mock.upsert_item.assert_called_once_with(resource_template)
+    container_mock.upsert_item.assert_called_once_with(resource_template.dict())

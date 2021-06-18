@@ -84,6 +84,7 @@ module "api-webapp" {
   state_store_endpoint               = module.state-store.endpoint
   state_store_key                    = module.state-store.primary_key
   service_bus_resource_request_queue = module.servicebus.workspacequeue
+  service_bus_deployment_status_update_queue = module.servicebus.service_bus_deployment_status_update_queue
   managed_identity                   = module.identity.managed_identity
 }
 
@@ -111,8 +112,9 @@ module "processor_function" {
   docker_registry_username         = var.docker_registry_username
   docker_registry_password         = var.docker_registry_password
   docker_registry_server           = var.docker_registry_server
-  servicebus_connection_string     = module.servicebus.connection_string
-  workspacequeue                   = module.servicebus.workspacequeue
+  service_bus_connection_string    = module.servicebus.connection_string
+  service_bus_resource_request_queue = module.servicebus.workspacequeue
+  service_bus_deployment_status_update_queue = module.servicebus.service_bus_deployment_status_update_queue
 }
 
 module "servicebus" {
