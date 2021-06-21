@@ -7,46 +7,38 @@ from starlette import status
 from httpx import AsyncClient
 
 from db.errors import EntityDoesNotExist, UnableToAccessDatabase
-from models.schemas.workspace_template import get_sample_workspace_template_object
+from models.domain.resource_template import ResourceTemplate, Parameter, ResourceType
+from models.schemas.workspace_template import get_sample_workspace_template_object, WorkspaceTemplateInCreate
 from resources import strings
 
 
 pytestmark = pytest.mark.asyncio
 
 
+def sample_workspace_template() -> ResourceTemplate:
+    return ResourceTemplate(
+        id="1234",
+        name="my-tre-workspace",
+        version="0.0.1",
+        description="workspace template for great product",
+        parameters=[Parameter(name="azure_location", type="string", default=None, applyTo="All Actions", description="", required=False)],
+        resourceType=ResourceType.Workspace,
+        current=True)
+
+
 @pytest.fixture
 def input_workspace_template() -> dict:
-    return {
-        "name": "my-tre-workspace",
-        "version": "0.0.1",
-        "description": "workspace template for great product",
-        "parameters": [{
-            "name": "azure_location",
-            "type": "string",
-        }],
-        "resourceType": "workspace",
-        "current": True
-    }
+    return WorkspaceTemplateInCreate(
+        name="my-tre-workspace",
+        version="0.0.1",
+        description="workspace template for great product",
+        parameters=[Parameter(name="azure_location", type="string")],
+        current=True).dict()
 
 
 @pytest.fixture
 def output_workspace_template() -> dict:
-    return {
-        "id": "1234",
-        "name": "my-tre-workspace",
-        "version": "0.0.1",
-        "description": "workspace template for great product",
-        "parameters": [{
-            "name": "azure_location",
-            "type": "string",
-            "default": None,
-            "applyTo": "All Actions",
-            "description": "",
-            "required": False
-        }],
-        "resourceType": "workspace",
-        "current": True
-    }
+    return sample_workspace_template().dict()
 
 
 # [GET] /workspace-templates
@@ -110,15 +102,18 @@ async def test_when_updating_current_and_template_found_update_and_add(get_name_
                                                                        input_workspace_template: dict,
                                                                        output_workspace_template: dict):
     get_name_ver_mock.side_effect = EntityDoesNotExist
-    get_current_mock.return_value = {"current": "true"}
 
     response_content = output_workspace_template
     create_item_mock.return_value = response_content
 
+    existing_current_workspace_template = sample_workspace_template()
+    get_current_mock.return_value = existing_current_workspace_template
+
     response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_workspace_template)
 
-    expected_template = {"current": "false"}
-    update_item_mock.assert_called_once_with(expected_template)
+    updated_current_workspace_template = existing_current_workspace_template
+    updated_current_workspace_template.current = False
+    update_item_mock.assert_called_once_with(updated_current_workspace_template.dict())
     assert response.status_code == status.HTTP_201_CREATED
     assert json.loads(response.text)["workspaceTemplate"] == response_content
 

@@ -62,4 +62,4 @@ class WorkspaceTemplateRepository(BaseRepository):
         return resource_template
 
     def update_item(self, resource_template: ResourceTemplate):
-        self.container.upsert_item(resource_template)
+        self.container.upsert_item(resource_template.dict())

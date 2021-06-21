@@ -60,7 +60,6 @@ cp devops/.env.sample devops/.env
 
 | Environment variable name | Description |
 | ------------------------- | ----------- |
-| `ARM_SUBSCRIPTION_ID` | The Azure subscription ID for all resources. |
 | `LOCATION` | The Azure location (region) for all resources. |
 | `MGMT_RESOURCE_GROUP_NAME` | The shared resource group for all management resources, including the storage account. |
 | `MGMT_STORAGE_ACCOUNT_NAME` | The name of the storage account to hold the Terraform state and other deployment artifacts. |
@@ -98,10 +97,11 @@ CONTRIBUTOR_SP_CLIENT_SECRET=secret
 
 #### Optional environment variables
 
-The below environment variables have to be set when deploying from a CD pipeline or similar setup.
+The below environment variables have to be set when deploying from a CD pipeline or testing Workspace bundles (Porter bundles) locally.
 
 | Environment variable name | Description |
 | ------------------------- | ----------- |
+| `ARM_SUBSCRIPTION_ID` | *Optional for manual deployment.* The Azure subscription ID for all resources. |
 | `ARM_TENANT_ID` | *Optional for manual deployment.* The Azure tenant ID. |
 | `ARM_CLIENT_ID` | *Optional for manual deployment.* The client (app) ID of a service principal with "Owner" role to the subscription. Used by the GitHub Actions workflows to deploy TRE. |
 | `ARM_CLIENT_SECRET` | *Optional for manual deployment.* The client secret (app password) of a service principal with "Owner" role to the subscription. Used by the GitHub Actions workflows to deploy TRE. |
@@ -174,7 +174,7 @@ log_analytics_name = "log-<TRE_ID>"
 static_web_storage = "stwebaz<TRE_ID>"
 ```
 
-The Azure TRE is initially deployed with an invalid self-signed SSL certificate. This certificate is stored in the deployed KeyVault. To update the certificate in KeyVault needs to be repaced with one valid for the configured domain name. To use a certificate from [Let's Encrypt][letsencrypt], simply run the command:
+The Azure TRE is initially deployed with an invalid self-signed SSL certificate. This certificate is stored in the deployed Key Vault. To update the certificate in Key Vault needs to be replaced with one valid for the configured domain name. To use a certificate from [Let's Encrypt][letsencrypt], simply run the command:
 
 ```cmd
 make letsencrypt

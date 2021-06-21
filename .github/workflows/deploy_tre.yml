@@ -60,6 +60,7 @@ jobs:
           fi
 
           export IMAGE_TAG
+          export TF_VAR_management_api_image_tag=$IMAGE_TAG
           export TF_VAR_tre_id=$TRE_ID
           export TF_VAR_mgmt_storage_account_name=$MGMT_STORAGE_ACCOUNT_NAME
           export TF_VAR_mgmt_resource_group_name=$MGMT_RESOURCE_GROUP_NAME

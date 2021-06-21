@@ -21,8 +21,10 @@ STATE_STORE_ENDPOINT_NOT_RESPONDING = "State Store endpoint is not responding"
 UNSPECIFIED_ERROR = "Unspecified error"
 
 # Error strings
+UNABLE_TO_REPLACE_CURRENT_TEMPLATE = "Unable to replace the existing 'current' template with this name"
+UNABLE_TO_PROCESS_REQUEST = "Unable to process request"
 WORKSPACE_DOES_NOT_EXIST = "Workspace does not exist"
-WORKSPACE_TEMPLATE_DOES_NOT_EXIST = "Workspace template does not exist"
+WORKSPACE_TEMPLATE_DOES_NOT_EXIST = "Could not retrieve the 'current' template with this name"
 WORKSPACE_TEMPLATE_VERSION_EXISTS = "A template with this version already exists"
 
 # Resource Status
@@ -31,6 +33,7 @@ RESOURCE_STATUS_DEPLOYING = "deploying"
 RESOURCE_STATUS_DEPLOYED = "deployed"
 RESOURCE_STATUS_DELETING = "deleting"
 RESOURCE_STATUS_DELETED = "deleted"
+RESOURCE_STATUS_FAILED = "failed"
 
 # Resource Type
 RESOURCE_TYPE_WORKSPACE = "workspace"
