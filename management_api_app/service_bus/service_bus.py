@@ -15,6 +15,7 @@ class ServiceBus:
     def _create_request_message(resource: Resource) -> str:
         return json.dumps({
             "action": "install",
+            "id": resource.id,
             "name": resource.resourceTemplateName,
             "version": resource.resourceTemplateVersion,
             "parameters": resource.resourceTemplateParameters
@@ -27,7 +28,7 @@ class ServiceBus:
         """
         resource_request_message = self._create_request_message(resource)
 
-        credential = DefaultAzureCredential()
+        credential = DefaultAzureCredential(managed_identity_client_id=config.MANAGED_IDENTITY_CLIENT_ID)
         service_bus_client = ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential)
 
         async with service_bus_client:

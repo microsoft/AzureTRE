@@ -12,13 +12,6 @@ resource "azurerm_app_service_plan" "core" {
   }
 }
 
-resource "azurerm_application_insights" "core" {
-  name                = "appi-${var.tre_id}"
-  resource_group_name = var.resource_group_name
-  location            = var.location
-  application_type    = "web"
-}
-
 resource "azurerm_app_service" "management_api" {
   name                = "api-${var.tre_id}"
   resource_group_name = var.resource_group_name
@@ -27,7 +20,7 @@ resource "azurerm_app_service" "management_api" {
   https_only          = true
 
   app_settings = {
-    "APPINSIGHTS_INSTRUMENTATIONKEY" = azurerm_application_insights.core.instrumentation_key
+    "APPINSIGHTS_INSTRUMENTATIONKEY" = var.app_insights_instrumentation_key
     "WEBSITES_PORT"                  = "8000"
     "WEBSITE_VNET_ROUTE_ALL"         = 1
 
@@ -38,8 +31,15 @@ resource "azurerm_app_service" "management_api" {
     "STATE_STORE_KEY"                       = var.state_store_key
     "SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE" = "sb-${var.tre_id}.servicebus.windows.net"
     "SERVICE_BUS_RESOURCE_REQUEST_QUEUE"    = var.service_bus_resource_request_queue
-    TRE_ID                                  = "${var.tre_id}"
+    "SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE" = var.service_bus_deployment_status_update_queue
+    "MANAGED_IDENTITY_CLIENT_ID"            = var.managed_identity.client_id
+    TRE_ID                                  = var.tre_id
     RESOURCE_LOCATION                       = var.location
+  }
+
+  identity {
+    type = "UserAssigned"
+    identity_ids = [ var.managed_identity.id ]
   }
 
   site_config {

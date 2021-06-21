@@ -14,6 +14,7 @@ resource "azurerm_function_app" "procesorfunction" {
     FUNCTIONS_WORKER_RUNTIME              = "python"
     FUNCTION_APP_EDIT_MODE                = "readonly"
     RESOURCE_GROUP_NAME                   = var.resource_group_name
+    APP_INSIGHTS_INSTRUMENTATION_KEY      = var.app_insights_instrumentation_key
     VNET_NAME                             = var.core_vnet
     ACI_SUBNET                            = var.aci_subnet
     CNAB_AZURE_STATE_STORAGE_ACCOUNT_NAME = var.storage_account_name
@@ -25,10 +26,11 @@ resource "azurerm_function_app" "procesorfunction" {
     CNAB_AZURE_VERBOSE                    = "true"
     CNAB_AZURE_PROPAGATE_CREDENTIALS      = "true"
     CNAB_AZURE_MSI_TYPE                   = "user"
-    REGISTRY_USER_NAME                    = var.docker_registry_username
-    REGISTRY_USER_PASSWORD                = var.docker_registry_password
+    CNAB_AZURE_REGISTRY_USERNAME          = var.docker_registry_username
+    CNAB_AZURE_REGISTRY_PASSWORD          = var.docker_registry_password
     REGISTRY_SERVER                       = var.docker_registry_server
-    servicebusconnection                  = var.servicebus_connection_string
-    queueName                             = var.workspacequeue
+    SERVICE_BUS_CONNECTION_STRING         = var.service_bus_connection_string
+    SERVICE_BUS_RESOURCE_REQUEST_QUEUE    = var.service_bus_resource_request_queue
+    SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE = var.service_bus_deployment_status_update_queue
   }
 }

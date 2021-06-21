@@ -1,4 +1,4 @@
-from typing import List, Optional, Any
+from typing import List, Any
 
 from pydantic import Field
 
@@ -9,9 +9,9 @@ from models.domain.resource import ResourceType
 class Parameter(AzureTREModel):
     name: str = Field(title="Parameter name")
     type: str = Field(title="Parameter type")
-    default: Any = Field(title="Default value for the parameter")
+    default: Any = Field(None, title="Default value for the parameter")
     applyTo: str = Field("All Actions", title="The actions that the parameter applies to e.g. install, delete etc")
-    description: Optional[str] = Field(title="Parameter description")
+    description: str = Field("", title="Parameter description")
     required: bool = Field(False, title="Is the parameter required")
 
 

@@ -11,27 +11,9 @@
       }
     },
     {
-      "name": "location",
+      "name": "azure_location",
       "source": {
         "env": "LOCATION"
-      }
-    },
-    {
-      "name": "tfstate_container_name",
-      "source": {
-        "env": "TF_VAR_tfstate_container_name"
-      }
-    },
-    {
-      "name": "tfstate_resource_group_name",
-      "source": {
-        "env": "TF_VAR_tfstate_resource_group_name"
-      }
-    },
-    {
-      "name": "tfstate_storage_account_name",
-      "source": {
-        "env": "TF_VAR_tfstate_storage_account_name"
       }
     },
     {
@@ -44,6 +26,24 @@
       "name": "workspace_id",
       "source": {
         "env": "WORKSPACE_ID"
+      }
+    },
+    {
+      "name": "tfstate_container_name",
+      "source": {
+        "env": "TERRAFORM_STATE_CONTAINER_NAME"
+      }
+    },
+    {
+      "name": "tfstate_resource_group_name",
+      "source": {
+        "env": "MGMT_RESOURCE_GROUP_NAME"
+      }
+    },
+    {
+      "name": "tfstate_storage_account_name",
+      "source": {
+        "env": "MGMT_STORAGE_ACCOUNT_NAME"
       }
     }
   ]

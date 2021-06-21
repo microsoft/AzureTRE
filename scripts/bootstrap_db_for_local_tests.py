@@ -1,6 +1,6 @@
 """
 This script adds resources to your cosmos database for local, manual, testing purposes
-NOTE: This script is not required for the tests to run, but assists in creating resources to test the API manually
+NOTE: This script is not required for the test_processor_function to run, but assists in creating resources to test the API manually
 """
 import uuid
 
@@ -18,16 +18,20 @@ STATE_STORE_RESOURCES_CONTAINER = "Resources"
 def create_workspace_resource(resource_id: str):
     return {
         "id": resource_id,
-        "resourceSpec": {
-            "name": "tre-workspace-vanilla",
-            "version": "0.1.0"
+        "displayName": "My workspace",
+        "description": "workspace for team X",
+        "resourceTemplateName": "tre-workspace-vanilla",
+        "resourceTemplateVersion": "0.1.0",
+        "resourceTemplateParameters": {
+            "azure_location": "westeurope",
+            "workspace_id": "f4a6",
+            "tre_id": "mytre-dev-3142",
+            "address_space": "10.2.1.0/24"
         },
-        "parameters": {
-            "location": "europe"
-        },
-        "resourceType": "workspace",
         "status": "not_deployed",
-        "isDeleted": False
+        "isDeleted": False,
+        "workspaceURL": "",
+        "resourceType": "workspace"
     }
 
 

@@ -7,28 +7,37 @@ echo -e "╚══════════════════════�
 
 echo -e "\n\e[34m»»» ✅ \e[96mChecking pre-reqs\e[0m..."
 
-
+echo -e "\n\e[96mChecking for Azure CLI\e[0m..."
 if [ $? -ne 0 ]; then
   echo -e "\e[31m»»» ⚠️ Azure CLI is not installed! 😥 Please go to http://aka.ms/cli to set it up"
   exit
 fi
 
-docker version > /dev/null 2>&1
-if [ $? -ne 0 ] && [[ "$1" != *"nodocker"* ]]; then
-  echo -e "\e[31m»»» ⚠️ Docker is not installed! 😥 Please go to https://docs.docker.com/engine/install/ to set it up"
-  exit
+if [[ "$1" != *"nodocker"* ]]; then
+  echo -e "\n\e[96mChecking for Docker\e[0m..."
+  sudo docker version > /dev/null 2>&1
+  if [ $? -ne 0 ]; then
+    echo -e "\e[31m»»» ⚠️ Docker is not installed! 😥 Please go to https://docs.docker.com/engine/install/ to set it up"
+    exit
+  fi
 fi
 
-/opt/certbot/bin/certbot --version > /dev/null 2>&1
-if [ $? -ne 0 ] && [[ "$1" == *"certbot"* ]]; then
-  echo -e "\e[31m»»» ⚠️ Certbot is not installed! 😥 Please go to https://certbot.eff.org/lets-encrypt/pip-other to set it up"
-  exit
+if  [[ "$1" == *"certbot"* ]]; then
+  echo -e "\n\e[96mChecking for Certbot\e[0m..."
+  /opt/certbot/bin/certbot --version > /dev/null 2>&1
+  if [ $? -ne 0 ]; then
+    echo -e "\e[31m»»» ⚠️ Certbot is not installed! 😥 Please go to https://certbot.eff.org/lets-encrypt/pip-other to set it up"
+    exit
+  fi
 fi
 
-porter --version > /dev/null 2>&1
-if [ $? -ne 0 ] && [[ "$1" == *"porter"* ]]; then
-  echo -e "\e[31m»»» ⚠️ Porter is not installed! 😥 Please go to https://porter.sh/install/ to set it up"
-  exit
+if [[ "$1" == *"porter"* ]]; then
+  echo -e "\n\e[96mChecking for porter\e[0m..."
+  porter --version > /dev/null 2>&1
+  if [ $? -ne 0 ]; then
+    echo -e "\e[31m»»» ⚠️ Porter is not installed! 😥 Please go to https://porter.sh/install/ to set it up"
+    exit
+  fi
 fi
 
 export SUB_NAME=$(az account show --query name -o tsv)

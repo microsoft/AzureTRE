@@ -14,6 +14,14 @@ resource "azurerm_servicebus_queue" "workspacequeue" {
   enable_partitioning = false
 }
 
+resource "azurerm_servicebus_queue" "service_bus_deployment_status_update_queue" {
+  name                = "deploymentstatus"
+  resource_group_name = var.resource_group_name
+  namespace_name      = azurerm_servicebus_namespace.sb.name
+
+  enable_partitioning = false
+}
+
 resource "azurerm_private_dns_zone" "servicebus" {
   name                = "privatelink.servicebus.windows.net"
   resource_group_name = var.resource_group_name
@@ -43,4 +51,8 @@ resource "azurerm_private_endpoint" "sbpe" {
     is_manual_connection           = false
     subresource_names              = ["namespace"]
   }
+}
+
+output "servicebus_namespace" {
+  value = azurerm_servicebus_namespace.sb
 }

@@ -1,0 +1,151 @@
+name: Deploy Azure TRE
+
+on:
+  schedule:
+    # 1am each night https://crontab.guru/#0_1_*_*_*
+    - cron: "0 1 * * *"
+  push:
+    branches: [ develop, main ]
+  workflow_dispatch:
+
+jobs:
+  deploy_tre:
+    name: Deploy TRE
+    runs-on: ubuntu-latest
+    environment: Dev
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Install Terraform
+      uses: little-core-labs/install-terraform@v2.0.0
+      with:
+          version: 0.15.4
+
+    - name: Deploy TRE
+      shell: bash
+      env:
+        TRE_ID: ${{ secrets.TRE_ID }}
+        TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TF_STATE_CONTAINER }}
+        MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP }}
+        MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+        LOCATION: ${{ secrets.LOCATION }}
+        ACR_NAME: ${{ secrets.ACR_NAME }}
+        ADDRESS_SPACE: ${{ secrets.ADDRESS_SPACE }}
+        AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+        AZURE_CONTRIBUTOR_SP: ${{ secrets.AZURE_CONTRIBUTOR_SP }}
+      run: |
+          export env
+          export USE_ENV_VARS_NOT_FILES=true
+          export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
+          export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
+          export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
+          export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
+
+          export CONTRIBUTOR_SP_CLIENT_ID=$(echo "$AZURE_CONTRIBUTOR_SP" | jq -r '.clientId')
+          export CONTRIBUTOR_SP_CLIENT_SECRET=$(echo "$AZURE_CONTRIBUTOR_SP" | jq -r '.clientSecret')
+
+          echo $GITHUB_REF
+          if [ $GITHUB_EVENT_NAME == 'push' ] && [ $GITHUB_REF == 'refs/heads/develop' ]; then
+            IMAGE_TAG='develop-latest'
+          elif [ $GITHUB_EVENT_NAME == 'push' ] && [ $GITHUB_REF == 'refs/heads/main' ]; then
+            IMAGE_TAG='main-latest'
+          else
+            IMAGE_TAG=$GITHUB_SHA
+          fi
+
+          export IMAGE_TAG
+          export TF_VAR_management_api_image_tag=$IMAGE_TAG
+          export TF_VAR_tre_id=$TRE_ID
+          export TF_VAR_mgmt_storage_account_name=$MGMT_STORAGE_ACCOUNT_NAME
+          export TF_VAR_mgmt_resource_group_name=$MGMT_RESOURCE_GROUP_NAME
+          export TF_VAR_terraform_state_container_name=$TERRAFORM_STATE_CONTAINER_NAME
+          export TF_VAR_location=$LOCATION
+          export TF_VAR_acr_name=$ACR_NAME
+          export TF_VAR_address_space=$ADDRESS_SPACE
+
+          make all
+
+  deploy_vanilla_workspace:
+    name: Deploy Vanilla Workspace
+    needs: deploy_tre
+    runs-on: ubuntu-latest
+    environment: Dev
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    - name: Publish and deploy vanilla workspace bundle
+      shell: bash
+      env:
+        TRE_ID: ${{ secrets.TRE_ID }}
+        LOCATION: ${{ secrets.LOCATION }}
+        WORKSPACE_ID: "0001"
+        ADDRESS_SPACE: "10.2.1.0/24"
+        ACR_NAME: ${{ secrets.ACR_NAME }}
+        TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TF_STATE_CONTAINER }}
+        MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP }}
+        MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+        AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+      run: |
+          export USE_ENV_VARS_NOT_FILES=true
+          export env
+          export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
+          export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
+          export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
+          export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
+
+          curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
+          export PATH=~/.porter/:$PATH
+
+          make porter-publish DIR=./workspaces/vanilla
+          make porter-install DIR=./workspaces/vanilla
+
+  deploy_azureml_devtestlabs_workspace:
+    name: Deploy Azure ML and DevTest Labs Workspace
+    needs: deploy_tre
+    runs-on: ubuntu-latest
+    environment: Dev
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    - name: Publish and deploy azureml_devtestlabs workspace bundle
+      shell: bash
+      env:
+        TRE_ID: ${{ secrets.TRE_ID }}
+        LOCATION: ${{ secrets.LOCATION }}
+        WORKSPACE_ID: "0002"
+        ADDRESS_SPACE: "10.2.2.0/24"
+        ACR_NAME: ${{ secrets.ACR_NAME }}
+        TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TF_STATE_CONTAINER }}
+        MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP }}
+        MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+        AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+
+      run: |
+          export USE_ENV_VARS_NOT_FILES=true
+          export env
+          export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
+          export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
+          export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
+          export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
+
+          curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
+          export PATH=~/.porter/:$PATH
+      
+          make porter-publish DIR=./workspaces/services/azureml
+          make porter-publish DIR=./workspaces/services/devtestlabs
+          make porter-publish DIR=./workspaces/azureml_devtestlabs
+          make porter-install DIR=./workspaces/azureml_devtestlabs

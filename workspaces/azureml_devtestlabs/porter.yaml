@@ -1,0 +1,152 @@
+name: tre-workspace-azureml-devtestlabs
+version: 0.1.4
+description: "A Azure TRE workspace with Azure Machine Learning and Dev Test Labs"
+registry: azuretre
+dockerfile: Dockerfile.tmpl
+
+credentials:
+  - name: azure_tenant_id
+    env: ARM_TENANT_ID
+  - name: azure_subscription_id
+    env: ARM_SUBSCRIPTION_ID
+  - name: azure_client_id
+    env: ARM_CLIENT_ID
+  - name: azure_client_secret
+    env: ARM_CLIENT_SECRET
+
+
+parameters:
+  - name: tre_id
+    type: string
+    description: "The ID of the parent TRE instance e.g., mytre-dev-3142"
+  - name: workspace_id
+    type: string
+    description: "Unique 4-digit workspace ID"
+  - name: azure_location
+    env: LOCATION
+    type: string
+    description: "Azure location (region) to deploy to"
+  - name: address_space
+    type: string
+    description: "VNet address space for the workspace services"
+    default: "10.2.1.0/24"
+  - name: acr_name
+    type: string
+    description: "Name of the azure container registry"
+  - name: tfstate_resource_group_name
+    type: string
+    description: "Resource group containing the Terraform state storage account"
+    env: MGMT_RESOURCE_GROUP_NAME
+  - name: tfstate_storage_account_name
+    type: string
+    description: "The name of the Terraform state storage account"
+    env: MGMT_STORAGE_ACCOUNT_NAME
+  - name: tfstate_container_name
+    type: string
+    default: "tfstate"
+    description: "The name of the Terraform state storage container"
+    env: TERRAFORM_STATE_CONTAINER_NAME
+  - name: porter_driver
+    default: "azure"
+    type: string
+    description: "The porter driver - azure or docker"
+
+mixins:
+  - exec
+  - docker
+
+install:
+  - exec:
+      description: "docker login"
+      command: docker
+      arguments:
+        - login
+        - "{{ bundle.parameters.acr_name }}.azurecr.io"
+      flags:
+        u: "{{ bundle.credentials.azure_client_id }}"
+        p: "{{ bundle.credentials.azure_client_secret }}"
+  - exec:
+      description: "Install vanilla workspace"
+      command: porter
+      arguments:
+        - install
+      flags:
+        d: "{{ bundle.parameters.porter_driver }}"
+        reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-workspace-vanilla:v0.1.0"
+        cred: ./azure.json
+        parameter-set: ./parameters_workspace_vanilla.json
+        debug:
+  - exec:
+      description: "Install Azure ML Service"
+      command: porter
+      arguments:
+        - install
+      flags:
+        d: "{{ bundle.parameters.porter_driver }}"
+        reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-service-azureml:v0.1.0"
+        cred: ./azure.json
+        parameter-set: ./parameters_service_azureml.json
+        debug:
+  - exec:
+      description: "Install Dev Test Labs Virtual Desktop Service"
+      command: porter
+      arguments:
+        - install
+      flags:
+        d: "{{ bundle.parameters.porter_driver }}"
+        reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-service-devtestlabs:v0.1.0"
+        cred: ./azure.json
+        parameter-set: ./parameters_service_devtestlabs.json
+        debug:
+
+upgrade:
+  - exec:
+      description: "Upgrade workspace"
+      command: echo
+      arguments:
+        - "This workspace does not implement upgrade action"
+
+# TODO: uninstall does not work at present, will need remote porter state
+uninstall:
+  - exec:
+      description: "docker login"
+      command: docker
+      arguments:
+        - login
+        - "{{ bundle.parameters.acr_name }}.azurecr.io"
+      flags:
+        u: "{{ bundle.credentials.azure_client_id }}"
+        p: "{{ bundle.credentials.azure_client_secret }}"
+  - exec:
+      description: "Uninstall Dev Test Labs Virtual Desktop Service"
+      command: porter
+      arguments:
+        - uninstall
+      flags:
+        d: "{{ bundle.parameters.porter_driver }}"
+        reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-service-devtestlabs:v0.1.0"
+        cred: ./azure.json
+        parameter-set: ./parameters_service_devtestlabs.json
+        debug:
+  - exec:
+        description: "Uninstall Azure ML service"
+        command: porter
+        arguments:
+          - uninstall
+        flags:
+          d: "{{ bundle.parameters.porter_driver }}"
+          reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-service-azureml:v0.1.0"
+          cred: ./azure.json
+          parameter-set: ./parameters.json
+          debug:
+  - exec:
+      description: "Uninstall vanilla workspace"
+      command: porter
+      arguments:
+        - uninstall
+      flags:
+        d: "{{ bundle.parameters.porter_driver }}"
+        reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-workspace-vanilla:v0.1.0"
+        cred: ./azure.json
+        parameter-set: ./parameters_workspace_vanilla.json
+        debug:

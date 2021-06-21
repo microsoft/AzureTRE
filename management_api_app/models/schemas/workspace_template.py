@@ -12,7 +12,7 @@ def get_sample_workspace_template_object(template_name: str = "tre-workspace-van
         description="vanilla workspace bundle",
         version="0.1.0",
         parameters=[
-            Parameter(name="location", type="string"),
+            Parameter(name="azure_location", type="string"),
             Parameter(name="tre_id", type="string"),
             Parameter(name="workspace_id", type="string"),
             Parameter(name="address_space", type="string", default="10.2.1.0/24", description="VNet address space for the workspace services")
@@ -38,30 +38,25 @@ class WorkspaceTemplateNamesInList(BaseModel):
 
 
 class WorkspaceTemplateInCreate(BaseModel):
-
     name: str = Field(title="Name of workspace template")
     version: str = Field(title="Version of workspace template")
     description: str = Field(title=" Description of workspace template")
-    properties: dict = Field({}, title="Workspace template properties",
-                             description="Values for the properties required by the workspace template")
-    resourceType: str = Field(title="Type of workspace template")
+    parameters: List[Parameter] = Field([], title="Workspace template parameters", description="Values for the parameters required by the workspace template")
     current: bool = Field(title="Mark this version as current")
 
     class Config:
         schema_extra = {
             "example": {
-                "name": "My workspace template",
+                "name": "my-tre-workspace",
                 "version": "0.0.1",
                 "description": "workspace template for great product",
-                "properties": {},
-                "resourceType": "workspace",
+                "parameters": [{
+                    "name": "azure_location",
+                    "type": "string"
+                }],
                 "current": "true"
             }
         }
-
-
-class WorkspaceTemplateIdInResponse(BaseModel):
-    resourceTemplateId: str
 
 
 class WorkspaceTemplateInResponse(BaseModel):

@@ -5,6 +5,7 @@ variable "web_app_subnet" {}
 variable "core_vnet" {}
 variable "shared_subnet" {}
 variable "app_gw_subnet" {}
+variable "app_insights_instrumentation_key" {}
 variable "log_analytics_workspace_id" {}
 variable "management_api_image_repository" {}
 variable "management_api_image_tag" {}
@@ -14,3 +15,5 @@ variable "docker_registry_password" {}
 variable "state_store_endpoint" {}
 variable "state_store_key" {}
 variable "service_bus_resource_request_queue" {}
+variable "service_bus_deployment_status_update_queue" {}
+variable "managed_identity" {}
