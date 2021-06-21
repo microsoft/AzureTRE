@@ -1,7 +1,8 @@
 from fastapi import Depends, HTTPException, status
 
 from resources import strings
-from services.aad_authentication import authorize, User
+from services.aad_authentication import authorize
+from services.authentication import User
 
 
 async def get_current_user(user: User = Depends(authorize)) -> User:

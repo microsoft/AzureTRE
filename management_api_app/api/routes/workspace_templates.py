@@ -9,7 +9,7 @@ from db.errors import EntityDoesNotExist
 from db.repositories.workspace_templates import WorkspaceTemplateRepository
 from models.schemas.workspace_template import (WorkspaceTemplateNamesInList, WorkspaceTemplateInCreate, WorkspaceTemplateInResponse)
 from resources import strings
-from services.aad_authentication import User
+from services.authentication import User
 
 
 router = APIRouter()

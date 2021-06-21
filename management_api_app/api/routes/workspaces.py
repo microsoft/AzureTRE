@@ -11,7 +11,7 @@ from models.domain.workspace import Workspace
 from models.schemas.workspace import WorkspaceInCreate, WorkspaceIdInResponse, WorkspacesInList, WorkspaceInResponse
 from resources import strings
 from service_bus.service_bus import ServiceBus
-from services.aad_authentication import User
+from services.authentication import User
 
 
 router = APIRouter()

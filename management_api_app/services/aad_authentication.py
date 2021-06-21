@@ -1,23 +1,15 @@
 import base64
 import logging
-from typing import List
 
 import jwt
 import requests
 import rsa
 from fastapi import Request, HTTPException, status
 from fastapi.security import OAuth2AuthorizationCodeBearer
-from pydantic import BaseModel, Field, parse_obj_as
 
 from core import config
 from resources import strings
-
-
-class User(BaseModel):
-    oid: str
-    name: str
-    email: str
-    roles: List[str] = Field([])
+from services.authentication import User
 
 
 class AzureADAuthorization(OAuth2AuthorizationCodeBearer):
@@ -37,10 +29,17 @@ class AzureADAuthorization(OAuth2AuthorizationCodeBearer):
 
         try:
             decoded_token = self._decode_token(token)
-            return parse_obj_as(User, decoded_token)
+            return self._get_user_from_token(decoded_token)
         except Exception as e:
             logging.debug(e)
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.AUTH_COULD_NOT_VALIDATE_CREDENTIALS, headers={"WWW-Authenticate": "Bearer"})
+
+    @staticmethod
+    def _get_user_from_token(decoded_token: dict) -> User:
+        return User(id=decoded_token['oid'],
+                    name=decoded_token.get('name', ''),
+                    email=decoded_token.get('email', ''),
+                    roles=decoded_token.get('roles', []))
 
     def _decode_token(self, token: str) -> dict:
         key_id = self._get_key_id(token)
@@ -52,19 +51,23 @@ class AzureADAuthorization(OAuth2AuthorizationCodeBearer):
         headers = jwt.get_unverified_header(token)
         return headers['kid'] if headers and 'kid' in headers else None
 
-    # The base64 encoded keys are not always correctly padded, so pad with the right number of =
     @staticmethod
     def _ensure_b64padding(key: str) -> str:
+        """
+        The base64 encoded keys are not always correctly padded, so pad with the right number of =
+        """
         key = key.encode('utf-8')
         missing_padding = len(key) % 4
         for _ in range(missing_padding):
             key = key + b'='
         return key
 
-    # Rather tha use PyJWKClient.get_signing_key_from_jwt every time, we'll get all the keys from AAD and cache them.
     def _get_token_key(self, key_id: str) -> str:
+        """
+        Rather tha use PyJWKClient.get_signing_key_from_jwt every time, we'll get all the keys from AAD and cache them.
+        """
         if key_id not in AzureADAuthorization._jwt_keys:
-            response = requests.get(f"{config.AAD_INSTANCE}/{config.TENANT_ID}/v2.0/.well-known/openid-configuration")
+            response = requests.get(f"{config.AAD_INSTANCE}/{config.AAD_TENANT_ID}/v2.0/.well-known/openid-configuration")
             aad_metadata = response.json() if response.ok else None
             jwks_uri = aad_metadata['jwks_uri'] if aad_metadata and 'jwks_uri' in aad_metadata else None
             if jwks_uri:
@@ -81,4 +84,4 @@ class AzureADAuthorization(OAuth2AuthorizationCodeBearer):
         return AzureADAuthorization._jwt_keys[key_id]
 
 
-authorize = AzureADAuthorization(config.AAD_INSTANCE, config.TENANT_ID)
+authorize = AzureADAuthorization(config.AAD_INSTANCE, config.AAD_TENANT_ID)
