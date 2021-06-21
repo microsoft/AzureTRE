@@ -36,4 +36,4 @@ API_CLIENT_ID: str = config("API_CLIENT_ID", default="")
 TENANT_ID: str = config("TENANT_ID", default="")
 
 AAD_INSTANCE: str = config("AAD_INSTANCE", default="https://login.microsoftonline.com")
-API_AUDIENCE: str = config("API_AUDIENCE", default="api://{}".format(API_CLIENT_ID))
+API_AUDIENCE: str = config("API_AUDIENCE", default=f"api://{API_CLIENT_ID}")

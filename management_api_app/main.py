@@ -44,6 +44,28 @@ def initialize_logging(logging_level: int):
     :param logging_level: The logging level to set e.g., logging.WARNING.
     """
     logger = logging.getLogger()
+    logging.getLogger("azure.core.pipeline.policies.http_logging_policy").disabled = True
+
+    logging.getLogger("azure.eventhub._eventprocessor.event_processor").disabled = True
+
+    logging.getLogger("azure.identity.aio._credentials.managed_identity").disabled = True
+    logging.getLogger("azure.identity.aio._credentials.environment").disabled = True
+    logging.getLogger("azure.identity.aio._internal.get_token_mixin").disabled = True
+    logging.getLogger("azure.identity.aio._internal.decorators").disabled = True
+    logging.getLogger("azure.identity.aio._credentials.chained").disabled = True
+    logging.getLogger("azure.identity").disabled = True
+
+    logging.getLogger("msal.token_cache").disabled = True
+
+    logging.getLogger("uamqp").disabled = True
+    logging.getLogger("uamqp.authentication.cbs_auth_async").disabled = True
+    logging.getLogger("uamqp.async_ops.client_async").disabled = True
+    logging.getLogger("uamqp.async_ops.connection_async").disabled = True
+    logging.getLogger("uamqp.async_ops").disabled = True
+    logging.getLogger("uamqp.authentication").disabled = True
+    logging.getLogger("uamqp.c_uamqp").disabled = True
+    logging.getLogger("uamqp.connection").disabled = True
+    logging.getLogger("uamqp.receiver").disabled = True
 
     try:
         logger.addHandler(AzureLogHandler(connection_string=f"InstrumentationKey={config.APP_INSIGHTS_INSTRUMENTATION_KEY}"))

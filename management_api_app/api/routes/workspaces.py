@@ -5,12 +5,13 @@ from starlette import status
 
 from api.dependencies.database import get_repository
 from api.dependencies.workspaces import get_workspace_by_workspace_id_from_path
+from api.dependencies.authentication import get_current_user_authorizer
 from db.repositories.workspaces import WorkspaceRepository
 from models.domain.workspace import Workspace
 from models.schemas.workspace import WorkspaceInCreate, WorkspaceIdInResponse, WorkspacesInList, WorkspaceInResponse
 from resources import strings
 from service_bus.service_bus import ServiceBus
-from services.authentication import User, authorize
+from services.authentication import User
 
 
 router = APIRouter()
@@ -19,8 +20,8 @@ router = APIRouter()
 @router.get("/workspaces", response_model=WorkspacesInList, name=strings.API_GET_ALL_WORKSPACES)
 async def retrieve_active_workspaces(
     workspace_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository)),
-    user: User = Depends(authorize)
-    ) -> WorkspacesInList:
+    user: User = Depends(get_current_user_authorizer)
+) -> WorkspacesInList:
     workspaces = workspace_repo.get_all_active_workspaces()
     return WorkspacesInList(workspaces=workspaces)
 
@@ -29,8 +30,8 @@ async def retrieve_active_workspaces(
 async def create_workspace(
     workspace_create: WorkspaceInCreate,
     workspace_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository)),
-    user: User = Depends(authorize)
-    ) -> WorkspaceIdInResponse:
+    user: User = Depends(get_current_user_authorizer)
+) -> WorkspaceIdInResponse:
     try:
         workspace = workspace_repo.create_workspace_item(workspace_create)
     except ValueError as e:
@@ -56,6 +57,6 @@ async def create_workspace(
 @router.get("/workspaces/{workspace_id}", response_model=WorkspaceInResponse, name=strings.API_GET_WORKSPACE_BY_ID)
 async def retrieve_workspace_by_workspace_id(
     workspace: Workspace = Depends(get_workspace_by_workspace_id_from_path),
-    user: User = Depends(authorize)
-    ) -> WorkspaceInResponse:
+    user: User = Depends(get_current_user_authorizer)
+) -> WorkspaceInResponse:
     return WorkspaceInResponse(workspace=workspace)
