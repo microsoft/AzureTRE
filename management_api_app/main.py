@@ -44,6 +44,7 @@ def initialize_logging(logging_level: int):
     :param logging_level: The logging level to set e.g., logging.WARNING.
     """
     logger = logging.getLogger()
+
     logging.getLogger("azure.core.pipeline.policies.http_logging_policy").disabled = True
 
     logging.getLogger("azure.eventhub._eventprocessor.event_processor").disabled = True

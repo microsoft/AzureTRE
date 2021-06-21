@@ -63,8 +63,7 @@ class AzureADAuthorization(OAuth2AuthorizationCodeBearer):
 
     # Rather tha use PyJWKClient.get_signing_key_from_jwt every time, we'll get all the keys from AAD and cache them.
     def _get_token_key(self, key_id: str) -> str:
-        # TODO: Refactor this -- also - do we need all keys or only the one given by key_id? does this change?
-        if key_id not in self._jwt_keys:
+        if key_id not in AzureADAuthorization._jwt_keys:
             response = requests.get(f"{config.AAD_INSTANCE}/{config.TENANT_ID}/v2.0/.well-known/openid-configuration")
             aad_metadata = response.json() if response.ok else None
             jwks_uri = aad_metadata['jwks_uri'] if aad_metadata and 'jwks_uri' in aad_metadata else None
@@ -77,9 +76,9 @@ class AzureADAuthorization(OAuth2AuthorizationCodeBearer):
                         e = int.from_bytes(base64.urlsafe_b64decode(self._ensure_b64padding(key['e'])), "big")
                         pub_key = rsa.PublicKey(n, e)
                         # Cache the PEM formatted public key.
-                        self._jwt_keys[key['kid']] = pub_key.save_pkcs1()
+                        AzureADAuthorization._jwt_keys[key['kid']] = pub_key.save_pkcs1()
 
-        return self._jwt_keys[key_id]
+        return AzureADAuthorization._jwt_keys[key_id]
 
 
 authorize = AzureADAuthorization(config.AAD_INSTANCE, config.TENANT_ID)
