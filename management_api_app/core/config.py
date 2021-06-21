@@ -31,6 +31,7 @@ MANAGED_IDENTITY_CLIENT_ID: str = config("MANAGED_IDENTITY_CLIENT_ID", default="
 # Logging and monitoring
 APP_INSIGHTS_INSTRUMENTATION_KEY: str = config("APPINSIGHTS_INSTRUMENTATIONKEY", default="")
 
+# Authentication
 CLIENT_ID: str = config("CLIENT_ID", default="")
 API_CLIENT_ID: str = config("API_CLIENT_ID", default="")
 TENANT_ID: str = config("TENANT_ID", default="")

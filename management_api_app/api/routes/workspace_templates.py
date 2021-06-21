@@ -3,13 +3,13 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
 
-from api.dependencies.authentication import get_current_user_authorizer
+from api.dependencies.authentication import get_current_admin_user
 from api.dependencies.database import get_repository
 from db.errors import EntityDoesNotExist
 from db.repositories.workspace_templates import WorkspaceTemplateRepository
 from models.schemas.workspace_template import (WorkspaceTemplateNamesInList, WorkspaceTemplateInCreate, WorkspaceTemplateInResponse)
 from resources import strings
-from services.authentication import User
+from services.aad_authentication import User
 
 
 router = APIRouter()
@@ -18,7 +18,7 @@ router = APIRouter()
 @router.get("/workspace-templates", response_model=WorkspaceTemplateNamesInList, name=strings.API_GET_WORKSPACE_TEMPLATES)
 async def get_workspace_templates(
     workspace_template_repo: WorkspaceTemplateRepository = Depends(get_repository(WorkspaceTemplateRepository)),
-    user: User = Depends(get_current_user_authorizer)
+    user: User = Depends(get_current_admin_user)
 ) -> WorkspaceTemplateNamesInList:
     workspace_template_names = workspace_template_repo.get_workspace_template_names()
     return WorkspaceTemplateNamesInList(templateNames=workspace_template_names)
@@ -30,7 +30,7 @@ async def get_workspace_templates(
 async def create_workspace_template(
     workspace_template_create: WorkspaceTemplateInCreate,
     workspace_template_repo: WorkspaceTemplateRepository = Depends(get_repository(WorkspaceTemplateRepository)),
-    user: User = Depends(get_current_user_authorizer)
+    user: User = Depends(get_current_admin_user)
 ) -> WorkspaceTemplateInResponse:
     try:
         template = workspace_template_repo.get_workspace_template_by_name_and_version(workspace_template_create.name, workspace_template_create.version)
@@ -54,7 +54,7 @@ async def create_workspace_template(
 async def get_current_workspace_template_by_name(
     template_name: str,
     workspace_template_repo: WorkspaceTemplateRepository = Depends(get_repository(WorkspaceTemplateRepository)),
-    user: User = Depends(get_current_user_authorizer)
+    user: User = Depends(get_current_admin_user)
 ) -> WorkspaceTemplateInResponse:
     try:
         template = workspace_template_repo.get_current_workspace_template_by_name(template_name)
