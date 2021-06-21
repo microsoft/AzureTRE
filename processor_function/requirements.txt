@@ -3,3 +3,4 @@ azure-mgmt-containerinstance==2.0.0
 azure-mgmt-network==19.0.0
 msrest==0.6.21
 opencensus-ext-azure==1.0.8
+opencensus-ext-logging==0.1.0
