@@ -27,7 +27,7 @@ async def create_workspace(workspace_create: WorkspaceInCreate, workspace_repo: 
     try:
         workspace = workspace_repo.create_workspace_item(workspace_create)
     except WorkspaceValidationError as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=e.errors)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.errors)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
