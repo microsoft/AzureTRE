@@ -14,17 +14,17 @@ pytestmark = pytest.mark.asyncio
 
 def create_test_resource():
     return Resource(
-        id = str(uuid.uuid4()),
-        displayName = "Test resource display name",
-        description = "Test resource description",
-        resourceTemplateName = "Test resource template name",
-        resourceTemplateVersion = "2.718",
-        resourceTemplateParameters = { "testParameter": "testValue" },
-        deployment = Deployment(
-            status = Status.NotDeployed,
-            message = "Deployment test message"
+        id=str(uuid.uuid4()),
+        displayName="Test resource display name",
+        description="Test resource description",
+        resourceTemplateName="Test resource template name",
+        resourceTemplateVersion="2.718",
+        resourceTemplateParameters={"testParameter": "testValue"},
+        deployment=Deployment(
+            status=Status.NotDeployed,
+            message="Deployment test message"
         ),
-        isDeleted = False
+        isDeleted=False
     )
 
 
