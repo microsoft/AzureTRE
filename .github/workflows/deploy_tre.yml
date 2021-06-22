@@ -72,6 +72,8 @@ jobs:
 
           make all
 
+          make terraform-deploy DIR=./templates/shared_services/gitea-mysql
+
   deploy_vanilla_workspace:
     name: Deploy Vanilla Workspace
     needs: deploy_tre
