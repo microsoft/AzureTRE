@@ -121,7 +121,7 @@ def test_validate_workspace_parameters_no_parameters(cosmos_client_mock):
 
     errors = workspace_repo._validate_workspace_parameters(template_parameters, supplied_request_parameters)
 
-    assert errors == None
+    assert errors is None
 
 
 @patch('azure.cosmos.CosmosClient')
@@ -133,7 +133,7 @@ def test_validate_workspace_parameters_valid_parameters(cosmos_client_mock):
 
     errors = workspace_repo._validate_workspace_parameters(template_parameters, supplied_request_parameters)
 
-    assert errors == None
+    assert errors is None
 
 
 @patch('azure.cosmos.CosmosClient')
