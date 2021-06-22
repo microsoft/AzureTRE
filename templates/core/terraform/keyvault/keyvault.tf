@@ -13,15 +13,17 @@ resource "azurerm_key_vault" "kv" {
     object_id    = data.azurerm_client_config.deployer.object_id
 
     key_permissions = [
-      "Get", "List", "Update", "Create", "Import", "Delete",
+      "Get", "List", "Update", "Create", "Import", "Delete"
     ]
 
     secret_permissions = [
-      "Get", "List", "Set", "Delete",
+      "Get", "List", "Set", "Delete"
     ]
 
+    certificate_permissions = [ "Get", "List", "Update", "Create", "Import", "Delete" ]
+
     storage_permissions = [
-      "Get", "List", "Update", "Create", "Import", "Delete",
+      "Get", "List", "Update", "Delete"
     ]
   }
 

@@ -79,11 +79,6 @@ resource "azurerm_app_service" "management_api" {
   }
 }
 
-data "azurerm_private_dns_zone" "azurewebsites" {
-  name                = "privatelink.azurewebsites.net"
-  resource_group_name = var.resource_group_name
-}
-
 resource "azurerm_private_endpoint" "management_api_private_endpoint" {
   name                = "pe-api-${var.tre_id}"
   resource_group_name = var.resource_group_name
@@ -99,7 +94,7 @@ resource "azurerm_private_endpoint" "management_api_private_endpoint" {
 
   private_dns_zone_group {
     name                 = "privatelink.azurewebsites.net"
-    private_dns_zone_ids = [data.azurerm_private_dns_zone.azurewebsites.id]
+    private_dns_zone_ids = [var.azurewebsites_dns_zone_id]
   }
 }
 

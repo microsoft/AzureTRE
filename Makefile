@@ -68,6 +68,7 @@ letsencrypt:
 tre-destroy:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDestroying TRE\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
+	&& . ./devops/scripts/load_env.sh ./devops/.env 
 	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
 	&& cd ./templates/core/terraform/ && ./destroy.sh
@@ -75,17 +76,19 @@ tre-destroy:
 terraform-deploy:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDeploying ${DIR} with Terraform\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
-	&& . ./devops/scripts/load_terraform_env.sh ${DIR}/terraform/.env \
-	&& cd /${DIR}/terraform/ && ./deploy.sh
+	&& . ./devops/scripts/load_terraform_env.sh ${DIR}/.env \
+	&& cd ${DIR}/terraform/ && ./deploy.sh
 
 terraform-destroy:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDestroying ${DIR} Service\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
-	&& . ./devops/scripts/load_terraform_env.sh ${DIR}/terraform/.env \
+	&& . ./devops/scripts/load_terraform_env.sh ${DIR}/.env \
 	&& cd ${DIR}/terraform/ && ./destroy.sh 
 
 porter-build:

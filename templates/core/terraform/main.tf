@@ -3,7 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=2.58.0"
+      version = "=2.64.0"
     }
   }
 }
@@ -74,6 +74,7 @@ module "api-webapp" {
   shared_subnet                              = module.network.shared
   app_gw_subnet                              = module.network.app_gw
   core_vnet                                  = module.network.core
+  azurewebsites_dns_zone_id                  = module.network.azurewebsites_dns_zone_id
   app_insights_instrumentation_key           = azurerm_application_insights.core.instrumentation_key
   log_analytics_workspace_id                 = azurerm_log_analytics_workspace.core.id
   management_api_image_repository            = var.management_api_image_repository
@@ -150,7 +151,7 @@ module "firewall" {
   resource_group_name        = azurerm_resource_group.core.name
   firewall_subnet            = module.network.azure_firewall
   shared_subnet              = module.network.shared
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.tre.workspace_id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.core.id
 }
 
 module "routetable" {

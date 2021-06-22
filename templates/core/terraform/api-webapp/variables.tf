@@ -17,3 +17,4 @@ variable "state_store_key" {}
 variable "service_bus_resource_request_queue" {}
 variable "service_bus_deployment_status_update_queue" {}
 variable "managed_identity" {}
+variable "azurewebsites_dns_zone_id" {}

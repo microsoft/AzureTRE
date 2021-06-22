@@ -18,12 +18,6 @@ resource "azurerm_firewall" "fw" {
   }
 }
 
-data "azurerm_log_analytics_workspace" "log_analytics" {
-  name                = "log-${var.tre_id}"
-  resource_group_name = var.resource_group_name
-}
-
-
 resource "azurerm_monitor_diagnostic_setting" "firewall" {
   name                       = "diagnostics-firewall-${var.tre_id}"
   target_resource_id         = azurerm_firewall.fw.id
