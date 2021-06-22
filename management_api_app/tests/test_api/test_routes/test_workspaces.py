@@ -103,9 +103,9 @@ async def test_workspaces_post_creates_workspace(create_workspace_item_mock, sav
 @patch("api.routes.workspaces.WorkspaceRepository.save_workspace")
 @patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item")
 @patch("api.routes.workspaces.WorkspaceRepository._validate_workspace_parameters")
-async def test_workspaces_post_calls_db_and_service_bus(_validate_workspace_parameters_mock, create_workspace_item_mock, save_workspace_mock, send_resource_request_message_mock, app: FastAPI, client: AsyncClient):
+async def test_workspaces_post_calls_db_and_service_bus(validate_workspace_parameters_mock, create_workspace_item_mock, save_workspace_mock, send_resource_request_message_mock, app: FastAPI, client: AsyncClient):
     workspace_id = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
-    _validate_workspace_parameters_mock.return_value = None
+    validate_workspace_parameters_mock.return_value = None
     create_workspace_item_mock.return_value = create_sample_workspace_object(workspace_id)
     input_data = create_sample_workspace_input_data()
 
@@ -119,9 +119,9 @@ async def test_workspaces_post_calls_db_and_service_bus(_validate_workspace_para
 @patch("api.routes.workspaces.WorkspaceRepository.save_workspace")
 @patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item")
 @patch("api.routes.workspaces.WorkspaceRepository._validate_workspace_parameters")
-async def test_workspaces_post_returns_202_on_successful_create(_validate_workspace_parameters_mock, create_workspace_item_mock, save_workspace_mock, send_resource_request_message_mock, app: FastAPI, client: AsyncClient):
+async def test_workspaces_post_returns_202_on_successful_create(validate_workspace_parameters_mock, create_workspace_item_mock, save_workspace_mock, send_resource_request_message_mock, app: FastAPI, client: AsyncClient):
     workspace_id = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
-    _validate_workspace_parameters_mock.return_value = None
+    validate_workspace_parameters_mock.return_value = None
     create_workspace_item_mock.return_value = create_sample_workspace_object(workspace_id)
     input_data = create_sample_workspace_input_data()
 
@@ -135,9 +135,9 @@ async def test_workspaces_post_returns_202_on_successful_create(_validate_worksp
 @patch("api.routes.workspaces.WorkspaceRepository.save_workspace")
 @patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item")
 @patch("api.routes.workspaces.WorkspaceRepository._validate_workspace_parameters")
-async def test_workspaces_post_returns_503_if_service_bus_call_fails(_validate_workspace_parameters_mock, create_workspace_item_mock, save_workspace_mock, send_resource_request_message_mock, app: FastAPI, client: AsyncClient):
+async def test_workspaces_post_returns_503_if_service_bus_call_fails(validate_workspace_parameters_mock, create_workspace_item_mock, save_workspace_mock, send_resource_request_message_mock, app: FastAPI, client: AsyncClient):
     workspace_id = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
-    _validate_workspace_parameters_mock.return_value = None
+    validate_workspace_parameters_mock.return_value = None
     create_workspace_item_mock.return_value = create_sample_workspace_object(workspace_id)
     input_data = create_sample_workspace_input_data()
 
@@ -150,9 +150,9 @@ async def test_workspaces_post_returns_503_if_service_bus_call_fails(_validate_w
 
 @patch("api.routes.workspaces.WorkspaceRepository._get_current_workspace_template")
 @patch("api.routes.workspaces.WorkspaceRepository._validate_workspace_parameters")
-async def test_workspaces_post_returns_400_if_template_does_not_exist(_validate_workspace_parameters_mock, _get_current_workspace_template_mock, app: FastAPI, client: AsyncClient):
-    _validate_workspace_parameters_mock.return_value = None
-    _get_current_workspace_template_mock.side_effect = EntityDoesNotExist
+async def test_workspaces_post_returns_400_if_template_does_not_exist(validate_workspace_parameters_mock, get_current_workspace_template_mock, app: FastAPI, client: AsyncClient):
+    validate_workspace_parameters_mock.return_value = None
+    get_current_workspace_template_mock.side_effect = EntityDoesNotExist
     input_data = create_sample_workspace_input_data()
 
     response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE), json=input_data)

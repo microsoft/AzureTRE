@@ -49,9 +49,7 @@ class WorkspaceRepository(BaseRepository):
         missing_required = []
         system_provided = WorkspaceRepository._system_provided_parameters()
         required_parameters = [parameter for parameter in template_parameters if parameter.required and parameter.name not in system_provided]
-        for parameter in required_parameters:
-            if parameter.name not in supplied_request_parameters:
-                missing_required.append(parameter.name)
+        missing_required = [parameter.name for parameter in required_parameters if parameter.name not in supplied_request_parameters]
 
         if missing_required:
             errors[strings.MISSING_REQUIRED_PARAMETERS] = missing_required

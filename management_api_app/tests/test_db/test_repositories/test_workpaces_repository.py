@@ -53,14 +53,14 @@ def test_get_workspace_by_id_throws_entity_does_not_exist_if_item_does_not_exist
 @patch('db.repositories.workspaces.WorkspaceRepository._get_current_workspace_template')
 @patch('azure.cosmos.CosmosClient')
 @patch("api.routes.workspaces.WorkspaceRepository._validate_workspace_parameters")
-def test_create_workspace_item_creates_a_workspace_with_the_right_values(_validate_workspace_parameters_mock, cosmos_client_mock, _get_current_workspace_template_mock):
+def test_create_workspace_item_creates_a_workspace_with_the_right_values(validate_workspace_parameters_mock, cosmos_client_mock, _get_current_workspace_template_mock):
     workspace_repo = db.repositories.workspaces.WorkspaceRepository(cosmos_client_mock)
 
     workspace_type = "vanilla-tre"
     display_name = "my workspace"
     description = "some description"
     workspace_to_create = WorkspaceInCreate(workspaceType=workspace_type, displayName=display_name, description=description)
-    _validate_workspace_parameters_mock.return_value = None
+    validate_workspace_parameters_mock.return_value = None
     _get_current_workspace_template_mock.return_value = ResourceTemplate(
         id="a7a7a7bd-7f4e-4a4e-b970-dc86a6b31dfb",
         name="sample",
