@@ -24,22 +24,21 @@ def initialize_logging(logging_level: int):
     try:
         logger.addHandler(AzureLogHandler(connection_string=f"InstrumentationKey={app_insights_instrumentation_key}"))
     except ValueError:
-        logger.error("Application Insights instrumentation key missing")
+        logger.error("Application Insights instrumentation key missing or invalid")
 
     config_integration.trace_integrations(['logging'])
-    logging.basicConfig(level=logging_level, format='correlationId=%(correlationId)s %(message)s')
+    logging.basicConfig(level=logging_level)
     logger.setLevel(logging_level)
 
 
 def main(msg: func.ServiceBusMessage):
+    initialize_logging(logging.INFO)
     service_bus = ServiceBus()
     id = ""
-    logging_properties = { "correlationId": f"{msg.correlation_id}" }
-    initialize_logging(logging.INFO)
 
     try:
         resource_request_message = json.loads(msg.get_body().decode('utf-8'))
-        logging.info(f"Received resource request message: {resource_request_message}", extra=logging_properties)
+        logging.info(f"Received resource request message (correlation_id={msg.correlation_id}): {resource_request_message}")
         id = resource_request_message['id']
         cnab_builder = CNABBuilder(resource_request_message)
         cnab_builder.deploy_aci()
