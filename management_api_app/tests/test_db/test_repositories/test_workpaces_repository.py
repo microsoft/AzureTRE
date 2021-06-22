@@ -143,8 +143,9 @@ def test_validate_workspace_parameters_wrong_type(cosmos_client_mock):
     template_parameters = [Parameter(name="a", type="string", default="a", applyto="a", description="b", required=True)]
     supplied_request_parameters = {"a": 50}
 
-    with pytest.raises(WorkspaceValidationError):
+    with pytest.raises(WorkspaceValidationError) as e:
         workspace_repo._validate_workspace_parameters(template_parameters, supplied_request_parameters)
+    assert e.value.errors == {"Parameters with wrong type": [{"parameter": "a", "expected_type": "string", "supplied_type": "integer"}]}
 
 
 @patch('azure.cosmos.CosmosClient')
@@ -154,8 +155,9 @@ def test_validate_workspace_parameters_extra_parameter(cosmos_client_mock):
     template_parameters = [Parameter(name="a", type="string", default="a", applyto="a", description="b", required=True)]
     supplied_request_parameters = {"a": "b", "b": "c"}
 
-    with pytest.raises(WorkspaceValidationError):
+    with pytest.raises(WorkspaceValidationError) as e:
         workspace_repo._validate_workspace_parameters(template_parameters, supplied_request_parameters)
+    assert e.value.errors == {"Invalid extra parameters": ["b"]}
 
 
 @patch('azure.cosmos.CosmosClient')
@@ -165,5 +167,6 @@ def test_validate_workspace_parameters_missing_parameter(cosmos_client_mock):
     template_parameters = [Parameter(name="a", type="string", default="a", applyto="a", description="b", required=True)]
     supplied_request_parameters = {}
 
-    with pytest.raises(WorkspaceValidationError):
+    with pytest.raises(WorkspaceValidationError) as e:
         workspace_repo._validate_workspace_parameters(template_parameters, supplied_request_parameters)
+    assert e.value.errors == {"Missing required parameters": ["a"]}
