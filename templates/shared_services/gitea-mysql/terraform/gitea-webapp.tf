@@ -20,7 +20,7 @@ resource "azurerm_app_service" "gitea" {
 
     GITEA__repository__ROOT="/home/data/git/gitea-repositories"
 
-    # See bug: 
+    # SSL disabled see task: #347 
     GITEA__database__SSL_MODE="disable"
     GITEA__database__DB_TYPE="mysql"
     GITEA__database__HOST=azurerm_mysql_server.gitea.fqdn
