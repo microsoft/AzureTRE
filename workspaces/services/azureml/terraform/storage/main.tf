@@ -20,6 +20,11 @@ resource "azurerm_storage_account" "stg" {
   account_tier             = "Standard"
   account_replication_type = "GRS"
 
+  network_rules {
+      bypass         = ["AzureServices"]
+      default_action = "Deny"
+  }
+
 }
 
 resource "azurerm_private_dns_zone" "filecore" {

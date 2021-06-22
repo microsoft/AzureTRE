@@ -4,6 +4,11 @@ resource "azurerm_storage_account" "storage" {
   location                 = var.location
   account_tier             = "Standard"
   account_replication_type = "LRS"
+
+  network_rules {
+      bypass         = ["AzureServices"]
+      default_action = "Deny"
+  }
 }
 
 resource "azurerm_private_dns_zone" "blobcore" {

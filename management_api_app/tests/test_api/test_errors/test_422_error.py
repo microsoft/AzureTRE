@@ -17,4 +17,4 @@ async def test_frw_validation_error_format(app: FastAPI):
 
     assert response.status_code == HTTP_422_UNPROCESSABLE_ENTITY
 
-    assert "errors" in response.json()
+    assert "error" in response.text
