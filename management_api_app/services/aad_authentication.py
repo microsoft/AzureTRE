@@ -20,7 +20,10 @@ class AzureADAuthorization(OAuth2AuthorizationCodeBearer):
             authorizationUrl=f"{aad_instance}/{aad_tenant}/oauth2/v2.0/authorize",
             tokenUrl=f"{aad_instance}/{aad_tenant}/oauth2/v2.0/token",
             refreshUrl=f"{aad_instance}/{aad_tenant}/oauth2/v2.0/token",
-            scheme_name="oauth2", scopes={f"api://{config.API_CLIENT_ID}/user_impersonation": "Access TRE API"},
+            scheme_name="oauth2", scopes={
+                f"api://{config.API_CLIENT_ID}/Workspace.Read": "List and Get TRE Workspaces",
+                f"api://{config.API_CLIENT_ID}/Workspace.Write": "Modify TRE Workspaces"
+            },
             auto_error=auto_error
         )
 

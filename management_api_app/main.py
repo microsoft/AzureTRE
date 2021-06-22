@@ -25,7 +25,7 @@ def get_application() -> FastAPI:
         swagger_ui_init_oauth={
             "usePkceWithAuthorizationCodeGrant": True,
             "clientId": config.SWAGGER_UI_CLIENT_ID,
-            "scopes": ["openid", "offline_access", f"api://{config.API_CLIENT_ID}/user_impersonation"]
+            "scopes": ["openid", "offline_access", f"api://{config.API_CLIENT_ID}/Workspace.Read", f"api://{config.API_CLIENT_ID}/Workspace.Write"]
         },
     )
 
