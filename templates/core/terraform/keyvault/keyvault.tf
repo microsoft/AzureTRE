@@ -27,7 +27,7 @@ resource "azurerm_key_vault" "kv" {
     storage_permissions = [
       "Get", "List", "Update", "Delete"
     ]
-
+  }
 }
 
 resource "azurerm_key_vault_access_policy" "managed_identity" {
