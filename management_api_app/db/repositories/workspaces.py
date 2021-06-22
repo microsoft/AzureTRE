@@ -37,17 +37,30 @@ class WorkspaceRepository(BaseRepository):
         return 'invalid'
 
     @staticmethod
-    def _validate_workspace_parameters(template_parameters: List[Parameter], supplied_request_parameters: dict):
-        # verify all required parameters are given
-        errors = {}
+    def _system_provided_parameters() -> List[str]:
+        return ["acr_name", 
+                "porter_driver", 
+                "tfstate_container_name", 
+                "tfstate_resource_group_name", 
+                "tfstate_storage_account_name"
+        ]
+
+    @staticmethod
+    def _check_that_all_required_parameters_exist(template_parameters: List[Parameter], supplied_request_parameters: dict, errors: dict):
         missing_required = []
-        system_provided = ["acr_name", "porter_driver", "tfstate_container_name", "tfstate_resource_group_name", "tfstate_storage_account_name"]
+        system_provided = WorkspaceRepository._system_provided_parameters()
         required_parameters = [parameter for parameter in template_parameters if parameter.required and parameter.name not in system_provided]
         for parameter in required_parameters:
             if parameter.name not in supplied_request_parameters:
                 missing_required.append(parameter.name)
+        
+        if missing_required:
+            errors[strings.MISSING_REQUIRED_PARAMETERS] = missing_required
+        
+        pass
 
-        # verify all given parameters are valid
+    @staticmethod
+    def _validate_given_parameters(template_parameters: List[Parameter], supplied_request_parameters: dict, errors: dict):
         extra_parameters = []
         wrong_type = []
         template_parameters_by_name = {parameter.name: parameter for parameter in template_parameters}
@@ -60,14 +73,21 @@ class WorkspaceRepository(BaseRepository):
                 if supplied_parameter_type != template_parameter.type:
                     wrong_type.append({"parameter": parameter, "expected_type": template_parameter.type, "supplied_type": supplied_parameter_type})
 
-        if missing_required:
-            errors[strings.MISSING_REQUIRED_PARAMETERS] = missing_required
-
         if extra_parameters:
             errors[strings.INVALID_EXTRA_PARAMETER] = extra_parameters
-
+        
         if wrong_type:
             errors[strings.PARAMETERS_WITH_WRONG_TYPE] = wrong_type
+
+        pass
+       
+    @staticmethod
+    def _validate_workspace_parameters(template_parameters: List[Parameter], supplied_request_parameters: dict):
+        errors = {}
+
+        WorkspaceRepository._check_that_all_required_parameters_exist(template_parameters, supplied_request_parameters, errors)
+        
+        WorkspaceRepository._validate_given_parameters(template_parameters, supplied_request_parameters, errors)
 
         if errors:
             raise WorkspaceValidationError(errors)
