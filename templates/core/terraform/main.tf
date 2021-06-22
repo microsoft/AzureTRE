@@ -3,7 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=2.58.0"
+      version = "=2.64.0"
     }
   }
 }
@@ -150,7 +150,7 @@ module "firewall" {
   resource_group_name        = azurerm_resource_group.core.name
   firewall_subnet            = module.network.azure_firewall
   shared_subnet              = module.network.shared
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.tre.workspace_id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.core.id
 }
 
 module "routetable" {
