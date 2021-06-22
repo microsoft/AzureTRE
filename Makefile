@@ -7,12 +7,14 @@ all: bootstrap mgmt-deploy build-api-image push-api-image build-cnab-image push-
 bootstrap:
 	echo -e "\n\e[34m»»» 🧩 \e[96mBootstrap Terraform\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& cd ./devops/terraform && ./bootstrap.sh
 
 mgmt-deploy:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDeploying management infrastructure\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& cd ./devops/terraform && ./deploy.sh
 
@@ -26,27 +28,27 @@ build-api-image:
 	echo -e "\n\e[34m»»» 🧩 \e[96mBuilding API Image\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& sudo docker build -t "$${ACR_NAME}.azurecr.io/microsoft/azuretre/management-api:$${IMAGE_TAG}" ./management_api_app/
+	&& docker build -t "$${ACR_NAME}.azurecr.io/microsoft/azuretre/management-api:$${IMAGE_TAG}" ./management_api_app/
 
 build-cnab-image:
 	echo -e "\n\e[34m»»» 🧩 \e[96mBuilding CNAB Image\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& sudo docker build -t "$${ACR_NAME}.azurecr.io/microsoft/azuretre/cnab-aci:$${IMAGE_TAG}" ./CNAB_container/
+	&& docker build -t "$${ACR_NAME}.azurecr.io/microsoft/azuretre/cnab-aci:$${IMAGE_TAG}" ./CNAB_container/
 
 push-api-image:
 	echo -e "\n\e[34m»»» 🧩 \e[96mPushing Images\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& sudo az acr login -n $${ACR_NAME} \
-	&& sudo docker push "$${ACR_NAME}.azurecr.io/microsoft/azuretre/management-api:$${IMAGE_TAG}"
+	&& az acr login -n $${ACR_NAME} \
+	&& docker push "$${ACR_NAME}.azurecr.io/microsoft/azuretre/management-api:$${IMAGE_TAG}"
 
 push-cnab-image:
 	echo -e "\n\e[34m»»» 🧩 \e[96mPushing Images\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& sudo az acr login -n $${ACR_NAME} \
-	&& sudo docker push "$${ACR_NAME}.azurecr.io/microsoft/azuretre/cnab-aci:$${IMAGE_TAG}"
+	&& az acr login -n $${ACR_NAME} \
+	&& docker push "$${ACR_NAME}.azurecr.io/microsoft/azuretre/cnab-aci:$${IMAGE_TAG}"
 
 tre-deploy:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDeploying TRE\e[0m..." \
@@ -90,6 +92,7 @@ terraform-destroy:
 	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ${DIR}/.env \
 	&& cd ${DIR}/terraform/ && ./destroy.sh 
+
 
 porter-build:
 	echo -e "\n\e[34m»»» 🧩 \e[96mBuilding ${DIR} bundle\e[0m..." \

@@ -1,7 +1,8 @@
 name: tre-service-azureml
-version: 0.1.0
+version: 0.1.2
 description: "An Azure TRE service for Azure Machine Learning"
 registry: azuretre
+dockerfile: Dockerfile.tmpl
 
 credentials:
   - name: azure_tenant_id
@@ -30,6 +31,10 @@ parameters:
     default: "tfstate"
     description: "The name of the Terraform state storage container"
 
+outputs:
+  - name: azureml_workspace_name
+    type: string
+
 mixins:
   - exec
   - terraform:
@@ -37,26 +42,31 @@ mixins:
 
 install:
   - terraform:
-      description: "Deploy workspace"
+      description: "Deploy Azure ML Service"
       vars:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
+        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
+        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
+        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.workspace_id }}-svc-azureml"
+      outputs:
+      - name: azureml_workspace_name
 
 upgrade:
   - exec:
-      description: "Upgrade workspace"
+      description: "Upgrade Azure ML Service"
       command: echo
       arguments:
         - "This workspace does not implement upgrade action"
 
 uninstall:
   - terraform:
-      description: "Tear down workspace"
+      description: "Deploy Azure ML Service"
       vars:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"

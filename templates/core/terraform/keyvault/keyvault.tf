@@ -20,13 +20,14 @@ resource "azurerm_key_vault" "kv" {
       "Get", "List", "Set", "Delete"
     ]
 
-    certificate_permissions = [ "Get", "List", "Update", "Create", "Import", "Delete" ]
+    certificate_permissions = [ 
+      "Get", "List", "Update", "Create", "Import", "Delete"
+    ]
 
     storage_permissions = [
       "Get", "List", "Update", "Delete"
     ]
   }
-
 }
 
 resource "azurerm_key_vault_access_policy" "managed_identity" {
