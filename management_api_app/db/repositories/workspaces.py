@@ -38,12 +38,11 @@ class WorkspaceRepository(BaseRepository):
 
     @staticmethod
     def _system_provided_parameters() -> List[str]:
-        return ["acr_name", 
-                "porter_driver", 
-                "tfstate_container_name", 
-                "tfstate_resource_group_name", 
-                "tfstate_storage_account_name"
-        ]
+        return ["acr_name",
+                "porter_driver",
+                "tfstate_container_name",
+                "tfstate_resource_group_name",
+                "tfstate_storage_account_name"]
 
     @staticmethod
     def _check_that_all_required_parameters_exist(template_parameters: List[Parameter], supplied_request_parameters: dict, errors: dict):
