@@ -21,6 +21,7 @@ STATE_STORE_ENDPOINT_NOT_RESPONDING = "State Store endpoint is not responding"
 UNSPECIFIED_ERROR = "Unspecified error"
 
 # Error strings
+INVALID_AUTH_PROVIDER = "Invalid authentication provider"
 UNABLE_TO_REPLACE_CURRENT_TEMPLATE = "Unable to replace the existing 'current' template with this name"
 UNABLE_TO_PROCESS_REQUEST = "Unable to process request"
 WORKSPACE_DOES_NOT_EXIST = "Workspace does not exist"

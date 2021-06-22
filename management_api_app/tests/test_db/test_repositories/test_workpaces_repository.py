@@ -8,7 +8,7 @@ from db.errors import EntityDoesNotExist, WorkspaceValidationError
 from models.domain.resource import Deployment, Status, ResourceType
 from models.domain.resource_template import ResourceTemplate, Parameter
 from models.domain.workspace import Workspace
-from models.schemas.workspace import WorkspaceInCreate
+from models.schemas.workspace import WorkspaceInCreate, AuthenticationConfiguration, AuthProvider
 
 
 @patch('azure.cosmos.CosmosClient')
@@ -52,14 +52,19 @@ def test_get_workspace_by_id_throws_entity_does_not_exist_if_item_does_not_exist
 
 @patch('db.repositories.workspaces.WorkspaceRepository._get_current_workspace_template')
 @patch('azure.cosmos.CosmosClient')
-@patch("api.routes.workspaces.WorkspaceRepository._validate_workspace_parameters")
+@patch("db.repositories.workspaces.WorkspaceRepository._validate_workspace_parameters")
 def test_create_workspace_item_creates_a_workspace_with_the_right_values(validate_workspace_parameters_mock, cosmos_client_mock, _get_current_workspace_template_mock):
     workspace_repo = db.repositories.workspaces.WorkspaceRepository(cosmos_client_mock)
 
     workspace_type = "vanilla-tre"
     display_name = "my workspace"
     description = "some description"
-    workspace_to_create = WorkspaceInCreate(workspaceType=workspace_type, displayName=display_name, description=description)
+    workspace_to_create = WorkspaceInCreate(
+        workspaceType=workspace_type,
+        displayName=display_name,
+        description=description,
+        authConfig=AuthenticationConfiguration(provider=AuthProvider.AAD, data={})
+    )
     validate_workspace_parameters_mock.return_value = None
     _get_current_workspace_template_mock.return_value = ResourceTemplate(
         id="a7a7a7bd-7f4e-4a4e-b970-dc86a6b31dfb",
@@ -68,9 +73,10 @@ def test_create_workspace_item_creates_a_workspace_with_the_right_values(validat
         version="0.1.0",
         resourceType=ResourceType.Workspace,
         parameters=[],
-        current=False)
+        current=False
+    )
 
-    workspace = workspace_repo.create_workspace_item(workspace_to_create)
+    workspace = workspace_repo.create_workspace_item(workspace_to_create, {})
 
     assert workspace.displayName == display_name
     assert workspace.description == description
@@ -88,11 +94,16 @@ def test_create_workspace_item_creates_a_workspace_with_the_right_values(validat
 def test_create_workspace_item_raises_value_error_if_template_is_invalid(cosmos_client_mock, _get_current_workspace_template_mock):
     workspace_repo = db.repositories.workspaces.WorkspaceRepository(cosmos_client_mock)
 
-    workspace_to_create = WorkspaceInCreate(workspaceType="vanilla-tre", displayName="my workspace", description="some description")
+    workspace_to_create = WorkspaceInCreate(
+        workspaceType="vanilla-tre",
+        displayName="my workspace",
+        description="some description",
+        authConfig=AuthenticationConfiguration(provider=AuthProvider.AAD, data={})
+    )
     _get_current_workspace_template_mock.side_effect = EntityDoesNotExist
 
     with pytest.raises(ValueError):
-        workspace_repo.create_workspace_item(workspace_to_create)
+        workspace_repo.create_workspace_item(workspace_to_create, {})
 
 
 @patch('azure.cosmos.CosmosClient')

@@ -103,7 +103,7 @@ class WorkspaceRepository(BaseRepository):
             raise EntityDoesNotExist
         return parse_obj_as(Workspace, workspaces[0])
 
-    def create_workspace_item(self, workspace_create: WorkspaceInCreate) -> Workspace:
+    def create_workspace_item(self, workspace_create: WorkspaceInCreate, auth_info: dict) -> Workspace:
         full_workspace_id = str(uuid.uuid4())
 
         try:
@@ -131,7 +131,8 @@ class WorkspaceRepository(BaseRepository):
             resourceTemplateName=workspace_create.workspaceType,
             resourceTemplateVersion=template_version,
             resourceTemplateParameters=resource_spec_parameters,
-            deployment=Deployment(status=Status.NotDeployed, message=strings.RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE)
+            deployment=Deployment(status=Status.NotDeployed, message=strings.RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE),
+            authInformation=auth_info
         )
 
         self._validate_workspace_parameters(current_template.parameters, workspace.resourceTemplateParameters)

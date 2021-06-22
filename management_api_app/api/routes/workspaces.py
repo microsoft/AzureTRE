@@ -3,6 +3,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
 
+from api.dependencies.authentication import extract_auth_information
 from api.dependencies.database import get_repository
 from api.dependencies.workspaces import get_workspace_by_workspace_id_from_path
 from db.errors import WorkspaceValidationError
@@ -24,8 +25,10 @@ async def retrieve_active_workspaces(workspace_repo: WorkspaceRepository = Depen
 
 @router.post("/workspaces", status_code=status.HTTP_202_ACCEPTED, response_model=WorkspaceIdInResponse, name=strings.API_CREATE_WORKSPACE)
 async def create_workspace(workspace_create: WorkspaceInCreate, workspace_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository))) -> WorkspaceIdInResponse:
+    auth_information = extract_auth_information(workspace_create.authConfig)
+
     try:
-        workspace = workspace_repo.create_workspace_item(workspace_create)
+        workspace = workspace_repo.create_workspace_item(workspace_create, auth_information)
     except WorkspaceValidationError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.errors)
     except ValueError as e:
