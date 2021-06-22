@@ -5,11 +5,6 @@ resource "azurerm_storage_account" "stg" {
   account_tier             = "Standard"
   account_replication_type = "LRS"
 
-  network_rules {
-      bypass         = ["AzureServices"]
-      default_action = "Deny"
-  }
-
 }
 
 resource "azurerm_storage_share" "storage_state_path" {
