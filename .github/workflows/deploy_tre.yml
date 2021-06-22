@@ -5,7 +5,7 @@ on:
     # 1am each night https://crontab.guru/#0_1_*_*_*
     - cron: "0 1 * * *"
   push:
-    branches: [ develop, main, marrobi/issue331 ]
+    branches: [ develop, main ]
   workflow_dispatch:
 
 jobs:
