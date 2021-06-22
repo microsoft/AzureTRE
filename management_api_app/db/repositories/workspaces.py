@@ -53,10 +53,10 @@ class WorkspaceRepository(BaseRepository):
         for parameter in required_parameters:
             if parameter.name not in supplied_request_parameters:
                 missing_required.append(parameter.name)
-        
+
         if missing_required:
             errors[strings.MISSING_REQUIRED_PARAMETERS] = missing_required
-        
+
         pass
 
     @staticmethod
@@ -75,18 +75,18 @@ class WorkspaceRepository(BaseRepository):
 
         if extra_parameters:
             errors[strings.INVALID_EXTRA_PARAMETER] = extra_parameters
-        
+
         if wrong_type:
             errors[strings.PARAMETERS_WITH_WRONG_TYPE] = wrong_type
 
         pass
-       
+
     @staticmethod
     def _validate_workspace_parameters(template_parameters: List[Parameter], supplied_request_parameters: dict):
         errors = {}
 
         WorkspaceRepository._check_that_all_required_parameters_exist(template_parameters, supplied_request_parameters, errors)
-        
+
         WorkspaceRepository._validate_given_parameters(template_parameters, supplied_request_parameters, errors)
 
         if errors:
