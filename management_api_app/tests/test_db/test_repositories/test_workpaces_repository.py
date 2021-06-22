@@ -119,7 +119,9 @@ def test_validate_workspace_parameters_no_parameters(cosmos_client_mock):
     template_parameters = []
     supplied_request_parameters = {}
 
-    workspace_repo._validate_workspace_parameters(template_parameters, supplied_request_parameters)
+    errors = workspace_repo._validate_workspace_parameters(template_parameters, supplied_request_parameters)
+
+    assert errors == None
 
 
 @patch('azure.cosmos.CosmosClient')
@@ -129,7 +131,9 @@ def test_validate_workspace_parameters_valid_parameters(cosmos_client_mock):
     template_parameters = [Parameter(name="a", type="string", default="a", applyto="a", description="b", required=True)]
     supplied_request_parameters = {"a": "b"}
 
-    workspace_repo._validate_workspace_parameters(template_parameters, supplied_request_parameters)
+    errors = workspace_repo._validate_workspace_parameters(template_parameters, supplied_request_parameters)
+
+    assert errors == None
 
 
 @patch('azure.cosmos.CosmosClient')
