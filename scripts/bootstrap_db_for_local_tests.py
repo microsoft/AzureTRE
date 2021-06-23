@@ -15,6 +15,7 @@ STATE_STORE_DATABASE = "AzureTRE"
 STATE_STORE_RESOURCES_CONTAINER = "Resources"
 DEBUG: bool = config("DEBUG", cast=bool, default=False)
 
+
 def create_workspace_resource(resource_id: str):
     return {
         "id": resource_id,
