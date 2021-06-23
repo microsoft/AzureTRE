@@ -1,0 +1,36 @@
+FROM debian:latest
+
+RUN apt-get update -y && \
+    apt-get upgrade -y && \
+    apt-get install -y curl jq ca-certificates
+
+ARG USER=porter
+RUN useradd -ms /bin/bash $USER
+USER $USER
+
+# Install Porter & Azure CNAB driver.
+ENV ACC_CLOUD='true'
+RUN curl https://raw.githubusercontent.com/deislabs/cnab-azure-driver/main/install-in-azure-cloudshell.sh | /bin/bash
+ENV ACC_CLOUD=
+ENV PATH="/home/$USER/.porter:/home/$USER/.cnab-azure-driver:$PATH"
+
+USER root
+
+ARG BUNDLE_DIR
+
+# This is a template Dockerfile for the bundle's invocation image
+# You can customize it to use different base images, install tools and copy configuration files.
+#
+# Porter will use it as a template and append lines to it for the mixins
+# and to set the CMD appropriately for the CNAB specification.
+#
+# Add the following line to porter.yaml to instruct Porter to use this template
+# dockerfile: Dockerfile.tmpl
+
+# You can control where the mixin's Dockerfile lines are inserted into this file by moving "# PORTER_MIXINS" line
+# another location in this file. If you remove that line, the mixins generated content is appended to this file.
+# PORTER_MIXINS
+
+# Use the BUNDLE_DIR build argument to copy files into the bundle
+
+COPY . $BUNDLE_DIR

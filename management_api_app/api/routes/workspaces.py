@@ -5,6 +5,7 @@ from starlette import status
 
 from api.dependencies.database import get_repository
 from api.dependencies.workspaces import get_workspace_by_workspace_id_from_path
+from db.errors import WorkspaceValidationError
 from db.repositories.workspaces import WorkspaceRepository
 from models.domain.workspace import Workspace
 from models.schemas.workspace import WorkspaceInCreate, WorkspaceIdInResponse, WorkspacesInList, WorkspaceInResponse
@@ -25,6 +26,8 @@ async def retrieve_active_workspaces(workspace_repo: WorkspaceRepository = Depen
 async def create_workspace(workspace_create: WorkspaceInCreate, workspace_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository))) -> WorkspaceIdInResponse:
     try:
         workspace = workspace_repo.create_workspace_item(workspace_create)
+    except WorkspaceValidationError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.errors)
     except ValueError as e:
         logging.error(f"Failed create workspace model instance: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

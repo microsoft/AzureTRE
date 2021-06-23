@@ -4,6 +4,7 @@ resource "azurerm_storage_account" "stg" {
   location                 = var.location
   account_tier             = "Standard"
   account_replication_type = "LRS"
+
 }
 
 resource "azurerm_storage_share" "storage_state_path" {
