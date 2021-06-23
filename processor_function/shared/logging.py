@@ -17,7 +17,7 @@ def initialize_logging(logging_level: int, correlation_id: str) -> logging.Logge
     :returns: A newly created logger adapter.
     """
     logger = logging.getLogger()
-    logger.addHandler(logging.StreamHandler()) # For logging into console
+    logger.addHandler(logging.StreamHandler())  # For logging into console
     app_insights_instrumentation_key = os.getenv("APP_INSIGHTS_INSTRUMENTATION_KEY")
 
     try:
@@ -33,7 +33,7 @@ def initialize_logging(logging_level: int, correlation_id: str) -> logging.Logge
     extra = None
 
     if correlation_id:
-        extra={'traceId':correlation_id}
+        extra = {'traceId': correlation_id}
 
     adapter = logging.LoggerAdapter(logger, extra)
     adapter.debug(f"Logger adapter initialized with extra: {extra}")
