@@ -99,7 +99,7 @@ porter-build:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& . ./devops/scripts/load_env.sh ${DIR}/.env \
-	&& cd ${DIR} && porter build --debug
+	&& cd ${DIR} && porter build --debug 
 
 porter-install:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDeploying ${DIR} with Porter\e[0m..." \
@@ -107,7 +107,7 @@ porter-install:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& . ./devops/scripts/load_env.sh ${DIR}/.env \
-	&& cd ${DIR} && porter install -p ./parameters.json --cred ./azure.json --param porter_driver=docker  --allow-docker-host-access --debug
+	&& cd ${DIR} && porter install -p ./parameters.json --cred ./azure.json --allow-docker-host-access --debug
 
 porter-uninstall:
 	echo -e "\n\e[34m»»» 🧩 \e[96mUninstalling ${DIR} with Porter\e[0m..." \
