@@ -4,6 +4,7 @@ import requests
 from msal import ConfidentialClientApplication
 
 from core import config
+from resources import strings
 from services.access_service import AccessService, AuthConfigValidationError
 
 
@@ -17,11 +18,10 @@ class AADAccessService(AccessService):
             logging.info('No suitable token exists in cache, getting a new one from AAD')
             result = app.acquire_token_for_client(scopes=scopes)
         if "access_token" not in result:
-            # TODO: Better error message + strings + should this be another type of error?
             logging.debug(result.get('error'))
             logging.debug(result.get('error_description'))
             logging.debug(result.get('correlation_id'))
-            raise AuthConfigValidationError("Can't get access token")
+            raise Exception(result.get('error'))
         return result["access_token"]
 
     @staticmethod
@@ -42,7 +42,7 @@ class AADAccessService(AccessService):
         graph_data = self._get_app_sp_graph_data(app_id)
         if 'value' not in graph_data or len(graph_data['value']) == 0:
             logging.debug(graph_data)
-            raise AuthConfigValidationError(f"Unable to get app info for app: {app_id}")
+            raise AuthConfigValidationError(f"{strings.ACCESS_UNABLE_TO_GET_INFO_FOR_APP} {app_id}")
 
         app_info = graph_data['value'][0]
         sp_id = app_info['id']
@@ -55,13 +55,13 @@ class AADAccessService(AccessService):
 
     def extract_workspace_auth_information(self, data: dict) -> dict:
         if "app_id" not in data:
-            raise AuthConfigValidationError("Please supply the app_id for the AAD application")
+            raise AuthConfigValidationError(strings.ACCESS_PLEASE_SUPPLY_APP_ID)
 
         auth_info = self._get_app_auth_info(data["app_id"])
         print(auth_info)
 
         for role in ['TREOwner', 'TREResearcher']:
             if role not in auth_info['roles']:
-                raise AuthConfigValidationError(f"App is missing the role {role}")
+                raise AuthConfigValidationError(f"{strings.ACCESS_APP_IS_MISSING_ROLE} {role}")
 
         return auth_info
