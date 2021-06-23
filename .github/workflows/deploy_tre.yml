@@ -67,6 +67,8 @@ jobs:
           export TF_VAR_management_api_image_tag=$IMAGE_TAG
           export TF_VAR_tre_id=$TRE_ID
           export TF_VAR_arm_subscription_id=$ARM_SUBSCRIPTION_ID
+          export TF_VAR_arm_client_id=$ARM_CLIENT_ID
+          export TF_VAR_arm_client_secret=$ARM_CLIENT_SECRET
           export TF_VAR_mgmt_storage_account_name=$MGMT_STORAGE_ACCOUNT_NAME
           export TF_VAR_mgmt_resource_group_name=$MGMT_RESOURCE_GROUP_NAME
           export TF_VAR_terraform_state_container_name=$TERRAFORM_STATE_CONTAINER_NAME
@@ -79,6 +81,7 @@ jobs:
 
   deploy_processor_function:
     name: Deploy Processor Function
+    needs: deploy_tre
     runs-on: ubuntu-latest
     environment: Dev
     env: 
