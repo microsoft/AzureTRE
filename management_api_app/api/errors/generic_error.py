@@ -1,4 +1,5 @@
 import logging
+import traceback
 
 from starlette.requests import Request
 from starlette.responses import PlainTextResponse
@@ -11,5 +12,5 @@ async def generic_error_handler(_: Request, exception: Exception) -> PlainTextRe
     logging.debug("=====================================")
     logging.exception(exception)
     logging.debug("=====================================")
-    error_string = exception if config.DEBUG else strings.UNABLE_TO_PROCESS_REQUEST
+    error_string = traceback.format_exc() if config.DEBUG else strings.UNABLE_TO_PROCESS_REQUEST
     return PlainTextResponse(error_string, status_code=500)
