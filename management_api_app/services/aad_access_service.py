@@ -60,7 +60,7 @@ class AADAccessService(AccessService):
         auth_info = self._get_app_auth_info(data["app_id"])
         print(auth_info)
 
-        for role in ['TREOwner', 'TREResearcher']:
+        for role in ['WorkspaceOwner', 'WorkspaceResearcher']:
             if role not in auth_info['roles']:
                 raise AuthConfigValidationError(f"{strings.ACCESS_APP_IS_MISSING_ROLE} {role}")
 
