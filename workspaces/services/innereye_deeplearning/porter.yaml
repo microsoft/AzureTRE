@@ -1,7 +1,8 @@
-name: tre-workspace-vanilla
+name: tre-service-innereye-deeplearning
 version: 0.1.0
-description: "A vanilla Azure TRE workspace"
+description: "An Azure TRE service for InnerEye Deep Learning"
 registry: azuretre
+dockerfile: Dockerfile.tmpl
 
 credentials:
   - name: azure_tenant_id
@@ -14,31 +15,25 @@ credentials:
     env: ARM_CLIENT_SECRET
 
 parameters:
-  - name: tre_id
-    type: string
-    description: "The ID of the parent TRE instance e.g., mytre-dev-3142"
   - name: workspace_id
     type: string
-    description: "Unique 4-character long, alphanumeric workspace ID"
-    minLength: 4
-    maxLength: 4
-  - name: azure_location
+  - name: tre_id
     type: string
-    description: "Azure location (region) to deploy to"
-  - name: address_space
+  - name: azureml_workspace_name
     type: string
-    description: "VNet address space for the workspace services"
-    default: "10.2.1.0/24"
   - name: tfstate_resource_group_name
     type: string
     description: "Resource group containing the Terraform state storage account"
+    env: MGMT_RESOURCE_GROUP_NAME
   - name: tfstate_storage_account_name
     type: string
     description: "The name of the Terraform state storage account"
+    env: MGMT_STORAGE_ACCOUNT_NAME
   - name: tfstate_container_name
     type: string
     default: "tfstate"
     description: "The name of the Terraform state storage container"
+    env: TERRAFORM_STATE_CONTAINER_NAME
 
 mixins:
   - exec
@@ -48,17 +43,18 @@ mixins:
 install:
   - terraform:
       description: "Deploy workspace"
-      input: false
       vars:
-        tre_id: "{{ bundle.parameters.tre_id }}"
         workspace_id: "{{ bundle.parameters.workspace_id }}"
-        location: "{{ bundle.parameters.azure_location }}"
-        address_space: "{{ bundle.parameters.address_space }}"
+        tre_id: "{{ bundle.parameters.tre_id }}"
+        azureml_workspace_name: "{{ bundle.parameters.azureml_workspace_name }}"
+        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
+        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
+        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.workspace_id }}"
+        key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.workspace_id }}-svc-innereye_deeplearning"
 
 upgrade:
   - exec:
@@ -70,14 +66,13 @@ upgrade:
 uninstall:
   - terraform:
       description: "Tear down workspace"
-      input: false
       vars:
-        tre_id: "{{ bundle.parameters.tre_id }}"
         workspace_id: "{{ bundle.parameters.workspace_id }}"
-        location: "{{ bundle.parameters.azure_location }}"
-        address_space: "{{ bundle.parameters.address_space }}"
+        tre_id: "{{ bundle.parameters.tre_id }}"
+        azureml_workspace_name: "{{ bundle.parameters.azureml_workspace_name }}"
+
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.workspace_id }}"
+        key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.workspace_id }}-svc-innereye_deeplearning"

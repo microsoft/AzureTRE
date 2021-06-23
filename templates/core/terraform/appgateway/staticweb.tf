@@ -16,6 +16,11 @@ resource "azurerm_storage_account" "staticweb" {
     tags = {
         tre_id = var.tre_id
     }
+
+    network_rules {
+      bypass         = ["AzureServices"]
+      default_action = "Deny"
+    }
 }
 
 # Assign the identity deploying data contibutor rights.

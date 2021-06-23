@@ -13,6 +13,7 @@ resource "azurerm_subnet" "services" {
   address_prefixes     = [local.services_subnet_address_prefix]
   # notice that private endpoints do not adhere to NSG rules
   enforce_private_link_endpoint_network_policies = true
+  enforce_private_link_service_network_policies = true
 }
 
 resource "azurerm_subnet" "webapps" {
@@ -22,6 +23,7 @@ resource "azurerm_subnet" "webapps" {
   address_prefixes     = [local.webapps_subnet_address_prefix]
   # notice that private endpoints do not adhere to NSG rules
   enforce_private_link_endpoint_network_policies = true
+  enforce_private_link_service_network_policies = true
 
   delegation {
     name = "delegation"
