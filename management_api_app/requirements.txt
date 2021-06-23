@@ -1,4 +1,4 @@
-# api
+# API
 fastapi[all]==0.65.2
 fastapi-utils==0.2.1
 uvicorn[standard]==0.13.0
@@ -9,4 +9,5 @@ azure-cosmos==4.2.0
 azure-identity==1.6.0
 azure-servicebus==7.2.0
 opencensus-ext-azure==1.0.8
+opencensus-ext-logging==0.1.0
 msal==1.12.0

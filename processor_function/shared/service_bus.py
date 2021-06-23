@@ -25,4 +25,4 @@ class ServiceBus:
             sender = service_bus_client.get_queue_sender(queue_name=os.environ["SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE"])
 
             with sender:
-                sender.send_messages(ServiceBusMessage(resource_request_message))
+                sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=id))
