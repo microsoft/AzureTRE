@@ -44,3 +44,27 @@ variable "docker_registry_password" {
   description = "Docker registry password"
   sensitive   = true
 }
+
+variable "swagger_ui_client_id" {
+  type        = string
+  description = "The client id (app id) of the registration in Azure AD for the Swagger UI"
+  sensitive   = true
+}
+
+variable "aad_tenant_id" {
+  type        = string
+  description = "The tenant id of the Azure AD used for authentication."
+  sensitive   = true
+}
+
+variable "api_client_id" {
+  type        = string
+  description = "The client id (app id) of the registration in Azure AD for the API."
+  sensitive   = true
+}
+
+variable "api_client_secret" {
+  type        = string
+  description = "A client secret use by the API to authenticate with Azure AD for access to Microsoft Graph."
+  sensitive   = true
+}

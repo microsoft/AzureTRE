@@ -1,17 +1,11 @@
 {
 	"name": "AzureTRE",
-	"build": {
-		"dockerfile": "Dockerfile",
-		"context": "..",
-		"args": {
-			"VARIANT": "3.8",
-			"INSTALL_NODE": "false",
-			"NODE_VERSION": "lts/*"
-		}
-	},
+	"workspaceFolder": "/workspaces/tre",
+	"dockerComposeFile": "docker-compose.yml",
+	"service": "dev",
 	// Set *default* container specific settings.json values on container create.
 	"settings": {
-		"terminal.integrated.defaultProfile.linux": "/bin/bash",
+		"terminal.integrated.defaultProfile.linux": "bash",
 		"python.pythonPath": "/usr/local/bin/python",
 		"python.linting.enabled": true,
 		"python.linting.pylintEnabled": true,
@@ -23,7 +17,27 @@
 		"python.linting.mypyPath": "/usr/local/py-utils/bin/mypy",
 		"python.linting.pycodestylePath": "/usr/local/py-utils/bin/pycodestyle",
 		"python.linting.pydocstylePath": "/usr/local/py-utils/bin/pydocstyle",
-		"python.linting.pylintPath": "/usr/local/py-utils/bin/pylint"
+		"python.linting.pylintPath": "/usr/local/py-utils/bin/pylint",
+		"launch": {
+			"configurations": [
+				{
+					"name": "Management API",
+					"type": "python",
+					"request": "launch",
+					"module": "uvicorn",
+					"cwd": "${workspaceFolder}/management_api_app",
+					"args": [
+						"main:app",
+						"--reload"
+					],
+					"jinja": true,
+					"env": {
+						"STATE_STORE_ENDPOINT": "https://host.docker.internal:8081"
+					}
+				},
+			],
+			"compounds": []
+		}
 	},
 	// Add the IDs of extensions you want installed when the container is created.
 	"extensions": [
@@ -34,15 +48,6 @@
 		"davidanson.vscode-markdownlint"
 	],
 	"forwardPorts": [],
-	"runArgs": [
-		"--name",
-		"tre"
-	],
 	// If .bash_history file doesn't exist, docker will create it as root and the vscode user won't have permission, so we need to create it first.
-	"initializeCommand": "touch .bash_history",
-	"mounts": [
-		"source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
-		"source=${localEnv:HOME}/.azure,target=/home/vscode/.azure,type=bind,consistency=cached",
-		"source=${localWorkspaceFolder}/.bash_history,target=/home/vscode/.bash_history,type=bind"
-	]
+	"initializeCommand": "touch .bash_history"
 }

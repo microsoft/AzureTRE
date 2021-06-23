@@ -13,7 +13,7 @@ STATE_STORE_ENDPOINT: str = config("STATE_STORE_ENDPOINT", default="")  # cosmos
 STATE_STORE_KEY: str = config("STATE_STORE_KEY", default="")  # cosmos db access key
 STATE_STORE_DATABASE = "AzureTRE"
 STATE_STORE_RESOURCES_CONTAINER = "Resources"
-
+DEBUG: bool = config("DEBUG", cast=bool, default=False)
 
 def create_workspace_resource(resource_id: str):
     return {
@@ -36,7 +36,7 @@ def create_workspace_resource(resource_id: str):
 
 
 def main():
-    client = CosmosClient(STATE_STORE_ENDPOINT, STATE_STORE_KEY)
+    client = CosmosClient(STATE_STORE_ENDPOINT, STATE_STORE_KEY, connection_verify=not DEBUG)
     database = client.create_database_if_not_exists(STATE_STORE_DATABASE)
 
     for container in database.list_containers():

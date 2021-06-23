@@ -39,6 +39,10 @@ jobs:
         ADDRESS_SPACE: ${{ secrets.ADDRESS_SPACE }}
         AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
         AZURE_CONTRIBUTOR_SP: ${{ secrets.AZURE_CONTRIBUTOR_SP }}
+        TF_VAR_swagger_ui_client_id: '${{ secrets.SWAGGER_UI_CLIENT_ID }}'
+        TF_VAR_aad_tenant_id: '${{ secrets.AAD_TENANT_ID }}'
+        TF_VAR_api_client_id: '${{ secrets.API_CLIENT_ID }}'
+        TF_VAR_api_client_secret: '${{ secrets.API_CLIENT_SECRET }}'
       run: |
           export env
           export USE_ENV_VARS_NOT_FILES=true

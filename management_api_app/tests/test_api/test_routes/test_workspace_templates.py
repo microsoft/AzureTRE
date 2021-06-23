@@ -50,6 +50,8 @@ async def test_workspace_templates_returns_template_names(get_workspace_template
     response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_TEMPLATES))
 
     actual_template_names = response.json()["templateNames"]
+
+    assert response.status_code == status.HTTP_200_OK
     assert len(actual_template_names) == len(expected_template_names)
     for name in expected_template_names:
         assert name in actual_template_names
