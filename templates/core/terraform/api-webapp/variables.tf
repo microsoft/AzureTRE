@@ -17,3 +17,7 @@ variable "state_store_key" {}
 variable "service_bus_resource_request_queue" {}
 variable "service_bus_deployment_status_update_queue" {}
 variable "managed_identity" {}
+variable "swagger_ui_client_id" {}
+variable "aad_tenant_id" {}
+variable "api_client_id" {}
+variable "api_client_secret" {}

@@ -86,6 +86,10 @@ module "api-webapp" {
   service_bus_resource_request_queue         = module.servicebus.workspacequeue
   service_bus_deployment_status_update_queue = module.servicebus.service_bus_deployment_status_update_queue
   managed_identity                           = module.identity.managed_identity
+  swagger_ui_client_id                       = var.swagger_ui_client_id
+  aad_tenant_id                              = var.aad_tenant_id
+  api_client_id                              = var.api_client_id
+  api_client_secret                          = var.api_client_secret
 }
 
 module "identity" {
