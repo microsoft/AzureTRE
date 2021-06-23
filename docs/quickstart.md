@@ -105,6 +105,7 @@ The below environment variables have to be set when deploying from a CD pipeline
 | `ARM_TENANT_ID` | *Optional for manual deployment.* The Azure tenant ID. |
 | `ARM_CLIENT_ID` | *Optional for manual deployment.* The client (app) ID of a service principal with "Owner" role to the subscription. Used by the GitHub Actions workflows to deploy TRE. |
 | `ARM_CLIENT_SECRET` | *Optional for manual deployment.* The client secret (app password) of a service principal with "Owner" role to the subscription. Used by the GitHub Actions workflows to deploy TRE. |
+| `PORTER_DRIVER` | *Optional for manual deployment.* Valid values are `docker` or `azure`. If deploying manually use `docker` if using Azure Container Instances and the [Azure CNAB Driver](https://github.com/deislabs/cnab-azure-driver) use `azure` |
 
 ### Bootstrap the back-end state
 

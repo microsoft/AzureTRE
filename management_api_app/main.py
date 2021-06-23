@@ -74,7 +74,7 @@ def initialize_logging(logging_level: int):
     try:
         logger.addHandler(AzureLogHandler(connection_string=f"InstrumentationKey={config.APP_INSIGHTS_INSTRUMENTATION_KEY}"))
     except ValueError:
-        logger.error("Application Insights instrumentation key missing")
+        logger.error("Application Insights instrumentation key missing or invalid")
 
     logging.basicConfig(level=logging_level)
     logger.setLevel(logging_level)

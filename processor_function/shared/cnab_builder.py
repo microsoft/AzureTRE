@@ -21,13 +21,14 @@ from resources import strings
 
 
 class CNABBuilder:
-    def __init__(self, resource_request_message: dict):
+    def __init__(self, resource_request_message: dict, logger_adapter: logging.LoggerAdapter):
         self._resource_group_name = os.environ["RESOURCE_GROUP_NAME"]
         self._subscription_id = os.environ["CNAB_AZURE_SUBSCRIPTION_ID"]
         self._message = resource_request_message
         self._container_group_name = ""
         self._location = ""
         self._id = ""
+        self._logger = logger_adapter
 
     def _build_porter_command(self) -> List[str]:
         porter_parameters = ""
@@ -112,15 +113,15 @@ class CNABBuilder:
         logs = aci_client.containers.list_logs(self._resource_group_name, self._container_group_name, self._container_group_name)
         if "Error" in logs.content:
             service_bus.send_status_update_message(self._id, strings.RESOURCE_STATUS_DEPLOYMENT_FAILED, logs.content)
-            logging.error(logs.content.split("Error", 1)[1])
+            self._logger.error(logs.content.split("Error", 1)[1])
             return True
         elif "Success" in logs.content:
             service_bus.send_status_update_message(self._id, strings.RESOURCE_STATUS_DEPLOYED, logs.content)
-            logging.info(logs.content.split("Success", 1)[1])
+            self._logger.info(logs.content.split("Success", 1)[1])
             return True
         else:
             service_bus.send_status_update_message(self._id, strings.RESOURCE_STATUS_DEPLOYING, strings.WAITING_FOR_RUNNER)
-            logging.info(strings.WAITING_FOR_RUNNER)
+            self._logger.info(strings.WAITING_FOR_RUNNER)
             return False
 
     def deploy_aci(self):
@@ -140,7 +141,7 @@ class CNABBuilder:
                                                               group)
 
         while not result.done():
-            logging.info(strings.RESOURCE_STATUS_DEPLOYING + self._container_group_name + " to " + self._resource_group_name)
+            self._logger.info(strings.RESOURCE_STATUS_DEPLOYING + self._container_group_name + " to " + self._resource_group_name)
             time.sleep(1)
 
         service_bus.send_status_update_message(self._id, strings.RESOURCE_STATUS_DEPLOYING, "ACI container deployed " + self._container_group_name)
@@ -148,4 +149,4 @@ class CNABBuilder:
         while not self._aci_run_completed(aci_client, service_bus):
             time.sleep(10)
 
-        logging.info(strings.MESSAGE_PROCESSED)
+        self._logger.info(strings.MESSAGE_PROCESSED)

@@ -51,6 +51,10 @@ parameters:
     type: string
     description: "The porter driver - azure or docker"
 
+outputs:
+  - name: azureml_workspace_name
+    type: string
+
 mixins:
   - exec
   - docker
@@ -81,12 +85,26 @@ install:
       command: porter
       arguments:
         - install
+        - service-azureml
       flags:
         d: "{{ bundle.parameters.porter_driver }}"
-        reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-service-azureml:v0.1.0"
+        reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-service-azureml:v0.1.2"
         cred: ./azure.json
         parameter-set: ./parameters_service_azureml.json
         debug:
+  - exec:
+      description: "Get Azure ML Service Outputs"
+      command: porter
+      arguments:
+        - installations
+        - output
+        - show
+        - azureml_workspace_name
+      flags:
+        i: service-azureml
+      outputs:
+        - name: azureml_workspace_name
+          regex: (.*)
   - exec:
       description: "Install Dev Test Labs Virtual Desktop Service"
       command: porter
@@ -127,7 +145,6 @@ uninstall:
         reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-service-devtestlabs:v0.1.0"
         cred: ./azure.json
         parameter-set: ./parameters_service_devtestlabs.json
-        debug:
   - exec:
         description: "Uninstall Azure ML service"
         command: porter
@@ -135,10 +152,10 @@ uninstall:
           - uninstall
         flags:
           d: "{{ bundle.parameters.porter_driver }}"
-          reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-service-azureml:v0.1.0"
+          reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-service-azureml:v0.1.2"
           cred: ./azure.json
           parameter-set: ./parameters.json
-          debug:
+
   - exec:
       description: "Uninstall vanilla workspace"
       command: porter
@@ -149,4 +166,3 @@ uninstall:
         reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-workspace-vanilla:v0.1.0"
         cred: ./azure.json
         parameter-set: ./parameters_workspace_vanilla.json
-        debug:

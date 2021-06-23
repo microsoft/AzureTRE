@@ -6,11 +6,12 @@ from starlette import status
 from api.dependencies.database import get_repository
 from api.dependencies.workspaces import get_workspace_by_workspace_id_from_path
 from api.dependencies.authentication import get_current_user, get_current_admin_user
+from db.errors import WorkspaceValidationError
 from db.repositories.workspaces import WorkspaceRepository
 from models.domain.workspace import Workspace
 from models.schemas.workspace import WorkspaceInCreate, WorkspaceIdInResponse, WorkspacesInList, WorkspaceInResponse
 from resources import strings
-from service_bus.service_bus import ServiceBus
+from service_bus.resource_request_sender import send_resource_request_message
 
 
 router = APIRouter(dependencies=[Depends(get_current_user)])
@@ -32,21 +33,23 @@ async def create_workspace(
 ) -> WorkspaceIdInResponse:
     try:
         workspace = workspace_repo.create_workspace_item(workspace_create)
+    except WorkspaceValidationError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.errors)
     except ValueError as e:
+        logging.error(f"Failed create workspace model instance: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     try:
         workspace_repo.save_workspace(workspace)
     except Exception as e:
-        logging.debug(e)
+        logging.error(f"Failed save workspace instance in DB: {e}")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
 
     try:
-        service_bus = ServiceBus()
-        await service_bus.send_resource_request_message(workspace)
+        await send_resource_request_message(workspace)
     except Exception as e:
         # TODO: Rollback DB change, issue #154
-        logging.debug(e)
+        logging.error(f"Failed send workspace resource request message: {e}")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
 
     return WorkspaceIdInResponse(workspaceId=workspace.id)
