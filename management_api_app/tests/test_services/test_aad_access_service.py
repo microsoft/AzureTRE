@@ -11,14 +11,14 @@ def test_extract_workspace__raises_error_if_app_id_not_available():
         access_service.extract_workspace_auth_information(data={})
 
 
-@patch("services.aad_access_service.AADAccessService._get_app_auth_info", return_value={"roles": {"TREResearcher": "1234"}})
+@patch("services.aad_access_service.AADAccessService._get_app_auth_info", return_value={"roles": {"WorkspaceResearcher": "1234"}})
 def test_extract_workspace__raises_error_if_owner_not_in_roles(get_app_auth_info_mock):
     access_service = AADAccessService()
     with pytest.raises(AuthConfigValidationError):
         access_service.extract_workspace_auth_information(data={"app_id": "1234"})
 
 
-@patch("services.aad_access_service.AADAccessService._get_app_auth_info", return_value={"roles": {"TREOwner": "1234"}})
+@patch("services.aad_access_service.AADAccessService._get_app_auth_info", return_value={"roles": {"WorkspaceOwner": "1234"}})
 def test_extract_workspace__raises_error_if_researcher_not_in_roles(get_app_auth_info_mock):
     access_service = AADAccessService()
     with pytest.raises(AuthConfigValidationError):
@@ -39,15 +39,15 @@ def test_extract_workspace__returns_sp_id_and_roles(get_app_sp_graph_data_mock):
             {
                 'id': '12345',
                 'appRoles': [
-                    {'id': '1abc3', 'value': 'TREResearcher'},
-                    {'id': '1abc4', 'value': 'TREOwner'},
+                    {'id': '1abc3', 'value': 'WorkspaceResearcher'},
+                    {'id': '1abc4', 'value': 'WorkspaceOwner'},
                 ]
             }
         ]
     }
     expected_auth_info = {
         'sp_id': '12345',
-        'roles': {'TREResearcher': '1abc3', 'TREOwner': '1abc4'}
+        'roles': {'WorkspaceResearcher': '1abc3', 'WorkspaceOwner': '1abc4'}
     }
 
     access_service = AADAccessService()

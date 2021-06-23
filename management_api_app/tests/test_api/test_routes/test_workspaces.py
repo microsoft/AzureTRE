@@ -117,7 +117,7 @@ async def test_workspaces_post_creates_workspace(extract_auth_info_mock, create_
 async def test_workspaces_post_calls_db_and_service_bus(extract_auth_info_mock, validate_workspace_parameters_mock, create_workspace_item_mock, save_workspace_mock, send_resource_request_message_mock, service_bus_client_mock, app: FastAPI, client: AsyncClient):
     workspace_id = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
     validate_workspace_parameters_mock.return_value = None
-    service_bus_client_mock().get_queue_sender().send_messages = AsyncMock()
+    # service_bus_client_mock().get_queue_sender().send_messages = AsyncMock()
     create_workspace_item_mock.return_value = create_sample_workspace_object(workspace_id)
     input_data = create_sample_workspace_input_data()
 
