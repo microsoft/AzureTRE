@@ -1,5 +1,5 @@
 import pytest
-from mock import patch
+from mock import AsyncMock, patch
 
 from fastapi import FastAPI
 from httpx import AsyncClient
@@ -84,12 +84,13 @@ async def test_workspaces_id_get_returns_workspace_if_found(get_workspace_mock, 
     assert actual_resource["id"] == sample_workspace["id"]
 
 
-@patch("service_bus.service_bus.ServiceBus.send_resource_request_message")
+@patch('service_bus.resource_request_sender.ServiceBusClient')
+@patch("api.routes.workspaces.send_resource_request_message")
 @patch("api.routes.workspaces.WorkspaceRepository.save_workspace")
 @patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item")
-async def test_workspaces_post_creates_workspace(create_workspace_item_mock, save_workspace_mock, send_resource_request_message_mock, app: FastAPI, client: AsyncClient):
+async def test_workspaces_post_creates_workspace(create_workspace_item_mock, save_workspace_mock, send_resource_request_message_mock, service_bus_client_mock, app: FastAPI, client: AsyncClient):
+    service_bus_client_mock().get_queue_sender().send_messages = AsyncMock()
     workspace_id = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
-
     create_workspace_item_mock.return_value = create_sample_workspace_object(workspace_id)
     input_data = create_sample_workspace_input_data()
 
@@ -99,13 +100,15 @@ async def test_workspaces_post_creates_workspace(create_workspace_item_mock, sav
     assert response.json()["workspaceId"] == workspace_id
 
 
-@patch("service_bus.service_bus.ServiceBus.send_resource_request_message")
+@patch('service_bus.resource_request_sender.ServiceBusClient')
+@patch("api.routes.workspaces.send_resource_request_message")
 @patch("api.routes.workspaces.WorkspaceRepository.save_workspace")
 @patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item")
 @patch("api.routes.workspaces.WorkspaceRepository._validate_workspace_parameters")
-async def test_workspaces_post_calls_db_and_service_bus(validate_workspace_parameters_mock, create_workspace_item_mock, save_workspace_mock, send_resource_request_message_mock, app: FastAPI, client: AsyncClient):
+async def test_workspaces_post_calls_db_and_service_bus(validate_workspace_parameters_mock, create_workspace_item_mock, save_workspace_mock, send_resource_request_message_mock, service_bus_client_mock, app: FastAPI, client: AsyncClient):
     workspace_id = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
     validate_workspace_parameters_mock.return_value = None
+    service_bus_client_mock().get_queue_sender().send_messages = AsyncMock()
     create_workspace_item_mock.return_value = create_sample_workspace_object(workspace_id)
     input_data = create_sample_workspace_input_data()
 
@@ -115,13 +118,15 @@ async def test_workspaces_post_calls_db_and_service_bus(validate_workspace_param
     send_resource_request_message_mock.assert_called_once()
 
 
-@patch("service_bus.service_bus.ServiceBus.send_resource_request_message")
+@patch('service_bus.resource_request_sender.ServiceBusClient')
+@patch("api.routes.workspaces.send_resource_request_message")
 @patch("api.routes.workspaces.WorkspaceRepository.save_workspace")
 @patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item")
 @patch("api.routes.workspaces.WorkspaceRepository._validate_workspace_parameters")
-async def test_workspaces_post_returns_202_on_successful_create(validate_workspace_parameters_mock, create_workspace_item_mock, save_workspace_mock, send_resource_request_message_mock, app: FastAPI, client: AsyncClient):
+async def test_workspaces_post_returns_202_on_successful_create(validate_workspace_parameters_mock, create_workspace_item_mock, save_workspace_mock, send_resource_request_message_mock, service_bus_client_mock, app: FastAPI, client: AsyncClient):
     workspace_id = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
     validate_workspace_parameters_mock.return_value = None
+    service_bus_client_mock().get_queue_sender().send_messages = AsyncMock()
     create_workspace_item_mock.return_value = create_sample_workspace_object(workspace_id)
     input_data = create_sample_workspace_input_data()
 
@@ -131,7 +136,7 @@ async def test_workspaces_post_returns_202_on_successful_create(validate_workspa
     assert response.json()["workspaceId"] == workspace_id
 
 
-@patch("service_bus.service_bus.ServiceBus.send_resource_request_message")
+@patch("service_bus.resource_request_sender.send_resource_request_message")
 @patch("api.routes.workspaces.WorkspaceRepository.save_workspace")
 @patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item")
 @patch("api.routes.workspaces.WorkspaceRepository._validate_workspace_parameters")
