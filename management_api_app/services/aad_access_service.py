@@ -32,10 +32,14 @@ class AADAccessService(AccessService):
     def _get_service_principal_endpoint(app_id) -> str:
         return f"https://graph.microsoft.com/v1.0/serviceprincipals?$filter=appid eq '{app_id}'"
 
-    def _get_auth_info(self, msgraph_token: str, app_id: str) -> dict:
+    def _get_app_sp_graph_data(self, app_id: str) -> dict:
+        msgraph_token = self._get_msgraph_token()
         sp_endpoint = self._get_service_principal_endpoint(app_id)
         graph_data = requests.get(sp_endpoint, headers=self._get_auth_header(msgraph_token)).json()
+        return graph_data
 
+    def _get_app_auth_info(self, app_id: str) -> dict:
+        graph_data = self._get_app_sp_graph_data(app_id)
         if 'value' not in graph_data or len(graph_data['value']) == 0:
             logging.debug(graph_data)
             raise AuthConfigValidationError(f"Unable to get app info for app: {app_id}")
@@ -53,11 +57,11 @@ class AADAccessService(AccessService):
         if "app_id" not in data:
             raise AuthConfigValidationError("Please supply the app_id for the AAD application")
 
-        msgraph_token = self._get_msgraph_token()
-        auth_info = self._get_auth_info(msgraph_token, data["app_id"])
+        auth_info = self._get_app_auth_info(data["app_id"])
+        print(auth_info)
 
         for role in ['TREOwner', 'TREResearcher']:
             if role not in auth_info['roles']:
-                raise AuthConfigValidationError(f"App is missing the role '{role}'")
+                raise AuthConfigValidationError(f"App is missing the role {role}")
 
         return auth_info
