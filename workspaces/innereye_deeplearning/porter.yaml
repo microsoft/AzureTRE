@@ -1,4 +1,5 @@
-name: tre-workspace-azureml-devtestlabs
+name: tre-workspace-innereye-deeplearning
+
 version: 0.1.4
 description: "A Azure TRE workspace with Azure Machine Learning and Dev Test Labs"
 registry: azuretre
@@ -33,6 +34,7 @@ parameters:
   - name: acr_name
     type: string
     description: "Name of the azure container registry"
+    env: ACR_NAME
   - name: tfstate_resource_group_name
     type: string
     description: "Resource group containing the Terraform state storage account"
@@ -50,10 +52,7 @@ parameters:
     default: "azure"
     type: string
     description: "The porter driver - azure or docker"
-
-outputs:
-  - name: azureml_workspace_name
-    type: string
+    env: PORTER_DRIVER
 
 mixins:
   - exec
@@ -70,52 +69,23 @@ install:
         u: "{{ bundle.credentials.azure_client_id }}"
         p: "{{ bundle.credentials.azure_client_secret }}"
   - exec:
-      description: "Install vanilla workspace"
+      description: "Install azureml_devtestlabs workspace"
       command: porter
       arguments:
         - install
+        - service-azureml_devtestlabs
       flags:
         d: "{{ bundle.parameters.porter_driver }}"
-        reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-workspace-vanilla:v0.1.0"
+        reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-workspace-azureml-devtestlabs:v0.1.4"
         cred: ./azure.json
-        parameter-set: ./parameters_workspace_vanilla.json
+        param: porter_driver={{ bundle.parameters.porter_driver }}
+        parameter-set: ./parameters_workspace_azureml-devtestlabs.json
         debug:
+        # do not merge
+        allow-docker-host-access:
   - exec:
-      description: "Install Azure ML Service"
-      command: porter
-      arguments:
-        - install
-        - service-azureml
-      flags:
-        d: "{{ bundle.parameters.porter_driver }}"
-        reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-service-azureml:v0.1.2"
-        cred: ./azure.json
-        parameter-set: ./parameters_service_azureml.json
-        debug:
-  - exec:
-      description: "Get Azure ML Service Outputs"
-      command: porter
-      arguments:
-        - installations
-        - output
-        - show
-        - azureml_workspace_name
-      flags:
-        i: service-azureml
-      outputs:
-        - name: azureml_workspace_name
-          regex: (.*)
-  - exec:
-      description: "Install Dev Test Labs Virtual Desktop Service"
-      command: porter
-      arguments:
-        - install
-      flags:
-        d: "{{ bundle.parameters.porter_driver }}"
-        reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-service-devtestlabs:v0.1.0"
-        cred: ./azure.json
-        parameter-set: ./parameters_service_devtestlabs.json
-        debug:
+      description: "Install InnerEye deep learnign service"
+      command: ./install_service_innereye_deep_learning.sh
 
 upgrade:
   - exec:
@@ -136,33 +106,24 @@ uninstall:
         u: "{{ bundle.credentials.azure_client_id }}"
         p: "{{ bundle.credentials.azure_client_secret }}"
   - exec:
-      description: "Uninstall Dev Test Labs Virtual Desktop Service"
-      command: porter
-      arguments:
-        - uninstall
-      flags:
-        d: "{{ bundle.parameters.porter_driver }}"
-        reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-service-devtestlabs:v0.1.0"
-        cred: ./azure.json
-        parameter-set: ./parameters_service_devtestlabs.json
-  - exec:
-        description: "Uninstall Azure ML service"
+        description: "Uninstall InnerEye DeepLearning Service"
         command: porter
         arguments:
           - uninstall
         flags:
           d: "{{ bundle.parameters.porter_driver }}"
-          reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-service-azureml:v0.1.2"
+          reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-service-innereye-deeplearning:v0.1.0"
           cred: ./azure.json
-          parameter-set: ./parameters.json
-
+          parameter-set: ./parameters_service_innereye-deeplearning.json
+          debug:
   - exec:
-      description: "Uninstall vanilla workspace"
+      description: "Install azureml_devtestlabs workspace"
       command: porter
       arguments:
         - uninstall
       flags:
         d: "{{ bundle.parameters.porter_driver }}"
-        reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-workspace-vanilla:v0.1.0"
+        reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-workspace-azureml-devtestlabs:v0.1.4"
         cred: ./azure.json
-        parameter-set: ./parameters_workspace_vanilla.json
+        parameter-set: ./parameters_workspace_azureml-devtestlabs.json
+        debug:
