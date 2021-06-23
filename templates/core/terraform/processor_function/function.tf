@@ -1,6 +1,11 @@
 data "azurerm_subscription" "current" {}
 data "azurerm_client_config" "current" {}
 
+data "azurerm_storage_account" "state_storage" {
+  name                     = var.mgmt_storage_account_name
+  resource_group_name      = var.mgmt_resource_group_name
+}
+
 resource "azurerm_function_app" "procesorfunction" {
   name                       = "processor-func-${var.tre_id}"
   location                   = var.location
@@ -19,10 +24,10 @@ resource "azurerm_function_app" "procesorfunction" {
     APP_INSIGHTS_INSTRUMENTATION_KEY      = var.app_insights_instrumentation_key
     VNET_NAME                             = var.core_vnet
     ACI_SUBNET                            = var.aci_subnet
-    CNAB_AZURE_STATE_STORAGE_ACCOUNT_NAME = var.storage_account_name
-    SEC_CNAB_AZURE_STATE_STORAGE_ACCOUNT_KEY  = var.storage_account_access_key
-    CNAB_AZURE_STATE_PATH                 = var.storage_state_path
-    CNAB_AZURE_STATE_FILESHARE            = var.storage_state_path
+    CNAB_AZURE_STATE_STORAGE_ACCOUNT_NAME = var.mgmt_storage_account_name
+    SEC_CNAB_AZURE_STATE_STORAGE_ACCOUNT_KEY  = data.azurerm_storage_account.state_storage.primary_access_key
+    CNAB_AZURE_STATE_PATH                 = var.porter_output_container_name
+    CNAB_AZURE_STATE_FILESHARE            = var.porter_output_container_name
     CNAB_AZURE_SUBSCRIPTION_ID            = data.azurerm_subscription.current.subscription_id
     CNAB_AZURE_USER_MSI_RESOURCE_ID       = var.identity_id
     CNAB_AZURE_VERBOSE                    = "true"
@@ -35,13 +40,13 @@ resource "azurerm_function_app" "procesorfunction" {
     SERVICE_BUS_RESOURCE_REQUEST_QUEUE    = var.service_bus_resource_request_queue
     SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE = var.service_bus_deployment_status_update_queue
     WORKSPACES_PATH                       = "/microsoft/azuretre/workspaces/"
-    CNAB_IMAGE                            = "msfttreacr.azurecr.io/microsoft/azuretre/cnab-aci:v1"
-    SEC_ARM_CLIENT_ID                     = XXXX
-    SEC_ARM_CLIENT_SECRET                 = XXXX
+    CNAB_IMAGE                            = "${var.docker_registry_server}.azurecr.io/microsoft/azuretre/cnab-aci:${var.management_api_image_tag}"
+    SEC_ARM_CLIENT_ID                     = var.arm_client_id
+    SEC_ARM_CLIENT_SECRET                 = var.arm_client_secret
     SEC_ARM_SUBSCRIPTION_ID               = data.azurerm_subscription.current.subscription_id
     SEC_ARM_TENANT_ID                     = data.azurerm_client_config.current.tenant_id
-    param_tfstate_resource_group_name     = "XXXXrg-msft-tre-tfstate"
-    param_tfstate_container_name          = "XXXXtfstate"
-    param_tfstate_storage_account_name    = "XXXXstgmsfttretfstate"
+    param_tfstate_resource_group_name     = var.mgmt_resource_group_name
+    param_tfstate_container_name          = var.terraform_state_container_name
+    param_tfstate_storage_account_name    = var.mgmt_storage_account_name
   }
 }

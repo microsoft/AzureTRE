@@ -5,7 +5,7 @@ on:
     # 1am each night https://crontab.guru/#0_1_*_*_*
     - cron: "0 1 * * *"
   push:
-    branches: [ develop, main ]
+    branches: [ develop, main, deniscep/processor_update]
   workflow_dispatch:
 
 jobs:
@@ -75,6 +75,44 @@ jobs:
           export TF_VAR_address_space=$ADDRESS_SPACE
 
           make all
+
+  deploy_processor_function:
+    name: Deploy TRE
+    runs-on: ubuntu-latest
+    environment: Dev
+    env: 
+      AZURE_FUNCTIONAPP_PACKAGE_PATH: ./processor_function
+      AZURE_FUNCTIONAPP_NAME: "processor-func-${{ secrets.TRE_ID }}"
+      PYTHON_VERSION: '3.7'
+    steps:
+      - name: Setup Python ${{ env.PYTHON_VERSION }} Environment
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: 'Checkout GitHub Action'
+        uses: actions/checkout@main
+      - name: 'Resolve Project Dependencies Using Pip'
+        shell: bash
+        run: |
+          pushd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt --target=".python_packages/lib/site-packages"
+          popd
+      - name: Get FunctionApp publish profile
+        id: publishprofile
+        uses: aliencube/publish-profile-actions@v1
+        env:
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+        with:
+          resourceGroupName: "rg-${{ secrets.TRE_ID }}"
+          appName: "processor-func-${{ secrets.TRE_ID }}"
+      - name: 'Run Azure Functions Action'
+        uses: Azure/functions-action@v1
+        id: fa
+        with:
+          app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
+          package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+          publish-profile: ${{ steps.publishprofile.outputs.profile }}
 
   deploy_vanilla_workspace:
     name: Deploy Vanilla Workspace
