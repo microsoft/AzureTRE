@@ -129,21 +129,6 @@ async def test_same_name_and_version_template_not_allowed(mock, app: FastAPI, cl
     assert response.status_code == status.HTTP_409_CONFLICT
 
 
-@patch("api.routes.workspace_templates.WorkspaceTemplateRepository.create_workspace_template_item")
-@patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_workspace_template_by_name_and_version")
-async def test_when_not_updating_current_a_unique_template_is_saved(get_mock, create_mock, app: FastAPI, client: AsyncClient, input_workspace_template: dict, output_workspace_template: dict):
-    input_workspace_template["current"] = False
-    get_mock.side_effect = EntityDoesNotExist
-
-    response_content = output_workspace_template
-    create_mock.return_value = response_content
-
-    response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_workspace_template)
-
-    assert response.status_code == status.HTTP_201_CREATED
-    assert json.loads(response.text)["workspaceTemplate"] == response_content
-
-
 @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_current_workspace_template_by_name")
 async def test_workspace_templates_by_name_returns_workspace_template(get_workspace_template_by_name_mock, app: FastAPI, client: AsyncClient):
     get_workspace_template_by_name_mock.return_value = get_sample_workspace_template_object(template_name="template1")
@@ -170,3 +155,26 @@ async def test_workspace_templates_by_name_returns_503_on_database_error(get_wor
     response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_TEMPLATE_BY_NAME, template_name="tre-workspace-vanilla"))
 
     assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+
+
+@patch("api.routes.workspace_templates.WorkspaceTemplateRepository.create_workspace_template_item")
+@patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_current_workspace_template_by_name")
+@patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_workspace_template_by_name_and_version")
+async def test_when_not_updating_current_and_new_registration_current_is_enforced(get_name_ver_mock,
+                                                                                  get_current_mock,
+                                                                                  create_item_mock,
+                                                                                  app: FastAPI,
+                                                                                  client: AsyncClient,
+                                                                                  input_workspace_template: dict,
+                                                                                  output_workspace_template: dict):
+    input_workspace_template["current"] = False
+    get_name_ver_mock.side_effect = EntityDoesNotExist
+    get_current_mock.side_effect = EntityDoesNotExist
+
+    response_content = output_workspace_template
+    create_item_mock.return_value = response_content
+
+    response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_workspace_template)
+
+    assert response.status_code == status.HTTP_201_CREATED
+    assert json.loads(response.text)["workspaceTemplate"] == response_content

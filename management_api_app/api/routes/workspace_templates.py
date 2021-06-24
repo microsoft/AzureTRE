@@ -32,15 +32,14 @@ async def create_workspace_template(
         if template:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_TEMPLATE_VERSION_EXISTS)
     except EntityDoesNotExist:
-        create_new_current = workspace_template_create.current
-        if create_new_current:
-            try:
-                template = workspace_template_repo.get_current_workspace_template_by_name(workspace_template_create.name)
+        try:
+            template = workspace_template_repo.get_current_workspace_template_by_name(workspace_template_create.name)
+            if workspace_template_create.current:
                 template.current = False
                 workspace_template_repo.update_item(template)
-            except EntityDoesNotExist:
-                # first registration
-                pass
+        except EntityDoesNotExist:
+            # first registration
+            workspace_template_create.current = True  # For first time registration, template is always marked current
         template_created = workspace_template_repo.create_workspace_template_item(workspace_template_create)
         return WorkspaceTemplateInResponse(workspaceTemplate=template_created)
 
