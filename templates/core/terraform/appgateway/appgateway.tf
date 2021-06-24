@@ -146,7 +146,7 @@ resource "azurerm_application_gateway" "agw" {
 
     path_rule {
       name = "api"
-      paths = [ "/api/*", "/docs", "/openapi.json" ]
+      paths = [ "/api/*", "/docs", "/openapi.json", "/docs/oauth2-redirect" ]
       backend_address_pool_name = local.api_backend_pool_name
       backend_http_settings_name = local.api_http_setting_name
     }
