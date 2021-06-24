@@ -17,7 +17,7 @@ resource "azurerm_resource_group" "core" {
   name     = "rg-${var.tre_id}"
   tags = {
     project = "Azure Trusted Research Environment"
-    tre_id  = "${var.tre_id}"
+    tre_id  = var.tre_id
     source  = "https://github.com/microsoft/AzureTRE/"
   }
 }
@@ -86,6 +86,10 @@ module "api-webapp" {
   service_bus_resource_request_queue         = module.servicebus.workspacequeue
   service_bus_deployment_status_update_queue = module.servicebus.service_bus_deployment_status_update_queue
   managed_identity                           = module.identity.managed_identity
+  swagger_ui_client_id                       = var.swagger_ui_client_id
+  aad_tenant_id                              = var.aad_tenant_id
+  api_client_id                              = var.api_client_id
+  api_client_secret                          = var.api_client_secret
 }
 
 module "identity" {
@@ -115,6 +119,13 @@ module "processor_function" {
   service_bus_connection_string              = module.servicebus.connection_string
   service_bus_resource_request_queue         = module.servicebus.workspacequeue
   service_bus_deployment_status_update_queue = module.servicebus.service_bus_deployment_status_update_queue
+  mgmt_storage_account_name                  = var.mgmt_storage_account_name
+  mgmt_resource_group_name                   = var.mgmt_resource_group_name
+  terraform_state_container_name             = var.terraform_state_container_name
+  porter_output_container_name               = var.porter_output_container_name
+  arm_client_id                              = var.arm_client_id
+  arm_client_secret                          = var.arm_client_secret
+  management_api_image_tag                   = var.management_api_image_tag
 }
 
 module "servicebus" {

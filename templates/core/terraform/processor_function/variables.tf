@@ -15,3 +15,10 @@ variable "docker_registry_server" {}
 variable "service_bus_connection_string" {}
 variable "service_bus_resource_request_queue" {}
 variable "service_bus_deployment_status_update_queue" {}
+variable "mgmt_storage_account_name" {}
+variable "mgmt_resource_group_name" {}
+variable "terraform_state_container_name" {}
+variable "porter_output_container_name" {}
+variable "arm_client_id" {}
+variable "arm_client_secret" {}
+variable "management_api_image_tag" {}

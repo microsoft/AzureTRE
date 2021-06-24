@@ -39,6 +39,11 @@ jobs:
         ADDRESS_SPACE: ${{ secrets.ADDRESS_SPACE }}
         AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
         AZURE_CONTRIBUTOR_SP: ${{ secrets.AZURE_CONTRIBUTOR_SP }}
+        TF_VAR_swagger_ui_client_id: '${{ secrets.SWAGGER_UI_CLIENT_ID }}'
+        TF_VAR_aad_tenant_id: '${{ secrets.AAD_TENANT_ID }}'
+        TF_VAR_api_client_id: '${{ secrets.API_CLIENT_ID }}'
+        TF_VAR_api_client_secret: '${{ secrets.API_CLIENT_SECRET }}'
+        PORTER_OUTPUT_CONTAINER_NAME: '${{ secrets.PORTER_OUTPUT_CONTAINER_NAME }}'
       run: |
           export env
           export USE_ENV_VARS_NOT_FILES=true
@@ -63,14 +68,58 @@ jobs:
           export TF_VAR_management_api_image_tag=$IMAGE_TAG
           export TF_VAR_tre_id=$TRE_ID
           export TF_VAR_arm_subscription_id=$ARM_SUBSCRIPTION_ID
+          export TF_VAR_arm_client_id=$ARM_CLIENT_ID
+          export TF_VAR_arm_client_secret=$ARM_CLIENT_SECRET
           export TF_VAR_mgmt_storage_account_name=$MGMT_STORAGE_ACCOUNT_NAME
           export TF_VAR_mgmt_resource_group_name=$MGMT_RESOURCE_GROUP_NAME
           export TF_VAR_terraform_state_container_name=$TERRAFORM_STATE_CONTAINER_NAME
           export TF_VAR_location=$LOCATION
           export TF_VAR_acr_name=$ACR_NAME
           export TF_VAR_address_space=$ADDRESS_SPACE
+          export TF_VAR_porter_output_container_name=$PORTER_OUTPUT_CONTAINER_NAME
 
           make all
+
+  deploy_processor_function:
+    name: Deploy Processor Function
+    needs: deploy_tre
+    runs-on: ubuntu-latest
+    environment: Dev
+    env: 
+      AZURE_FUNCTIONAPP_PACKAGE_PATH: ./processor_function
+      AZURE_FUNCTIONAPP_NAME: "processor-func-${{ secrets.TRE_ID }}"
+      PYTHON_VERSION: '3.7'
+    steps:
+      - name: Setup Python ${{ env.PYTHON_VERSION }} Environment
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: 'Checkout GitHub Action'
+        uses: actions/checkout@main
+      - name: 'Resolve Project Dependencies Using Pip'
+        shell: bash
+        run: |
+          pushd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt --target=".python_packages/lib/site-packages"
+          popd
+      - name: Get FunctionApp publish profile
+        id: publishprofile
+        uses: aliencube/publish-profile-actions@v1
+        env:
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+        with:
+          resourceGroupName: "rg-${{ secrets.TRE_ID }}"
+          appName: "processor-func-${{ secrets.TRE_ID }}"
+      - name: 'Run Azure Functions Action'
+        uses: Azure/functions-action@v1.3.1
+        id: fa
+        with:
+          app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
+          package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+          publish-profile: ${{ steps.publishprofile.outputs.profile }}
+          scm-do-build-during-deployment: true
+          enable-oryx-build: true
 
   deploy_vanilla_workspace:
     name: Deploy Vanilla Workspace

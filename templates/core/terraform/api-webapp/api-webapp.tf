@@ -33,8 +33,12 @@ resource "azurerm_app_service" "management_api" {
     "SERVICE_BUS_RESOURCE_REQUEST_QUEUE"    = var.service_bus_resource_request_queue
     "SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE" = var.service_bus_deployment_status_update_queue
     "MANAGED_IDENTITY_CLIENT_ID"            = var.managed_identity.client_id
-    TRE_ID                                  = var.tre_id
-    RESOURCE_LOCATION                       = var.location
+    "TRE_ID"                                = var.tre_id
+    "RESOURCE_LOCATION"                     = var.location
+    "SWAGGER_UI_CLIENT_ID"                  = var.swagger_ui_client_id
+    "AAD_TENANT_ID"                         = var.aad_tenant_id
+    "API_CLIENT_ID"                         = var.api_client_id
+    "API_CLIENT_SECRET"                     = var.api_client_secret
   }
 
   identity {
