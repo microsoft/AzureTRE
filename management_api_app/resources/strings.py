@@ -21,13 +21,18 @@ STATE_STORE_ENDPOINT_NOT_RESPONDING = "State Store endpoint is not responding"
 UNSPECIFIED_ERROR = "Unspecified error"
 
 # Error strings
+ACCESS_APP_IS_MISSING_ROLE = "The App is missing role"
+ACCESS_PLEASE_SUPPLY_APP_ID = "Please supply the app_id for the AAD application"
+ACCESS_UNABLE_TO_GET_INFO_FOR_APP = "Unable to get app info for app:"
 AUTH_NOT_ASSIGNED_TO_ADMIN_ROLE = "Not assigned to admin role"
 AUTH_COULD_NOT_VALIDATE_CREDENTIALS = "Could not validate credentials"
+INVALID_AUTH_PROVIDER = "Invalid authentication provider"
 UNABLE_TO_REPLACE_CURRENT_TEMPLATE = "Unable to replace the existing 'current' template with this name"
 UNABLE_TO_PROCESS_REQUEST = "Unable to process request"
 WORKSPACE_DOES_NOT_EXIST = "Workspace does not exist"
 WORKSPACE_TEMPLATE_DOES_NOT_EXIST = "Could not retrieve the 'current' template with this name"
 WORKSPACE_TEMPLATE_VERSION_EXISTS = "A template with this version already exists"
+
 
 # Resource Status
 RESOURCE_STATUS_NOT_DEPLOYED = "not_deployed"

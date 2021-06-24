@@ -33,6 +33,7 @@ APP_INSIGHTS_INSTRUMENTATION_KEY: str = config("APPINSIGHTS_INSTRUMENTATIONKEY",
 
 # Authentication
 API_CLIENT_ID: str = config("API_CLIENT_ID", default="")
+API_CLIENT_SECRET: str = config("API_CLIENT_SECRET", default="")
 SWAGGER_UI_CLIENT_ID: str = config("SWAGGER_UI_CLIENT_ID", default="")
 AAD_TENANT_ID: str = config("AAD_TENANT_ID", default="")
 
