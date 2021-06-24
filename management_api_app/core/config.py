@@ -38,4 +38,4 @@ SWAGGER_UI_CLIENT_ID: str = config("SWAGGER_UI_CLIENT_ID", default="")
 AAD_TENANT_ID: str = config("AAD_TENANT_ID", default="")
 
 AAD_INSTANCE: str = config("AAD_INSTANCE", default="https://login.microsoftonline.com")
-API_AUDIENCE: str = config("API_AUDIENCE", default=f"api://{API_CLIENT_ID}")
+API_AUDIENCE: str = config("API_AUDIENCE", default=API_CLIENT_ID)
