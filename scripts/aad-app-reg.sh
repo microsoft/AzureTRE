@@ -67,7 +67,7 @@ fi
 currentUserId=$(az ad signed-in-user show --query 'objectId' -o tsv)
 
 # Generate GUIDS
-declare researcherRoleId=$(cat /proc/sys/kernel/random/uuid)
+declare userRoleId=$(cat /proc/sys/kernel/random/uuid)
 declare adminRoleId=$(cat /proc/sys/kernel/random/uuid)
 declare workspaceReadId=$(cat /proc/sys/kernel/random/uuid)
 declare workspaceWriteId=$(cat /proc/sys/kernel/random/uuid)
@@ -96,12 +96,12 @@ declare existingApiApp=$(get_existing_app "${appName} API")
 if [[ -n ${existingApiApp} ]]; then
 	apiAppObjectId=$(echo ${existingApiApp} | jq -r '.objectId')
 	# Get existing ids of roles and scopes.
-	researcherRoleId=$(echo "$existingApiApp" | jq -r '.appRoles[] | select(.value == "TREResearcher").id')
+	userRoleId=$(echo "$existingApiApp" | jq -r '.appRoles[] | select(.value == "TREUser").id')
 	adminRoleId=$(echo "$existingApiApp" | jq -r '.appRoles[] | select(.value == "TREAdmin").id')
 	workspaceReadId=$(echo "$existingApiApp" | jq -r '.oauth2Permissions[] | select(.value == "Workspace.Read").id')
 	workspaceWriteId=$(echo "$existingApiApp" | jq -r '.oauth2Permissions[] | select(.value == "Workspace.Write").id')
 
-	if [[ -z "${researcherRoleId}" ]]; then researcherRoleId=$(cat /proc/sys/kernel/random/uuid); fi
+	if [[ -z "${userRoleId}" ]]; then userRoleId=$(cat /proc/sys/kernel/random/uuid); fi
 	if [[ -z "${adminRoleId}" ]]; then adminRoleId=$(cat /proc/sys/kernel/random/uuid); fi
 	if [[ -z "${workspaceReadId}" ]]; then workspaceReadId=$(cat /proc/sys/kernel/random/uuid); fi
 	if [[ -z "${workspaceWriteId}" ]]; then workspaceWriteId=$(cat /proc/sys/kernel/random/uuid); fi
@@ -110,13 +110,13 @@ fi
 declare appRoles=$(jq -c . << JSON
 [
 	{
-		"id": "${researcherRoleId}",
+		"id": "${userRoleId}",
 		"allowedMemberTypes": [ "User" ],
 		"description": "Provides access to the ${appName} application.",
-		"displayName": "TRE Researchers",
+		"displayName": "TRE Userss",
 		"isEnabled": true,
 		"origin": "Application",
-		"value": "TREResearcher"
+		"value": "TREUser"
 	},
 	{
 		"id": "${adminRoleId}",
