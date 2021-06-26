@@ -74,6 +74,7 @@ module "api-webapp" {
   shared_subnet                              = module.network.shared
   app_gw_subnet                              = module.network.app_gw
   core_vnet                                  = module.network.core
+  app_insights_connection_string             = azurerm_application_insights.core.connection_string
   app_insights_instrumentation_key           = azurerm_application_insights.core.instrumentation_key
   log_analytics_workspace_id                 = azurerm_log_analytics_workspace.core.id
   management_api_image_repository            = var.management_api_image_repository
@@ -106,6 +107,7 @@ module "processor_function" {
   tre_id                                     = var.tre_id
   location                                   = var.location
   resource_group_name                        = azurerm_resource_group.core.name
+  app_insights_connection_string             = azurerm_application_insights.core.connection_string
   app_insights_instrumentation_key           = azurerm_application_insights.core.instrumentation_key
   app_service_plan_id                        = module.api-webapp.app_service_plan_id
   storage_account_name                       = module.storage.storage_account_name

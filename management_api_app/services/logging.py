@@ -7,7 +7,37 @@ from opencensus.trace.samplers import AlwaysOnSampler
 from opencensus.trace.tracer import Tracer
 
 
-def initialize_logging(logging_level: int, correlation_id: str) -> logging.LoggerAdapter:
+UNWANTED_LOGGERS = [
+    "azure.core.pipeline.policies.http_logging_policy",
+    "azure.eventhub._eventprocessor.event_processor",
+    "azure.identity.aio._credentials.managed_identity",
+    "azure.identity.aio._credentials.environment",
+    "azure.identity.aio._internal.get_token_mixin",
+    "azure.identity.aio._internal.decorators",
+    "azure.identity.aio._credentials.chained",
+    "azure.identity",
+    "msal.token_cache",
+    "uamqp",
+    "uamqp.authentication.cbs_auth_async",
+    "uamqp.async_ops.client_async",
+    "uamqp.async_ops.connection_async",
+    "uamqp.async_ops",
+    "uamqp.authentication",
+    "uamqp.c_uamqp",
+    "uamqp.connection",
+    "uamqp.receiver"
+]
+
+
+def disable_unwanted_loggers():
+    """
+    Disables the unwanted loggers.
+    """
+    for logger_name in UNWANTED_LOGGERS:
+        logging.getLogger(logger_name).disabled = True
+
+
+def initialize_logging(logging_level: int, correlation_id: str = None) -> logging.LoggerAdapter:
     """
     Adds the Application Insights handler for the root logger and sets the given logging level.
     Creates and returns a logger adapter that integrates the correlation ID, if given, to the log messages.
