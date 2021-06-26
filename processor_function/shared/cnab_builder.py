@@ -4,6 +4,7 @@ import os
 import logging
 from typing import List
 
+from azure.identity import DefaultAzureCredential
 from azure.mgmt.containerinstance import ContainerInstanceManagementClient
 from azure.mgmt.containerinstance.models import (ContainerGroup,
                                                  Container,
@@ -15,7 +16,6 @@ from azure.mgmt.containerinstance.models import (ContainerGroup,
                                                  ResourceRequirements,
                                                  OperatingSystemTypes)
 
-from shared.azure_identity_credential_adapter import AzureIdentityCredentialAdapter
 from shared.service_bus import ServiceBus
 from resources import strings
 
@@ -112,7 +112,7 @@ class CNABBuilder:
     def _aci_run_completed(self, aci_client, service_bus) -> bool:
         logs = aci_client.containers.list_logs(self._resource_group_name, self._container_group_name, self._container_group_name)
         if "Error" in logs.content:
-            service_bus.send_status_update_message(self._id, strings.RESOURCE_STATUS_DEPLOYMENT_FAILED, logs.content)
+            service_bus.send_status_update_message(self._id, strings.RESOURCE_STATUS_FAILED, logs.content)
             self._logger.error(logs.content.split("Error", 1)[1])
             return True
         elif "Success" in logs.content:
@@ -131,13 +131,13 @@ class CNABBuilder:
 
         group = self._setup_aci_deployment()
 
-        credential = AzureIdentityCredentialAdapter()
+        credential = DefaultAzureCredential(managed_identity_client_id=os.environ["MANAGED_IDENTITY_CLIENT_ID"])
         aci_client = ContainerInstanceManagementClient(credential, self._subscription_id)
 
         service_bus = ServiceBus()
         service_bus.send_status_update_message(self._id, strings.RESOURCE_STATUS_DEPLOYING, "Deploying ACI container: " + self._container_group_name)
 
-        result = aci_client.container_groups.create_or_update(self._resource_group_name, self._container_group_name,
+        result = aci_client.container_groups.begin_create_or_update(self._resource_group_name, self._container_group_name,
                                                               group)
 
         while not result.done():

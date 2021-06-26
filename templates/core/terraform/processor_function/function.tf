@@ -40,7 +40,7 @@ resource "azurerm_function_app" "procesorfunction" {
     SERVICE_BUS_RESOURCE_REQUEST_QUEUE    = var.service_bus_resource_request_queue
     SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE = var.service_bus_deployment_status_update_queue
     WORKSPACES_PATH                       = "/microsoft/azuretre/workspaces/"
-    CNAB_IMAGE                            = "${var.docker_registry_server}.azurecr.io/microsoft/azuretre/cnab-aci:${var.management_api_image_tag}"
+    CNAB_IMAGE                            = "${var.docker_registry_server}/microsoft/azuretre/cnab-aci:${var.management_api_image_tag}"
     SEC_ARM_CLIENT_ID                     = var.arm_client_id
     SEC_ARM_CLIENT_SECRET                 = var.arm_client_secret
     SEC_ARM_SUBSCRIPTION_ID               = data.azurerm_subscription.current.subscription_id
@@ -48,5 +48,12 @@ resource "azurerm_function_app" "procesorfunction" {
     param_tfstate_resource_group_name     = var.mgmt_resource_group_name
     param_tfstate_container_name          = var.terraform_state_container_name
     param_tfstate_storage_account_name    = var.mgmt_storage_account_name
+    MANAGED_IDENTITY_CLIENT_ID            = var.managed_identity.client_id
   }
+
+  identity {
+    type = "UserAssigned"
+    identity_ids = [ var.managed_identity.id ]
+  }
+
 }

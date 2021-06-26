@@ -21,5 +21,5 @@ def main(msg: func.ServiceBusMessage):
         cnab_builder = CNABBuilder(resource_request_message, logger_adapter)
         cnab_builder.deploy_aci()
     except Exception as e:
-        service_bus.send_status_update_message(id, strings.RESOURCE_STATUS_DEPLOYMENT_FAILED, strings.UNKNOWN_EXCEPTION)
+        service_bus.send_status_update_message(id, strings.RESOURCE_STATUS_FAILED, strings.UNKNOWN_EXCEPTION)
         logger_adapter.error(f"CNAB ACI provisioning failed: {e}")
