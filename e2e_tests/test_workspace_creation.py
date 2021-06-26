@@ -68,15 +68,14 @@ async def test_create_vanilla_workspace() -> None:
                    "description": "workspace for team X",
                    "workspaceType": "tre-workspace-vanilla",
                    "parameters": "",
-                   "authConfig": 
-                        {
-                        "provider":"AAD",
-                            "data": 
-                            {
-                                "app_id": f"{config.AUTH_APP_CLIENT_ID}"
-                            }
-                        }
+                   "authConfig":
+                    {"provider":"AAD",
+                     "data":
+                     {
+                         "app_id": f"{config.AUTH_APP_CLIENT_ID}"
+                     }
                     }
+                   }
 
         response = await client.post(f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACES}", headers=headers, json=payload)
 
