@@ -138,7 +138,7 @@ class CNABBuilder:
         service_bus.send_status_update_message(self._id, strings.RESOURCE_STATUS_DEPLOYING, "Deploying ACI container: " + self._container_group_name)
 
         result = aci_client.container_groups.begin_create_or_update(self._resource_group_name, self._container_group_name,
-                                                              group)
+                                                                    group)
 
         while not result.done():
             self._logger.info(strings.RESOURCE_STATUS_DEPLOYING + self._container_group_name + " to " + self._resource_group_name)

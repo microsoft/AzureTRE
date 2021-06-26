@@ -46,13 +46,14 @@ async def test_get_vanilla_workspace_template() -> None:
 
         assert (response.status_code == status.HTTP_200_OK), "Request for workspace creation failed"
 
-async def deployment_started(client, workspaceId, headers) -> bool:
-        response = await client.get(f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACES}/{workspaceId}", headers=headers)
 
-        if response.json()["workspace"]["deployment"]["status"] == strings.NOT_DEPLOYED:
-            return False
-        else: 
-            return True
+async def deployment_started(client, workspaceId, headers) -> bool:
+    response = await client.get(f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACES}/{workspaceId}", headers=headers)
+
+    if response.json()["workspace"]["deployment"]["status"] == strings.NOT_DEPLOYED:
+        return False
+    else:
+        return True
 
 
 async def test_create_vanilla_workspace() -> None:
@@ -67,13 +68,15 @@ async def test_create_vanilla_workspace() -> None:
                    "description": "workspace for team X",
                    "workspaceType": "tre-workspace-vanilla",
                    "parameters": "",
-                   "authConfig": {
-                    "provider":"AAD",
-                        "data": {
-                        "app_id": f"{config.AUTH_APP_CLIENT_ID}"
+                   "authConfig": 
+                        {
+                        "provider":"AAD",
+                            "data": 
+                            {
+                                "app_id": f"{config.AUTH_APP_CLIENT_ID}"
+                            }
                         }
                     }
-                  }
 
         response = await client.post(f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACES}", headers=headers, json=payload)
 
