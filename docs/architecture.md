@@ -14,7 +14,8 @@ Management API is a services that users can interact with to request changes to 
 
 In- & egress components governs all inbound and outbound traffic from the public Internet to and from Azure TRE including the Workspaces. The In- & egress Services is managing the rules of the Application Gateway and Firewall.
 
-Shared Services are services available to all Workspaces. Source Mirror can mirror source repositories such as GitHub, but only allowing read-access, hence data from a Workspace cannot be pushed to a source repository. Package Mirror is also a read-only front for developer/researcher application package services like NPM, PyPI, and NuGet and operating system application package services like apt-get and Windows Package Manager (winget).
+Shared Services are services available to all Workspaces. Source Mirror can mirror source repositories such as GitHub, but only allowing read-access, hence data from a Workspace cannot be pushed to a source repository. 
+Package Mirror is also a read-only front for developer/researcher application package services like NPM, PyPI, and NuGet and operating system application package services like apt-get and Windows Package Manager (winget).
 
 ## Composition Service
 
@@ -40,7 +41,7 @@ The flow to mutate a Workspace is the following:
         }
     ```
 
-1. The Resource Processor Azure Function is triggered by the arrival of a new message. 
+1. The Resource Processor Azure Function is triggered by the arrival of a new message.
 1. The Resource Processor processes the command by provisioning an [Azure Container Instance](https://docs.microsoft.com/en-us/azure/container-instances/) (ACI). A Workspace Template is implemented as a [Porter](https://porter.sh/) bundle - read more about [Authoring Workspaces](authoring-workspaces.md).
 
     ```bash
@@ -55,7 +56,7 @@ The flow to mutate a Workspace is the following:
 
     Porter bundle actions are required to be idempotent, so if a deployment fails, the Resource Processor can retry.
 
-    > The Resource Processor is a Docker container running on ACI and a Porter bundle is also a Docker container. Running Docker in Docker is not recommended or supported by ACI. Under the covers the Resource Processor is using the [Azure CNAB Driver](https://github.com/deislabs/cnab-azure-driver) to execute the Porter bundle. The Azure CNAB Driver instantiates another ACI instance to execute the Porter bundle.
+    > The Resource Processor is a Docker container running on ACI and a Porter bundle is also a Docker container. Running Docker in Docker is not recommended or supported by ACI. The Resource Processor is using the [Azure CNAB Driver](https://github.com/deislabs/cnab-azure-driver) to execute the Porter bundle. The Azure CNAB Driver instantiates another ACI instance to execute the Porter bundle.
 
 1. The Porter Docker bundle is pulled from the Azure Container Registry (ACR) and executed.
 1. The Porter bundle executes against Azure Resource Manager to provision Azure resources. Any kind of infrastructure of code frameworks like ARM, Terraform, or Pulumi can be used or scripted via PowerShell or Azure CLI.
