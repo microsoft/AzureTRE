@@ -14,7 +14,7 @@ Management API is a services that users can interact with to request changes to 
 
 In- & egress components governs all inbound and outbound traffic from the public Internet to and from Azure TRE including the Workspaces. The In- & egress Services is managing the rules of the Application Gateway and Firewall.
 
-Shared Services are services available to all Workspaces. Source Mirror can mirror source repositories such as GitHub, but only allowing read-access, hence data from a Workspace cannot be pushed to a source repository. 
+Shared Services are services available to all Workspaces. Source Mirror can mirror source repositories such as GitHub, but only allowing read-access, hence data from a Workspace cannot be pushed to a source repository.
 Package Mirror is also a read-only front for developer/researcher application package services like NPM, PyPI, and NuGet and operating system application package services like apt-get and Windows Package Manager (winget).
 
 ## Composition Service
