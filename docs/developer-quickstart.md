@@ -87,14 +87,14 @@ Execute the following steps to set up a development environment.
 
 1. Register AAD applications with the Microsoft Identity Platform
 
-   > NOTE: this requires domain admin privileges. You may wish to set up a separate Azure AD tenant for this 
+   > NOTE: this requires domain admin privileges. You may wish to set up a separate Azure AD tenant for this
 
    Follow the [Microsoft Docs Quickstart](https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app) or run the [AAD App Reg script](../scripts/aad-app-reg.sh) to register two apps
 
    - **TRE API:**  (with three roles `TREAdmin`, `TREWorkspaceOwner` and `TREResearcher`) This app is used to authenticate users to the API - add users to the admin, owner, and researcher roles.
    - **TRE Swagger UI**: This app is used to allow Swagger login
-   - You will also want to create applications for workspaces (with the roles `WorkspaceResearcher` and `WorkspaceOwner` that govern who can see what workspaces in the API.
-   
+   - You will also want to create applications for workspaces (with the roles `WorkspaceResearcher` and `WorkspaceOwner`) that govern who can see what workspaces in the API
+
 
 ## Running the Management API
 
