@@ -1,7 +1,7 @@
 # Developer Setup
 
-- [Prerequisite Azure ressource](#prerequisite-azure-ressource)
-- [Running the Managment API](#running-the-managment-api)
+- [Prerequisite Azure resource](#prerequisite-azure-resource)
+- [Running the Management API](#running-the-management-api)
 - [Running the Resource Processor function](#running-the-resource-processor-function)
 - [(Optional) Install pre-commit hooks](#optional-install-pre-commit-hooks)
 - [API Endpoints](#api-endpoints)
@@ -9,20 +9,21 @@
 
 > This guide assumes usage of Bash for development.
 
-## Prerequisite Azure ressource
+## Prerequisite Azure resource
 
 To develop locally you required the following Azure services:
 
 - Azure CosmosDB (SQL)
 - Azure Service Bus
 - Service Principal for the API to access Azure services such as Azure Service Bus
+- AAD applications (for API and Swagger UI) registered with the Microsoft Identity Platform
 
 The solution consists of two services:
 
 - Management API ([src](/management_api_app/))
 - Resource Processor ([src](/processor_function/))
 
-Execute the following steps to setup a development environment.
+Execute the following steps to set up a development environment.
 
 1. Login and select the Azure subscription you wish to deploy to
 
@@ -35,15 +36,15 @@ Execute the following steps to setup a development environment.
 1. Create Azure Service Bus
 
     ```bash
-    RESSOURCE_GROUP=<resource_group_name>
+    RESOURCE_GROUP=<resource_group_name>
     LOCATION=westeurope
     SERVICE_BUS_NAMESPACE=<service_bus_namespace_name>
     SERVICE_BUS_RESOURCE_REQUEST_QUEUE=workspacequeue
     SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE=deploymentstatus
 
-    az servicebus namespace create --resource-group $RESSOURCE_GROUP --name $SERVICE_BUS_NAMESPACE --location $LOCATION
-    az servicebus queue create --resource-group $RESSOURCE_GROUP --namespace-name $SERVICE_BUS_NAMESPACE --name $SERVICE_BUS_RESOURCE_REQUEST_QUEUE
-    az servicebus queue create --resource-group $RESSOURCE_GROUP --namespace-name $SERVICE_BUS_NAMESPACE --name $SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE
+    az servicebus namespace create --resource-group $RESOURCE_GROUP --name $SERVICE_BUS_NAMESPACE --location $LOCATION
+    az servicebus queue create --resource-group $RESOURCE_GROUP --namespace-name $SERVICE_BUS_NAMESPACE --name $SERVICE_BUS_RESOURCE_REQUEST_QUEUE
+    az servicebus queue create --resource-group $RESOURCE_GROUP --namespace-name $SERVICE_BUS_NAMESPACE --name $SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE
     ```
 
 1. Create Cosmos DB
@@ -84,7 +85,18 @@ Execute the following steps to setup a development environment.
 
     > Keep in mind that Azure role assignments may take up to five minutes to propagate.
 
-## Running the Managment API
+1. Register AAD applications with the Microsoft Identity Platform
+
+   > NOTE: this requires domain admin privileges. You may wish to set up a separate Azure AD tenant for this
+
+   Follow the [Microsoft Docs Quickstart](https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app) or run the [AAD App Reg script](../scripts/aad-app-reg.sh) to register two apps
+
+   - **TRE API:**  (with three roles `TREAdmin`, `TREWorkspaceOwner` and `TREResearcher`) This app is used to authenticate users to the API - add users to the admin, owner, and researcher roles.
+   - **TRE Swagger UI**: This app is used to allow Swagger login
+   - You will also want to create applications for workspaces (with the roles `WorkspaceResearcher` and `WorkspaceOwner`) that govern who can see what workspaces in the API
+
+
+## Running the Management API
 
 ### Develop and run locally on Windows
 
@@ -109,7 +121,7 @@ The API will be available at [https://localhost:8000/docs](https://localhost:800
 ### Develop and run in a DevContainer
 
 1. Open the project in Visual Studio Code in the DevContainer
-1. Copy `.env.tmpl` in the **management_api_app** folder to `.env` and configure the variables
+1. Copy `.env.sample` in the **management_api_app** folder to `.env` and configure the variables
 1. Start the web API
 
     ```cmd
