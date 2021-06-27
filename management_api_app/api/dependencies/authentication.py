@@ -23,6 +23,8 @@ def get_access_service(provider: str) -> AccessService:
 
 
 async def get_current_user(user: User = Depends(authorize)) -> User:
+    access_service = get_access_service(AuthProvider.AAD)
+    user.roleAssignments = access_service.get_user_role_assignments(user)
     return user
 
 

@@ -13,6 +13,7 @@ from models.domain.workspace import Workspace
 from models.schemas.workspace import WorkspaceInCreate, WorkspaceIdInResponse, WorkspacesInList, WorkspaceInResponse
 from resources import strings
 from service_bus.resource_request_sender import send_resource_request_message
+from services.authentication import User
 
 
 router = APIRouter(dependencies=[Depends(get_current_user)])
@@ -20,8 +21,10 @@ router = APIRouter(dependencies=[Depends(get_current_user)])
 
 @router.get("/workspaces", response_model=WorkspacesInList, name=strings.API_GET_ALL_WORKSPACES)
 async def retrieve_active_workspaces(
-    workspace_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository)),
+        workspace_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository)),
+        user: User = Depends(get_current_user)
 ) -> WorkspacesInList:
+    print(user)
     workspaces = workspace_repo.get_all_active_workspaces()
     return WorkspacesInList(workspaces=workspaces)
 

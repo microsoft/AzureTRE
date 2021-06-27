@@ -6,6 +6,7 @@ from msal import ConfidentialClientApplication
 from core import config
 from resources import strings
 from services.access_service import AccessService, AuthConfigValidationError
+from services.authentication import User
 
 
 class AADAccessService(AccessService):
@@ -53,15 +54,29 @@ class AADAccessService(AccessService):
             'roles': {role['value']: role['id'] for role in roles}
         }
 
+    def _get_role_assignment_graph_data(self, user_id: str) -> dict:
+        msgraph_token = self._get_msgraph_token()
+        user_endpoint = f"https://graph.microsoft.com/v1.0/users/{user_id}/appRoleAssignments"
+        graph_data = requests.get(user_endpoint, headers=self._get_auth_header(msgraph_token)).json()
+        return graph_data
+
     def extract_workspace_auth_information(self, data: dict) -> dict:
         if "app_id" not in data:
             raise AuthConfigValidationError(strings.ACCESS_PLEASE_SUPPLY_APP_ID)
 
         auth_info = self._get_app_auth_info(data["app_id"])
-        print(auth_info)
 
         for role in ['WorkspaceOwner', 'WorkspaceResearcher']:
             if role not in auth_info['roles']:
                 raise AuthConfigValidationError(f"{strings.ACCESS_APP_IS_MISSING_ROLE} {role}")
 
         return auth_info
+
+    def get_user_role_assignments(self, user: User) -> dict:
+        graph_data = self._get_role_assignment_graph_data(user.id)
+
+        if 'value' not in graph_data:
+            logging.debug(graph_data)
+            raise AuthConfigValidationError(f"{strings.ACCESS_UNABLE_TO_GET_ROLE_ASSIGNMENTS_FOR_USER} {user.id}")
+
+        return {role_assignment['resourceId']: role_assignment['appRoleId'] for role_assignment in graph_data['value']}
