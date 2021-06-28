@@ -29,6 +29,36 @@ variable "management_api_image_tag" {
   default     = "main-latest"
 }
 
+variable "mgmt_storage_account_name" {
+  type        = string
+  description = "Storage account created by bootstrap to hold all Terraform state"
+}
+
+variable "mgmt_resource_group_name" {
+  type        = string
+  description = "Shared management resource group"
+}
+
+variable "terraform_state_container_name" {
+  type        = string
+  description = "Name of the storage container for Terraform state"
+}
+
+variable "porter_output_container_name" {
+  type        = string
+  description = "Name of the storage container for Porter output"
+}
+
+variable "arm_client_id" {
+  type        = string
+  description = "The client (app) ID of a service principal with Owner role to the subscription."
+}
+
+variable "arm_client_secret" {
+  type        = string
+  description = "The client secret (app password) of a service principal with Owner role to the subscription."
+}
+
 variable "docker_registry_server" {
   type        = string
   description = "Docker registry server"
