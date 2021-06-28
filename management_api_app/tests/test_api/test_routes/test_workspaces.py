@@ -8,23 +8,24 @@ from starlette import status
 from db.errors import EntityDoesNotExist
 from models.domain.resource import Status, Deployment
 from models.domain.workspace import Workspace
-from models.schemas.workspace import get_sample_workspace
 from resources import strings
 
 
 pytestmark = pytest.mark.asyncio
 
 
-def create_sample_workspace_object(workspace_id):
-    return Workspace(
+def create_sample_workspace_object(workspace_id, auth_info: dict = None):
+    workspace = Workspace(
         id=workspace_id,
         description="My workspace",
         resourceTemplateName="tre-workspace-vanilla",
         resourceTemplateVersion="0.1.0",
         resourceTemplateParameters={},
         deployment=Deployment(status=Status.NotDeployed, message=""),
-        authInformation={}
     )
+    if auth_info:
+        workspace.authInformation = auth_info
+    return workspace
 
 
 def create_sample_workspace_input_data():
@@ -53,13 +54,21 @@ async def test_workspaces_get_empty_list_when_no_resources_exist(get_workspaces_
 
 @patch("api.routes.workspaces.WorkspaceRepository.get_all_active_workspaces")
 async def test_workspaces_get_list_returns_correct_data_when_resources_exist(get_workspaces_mock, app: FastAPI, client: AsyncClient) -> None:
-    workspaces = [get_sample_workspace("2fdc9fba-726e-4db6-a1b8-9018a2165748"), get_sample_workspace("000000d3-82da-4bfc-b6e9-9a7853ef753e")]
-    get_workspaces_mock.return_value = workspaces
+    auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'roles': {'WorkspaceOwner': 'ab124', 'WorkspaceResearcher': 'ab125'}}
+    auth_info_user_not_in_workspace_role = {'sp_id': 'ab127', 'roles': {'WorkspaceOwner': 'ab128', 'WorkspaceResearcher': 'ab129'}}
+
+    valid_ws_1 = create_sample_workspace_object("2fdc9fba-726e-4db6-a1b8-9018a2165748", auth_info_user_in_workspace_owner_role)
+    valid_ws_2 = create_sample_workspace_object("000000d3-82da-4bfc-b6e9-9a7853ef753e", auth_info_user_in_workspace_owner_role)
+    invalid_ws = create_sample_workspace_object("00000045-82da-4bfc-b6e9-9a7853ef7534", auth_info_user_not_in_workspace_role)
+
+    get_workspaces_mock.return_value = [valid_ws_1, valid_ws_2, invalid_ws]
 
     response = await client.get(app.url_path_for(strings.API_GET_ALL_WORKSPACES))
     workspaces_from_response = response.json()["workspaces"]
-    assert len(workspaces_from_response) == len(workspaces)
-    assert all((workspace in workspaces for workspace in workspaces_from_response))
+
+    assert len(workspaces_from_response) == 2
+    assert valid_ws_1 in workspaces_from_response
+    assert valid_ws_2 in workspaces_from_response
 
 
 # [GET] /workspaces/{workspace_id}
@@ -83,12 +92,13 @@ async def test_workspaces_id_get_returns_422_if_workspace_id_is_not_a_uuid(get_w
 @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
 async def test_workspaces_id_get_returns_workspace_if_found(get_workspace_mock, app: FastAPI, client: AsyncClient):
     workspace_id = "933ad738-7265-4b5f-9eae-a1a62928772e"
-    sample_workspace = get_sample_workspace(workspace_id=workspace_id)
+    auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'roles': {'WorkspaceOwner': 'ab124', 'WorkspaceResearcher': 'ab125'}}
+    sample_workspace = create_sample_workspace_object(workspace_id, auth_info_user_in_workspace_owner_role)
     get_workspace_mock.return_value = sample_workspace
 
     response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id=workspace_id))
     actual_resource = response.json()["workspace"]
-    assert actual_resource["id"] == sample_workspace["id"]
+    assert actual_resource["id"] == sample_workspace.id
 
 
 @patch("api.routes.workspaces.send_resource_request_message")

@@ -8,3 +8,4 @@ class User(BaseModel):
     name: str
     email: str
     roles: List[str] = Field([])
+    roleAssignments: dict = Field({})

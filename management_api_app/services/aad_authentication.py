@@ -10,6 +10,7 @@ from fastapi.security import OAuth2AuthorizationCodeBearer
 from core import config
 from resources import strings
 from services.authentication import User
+from services.aad_access_service import AADAccessService
 
 
 class AzureADAuthorization(OAuth2AuthorizationCodeBearer):
@@ -39,10 +40,15 @@ class AzureADAuthorization(OAuth2AuthorizationCodeBearer):
 
     @staticmethod
     def _get_user_from_token(decoded_token: dict) -> User:
-        return User(id=decoded_token['oid'],
+        user_id = decoded_token['oid']
+        access_service = AADAccessService()
+        role_assignments = access_service.get_user_role_assignments(user_id)
+
+        return User(id=user_id,
                     name=decoded_token.get('name', ''),
                     email=decoded_token.get('email', ''),
-                    roles=decoded_token.get('roles', []))
+                    roles=decoded_token.get('roles', []),
+                    roleAssignments=role_assignments)
 
     def _decode_token(self, token: str) -> dict:
         key_id = self._get_key_id(token)

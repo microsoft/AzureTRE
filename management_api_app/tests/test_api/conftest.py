@@ -18,7 +18,7 @@ def no_database():
 
 def override_get_user():
     from services.authentication import User
-    return User(id="1234", name="test", email="test", roles=["TREAdmin"])
+    return User(id="1234", name="test", email="test", roles=["TREAdmin"], roleAssignments={"ab123": "ab124"})
 
 
 @pytest.fixture
