@@ -48,8 +48,8 @@ async def receive_message():
                     try:
                         message = json.loads(str(msg))
                         result = (yield parse_obj_as(DeploymentStatusUpdateMessage, message))
-                    except (json.JSONDecodeError, ValidationError):
-                        logging.error(strings.DEPLOYMENT_STATUS_MESSAGE_FORMAT_INCORRECT)
+                    except (json.JSONDecodeError, ValidationError) as e:
+                        logging.error(f"{strings.DEPLOYMENT_STATUS_MESSAGE_FORMAT_INCORRECT}: {e}")
 
                     if result:
                         logging.info(f"Received deployment status update message with correlation ID {msg.correlation_id}: {message}")
