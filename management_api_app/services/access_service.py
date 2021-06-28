@@ -1,4 +1,6 @@
 from abc import ABC, abstractmethod
+
+from models.domain.workspace import Workspace, WorkspaceRole
 from services.authentication import User
 
 
@@ -12,5 +14,10 @@ class AccessService(ABC):
         pass
 
     @abstractmethod
-    def get_user_role_assignments(self, user: User):
+    def get_user_role_assignments(self, user_id: str) -> dict:
+        pass
+
+    @staticmethod
+    @abstractmethod
+    def get_workspace_role(user: User, workspace: Workspace) -> WorkspaceRole:
         pass

@@ -16,15 +16,13 @@ def extract_auth_information(auth_config: AuthenticationConfiguration) -> dict:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
-def get_access_service(provider: str) -> AccessService:
+def get_access_service(provider: str = AuthProvider.AAD) -> AccessService:
     if provider == AuthProvider.AAD:
         return AADAccessService()
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.INVALID_AUTH_PROVIDER)
 
 
 async def get_current_user(user: User = Depends(authorize)) -> User:
-    access_service = get_access_service(AuthProvider.AAD)
-    user.roleAssignments = access_service.get_user_role_assignments(user)
     return user
 
 

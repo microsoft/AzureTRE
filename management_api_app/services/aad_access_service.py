@@ -4,6 +4,7 @@ import requests
 from msal import ConfidentialClientApplication
 
 from core import config
+from models.domain.workspace import Workspace, WorkspaceRole
 from resources import strings
 from services.access_service import AccessService, AuthConfigValidationError
 from services.authentication import User
@@ -72,11 +73,29 @@ class AADAccessService(AccessService):
 
         return auth_info
 
-    def get_user_role_assignments(self, user: User) -> dict:
-        graph_data = self._get_role_assignment_graph_data(user.id)
+    def get_user_role_assignments(self, user_id: str) -> dict:
+        graph_data = self._get_role_assignment_graph_data(user_id)
 
         if 'value' not in graph_data:
             logging.debug(graph_data)
-            raise AuthConfigValidationError(f"{strings.ACCESS_UNABLE_TO_GET_ROLE_ASSIGNMENTS_FOR_USER} {user.id}")
+            raise AuthConfigValidationError(f"{strings.ACCESS_UNABLE_TO_GET_ROLE_ASSIGNMENTS_FOR_USER} {user_id}")
 
         return {role_assignment['resourceId']: role_assignment['appRoleId'] for role_assignment in graph_data['value']}
+
+    @staticmethod
+    def get_workspace_role(user: User, workspace: Workspace) -> WorkspaceRole:
+        if 'sp_id' not in workspace.authInformation or 'roles' not in workspace.authInformation:
+            raise AuthConfigValidationError(strings.AUTH_CONFIGURATION_NOT_AVAILABLE_FOR_WORKSPACE)
+
+        workspace_sp_id = workspace.authInformation['sp_id']
+        workspace_roles = workspace.authInformation['roles']
+
+        if 'WorkspaceOwner' not in workspace_roles or 'WorkspaceResearcher' not in workspace_roles:
+            raise AuthConfigValidationError(strings.AUTH_CONFIGURATION_NOT_AVAILABLE_FOR_WORKSPACE)
+
+        if workspace_sp_id in user.roleAssignments:
+            if workspace_roles['WorkspaceOwner'] == user.roleAssignments[workspace_sp_id]:
+                return WorkspaceRole.Owner
+            if workspace_roles['WorkspaceResearcher'] == user.roleAssignments[workspace_sp_id]:
+                return WorkspaceRole.Researcher
+        return WorkspaceRole.NoRole
