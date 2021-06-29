@@ -22,3 +22,4 @@ variable "porter_output_container_name" {}
 variable "arm_client_id" {}
 variable "arm_client_secret" {}
 variable "management_api_image_tag" {}
+variable "managed_identity" {}
