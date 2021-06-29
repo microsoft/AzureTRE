@@ -16,7 +16,7 @@ def extract_auth_information(auth_config: AuthenticationConfiguration) -> dict:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
-def get_access_service(provider: str) -> AccessService:
+def get_access_service(provider: str = AuthProvider.AAD) -> AccessService:
     if provider == AuthProvider.AAD:
         return AADAccessService()
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.INVALID_AUTH_PROVIDER)
