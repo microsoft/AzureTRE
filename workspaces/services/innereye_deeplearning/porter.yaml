@@ -21,6 +21,8 @@ parameters:
     type: string
   - name: azureml_workspace_name
     type: string
+  - name: azureml_acr_id
+    type: string
   - name: tfstate_resource_group_name
     type: string
     description: "Resource group containing the Terraform state storage account"
@@ -35,6 +37,10 @@ parameters:
     description: "The name of the Terraform state storage container"
     env: TERRAFORM_STATE_CONTAINER_NAME
 
+outputs:
+  - name: azureml_compute_cluster_name
+    type: string
+
 mixins:
   - exec
   - terraform:
@@ -42,11 +48,12 @@ mixins:
 
 install:
   - terraform:
-      description: "Deploy workspace"
+      description: "Deploy service"
       vars:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
         azureml_workspace_name: "{{ bundle.parameters.azureml_workspace_name }}"
+        azureml_acr_id: "{{ bundle.parameters.azureml_acr_id }}"
         arm_client_id: "{{ bundle.credentials.azure_client_id }}"
         arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
         arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
@@ -55,10 +62,12 @@ install:
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.workspace_id }}-svc-innereye_deeplearning"
+      outputs:
+      - name: azureml_compute_cluster_name
 
 upgrade:
   - exec:
-      description: "Upgrade workspace"
+      description: "Upgrade service"
       command: echo
       arguments:
         - "This workspace does not implement upgrade action"

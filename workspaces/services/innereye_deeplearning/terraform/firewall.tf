@@ -14,7 +14,7 @@ resource "null_resource" "az_login" {
   }
 
   triggers = {
-    service_id = timestamp()
+    timestamp = timestamp()
   }
 }
 

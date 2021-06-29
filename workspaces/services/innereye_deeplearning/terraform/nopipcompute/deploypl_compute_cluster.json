@@ -21,15 +21,29 @@
         "workspace_name": {
             "type": "String"
         },
-        "instance_name": {
+        "cluster_name": {
             "type": "String"
         },
         "subnet_name": {
             "type": "String"
         },
+        "admin_username": {
+            "type": "String",
+            "defaultValue": "azureuser"
+        },
+        "admin_user_password": {
+            "type": "SecureString"
+        },
         "vm_size_sku": {
             "type": "String",
             "defaultValue": "STANDARD_DS2_V2"
+        },
+        "min_node_count": {
+            "type": "Int",
+            "defaultValue": 0
+        },
+        "max_node_count": {
+            "type": "Int"
         }
     },
     "variables": {},
@@ -37,13 +51,25 @@
         {
             "type": "Microsoft.MachineLearningServices/workspaces/computes",
             "apiVersion": "2020-05-15-preview",
-            "name": "[concat(parameters('workspace_name'),'/',parameters('instance_name'))]",
+            "name": "[concat(parameters('workspace_name'),'/',parameters('cluster_name'))]",
             "location": "[parameters('location')]",
+            "identity": {
+                "type": "SystemAssigned"
+            },
             "properties": {
-                "computeType": "ComputeInstance",
+                "computeType": "AmlCompute",
                 "computeLocation": "[parameters('location')]",
                 "properties": {
                     "vmSize": "[parameters('vm_size_sku')]",
+                    "vmPriority": "Dedicated",
+                    "scaleSettings": {
+                        "minNodeCount": "[parameters('min_node_count')]",
+                        "maxNodeCount": "[parameters('max_node_count')]"
+                    },
+                    "userAccountCredentials": {
+                        "adminUserName": "[parameters('admin_username')]",
+                        "adminUserPassword": "[parameters('admin_user_password')]"
+                    },
                     "remoteLoginPortPublicAccess": "Enabled",
                     "enableNodePublicIp": false,
                     "subnet": {
@@ -52,5 +78,13 @@
                 }
             }
         }
-    ]
+    ],
+    "outputs": {
+
+        "cluster_principal_id": {
+            "value": "[reference(resourceId('Microsoft.MachineLearningServices/workspaces/computes', parameters('workspace_name'),parameters('cluster_name')),'2020-05-15-preview', 'Full').identity.principalId]",
+            "type": "String"
+        }
+
+    }
 }

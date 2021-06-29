@@ -1,7 +1,7 @@
 name: tre-workspace-innereye-deeplearning
 
 version: 0.1.4
-description: "A Azure TRE workspace with Azure Machine Learning and Dev Test Labs"
+description: "An Azure TRE workspace with Azure Machine Learning, Dev Test Labs and InnerEye deep learning"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
 
@@ -84,7 +84,7 @@ install:
         # do not merge
         allow-docker-host-access:
   - exec:
-      description: "Install InnerEye deep learnign service"
+      description: "Install InnerEye deep learning service"
       command: ./install_service_innereye_deep_learning.sh
 
 upgrade:
