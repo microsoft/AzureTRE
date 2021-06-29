@@ -25,3 +25,7 @@ output "shared" {
 output "aci" {
   value = azurerm_subnet.aci.id
 }
+
+output "azurewebsites_dns_zone_id" {
+  value = azurerm_private_dns_zone.azurewebsites.id
+}
