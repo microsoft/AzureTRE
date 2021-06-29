@@ -192,3 +192,11 @@ resource "azurerm_subnet_route_table_association" "rt_services_subnet_associatio
   route_table_id = data.azurerm_route_table.rt.id
   subnet_id      = azurerm_subnet.services.id
 }
+
+resource "azurerm_private_dns_zone_virtual_network_link" "azurewebsites" {
+  resource_group_name   = var.core_resource_group_name
+  virtual_network_id    = azurerm_virtual_network.ws.id
+  private_dns_zone_name = "privatelink.azurewebsites.net"
+  name                  = "link-azurewebsites-${local.workspace_resource_name_suffix}"
+  registration_enabled  = false
+}

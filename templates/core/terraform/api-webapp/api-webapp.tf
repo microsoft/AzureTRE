@@ -98,22 +98,10 @@ resource "azurerm_private_endpoint" "management_api_private_endpoint" {
 
   private_dns_zone_group {
     name                 = "privatelink.azurewebsites.net"
-    private_dns_zone_ids = [azurerm_private_dns_zone.azurewebsites.id]
+    private_dns_zone_ids = [var.azurewebsites_dns_zone_id]
   }
 }
 
-resource "azurerm_private_dns_zone" "azurewebsites" {
-  name                = "privatelink.azurewebsites.net"
-  resource_group_name = var.resource_group_name
-}
-
-resource "azurerm_private_dns_zone_virtual_network_link" "azurewebsites" {
-  resource_group_name   = var.resource_group_name
-  virtual_network_id    = var.core_vnet
-  private_dns_zone_name = azurerm_private_dns_zone.azurewebsites.name
-  name                  = "azurewebsites-link"
-  registration_enabled  = false
-}
 
 resource "azurerm_app_service_virtual_network_swift_connection" "api-integrated-vnet" {
   app_service_id = azurerm_app_service.management_api.id
