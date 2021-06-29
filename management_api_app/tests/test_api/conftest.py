@@ -18,17 +18,23 @@ def no_database():
 
 def override_get_user():
     from services.authentication import User
-    return User(id="1234", name="test", email="test", roles=["TREAdmin"])
+    return User(id="1234", name="test", email="test", roles=[""])
 
 
-@pytest.fixture
+@pytest.fixture(scope='module')
+def admin_user():
+    def inner():
+        from services.authentication import User
+        return User(id="1234", name="test", email="test", roles=["TREAdmin"])
+    return inner
+
+
+@pytest.fixture(scope='module')
 def app() -> FastAPI:
     from main import get_application
-    from api.routes.workspace_templates import get_current_admin_user
     from api.routes.workspaces import get_current_user
 
     the_app = get_application()
-    the_app.dependency_overrides[get_current_admin_user] = override_get_user
     the_app.dependency_overrides[get_current_user] = override_get_user
     return the_app
 
