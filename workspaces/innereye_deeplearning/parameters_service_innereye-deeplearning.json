@@ -23,6 +23,12 @@
       }
     },
     {
+      "name": "azureml_acr_id",
+      "source": {
+        "env": "AZUREML_ACR_ID"
+      }
+    },
+    {
       "name": "tfstate_container_name",
       "source": {
         "env": "TERRAFORM_STATE_CONTAINER_NAME"

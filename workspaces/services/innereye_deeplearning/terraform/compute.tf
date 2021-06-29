@@ -1,5 +1,5 @@
-data "local_file" "deploypl_aml_compute" {
-  filename = "${path.module}/nopipcompute/deploypl_aml_compute.json"
+data "local_file" "deploypl_compute_cluster" {
+  filename = "${path.module}/nopipcompute/deploypl_compute_cluster.json"
 }
 
 data "local_file" "deploypl_compute_instance" {
@@ -22,11 +22,11 @@ resource "azurerm_network_security_rule" "aml-compute-storage-access" {
 }
 
 # need to add existing VNET
-resource "azurerm_resource_group_template_deployment" "deploy_aml_compute" {
-  name                = "dpl-${local.service_resource_name_suffix}_deploy_aml_compute"
+resource "azurerm_resource_group_template_deployment" "deploy_compute_cluster" {
+  name                = "dpl-${local.service_resource_name_suffix}_deploy_compute_cluster"
   resource_group_name = data.azurerm_resource_group.ws.name
 
-  template_content  = data.local_file.deploypl_aml_compute.content
+  template_content  = data.local_file.deploypl_compute_cluster.content
 
 
   # these key-value pairs are passed into the ARM Template's `parameters` block
@@ -41,7 +41,7 @@ resource "azurerm_resource_group_template_deployment" "deploy_aml_compute" {
       value = var.azureml_workspace_name
     },
     "cluster_name" = {
-      value = "cp-${local.aml_compute_id}"
+      value = local.aml_compute_cluster_name
     },
     "subnet_name" = {
       value = data.azurerm_subnet.services.name
@@ -87,7 +87,7 @@ resource "azurerm_resource_group_template_deployment" "deploy_compute_instance" 
       "value" = var.azureml_workspace_name
     },
     "instance_name" = {
-      "value" = "ci-${local.aml_compute_id}"
+      "value" = local.aml_compute_instance_name
     },
     "subnet_name" = {
       "value" = data.azurerm_subnet.services.name
@@ -99,4 +99,11 @@ resource "azurerm_resource_group_template_deployment" "deploy_compute_instance" 
   })
 
   deployment_mode = "Incremental"
+}
+
+
+resource "azurerm_role_assignment" "compute_cluster_acr_pull" {
+  scope                = var.azureml_acr_id
+  role_definition_name = "AcrPull"
+  principal_id         = jsondecode(azurerm_resource_group_template_deployment.deploy_compute_cluster.output_content).cluster_principal_id.value
 }
