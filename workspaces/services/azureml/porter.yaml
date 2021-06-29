@@ -34,6 +34,10 @@ parameters:
 outputs:
   - name: azureml_workspace_name
     type: string
+  - name: azureml_acr_id
+    type: string
+  - name: azureml_storage_account_id
+    type: string
 
 mixins:
   - exec
@@ -56,6 +60,8 @@ install:
         key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.workspace_id }}-svc-azureml"
       outputs:
       - name: azureml_workspace_name
+      - name: azureml_acr_id
+      - name: azureml_storage_account_id
 
 upgrade:
   - exec:

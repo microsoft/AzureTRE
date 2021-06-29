@@ -54,6 +54,8 @@ parameters:
 outputs:
   - name: azureml_workspace_name
     type: string
+  - name: azureml_acr_id
+    type: string
 
 mixins:
   - exec
@@ -104,6 +106,19 @@ install:
         i: service-azureml
       outputs:
         - name: azureml_workspace_name
+          regex: (.*)
+  - exec:
+      description: "Get Azure ML Service Outputs"
+      command: porter
+      arguments:
+        - installations
+        - output
+        - show
+        - azureml_acr_id
+      flags:
+        i: service-azureml
+      outputs:
+        - name: azureml_acr_id
           regex: (.*)
   - exec:
       description: "Install Dev Test Labs Virtual Desktop Service"
