@@ -41,10 +41,10 @@ Service Tags:
     `make build-cnab-image`
 
 - A Azure ML DevTest Labs Workspace bundle built
-    `make porter-build DIR=./workspaces/azureml-devtestlabs`
+    `make porter-build DIR=./workspaces/azureml_devtestlabs`
 
 ## To deploy
 
 - Once prerequisites are installed, create a copy of `workspaces/azureml_devtestlabs/.env.sample` called `.env` in the  `workspaces/azureml_devtestlabs/` directory. Update the environment variable values to match your installation.
 
-- Run: `make porter-install DIR=./workspaces/azureml-devtestlabs`
+- Run: `make porter-install DIR=./workspaces/azureml_devtestlabs`
