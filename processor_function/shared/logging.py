@@ -18,7 +18,7 @@ def initialize_logging(logging_level: int, correlation_id: str) -> logging.Logge
     """
     logger = logging.getLogger()
     logger.addHandler(logging.StreamHandler())  # For logging into console
-    app_insights_instrumentation_key = os.getenv("APP_INSIGHTS_INSTRUMENTATION_KEY")
+    app_insights_instrumentation_key = os.getenv("APPINSIGHTS_INSTRUMENTATIONKEY")
 
     try:
         logger.addHandler(AzureLogHandler(connection_string=f"InstrumentationKey={app_insights_instrumentation_key}"))
