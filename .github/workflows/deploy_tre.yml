@@ -5,7 +5,7 @@ on:
     # 1am each night https://crontab.guru/#0_1_*_*_*
     - cron: "0 1 * * *"
   push:
-    branches: [ develop, main ]
+    branches: [ develop, main, marrobi/issue350-4 ]
   workflow_dispatch:
 
 jobs:
@@ -121,9 +121,34 @@ jobs:
           scm-do-build-during-deployment: true
           enable-oryx-build: true
 
+  publish_bundles:
+    name: Publish Bundles
+    runs-on: ubuntu-latest
+    environment: Dev
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    - name: Publish bundles
+      shell: bash
+      env:
+        ACR_NAME: ${{ secrets.ACR_NAME }}
+      run: |
+          curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
+          export PATH=~/.porter/:$PATH
+
+          make porter-publish DIR=./workspaces/vanilla
+          make porter-publish DIR=./workspaces/services/azureml
+          make porter-publish DIR=./workspaces/services/devtestlabs
+          make porter-publish DIR=./workspaces/services/innereye_deeplearning
+          make porter-publish DIR=./workspaces/services/innereye_inference
+
   deploy_vanilla_workspace:
     name: Deploy Vanilla Workspace
-    needs: deploy_tre
+    needs: [deploy_tre,publish_bundles]
     runs-on: ubuntu-latest
     environment: Dev
     steps:
@@ -156,12 +181,11 @@ jobs:
           curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
           export PATH=~/.porter/:$PATH
 
-          make porter-publish DIR=./workspaces/vanilla
           make porter-install DIR=./workspaces/vanilla
 
   deploy_azureml_devtestlabs_workspace:
     name: Deploy Azure ML and DevTest Labs Workspace
-    needs: deploy_vanilla_workspace
+    needs: [deploy_tre,publish_bundles,deploy_vanilla_workspace]
     runs-on: ubuntu-latest
     environment: Dev
     steps:
@@ -196,14 +220,12 @@ jobs:
           export PATH=~/.porter/:$PATH
           export PORTER_DRIVER=docker
       
-          make porter-publish DIR=./workspaces/services/azureml
-          make porter-publish DIR=./workspaces/services/devtestlabs
           make porter-publish DIR=./workspaces/azureml_devtestlabs
           make porter-install DIR=./workspaces/azureml_devtestlabs
 
   deploy_innereye_deeplearning_workspace:
     name: Deploy InnerEye Deep Learning Workspace
-    needs: deploy_azureml_devtestlabs_workspace
+    needs: [deploy_tre,publish_bundles,deploy_azureml_devtestlabs_workspace]
     runs-on: ubuntu-latest
     environment: Dev
     steps:
@@ -238,13 +260,13 @@ jobs:
           export PATH=~/.porter/:$PATH
       
           export PORTER_DRIVER=docker
-          make porter-publish DIR=./workspaces/services/innereye_deeplearning
+
           make porter-publish DIR=./workspaces/innereye_deeplearning
           make porter-install DIR=./workspaces/innereye_deeplearning
 
-  deploy_innereye_deeplearning__inference_workspace:
-    name: Deploy InnerEye Deep Learning Inference Workspace
-    needs: deploy_azureml_devtestlabs_inference_workspace
+  deploy_innereye_deeplearning_inference_workspace:
+    name: Deploy InnerEye Deep Learning & Inference Workspace
+    needs: [deploy_tre,publish_bundles,deploy_innereye_deeplearning_workspace]
     runs-on: ubuntu-latest
     environment: Dev
     steps:
@@ -254,7 +276,7 @@ jobs:
       uses: azure/login@v1
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
-    - name: Publish and deploy azureml_devtestlabs workspace bundle
+    - name: Publish and deploy innereye_deeplearning_inference workspace bundle
       shell: bash
       env:
         TRE_ID: ${{ secrets.TRE_ID }}
@@ -279,6 +301,5 @@ jobs:
           export PATH=~/.porter/:$PATH
       
           export PORTER_DRIVER=docker
-          make porter-publish DIR=./workspaces/services/innereye_deeplearning
-          make porter-publish DIR=./workspaces/innereye_deeplearning
-          make porter-install DIR=./workspaces/innereye_deeplearning
+          make porter-publish DIR=./workspaces/innereye_deeplearning_inference
+          make porter-install DIR=./workspaces/innereye_deeplearning_inference
