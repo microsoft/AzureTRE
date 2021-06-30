@@ -74,6 +74,7 @@ module "api-webapp" {
   shared_subnet                              = module.network.shared
   app_gw_subnet                              = module.network.app_gw
   core_vnet                                  = module.network.core
+  app_insights_connection_string             = azurerm_application_insights.core.connection_string
   app_insights_instrumentation_key           = azurerm_application_insights.core.instrumentation_key
   log_analytics_workspace_id                 = azurerm_log_analytics_workspace.core.id
   management_api_image_repository            = var.management_api_image_repository
