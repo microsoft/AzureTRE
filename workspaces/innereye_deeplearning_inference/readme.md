@@ -9,9 +9,10 @@ See: [https://github.com/microsoft/InnerEye-Inference](https://github.com/micros
 ```cmd
 az ad sp create-for-rbac --name <sp-name> --role Contributor --scopes /subscriptions/<subscription-id>/resourceGroups/<resource-group-name>/providers/Microsoft.MachineLearningServices/workspaces/<workspace-name>
 ```
-2. Create a copy of `workspaces/innereye_deeplearning_inference/.env.sample` with the name `.env` and update the workspace_id, address_space, and service principal client ID and secret from the previous step.
 
-3. Prerequisites for deployment:
+1. Create a copy of `workspaces/innereye_deeplearning_inference/.env.sample` with the name `.env` and update the workspace_id, address_space, and service principal client ID and secret from the previous step.
+
+1. Prerequisites for deployment:
 
 - A deployed TRE instance
 
@@ -26,7 +27,7 @@ az ad sp create-for-rbac --name <sp-name> --role Contributor --scopes /subscript
 - A DevTest Labs Service bundle published
     `make porter-build DIR=./workspaces/services/devtestlabs`  
     `make porter-publish DIR=./workspaces/services/devtestlabs`
-    
+
 - A InnerEye Deep Learning Service bundle published
     `make porter-build DIR=./workspaces/services/innereye_deeplearning`  
     `make porter-publish DIR=./workspaces/services/innereye_deeplearning`
@@ -35,7 +36,7 @@ az ad sp create-for-rbac --name <sp-name> --role Contributor --scopes /subscript
     `make porter-build DIR=./workspaces/services/innereye_inference`  
     `make porter-publish DIR=./workspaces/services/innereye_inference`
 
-4. Publish and install the InnerEye inference workspace:
+1. Publish and install the InnerEye inference workspace:
 
     `make porter-publish DIR=./workspaces/innereye_deeplearning_inference`
     `make porter-install DIR=./workspaces/innereye_deeplearning_inference`
