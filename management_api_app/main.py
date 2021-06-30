@@ -4,7 +4,6 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi_utils.tasks import repeat_every
-from opencensus.ext.azure.log_exporter import AzureLogHandler
 from starlette.exceptions import HTTPException
 from starlette.middleware.errors import ServerErrorMiddleware
 
@@ -14,6 +13,7 @@ from api.errors.validation_error import http422_error_handler
 from api.errors.generic_error import generic_error_handler
 from core import config
 from core.events import create_start_app_handler, create_stop_app_handler
+from services.logging import disable_unwanted_loggers, initialize_logging
 from service_bus.deployment_status_update import receive_message_and_update_deployment
 
 
@@ -40,46 +40,6 @@ def get_application() -> FastAPI:
     return application
 
 
-def initialize_logging(logging_level: int):
-    """
-    Adds the Application Insights handler for the root logger and sets the given logging level.
-
-    :param logging_level: The logging level to set e.g., logging.WARNING.
-    """
-    logger = logging.getLogger()
-
-    logging.getLogger("azure.core.pipeline.policies.http_logging_policy").disabled = True
-
-    logging.getLogger("azure.eventhub._eventprocessor.event_processor").disabled = True
-
-    logging.getLogger("azure.identity.aio._credentials.managed_identity").disabled = True
-    logging.getLogger("azure.identity.aio._credentials.environment").disabled = True
-    logging.getLogger("azure.identity.aio._internal.get_token_mixin").disabled = True
-    logging.getLogger("azure.identity.aio._internal.decorators").disabled = True
-    logging.getLogger("azure.identity.aio._credentials.chained").disabled = True
-    logging.getLogger("azure.identity").disabled = True
-
-    logging.getLogger("msal.token_cache").disabled = True
-
-    logging.getLogger("uamqp").disabled = True
-    logging.getLogger("uamqp.authentication.cbs_auth_async").disabled = True
-    logging.getLogger("uamqp.async_ops.client_async").disabled = True
-    logging.getLogger("uamqp.async_ops.connection_async").disabled = True
-    logging.getLogger("uamqp.async_ops").disabled = True
-    logging.getLogger("uamqp.authentication").disabled = True
-    logging.getLogger("uamqp.c_uamqp").disabled = True
-    logging.getLogger("uamqp.connection").disabled = True
-    logging.getLogger("uamqp.receiver").disabled = True
-
-    try:
-        logger.addHandler(AzureLogHandler(connection_string=f"InstrumentationKey={config.APP_INSIGHTS_INSTRUMENTATION_KEY}"))
-    except ValueError:
-        logger.error("Application Insights instrumentation key missing or invalid")
-
-    logging.basicConfig(level=logging_level)
-    logger.setLevel(logging_level)
-
-
 app = get_application()
 
 
@@ -89,6 +49,8 @@ async def initialize_logging_on_startup():
         initialize_logging(logging.DEBUG)
     else:
         initialize_logging(logging.INFO)
+
+    disable_unwanted_loggers()
 
 
 @app.on_event("startup")
