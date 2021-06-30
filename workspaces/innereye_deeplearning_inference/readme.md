@@ -20,7 +20,7 @@ az ad sp create-for-rbac --name <sp-name> --role Contributor --scopes /subscript
     `make porter-build DIR=./workspaces/vanilla`
     `make porter-publish DIR=./workspaces/vanilla`
 
-- A Azure ML Service bundle published
+- An Azure ML Service bundle published
     `make porter-build DIR=./workspaces/services/azureml`  
     `make porter-publish DIR=./workspaces/services/azureml`
 
