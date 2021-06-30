@@ -38,7 +38,7 @@ def disable_unwanted_loggers():
         logging.getLogger(logger_name).disabled = True
 
 
-def initialize_logging(logging_level: int, correlation_id: str) -> logging.LoggerAdapter:
+def initialize_logging(logging_level: int, correlation_id: str = None) -> logging.LoggerAdapter:
     """
     Adds the Application Insights handler for the root logger and sets the given logging level.
     Creates and returns a logger adapter that integrates the correlation ID, if given, to the log messages.
