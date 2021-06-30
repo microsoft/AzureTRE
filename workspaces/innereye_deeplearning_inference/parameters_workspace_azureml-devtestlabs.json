@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "1.0.0-DRAFT+TODO",
+  "name": "workspace-azureml_devtestlabs",
+  "created": "2021-06-03T11:54:54.0225968Z",
+  "modified": "2021-06-03T11:54:54.0225968Z",
+  "parameters": [
+    {
+      "name": "address_space",
+      "source": {
+        "env": "ADDRESS_SPACE"
+      }
+    },
+    {
+      "name": "tre_id",
+      "source": {
+        "env": "TRE_ID"
+      }
+    },
+    {
+      "name": "azure_location",
+      "source": {
+        "env": "LOCATION"
+      }
+    },
+    {
+      "name": "workspace_id",
+      "source": {
+        "env": "WORKSPACE_ID"
+      }
+    },
+    {
+      "name": "acr_name",
+      "source": {
+        "env": "ACR_NAME"
+      }
+    },
+    {
+      "name": "tfstate_container_name",
+      "source": {
+        "env": "TERRAFORM_STATE_CONTAINER_NAME"
+      }
+    },
+    {
+      "name": "tfstate_resource_group_name",
+      "source": {
+        "env": "MGMT_RESOURCE_GROUP_NAME"
+      }
+    },
+    {
+      "name": "tfstate_storage_account_name",
+      "source": {
+        "env": "MGMT_STORAGE_ACCOUNT_NAME"
+      }
+    },
+    {
+      "name": "porter_driver",
+      "source": {
+        "env": "PORTER_DRIVER"
+      }
+    }
+  ]
+}
