@@ -129,6 +129,7 @@ module "processor_function" {
   arm_client_id                              = var.arm_client_id
   arm_client_secret                          = var.arm_client_secret
   management_api_image_tag                   = var.management_api_image_tag
+  managed_identity                           = module.identity.managed_identity
 }
 
 module "servicebus" {
