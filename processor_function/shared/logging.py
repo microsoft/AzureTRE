@@ -18,10 +18,10 @@ def initialize_logging(logging_level: int, correlation_id: str) -> logging.Logge
     """
     logger = logging.getLogger()
     logger.addHandler(logging.StreamHandler())  # For logging into console
-    app_insights_instrumentation_key = os.getenv("APP_INSIGHTS_INSTRUMENTATION_KEY")
+    app_insights_connection_string = os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING")
 
     try:
-        logger.addHandler(AzureLogHandler(connection_string=f"InstrumentationKey={app_insights_instrumentation_key}"))
+        logger.addHandler(AzureLogHandler(connection_string=app_insights_connection_string))
     except ValueError as e:
         logger.error(f"Failed to set Application Insights logger handler: {e}")
 

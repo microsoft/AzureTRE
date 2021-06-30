@@ -21,7 +21,8 @@ resource "azurerm_function_app" "procesorfunction" {
     FUNCTION_APP_EDIT_MODE                = "readonly"
     FUNCTIONS_EXTENSION_VERSION           = "3"
     RESOURCE_GROUP_NAME                   = var.resource_group_name
-    APP_INSIGHTS_INSTRUMENTATION_KEY      = var.app_insights_instrumentation_key
+    APPLICATIONINSIGHTS_CONNECTION_STRING = var.app_insights_connection_string
+    APPINSIGHTS_INSTRUMENTATIONKEY        = var.app_insights_instrumentation_key
     VNET_NAME                             = var.core_vnet
     ACI_SUBNET                            = var.aci_subnet
     CNAB_AZURE_STATE_STORAGE_ACCOUNT_NAME = var.mgmt_storage_account_name
