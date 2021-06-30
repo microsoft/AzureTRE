@@ -5,7 +5,6 @@ from opencensus.ext.azure.log_exporter import AzureLogHandler
 from opencensus.trace import config_integration
 from opencensus.trace.samplers import AlwaysOnSampler
 from opencensus.trace.tracer import Tracer
-from typing import List
 
 
 UNWANTED_LOGGERS = [

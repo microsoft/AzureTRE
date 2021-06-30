@@ -4,7 +4,6 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi_utils.tasks import repeat_every
-from opencensus.ext.azure.log_exporter import AzureLogHandler
 from starlette.exceptions import HTTPException
 from starlette.middleware.errors import ServerErrorMiddleware
 
