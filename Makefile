@@ -68,7 +68,7 @@ deploy-processor-function:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDeploying processor function\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
-	&& cd ./processor_function && func azure functionapp publish "processor-func-$${TRE_ID}"
+	&& cd ./processor_function && func azure functionapp publish "processor-func-$${TRE_ID}" --python
 
 letsencrypt:
 	echo -e "\n\e[34m»»» 🧩 \e[96mRequesting LetsEncrypt SSL certificate\e[0m..." \
