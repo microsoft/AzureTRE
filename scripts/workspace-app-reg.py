@@ -176,7 +176,7 @@ def main():
             print(content)
     else:
         # Create
-        resp = graph.post(f"/applications", json=apiApp, headers={'Content-Type': 'application/json'})
+        resp = graph.post("/applications", json=apiApp, headers={'Content-Type': 'application/json'})
         content = resp.json()
         if resp.ok:
             apiAppId = content['appId']
