@@ -4,15 +4,14 @@ The Azure Trusted Research Environment (TRE) consists of multiple components all
 
 ![Architecture overview](./assets/archtecture-overview.png)
 
-Management consists of three groups of components.
+Management consists of two groups of components.
 
 - Management API & Composition Service
-- Ingress/egress
 - Shared Services (not implemented yet [#23](https://github.com/microsoft/AzureTRE/issues/23), [#22](https://github.com/microsoft/AzureTRE/issues/21), & [#21](https://github.com/microsoft/AzureTRE/issues/21))
 
 Management API is a services that users can interact with to request changes to Workspaces. To create, update, delete Workspaces or Workspace Services inside each Workspace. The Composition Service is doing the actual work of mutating the state of each Workspace including the Workspace Services.
 
-Ingress/egress components governs all inbound and outbound traffic from the public Internet to and from Azure TRE including the Workspaces. The In- & egress Services is managing the rules of the Application Gateway and Firewall.
+Ingress/egress components governs all inbound and outbound traffic from the public Internet to and from Azure TRE including the Workspaces. The Firewall Service is managing the egres rules of the Firewall.
 
 Shared Services are services available to all Workspaces. Source Mirror can mirror source repositories such as GitHub, but only allowing read-access, hence data from a Workspace cannot be pushed to a source repository.
 Package Mirror is also a read-only front for developer/researcher application package services like NPM, PyPI, and NuGet and operating system application package services like apt-get and Windows Package Manager (winget).
