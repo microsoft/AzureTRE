@@ -69,23 +69,17 @@ install:
         u: "{{ bundle.credentials.azure_client_id }}"
         p: "{{ bundle.credentials.azure_client_secret }}"
   - exec:
-      description: "Install azureml_devtestlabs workspace"
-      command: porter
-      arguments:
-        - install
-        - service-azureml_devtestlabs
-      flags:
-        d: "{{ bundle.parameters.porter_driver }}"
-        reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-workspace-azureml-devtestlabs:v0.1.4"
-        cred: ./azure.json
-        param: porter_driver={{ bundle.parameters.porter_driver }}
-        parameter-set: ./parameters_workspace_azureml-devtestlabs.json
-        debug:
-        # do not merge
-        allow-docker-host-access:
+      description: "Install Vanilla Workspace service"
+      command: ./install_workspace_vanilla.sh
   - exec:
-      description: "Install InnerEye deep learning service"
-      command: ./install_service_innereye_deep_learning.sh
+      description: "Install DevTestLabs service"
+      command: ./install_service_devtestlabs.sh
+  - exec:
+      description: "Install Azure ML service"
+      command: ./install_service_azureml.sh
+  - exec:
+      description: "Install InnerEye Deep Learning service"
+      command: ./install_service_innereye_deeplearning.sh
 
 upgrade:
   - exec:
@@ -94,36 +88,9 @@ upgrade:
       arguments:
         - "This workspace does not implement upgrade action"
 
-# TODO: uninstall does not work at present, will need remote porter state
-uninstall:
-  - exec:
-      description: "docker login"
-      command: docker
+uninstall:  
+- exec:
+      description: "Uninstall workspace"
+      command: echo
       arguments:
-        - login
-        - "{{ bundle.parameters.acr_name }}.azurecr.io"
-      flags:
-        u: "{{ bundle.credentials.azure_client_id }}"
-        p: "{{ bundle.credentials.azure_client_secret }}"
-  - exec:
-        description: "Uninstall InnerEye DeepLearning Service"
-        command: porter
-        arguments:
-          - uninstall
-        flags:
-          d: "{{ bundle.parameters.porter_driver }}"
-          reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-service-innereye-deeplearning:v0.1.0"
-          cred: ./azure.json
-          parameter-set: ./parameters_service_innereye-deeplearning.json
-          debug:
-  - exec:
-      description: "Install azureml_devtestlabs workspace"
-      command: porter
-      arguments:
-        - uninstall
-      flags:
-        d: "{{ bundle.parameters.porter_driver }}"
-        reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-workspace-azureml-devtestlabs:v0.1.4"
-        cred: ./azure.json
-        parameter-set: ./parameters_workspace_azureml-devtestlabs.json
-        debug:
+        - "This workspace does not implement uninstall action"
