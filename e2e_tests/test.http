@@ -1,0 +1,43 @@
+# Retrieve Bearer token
+# @name auth
+POST https://login.microsoftonline.com/<CHANGE_ME_TENANT_ID>/oauth2/token HTTP/1.1
+Content-type: application/x-www-form-urlencoded	
+
+grant_type=password
+&resource=__CHANGE_ME_
+&username=__CHANGE_ME_
+&password=__CHANGE_ME_
+&scope=__CHANGE_ME_
+&client_id=__CHANGE_ME_
+
+#############################
+# Create workspace template
+
+### Get all workspace templates
+GET https://cse-msr-dev.westeurope.cloudapp.azure.com/api/workspace-templates
+Authorization:  Bearer {{auth.response.body.access_token}}
+Content-type: application/json
+
+### Create a new workspace with an id
+# @name newworkspace
+POST https://cse-msr-dev.westeurope.cloudapp.azure.com/api/workspaces
+Authorization:  Bearer {{auth.response.body.access_token}}
+Content-type: application/json
+
+{
+  "displayName": "My workspace",
+  "description": "workspace for team X",
+  "workspaceType": "tre-workspace-vanilla",
+  "parameters": {},
+  "authConfig": {
+    "provider": "AAD",
+    "data": {
+      "app_id": "<CHANGE_ME_APP_ID>"
+    }
+  }
+}
+
+### Get workspace info for the provisioned workspace
+GET https://cse-msr-dev.westeurope.cloudapp.azure.com/api/workspaces/{{newworkspace.response.body.workspaceId}}
+Authorization:  Bearer {{auth.response.body.access_token}}
+Content-type: application/json
