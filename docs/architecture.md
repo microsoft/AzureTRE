@@ -7,12 +7,12 @@ The Azure Trusted Research Environment (TRE) consists of multiple components all
 Management consists of three groups of components.
 
 - Management API & Composition Service
-- Ingress & egress
+- Ingress/egress
 - Shared Services (not implemented yet [#23](https://github.com/microsoft/AzureTRE/issues/23), [#22](https://github.com/microsoft/AzureTRE/issues/21), & [#21](https://github.com/microsoft/AzureTRE/issues/21))
 
 Management API is a services that users can interact with to request changes to Workspaces. To create, update, delete Workspaces or Workspace Services inside each Workspace. The Composition Service is doing the actual work of mutating the state of each Workspace including the Workspace Services.
 
-Ingress & egress components governs all inbound and outbound traffic from the public Internet to and from Azure TRE including the Workspaces. The In- & egress Services is managing the rules of the Application Gateway and Firewall.
+Ingress/egress components governs all inbound and outbound traffic from the public Internet to and from Azure TRE including the Workspaces. The In- & egress Services is managing the rules of the Application Gateway and Firewall.
 
 Shared Services are services available to all Workspaces. Source Mirror can mirror source repositories such as GitHub, but only allowing read-access, hence data from a Workspace cannot be pushed to a source repository.
 Package Mirror is also a read-only front for developer/researcher application package services like NPM, PyPI, and NuGet and operating system application package services like apt-get and Windows Package Manager (winget).
@@ -21,9 +21,18 @@ Package Mirror is also a read-only front for developer/researcher application pa
 
 The Composition Service is responsible for managing and mutating Workspaces and Workspace Service.
 
+A Workspace is an instance of a Workspace Template. A Workspace Template is implemented as a [Porter](https://porter.sh/) bundle - read more about [Authoring Workspaces Templates](authoring-workspaces.md). A Porter bundle is a full encapsulated bundle with everything needed (binaries, scripts, IoC templates etc.) to provision an instance of Workspace Template.
+The [TRE Administrator](./user-roles.md#tre-administrator) can register a Porter bundle to use the Composition Service to provision instances of the Workspace Templates.
+To do so requires:
+
+1. The Porter bundle to be pushed to the Azure Container Registry (ACR).
+1. Registering the Workspace through the Management API.
+
+### Provision a Workspace
+
 ![Composition Service](./assets/composition-service.png)
 
-The flow to mutate a Workspace is the following:
+The flow to provision a Workspace is the following (the flow is the same for all kinds of mutations to a Workspace):
 
 1. A HTTP request to the Management API to create a new Workspace. The request contains information like the name of the Workspace, the Workspace Template to use and the parameters required for the Workspace Template (Workspace Templates can via a JSON Schema expose the the parameters).
 1. The desired state of the Workspace is updated in the Configuration Store.
@@ -42,7 +51,7 @@ The flow to mutate a Workspace is the following:
     ```
 
 1. The Resource Processor Azure Function is triggered by the arrival of a new message.
-1. The Resource Processor processes the command by provisioning an [Azure Container Instance](https://docs.microsoft.com/en-us/azure/container-instances/) (ACI). A Workspace Template is implemented as a [Porter](https://porter.sh/) bundle - read more about [Authoring Workspaces](authoring-workspaces.md).
+1. The Resource Processor processes the command by provisioning an [Azure Container Instance](https://docs.microsoft.com/en-us/azure/container-instances/) (ACI) instance executing the Porter bundle (the implementation of a Workspace Template).
 
     ```bash
     # simplified for readability
