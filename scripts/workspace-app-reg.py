@@ -1,36 +1,21 @@
 #!/usr/local/bin/python3
 
-import getopt
+import click
 import sys
 import uuid
 
 from azure.identity import AzureCliCredential
 from msgraph.core import GraphClient
-from requests.exceptions import HTTPError
-
-
-def usage():
-    print('workspace-app-reg.py -n <tre-name> -w <workspace-name>')
-
-
-me: dict = None
-
-
-class Options:
-    tre_name: str = None
-    workspace_name: str = None
-    app_name: str = None
-    force: bool = False
-
-
-options = Options()
 
 
 class GraphError(Exception):
-    def __init__(self, error: dict):
-        self.code: str = error['error']['code']
-        self.message: str = error['error']['message']
-        self.innerError: dict = error['error']['innerError']
+    def __init__(self, message: str, error: dict):
+        if error:
+            self.code: str = error['error']['code']
+            self.message: str = f"{message}: {error['error']['message']}"
+            self.innerError: dict = error['error']['innerError']
+        else:
+            self.message: str = message
 
 
 class CliGraphClient(GraphClient):
@@ -40,10 +25,8 @@ class CliGraphClient(GraphClient):
     def get(self, url: str, **kwargs):
         resp = super().get(url, **kwargs)
 
-        try:
-            resp.raise_for_status()
-        except HTTPError:
-            raise GraphError(resp.json())
+        if not resp.ok:
+            raise GraphError(f"Error calling GET {url}", resp.json())
 
         json = resp.json()
 
@@ -52,143 +35,129 @@ class CliGraphClient(GraphClient):
 
         return json
 
+    def me(self):
+        return self.get("/me")
 
-graph = CliGraphClient()
+    def default_domain(self):
+        domains = self.get("/domains")
+        for d in domains:
+            if d['isDefault']:
+                return d['id']
+
+    def get_existing_app(self, name: str) -> dict:
+        apps = self.get(f"/applications?$filter=displayName eq '{name}'")
+
+        if len(apps) > 1:
+            raise GraphError(f"There is more than one application with the name \"{name}\" already.", None)
+
+        if len(apps) == 1:
+            return apps[0]
+
+        return None
+
+    def create_app(self, app: dict) -> dict:
+        resp = self.post("/applications", json=app, headers={'Content-Type': 'application/json'})
+
+        if not resp.ok:
+            raise GraphError("Error creating application", resp.json())
+
+        return resp.json()
+
+    def update_app(self, app_object_id: str, app: dict) -> dict:
+        resp = self.patch(f"/applications/{app_object_id}", json=app, headers={'Content-Type': 'application/json'})
+        if not resp.ok:
+            raise GraphError("Error updating application", resp.json())
+        # Now get the updated app details
+        resp = super().get(f"/applications/{app_object_id}")
+        if not resp.ok:
+            raise GraphError("Error getting updating application", resp.json())
+        return resp.json()
+
+    def ensure_sp(self, appId: str, roleAssignmentRequired: bool):
+        sp = {"appId": appId, "appRoleAssignmentRequired": roleAssignmentRequired, "tags": ['WindowsAzureActiveDirectoryIntegratedApp']}
+        sps = self.get(f"/servicePrincipals?$filter=appid eq '{appId}'")
+        if len(sps) == 0:
+            resp = self.post("/servicePrincipals", json=sp, headers={'Content-Type': 'application/json'})
+            if not resp.ok:
+                raise GraphError("Error creating service principal", resp.json())
+        else:
+            resp = self.patch(f"/servicePrincipals/{sps[0]['id']}", json=sp, headers={'Content-Type': 'application/json'})
+            if not resp.ok:
+                raise GraphError("Error updating service principal", resp.json())
 
 
-def _get_commandline_options(argv):
-    global options
+def double_check(domain: str, myname: str) -> bool:
+    should_continue = input(f"You are about to create app registrations in the Azure AD Tenant \"{domain}\", signed in as \"{myname}\"\nDo you want to continue? (y/N) ")
+    return True if should_continue.lower() == "y" or should_continue.lower() == "yes" else False
+
+
+def get_role_id(app: dict, role: str) -> str:
+    if app:
+        ids = [r['id'] for r in app['appRoles'] if r['value'] == role]
+        if len(ids) == 1:
+            return ids[0]
+
+    return str(uuid.uuid4())
+
+
+@click.command()
+@click.option('-n', '--tre-name', required=True)
+@click.option('-w', '--workspace-name', required=True)
+@click.option('-f', '--force', is_flag=True, default=False)
+def main(tre_name, workspace_name, force):
+    graph = CliGraphClient()
 
     try:
-        opts, _ = getopt.getopt(argv, "hn:w:f", ["tre-name=", "workspace-name=", "force"])
-    except getopt.GetoptError:
-        usage()
-        sys.exit(2)
 
-    for opt, arg in opts:
-        if opt == '-h':
-            usage()
-            sys.exit()
-        elif opt == '-f':
-            options.force = True
-        elif opt in ("-n", "--tre-name"):
-            options.tre_name = arg
-        elif opt in ("-w", "--workspace-name"):
-            options.workspace_name = arg
+        if not force and not double_check(graph.default_domain, graph.me()['displayName']):
+            sys.exit(0)
 
-    if options.tre_name is None or options.workspace_name is None:
-        usage()
-        sys.exit(2)
+        app_name = f"{tre_name} Workspace - {workspace_name}"
+        existing_app = graph.get_existing_app(app_name)
 
-    options.app_name = f"{options.tre_name} Workspace - {options.workspace_name}"
+        # Define the App Roles
+        appRoles = [
+            {
+                "id": get_role_id(existing_app, 'WorkspaceResearcher'),
+                "allowedMemberTypes": ["User"],
+                "description": f"Provides access to the {tre_name} workspace {workspace_name}.",
+                "displayName": "Researchers",
+                "isEnabled": True,
+                "origin": "Application",
+                "value": "WorkspaceResearcher"
+            },
+            {
+                "id": get_role_id(existing_app, 'WorkspaceOwner'),
+                "allowedMemberTypes": ["User"],
+                "description": f"Provides ownership access to the {tre_name} workspace {workspace_name}.",
+                "displayName": "Owners",
+                "isEnabled": True,
+                "origin": "Application",
+                "value": "WorkspaceOwner"
+            }
+        ]
 
-
-def get_existing_app(name: str) -> dict:
-    apps = graph.get(f"/applications?$filter=displayName eq '{name}'")
-
-    if len(apps) > 1:
-        print(f"There are more than one applications with the name \"{name}\" already.")
-        sys.exit(1)
-
-    if len(apps) == 1:
-        return apps[0]
-
-    return None
-
-
-def _double_check():
-    domains = graph.get("/domains")
-    for d in domains:
-        if d['isDefault']:
-            domain = d['id']
-            break
-
-    cont = input(f"You are about to create app registrations in the Azure AD Tenant \"{domain}\", signed in as \"{me['displayName']}\"\nDo you want to continue? (y/N) ")
-
-    if cont.lower() != "y" and cont.lower() != "yes":
-        sys.exit(0)
-
-
-def ensure_sp(appId: str):
-    sps = graph.get(f"/servicePrincipals?$filter=appid eq '{appId}'")
-    if len(sps) == 0:
-        graph.post("/servicePrincipals", json={
-            "appId": appId,
-            "appRoleAssignmentRequired": True,
-            "tags": ['WindowsAzureActiveDirectoryIntegratedApp'],
-        }, headers={'Content-Type': 'application/json'})
-
-
-def main():
-    global me
-    me = graph.get("/me")
-
-    if not options.force:
-        _double_check()
-
-    existing_app = get_existing_app(options.app_name)
-
-    # Generate new Guids if needed
-    ownerRoleId = str(uuid.uuid4())
-    researcherRoleId = str(uuid.uuid4())
-
-    # Get existing role and scope ids (in case we are updating the existing app)
-    if existing_app is not None:
-        ownerRoleId = [r['id'] for r in existing_app['appRoles'] if r['value'] == 'WorkspaceOwner'][0]
-        researcherRoleId = [r['id'] for r in existing_app['appRoles'] if r['value'] == 'WorkspaceResearcher'][0]
-
-    appRoles = [
-        {
-            "id": researcherRoleId,
-            "allowedMemberTypes": ["User"],
-            "description": f"Provides access to the {options.tre_name} workspace {options.workspace_name}.",
-            "displayName": "Researchers",
-            "isEnabled": True,
-            "origin": "Application",
-            "value": "WorkspaceResearcher"
-        },
-        {
-            "id": ownerRoleId,
-            "allowedMemberTypes": ["User"],
-            "description": f"Provides ownership access to the {options.tre_name} workspace {options.workspace_name}.",
-            "displayName": "Owners",
-            "isEnabled": True,
-            "origin": "Application",
-            "value": "WorkspaceOwner"
+        # Define the API application
+        workspaceApp = {
+            "displayName": app_name,
+            "appRoles": appRoles,
+            "signInAudience": "AzureADMyOrg"
         }
-    ]
 
-    # Define the API application
-    apiApp = {
-        "displayName": options.app_name,
-        "appRoles": appRoles,
-        "signInAudience": "AzureADMyOrg"
-    }
-
-    if existing_app is not None:
-        apiAppId = existing_app['appId']
-        # Update
-        resp = graph.patch(f"/applications/{existing_app['id']}", json=apiApp, headers={'Content-Type': 'application/json'})
-        if resp.ok:
-            print(f"Updated application \"{existing_app['displayName']}\" (appid={apiAppId})")
+        if existing_app:
+            app = graph.update_app(existing_app['id'], workspaceApp)
+            print(f"Updated application \"{app['displayName']}\" (appid={app['appId']})")
         else:
-            content = resp.json()
-            print(content)
-    else:
-        # Create
-        resp = graph.post("/applications", json=apiApp, headers={'Content-Type': 'application/json'})
-        content = resp.json()
-        if resp.ok:
-            apiAppId = content['appId']
-            print(f"Created application \"{content['displayName']}\" (appid={apiAppId})")
-            graph.post(f"/applications/{content['id']}/owners/$ref")
-        else:
-            print(content)
+            app = graph.create_app(workspaceApp)
+            print(f"Created application \"{app['displayName']}\" (appid={app['appId']})")
 
-    if apiAppId is not None and len(apiAppId) != 0:
-        ensure_sp(apiAppId)
+        if app:
+            graph.ensure_sp(app['appId'], True)
+
+    except GraphError as graph_error:
+        print(graph_error.message)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
-    _get_commandline_options(sys.argv[1:])
     main()
