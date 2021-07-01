@@ -51,12 +51,6 @@ parameters:
     type: string
     description: "The porter driver - azure or docker"
 
-outputs:
-  - name: azureml_workspace_name
-    type: string
-  - name: azureml_acr_id
-    type: string
-
 mixins:
   - exec
   - docker
