@@ -12,6 +12,7 @@ from requests.exceptions import HTTPError
 def usage():
     print('workspace-app-reg.py -n <tre-name> -w <workspace-name>')
 
+
 me: dict = None
 
 
@@ -23,6 +24,7 @@ class Options:
 
 
 options = Options()
+
 
 class GraphError(Exception):
     def __init__(self, error: dict):
@@ -53,6 +55,7 @@ class CliGraphClient(GraphClient):
 
 graph = CliGraphClient()
 
+
 def _get_commandline_options(argv):
     global options
 
@@ -73,7 +76,7 @@ def _get_commandline_options(argv):
         elif opt in ("-w", "--workspace-name"):
             options.workspace_name = arg
 
-    if options.tre_name == None or options.workspace_name == None:
+    if options.tre_name is None or options.workspace_name is None:
         usage()
         sys.exit(2)
 
@@ -109,7 +112,7 @@ def _double_check():
 def ensure_sp(appId: str):
     sps = graph.get(f"/servicePrincipals?$filter=appid eq '{appId}'")
     if len(sps) == 0:
-        graph.post("/servicePrincipals", json = {
+        graph.post("/servicePrincipals", json={
             "appId": appId,
             "appRoleAssignmentRequired": True,
             "tags": ['WindowsAzureActiveDirectoryIntegratedApp'],
@@ -131,13 +134,13 @@ def main():
 
     # Get existing role and scope ids (in case we are updating the existing app)
     if existing_app is not None:
-        ownerRoleId = [ r['id'] for r in existing_app['appRoles'] if r['value'] == 'WorkspaceOwner' ][0]
-        researcherRoleId = [ r['id'] for r in existing_app['appRoles'] if r['value'] == 'WorkspaceResearcher' ][0]
+        ownerRoleId = [r['id'] for r in existing_app['appRoles'] if r['value'] == 'WorkspaceOwner'][0]
+        researcherRoleId = [r['id'] for r in existing_app['appRoles'] if r['value'] == 'WorkspaceResearcher'][0]
 
     appRoles = [
         {
             "id": researcherRoleId,
-            "allowedMemberTypes": [ "User" ],
+            "allowedMemberTypes": ["User"],
             "description": f"Provides access to the {options.tre_name} workspace {options.workspace_name}.",
             "displayName": "Researchers",
             "isEnabled": True,
@@ -146,7 +149,7 @@ def main():
         },
         {
             "id": ownerRoleId,
-            "allowedMemberTypes": [ "User" ],
+            "allowedMemberTypes": ["User"],
             "description": f"Provides ownership access to the {options.tre_name} workspace {options.workspace_name}.",
             "displayName": "Owners",
             "isEnabled": True,
