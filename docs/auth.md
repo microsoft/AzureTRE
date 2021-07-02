@@ -1,5 +1,6 @@
 # Authentication and authorization
 
+<!-- markdownlint-disable-next-line MD013 -->
 This document describes the authentication and authorization (A&A) of deployed Azure TRE system. The backbone of A&A is [Azure Active Directory (AAD)](https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-whatis). It holds the identities of all TRE/workspace users, including administrators, and connects the identities with app registrations defining the privileges per user roles.
 
 ## App registrations
