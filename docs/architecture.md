@@ -1,6 +1,6 @@
 # Overview
 
-The Azure Trusted Research Environment (TRE) consists of multiple components all encapsulated in networks with restricted in- & egress traffic. One network for management components and one network per Workspace. All traffic has to explicit allowed by the Application Gateway of the Firewall. Azure TRE is build around the concept of data in a Workspace must not be able to exfiltrate the Workspace.
+The Azure Trusted Research Environment (TRE) consists of multiple components, all encapsulated in networks with restricted ingress- & egress traffic. There is one network for the management components and one network per Workspace. All traffic has to be explicitly allowed by the Application Gateway or the Firewall.
 
 ![Architecture overview](./assets/archtecture-overview.png)
 
