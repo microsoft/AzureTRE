@@ -4,7 +4,7 @@ The Azure Trusted Research Environment (TRE) consists of multiple components, al
 
 ![Architecture overview](./assets/archtecture-overview.png)
 
-Management consists of two groups of components.
+The Azure TRE management plane consists of two groups of components:
 
 - Management API & Composition Service
 - Shared Services (not implemented yet [#23](https://github.com/microsoft/AzureTRE/issues/23), [#22](https://github.com/microsoft/AzureTRE/issues/21), & [#21](https://github.com/microsoft/AzureTRE/issues/21))
