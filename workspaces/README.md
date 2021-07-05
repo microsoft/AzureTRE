@@ -9,4 +9,4 @@ In this folder Workspace Templates are located. These Templates for the Composit
 | [innereye_deeplearning](innereye_deeplearning/readme.md)) | Deploys InnerEye Deep learning. |
 | [innereye_deeplearning_inference](innereye_deeplearning_inference/readme.md) | Deploys InnerEye inference service. |
 
-To customize or author new Workspace Templates read the [Authoring Workspace Templates](../docs/authoring-workspaces.md).
+To customize or author new Workspace Templates read the [Authoring Workspace Templates](../docs/authoring-workspace-templates.md).

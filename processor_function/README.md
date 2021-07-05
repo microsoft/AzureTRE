@@ -20,7 +20,7 @@ Resources:
 * [Azure Container Instances](https://docs.microsoft.com/azure/container-instances/)
 * [Azure Container Registry](https://docs.microsoft.com/azure/container-registry/) with:
   * The [CNAB container image](../CNAB_container/Dockerfile)
-  * A workspace image (bundle) to deploy (see [Authoring workspaces](../docs/authoring-workspaces.md))
+  * A workspace image (bundle) to deploy (see [Authoring workspaces](../docs/authoring-workspace-templates.md))
 * [Azure Service Bus](https://docs.microsoft.com/azure/service-bus-messaging/) with two queues:
   * Resource request queue for messages triggering the function
   * Deployment status update queue for messages function sends about the progress of the deployment
@@ -74,15 +74,15 @@ See [Azure CNAB Driver environment variables](https://github.com/deislabs/cnab-a
 
 | Environment variable name | Description |
 | ------------------------- | ----------- |
-| `SEC_ARM_TENANT_ID` | The tenant ID of a service principal with privileges to provision workspace resources. See [Authoring workspaces - Credentials](../docs/authoring-workspaces.md#credentials). |
-| `SEC_ARM_SUBSCRIPTION_ID` | The subscription ID of a service principal with privileges to provision workspace resources. See [Authoring workspaces - Credentials](../docs/authoring-workspaces.md#credentials). |
-| `SEC_ARM_CLIENT_ID` | The application (client) ID of a service principal with privileges to provision workspace resources. See [Authoring workspaces - Credentials](../docs/authoring-workspaces.md#credentials). |
-| `SEC_ARM_CLIENT_SECRET` | The application password (client secret) of a service principal with privileges to provision workspace resources. See [Authoring workspaces - Credentials](../docs/authoring-workspaces.md#credentials). |
+| `SEC_ARM_TENANT_ID` | The tenant ID of a service principal with privileges to provision workspace resources. See [Authoring workspaces - Credentials](../docs/authoring-workspace-templates.md#credentials). |
+| `SEC_ARM_SUBSCRIPTION_ID` | The subscription ID of a service principal with privileges to provision workspace resources. See [Authoring workspaces - Credentials](../docs/authoring-workspace-templates.md#credentials). |
+| `SEC_ARM_CLIENT_ID` | The application (client) ID of a service principal with privileges to provision workspace resources. See [Authoring workspaces - Credentials](../docs/authoring-workspace-templates.md#credentials). |
+| `SEC_ARM_CLIENT_SECRET` | The application password (client secret) of a service principal with privileges to provision workspace resources. See [Authoring workspaces - Credentials](../docs/authoring-workspace-templates.md#credentials). |
 | `param_tfstate_resource_group_name` | The name of the resource group containing the Terraform state store for the workspace/service deployment. |
 | `param_tfstate_storage_account_name` | The name of the storage account containing the Terraform state store for the workspace/service deployment. |
 | `param_tfstate_container_name` | The name of the container for the Terraform state store for the workspace/service deployment. |
 
-See [Authoring workspaces](../docs/authoring-workspaces.md) for more information.
+See [Authoring Workspace Templates](../docs/authoring-workspace-templates.md) for more information.
 
 ## Running the function locally
 
