@@ -22,7 +22,7 @@ Package Mirror is also a read-only front for developer/researcher application pa
 
 The Composition Service is responsible for managing and mutating Workspaces and Workspace Service.
 
-A Workspace is an instance of a Workspace Template. A Workspace Template is implemented as a [Porter](https://porter.sh/) bundle - read more about [Authoring Workspaces Templates](authoring-workspaces.md). A Porter bundle is a full encapsulated bundle with everything needed (binaries, scripts, IoC templates etc.) to provision an instance of Workspace Template.
+A Workspace is an instance of a Workspace Template. A Workspace Template is implemented as a [Porter](https://porter.sh/) bundle - read more about [Authoring Workspaces Templates](authoring-workspaces.md). A Porter bundle is a full encapsulated versioned bundle with everything needed (binaries, scripts, IoC templates etc.) to provision an instance of Workspace Template.
 The [TRE Administrator](./user-roles.md#tre-administrator) can register a Porter bundle to use the Composition Service to provision instances of the Workspace Templates.
 To do so requires:
 
@@ -32,6 +32,16 @@ To do so requires:
 ### Provision a Workspace
 
 ![Composition Service](./assets/composition-service.png)
+
+The Composition Service consists of multiple components.
+
+| Component Name | Responsibility / Description |
+| --- | --- |
+| Management API | An API responsible for performing all operations on Workspaces and managing Workspace Templates. |
+| Configuration Store | Keeping the state of Workspaces and Workspace Templates. The store uses [Cosmos DB (SQL)](https://docs.microsoft.com/en-us/azure/cosmos-db/introduction). |
+| Service Bus | [Azure Service Bus](https://docs.microsoft.com/en-us/azure/service-bus-messaging/service-bus-messaging-overview) responsible for reliable delivery of messages between components.  |
+| Resource Processor | Responsible for starting the process of mutating a Workspace via a Workspace Template. |
+| Deployment Client| Responsible for processing the Workspace Template. [Azure CNAB Driver](https://github.com/deislabs/cnab-azure-driver) is used to execute the Porter bundle. |
 
 The flow to provision a Workspace is the following (the flow is the same for all kinds of mutations to a Workspace):
 
