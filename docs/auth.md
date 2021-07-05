@@ -141,7 +141,7 @@ The users can also be linked via the Enterprise application view:
 
 ## Management API
 
-This section describes the management API with respect to A&A.
+This section describes the management API with respect to authentication & authorization (A&A).
 
 ### Configuration
 
