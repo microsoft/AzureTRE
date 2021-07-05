@@ -26,8 +26,8 @@ See [Microsoft Graph permissions reference](https://docs.microsoft.com/graph/per
 
 #### Scopes - TRE API
 
-* `api://<Application (client) ID>/` **`Workspace.Write`** - Allow the app to get information about the TRE workspaces on behalf of the signed-in user
-* `api://<Application (client) ID>/` **`Workspace.Read`** - Allow the app to create, update or delete TRE workspaces on behalf of the signed-in user
+* `api://<Application (client) ID>/` **`Workspace.Read`** - Allow the app to get information about the TRE workspaces on behalf of the signed-in user
+* `api://<Application (client) ID>/` **`Workspace.Write`** - Allow the app to create, update or delete TRE workspaces on behalf of the signed-in user
 
 #### App roles - TRE API
 
