@@ -29,6 +29,8 @@ To do so requires:
 1. The Porter bundle to be pushed to the Azure Container Registry (ACR).
 1. Registering the Workspace through the Management API.
 
+Details on how to [register a Workspace Template](registering-workspace-templates.md).
+
 ### Provision a Workspace
 
 ![Composition Service](./assets/composition-service.png)
