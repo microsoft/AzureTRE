@@ -1,0 +1,103 @@
+name: tre-workspace-innereye-deeplearning-inference
+
+version: 0.1.4
+description: "A Azure TRE workspace with Azure Machine Learning, Dev Test Labs,  InnerEye deep learning and inference"
+registry: azuretre
+dockerfile: Dockerfile.tmpl
+
+credentials:
+  - name: azure_tenant_id
+    env: ARM_TENANT_ID
+  - name: azure_subscription_id
+    env: ARM_SUBSCRIPTION_ID
+  - name: azure_client_id
+    env: ARM_CLIENT_ID
+  - name: azure_client_secret
+    env: ARM_CLIENT_SECRET
+
+
+parameters:
+  - name: tre_id
+    type: string
+    description: "The ID of the parent TRE instance e.g., mytre-dev-3142"
+  - name: workspace_id
+    type: string
+  - name: inference_sp_client_id
+    type: string
+  - name: inference_sp_client_secret
+    type: string
+    description: "Unique 4-digit workspace ID"
+  - name: azure_location
+    env: LOCATION
+    type: string
+    description: "Azure location (region) to deploy to"
+  - name: address_space
+    type: string
+    description: "VNet address space for the workspace services"
+    default: "10.2.1.0/24"
+  - name: acr_name
+    type: string
+    description: "Name of the azure container registry"
+    env: ACR_NAME
+  - name: tfstate_resource_group_name
+    type: string
+    description: "Resource group containing the Terraform state storage account"
+    env: MGMT_RESOURCE_GROUP_NAME
+  - name: tfstate_storage_account_name
+    type: string
+    description: "The name of the Terraform state storage account"
+    env: MGMT_STORAGE_ACCOUNT_NAME
+  - name: tfstate_container_name
+    type: string
+    default: "tfstate"
+    description: "The name of the Terraform state storage container"
+    env: TERRAFORM_STATE_CONTAINER_NAME
+  - name: porter_driver
+    default: "azure"
+    type: string
+    description: "The porter driver - azure or docker"
+    env: PORTER_DRIVER
+
+mixins:
+  - exec
+  - docker
+
+install:
+  - exec:
+      description: "docker login"
+      command: docker
+      arguments:
+        - login
+        - "{{ bundle.parameters.acr_name }}.azurecr.io"
+      flags:
+        u: "{{ bundle.credentials.azure_client_id }}"
+        p: "{{ bundle.credentials.azure_client_secret }}"
+  - exec:
+      description: "Install Vanilla Workspace service"
+      command: ./install_workspace_vanilla.sh
+  - exec:
+      description: "Install DevTestLabs service"
+      command: ./install_service_devtestlabs.sh
+  - exec:
+      description: "Install Azure ML service"
+      command: ./install_service_azureml.sh
+  - exec:
+      description: "Install InnerEye Deep Learning service"
+      command: ./install_service_innereye_deeplearning.sh
+  - exec:
+      description: "Install InnerEye inference service"
+      command: ./install_service_innereye_inference.sh
+
+upgrade:
+  - exec:
+      description: "Upgrade workspace"
+      command: echo
+      arguments:
+        - "This workspace does not implement upgrade action"
+
+uninstall:  
+- exec:
+      description: "Uninstall workspace"
+      command: echo
+      arguments:
+        - "This workspace does not implement uninstall action"

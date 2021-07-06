@@ -68,6 +68,7 @@ resource "azurerm_app_service" "management_api" {
       priority   = 2147483647
     }
 
+    ftps_state         = "FtpsOnly"
     websockets_enabled = false
   }
 

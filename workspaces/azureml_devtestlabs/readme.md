@@ -37,9 +37,6 @@ Service Tags:
     `make porter-build DIR=./workspaces/services/devtestlabs`  
     `make porter-publish DIR=./workspaces/services/devtestlabs`
 
-- CNAB image built (contains azure driver)
-    `make build-cnab-image`
-
 - A Azure ML DevTest Labs Workspace bundle built
     `make porter-build DIR=./workspaces/azureml_devtestlabs`
 

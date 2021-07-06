@@ -175,6 +175,12 @@ log_analytics_name = "log-<TRE_ID>"
 static_web_storage = "stwebaz<TRE_ID>"
 ```
 
+Deploy the processor function:
+
+```cmd
+make deploy-processor-function
+```
+
 The Azure TRE is initially deployed with an invalid self-signed SSL certificate. This certificate is stored in the deployed Key Vault. To update the certificate in Key Vault needs to be replaced with one valid for the configured domain name. To use a certificate from [Let's Encrypt][letsencrypt], simply run the command:
 
 ```cmd
