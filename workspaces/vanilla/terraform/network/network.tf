@@ -70,6 +70,8 @@ resource "azurerm_network_security_group" "ws" {
   location            = var.location
   name                = "nsg-ws"
   resource_group_name = var.resource_group_name
+
+  lifecycle { ignore_changes = [ tags ] }
 }
 
 
@@ -199,4 +201,6 @@ resource "azurerm_private_dns_zone_virtual_network_link" "azurewebsites" {
   private_dns_zone_name = "privatelink.azurewebsites.net"
   name                  = "link-azurewebsites-${local.workspace_resource_name_suffix}"
   registration_enabled  = false
+
+  lifecycle { ignore_changes = [ tags ] }
 }

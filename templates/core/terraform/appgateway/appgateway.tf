@@ -5,12 +5,16 @@ resource "azurerm_public_ip" "appgwpip" {
   allocation_method     = "Static"
   sku                   = "Standard"
   domain_name_label     = var.tre_id
+
+  lifecycle { ignore_changes = [ tags ] }
 }
 
 resource "azurerm_user_assigned_identity" "agw_id" {
   resource_group_name = var.resource_group_name
   location = var.location
   name = "msi-agw-${var.tre_id}"
+
+  lifecycle { ignore_changes = [ tags ] }
 }
 
 resource "azurerm_application_gateway" "agw" {
@@ -177,7 +181,8 @@ resource "azurerm_application_gateway" "agw" {
   # We don't want Terraform to revert certificate cycle changes. We assume the certificate will be renewed in keyvault.
   lifecycle {
     ignore_changes = [
-      ssl_certificate
+      ssl_certificate,
+      tags
     ]
   }
 
