@@ -98,3 +98,5 @@ variable "api_client_secret" {
   description = "A client secret use by the API to authenticate with Azure AD for access to Microsoft Graph."
   sensitive   = true
 }
+
+variable "debug" {}

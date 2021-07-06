@@ -1,27 +1,9 @@
 {
   "schemaVersion": "1.0.0-DRAFT+TODO",
-  "name": "workspace-azureml_devtestlabs",
+  "name": "service-azureml",
   "created": "2021-06-03T11:54:54.0225968Z",
   "modified": "2021-06-03T11:54:54.0225968Z",
   "parameters": [
-    {
-      "name": "address_space",
-      "source": {
-        "env": "ADDRESS_SPACE"
-      }
-    },
-    {
-      "name": "tre_id",
-      "source": {
-        "env": "TRE_ID"
-      }
-    },
-    {
-      "name": "azure_location",
-      "source": {
-        "env": "LOCATION"
-      }
-    },
     {
       "name": "workspace_id",
       "source": {
@@ -29,9 +11,9 @@
       }
     },
     {
-      "name": "acr_name",
+      "name": "tre_id",
       "source": {
-        "env": "ACR_NAME"
+        "env": "TRE_ID"
       }
     },
     {
@@ -50,12 +32,6 @@
       "name": "tfstate_storage_account_name",
       "source": {
         "env": "MGMT_STORAGE_ACCOUNT_NAME"
-      }
-    },
-    {
-      "name": "porter_driver",
-      "source": {
-        "env": "PORTER_DRIVER"
       }
     }
   ]

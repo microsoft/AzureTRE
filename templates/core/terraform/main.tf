@@ -9,7 +9,11 @@ terraform {
 }
 
 provider "azurerm" {
-  features {}
+  features {
+    key_vault {
+      purge_soft_delete_on_destroy = var.debug == "true" ? true : false
+    }
+  }
 }
 
 resource "azurerm_resource_group" "core" {
@@ -152,6 +156,7 @@ module "keyvault" {
   tenant_id                  = data.azurerm_client_config.current.tenant_id
   managed_identity_tenant_id = module.identity.managed_identity.tenant_id
   managed_identity_object_id = module.identity.managed_identity.principal_id
+  debug                      = var.debug
 
   depends_on = [
     module.identity

@@ -7,7 +7,7 @@ resource "azurerm_key_vault" "kv" {
   location                 = var.location
   resource_group_name      = var.resource_group_name
   sku_name                 = "standard"
-  purge_protection_enabled = true
+  purge_protection_enabled = var.debug == "true" ? false : true
 
   access_policy {
     tenant_id = data.azurerm_client_config.deployer.tenant_id
