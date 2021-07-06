@@ -100,7 +100,7 @@ terraform-destroy:
 	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ${DIR}/.env \
-	&& cd ${DIR}/terraform/ && ./destroy.sh 
+	&& cd ${DIR}/terraform/ && ./destroy.sh
 
 
 porter-build:
@@ -109,7 +109,7 @@ porter-build:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& . ./devops/scripts/load_env.sh ${DIR}/.env \
-	&& cd ${DIR} && porter build --debug 
+	&& cd ${DIR} && porter build --debug
 
 porter-install:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDeploying ${DIR} with Porter\e[0m..." \
@@ -135,4 +135,4 @@ porter-publish:
 	&& . ./devops/scripts/load_env.sh ${DIR}/.env \
 	&& az acr login --name $${ACR_NAME}	\
 	&& cd ${DIR} \
-	&& porter publish --registry "$${ACR_NAME}.azurecr.io" --debug	
+	&& porter publish --registry "$${ACR_NAME}.azurecr.io" --debug

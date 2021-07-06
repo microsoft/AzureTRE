@@ -3,27 +3,30 @@ import os
 from azure.servicebus import ServiceBusClient, ServiceBusMessage
 
 
-CONNECTION_STR = os.environ['SERVICEBUSCONNECTION']
-QUEUE_NAME = "workspacequeue"
+CREATE_WORKSPACE_REQUEST_DATA_FILE = "createWorkspaceRequestData.json"
 
 
-def send_single_message(sender, data):
-    message = ServiceBusMessage(data)
-    sender.send_messages(message)
-    print(f"Sent: {data}")
-
-
-def main():
-    with open('createWorkspace.json', 'r') as file:
+def send_service_bus_message(service_bus_connection_string, service_bus_queue_name):
+    with open(CREATE_WORKSPACE_REQUEST_DATA_FILE, "r") as file:
         data = file.read().replace('\n', '')
 
-    servicebus_client = ServiceBusClient.from_connection_string(conn_str=CONNECTION_STR, logging_enable=True)
+    service_bus_client = ServiceBusClient.from_connection_string(
+        conn_str=service_bus_connection_string, logging_enable=True)
 
-    with servicebus_client:
-        sender = servicebus_client.get_queue_sender(queue_name=QUEUE_NAME)
-        with sender:
-            send_single_message(sender, data)
+    with service_bus_client:
+        queue_sender = service_bus_client.get_queue_sender(queue_name=service_bus_queue_name)
+
+        with queue_sender:
+            message = ServiceBusMessage(data)
+            queue_sender.send_messages(message)
+            print(f"Service Bus message sent to queue: {data}")
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        service_bus_connection_string = os.environ["SERVICE_BUS_CONNECTION_STRING"]
+        resource_request_queue_name = os.environ["SERVICE_BUS_RESOURCE_REQUEST_QUEUE"]
+        print(f"Service Bus queue name: {resource_request_queue_name}")
+        send_service_bus_message(service_bus_connection_string, resource_request_queue_name)
+    except Exception as e:
+        print(f"Failed to send a Service Bus message: {type(e).__name__}: {e}")
