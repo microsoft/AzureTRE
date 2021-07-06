@@ -17,11 +17,7 @@ TRE API app registration defines the permissions, scopes and app roles for manag
 
 | API/permission name | Type | Description | Admin consent required | TRE usage |
 | ------------------- | ---- | ----------- | ---------------------- | --------- |
-<<<<<<< HEAD
-| Microsoft Graph/Directory.Read.All (`https://graph.microsoft.com/Directory.Read.All`) | Application* | Allows the app to read data in your organization's directory, such as users, groups and apps, without a signed-in user. | Yes |  |
-=======
 | Microsoft Graph/Directory.Read.All (`https://graph.microsoft.com/Directory.Read.All`) | Application* | Allows the app to read data in your organization's directory, such as users, groups and apps, without a signed-in user. | Yes | Used e.g., to retrieve app registration details, user associated app roles etc. |
->>>>>>> origin/develop
 | Microsoft Graph/User.Read.All (`https://graph.microsoft.com/User.Read.All`) | Application* | Allows the app to read user profiles without a signed in user. | Yes | Reading user role assignments to check that the user has permissions to execute an action e.g., to view workspaces. See [`aad_access_service.py`](../management_api_app/services/aad_access_service.py). |
 
 *) See the difference between [delegated and application permission](https://docs.microsoft.com/graph/auth/auth-concepts#delegated-and-application-permissions) types.
@@ -79,14 +75,10 @@ The Swagger UI is a public client, so public client flows need to be enabled:
 
 TRE e2e test app registration is used to authorize end-to-end test scenarios. It has no scopes or app roles defined.
 
-<<<<<<< HEAD
-> **Note:** As of writing this, there is no automated way provided for creating "TRE e2e test" app registration, but it needs to be created manually.
-=======
 > **Note:**
 >
 > * This app registration is only needed and used for **testing**
 > * As of writing this, there is no automated way provided for creating "TRE e2e test" app registration, but it needs to be created manually.
->>>>>>> origin/develop
 
 #### API permissions - TRE e2e test
 
@@ -201,8 +193,5 @@ Some workspace routes require `authConfig` field in the request body. The AAD sp
   }
 }
 ```
-<<<<<<< HEAD
-=======
 
 > **Note:** The app registration for a workspace is not created by the API. One needs to be present (created manually) before using the API to provision a new workspace.
->>>>>>> origin/develop
