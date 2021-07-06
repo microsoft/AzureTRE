@@ -9,6 +9,10 @@ See: [https://azure.microsoft.com/services/devtest-lab/](https://azure.microsoft
 
 1. Create a copy of `workspaces/services/devtestlabs/.env.sample` with the name `.env` and update with the Workspace ID used when deploying the vanilla workspace.
 
+| Environment variable name | Description |
+| ------------------------- | ----------- |
+| `WORKSPACE_ID` | The 4 character unique identifier used when deploying the vanilla workspace bundle. |
+
 1. Build and install the Azure DevTest Labs Service bundle
     - `make porter-build DIR=./workspaces/services/devtestlabs`  
     - `make porter-install DIR=./workspaces/services/devtestlabs`

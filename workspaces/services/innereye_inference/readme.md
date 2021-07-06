@@ -15,6 +15,14 @@ az ad sp create-for-rbac --name <sp-name> --role Contributor --scopes /subscript
 
 1. Create a copy of `workspaces/services/innereye_inference/.env.sample` with the name `.env` and update the variables with the appropriate values.
 
+| Environment variable name | Description |
+| ------------------------- | ----------- |
+| `WORKSPACE_ID` | The 4 character unique identifier used when deploying the vanilla workspace bundle. |
+| `AZUREML_WORKSPACE_NAME` | Name of the Azure ML workspace deployed as part of the Azure ML workspace service prerequisite. |
+| `AZUREML_ACR_ID` | ID of the Azure Container Registry deployed as part of the Azure ML workspace service prerequisite. |
+| `INFERENCE_SP_CLIENT_ID` | Service principal client ID used by the inference service to connect to Azure ML. Use the output from the step above. |
+| `INFERENCE_SP_CLIENT_SECRET` | Service principal client secret used by the inference service to connect to Azure ML. Use the output from the step above. |
+
 1. Build and deploy the InnerEye Inference service
     - `make porter-build DIR=./workspaces/services/innereye_inference`  
     - `make porter-install DIR=./workspaces/services/innereye_inference`

@@ -23,6 +23,12 @@ URLs:
 
 1. Create a copy of `workspaces/services/innereye_deeplearning/.env.sample` with the name `.env` and update the variables with the appropriate values.
 
+| Environment variable name | Description |
+| ------------------------- | ----------- |
+| `WORKSPACE_ID` | The 4 character unique identifier used when deploying the vanilla workspace bundle. |
+| `AZUREML_WORKSPACE_NAME` | Name of the Azure ML workspace deployed as part of the Azure ML workspace service prerequisite. |
+| `AZUREML_ACR_ID` | Azure sesource ID of the Azure Container Registry deployed as part of the Azure ML workspace service prerequisite. |
+
 1. Build and install the InnerEye Deep Learning Service bundle
     - `make porter-build DIR=./workspaces/services/innereye_deeplearning`  
     - `make porter-install DIR=./workspaces/services/innereye_deeplearning`

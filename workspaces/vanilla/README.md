@@ -2,61 +2,17 @@
 
 ## Prerequisites
 
-* [Docker installed](https://docs.docker.com/get-docker/)
-* [Porter installed](https://porter.sh/install)
-* Azure subscription and a service principal with privileges to provision Azure resources
-* TRE core Azure resources deployed, namely:
-  * Virtual network
-  * Shared subnet
-  * Azure Bastion subnet
-  * Route table
-* Azure storage account with a container for Terraform backend (for storing the state)
+- A TRE environment
 
-## Build and run locally
+## Manual Deployment
 
-### Set environment variables
+1. Create a copy of `/workspaces/vanilla/.env.sample` with the name `.env` and update the variables with the appropriate values.
 
-1. Create a copy of `/workspaces/vanilla/.env.sample` called `/workspaces/vanilla/.env`
+| Environment variable name | Description |
+| ------------------------- | ----------- |
+| `WORKSPACE_ID` | A 4 ter unique identifier for the workspace for this TRE. `WORKSPACE_ID` can be found in the resource names of the workspace resources; for example, a `WORKSPACE_ID` of `ab12` will result in a resource group name for workspace of `rg-<tre-id>-ab12`. Allowed characters: Alphanumeric. |
+| `ADDRESS_SPACE` | The address space for the workspace virtual network. For example `192.168.1.0/24`|
 
-1. Update the `.env` file with the workspace parameters and Azure service principal credentials.
-
-### Build and install
-
-**Option 1:** Using the Makefile:
-
-```cmd
-make porter-build DIR=./workspaces/vanilla
-```
-
-```cmd
-make porter-install DIR=./workspaces/vanilla
-```
-
-**Option 2:** Using Porter commands:
-
-1. Load the environment variables into your current session:
-
-    ```cmd
-    . ./devops/scripts/load_env.sh ./workspaces/vanilla/.env
-    ```
-
-1. Build the bundle:
-
-    ```cmd
-    cd ./workspaces/vanilla/
-    porter build --debug
-    ```
-
-1. Install the bundle:
-
-    ```plaintext
-    porter install --parameter-set ./parameters.json --cred ./azure.json --debug
-    ```
-
-### Clean up
-
-Uninstall the bundle with Porter uninstall command:
-
-```plaintext
-porter uninstall --parameter-set ./parameters.json --cred ./azure.json --debug
-```
+1. Build and deploy the vanilla workspace
+    - `make porter-build DIR=./workspaces/vanilla`  
+    - `make porter-install DIR=./workspaces/vanilla`
