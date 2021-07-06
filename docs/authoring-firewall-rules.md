@@ -10,7 +10,7 @@ Please be aware when opening firewall rules there is the potential for data to b
 
 ## Using Terraform to open firewall rules
 
-The aim is to create a firewall rule that grants access from the workspace's address space to the external location. The challenge being the rule must use a priority that has not been used by any other rule.
+Until a mechanism to update shared services has been implemented firewall rule updates should be done using terraform as part of the service deployment. The aim is to create a firewall rule that grants access from the workspace's address space to the external location. The challenge being the rule must use a priority that has not been used by any other rule.
 
 1. Create a `firewall.tf` file in the `terraform` directory of the workspace.
 
