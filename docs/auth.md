@@ -75,7 +75,10 @@ The Swagger UI is a public client, so public client flows need to be enabled:
 
 TRE e2e test app registration is used to authorize end-to-end test scenarios. It has no scopes or app roles defined.
 
-> **Note:** As of writing this, there is no automated way provided for creating "TRE e2e test" app registration, but it needs to be created manually.
+> **Note:**
+>
+> * This app registration is only needed and used for **testing**
+> * As of writing this, there is no automated way provided for creating "TRE e2e test" app registration, but it needs to be created manually.
 
 #### API permissions - TRE e2e test
 
@@ -190,3 +193,5 @@ Some workspace routes require `authConfig` field in the request body. The AAD sp
   }
 }
 ```
+
+> **Note:** The app registration for a workspace is not created by the API. One needs to be present (created manually) before using the API to provision a new workspace.
