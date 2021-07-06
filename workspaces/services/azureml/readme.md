@@ -1,4 +1,4 @@
-# Azure machine Learning Serivce bundle
+# Azure machine Learning Service bundle
 
 See: [https://azure.microsoft.com/services/machine-learning/](https://azure.microsoft.com/services/machine-learning/)
 
