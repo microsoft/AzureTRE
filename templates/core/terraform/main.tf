@@ -126,8 +126,8 @@ module "processor_function" {
   mgmt_resource_group_name                   = var.mgmt_resource_group_name
   terraform_state_container_name             = var.terraform_state_container_name
   porter_output_container_name               = var.porter_output_container_name
-  arm_client_id                              = var.arm_client_id
-  arm_client_secret                          = var.arm_client_secret
+  arm_client_id                              = var.resource_processor_client_id
+  arm_client_secret                          = var.resource_processor_client_secret
   management_api_image_tag                   = var.management_api_image_tag
   managed_identity                           = module.identity.managed_identity
 }
@@ -195,10 +195,10 @@ module "state-store" {
   core_vnet           = module.network.core
 }
 
-module "bastion" {
-  source              = "./bastion"
-  tre_id              = var.tre_id
-  location            = var.location
-  resource_group_name = azurerm_resource_group.core.name
-  bastion_subnet      = module.network.bastion
-}
+# module "bastion" {
+#   source              = "./bastion"
+#   tre_id              = var.tre_id
+#   location            = var.location
+#   resource_group_name = azurerm_resource_group.core.name
+#   bastion_subnet      = module.network.bastion
+# }

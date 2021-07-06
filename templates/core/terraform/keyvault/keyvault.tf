@@ -1,4 +1,5 @@
 data "azurerm_client_config" "deployer" {}
+data "azurerm_client_config" "current" {}
 
 resource "azurerm_key_vault" "kv" {
   name                     = "kv-${var.tre_id}"
@@ -9,8 +10,8 @@ resource "azurerm_key_vault" "kv" {
   purge_protection_enabled = true
 
   access_policy {
-    tenant_id    = data.azurerm_client_config.deployer.tenant_id
-    object_id    = data.azurerm_client_config.deployer.object_id
+    tenant_id = data.azurerm_client_config.deployer.tenant_id
+    object_id = data.azurerm_client_config.deployer.object_id
 
     key_permissions = [
       "Get", "List", "Update", "Create", "Import", "Delete"
@@ -20,13 +21,19 @@ resource "azurerm_key_vault" "kv" {
       "Get", "List", "Set", "Delete"
     ]
 
-    certificate_permissions = [ 
+    certificate_permissions = [
       "Get", "List", "Update", "Create", "Import", "Delete"
     ]
 
     storage_permissions = [
       "Get", "List", "Update", "Delete"
     ]
+  }
+  # Access policy for this particular TF run to insert the secret into kv
+  access_policy {
+    tenant_id          = var.tenant_id
+    object_id          = data.azurerm_client_config.current.object_id
+    secret_permissions = ["get", "set"]
   }
 }
 
@@ -35,9 +42,9 @@ resource "azurerm_key_vault_access_policy" "managed_identity" {
   tenant_id    = var.managed_identity_tenant_id
   object_id    = var.managed_identity_object_id
 
-  key_permissions = [ "Get", "List", ]
-  secret_permissions = [ "Get", "List", ]
-  certificate_permissions = [ "Get", "List", ]
+  key_permissions         = ["Get", "List", ]
+  secret_permissions      = ["Get", "List", ]
+  certificate_permissions = ["Get", "List", ]
 }
 
 resource "azurerm_private_dns_zone" "vaultcore" {
