@@ -4,7 +4,7 @@ See: [https://github.com/microsoft/InnerEye-DeepLearning](https://github.com/mic
 
 ## Firewall Rules
 
-Please be aware that the following Firewall rules are opened for the workspace when this service is deployed:
+Please be aware that the following Firewall rules are opened for the workspace when this service is deployed. These are all dependencies needed by InnerEye to be able to develop and train models:
 
 URLs:
 
