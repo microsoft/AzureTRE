@@ -158,7 +158,10 @@ Or in [Visual Studio Code](https://docs.microsoft.com/en-us/azure/azure-function
 
 ## Run tests
 
-Tests are written with pytest and located in the `tests` and `test_processor_function` folder.
+Tests are written with pytest and located in folders:
+
+- `/management_api_app/tests/`
+- `/processor_function/tests/`
 
 Run all tests with:
 
