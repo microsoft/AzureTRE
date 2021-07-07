@@ -55,6 +55,8 @@ class CNABBuilder:
             + " --cred ./home/porter/azure.json"
             + " --driver azure && porter show " + installation_id]
 
+        self._logger.info(f"Constructed command: {command}")
+
         return command
 
     @staticmethod
