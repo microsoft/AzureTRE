@@ -51,13 +51,16 @@ The resource processor needs service principal credentials to deploy resources.
 
 Run the following commnand to create a new service principal with the Owner role. Make note of the `clientId` and `clientSecret` values returned.
 
-### Setup auth
-
-Read through the guide 
-
 ```cmd
 az ad sp create-for-rbac --name "sp-aztre-resource-processor" --role Owner --scopes /subscriptions/<subscription_id> --sdk-auth
 ```
+
+<!-- markdownlint-disable-next-line MD013 -->
+> *) The creation of the service principal with "Contributor" role is explained in [CD setup guide](./cd-setup.md#create-service-principals).  The `tre-deploy` target in the [Makefile](../Makefile) runs [a script](../devops/scripts/set_contributor_sp_secrets.sh) that inserts the client ID and secret into a Key Vault created in the same very step. If the script fails, the system will be up and running, but the deployment processor function will not be able to deploy workspace resources.
+
+### Setup auth
+
+Read through the guide [auth.md](auth.md). You need to create various app registrations and use that information below.
 
 ### Configuration
 
@@ -85,14 +88,11 @@ cp devops/.env.sample devops/.env
 | `RESOURCE_PROCESSOR_CLIENT_ID` | The client (app) ID of a service principal with "Owner" role to the subscription as created above. Used by the deployment processor function to deploy workspaces and workspace services. |
 | `RESOURCE_PROCESSOR_CLIENT_SECRET` | The client secret (app password) of a service principal with "Onwer" role to the subscription as created above. Used by the depl09oyment processor function to deploy workspaces and workspace services. |
 | `PORTER_DRIVER` | *Optional for manual deployment.* Valid values are `docker` or `azure`. If deploying manually use `docker` if using Azure Container Instances and the [Azure CNAB Driver](https://github.com/deislabs/cnab-azure-driver) use `azure` |
-| `SWAGGER_UI_CLIENT_ID` | blah
-| `AAD_TENANT_ID` | blah
-| `API_CLIENT_ID` | blah
-| `API_CLIENT_SECRET` | blah
+| `SWAGGER_UI_CLIENT_ID` | Generated when following auth guide. Client ID for swagger client to make requests. 
+| `AAD_TENANT_ID` | Generated when following auth guide. Tenant id against which auth is performed.
+| `API_CLIENT_ID` | Generated when following auth guide. Client id of the "TRE API".
+| `API_CLIENT_SECRET` | Generated when following auth guide. Client secret of the "TRE API".
 | `DEBUG` | If set to "true" disables purge protection of keyvault.
-
-<!-- markdownlint-disable-next-line MD013 -->
-> *) The creation of the service principal with "Contributor" role is explained in [CD setup guide](./cd-setup.md#create-service-principals).  The `tre-deploy` target in the [Makefile](../Makefile) runs [a script](../devops/scripts/set_contributor_sp_secrets.sh) that inserts the client ID and secret into a Key Vault created in the same very step. If the script fails, the system will be up and running, but the deployment processor function will not be able to deploy workspace resources.
 
 Your `.env` file should now look something similar to this:
 
@@ -120,7 +120,7 @@ PORTER_DRIVER=docker
 PORTER_OUTPUT_CONTAINER_NAME=porterout
 
 # 
-DEBUG="true"
+DEBUG="false"
 ```
 
 Copy [/templates/core/.env.sample](../templates/core/.env.sample) to `/templates/core/.env` and set values for all variables described in the table below:
@@ -271,7 +271,7 @@ Now that we have created a vanilla workspace bundle we can use the deployed API 
 <!-- markdownlint-disable-next-line MD013 -->
 > All routes are auth protected.Click the green **Authorize** button to receive a token for swagger client.  
 
-Every workspace has a corresponding app registration which can be created using the helper script [../scripts/workspace-app-reg.py](../scripts/workspace-app-reg.py). Multiple workspaces can share an app registration.
+As explained in the [auth guide](auth.md), every workspace has a corresponding app registration which can be created using the helper script [../scripts/workspace-app-reg.py](../scripts/workspace-app-reg.py). Multiple workspaces can share an app registration.
 
 Running the script will report app id of the generated app which needs to be used in the POST body below.
 
