@@ -22,7 +22,7 @@ data "external" "rule_priorities" {
   query = {
     firewall_name       = data.azurerm_firewall.fw.name
     resource_group_name = data.azurerm_firewall.fw.resource_group_name
-
+    service_resource_name_suffix = local.service_resource_name_suffix
   }
   depends_on = [
     null_resource.az_login
