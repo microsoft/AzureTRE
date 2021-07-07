@@ -200,10 +200,10 @@ module "state-store" {
   core_vnet           = module.network.core
 }
 
-# module "bastion" {
-#   source              = "./bastion"
-#   tre_id              = var.tre_id
-#   location            = var.location
-#   resource_group_name = azurerm_resource_group.core.name
-#   bastion_subnet      = module.network.bastion
-# }
+module "bastion" {
+  source              = "./bastion"
+  tre_id              = var.tre_id
+  location            = var.location
+  resource_group_name = azurerm_resource_group.core.name
+  bastion_subnet      = module.network.bastion
+}
