@@ -10,6 +10,8 @@ variable "storage_state_path" {}
 variable "identity_id" {}
 variable "core_vnet" {}
 variable "aci_subnet" {}
+variable "processor_function_image_repository" {}
+variable "processor_function_image_tag" {}
 variable "docker_registry_username" {}
 variable "docker_registry_password" {}
 variable "docker_registry_server" {}

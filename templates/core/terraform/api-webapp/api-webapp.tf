@@ -22,7 +22,7 @@ resource "azurerm_app_service" "management_api" {
   app_settings = {
     "APPLICATIONINSIGHTS_CONNECTION_STRING"      = var.app_insights_connection_string
     "APPINSIGHTS_INSTRUMENTATIONKEY"             = var.app_insights_instrumentation_key
-    "ApplicationInsightsAgent_EXTENSION_VERSION" = "~3"
+    "ApplicationInsightsAgent_EXTENSION_VERSION" = "3"
     "XDT_MicrosoftApplicationInsights_Mode"      = "default"
     "WEBSITES_PORT"                              = "8000"
     "WEBSITE_VNET_ROUTE_ALL"                     = 1

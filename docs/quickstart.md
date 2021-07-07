@@ -136,7 +136,9 @@ Build and push the docker images required by the Azure TRE and publish them to t
 ```bash
 make build-api-image
 make build-cnab-image
+make build-processor-function-image
 make push-api-image
+make-push-processor-function-image
 make push-cnab-image
 ```
 
@@ -154,7 +156,8 @@ cp templates/core/.env.sample templates/core/.env
 | ------------------------- | ----------- |
 | `TRE_ID` | A globally unique identifier. `TRE_ID` can be found in the resource names of the Azure TRE instance; for example, a `TRE_ID` of `mytre-dev-3142` will result in a resource group name for Azure TRE instance of `rg-mytre-dev-3142`. This must be less than 12 characters. Allowed characters: Alphanumeric, underscores, and hyphens. |
 | `ADDRESS_SPACE` | The address space for the Azure TRE core virtual network. |
-| `MANAGEMENT_API_IMAGE_TAG` | The tag of the management API image. |
+| `MANAGEMENT_API_IMAGE_TAG` | The tag of the management API image.  Set to the same value as `IMAGE_TAG` unless need to deploy different versions of each image. |
+| `PROCESSOR_FUNCTION_API_IMAGE_TAG` | The tag of the processor function image that will be deployed. Set to the same value as `IMAGE_TAG` unless need to deploy different versions of each image. |
 
 ### Deploy
 
@@ -173,12 +176,6 @@ core_resource_group_name = "rg-<TRE_ID>"
 keyvault_name = "kv-<TRE_ID>"
 log_analytics_name = "log-<TRE_ID>"
 static_web_storage = "stwebaz<TRE_ID>"
-```
-
-Deploy the processor function:
-
-```cmd
-make deploy-processor-function
 ```
 
 The Azure TRE is initially deployed with an invalid self-signed SSL certificate. This certificate is stored in the deployed Key Vault. To update the certificate in Key Vault needs to be replaced with one valid for the configured domain name. To use a certificate from [Let's Encrypt][letsencrypt], simply run the command:

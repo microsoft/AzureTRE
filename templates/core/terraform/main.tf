@@ -116,6 +116,8 @@ module "processor_function" {
   identity_id                                = module.identity.identity_id
   core_vnet                                  = module.network.core
   aci_subnet                                 = module.network.aci
+  processor_function_image_repository        = var.processor_function_image_repository
+  processor_function_image_tag               = var.processor_function_image_tag
   docker_registry_username                   = var.docker_registry_username
   docker_registry_password                   = var.docker_registry_password
   docker_registry_server                     = var.docker_registry_server
@@ -195,10 +197,10 @@ module "state-store" {
   core_vnet           = module.network.core
 }
 
-module "bastion" {
-  source              = "./bastion"
-  tre_id              = var.tre_id
-  location            = var.location
-  resource_group_name = azurerm_resource_group.core.name
-  bastion_subnet      = module.network.bastion
-}
+# module "bastion" {
+#   source              = "./bastion"
+#   tre_id              = var.tre_id
+#   location            = var.location
+#   resource_group_name = azurerm_resource_group.core.name
+#   bastion_subnet      = module.network.bastion
+# }

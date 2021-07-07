@@ -1,8 +1,8 @@
-.PHONY: bootstrap-init mgmt-deploy mgmt-destroy build-api-image push-api-image build-cnab-image push-cnab-image deploy-tre destroy-tre letsencrypt
+.PHONY: bootstrap-init mgmt-deploy mgmt-destroy build-api-image push-api-image build-processor-function-image push-processor-function-image build-cnab-image push-cnab-image deploy-tre destroy-tre letsencrypt
 
 SHELL:=/bin/bash
 
-all: bootstrap mgmt-deploy build-api-image push-api-image build-cnab-image push-cnab-image tre-deploy
+all: bootstrap mgmt-deploy build-api-image push-api-image build-processor-function-image push-processor-function-image build-cnab-image push-cnab-image tre-deploy
 
 bootstrap:
 	echo -e "\n\e[34m»»» 🧩 \e[96mBootstrap Terraform\e[0m..." \
@@ -30,6 +30,21 @@ build-api-image:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/set_docker_sock_permission.sh \
 	&& docker build -t "$${ACR_NAME}.azurecr.io/microsoft/azuretre/management-api:$${IMAGE_TAG}" ./management_api_app/
+
+build-processor-function-image:
+	echo -e "\n\e[34m»»» 🧩 \e[96mBuilding Processor Function\e[0m..." \
+	&& . ./devops/scripts/check_dependencies.sh \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& . ./devops/scripts/set_docker_sock_permission.sh \
+	&& docker build -t "$${ACR_NAME}.azurecr.io/microsoft/azuretre/processor-function:$${IMAGE_TAG}" ./processor_function/
+
+push-processor-function-image:
+	echo -e "\n\e[34m»»» 🧩 \e[96mPushing Images\e[0m..." \
+	&& . ./devops/scripts/check_dependencies.sh \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& . ./devops/scripts/set_docker_sock_permission.sh \
+	&& az acr login -n $${ACR_NAME} \
+	&& docker push "$${ACR_NAME}.azurecr.io/microsoft/azuretre/processor-function:$${IMAGE_TAG}"
 
 build-cnab-image:
 	echo -e "\n\e[34m»»» 🧩 \e[96mBuilding CNAB Image\e[0m..." \
