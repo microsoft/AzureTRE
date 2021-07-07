@@ -29,11 +29,16 @@ resource "azurerm_key_vault" "kv" {
       "Get", "List", "Update", "Delete"
     ]
   }
-  # Access policy for this particular TF run to insert the secret into kv
+  # Access policy for this particular TF run to insert and purge from kv
   access_policy {
     tenant_id          = var.tenant_id
     object_id          = data.azurerm_client_config.current.object_id
     secret_permissions = ["get", "set"]
+    certificate_permissions = [
+      "Delete", "Purge"
+    ]
+
+
   }
 }
 
