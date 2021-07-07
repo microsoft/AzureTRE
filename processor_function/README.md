@@ -15,8 +15,10 @@ Tools:
 Resources:
 
 * [Application Insights](https://docs.microsoft.com/azure/azure-monitor/app/app-insights-overview) - Not required for testing locally
-* [Azure Container Registry](https://docs.microsoft.com/azure/container-registry/) with a workspace image (bundle) to deploy
-  * See [Authoring workspaces](../docs/authoring-workspaces.md)
+* [Azure Container Instances](https://docs.microsoft.com/azure/container-instances/)
+* [Azure Container Registry](https://docs.microsoft.com/azure/container-registry/) with:
+  * The [CNAB container image](../CNAB_container/Dockerfile)
+  * A workspace image (bundle) to deploy (see [Authoring workspaces](../docs/authoring-workspaces.md))
 * [Azure Service Bus](https://docs.microsoft.com/azure/service-bus-messaging/) with two queues:
   * Resource request queue for messages triggering the function
   * Deployment status update queue for messages function sends about the progress of the deployment
@@ -90,7 +92,8 @@ See [Authoring workspaces](../docs/authoring-workspaces.md) for more information
 
 1. Set the environment variables
 
-    * When using `.env` file in Unix shell (e.g., Bash), the utility script [`load_env.sh`](../devops/scripts/load_env.sh) can be used:
+    * Use [`.env.sample`](./.env.sample) in `/processor_function/` folder as the basis; copy the file and rename it "`.env`" and fill the values
+    * In Unix shell (e.g., Bash), use the utility script [`load_env.sh`](../devops/scripts/load_env.sh) to load the variables:
 
         ```bash
         $ . ../devops/scripts/load_env.sh .env
