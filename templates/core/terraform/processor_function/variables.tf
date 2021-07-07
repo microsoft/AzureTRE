@@ -7,7 +7,6 @@ variable "app_service_plan_id" {}
 variable "storage_account_name" {}
 variable "storage_account_access_key" {}
 variable "storage_state_path" {}
-variable "identity_id" {}
 variable "core_vnet" {}
 variable "aci_subnet" {}
 variable "docker_registry_username" {}

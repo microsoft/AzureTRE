@@ -31,7 +31,7 @@ resource "azurerm_function_app" "procesorfunction" {
     CNAB_AZURE_STATE_PATH                      = var.porter_output_container_name
     CNAB_AZURE_STATE_FILESHARE                 = var.porter_output_container_name
     CNAB_AZURE_SUBSCRIPTION_ID                 = data.azurerm_subscription.current.subscription_id
-    CNAB_AZURE_USER_MSI_RESOURCE_ID            = var.identity_id
+    CNAB_AZURE_USER_MSI_RESOURCE_ID            = var.managed_identity.id
     CNAB_AZURE_VERBOSE                         = "true"
     CNAB_AZURE_PROPAGATE_CREDENTIALS           = "true"
     CNAB_AZURE_MSI_TYPE                        = "user"
@@ -41,7 +41,7 @@ resource "azurerm_function_app" "procesorfunction" {
     SERVICE_BUS_CONNECTION_STRING              = var.service_bus_connection_string
     SERVICE_BUS_RESOURCE_REQUEST_QUEUE         = var.service_bus_resource_request_queue
     SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE = var.service_bus_deployment_status_update_queue
-    WORKSPACES_PATH                            = "/microsoft/azuretre/workspaces/"
+    WORKSPACES_PATH                            = ""
     CNAB_IMAGE                                 = "${var.docker_registry_server}/microsoft/azuretre/cnab-aci:${var.management_api_image_tag}"
     SEC_ARM_CLIENT_ID                          = var.arm_client_id
     SEC_ARM_CLIENT_SECRET                      = var.arm_client_secret
