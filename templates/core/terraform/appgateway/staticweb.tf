@@ -17,6 +17,8 @@ resource "azurerm_storage_account" "staticweb" {
         tre_id = var.tre_id
     }
 
+    lifecycle { ignore_changes = [ tags ] }
+
     network_rules {
       bypass         = ["AzureServices"]
       default_action = "Deny"

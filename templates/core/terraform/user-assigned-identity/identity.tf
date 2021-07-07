@@ -5,6 +5,8 @@ resource "azurerm_user_assigned_identity" "id" {
   location            = var.location
 
   name = "msi-${var.tre_id}"
+
+  lifecycle { ignore_changes = [ tags ] }
 }
 
 resource "azurerm_role_assignment" "contributor" {

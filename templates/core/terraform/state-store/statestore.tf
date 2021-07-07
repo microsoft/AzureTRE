@@ -17,6 +17,8 @@ resource "azurerm_cosmosdb_account" "tre-db-account" {
     location          = var.location
     failover_priority = 0
   }
+
+  lifecycle { ignore_changes = [ tags ] }
 }
 
 resource "azurerm_cosmosdb_sql_database" "tre-db" {
@@ -29,6 +31,8 @@ resource "azurerm_cosmosdb_sql_database" "tre-db" {
 resource "azurerm_private_dns_zone" "cosmos" {
   name                = "privatelink.documents.azure.com"
   resource_group_name = var.resource_group_name
+
+  lifecycle { ignore_changes = [ tags ] }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "cosmos_documents_dns_link" {
@@ -36,6 +40,8 @@ resource "azurerm_private_dns_zone_virtual_network_link" "cosmos_documents_dns_l
   resource_group_name   = var.resource_group_name
   private_dns_zone_name = azurerm_private_dns_zone.cosmos.name
   virtual_network_id    = var.core_vnet
+
+  lifecycle { ignore_changes = [ tags ] }
 }
 
 resource "azurerm_private_endpoint" "sspe" {
@@ -43,6 +49,8 @@ resource "azurerm_private_endpoint" "sspe" {
   location            = var.location
   resource_group_name = var.resource_group_name
   subnet_id           = var.shared_subnet
+
+  lifecycle { ignore_changes = [ tags ] }
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group"

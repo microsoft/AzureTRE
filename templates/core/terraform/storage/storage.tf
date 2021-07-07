@@ -5,6 +5,7 @@ resource "azurerm_storage_account" "stg" {
   account_tier             = "Standard"
   account_replication_type = "LRS"
 
+  lifecycle { ignore_changes = [ tags ] }
 }
 
 resource "azurerm_storage_share" "storage_state_path" {
@@ -16,6 +17,8 @@ resource "azurerm_storage_share" "storage_state_path" {
 resource "azurerm_private_dns_zone" "blobcore" {
   name                = "privatelink.blob.core.windows.net"
   resource_group_name = var.resource_group_name
+
+  lifecycle { ignore_changes = [ tags ] }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "blobcorelink" {
@@ -23,6 +26,8 @@ resource "azurerm_private_dns_zone_virtual_network_link" "blobcorelink" {
   resource_group_name   = var.resource_group_name
   private_dns_zone_name = azurerm_private_dns_zone.blobcore.name
   virtual_network_id    = var.core_vnet
+
+  lifecycle { ignore_changes = [ tags ] }
 }
 
 resource "azurerm_private_endpoint" "blobpe" {
@@ -30,6 +35,8 @@ resource "azurerm_private_endpoint" "blobpe" {
   location            = var.location
   resource_group_name = var.resource_group_name
   subnet_id           = var.shared_subnet
+
+  lifecycle { ignore_changes = [ tags ] }
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group-blobcore"
@@ -47,6 +54,8 @@ resource "azurerm_private_endpoint" "blobpe" {
 resource "azurerm_private_dns_zone" "filecore" {
   name                = "privatelink.file.core.windows.net"
   resource_group_name = var.resource_group_name
+
+  lifecycle { ignore_changes = [ tags ] }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "filecorelink" {
@@ -54,6 +63,8 @@ resource "azurerm_private_dns_zone_virtual_network_link" "filecorelink" {
   resource_group_name   = var.resource_group_name
   private_dns_zone_name = azurerm_private_dns_zone.filecore.name
   virtual_network_id    = var.core_vnet
+
+  lifecycle { ignore_changes = [ tags ] }
 }
 
 resource "azurerm_private_endpoint" "filepe" {
@@ -61,6 +72,8 @@ resource "azurerm_private_endpoint" "filepe" {
   location            = var.location
   resource_group_name = var.resource_group_name
   subnet_id           = var.shared_subnet
+
+  lifecycle { ignore_changes = [ tags ] }
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group-filecore"

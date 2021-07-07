@@ -22,6 +22,8 @@ resource "azurerm_resource_group" "ws" {
     tre_id  = var.tre_id
     source  = "https://github.com/microsoft/AzureTRE/"
   }
+
+  lifecycle { ignore_changes = [ tags ] }
 }
 
 module "network" {

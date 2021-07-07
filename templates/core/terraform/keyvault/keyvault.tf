@@ -40,6 +40,8 @@ resource "azurerm_key_vault" "kv" {
 
 
   }
+
+  lifecycle { ignore_changes = [ tags ] }
 }
 
 resource "azurerm_key_vault_access_policy" "managed_identity" {
@@ -55,6 +57,8 @@ resource "azurerm_key_vault_access_policy" "managed_identity" {
 resource "azurerm_private_dns_zone" "vaultcore" {
   name                = "privatelink.vaultcore.azure.net"
   resource_group_name = var.resource_group_name
+
+  lifecycle { ignore_changes = [ tags ] }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "vaultcorelink" {
@@ -62,6 +66,8 @@ resource "azurerm_private_dns_zone_virtual_network_link" "vaultcorelink" {
   resource_group_name   = var.resource_group_name
   private_dns_zone_name = azurerm_private_dns_zone.vaultcore.name
   virtual_network_id    = var.core_vnet
+
+  lifecycle { ignore_changes = [ tags ] }
 }
 
 resource "azurerm_private_endpoint" "kvpe" {
@@ -69,6 +75,8 @@ resource "azurerm_private_endpoint" "kvpe" {
   location            = var.location
   resource_group_name = var.resource_group_name
   subnet_id           = var.shared_subnet
+
+  lifecycle { ignore_changes = [ tags ] }
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group"
