@@ -29,6 +29,18 @@ variable "management_api_image_tag" {
   default     = "main-latest"
 }
 
+variable "processor_function_image_repository" {
+  type        = string
+  description = "Repository for processor function image"
+  default     = "microsoft/azuretre/processor-function"
+}
+
+variable "processor_function_image_tag" {
+  type        = string
+  description = "Tag for processor function image"
+  default     = "main-latest"
+}
+
 variable "mgmt_storage_account_name" {
   type        = string
   description = "Storage account created by bootstrap to hold all Terraform state"
