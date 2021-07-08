@@ -49,12 +49,12 @@ variable "porter_output_container_name" {
   description = "Name of the storage container for Porter output"
 }
 
-variable "arm_client_id" {
+variable "resource_processor_client_id" {
   type        = string
   description = "The client (app) ID of a service principal with Owner role to the subscription."
 }
 
-variable "arm_client_secret" {
+variable "resource_processor_client_secret" {
   type        = string
   description = "The client secret (app password) of a service principal with Owner role to the subscription."
 }
@@ -98,3 +98,5 @@ variable "api_client_secret" {
   description = "A client secret use by the API to authenticate with Azure AD for access to Microsoft Graph."
   sensitive   = true
 }
+
+variable "debug" {}

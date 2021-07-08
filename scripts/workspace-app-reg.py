@@ -109,7 +109,7 @@ def main(tre_name, workspace_name, force):
 
     try:
 
-        if not force and not double_check(graph.default_domain, graph.me()['displayName']):
+        if not force and not double_check(graph.default_domain(), graph.me()['displayName']):
             sys.exit(0)
 
         app_name = f"{tre_name} Workspace - {workspace_name}"
