@@ -31,7 +31,7 @@ When deploying the processor function using infrastructure as code (IaC), the en
 
 | Environment variable name | Description |
 | ------------------------- | ----------- |
-| `AzureWebJobsStorage` | See [App settings reference for Azure Functions](https://docs.microsoft.com/en-us/azure/azure-functions/functions-app-settings#azurewebjobsstorage). |
+| `AzureWebJobsStorage` | For testing locally. See [App settings reference for Azure Functions](https://docs.microsoft.com/en-us/azure/azure-functions/functions-app-settings#azurewebjobsstorage). |
 | `APPINSIGHTS_INSTRUMENTATIONKEY` | Application Insights instrumentation key. |
 | `APPLICATIONINSIGHTS_CONNECTION_STRING` | Application Insights connection string. |
 | `RESOURCE_GROUP_NAME` | The name of the resource group containing the ACI. |
