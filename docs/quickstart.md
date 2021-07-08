@@ -88,11 +88,11 @@ cp devops/.env.sample devops/.env
 | `RESOURCE_PROCESSOR_CLIENT_ID` | The client (app) ID of a service principal with "Owner" role to the subscription as created above. Used by the deployment processor function to deploy workspaces and workspace services. |
 | `RESOURCE_PROCESSOR_CLIENT_SECRET` | The client secret (app password) of a service principal with "Onwer" role to the subscription as created above. Used by the depl09oyment processor function to deploy workspaces and workspace services. |
 | `PORTER_DRIVER` | *Optional for manual deployment.* Valid values are `docker` or `azure`. If deploying manually use `docker` if using Azure Container Instances and the [Azure CNAB Driver](https://github.com/deislabs/cnab-azure-driver) use `azure` |
-| `SWAGGER_UI_CLIENT_ID` | Generated when following auth guide. Client ID for swagger client to make requests. 
-| `AAD_TENANT_ID` | Generated when following auth guide. Tenant id against which auth is performed.
-| `API_CLIENT_ID` | Generated when following auth guide. Client id of the "TRE API".
-| `API_CLIENT_SECRET` | Generated when following auth guide. Client secret of the "TRE API".
-| `DEBUG` | If set to "true" disables purge protection of keyvault.
+| `SWAGGER_UI_CLIENT_ID` | Generated when following auth guide. Client ID for swagger client to make requests. |
+| `AAD_TENANT_ID` | Generated when following auth guide. Tenant id against which auth is performed. |
+| `API_CLIENT_ID` | Generated when following auth guide. Client id of the "TRE API". |
+| `API_CLIENT_SECRET` | Generated when following auth guide. Client secret of the "TRE API". |
+| `DEBUG` | If set to "true" disables purge protection of keyvault. |
 
 Your `.env` file should now look something similar to this:
 
@@ -168,7 +168,7 @@ make letsencrypt
 
 Note that there are rate limits with Let's Encrypt, so this should not be run when not needed.
 
-## Details of infrastructure deployment.
+## Details of infrastructure deployment
 
 The following section is for informational purpose and the steps don't need to be executed as they are part of make all above.
 
