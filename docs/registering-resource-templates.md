@@ -1,4 +1,4 @@
-# Regsitering Resource Templates
+# Registering Resource Templates
 
 Before a resource template can be deployed using the API it needs to be registered.
 
