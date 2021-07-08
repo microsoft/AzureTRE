@@ -3,6 +3,8 @@ resource "azurerm_virtual_network" "core" {
   location            = var.location
   resource_group_name = var.resource_group_name
   address_space       = [var.address_space]
+
+  lifecycle { ignore_changes = [ tags ] }
 }
 
 resource "azurerm_subnet" "bastion" {
@@ -75,6 +77,8 @@ resource "azurerm_network_profile" "aciprofile" {
       subnet_id = azurerm_subnet.aci.id
     }
   }
+
+  lifecycle { ignore_changes = [ tags ] }
 }
 
 resource "azurerm_subnet" "shared" {

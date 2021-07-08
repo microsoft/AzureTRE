@@ -1,8 +1,37 @@
-# InnerEye Inference service bundle
+# InnerEye Deep Learning and Inference Workspace
 
-See: [https://github.com/microsoft/InnerEye-Inference](https://github.com/microsoft/InnerEye-Inference)
+This deploys a TRE workspace with the following services:
 
-## Deployment
+- [Azure ML](./services/azureml)
+- [Azure Dev Test Labs](./services/devtestlabs)
+- [InnerEye deep learning](./services/innereye_deeplearning)
+- [InnerEye Inference](./services/innereye_inference)
+
+Please follow the above links to learn more about how to access the services and any firewall rules that they will open in the workspace.
+
+## Manual deployment
+
+1. Publish the bundles required for this workspace:
+
+- Vanilla Workspace
+    `make porter-build DIR=./workspaces/vanilla`
+    `make porter-publish DIR=./workspaces/vanilla`
+
+- Azure ML Service
+    `make porter-build DIR=./workspaces/services/azureml`  
+    `make porter-publish DIR=./workspaces/services/azureml`
+
+- DevTest Labs Service
+    `make porter-build DIR=./workspaces/services/devtestlabs`  
+    `make porter-publish DIR=./workspaces/services/devtestlabs`
+
+- InnerEye Deep Learning Service
+    `make porter-build DIR=./workspaces/services/innereye_deeplearning`  
+    `make porter-publish DIR=./workspaces/services/innereye_deeplearning`
+
+- InnerEye Inference Service
+    `make porter-build DIR=./workspaces/services/innereye_inference`  
+    `make porter-publish DIR=./workspaces/services/innereye_inference`
 
 1. Create a service principal with contributor rights over Azure ML:
 
@@ -10,55 +39,16 @@ See: [https://github.com/microsoft/InnerEye-Inference](https://github.com/micros
 az ad sp create-for-rbac --name <sp-name> --role Contributor --scopes /subscriptions/<subscription-id>/resourceGroups/<resource-group-name>/providers/Microsoft.MachineLearningServices/workspaces/<workspace-name>
 ```
 
-1. Create a copy of `workspaces/innereye_deeplearning_inference/.env.sample` with the name `.env` and update the workspace_id, address_space, and service principal client ID and secret from the previous step.
+1. Create a copy of `workspaces/innereye_deeplearning_inference/.env.sample` with the name `.env` and update the variables with the appropriate values.
 
-1. Prerequisites for deployment:
+| Environment variable name | Description |
+| ------------------------- | ----------- |
+| `WORKSPACE_ID` | A 4 ter unique identifier for the workspace for this TRE. `WORKSPACE_ID` can be found in the resource names of the workspace resources; for example, a `WORKSPACE_ID` of `ab12` will result in a resource group name for workspace of `rg-<tre-id>-ab12`. Allowed characters: Alphanumeric. |
+| `ADDRESS_SPACE` | The address space for the workspace virtual network. For example `192.168.1.0/24`|
+| `INFERENCE_SP_CLIENT_ID` | Service principal client ID used by the inference service to connect to Azure ML. Use the output from the step above. |
+| `INFERENCE_SP_CLIENT_SECRET` | Service principal client secret used by the inference service to connect to Azure ML. Use the output from the step above. |
 
-- A deployed TRE instance
-
-- A Vanilla Workspace Bundle published
-    `make porter-build DIR=./workspaces/vanilla`
-    `make porter-publish DIR=./workspaces/vanilla`
-
-- An Azure ML Service bundle published
-    `make porter-build DIR=./workspaces/services/azureml`  
-    `make porter-publish DIR=./workspaces/services/azureml`
-
-- A DevTest Labs Service bundle published
-    `make porter-build DIR=./workspaces/services/devtestlabs`  
-    `make porter-publish DIR=./workspaces/services/devtestlabs`
-
-- A InnerEye Deep Learning Service bundle published
-    `make porter-build DIR=./workspaces/services/innereye_deeplearning`  
-    `make porter-publish DIR=./workspaces/services/innereye_deeplearning`
-
-- A InnerEye Inference service bundle published
-    `make porter-build DIR=./workspaces/services/innereye_inference`  
-    `make porter-publish DIR=./workspaces/services/innereye_inference`
-
-1. Publish and install the InnerEye inference workspace:
+1. Build and install the workspace:
 
     `make porter-publish DIR=./workspaces/innereye_deeplearning_inference`
     `make porter-install DIR=./workspaces/innereye_deeplearning_inference`
-
-1. Log onto a VM in the workspace and run:
-
-```cmd
-git clone https://github.com/microsoft/InnerEye-Inference
-cd InnerEye-Inference
-az webapp up --name <inference-app-name> -g <resource-group-name>
-```
-
-## Configuring and testing inference service
-
-The workspace service provision an App Service Plan and an App Service for hosting the inference webapp. The webapp will be integrated into the workspace network, allowing the webapp to connect to the AML workspace. Following the setup you will need to:
-
-- Create a new container in your storage account for storing inference images called `inferencedatastore`.
-- Create a new folder in that container called `imagedata`.
-- Navigate to the ml.azure.com, `Datastores` and create a new datastore named `inferencedatastore` and connect it to the newly created container.
-- The key used for authentication is the `inference_auth_key` provided as an output of the service deployment.
-- Test the service by sending a GET or POST command using curl or Invoke-WebRequest:
-  - Simple ping:
-  ```Invoke-WebRequest https://yourservicename.azurewebsites.net/v1/ping -Headers @{'Accept' = 'application/json'; 'API_AUTH_SECRET' = 'your-secret-1234-1123445'}```
-  - Test connection with AML:
-  ```Invoke-WebRequest https://yourservicename.azurewebsites.net/v1/model/start/HelloWorld:1 -Method POST -Headers @{'Accept' = 'application/json'; 'API_AUTH_SECRET' = 'your-secret-1234-1123445'}```

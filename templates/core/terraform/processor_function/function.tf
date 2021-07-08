@@ -57,4 +57,6 @@ resource "azurerm_function_app" "procesorfunction" {
     type         = "UserAssigned"
     identity_ids = [ var.managed_identity.id ]
   }
+
+  lifecycle { ignore_changes = [ tags ] }
 }

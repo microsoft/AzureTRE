@@ -20,6 +20,8 @@ resource "azurerm_resource_group" "core" {
     tre_id  = var.tre_id
     source  = "https://github.com/microsoft/AzureTRE/"
   }
+
+  lifecycle { ignore_changes = [ tags ] }
 }
 
 resource "azurerm_application_insights" "core" {
@@ -27,6 +29,8 @@ resource "azurerm_application_insights" "core" {
   resource_group_name = azurerm_resource_group.core.name
   location            = var.location
   application_type    = "web"
+
+  lifecycle { ignore_changes = [ tags ] }
 }
 
 resource "azurerm_log_analytics_workspace" "core" {
@@ -35,6 +39,8 @@ resource "azurerm_log_analytics_workspace" "core" {
   location            = var.location
   retention_in_days   = 30
   sku                 = "pergb2018"
+
+  lifecycle { ignore_changes = [ tags ] }
 }
 
 module "network" {

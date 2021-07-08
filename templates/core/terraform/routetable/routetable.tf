@@ -4,6 +4,8 @@ resource "azurerm_route_table" "rt" {
   location                      = var.location
   disable_bgp_route_propagation = false
 
+  lifecycle { ignore_changes = [ tags ] }
+
   route {
     name           = "DefaultRoute"
     address_prefix = "0.0.0.0/0"
