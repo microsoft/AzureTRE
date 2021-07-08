@@ -1,7 +1,9 @@
 # Processor function
 
+<!-- markdownlint-disable-next-line MD013 -->
 The processor function (sometimes referred to as resource or deployment processor) uses [Azure Container Instances (ACI)](https://docs.microsoft.com/en-us/azure/container-instances/) together with the [CNAB container image](../CNAB_container/Dockerfile) based on [Azure CNAB Driver](https://github.com/deislabs/cnab-azure-driver) to execute workspace and workspace service deployments. The workspaces and workspace services are [Porter](https://porter.sh/) bundles.
 
+<!-- markdownlint-disable-next-line MD013 -->
 The processor function waits for Service Bus messages in the resource request queue containing the bundle details and the action to execute, prepares the environment for the execution in the ACI and follows through the deployment process. The deployment status is reported back to [the management API](../management_api_app/) using Service Bus messages but with in a deployment status update queue.
 
 ## Prerequisites
@@ -96,7 +98,7 @@ See [Authoring workspaces](../docs/authoring-workspaces.md) for more information
     * In Unix shell (e.g., Bash), use the utility script [`load_env.sh`](../devops/scripts/load_env.sh) to load the variables:
 
         ```bash
-        $ . ../devops/scripts/load_env.sh .env
+        . ../devops/scripts/load_env.sh .env
         ```
 
         > Check with the `env` command that the environment variables were effectively set e.g.,
@@ -148,7 +150,7 @@ The script will also generate and output a correlation ID that is injected into 
 
 Error message:
 
-```
+```plaintext
 [...] System.Private.CoreLib: Exception while executing function: Functions.createNewWorkspace. System.Private.CoreLib: Result: Failure
 Exception: ModuleNotFoundError: No module named 'shared'
 ...
@@ -170,6 +172,7 @@ Solution: Set `PYTHOHPATH` environment variable to point to the root of the `pro
 
 ## Observability
 
+<!-- markdownlint-disable-next-line MD013 -->
 When the function is triggered by a Service Bus message, the correlation ID in the message is used to create a new Python logging adapter (see [main `__init__.py`](./createNewWorkspace/__init__.py) and [`logging.py`](./shared/logging.py)). The adapter is then passed on to [the `CNABBuilder` class](./shared/cnab_builder.py) instance and when used, each log entry sent to Application Insights will have an `operation_Id` field matching the correlation ID. Using the ID, the logs for a specific deployment operation can be easily collected with a query e.g.:
 
 ```plaintext
