@@ -16,6 +16,11 @@ resource "azurerm_function_app" "procesorfunction" {
   version                    = "~3"
   os_type                    = "linux"
 
+  site_config {
+    always_on        = true
+    linux_fx_version = "Python|3.8"
+  }
+
   app_settings = {
     https_only                                 = true
     FUNCTIONS_WORKER_RUNTIME                   = "python"
@@ -35,13 +40,15 @@ resource "azurerm_function_app" "procesorfunction" {
     CNAB_AZURE_VERBOSE                         = "true"
     CNAB_AZURE_PROPAGATE_CREDENTIALS           = "true"
     CNAB_AZURE_MSI_TYPE                        = "user"
+    CNAB_AZURE_DELETE_RESOURCES                = false
+    CNAB_AZURE_DELETE_OUTPUTS_FROM_FILESHARE   = false
     SEC_CNAB_AZURE_REGISTRY_USERNAME           = var.docker_registry_username
     SEC_CNAB_AZURE_REGISTRY_PASSWORD           = var.docker_registry_password
     REGISTRY_SERVER                            = var.docker_registry_server
     SERVICE_BUS_CONNECTION_STRING              = var.service_bus_connection_string
     SERVICE_BUS_RESOURCE_REQUEST_QUEUE         = var.service_bus_resource_request_queue
     SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE = var.service_bus_deployment_status_update_queue
-    WORKSPACES_PATH                            = ""
+    WORKSPACES_PATH                            = "/"
     CNAB_IMAGE                                 = "${var.docker_registry_server}/microsoft/azuretre/cnab-aci:${var.management_api_image_tag}"
     SEC_ARM_CLIENT_ID                          = var.arm_client_id
     SEC_ARM_CLIENT_SECRET                      = var.arm_client_secret
@@ -58,5 +65,5 @@ resource "azurerm_function_app" "procesorfunction" {
     identity_ids = [ var.managed_identity.id ]
   }
 
-  lifecycle { ignore_changes = [ tags ] }
+  lifecycle { ignore_changes = [tags] }
 }

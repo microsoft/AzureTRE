@@ -9,7 +9,11 @@ terraform {
 }
 
 provider "azurerm" {
-  features {}
+  features {
+    key_vault {
+      purge_soft_delete_on_destroy = var.debug == "true" ? true : false
+    }
+  }
 }
 
 resource "azurerm_resource_group" "core" {
@@ -131,8 +135,8 @@ module "processor_function" {
   mgmt_resource_group_name                   = var.mgmt_resource_group_name
   terraform_state_container_name             = var.terraform_state_container_name
   porter_output_container_name               = var.porter_output_container_name
-  arm_client_id                              = var.arm_client_id
-  arm_client_secret                          = var.arm_client_secret
+  arm_client_id                              = var.resource_processor_client_id
+  arm_client_secret                          = var.resource_processor_client_secret
   management_api_image_tag                   = var.management_api_image_tag
   managed_identity                           = module.identity.managed_identity
 }
@@ -157,6 +161,7 @@ module "keyvault" {
   tenant_id                  = data.azurerm_client_config.current.tenant_id
   managed_identity_tenant_id = module.identity.managed_identity.tenant_id
   managed_identity_object_id = module.identity.managed_identity.principal_id
+  debug                      = var.debug
 
   depends_on = [
     module.identity
