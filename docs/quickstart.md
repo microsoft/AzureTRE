@@ -21,7 +21,7 @@ You will require the following prerequisites installed.
 You will also need:
 
 - An Azure Subscription
-- An Azure Active Directory Service Principal  
+- An Azure Active Directory Service Principal
   (Instructions later in this quickstart)
 
 ## Clone the repository

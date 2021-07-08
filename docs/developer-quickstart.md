@@ -163,10 +163,10 @@ Tests are written with pytest and located in folders:
 - `/management_api_app/tests/`
 - `/processor_function/tests/`
 
-Run all tests with:
+Run all unit tests with:
 
 ```cmd
-pytest
+pytest --ignore=e2e_tests
 ```
 
 ## (Optional) Install pre-commit hooks
