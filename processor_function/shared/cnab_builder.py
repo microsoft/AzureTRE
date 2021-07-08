@@ -43,7 +43,7 @@ class CNABBuilder:
         acr_name = os.environ["REGISTRY_SERVER"].split(".")[0]
 
         command = [
-            + "/bin/bash", "-c", "az login --identity "
+            "/bin/bash", "-c", "az login --identity "
             + f"&& TOKEN=$(az acr login --name {acr_name} --expose-token --output tsv --query accessToken) "
             + f"&& docker login {os.environ['REGISTRY_SERVER']} --username 00000000-0000-0000-0000-000000000000 --password $TOKEN "
             + "&& porter "
