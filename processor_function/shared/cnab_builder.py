@@ -62,7 +62,6 @@ class CNABBuilder:
 
         return command
 
-
     @staticmethod
     def _get_environment_variable(key, value):
         if key.startswith("CNAB_AZURE"):
