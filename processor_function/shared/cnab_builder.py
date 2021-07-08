@@ -1,23 +1,22 @@
-import time
 import os
-
 import logging
+import time
 from typing import List
 
 from azure.identity import DefaultAzureCredential
 from azure.mgmt.containerinstance import ContainerInstanceManagementClient
-from azure.mgmt.containerinstance.models import (ContainerGroup,
-                                                 Container,
+from azure.mgmt.containerinstance.models import (Container,
+                                                 ContainerGroup,
+                                                 ContainerGroupIdentity,
                                                  ContainerGroupRestartPolicy,
                                                  EnvironmentVariable,
                                                  ImageRegistryCredential,
-                                                 ContainerGroupIdentity,
+                                                 OperatingSystemTypes,
                                                  ResourceRequests,
-                                                 ResourceRequirements,
-                                                 OperatingSystemTypes)
+                                                 ResourceRequirements)
 
-from shared.service_bus import ServiceBus
 from resources import strings
+from shared.service_bus import ServiceBus
 
 
 class CNABBuilder:
@@ -40,22 +39,26 @@ class CNABBuilder:
                 porter_parameters += " --param " + key.replace('param_', '') + "=" + value
 
         installation_id = self._message['parameters']['tre_id'] + "-" + self._message['parameters']['workspace_id']
-        command_line = ["/bin/bash", "-c", "az login --identity "
-                        + "&& TOKEN=$(az acr login --name msfttreacr --expose-token --output tsv --query accessToken) "
-                        + "&& docker login msfttreacr.azurecr.io --username 00000000-0000-0000-0000-000000000000 --password $TOKEN "
-                        + "&& porter "
-                        + self._message['action'] + " "
-                        + installation_id
-                        + " --reference "
-                        + os.environ["REGISTRY_SERVER"]
-                        + os.environ["WORKSPACES_PATH"]
-                        + self._message['name'] + ":"
-                        + "v" + self._message['version'] + " "
-                        + porter_parameters
-                        + " --cred ./home/porter/azure.json"
-                        + " --driver azure && porter show " + installation_id]
 
-        return command_line
+        command = [
+            + "/bin/bash", "-c", "az login --identity "
+            + "&& TOKEN=$(az acr login --name msfttreacr --expose-token --output tsv --query accessToken) "
+            + "&& docker login msfttreacr.azurecr.io --username 00000000-0000-0000-0000-000000000000 --password $TOKEN "
+            + "&& porter "
+            + self._message['action'] + " "
+            + installation_id
+            + " --reference "
+            + os.environ["REGISTRY_SERVER"]
+            + os.environ["WORKSPACES_PATH"]
+            + self._message['name'] + ":"
+            + "v" + self._message['version'] + " "
+            + porter_parameters
+            + " --cred ./home/porter/azure.json"
+            + " --driver azure && porter show " + installation_id]
+
+        self._logger.info(f"Constructed command: {command}")
+
+        return command
 
     @staticmethod
     def _get_environment_variable(key, value):

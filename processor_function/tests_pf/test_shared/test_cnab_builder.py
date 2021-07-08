@@ -1,7 +1,7 @@
 import os
-from mock import patch
 
 from azure.mgmt.containerinstance.models import EnvironmentVariable
+from mock import patch
 
 from shared.cnab_builder import CNABBuilder
 

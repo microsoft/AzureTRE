@@ -119,7 +119,6 @@ module "processor_function" {
   storage_account_name                       = module.storage.storage_account_name
   storage_account_access_key                 = module.storage.storage_account_access_key
   storage_state_path                         = module.storage.storage_state_path
-  identity_id                                = module.identity.identity_id
   core_vnet                                  = module.network.core
   aci_subnet                                 = module.network.aci
   docker_registry_username                   = var.docker_registry_username
