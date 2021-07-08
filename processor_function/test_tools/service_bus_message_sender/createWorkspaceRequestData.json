@@ -4,9 +4,9 @@
   "name":"tre-workspace-vanilla",
   "version":"0.1.0",
   "parameters":{
+    "address_space":"10.2.1.0/24",
     "azure_location":"westeurope",
-    "workspace_id":"42cc",
     "tre_id":"cse-msr-dev",
-    "address_space":"10.2.1.0/24"
+    "workspace_id":"42cc"
   }
 }

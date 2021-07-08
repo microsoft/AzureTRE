@@ -15,6 +15,7 @@ resource "azurerm_function_app" "procesorfunction" {
   storage_account_access_key = var.storage_account_access_key
   version                    = "~3"
   os_type                    = "linux"
+
   app_settings = {
     https_only                                 = true
     FUNCTIONS_WORKER_RUNTIME                   = "python"
@@ -30,7 +31,7 @@ resource "azurerm_function_app" "procesorfunction" {
     CNAB_AZURE_STATE_PATH                      = var.porter_output_container_name
     CNAB_AZURE_STATE_FILESHARE                 = var.porter_output_container_name
     CNAB_AZURE_SUBSCRIPTION_ID                 = data.azurerm_subscription.current.subscription_id
-    CNAB_AZURE_USER_MSI_RESOURCE_ID            = var.identity_id
+    CNAB_AZURE_USER_MSI_RESOURCE_ID            = var.managed_identity.id
     CNAB_AZURE_VERBOSE                         = "true"
     CNAB_AZURE_PROPAGATE_CREDENTIALS           = "true"
     CNAB_AZURE_MSI_TYPE                        = "user"
@@ -55,7 +56,7 @@ resource "azurerm_function_app" "procesorfunction" {
 
   identity {
     type         = "UserAssigned"
-    identity_ids = [var.managed_identity.id]
+    identity_ids = [ var.managed_identity.id ]
   }
 
   lifecycle { ignore_changes = [ tags ] }
