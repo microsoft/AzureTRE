@@ -95,70 +95,17 @@ Execute the following steps to set up a development environment.
    - **TRE Swagger UI**: This app is used to allow Swagger login
    - You will also want to create applications for workspaces (with the roles `WorkspaceResearcher` and `WorkspaceOwner`) that govern who can see what workspaces in the API
 
+## Running Management API
 
-## Running the Management API
+See [README](../management_api_app/README.md) dedicated to the management API application.
 
-### Develop and run locally on Windows
+## Running Resource Processor Function
 
-1. Install python dependencies (in a virtual environment)
+See [README](../processor_function/README.md) dedicated to the processor function.
 
-    ```cmd
-    virtualenv venv
-    venv/Scripts/activate
-    pip install -r requirements.txt
-    ```
+## Running tests
 
-1. Copy `.env.tmpl` in the **management_api_app** folder to `.env` and configure the variables
-1. Start the web API
-
-    ```cmd
-    cd management_api_app
-    uvicorn main:app --reload
-    ```
-
-The API will be available at [https://localhost:8000/docs](https://localhost:8000/docs) in your browser.
-
-### Develop and run in a DevContainer
-
-1. Open the project in Visual Studio Code in the DevContainer
-1. Copy `.env.sample` in the **management_api_app** folder to `.env` and configure the variables
-1. Start the web API
-
-    ```cmd
-    cd management_api_app
-    pip install -r requirements.txt
-    uvicorn main:app --reload
-    ```
-
-The API will be available at [https://localhost:8000/docs](https://localhost:8000/docs) in your browser.
-
-### Deploy with docker
-
-You must have docker and docker-compose tools installed, and an Azure Cosmos DB configured in `.env` as described above.
-
-Then run:
-
-```cmd
-cd management_api_app
-docker compose up -d app
-```
-
-The API will be available at [https://localhost:8000/api](https://localhost:8000/api) in your browser.
-
-## Running the Resource Processor function
-
-The Resource Processor is an Azure Function that can be hosted in [command line](https://docs.microsoft.com/en-us/azure/azure-functions/create-first-function-cli-python?tabs=azure-cli%2Cbash%2Cbrowser#run-the-function-locally)
-
-```cmd
-cd processor_function
-func start
-```
-
-Or in [Visual Studio Code](https://docs.microsoft.com/en-us/azure/azure-functions/create-first-function-vs-code-python#run-the-function-in-azure).
-
-## Run tests
-
-Tests are written with pytest and located in folders:
+The unit tests are written with pytest and located in folders:
 
 - `/management_api_app/tests_ma/`
 - `/processor_function/tests_pf/`
@@ -171,34 +118,12 @@ Run all unit tests with:
 pytest --ignore=e2e_tests
 ```
 
+The end-to-end tests can be found in `/e2e_tests/` folder.
+
 ## (Optional) Install pre-commit hooks
 
 Pre commit hooks help you lint your python code on each git commit, to avoid having to fail the build when submitting a PR. Installing pre-commit hooks is completely optional.
 
 ```cmd
 pre-commit install
-```
-
-## API Endpoints
-
-API endpoints documentation and swagger are available at [https://localhost:8000/docs](https://localhost:8000/docs)
-
-## Management API Project Structure
-
-```text
-management_api_app
-├── api              - web related stuff.
-│   ├── dependencies - dependencies for routes definition.
-│   ├── errors       - definition of error handlers.
-│   └── routes       - web routes.
-├── core             - application configuration, startup events, logging.
-├── db               - db related stuff.
-│   ├── migrations   - manually written alembic migrations.
-│   └── repositories - all crud stuff.
-├── models           - pydantic models for this application.
-│   ├── domain       - main models that are used almost everywhere.
-│   └── schemas      - schemas for using in web routes.
-├── resources        - strings that are used in web responses.
-├── services         - logic that is not just crud related.
-└── main.py          - FastAPI application creation and configuration.
 ```
