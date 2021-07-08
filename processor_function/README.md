@@ -182,4 +182,4 @@ traces
 
 ## Unit tests
 
-The unit tests are located in folder `/processor_function/tests/`. To execute the unit tests run command `pytest` in `/processor_function/` folder.
+The unit tests are located in folder `/processor_function/tests_pf/`. To execute the unit tests run command `pytest` in `/processor_function/` folder.
