@@ -163,6 +163,8 @@ Tests are written with pytest and located in folders:
 - `/management_api_app/tests_ma/`
 - `/processor_function/tests_pf/`
 
+> The folders containing the unit tests cannot have the same name. Otherwise, pytest will get confused, when trying to run all tests in the root folder.
+
 Run all unit tests with:
 
 ```cmd

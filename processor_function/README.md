@@ -1,16 +1,16 @@
 # Processor function
 
 <!-- markdownlint-disable-next-line MD013 -->
-The processor function (sometimes referred to as resource or deployment processor) uses [Azure Container Instances (ACI)](https://docs.microsoft.com/en-us/azure/container-instances/) together with the [CNAB container image](../CNAB_container/Dockerfile) based on [Azure CNAB Driver](https://github.com/deislabs/cnab-azure-driver) to execute workspace and workspace service deployments. The workspaces and workspace services are [Porter](https://porter.sh/) bundles.
+The processor function (sometimes referred to as resource or deployment processor) uses [Azure Container Instances (ACI)](https://docs.microsoft.com/en-us/azure/container-instances/) together with the [CNAB container image](../CNAB_container/Dockerfile), based on [Azure CNAB Driver](https://github.com/deislabs/cnab-azure-driver), to execute workspace and workspace service deployments. The workspace and workspace service packages are implemented as [Porter](https://porter.sh/) bundles.
 
 <!-- markdownlint-disable-next-line MD013 -->
-The processor function waits for Service Bus messages in the resource request queue containing the bundle details and the action to execute, prepares the environment for the execution in the ACI and follows through the deployment process. The deployment status is reported back to [the management API](../management_api_app/) using Service Bus messages but with in a deployment status update queue.
+The processor function waits for Service Bus messages, sent my the [the management API](../management_api_app/README.md), in the resource request queue containing the bundle details and the action to execute, prepares the environment for the execution in the ACI and follows through the deployment process. The deployment status is reported back to the management API using Service Bus messages but with in a deployment status update queue.
 
 ## Prerequisites
 
 Tools:
 
-* [Python 3.x](https://www.python.org/downloads/)
+* [Python 3.8.x](https://www.python.org/downloads/)
 * [Azure Function Core Tools](https://docs.microsoft.com/azure/azure-functions/functions-run-local?tabs=windows%2Ccsharp%2Cbash#install-the-azure-functions-core-tools) - For testing locally
   * [The package source for Linux](https://www.npmjs.com/package/azure-functions-core-tools#linux) varies depending the version of the Linux distribution. Use command "`lsb_release -a`" to check your version.
 
