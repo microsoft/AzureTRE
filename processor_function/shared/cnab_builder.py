@@ -40,8 +40,8 @@ class CNABBuilder:
 
         installation_id = self._message['parameters']['tre_id'] + "-" + self._message['parameters']['workspace_id']
 
-        command = \
-            ["/bin/bash", "-c", "az login --identity "
+        command = [ \
+            + "/bin/bash", "-c", "az login --identity "
             + "&& TOKEN=$(az acr login --name msfttreacr --expose-token --output tsv --query accessToken) "
             + "&& docker login msfttreacr.azurecr.io --username 00000000-0000-0000-0000-000000000000 --password $TOKEN "
             + "&& porter "
