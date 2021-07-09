@@ -57,6 +57,7 @@ jobs:
 
   deploy_tre:
     name: Deploy TRE
+    needs: deploy_mgmt_infra
     runs-on: ubuntu-latest
     environment: Dev
     steps:
