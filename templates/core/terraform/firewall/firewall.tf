@@ -33,6 +33,7 @@ resource "azurerm_monitor_diagnostic_setting" "firewall" {
 
     retention_policy {
       enabled = false
+      days    = 0
     }
   }
 
@@ -43,14 +44,37 @@ resource "azurerm_monitor_diagnostic_setting" "firewall" {
 
     retention_policy {
       enabled = false
+      days    = 0
     }
   }
+  log {
+
+    category = "AzureFirewallDnsProxy"
+    enabled  = true
+
+    retention_policy {
+      enabled = false
+      days    = 0
+    }
+  } 
+   log {
+
+    category = "AzureFirewallNetworkRule"
+    enabled  = true
+
+    retention_policy {
+      enabled = false
+      days    = 0
+    }
+  }
+
   metric {
     category = "AllMetrics"
     enabled  = true
 
     retention_policy {
       enabled = false
+      days    = 0
     }
   }
 }
