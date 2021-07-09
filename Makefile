@@ -131,8 +131,6 @@ porter-publish:
 	echo -e "\n\e[34m»»» 🧩 \e[96mPublishing ${DIR} bundle\e[0m..." \
 	&& ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
-	&& . ./devops/scripts/load_env.sh ${DIR}/.env \
 	&& az acr login --name $${ACR_NAME}	\
 	&& cd ${DIR} \
 	&& porter publish --registry "$${ACR_NAME}.azurecr.io" --debug

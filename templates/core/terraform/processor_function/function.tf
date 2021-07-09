@@ -25,7 +25,7 @@ resource "azurerm_function_app" "procesorfunction" {
     https_only                                 = true
     FUNCTIONS_WORKER_RUNTIME                   = "python"
     FUNCTION_APP_EDIT_MODE                     = "readonly"
-    FUNCTIONS_EXTENSION_VERSION                = "3"
+    FUNCTIONS_EXTENSION_VERSION                = "~3"
     RESOURCE_GROUP_NAME                        = var.resource_group_name
     APPLICATIONINSIGHTS_CONNECTION_STRING      = var.app_insights_connection_string
     APPINSIGHTS_INSTRUMENTATIONKEY             = var.app_insights_instrumentation_key
