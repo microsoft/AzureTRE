@@ -44,6 +44,7 @@ jobs:
         TF_VAR_api_client_id: '${{ secrets.API_CLIENT_ID }}'
         TF_VAR_api_client_secret: '${{ secrets.API_CLIENT_SECRET }}'
         PORTER_OUTPUT_CONTAINER_NAME: '${{ secrets.PORTER_OUTPUT_CONTAINER_NAME }}'
+
       run: |
           export env
           export USE_ENV_VARS_NOT_FILES=true
@@ -51,9 +52,6 @@ jobs:
           export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
           export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
           export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
-
-          export CONTRIBUTOR_SP_CLIENT_ID=$(echo "$AZURE_CONTRIBUTOR_SP" | jq -r '.clientId')
-          export CONTRIBUTOR_SP_CLIENT_SECRET=$(echo "$AZURE_CONTRIBUTOR_SP" | jq -r '.clientSecret')
 
           echo $GITHUB_REF
           if [ $GITHUB_EVENT_NAME == 'push' ] && [ $GITHUB_REF == 'refs/heads/develop' ]; then
@@ -77,6 +75,11 @@ jobs:
           export TF_VAR_acr_name=$ACR_NAME
           export TF_VAR_address_space=$ADDRESS_SPACE
           export TF_VAR_porter_output_container_name=$PORTER_OUTPUT_CONTAINER_NAME
+          export RESOURCE_PROCESSOR_CLIENT_ID=$(echo "$AZURE_CONTRIBUTOR_SP" | jq -r '.clientId')
+          export RESOURCE_PROCESSOR_CLIENT_SECRET=$(echo "$AZURE_CONTRIBUTOR_SP" | jq -r '.clientSecret')
+          export TF_VAR_resource_processor_client_id=$RESOURCE_PROCESSOR_CLIENT_ID
+          export TF_VAR_resource_processor_client_secret=$RESOURCE_PROCESSOR_CLIENT_SECRET
+          export TF_VAR_debug="false"
 
           make all
 
@@ -88,7 +91,7 @@ jobs:
     env:
       AZURE_FUNCTIONAPP_PACKAGE_PATH: ./processor_function
       AZURE_FUNCTIONAPP_NAME: "processor-func-${{ secrets.TRE_ID }}"
-      PYTHON_VERSION: '3.7'
+      PYTHON_VERSION: '3.8'
     steps:
       - name: Setup Python ${{ env.PYTHON_VERSION }} Environment
         uses: actions/setup-python@v1
@@ -118,9 +121,9 @@ jobs:
           app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
           package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
           publish-profile: ${{ steps.publishprofile.outputs.profile }}
-          scm-do-build-during-deplpoyment: true
+          scm-do-build-during-deployment: true
           enable-oryx-build: true
-
+  
   publish_bundles:
     name: Publish Bundles
     runs-on: ubuntu-latest

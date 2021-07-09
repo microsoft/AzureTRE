@@ -58,11 +58,13 @@ resource "azurerm_function_app" "procesorfunction" {
     param_tfstate_container_name               = var.terraform_state_container_name
     param_tfstate_storage_account_name         = var.mgmt_storage_account_name
     MANAGED_IDENTITY_CLIENT_ID                 = var.managed_identity.client_id
+    ENABLE_ORYX_BUILD                          = true
+    SCM_DO_BUILD_DURING_DEPLOYMENT             = true
   }
 
   identity {
     type         = "UserAssigned"
-    identity_ids = [ var.managed_identity.id ]
+    identity_ids = [var.managed_identity.id]
   }
 
   lifecycle { ignore_changes = [tags] }
