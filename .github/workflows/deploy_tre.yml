@@ -36,6 +36,7 @@ jobs:
         LOCATION: ${{ secrets.LOCATION }}
         ACR_NAME: ${{ secrets.ACR_NAME }}
         AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+        PORTER_OUTPUT_CONTAINER_NAME: '${{ secrets.PORTER_OUTPUT_CONTAINER_NAME }}'
       run: |
 
           export USE_ENV_VARS_NOT_FILES=true
@@ -47,6 +48,8 @@ jobs:
           export TF_VAR_mgmt_storage_account_name=$MGMT_STORAGE_ACCOUNT_NAME
           export TF_VAR_mgmt_resource_group_name=$MGMT_RESOURCE_GROUP_NAME
           export TF_VAR_terraform_state_container_name=$TERRAFORM_STATE_CONTAINER_NAME
+          export TF_VAR_porter_output_container_name=$PORTER_OUTPUT_CONTAINER_NAME
+
           export TF_VAR_location=$LOCATION
           export TF_VAR_acr_name=$ACR_NAME
           
