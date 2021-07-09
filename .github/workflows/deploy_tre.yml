@@ -5,10 +5,53 @@ on:
     # 1am each night https://crontab.guru/#0_1_*_*_*
     - cron: "0 1 * * *"
   push:
-    branches: [ develop, main ]
+    branches: [ develop, main, marrobi/issue414 ]
   workflow_dispatch:
 
 jobs:
+  deploy_mgmt_infra:
+    name: Deploy Management Infrastructure
+    runs-on: ubuntu-latest
+    environment: Dev
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Install Terraform
+      uses: little-core-labs/install-terraform@v2.0.0
+      with:
+          version: 0.15.4
+
+    - name: Create Management Infrastructure
+      shell: bash
+      env:
+        TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TF_STATE_CONTAINER }}
+        MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP }}
+        MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+        LOCATION: ${{ secrets.LOCATION }}
+        ACR_NAME: ${{ secrets.ACR_NAME }}
+        AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+      run: |
+
+          export USE_ENV_VARS_NOT_FILES=true
+          export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
+          export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
+          export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
+          export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
+
+          export TF_VAR_mgmt_storage_account_name=$MGMT_STORAGE_ACCOUNT_NAME
+          export TF_VAR_mgmt_resource_group_name=$MGMT_RESOURCE_GROUP_NAME
+          export TF_VAR_terraform_state_container_name=$TERRAFORM_STATE_CONTAINER_NAME
+          export TF_VAR_location=$LOCATION
+          export TF_VAR_acr_name=$ACR_NAME
+          
+          make bootstrap
+
   deploy_tre:
     name: Deploy TRE
     runs-on: ubuntu-latest
@@ -26,7 +69,6 @@ jobs:
       uses: little-core-labs/install-terraform@v2.0.0
       with:
           version: 0.15.4
-
     - name: Deploy TRE
       shell: bash
       env:
@@ -126,6 +168,7 @@ jobs:
   
   publish_bundles:
     name: Publish Bundles
+    needs: deploy_mgmt_infra
     runs-on: ubuntu-latest
     environment: Dev
     steps:
@@ -142,6 +185,8 @@ jobs:
       run: |
           curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
           export PATH=~/.porter/:$PATH
+
+          export USE_ENV_VARS_NOT_FILES=true
 
           make porter-publish DIR=./workspaces/vanilla
           make porter-publish DIR=./workspaces/services/azureml
