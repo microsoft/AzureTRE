@@ -1,6 +1,6 @@
 # GitHub Actions workflows (CI/CD)
 
-## Set up instructions
+## Setup instructions
 
 These are onetime configuration steps required to set up the GitHub Actions workflows (pipelines). After the steps the [TRE deployment workflow](../.github/workflows/deploy_tre.yml) is ready to run.
 
