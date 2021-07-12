@@ -5,7 +5,7 @@ on:
     # 1am each night https://crontab.guru/#0_1_*_*_*
     - cron: "0 1 * * *"
   push:
-    branches: [ develop, main ]
+    branches: [ develop, main, sakundu/e2etests-refactor ]
   workflow_dispatch:
 
 jobs:
@@ -194,167 +194,70 @@ jobs:
           export USE_ENV_VARS_NOT_FILES=true
 
           make porter-publish DIR=./workspaces/vanilla
-          make porter-publish DIR=./workspaces/services/azureml
-          make porter-publish DIR=./workspaces/services/devtestlabs
-          make porter-publish DIR=./workspaces/services/innereye_deeplearning
-          make porter-publish DIR=./workspaces/services/innereye_inference
 
-  deploy_vanilla_workspace:
-    name: Deploy Vanilla Workspace
-    needs: [deploy_tre,publish_bundles]
+  e2e_tests:
+    name: "Run E2E Tests"
     runs-on: ubuntu-latest
-    environment: Dev
+    needs: deploy_processor_function
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: Azure Login
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-    - name: Publish and deploy vanilla workspace bundle
-      shell: bash
-      env:
-        TRE_ID: ${{ secrets.TRE_ID }}
-        LOCATION: ${{ secrets.LOCATION }}
-        WORKSPACE_ID: "0001"
-        ADDRESS_SPACE: "10.2.1.0/24"
-        ACR_NAME: ${{ secrets.ACR_NAME }}
-        TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TF_STATE_CONTAINER }}
-        MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP }}
-        MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
-        AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-      run: |
-          export USE_ENV_VARS_NOT_FILES=true
-          export env
-          export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
-          export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
-          export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
-          export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          # Full git history is needed to get a proper list of changed files within `super-linter`
+          fetch-depth: 0
 
-          curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
-          export PATH=~/.porter/:$PATH
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
 
-          make porter-install DIR=./workspaces/vanilla
+      - name: Install dependencies
+        run: |
+          cd e2e_tests
+          python -m pip install --upgrade pip
+          pip install pytest
+          pip install -r requirements.txt
 
-  deploy_azureml_devtestlabs_workspace:
-    name: Deploy Azure ML and DevTest Labs Workspace
-    needs: [deploy_tre,publish_bundles,deploy_vanilla_workspace]
+      - name: Test with pytest
+        shell: bash
+        env:
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+          AZURE_CONTRIBUTOR_SP: ${{ secrets.AZURE_CONTRIBUTOR_SP }}
+          RESOURCE_LOCATION: ${{ secrets.LOCATION }}
+          TRE_ID: ${{ secrets.TRE_ID }}
+          RESOURCE: '${{ secrets.API_CLIENT_ID }}'
+          AUTH_TENANT_ID: '${{ secrets.AAD_TENANT_ID }}'
+          CLIENT_ID: ${{ secrets.TEST_APP_ID }}
+          USERNAME: '${{ secrets.TEST_USER_NAME }}'
+          PASSWORD: '${{ secrets.TEST_USER_PASSWORD }}'
+          AUTH_APP_CLIENT_ID: '${{ secrets.TEST_WORKSPACE_APP_ID }}'
+        run: |
+          export SCOPE=$(echo "api://$RESOURCE/Workspace.Read api://$RESOURCE/Workspace.Write")
+          cd e2e_tests
+          PYTHONPATH=. python -m pytest --junit-xml pytest.xml
+
+      - name: Upload Unit Test Results
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: E2E Test Results (Python ${{ matrix.python-version }})
+          path: './e2e_tests/pytest.xml'
+
+  publish-test-results:
+    name: "Publish E2E Tests Results"
+    needs: e2e_tests
     runs-on: ubuntu-latest
-    environment: Dev
+    # the build job might be skipped, we don't need to run this job then
+    if: success() || failure()
+
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: Azure Login
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-    - name: Publish and deploy azureml_devtestlabs workspace bundle
-      shell: bash
-      env:
-        TRE_ID: ${{ secrets.TRE_ID }}
-        LOCATION: ${{ secrets.LOCATION }}
-        WORKSPACE_ID: "0002"
-        ADDRESS_SPACE: "10.2.2.0/24"
-        ACR_NAME: ${{ secrets.ACR_NAME }}
-        TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TF_STATE_CONTAINER }}
-        MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP }}
-        MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
-        AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Download Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: artifacts
 
-      run: |
-          export USE_ENV_VARS_NOT_FILES=true
-          export env
-          export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
-          export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
-          export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
-          export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
-
-          curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
-          export PATH=~/.porter/:$PATH
-          export PORTER_DRIVER=docker
-
-          make porter-publish DIR=./workspaces/azureml_devtestlabs
-          make porter-install DIR=./workspaces/azureml_devtestlabs
-
-  deploy_innereye_deeplearning_workspace:
-    name: Deploy InnerEye Deep Learning Workspace
-    needs: [deploy_tre,publish_bundles,deploy_azureml_devtestlabs_workspace]
-    runs-on: ubuntu-latest
-    environment: Dev
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: Azure Login
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-    - name: Publish and deploy azureml_devtestlabs workspace bundle
-      shell: bash
-      env:
-        TRE_ID: ${{ secrets.TRE_ID }}
-        LOCATION: ${{ secrets.LOCATION }}
-        WORKSPACE_ID: "0003"
-        ADDRESS_SPACE: "10.2.3.0/24"
-        ACR_NAME: ${{ secrets.ACR_NAME }}
-        TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TF_STATE_CONTAINER }}
-        MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP }}
-        MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
-        AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-
-      run: |
-          export USE_ENV_VARS_NOT_FILES=true
-          export env
-          export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
-          export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
-          export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
-          export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
-
-          curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
-          export PATH=~/.porter/:$PATH
-
-          export PORTER_DRIVER=docker
-
-          make porter-publish DIR=./workspaces/innereye_deeplearning
-          make porter-install DIR=./workspaces/innereye_deeplearning
-
-  deploy_innereye_deeplearning_inference_workspace:
-    name: Deploy InnerEye Deep Learning & Inference Workspace
-    needs: [deploy_tre,publish_bundles,deploy_innereye_deeplearning_workspace]
-    runs-on: ubuntu-latest
-    environment: Dev
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: Azure Login
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-    - name: Publish and deploy innereye_deeplearning_inference workspace bundle
-      shell: bash
-      env:
-        TRE_ID: ${{ secrets.TRE_ID }}
-        LOCATION: ${{ secrets.LOCATION }}
-        WORKSPACE_ID: "0004"
-        ADDRESS_SPACE: "10.2.4.0/24"
-        ACR_NAME: ${{ secrets.ACR_NAME }}
-        TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TF_STATE_CONTAINER }}
-        MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP }}
-        MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
-        AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-
-      run: |
-          export USE_ENV_VARS_NOT_FILES=true
-          export env
-          export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
-          export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
-          export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
-          export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
-          export INFERENCE_SP_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
-          export INFERENCE_SP_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
-
-          curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
-          export PATH=~/.porter/:$PATH
-
-          export PORTER_DRIVER=docker
-          make porter-publish DIR=./workspaces/innereye_deeplearning_inference
-          make porter-install DIR=./workspaces/innereye_deeplearning_inference
+      - name: Publish Unit Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        if: always()
+        with:
+          files: artifacts/**/*.xml  
