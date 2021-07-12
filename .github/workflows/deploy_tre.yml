@@ -52,7 +52,7 @@ jobs:
 
           export TF_VAR_location=$LOCATION
           export TF_VAR_acr_name=$ACR_NAME
-          
+
           make bootstrap
           make mgmt-deploy
 
@@ -170,7 +170,7 @@ jobs:
           publish-profile: ${{ steps.publishprofile.outputs.profile }}
           scm-do-build-during-deployment: true
           enable-oryx-build: true
-  
+
   publish_bundles:
     name: Publish Bundles
     needs: deploy_mgmt_infra

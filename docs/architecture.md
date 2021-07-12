@@ -27,7 +27,7 @@ The [TRE Administrator](./user-roles.md#tre-administrator) can register a Porter
 To do so requires:
 
 1. The Porter bundle to be pushed to the Azure Container Registry (ACR).
-1. Registering the Workspace through the Management API.
+1. Registering the Workspace through Management API.
 
 Details on how to [register a Workspace Template](registering-workspace-templates.md).
 
@@ -47,7 +47,7 @@ The Composition Service consists of multiple components.
 
 The flow to provision a Workspace is the following (the flow is the same for all kinds of mutations to a Workspace):
 
-1. A HTTP request to the Management API to create a new Workspace. The request contains information like the name of the Workspace, the Workspace Template to use and the parameters required for the Workspace Template (Workspace Templates can via a JSON Schema expose the the parameters).
+1. A HTTP request to Management API to create a new Workspace. The request contains information like the name of the Workspace, the Workspace Template to use and the parameters required for the Workspace Template (Workspace Templates can via a JSON Schema expose the the parameters).
 1. The desired state of the Workspace is updated in the Configuration Store.
 1. A command message with the Workspace Template reference and parameters are send to the `workspacequeue`.
 
@@ -125,5 +125,5 @@ Inbound traffic from the Internet is only allowed through the Application Gatewa
 | `AppGwSubnet` | Subnet for Azure Application Gateway controlling ingress traffic. |
 | `AzureFirewallSubnet` | Subnet for Azure Firewall controlling egress traffic. |
 | `AciSubnet` | Subnet for Azure Container Instances (ACI) used by the Composition Service to host Docker containers to execute Porter bundles that deploys Workspaces. |
-| `WebAppSubnet` | Subnet for the Management API and Resource Processor function. |
+| `WebAppSubnet` | Subnet for Management API and Resource Processor Function. |
 | `SharedSubnet` | Shared Services subnet for all things shared by TRE Management and Workspaces. Future Shared Services are Firewall Shared Service, Source Mirror Shared Service and Package Mirror Shared Service. |

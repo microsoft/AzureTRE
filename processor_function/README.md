@@ -1,10 +1,10 @@
-# Processor function
+# Resource Processor Function
 
 <!-- markdownlint-disable-next-line MD013 -->
-The processor function (sometimes referred to as resource or deployment processor) uses [Azure Container Instances (ACI)](https://docs.microsoft.com/en-us/azure/container-instances/) together with the [CNAB container image](../CNAB_container/Dockerfile), based on [Azure CNAB Driver](https://github.com/deislabs/cnab-azure-driver), to execute workspace and workspace service deployments. The workspace and workspace service packages are implemented as [Porter](https://porter.sh/) bundles.
+Resource Processor Function (sometimes referred to as the deployment processor) uses [Azure Container Instances (ACI)](https://docs.microsoft.com/en-us/azure/container-instances/) together with the [CNAB container image](../CNAB_container/Dockerfile), based on [Azure CNAB Driver](https://github.com/deislabs/cnab-azure-driver), to execute workspace and workspace service deployments. The workspace and workspace service packages are implemented as [Porter](https://porter.sh/) bundles.
 
 <!-- markdownlint-disable-next-line MD013 -->
-The processor function waits for Service Bus messages, sent my the [the management API](../management_api_app/README.md), in the resource request queue containing the bundle details and the action to execute, prepares the environment for the execution in the ACI and follows through the deployment process. The deployment status is reported back to the management API using Service Bus messages but with in a deployment status update queue.
+The processor function waits for Service Bus messages, sent by [Management API](../management_api_app/README.md), in the resource request queue containing the bundle details and the action to execute, prepares the environment for the execution in the ACI and follows through the deployment process. The deployment status is reported back to Management API using Service Bus messages but with in a deployment status update queue.
 
 ## Prerequisites
 

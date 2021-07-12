@@ -64,7 +64,7 @@ Similarly to `tre_id`, `workspace_id` is used in the resource names of the works
 
 All the values for the required parameters will be provided by the deployment runner.
 
-Any **custom parameters** are picked up by the Azure TRE management API and will be queried from the user deploying the workspace bundle so make sure to write clear descriptions of the parameters as these are shown in the user interface to guide the user.
+Any **custom parameters** are picked up by Azure TRE Management API and will be queried from the user deploying the workspace bundle so make sure to write clear descriptions of the parameters as these are shown in the user interface to guide the user.
 
 ### Output
 
@@ -96,7 +96,9 @@ TRE does not provide means to update an existing workspace to a newer version. I
 
 ## Publishing workspace bundle
 
-Workspace bundles are stored in [Azure Container Registry (ACR)](https://azure.microsoft.com/en-us/services/container-registry/) shared with the TRE management API. The workspace repository in the ACR must be of form "`<your organization>/azuretre/workspaces`". The bundles are published (pushed) to ACR using [the `porter publish` CLI command](https://porter.sh/cli/porter_publish/).
+> TBD: Update this section as it is out-of-date
+
+Workspace bundles are stored in [Azure Container Registry (ACR)](https://azure.microsoft.com/en-us/services/container-registry/) shared with Management API. The workspace repository in the ACR must be of form "`<your organization>/azuretre/workspaces`". The bundles are published (pushed) to ACR using [the `porter publish` CLI command](https://porter.sh/cli/porter_publish/).
 
 For reference, see the vanilla workspace bundle publish workflow step and scripts:
 

@@ -5,13 +5,13 @@ This document describes the authentication and authorization (A&A) of deployed A
 
 ## App registrations
 
-App registrations (represented by service principals) define the privileges enabling access to the TRE system (e.g., management API) as well as the workspaces. The two main app registrations, "TRE API" and "TRE Swagger UI", are created by the [`/scripts/aad-app-reg.sh`](../scripts/aad-app-reg.sh) script.
+App registrations (represented by service principals) define the privileges enabling access to the TRE system (e.g., [Management API](../management_api_app/README.md)) as well as the workspaces. The two main app registrations, "TRE API" and "TRE Swagger UI", are created by the [`/scripts/aad-app-reg.sh`](../scripts/aad-app-reg.sh) script.
 
 Workspaces rely on app registrations as well, and those are documented under [Workspaces](#workspaces).
 
 ### TRE API
 
-TRE API app registration defines the permissions, scopes and app roles for management API users to authenticate and authorize API calls.
+TRE API app registration defines the permissions, scopes and app roles for Management API users to authenticate and authorize API calls.
 
 #### API permissions - TRE API
 
@@ -46,7 +46,7 @@ TRE API app registration requires no redirect URLs defined or anything else for 
 
 TRE Swagger UI app registration:
 
-* Controls the access to the Swagger UI of the management API
+* Controls the access to the Swagger UI of Management API
 * Has no scopes or app roles defined
 
 #### API permissions - TRE Swagger UI
@@ -134,7 +134,7 @@ For a user to gain access to the system, they have to:
 1. Have an identity in Azure AD
 1. Be linked with an app registration and assigned a role
 
-When these requirements are met, the user can sign-in using their credentials and use their privileges to use the management API, login to workspace environment etc. based on their specific roles.
+When these requirements are met, the user can sign-in using their credentials and use their privileges to use Management API, login to workspace environment etc. based on their specific roles.
 
 ![User linked with app registrations](./assets/aad-user-linked-with-app-regs.png)
 
@@ -144,24 +144,12 @@ The users can also be linked via the Enterprise application view:
 
 ## Management API
 
-This section describes the management API with respect to authentication & authorization (A&A).
+This section describes [Management API](../management_api_app/README.md) with respect to authentication & authorization (A&A).
 
-### Configuration
-
-> The management API does not, as of writing this, has its own README and documentation (in `/management_api_app/ folder`). Once created, this section needs to be moved there.
-
-The management API depends on [TRE API](#tre-api) and [TRE Swagger UI](#tre-swagger-ui) app registrations. The API requires the following environment variables to be present:
-
-| Environment variable name | Description |
-| ------------------------- | ----------- |
-| `API_CLIENT_ID` | The application (client) ID of TRE API app registration. |
-| `API_CLIENT_SECRET` | The application password (cleint secret) of the TRE API app registration. |
-| `SWAGGER_UI_CLIENT_ID` | The application (client) ID of the TRE Swagger UI app registration. |
-| `AAD_TENANT_ID` | The Azure Active Directory tenant ID. |
 
 ### Auth in code
 
-The bulk of the authentication and authorization (A&A) related code of the management API is located in `/management_api_app/services/` folder. The A&A code has an abstract base for enabling the possibility to add additional A&A service providers. The Azure Active Directory (AAD) specific implementation is derived as follows:
+The bulk of the authentication and authorization (A&A) related code of Management API is located in `/management_api_app/services/` folder. The A&A code has an abstract base for enabling the possibility to add additional A&A service providers. The Azure Active Directory (AAD) specific implementation is derived as follows:
 
 ```plaintext
 AccessService (access_service.py) <─── AADAccessService (aad_access_service.py)
@@ -169,7 +157,7 @@ AccessService (access_service.py) <─── AADAccessService (aad_access_servic
 fastapi.security.OAuth2AuthorizationCodeBearer <─── AzureADAuthorization (aad_authentication.py)
 ```
 
-All the sensitive routes (API calls that can query sensitive data or modify resources) in management API depend on having a "current user" authenticated. E.g., in [`/management_api_app/api/routes/workspaces.py`](../management_api_app/api/routes/workspaces.py):
+All the sensitive routes (API calls that can query sensitive data or modify resources) in Management API depend on having a "current user" authenticated. E.g., in [`/management_api_app/api/routes/workspaces.py`](../management_api_app/api/routes/workspaces.py):
 
 ```python
 router = APIRouter(dependencies=[Depends(get_current_user)])

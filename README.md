@@ -18,6 +18,10 @@ Workspaces can be configured with a variety of tools to enable tasks such as the
 
 A successful Trusted Research Environments enables users to be as productive, if not more productive than they would be working in environments without strict information governance controls.
 
+## Documentation
+
+See [Index](./docs/index.md) to get started.
+
 ## Support
 
 For details of support expectations, please review our [Support Policy](./SUPPORT.md).

@@ -21,7 +21,7 @@ Until a mechanism to update shared services has been implemented firewall rule u
     name                = "fw-${var.tre_id}"
     resource_group_name = "rg-${var.tre_id}"
     }
-    
+
     data "azurerm_virtual_network" "ws" {
         name                = "vnet-${var.tre_id}-ws-${var.workspace_id}"
         resource_group_name = "rg-${var.tre_id}-ws-${var.workspace_id}"

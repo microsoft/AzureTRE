@@ -1,7 +1,7 @@
 # Developer Setup
 
 - [Prerequisite Azure resource](#prerequisite-azure-resource)
-- [Running the Management API](#running-the-management-api)
+- [Running Management API](#running-management-api)
 - [Running the Resource Processor function](#running-the-resource-processor-function)
 - [(Optional) Install pre-commit hooks](#optional-install-pre-commit-hooks)
 - [API Endpoints](#api-endpoints)
@@ -97,11 +97,11 @@ Execute the following steps to set up a development environment.
 
 ## Running Management API
 
-See [README](../management_api_app/README.md) dedicated to the management API application.
+See [README](../management_api_app/README.md) dedicated to Management API application.
 
 ## Running Resource Processor Function
 
-See [README](../processor_function/README.md) dedicated to the processor function.
+See [README](../processor_function/README.md) dedicated to Resource Processor Function.
 
 ## Running tests
 
