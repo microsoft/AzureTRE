@@ -54,6 +54,7 @@ jobs:
           export TF_VAR_acr_name=$ACR_NAME
           
           make bootstrap
+          make mgmt-deploy
 
   deploy_tre:
     name: Deploy TRE
