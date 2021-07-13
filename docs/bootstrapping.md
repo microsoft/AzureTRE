@@ -1,5 +1,7 @@
 # Bootstrapping
 
+This document covers the steps that have to be executed manually before Azure TRE can be deployed (both manually or using the CI/CD).
+
 ## Login to Azure
 
 Run `login` command and select the Azure subscription you wish to deploy Azure TRE to:

@@ -30,6 +30,7 @@ Management API is a service that users can interact with to request changes to w
 
 ### Azure resources
 
+* [Application Insights](https://docs.microsoft.com/azure/azure-monitor/app/app-insights-overview) - Not required for testing locally
 * [Azure Cosmos DB](https://docs.microsoft.com/azure/cosmos-db/introduction) (SQL)
   * You can use the [Cosmos DB Emulator](https://docs.microsoft.com/azure/cosmos-db/local-emulator?tabs=cli%2Cssl-netstd21) for testing locally
 * [Azure Service Bus](https://docs.microsoft.com/azure/service-bus-messaging/service-bus-messaging-overview)

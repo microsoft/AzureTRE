@@ -6,15 +6,31 @@ Resource Processor Function (sometimes referred to as the deployment processor) 
 <!-- markdownlint-disable-next-line MD013 -->
 The processor function waits for Service Bus messages, sent by [Management API](../management_api_app/README.md), in the resource request queue containing the bundle details and the action to execute, prepares the environment for the execution in the ACI and follows through the deployment process. The deployment status is reported back to Management API using Service Bus messages but with in a deployment status update queue.
 
+*Table of contents:*
+
+* [Prerequisites](#prerequisites)
+  * [Tools](#tools)
+  * [Azure resources](#azure-resources)
+* [Configuration](#configuration)
+  * [General](#general)
+  * [Azure CNAB Driver](#azure-cnab-driver)
+  * [Service Bus](#service-bus)
+  * [Required by workspace and service templates](#required-by-workspace-and-service-templates)
+* [Running the function locally](#running-the-function-locally)
+  * [Triggering the function](#triggering-the-function)
+  * [Troubleshooting](#troubleshooting)
+* [Observability](#observability)
+* [Unit tests](#unit-tests)
+
 ## Prerequisites
 
-Tools:
+### Tools
 
 * [Python 3.8.x](https://www.python.org/downloads/)
 * [Azure Function Core Tools](https://docs.microsoft.com/azure/azure-functions/functions-run-local?tabs=windows%2Ccsharp%2Cbash#install-the-azure-functions-core-tools) - For testing locally
   * [The package source for Linux](https://www.npmjs.com/package/azure-functions-core-tools#linux) varies depending the version of the Linux distribution. Use command "`lsb_release -a`" to check your version.
 
-Resources:
+### Azure resources
 
 * [Application Insights](https://docs.microsoft.com/azure/azure-monitor/app/app-insights-overview) - Not required for testing locally
 * [Azure Container Instances](https://docs.microsoft.com/azure/container-instances/)
