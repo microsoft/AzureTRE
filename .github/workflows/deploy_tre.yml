@@ -268,3 +268,155 @@ jobs:
         if: always()
         with:
           files: artifacts/**/*.xml  
+  
+  publish_innereye_bundles:
+    name: Publish Bundles
+    runs-on: ubuntu-latest
+    environment: Dev
+    needs: [e2e_tests]
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    - name: Publish bundles
+      shell: bash
+      env:
+        ACR_NAME: ${{ secrets.ACR_NAME }}
+      run: |
+          curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
+          export PATH=~/.porter/:$PATH
+
+          export USE_ENV_VARS_NOT_FILES=true
+
+          make porter-publish DIR=./workspaces/services/azureml
+          make porter-publish DIR=./workspaces/services/devtestlabs
+          make porter-publish DIR=./workspaces/services/innereye_deeplearning
+          make porter-publish DIR=./workspaces/services/innereye_inference
+
+  deploy_azureml_devtestlabs_workspace:
+    name: Deploy Azure ML and DevTest Labs Workspace
+    needs: [publish_innereye_bundles]
+    runs-on: ubuntu-latest
+    environment: Dev
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    - name: Publish and deploy azureml_devtestlabs workspace bundle
+      shell: bash
+      env:
+        TRE_ID: ${{ secrets.TRE_ID }}
+        LOCATION: ${{ secrets.LOCATION }}
+        WORKSPACE_ID: "0002"
+        ADDRESS_SPACE: "10.2.2.0/24"
+        ACR_NAME: ${{ secrets.ACR_NAME }}
+        TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TF_STATE_CONTAINER }}
+        MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP }}
+        MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+        AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+
+      run: |
+          export USE_ENV_VARS_NOT_FILES=true
+          export env
+          export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
+          export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
+          export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
+          export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
+
+          curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
+          export PATH=~/.porter/:$PATH
+          export PORTER_DRIVER=docker
+
+          make porter-publish DIR=./workspaces/azureml_devtestlabs
+          make porter-install DIR=./workspaces/azureml_devtestlabs
+
+  deploy_innereye_deeplearning_workspace:
+    name: Deploy InnerEye Deep Learning Workspace
+    needs: [deploy_azureml_devtestlabs_workspace]
+    runs-on: ubuntu-latest
+    environment: Dev
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    - name: Publish and deploy azureml_devtestlabs workspace bundle
+      shell: bash
+      continue-on-error: true
+      env:
+        TRE_ID: ${{ secrets.TRE_ID }}
+        LOCATION: ${{ secrets.LOCATION }}
+        WORKSPACE_ID: "0003"
+        ADDRESS_SPACE: "10.2.3.0/24"
+        ACR_NAME: ${{ secrets.ACR_NAME }}
+        TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TF_STATE_CONTAINER }}
+        MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP }}
+        MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+        AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+
+      run: |
+          export USE_ENV_VARS_NOT_FILES=true
+          export env
+          export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
+          export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
+          export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
+          export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
+
+          curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
+          export PATH=~/.porter/:$PATH
+
+          export PORTER_DRIVER=docker
+
+          make porter-publish DIR=./workspaces/innereye_deeplearning
+          make porter-install DIR=./workspaces/innereye_deeplearning
+
+  deploy_innereye_deeplearning_inference_workspace:
+    name: Deploy InnerEye Deep Learning & Inference Workspace
+    needs: [deploy_innereye_deeplearning_workspace]
+    runs-on: ubuntu-latest
+    environment: Dev
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    - name: Publish and deploy innereye_deeplearning_inference workspace bundle
+      shell: bash
+      continue-on-error: true
+      env:
+        TRE_ID: ${{ secrets.TRE_ID }}
+        LOCATION: ${{ secrets.LOCATION }}
+        WORKSPACE_ID: "0004"
+        ADDRESS_SPACE: "10.2.4.0/24"
+        ACR_NAME: ${{ secrets.ACR_NAME }}
+        TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TF_STATE_CONTAINER }}
+        MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP }}
+        MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+        AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+
+      run: |
+          export USE_ENV_VARS_NOT_FILES=true
+          export env
+          export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
+          export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
+          export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
+          export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
+          export INFERENCE_SP_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
+          export INFERENCE_SP_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
+
+          curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
+          export PATH=~/.porter/:$PATH
+
+          export PORTER_DRIVER=docker
+          make porter-publish DIR=./workspaces/innereye_deeplearning_inference
+          make porter-install DIR=./workspaces/innereye_deeplearning_inference
