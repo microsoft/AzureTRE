@@ -7,10 +7,12 @@
   * [Logical data model](./logical-data-model.md)
 * Getting started
   * [Dev environment](./dev-environment.md)
+  * [Bootstrapping](./bootstrapping.md)
   * The two ways of provisioning an instance of Azure TRE:
     1. [GitHub Actions workflows (CI/CD)](./workflows.md)
     1. [Manual deployment](./manual-deployment.md)
   * [Authentication & authorization](./auth.md)
+  * [Testing](./testing.md)
 * Composition Service components
   * [Management API](../management_api_app/README.md)
   * [Resource Processor Function](../processor_function/README.md)

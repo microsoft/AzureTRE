@@ -4,36 +4,10 @@
 
 These are onetime configuration steps required to set up the GitHub Actions workflows (pipelines). After the steps the [TRE deployment workflow](../.github/workflows/deploy_tre.yml) is ready to run.
 
-### Create service principals
+1. Create service principals and set their [repository secrets](https://docs.github.com/en/actions/reference/encrypted-secrets) as explained in [Bootstrapping](./bootstrapping.md#create-service-principals)
+1. Set other repository secrets as explained in the table below
 
-Two service principals need to be created: One to authorize the workflow itself and another for the deployment processor to provision resources for the TRE workspaces and workspace services.
-
-1. Login with Azure CLI and set the subscription used by TRE:
-
-    ```cmd
-    az account set --subscription <subscription ID>
-    ```
-
-1. Create the workflow service principal with "Owner" role:
-
-    ```cmd
-    az ad sp create-for-rbac --name "MyTREAppDeployment" --role Owner --scopes /subscriptions/<subscription ID> --sdk-auth
-    ```
-
-1. Save the JSON output in a [GitHub secret](https://docs.github.com/en/actions/reference/encrypted-secrets) called `AZURE_CREDENTIALS`.
-
-1. Create the service principal, used by the deployment processor, that has contributor privileges:
-
-    ```cmd
-    az ad sp create-for-rbac --name "sp-msfttre-deployment-processor" --role Contributor --scopes /subscriptions/<subscription ID> --sdk-auth
-    ```
-
-1. Save the JSON output in a GitHub secret called `AZURE_CONTRIBUTOR_SP`.
-
-### Set other sercrets
-
-You will also need to create the following [repository secrets](https://docs.github.com/en/actions/reference/encrypted-secrets):
-
+*Required repository secrets for the CI/CD.*
 | Secret name | Description |
 | ----------- | ----------- |
 | `AZURE_CREDENTIALS` | Explained [above](#create-service-principals). |
