@@ -272,7 +272,8 @@ jobs:
             export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
             export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
 
-            ./workspaces/vanilla/terraform/destroy.sh
+            cd ./workspaces/vanilla/terraform/
+            ./destroy.sh
 
       - name: Upload Unit Test Results
         if: always()
