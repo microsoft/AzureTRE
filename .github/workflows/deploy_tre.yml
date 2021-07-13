@@ -30,28 +30,34 @@ jobs:
     - name: Create Management Infrastructure
       shell: bash
       env:
+        TRE_ID: ${{ secrets.TRE_ID }}
         TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TF_STATE_CONTAINER }}
         MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP }}
         MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
         LOCATION: ${{ secrets.LOCATION }}
         ACR_NAME: ${{ secrets.ACR_NAME }}
+        ADDRESS_SPACE: ${{ secrets.ADDRESS_SPACE }}
         AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
         PORTER_OUTPUT_CONTAINER_NAME: '${{ secrets.PORTER_OUTPUT_CONTAINER_NAME }}'
-      run: |
 
+      run: |
           export USE_ENV_VARS_NOT_FILES=true
           export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
           export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
           export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
           export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
 
+          export TF_VAR_tre_id=$TRE_ID
+          export TF_VAR_arm_subscription_id=$ARM_SUBSCRIPTION_ID
+          export TF_VAR_arm_client_id=$ARM_CLIENT_ID
+          export TF_VAR_arm_client_secret=$ARM_CLIENT_SECRET
           export TF_VAR_mgmt_storage_account_name=$MGMT_STORAGE_ACCOUNT_NAME
           export TF_VAR_mgmt_resource_group_name=$MGMT_RESOURCE_GROUP_NAME
           export TF_VAR_terraform_state_container_name=$TERRAFORM_STATE_CONTAINER_NAME
-          export TF_VAR_porter_output_container_name=$PORTER_OUTPUT_CONTAINER_NAME
-
           export TF_VAR_location=$LOCATION
           export TF_VAR_acr_name=$ACR_NAME
+          export TF_VAR_address_space=$ADDRESS_SPACE
+          export TF_VAR_porter_output_container_name=$PORTER_OUTPUT_CONTAINER_NAME
 
           make bootstrap
           make mgmt-deploy
