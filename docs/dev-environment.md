@@ -38,6 +38,7 @@ pip install -r requirements.txt
 
 ## Dev container
 
+<!-- markdownlint-disable-next-line MD013 -->
 The files for a dev container that comes with the required tools installed is located in `/.devcontainer/` folder. Your native environment will require [Docker](https://docs.docker.com/docker-for-windows/install/) and IDE supporting development in containers such as [Visual Studio Code](https://code.visualstudio.com/). See [Developing inside a Container](https://code.visualstudio.com/docs/remote/containers) for instructions how to use the dev container with Visual Studio Code.
 
 
