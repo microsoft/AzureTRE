@@ -67,8 +67,8 @@ async def test_create_vanilla_workspace(token) -> None:
     async with AsyncClient() as client:
         headers = {'Authorization': f'Bearer {token}'}
 
-        payload = {"displayName": "My workspace",
-                   "description": "workspace for team X",
+        payload = {"displayName": "E2E test",
+                   "description": "workspace for E2E",
                    "workspaceType": "tre-workspace-vanilla",
                    "parameters": {
                        "address_space": "192.168.25.0/24"  # Reserving this for E2E tests.

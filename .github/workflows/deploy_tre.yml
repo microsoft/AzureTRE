@@ -172,7 +172,7 @@ jobs:
           enable-oryx-build: true
   
   publish_bundles:
-    name: Publish Bundles
+    name: Publish Vanilla Bundle
     needs: deploy_mgmt_infra
     runs-on: ubuntu-latest
     environment: Dev
@@ -267,10 +267,10 @@ jobs:
         uses: EnricoMi/publish-unit-test-result-action@v1
         if: always()
         with:
-          files: artifacts/**/*.xml  
+          files: artifacts/**/*.xml
   
   publish_innereye_bundles:
-    name: Publish Bundles
+    name: Publish InnerEye Bundles
     runs-on: ubuntu-latest
     environment: Dev
     needs: [e2e_tests]
