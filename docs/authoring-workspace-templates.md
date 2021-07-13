@@ -1,4 +1,4 @@
-# Authoring Workspaces Templates
+# Authoring workspaces templates
 
 <!-- markdownlint-disable-next-line MD013 -->
 Azure TRE workspaces are [Porter](https://porter.sh/) bundles that in turn are based on [Cloud Native Application Bundles (CNAB)](https://cnab.io/). Workspace authors are free to choose the technology stack for provisioning resources (e.g., ARM templates, Terraform etc.), but the Azure TRE framework sets certain requirements for the bundle manifests, which specify the credentials, input and output parameters, deployment actions among other things. The document describes those requirements.
@@ -96,14 +96,4 @@ TRE does not provide means to update an existing workspace to a newer version. I
 
 ## Publishing workspace bundle
 
-> TBD: Update this section as it is out-of-date
-
-Workspace bundles are stored in [Azure Container Registry (ACR)](https://azure.microsoft.com/en-us/services/container-registry/) shared with Management API. The workspace repository in the ACR must be of form "`<your organization>/azuretre/workspaces`". The bundles are published (pushed) to ACR using [the `porter publish` CLI command](https://porter.sh/cli/porter_publish/).
-
-For reference, see the vanilla workspace bundle publish workflow step and scripts:
-
-1. `Publish vanilla workspace bundle` step in [Azure TRE continuous delivery workflow (tre-CD.yml)](../.github/workflows/tre-CD.yml)
-1. `workspaces-vanilla-porter-publish` target in [Makefile](../Makefile)
-1. [`publish_vanilla_workspace.sh` script](../devops/scripts/publish_vanilla_workspace.sh)
-
-> **TBD:** After end-to-end workspace deployment scenario is implemented we will have a script or other automated means of publishing a bundle **with the metadata schema** (that is likely a reduced and slightly modified copy of the Porter manifest in Cosmos DB) and we can refer to that here.
+See [Registering workspace templates](./registering-workspace-templates.md).
