@@ -8,40 +8,29 @@ resource "azurerm_key_vault" "kv" {
   resource_group_name      = var.resource_group_name
   sku_name                 = "standard"
   purge_protection_enabled = var.debug == "true" ? false : true
-
-  access_policy {
-    tenant_id = data.azurerm_client_config.deployer.tenant_id
-    object_id = data.azurerm_client_config.deployer.object_id
-
-    key_permissions = [
-      "Get", "List", "Update", "Create", "Import", "Delete"
-    ]
-
-    secret_permissions = [
-      "Get", "List", "Set", "Delete"
-    ]
-
-    certificate_permissions = [
-      "Get", "List", "Update", "Create", "Import", "Delete"
-    ]
-
-    storage_permissions = [
-      "Get", "List", "Update", "Delete"
-    ]
-  }
-  # Access policy for this particular TF run to insert and purge from kv
-  access_policy {
-    tenant_id          = var.tenant_id
-    object_id          = data.azurerm_client_config.current.object_id
-    secret_permissions = ["get", "set"]
-    certificate_permissions = [
-      "Delete", "Purge"
-    ]
-
-
-  }
-
+  
   lifecycle { ignore_changes = [ tags ] }
+}
+
+resource "azurerm_key_vault_access_policy" "deployer" {
+  key_vault_id = azurerm_key_vault.kv.id
+  tenant_id    = data.azurerm_client_config.deployer.tenant_id
+  object_id    = data.azurerm_client_config.deployer.object_id
+
+  key_permissions         = ["Get", "List", "Update", "Create", "Import", "Delete", ]
+  secret_permissions      = ["Get", "List", "Set", "Delete", ]
+  certificate_permissions = ["Get", "List", "Update", "Create", "Import", "Delete", ]
+  storage_permissions     = ["Get", "List", "Update", "Delete", ]
+}
+
+# Access policy for this particular TF run to insert and purge from kv
+resource "azurerm_key_vault_access_policy" "tf_run" {
+  key_vault_id = azurerm_key_vault.kv.id
+  tenant_id    = var.tenant_id
+  object_id    = data.azurerm_client_config.current.object_id
+
+  secret_permissions      = ["Get", "Set"]
+  certificate_permissions = ["Delete", "Purge", ]
 }
 
 resource "azurerm_key_vault_access_policy" "managed_identity" {
