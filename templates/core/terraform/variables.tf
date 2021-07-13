@@ -12,6 +12,11 @@ variable "location" {
   description = "Azure region for deployment of core TRE services"
 }
 
+variable "acr_name" {
+  type        = string
+  description = "Management ACR name"
+}
+
 variable "address_space" {
   type        = string
   description = "Core services VNET Address Space"
@@ -26,6 +31,18 @@ variable "management_api_image_repository" {
 variable "management_api_image_tag" {
   type        = string
   description = "Tag for management API image"
+  default     = "main-latest"
+}
+
+variable "resource_processor_vmss_porter_image_repository" {
+  type        = string
+  description = "Repository for resource processor vmms porter image"
+  default     = "microsoft/azuretre/resource-processor-vm-porter"
+}
+
+variable "resource_processor_vmss_porter_image_tag" {
+  type        = string
+  description = "Tag for  resource processor vmms porter image"
   default     = "main-latest"
 }
 
@@ -97,6 +114,12 @@ variable "api_client_secret" {
   type        = string
   description = "A client secret use by the API to authenticate with Azure AD for access to Microsoft Graph."
   sensitive   = true
+}
+
+variable "resource_processor_type" {
+  default     = "function_cnab_driver"
+  description = "Which resource processor to deploy."
+  type        = string
 }
 
 variable "debug" {}

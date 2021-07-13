@@ -26,6 +26,10 @@ output "aci" {
   value = azurerm_subnet.aci.id
 }
 
+output "resource_processor" {
+  value = azurerm_subnet.resource_processor.id
+}
+
 output "azurewebsites_dns_zone_id" {
   value = azurerm_private_dns_zone.azurewebsites.id
 }
