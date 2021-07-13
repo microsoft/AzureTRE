@@ -56,9 +56,10 @@ async def deployment_done(client, workspaceid, headers) -> bool:
         headers=headers)
     status = response.json()["workspace"]["deployment"]["status"]
     print(status)
-    return True, status if status in [strings.RESOURCE_STATUS_DEPLOYED, strings.RESOURCE_STATUS_FAILED] else False
+    return (True, status) if status in [strings.RESOURCE_STATUS_DEPLOYED, strings.RESOURCE_STATUS_FAILED] else (False, status)
 
 
+@pytest.mark.timeout(1200)  # Timeout for vanilla deployment should be 20 mins max
 async def test_create_vanilla_workspace(token) -> None:
 
     assert token is not None, "Token not returned"
@@ -69,7 +70,9 @@ async def test_create_vanilla_workspace(token) -> None:
         payload = {"displayName": "My workspace",
                    "description": "workspace for team X",
                    "workspaceType": "tre-workspace-vanilla",
-                   "parameters": "",
+                   "parameters": {
+                       "address_space": "192.168.25.0/24"  # Reserving this for E2E tests.
+                   },
                    "authConfig":
                        {"provider": "AAD",
                         "data":
@@ -90,6 +93,6 @@ async def test_create_vanilla_workspace(token) -> None:
         done, done_state = await deployment_done(client, workspaceid, headers)
         while not done:
             await asyncio.sleep(60)
-            done = await deployment_done(client, workspaceid, headers)
-
+            done, done_state = await deployment_done(client, workspaceid, headers)
+        print('#####', done_state)
         assert done_state != strings.RESOURCE_STATUS_FAILED
