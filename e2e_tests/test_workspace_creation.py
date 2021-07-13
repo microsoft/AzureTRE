@@ -55,7 +55,6 @@ async def deployment_done(client, workspaceid, headers) -> bool:
         f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACES}/{workspaceid}",
         headers=headers)
     status = response.json()["workspace"]["deployment"]["status"]
-    print(status)
     return (True, status) if status in [strings.RESOURCE_STATUS_DEPLOYED, strings.RESOURCE_STATUS_FAILED] else (False, status)
 
 
@@ -88,11 +87,12 @@ async def test_create_vanilla_workspace(token) -> None:
         assert (response.status_code == status.HTTP_202_ACCEPTED), "Request for workspace creation failed"
 
         workspaceid = response.json()["workspaceId"]
-        print(f"Workspace id being created for test = {workspaceid}")
+
+        with open('workspace_id.txt', 'w') as f:
+            f.write(workspaceid)
 
         done, done_state = await deployment_done(client, workspaceid, headers)
         while not done:
             await asyncio.sleep(60)
             done, done_state = await deployment_done(client, workspaceid, headers)
-        print('#####', done_state)
         assert done_state != strings.RESOURCE_STATUS_FAILED
