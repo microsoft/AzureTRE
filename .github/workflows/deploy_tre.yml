@@ -250,11 +250,6 @@ jobs:
           wkspc_id=`cat workspace_id.txt`
           echo "WORKSPACE_ID=$wkspc_id" >> $GITHUB_ENV
 
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
       - name: Clean created test resources
         shell: bash
         env:
@@ -277,11 +272,7 @@ jobs:
             export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
             export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
 
-            curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
-            export PATH=~/.porter/:$PATH
-            export PORTER_DRIVER=docker
-
-            make porter-uninstall DIR=./workspaces/vanilla
+            ./workspaces/vanilla/terraform/destroy.sh
 
       - name: Upload Unit Test Results
         if: always()
