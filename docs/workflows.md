@@ -5,13 +5,14 @@
 These are onetime configuration steps required to set up the GitHub Actions workflows (pipelines). After the steps the [TRE deployment workflow](../.github/workflows/deploy_tre.yml) is ready to run.
 
 1. Create service principals and set their [repository secrets](https://docs.github.com/en/actions/reference/encrypted-secrets) as explained in [Bootstrapping](./bootstrapping.md#create-service-principals)
+1. Create app registrations for auth based on the [Authentication & authorization](./auth.md) guide
 1. Set other repository secrets as explained in the table below
 
 *Required repository secrets for the CI/CD.*
 | Secret name | Description |
 | ----------- | ----------- |
-| `AZURE_CREDENTIALS` | Explained [above](#create-service-principals). |
-| `AZURE_CONTRIBUTOR_SP` | Explained [above](#create-service-principals). |
+| `AZURE_CREDENTIALS` | Explained in [Bootstrapping - Create service principals](./bootstrapping.md#create-service-principals). |
+| `AZURE_CONTRIBUTOR_SP` | Explained in [Bootstrapping - Create service principals](./bootstrapping.md#create-service-principals). |
 | `TF_STATE_CONTAINER` | The name of the blob container to hold the Terraform state. Default value is `tfstate`. |
 | `MGMT_RESOURCE_GROUP` | The name of the shared resource group for all Azure TRE core resources. |
 | `STATE_STORAGE_ACCOUNT_NAME` | The name of the storage account to hold the Terraform state and other deployment artifacts. |
