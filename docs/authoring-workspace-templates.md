@@ -1,4 +1,4 @@
-# Authoring workspaces
+# Authoring workspaces templates
 
 <!-- markdownlint-disable-next-line MD013 -->
 Azure TRE workspaces are [Porter](https://porter.sh/) bundles that in turn are based on [Cloud Native Application Bundles (CNAB)](https://cnab.io/). Workspace authors are free to choose the technology stack for provisioning resources (e.g., ARM templates, Terraform etc.), but the Azure TRE framework sets certain requirements for the bundle manifests, which specify the credentials, input and output parameters, deployment actions among other things. The document describes those requirements.
@@ -53,18 +53,18 @@ This section describes the mandatory [(input) parameters](https://porter.sh/auth
 
 | Parameter | Type | Description | Example value |
 | --------- | ---- | ----------- | ------------- |
-| `tre_id` | string | Unique ID of for the TRE instance. | `mytre-dev-3142` |
+| `tre_id` | string | Unique ID of for the TRE instance. | `tre-dev-42` |
 | `workspace_id` | string | Unique 4-character long, alphanumeric workspace ID. | `0a9e` |
 | `azure_location` | string | Azure location (region) to deploy the workspace resource to. | `westeurope` |
 | `address_space` | string | VNet address space for the workspace services. | `10.2.1.0/24` |
 
-`tre_id` can be found in the resource names of the Azure TRE instance; for example the resource group name of the Azure TRE instance based on the example in the above table would be "`rg-mytre-dev-3142`".
+`tre_id` can be found in the resource names of the Azure TRE instance; for example the resource group name of the Azure TRE instance based on the example in the above table would be "`rg-tre-dev-42`".
 
-Similarly to `tre_id`, `workspace_id` is used in the resource names of the workspace. The resource group name of the workspace must be of form "`rg-<tre_id>-ws-<workspace_id>`", for example: "`rg-mytre-dev-3142-ws-0a9e`".
+Similarly to `tre_id`, `workspace_id` is used in the resource names of the workspace. The resource group name of the workspace must be of form "`rg-<tre_id>-ws-<workspace_id>`", for example: "`rg-tre-dev-42-ws-0a9e`".
 
 All the values for the required parameters will be provided by the deployment runner.
 
-Any **custom parameters** are picked up by the Azure TRE management API and will be queried from the user deploying the workspace bundle so make sure to write clear descriptions of the parameters as these are shown in the user interface to guide the user.
+Any **custom parameters** are picked up by Azure TRE Management API and will be queried from the user deploying the workspace bundle so make sure to write clear descriptions of the parameters as these are shown in the user interface to guide the user.
 
 ### Output
 
@@ -96,12 +96,4 @@ TRE does not provide means to update an existing workspace to a newer version. I
 
 ## Publishing workspace bundle
 
-Workspace bundles are stored in [Azure Container Registry (ACR)](https://azure.microsoft.com/en-us/services/container-registry/) shared with the TRE management API. The workspace repository in the ACR must be of form "`<your organization>/azuretre/workspaces`". The bundles are published (pushed) to ACR using [the `porter publish` CLI command](https://porter.sh/cli/porter_publish/).
-
-For reference, see the vanilla workspace bundle publish workflow step and scripts:
-
-1. `Publish vanilla workspace bundle` step in [Azure TRE continuous delivery workflow (tre-CD.yml)](../.github/workflows/tre-CD.yml)
-1. `workspaces-vanilla-porter-publish` target in [Makefile](../Makefile)
-1. [`publish_vanilla_workspace.sh` script](../devops/scripts/publish_vanilla_workspace.sh)
-
-> **TBD:** After end-to-end workspace deployment scenario is implemented we will have a script or other automated means of publishing a bundle **with the metadata schema** (that is likely a reduced and slightly modified copy of the Porter manifest in Cosmos DB) and we can refer to that here.
+See [Registering workspace templates](./registering-workspace-templates.md).

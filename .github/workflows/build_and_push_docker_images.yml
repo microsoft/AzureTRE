@@ -12,7 +12,7 @@ on:
 
 jobs:
   docker_build:
-    name: Build & publish management API
+    name: Build & publish Management API
     runs-on: ubuntu-latest
 
     steps:

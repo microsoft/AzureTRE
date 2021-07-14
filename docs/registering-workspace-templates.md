@@ -1,6 +1,6 @@
-# Registering Resource Templates
+# Registering Workspace Templates
 
-Before a resource template can be deployed using the API it needs to be registered.
+Before a Workspace Template can be deployed using the API it needs to be registered.
 
 ## Porter Bundles
 

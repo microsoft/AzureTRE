@@ -176,7 +176,7 @@ jobs:
           publish-profile: ${{ steps.publishprofile.outputs.profile }}
           scm-do-build-during-deployment: true
           enable-oryx-build: true
-  
+
   publish_bundles:
     name: Publish Bundles
     needs: deploy_mgmt_infra

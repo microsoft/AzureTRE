@@ -18,10 +18,10 @@ Until a mechanism to update shared services has been implemented firewall rule u
 
     ```hcl
     data "azurerm_firewall" "fw" {
-    name                = "fw-${var.tre_id}"
-    resource_group_name = "rg-${var.tre_id}"
+        name                = "fw-${var.tre_id}"
+        resource_group_name = "rg-${var.tre_id}"
     }
-    
+
     data "azurerm_virtual_network" "ws" {
         name                = "vnet-${var.tre_id}-ws-${var.workspace_id}"
         resource_group_name = "rg-${var.tre_id}-ws-${var.workspace_id}"
@@ -41,13 +41,13 @@ Until a mechanism to update shared services has been implemented firewall rule u
 
     ```hcl
     resource "null_resource" "az_login" {
-    provisioner "local-exec" {
-        command = "az login --service-principal -u '${var.arm_client_id}' -p '${var.arm_client_secret}' --tenant '${var.arm_tenant_id}'"
-    }
+        provisioner "local-exec" {
+            command = "az login --service-principal -u '${var.arm_client_id}' -p '${var.arm_client_secret}' --tenant '${var.arm_tenant_id}'"
+        }
 
-    triggers = {
-        timestamp = timestamp()
-    }
+        triggers = {
+            timestamp = timestamp()
+        }
     }
     ```
 
