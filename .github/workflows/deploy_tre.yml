@@ -135,6 +135,11 @@ jobs:
             export TF_VAR_debug="false"
 
             cd ./templates/core/terraform/
+            terraform init -input=false -backend=true -reconfigure -upgrade \
+                -backend-config="resource_group_name=$TF_VAR_mgmt_resource_group_name" \
+                -backend-config="storage_account_name=$TF_VAR_mgmt_storage_account_name" \
+                -backend-config="container_name=$TF_VAR_terraform_state_container_name" \
+                -backend-config="key=${TF_VAR_tre_id}"
             terraform import module.keyvault.azurerm_key_vault_access_policy.deployer /subscriptions/8f987318-0ccb-4831-bde1-5cb0146f2d91/resourceGroups/rg-cse-msr-dev/providers/Microsoft.KeyVault/vaults/kv-cse-msr-dev/objectId/fe46b9fe-4452-42ab-bbc3-151914db72a8
 
             make all
