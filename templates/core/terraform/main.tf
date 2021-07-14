@@ -212,3 +212,15 @@ module "bastion" {
   resource_group_name = azurerm_resource_group.core.name
   bastion_subnet      = module.network.bastion
 }
+
+module "gitea" {
+  count   = var.deploy_gitea == true ? 1 : 0
+
+  source              = "../../shared_services/gitea/terraform"
+  tre_id              = var.tre_id
+  location            = var.location
+
+  depends_on = [
+    module.network
+  ]
+}

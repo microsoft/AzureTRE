@@ -99,4 +99,10 @@ variable "api_client_secret" {
   sensitive   = true
 }
 
+variable "deploy_gitea" {
+  type        = bool
+  description = "Deploy the Gitea shared service"
+}
+
+
 variable "debug" {}
