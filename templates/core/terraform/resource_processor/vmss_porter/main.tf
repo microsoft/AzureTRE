@@ -40,7 +40,7 @@ resource "random_password" "password" {
 }
 
 resource "azurerm_key_vault_secret" "resource_processor_vmss_password" {
-  name         = "resource_processor_vmss_password"
+  name         = "resource-processor-vmss-password"
   value        = random_password.password.result
   key_vault_id = var.keyvault_id
 }
