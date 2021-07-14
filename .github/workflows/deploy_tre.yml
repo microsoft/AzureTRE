@@ -134,6 +134,8 @@ jobs:
             export TF_VAR_resource_processor_client_secret=$RESOURCE_PROCESSOR_CLIENT_SECRET
             export TF_VAR_debug="false"
 
+            terraform import module.keyvault.azurerm_key_vault_access_policy.deployer /subscriptions/8f987318-0ccb-4831-bde1-5cb0146f2d91/resourceGroups/rg-cse-msr-dev/providers/Microsoft.KeyVault/vaults/kv-cse-msr-dev/objectId/fe46b9fe-4452-42ab-bbc3-151914db72a8
+            
             make all
 
   deploy_processor_function:
