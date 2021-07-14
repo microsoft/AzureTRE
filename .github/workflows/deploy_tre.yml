@@ -253,20 +253,19 @@ jobs:
       - name: Clean created test resources
         shell: bash
         env:
-          TRE_ID: ${{ secrets.TRE_ID }}
+          TF_VAR_tre_id: ${{ secrets.TRE_ID }}
           WORKSPACE_ID: ${{ env.WORKSPACE_ID }}
-          LOCATION: ${{ secrets.LOCATION }}
-          ADDRESS_SPACE: "192.168.25.0/24"
-          ACR_NAME: ${{ secrets.ACR_NAME }}
-          TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TF_STATE_CONTAINER }}
-          MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP }}
-          MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+          TF_VAR_location: ${{ secrets.LOCATION }}
+          TF_VAR_address_space: "192.168.25.0/24"
+          TF_VAR_terraform_state_container_name: ${{ secrets.TF_STATE_CONTAINER }}
+          TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
+          TF_VAR_mgmt_storage_account_name: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
 
         run: |
             export USE_ENV_VARS_NOT_FILES=true
             export env
-            export WORKSPACE_ID=$(echo "${WORKSPACE_ID: -4}")
+            export  TF_VAR_workspace_id=$(echo "${WORKSPACE_ID: -4}")
             export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
             export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
             export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
