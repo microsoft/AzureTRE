@@ -3,6 +3,8 @@ resource "azurerm_virtual_network" "ws" {
   location            = var.location
   resource_group_name = var.resource_group_name
   address_space       = [var.address_space]
+
+  lifecycle { ignore_changes = [ tags ] }
 }
 
 
@@ -13,6 +15,7 @@ resource "azurerm_subnet" "services" {
   address_prefixes     = [local.services_subnet_address_prefix]
   # notice that private endpoints do not adhere to NSG rules
   enforce_private_link_endpoint_network_policies = true
+  enforce_private_link_service_network_policies = true
 }
 
 resource "azurerm_subnet" "webapps" {
@@ -22,6 +25,7 @@ resource "azurerm_subnet" "webapps" {
   address_prefixes     = [local.webapps_subnet_address_prefix]
   # notice that private endpoints do not adhere to NSG rules
   enforce_private_link_endpoint_network_policies = true
+  enforce_private_link_service_network_policies = true
 
   delegation {
     name = "delegation"
@@ -68,6 +72,8 @@ resource "azurerm_network_security_group" "ws" {
   location            = var.location
   name                = "nsg-ws"
   resource_group_name = var.resource_group_name
+
+  lifecycle { ignore_changes = [ tags ] }
 }
 
 
@@ -204,4 +210,6 @@ resource "azurerm_private_dns_zone_virtual_network_link" "azurewebsites" {
 
   name                  = "azurewebsites-link-${azurerm_virtual_network.ws.name}"
   registration_enabled  = false
+
+  lifecycle { ignore_changes = [ tags ] }
 }

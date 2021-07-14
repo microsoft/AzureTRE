@@ -37,16 +37,22 @@ async def receive_message():
 
         async with service_bus_client:
             receiver = service_bus_client.get_queue_receiver(queue_name=config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE)
+
             async with receiver:
                 received_msgs = await receiver.receive_messages(max_message_count=10, max_wait_time=5)
+
                 for msg in received_msgs:
                     result = True
+                    message = ""
+
                     try:
                         message = json.loads(str(msg))
                         result = (yield parse_obj_as(DeploymentStatusUpdateMessage, message))
-                    except (json.JSONDecodeError, ValidationError):
-                        logging.error(strings.DEPLOYMENT_STATUS_MESSAGE_FORMAT_INCORRECT)
+                    except (json.JSONDecodeError, ValidationError) as e:
+                        logging.error(f"{strings.DEPLOYMENT_STATUS_MESSAGE_FORMAT_INCORRECT}: {e}")
+
                     if result:
+                        logging.info(f"Received deployment status update message with correlation ID {msg.correlation_id}: {message}")
                         await receiver.complete_message(msg)
 
 
@@ -76,6 +82,7 @@ def update_status_in_database(workspace_repo: WorkspaceRepository, message: Depl
         [bool]: True if document is updated, False otherwise.
     """
     result = False
+
     try:
         workspace = workspace_repo.get_workspace_by_workspace_id(message.id)
         workspace_repo.update_workspace(create_updated_deployment_document(workspace, message))
@@ -87,6 +94,7 @@ def update_status_in_database(workspace_repo: WorkspaceRepository, message: Depl
         logging.error(error_string)
     except Exception as e:
         logging.error(strings.STATE_STORE_ENDPOINT_NOT_RESPONDING + " " + str(e))
+
     return result
 
 
@@ -98,6 +106,7 @@ async def receive_message_and_update_deployment(app: FastAPI) -> None:
         app ([FastAPI]): Handle to the currently running app
     """
     receive_message_gen = receive_message()
+
     try:
         async for message in receive_message_gen:
             workspace_repo = WorkspaceRepository(get_db_client(app))

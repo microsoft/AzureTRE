@@ -1,12 +1,12 @@
 variable "tre_id" {}
 variable "location" {}
 variable "resource_group_name" {}
+variable "app_insights_connection_string" {}
 variable "app_insights_instrumentation_key" {}
 variable "app_service_plan_id" {}
 variable "storage_account_name" {}
 variable "storage_account_access_key" {}
 variable "storage_state_path" {}
-variable "identity_id" {}
 variable "core_vnet" {}
 variable "aci_subnet" {}
 variable "docker_registry_username" {}
@@ -15,3 +15,11 @@ variable "docker_registry_server" {}
 variable "service_bus_connection_string" {}
 variable "service_bus_resource_request_queue" {}
 variable "service_bus_deployment_status_update_queue" {}
+variable "mgmt_storage_account_name" {}
+variable "mgmt_resource_group_name" {}
+variable "terraform_state_container_name" {}
+variable "porter_output_container_name" {}
+variable "arm_client_id" {}
+variable "arm_client_secret" {}
+variable "management_api_image_tag" {}
+variable "managed_identity" {}

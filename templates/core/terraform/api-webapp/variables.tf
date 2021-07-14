@@ -5,6 +5,7 @@ variable "web_app_subnet" {}
 variable "core_vnet" {}
 variable "shared_subnet" {}
 variable "app_gw_subnet" {}
+variable "app_insights_connection_string" {}
 variable "app_insights_instrumentation_key" {}
 variable "log_analytics_workspace_id" {}
 variable "management_api_image_repository" {}
@@ -18,3 +19,7 @@ variable "service_bus_resource_request_queue" {}
 variable "service_bus_deployment_status_update_queue" {}
 variable "managed_identity" {}
 variable "azurewebsites_dns_zone_id" {}
+variable "swagger_ui_client_id" {}
+variable "aad_tenant_id" {}
+variable "api_client_id" {}
+variable "api_client_secret" {}

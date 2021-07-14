@@ -1,50 +1,36 @@
-# Azure ML Worksapce
+# Azure ML and Dev Test Labs Worksapce
 
-This deploys a TRE workspace with a private Azure ML deployment.
+This deploys a TRE workspace with the following services:
 
-## Firewall Rules
+- [Azure ML](./services/azureml)
+- [Azure Dev Test Labs](./services/devtestlabs)
 
-Please be aware that the following Firewall rules are opened for the workspace:
+Please follow the above links to learn more about how to access the services and any firewall rules that they will open in the workspace.
 
-URLs:
+## Manual deployment
 
-- graph.windows.net
-- ml.azure.com
-- login.microsoftonline.com
-- aadcdn.msftauth.net
-- graph.microsoft.com
-- management.azure.com
-- viennaglobal.azurecr.io
+1. Publish the bundles required for this workspace:
 
-Service Tags:
-
-- Storage.`{AzureRegion}`
-- AzureContainerRegistry
-
-## Prerequisites
-
-- A deployed TRE instance
-
-- A Vanilla Workspace Bundle published
+- Vanilla Workspace
     `make porter-build DIR=./workspaces/vanilla`
     `make porter-publish DIR=./workspaces/vanilla`
 
-- A Azure ML Service bundle published
+- Azure ML Service
     `make porter-build DIR=./workspaces/services/azureml`  
     `make porter-publish DIR=./workspaces/services/azureml`
 
-- A DevTest Labs Service bundle published
+- DevTest Labs Service
     `make porter-build DIR=./workspaces/services/devtestlabs`  
     `make porter-publish DIR=./workspaces/services/devtestlabs`
 
-- CNAB image built (contains azure driver)
-    `make build-cnab-image`
+1. Create a copy of `workspaces/azureml_devtestlabs/.env.sample` with the name `.env` and update the variables with the appropriate values.
 
-- A Azure ML DevTest Labs Workspace bundle built
-    `make porter-build DIR=./workspaces/azureml-devtestlabs`
+| Environment variable name | Description |
+| ------------------------- | ----------- |
+| `WORKSPACE_ID` | A 4 character unique identifier for the workspace for this TRE. `WORKSPACE_ID` can be found in the resource names of the workspace resources; for example, a `WORKSPACE_ID` of `ab12` will result in a resource group name for workspace of `rg-<tre-id>-ab12`. Allowed characters: Alphanumeric. |
+| `ADDRESS_SPACE` | The address space for the workspace virtual network. For example `192.168.1.0/24`|
 
-## To deploy
+1. Build and install the workspace:
 
-- Once prerequisites are installed, create a copy of `workspaces/azureml_devtestlabs/.env.sample` called `.env` in the  `workspaces/azureml_devtestlabs/` directory. Update the environment variable values to match your installation.
-
-- Run: `make porter-install DIR=./workspaces/azureml-devtestlabs`
+    `make porter-publish DIR=./workspaces/azureml_devtestlabs`
+    `make porter-install DIR=./workspaces/azureml_devtestlabs`

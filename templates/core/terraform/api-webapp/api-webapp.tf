@@ -5,6 +5,8 @@ resource "azurerm_app_service_plan" "core" {
   reserved            = true
   kind                = "linux"
 
+  lifecycle { ignore_changes = [ tags ] }
+
   sku {
     tier     = "PremiumV3"
     capacity = 1
@@ -20,27 +22,35 @@ resource "azurerm_app_service" "management_api" {
   https_only          = true
 
   app_settings = {
-    "APPINSIGHTS_INSTRUMENTATIONKEY" = var.app_insights_instrumentation_key
-    "WEBSITES_PORT"                  = "8000"
-    "WEBSITE_VNET_ROUTE_ALL"         = 1
-
-    "DOCKER_REGISTRY_SERVER_USERNAME"       = var.docker_registry_username
-    "DOCKER_REGISTRY_SERVER_URL"            = "https://${var.docker_registry_server}"
-    "DOCKER_REGISTRY_SERVER_PASSWORD"       = var.docker_registry_password
-    "STATE_STORE_ENDPOINT"                  = var.state_store_endpoint
-    "STATE_STORE_KEY"                       = var.state_store_key
-    "SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE" = "sb-${var.tre_id}.servicebus.windows.net"
-    "SERVICE_BUS_RESOURCE_REQUEST_QUEUE"    = var.service_bus_resource_request_queue
+    "APPLICATIONINSIGHTS_CONNECTION_STRING"      = var.app_insights_connection_string
+    "APPINSIGHTS_INSTRUMENTATIONKEY"             = var.app_insights_instrumentation_key
+    "ApplicationInsightsAgent_EXTENSION_VERSION" = "~3"
+    "XDT_MicrosoftApplicationInsights_Mode"      = "default"
+    "WEBSITES_PORT"                              = "8000"
+    "WEBSITE_VNET_ROUTE_ALL"                     = 1
+    "DOCKER_REGISTRY_SERVER_USERNAME"            = var.docker_registry_username
+    "DOCKER_REGISTRY_SERVER_URL"                 = "https://${var.docker_registry_server}"
+    "DOCKER_REGISTRY_SERVER_PASSWORD"            = var.docker_registry_password
+    "STATE_STORE_ENDPOINT"                       = var.state_store_endpoint
+    "STATE_STORE_KEY"                            = var.state_store_key
+    "SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE"      = "sb-${var.tre_id}.servicebus.windows.net"
+    "SERVICE_BUS_RESOURCE_REQUEST_QUEUE"         = var.service_bus_resource_request_queue
     "SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE" = var.service_bus_deployment_status_update_queue
-    "MANAGED_IDENTITY_CLIENT_ID"            = var.managed_identity.client_id
-    TRE_ID                                  = var.tre_id
-    RESOURCE_LOCATION                       = var.location
+    "MANAGED_IDENTITY_CLIENT_ID"                 = var.managed_identity.client_id
+    "TRE_ID"                                     = var.tre_id
+    "RESOURCE_LOCATION"                          = var.location
+    "SWAGGER_UI_CLIENT_ID"                       = var.swagger_ui_client_id
+    "AAD_TENANT_ID"                              = var.aad_tenant_id
+    "API_CLIENT_ID"                              = var.api_client_id
+    "API_CLIENT_SECRET"                          = var.api_client_secret
   }
 
   identity {
     type = "UserAssigned"
     identity_ids = [ var.managed_identity.id ]
   }
+
+  lifecycle { ignore_changes = [ tags ] }
 
   site_config {
     linux_fx_version            = "DOCKER|${var.docker_registry_server}/${var.management_api_image_repository}:${var.management_api_image_tag}"
@@ -62,6 +72,7 @@ resource "azurerm_app_service" "management_api" {
       priority   = 2147483647
     }
 
+    ftps_state         = "FtpsOnly"
     websockets_enabled = false
   }
 
@@ -84,6 +95,8 @@ resource "azurerm_private_endpoint" "management_api_private_endpoint" {
   resource_group_name = var.resource_group_name
   location            = var.location
   subnet_id           = var.shared_subnet
+
+  lifecycle { ignore_changes = [ tags ] }
 
   private_service_connection {
     private_connection_resource_id = azurerm_app_service.management_api.id

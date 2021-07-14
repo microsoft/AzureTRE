@@ -1,5 +1,9 @@
+aiohttp==3.7.4.post0
 azure-functions==1.7.2
-azure-mgmt-containerinstance==2.0.0
+azure-identity==1.6.0
+azure-mgmt-containerinstance==7.0.0
 azure-mgmt-network==19.0.0
+azure-servicebus==7.2.0
 msrest==0.6.21
 opencensus-ext-azure==1.0.8
+opencensus-ext-logging==0.1.0

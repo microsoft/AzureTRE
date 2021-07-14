@@ -1,0 +1,56 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vnet_name": {
+            "type": "String"
+        },
+        "location": {
+            "type": "String",
+            "allowedValues": [
+                "eastus",
+                "southcentralus",
+                "westus2",
+                "eastus2",
+                "westeurope"
+            ],
+            "metadata": {
+                "description": "Specifies the location for all resources."
+            }
+        },
+        "workspace_name": {
+            "type": "String"
+        },
+        "instance_name": {
+            "type": "String"
+        },
+        "subnet_name": {
+            "type": "String"
+        },
+        "vm_size_sku": {
+            "type": "String",
+            "defaultValue": "STANDARD_DS2_V2"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.MachineLearningServices/workspaces/computes",
+            "apiVersion": "2020-05-15-preview",
+            "name": "[concat(parameters('workspace_name'),'/',parameters('instance_name'))]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "computeType": "ComputeInstance",
+                "computeLocation": "[parameters('location')]",
+                "properties": {
+                    "vmSize": "[parameters('vm_size_sku')]",
+                    "remoteLoginPortPublicAccess": "Enabled",
+                    "enableNodePublicIp": false,
+                    "subnet": {
+                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnet_name'), parameters('subnet_name'))]"
+                    }
+                }
+            }
+        }
+    ]
+}

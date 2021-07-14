@@ -108,7 +108,7 @@ Software developer who contributes to the development of the Azure TRE solution.
 
 Example tasks:
 
-- Modify the deployment service, management API and other components of the Azure TRE solution.
+- Modify the deployment service, Management API and other components of the Azure TRE solution.
 - Contribute to the Azure TRE OSS solution.
 
 Expected skills:

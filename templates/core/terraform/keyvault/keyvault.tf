@@ -1,4 +1,5 @@
 data "azurerm_client_config" "deployer" {}
+data "azurerm_client_config" "current" {}
 
 resource "azurerm_key_vault" "kv" {
   name                     = "kv-${var.tre_id}"
@@ -6,28 +7,30 @@ resource "azurerm_key_vault" "kv" {
   location                 = var.location
   resource_group_name      = var.resource_group_name
   sku_name                 = "standard"
-  purge_protection_enabled = true
+  purge_protection_enabled = var.debug == "true" ? false : true
+  
+  lifecycle { ignore_changes = [ tags ] }
+}
 
-  access_policy {
-    tenant_id    = data.azurerm_client_config.deployer.tenant_id
-    object_id    = data.azurerm_client_config.deployer.object_id
+resource "azurerm_key_vault_access_policy" "deployer" {
+  key_vault_id = azurerm_key_vault.kv.id
+  tenant_id    = data.azurerm_client_config.deployer.tenant_id
+  object_id    = data.azurerm_client_config.deployer.object_id
 
-    key_permissions = [
-      "Get", "List", "Update", "Create", "Import", "Delete"
-    ]
+  key_permissions         = ["Get", "List", "Update", "Create", "Import", "Delete", ]
+  secret_permissions      = ["Get", "List", "Set", "Delete", ]
+  certificate_permissions = ["Get", "List", "Update", "Create", "Import", "Delete", ]
+  storage_permissions     = ["Get", "List", "Update", "Delete", ]
+}
 
-    secret_permissions = [
-      "Get", "List", "Set", "Delete"
-    ]
+# Access policy for this particular TF run to insert and purge from kv
+resource "azurerm_key_vault_access_policy" "tf_run" {
+  key_vault_id = azurerm_key_vault.kv.id
+  tenant_id    = var.tenant_id
+  object_id    = data.azurerm_client_config.current.object_id
 
-    certificate_permissions = [ 
-      "Get", "List", "Update", "Create", "Import", "Delete"
-    ]
-
-    storage_permissions = [
-      "Get", "List", "Update", "Delete"
-    ]
-  }
+  secret_permissions      = ["Get", "Set"]
+  certificate_permissions = ["Delete", "Purge", ]
 }
 
 resource "azurerm_key_vault_access_policy" "managed_identity" {
@@ -35,14 +38,16 @@ resource "azurerm_key_vault_access_policy" "managed_identity" {
   tenant_id    = var.managed_identity_tenant_id
   object_id    = var.managed_identity_object_id
 
-  key_permissions = [ "Get", "List", ]
-  secret_permissions = [ "Get", "List", ]
-  certificate_permissions = [ "Get", "List", ]
+  key_permissions         = ["Get", "List", ]
+  secret_permissions      = ["Get", "List", ]
+  certificate_permissions = ["Get", "List", ]
 }
 
 resource "azurerm_private_dns_zone" "vaultcore" {
   name                = "privatelink.vaultcore.azure.net"
   resource_group_name = var.resource_group_name
+
+  lifecycle { ignore_changes = [ tags ] }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "vaultcorelink" {
@@ -50,6 +55,8 @@ resource "azurerm_private_dns_zone_virtual_network_link" "vaultcorelink" {
   resource_group_name   = var.resource_group_name
   private_dns_zone_name = azurerm_private_dns_zone.vaultcore.name
   virtual_network_id    = var.core_vnet
+
+  lifecycle { ignore_changes = [ tags ] }
 }
 
 resource "azurerm_private_endpoint" "kvpe" {
@@ -57,6 +64,8 @@ resource "azurerm_private_endpoint" "kvpe" {
   location            = var.location
   resource_group_name = var.resource_group_name
   subnet_id           = var.shared_subnet
+
+  lifecycle { ignore_changes = [ tags ] }
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group"

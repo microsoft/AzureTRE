@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import List
 from pydantic import BaseModel, Field
 
@@ -23,8 +24,21 @@ def get_sample_workspace(workspace_id: str, spec_workspace_id: str = "0001") -> 
         },
         "isDeleted": False,
         "resourceType": "workspace",
-        "workspaceURL": ""
+        "workspaceURL": "",
+        "authInformation": {}
     }
+
+
+class AuthProvider(str, Enum):
+    """
+    Auth Provider
+    """
+    AAD = "AAD"
+
+
+class AuthenticationConfiguration(BaseModel):
+    provider: AuthProvider = Field(AuthProvider.AAD, title="Authentication Provider")
+    data: dict = Field({}, title="Authentication information")
 
 
 class WorkspaceInResponse(BaseModel):
@@ -57,6 +71,7 @@ class WorkspaceInCreate(BaseModel):
     workspaceType: str = Field(title="Workspace type", description="Bundle name")
     description: str = Field(title="Workspace description")
     parameters: dict = Field({}, title="Workspace parameters", description="Values for the parameters required by the workspace resource specification")
+    authConfig: AuthenticationConfiguration = Field(title="Authentication configuration", description="Authentication configuration for the workspace")
 
     class Config:
         schema_extra = {
@@ -64,7 +79,11 @@ class WorkspaceInCreate(BaseModel):
                 "displayName": "My workspace",
                 "description": "workspace for team X",
                 "workspaceType": "tre-workspace-vanilla",
-                "parameters": {}
+                "parameters": {},
+                "authConfig": {
+                    "provider": "AAD",
+                    "data": {"app_id": "1212445c-aae6-41ec-a539-30dfa90ab1ae"}
+                }
             }
         }
 

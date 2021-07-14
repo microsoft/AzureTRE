@@ -47,7 +47,7 @@ class WorkspaceTemplateRepository(BaseRepository):
         workspace_template_names = [template["name"] for template in workspace_templates]
         return list(set(workspace_template_names))
 
-    def create_workspace_template_item(self, workspace_template_create: WorkspaceTemplateInCreate):
+    def create_workspace_template_item(self, workspace_template_create: WorkspaceTemplateInCreate) -> ResourceTemplate:
         item_id = str(uuid.uuid4())
         resource_template = ResourceTemplate(
             id=item_id,
@@ -56,7 +56,7 @@ class WorkspaceTemplateRepository(BaseRepository):
             version=workspace_template_create.version,
             parameters=workspace_template_create.parameters,
             resourceType=ResourceType.Workspace,
-            current=workspace_template_create.current
+            current=workspace_template_create.current,
         )
         self.create_item(resource_template)
         return resource_template

@@ -4,6 +4,8 @@ resource "azurerm_public_ip" "bastion" {
   location            = var.location
   allocation_method   = "Static"
   sku                 = "Standard"
+
+  lifecycle { ignore_changes = [ tags ] }
 }
 
 resource "azurerm_bastion_host" "bastion" {
@@ -16,5 +18,7 @@ resource "azurerm_bastion_host" "bastion" {
     subnet_id            = var.bastion_subnet
     public_ip_address_id = azurerm_public_ip.bastion.id
   }
+
+  lifecycle { ignore_changes = [ tags ] }
 }
 

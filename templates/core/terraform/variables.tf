@@ -19,14 +19,44 @@ variable "address_space" {
 
 variable "management_api_image_repository" {
   type        = string
-  description = "Repository for management API image"
+  description = "Repository for Management API image"
   default     = "microsoft/azuretre/management-api"
 }
 
 variable "management_api_image_tag" {
   type        = string
-  description = "Tag for management API image"
+  description = "Tag for Management API image"
   default     = "main-latest"
+}
+
+variable "mgmt_storage_account_name" {
+  type        = string
+  description = "Storage account created by bootstrap to hold all Terraform state"
+}
+
+variable "mgmt_resource_group_name" {
+  type        = string
+  description = "Shared management resource group"
+}
+
+variable "terraform_state_container_name" {
+  type        = string
+  description = "Name of the storage container for Terraform state"
+}
+
+variable "porter_output_container_name" {
+  type        = string
+  description = "Name of the storage container for Porter output"
+}
+
+variable "resource_processor_client_id" {
+  type        = string
+  description = "The client (app) ID of a service principal with Owner role to the subscription."
+}
+
+variable "resource_processor_client_secret" {
+  type        = string
+  description = "The client secret (app password) of a service principal with Owner role to the subscription."
 }
 
 variable "docker_registry_server" {
@@ -44,3 +74,29 @@ variable "docker_registry_password" {
   description = "Docker registry password"
   sensitive   = true
 }
+
+variable "swagger_ui_client_id" {
+  type        = string
+  description = "The client id (app id) of the registration in Azure AD for the Swagger UI"
+  sensitive   = true
+}
+
+variable "aad_tenant_id" {
+  type        = string
+  description = "The tenant id of the Azure AD used for authentication."
+  sensitive   = true
+}
+
+variable "api_client_id" {
+  type        = string
+  description = "The client id (app id) of the registration in Azure AD for the API."
+  sensitive   = true
+}
+
+variable "api_client_secret" {
+  type        = string
+  description = "A client secret use by the API to authenticate with Azure AD for access to Microsoft Graph."
+  sensitive   = true
+}
+
+variable "debug" {}

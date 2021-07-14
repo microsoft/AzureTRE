@@ -6,3 +6,4 @@ variable "shared_subnet" {}
 variable "tenant_id" {}
 variable "managed_identity_tenant_id" {}
 variable "managed_identity_object_id" {}
+variable "debug" {}

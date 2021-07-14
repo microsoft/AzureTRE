@@ -4,6 +4,8 @@ resource "azurerm_public_ip" "fwpip" {
   location            = var.location
   allocation_method   = "Static"
   sku                 = "Standard"
+
+  lifecycle { ignore_changes = [ tags ] }
 }
 
 resource "azurerm_firewall" "fw" {
@@ -16,6 +18,8 @@ resource "azurerm_firewall" "fw" {
     subnet_id            = var.firewall_subnet
     public_ip_address_id = azurerm_public_ip.fwpip.id
   }
+
+  lifecycle { ignore_changes = [ tags ] }
 }
 
 resource "azurerm_monitor_diagnostic_setting" "firewall" {
@@ -29,6 +33,7 @@ resource "azurerm_monitor_diagnostic_setting" "firewall" {
 
     retention_policy {
       enabled = false
+      days    = 0
     }
   }
 
@@ -39,14 +44,37 @@ resource "azurerm_monitor_diagnostic_setting" "firewall" {
 
     retention_policy {
       enabled = false
+      days    = 0
     }
   }
+  log {
+
+    category = "AzureFirewallDnsProxy"
+    enabled  = true
+
+    retention_policy {
+      enabled = false
+      days    = 0
+    }
+  } 
+   log {
+
+    category = "AzureFirewallNetworkRule"
+    enabled  = true
+
+    retention_policy {
+      enabled = false
+      days    = 0
+    }
+  }
+
   metric {
     category = "AllMetrics"
     enabled  = true
 
     retention_policy {
       enabled = false
+      days    = 0
     }
   }
 }

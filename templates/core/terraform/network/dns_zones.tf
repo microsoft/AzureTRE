@@ -2,6 +2,8 @@
 resource "azurerm_private_dns_zone" "azurewebsites" {
   name                = "privatelink.azurewebsites.net"
   resource_group_name = var.resource_group_name
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "azurewebsites" {
@@ -10,12 +12,16 @@ resource "azurerm_private_dns_zone_virtual_network_link" "azurewebsites" {
   private_dns_zone_name = azurerm_private_dns_zone.azurewebsites.name
   name                  = "azurewebsites-link"
   registration_enabled  = false
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 
 resource "azurerm_private_dns_zone" "mysql" {
   name                = "privatelink.mysql.database.azure.com"
   resource_group_name = var.resource_group_name
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "mysql" {
@@ -24,4 +30,6 @@ resource "azurerm_private_dns_zone_virtual_network_link" "mysql" {
   private_dns_zone_name = azurerm_private_dns_zone.mysql.name
   name                  = "azurewebsites-link"
   registration_enabled  = false
+
+  lifecycle { ignore_changes = [tags] }
 }

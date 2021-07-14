@@ -10,6 +10,8 @@ data "azurerm_client_config" "current" {}
 resource "azurerm_resource_group" "mgmt" {
   name     = var.mgmt_resource_group_name
   location = var.location
+
+  lifecycle { ignore_changes = [ tags ] }
 }
 
 
@@ -22,6 +24,8 @@ resource "azurerm_storage_account" "state_storage" {
   account_kind             = "StorageV2"
   account_replication_type = "LRS"
   allow_blob_public_access = false
+
+  lifecycle { ignore_changes = [ tags ] }
 }
 
 #
@@ -33,4 +37,6 @@ resource "azurerm_container_registry" "shared_acr" {
   location            = azurerm_resource_group.mgmt.location
   sku                 = var.acr_sku
   admin_enabled       = true
+
+  lifecycle { ignore_changes = [ tags ] }
 }

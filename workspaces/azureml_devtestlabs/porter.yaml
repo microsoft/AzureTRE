@@ -54,7 +54,6 @@ parameters:
 mixins:
   - exec
   - docker
-
 install:
   - exec:
       description: "docker login"
@@ -66,38 +65,14 @@ install:
         u: "{{ bundle.credentials.azure_client_id }}"
         p: "{{ bundle.credentials.azure_client_secret }}"
   - exec:
-      description: "Install vanilla workspace"
-      command: porter
-      arguments:
-        - install
-      flags:
-        d: "{{ bundle.parameters.porter_driver }}"
-        reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-workspace-vanilla:v0.1.0"
-        cred: ./azure.json
-        parameter-set: ./parameters_workspace_vanilla.json
-        debug:
+      description: "Install Vanilla Workspace service"
+      command: ./install_workspace_vanilla.sh
   - exec:
-      description: "Install Azure ML Service"
-      command: porter
-      arguments:
-        - install
-      flags:
-        d: "{{ bundle.parameters.porter_driver }}"
-        reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-service-azureml:v0.1.0"
-        cred: ./azure.json
-        parameter-set: ./parameters_service_azureml.json
-        debug:
+      description: "Install DevTestLabs service"
+      command: ./install_service_devtestlabs.sh
   - exec:
-      description: "Install Dev Test Labs Virtual Desktop Service"
-      command: porter
-      arguments:
-        - install
-      flags:
-        d: "{{ bundle.parameters.porter_driver }}"
-        reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-service-devtestlabs:v0.1.0"
-        cred: ./azure.json
-        parameter-set: ./parameters_service_devtestlabs.json
-        debug:
+      description: "Install Azure ML service"
+      command: ./install_service_azureml.sh
 
 upgrade:
   - exec:
@@ -106,47 +81,9 @@ upgrade:
       arguments:
         - "This workspace does not implement upgrade action"
 
-# TODO: uninstall does not work at present, will need remote porter state
-uninstall:
-  - exec:
-      description: "docker login"
-      command: docker
+uninstall:  
+- exec:
+      description: "Uninstall workspace"
+      command: echo
       arguments:
-        - login
-        - "{{ bundle.parameters.acr_name }}.azurecr.io"
-      flags:
-        u: "{{ bundle.credentials.azure_client_id }}"
-        p: "{{ bundle.credentials.azure_client_secret }}"
-  - exec:
-      description: "Uninstall Dev Test Labs Virtual Desktop Service"
-      command: porter
-      arguments:
-        - uninstall
-      flags:
-        d: "{{ bundle.parameters.porter_driver }}"
-        reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-service-devtestlabs:v0.1.0"
-        cred: ./azure.json
-        parameter-set: ./parameters_service_devtestlabs.json
-        debug:
-  - exec:
-        description: "Uninstall Azure ML service"
-        command: porter
-        arguments:
-          - uninstall
-        flags:
-          d: "{{ bundle.parameters.porter_driver }}"
-          reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-service-azureml:v0.1.0"
-          cred: ./azure.json
-          parameter-set: ./parameters.json
-          debug:
-  - exec:
-      description: "Uninstall vanilla workspace"
-      command: porter
-      arguments:
-        - uninstall
-      flags:
-        d: "{{ bundle.parameters.porter_driver }}"
-        reference: "{{ bundle.parameters.acr_name }}.azurecr.io/tre-workspace-vanilla:v0.1.0"
-        cred: ./azure.json
-        parameter-set: ./parameters_workspace_vanilla.json
-        debug:
+        - "This workspace does not implement uninstall action"

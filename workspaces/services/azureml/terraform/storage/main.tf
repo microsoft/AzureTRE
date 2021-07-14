@@ -20,21 +20,26 @@ resource "azurerm_storage_account" "stg" {
   account_tier             = "Standard"
   account_replication_type = "GRS"
 
+  lifecycle { ignore_changes = [ tags ] }
+
   network_rules {
       bypass         = ["AzureServices"]
       default_action = "Deny"
   }
-
 }
 
 resource "azurerm_private_dns_zone" "filecore" {
   name                = "privatelink.file.core.windows.net"
   resource_group_name = data.azurerm_resource_group.ws.name
+
+  lifecycle { ignore_changes = [ tags ] }
 }
 
 resource "azurerm_private_dns_zone" "blobcore" {
   name                = "privatelink.blob.core.windows.net"
   resource_group_name = data.azurerm_resource_group.ws.name
+
+  lifecycle { ignore_changes = [ tags ] }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "filecorelink" {
@@ -42,6 +47,8 @@ resource "azurerm_private_dns_zone_virtual_network_link" "filecorelink" {
   resource_group_name   = data.azurerm_resource_group.ws.name
   private_dns_zone_name = azurerm_private_dns_zone.filecore.name
   virtual_network_id    = data.azurerm_virtual_network.ws.id
+
+  lifecycle { ignore_changes = [ tags ] }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "blobcorelink" {
@@ -49,6 +56,8 @@ resource "azurerm_private_dns_zone_virtual_network_link" "blobcorelink" {
   resource_group_name   = data.azurerm_resource_group.ws.name
   private_dns_zone_name = azurerm_private_dns_zone.blobcore.name
   virtual_network_id    = data.azurerm_virtual_network.ws.id
+
+  lifecycle { ignore_changes = [ tags ] }
 }
 
 resource "azurerm_private_endpoint" "stgfilepe" {
@@ -56,6 +65,8 @@ resource "azurerm_private_endpoint" "stgfilepe" {
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
   subnet_id           = data.azurerm_subnet.services.id
+
+  lifecycle { ignore_changes = [ tags ] }
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group"
@@ -75,6 +86,8 @@ resource "azurerm_private_endpoint" "stgblobpe" {
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
   subnet_id           = data.azurerm_subnet.services.id
+
+  lifecycle { ignore_changes = [ tags ] }
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group"
