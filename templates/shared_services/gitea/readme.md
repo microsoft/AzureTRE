@@ -4,7 +4,7 @@ As outbound access to public git repositories such as GitHub is often blocked a 
 
 ## Deploy
 
-To deploy run:
+To deploy independantly from the core TRE run:
 
 ```cmd
 make terraform-deploy DIR=./templates/shared_services/gitea-mysql
