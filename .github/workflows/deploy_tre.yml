@@ -135,6 +135,15 @@ jobs:
             export TF_VAR_debug="false"
 
             make all
+      - name: Notify dedicated teams channel
+        uses: sachinkundu/ms-teams-notification@1.4
+        if: failure()
+        with:
+          github-token: ${{ github.token }}
+          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+          notification-summary: "Deploy TRE Failed"
+          notification-color: dc3545
+          timezone: Europe/Zurich
 
   deploy_processor_function:
     name: Deploy Processor Function
@@ -176,6 +185,16 @@ jobs:
           publish-profile: ${{ steps.publishprofile.outputs.profile }}
           scm-do-build-during-deployment: true
           enable-oryx-build: true
+      - name: Notify dedicated teams channel
+        uses: sachinkundu/ms-teams-notification@1.4
+        if: failure()
+        continue-on-error: true
+        with:
+          github-token: ${{ github.token }}
+          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+          notification-summary: "Deploy Processor Function Failed"
+          notification-color: dc3545
+          timezone: Europe/Zurich          
 
   publish_bundles:
     name: Publish Vanilla Bundle
@@ -248,6 +267,16 @@ jobs:
           export AUTH_APP_CLIENT_ID=$AUTH_APP_CLIENT_ID
           cd e2e_tests
           PYTHONPATH=. python -m pytest --junit-xml pytest_e2e.xml
+      - name: Notify dedicated teams channel
+        uses: sachinkundu/ms-teams-notification@1.4
+        if: failure()
+        continue-on-error: true
+        with:
+          github-token: ${{ github.token }}
+          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+          notification-summary: "E2E Tests failed"
+          notification-color: dc3545
+          timezone: Europe/Zurich        
       
       - name: Expose workspace id
         shell: bash
@@ -387,7 +416,6 @@ jobs:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
     - name: Publish and deploy azureml_devtestlabs workspace bundle
       shell: bash
-      continue-on-error: true
       env:
         TRE_ID: ${{ secrets.TRE_ID }}
         LOCATION: ${{ secrets.LOCATION }}
@@ -429,7 +457,6 @@ jobs:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
     - name: Publish and deploy innereye_deeplearning_inference workspace bundle
       shell: bash
-      continue-on-error: true
       env:
         TRE_ID: ${{ secrets.TRE_ID }}
         LOCATION: ${{ secrets.LOCATION }}
@@ -457,3 +484,13 @@ jobs:
           export PORTER_DRIVER=docker
           make porter-publish DIR=./workspaces/innereye_deeplearning_inference
           make porter-install DIR=./workspaces/innereye_deeplearning_inference
+    - name: Notify dedicated teams channel
+      uses: sachinkundu/ms-teams-notification@1.4
+      if: success()
+      continue-on-error: true
+      with:
+        github-token: ${{ github.token }}
+        ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+        notification-summary: "Deployment Success"
+        notification-color: 28a745
+        timezone: Europe/Zurich
