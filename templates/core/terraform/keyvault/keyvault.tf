@@ -13,9 +13,10 @@ resource "azurerm_key_vault" "kv" {
     object_id = data.azurerm_client_config.deployer.object_id
 
     key_permissions         = ["Get", "List", "Update", "Create", "Import", "Delete", ]
-    secret_permissions      = ["Get", "List", "Set", "Delete" ]
-    certificate_permissions = ["Get", "List", "Update", "Create", "Import", "Delete", "Purge" ]
-    storage_permissions     = ["Get", "List", "Update", "Delete" ]
+    secret_permissions      = ["Get", "List", "Set", "Delete"]
+    certificate_permissions = ["Get", "List", "Update", "Create", "Import", "Delete", "Purge"]
+    storage_permissions     = ["Get", "List", "Update", "Delete"]
+  }
 }
 
 resource "azurerm_key_vault_access_policy" "managed_identity" {
@@ -32,7 +33,7 @@ resource "azurerm_private_dns_zone" "vaultcore" {
   name                = "privatelink.vaultcore.azure.net"
   resource_group_name = var.resource_group_name
 
-  lifecycle { ignore_changes = [ tags ] }
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "vaultcorelink" {
@@ -41,7 +42,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "vaultcorelink" {
   private_dns_zone_name = azurerm_private_dns_zone.vaultcore.name
   virtual_network_id    = var.core_vnet
 
-  lifecycle { ignore_changes = [ tags ] }
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_endpoint" "kvpe" {
@@ -50,7 +51,7 @@ resource "azurerm_private_endpoint" "kvpe" {
   resource_group_name = var.resource_group_name
   subnet_id           = var.shared_subnet
 
-  lifecycle { ignore_changes = [ tags ] }
+  lifecycle { ignore_changes = [tags] }
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group"
