@@ -2,14 +2,6 @@
 
 ## Project Status
 
-**This project is currently under active development, and not yet ready for production deployments.**
-
-Development is being carried out in the [develop](https://github.com/microsoft/AzureTRE/tree/develop/) branch.
-
-**This project is currently under active development, and not yet ready for production deployments.**
-
-Development is being carried out in the [develop](https://github.com/microsoft/AzureTRE/tree/develop/) branch.
-
 The aim is to bring together learnings from past customer engagements where TREs have been built into a single reference solution. This is a solution accelerator aiming to be a great starting point for a customized TRE solution. You're encouraged to download and customize the solution to meet your requirements
 
 This project does not have a dedicated team of maintainers but relies on you and the community to maintain and enhance the solution. Microsoft will on project-to-project basis continue to extend the solution in collaboration with customers and partners. No guarantees can be offered as to response times on issues, feature requests, or to the long term road map for the project.
@@ -25,6 +17,10 @@ Trusted Research Environments (TREs) enforce a secure boundary around distinct w
 Workspaces can be configured with a variety of tools to enable tasks such as the development of machine learning models, data engineering, data analysis, and software development. Authorized users should be able to deploy and configure their tools without a dependency on IT teams.
 
 A successful Trusted Research Environments enables users to be as productive, if not more productive than they would be working in environments without strict information governance controls.
+
+## Documentation
+
+See [Index](./docs/index.md) to get started.
 
 ## Support
 

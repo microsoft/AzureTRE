@@ -1,68 +1,18 @@
-# Azure TRE Deployment QuickStart
+# Deploying Azure TRE manually
 
-By following this quickstart, you will deploy a new Azure TRE instance for development and testing purposes.
+By following this guide you will deploy a new Azure TRE instance for development and testing purposes.
 
-The most straightforward way to get up and running is to deploy direct from the `microsoft/AzureTRE` repository.
+The most straightforward way to get up and running is to deploy direct from the [`microsoft/AzureTRE`](https://github.com/microsoft/AzureTRE) repository.
 
-Production deployments should take advantage of your chosen DevOps CD tooling.
+## Steps
 
-> The quickstart assumes usage of Linux or WSL on Windows.
+### Bootstrap and create prerequisite resources
 
-## Prerequisites
+1. By now you should have a [developer environment](./dev-environment.md) set up
+1. Create service principals as explained in [Bootstrapping](./bootstrapping.md) document
+1. Create app registrations for auth; follow the [Authentication & authorization](./auth.md) guide
 
-You will require the following prerequisites installed.
-
-- Terraform >= v0.15.3
-- Azure CLI >= 2.21.0
-- Docker
-- Azure Functions Core Tools
-
-> The above prerequisites will already be present if you are using GitHub Codespaces, or the provided Dev Container in VS Code.
-
-You will also need:
-
-- An Azure Subscription
-- An Azure Active Directory Service Principal
-  (Instructions later in this quickstart)
-
-## Clone the repository
-
-Clone the repository to your local machine ( `git clone https://github.com/microsoft/AzureTRE.git` ), or you may choose to use our pre-configured dev container via GitHub Codespaces.
-
-![Clone Options](../docs/assets/clone_options.png)
-
-## Deploy Infrastructure
-
-### Log into your chosen Azure subscription
-
-Login and select the Azure subscription you wish to deploy to:
-
-```cmd
-az login
-az account list
-az account set -s <subscription_id>
-```
-
-When running locally the credentials of the logged in user will be used to deploy the infrastructure. Hence it is essential the user has enough permissions to deploy all resources.
-
-### Create a service principal
-
-The resource processor needs service principal credentials to deploy resources.
-
-Run the following commnand to create a new service principal with the Owner role. Make note of the `clientId` and `clientSecret` values returned.
-
-```cmd
-az ad sp create-for-rbac --name "sp-aztre-resource-processor" --role Owner --scopes /subscriptions/<subscription_id> --sdk-auth
-```
-
-<!-- markdownlint-disable-next-line MD013 -->
-> *) The creation of the service principal with "Contributor" role is explained in [CD setup guide](./cd-setup.md#create-service-principals).  The `tre-deploy` target in the [Makefile](../Makefile) runs [a script](../devops/scripts/set_contributor_sp_secrets.sh) that inserts the client ID and secret into a Key Vault created in the same very step. If the script fails, the system will be up and running, but the deployment processor function will not be able to deploy workspace resources.
-
-### Setup auth
-
-Read through the guide [auth.md](auth.md). You need to create various app registrations and use that information below.
-
-### Configuration
+### Configure variables
 
 Before running any of the scripts, the configuration variables need to be set. This is done in an `.env` file, and this file is read and parsed by the scripts.
 
@@ -85,7 +35,7 @@ cp devops/.env.sample devops/.env
 | `IMAGE_TAG` | The default tag for Docker images that will be pushed to the container registry and deployed with the Azure TRE. |
 | `ACR_NAME` | A globally unique name for the Azure Container Registry (ACR) that will be created to store deployment images. |
 | `ARM_SUBSCRIPTION_ID` | *Optional for manual deployment.* The Azure subscription ID for all resources. |
-| `RESOURCE_PROCESSOR_CLIENT_ID` | The client (app) ID of a service principal with "Owner" role to the subscription as created above. Used by the deployment processor function to deploy workspaces and workspace services. |
+| `RESOURCE_PROCESSOR_CLIENT_ID` | The client (app) ID of a service principal with "Owner" role to the subscription as created above. Used by Resource Processor Function to deploy workspaces and workspace services. |
 | `RESOURCE_PROCESSOR_CLIENT_SECRET` | The client secret (app password) of a service principal with "Onwer" role to the subscription as created above. Used by the depl09oyment processor function to deploy workspaces and workspace services. |
 | `PORTER_DRIVER` | *Optional for manual deployment.* Valid values are `docker` or `azure`. If deploying manually use `docker` if using Azure Container Instances and the [Azure CNAB Driver](https://github.com/deislabs/cnab-azure-driver) use `azure` |
 | `SWAGGER_UI_CLIENT_ID` | Generated when following auth guide. Client ID for swagger client to make requests. |
@@ -119,7 +69,7 @@ API_CLIENT_SECRET=secret
 PORTER_DRIVER=docker
 PORTER_OUTPUT_CONTAINER_NAME=porterout
 
-# 
+# Debug mode
 DEBUG="false"
 ```
 
@@ -133,7 +83,7 @@ cp templates/core/.env.sample templates/core/.env
 | ------------------------- | ----------- |
 | `TRE_ID` | A globally unique identifier. `TRE_ID` can be found in the resource names of the Azure TRE instance; for example, a `TRE_ID` of `mytre-dev-3142` will result in a resource group name for Azure TRE instance of `rg-mytre-dev-3142`. This must be less than 12 characters. Allowed characters: Alphanumeric, underscores, and hyphens. |
 | `ADDRESS_SPACE` | The address space for the Azure TRE core virtual network. |
-| `MANAGEMENT_API_IMAGE_TAG` | The tag of the management API image. Make it the same as IMAGE_TAG above.|
+| `MANAGEMENT_API_IMAGE_TAG` | The tag of the Management API image. Make it the same as `IMAGE_TAG` above.|
 
 ### Deploy
 
@@ -168,7 +118,7 @@ make letsencrypt
 
 Note that there are rate limits with Let's Encrypt, so this should not be run when not needed.
 
-## Details of infrastructure deployment
+## Details of deployment and infrastructure
 
 The following section is for informational purpose and the steps don't need to be executed as they are part of make all above.
 
@@ -220,13 +170,13 @@ cd templates/core/terraform
 terraform output azure_tre_fqdn
 ```
 
-Open the following URL in a browser and you should see the Open API docs for the Azure TRE management API.
+Open the following URL in a browser and you should see the Open API docs of Azure TRE Management API.
 
 ```plaintext
 https://<azure_tre_fqdn>/docs
 ```
 
-You can also create a request to the `api/health` endpoint to verify that the management API is deployed and responds. You should see a *pong* response as a result of below request.
+You can also create a request to the `api/health` endpoint to verify that Management API is deployed and responds. You should see a *pong* response as a result of below request.
 
 ```cmd
 curl https://<azure_tre_fqdn>/api/health
