@@ -15,3 +15,6 @@ variable "mgmt_storage_account_name" {}
 variable "mgmt_resource_group_name" {}
 variable "terraform_state_container_name" {}
 variable "app_insights_connection_string" {}
+variable "keyvault_id" {
+  
+}

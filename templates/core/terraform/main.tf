@@ -162,6 +162,7 @@ module "resource_processor_vmss_porter" {
   terraform_state_container_name                  = var.terraform_state_container_name
   resource_processor_client_id                    = var.resource_processor_client_id
   resource_processor_client_secret                = var.resource_processor_client_secret
+  keyvault_id         = module.keyvault.keyvault_id
 }
 
 

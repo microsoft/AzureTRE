@@ -39,6 +39,12 @@ resource "random_password" "password" {
   override_special = "_%@"
 }
 
+resource "azurerm_key_vault_secret" "resource_processor_vmss_password" {
+  name         = "resource_processor_vmss_password"
+  value        = random_password.password.result
+  key_vault_id = var.keyvault_id
+}
+
 resource "azurerm_user_assigned_identity" "acr_pull" {
   name                = "acr_pull"
   location            = var.location
