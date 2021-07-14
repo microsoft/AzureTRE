@@ -1,0 +1,12 @@
+{
+  "scriptFile": "__init__.py",
+  "bindings": [
+    {
+      "name": "msg",
+      "type": "serviceBusTrigger",
+      "direction": "in",
+      "queueName": "%SERVICE_BUS_RESOURCE_REQUEST_QUEUE%",
+      "connection": "SERVICE_BUS_CONNECTION_STRING"
+    }
+  ]
+}

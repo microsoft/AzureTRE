@@ -2,7 +2,7 @@
 
 SHELL:=/bin/bash
 
-all: bootstrap mgmt-deploy build-api-image push-api-image build-cnab-image push-cnab-image tre-deploy
+all: bootstrap mgmt-deploy build-api-image push-api-image build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image build-cnab-image push-cnab-image tre-deploy
 
 bootstrap:
 	echo -e "\n\e[34m»»» 🧩 \e[96mBootstrap Terraform\e[0m..." \
@@ -37,6 +37,22 @@ build-cnab-image:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/set_docker_sock_permission.sh \
 	&& docker build -t "$${ACR_NAME}.azurecr.io/microsoft/azuretre/cnab-aci:$${IMAGE_TAG}" ./CNAB_container/
+
+
+build-resource-processor-vm-porter-image:
+	echo -e "\n\e[34m»»» 🧩 \e[96mBuilding Image\e[0m..." \
+	&& . ./devops/scripts/check_dependencies.sh \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& . ./devops/scripts/set_docker_sock_permission.sh \
+	&& docker build -t "$${ACR_NAME}.azurecr.io/microsoft/azuretre/resource-processor-vm-porter:$${IMAGE_TAG}" -f ./processor_function/vm_porter/Dockerfile ./processor_function/
+
+push-resource-processor-vm-porter-image:
+	echo -e "\n\e[34m»»» 🧩 \e[96mPushing Images\e[0m..." \
+	&& . ./devops/scripts/check_dependencies.sh \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& . ./devops/scripts/set_docker_sock_permission.sh \
+	&& az acr login -n $${ACR_NAME} \
+	&& docker push "$${ACR_NAME}.azurecr.io/microsoft/azuretre/resource-processor-vm-porter:$${IMAGE_TAG}"
 
 push-api-image:
 	echo -e "\n\e[34m»»» 🧩 \e[96mPushing Images\e[0m..." \
@@ -80,6 +96,8 @@ letsencrypt:
 tre-destroy:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDestroying TRE\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
+	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
 	&& cd ./templates/core/terraform/ && ./destroy.sh
