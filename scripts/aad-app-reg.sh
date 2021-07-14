@@ -294,7 +294,7 @@ echo "Register the \"${appName}Swagger UI\" application"
 # Is the API app already registered?
 declare existingSwaggerUIApp=$(get_existing_app "${appName} Swagger UI")
 if [[ -n ${existingSwaggerUIApp} ]]; then
-	swaggerUIAppObjectId=$(echo "${existingSwaggerUIApp}" | jq '.objectId')
+	swaggerUIAppObjectId=$(echo "${existingSwaggerUIApp}" | jq -r '.objectId')
 	echo "Updating app ${swaggerUIAppObjectId}"
 	az rest --method PATCH --uri "${msGraphUri}/applications/${swaggerUIAppObjectId}" --headers Content-Type=application/json --body "${swaggerUIApp}"
 	swaggerAppId=$(az ad app show --id ${swaggerUIAppObjectId} --query "appId" -o tsv)
