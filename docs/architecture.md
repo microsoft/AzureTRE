@@ -11,7 +11,7 @@ The Azure TRE management plane consists of two groups of components:
 
 > Shared Services is still work in progress. Please see [#23](https://github.com/microsoft/AzureTRE/issues/23), [#22](https://github.com/microsoft/AzureTRE/issues/21), & [#21](https://github.com/microsoft/AzureTRE/issues/21)
 
-Management API is a services that users can interact with to request changes to Workspaces. To create, update, delete Workspaces or Workspace Services inside each Workspace. The Composition Service is doing the actual work of mutating the state of each Workspace including the Workspace Services.
+Management API is a service that users can interact with to request changes to workspaces e.g., to create, update, delete workspaces and workspace services inside each workspace. The Composition Service is doing the actual work of mutating the state of each Workspace including the Workspace Services.
 
 Ingress/egress components governs all inbound and outbound traffic from the public Internet to and from Azure TRE including the Workspaces. The Firewall Service is managing the egress rules of the Firewall.
 
@@ -22,20 +22,32 @@ Package Mirror is also a read-only front for developer/researcher application pa
 
 The Composition Service is responsible for managing and mutating Workspaces and Workspace Service.
 
-A Workspace is an instance of a Workspace Template. A Workspace Template is implemented as a [Porter](https://porter.sh/) bundle - read more about [Authoring Workspaces Templates](authoring-workspaces.md). A Porter bundle is a full encapsulated bundle with everything needed (binaries, scripts, IoC templates etc.) to provision an instance of Workspace Template.
+A Workspace is an instance of a Workspace Template. A Workspace Template is implemented as a [Porter](https://porter.sh/) bundle - read more about [Authoring workspaces templates](./authoring-workspace-templates.md). A Porter bundle is a full encapsulated versioned bundle with everything needed (binaries, scripts, IoC templates etc.) to provision an instance of Workspace Template.
 The [TRE Administrator](./user-roles.md#tre-administrator) can register a Porter bundle to use the Composition Service to provision instances of the Workspace Templates.
 To do so requires:
 
 1. The Porter bundle to be pushed to the Azure Container Registry (ACR).
-1. Registering the Workspace through the Management API.
+1. Registering the Workspace through Management API.
+
+Details on how to [register a Workspace Template](registering-workspace-templates.md).
 
 ### Provision a Workspace
 
 ![Composition Service](./assets/composition-service.png)
 
+The Composition Service consists of multiple components.
+
+| Component Name | Responsibility / Description |
+| --- | --- |
+| Management API | An API responsible for performing all operations on Workspaces and managing Workspace Templates. |
+| Configuration Store | Keeping the state of Workspaces and Workspace Templates. The store uses [Cosmos DB (SQL)](https://docs.microsoft.com/en-us/azure/cosmos-db/introduction). |
+| Service Bus | [Azure Service Bus](https://docs.microsoft.com/en-us/azure/service-bus-messaging/service-bus-messaging-overview) responsible for reliable delivery of messages between components.  |
+| Resource Processor | Responsible for starting the process of mutating a Workspace via a Workspace Template. |
+| Deployment Client| Responsible for processing the Workspace Template. [Azure CNAB Driver](https://github.com/deislabs/cnab-azure-driver) is used to execute the Porter bundle. |
+
 The flow to provision a Workspace is the following (the flow is the same for all kinds of mutations to a Workspace):
 
-1. A HTTP request to the Management API to create a new Workspace. The request contains information like the name of the Workspace, the Workspace Template to use and the parameters required for the Workspace Template (Workspace Templates can via a JSON Schema expose the the parameters).
+1. A HTTP request to Management API to create a new Workspace. The request contains information like the name of the Workspace, the Workspace Template to use and the parameters required for the Workspace Template (Workspace Templates can via a JSON Schema expose the the parameters).
 1. The desired state of the Workspace is updated in the Configuration Store.
 1. A command message with the Workspace Template reference and parameters are send to the `workspacequeue`.
 
@@ -57,7 +69,7 @@ The flow to provision a Workspace is the following (the flow is the same for all
     ```bash
     # simplified for readability
     porter <action> --reference <ACR name>.azurecr.io/bundles/<name>:<version> --params key=value --cred <credentials set name or file>
-    
+
     # Example
     porter install --reference msfttreacr.azurecr.io/bundles/VanillaWorkspaceTemplate:1.0 --params param1=value1 --cred azure.json
     ```
@@ -113,5 +125,5 @@ Inbound traffic from the Internet is only allowed through the Application Gatewa
 | `AppGwSubnet` | Subnet for Azure Application Gateway controlling ingress traffic. |
 | `AzureFirewallSubnet` | Subnet for Azure Firewall controlling egress traffic. |
 | `AciSubnet` | Subnet for Azure Container Instances (ACI) used by the Composition Service to host Docker containers to execute Porter bundles that deploys Workspaces. |
-| `WebAppSubnet` | Subnet for the Management API and Resource Processor function. |
+| `WebAppSubnet` | Subnet for Management API and Resource Processor Function. |
 | `SharedSubnet` | Shared Services subnet for all things shared by TRE Management and Workspaces. Future Shared Services are Firewall Shared Service, Source Mirror Shared Service and Package Mirror Shared Service. |

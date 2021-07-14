@@ -24,13 +24,13 @@ variable "address_space" {
 
 variable "management_api_image_repository" {
   type        = string
-  description = "Repository for management API image"
+  description = "Repository for Management API image"
   default     = "microsoft/azuretre/management-api"
 }
 
 variable "management_api_image_tag" {
   type        = string
-  description = "Tag for management API image"
+  description = "Tag for Management API image"
   default     = "main-latest"
 }
 

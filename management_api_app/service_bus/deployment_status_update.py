@@ -14,6 +14,7 @@ from db.errors import EntityDoesNotExist
 from api.dependencies.database import get_db_client
 from db.repositories.workspaces import WorkspaceRepository
 from models.domain.workspace import DeploymentStatusUpdateMessage, Workspace
+from models.domain.resource import Status
 
 
 @asynccontextmanager
@@ -66,6 +67,8 @@ def create_updated_deployment_document(workspace: Workspace, message: Deployment
     Returns:
         [Workspace]: Workspace with the deployment sub doc updated
     """
+    if workspace.deployment.status == Status.Deployed:
+        return workspace  # Never update a deployed workspace.
     workspace.deployment.status = message.status
     workspace.deployment.message = message.message
     return workspace

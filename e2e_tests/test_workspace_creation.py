@@ -1,31 +1,30 @@
 import pytest
+import asyncio
+import config
+from starlette import status
 from httpx import AsyncClient
 from resources import strings
-from starlette import status
-import config
-import time
 
 pytestmark = pytest.mark.asyncio
 
 
-async def authenticate() -> str:
+@pytest.fixture
+async def token() -> str:
     async with AsyncClient() as client:
 
-        headers = {'content-type': "application/x-www-form-urlencoded"}
+        headers = {'Content-Type': "application/x-www-form-urlencoded"}
         payload = f"grant_type=password&resource={config.RESOURCE}&username={config.USERNAME}&password={config.PASSWORD}&scope={config.SCOPE}&client_id={config.CLIENT_ID}"
 
-        response = await client.post(f"https://login.microsoftonline.com/{config.AUTH_TENANT_ID}/oauth2/token",
+        url = f"https://login.microsoftonline.com/{config.AUTH_TENANT_ID}/oauth2/token"
+        response = await client.post(url,
                                      headers=headers, data=payload)
-        if (response.status_code == status.HTTP_200_OK):
-            return response.json()["access_token"]
-        else:
-            return None
+        token = response.json()["access_token"]
+
+        assert token is not None, "Token not returned"
+        return token if (response.status_code == status.HTTP_200_OK) else None
 
 
-async def test_get_workspace_templates() -> None:
-    token = await authenticate()
-
-    assert token is not None, "Token not returned"
+async def test_get_workspace_templates(token) -> None:
 
     async with AsyncClient() as client:
         headers = {'Authorization': f'Bearer {token}'}
@@ -37,8 +36,7 @@ async def test_get_workspace_templates() -> None:
         assert (strings.VANILLA_WORKSPACE in response.json()["templateNames"]), "No vanilla workspace found"
 
 
-async def test_get_vanilla_workspace_template() -> None:
-    token = await authenticate()
+async def test_get_vanilla_workspace_template(token) -> None:
 
     assert token is not None, "Token not returned"
 
@@ -52,29 +50,28 @@ async def test_get_vanilla_workspace_template() -> None:
         assert (response.status_code == status.HTTP_200_OK), "Request for workspace creation failed"
 
 
-async def deployment_started(client, workspaceid, headers) -> bool:
+async def deployment_done(client, workspaceid, headers) -> bool:
     response = await client.get(
         f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACES}/{workspaceid}",
         headers=headers)
-
-    if response.json()["workspace"]["deployment"]["status"] == strings.NOT_DEPLOYED:
-        return False
-    else:
-        return True
+    status = response.json()["workspace"]["deployment"]["status"]
+    return (True, status) if status in [strings.RESOURCE_STATUS_DEPLOYED, strings.RESOURCE_STATUS_FAILED] else (False, status)
 
 
-async def test_create_vanilla_workspace() -> None:
-    token = await authenticate()
+@pytest.mark.timeout(1200)  # Timeout for vanilla deployment should be 20 mins max
+async def test_create_vanilla_workspace(token) -> None:
 
     assert token is not None, "Token not returned"
 
     async with AsyncClient() as client:
         headers = {'Authorization': f'Bearer {token}'}
 
-        payload = {"displayName": "My workspace",
-                   "description": "workspace for team X",
+        payload = {"displayName": "E2E test",
+                   "description": "workspace for E2E",
                    "workspaceType": "tre-workspace-vanilla",
-                   "parameters": "",
+                   "parameters": {
+                       "address_space": "192.168.25.0/24"  # Reserving this for E2E tests.
+                   },
                    "authConfig":
                        {"provider": "AAD",
                         "data":
@@ -91,5 +88,11 @@ async def test_create_vanilla_workspace() -> None:
 
         workspaceid = response.json()["workspaceId"]
 
-        while not await deployment_started(client, workspaceid, headers):
-            time.sleep(10)
+        with open('workspace_id.txt', 'w') as f:
+            f.write(workspaceid)
+
+        done, done_state = await deployment_done(client, workspaceid, headers)
+        while not done:
+            await asyncio.sleep(60)
+            done, done_state = await deployment_done(client, workspaceid, headers)
+        assert done_state != strings.RESOURCE_STATUS_FAILED

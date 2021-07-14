@@ -13,7 +13,7 @@ RUN if [ "${INSTALL_NODE}" = "true" ]; then su vscode -c "umask 0002 && . /usr/l
 RUN apt-get update && apt-get install -y gnupg software-properties-common curl \
     && curl -fsSL https://apt.releases.hashicorp.com/gpg |  apt-key add - \
     && apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
-    && apt-get update && apt-get install -y terraform 
+    && apt-get update && apt-get install -y terraform
 
 # Install Azure CLI
 RUN apt-get update \
@@ -21,7 +21,7 @@ RUN apt-get update \
     && curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null \
     && AZ_REPO=$(lsb_release -cs) \
     && echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | tee /etc/apt/sources.list.d/azure-cli.list \
-    && apt-get update && apt-get -y install azure-cli 
+    && apt-get update && apt-get -y install azure-cli
 
 # Make sure docker group id matches that on WSL.
 RUN groupadd --gid 1001 docker

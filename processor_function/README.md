@@ -1,26 +1,42 @@
-# Processor function
+# Resource Processor Function
 
 <!-- markdownlint-disable-next-line MD013 -->
-The processor function (sometimes referred to as resource or deployment processor) uses [Azure Container Instances (ACI)](https://docs.microsoft.com/en-us/azure/container-instances/) together with the [CNAB container image](../CNAB_container/Dockerfile), based on [Azure CNAB Driver](https://github.com/deislabs/cnab-azure-driver), to execute workspace and workspace service deployments. The workspace and workspace service packages are implemented as [Porter](https://porter.sh/) bundles.
+Resource Processor Function (sometimes referred to as the deployment processor) uses [Azure Container Instances (ACI)](https://docs.microsoft.com/en-us/azure/container-instances/) together with the [CNAB container image](../CNAB_container/Dockerfile), based on [Azure CNAB Driver](https://github.com/deislabs/cnab-azure-driver), to execute workspace and workspace service deployments. The workspace and workspace service packages are implemented as [Porter](https://porter.sh/) bundles.
 
 <!-- markdownlint-disable-next-line MD013 -->
-The processor function waits for Service Bus messages, sent my the [the management API](../management_api_app/README.md), in the resource request queue containing the bundle details and the action to execute, prepares the environment for the execution in the ACI and follows through the deployment process. The deployment status is reported back to the management API using Service Bus messages but with in a deployment status update queue.
+The processor function waits for Service Bus messages, sent by [Management API](../management_api_app/README.md), in the resource request queue containing the bundle details and the action to execute, prepares the environment for the execution in the ACI and follows through the deployment process. The deployment status is reported back to Management API using Service Bus messages but with in a deployment status update queue.
+
+*Table of contents:*
+
+* [Prerequisites](#prerequisites)
+  * [Tools](#tools)
+  * [Azure resources](#azure-resources)
+* [Configuration](#configuration)
+  * [General](#general)
+  * [Azure CNAB Driver](#azure-cnab-driver)
+  * [Service Bus](#service-bus)
+  * [Required by workspace and service templates](#required-by-workspace-and-service-templates)
+* [Running the function locally](#running-the-function-locally)
+  * [Triggering the function](#triggering-the-function)
+  * [Troubleshooting](#troubleshooting)
+* [Observability](#observability)
+* [Unit tests](#unit-tests)
 
 ## Prerequisites
 
-Tools:
+### Tools
 
 * [Python 3.8.x](https://www.python.org/downloads/)
 * [Azure Function Core Tools](https://docs.microsoft.com/azure/azure-functions/functions-run-local?tabs=windows%2Ccsharp%2Cbash#install-the-azure-functions-core-tools) - For testing locally
   * [The package source for Linux](https://www.npmjs.com/package/azure-functions-core-tools#linux) varies depending the version of the Linux distribution. Use command "`lsb_release -a`" to check your version.
 
-Resources:
+### Azure resources
 
 * [Application Insights](https://docs.microsoft.com/azure/azure-monitor/app/app-insights-overview) - Not required for testing locally
 * [Azure Container Instances](https://docs.microsoft.com/azure/container-instances/)
 * [Azure Container Registry](https://docs.microsoft.com/azure/container-registry/) with:
   * The [CNAB container image](../CNAB_container/Dockerfile)
-  * A workspace image (bundle) to deploy (see [Authoring workspaces](../docs/authoring-workspaces.md))
+  * A workspace image (bundle) to deploy (see [Authoring workspaces](../docs/authoring-workspace-templates.md))
 * [Azure Service Bus](https://docs.microsoft.com/azure/service-bus-messaging/) with two queues:
   * Resource request queue for messages triggering the function
   * Deployment status update queue for messages function sends about the progress of the deployment
@@ -74,15 +90,15 @@ See [Azure CNAB Driver environment variables](https://github.com/deislabs/cnab-a
 
 | Environment variable name | Description |
 | ------------------------- | ----------- |
-| `SEC_ARM_TENANT_ID` | The tenant ID of a service principal with privileges to provision workspace resources. See [Authoring workspaces - Credentials](../docs/authoring-workspaces.md#credentials). |
-| `SEC_ARM_SUBSCRIPTION_ID` | The subscription ID of a service principal with privileges to provision workspace resources. See [Authoring workspaces - Credentials](../docs/authoring-workspaces.md#credentials). |
-| `SEC_ARM_CLIENT_ID` | The application (client) ID of a service principal with privileges to provision workspace resources. See [Authoring workspaces - Credentials](../docs/authoring-workspaces.md#credentials). |
-| `SEC_ARM_CLIENT_SECRET` | The application password (client secret) of a service principal with privileges to provision workspace resources. See [Authoring workspaces - Credentials](../docs/authoring-workspaces.md#credentials). |
+| `SEC_ARM_TENANT_ID` | The tenant ID of a service principal with privileges to provision workspace resources. See [Authoring workspaces - Credentials](../docs/authoring-workspace-templates.md#credentials). |
+| `SEC_ARM_SUBSCRIPTION_ID` | The subscription ID of a service principal with privileges to provision workspace resources. See [Authoring workspaces - Credentials](../docs/authoring-workspace-templates.md#credentials). |
+| `SEC_ARM_CLIENT_ID` | The application (client) ID of a service principal with privileges to provision workspace resources. See [Authoring workspaces - Credentials](../docs/authoring-workspace-templates.md#credentials). |
+| `SEC_ARM_CLIENT_SECRET` | The application password (client secret) of a service principal with privileges to provision workspace resources. See [Authoring workspaces - Credentials](../docs/authoring-workspace-templates.md#credentials). |
 | `param_tfstate_resource_group_name` | The name of the resource group containing the Terraform state store for the workspace/service deployment. |
 | `param_tfstate_storage_account_name` | The name of the storage account containing the Terraform state store for the workspace/service deployment. |
 | `param_tfstate_container_name` | The name of the container for the Terraform state store for the workspace/service deployment. |
 
-See [Authoring workspaces](../docs/authoring-workspaces.md) for more information.
+See [Authoring Workspace Templates](../docs/authoring-workspace-templates.md) for more information.
 
 ## Running the function locally
 
@@ -182,4 +198,4 @@ traces
 
 ## Unit tests
 
-The unit tests are located in folder `/processor_function/tests/`. To execute the unit tests run command `pytest` in `/processor_function/` folder.
+The unit tests are located in folder `/processor_function/tests_pf/`. To execute the unit tests run command `pytest` in `/processor_function/` folder.
