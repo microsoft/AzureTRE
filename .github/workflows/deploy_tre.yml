@@ -134,19 +134,19 @@ jobs:
             export TF_VAR_resource_processor_client_secret=$RESOURCE_PROCESSOR_CLIENT_SECRET
             export TF_VAR_debug="false"
 
-            # TEMP DO NOT MERGE
-            cd ./templates/core/terraform/
-            export TF_VAR_docker_registry_server="$TF_VAR_acr_name.azurecr.io"
-            export TF_VAR_docker_registry_username=$TF_VAR_acr_name
-            export TF_VAR_docker_registry_password=$(az acr credential show --name ${TF_VAR_acr_name} --query passwords[0].value -o tsv | sed 's/"//g')
-            export TF_VAR_management_api_image_tag=$TF_VAR_management_api_image_tag
+            # # TEMP DO NOT MERGE
+            # cd ./templates/core/terraform/
+            # export TF_VAR_docker_registry_server="$TF_VAR_acr_name.azurecr.io"
+            # export TF_VAR_docker_registry_username=$TF_VAR_acr_name
+            # export TF_VAR_docker_registry_password=$(az acr credential show --name ${TF_VAR_acr_name} --query passwords[0].value -o tsv | sed 's/"//g')
+            # export TF_VAR_management_api_image_tag=$TF_VAR_management_api_image_tag
 
-            terraform init -input=false -backend=true -reconfigure -upgrade \
-                -backend-config="resource_group_name=$TF_VAR_mgmt_resource_group_name" \
-                -backend-config="storage_account_name=$TF_VAR_mgmt_storage_account_name" \
-                -backend-config="container_name=$TF_VAR_terraform_state_container_name" \
-                -backend-config="key=${TF_VAR_tre_id}"
-            terraform import module.keyvault.azurerm_key_vault_access_policy.deployer /subscriptions/8f987318-0ccb-4831-bde1-5cb0146f2d91/resourceGroups/rg-cse-msr-dev/providers/Microsoft.KeyVault/vaults/kv-cse-msr-dev/objectId/fe46b9fe-4452-42ab-bbc3-151914db72a8
+            # terraform init -input=false -backend=true -reconfigure -upgrade \
+            #     -backend-config="resource_group_name=$TF_VAR_mgmt_resource_group_name" \
+            #     -backend-config="storage_account_name=$TF_VAR_mgmt_storage_account_name" \
+            #     -backend-config="container_name=$TF_VAR_terraform_state_container_name" \
+            #     -backend-config="key=${TF_VAR_tre_id}"
+            # terraform import module.keyvault.azurerm_key_vault_access_policy.deployer /subscriptions/8f987318-0ccb-4831-bde1-5cb0146f2d91/resourceGroups/rg-cse-msr-dev/providers/Microsoft.KeyVault/vaults/kv-cse-msr-dev/objectId/fe46b9fe-4452-42ab-bbc3-151914db72a8
 
             make all
 
