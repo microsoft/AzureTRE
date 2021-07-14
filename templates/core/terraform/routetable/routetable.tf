@@ -15,6 +15,11 @@ resource "azurerm_route_table" "rt" {
 }
 
 resource "azurerm_subnet_route_table_association" "rt_shared_subnet_association" {
-  subnet_id      = var.shared_subnet
+  subnet_id      = var.shared_subnet_id
+  route_table_id = azurerm_route_table.rt.id
+}
+
+resource "azurerm_subnet_route_table_association" "rt_resource_processor_subnet_association" {
+  subnet_id      = var.resource_processor_subnet_id
   route_table_id = azurerm_route_table.rt.id
 }
