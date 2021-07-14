@@ -1,0 +1,43 @@
+#cloud-config
+package_upgrade: true
+apt:
+  sources:
+    docker.list:
+      source: deb [arch=amd64] https://download.docker.com/linux/ubuntu $RELEASE stable
+      keyid: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
+      keyserver: hkp://keyserver.ubuntu.com:80
+    azure-cli.list:
+      source: deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $RELEASE main
+      keyid: BC528686B50D79E339D3721CEB3E94ADBE1229CF
+      keyserver: hkp://keyserver.ubuntu.com:80
+
+packages:
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  - docker-compose
+  - azure-cli
+  - gnupg2
+  - pass
+
+write_files:
+  - path: .env
+    content: |
+      SERVICE_BUS_CONNECTION_STRING=${service_bus_connection_string}
+      SERVICE_BUS_RESOURCE_REQUEST_QUEUE=${service_bus_resource_request_queue}
+      SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE=${service_bus_deployment_status_update_queue}
+      REGISTRY_SERVER=${docker_registry_server}
+      ARM_TENANT_ID=${arm_tenant_id}
+      ARM_SUBSCRIPTION_ID=${arm_subscription_id}
+      RESOURCE_PROCESSOR_CLIENT_ID=${resource_processor_client_id}
+      RESOURCE_PROCESSOR_CLIENT_SECRET=${resource_processor_client_secret}
+      MGMT_STORAGE_ACCOUNT_NAME=${mgmt_storage_account_name}
+      MGMT_RESOURCE_GROUP_NAME=${mgmt_resource_group_name}
+      TERRAFORM_STATE_CONTAINER_NAME=${terraform_state_container_name}
+      APPLICATIONINSIGHTS_CONNECTION_STRING=${app_insights_connection_string}
+
+runcmd:
+  - export DEBIAN_FRONTEND=noninteractive
+  - az login --identity -u ${acr_pull_identity}
+  - az acr login --name ${docker_registry_server}
+  - docker run -d -v /var/run/docker.sock:/var/run/docker.sock --restart always --env-file .env --name resource_processor_vmss_porter1   ${docker_registry_server}/${resource_processor_vmss_porter_image_repository}:${resource_processor_vmss_porter_image_tag}

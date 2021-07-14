@@ -89,3 +89,13 @@ resource "azurerm_subnet" "shared" {
   # notice that private endpoints do not adhere to NSG rules
   enforce_private_link_endpoint_network_policies = true
 }
+
+
+resource "azurerm_subnet" "resource_processor" {
+  name                                           = "ResourceProcessorSubnet"
+  virtual_network_name                           = azurerm_virtual_network.core.name
+  resource_group_name                            = var.resource_group_name
+  address_prefixes                               = [local.resource_processor_subnet_address_prefix]
+  # notice that private endpoints do not adhere to NSG rules
+  enforce_private_link_endpoint_network_policies = true
+}
