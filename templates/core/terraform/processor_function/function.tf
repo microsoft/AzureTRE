@@ -40,8 +40,9 @@ resource "azurerm_function_app" "procesorfunction" {
     CNAB_AZURE_VERBOSE                         = "true"
     CNAB_AZURE_PROPAGATE_CREDENTIALS           = "true"
     CNAB_AZURE_MSI_TYPE                        = "user"
-    CNAB_AZURE_DELETE_RESOURCES                = false
-    CNAB_AZURE_DELETE_OUTPUTS_FROM_FILESHARE   = false
+    # Enable these when debugging
+    # CNAB_AZURE_DELETE_RESOURCES                = false
+    # CNAB_AZURE_DELETE_OUTPUTS_FROM_FILESHARE   = false
     SEC_CNAB_AZURE_REGISTRY_USERNAME           = var.docker_registry_username
     SEC_CNAB_AZURE_REGISTRY_PASSWORD           = var.docker_registry_password
     REGISTRY_SERVER                            = var.docker_registry_server
