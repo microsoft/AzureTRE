@@ -5,7 +5,7 @@ on:
     # 1am each night https://crontab.guru/#0_1_*_*_*
     - cron: "0 1 * * *"
   push:
-    branches: [ develop, main, marrobi/issue456 ]
+    branches: [ develop, main ]
   workflow_dispatch:
 
 jobs:
@@ -137,7 +137,7 @@ jobs:
             make all
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
-        if: failure() && ${{ github.ref == 'refs/heads/develop' }} || ${{ github.ref == 'refs/heads/main' }}
+        if: ${{ failure() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') }}
         with:
           github-token: ${{ github.token }}
           ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
@@ -187,7 +187,7 @@ jobs:
           enable-oryx-build: true
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
-        if: failure() && ${{ github.ref == 'refs/heads/develop' }} || ${{ github.ref == 'refs/heads/main' }}
+        if: ${{ failure() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') }}
         continue-on-error: true
         with:
           github-token: ${{ github.token }}
@@ -269,7 +269,7 @@ jobs:
           PYTHONPATH=. python -m pytest --junit-xml pytest_e2e.xml
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
-        if: failure() && ${{ github.ref == 'refs/heads/develop' }} || ${{ github.ref == 'refs/heads/main' }}
+        if: ${{ failure() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') }}
         continue-on-error: true
         with:
           github-token: ${{ github.token }}
@@ -280,6 +280,7 @@ jobs:
       
       - name: Expose workspace id
         shell: bash
+        if: always()
         run: |
           cd e2e_tests
           wkspc_id=`cat workspace_id.txt`
@@ -287,6 +288,7 @@ jobs:
 
       - name: Clean created test resources
         shell: bash
+        if: always()
         env:
           TF_VAR_tre_id: ${{ secrets.TRE_ID }}
           WORKSPACE_ID: ${{ env.WORKSPACE_ID }}
@@ -305,7 +307,7 @@ jobs:
             export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
             export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
             export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
-
+            sleep 1m
             cd ./workspaces/vanilla/terraform/
             ./destroy.sh
 
@@ -486,7 +488,7 @@ jobs:
           make porter-install DIR=./workspaces/innereye_deeplearning_inference
     - name: Notify dedicated teams channel
       uses: sachinkundu/ms-teams-notification@1.4
-      if: success() && ${{ github.ref == 'refs/heads/develop' }} || ${{ github.ref == 'refs/heads/main' }}
+      if: ${{ success() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') }}
       continue-on-error: true
       with:
         github-token: ${{ github.token }}
