@@ -2,8 +2,6 @@
 
 By following this guide you will deploy a new Azure TRE instance for development and testing purposes.
 
-The most straightforward way to get up and running is to deploy direct from the [`microsoft/AzureTRE`](https://github.com/microsoft/AzureTRE) repository.
-
 ## Steps
 
 ### Bootstrap and create prerequisite resources
