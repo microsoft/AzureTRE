@@ -189,3 +189,7 @@ sample.dat
 
 # Dev container shell history
 .bash_history
+
+# lets encrypt
+templates/core/terraform/scripts/index.html
+templates/core/terraform/scripts/validation.txt
