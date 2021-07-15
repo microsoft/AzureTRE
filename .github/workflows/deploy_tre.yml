@@ -280,6 +280,7 @@ jobs:
       
       - name: Expose workspace id
         shell: bash
+        if: always()
         run: |
           cd e2e_tests
           wkspc_id=`cat workspace_id.txt`
@@ -287,6 +288,7 @@ jobs:
 
       - name: Clean created test resources
         shell: bash
+        if: always()
         env:
           TF_VAR_tre_id: ${{ secrets.TRE_ID }}
           WORKSPACE_ID: ${{ env.WORKSPACE_ID }}
