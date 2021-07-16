@@ -135,6 +135,7 @@ jobs:
             export TF_VAR_debug="false"
 
             make all
+
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
         if: ${{ failure() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') }}
@@ -307,9 +308,10 @@ jobs:
             export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
             export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
             export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
-            sleep 1m
+
             cd ./workspaces/vanilla/terraform/
-            ./destroy.sh
+            ../../../devops/scripts/terraform_wrapper.sh -g $TF_VAR_mgmt_resource_group_name -s $TF_VAR_mgmt_storage_account_name  -n $TF_VAR_terraform_state_container_name -k "${TF_VAR_tre_id}-ws-${TF_VAR_workspace_id}" -c "terraform destroy -auto-approve"
+
 
       - name: Upload Unit Test Results
         if: always()

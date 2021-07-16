@@ -12,5 +12,5 @@ terraform init -input=false -backend=true -reconfigure -upgrade \
     -backend-config="storage_account_name=$TF_VAR_mgmt_storage_account_name" \
     -backend-config="container_name=$TF_VAR_terraform_state_container_name" \
     -backend-config="key=${TF_VAR_tre_id}"
-    
-terraform import $1 $2
+
+terraform import ...

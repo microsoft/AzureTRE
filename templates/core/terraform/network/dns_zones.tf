@@ -15,3 +15,19 @@ resource "azurerm_private_dns_zone_virtual_network_link" "azurewebsites" {
 
   lifecycle { ignore_changes = [ tags ] }
 }
+
+resource "azurerm_private_dns_zone" "static_web" {
+  name                = "privatelink.web.core.windows.net"
+  resource_group_name = var.resource_group_name
+
+  lifecycle { ignore_changes = [ tags ] }
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "webcorelink" {
+  name                  = "staticwebcorelink"
+  resource_group_name   = var.resource_group_name
+  private_dns_zone_name = azurerm_private_dns_zone.static_web.name
+  virtual_network_id    = azurerm_virtual_network.core.id
+
+  lifecycle { ignore_changes = [ tags ] }
+}

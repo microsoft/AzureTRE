@@ -32,3 +32,24 @@ resource "azurerm_role_assignment" "stgwriter" {
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = data.azurerm_client_config.deployer.object_id
 }
+
+resource "azurerm_private_endpoint" "webpe" {
+  name                = "pe-web-${local.staticweb_storage_name}"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  subnet_id           = var.shared_subnet
+
+  lifecycle { ignore_changes = [ tags ] }
+
+  private_dns_zone_group {
+    name                 = "private-dns-zone-group-web"
+    private_dns_zone_ids = [var.static_web_dns_zone_id]
+  }
+
+  private_service_connection {
+    name                           = "psc-web--${local.staticweb_storage_name}"
+    private_connection_resource_id = azurerm_storage_account.staticweb.id
+    is_manual_connection           = false
+    subresource_names              = ["web"]
+  }
+}

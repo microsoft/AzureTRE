@@ -33,3 +33,7 @@ output "resource_processor" {
 output "azurewebsites_dns_zone_id" {
   value = azurerm_private_dns_zone.azurewebsites.id
 }
+
+output "static_web_dns_zone_id" {
+  value = azurerm_private_dns_zone.static_web.id
+}

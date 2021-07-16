@@ -73,9 +73,12 @@ deploy-processor-function:
 letsencrypt:
 	echo -e "\n\e[34m»»» 🧩 \e[96mRequesting LetsEncrypt SSL certificate\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh nodocker,certbot \
-	&& chmod 755 ./devops/scripts/letsencrypt.sh ./devops/scripts/auth-hook.sh ./devops/scripts/cleanup-hook.sh \
-	&& . ./devops/scripts/get-coreenv.sh \
-	&& ./devops/scripts/letsencrypt.sh
+	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
+	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
+	&& cd ./templates/core/terraform/ && . ./outputs.sh \
+	&& cd ./scripts/ && ./letsencrypt.sh
 
 tre-destroy:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDestroying TRE\e[0m..." \
