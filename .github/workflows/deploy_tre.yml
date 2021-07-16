@@ -5,7 +5,7 @@ on:
     # 1am each night https://crontab.guru/#0_1_*_*_*
     - cron: "0 1 * * *"
   push:
-    branches: [ develop, main ]
+    branches: [ develop, main, marrobi/issue214-cd-fix ]
   workflow_dispatch:
 
 jobs:
@@ -133,6 +133,7 @@ jobs:
             export TF_VAR_resource_processor_client_id=$RESOURCE_PROCESSOR_CLIENT_ID
             export TF_VAR_resource_processor_client_secret=$RESOURCE_PROCESSOR_CLIENT_SECRET
             export TF_VAR_debug="false"
+            export TF_VAR_deploy_gitea=true
 
             make all
 
