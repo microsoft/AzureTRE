@@ -92,7 +92,6 @@ resource "azurerm_subnet" "shared" {
   enforce_private_link_endpoint_network_policies = true
 }
 
-
 resource "azurerm_subnet" "resource_processor" {
   name                                           = "ResourceProcessorSubnet"
   virtual_network_name                           = azurerm_virtual_network.core.name
