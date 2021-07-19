@@ -83,7 +83,7 @@ letsencrypt:
 tre-destroy:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDestroying TRE\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
-	&& . ./devops/scripts/load_env.sh ./devops/.env 
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
 	&& cd ./templates/core/terraform/ && ./destroy.sh
