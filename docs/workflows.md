@@ -25,3 +25,4 @@ These are onetime configuration steps required to set up the GitHub Actions work
 | `AAD_TENANT_ID` | The tenant ID of the Azure AD. |
 | `API_CLIENT_ID` | The application (client) ID of the [TRE API](./auth.md#tre-api) service principal. |
 | `API_CLIENT_SECRET` | The application password (client secret) of the [TRE API](./auth.md#tre-api) service principal. |
+| `DEPLOY_GITEA` | If set to `false` disables deployment of the Gitea shared service. |

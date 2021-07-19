@@ -118,6 +118,7 @@ variable "api_client_secret" {
 
 variable "deploy_gitea" {
   type        = bool
+  default     = true
   description = "Deploy the Gitea shared service"
 }
 
