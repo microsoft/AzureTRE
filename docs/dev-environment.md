@@ -18,7 +18,12 @@ Copy the source or clone the repository to your local machine or choose to use t
 
 ![Clone options](../docs/assets/clone_options.png)
 
-## Native environment
+## Dev container
+
+<!-- markdownlint-disable-next-line MD013 -->
+The files for a dev container that comes with the required tools installed is located in `/.devcontainer/` folder. Your native environment will require [Docker](https://docs.docker.com/docker-for-windows/install/) and IDE supporting development in containers such as [Visual Studio Code](https://code.visualstudio.com/). See [Developing inside a Container](https://code.visualstudio.com/docs/remote/containers) for instructions how to use the dev container with Visual Studio Code.
+
+## Native environment - DELETE? Or maybe list as unsupported?
 
 *Native* environment is the typical development environment based on your OS with the required tools installed on top. In addition to Unix shell (e.g., Bash or [Windows Subsystem for Linux (WSL)](https://docs.microsoft.com/en-us/windows/wsl/install-win10)) the following tools need to be installed:
 
@@ -35,11 +40,6 @@ The required Python packages can be installed with the following command in the 
 ```cmd
 pip install -r requirements.txt
 ```
-
-## Dev container
-
-<!-- markdownlint-disable-next-line MD013 -->
-The files for a dev container that comes with the required tools installed is located in `/.devcontainer/` folder. Your native environment will require [Docker](https://docs.docker.com/docker-for-windows/install/) and IDE supporting development in containers such as [Visual Studio Code](https://code.visualstudio.com/). See [Developing inside a Container](https://code.visualstudio.com/docs/remote/containers) for instructions how to use the dev container with Visual Studio Code.
 
 ## (Optional) Install pre-commit hooks
 
