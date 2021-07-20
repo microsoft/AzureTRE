@@ -35,7 +35,7 @@ cp devops/.env.sample devops/.env
 | `ARM_SUBSCRIPTION_ID` | *Optional for manual deployment.* The Azure subscription ID for all resources. |
 | `ARM_TENANT_ID` | MISSING? |
 | `PORTER_DRIVER` | *Optional for manual deployment.* Valid values are `docker` or `azure`. If deploying manually use `docker` if using Azure Container Instances and the [Azure CNAB Driver](https://github.com/deislabs/cnab-azure-driver) use `azure` |
-| `PORTER_OUTPUT_CONTAINER_NAME` | MISSING? |
+| `PORTER_OUTPUT_CONTAINER_NAME` | The name of the storage container where to store the workspace/workspace service deployment output. Workspaces and workspace templates are implemented using [Porter](https://porter.sh) bundles - hence the name of the secret. The storage account used is the same as defined by `STATE_STORAGE_ACCOUNT_NAME`. |
 | `DEBUG` | If set to "true" disables purge protection of keyvault. |
 
 
