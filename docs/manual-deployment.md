@@ -40,7 +40,7 @@ cp devops/.env.sample devops/.env
 | `API_CLIENT_ID` | Generated when following auth guide. Client id of the "TRE API". |
 | `API_CLIENT_SECRET` | Generated when following auth guide. Client secret of the "TRE API". |
 | `DEPLOY_GITEA` | If set to `false` disables deployment of the Gitea shared service. |
-| `PORTER_OUTPUT_CONTAINER_NAME` | MISSING? |
+| `PORTER_OUTPUT_CONTAINER_NAME` | The name of the storage container where to store the workspace/workspace service deployment output. Workspaces and workspace templates are implemented using [Porter](https://porter.sh) bundles - hence the name of the secret. The storage account used is the same as defined by `STATE_STORAGE_ACCOUNT_NAME`. |
 | `DEBUG` | If set to "true" disables purge protection of keyvault. |
 
 
