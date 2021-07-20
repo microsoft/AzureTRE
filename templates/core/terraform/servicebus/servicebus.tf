@@ -44,7 +44,7 @@ resource "azurerm_private_endpoint" "sbpe" {
   name                = "pe-sb-${var.tre_id}"
   location            = var.location
   resource_group_name = var.resource_group_name
-  subnet_id           = var.shared_subnet
+  subnet_id           = var.resource_processor_subnet_id
 
   lifecycle { ignore_changes = [ tags ] }
 
