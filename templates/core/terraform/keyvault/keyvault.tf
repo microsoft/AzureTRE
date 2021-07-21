@@ -8,6 +8,7 @@ resource "azurerm_key_vault" "kv" {
   sku_name                 = "standard"
   purge_protection_enabled = var.debug == "true" ? false : true
 }
+
 resource "azurerm_key_vault_access_policy" "deployer" {
   key_vault_id = azurerm_key_vault.kv.id
   tenant_id    = data.azurerm_client_config.deployer.tenant_id
