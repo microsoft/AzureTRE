@@ -13,8 +13,6 @@ credentials:
     env: ARM_CLIENT_ID
   - name: azure_client_secret
     env: ARM_CLIENT_SECRET
-  - name: arm_use_msi
-    env: ARM_USE_MSI
 
 parameters:
   - name: tre_id
@@ -51,6 +49,9 @@ parameters:
     default: "azure"
     type: string
     description: "The porter driver - azure or docker"
+  - name: arm_use_msi
+    env: ARM_USE_MSI
+    default: false
 
 mixins:
   - exec
