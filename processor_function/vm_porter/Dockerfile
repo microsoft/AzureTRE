@@ -27,11 +27,13 @@ RUN apt-get update &&  apt-get install -y  apt-transport-https ca-certificates c
 
 ENV PATH /root/.porter/:$PATH
 
+ENV PYTHONPATH .
+
 COPY ./vm_porter/requirements.txt .
 RUN pip3 install -r requirements.txt
 
 COPY . /app
 
-WORKDIR /app/vm_porter
-
-CMD ["python","main.py"]
+WORKDIR /app/
+ 
+CMD ["python","-u", "vm_porter/runner.py"]
