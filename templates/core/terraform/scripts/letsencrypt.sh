@@ -8,6 +8,13 @@ if [[ -z ${STORAGE_ACCOUNT} ]]; then
   exit 1
 fi
 
+IPADDR=$(curl ipecho.net/plain; echo)
+
+echo "Creating network rule on storage account ${STORAGE_ACCOUNT} for $IPADDR"
+az storage account network-rule add --account-name "${STORAGE_ACCOUNT}" --ip-address $IPADDR
+sleep 10s
+echo "Created network rule on storage account"
+
 staticenabled=$(az storage blob service-properties show -o tsv \
     --account-name "${STORAGE_ACCOUNT}" \
     --auth-mode login \
@@ -109,3 +116,7 @@ else
         --cert-file "${CERT_DIR}/aci.pfx" \
         --cert-password "${CERT_PASSWORD}"
 fi
+
+echo "Removing network rule on storage account"
+az storage account network-rule remove --account-name ${STORAGE_ACCOUNT} --ip-address ${IPADDR}
+echo "Removed network rule on storage account"

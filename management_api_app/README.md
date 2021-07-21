@@ -49,16 +49,6 @@ az account list
 az account set --subscription <subscription ID>
 ```
 
-Azure Cosmos DB:
-
-```bash
-COSMOS_NAME=<cosmos_name>
-COSMOS_DB_NAME=<database_name>
-
-az cosmosdb create -n $COSMOS_NAME -g $RESSOURCE_GROUP --locations regionName=$LOCATION
-az cosmosdb sql database create -a $COSMOS_NAME -g $RESSOURCE_GROUP -n $COSMOS_DB_NAME
-```
-
 Azure Service Bus:
 
 ```bash
@@ -73,6 +63,17 @@ az servicebus queue create --resource-group $RESOURCE_GROUP --namespace-name $SE
 az servicebus queue create --resource-group $RESOURCE_GROUP --namespace-name $SERVICE_BUS_NAMESPACE --name $SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE
 ```
 
+Azure Cosmos DB:
+
+```bash
+COSMOS_NAME=<cosmos_name>
+COSMOS_DB_NAME=<database_name>
+
+az cosmosdb create -n $COSMOS_NAME -g $RESOURCE_GROUP --locations regionName=$LOCATION
+az cosmosdb sql database create -a $COSMOS_NAME -g $RESOURCE_GROUP -n $COSMOS_DB_NAME
+```
+
+
 [Create a service principal](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli) and assign it permissions to access Service Bus:
 
 ```bash
@@ -84,12 +85,12 @@ SUBSCRIPTION_ID=$(az account show --query id --output tsv)
 az role assignment create \
     --role "Azure Service Bus Data Sender" \
     --assignee $SERVICE_PRINCIPAL_ID \
-    --scope /subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESSOURCE_GROUP/providers/Microsoft.ServiceBus/namespaces/$SERVICE_BUS_NAMESPACE
+    --scope /subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.ServiceBus/namespaces/$SERVICE_BUS_NAMESPACE
 
 az role assignment create \
     --role "Azure Service Bus Data Receiver" \
     --assignee $SERVICE_PRINCIPAL_ID \
-    --scope /subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESSOURCE_GROUP/providers/Microsoft.ServiceBus/namespaces/$SERVICE_BUS_NAMESPACE
+    --scope /subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.ServiceBus/namespaces/$SERVICE_BUS_NAMESPACE
 ```
 
 > Keep in mind that Azure role assignments may take up to five minutes to propagate.

@@ -72,8 +72,10 @@ module "appgateway" {
   location            = var.location
   resource_group_name = azurerm_resource_group.core.name
   app_gw_subnet       = module.network.app_gw
+  shared_subnet       = module.network.shared
   management_api_fqdn = module.api-webapp.management_api_fqdn
   keyvault_id         = module.keyvault.keyvault_id
+  static_web_dns_zone_id                  = module.network.static_web_dns_zone_id
   depends_on          = [module.keyvault]
 }
 
@@ -241,4 +243,16 @@ module "bastion" {
   location            = var.location
   resource_group_name = azurerm_resource_group.core.name
   bastion_subnet      = module.network.bastion
+}
+
+module "gitea" {
+  count   = var.deploy_gitea == true ? 1 : 0
+
+  source              = "../../shared_services/gitea/terraform"
+  tre_id              = var.tre_id
+  location            = var.location
+
+  depends_on = [
+    module.network
+  ]
 }

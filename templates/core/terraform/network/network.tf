@@ -26,6 +26,8 @@ resource "azurerm_subnet" "app_gw" {
   virtual_network_name = azurerm_virtual_network.core.name
   resource_group_name  = var.resource_group_name
   address_prefixes     = [local.app_gw_subnet_address_prefix]
+  enforce_private_link_endpoint_network_policies = true
+  enforce_private_link_service_network_policies  = true
 }
 
 resource "azurerm_subnet" "web_app" {
@@ -89,7 +91,6 @@ resource "azurerm_subnet" "shared" {
   # notice that private endpoints do not adhere to NSG rules
   enforce_private_link_endpoint_network_policies = true
 }
-
 
 resource "azurerm_subnet" "resource_processor" {
   name                                           = "ResourceProcessorSubnet"

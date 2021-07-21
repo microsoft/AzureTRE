@@ -116,6 +116,12 @@ variable "api_client_secret" {
   sensitive   = true
 }
 
+variable "deploy_gitea" {
+  type        = bool
+  default     = true
+  description = "Deploy the Gitea shared service"
+}
+
 variable "resource_processor_type" {
   default     = "function_cnab_driver"
   description = "Which resource processor to deploy."

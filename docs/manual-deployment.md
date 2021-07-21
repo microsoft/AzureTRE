@@ -2,8 +2,6 @@
 
 By following this guide you will deploy a new Azure TRE instance for development and testing purposes.
 
-The most straightforward way to get up and running is to deploy direct from the [`microsoft/AzureTRE`](https://github.com/microsoft/AzureTRE) repository.
-
 ## Steps
 
 ### Bootstrap and create prerequisite resources
@@ -42,6 +40,7 @@ cp devops/.env.sample devops/.env
 | `AAD_TENANT_ID` | Generated when following auth guide. Tenant id against which auth is performed. |
 | `API_CLIENT_ID` | Generated when following auth guide. Client id of the "TRE API". |
 | `API_CLIENT_SECRET` | Generated when following auth guide. Client secret of the "TRE API". |
+| `DEPLOY_GITEA` | If set to `false` disables deployment of the Gitea shared service. |
 | `DEBUG` | If set to "true" disables purge protection of keyvault. |
 
 Your `.env` file should now look something similar to this:
