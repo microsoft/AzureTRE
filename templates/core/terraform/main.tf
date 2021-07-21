@@ -7,7 +7,7 @@ terraform {
     }
   }
 
-  backend "azurerm" {}
+  # backend "azurerm" {}
 }
 
 provider "azurerm" {
@@ -158,7 +158,7 @@ module "resource_processor_vmss_porter" {
   docker_registry_server                          = var.docker_registry_server
   resource_processor_vmss_porter_image_repository = var.resource_processor_vmss_porter_image_repository
   resource_processor_vmss_porter_image_tag        = var.resource_processor_vmss_porter_image_tag
-  service_bus_connection_string                   = module.servicebus.connection_string
+  service_bus_namespace_id                        = module.servicebus.id
   service_bus_resource_request_queue              = module.servicebus.workspacequeue
   service_bus_deployment_status_update_queue      = module.servicebus.service_bus_deployment_status_update_queue
   mgmt_storage_account_name                       = var.mgmt_storage_account_name
