@@ -67,16 +67,16 @@ module "storage" {
 }
 
 module "appgateway" {
-  source              = "./appgateway"
-  tre_id              = var.tre_id
-  location            = var.location
-  resource_group_name = azurerm_resource_group.core.name
-  app_gw_subnet       = module.network.app_gw
-  shared_subnet       = module.network.shared
-  management_api_fqdn = module.api-webapp.management_api_fqdn
-  keyvault_id         = module.keyvault.keyvault_id
-  static_web_dns_zone_id                  = module.network.static_web_dns_zone_id
-  depends_on          = [module.keyvault]
+  source                 = "./appgateway"
+  tre_id                 = var.tre_id
+  location               = var.location
+  resource_group_name    = azurerm_resource_group.core.name
+  app_gw_subnet          = module.network.app_gw
+  shared_subnet          = module.network.shared
+  management_api_fqdn    = module.api-webapp.management_api_fqdn
+  keyvault_id            = module.keyvault.keyvault_id
+  static_web_dns_zone_id = module.network.static_web_dns_zone_id
+  depends_on             = [module.keyvault]
 }
 
 module "api-webapp" {
@@ -166,18 +166,18 @@ module "resource_processor_vmss_porter" {
   terraform_state_container_name                  = var.terraform_state_container_name
   resource_processor_client_id                    = var.resource_processor_client_id
   resource_processor_client_secret                = var.resource_processor_client_secret
-  keyvault_id         = module.keyvault.keyvault_id
+  keyvault_id                                     = module.keyvault.keyvault_id
 }
 
 
 module "servicebus" {
-  source              = "./servicebus"
-  tre_id              = var.tre_id
-  location            = var.location
-  resource_group_name = azurerm_resource_group.core.name
-  shared_subnet       = module.network.shared
-  core_vnet           = module.network.core
-  tenant_id           = data.azurerm_client_config.current.tenant_id
+  source                    = "./servicebus"
+  tre_id                    = var.tre_id
+  location                  = var.location
+  resource_group_name       = azurerm_resource_group.core.name
+  resource_processor_subnet_id = module.network.resource_processor
+  core_vnet                 = module.network.core
+  tenant_id                 = data.azurerm_client_config.current.tenant_id
 }
 
 module "keyvault" {
@@ -246,11 +246,11 @@ module "bastion" {
 }
 
 module "gitea" {
-  count   = var.deploy_gitea == true ? 1 : 0
+  count = var.deploy_gitea == true ? 1 : 0
 
-  source              = "../../shared_services/gitea/terraform"
-  tre_id              = var.tre_id
-  location            = var.location
+  source   = "../../shared_services/gitea/terraform"
+  tre_id   = var.tre_id
+  location = var.location
 
   depends_on = [
     module.network
