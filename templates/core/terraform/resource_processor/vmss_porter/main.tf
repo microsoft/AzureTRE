@@ -5,21 +5,21 @@ data "azurerm_client_config" "current" {}
 data "template_file" "cloudconfig" {
   template = file("${path.module}/cloud-config.yaml")
   vars = {
+    docker_registry_server                          = var.docker_registry_server
+    terraform_state_container_name                  = var.terraform_state_container_name
+    mgmt_resource_group_name                        = var.mgmt_resource_group_name
+    mgmt_storage_account_name                       = var.mgmt_storage_account_name
+    service_bus_deployment_status_update_queue      = var.service_bus_deployment_status_update_queue
+    service_bus_resource_request_queue              = var.service_bus_resource_request_queue
+    service_bus_namespace                           = "sb-${var.tre_id}.servicebus.windows.net"
+    vmss_msi_id                                     = azurerm_user_assigned_identity.vmss_msi.client_id
+    arm_subscription_id                             = data.azurerm_subscription.current.subscription_id
+    arm_client_id                                   = var.resource_processor_client_id
+    arm_client_secret                               = var.resource_processor_client_secret
+    arm_tenant_id                                   = data.azurerm_client_config.current.tenant_id
     resource_processor_vmss_porter_image_repository = var.resource_processor_vmss_porter_image_repository
     resource_processor_vmss_porter_image_tag        = var.resource_processor_vmss_porter_image_tag
-    docker_registry_server                          = var.docker_registry_server
-    service_bus_connection_string                   = var.service_bus_connection_string
-    service_bus_resource_request_queue              = var.service_bus_resource_request_queue
-    service_bus_deployment_status_update_queue      = var.service_bus_deployment_status_update_queue
-    arm_tenant_id                                   = data.azurerm_client_config.current.tenant_id
-    arm_subscription_id                             = data.azurerm_subscription.current.subscription_id
-    resource_processor_client_id                    = var.resource_processor_client_id
-    resource_processor_client_secret                = var.resource_processor_client_secret
-    mgmt_storage_account_name                       = var.mgmt_storage_account_name
-    mgmt_resource_group_name                        = var.mgmt_resource_group_name
-    terraform_state_container_name                  = var.terraform_state_container_name
     app_insights_connection_string                  = var.app_insights_connection_string
-    acr_pull_identity                               = azurerm_user_assigned_identity.acr_pull.id
   }
 }
 
@@ -45,8 +45,8 @@ resource "azurerm_key_vault_secret" "resource_processor_vmss_password" {
   key_vault_id = var.keyvault_id
 }
 
-resource "azurerm_user_assigned_identity" "acr_pull" {
-  name                = "acr_pull"
+resource "azurerm_user_assigned_identity" "vmss_msi" {
+  name                = "msi-${var.tre_id}-vmss"
   location            = var.location
   resource_group_name = var.resource_group_name
   lifecycle { ignore_changes = [tags] }
@@ -72,7 +72,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "vm_linux" {
 
   identity {
     type         = "UserAssigned"
-    identity_ids = [azurerm_user_assigned_identity.acr_pull.id]
+    identity_ids = [azurerm_user_assigned_identity.vmss_msi.id]
   }
 
 
@@ -114,5 +114,17 @@ resource "azurerm_linux_virtual_machine_scale_set" "vm_linux" {
 resource "azurerm_role_assignment" "vmss_acr_pull" {
   scope                = var.acr_id
   role_definition_name = "AcrPull"
-  principal_id         = azurerm_user_assigned_identity.acr_pull.principal_id
+  principal_id         = azurerm_user_assigned_identity.vmss_msi.principal_id
+}
+
+resource "azurerm_role_assignment" "vmss_sb_sender" {
+  scope                = var.service_bus_namespace_id
+  role_definition_name = "Azure Service Bus Data Sender"
+  principal_id         = azurerm_user_assigned_identity.vmss_msi.principal_id
+}
+
+resource "azurerm_role_assignment" "vmss_sb_receiver" {
+  scope                = var.service_bus_namespace_id
+  role_definition_name = "Azure Service Bus Data Receiver"
+  principal_id         = azurerm_user_assigned_identity.vmss_msi.principal_id
 }

@@ -4,7 +4,7 @@ import json
 import socket
 import asyncio
 import logging
-from shared.logger import disable_unwanted_loggers, initialize_logging  # pylint: disable=import-error # noqa
+from shared.logging import disable_unwanted_loggers, initialize_logging  # pylint: disable=import-error # noqa
 from resources import strings
 from contextlib import asynccontextmanager
 from azure.servicebus import ServiceBusMessage
@@ -109,12 +109,12 @@ async def run_porter(command, env_vars):
         result_stdout = stdout.decode()
         logger_adapter.info('[stdout]')
         for string in result_stdout.split('\n'):
-            logger_adapter.info(string)
+            logger_adapter.info(str(string))
     if stderr:
         result_stderr = stderr.decode()
         logger_adapter.info('[stderr]')
         for string in result_stderr.split('\n'):
-            logger_adapter.info(string)
+            logger_adapter.info(str(string))
 
     return (proc.returncode, result_stdout, result_stderr)
 
