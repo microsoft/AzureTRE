@@ -33,44 +33,14 @@ cp devops/.env.sample devops/.env
 | `IMAGE_TAG` | The default tag for Docker images that will be pushed to the container registry and deployed with the Azure TRE. |
 | `ACR_NAME` | A globally unique name for the Azure Container Registry (ACR) that will be created to store deployment images. |
 | `ARM_SUBSCRIPTION_ID` | *Optional for manual deployment.* The Azure subscription ID for all resources. |
-| `RESOURCE_PROCESSOR_CLIENT_ID` | The client (app) ID of a service principal with "Owner" role to the subscription as created above. Used by Resource Processor Function to deploy workspaces and workspace services. |
-| `RESOURCE_PROCESSOR_CLIENT_SECRET` | The client secret (app password) of a service principal with "Onwer" role to the subscription as created above. Used by the depl09oyment processor function to deploy workspaces and workspace services. |
+| `ARM_CLIENT_ID` | *Optional for manual deployment without logged-in credentials.* The client whose azure identity will be used to deloy the solution. |
+| `ARM_CLIENT_SECRET` | *Optional for manual deployment without logged-in credentials.* The password of the client defined in `ARM_CLIENT_ID`. |
+| `ARM_TENANT_ID` | *Optional for manual deployment without logged-in credentials.* The AAD tenant of the client defined in `ARM_CLIENT_ID`. |
 | `PORTER_DRIVER` | *Optional for manual deployment.* Valid values are `docker` or `azure`. If deploying manually use `docker` if using Azure Container Instances and the [Azure CNAB Driver](https://github.com/deislabs/cnab-azure-driver) use `azure` |
-| `SWAGGER_UI_CLIENT_ID` | Generated when following auth guide. Client ID for swagger client to make requests. |
-| `AAD_TENANT_ID` | Generated when following auth guide. Tenant id against which auth is performed. |
-| `API_CLIENT_ID` | Generated when following auth guide. Client id of the "TRE API". |
-| `API_CLIENT_SECRET` | Generated when following auth guide. Client secret of the "TRE API". |
+| `PORTER_OUTPUT_CONTAINER_NAME` | The name of the storage container where to store the workspace/workspace service deployment output. Workspaces and workspace templates are implemented using [Porter](https://porter.sh) bundles - hence the name of the variable. The storage account used is the one defined in `STATE_STORAGE_ACCOUNT_NAME`. |
 | `DEPLOY_GITEA` | If set to `false` disables deployment of the Gitea shared service. |
 | `DEBUG` | If set to "true" disables purge protection of keyvault. |
 
-Your `.env` file should now look something similar to this:
-
-```plaintext
-# Management infrastructure
-ARM_SUBSCRIPTION_ID=8cf4..65a0
-LOCATION=norwayeast
-MGMT_RESOURCE_GROUP_NAME=aztremgmt
-MGMT_STORAGE_ACCOUNT_NAME=aztremgmt
-TERRAFORM_STATE_CONTAINER_NAME=tfstate
-IMAGE_TAG=v1
-ACR_NAME=aztre
-
-# Service Principal used by the Composition Service to provision workspaces
-RESOURCE_PROCESSOR_CLIENT_ID=8cf4..65ae
-RESOURCE_PROCESSOR_CLIENT_SECRET=secret
-
-SWAGGER_UI_CLIENT_ID=bbfbfd5b...dd00
-AAD_TENANT_ID=6ece...8aed
-API_CLIENT_ID=f91b..6332
-API_CLIENT_SECRET=secret
-
-# Configure Porter to use docker or Azure CNAB driver
-PORTER_DRIVER=docker
-PORTER_OUTPUT_CONTAINER_NAME=porterout
-
-# Debug mode
-DEBUG="false"
-```
 
 Copy [/templates/core/.env.sample](../templates/core/.env.sample) to `/templates/core/.env` and set values for all variables described in the table below:
 
@@ -83,6 +53,13 @@ cp templates/core/.env.sample templates/core/.env
 | `TRE_ID` | A globally unique identifier. `TRE_ID` can be found in the resource names of the Azure TRE instance; for example, a `TRE_ID` of `mytre-dev-3142` will result in a resource group name for Azure TRE instance of `rg-mytre-dev-3142`. This must be less than 12 characters. Allowed characters: Alphanumeric, underscores, and hyphens. |
 | `ADDRESS_SPACE` | The address space for the Azure TRE core virtual network. |
 | `MANAGEMENT_API_IMAGE_TAG` | The tag of the Management API image. Make it the same as `IMAGE_TAG` above.|
+| `RESOURCE_PROCESSOR_CLIENT_ID` | The client (app) ID of a service principal with "Owner" role to the subscription as created above. Used by Resource Processor Function to deploy workspaces and workspace services. |
+| `RESOURCE_PROCESSOR_CLIENT_SECRET` | The client secret (app password) of a service principal with "Onwer" role to the subscription as created above. Used by the depl09oyment processor function to deploy workspaces and workspace services. |
+| `SWAGGER_UI_CLIENT_ID` | Generated when following auth guide. Client ID for swagger client to make requests. |
+| `AAD_TENANT_ID` | Generated when following auth guide. Tenant id against which auth is performed. |
+| `API_CLIENT_ID` | Generated when following auth guide. Client id of the "TRE API". |
+| `API_CLIENT_SECRET` | Generated when following auth guide. Client secret of the "TRE API". |
+| `DEPLOY_GITEA` | Set to true (default) to enable Git shared service. |
 
 ### Deploy
 
@@ -96,7 +73,7 @@ Once the deployment is complete, you will see a few output parameters which are 
 
 ```plaintext
 app_gateway_name = "agw-<TRE_ID>"
-azure_tre_fqdn = "<TRE_ID>.norwayeast.cloudapp.azure.com"
+azure_tre_fqdn = "<TRE_ID>.<LOCATION>.cloudapp.azure.com"
 core_resource_group_name = "rg-<TRE_ID>"
 keyvault_name = "kv-<TRE_ID>"
 log_analytics_name = "log-<TRE_ID>"
@@ -109,7 +86,7 @@ Deploy the processor function:
 make deploy-processor-function
 ```
 
-The Azure TRE is initially deployed with an invalid self-signed SSL certificate. This certificate is stored in the deployed Key Vault. To update the certificate in Key Vault needs to be replaced with one valid for the configured domain name. To use a certificate from [Let's Encrypt][letsencrypt], simply run the command:
+The Azure TRE is initially deployed with an invalid self-signed SSL certificate. This certificate is stored in the deployed Key Vault and can/should be replaced with one valid for the configured domain name. To use a certificate from [Let's Encrypt][letsencrypt], simply run the command:
 
 ```cmd
 make letsencrypt
