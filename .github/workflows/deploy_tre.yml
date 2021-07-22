@@ -134,6 +134,9 @@ jobs:
             export TF_VAR_resource_processor_client_secret=$RESOURCE_PROCESSOR_CLIENT_SECRET
             export TF_VAR_debug="false"
             export TF_VAR_deploy_gitea=true
+            export TF_VAR_resource_processor_type="vmss_porter"
+            export TF_VAR_resource_processor_vmss_porter_image_tag=$IMAGE_TAG
+
 
             make all
 
@@ -146,57 +149,6 @@ jobs:
           notification-summary: "Deploy TRE Failed"
           notification-color: dc3545
           timezone: Europe/Zurich
-
-  deploy_processor_function:
-    name: Deploy Processor Function
-    needs: deploy_tre
-    runs-on: ubuntu-latest
-    environment: Dev
-    env:
-      AZURE_FUNCTIONAPP_PACKAGE_PATH: ./processor_function
-      AZURE_FUNCTIONAPP_NAME: "processor-func-${{ secrets.TRE_ID }}"
-      PYTHON_VERSION: '3.8'
-    steps:
-      - name: Setup Python ${{ env.PYTHON_VERSION }} Environment
-        uses: actions/setup-python@v1
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-      - name: 'Checkout GitHub Action'
-        uses: actions/checkout@main
-      - name: 'Resolve Project Dependencies Using Pip'
-        shell: bash
-        run: |
-          pushd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt --target=".python_packages/lib/site-packages"
-          popd
-      - name: Get FunctionApp publish profile
-        id: publishprofile
-        uses: aliencube/publish-profile-actions@v1
-        env:
-          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-        with:
-          resourceGroupName: "rg-${{ secrets.TRE_ID }}"
-          appName: "processor-func-${{ secrets.TRE_ID }}"
-      - name: 'Run Azure Functions Action'
-        uses: Azure/functions-action@v1.3.1
-        id: fa
-        with:
-          app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
-          package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
-          publish-profile: ${{ steps.publishprofile.outputs.profile }}
-          scm-do-build-during-deployment: true
-          enable-oryx-build: true
-      - name: Notify dedicated teams channel
-        uses: sachinkundu/ms-teams-notification@1.4
-        if: ${{ failure() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') }}
-        continue-on-error: true
-        with:
-          github-token: ${{ github.token }}
-          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-          notification-summary: "Deploy Processor Function Failed"
-          notification-color: dc3545
-          timezone: Europe/Zurich          
 
   publish_bundles:
     name: Publish Vanilla Bundle
@@ -226,7 +178,7 @@ jobs:
     name: "Run E2E Tests"
     runs-on: ubuntu-latest
     environment: Dev
-    needs: deploy_processor_function
+    needs: deploy_tre
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
