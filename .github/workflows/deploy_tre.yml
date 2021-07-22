@@ -134,8 +134,8 @@ jobs:
             export TF_VAR_resource_processor_client_secret=$RESOURCE_PROCESSOR_CLIENT_SECRET
             export TF_VAR_debug="false"
             export TF_VAR_deploy_gitea=true
-            export TF_VAR_RESOURCE_PROCESSOR_TYPE="vmss_porter"
-            export TF_VAR_RESOURCE_PROCESSOR_VMSS_PORTER_IMAGE_TAG=$IMAGE_TAG
+            export TF_VAR_resource_processor_type="vmss_porter"
+            export TF_VAR_resource_processor_vmss_porter_image_tag=$IMAGE_TAG
 
 
             make all
