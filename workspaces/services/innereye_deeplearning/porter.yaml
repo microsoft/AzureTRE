@@ -13,7 +13,7 @@ credentials:
     env: ARM_CLIENT_ID
   - name: azure_client_secret
     env: ARM_CLIENT_SECRET
-
+    
 parameters:
   - name: workspace_id
     type: string
@@ -36,6 +36,9 @@ parameters:
     default: "tfstate"
     description: "The name of the Terraform state storage container"
     env: TERRAFORM_STATE_CONTAINER_NAME
+  - name: arm_use_msi
+    env: ARM_USE_MSI
+    default: false
 
 outputs:
   - name: azureml_compute_cluster_name
