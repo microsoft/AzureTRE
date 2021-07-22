@@ -5,7 +5,7 @@ on:
     # 1am each night https://crontab.guru/#0_1_*_*_*
     - cron: "0 1 * * *"
   push:
-    branches: [ develop, main, sakundu/vmss_processor_build ]
+    branches: [ develop, main ]
   workflow_dispatch:
 
 jobs:
@@ -149,57 +149,6 @@ jobs:
           notification-summary: "Deploy TRE Failed"
           notification-color: dc3545
           timezone: Europe/Zurich
-
-  # deploy_processor_function:
-  #   name: Deploy Processor Function
-  #   needs: deploy_tre
-  #   runs-on: ubuntu-latest
-  #   environment: Dev
-  #   env:
-  #     AZURE_FUNCTIONAPP_PACKAGE_PATH: ./processor_function
-  #     AZURE_FUNCTIONAPP_NAME: "processor-func-${{ secrets.TRE_ID }}"
-  #     PYTHON_VERSION: '3.8'
-  #   steps:
-  #     - name: Setup Python ${{ env.PYTHON_VERSION }} Environment
-  #       uses: actions/setup-python@v1
-  #       with:
-  #         python-version: ${{ env.PYTHON_VERSION }}
-  #     - name: 'Checkout GitHub Action'
-  #       uses: actions/checkout@main
-  #     - name: 'Resolve Project Dependencies Using Pip'
-  #       shell: bash
-  #       run: |
-  #         pushd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
-  #         python -m pip install --upgrade pip
-  #         pip install -r requirements.txt --target=".python_packages/lib/site-packages"
-  #         popd
-  #     - name: Get FunctionApp publish profile
-  #       id: publishprofile
-  #       uses: aliencube/publish-profile-actions@v1
-  #       env:
-  #         AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-  #       with:
-  #         resourceGroupName: "rg-${{ secrets.TRE_ID }}"
-  #         appName: "processor-func-${{ secrets.TRE_ID }}"
-  #     - name: 'Run Azure Functions Action'
-  #       uses: Azure/functions-action@v1.3.1
-  #       id: fa
-  #       with:
-  #         app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
-  #         package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
-  #         publish-profile: ${{ steps.publishprofile.outputs.profile }}
-  #         scm-do-build-during-deployment: true
-  #         enable-oryx-build: true
-  #     - name: Notify dedicated teams channel
-  #       uses: sachinkundu/ms-teams-notification@1.4
-  #       if: ${{ failure() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') }}
-  #       continue-on-error: true
-  #       with:
-  #         github-token: ${{ github.token }}
-  #         ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-  #         notification-summary: "Deploy Processor Function Failed"
-  #         notification-color: dc3545
-  #         timezone: Europe/Zurich          
 
   publish_bundles:
     name: Publish Vanilla Bundle

@@ -123,7 +123,7 @@ variable "deploy_gitea" {
 }
 
 variable "resource_processor_type" {
-  default     = "function_cnab_driver"
+  default     = "vmss_porter"
   description = "Which resource processor to deploy."
   type        = string
 }
