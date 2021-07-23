@@ -166,6 +166,10 @@ module "resource_processor_vmss_porter" {
   mgmt_resource_group_name                        = var.mgmt_resource_group_name
   terraform_state_container_name                  = var.terraform_state_container_name
   keyvault_id                                     = module.keyvault.keyvault_id
+
+  depends_on = [
+    module.keyvault
+  ]
 }
 
 

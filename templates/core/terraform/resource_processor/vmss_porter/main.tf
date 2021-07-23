@@ -50,7 +50,6 @@ resource "azurerm_user_assigned_identity" "vmss_msi" {
   lifecycle { ignore_changes = [tags] }
 }
 
-
 resource "azurerm_linux_virtual_machine_scale_set" "vm_linux" {
 
   name                       = "vmss-rp-porter-${var.tre_id}"

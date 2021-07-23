@@ -195,12 +195,7 @@ def read_env_vars():
         "arm_tenant_id": os.environ["ARM_TENANT_ID"]
     }
 
-    if env_vars["arm_use_msi"] == "false":
-        # client secret required if not using msi
-        env_vars["arm_client_secret"] = os.environ["ARM_CLIENT_SECRET"],
-    else:
-        # porter requires it to be set even if not used by terraform
-        env_vars["arm_client_secret"] = "not_required"
+    env_vars["arm_client_secret"] = os.environ["ARM_CLIENT_SECRET"] if env_vars["arm_use_msi"] == "false" else "not_required"
 
     return env_vars
 
