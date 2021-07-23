@@ -5,7 +5,7 @@ import socket
 import asyncio
 import logging
 from shared.logging import disable_unwanted_loggers, initialize_logging  # pylint: disable=import-error # noqa
-from resources import strings
+from resources import strings # pylint: disable=import-error # noqa
 from contextlib import asynccontextmanager
 from azure.servicebus import ServiceBusMessage
 from azure.servicebus.aio import ServiceBusClient, AutoLockRenewer
@@ -86,6 +86,7 @@ def porter_envs(env_var):
     porter_env_vars = {}
     porter_env_vars["HOME"] = os.environ['HOME']
     porter_env_vars["PATH"] = os.environ['PATH']
+    porter_env_vars["ARM_USE_MSI"] = env_var["arm_use_msi"]
     porter_env_vars["ARM_CLIENT_ID"] = env_var["arm_client_id"]
     porter_env_vars["ARM_CLIENT_SECRET"] = env_var["arm_client_secret"]
     porter_env_vars["ARM_SUBSCRIPTION_ID"] = env_var["arm_subscription_id"]
@@ -188,11 +189,19 @@ def read_env_vars():
         "vmss_msi_id": os.environ.get('VMSS_MSI_ID', None),
 
         # Needed for running porter
+        "arm_use_msi": os.environ["ARM_USE_MSI"],
         "arm_subscription_id": os.environ['ARM_SUBSCRIPTION_ID'],
         "arm_client_id": os.environ["ARM_CLIENT_ID"],
-        "arm_client_secret": os.environ["ARM_CLIENT_SECRET"],
-        "arm_tenant_id": os.environ["ARM_TENANT_ID"],
+        "arm_tenant_id": os.environ["ARM_TENANT_ID"]
     }
+
+    if env_vars["arm_use_msi"] == "false":
+        # client secret required if not using msi
+        env_vars["arm_client_secret"] = os.environ["ARM_CLIENT_SECRET"],
+    else:
+        # porter requires it to be set even if not used by terraform
+        env_vars["arm_client_secret"] = "not_required"
+
     return env_vars
 
 

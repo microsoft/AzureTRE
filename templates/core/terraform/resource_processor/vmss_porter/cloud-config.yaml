@@ -35,6 +35,7 @@ write_files:
       ARM_CLIENT_ID=${arm_client_id}
       ARM_CLIENT_SECRET=${arm_client_secret}
       ARM_TENANT_ID=${arm_tenant_id}
+      ARM_USE_MSI=true
       APPLICATIONINSIGHTS_CONNECTION_STRING=${app_insights_connection_string}
 
 runcmd:
