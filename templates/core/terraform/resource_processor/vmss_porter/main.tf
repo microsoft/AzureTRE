@@ -14,8 +14,6 @@ data "template_file" "cloudconfig" {
     service_bus_namespace                           = "sb-${var.tre_id}.servicebus.windows.net"
     vmss_msi_id                                     = azurerm_user_assigned_identity.vmss_msi.client_id
     arm_subscription_id                             = data.azurerm_subscription.current.subscription_id
-    arm_client_id                                   = var.resource_processor_client_id
-    arm_client_secret                               = var.resource_processor_client_secret
     arm_tenant_id                                   = data.azurerm_client_config.current.tenant_id
     resource_processor_vmss_porter_image_repository = var.resource_processor_vmss_porter_image_repository
     resource_processor_vmss_porter_image_tag        = var.resource_processor_vmss_porter_image_tag
