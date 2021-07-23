@@ -51,11 +51,6 @@ parameters:
     default: "tfstate"
     description: "The name of the Terraform state storage container"
     env: TERRAFORM_STATE_CONTAINER_NAME
-  - name: porter_driver
-    default: "azure"
-    type: string
-    description: "The porter driver - azure or docker"
-    env: PORTER_DRIVER
   - name: arm_use_msi
     env: ARM_USE_MSI
     default: false

@@ -73,6 +73,7 @@ def build_porter_command(msg_body, env_vars):
     porter_parameters = porter_parameters + f" --param tfstate_container_name={env_vars['tfstate_container_name']}"
     porter_parameters = porter_parameters + f" --param tfstate_resource_group_name={env_vars['tfstate_resource_group_name']}"
     porter_parameters = porter_parameters + f" --param tfstate_storage_account_name={env_vars['tfstate_storage_account_name']}"
+    porter_parameters = porter_parameters + f" --param arm_use_msi={env_vars['arm_use_msi']}"
 
     command_line = [f"{azure_login_command(env_vars)} && az acr login --name {env_vars['registry_server']} && porter "
                     f"{msg_body['action']} {installation_id} "
@@ -86,12 +87,11 @@ def porter_envs(env_var):
     porter_env_vars = {}
     porter_env_vars["HOME"] = os.environ['HOME']
     porter_env_vars["PATH"] = os.environ['PATH']
-    porter_env_vars["ARM_USE_MSI"] = env_var["arm_use_msi"]
     porter_env_vars["ARM_CLIENT_ID"] = env_var["arm_client_id"]
     porter_env_vars["ARM_CLIENT_SECRET"] = env_var["arm_client_secret"]
     porter_env_vars["ARM_SUBSCRIPTION_ID"] = env_var["arm_subscription_id"]
     porter_env_vars["ARM_TENANT_ID"] = env_var["arm_tenant_id"]
-    porter_env_vars["PORTER_DRIVER"] = "docker"
+    
     return porter_env_vars
 
 
@@ -195,7 +195,7 @@ def read_env_vars():
         "arm_tenant_id": os.environ["ARM_TENANT_ID"]
     }
 
-    env_vars["arm_client_secret"] = os.environ["ARM_CLIENT_SECRET"] if env_vars["arm_use_msi"] == "false" else "not_required"
+    env_vars["arm_client_secret"] = os.environ["ARM_CLIENT_SECRET"] if env_vars["arm_use_msi"] == "false" else ""
 
     return env_vars
 
