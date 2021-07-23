@@ -110,7 +110,8 @@ async def run_porter(command, env_vars):
         result_stdout = stdout.decode()
         logger_adapter.info('[stdout]')
         for string in result_stdout.split('\n'):
-            logger_adapter.info(str(string))
+            if len(string) != 0:
+                logger_adapter.info(str(string))
     if stderr:
         result_stderr = stderr.decode()
         logger_adapter.info('[stderr]')
