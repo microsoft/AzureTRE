@@ -57,8 +57,6 @@ install:
         tre_id: "{{ bundle.parameters.tre_id }}"
         azureml_workspace_name: "{{ bundle.parameters.azureml_workspace_name }}"
         azureml_acr_id: "{{ bundle.parameters.azureml_acr_id }}"
-        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
-        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
