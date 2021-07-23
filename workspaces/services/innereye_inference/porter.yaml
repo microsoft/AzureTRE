@@ -60,7 +60,6 @@ install:
         inference_sp_client_id: "{{ bundle.parameters.inference_sp_client_id }}"
         inference_sp_client_secret: "{{ bundle.parameters.inference_sp_client_secret }}"
         arm_client_id: "{{ bundle.credentials.azure_client_id }}"
-        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
         arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"

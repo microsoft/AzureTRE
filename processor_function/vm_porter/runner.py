@@ -75,7 +75,7 @@ def build_porter_command(msg_body, env_vars):
     porter_parameters = porter_parameters + f" --param tfstate_storage_account_name={env_vars['tfstate_storage_account_name']}"
     porter_parameters = porter_parameters + f" --param arm_use_msi={env_vars['arm_use_msi']}"
 
-    command_line = [f"{azure_login_command(env_vars)} && az acr login --name {env_vars['registry_server']} && porter "
+    command_line = [f"{azure_login_command(env_vars)} && az acr login --name {env_vars['registry_server'].replace('.azurecr.io','')} && porter "
                     f"{msg_body['action']} {installation_id} "
                     f" --reference {env_vars['registry_server']}/{msg_body['name']}:v{msg_body['version']}"
                     f" {porter_parameters} --cred ./vm_porter/azure.json --allow-docker-host-access"

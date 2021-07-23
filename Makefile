@@ -163,3 +163,10 @@ porter-publish:
 	&& az acr login --name $${ACR_NAME}	\
 	&& cd ${DIR} \
 	&& porter publish --registry "$${ACR_NAME}.azurecr.io" --debug
+
+register-bundle:
+	echo -e "\n\e[34m»»» 🧩 \e[96mPublishing ${DIR} bundle\e[0m..." \
+	&& ./devops/scripts/check_dependencies.sh porter \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& cd ${DIR} \
+	&& ../../devops/scripts/publish_register_bundle.sh --acr-name $${ACR_NAME} --bundle-type workspace --current --insecure

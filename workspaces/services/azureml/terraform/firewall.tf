@@ -9,7 +9,7 @@ data "azurerm_firewall" "fw" {
 
 resource "null_resource" "az_login" {
   provisioner "local-exec" {
-    command = "az login --service-principal -u '${var.arm_client_id}' -p '${var.arm_client_secret}' --tenant '${var.arm_tenant_id}'"
+    command = "az login --identity -u '${var.arm_client_id}'"
   }
   triggers = {
     timestamp = timestamp()
