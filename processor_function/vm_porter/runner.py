@@ -91,7 +91,7 @@ def porter_envs(env_var):
     porter_env_vars["ARM_CLIENT_SECRET"] = env_var["arm_client_secret"]
     porter_env_vars["ARM_SUBSCRIPTION_ID"] = env_var["arm_subscription_id"]
     porter_env_vars["ARM_TENANT_ID"] = env_var["arm_tenant_id"]
-    
+
     return porter_env_vars
 
 
