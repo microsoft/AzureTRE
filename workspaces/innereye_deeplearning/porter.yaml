@@ -54,6 +54,7 @@ parameters:
 mixins:
   - exec
   - docker
+  - az
 
 install:
   - az:
