@@ -5,8 +5,6 @@ variable "resource_group_name" {}
 variable "resource_processor_subnet_id" {}
 variable "resource_processor_vmss_porter_image_repository" {}
 variable "resource_processor_vmss_porter_image_tag" {}
-variable "resource_processor_client_id" {}
-variable "resource_processor_client_secret" {}
 variable "docker_registry_server" {}
 variable "service_bus_namespace_id" {}
 variable "service_bus_resource_request_queue" {}

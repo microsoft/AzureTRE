@@ -39,7 +39,6 @@ class WorkspaceRepository(BaseRepository):
     @staticmethod
     def _system_provided_parameters() -> List[str]:
         return ["acr_name",
-                "porter_driver",
                 "tfstate_container_name",
                 "tfstate_resource_group_name",
                 "tfstate_storage_account_name"]

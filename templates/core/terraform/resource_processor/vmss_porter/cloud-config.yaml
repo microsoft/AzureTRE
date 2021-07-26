@@ -32,9 +32,9 @@ write_files:
       SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE=${service_bus_namespace}
       VMSS_MSI_ID=${vmss_msi_id}
       ARM_SUBSCRIPTION_ID=${arm_subscription_id}
-      ARM_CLIENT_ID=${arm_client_id}
-      ARM_CLIENT_SECRET=${arm_client_secret}
+      ARM_CLIENT_ID=${vmss_msi_id}
       ARM_TENANT_ID=${arm_tenant_id}
+      ARM_USE_MSI=true
       APPLICATIONINSIGHTS_CONNECTION_STRING=${app_insights_connection_string}
 
 runcmd:
