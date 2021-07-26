@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://github.com/microsoft/AzureTRE/schema/workspace.json",
+  "type": "object",
+  "title": "Workspace Default Parameters",
+  "description": "These parameters are required for all workspaces",
+  "required": [
+      "display_name",
+      "description"
+  ],
+  "properties": {
+      "display_name": {
+          "$id": "#/properties/display_name",
+          "type": "string",
+          "title": "Name for the workspace",
+          "description": "The name of the workspace to be displayed to users"
+      },
+      "description": {
+          "$id": "#/properties/description",
+          "type": "string",
+          "title": "Description of the workspace",
+          "description": "Description of the workspace"
+      },
+      "address_space": {
+          "$id": "#/properties/address_space",
+          "type": "string",
+          "title": "Address space",
+          "description": "Network address space to be used by the workspace"
+      }
+  }
+}
