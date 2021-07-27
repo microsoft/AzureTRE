@@ -65,7 +65,6 @@ class WorkspaceTemplateInResponse(BaseModel):
     class Config:
         schema_extra = {
             "example": {
-                "resourceTemplateId": "49a7445c-aae6-41ec-a539-30dfa90ab1ae",
                 "workspaceTemplate": get_sample_workspace_template()
             }
         }
