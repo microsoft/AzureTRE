@@ -1,27 +1,17 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema",
-  "$id": "https://github.com/microsoft/AzureTRE/schema/azuread.json",
-  "type": "object",
-  "title": "Azure AD Authorisation Schema",
-  "default": {},
-  "required": [
-      "authConfig"
-  ],
-  "properties": {
-      "authConfig": {
-          "$id": "#/properties/authConfig",
-          "type": "object",
-          "title": "Authorisation configuration",
-          "required": [
-              "app_id"
-          ],
-          "properties": {
-              "app_id": {
-                  "$id": "#/properties/authConfig/properties/app_id",
-                  "type": "string",
-                  "title": "App Registration ID"
-              }
-          }
-      }
-  }
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://github.com/microsoft/AzureTRE/schema/azuread.json",
+    "type": "object",
+    "title": "Azure AD Authorisation Schema",
+    "default": {},
+    "required": [
+        "app_id"
+    ],
+    "properties": {
+        "app_id": {
+            "type": "string",
+            "title": "App Registration ID",
+            "description": "AAD App registration of the workspace"
+        }
+    }
 }

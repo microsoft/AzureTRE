@@ -23,4 +23,3 @@ class ResourceTemplate(AzureTREModel):
     type: str = "object"
     required: List[str] = Field(title="List of properties which must be provided")
     properties: Dict[str, Property] = Field(title="Template properties")
-    system_properties: Dict[str, Property] = Field(title="System properties")

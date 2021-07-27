@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 from pydantic import BaseModel, Field
 
 from models.domain.resource import ResourceType
@@ -20,17 +20,22 @@ def get_sample_workspace_template_object(template_name: str = "tre-workspace-van
             "description": Property(type="string"),
             "app_id": Property(type="string"),
             "address_space": Property(type="string", default="10.2.1.0/24", description="VNet address space for the workspace services")
-        },
-        system_properties={
-            "tre_id": Property(type="string"),
-            "workspace_id": Property(type="string"),
-            "azure_location": Property(type="string"),
         }
     )
 
 
 def get_sample_workspace_template() -> dict:
     return get_sample_workspace_template_object().dict()
+
+
+def get_sample_workspace_template_in_response() -> dict:
+    workspace_template = get_sample_workspace_template_object().dict()
+    workspace_template["system_properties"] = {
+        "tre_id": Property(type="string"),
+        "workspace_id": Property(type="string"),
+        "azure_location": Property(type="string"),
+    }
+    return workspace_template
 
 
 class WorkspaceTemplateNamesInList(BaseModel):
@@ -67,7 +72,9 @@ class WorkspaceTemplateInCreate(BaseModel):
 
 
 class WorkspaceTemplateInResponse(ResourceTemplate):
+    system_properties: Dict[str, Property] = Field(title="System properties")
+
     class Config:
         schema_extra = {
-            "example": get_sample_workspace_template()
+            "example": get_sample_workspace_template_in_response()
         }
