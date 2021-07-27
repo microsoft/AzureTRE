@@ -51,12 +51,6 @@
       "source": {
         "env": "MGMT_STORAGE_ACCOUNT_NAME"
       }
-    },
-    {
-      "name": "porter_driver",
-      "source": {
-        "env": "PORTER_DRIVER"
-      }
     }
   ]
 }

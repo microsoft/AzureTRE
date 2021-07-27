@@ -5,7 +5,7 @@ import socket
 import asyncio
 import logging
 from shared.logging import disable_unwanted_loggers, initialize_logging  # pylint: disable=import-error # noqa
-from resources import strings
+from resources import strings # pylint: disable=import-error # noqa
 from contextlib import asynccontextmanager
 from azure.servicebus import ServiceBusMessage
 from azure.servicebus.aio import ServiceBusClient, AutoLockRenewer
@@ -73,6 +73,7 @@ def build_porter_command(msg_body, env_vars):
     porter_parameters = porter_parameters + f" --param tfstate_container_name={env_vars['tfstate_container_name']}"
     porter_parameters = porter_parameters + f" --param tfstate_resource_group_name={env_vars['tfstate_resource_group_name']}"
     porter_parameters = porter_parameters + f" --param tfstate_storage_account_name={env_vars['tfstate_storage_account_name']}"
+    porter_parameters = porter_parameters + f" --param arm_use_msi={env_vars['arm_use_msi']}"
 
     command_line = [f"{azure_login_command(env_vars)} && az acr login --name {env_vars['registry_server']} && porter "
                     f"{msg_body['action']} {installation_id} "
@@ -90,7 +91,7 @@ def porter_envs(env_var):
     porter_env_vars["ARM_CLIENT_SECRET"] = env_var["arm_client_secret"]
     porter_env_vars["ARM_SUBSCRIPTION_ID"] = env_var["arm_subscription_id"]
     porter_env_vars["ARM_TENANT_ID"] = env_var["arm_tenant_id"]
-    porter_env_vars["PORTER_DRIVER"] = "docker"
+
     return porter_env_vars
 
 
@@ -188,11 +189,14 @@ def read_env_vars():
         "vmss_msi_id": os.environ.get('VMSS_MSI_ID', None),
 
         # Needed for running porter
+        "arm_use_msi": os.environ["ARM_USE_MSI"],
         "arm_subscription_id": os.environ['ARM_SUBSCRIPTION_ID'],
         "arm_client_id": os.environ["ARM_CLIENT_ID"],
-        "arm_client_secret": os.environ["ARM_CLIENT_SECRET"],
-        "arm_tenant_id": os.environ["ARM_TENANT_ID"],
+        "arm_tenant_id": os.environ["ARM_TENANT_ID"]
     }
+
+    env_vars["arm_client_secret"] = os.environ["ARM_CLIENT_SECRET"] if env_vars["arm_use_msi"] == "false" else ""
+
     return env_vars
 
 
