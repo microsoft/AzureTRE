@@ -4,29 +4,50 @@
       "id": "a7a7a7bd-7f4e-4a4e-b970-dc86a6b31dfb",
       "name": "tre-workspace-vanilla",
       "description": "vanilla workspace bundle",
-      "version": "0.1.0", 
-      "parameters": [
-        {
-          "name": "azure_location",
-          "type": "string"
-        },
-        {
-          "name": "tre_id",
-          "type": "string"
-        },
-        {
-          "name": "workspace_id",
-          "type": "string"
-        },
-        {
-          "name": "address_space",
-          "type": "string",
-          "default": "10.2.1.0/24",
-          "description": "VNet address space for the workspace services"
-        }
-      ],
+      "version": "0.1.0",
       "resourceType": "workspace",
-      "current": true
-    }
+      "current": true,
+      
+      "type": "object",
+      "required": [
+        "display_name",
+        "description",
+        "authConfig"
+      ],
+      "properties": {
+        "display_name": {
+          "type": "string",
+          "title": "Name for the workspace",
+          "description": "The name of the workspace to be displayed to users"
+        },
+      "description": {
+          "type": "string",
+          "title": "Description of the workspace",
+          "description": "Description of the workspace"
+        },
+      "address_space": {
+          "type": "string",
+          "title": "Address space",
+          "description": "Network address space to be used by the workspace",
+          "default": "10.2.1.0/24"
+        },
+      "app_id": {
+          "type": "string",
+          "title": "App Registration ID",
+          "description": "App registration of the workspace"
+        }
+      },
+      "system_properties": {
+        "tre_id": {
+          "type": "string"
+        },
+        "workspace_id": {
+          "type": "string"
+        },
+        "azure_location": {
+          "type": "string"
+        }
+      }
+    }    
   ]
 }

@@ -10,7 +10,7 @@ from db.errors import EntityDoesNotExist, WorkspaceValidationError
 from models.domain.workspace import Workspace
 from db.repositories.base import BaseRepository
 from models.domain.resource import Deployment, Status
-from models.domain.resource_template import ResourceTemplate, Parameter
+from models.domain.resource_template import ResourceTemplate, Property
 from models.schemas.workspace import WorkspaceInCreate
 from db.repositories.workspace_templates import WorkspaceTemplateRepository
 
@@ -44,7 +44,7 @@ class WorkspaceRepository(BaseRepository):
                 "tfstate_storage_account_name"]
 
     @staticmethod
-    def _check_that_all_required_parameters_exist(template_parameters: List[Parameter], supplied_request_parameters: dict, errors: dict):
+    def _check_that_all_required_parameters_exist(template_parameters: List[Property], supplied_request_parameters: dict, errors: dict):
         missing_required = []
         system_provided = WorkspaceRepository._system_provided_parameters()
         required_parameters = [parameter for parameter in template_parameters if parameter.required and parameter.name not in system_provided]
@@ -56,7 +56,7 @@ class WorkspaceRepository(BaseRepository):
         pass
 
     @staticmethod
-    def _validate_given_parameters(template_parameters: List[Parameter], supplied_request_parameters: dict, errors: dict):
+    def _validate_given_parameters(template_parameters: List[Property], supplied_request_parameters: dict, errors: dict):
         extra_parameters = []
         wrong_type = []
         template_parameters_by_name = {parameter.name: parameter for parameter in template_parameters}
@@ -78,7 +78,7 @@ class WorkspaceRepository(BaseRepository):
         pass
 
     @staticmethod
-    def _validate_workspace_parameters(template_parameters: List[Parameter], supplied_request_parameters: dict):
+    def _validate_workspace_parameters(template_parameters: List[Property], supplied_request_parameters: dict):
         errors = {}
 
         WorkspaceRepository._check_that_all_required_parameters_exist(template_parameters, supplied_request_parameters, errors)

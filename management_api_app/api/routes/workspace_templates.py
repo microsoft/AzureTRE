@@ -51,7 +51,7 @@ async def get_current_workspace_template_by_name(
 ) -> WorkspaceTemplateInResponse:
     try:
         template = workspace_template_repo.get_current_workspace_template_by_name(template_name)
-        return WorkspaceTemplateInResponse(workspaceTemplate=template)
+        return template
     except EntityDoesNotExist:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.WORKSPACE_TEMPLATE_DOES_NOT_EXIST)
     except Exception as e:

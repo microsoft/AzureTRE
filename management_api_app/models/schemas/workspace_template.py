@@ -2,7 +2,7 @@ from typing import List
 from pydantic import BaseModel, Field
 
 from models.domain.resource import ResourceType
-from models.domain.resource_template import ResourceTemplate, Parameter
+from models.domain.resource_template import ResourceTemplate, Property
 
 
 def get_sample_workspace_template_object(template_name: str = "tre-workspace-vanilla") -> ResourceTemplate:
@@ -11,14 +11,21 @@ def get_sample_workspace_template_object(template_name: str = "tre-workspace-van
         name=template_name,
         description="vanilla workspace bundle",
         version="0.1.0",
-        parameters=[
-            Parameter(name="azure_location", type="string"),
-            Parameter(name="tre_id", type="string"),
-            Parameter(name="workspace_id", type="string"),
-            Parameter(name="address_space", type="string", default="10.2.1.0/24", description="VNet address space for the workspace services")
-        ],
         resourceType=ResourceType.Workspace,
         current=True,
+        type="object",
+        required=["display_name", "description", "app_id"],
+        properties={
+            "display_name": Property(type="string"),
+            "description": Property(type="string"),
+            "app_id": Property(type="string"),
+            "address_space": Property(type="string", default="10.2.1.0/24", description="VNet address space for the workspace services")
+        },
+        system_properties={
+            "tre_id": Property(type="string"),
+            "workspace_id": Property(type="string"),
+            "azure_location": Property(type="string"),
+        }
     )
 
 
@@ -41,7 +48,7 @@ class WorkspaceTemplateInCreate(BaseModel):
     name: str = Field(title="Name of workspace template")
     version: str = Field(title="Version of workspace template")
     description: str = Field(title=" Description of workspace template")
-    parameters: List[Parameter] = Field([], title="Workspace template parameters", description="Values for the parameters required by the workspace template")
+    parameters: List[Property] = Field([], title="Workspace template parameters", description="Values for the parameters required by the workspace template")
     current: bool = Field(title="Mark this version as current")
 
     class Config:
@@ -59,12 +66,8 @@ class WorkspaceTemplateInCreate(BaseModel):
         }
 
 
-class WorkspaceTemplateInResponse(BaseModel):
-    workspaceTemplate: ResourceTemplate
-
+class WorkspaceTemplateInResponse(ResourceTemplate):
     class Config:
         schema_extra = {
-            "example": {
-                "workspaceTemplate": get_sample_workspace_template()
-            }
+            "example": get_sample_workspace_template()
         }
