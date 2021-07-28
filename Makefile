@@ -2,7 +2,7 @@
 
 SHELL:=/bin/bash
 
-all: bootstrap mgmt-deploy build-api-image push-api-image build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image build-cnab-image push-cnab-image tre-deploy
+all: bootstrap mgmt-deploy build-api-image push-api-image build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image tre-deploy
 
 bootstrap:
 	echo -e "\n\e[34m»»» 🧩 \e[96mBootstrap Terraform\e[0m..." \
@@ -77,8 +77,7 @@ tre-deploy:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
-	&& cd ./templates/core/terraform/ && ./deploy.sh \
-	&& cd ../../../ && ./devops/scripts/set_contributor_sp_secrets.sh
+	&& cd ./templates/core/terraform/ && ./deploy.sh
 
 deploy-processor-function:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDeploying processor function\e[0m..." \
@@ -163,3 +162,10 @@ porter-publish:
 	&& az acr login --name $${ACR_NAME}	\
 	&& cd ${DIR} \
 	&& porter publish --registry "$${ACR_NAME}.azurecr.io" --debug
+
+register-bundle:
+	echo -e "\n\e[34m»»» 🧩 \e[96mPublishing ${DIR} bundle\e[0m..." \
+	&& ./devops/scripts/check_dependencies.sh porter \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& cd ${DIR} \
+	&& ../../devops/scripts/publish_register_bundle.sh --acr-name $${ACR_NAME} --bundle-type workspace --current --insecure
