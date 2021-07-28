@@ -8,7 +8,8 @@ RUN apt-get update \
     && echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | tee /etc/apt/sources.list.d/azure-cli.list \
     && apt-get update && apt-get -y install azure-cli 
 
-RUN az config set extension.use_dynamic_install=yes_without_prompt
+RUN az extension add --name azure-firewall
+
 
 ARG BUNDLE_DIR
 

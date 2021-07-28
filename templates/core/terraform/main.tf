@@ -168,7 +168,8 @@ module "resource_processor_vmss_porter" {
   keyvault_id                                     = module.keyvault.keyvault_id
 
   depends_on = [
-    module.keyvault
+    module.keyvault,
+    module.firewall
   ]
 }
 

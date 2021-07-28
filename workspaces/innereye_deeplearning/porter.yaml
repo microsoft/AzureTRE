@@ -54,17 +54,23 @@ parameters:
 mixins:
   - exec
   - docker
+  - az
 
 install:
-  - exec:
-      description: "docker login"
-      command: docker
+  - az:
+      description: "az login"
       arguments:
         - login
-        - "{{ bundle.parameters.acr_name }}.azurecr.io"
       flags:
-        u: "{{ bundle.credentials.azure_client_id }}"
-        p: "{{ bundle.credentials.azure_client_secret }}"
+        identity:
+        username: "{{ bundle.credentials.azure_client_id}}"
+  - az:
+      description: "acr login"
+      arguments:
+        - acr
+        - login
+      flags:
+        name: "{{ bundle.parameters.acr_name }}"
   - exec:
       description: "Install Vanilla Workspace service"
       command: ./install_workspace_vanilla.sh
