@@ -7,7 +7,6 @@ By following this guide you will deploy a new Azure TRE instance for development
 ### Bootstrap and create prerequisite resources
 
 1. By now you should have a [developer environment](./dev-environment.md) set up
-1. Create service principals as explained in [Bootstrapping](./bootstrapping.md) document
 1. Create app registrations for auth; follow the [Authentication & authorization](./auth.md) guide
 
 ### Configure variables
