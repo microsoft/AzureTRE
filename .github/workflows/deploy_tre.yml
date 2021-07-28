@@ -5,7 +5,7 @@ on:
     # 1am each night https://crontab.guru/#0_1_*_*_*
     - cron: "0 1 * * *"
   push:
-    branches: [ develop, main ]
+    branches: [ develop, main, marrobi/issue496 ]
   workflow_dispatch:
 
 jobs:
@@ -128,10 +128,6 @@ jobs:
             export TF_VAR_acr_name=$ACR_NAME
             export TF_VAR_address_space=$ADDRESS_SPACE
             export TF_VAR_porter_output_container_name=$PORTER_OUTPUT_CONTAINER_NAME
-            export RESOURCE_PROCESSOR_CLIENT_ID=$(echo "$AZURE_CONTRIBUTOR_SP" | jq -r '.clientId')
-            export RESOURCE_PROCESSOR_CLIENT_SECRET=$(echo "$AZURE_CONTRIBUTOR_SP" | jq -r '.clientSecret')
-            export TF_VAR_resource_processor_client_id=$RESOURCE_PROCESSOR_CLIENT_ID
-            export TF_VAR_resource_processor_client_secret=$RESOURCE_PROCESSOR_CLIENT_SECRET
             export TF_VAR_debug="false"
             export TF_VAR_deploy_gitea=true
             export TF_VAR_resource_processor_type="vmss_porter"
@@ -319,131 +315,131 @@ jobs:
           make porter-publish DIR=./workspaces/services/innereye_deeplearning
           make porter-publish DIR=./workspaces/services/innereye_inference
 
-  deploy_azureml_devtestlabs_workspace:
-    name: Deploy Azure ML and DevTest Labs Workspace
-    needs: [publish_innereye_bundles]
-    runs-on: ubuntu-latest
-    environment: Dev
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: Azure Login
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-    - name: Publish and deploy azureml_devtestlabs workspace bundle
-      shell: bash
-      env:
-        TRE_ID: ${{ secrets.TRE_ID }}
-        LOCATION: ${{ secrets.LOCATION }}
-        WORKSPACE_ID: "0002"
-        ADDRESS_SPACE: "10.2.2.0/24"
-        ACR_NAME: ${{ secrets.ACR_NAME }}
-        TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TF_STATE_CONTAINER }}
-        MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP }}
-        MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
-        AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+  # deploy_azureml_devtestlabs_workspace:
+  #   name: Deploy Azure ML and DevTest Labs Workspace
+  #   needs: [publish_innereye_bundles]
+  #   runs-on: ubuntu-latest
+  #   environment: Dev
+  #   steps:
+  #   - name: Checkout
+  #     uses: actions/checkout@v2
+  #   - name: Azure Login
+  #     uses: azure/login@v1
+  #     with:
+  #       creds: ${{ secrets.AZURE_CREDENTIALS }}
+  #   - name: Publish and deploy azureml_devtestlabs workspace bundle
+  #     shell: bash
+  #     env:
+  #       TRE_ID: ${{ secrets.TRE_ID }}
+  #       LOCATION: ${{ secrets.LOCATION }}
+  #       WORKSPACE_ID: "0002"
+  #       ADDRESS_SPACE: "10.2.2.0/24"
+  #       ACR_NAME: ${{ secrets.ACR_NAME }}
+  #       TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TF_STATE_CONTAINER }}
+  #       MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP }}
+  #       MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+  #       AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
 
-      run: |
-          export USE_ENV_VARS_NOT_FILES=true
-          export env
-          export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
-          export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
-          export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
-          export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
+  #     run: |
+  #         export USE_ENV_VARS_NOT_FILES=true
+  #         export env
+  #         export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
+  #         export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
+  #         export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
+  #         export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
 
-          curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
-          export PATH=~/.porter/:$PATH
+  #         curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
+  #         export PATH=~/.porter/:$PATH
          
-          make porter-publish DIR=./workspaces/azureml_devtestlabs
-          make porter-install DIR=./workspaces/azureml_devtestlabs
+  #         make porter-publish DIR=./workspaces/azureml_devtestlabs
+  #         make porter-install DIR=./workspaces/azureml_devtestlabs
 
-  deploy_innereye_deeplearning_workspace:
-    name: Deploy InnerEye Deep Learning Workspace
-    needs: [deploy_azureml_devtestlabs_workspace]
-    runs-on: ubuntu-latest
-    environment: Dev
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: Azure Login
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-    - name: Publish and deploy azureml_devtestlabs workspace bundle
-      shell: bash
-      env:
-        TRE_ID: ${{ secrets.TRE_ID }}
-        LOCATION: ${{ secrets.LOCATION }}
-        WORKSPACE_ID: "0003"
-        ADDRESS_SPACE: "10.2.3.0/24"
-        ACR_NAME: ${{ secrets.ACR_NAME }}
-        TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TF_STATE_CONTAINER }}
-        MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP }}
-        MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
-        AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+  # deploy_innereye_deeplearning_workspace:
+  #   name: Deploy InnerEye Deep Learning Workspace
+  #   needs: [deploy_azureml_devtestlabs_workspace]
+  #   runs-on: ubuntu-latest
+  #   environment: Dev
+  #   steps:
+  #   - name: Checkout
+  #     uses: actions/checkout@v2
+  #   - name: Azure Login
+  #     uses: azure/login@v1
+  #     with:
+  #       creds: ${{ secrets.AZURE_CREDENTIALS }}
+  #   - name: Publish and deploy azureml_devtestlabs workspace bundle
+  #     shell: bash
+  #     env:
+  #       TRE_ID: ${{ secrets.TRE_ID }}
+  #       LOCATION: ${{ secrets.LOCATION }}
+  #       WORKSPACE_ID: "0003"
+  #       ADDRESS_SPACE: "10.2.3.0/24"
+  #       ACR_NAME: ${{ secrets.ACR_NAME }}
+  #       TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TF_STATE_CONTAINER }}
+  #       MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP }}
+  #       MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+  #       AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
 
-      run: |
-          export USE_ENV_VARS_NOT_FILES=true
-          export env
-          export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
-          export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
-          export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
-          export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
+  #     run: |
+  #         export USE_ENV_VARS_NOT_FILES=true
+  #         export env
+  #         export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
+  #         export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
+  #         export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
+  #         export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
 
-          curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
-          export PATH=~/.porter/:$PATH
+  #         curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
+  #         export PATH=~/.porter/:$PATH
 
-          make porter-publish DIR=./workspaces/innereye_deeplearning
-          make porter-install DIR=./workspaces/innereye_deeplearning
+  #         make porter-publish DIR=./workspaces/innereye_deeplearning
+  #         make porter-install DIR=./workspaces/innereye_deeplearning
 
-  deploy_innereye_deeplearning_inference_workspace:
-    name: Deploy InnerEye Deep Learning & Inference Workspace
-    needs: [deploy_innereye_deeplearning_workspace]
-    runs-on: ubuntu-latest
-    environment: Dev
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: Azure Login
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-    - name: Publish and deploy innereye_deeplearning_inference workspace bundle
-      shell: bash
-      env:
-        TRE_ID: ${{ secrets.TRE_ID }}
-        LOCATION: ${{ secrets.LOCATION }}
-        WORKSPACE_ID: "0004"
-        ADDRESS_SPACE: "10.2.4.0/24"
-        ACR_NAME: ${{ secrets.ACR_NAME }}
-        TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TF_STATE_CONTAINER }}
-        MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP }}
-        MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
-        AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+  # deploy_innereye_deeplearning_inference_workspace:
+  #   name: Deploy InnerEye Deep Learning & Inference Workspace
+  #   needs: [deploy_innereye_deeplearning_workspace]
+  #   runs-on: ubuntu-latest
+  #   environment: Dev
+  #   steps:
+  #   - name: Checkout
+  #     uses: actions/checkout@v2
+  #   - name: Azure Login
+  #     uses: azure/login@v1
+  #     with:
+  #       creds: ${{ secrets.AZURE_CREDENTIALS }}
+  #   - name: Publish and deploy innereye_deeplearning_inference workspace bundle
+  #     shell: bash
+  #     env:
+  #       TRE_ID: ${{ secrets.TRE_ID }}
+  #       LOCATION: ${{ secrets.LOCATION }}
+  #       WORKSPACE_ID: "0004"
+  #       ADDRESS_SPACE: "10.2.4.0/24"
+  #       ACR_NAME: ${{ secrets.ACR_NAME }}
+  #       TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TF_STATE_CONTAINER }}
+  #       MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP }}
+  #       MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+  #       AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
 
-      run: |
-          export USE_ENV_VARS_NOT_FILES=true
-          export env
-          export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
-          export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
-          export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
-          export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
-          export INFERENCE_SP_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
-          export INFERENCE_SP_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
+  #     run: |
+  #         export USE_ENV_VARS_NOT_FILES=true
+  #         export env
+  #         export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
+  #         export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
+  #         export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
+  #         export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
+  #         export INFERENCE_SP_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
+  #         export INFERENCE_SP_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
 
-          curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
-          export PATH=~/.porter/:$PATH
+  #         curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
+  #         export PATH=~/.porter/:$PATH
 
-          make porter-publish DIR=./workspaces/innereye_deeplearning_inference
-          make porter-install DIR=./workspaces/innereye_deeplearning_inference
-    - name: Notify dedicated teams channel
-      uses: sachinkundu/ms-teams-notification@1.4
-      if: ${{ success() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') }}
-      continue-on-error: true
-      with:
-        github-token: ${{ github.token }}
-        ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-        notification-summary: "Deployment Success"
-        notification-color: 28a745
-        timezone: Europe/Zurich
+  #         make porter-publish DIR=./workspaces/innereye_deeplearning_inference
+  #         make porter-install DIR=./workspaces/innereye_deeplearning_inference
+  #   - name: Notify dedicated teams channel
+  #     uses: sachinkundu/ms-teams-notification@1.4
+  #     if: ${{ success() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') }}
+  #     continue-on-error: true
+  #     with:
+  #       github-token: ${{ github.token }}
+  #       ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+  #       notification-summary: "Deployment Success"
+  #       notification-color: 28a745
+  #       timezone: Europe/Zurich
