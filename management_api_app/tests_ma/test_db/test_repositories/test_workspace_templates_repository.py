@@ -5,18 +5,18 @@ from db.repositories.workspace_templates import WorkspaceTemplateRepository
 from db.errors import EntityDoesNotExist
 from models.domain.resource import ResourceType
 from models.domain.resource_template import ResourceTemplate
-from models.schemas.workspace_template import WorkspaceTemplateInCreate
 
 
 def sample_workspace_template(name: str, version: str = "1.0") -> ResourceTemplate:
     return ResourceTemplate(
         id="a7a7a7bd-7f4e-4a4e-b970-dc86a6b31dfb",
         name=name,
-        description="some description",
+        description="test",
         version=version,
         resourceType=ResourceType.Workspace,
-        parameters=[],
-        current=False
+        current=False,
+        properties={},
+        required=[],
     )
 
 
@@ -143,25 +143,19 @@ def test_get_workspace_template_names_returns_unique_template_names(cosmos_clien
 @patch('db.repositories.workspace_templates.WorkspaceTemplateRepository.create_item')
 @patch('uuid.uuid4')
 @patch('azure.cosmos.CosmosClient')
-def test_create_item(cosmos_mock, uuid_mock, create_mock):
+def test_create_item(cosmos_mock, uuid_mock, create_mock, input_workspace_template):
     template_repo = WorkspaceTemplateRepository(cosmos_mock)
     uuid_mock.return_value = "1234"
-    payload = WorkspaceTemplateInCreate(
-        name="name",
-        description="some description",
-        version="0.0.1",
-        parameters=[],
-        current=False
-    )
-    returned_template = template_repo.create_workspace_template_item(payload)
+    returned_template = template_repo.create_workspace_template_item(input_workspace_template)
     expected_resource_template = ResourceTemplate(
         id="1234",
-        name="name",
-        description="some description",
-        version="0.0.1",
+        name=input_workspace_template.name,
+        description=input_workspace_template.json_schema["description"],
+        version=input_workspace_template.version,
         resourceType=ResourceType.Workspace,
-        parameters=[],
-        current=False
+        properties=input_workspace_template.json_schema["properties"],
+        required=input_workspace_template.json_schema["required"],
+        current=input_workspace_template.current
     )
     create_mock.assert_called_once_with(expected_resource_template)
     assert expected_resource_template == returned_template

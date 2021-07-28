@@ -9,7 +9,7 @@ from httpx import AsyncClient
 from resources import strings
 from api.routes.workspaces import get_current_user
 from db.errors import EntityDoesNotExist, UnableToAccessDatabase
-from models.domain.resource_template import ResourceTemplate, ResourceType
+from models.domain.resource_template import ResourceTemplate
 from models.schemas.workspace_template import WorkspaceTemplateInResponse, get_sample_workspace_template_object, WorkspaceTemplateInCreate
 
 from services.concatjsonschema import enrich_schema_defs
@@ -23,37 +23,6 @@ class TestWorkspaceTemplate:
     @pytest.fixture(autouse=True, scope='class')
     def _prepare(self, app, admin_user):
         app.dependency_overrides[get_current_user] = admin_user
-
-    @staticmethod
-    @pytest.fixture
-    def input_workspace_template():
-        return WorkspaceTemplateInCreate(
-            name="my-tre-workspace",
-            version="0.0.1",
-            current=True,
-            json_schema={
-                "$schema": "http://json-schema.org/draft-07/schema",
-                "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/myworkspace/workspace.json",
-                "type": "object",
-                "title": "My Workspace Template Custom Parameters",
-                "description": "These parameters are specific to my workspace template",
-                "required": [],
-                "properties": {}
-            })
-
-    @staticmethod
-    @pytest.fixture
-    def basic_resource_template(input_workspace_template):
-        return ResourceTemplate(
-            id="1234-5678",
-            name=input_workspace_template.name,
-            description=input_workspace_template.json_schema["description"],
-            version=input_workspace_template.name,
-            resourceType=ResourceType.Workspace,
-            current=True,
-            required=input_workspace_template.json_schema["required"],
-            properties=input_workspace_template.json_schema["properties"]
-        )
 
     @ patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_workspace_template_names")
     async def test_workspace_templates_returns_template_names(self, get_workspace_template_names_mock, app: FastAPI, client: AsyncClient):

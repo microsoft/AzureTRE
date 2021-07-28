@@ -134,8 +134,6 @@ class WorkspaceRepository(BaseRepository):
             authInformation=auth_info
         )
 
-        self._validate_workspace_parameters(current_template.parameters, workspace.resourceTemplateParameters)
-
         return workspace
 
     def save_workspace(self, workspace: Workspace):
