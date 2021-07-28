@@ -68,11 +68,13 @@ variable "porter_output_container_name" {
 
 variable "resource_processor_client_id" {
   type        = string
+  default     = ""
   description = "The client (app) ID of a service principal with Owner role to the subscription."
 }
 
 variable "resource_processor_client_secret" {
   type        = string
+  default     = ""
   description = "The client secret (app password) of a service principal with Owner role to the subscription."
 }
 
