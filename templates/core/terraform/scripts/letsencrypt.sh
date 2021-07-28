@@ -12,7 +12,8 @@ IPADDR=$(curl ipecho.net/plain; echo)
 
 echo "Creating network rule on storage account ${STORAGE_ACCOUNT} for $IPADDR"
 az storage account network-rule add --account-name "${STORAGE_ACCOUNT}" --ip-address $IPADDR
-sleep 10s
+echo "Waiting for network rule to take effect"
+sleep 30s
 echo "Created network rule on storage account"
 
 staticenabled=$(az storage blob service-properties show -o tsv \
