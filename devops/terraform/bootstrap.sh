@@ -9,7 +9,7 @@ az storage account create --resource-group $TF_VAR_mgmt_resource_group_name \
 --kind StorageV2 --sku Standard_LRS -o table
 
 # Blob container
-SA_KEY=$(az storage account keys list --account-name $TF_VAR_mgmt_storage_account_name --query "[0].value" -o tsv)
+SA_KEY=$(az storage account keys list --account-name $TF_VAR_mgmt_storage_account_name --resource-group $TF_VAR_mgmt_resource_group_name --query "[0].value" -o tsv)
 az storage container create --account-name $TF_VAR_mgmt_storage_account_name --name $TF_VAR_terraform_state_container_name --account-key $SA_KEY -o table
 az storage share create --account-name $TF_VAR_mgmt_storage_account_name --name $TF_VAR_porter_output_container_name --account-key $SA_KEY -o table
 

@@ -7,7 +7,6 @@ By following this guide you will deploy a new Azure TRE instance for development
 ### Bootstrap and create prerequisite resources
 
 1. By now you should have a [developer environment](./dev-environment.md) set up
-1. Create service principals as explained in [Bootstrapping](./bootstrapping.md) document
 1. Create app registrations for auth; follow the [Authentication & authorization](./auth.md) guide
 
 ### Configure variables
@@ -50,10 +49,9 @@ cp templates/core/.env.sample templates/core/.env
 | Environment variable name | Description |
 | ------------------------- | ----------- |
 | `TRE_ID` | A globally unique identifier. `TRE_ID` can be found in the resource names of the Azure TRE instance; for example, a `TRE_ID` of `mytre-dev-3142` will result in a resource group name for Azure TRE instance of `rg-mytre-dev-3142`. This must be less than 12 characters. Allowed characters: Alphanumeric, underscores, and hyphens. |
-| `ADDRESS_SPACE` | The address space for the Azure TRE core virtual network. |
+| `ADDRESS_SPACE` | The address space for the Azure TRE core virtual network. `/22` or larger. |
 | `MANAGEMENT_API_IMAGE_TAG` | The tag of the Management API image. Make it the same as `IMAGE_TAG` above.|
-| `RESOURCE_PROCESSOR_CLIENT_ID` | The client (app) ID of a service principal with "Owner" role to the subscription as created above. Used by Resource Processor Function to deploy workspaces and workspace services. |
-| `RESOURCE_PROCESSOR_CLIENT_SECRET` | The client secret (app password) of a service principal with "Onwer" role to the subscription as created above. Used by the depl09oyment processor function to deploy workspaces and workspace services. |
+| `RESOURCE_PROCESSOR_VMSS_PORTER_IMAGE_TAG` | The tag of the resource processor image. Make it the same as `IMAGE_TAG` above.|
 | `SWAGGER_UI_CLIENT_ID` | Generated when following auth guide. Client ID for swagger client to make requests. |
 | `AAD_TENANT_ID` | Generated when following auth guide. Tenant id against which auth is performed. |
 | `API_CLIENT_ID` | Generated when following auth guide. Client id of the "TRE API". |
@@ -77,12 +75,6 @@ core_resource_group_name = "rg-<TRE_ID>"
 keyvault_name = "kv-<TRE_ID>"
 log_analytics_name = "log-<TRE_ID>"
 static_web_storage = "stwebaz<TRE_ID>"
-```
-
-Deploy the processor function:
-
-```cmd
-make deploy-processor-function
 ```
 
 The Azure TRE is initially deployed with an invalid self-signed SSL certificate. This certificate is stored in the deployed Key Vault and can/should be replaced with one valid for the configured domain name. To use a certificate from [Let's Encrypt][letsencrypt], simply run the command:
@@ -131,9 +123,9 @@ Build and push the docker images required by the Azure TRE and publish them to t
 
 ```bash
 make build-api-image
-make build-cnab-image
+make build-resource-processor-vm-porter-image
 make push-api-image
-make push-cnab-image
+make push-resource-processor-vm-porter-image
 ```
 
 ## Access the Azure TRE deployment
@@ -157,41 +149,31 @@ You can also create a request to the `api/health` endpoint to verify that Manage
 curl https://<azure_tre_fqdn>/api/health
 ```
 
-## Creating vanilla workspace bundle and publishing them
+## Publishing and registering the vanilla workspace bundle
 
-Copy [workspaces/vanilla/.env.sample](../workspaces/vanilla/.env.sample) to `workspaces/vanilla/.env`.
+1. Run:
 
-```cmd
-cp workspaces/vanilla/.env.sample workspaces/vanilla/.env
-```
+    ```cmd
+    register-bundle DIR=./workspaces/vanilla
+    ```
 
-Edit the file and update the parameters
+    Copy the resulting payload json.
 
-| Environment variable name | Description |
-| ------------------------- | ----------- |
-| `TRE_ID` | Same as used above for creating the TRE |
-| `WORKSPACE_ID` | Random 4 characters ???|
-| `ADDRESS_SPACE` | The address space for the Azure TRE core virtual network. |
-| `AZURE_LOCATION` | Same as LOCATION above  |
-| `ARM_CLIENT_ID` | Same as RESOURCE_PROCESSOR_CLIENT_ID |
-| `ARM_CLIENT_SECRET` | Same as RESOURCE_PROCESSOR_CLIENT_SECRET |
-| `ARM_TENANT_ID` | Tenant id where TRE is deployed |
+1. Navigate to the Swagger UI at `https://<azure_tre_fqdn>/docs`
 
-Now you can run
+1. Log into the Swagger UI by clicking `Authorize`, then `Authorize` again. You will be redirected to the login page.
 
-```cmd
-make porter-build DIR=./workspaces/vanilla
-```
+1. Once logged in. Click `Try it out` on the `POST` `/api/workspace-templates` operation:
 
-followed by
+    ![Post Workspace Template](./assets/post-template.png)
 
-```cmd
-make porter-publish DIR=./workspaces/vanilla
-```
+1. Paste the payload json generated earlier into the `Request body` field, then click `Execute`. Review the server response.
+
+1. To verify regsitration of the template do `GET` operation on `/api/workspace-templates`. The name of the template should now be listed.
 
 ## Creating a vanilla workspace
 
-Now that we have created a vanilla workspace bundle we can use the deployed API to create a vanilla workspace.
+Now that we have published and registered a vanilla workspace bundle we can use the deployed API to create a vanilla workspace.
 
 <!-- markdownlint-disable-next-line MD013 -->
 > All routes are auth protected.Click the green **Authorize** button to receive a token for swagger client.  
