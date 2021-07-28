@@ -55,7 +55,8 @@ def enrich_schema_defs(combine_with, print_result=None):
     combine_with_dict = combine_with.dict()
     workspace_tuple = load_workspace_schema_def()
     schema_tuple = load_azuread_schema_def()
-    given_template_tuple = (combine_with_dict["required"], combine_with_dict["properties"])
+    given_template_tuple = (combine_with_dict["required"],
+                            combine_with_dict["properties"])
     basic_blocks = [workspace_tuple, schema_tuple, given_template_tuple]
     combine_with_dict["required"] = merge_required(basic_blocks)
     combine_with_dict["properties"] = merge_properties(basic_blocks)

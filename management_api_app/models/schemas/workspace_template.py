@@ -52,21 +52,47 @@ class WorkspaceTemplateNamesInList(BaseModel):
 class WorkspaceTemplateInCreate(BaseModel):
     name: str = Field(title="Name of workspace template")
     version: str = Field(title="Version of workspace template")
-    description: str = Field(title=" Description of workspace template")
-    parameters: List[Property] = Field([], title="Workspace template parameters", description="Values for the parameters required by the workspace template")
     current: bool = Field(title="Mark this version as current")
+    json_schema: Dict = Field(title="JSON Schema compliant template")
 
     class Config:
         schema_extra = {
             "example": {
                 "name": "my-tre-workspace",
                 "version": "0.0.1",
-                "description": "workspace template for great product",
-                "parameters": [{
-                    "name": "azure_location",
-                    "type": "string"
-                }],
-                "current": "true"
+                "current": "true",
+                "json_schema": {
+                    "$schema": "http://json-schema.org/draft-07/schema",
+                    "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/myworkspace/workspace.json",
+                    "type": "object",
+                    "title": "My Workspace Template Custom Parameters",
+                    "description": "These parameters are specific to my workspace template",
+                    "required": [
+                        "vm_size",
+                        "no_of_vms"
+                    ],
+                    "properties": {
+                        "vm_size": {
+                            "$id": "#/properties/vm_size",
+                            "type": "string",
+                            "title": "VM size",
+                            "description": "Size of the VMs in my workspace",
+                            "default": "Standard_A1",
+                            "enum": [
+                                "Standard_A1",
+                                "Standard_A2",
+                                "Standard_A3"
+                            ]
+                        },
+                        "no_of_vms": {
+                            "$id": "#/properties/no_of_vms",
+                            "type": "integer",
+                            "title": "Number of VMs",
+                            "description": "Number of virtual machines to be deployed in the workspace",
+                            "default": 0
+                        }
+                    }
+                }
             }
         }
 

@@ -41,7 +41,8 @@ async def create_workspace_template(
             # first registration
             workspace_template_create.current = True  # For first time registration, template is always marked current
         template_created = workspace_template_repo.create_workspace_template_item(workspace_template_create)
-        return WorkspaceTemplateInResponse(workspaceTemplate=template_created)
+        template = enrich_schema_defs(template_created)
+        return template
 
 
 @router.get("/workspace-templates/{template_name}", response_model=WorkspaceTemplateInResponse, name=strings.API_GET_WORKSPACE_TEMPLATE_BY_NAME)
