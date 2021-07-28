@@ -116,7 +116,8 @@ async def run_porter(command, env_vars):
         result_stderr = stderr.decode()
         logger_adapter.info('[stderr]')
         for string in result_stderr.split('\n'):
-            logger_adapter.info(str(string))
+            if len(string) != 0:
+                logger_adapter.info(str(string))
 
     return (proc.returncode, result_stdout, result_stderr)
 
