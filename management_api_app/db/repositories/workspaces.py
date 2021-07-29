@@ -6,13 +6,15 @@ from pydantic import parse_obj_as, UUID4
 
 from core import config
 from resources import strings
-from db.errors import EntityDoesNotExist, WorkspaceValidationError
+from db.errors import EntityDoesNotExist
 from models.domain.workspace import Workspace
 from db.repositories.base import BaseRepository
 from models.domain.resource import Deployment, Status
 from models.domain.resource_template import ResourceTemplate, Property
 from models.schemas.workspace import WorkspaceInCreate
 from db.repositories.workspace_templates import WorkspaceTemplateRepository
+from services.concatjsonschema import enrich_schema_defs
+from jsonschema import validate
 
 
 class WorkspaceRepository(BaseRepository):
@@ -26,7 +28,7 @@ class WorkspaceRepository(BaseRepository):
     def _get_current_workspace_template(self, template_name) -> ResourceTemplate:
         workspace_template_repo = WorkspaceTemplateRepository(self._client)
         template = workspace_template_repo.get_current_workspace_template_by_name(template_name)
-        return template
+        return enrich_schema_defs(template)
 
     @staticmethod
     def _convert_type_name(s: str) -> str:
@@ -78,17 +80,8 @@ class WorkspaceRepository(BaseRepository):
         pass
 
     @staticmethod
-    def _validate_workspace_parameters(template_parameters: List[Property], supplied_request_parameters: dict):
-        errors = {}
-
-        WorkspaceRepository._check_that_all_required_parameters_exist(template_parameters, supplied_request_parameters, errors)
-
-        WorkspaceRepository._validate_given_parameters(template_parameters, supplied_request_parameters, errors)
-
-        if errors:
-            raise WorkspaceValidationError(errors)
-
-        pass
+    def _validate_workspace_parameters(workspace_create, workspace_template):
+        validate(instance=workspace_create["properties"], schema=workspace_template)
 
     def get_all_active_workspaces(self) -> List[Workspace]:
         query = self._active_workspaces_query()
@@ -107,9 +100,11 @@ class WorkspaceRepository(BaseRepository):
 
         try:
             current_template = self._get_current_workspace_template(workspace_create.workspaceType)
-            template_version = current_template.version
+            template_version = current_template["version"]
         except EntityDoesNotExist:
             raise ValueError(f"The workspace type '{workspace_create.workspaceType}' does not exist")
+
+        self._validate_workspace_parameters(workspace_create.dict(), current_template)
 
         # system generated parameters
         resource_spec_parameters = {
@@ -120,13 +115,12 @@ class WorkspaceRepository(BaseRepository):
         }
 
         # user provided parameters
-        for parameter in workspace_create.parameters:
-            resource_spec_parameters[parameter] = workspace_create.parameters[parameter]
+        resource_spec_parameters.update(workspace_create.properties)
 
         workspace = Workspace(
             id=full_workspace_id,
-            displayName=workspace_create.displayName,
-            description=workspace_create.description,
+            displayName=workspace_create.properties["display_name"],
+            description=workspace_create.properties["description"],
             resourceTemplateName=workspace_create.workspaceType,
             resourceTemplateVersion=template_version,
             resourceTemplateParameters=resource_spec_parameters,

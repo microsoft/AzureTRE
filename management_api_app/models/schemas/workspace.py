@@ -67,23 +67,14 @@ class WorkspacesInList(BaseModel):
 
 
 class WorkspaceInCreate(BaseModel):
-    displayName: str = Field(title="Friendly name for workspace")
     workspaceType: str = Field(title="Workspace type", description="Bundle name")
-    description: str = Field(title="Workspace description")
-    parameters: dict = Field({}, title="Workspace parameters", description="Values for the parameters required by the workspace resource specification")
-    authConfig: AuthenticationConfiguration = Field(title="Authentication configuration", description="Authentication configuration for the workspace")
+    properties: dict = Field({}, title="Workspace parameters", description="Values for the parameters required by the workspace resource specification")
 
     class Config:
         schema_extra = {
             "example": {
-                "displayName": "My workspace",
-                "description": "workspace for team X",
                 "workspaceType": "tre-workspace-vanilla",
-                "parameters": {},
-                "authConfig": {
-                    "provider": "AAD",
-                    "data": {"app_id": "1212445c-aae6-41ec-a539-30dfa90ab1ae"}
-                }
+                "properties": {}
             }
         }
 

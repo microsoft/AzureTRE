@@ -1,6 +1,6 @@
 from fastapi import Depends, HTTPException, status
 
-from models.schemas.workspace import AuthenticationConfiguration, AuthProvider
+from models.schemas.workspace import AuthProvider
 from resources import strings
 from services.aad_authentication import authorize
 from services.aad_access_service import AADAccessService
@@ -8,10 +8,11 @@ from services.authentication import User
 from services.access_service import AccessService, AuthConfigValidationError
 
 
-def extract_auth_information(auth_config: AuthenticationConfiguration) -> dict:
-    access_service = get_access_service(auth_config.provider)
+def extract_auth_information(app_id: str) -> dict:
+    access_service = get_access_service('AAD')
     try:
-        return access_service.extract_workspace_auth_information(auth_config.data)
+        auth_config = {"app_id": app_id}
+        return access_service.extract_workspace_auth_information(auth_config)
     except AuthConfigValidationError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
