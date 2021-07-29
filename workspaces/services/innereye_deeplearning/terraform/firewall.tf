@@ -12,7 +12,7 @@ data "azurerm_client_config" "current" {}
 
 resource "null_resource" "az_login" {
   provisioner "local-exec" {
-    command = "az login --identity -u '${data.azurerm_client_config.client_id}'"
+    command = "az login --identity -u '${data.azurerm_client_config.current.client_id}'"
   }
 
   triggers = {
