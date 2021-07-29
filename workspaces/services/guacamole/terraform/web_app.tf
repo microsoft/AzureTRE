@@ -48,10 +48,6 @@ resource "null_resource" "az_login" {
     # command = "az login --identity -u '${data.azurerm_client_config.current.client_id}'"
     command = "az login --service-principal --username ${var.arm_client_id} --password ${var.arm_client_secret} --tenant ${var.arm_tenant_id} && az resource update --ids ${azurerm_app_service.guacamole.id}/config/web --set properties.acrUseManagedIdentityCreds=True -o none"
   }
-
-  triggers = {
-    timestamp = timestamp()
-  }
 }
 
 resource "azurerm_role_assignment" "guac_acr_pull" {

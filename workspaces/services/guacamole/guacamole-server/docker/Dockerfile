@@ -19,7 +19,7 @@ USER root
 RUN apt-get update && apt-get install wget curl openssh-server apt-transport-https gnupg -y && \
     apt-get autoclean && apt-get autoremove && rm -rf /var/lib/apt/lists/*
 
-RUN wget https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk-11.0.9.1%2B1/OpenJDK11U-jre_x64_linux_hotspot_11.0.9.1_1.tar.gz && \
+RUN wget https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk-11.0.11%2B9/OpenJDK11U-jdk_x64_linux_hotspot_11.0.11_9.tar.gz && \
     mkdir -p /usr/lib/jvm/java-11-openjdk-amd64/ && \
     tar xzf OpenJDK11U-jre_x64_linux_hotspot_11.0.9.1_1.tar.gz -C /usr/lib/jvm/java-11-openjdk-amd64/ --strip-components=1 && \
     export PATH=/usr/lib/jvm/java-11-openjdk-amd64/bin:$PATH && java -version
@@ -49,7 +49,7 @@ RUN mkdir /guac-transfer
 
 COPY ./docker/guacamole/ ${GUACAMOLE_HOME}
 
-RUN curl -L -o s6-overlay.tar.gz https://github.com/just-containers/s6-overlay/releases/download/v2.0.0.1/s6-overlay-amd64.tar.gz && tar xzvf s6-overlay.tar.gz -C /
+RUN curl -L -o s6-overlay.tar.gz https://github.com/just-containers/s6-overlay/releases/download/v2.2.0.3/s6-overlay-amd64.tar.gz && tar xzvf s6-overlay.tar.gz -C /
 
 COPY ./docker/sshd_config /etc/ssh/
 
