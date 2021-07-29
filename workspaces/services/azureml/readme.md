@@ -32,6 +32,6 @@ Service Tags:
 | ------------------------- | ----------- |
 | `WORKSPACE_ID` | The 4 character unique identifier used when deploying the vanilla workspace bundle. |
 
-1. Build and install the Azure DevTest Labs Service bundle
+1. Build and install the Azure ML Service bundle
     - `make porter-build DIR=./workspaces/services/azureml`  
     - `make porter-install DIR=./workspaces/services/azureml`

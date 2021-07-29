@@ -1,6 +1,6 @@
-name: tre-service-azureml
+name: tre-service-guacamole
 version: 0.1.2
-description: "An Azure TRE service for Azure Machine Learning"
+description: "An Azure TRE service for Guacamole"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
 
@@ -19,6 +19,18 @@ parameters:
     type: string
   - name: tre_id
     type: string
+  - name: acr_name
+    type: string
+    description: "Name of the azure container registry"
+    env: ACR_NAME
+  - name: mgmt_resource_group_name
+    type: string
+    description: "Resource group containing the shared ACR"
+    env: MGMT_RESOURCE_GROUP_NAME
+  - name: guacamole_image_tag
+    type: string
+    description: "Guacamole server image tag"
+    env: GUACAMOLE_IMAGE_TAG
   - name: tfstate_resource_group_name
     type: string
     description: "Resource group containing the Terraform state storage account"
@@ -32,11 +44,7 @@ parameters:
     description: "The name of the Terraform state storage container"
 
 outputs:
-  - name: azureml_workspace_name
-    type: string
-  - name: azureml_acr_id
-    type: string
-  - name: azureml_storage_account_id
+  - name: guacamole_workspace_name
     type: string
 
 mixins:
@@ -46,33 +54,34 @@ mixins:
 
 install:
   - terraform:
-      description: "Deploy Azure ML Service"
+      description: "Deploy Guacamole Service"
       vars:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
         arm_client_id: "{{ bundle.credentials.azure_client_id }}"
         arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
         arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
+        acr_name: "{{ bundle.parameters.acr_name }}"
+        mgmt_resource_group_name: "{{ bundle.parameters.mgmt_resource_group_name }}"
+        guacamole_image_tag: "{{ bundle.parameters.guacamole_image_tag }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.workspace_id }}-svc-azureml"
+        key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.workspace_id }}-svc-guacamole"
       outputs:
-      - name: azureml_workspace_name
-      - name: azureml_acr_id
-      - name: azureml_storage_account_id
+      - name: guacamole_workspace_name
 
 upgrade:
   - exec:
-      description: "Upgrade Azure ML Service"
+      description: "Upgrade Guacamole Service"
       command: echo
       arguments:
         - "This workspace service does not implement upgrade action"
 
 uninstall:
   - terraform:
-      description: "Delete the Azure ML Service"
+      description: "Delete the Guacamole Service"
       vars:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
@@ -80,4 +89,4 @@ uninstall:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.workspace_id }}-svc-azureml"
+        key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.workspace_id }}-svc-guacamole"
