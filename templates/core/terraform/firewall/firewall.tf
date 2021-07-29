@@ -214,6 +214,7 @@ resource "azurerm_firewall_network_rule_collection" "resource_processor_subnet" 
       "AzureActiveDirectory",
       "AzureResourceManager",
       "AzureContainerRegistry",
+      "AzureKeyVault",
       "AzureMonitor",
       "MicrosoftContainerRegistry",
       "Storage"

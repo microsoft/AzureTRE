@@ -8,9 +8,11 @@ locals {
   allowedInnerEyeURLs           = ["*.anaconda.com", "*.anaconda.org", "binstar-cio-packages-prod.s3.amazonaws.com", "github.com", "*pypi.org", "*pythonhosted.org", "github-cloud.githubusercontent.com"]
 }
 
+data "azurerm_client_config" "current" {}
+
 resource "null_resource" "az_login" {
   provisioner "local-exec" {
-    command = "az login --service-principal -u '${var.arm_client_id}' -p '${var.arm_client_secret}' --tenant '${var.arm_tenant_id}'"
+    command = "az login --identity -u '${data.azurerm_client_config.client_id}'"
   }
 
   triggers = {

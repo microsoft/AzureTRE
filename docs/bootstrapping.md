@@ -31,19 +31,6 @@ Two service principals need to be created: One to authorize the [Makefile](../Ma
     * Locally
     * In a [GitHub secret](https://docs.github.com/en/actions/reference/encrypted-secrets) called `AZURE_CREDENTIALS`.
 
-1. Create a service principal, used by the Resource Processor Function, with "**Contributor**" role:
-
-    ```cmd
-    az ad sp create-for-rbac --name "sp-aztre-resource-processor" --role Contributor --scopes /subscriptions/<subscription ID> --sdk-auth
-    ```
-
-    > The `tre-deploy` target in the [Makefile](../Makefile) runs [a script](../devops/scripts/set_contributor_sp_secrets.sh) that inserts the client ID and secret into a Key Vault created in the same very step. If the script fails, the system will be up and running, but the Resource Processor Function will not be able to deploy workspace resources.
-
-1. Save the JSON output
-
-    * Locally, and make sure you can distinguish this one from the previous one later
-    * In a GitHub secret called `AZURE_CONTRIBUTOR_SP`.
-
 ## Create app registrations
 
 Create app registrations for auth based on the [Authentication & authorization](./auth.md) guide.
