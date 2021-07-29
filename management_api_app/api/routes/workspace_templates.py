@@ -9,7 +9,7 @@ from db.errors import EntityDoesNotExist
 from db.repositories.workspace_templates import WorkspaceTemplateRepository
 from models.schemas.workspace_template import (WorkspaceTemplateNamesInList, WorkspaceTemplateInCreate, WorkspaceTemplateInResponse)
 from resources import strings
-
+from services.concatjsonschema import enrich_schema_defs
 
 router = APIRouter(dependencies=[Depends(get_current_admin_user)])
 
@@ -41,7 +41,8 @@ async def create_workspace_template(
             # first registration
             workspace_template_create.current = True  # For first time registration, template is always marked current
         template_created = workspace_template_repo.create_workspace_template_item(workspace_template_create)
-        return WorkspaceTemplateInResponse(workspaceTemplate=template_created)
+        template = enrich_schema_defs(template_created)
+        return template
 
 
 @router.get("/workspace-templates/{template_name}", response_model=WorkspaceTemplateInResponse, name=strings.API_GET_WORKSPACE_TEMPLATE_BY_NAME)
@@ -51,7 +52,8 @@ async def get_current_workspace_template_by_name(
 ) -> WorkspaceTemplateInResponse:
     try:
         template = workspace_template_repo.get_current_workspace_template_by_name(template_name)
-        return WorkspaceTemplateInResponse(workspaceTemplate=template)
+        template = enrich_schema_defs(template)
+        return template
     except EntityDoesNotExist:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.WORKSPACE_TEMPLATE_DOES_NOT_EXIST)
     except Exception as e:

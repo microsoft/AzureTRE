@@ -2,6 +2,20 @@ import json
 from pathlib import Path
 
 
+def system_properties_block():
+    return {
+        "tre_id": {
+            "type": "string"
+        },
+        "workspace_id": {
+            "type": "string"
+        },
+        "azure_location": {
+            "type": "string"
+        }
+    }
+
+
 def merge_required(tuples):
     required = [tup[0] for tup in tuples]
     flattened = [val for sublist in required for val in sublist]
@@ -30,30 +44,21 @@ def load_azuread_schema_def():
     return read_schema("azuread.json")
 
 
-def print_formatted_json(required, properties):
-    for j in [required, properties]:
-        json_formatted_str = json.dumps(j, indent=4)
-        print(json_formatted_str)
-
-
-def concat_schema_defs(combine_with=None, print_result=None):
-    """Combines schema definitions of known blocks with optional schema
+def enrich_schema_defs(combine_with, print_result=None):
+    """Adds to the provided template all UI and system properties
 
     Args:
-        combine_with ([Tuple], optional): [Optional schema defs of a workspace]. Defaults to None.
+        combine_with ([Dict]): [Template to which UI and system properties are added].
     Returns:
-        [Tuple]: [A tuple of merged required list and properties dictionary]
+        [Dict]: [Enriched template with all required and system properties added]
     """
+    combine_with_dict = combine_with.dict()
     workspace_tuple = load_workspace_schema_def()
     schema_tuple = load_azuread_schema_def()
-    basic_blocks = [workspace_tuple, schema_tuple]
-    _ = basic_blocks if not combine_with else basic_blocks.append(combine_with)
-    required = merge_required(basic_blocks)
-    properties = merge_properties(basic_blocks)
-    if print_result:
-        print_formatted_json(required, properties)
-    return (required, properties)
-
-
-if __name__ == "__main__":
-    concat_schema_defs(print_result=True)
+    given_template_tuple = (combine_with_dict["required"],
+                            combine_with_dict["properties"])
+    basic_blocks = [workspace_tuple, schema_tuple, given_template_tuple]
+    combine_with_dict["required"] = merge_required(basic_blocks)
+    combine_with_dict["properties"] = merge_properties(basic_blocks)
+    combine_with_dict["system_properties"] = system_properties_block()
+    return combine_with_dict
