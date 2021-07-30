@@ -104,5 +104,5 @@ if [[ -n  ${access_token+x} ]]; then
     echo -e "\n"
 else
     echo -e "Use the following payload to register the template:\n\n"
-    echo $(echo $payload | jq .)
+    echo $(echo $payload | jq --color-output .)
 fi
