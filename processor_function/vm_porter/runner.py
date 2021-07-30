@@ -4,8 +4,9 @@ import json
 import socket
 import asyncio
 import logging
+
 from shared.logging import disable_unwanted_loggers, initialize_logging  # pylint: disable=import-error # noqa
-from resources import strings # pylint: disable=import-error # noqa
+from resources import strings  # pylint: disable=import-error # noqa
 from contextlib import asynccontextmanager
 from azure.servicebus import ServiceBusMessage
 from azure.servicebus.aio import ServiceBusClient, AutoLockRenewer
@@ -63,9 +64,41 @@ def azure_login_command(env_vars):
     return command
 
 
-def build_porter_command(msg_body, env_vars):
+async def filter_parameters_not_needed_by_porter(msg_body, env_vars):
+    parameters = msg_body["parameters"]
+    command = [f"{azure_login_command(env_vars)} >/dev/null && \
+        az acr login --name {env_vars['registry_server'].replace('.azurecr.io','')} >/dev/null && \
+        porter explain --reference {env_vars['registry_server']}/{msg_body['name']}:v{msg_body['version']} -ojson"]
+    proc = await asyncio.create_subprocess_shell(
+        ''.join(command),
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+        env=porter_envs(env_vars))
+
+    stdout, stderr = await proc.communicate()
+    logging.info(f'[{command!r} exited with {proc.returncode}]')
+    result_stdout = None
+    result_stderr = None
+    if stdout:
+        result_stdout = stdout.decode()
+        porter_explain_parameters = json.loads(result_stdout)["parameters"]
+        items = [item["name"] for item in porter_explain_parameters]
+        porter_keys = set(items).intersection(set(parameters.keys()))
+        return porter_keys
+    if stderr:
+        result_stderr = stderr.decode()
+        logger_adapter.info('[stderr]')
+        for string in result_stderr.split('\n'):
+            logger_adapter.info(str(string))
+
+    return parameters.keys()
+
+
+async def build_porter_command(msg_body, env_vars):
     porter_parameters = ""
-    for parameter in msg_body['parameters']:
+
+    porter_keys = await filter_parameters_not_needed_by_porter(msg_body, env_vars)
+    for parameter in porter_keys:
         porter_parameters = porter_parameters + f" --param {parameter}={msg_body['parameters'][parameter]}"
 
     installation_id = msg_body['parameters']['tre_id'] + "-" + msg_body['parameters']['workspace_id']
@@ -137,8 +170,8 @@ async def deploy_porter_bundle(msg_body, sb_client, env_vars, message_logger_ada
     sb_sender = sb_client.get_queue_sender(queue_name=env_vars["deployment_status_queue"])
     resource_request_message = service_bus_message_generator(msg_body, strings.RESOURCE_STATUS_DEPLOYING, "Deployment job starting")
     await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"]))
-
-    returncode, _, err = await run_porter(build_porter_command(msg_body, env_vars), env_vars)
+    porter_command = await build_porter_command(msg_body, env_vars)
+    returncode, _, err = await run_porter(porter_command, env_vars)
     if returncode != 0:
         error_message = "Error context message = " + " ".join(err.split('\n'))
         resource_request_message = service_bus_message_generator(msg_body, strings.RESOURCE_STATUS_FAILED, error_message)

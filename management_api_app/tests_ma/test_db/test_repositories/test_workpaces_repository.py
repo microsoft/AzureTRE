@@ -10,6 +10,11 @@ from models.domain.workspace import Workspace
 from models.schemas.workspace import WorkspaceInCreate, AuthenticationConfiguration, AuthProvider
 
 
+@pytest.fixture
+def basic_workspace_request():
+    return WorkspaceInCreate(workspaceType="vanilla-tre", properties={"display_name": "test", "description": "test"})
+
+
 @patch('azure.cosmos.CosmosClient')
 def test_get_all_active_workspaces_calls_db_with_correct_query(cosmos_client_mock):
     workspace_repo = db.repositories.workspaces.WorkspaceRepository(cosmos_client_mock)
@@ -54,26 +59,18 @@ def test_get_workspace_by_id_throws_entity_does_not_exist_if_item_does_not_exist
 @patch("db.repositories.workspaces.WorkspaceRepository._validate_workspace_parameters")
 def test_create_workspace_item_creates_a_workspace_with_the_right_values(validate_workspace_parameters_mock, cosmos_client_mock,
                                                                          _get_current_workspace_template_mock,
-                                                                         basic_resource_template):
+                                                                         basic_resource_template, basic_workspace_request):
     workspace_repo = db.repositories.workspaces.WorkspaceRepository(cosmos_client_mock)
 
-    workspace_type = "vanilla-tre"
-    display_name = "my workspace"
-    description = "some description"
-    workspace_to_create = WorkspaceInCreate(
-        workspaceType=workspace_type,
-        displayName=display_name,
-        description=description,
-        authConfig=AuthenticationConfiguration(provider=AuthProvider.AAD, data={})
-    )
+    workspace_to_create = basic_workspace_request
     validate_workspace_parameters_mock.return_value = None
-    _get_current_workspace_template_mock.return_value = basic_resource_template
+    _get_current_workspace_template_mock.return_value = basic_resource_template.dict()
 
     workspace = workspace_repo.create_workspace_item(workspace_to_create, {})
 
-    assert workspace.displayName == display_name
-    assert workspace.description == description
-    assert workspace.resourceTemplateName == workspace_type
+    assert workspace.displayName == basic_workspace_request.properties["display_name"]
+    assert workspace.description == basic_workspace_request.properties["description"]
+    assert workspace.resourceTemplateName == basic_workspace_request.workspaceType
     assert workspace.resourceType == ResourceType.Workspace
     assert workspace.deployment.status == Status.NotDeployed
     assert "azure_location" in workspace.resourceTemplateParameters

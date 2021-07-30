@@ -34,11 +34,10 @@ async def retrieve_users_active_workspaces(
 
 @router.post("/workspaces", status_code=status.HTTP_202_ACCEPTED, response_model=WorkspaceIdInResponse, name=strings.API_CREATE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
 async def create_workspace(workspace_create: WorkspaceInCreate, workspace_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository))) -> WorkspaceIdInResponse:
-    auth_information = extract_auth_information(workspace_create.properties["app_id"])
-
     try:
+        auth_information = extract_auth_information(workspace_create.properties["app_id"])
         workspace = workspace_repo.create_workspace_item(workspace_create, auth_information)
-    except (ValidationError, ValueError) as e:
+    except (KeyError, ValidationError, ValueError) as e:
         logging.error(f"Failed create workspace model instance: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
