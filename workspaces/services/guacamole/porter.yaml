@@ -31,6 +31,7 @@ parameters:
     type: string
     description: "Guacamole server image tag"
     env: GUACAMOLE_IMAGE_TAG
+    default: "v0.0.1"
   - name: tfstate_resource_group_name
     type: string
     description: "Resource group containing the Terraform state storage account"
