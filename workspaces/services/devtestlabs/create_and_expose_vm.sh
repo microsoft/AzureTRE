@@ -112,7 +112,7 @@ fi
 if NSG_RULE=$(az network nsg rule show -g $vm_resource_group_name --nsg-name nsg-ws --name $lab_name -o json); then
     echo "NSG rule from firewall already exists for VMs in this worksapce"
 else
-    az network nsg rule create -g $vm_resource_group_name --nsg-name nsg-ws --name $lab_name --priority 3000 --destination-port-range 3389 --source-address-prefixes $FIREWALL_SUBNET_ADDRESS_PREFIX --destination-address-prefixes $VM_SUBNET_ADDRESS_PREFIX --protocol Tcp --access Allow
+    az network nsg rule create -g $vm_resource_group_name --nsg-name nsg-ws --name $lab_name --priority 800 --destination-port-range 3389 --source-address-prefixes $FIREWALL_SUBNET_ADDRESS_PREFIX --destination-address-prefixes $VM_SUBNET_ADDRESS_PREFIX --protocol Tcp --access Allow
 fi
 
 

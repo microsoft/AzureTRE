@@ -33,7 +33,7 @@ async def receive_message(env_vars, service_bus_client):
     """
     async with service_bus_client:
         q_name = env_vars["resource_request_queue"]
-        renewer = AutoLockRenewer()
+        renewer = AutoLockRenewer(max_lock_renewal_duration=1800)
         receiver = service_bus_client.get_queue_receiver(queue_name=q_name, auto_lock_renewer=renewer)
 
         async with receiver:
