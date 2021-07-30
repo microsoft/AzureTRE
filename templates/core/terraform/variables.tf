@@ -124,6 +124,12 @@ variable "deploy_gitea" {
   description = "Deploy the Gitea shared service"
 }
 
+variable "deploy_nexus" {
+  type        = bool
+  default     = true
+  description = "Deploy the Nexus shared service"
+}
+
 variable "resource_processor_type" {
   default     = "vmss_porter"
   description = "Which resource processor to deploy."

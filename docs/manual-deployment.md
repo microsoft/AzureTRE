@@ -36,7 +36,6 @@ cp devops/.env.sample devops/.env
 | `ARM_CLIENT_SECRET` | *Optional for manual deployment without logged-in credentials.* The password of the client defined in `ARM_CLIENT_ID`. |
 | `ARM_TENANT_ID` | *Optional for manual deployment without logged-in credentials.* The AAD tenant of the client defined in `ARM_CLIENT_ID`. |
 | `PORTER_OUTPUT_CONTAINER_NAME` | The name of the storage container where to store the workspace/workspace service deployment output. Workspaces and workspace templates are implemented using [Porter](https://porter.sh) bundles - hence the name of the variable. The storage account used is the one defined in `STATE_STORAGE_ACCOUNT_NAME`. |
-| `DEPLOY_GITEA` | If set to `false` disables deployment of the Gitea shared service. |
 | `DEBUG` | If set to "true" disables purge protection of keyvault. |
 
 
@@ -56,7 +55,8 @@ cp templates/core/.env.sample templates/core/.env
 | `AAD_TENANT_ID` | Generated when following auth guide. Tenant id against which auth is performed. |
 | `API_CLIENT_ID` | Generated when following auth guide. Client id of the "TRE API". |
 | `API_CLIENT_SECRET` | Generated when following auth guide. Client secret of the "TRE API". |
-| `DEPLOY_GITEA` | Set to true (default) to enable Git shared service. |
+| `DEPLOY_GITEA` | If set to `false` disables deployment of the Gitea shared service. |
+| `DEPLOY_NEXUS` | If set to `false` disables deployment of the Nexus shared service. |
 
 ### Deploy
 
