@@ -10,7 +10,7 @@ from db.errors import EntityDoesNotExist
 from models.domain.workspace import Workspace
 from db.repositories.base import BaseRepository
 from models.domain.resource import Deployment, Status
-from models.domain.resource_template import ResourceTemplate, Property
+from models.domain.resource_template import ResourceTemplate
 from models.schemas.workspace import WorkspaceInCreate
 from db.repositories.workspace_templates import WorkspaceTemplateRepository
 from services.concatjsonschema import enrich_schema_defs
@@ -29,55 +29,6 @@ class WorkspaceRepository(BaseRepository):
         workspace_template_repo = WorkspaceTemplateRepository(self._client)
         template = workspace_template_repo.get_current_workspace_template_by_name(template_name)
         return enrich_schema_defs(template)
-
-    @staticmethod
-    def _convert_type_name(s: str) -> str:
-        if s == 'str':
-            return 'string'
-        if s == 'int':
-            return 'integer'
-        return 'invalid'
-
-    @staticmethod
-    def _system_provided_parameters() -> List[str]:
-        return ["acr_name",
-                "tfstate_container_name",
-                "tfstate_resource_group_name",
-                "tfstate_storage_account_name"]
-
-    @staticmethod
-    def _check_that_all_required_parameters_exist(template_parameters: List[Property], supplied_request_parameters: dict, errors: dict):
-        missing_required = []
-        system_provided = WorkspaceRepository._system_provided_parameters()
-        required_parameters = [parameter for parameter in template_parameters if parameter.required and parameter.name not in system_provided]
-        missing_required = [parameter.name for parameter in required_parameters if parameter.name not in supplied_request_parameters]
-
-        if missing_required:
-            errors[strings.MISSING_REQUIRED_PARAMETERS] = missing_required
-
-        pass
-
-    @staticmethod
-    def _validate_given_parameters(template_parameters: List[Property], supplied_request_parameters: dict, errors: dict):
-        extra_parameters = []
-        wrong_type = []
-        template_parameters_by_name = {parameter.name: parameter for parameter in template_parameters}
-        for parameter in supplied_request_parameters:
-            if parameter not in template_parameters_by_name:
-                extra_parameters.append(parameter)
-            else:
-                template_parameter = template_parameters_by_name[parameter]
-                supplied_parameter_type = WorkspaceRepository._convert_type_name(type(supplied_request_parameters[parameter]).__name__)
-                if supplied_parameter_type != template_parameter.type:
-                    wrong_type.append({"parameter": parameter, "expected_type": template_parameter.type, "supplied_type": supplied_parameter_type})
-
-        if extra_parameters:
-            errors[strings.INVALID_EXTRA_PARAMETER] = extra_parameters
-
-        if wrong_type:
-            errors[strings.PARAMETERS_WITH_WRONG_TYPE] = wrong_type
-
-        pass
 
     @staticmethod
     def _validate_workspace_parameters(workspace_create, workspace_template):
