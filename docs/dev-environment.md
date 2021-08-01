@@ -2,7 +2,6 @@
 
 The supported development environments for Azure TRE are:
 
-* [Native](#native-environment) and
 * [Dev container](#dev-container)
 
 ## Prerequisites

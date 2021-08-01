@@ -89,21 +89,23 @@ TRE e2e test app registration is used to authorize end-to-end test scenarios. It
 | ------------------- | ---- | ----------- | ---------------------- |
 | Microsoft Graph/openid (`https://graph.microsoft.com/openid`) | Delegated | Allows users to sign in to the app with their work or school accounts and allows the app to see basic user profile information. | No |
 | Microsoft Graph/User.Read (`https://graph.microsoft.com/User.Read`) | Delegated | Allows users to sign-in to the app, and allows the app to read the profile of signed-in users. It also allows the app to read basic company information of signed-in users. | No |
+| <TRE APP client>.Workspace.Read | Delegated | Allow the app to get information about the TRE workspaces on behalf of the signed-in user | No |
+| <TRE APP client>.Workspace.Write | Delegated | Allow the app to create, update or delete TRE workspaces on behalf of the signed-in user | No |
 
 #### Authentication - TRE e2e test
 
-Redirect URLs:
+1. Define Redirect URLs:
+    
+    In TRE e2e test app registration go to Authentication -> Add platform -> Select Mobile & Desktop and add: 
+    
+    * `https://login.microsoftonline.com/common/oauth2/nativeclient`
+    * `msal<TRE e2e test app registration application (client) ID>://auth`
+    
+    ![Add auth platform](assets/aad-add-auth-platform.png)
 
-* `https://login.microsoftonline.com/common/oauth2/nativeclient`
-* `msal<TRE e2e test app registration application (client) ID>://auth`
+1. Allow public client flows (see image below). This enables the end-to-end tests to use a username and password combination to authenticate. Note that this should never be allowed for a production environment as it poses a security risk.
 
-The authorization endpoint must be allowed to issue access tokens:
-
-![Access tokens issued by endpoint](./assets/tre-e2e-test-app-reg-authentication-access-tokens.png)
-
-Public client flows need to be allowed (see image below). This enables the end-to-end tests to use a username and password combination to authenticate. Note that this should never be allowed for a production environment as it poses a security risk.
-
-![Allow public client flows - Yes](./assets/app-reg-authentication-allow-public-client-flows-yes.png)
+    ![Allow public client flows - Yes](./assets/app-reg-authentication-allow-public-client-flows-yes.png)
 
 #### End-to-end test user
 

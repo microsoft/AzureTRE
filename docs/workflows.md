@@ -11,8 +11,8 @@ These are onetime configuration steps required to set up the GitHub Actions work
 *Required repository secrets for the CI/CD.*
 | Secret name | Description |
 | ----------- | ----------- |
-| `AZURE_CREDENTIALS` | Explained in [Bootstrapping - Create service principals](./bootstrapping.md#create-service-principals). |
-| `AZURE_CONTRIBUTOR_SP` | Explained in [Bootstrapping - Create service principals](./bootstrapping.md#create-service-principals). |
+| `AZURE_CREDENTIALS` | Explained in [Bootstrapping - Create service principals](./bootstrapping.md#create-service-principals). Main service principal credentials output. |
+| `AZURE_CONTRIBUTOR_SP` | Explained in [Bootstrapping - Create service principals](./bootstrapping.md#create-service-principals). Resource Processor Function service principal credentials output.|
 | `TF_STATE_CONTAINER` | The name of the blob container to hold the Terraform state. Default value is `tfstate`. |
 | `MGMT_RESOURCE_GROUP` | The name of the shared resource group for all Azure TRE core resources. |
 | `STATE_STORAGE_ACCOUNT_NAME` | The name of the storage account to hold the Terraform state and other deployment artifacts. |

@@ -157,11 +157,11 @@ See also: [Auth in code](#auth-in-code)
 
     ```cmd
     virtualenv venv
-    venv/Scripts/activate
+    venv/Scripts/activate -- didn't work
     pip install -r requirements.txt
     ```
 
-1. Copy `.env.tmpl` in the **management_api_app** folder to `.env` and configure the variables
+1. Copy `.env.tmpl` in the **management_api_app** folder to `.env` and configure the variables. Notice: You might also need to export those variables to your env (`export VAR_NAME=VALUE` for all vars in the .env file). 
 1. Start the web API
 
     ```cmd
