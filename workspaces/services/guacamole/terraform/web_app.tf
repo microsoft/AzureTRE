@@ -1,5 +1,5 @@
 resource "azurerm_app_service_plan" "guacamole" {
-  name                = "asp-inf-${local.service_resource_name_suffix}"
+  name                = "plan-inf-${local.service_resource_name_suffix}"
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
   kind                = "Linux"
@@ -12,7 +12,7 @@ resource "azurerm_app_service_plan" "guacamole" {
 }
 
 resource "azurerm_app_service" "guacamole" {
-  name                = "app-gua-${local.service_resource_name_suffix}"
+  name                = "guacamole-${local.service_resource_name_suffix}"
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
   app_service_plan_id = azurerm_app_service_plan.guacamole.id
@@ -43,7 +43,7 @@ resource "azurerm_app_service" "guacamole" {
 
 # Use managed identity to login to ACR
 # https://github.com/Azure/app-service-linux-docs/blob/master/HowTo/use_system-assigned_managed_identities.md
-resource "null_resource" "az_login" {
+resource "null_resource" "az_update_acr_permissions" {
   provisioner "local-exec" {
     # command = "az login --identity -u '${data.azurerm_client_config.current.client_id}'"
     command = "az login --service-principal --username ${var.arm_client_id} --password ${var.arm_client_secret} --tenant ${var.arm_tenant_id} && az resource update --ids ${azurerm_app_service.guacamole.id}/config/web --set properties.acrUseManagedIdentityCreds=True -o none"

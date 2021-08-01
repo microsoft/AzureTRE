@@ -39,17 +39,16 @@ ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 ENV CATALINA_BASE=/usr/share/tomcat9/
 
 ENV GUACAMOLE_HOME=/guacamole/
-ENV PORT=80
 
 RUN mkdir ${GUACAMOLE_HOME}
 
-RUN curl -L -o ${GUACAMOLE_HOME}/guacamole.war 'http://apache.org/dyn/closer.cgi?action=download&filename=guacamole/1.3.0/binary/guacamole-1.3.0.war'  
+RUN wget -O ${GUACAMOLE_HOME}/guacamole.war 'http://apache.org/dyn/closer.cgi?action=download&filename=guacamole/1.3.0/binary/guacamole-1.3.0.war'  
 
 RUN mkdir /guac-transfer
 
 COPY ./docker/guacamole/ ${GUACAMOLE_HOME}
 
-RUN curl -L -o s6-overlay.tar.gz https://github.com/just-containers/s6-overlay/releases/download/v2.2.0.3/s6-overlay-amd64.tar.gz && tar xzvf s6-overlay.tar.gz -C /
+RUN wget -O s6-overlay.tar.gz https://github.com/just-containers/s6-overlay/releases/download/v2.2.0.3/s6-overlay-amd64.tar.gz && tar xzvf s6-overlay.tar.gz -C /
 
 COPY ./docker/sshd_config /etc/ssh/
 
