@@ -37,6 +37,16 @@ resource "azurerm_subnet" "webapps" {
   }
 }
 
+resource "azurerm_subnet" "winvms" {
+  name                 = "WinVmsSubnet"
+  virtual_network_name = azurerm_virtual_network.ws.name
+  resource_group_name  = var.resource_group_name
+  address_prefixes     = [local.win_vms_subnet_address_prefix]
+  # notice that private endpoints do not adhere to NSG rules
+  enforce_private_link_endpoint_network_policies = true
+  enforce_private_link_service_network_policies = true
+}
+
 data "azurerm_virtual_network" "core" {
   name                = var.core_vnet
   resource_group_name = var.core_resource_group_name
