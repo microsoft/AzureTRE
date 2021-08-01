@@ -20,14 +20,6 @@ TBD
 | Environment variable name | Description |
 | ------------------------- | ----------- |
 | `WORKSPACE_ID` | The 4 character unique identifier used when deploying the vanilla workspace bundle. |
-| `TRE_ID` | The TRE ID|
-| `ACR_NAME` | The ACR containing the Guacamole server image |
-| `ARM_CLIENT_ID` | ARM client id |
-| `ARM_CLIENT_SECRET` | ARM client secret |
-| `ARM_TENANT_ID` | Tenant ID |
-| `MGMT_RESOURCE_GROUP_NAME` | The Azure RG of the management resources |
-| `TERRAFORM_STATE_CONTAINER_NAME` | The Terraform state container name |
-| `ARM_SUBSCRIPTION_ID` | Azure subscription id |
 | `GUACAMOLE_IMAGE_TAG` | Image tag of the Guacamole server |
 
 1. Build and install the Guacamole Service bundle
