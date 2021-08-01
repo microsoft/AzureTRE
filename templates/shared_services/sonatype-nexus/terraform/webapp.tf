@@ -56,6 +56,11 @@ resource "azurerm_app_service" "nexus" {
       }
     }
   }
+
+  # App needs to wait for the properties file to be there
+  depends_on = [
+    null_resource.upload_nexus_props
+  ]
 }
 
 resource "azurerm_private_endpoint" "nexus_private_endpoint" {
@@ -181,4 +186,16 @@ resource "azurerm_storage_share" "nexus" {
   name                 = "nexus-data"
   storage_account_name = data.azurerm_storage_account.nexus.name
   quota                = var.nexus_storage_limit
+}
+
+# Include a properties file in the nexus-data path will change its configuration. We need this to instruct it not to create default repositories.
+resource "null_resource" "upload_nexus_props" {
+  provisioner "local-exec" {
+    command = "az storage directory create --name etc --share-name ${azurerm_storage_share.nexus.name} --account-name ${data.azurerm_storage_account.nexus.name} --account-key ${data.azurerm_storage_account.nexus.primary_access_key} && az storage file upload --source ../../shared_services/sonatype-nexus/nexus.properties --path etc --share-name ${azurerm_storage_share.nexus.name} --account-name ${data.azurerm_storage_account.nexus.name} --account-key ${data.azurerm_storage_account.nexus.primary_access_key}"
+  }
+
+  # Make sure this only runs after the share is ready
+  depends_on = [
+    azurerm_storage_share.nexus
+  ]
 }
