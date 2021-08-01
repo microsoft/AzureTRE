@@ -18,7 +18,7 @@ resource "azurerm_network_security_group" "dsvmnsg" {
 
 resource "azurerm_network_security_rule" "allow-rdp-inbound-from-vnet-dsvm" {
   name                        = "RDP"
-  priority                    = 1010
+  priority                    = 800
   direction                   = "Inbound"
   access                      = "Allow"
   protocol                    = "Tcp"
@@ -97,8 +97,8 @@ resource "azurerm_virtual_machine" "dsvm" {
 
   storage_image_reference {
     publisher = "microsoft-dsvm"
-    offer     = "dsvm-windows"
-    sku       = "server-2016"
+    offer     = "dsvm-win-2019"
+    sku       = "server-2019-gen2"
     version   = "latest"
   }
 
