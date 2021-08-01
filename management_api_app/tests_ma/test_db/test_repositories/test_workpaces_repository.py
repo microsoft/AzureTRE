@@ -13,7 +13,7 @@ from models.schemas.workspace import WorkspaceInCreate, AuthenticationConfigurat
 
 @pytest.fixture
 def basic_workspace_request():
-    return WorkspaceInCreate(workspaceType="vanilla-tre", properties={"display_name": "test", "description": "test"})
+    return WorkspaceInCreate(workspaceType="vanilla-tre", properties={"display_name": "test", "description": "test", "app_id": "123"})
 
 
 @patch('azure.cosmos.CosmosClient')
@@ -55,11 +55,14 @@ def test_get_workspace_by_id_throws_entity_does_not_exist_if_item_does_not_exist
         workspace_repo.get_workspace_by_workspace_id(workspace_id)
 
 
+@patch('db.repositories.workspaces.extract_auth_information', return_value={})
 @patch('db.repositories.workspaces.WorkspaceRepository._get_current_workspace_template')
 @patch('azure.cosmos.CosmosClient')
 def test_create_workspace_item_creates_a_workspace_with_the_right_values(cosmos_client_mock,
                                                                          _get_current_workspace_template_mock,
+                                                                         _,
                                                                          basic_resource_template, basic_workspace_request):
+
     workspace_repo = db.repositories.workspaces.WorkspaceRepository(cosmos_client_mock)
 
     workspace_to_create = basic_workspace_request
@@ -69,7 +72,7 @@ def test_create_workspace_item_creates_a_workspace_with_the_right_values(cosmos_
 
     _get_current_workspace_template_mock.return_value = basic_resource_template.dict()
 
-    workspace = workspace_repo.create_workspace_item(workspace_to_create, {})
+    workspace = workspace_repo.create_workspace_item(workspace_to_create)
 
     assert workspace.displayName == basic_workspace_request.properties["display_name"]
     assert workspace.description == basic_workspace_request.properties["description"]
@@ -82,9 +85,11 @@ def test_create_workspace_item_creates_a_workspace_with_the_right_values(cosmos_
     assert "address_space" in workspace.resourceTemplateParameters
 
 
+@patch("jsonschema.validate", return_value=None)
+@patch('db.repositories.workspaces.extract_auth_information', return_value={})
 @patch('db.repositories.workspaces.WorkspaceRepository._get_current_workspace_template')
 @patch('azure.cosmos.CosmosClient')
-def test_create_workspace_item_raises_value_error_if_template_is_invalid(cosmos_client_mock, _get_current_workspace_template_mock):
+def test_create_workspace_item_raises_value_error_if_template_is_invalid(cosmos_client_mock, _get_current_workspace_template_mock, _, __):
     workspace_repo = db.repositories.workspaces.WorkspaceRepository(cosmos_client_mock)
 
     workspace_to_create = WorkspaceInCreate(
@@ -96,7 +101,7 @@ def test_create_workspace_item_raises_value_error_if_template_is_invalid(cosmos_
     _get_current_workspace_template_mock.side_effect = EntityDoesNotExist
 
     with pytest.raises(ValueError):
-        workspace_repo.create_workspace_item(workspace_to_create, {})
+        workspace_repo.create_workspace_item(workspace_to_create)
 
 
 @patch('azure.cosmos.CosmosClient')
@@ -116,10 +121,12 @@ def test_save_workspace_saves_the_items_to_the_database(cosmos_client_mock):
     workspace_repo.container.create_item.assert_called_once_with(body=workspace)
 
 
+@patch('db.repositories.workspaces.extract_auth_information', return_value={})
 @patch('db.repositories.workspaces.WorkspaceRepository._get_current_workspace_template')
 @patch('azure.cosmos.CosmosClient')
 def test_create_workspace_item_does_not_accept_invalid_payload(cosmos_client_mock,
                                                                _get_current_workspace_template_mock,
+                                                               _,
                                                                basic_resource_template, basic_workspace_request):
     workspace_repo = db.repositories.workspaces.WorkspaceRepository(cosmos_client_mock)
 
@@ -132,6 +139,6 @@ def test_create_workspace_item_does_not_accept_invalid_payload(cosmos_client_moc
     _get_current_workspace_template_mock.return_value = resource_template.dict()
 
     with pytest.raises(ValidationError) as exc_info:
-        workspace_repo.create_workspace_item(workspace_to_create, {})
+        workspace_repo.create_workspace_item(workspace_to_create)
 
     assert exc_info.value.message == "'display_name' is a required property"

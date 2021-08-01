@@ -4,16 +4,15 @@ from fastapi import APIRouter, Depends, HTTPException
 from jsonschema.exceptions import ValidationError
 from starlette import status
 
-from api.dependencies.authentication import extract_auth_information
 from api.dependencies.database import get_repository
 from api.dependencies.workspaces import get_workspace_by_workspace_id_from_path
-from api.dependencies.authentication import get_current_user, get_current_admin_user, get_access_service
+from services.authentication import get_current_user, get_current_admin_user, get_access_service
 from db.repositories.workspaces import WorkspaceRepository
 from models.domain.workspace import Workspace, WorkspaceRole
 from models.schemas.workspace import WorkspaceInCreate, WorkspaceIdInResponse, WorkspacesInList, WorkspaceInResponse
 from resources import strings
 from service_bus.resource_request_sender import send_resource_request_message
-from services.authentication import User
+from models.domain.authentication import User
 
 
 router = APIRouter(dependencies=[Depends(get_current_user)])
@@ -35,9 +34,8 @@ async def retrieve_users_active_workspaces(
 @router.post("/workspaces", status_code=status.HTTP_202_ACCEPTED, response_model=WorkspaceIdInResponse, name=strings.API_CREATE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
 async def create_workspace(workspace_create: WorkspaceInCreate, workspace_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository))) -> WorkspaceIdInResponse:
     try:
-        auth_information = extract_auth_information(workspace_create.properties["app_id"])
-        workspace = workspace_repo.create_workspace_item(workspace_create, auth_information)
-    except (KeyError, ValidationError, ValueError) as e:
+        workspace = workspace_repo.create_workspace_item(workspace_create)
+    except (ValidationError, ValueError) as e:
         logging.error(f"Failed create workspace model instance: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 

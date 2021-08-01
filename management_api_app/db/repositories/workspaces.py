@@ -15,6 +15,7 @@ from models.schemas.workspace import WorkspaceInCreate
 from db.repositories.workspace_templates import WorkspaceTemplateRepository
 from services.concatjsonschema import enrich_schema_defs
 from jsonschema import validate
+from services.authentication import extract_auth_information
 
 
 class WorkspaceRepository(BaseRepository):
@@ -46,7 +47,7 @@ class WorkspaceRepository(BaseRepository):
             raise EntityDoesNotExist
         return parse_obj_as(Workspace, workspaces[0])
 
-    def create_workspace_item(self, workspace_create: WorkspaceInCreate, auth_info: dict) -> Workspace:
+    def create_workspace_item(self, workspace_create: WorkspaceInCreate) -> Workspace:
         full_workspace_id = str(uuid.uuid4())
 
         try:
@@ -56,6 +57,7 @@ class WorkspaceRepository(BaseRepository):
             raise ValueError(f"The workspace type '{workspace_create.workspaceType}' does not exist")
 
         self._validate_workspace_parameters(workspace_create.dict(), current_template)
+        auth_info = extract_auth_information(workspace_create.properties["app_id"])
 
         # system generated parameters
         resource_spec_parameters = {

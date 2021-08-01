@@ -3,7 +3,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
 
-from api.dependencies.authentication import get_current_admin_user
+from services.authentication import get_current_admin_user
 from api.dependencies.database import get_repository
 from db.errors import EntityDoesNotExist
 from db.repositories.workspace_templates import WorkspaceTemplateRepository

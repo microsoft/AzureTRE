@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 from models.domain.workspace import Workspace, WorkspaceRole
-from services.authentication import User
+from models.domain.authentication import User
 
 
 class AuthConfigValidationError(Exception):
