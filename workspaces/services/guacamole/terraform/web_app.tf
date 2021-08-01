@@ -41,12 +41,24 @@ resource "azurerm_app_service" "guacamole" {
   }
 }
 
-# Use managed identity to login to ACR
+# The WebApp uses managed identity to login to ACR
 # https://github.com/Azure/app-service-linux-docs/blob/master/HowTo/use_system-assigned_managed_identities.md
-resource "null_resource" "az_update_acr_permissions" {
+# Depends if this tf script if being executed with a SP or a managed identity we have to options to do az login
+# az login using SP (local runs)
+resource "null_resource" "az_sp_update_acr_permissions" {
+
+  count = var.arm_client_id != "" ? 1 : 0
   provisioner "local-exec" {
-    # command = "az login --identity -u '${data.azurerm_client_config.current.client_id}'"
     command = "az login --service-principal --username ${var.arm_client_id} --password ${var.arm_client_secret} --tenant ${var.arm_tenant_id} && az resource update --ids ${azurerm_app_service.guacamole.id}/config/web --set properties.acrUseManagedIdentityCreds=True -o none"
+  }
+}
+
+# Managed az login (for CI)
+resource "null_resource" "az_managed_update_acr_permissions" {
+
+  count = data.azurerm_client_config.current.client_id != "" && var.arm_client_id == "" ? 1 : 0
+  provisioner "local-exec" {
+    command = "az login --identity -u '${data.azurerm_client_config.current.client_id}' && az resource update --ids ${azurerm_app_service.guacamole.id}/config/web --set properties.acrUseManagedIdentityCreds=True -o none"
   }
 }
 
