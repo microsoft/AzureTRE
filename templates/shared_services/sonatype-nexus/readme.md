@@ -13,3 +13,4 @@ To deploy set `DEPLOY_NEXUS=true` in `templates/core/.env`.
 1. Retrieve the initial admin password from the "admin.password" file. You will find it by going to TRE management resource group -> storage account named "stg\<TRE-ID\>" -> "File Shares" -> "nexus-data".
 1. Use the password to login to Nexus and go through the initial setup wizard. You can allow anonymous access because the purpose of this service is to use publicly available software packages.
 1. On the admin screen, add **proxy** repositories as needed. Note that other types of repositories might be a way to move data in/out workspaces and you should not allow that.
+1. Finally, share the repositories addresses with your users.
