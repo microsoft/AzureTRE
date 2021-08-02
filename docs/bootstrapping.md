@@ -1,6 +1,6 @@
 # Bootstrapping
 
-This document covers the steps that have to be executed manually before Azure TRE can be deployed using the CI/CD.
+This document covers the steps that have to be executed manually before Azure TRE can be deployed using CI/CD.
 
 ## Login to Azure
 
