@@ -4,7 +4,7 @@
 
 These are onetime configuration steps required to set up the GitHub Actions workflows (pipelines). After the steps the [TRE deployment workflow](../.github/workflows/deploy_tre.yml) is ready to run.
 
-1. Create service principals and set their [repository secrets](https://docs.github.com/en/actions/reference/encrypted-secrets) as explained in [Bootstrapping](./bootstrapping.md#create-service-principals)
+1. Create service principal and set their [repository secrets](https://docs.github.com/en/actions/reference/encrypted-secrets) as explained in [Bootstrapping](./bootstrapping.md#create-service-principals)
 1. Create app registrations for auth based on the [Authentication & authorization](./auth.md) guide
 1. Set other repository secrets as explained in the table below
 

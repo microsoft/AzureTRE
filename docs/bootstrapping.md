@@ -1,6 +1,6 @@
 # Bootstrapping
 
-This document covers the steps that have to be executed manually before Azure TRE can be deployed (both manually or using the CI/CD).
+This document covers the steps that have to be executed manually before Azure TRE can be deployed using the CI/CD.
 
 ## Login to Azure
 
@@ -18,7 +18,7 @@ See [Sign in with Azure CLI](https://docs.microsoft.com/cli/azure/authenticate-a
 
 ## Create service principals
 
-Two service principals need to be created: One to authorize the [Makefile](../Makefile) (for deploying locally) and/or [workflows](./workflows.md) (for deploying using CI/CD) and another for [Resource Processor Function](../processor_function/README.md) to provision resources for the TRE workspaces and workspace services.
+A service principals need to be created to authorize CI/CD workflows to provision resources for the TRE workspaces and workspace services.
 
 1. Create a main service principal with "**Owner**" role:
 
