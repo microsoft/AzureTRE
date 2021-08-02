@@ -27,6 +27,12 @@
       "source": {
         "env": "ARM_TENANT_ID"
       }
+    },
+    {
+      "name": "arm_use_msi",
+      "source": {
+        "env": "ARM_USE_MSI"
+      }
     }
   ]
 }

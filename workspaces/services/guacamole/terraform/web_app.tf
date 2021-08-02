@@ -29,13 +29,13 @@ resource "azurerm_app_service" "guacamole" {
     "WEBSITE_DNS_SERVER"             = "168.63.129.16"
     "SCM_DO_BUILD_DURING_DEPLOYMENT" = "True"
 
-    "RESOURCE_GROUP"    = data.azurerm_resource_group.ws.name
-    "SUBSCRIPTION_ID"   = data.azurerm_client_config.current.subscription_id
-    "TENANT_ID"         = data.azurerm_client_config.current.tenant_id
+    "RESOURCE_GROUP"  = data.azurerm_resource_group.ws.name
+    "SUBSCRIPTION_ID" = data.azurerm_client_config.current.subscription_id
+    "TENANT_ID"       = data.azurerm_client_config.current.tenant_id
 
-    WEBSITES_PORT       = "8080"
+    WEBSITES_PORT = "8080"
   }
-  
+
   identity {
     type = "SystemAssigned"
   }
@@ -47,7 +47,7 @@ resource "azurerm_app_service" "guacamole" {
 # az login using SP (local runs)
 resource "null_resource" "az_sp_update_acr_permissions" {
 
-  count = var.arm_client_id != "" ? 1 : 0
+  count = var.arm_use_msi == true ? 0 : 1
   provisioner "local-exec" {
     command = "az login --service-principal --username ${var.arm_client_id} --password ${var.arm_client_secret} --tenant ${var.arm_tenant_id} && az resource update --ids ${azurerm_app_service.guacamole.id}/config/web --set properties.acrUseManagedIdentityCreds=True -o none"
   }
@@ -56,7 +56,7 @@ resource "null_resource" "az_sp_update_acr_permissions" {
 # Managed az login (for CI)
 resource "null_resource" "az_managed_update_acr_permissions" {
 
-  count = data.azurerm_client_config.current.client_id != "" && var.arm_client_id == "" ? 1 : 0
+  count = var.arm_use_msi == true ? 1 : 0
   provisioner "local-exec" {
     command = "az login --identity -u '${data.azurerm_client_config.current.client_id}' && az resource update --ids ${azurerm_app_service.guacamole.id}/config/web --set properties.acrUseManagedIdentityCreds=True -o none"
   }
