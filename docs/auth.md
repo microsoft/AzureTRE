@@ -109,7 +109,11 @@ TRE e2e test app registration is used to authorize end-to-end test scenarios. It
 
 #### End-to-end test user
 
-The end-to-end test authentication and authorization is done via a dummy user, using its username and password, dedicated just for running the tests. The user is linked to the application (app registration) the same way as any users (see [Enabling users](#enabling-users)). The end-to-end test should be added to TRE Administrator role exposed by the TRE API application, and to Owners role exposed by the Workspaces application.
+The end-to-end test authentication and authorization is done via a dummy user, using its username and password, dedicated just for running the tests.
+
+The user is linked to the application (app registration) the same way as any users (see [Enabling users](#enabling-users)).
+
+The end-to-end test should be added to TRE Administrator role exposed by the TRE API application, and to Owners role exposed by the Workspaces application.
 
 ### Workspaces
 
