@@ -10,7 +10,7 @@ from models.domain.resource import Status, Deployment
 from models.domain.workspace import Workspace
 from resources import strings
 from api.routes.workspaces import get_current_user
-from services.authentication import User
+from models.domain.authentication import User
 
 
 pytestmark = pytest.mark.asyncio
@@ -32,20 +32,15 @@ def create_sample_workspace_object(workspace_id, auth_info: dict = None):
 
 def create_sample_workspace_input_data():
     return {
-        "displayName": "My workspace",
-        "description": "workspace for team X",
-        "workspaceType": "tre-workspace-vanilla",
-        "parameters": {},
-        "authConfig": {
-            "provider": "AAD",
-            "data": {
-                "app_id": "1212445c-aae6-41ec-a539-30dfa90ab1ae"
-            }
+        "workspaceType": "test-workspace",
+        "properties": {
+            "display_name": "display",
+            "app_id": "f0acf127-a672-a672-a672-a15e5bf9f127"
         }
     }
 
 
-@patch("api.routes.workspaces.WorkspaceRepository.get_all_active_workspaces")
+@ patch("api.routes.workspaces.WorkspaceRepository.get_all_active_workspaces")
 async def test_workspaces_get_empty_list_when_no_resources_exist(get_workspaces_mock, app: FastAPI, client: AsyncClient) -> None:
     get_workspaces_mock.return_value = []
 
@@ -53,7 +48,7 @@ async def test_workspaces_get_empty_list_when_no_resources_exist(get_workspaces_
     assert response.json() == {"workspaces": []}
 
 
-@patch("api.routes.workspaces.WorkspaceRepository.get_all_active_workspaces")
+@ patch("api.routes.workspaces.WorkspaceRepository.get_all_active_workspaces")
 async def test_workspaces_get_list_returns_correct_data_when_resources_exist(get_workspaces_mock, app: FastAPI, client: AsyncClient) -> None:
     auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'roles': {'WorkspaceOwner': 'ab124', 'WorkspaceResearcher': 'ab125'}}
     auth_info_user_not_in_workspace_role = {'sp_id': 'ab127', 'roles': {'WorkspaceOwner': 'ab128', 'WorkspaceResearcher': 'ab129'}}
@@ -73,7 +68,7 @@ async def test_workspaces_get_list_returns_correct_data_when_resources_exist(get
 
 
 # [GET] /workspaces/{workspace_id}
-@patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+@ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
 async def test_workspaces_id_get_returns_404_if_resource_is_not_found(get_workspace_mock, app: FastAPI, client: AsyncClient):
     get_workspace_mock.side_effect = EntityDoesNotExist
 
@@ -82,7 +77,7 @@ async def test_workspaces_id_get_returns_404_if_resource_is_not_found(get_worksp
 
 
 # [GET] /workspaces/{workspace_id}
-@patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+@ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
 async def test_workspaces_id_get_returns_422_if_workspace_id_is_not_a_uuid(get_workspace_mock, app: FastAPI, client: AsyncClient):
     get_workspace_mock.side_effect = EntityDoesNotExist
 
@@ -90,7 +85,7 @@ async def test_workspaces_id_get_returns_422_if_workspace_id_is_not_a_uuid(get_w
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
-@patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+@ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
 async def test_workspaces_id_get_returns_workspace_if_found(get_workspace_mock, app: FastAPI, client: AsyncClient):
     workspace_id = "933ad738-7265-4b5f-9eae-a1a62928772e"
     auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'roles': {'WorkspaceOwner': 'ab124', 'WorkspaceResearcher': 'ab125'}}
@@ -102,11 +97,10 @@ async def test_workspaces_id_get_returns_workspace_if_found(get_workspace_mock, 
     assert actual_resource["id"] == sample_workspace.id
 
 
-@patch("api.routes.workspaces.send_resource_request_message")
-@patch("api.routes.workspaces.WorkspaceRepository.save_workspace")
-@patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item")
-@patch("api.routes.workspaces.extract_auth_information", return_value={})
-async def test_workspaces_post_creates_workspace(extract_auth_info_mock, create_workspace_item_mock, save_workspace_mock, send_resource_request_message_mock, app: FastAPI, client: AsyncClient, admin_user: User):
+@ patch("api.routes.workspaces.send_resource_request_message")
+@ patch("api.routes.workspaces.WorkspaceRepository.save_workspace")
+@ patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item")
+async def test_workspaces_post_creates_workspace(create_workspace_item_mock, save_workspace_mock, send_resource_request_message_mock, app: FastAPI, client: AsyncClient, admin_user: User):
     app.dependency_overrides[get_current_user] = admin_user
     workspace_id = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
     create_workspace_item_mock.return_value = create_sample_workspace_object(workspace_id)
@@ -118,12 +112,11 @@ async def test_workspaces_post_creates_workspace(extract_auth_info_mock, create_
     assert response.json()["workspaceId"] == workspace_id
 
 
-@patch("api.routes.workspaces.send_resource_request_message")
-@patch("api.routes.workspaces.WorkspaceRepository.save_workspace")
-@patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item")
-@patch("api.routes.workspaces.WorkspaceRepository._validate_workspace_parameters")
-@patch("api.routes.workspaces.extract_auth_information", return_value={})
-async def test_workspaces_post_calls_db_and_service_bus(extract_auth_info_mock, validate_workspace_parameters_mock, create_workspace_item_mock, save_workspace_mock, send_resource_request_message_mock, app: FastAPI, client: AsyncClient, admin_user: User):
+@ patch("api.routes.workspaces.send_resource_request_message")
+@ patch("api.routes.workspaces.WorkspaceRepository.save_workspace")
+@ patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item")
+@ patch("api.routes.workspaces.WorkspaceRepository._validate_workspace_parameters")
+async def test_workspaces_post_calls_db_and_service_bus(validate_workspace_parameters_mock, create_workspace_item_mock, save_workspace_mock, send_resource_request_message_mock, app: FastAPI, client: AsyncClient, admin_user: User):
     app.dependency_overrides[get_current_user] = admin_user
     workspace_id = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
     validate_workspace_parameters_mock.return_value = None
@@ -136,12 +129,11 @@ async def test_workspaces_post_calls_db_and_service_bus(extract_auth_info_mock, 
     send_resource_request_message_mock.assert_called_once()
 
 
-@patch("api.routes.workspaces.send_resource_request_message")
-@patch("api.routes.workspaces.WorkspaceRepository.save_workspace")
-@patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item")
-@patch("api.routes.workspaces.WorkspaceRepository._validate_workspace_parameters")
-@patch("api.routes.workspaces.extract_auth_information", return_value={})
-async def test_workspaces_post_returns_202_on_successful_create(extract_auth_info_mock, validate_workspace_parameters_mock, create_workspace_item_mock, save_workspace_mock, send_resource_request_message_mock, app: FastAPI, client: AsyncClient, admin_user: User):
+@ patch("api.routes.workspaces.send_resource_request_message")
+@ patch("api.routes.workspaces.WorkspaceRepository.save_workspace")
+@ patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item")
+@ patch("api.routes.workspaces.WorkspaceRepository._validate_workspace_parameters")
+async def test_workspaces_post_returns_202_on_successful_create(validate_workspace_parameters_mock, create_workspace_item_mock, save_workspace_mock, send_resource_request_message_mock, app: FastAPI, client: AsyncClient, admin_user: User):
     app.dependency_overrides[get_current_user] = admin_user
     workspace_id = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
     validate_workspace_parameters_mock.return_value = None
@@ -154,12 +146,11 @@ async def test_workspaces_post_returns_202_on_successful_create(extract_auth_inf
     assert response.json()["workspaceId"] == workspace_id
 
 
-@patch("service_bus.resource_request_sender.send_resource_request_message")
-@patch("api.routes.workspaces.WorkspaceRepository.save_workspace")
-@patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item")
-@patch("api.routes.workspaces.WorkspaceRepository._validate_workspace_parameters")
-@patch("api.routes.workspaces.extract_auth_information", return_value={})
-async def test_workspaces_post_returns_503_if_service_bus_call_fails(extract_auth_info_mock, validate_workspace_parameters_mock, create_workspace_item_mock, save_workspace_mock, send_resource_request_message_mock, app: FastAPI, client: AsyncClient, admin_user: User):
+@ patch("service_bus.resource_request_sender.send_resource_request_message")
+@ patch("api.routes.workspaces.WorkspaceRepository.save_workspace")
+@ patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item")
+@ patch("api.routes.workspaces.WorkspaceRepository._validate_workspace_parameters")
+async def test_workspaces_post_returns_503_if_service_bus_call_fails(validate_workspace_parameters_mock, create_workspace_item_mock, save_workspace_mock, send_resource_request_message_mock, app: FastAPI, client: AsyncClient, admin_user: User):
     app.dependency_overrides[get_current_user] = admin_user
     workspace_id = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
     validate_workspace_parameters_mock.return_value = None
@@ -173,10 +164,9 @@ async def test_workspaces_post_returns_503_if_service_bus_call_fails(extract_aut
     assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
 
-@patch("api.routes.workspaces.WorkspaceRepository._get_current_workspace_template")
-@patch("api.routes.workspaces.WorkspaceRepository._validate_workspace_parameters")
-@patch("api.routes.workspaces.extract_auth_information", return_value={})
-async def test_workspaces_post_returns_400_if_template_does_not_exist(extract_auth_info_mock, validate_workspace_parameters_mock, get_current_workspace_template_mock, app: FastAPI, client: AsyncClient, admin_user: User):
+@ patch("api.routes.workspaces.WorkspaceRepository._get_current_workspace_template")
+@ patch("api.routes.workspaces.WorkspaceRepository._validate_workspace_parameters")
+async def test_workspaces_post_returns_400_if_template_does_not_exist(validate_workspace_parameters_mock, get_current_workspace_template_mock, app: FastAPI, client: AsyncClient, admin_user: User):
     app.dependency_overrides[get_current_user] = admin_user
     validate_workspace_parameters_mock.return_value = None
     get_current_workspace_template_mock.side_effect = EntityDoesNotExist

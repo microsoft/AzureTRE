@@ -7,7 +7,7 @@ from core import config
 from models.domain.workspace import Workspace, WorkspaceRole
 from resources import strings
 from services.access_service import AccessService, AuthConfigValidationError
-from services.authentication import User
+from models.domain.authentication import User
 
 
 class AADAccessService(AccessService):

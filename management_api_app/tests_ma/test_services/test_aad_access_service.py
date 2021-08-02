@@ -4,7 +4,7 @@ from mock import patch
 from models.domain.workspace import Workspace, WorkspaceRole
 from services.aad_access_service import AADAccessService
 from services.access_service import AuthConfigValidationError
-from services.authentication import User
+from models.domain.authentication import User
 
 
 def test_extract_workspace__raises_error_if_app_id_not_available():

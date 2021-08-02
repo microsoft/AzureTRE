@@ -9,7 +9,7 @@ from fastapi.security import OAuth2AuthorizationCodeBearer
 
 from core import config
 from resources import strings
-from services.authentication import User
+from models.domain.authentication import User
 from services.aad_access_service import AADAccessService
 
 
