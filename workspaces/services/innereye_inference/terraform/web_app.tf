@@ -1,5 +1,5 @@
 resource "azurerm_app_service_plan" "inference" {
-  name                = "asp-inf-${local.service_resource_name_suffix}"
+  name                = "plan-inf-${local.service_resource_name_suffix}"
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
   kind                = "Linux"
@@ -50,7 +50,6 @@ resource "azurerm_app_service" "inference" {
     type  = "Custom"
     value = random_uuid.inference_auth_key.result
   }
-
 }
 
 resource "azurerm_app_service_virtual_network_swift_connection" "inference" {
