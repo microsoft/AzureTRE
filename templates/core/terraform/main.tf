@@ -13,7 +13,7 @@ terraform {
 provider "azurerm" {
   features {
     key_vault {
-      purge_soft_delete_on_destroy = var.debug == "true" ? true : false
+      purge_soft_delete_on_destroy    = var.debug == "true" ? true : false
       recover_soft_deleted_key_vaults = true
     }
   }
@@ -175,13 +175,13 @@ module "resource_processor_vmss_porter" {
 
 
 module "servicebus" {
-  source                    = "./servicebus"
-  tre_id                    = var.tre_id
-  location                  = var.location
-  resource_group_name       = azurerm_resource_group.core.name
+  source                       = "./servicebus"
+  tre_id                       = var.tre_id
+  location                     = var.location
+  resource_group_name          = azurerm_resource_group.core.name
   resource_processor_subnet_id = module.network.resource_processor
-  core_vnet                 = module.network.core
-  tenant_id                 = data.azurerm_client_config.current.tenant_id
+  core_vnet                    = module.network.core
+  tenant_id                    = data.azurerm_client_config.current.tenant_id
 }
 
 module "keyvault" {
@@ -255,6 +255,19 @@ module "gitea" {
   source   = "../../shared_services/gitea/terraform"
   tre_id   = var.tre_id
   location = var.location
+  
+  depends_on = [
+    module.network
+  ]
+}
+
+module "nexus" {
+  count = var.deploy_nexus == true ? 1 : 0
+
+  source               = "../../shared_services/sonatype-nexus/terraform"
+  tre_id               = var.tre_id
+  location             = var.location
+  storage_account_name = module.storage.storage_account_name
 
   depends_on = [
     module.network

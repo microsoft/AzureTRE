@@ -128,11 +128,11 @@ jobs:
             export TF_VAR_acr_name=$ACR_NAME
             export TF_VAR_address_space=$ADDRESS_SPACE
             export TF_VAR_porter_output_container_name=$PORTER_OUTPUT_CONTAINER_NAME
-            export TF_VAR_debug="false"
-            export TF_VAR_deploy_gitea=true
+            export TF_VAR_debug="false"            
             export TF_VAR_resource_processor_type="vmss_porter"
             export TF_VAR_resource_processor_vmss_porter_image_tag=$IMAGE_TAG
-
+            export TF_VAR_deploy_gitea=true
+            export TF_VAR_deploy_nexus=true
 
             make all
 
