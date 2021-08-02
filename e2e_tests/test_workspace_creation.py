@@ -66,19 +66,15 @@ async def test_create_vanilla_workspace(token) -> None:
     async with AsyncClient() as client:
         headers = {'Authorization': f'Bearer {token}'}
 
-        payload = {"displayName": "E2E test",
-                   "description": "workspace for E2E",
-                   "workspaceType": "tre-workspace-vanilla",
-                   "parameters": {
-                       "address_space": "192.168.25.0/24"  # Reserving this for E2E tests.
-                   },
-                   "authConfig":
-                       {"provider": "AAD",
-                        "data":
-                            {"app_id": f"{config.AUTH_APP_CLIENT_ID}"
-                             }
-                        }
-                   }
+        payload = {
+            "workspaceType": "tre-workspace-vanilla",
+            "properties": {
+                "display_name": "E2E test",
+                "description": "workspace for E2E",
+                "app_id": f"{config.AUTH_APP_CLIENT_ID}",
+                "address_space": "192.168.25.0/24"  # Reserving this for E2E tests.
+            }
+        }
 
         response = await client.post(
             f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACES}",
