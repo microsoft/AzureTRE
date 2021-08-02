@@ -1,0 +1,11 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://github.com/microsoft/AzureTRE/workspaces/vanilla/custom_parameters.json",
+    "type": "object",
+    "title": "Vanilla Workspace Template Custom Parameters",
+    "description": "Vanilla workspace custom parameters",
+    "required": [
+    ],
+    "properties": {
+    }
+}
