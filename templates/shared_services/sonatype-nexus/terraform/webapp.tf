@@ -13,9 +13,6 @@ resource "azurerm_app_service" "nexus" {
     "WEBSITE_VNET_ROUTE_ALL" = 1
     "WEBSITE_DNS_SERVER"     = "168.63.129.16" # required to access storage over private endpoints
 
-    TRE_ID            = var.tre_id   # why do we need this?
-    RESOURCE_LOCATION = var.location # why do we need this?
-
     WEBSITES_ENABLE_APP_SERVICE_STORAGE = false
   }
 
@@ -23,12 +20,6 @@ resource "azurerm_app_service" "nexus" {
     linux_fx_version            = "DOCKER|sonatype/nexus3"
     remote_debugging_enabled    = false
     scm_use_main_ip_restriction = true
-
-    # why do we need this?
-    cors {
-      allowed_origins     = []
-      support_credentials = false
-    }
 
     # always_on       = true
     min_tls_version = "1.2"
@@ -187,7 +178,7 @@ resource "azurerm_monitor_diagnostic_setting" "nexus" {
 }
 
 resource "azurerm_storage_share" "nexus" {
-  name = "nexus-data"
+  name                 = "nexus-data"
   storage_account_name = data.azurerm_storage_account.nexus.name
-  quota                = 1024 # 1TB 
+  quota                = var.nexus_storage_limit
 }
