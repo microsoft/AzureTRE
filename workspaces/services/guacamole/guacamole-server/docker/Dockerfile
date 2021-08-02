@@ -19,9 +19,9 @@ USER root
 RUN apt-get update && apt-get install wget curl openssh-server apt-transport-https gnupg -y && \
     apt-get autoclean && apt-get autoremove && rm -rf /var/lib/apt/lists/*
 
-RUN wget https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk-11.0.11%2B9/OpenJDK11U-jdk_x64_linux_hotspot_11.0.11_9.tar.gz && \
+RUN wget https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk-11.0.11%2B9/OpenJDK11U-jre_x64_linux_hotspot_11.0.11_9.tar.gz && \
     mkdir -p /usr/lib/jvm/java-11-openjdk-amd64/ && \
-    tar xzf OpenJDK11U-jre_x64_linux_hotspot_11.0.9.1_1.tar.gz -C /usr/lib/jvm/java-11-openjdk-amd64/ --strip-components=1 && \
+    tar xzf OpenJDK11U-jre_x64_linux_hotspot_11.0.11_9.tar.gz -C /usr/lib/jvm/java-11-openjdk-amd64/ --strip-components=1 && \
     export PATH=/usr/lib/jvm/java-11-openjdk-amd64/bin:$PATH && java -version
 
 RUN \

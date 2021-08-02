@@ -1,5 +1,5 @@
 resource "azurerm_app_service_plan" "guacamole" {
-  name                = "plan-inf-${local.service_resource_name_suffix}"
+  name                = "plan-gua-${local.service_resource_name_suffix}"
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
   kind                = "Linux"
