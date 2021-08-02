@@ -74,14 +74,14 @@ resource "azurerm_app_service_virtual_network_swift_connection" "guacamole" {
 }
 
 resource "azurerm_private_endpoint" "guacamole" {
-  name                = "pe-guacamole-${var.tre_id}"
+  name                = "pe-guacamole-${local.service_resource_name_suffix}"
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
   subnet_id           = data.azurerm_subnet.services.id
 
   private_service_connection {
     private_connection_resource_id = azurerm_app_service.guacamole.id
-    name                           = "psc-guacamole-${var.tre_id}"
+    name                           = "psc-guacamole-${local.service_resource_name_suffix}"
     subresource_names              = ["sites"]
     is_manual_connection           = false
   }
