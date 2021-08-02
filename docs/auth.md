@@ -95,12 +95,12 @@ TRE e2e test app registration is used to authorize end-to-end test scenarios. It
 #### Authentication - TRE e2e test
 
 1. Define Redirect URLs:
-    
-    In TRE e2e test app registration go to Authentication -> Add platform -> Select Mobile & Desktop and add: 
-    
+
+    In TRE e2e test app registration go to Authentication -> Add platform -> Select Mobile & Desktop and add:
+
     * `https://login.microsoftonline.com/common/oauth2/nativeclient`
     * `msal<TRE e2e test app registration application (client) ID>://auth`
-    
+
     ![Add auth platform](assets/aad-add-auth-platform.png)
 
 1. Allow public client flows (see image below). This enables the end-to-end tests to use a username and password combination to authenticate. Note that this should never be allowed for a production environment as it poses a security risk.
@@ -109,8 +109,7 @@ TRE e2e test app registration is used to authorize end-to-end test scenarios. It
 
 #### End-to-end test user
 
-The end-to-end test authentication and authorization is done via a dummy user, using its username and password, dedicated just for running the tests. The user is linked to the application (app registration) the same way as any users (see [Enabling users](#enabling-users)). 
-The end-to-end test should be added to TRE Administrator role exposed by the TRE API application, and to Owners role exposed by the Workspaces application.
+The end-to-end test authentication and authorization is done via a dummy user, using its username and password, dedicated just for running the tests. The user is linked to the application (app registration) the same way as any users (see [Enabling users](#enabling-users)). The end-to-end test should be added to TRE Administrator role exposed by the TRE API application, and to Owners role exposed by the Workspaces application.
 
 ### Workspaces
 
