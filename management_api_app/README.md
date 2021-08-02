@@ -157,7 +157,7 @@ See also: [Auth in code](#auth-in-code)
 
     ```cmd
     virtualenv venv
-    venv/Scripts/activate -- didn't work
+    venv/Scripts/activate
     pip install -r requirements.txt
     ```
 
