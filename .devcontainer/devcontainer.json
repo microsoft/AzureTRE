@@ -49,5 +49,5 @@
 		"ms-kubernetes-tools.porter-vscode",
 		"davidanson.vscode-markdownlint"
 	],
-	"forwardPorts": []	
+	"forwardPorts": [8000]
 }

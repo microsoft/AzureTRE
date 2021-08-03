@@ -91,7 +91,6 @@ jobs:
           ACR_NAME: ${{ secrets.ACR_NAME }}
           ADDRESS_SPACE: ${{ secrets.ADDRESS_SPACE }}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-          AZURE_CONTRIBUTOR_SP: ${{ secrets.AZURE_CONTRIBUTOR_SP }}
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
           TF_VAR_aad_tenant_id: "${{ secrets.AAD_TENANT_ID }}"
           TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
@@ -128,7 +127,7 @@ jobs:
           export TF_VAR_acr_name=$ACR_NAME
           export TF_VAR_address_space=$ADDRESS_SPACE
           export TF_VAR_porter_output_container_name=$PORTER_OUTPUT_CONTAINER_NAME
-          export TF_VAR_debug="false"            
+          export TF_VAR_debug="false"
           export TF_VAR_resource_processor_type="vmss_porter"
           export TF_VAR_resource_processor_vmss_porter_image_tag=$IMAGE_TAG
           export TF_VAR_deploy_gitea=true

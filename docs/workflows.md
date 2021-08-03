@@ -11,8 +11,7 @@ These are onetime configuration steps required to set up the GitHub Actions work
 *Required repository secrets for the CI/CD.*
 | Secret name | Description |
 | ----------- | ----------- |
-| `AZURE_CREDENTIALS` | Explained in [Bootstrapping - Create service principals](./bootstrapping.md#create-service-principals). |
-| `AZURE_CONTRIBUTOR_SP` | Explained in [Bootstrapping - Create service principals](./bootstrapping.md#create-service-principals). |
+| `AZURE_CREDENTIALS` | Explained in [Bootstrapping - Create service principals](./bootstrapping.md#create-service-principals). Main service principal credentials output. |
 | `TF_STATE_CONTAINER` | The name of the blob container to hold the Terraform state. Default value is `tfstate`. |
 | `MGMT_RESOURCE_GROUP` | The name of the shared resource group for all Azure TRE core resources. |
 | `STATE_STORAGE_ACCOUNT_NAME` | The name of the storage account to hold the Terraform state and other deployment artifacts. |
@@ -27,3 +26,7 @@ These are onetime configuration steps required to set up the GitHub Actions work
 | `API_CLIENT_SECRET` | The application password (client secret) of the [TRE API](./auth.md#tre-api) service principal. |
 | `DEPLOY_GITEA` | If set to `false` disables deployment of the Gitea shared service. |
 | `DEPLOY_NEXUS` | If set to `false` disables deployment of the Nexus shared service. |
+| `TEST_APP_ID` | The application (client) ID of the [E2E Test app](./auth.md#tre-e2e-test) service principal. |
+| `TEST_USER_NAME` | The username of the [E2E Test User](./auth.md#end-to-end-test-user). |
+| `TEST_USER_NAME` | The password of the [E2E Test User](./auth.md#end-to-end-test-user). |
+| `TEST_WORKSPACE_APP_ID` | The application (client) ID of the [Workspaces app](./auth.md#workspaces) service principal. |

@@ -113,7 +113,7 @@ declare appRoles=$(jq -c . << JSON
 		"id": "${userRoleId}",
 		"allowedMemberTypes": [ "User" ],
 		"description": "Provides access to the ${appName} application.",
-		"displayName": "TRE Userss",
+		"displayName": "TRE Users",
 		"isEnabled": true,
 		"origin": "Application",
 		"value": "TREUser"

@@ -55,7 +55,7 @@ When deploying the processor function using infrastructure as code (IaC), the en
 | `RESOURCE_GROUP_NAME` | The name of the resource group containing the ACI. |
 | `VNET_NAME` | The name of the Azure TRE (core) VNet. |
 | `ACI_SUBNET` | The subnet for the ACI. |
-| `REGISTRY_SERVER` | The URL of the container registry e.g., `https://<Container registry name>.azurecr.io` |
+| `REGISTRY_SERVER` | The URL of the container registry e.g., `<Container registry name>.azurecr.io` |
 | `WORKSPACES_PATH` | The path of the repository containing the workspace images (bundles). The value must start and end with a forward slash as it is concatenated with the values of `REGISTRY SERVER` and the name of the bundle to act upon. Example: `/microsoft/azuretre/workspaces/`. If the repositories do not have an extended path, leave the value empty. |
 | `CNAB_IMAGE` | The full URL of the CNAB container image used for running Porter e.g., `https://<Container registry name>.azurecr.io/microsoft/azuretre/cnab-aci:v1.0.0` |
 

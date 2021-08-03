@@ -89,25 +89,31 @@ TRE e2e test app registration is used to authorize end-to-end test scenarios. It
 | ------------------- | ---- | ----------- | ---------------------- |
 | Microsoft Graph/openid (`https://graph.microsoft.com/openid`) | Delegated | Allows users to sign in to the app with their work or school accounts and allows the app to see basic user profile information. | No |
 | Microsoft Graph/User.Read (`https://graph.microsoft.com/User.Read`) | Delegated | Allows users to sign-in to the app, and allows the app to read the profile of signed-in users. It also allows the app to read basic company information of signed-in users. | No |
+| <TRE APP client>.Workspace.Read | Delegated | Allow the app to get information about the TRE workspaces on behalf of the signed-in user | No |
+| <TRE APP client>.Workspace.Write | Delegated | Allow the app to create, update or delete TRE workspaces on behalf of the signed-in user | No |
 
 #### Authentication - TRE e2e test
 
-Redirect URLs:
+1. Define Redirect URLs:
 
-* `https://login.microsoftonline.com/common/oauth2/nativeclient`
-* `msal<TRE e2e test app registration application (client) ID>://auth`
+    In TRE e2e test app registration go to Authentication -> Add platform -> Select Mobile & Desktop and add:
 
-The authorization endpoint must be allowed to issue access tokens:
+    * `https://login.microsoftonline.com/common/oauth2/nativeclient`
+    * `msal<TRE e2e test app registration application (client) ID>://auth`
 
-![Access tokens issued by endpoint](./assets/tre-e2e-test-app-reg-authentication-access-tokens.png)
+    ![Add auth platform](assets/aad-add-auth-platform.png)
 
-Public client flows need to be allowed (see image below). This enables the end-to-end tests to use a username and password combination to authenticate. Note that this should never be allowed for a production environment as it poses a security risk.
+1. Allow public client flows (see image below). This enables the end-to-end tests to use a username and password combination to authenticate. Note that this should never be allowed for a production environment as it poses a security risk.
 
-![Allow public client flows - Yes](./assets/app-reg-authentication-allow-public-client-flows-yes.png)
+    ![Allow public client flows - Yes](./assets/app-reg-authentication-allow-public-client-flows-yes.png)
 
 #### End-to-end test user
 
-The end-to-end test authentication and authorization is done via a dummy user, using its username and password, dedicated just for running the tests. The user is linked to the application (app registration) the same way as any users (see [Enabling users](#enabling-users)).
+The end-to-end test authentication and authorization is done via a dummy user, using its username and password, dedicated just for running the tests.
+
+The user is linked to the application (app registration) the same way as any users (see [Enabling users](#enabling-users)).
+
+The end-to-end test should be added to TRE Administrator role exposed by the TRE API application, and to Owners role exposed by the Workspaces application.
 
 ### Workspaces
 
