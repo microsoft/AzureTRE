@@ -47,7 +47,8 @@ class WorkspaceTemplateRepository(BaseRepository):
         workspace_template_names = [template["name"] for template in workspace_templates]
         return list(set(workspace_template_names))
 
-    def create_workspace_template_item(self, workspace_template_create: WorkspaceTemplateInCreate) -> ResourceTemplate:
+    def create_workspace_template_item(self, workspace_template_create: WorkspaceTemplateInCreate,
+                                       resource_type: ResourceType) -> ResourceTemplate:
         item_id = str(uuid.uuid4())
         description = workspace_template_create.json_schema["description"]
         required = workspace_template_create.json_schema["required"]
@@ -57,7 +58,7 @@ class WorkspaceTemplateRepository(BaseRepository):
             name=workspace_template_create.name,
             description=description,
             version=workspace_template_create.version,
-            resourceType=ResourceType.Workspace,
+            resourceType=resource_type,
             current=workspace_template_create.current,
             required=required,
             properties=properties

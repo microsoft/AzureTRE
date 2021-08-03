@@ -11,6 +11,7 @@ API_GET_STATUS_OF_SERVICES = "Get status of services"
 
 API_GET_WORKSPACE_TEMPLATES = "Get workspace template names"
 API_CREATE_WORKSPACE_TEMPLATES = "Create workspace template"
+API_CREATE_WORKSPACE_SERVICE_TEMPLATES = "Create workspace service template"
 API_GET_WORKSPACE_TEMPLATE_BY_NAME = "Get workspace template by name"
 
 # State store status
@@ -48,6 +49,7 @@ RESOURCE_STATUS_FAILED = "failed"
 # Resource Type
 RESOURCE_TYPE_WORKSPACE = "workspace"
 RESOURCE_TYPE_SERVICE = "service"
+RESOURCE_TYPE_SERVICE_TEMPLATE = "service-template"
 
 # Deployments
 RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE = "This resource has not yet been deployed"
