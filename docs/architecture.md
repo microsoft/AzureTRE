@@ -43,7 +43,6 @@ The Composition Service consists of multiple components.
 | Configuration Store | Keeping the state of Workspaces and Workspace Templates. The store uses [Cosmos DB (SQL)](https://docs.microsoft.com/en-us/azure/cosmos-db/introduction). |
 | Service Bus | [Azure Service Bus](https://docs.microsoft.com/en-us/azure/service-bus-messaging/service-bus-messaging-overview) responsible for reliable delivery of messages between components.  |
 | Resource Processor | Responsible for starting the process of mutating a Workspace via a Workspace Template. |
-| Deployment Client| Responsible for processing the Workspace Template. [Azure CNAB Driver](https://github.com/deislabs/cnab-azure-driver) is used to execute the Porter bundle. |
 
 The flow to provision a Workspace is the following (the flow is the same for all kinds of mutations to a Workspace):
 
@@ -63,8 +62,8 @@ The flow to provision a Workspace is the following (the flow is the same for all
         }
     ```
 
-1. The Resource Processor Azure Function is triggered by the arrival of a new message.
-1. The Resource Processor processes the command by provisioning an [Azure Container Instance](https://docs.microsoft.com/en-us/azure/container-instances/) (ACI) instance executing the Porter bundle (the implementation of a Workspace Template).
+1. The Resource Processor picks up the new message from the service bus queue.
+1. The Resource Processor processes the command by executing the Porter bundle (the implementation of a Workspace Template).
 
     ```bash
     # simplified for readability
@@ -74,17 +73,17 @@ The flow to provision a Workspace is the following (the flow is the same for all
     porter install --reference msfttreacr.azurecr.io/bundles/VanillaWorkspaceTemplate:1.0 --params param1=value1 --cred azure.json
     ```
 
-    Credentials for the Service Principal with Contributor permissions to provision Azure resource is injected into the Porter bundle via [credential set](https://porter.sh/credentials/). The `azure.json` tells Porter where the credential information can be found and for the Resource Processor they are set as environment variables (Vanilla Workspace Template [azure.json](workspaces/vanilla/azure.json)).
+    Deployments are carried out against the Azure Subscription using a User Assigned Managed Identity. The `azure.json` tells Porter where the credential information can be found and for the Resource Processor they are set as environment variables (Vanilla Workspace Template [azure.json](workspaces/vanilla/azure.json)).
 
     Porter bundle actions are required to be idempotent, so if a deployment fails, the Resource Processor can retry.
 
-    > The Resource Processor is a Docker container running on ACI and a Porter bundle is also a Docker container. Running Docker in Docker is not recommended or supported by ACI. The Resource Processor is using the [Azure CNAB Driver](https://github.com/deislabs/cnab-azure-driver) to execute the Porter bundle. The Azure CNAB Driver instantiates another ACI instance to execute the Porter bundle.
+    > The Resource Processor is a Docker container running on a Linux VM scale set.
 
 1. The Porter Docker bundle is pulled from the Azure Container Registry (ACR) and executed.
 1. The Porter bundle executes against Azure Resource Manager to provision Azure resources. Any kind of infrastructure of code frameworks like ARM, Terraform, or Pulumi can be used or scripted via PowerShell or Azure CLI.
-1. State and output management is handled via Azure Storage Containers. State for keeping persistent state between executions of a bundled with the same Workspace. The Porter Out Azure Storage account is used to [parse output from the Porter bundle](https://github.com/deislabs/cnab-azure-driver#dealing-with-bundle-outputs) back to the Composition Service.
+1. State and output management is handled via Azure Storage Containers. State for keeping persistent state between executions of a bundled with the same Workspace.
 
-    > Currently the bundle keeps state between executions in a Storage Container (TF state) passed in a parameters to the bundle. An enhancement issues [#343](https://github.com/microsoft/AzureTRE/issues/343) exists to generalize state management, so it is not Terraform specific.
+    > Currently the bundle keeps state between executions in a Storage Container (TF state) passed in a parameters to the bundle. An enhancement issues [#536](https://github.com/microsoft/AzureTRE/issues/536) exists to configure Porter state management.
 
 1. For the time being, the Porter bundle updates Firewall rules directly setting egress rules. An enhancement to implement a Shared Firewall services is planned ([#23](https://github.com/microsoft/AzureTRE/issues/23)).
 1. The Resource Processor sends events to the `deploymentstatus` queue on state changes and informs if the deployment succeeded or failed.
@@ -124,6 +123,6 @@ Inbound traffic from the Internet is only allowed through the Application Gatewa
 | `AzureBastionSubnet` | A dedicated subnet for Azure Bastion hosts. |
 | `AppGwSubnet` | Subnet for Azure Application Gateway controlling ingress traffic. |
 | `AzureFirewallSubnet` | Subnet for Azure Firewall controlling egress traffic. |
-| `AciSubnet` | Subnet for Azure Container Instances (ACI) used by the Composition Service to host Docker containers to execute Porter bundles that deploys Workspaces. |
+| `ResourceProcessorSubnet` | Subnet for VMSS used by the Composition Service to host Docker containers to execute Porter bundles that deploys Workspaces. |
 | `WebAppSubnet` | Subnet for Management API and Resource Processor Function. |
 | `SharedSubnet` | Shared Services subnet for all things shared by TRE Management and Workspaces. Future Shared Services are Firewall Shared Service, Source Mirror Shared Service and Package Mirror Shared Service. |
