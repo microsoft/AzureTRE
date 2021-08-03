@@ -255,6 +255,9 @@ module "gitea" {
   source   = "../../shared_services/gitea/terraform"
   tre_id   = var.tre_id
   location = var.location
+  gitea_username   = var.gitea_username
+  gitea_passwd = var.gitea_passwd
+  gitea_email = var.gitea_email
   
   depends_on = [
     module.network

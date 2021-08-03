@@ -9,6 +9,10 @@ resource "azurerm_app_service" "gitea" {
     "APPINSIGHTS_INSTRUMENTATIONKEY" = data.azurerm_application_insights.core.instrumentation_key
     "WEBSITES_PORT"                  = "3000"
     "WEBSITE_VNET_ROUTE_ALL"         = 1
+    
+    GITEA_USERNAME                 = var.gitea_username
+    GITEA_PASSWD                   = var.gitea_passwd
+    GITEA_EMAIL                    = var.gitea_email
 
     TRE_ID            = var.tre_id
     RESOURCE_LOCATION = var.location
@@ -29,10 +33,12 @@ resource "azurerm_app_service" "gitea" {
     GITEA__database__PASSWD=random_password.password.result
     
     GITEA__security__INSTALL_LOCK=true
+
+    GITEA__service__DISABLE_REGISTRATION=true
   }
 
   site_config {
-    linux_fx_version            = "DOCKER|gitea/gitea"
+    linux_fx_version            = "COMPOSE|${filebase64("docker-compose.yml")}"
     remote_debugging_enabled    = false
     scm_use_main_ip_restriction = true
 

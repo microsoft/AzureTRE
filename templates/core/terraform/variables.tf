@@ -124,6 +124,22 @@ variable "deploy_gitea" {
   description = "Deploy the Gitea shared service"
 }
 
+variable "gitea_username" {
+  type        = string
+  description = "An admin username for gitea service."
+}
+
+variable "gitea_passwd" {
+  type        = string
+  description = "An admin password for gitea service."
+  sensitive   = true
+}
+
+variable "gitea_email" {
+  type        = string
+  description = "An admin email for gitea service."
+}
+
 variable "deploy_nexus" {
   type        = bool
   default     = true

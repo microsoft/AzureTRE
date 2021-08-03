@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  server:
+    image: gitea/gitea:latest
+    volumes:
+      - ${WEBAPP_STORAGE_HOME}:/home
+    ports:
+      - '3000:3000'
+    command:
+      - /bin/bash
+      - -c
+      - |
+        sleep 120 && gitea admin user create --admin --access-token --username=${GITEA_USERNAME} --password=${GITEA_PASSWD} --email=${GITEA_EMAIL} --must-change-password=false & /usr/bin/entrypoint
