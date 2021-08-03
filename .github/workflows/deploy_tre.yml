@@ -5,7 +5,7 @@ on:
     # 1am each night https://crontab.guru/#0_1_*_*_*
     - cron: "0 1 * * *"
   push:
-    branches: [ develop, main ]
+    branches: [develop, main]
   workflow_dispatch:
 
 jobs:
@@ -14,33 +14,33 @@ jobs:
     runs-on: ubuntu-latest
     environment: Dev
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v2
 
-    - name: Azure Login
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    - name: Install Terraform
-      uses: little-core-labs/install-terraform@v2.0.0
-      with:
+      - name: Install Terraform
+        uses: little-core-labs/install-terraform@v2.0.0
+        with:
           version: 0.15.4
 
-    - name: Create Management Infrastructure
-      shell: bash
-      env:
-        TRE_ID: ${{ secrets.TRE_ID }}
-        TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TF_STATE_CONTAINER }}
-        MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP }}
-        MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
-        LOCATION: ${{ secrets.LOCATION }}
-        ACR_NAME: ${{ secrets.ACR_NAME }}
-        ADDRESS_SPACE: ${{ secrets.ADDRESS_SPACE }}
-        AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-        PORTER_OUTPUT_CONTAINER_NAME: '${{ secrets.PORTER_OUTPUT_CONTAINER_NAME }}'
+      - name: Create Management Infrastructure
+        shell: bash
+        env:
+          TRE_ID: ${{ secrets.TRE_ID }}
+          TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TF_STATE_CONTAINER }}
+          MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP }}
+          MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+          LOCATION: ${{ secrets.LOCATION }}
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+          ADDRESS_SPACE: ${{ secrets.ADDRESS_SPACE }}
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+          PORTER_OUTPUT_CONTAINER_NAME: "${{ secrets.PORTER_OUTPUT_CONTAINER_NAME }}"
 
-      run: |
+        run: |
           export USE_ENV_VARS_NOT_FILES=true
           export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
           export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
@@ -63,11 +63,11 @@ jobs:
           make mgmt-deploy
 
   deploy_tre:
-      name: Deploy TRE
-      needs: deploy_mgmt_infra
-      runs-on: ubuntu-latest
-      environment: Dev
-      steps:
+    name: Deploy TRE
+    needs: deploy_mgmt_infra
+    runs-on: ubuntu-latest
+    environment: Dev
+    steps:
       - name: Checkout
         uses: actions/checkout@v2
 
@@ -79,7 +79,7 @@ jobs:
       - name: Install Terraform
         uses: little-core-labs/install-terraform@v2.0.0
         with:
-            version: 0.15.4
+          version: 0.15.4
       - name: Deploy TRE
         shell: bash
         env:
@@ -92,49 +92,49 @@ jobs:
           ADDRESS_SPACE: ${{ secrets.ADDRESS_SPACE }}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
           AZURE_CONTRIBUTOR_SP: ${{ secrets.AZURE_CONTRIBUTOR_SP }}
-          TF_VAR_swagger_ui_client_id: '${{ secrets.SWAGGER_UI_CLIENT_ID }}'
-          TF_VAR_aad_tenant_id: '${{ secrets.AAD_TENANT_ID }}'
-          TF_VAR_api_client_id: '${{ secrets.API_CLIENT_ID }}'
-          TF_VAR_api_client_secret: '${{ secrets.API_CLIENT_SECRET }}'
-          PORTER_OUTPUT_CONTAINER_NAME: '${{ secrets.PORTER_OUTPUT_CONTAINER_NAME }}'
+          TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
+          TF_VAR_aad_tenant_id: "${{ secrets.AAD_TENANT_ID }}"
+          TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
+          TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
+          PORTER_OUTPUT_CONTAINER_NAME: "${{ secrets.PORTER_OUTPUT_CONTAINER_NAME }}"
 
         run: |
-            export env
-            export USE_ENV_VARS_NOT_FILES=true
-            export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
-            export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
-            export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
-            export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
+          export env
+          export USE_ENV_VARS_NOT_FILES=true
+          export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
+          export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
+          export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
+          export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
 
-            echo $GITHUB_REF
-            if [ $GITHUB_EVENT_NAME == 'push' ] && [ $GITHUB_REF == 'refs/heads/develop' ]; then
-              IMAGE_TAG='develop-latest'
-            elif [ $GITHUB_EVENT_NAME == 'push' ] && [ $GITHUB_REF == 'refs/heads/main' ]; then
-              IMAGE_TAG='main-latest'
-            else
-              IMAGE_TAG=$GITHUB_SHA
-            fi
+          echo $GITHUB_REF
+          if [ $GITHUB_EVENT_NAME == 'push' ] && [ $GITHUB_REF == 'refs/heads/develop' ]; then
+            IMAGE_TAG='develop-latest'
+          elif [ $GITHUB_EVENT_NAME == 'push' ] && [ $GITHUB_REF == 'refs/heads/main' ]; then
+            IMAGE_TAG='main-latest'
+          else
+            IMAGE_TAG=$GITHUB_SHA
+          fi
 
-            export IMAGE_TAG
-            export TF_VAR_management_api_image_tag=$IMAGE_TAG
-            export TF_VAR_tre_id=$TRE_ID
-            export TF_VAR_arm_subscription_id=$ARM_SUBSCRIPTION_ID
-            export TF_VAR_arm_client_id=$ARM_CLIENT_ID
-            export TF_VAR_arm_client_secret=$ARM_CLIENT_SECRET
-            export TF_VAR_mgmt_storage_account_name=$MGMT_STORAGE_ACCOUNT_NAME
-            export TF_VAR_mgmt_resource_group_name=$MGMT_RESOURCE_GROUP_NAME
-            export TF_VAR_terraform_state_container_name=$TERRAFORM_STATE_CONTAINER_NAME
-            export TF_VAR_location=$LOCATION
-            export TF_VAR_acr_name=$ACR_NAME
-            export TF_VAR_address_space=$ADDRESS_SPACE
-            export TF_VAR_porter_output_container_name=$PORTER_OUTPUT_CONTAINER_NAME
-            export TF_VAR_debug="false"            
-            export TF_VAR_resource_processor_type="vmss_porter"
-            export TF_VAR_resource_processor_vmss_porter_image_tag=$IMAGE_TAG
-            export TF_VAR_deploy_gitea=true
-            export TF_VAR_deploy_nexus=true
+          export IMAGE_TAG
+          export TF_VAR_management_api_image_tag=$IMAGE_TAG
+          export TF_VAR_tre_id=$TRE_ID
+          export TF_VAR_arm_subscription_id=$ARM_SUBSCRIPTION_ID
+          export TF_VAR_arm_client_id=$ARM_CLIENT_ID
+          export TF_VAR_arm_client_secret=$ARM_CLIENT_SECRET
+          export TF_VAR_mgmt_storage_account_name=$MGMT_STORAGE_ACCOUNT_NAME
+          export TF_VAR_mgmt_resource_group_name=$MGMT_RESOURCE_GROUP_NAME
+          export TF_VAR_terraform_state_container_name=$TERRAFORM_STATE_CONTAINER_NAME
+          export TF_VAR_location=$LOCATION
+          export TF_VAR_acr_name=$ACR_NAME
+          export TF_VAR_address_space=$ADDRESS_SPACE
+          export TF_VAR_porter_output_container_name=$PORTER_OUTPUT_CONTAINER_NAME
+          export TF_VAR_debug="false"            
+          export TF_VAR_resource_processor_type="vmss_porter"
+          export TF_VAR_resource_processor_vmss_porter_image_tag=$IMAGE_TAG
+          export TF_VAR_deploy_gitea=true
+          export TF_VAR_deploy_nexus=true
 
-            make all
+          make all
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
@@ -152,17 +152,17 @@ jobs:
     runs-on: ubuntu-latest
     environment: Dev
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: Azure Login
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-    - name: Publish bundles
-      shell: bash
-      env:
-        ACR_NAME: ${{ secrets.ACR_NAME }}
-      run: |
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Publish bundles
+        shell: bash
+        env:
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+        run: |
           curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
           export PATH=~/.porter/:$PATH
 
@@ -197,14 +197,14 @@ jobs:
       - name: Test with pytest
         shell: bash
         env:
-          RESOURCE_LOCATION: '${{ secrets.LOCATION }}'
-          TRE_ID: '${{ secrets.TRE_ID }}'
-          RESOURCE: '${{ secrets.API_CLIENT_ID }}'
-          AUTH_TENANT_ID: '${{ secrets.AAD_TENANT_ID }}'
-          CLIENT_ID: '${{ secrets.TEST_APP_ID }}'
-          USERNAME: '${{ secrets.TEST_USER_NAME }}'
-          PASSWORD: '${{ secrets.TEST_USER_PASSWORD }}'
-          AUTH_APP_CLIENT_ID: '${{ secrets.TEST_WORKSPACE_APP_ID }}'
+          RESOURCE_LOCATION: "${{ secrets.LOCATION }}"
+          TRE_ID: "${{ secrets.TRE_ID }}"
+          RESOURCE: "${{ secrets.API_CLIENT_ID }}"
+          AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
+          CLIENT_ID: "${{ secrets.TEST_APP_ID }}"
+          USERNAME: "${{ secrets.TEST_USER_NAME }}"
+          PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
+          AUTH_APP_CLIENT_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
         run: |
           export SCOPE=$(echo "api://$RESOURCE/Workspace.Read api://$RESOURCE/Workspace.Write")
           export RESOURCE_LOCATION=$RESOURCE_LOCATION
@@ -226,8 +226,8 @@ jobs:
           ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
           notification-summary: "E2E Tests failed"
           notification-color: dc3545
-          timezone: Europe/Zurich        
-      
+          timezone: Europe/Zurich
+
       - name: Expose workspace id
         shell: bash
         if: always()
@@ -250,24 +250,34 @@ jobs:
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
 
         run: |
-            export USE_ENV_VARS_NOT_FILES=true
-            export env
-            export  TF_VAR_workspace_id=$(echo "${WORKSPACE_ID: -4}")
-            export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
-            export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
-            export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
-            export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
+          export USE_ENV_VARS_NOT_FILES=true
+          export env
+          export  TF_VAR_workspace_id=$(echo "${WORKSPACE_ID: -4}")
+          export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
+          export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
+          export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
+          export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
 
-            cd ./workspaces/vanilla/terraform/
-            ../../../devops/scripts/terraform_wrapper.sh -g $TF_VAR_mgmt_resource_group_name -s $TF_VAR_mgmt_storage_account_name  -n $TF_VAR_terraform_state_container_name -k "${TF_VAR_tre_id}-ws-${TF_VAR_workspace_id}" -c "terraform destroy -auto-approve"
+          cd ./workspaces/vanilla/terraform/
+          ../../../devops/scripts/terraform_wrapper.sh -g $TF_VAR_mgmt_resource_group_name -s $TF_VAR_mgmt_storage_account_name  -n $TF_VAR_terraform_state_container_name -k "${TF_VAR_tre_id}-ws-${TF_VAR_workspace_id}" -c "terraform destroy -auto-approve"
 
+      - name: Notify dedicated teams channel
+        uses: sachinkundu/ms-teams-notification@1.4
+        if: ${{ success() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') }}
+        continue-on-error: true
+        with:
+          github-token: ${{ github.token }}
+          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+          notification-summary: "Deployment and tests passed successfully"
+          notification-color: 28a745
+          timezone: Europe/Zurich
 
       - name: Upload Unit Test Results
         if: always()
         uses: actions/upload-artifact@v2
         with:
           name: E2E Test Results (Python ${{ matrix.python-version }})
-          path: './e2e_tests/pytest_e2e.xml'
+          path: "./e2e_tests/pytest_e2e.xml"
 
   publish-test-results:
     name: "Publish E2E Tests Results"
@@ -287,24 +297,24 @@ jobs:
         if: always()
         with:
           files: artifacts/**/*.xml
-  
+
   publish_innereye_bundles:
     name: Publish InnerEye Bundles
     runs-on: ubuntu-latest
     environment: Dev
     needs: [e2e_tests]
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: Azure Login
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-    - name: Publish bundles
-      shell: bash
-      env:
-        ACR_NAME: ${{ secrets.ACR_NAME }}
-      run: |
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Publish bundles
+        shell: bash
+        env:
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+        run: |
           curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
           export PATH=~/.porter/:$PATH
 
@@ -314,7 +324,6 @@ jobs:
           make porter-publish DIR=./workspaces/services/devtestlabs
           make porter-publish DIR=./workspaces/services/innereye_deeplearning
           make porter-publish DIR=./workspaces/services/innereye_inference
-
   # deploy_azureml_devtestlabs_workspace:
   #   name: Deploy Azure ML and DevTest Labs Workspace
   #   needs: [publish_innereye_bundles]
@@ -339,7 +348,6 @@ jobs:
   #       MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP }}
   #       MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
   #       AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-
   #     run: |
   #         export USE_ENV_VARS_NOT_FILES=true
   #         export env
@@ -347,13 +355,10 @@ jobs:
   #         export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
   #         export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
   #         export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
-
   #         curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
   #         export PATH=~/.porter/:$PATH
-         
   #         make porter-publish DIR=./workspaces/azureml_devtestlabs
   #         make porter-install DIR=./workspaces/azureml_devtestlabs
-
   # deploy_innereye_deeplearning_workspace:
   #   name: Deploy InnerEye Deep Learning Workspace
   #   needs: [deploy_azureml_devtestlabs_workspace]
@@ -378,7 +383,6 @@ jobs:
   #       MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP }}
   #       MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
   #       AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-
   #     run: |
   #         export USE_ENV_VARS_NOT_FILES=true
   #         export env
@@ -386,13 +390,10 @@ jobs:
   #         export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
   #         export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
   #         export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
-
   #         curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
   #         export PATH=~/.porter/:$PATH
-
   #         make porter-publish DIR=./workspaces/innereye_deeplearning
   #         make porter-install DIR=./workspaces/innereye_deeplearning
-
   # deploy_innereye_deeplearning_inference_workspace:
   #   name: Deploy InnerEye Deep Learning & Inference Workspace
   #   needs: [deploy_innereye_deeplearning_workspace]
@@ -417,7 +418,6 @@ jobs:
   #       MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP }}
   #       MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
   #       AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-
   #     run: |
   #         export USE_ENV_VARS_NOT_FILES=true
   #         export env
@@ -427,19 +427,7 @@ jobs:
   #         export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
   #         export INFERENCE_SP_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
   #         export INFERENCE_SP_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
-
   #         curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
   #         export PATH=~/.porter/:$PATH
-
   #         make porter-publish DIR=./workspaces/innereye_deeplearning_inference
   #         make porter-install DIR=./workspaces/innereye_deeplearning_inference
-  #   - name: Notify dedicated teams channel
-  #     uses: sachinkundu/ms-teams-notification@1.4
-  #     if: ${{ success() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') }}
-  #     continue-on-error: true
-  #     with:
-  #       github-token: ${{ github.token }}
-  #       ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-  #       notification-summary: "Deployment Success"
-  #       notification-color: 28a745
-  #       timezone: Europe/Zurich
