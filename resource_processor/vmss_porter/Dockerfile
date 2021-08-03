@@ -29,11 +29,11 @@ ENV PATH /root/.porter/:$PATH
 
 ENV PYTHONPATH .
 
-COPY ./vm_porter/requirements.txt .
+COPY ./vmss_porter/requirements.txt .
 RUN pip3 install -r requirements.txt
 
 COPY . /app
 
 WORKDIR /app/
  
-CMD ["python","-u", "vm_porter/runner.py"]
+CMD ["python","-u", "vmss_porter/runner.py"]

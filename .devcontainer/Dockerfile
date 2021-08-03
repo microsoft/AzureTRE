@@ -47,18 +47,9 @@ RUN export PORTER_HOME=/home/vscode/.porter && curl -L https://cdn.porter.sh/lat
 
 ENV PATH /home/vscode/.porter/:$PATH
 
-# Install Azure Function Core Tools
-RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg \
-    && sudo mv microsoft.gpg /etc/apt/trusted.gpg.d/microsoft.gpg \
-    && sudo sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/debian/$(lsb_release -rs | cut -d'.' -f 1)/prod $(lsb_release -cs) main" > /etc/apt/sources.list.d/dotnetdev.list' \
-    && sudo apt-get update \
-    && sudo apt-get update \
-    && sudo apt-get install azure-functions-core-tools-3
-
 # Install requirements
 COPY ["requirements.txt", "requirements-dev.txt", "/tmp/pip-tmp/" ]
 COPY ["management_api_app/requirements.txt", "/tmp/pip-tmp/management_api_app/" ]
-COPY ["processor_function/requirements.txt", "/tmp/pip-tmp/processor_function/" ]
 RUN pip3 --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requirements.txt && rm -rf /tmp/pip-tmp
 
 RUN usermod -a -G docker vscode

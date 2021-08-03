@@ -18,7 +18,3 @@ To run the Unit and E2E tests follow the [testing documentation](testing.md).
 ### Running management api locally
 
 To run management api locally follow the steps noted [here](../management_api_app/README.md#).
-
-### Running Resource Processor
-
-To run processor function locally follow the steps noted [here](../processor_function/vm_porter/readme.md).

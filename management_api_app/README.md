@@ -131,7 +131,7 @@ See also: [Auth in code](#auth-in-code)
 | ------------------------- | ----------- |
 | `SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE` | Example value: `<your namespace>.servicebus.windows.net` |
 | `SERVICE_BUS_RESOURCE_REQUEST_QUEUE` | The queue for resource request messages sent by the API. Example value: `workspacequeue` |
-| `SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE` | The queue for deployment status update messages sent by [Resource Processor Function](../processor_function/README.md) and received by the API. Example value: `deploymentstatus` |
+| `SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE` | The queue for deployment status update messages sent by [Resource Processor](../resource_processor/vmss_porter/readme.md) and received by the API. Example value: `deploymentstatus` |
 
 ### Logging and monitoring
 
