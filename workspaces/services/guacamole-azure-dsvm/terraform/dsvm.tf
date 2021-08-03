@@ -5,62 +5,9 @@ resource "azurerm_network_interface" "internal" {
 
   ip_configuration {
     name                          = "primary"
-    subnet_id                     = data.azurerm_subnet.dsvms.id
+    subnet_id                     = data.azurerm_subnet.services.id
     private_ip_address_allocation = "Dynamic"
   }
-}
-
-resource "azurerm_network_security_group" "dsvmnsg" {
-  name                = "nsg-${local.service_resource_name_suffix}"
-  location            = data.azurerm_resource_group.ws.location
-  resource_group_name = data.azurerm_resource_group.ws.name
-}
-
-resource "azurerm_network_security_rule" "allow-rdp-inbound-from-vnet-dsvm" {
-  name                        = "RDP"
-  priority                    = 800
-  direction                   = "Inbound"
-  access                      = "Allow"
-  protocol                    = "Tcp"
-  source_port_range           = "*"
-  destination_port_range      = 3389
-  source_address_prefix       = "VirtualNetwork"
-  destination_address_prefix  = "*"
-  network_security_group_name = azurerm_network_security_group.dsvmnsg.name
-  resource_group_name         = data.azurerm_resource_group.ws.name
-}
-
-resource "azurerm_network_security_rule" "deny-all-inbound-override-dsvm" {
-  access                      = "Deny"
-  destination_address_prefix  = "*"
-  destination_port_range      = "*"
-  direction                   = "Inbound"
-  name                        = "deny-inbound-override"
-  network_security_group_name = azurerm_network_security_group.dsvmnsg.name
-  priority                    = 900
-  protocol                    = "*"
-  resource_group_name         = data.azurerm_resource_group.ws.name
-  source_address_prefix       = "*"
-  source_port_range           = "*"
-}
-
-resource "azurerm_network_security_rule" "deny-outbound-override-dsvm" {
-  access                      = "Deny"
-  destination_address_prefix  = "*"
-  destination_port_range      = "*"
-  direction                   = "Outbound"
-  name                        = "deny-outbound-override"
-  network_security_group_name = azurerm_network_security_group.dsvmnsg.name
-  priority                    = 4096
-  protocol                    = "*"
-  resource_group_name         = data.azurerm_resource_group.ws.name
-  source_address_prefix       = "*"
-  source_port_range           = "*"
-}
-
-resource "azurerm_network_interface_security_group_association" "dev_vm_nsg_association" {
-  network_interface_id      = azurerm_network_interface.internal.id
-  network_security_group_id = azurerm_network_security_group.dsvmnsg.id
 }
 
 resource "random_string" "username" {
@@ -123,6 +70,6 @@ resource "azurerm_virtual_machine" "dsvm" {
   }
 
   tags = {
-    parent_service_id = var.guacamole_parent_service_id
+    parent_service_id = var.parent_service_id
   }
 }

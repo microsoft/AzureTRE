@@ -26,8 +26,7 @@ data "azurerm_virtual_network" "ws" {
   resource_group_name = data.azurerm_resource_group.ws.name
 }
 
-data "azurerm_subnet" "dsvms" {
-  name                 = "WinVmsSubnet"
-  virtual_network_name = data.azurerm_virtual_network.ws.name
-  resource_group_name  = data.azurerm_virtual_network.ws.resource_group_name
+data "azurerm_network_security_group" "ws" {
+  name                = "nsg-ws"
+  resource_group_name = data.azurerm_virtual_network.ws.resource_group_name
 }

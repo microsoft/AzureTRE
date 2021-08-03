@@ -11,9 +11,9 @@
       }
     },
     {
-      "name": "guacamole_parent_service_id",
+      "name": "parent_service_id",
       "source": {
-        "env": "GUACAMOLE_PARENT_SERVICE_ID"
+        "env": "PARENT_SERVICE_ID"
       }
     },
     {

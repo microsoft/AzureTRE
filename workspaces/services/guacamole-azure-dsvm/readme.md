@@ -1,6 +1,6 @@
-# Guacamole Target Resource Service bundle (Windows DSVM)
+# Guacamole User Resource Service bundle (Windows DSVM)
 
-This is a Target Resource Service template. It contains a Windows DSVM to be used by TRE researchers and to be connected using a [Guacamole server](https://guacamole.apache.org/).
+This is a User Resource Service template. It contains a Windows DSVM to be used by TRE researchers and to be connected using a [Guacamole server](https://guacamole.apache.org/).
 It blocks all inbound and outbound traffic to the internet and allows only RDP connections from within the vnet.
 
 ## Firewall Rules
@@ -20,7 +20,7 @@ Inbound connectivity from within the VNET to the RDP port
 | Environment variable name | Description |
 | ------------------------- | ----------- |
 | `WORKSPACE_ID` | The 4 character unique identifier used when deploying the vanilla workspace bundle. |
-| `GUACAMOLE_PARENT_SERVICE_ID` | The unique identifier of this service parent (a Guacamole service) |
+| `PARENT_SERVICE_ID` | The unique identifier of this service parent (a Guacamole service) |
 
 1. Build and install the Guacamole Service bundle
     - `make porter-build DIR=./workspaces/services/guacamole-azure-dsvm`  
