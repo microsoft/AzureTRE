@@ -77,6 +77,9 @@ tre-deploy:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
+	&& docker build -t "$${ACR_NAME}.azurecr.io/gitea:$${IMAGE_TAG}" -f ./templates/shared_services/gitea/Dockerfile . \
+	&& az acr login -n $${ACR_NAME} \
+	&& docker push "$${ACR_NAME}.azurecr.io/gitea:$${IMAGE_TAG}" \
 	&& cd ./templates/core/terraform/ && ./deploy.sh
 
 deploy-processor-function:
