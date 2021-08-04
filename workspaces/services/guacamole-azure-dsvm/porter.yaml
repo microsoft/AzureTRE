@@ -40,7 +40,7 @@ parameters:
     description: "The name of the Terraform state storage container"
   - name: arm_use_msi
     env: ARM_USE_MSI
-    default: true
+    default: false
 
 outputs:
   - name: guacamole_win_dsvm_name
