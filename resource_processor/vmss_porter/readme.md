@@ -2,7 +2,7 @@
 
 ## Build docker container
 
-docker build -f ./vm_porter/Dockerfile -t rp .
+docker build -f ./vmss_porter/Dockerfile -t rp .
 
 docker run -it -v /var/run/docker.sock:/var/run/docker.sock  --env-file .env  rp
 
@@ -19,9 +19,9 @@ If you use visual studio code you can set up your launch.json to include the fol
       "name": "VMSS Processor",
       "type": "python",
       "request": "launch",
-      "program": "vm_porter/runner.py",
+      "program": "vmss_porter/runner.py",
       "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}/processor_function",
+      "cwd": "${workspaceFolder}/resource_processor",
       "env": {
         "PYTHONPATH": ".",
         "AZURE_CLIENT_ID": "",

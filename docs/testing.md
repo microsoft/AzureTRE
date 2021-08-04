@@ -5,7 +5,6 @@
 The unit tests are written with pytest and located in folders:
 
 - [Management API](../management_api_app/README.md) unit tests: `/management_api_app/tests_ma/`
-- [Resource Processor Function](../processor_function/README.md) unit tests: `/processor_function/tests_pf/`
 
 > The folders containing the unit tests cannot have the same name. Otherwise, pytest will get confused, when trying to run all tests in the root folder.
 
