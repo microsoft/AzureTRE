@@ -1,0 +1,2 @@
+FROM gitea/gitea:latest
+ENTRYPOINT ["/bin/bash", "-c", "sleep 120 && gitea admin user create --admin --access-token --username=${GITEA_USERNAME} --password=${GITEA_PASSWD} --email=${GITEA_EMAIL} --must-change-password=false & /usr/bin/entrypoint"]

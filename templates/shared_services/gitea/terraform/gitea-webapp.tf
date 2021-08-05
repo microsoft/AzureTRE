@@ -1,3 +1,11 @@
+resource "random_password" "gitea_passwd" {
+  length      = 20
+  min_upper   = 2
+  min_lower   = 2
+  min_numeric = 2
+  min_special = 2
+}
+
 resource "azurerm_app_service" "gitea" {
   name                = "gitea-${var.tre_id}"
   resource_group_name = local.core_resource_group_name
@@ -10,8 +18,15 @@ resource "azurerm_app_service" "gitea" {
     "WEBSITES_PORT"                  = "3000"
     "WEBSITE_VNET_ROUTE_ALL"         = 1
 
-    TRE_ID            = var.tre_id
-    RESOURCE_LOCATION = var.location
+     # Settings for private Container Registires  
+    "DOCKER_REGISTRY_SERVER_USERNAME"            = var.docker_registry_username
+    "DOCKER_REGISTRY_SERVER_URL"                 = "https://${var.docker_registry_server}"
+    "DOCKER_REGISTRY_SERVER_PASSWORD"            = var.docker_registry_password
+   
+    # TBD, Username and password should not be defined here: #542
+    GITEA_USERNAME                 = "giteaadmin"
+    GITEA_PASSWD                   = random_password.gitea_passwd.result
+    GITEA_EMAIL                    = "giteaadmin@tre.com"
 
     WEBSITES_ENABLE_APP_SERVICE_STORAGE = true
 
@@ -29,10 +44,12 @@ resource "azurerm_app_service" "gitea" {
     GITEA__database__PASSWD=random_password.password.result
     
     GITEA__security__INSTALL_LOCK=true
+
+    GITEA__service__DISABLE_REGISTRATION=true
   }
 
   site_config {
-    linux_fx_version            = "DOCKER|gitea/gitea"
+    linux_fx_version            = "DOCKER|${var.docker_registry_server}/microsoft/azuretre/gitea:${var.image_tag}"
     remote_debugging_enabled    = false
     scm_use_main_ip_restriction = true
 
