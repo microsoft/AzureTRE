@@ -224,7 +224,7 @@ module "gitea" {
   source                                     = "../../shared_services/gitea/terraform"
   tre_id                                     = var.tre_id
   location                                   = var.location
-  management_api_image_tag                   = var.management_api_image_tag
+  image_tag                                  = var.gitea_image_tag
   docker_registry_server                     = var.docker_registry_server
   docker_registry_username                   = var.docker_registry_username
   docker_registry_password                   = var.docker_registry_password
