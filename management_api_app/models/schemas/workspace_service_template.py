@@ -1,7 +1,3 @@
-from typing import List
-
-from pydantic import BaseModel
-
 from models.domain.resource import ResourceType
 from models.domain.resource_template import ResourceTemplate, Property
 from models.schemas.template import TemplateInCreate, TemplateInResponse

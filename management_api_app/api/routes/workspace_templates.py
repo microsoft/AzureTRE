@@ -35,7 +35,8 @@ async def create_workspace_template(
         workspace_template_create: WorkspaceTemplateInCreate,
         workspace_template_repo: WorkspaceTemplateRepository = Depends(get_repository(WorkspaceTemplateRepository)),
 ) -> TemplateInResponse:
-    template_created = create_template_by_resource_type(workspace_template_create, workspace_template_repo, ResourceType.Workspace)
+    template_created = create_template_by_resource_type(workspace_template_create, workspace_template_repo,
+                                                        ResourceType.Workspace)
     template = enrich_schema_defs(template_created)
     return template
 
@@ -47,8 +48,8 @@ async def create_workspace_service_template(
         workspace_template_repo: WorkspaceTemplateRepository = Depends(get_repository(WorkspaceTemplateRepository)),
 ) -> TemplateInResponse:
     template_created = create_template_by_resource_type(workspace_template_create,
-                                            workspace_template_repo,
-                                            ResourceType.WorkspaceService)
+                                                        workspace_template_repo,
+                                                        ResourceType.WorkspaceService)
     template = enrich_workspace_service_schema_defs(template_created)
     return template
 
@@ -89,4 +90,3 @@ def create_template_by_resource_type(workspace_template_create: TemplateInCreate
             # first registration
             workspace_template_create.current = True  # For first time registration, template is always marked current
         return workspace_template_repo.create_workspace_template_item(workspace_template_create, resource_type)
-
