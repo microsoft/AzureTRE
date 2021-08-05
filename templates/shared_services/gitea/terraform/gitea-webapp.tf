@@ -18,15 +18,15 @@ resource "azurerm_app_service" "gitea" {
     "WEBSITES_PORT"                  = "3000"
     "WEBSITE_VNET_ROUTE_ALL"         = 1
 
-     # Settings for private Container Registires  
+    # Settings for private Container Registires  
     "DOCKER_REGISTRY_SERVER_USERNAME" = var.docker_registry_username
     "DOCKER_REGISTRY_SERVER_URL"      = "https://${var.docker_registry_server}"
     "DOCKER_REGISTRY_SERVER_PASSWORD" = var.docker_registry_password
-   
+
     # TBD, Username and password should not be defined here: #542
-    GITEA_USERNAME                 = "giteaadmin"
-    GITEA_PASSWD                   = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.gitea_password.id})"
-    GITEA_EMAIL                    = "giteaadmin@tre.com"
+    GITEA_USERNAME = "giteaadmin"
+    GITEA_PASSWD   = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.gitea_password.id})"
+    GITEA_EMAIL    = "giteaadmin@tre.com"
 
     WEBSITES_ENABLE_APP_SERVICE_STORAGE = true
 
@@ -42,15 +42,16 @@ resource "azurerm_app_service" "gitea" {
     GITEA__database__NAME     = azurerm_mysql_database.gitea.name
     GITEA__database__USER     = "mysqladmin@${azurerm_mysql_server.gitea.fqdn}"
     # GITEA__database__PASSWD=random_password.password.result
-    GITEA__database__PASSWD = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.db_password.id})"    
+    GITEA__database__PASSWD = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.db_password.id})"
 
     GITEA__security__INSTALL_LOCK        = true
     GITEA__service__DISABLE_REGISTRATION = true
   }
 
   identity {
-    type         = "UserAssigned"
-    identity_ids = [azurerm_user_assigned_identity.id.id]
+    # type         = "UserAssigned"
+    # identity_ids = [azurerm_user_assigned_identity.id.id]
+    type = "SystemAssigned"
   }
 
   site_config {
@@ -89,8 +90,8 @@ resource "azurerm_app_service" "gitea" {
     }
   }
 
-    depends_on = [
-    azurerm_key_vault_access_policy.gitea_policy,
+  depends_on = [
+    # azurerm_key_vault_access_policy.gitea_policy,
     azurerm_key_vault_secret.gitea_password
   ]
 }
@@ -214,28 +215,24 @@ resource "azurerm_monitor_diagnostic_setting" "webapp_gitea" {
   }
 }
 
-resource "azurerm_user_assigned_identity" "id" {
-  resource_group_name = local.core_resource_group_name
-  location            = var.location
-  name                = "id-gitea-${var.tre_id}"
+# resource "azurerm_user_assigned_identity" "id" {
+#   resource_group_name = local.core_resource_group_name
+#   location            = var.location
+#   name                = "id-gitea-${var.tre_id}"
 
-  lifecycle { ignore_changes = [tags] }
-}
+#   lifecycle { ignore_changes = [tags] }
+# }
 
 resource "azurerm_key_vault_access_policy" "gitea_policy" {
   key_vault_id = var.keyvault_id
-  tenant_id    = azurerm_user_assigned_identity.id.tenant_id
-  object_id    = azurerm_user_assigned_identity.id.principal_id
+  tenant_id    = azurerm_app_service.gitea.identity.0.tenant_id
+  object_id    = azurerm_app_service.gitea.identity.0.principal_id
 
-  secret_permissions      = ["Get", "List", ]
+  secret_permissions = ["Get", "List", ]
 }
 
 resource "azurerm_key_vault_secret" "gitea_password" {
   name         = "gitea-${var.tre_id}-password"
   value        = random_password.gitea_passwd.result
   key_vault_id = var.keyvault_id
-}
-
-output "gitea_fqdn" {
-  value = azurerm_app_service.gitea.default_site_hostname
 }
