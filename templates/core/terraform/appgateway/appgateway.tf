@@ -12,7 +12,7 @@ resource "azurerm_public_ip" "appgwpip" {
 resource "azurerm_user_assigned_identity" "agw_id" {
   resource_group_name = var.resource_group_name
   location = var.location
-  name = "msi-agw-${var.tre_id}"
+  name = "id-agw-${var.tre_id}"
 
   lifecycle { ignore_changes = [ tags ] }
 }
