@@ -146,13 +146,35 @@ def test_get_workspace_template_names_returns_unique_template_names(cosmos_clien
 def test_create_item(cosmos_mock, uuid_mock, create_mock, input_workspace_template):
     template_repo = WorkspaceTemplateRepository(cosmos_mock)
     uuid_mock.return_value = "1234"
-    returned_template = template_repo.create_workspace_template_item(input_workspace_template)
+    returned_template = template_repo.create_workspace_template_item(input_workspace_template, ResourceType.Workspace)
     expected_resource_template = ResourceTemplate(
         id="1234",
         name=input_workspace_template.name,
         description=input_workspace_template.json_schema["description"],
         version=input_workspace_template.version,
         resourceType=ResourceType.Workspace,
+        properties=input_workspace_template.json_schema["properties"],
+        required=input_workspace_template.json_schema["required"],
+        current=input_workspace_template.current
+    )
+    create_mock.assert_called_once_with(expected_resource_template)
+    assert expected_resource_template == returned_template
+
+
+@patch('db.repositories.workspace_templates.WorkspaceTemplateRepository.create_item')
+@patch('uuid.uuid4')
+@patch('azure.cosmos.CosmosClient')
+def test_create_item_created_with_the_expected_type(cosmos_mock, uuid_mock, create_mock, input_workspace_template):
+    template_repo = WorkspaceTemplateRepository(cosmos_mock)
+    uuid_mock.return_value = "1234"
+    expected_type = ResourceType.Service
+    returned_template = template_repo.create_workspace_template_item(input_workspace_template, expected_type)
+    expected_resource_template = ResourceTemplate(
+        id="1234",
+        name=input_workspace_template.name,
+        description=input_workspace_template.json_schema["description"],
+        version=input_workspace_template.version,
+        resourceType=expected_type,
         properties=input_workspace_template.json_schema["properties"],
         required=input_workspace_template.json_schema["required"],
         current=input_workspace_template.current

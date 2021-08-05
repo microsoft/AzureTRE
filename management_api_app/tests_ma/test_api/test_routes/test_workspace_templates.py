@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from starlette import status
 from httpx import AsyncClient
 
+from models.domain.resource import ResourceType
 from resources import strings
 from api.routes.workspaces import get_current_user
 from db.errors import EntityDoesNotExist, UnableToAccessDatabase
@@ -166,3 +167,44 @@ class TestWorkspaceTemplate:
 
         assert json.loads(response.text)["required"] == expected_template.required
         assert json.loads(response.text)["properties"] == expected_template.properties
+
+    @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.create_workspace_template_item")
+    @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_current_workspace_template_by_name")
+    @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_workspace_template_by_name_and_version")
+    async def test_when_creating_workspace_template_workspace_resource_type_is_set(self,
+                                                                        get_workspace_template_by_name_and_version,
+                                                                        get_current_workspace_template_by_name,
+                                                                        create_workspace_template_item_mock,
+                                                                        app: FastAPI,
+                                                                        client: AsyncClient,
+                                                                        input_workspace_template: WorkspaceTemplateInCreate,
+                                                                        basic_resource_template: ResourceTemplate):
+        get_workspace_template_by_name_and_version.side_effect = EntityDoesNotExist
+        get_current_workspace_template_by_name.side_effect = EntityDoesNotExist
+
+        create_workspace_template_item_mock.return_value = basic_resource_template
+
+        await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES),
+                          json=input_workspace_template.dict())
+
+        create_workspace_template_item_mock.assert_called_once_with(input_workspace_template, ResourceType.Workspace)
+
+    @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.create_workspace_template_item")
+    @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_current_workspace_template_by_name")
+    @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_workspace_template_by_name_and_version")
+    async def test_when_creating_workspace_service_template_service_resource_type_is_set(self,
+                                                                                   get_workspace_template_by_name_and_version,
+                                                                                   get_current_workspace_template_by_name,
+                                                                                   create_workspace_template_item_mock,
+                                                                                   app: FastAPI,
+                                                                                   client: AsyncClient,
+                                                                                   input_workspace_template: WorkspaceTemplateInCreate,
+                                                                                   basic_workspace_service_template: ResourceTemplate):
+        get_workspace_template_by_name_and_version.side_effect = EntityDoesNotExist
+        get_current_workspace_template_by_name.side_effect = EntityDoesNotExist
+
+        create_workspace_template_item_mock.return_value = basic_workspace_service_template
+
+        await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES), json=input_workspace_template.dict())
+
+        create_workspace_template_item_mock.assert_called_once_with(input_workspace_template, ResourceType.Service)

@@ -17,8 +17,8 @@ class WorkspaceTemplateRepository(BaseRepository):
         super().__init__(client, config.STATE_STORE_RESOURCE_TEMPLATES_CONTAINER)
 
     @staticmethod
-    def _workspace_template_by_name_query(name: str) -> str:
-        return f'SELECT * FROM c WHERE c.resourceType = "workspace" AND c.name = "{name}"'
+    def _workspace_template_by_name_query(name: str, resource_type: str = ResourceType.Workspace) -> str:
+        return f'SELECT * FROM c WHERE c.resourceType = "{resource_type}" AND c.name = "{name}"'
 
     def get_workspace_templates_by_name(self, name: str) -> List[ResourceTemplate]:
         query = self._workspace_template_by_name_query(name)
@@ -26,8 +26,8 @@ class WorkspaceTemplateRepository(BaseRepository):
         print(resource_templates)
         return parse_obj_as(List[ResourceTemplate], resource_templates)
 
-    def get_current_workspace_template_by_name(self, name: str) -> ResourceTemplate:
-        query = self._workspace_template_by_name_query(name) + ' AND c.current = true'
+    def get_current_workspace_template_by_name(self, name: str, resource_type: str = ResourceType.Workspace) -> ResourceTemplate:
+        query = self._workspace_template_by_name_query(name, resource_type) + ' AND c.current = true'
         workspace_templates = self.query(query=query)
         print(workspace_templates)
         if len(workspace_templates) != 1:
