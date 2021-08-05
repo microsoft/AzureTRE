@@ -256,10 +256,6 @@ module "gitea" {
   tre_id   = var.tre_id
   location = var.location
   management_api_image_tag =  var.management_api_image_tag
-  acr_name = var.acr_name
-  gitea_username   = var.gitea_username
-  gitea_passwd = var.gitea_passwd
-  gitea_email = var.gitea_email
   docker_registry_server                     = var.docker_registry_server
   docker_registry_username                   = var.docker_registry_username
   docker_registry_password                   = var.docker_registry_password

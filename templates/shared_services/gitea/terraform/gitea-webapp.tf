@@ -1,3 +1,11 @@
+resource "random_password" "gitea_passwd" {
+  length      = 20
+  min_upper   = 2
+  min_lower   = 2
+  min_numeric = 2
+  min_special = 2
+}
+
 resource "azurerm_app_service" "gitea" {
   name                = "gitea-${var.tre_id}"
   resource_group_name = local.core_resource_group_name
@@ -16,9 +24,9 @@ resource "azurerm_app_service" "gitea" {
     "DOCKER_REGISTRY_SERVER_PASSWORD"            = var.docker_registry_password
    
     # TBD, Username and password should not be defined here: #542
-    GITEA_USERNAME                 = var.gitea_username
-    GITEA_PASSWD                   = var.gitea_passwd
-    GITEA_EMAIL                    = var.gitea_email
+    GITEA_USERNAME                 = "giteaadmin"
+    GITEA_PASSWD                   = random_password.gitea_passwd.result
+    GITEA_EMAIL                    = "giteaadmin@tre.com"
 
     WEBSITES_ENABLE_APP_SERVICE_STORAGE = true
 
@@ -41,7 +49,7 @@ resource "azurerm_app_service" "gitea" {
   }
 
   site_config {
-    linux_fx_version            = "DOCKER|${var.acr_name}.azurecr.io/gitea:${var.management_api_image_tag}"
+    linux_fx_version            = "DOCKER|${var.docker_registry_server}/gitea:${var.management_api_image_tag}"
     remote_debugging_enabled    = false
     scm_use_main_ip_restriction = true
 

@@ -2,7 +2,7 @@
 
 SHELL:=/bin/bash
 
-all: bootstrap mgmt-deploy build-api-image push-api-image build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image tre-deploy
+all: bootstrap mgmt-deploy build-api-image push-api-image build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image push-gitea-image tre-deploy
 
 bootstrap:
 	echo -e "\n\e[34m»»» 🧩 \e[96mBootstrap Terraform\e[0m..." \
@@ -70,6 +70,15 @@ push-cnab-image:
 	&& az acr login -n $${ACR_NAME} \
 	&& docker push "$${ACR_NAME}.azurecr.io/microsoft/azuretre/cnab-aci:$${IMAGE_TAG}"
 
+push-gitea-image:
+	echo -e "\n\e[34m»»» 🧩 \e[96mPushing Images\e[0m..." \
+	&& . ./devops/scripts/check_dependencies.sh \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& . ./devops/scripts/set_docker_sock_permission.sh \
+	&& docker build -t "$${ACR_NAME}.azurecr.io/gitea:$${IMAGE_TAG}" -f ./templates/shared_services/gitea/Dockerfile . \
+	&& az acr login -n $${ACR_NAME} \
+	&& docker push "$${ACR_NAME}.azurecr.io/gitea:$${IMAGE_TAG}" \
+
 tre-deploy:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDeploying TRE\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
@@ -77,9 +86,6 @@ tre-deploy:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
-	&& docker build -t "$${ACR_NAME}.azurecr.io/gitea:$${IMAGE_TAG}" -f ./templates/shared_services/gitea/Dockerfile . \
-	&& az acr login -n $${ACR_NAME} \
-	&& docker push "$${ACR_NAME}.azurecr.io/gitea:$${IMAGE_TAG}" \
 	&& cd ./templates/core/terraform/ && ./deploy.sh
 
 deploy-processor-function:
