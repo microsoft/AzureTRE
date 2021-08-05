@@ -111,7 +111,7 @@ async def build_porter_command(msg_body, env_vars):
     command_line = [f"{azure_login_command(env_vars)} && az acr login --name {env_vars['registry_server'].replace('.azurecr.io','')} && porter "
                     f"{msg_body['action']} {installation_id} "
                     f" --reference {env_vars['registry_server']}/{msg_body['name']}:v{msg_body['version']}"
-                    f" {porter_parameters} --cred ./vm_porter/azure.json --allow-docker-host-access"
+                    f" {porter_parameters} --cred ./vmss_porter/azure.json --allow-docker-host-access"
                     f" && porter show {installation_id}"]
     return command_line
 

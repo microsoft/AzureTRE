@@ -215,7 +215,7 @@ jobs:
           export PASSWORD=$PASSWORD
           export AUTH_APP_CLIENT_ID=$AUTH_APP_CLIENT_ID
           cd e2e_tests
-          PYTHONPATH=. python -m pytest --junit-xml pytest_e2e.xml
+          PYTHONPATH=. python -m pytest -m smoke --junit-xml pytest_e2e.xml
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
         if: ${{ failure() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') }}

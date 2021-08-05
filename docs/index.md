@@ -14,7 +14,7 @@
   * [Testing](./testing.md)
 * Composition Service components
   * [Management API](../management_api_app/README.md)
-  * [Resource Processor Function](../processor_function/README.md)
+  * [Resource Processor](../resource_processor/vmss_porter/readme.md)
 * Workspaces and workspace services
   * [Authoring workspace templates](./authoring-workspace-templates.md)
   * [Registering workspace templates](./registering-workspace-templates.md)
@@ -28,8 +28,6 @@
 │   ├── linters         - Linter definitions for workflows
 │   └── workflows       - GitHub Actions workflows (CI/CD)
 │
-├── CNAB_container      - Container image used to run workspace deployments
-│
 ├── devops
 │   ├── scripts         - DevOps scripts
 │   └── terraform       - Terraform specific DevOps files/scripts for bootstrapping
@@ -40,7 +38,7 @@
 │
 ├── management_api_app  - Management API source code and docs
 │
-├── processor_function  - Resource Processor Function source code and docs
+├── resource_processor  - VMSS Porter Runner
 │
 ├── scripts             - Utility scripts
 │
