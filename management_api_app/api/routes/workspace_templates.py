@@ -3,6 +3,10 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
 
+from models.domain.resource_template import ResourceTemplate
+from models.schemas.template import TemplateInCreate, TemplateInResponse
+from models.schemas.workspace_service_template import WorkspaceServiceTemplateInCreate, \
+    WorkspaceServiceTemplateInResponse
 from services.authentication import get_current_admin_user
 from api.dependencies.database import get_repository
 from db.errors import EntityDoesNotExist
@@ -11,7 +15,7 @@ from models.schemas.workspace_template import (WorkspaceTemplateNamesInList, Wor
                                                WorkspaceTemplateInResponse)
 from models.domain.resource import ResourceType
 from resources import strings
-from services.concatjsonschema import enrich_schema_defs
+from services.concatjsonschema import enrich_schema_defs, enrich_workspace_service_schema_defs
 
 router = APIRouter(dependencies=[Depends(get_current_admin_user)])
 
@@ -30,19 +34,23 @@ async def get_workspace_templates(
 async def create_workspace_template(
         workspace_template_create: WorkspaceTemplateInCreate,
         workspace_template_repo: WorkspaceTemplateRepository = Depends(get_repository(WorkspaceTemplateRepository)),
-) -> WorkspaceTemplateInResponse:
-    return create_template_by_resource_type(workspace_template_create, workspace_template_repo, ResourceType.Workspace)
+) -> TemplateInResponse:
+    template_created = create_template_by_resource_type(workspace_template_create, workspace_template_repo, ResourceType.Workspace)
+    template = enrich_schema_defs(template_created)
+    return template
 
 
 @router.post("/workspace-service-templates", status_code=status.HTTP_201_CREATED,
-             response_model=WorkspaceTemplateInResponse, name=strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES)
+             response_model=WorkspaceServiceTemplateInResponse, name=strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES)
 async def create_workspace_service_template(
-        workspace_template_create: WorkspaceTemplateInCreate,
+        workspace_template_create: WorkspaceServiceTemplateInCreate,
         workspace_template_repo: WorkspaceTemplateRepository = Depends(get_repository(WorkspaceTemplateRepository)),
-) -> WorkspaceTemplateInResponse:
-    return create_template_by_resource_type(workspace_template_create,
+) -> TemplateInResponse:
+    template_created = create_template_by_resource_type(workspace_template_create,
                                             workspace_template_repo,
                                             ResourceType.WorkspaceService)
+    template = enrich_workspace_service_schema_defs(template_created)
+    return template
 
 
 @router.get("/workspace-templates/{template_name}", response_model=WorkspaceTemplateInResponse,
@@ -63,9 +71,9 @@ async def get_current_workspace_template_by_name(
                             detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
 
 
-def create_template_by_resource_type(workspace_template_create: WorkspaceTemplateInCreate,
+def create_template_by_resource_type(workspace_template_create: TemplateInCreate,
                                      workspace_template_repo: WorkspaceTemplateRepository,
-                                     resource_type: ResourceType) -> WorkspaceTemplateInResponse:
+                                     resource_type: ResourceType) -> ResourceTemplate:
     try:
         template = workspace_template_repo.get_workspace_template_by_name_and_version(workspace_template_create.name,
                                                                                       workspace_template_create.version)
@@ -80,7 +88,5 @@ def create_template_by_resource_type(workspace_template_create: WorkspaceTemplat
         except EntityDoesNotExist:
             # first registration
             workspace_template_create.current = True  # For first time registration, template is always marked current
-        template_created = \
-            workspace_template_repo.create_workspace_template_item(workspace_template_create, resource_type)
-        template = enrich_schema_defs(template_created)
-        return template
+        return workspace_template_repo.create_workspace_template_item(workspace_template_create, resource_type)
+

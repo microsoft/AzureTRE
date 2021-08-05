@@ -9,7 +9,7 @@ from db.errors import EntityDoesNotExist
 from db.repositories.base import BaseRepository
 from models.domain.resource import ResourceType
 from models.domain.resource_template import ResourceTemplate
-from models.schemas.workspace_template import WorkspaceTemplateInCreate
+from models.schemas.template import TemplateInCreate
 
 
 class WorkspaceTemplateRepository(BaseRepository):
@@ -47,19 +47,19 @@ class WorkspaceTemplateRepository(BaseRepository):
         workspace_template_names = [template["name"] for template in workspace_templates]
         return list(set(workspace_template_names))
 
-    def create_workspace_template_item(self, workspace_template_create: WorkspaceTemplateInCreate,
+    def create_workspace_template_item(self, template_create: TemplateInCreate,
                                        resource_type: ResourceType) -> ResourceTemplate:
         item_id = str(uuid.uuid4())
-        description = workspace_template_create.json_schema["description"]
-        required = workspace_template_create.json_schema["required"]
-        properties = workspace_template_create.json_schema["properties"]
+        description = template_create.json_schema["description"]
+        required = template_create.json_schema["required"]
+        properties = template_create.json_schema["properties"]
         resource_template = ResourceTemplate(
             id=item_id,
-            name=workspace_template_create.name,
+            name=template_create.name,
             description=description,
-            version=workspace_template_create.version,
+            version=template_create.version,
             resourceType=resource_type,
-            current=workspace_template_create.current,
+            current=template_create.current,
             required=required,
             properties=properties
         )
