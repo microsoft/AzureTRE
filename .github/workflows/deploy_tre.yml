@@ -131,6 +131,7 @@ jobs:
           export TF_VAR_resource_processor_type="vmss_porter"
           export TF_VAR_resource_processor_vmss_porter_image_tag=$IMAGE_TAG
           export TF_VAR_deploy_gitea=true
+          export TF_VAR_gitea_image_tag=$IMAGE_TAG
           export TF_VAR_deploy_nexus=true
 
           make all
