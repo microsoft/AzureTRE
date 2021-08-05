@@ -6,6 +6,9 @@ API_WORKSPACE_TEMPLATES = "/api/workspace-templates"
 API_WORKSPACES = "/api/workspaces"
 
 VANILLA_WORKSPACE = "tre-workspace-vanilla"
+DEV_TEST_LABS = "tre-workspace-azureml-devtestlabs"
+INNEREYE_DEEPLEARNING = "tre-workspace-innereye-deeplearning"
+INNEREYE_DEEPLEARNING_INFERENCE = "tre-workspace-innereye-deeplearning-inference"
 
 # Resource Status
 RESOURCE_STATUS_NOT_DEPLOYED = "not_deployed"
