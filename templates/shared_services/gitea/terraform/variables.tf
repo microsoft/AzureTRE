@@ -9,9 +9,9 @@ variable "location" {
   description = "Azure location (region) for deployment of core TRE services"
 }
 
-variable "management_api_image_tag" {
+variable "image_tag" {
   type        = string
-  description = "Tag for Management API image"
+  description = "Tag for Gitea image"
   default     = "main-latest"
 }
 
