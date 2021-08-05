@@ -90,7 +90,8 @@ resource "azurerm_app_service" "gitea" {
   }
 
     depends_on = [
-    azurerm_key_vault_access_policy.gitea_policy
+    azurerm_key_vault_access_policy.gitea_policy,
+    azurerm_key_vault_secret.gitea_password
   ]
 }
 
@@ -230,10 +231,9 @@ resource "azurerm_key_vault_access_policy" "gitea_policy" {
 }
 
 resource "azurerm_key_vault_secret" "gitea_password" {
-  name         = "${azurerm_app_service.gitea.name}-password"
+  name         = "gitea-${var.tre_id}-password"
   value        = random_password.gitea_passwd.result
   key_vault_id = var.keyvault_id
-  }
 }
 
 output "gitea_fqdn" {
