@@ -2,20 +2,20 @@ import uuid
 from typing import List
 
 from azure.cosmos import CosmosClient
+from jsonschema import validate
 from pydantic import parse_obj_as, UUID4
 
 from core import config
-from resources import strings
 from db.errors import EntityDoesNotExist
-from models.domain.workspace import Workspace
 from db.repositories.base import BaseRepository
+from db.repositories.workspace_templates import WorkspaceTemplateRepository
 from models.domain.resource import Deployment, Status
 from models.domain.resource_template import ResourceTemplate
-from models.schemas.workspace import WorkspaceInCreate
-from db.repositories.workspace_templates import WorkspaceTemplateRepository
-from services.concatjsonschema import enrich_schema_defs
-from jsonschema import validate
+from models.domain.workspace import Workspace
+from models.schemas.workspace import WorkspaceInCreate, WorkspacePatch
+from resources import strings
 from services.authentication import extract_auth_information
+from services.concatjsonschema import enrich_schema_defs
 
 
 class WorkspaceRepository(BaseRepository):
@@ -87,4 +87,9 @@ class WorkspaceRepository(BaseRepository):
         self.create_item(workspace)
 
     def update_workspace(self, workspace: Workspace):
+        self.container.upsert_item(body=workspace.dict())
+
+    def patch_workspace(self, workspace: Workspace, workspace_patch: WorkspacePatch):
+        workspace.enabled = workspace_patch.enabled
+        workspace.resourceTemplateParameters["enabled"] = workspace_patch.enabled
         self.container.upsert_item(body=workspace.dict())
