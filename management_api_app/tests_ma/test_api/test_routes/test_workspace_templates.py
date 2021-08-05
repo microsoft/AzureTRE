@@ -207,4 +207,4 @@ class TestWorkspaceTemplate:
 
         await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES), json=input_workspace_template.dict())
 
-        create_workspace_template_item_mock.assert_called_once_with(input_workspace_template, ResourceType.Service)
+        create_workspace_template_item_mock.assert_called_once_with(input_workspace_template, ResourceType.WorkspaceService)

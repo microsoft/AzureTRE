@@ -48,8 +48,7 @@ RESOURCE_STATUS_FAILED = "failed"
 
 # Resource Type
 RESOURCE_TYPE_WORKSPACE = "workspace"
-RESOURCE_TYPE_SERVICE = "service"
-RESOURCE_TYPE_SERVICE_TEMPLATE = "service-template"
+RESOURCE_TYPE_WORKSPACE_SERVICE = "workspace-service"
 
 # Deployments
 RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE = "This resource has not yet been deployed"

@@ -167,7 +167,7 @@ def test_create_item(cosmos_mock, uuid_mock, create_mock, input_workspace_templa
 def test_create_item_created_with_the_expected_type(cosmos_mock, uuid_mock, create_mock, input_workspace_template):
     template_repo = WorkspaceTemplateRepository(cosmos_mock)
     uuid_mock.return_value = "1234"
-    expected_type = ResourceType.Service
+    expected_type = ResourceType.WorkspaceService
     returned_template = template_repo.create_workspace_template_item(input_workspace_template, expected_type)
     expected_resource_template = ResourceTemplate(
         id="1234",

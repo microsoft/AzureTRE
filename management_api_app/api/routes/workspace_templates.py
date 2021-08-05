@@ -40,7 +40,9 @@ async def create_workspace_service_template(
         workspace_template_create: WorkspaceTemplateInCreate,
         workspace_template_repo: WorkspaceTemplateRepository = Depends(get_repository(WorkspaceTemplateRepository)),
 ) -> WorkspaceTemplateInResponse:
-    return create_template_by_resource_type(workspace_template_create, workspace_template_repo, ResourceType.Service)
+    return create_template_by_resource_type(workspace_template_create,
+                                            workspace_template_repo,
+                                            ResourceType.WorkspaceService)
 
 
 @router.get("/workspace-templates/{template_name}", response_model=WorkspaceTemplateInResponse,

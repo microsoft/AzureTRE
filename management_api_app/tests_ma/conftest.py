@@ -42,7 +42,7 @@ def basic_workspace_service_template(input_workspace_template):
         name=input_workspace_template.name,
         description=input_workspace_template.json_schema["description"],
         version=input_workspace_template.name,
-        resourceType=ResourceType.Service,
+        resourceType=ResourceType.WorkspaceService,
         current=True,
         required=input_workspace_template.json_schema["required"],
         properties=input_workspace_template.json_schema["properties"]
