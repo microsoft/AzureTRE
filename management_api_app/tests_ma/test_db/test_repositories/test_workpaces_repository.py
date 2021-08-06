@@ -4,11 +4,11 @@ from jsonschema.exceptions import ValidationError
 from mock import patch, MagicMock
 import pytest
 
-import db.repositories.workspaces
 from db.errors import EntityDoesNotExist
+import db.repositories.workspaces
 from models.domain.resource import Deployment, Status, ResourceType
 from models.domain.workspace import Workspace
-from models.schemas.workspace import WorkspaceInCreate, AuthenticationConfiguration, AuthProvider
+from models.schemas.workspace import WorkspaceInCreate, WorkspacePatch
 
 
 @pytest.fixture
@@ -94,9 +94,6 @@ def test_create_workspace_item_raises_value_error_if_template_is_invalid(cosmos_
 
     workspace_to_create = WorkspaceInCreate(
         workspaceType="vanilla-tre",
-        displayName="my workspace",
-        description="some description",
-        authConfig=AuthenticationConfiguration(provider=AuthProvider.AAD, data={})
     )
     _get_current_workspace_template_mock.side_effect = EntityDoesNotExist
 
@@ -142,3 +139,25 @@ def test_create_workspace_item_does_not_accept_invalid_payload(cosmos_client_moc
         workspace_repo.create_workspace_item(workspace_to_create)
 
     assert exc_info.value.message == "'display_name' is a required property"
+
+
+@patch('azure.cosmos.CosmosClient')
+def test_patch_workspace_updates_item(cosmos_client_mock):
+    workspace_repo = db.repositories.workspaces.WorkspaceRepository(cosmos_client_mock)
+    workspace_repo.container.upsert_item = MagicMock()
+    workspace_to_patch = Workspace(
+        id="1234",
+        resourceTemplateName="vanilla-tre",
+        resourceTemplateVersion="0.1.0",
+        resourceTemplateParameters={},
+        deployment=Deployment(status=Status.NotDeployed, message=""),
+        enabled=True
+    )
+    workspace_patch = WorkspacePatch(enabled=False)
+    patched_workspace_dict = workspace_to_patch.dict()
+    patched_workspace_dict["enabled"] = False
+
+    workspace_repo.patch_workspace(workspace_to_patch, workspace_patch)
+
+    workspace_repo.container.upsert_item.assert_called_once_with(body=patched_workspace_dict)
+    assert workspace_to_patch.enabled is False

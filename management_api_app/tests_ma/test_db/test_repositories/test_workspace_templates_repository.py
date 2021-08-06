@@ -143,10 +143,12 @@ def test_get_workspace_template_names_returns_unique_template_names(cosmos_clien
 @patch('db.repositories.workspace_templates.WorkspaceTemplateRepository.create_item')
 @patch('uuid.uuid4')
 @patch('azure.cosmos.CosmosClient')
-def test_create_item(cosmos_mock, uuid_mock, create_mock, input_workspace_template):
+def test_create_workspace_template_item_calls_create_item_with_the_correct_parameters(cosmos_mock, uuid_mock, create_mock, input_workspace_template):
     template_repo = WorkspaceTemplateRepository(cosmos_mock)
     uuid_mock.return_value = "1234"
+
     returned_template = template_repo.create_workspace_template_item(input_workspace_template)
+
     expected_resource_template = ResourceTemplate(
         id="1234",
         name=input_workspace_template.name,
@@ -163,10 +165,11 @@ def test_create_item(cosmos_mock, uuid_mock, create_mock, input_workspace_templa
 
 @patch('db.repositories.workspace_templates.WorkspaceTemplateRepository.container')
 @patch('azure.cosmos.CosmosClient')
-def test_updating_an_item(cosmos_mock, container_mock):
+def test_update_item_calls_upsert_with_correct_parameters(cosmos_mock, container_mock):
     container_mock.upsert_item = MagicMock()
     template_repo = WorkspaceTemplateRepository(cosmos_mock)
     resource_template = sample_workspace_template("blah", "blah")
+
     template_repo.update_item(resource_template)
 
     container_mock.upsert_item.assert_called_once_with(resource_template.dict())
