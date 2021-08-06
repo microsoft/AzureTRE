@@ -24,7 +24,7 @@ class WorkspaceRepository(BaseRepository):
 
     @staticmethod
     def _active_workspaces_query():
-        return 'SELECT * FROM c WHERE c.resourceType = "workspace" AND c.isDeleted = false'
+        return 'SELECT * FROM c WHERE c.resourceType = "workspace" AND c.deleted = false'
 
     def _get_current_workspace_template(self, template_name) -> ResourceTemplate:
         workspace_template_repo = WorkspaceTemplateRepository(self._client)
@@ -70,16 +70,8 @@ class WorkspaceRepository(BaseRepository):
         # user provided parameters
         resource_spec_parameters.update(workspace_create.properties)
 
-        # remove duplicate parameters - that exist both in parameters and the workspace definition
-        for parameter in ['display_name', 'description', 'enabled']:
-            if parameter in resource_spec_parameters:
-                del resource_spec_parameters[parameter]
-
         workspace = Workspace(
             id=full_workspace_id,
-            displayName=workspace_create.properties["display_name"],
-            description=workspace_create.properties["description"],
-            enabled=workspace_create.properties["enabled"] if "enabled" in workspace_create.properties else True,
             resourceTemplateName=workspace_create.workspaceType,
             resourceTemplateVersion=template_version,
             resourceTemplateParameters=resource_spec_parameters,
@@ -96,5 +88,5 @@ class WorkspaceRepository(BaseRepository):
         self.container.upsert_item(body=workspace.dict())
 
     def patch_workspace(self, workspace: Workspace, workspace_patch: WorkspacePatch):
-        workspace.enabled = workspace_patch.enabled
+        workspace.resourceTemplateParameters["enabled"] = workspace_patch.enabled
         self.container.upsert_item(body=workspace.dict())
