@@ -39,3 +39,9 @@ data "azurerm_private_dns_zone" "azurewebsites" {
   name                = "privatelink.azurewebsites.net"
   resource_group_name = local.core_resource_group_name
 }
+
+data "azurerm_storage_account" "gitea" {
+  name                = var.storage_account_name
+  resource_group_name = local.core_resource_group_name
+}
+

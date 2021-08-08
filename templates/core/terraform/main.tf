@@ -229,6 +229,7 @@ module "gitea" {
   docker_registry_username                   = var.docker_registry_username
   docker_registry_password                   = var.docker_registry_password
   keyvault_id                                = module.keyvault.keyvault_id
+  storage_account_name                       = module.storage.storage_account_name
 
   depends_on = [
     module.network
