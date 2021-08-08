@@ -110,7 +110,7 @@ async def test_getting_templates(template_name, token, verify) -> None:
 
 @pytest.mark.smoke
 @pytest.mark.timeout(1200)
-async def test_create_vanilla_workspace(token) -> None:
+async def test_create_vanilla_workspace(token, verify) -> None:
     payload = {
         "workspaceType": "tre-workspace-vanilla",
         "properties": {
@@ -120,12 +120,12 @@ async def test_create_vanilla_workspace(token) -> None:
             "address_space": "192.168.25.0/24"  # Reserving this for E2E tests.
         }
     }
-    await post_workspace_template(payload, token)
+    await post_workspace_template(payload, token, verify)
 
 
 @pytest.mark.extended
 @pytest.mark.timeout(1800)
-async def test_create_devtestlabs_workspace(token) -> None:
+async def test_create_devtestlabs_workspace(token, verify) -> None:
     payload = {
         "workspaceType": "tre-workspace-azureml-devtestlabs",
         "properties": {
@@ -136,12 +136,12 @@ async def test_create_devtestlabs_workspace(token) -> None:
             "acr_name": f"{config.ACR_NAME}"
         }
     }
-    await post_workspace_template(payload, token)
+    await post_workspace_template(payload, token, verify)
 
 
 @pytest.mark.extended
 @pytest.mark.timeout(2400)
-async def test_create_innereys_dl_workspace(token) -> None:
+async def test_create_innereys_dl_workspace(token, verify) -> None:
     payload = {
         "workspaceType": "tre-workspace-azureml-devtestlabs",
         "properties": {
@@ -152,12 +152,12 @@ async def test_create_innereys_dl_workspace(token) -> None:
             "acr_name": f"{config.ACR_NAME}"
         }
     }
-    await post_workspace_template(payload, token)
+    await post_workspace_template(payload, token, verify)
 
 
 @pytest.mark.extended
 @pytest.mark.timeout(3000)
-async def test_create_innereys_dl_inference_workspace(token) -> None:
+async def test_create_innereys_dl_inference_workspace(token, verify) -> None:
     payload = {
         "workspaceType": "tre-workspace-azureml-devtestlabs",
         "properties": {
@@ -168,4 +168,4 @@ async def test_create_innereys_dl_inference_workspace(token) -> None:
             "acr_name": f"{config.ACR_NAME}"
         }
     }
-    await post_workspace_template(payload, token)
+    await post_workspace_template(payload, token, verify)
