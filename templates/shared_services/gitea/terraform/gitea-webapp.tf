@@ -18,7 +18,7 @@ resource "azurerm_app_service" "gitea" {
     WEBSITES_PORT                       = "3000"
     WEBSITE_VNET_ROUTE_ALL              = 1
     WEBSITE_DNS_SERVER                  = "168.63.129.16" # required to access storage over private endpoints
-    WEBSITES_ENABLE_APP_SERVICE_STORAGE = true
+    WEBSITES_ENABLE_APP_SERVICE_STORAGE = false
 
     GITEA_USERNAME = "gitea_admin"
     GITEA_PASSWD   = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.gitea_password.id})"
@@ -43,9 +43,10 @@ resource "azurerm_app_service" "gitea" {
   }
 
   site_config {
-    linux_fx_version            = "DOCKER|${var.docker_registry_server}/microsoft/azuretre/gitea:${var.image_tag}"
-    remote_debugging_enabled    = false
-    scm_use_main_ip_restriction = true
+    linux_fx_version                     = "DOCKER|${var.docker_registry_server}/microsoft/azuretre/gitea:${var.image_tag}"
+    remote_debugging_enabled             = false
+    scm_use_main_ip_restriction          = true
+    acr_use_managed_identity_credentials = true
 
     cors {
       allowed_origins     = []
@@ -231,13 +232,6 @@ resource "azurerm_storage_share" "gitea" {
   name                 = "gitea-data"
   storage_account_name = data.azurerm_storage_account.gitea.name
   quota                = var.gitea_storage_limit
-}
-
-# The WebApp uses managed identity to login to ACR https://github.com/Azure/app-service-linux-docs/blob/master/HowTo/use_system-assigned_managed_identities.md
-resource "null_resource" "pull_with_managed_id" {
-  provisioner "local-exec" {
-    command = "az resource update --ids ${azurerm_app_service.gitea.id}/config/web --set properties.acrUseManagedIdentityCreds=True -o none"
-  }
 }
 
 resource "azurerm_role_assignment" "gitea_acrpull_role" {
