@@ -23,7 +23,7 @@ resource "azurerm_app_service" "gitea" {
     "DOCKER_REGISTRY_SERVER_URL"      = "https://${var.docker_registry_server}"
     "DOCKER_REGISTRY_SERVER_PASSWORD" = var.docker_registry_password
 
-    GITEA_USERNAME = "giteaadmin"
+    GITEA_USERNAME = "gitea_admin"
     GITEA_PASSWD   = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.gitea_password.id})"
     GITEA_EMAIL    = "giteaadmin@tre.com"
 

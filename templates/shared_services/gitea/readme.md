@@ -10,4 +10,4 @@ To deploy set `DEPLOY_GITEA=true` in `templates/core/.env`
 
 ## Getting Started
 
-In order to connect to the gitea admin console use the user "giteaadmin". The user's password can be found in keyvault as gitea password.
+In order to connect to the gitea admin console use the user "gitea_admin". The user's password can be found in keyvault as gitea password.
