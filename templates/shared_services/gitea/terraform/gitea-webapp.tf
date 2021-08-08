@@ -18,34 +18,36 @@ resource "azurerm_app_service" "gitea" {
     "WEBSITES_PORT"                  = "3000"
     "WEBSITE_VNET_ROUTE_ALL"         = 1
 
-     # Settings for private Container Registires  
-    "DOCKER_REGISTRY_SERVER_USERNAME"            = var.docker_registry_username
-    "DOCKER_REGISTRY_SERVER_URL"                 = "https://${var.docker_registry_server}"
-    "DOCKER_REGISTRY_SERVER_PASSWORD"            = var.docker_registry_password
-   
-    # TBD, Username and password should not be defined here: #542
-    GITEA_USERNAME                 = "giteaadmin"
-    GITEA_PASSWD                   = random_password.gitea_passwd.result
-    GITEA_EMAIL                    = "giteaadmin@tre.com"
+    # Settings for private Container Registires  
+    "DOCKER_REGISTRY_SERVER_USERNAME" = var.docker_registry_username
+    "DOCKER_REGISTRY_SERVER_URL"      = "https://${var.docker_registry_server}"
+    "DOCKER_REGISTRY_SERVER_PASSWORD" = var.docker_registry_password
+
+    GITEA_USERNAME = "gitea_admin"
+    GITEA_PASSWD   = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.gitea_password.id})"
+    GITEA_EMAIL    = "giteaadmin@tre.com"
 
     WEBSITES_ENABLE_APP_SERVICE_STORAGE = true
 
-    GITEA__server__APP_DATA_PATH="/home/data"
-    GITEA__server__ROOT_URL="https://gitea-${var.tre_id}.azurewebsites.net/"
-
-    GITEA__repository__ROOT="/home/data/git/gitea-repositories"
+    GITEA__server__APP_DATA_PATH      = "/home/data"
+    GITEA__repository__ROOT           = "/home/data/git/gitea-repositories"
+    GITEA__server__ROOT_URL           = "https://gitea-${var.tre_id}.azurewebsites.net/"
+    GITEA__log_0x2E_console__COLORIZE = "false"
 
     # SSL disabled see task: #347 
-    GITEA__database__SSL_MODE="disable"
-    GITEA__database__DB_TYPE="mysql"
-    GITEA__database__HOST=azurerm_mysql_server.gitea.fqdn
-    GITEA__database__NAME="gitea"
-    GITEA__database__USER="mysqladmin@${azurerm_mysql_server.gitea.fqdn}"
-    GITEA__database__PASSWD=random_password.password.result
-    
-    GITEA__security__INSTALL_LOCK=true
+    GITEA__database__SSL_MODE = "disable"
+    GITEA__database__DB_TYPE  = "mysql"
+    GITEA__database__HOST     = azurerm_mysql_server.gitea.fqdn
+    GITEA__database__NAME     = azurerm_mysql_database.gitea.name
+    GITEA__database__USER     = "mysqladmin@${azurerm_mysql_server.gitea.fqdn}"
+    GITEA__database__PASSWD = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.db_password.id})"
 
-    GITEA__service__DISABLE_REGISTRATION=true
+    GITEA__security__INSTALL_LOCK        = true
+    GITEA__service__DISABLE_REGISTRATION = true
+  }
+
+  identity {
+    type = "SystemAssigned"
   }
 
   site_config {
@@ -83,6 +85,10 @@ resource "azurerm_app_service" "gitea" {
       }
     }
   }
+
+  depends_on = [
+    azurerm_key_vault_secret.gitea_password
+  ]
 }
 
 resource "azurerm_private_endpoint" "gitea_private_endpoint" {
@@ -204,6 +210,16 @@ resource "azurerm_monitor_diagnostic_setting" "webapp_gitea" {
   }
 }
 
-output "gitea_fqdn" {
-  value = azurerm_app_service.gitea.default_site_hostname
+resource "azurerm_key_vault_access_policy" "gitea_policy" {
+  key_vault_id = var.keyvault_id
+  tenant_id    = azurerm_app_service.gitea.identity.0.tenant_id
+  object_id    = azurerm_app_service.gitea.identity.0.principal_id
+
+  secret_permissions = ["Get", "List", ]
+}
+
+resource "azurerm_key_vault_secret" "gitea_password" {
+  name         = "gitea-${var.tre_id}-password"
+  value        = random_password.gitea_passwd.result
+  key_vault_id = var.keyvault_id
 }

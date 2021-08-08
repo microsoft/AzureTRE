@@ -30,3 +30,5 @@ variable "docker_registry_password" {
   description = "Docker registry password"
   sensitive   = true
 }
+
+variable "keyvault_id" {}

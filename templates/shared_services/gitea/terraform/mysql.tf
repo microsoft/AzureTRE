@@ -51,3 +51,9 @@ resource "azurerm_private_endpoint" "private-endpoint" {
     private_dns_zone_ids = [data.azurerm_private_dns_zone.mysql.id]
   }
 }
+
+resource "azurerm_key_vault_secret" "db_password" {
+  name         = "${azurerm_mysql_server.gitea.name}-password"
+  value        = random_password.password.result
+  key_vault_id = var.keyvault_id
+}

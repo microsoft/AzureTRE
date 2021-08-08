@@ -44,7 +44,7 @@ resource "azurerm_key_vault_secret" "resource_processor_vmss_password" {
 }
 
 resource "azurerm_user_assigned_identity" "vmss_msi" {
-  name                = "msi-${var.tre_id}-vmss"
+  name                = "id-vmss-${var.tre_id}"
   location            = var.location
   resource_group_name = var.resource_group_name
   lifecycle { ignore_changes = [tags] }
