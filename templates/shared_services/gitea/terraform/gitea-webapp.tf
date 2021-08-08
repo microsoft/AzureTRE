@@ -29,8 +29,6 @@ resource "azurerm_app_service" "gitea" {
 
     WEBSITES_ENABLE_APP_SERVICE_STORAGE = true
 
-    GITEA__server__APP_DATA_PATH      = "/home/data"
-    GITEA__repository__ROOT           = "/home/data/git/gitea-repositories"
     GITEA__server__ROOT_URL           = "https://gitea-${var.tre_id}.azurewebsites.net/"
     GITEA__log_0x2E_console__COLORIZE = "false"
 
@@ -73,6 +71,17 @@ resource "azurerm_app_service" "gitea" {
     websockets_enabled = false
   }
 
+  storage_account {
+    name         = "gitea-data"
+    type         = "AzureFiles"
+    account_name = data.azurerm_storage_account.gitea.name
+
+    access_key = data.azurerm_storage_account.gitea.primary_access_key
+    share_name = azurerm_storage_share.gitea.name
+    
+    mount_path = "/data"
+  }
+  
   logs {
     application_logs {
       file_system_level = "Information"
@@ -222,4 +231,10 @@ resource "azurerm_key_vault_secret" "gitea_password" {
   name         = "gitea-${var.tre_id}-password"
   value        = random_password.gitea_passwd.result
   key_vault_id = var.keyvault_id
+}
+
+resource "azurerm_storage_share" "gitea" {
+  name                 = "gitea-data"
+  storage_account_name = data.azurerm_storage_account.gitea.name
+  quota                = var.gitea_storage_limit
 }

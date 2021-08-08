@@ -32,3 +32,14 @@ variable "docker_registry_password" {
 }
 
 variable "keyvault_id" {}
+
+variable "storage_account_name" {
+  type        = string
+  description = "The name of the storage account to use"
+}
+
+variable "gitea_storage_limit" {
+  type        = number
+  description = "Space allocated in GB for the Gitea data in Azure Files Share"
+  default     = 1024
+}
