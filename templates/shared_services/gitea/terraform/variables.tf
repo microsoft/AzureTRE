@@ -28,8 +28,6 @@ variable "acr_id" {
   type = string
 }
 
-variable "keyvault_id" {}
-
 variable "storage_account_name" {
   type        = string
   description = "The name of the storage account to use"

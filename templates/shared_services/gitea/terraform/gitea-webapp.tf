@@ -24,12 +24,10 @@ resource "azurerm_app_service" "gitea" {
     GITEA_PASSWD   = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.gitea_password.id})"
     GITEA_EMAIL    = "giteaadmin@tre.com"
 
-    WEBSITES_ENABLE_APP_SERVICE_STORAGE = true
-
     GITEA__server__ROOT_URL           = "https://${local.webapp_name}.azurewebsites.net/"
     GITEA__log_0x2E_console__COLORIZE = "false"
 
-    GITEA__database__SSL_MODE = "skip-verify" # TODO (#347): enable ssl validation
+    GITEA__database__SSL_MODE = "true"
     GITEA__database__DB_TYPE  = "mysql"
     GITEA__database__HOST     = azurerm_mysql_server.gitea.fqdn
     GITEA__database__NAME     = azurerm_mysql_database.gitea.name
