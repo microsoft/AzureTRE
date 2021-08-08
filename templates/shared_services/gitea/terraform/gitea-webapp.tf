@@ -23,7 +23,6 @@ resource "azurerm_app_service" "gitea" {
     "DOCKER_REGISTRY_SERVER_URL"      = "https://${var.docker_registry_server}"
     "DOCKER_REGISTRY_SERVER_PASSWORD" = var.docker_registry_password
 
-    # TBD, Username and password should not be defined here: #542
     GITEA_USERNAME = "giteaadmin"
     GITEA_PASSWD   = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.gitea_password.id})"
     GITEA_EMAIL    = "giteaadmin@tre.com"
@@ -41,7 +40,6 @@ resource "azurerm_app_service" "gitea" {
     GITEA__database__HOST     = azurerm_mysql_server.gitea.fqdn
     GITEA__database__NAME     = azurerm_mysql_database.gitea.name
     GITEA__database__USER     = "mysqladmin@${azurerm_mysql_server.gitea.fqdn}"
-    # GITEA__database__PASSWD=random_password.password.result
     GITEA__database__PASSWD = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.db_password.id})"
 
     GITEA__security__INSTALL_LOCK        = true
@@ -49,8 +47,6 @@ resource "azurerm_app_service" "gitea" {
   }
 
   identity {
-    # type         = "UserAssigned"
-    # identity_ids = [azurerm_user_assigned_identity.id.id]
     type = "SystemAssigned"
   }
 
@@ -91,7 +87,6 @@ resource "azurerm_app_service" "gitea" {
   }
 
   depends_on = [
-    # azurerm_key_vault_access_policy.gitea_policy,
     azurerm_key_vault_secret.gitea_password
   ]
 }
@@ -214,14 +209,6 @@ resource "azurerm_monitor_diagnostic_setting" "webapp_gitea" {
     }
   }
 }
-
-# resource "azurerm_user_assigned_identity" "id" {
-#   resource_group_name = local.core_resource_group_name
-#   location            = var.location
-#   name                = "id-gitea-${var.tre_id}"
-
-#   lifecycle { ignore_changes = [tags] }
-# }
 
 resource "azurerm_key_vault_access_policy" "gitea_policy" {
   key_vault_id = var.keyvault_id
