@@ -7,21 +7,18 @@ resource "random_password" "gitea_passwd" {
 }
 
 resource "azurerm_app_service" "gitea" {
-  name                = "gitea-${var.tre_id}"
+  name                = local.webapp_name
   resource_group_name = local.core_resource_group_name
   location            = var.location
   app_service_plan_id = data.azurerm_app_service_plan.core.id
   https_only          = true
 
   app_settings = {
-    "APPINSIGHTS_INSTRUMENTATIONKEY" = data.azurerm_application_insights.core.instrumentation_key
-    "WEBSITES_PORT"                  = "3000"
-    "WEBSITE_VNET_ROUTE_ALL"         = 1
-
-    # Settings for private Container Registires  
-    "DOCKER_REGISTRY_SERVER_USERNAME" = var.docker_registry_username
-    "DOCKER_REGISTRY_SERVER_URL"      = "https://${var.docker_registry_server}"
-    "DOCKER_REGISTRY_SERVER_PASSWORD" = var.docker_registry_password
+    APPINSIGHTS_INSTRUMENTATIONKEY      = data.azurerm_application_insights.core.instrumentation_key
+    WEBSITES_PORT                       = "3000"
+    WEBSITE_VNET_ROUTE_ALL              = 1
+    WEBSITE_DNS_SERVER                  = "168.63.129.16" # required to access storage over private endpoints
+    WEBSITES_ENABLE_APP_SERVICE_STORAGE = true
 
     GITEA_USERNAME = "gitea_admin"
     GITEA_PASSWD   = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.gitea_password.id})"
@@ -29,16 +26,15 @@ resource "azurerm_app_service" "gitea" {
 
     WEBSITES_ENABLE_APP_SERVICE_STORAGE = true
 
-    GITEA__server__ROOT_URL           = "https://gitea-${var.tre_id}.azurewebsites.net/"
+    GITEA__server__ROOT_URL           = "https://${local.webapp_name}.azurewebsites.net/"
     GITEA__log_0x2E_console__COLORIZE = "false"
 
-    # SSL disabled see task: #347 
-    GITEA__database__SSL_MODE = "disable"
+    GITEA__database__SSL_MODE = "skip-verify" # TODO (#347): enable ssl validation
     GITEA__database__DB_TYPE  = "mysql"
     GITEA__database__HOST     = azurerm_mysql_server.gitea.fqdn
     GITEA__database__NAME     = azurerm_mysql_database.gitea.name
-    GITEA__database__USER     = "mysqladmin@${azurerm_mysql_server.gitea.fqdn}"
-    GITEA__database__PASSWD = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.db_password.id})"
+    GITEA__database__USER     = "${azurerm_mysql_server.gitea.administrator_login}@${azurerm_mysql_server.gitea.fqdn}"
+    GITEA__database__PASSWD   = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.db_password.id})"
 
     GITEA__security__INSTALL_LOCK        = true
     GITEA__service__DISABLE_REGISTRATION = true
@@ -101,14 +97,14 @@ resource "azurerm_app_service" "gitea" {
 }
 
 resource "azurerm_private_endpoint" "gitea_private_endpoint" {
-  name                = "pe-gitea-${var.tre_id}"
+  name                = "pe-${local.webapp_name}"
   resource_group_name = local.core_resource_group_name
   location            = var.location
   subnet_id           = data.azurerm_subnet.shared.id
 
   private_service_connection {
     private_connection_resource_id = azurerm_app_service.gitea.id
-    name                           = "psc-gitea-${var.tre_id}"
+    name                           = "psc-${local.webapp_name}"
     subresource_names              = ["sites"]
     is_manual_connection           = false
   }
@@ -228,7 +224,7 @@ resource "azurerm_key_vault_access_policy" "gitea_policy" {
 }
 
 resource "azurerm_key_vault_secret" "gitea_password" {
-  name         = "gitea-${var.tre_id}-password"
+  name         = "${local.webapp_name}-admin-password"
   value        = random_password.gitea_passwd.result
   key_vault_id = var.keyvault_id
 }
@@ -237,4 +233,17 @@ resource "azurerm_storage_share" "gitea" {
   name                 = "gitea-data"
   storage_account_name = data.azurerm_storage_account.gitea.name
   quota                = var.gitea_storage_limit
+}
+
+# The WebApp uses managed identity to login to ACR https://github.com/Azure/app-service-linux-docs/blob/master/HowTo/use_system-assigned_managed_identities.md
+resource "null_resource" "pull_with_managed_id" {
+  provisioner "local-exec" {
+    command = "az resource update --ids ${azurerm_app_service.gitea.id}/config/web --set properties.acrUseManagedIdentityCreds=True -o none"
+  }
+}
+
+resource "azurerm_role_assignment" "gitea_acrpull_role" {
+  scope                = var.acr_id
+  role_definition_name = "AcrPull"
+  principal_id         = azurerm_app_service.gitea.identity[0].principal_id
 }
