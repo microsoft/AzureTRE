@@ -59,10 +59,10 @@ install:
         tre_id: "{{ bundle.parameters.tre_id }}"
         mgmt_resource_group_name: "{{ bundle.parameters.mgmt_resource_group_name }}"
         parent_service_id: "{{ bundle.parameters.parent_service_id }}"
-        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
         arm_client_id: "{{ bundle.credentials.azure_client_id }}"
         arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
         arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
+        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
