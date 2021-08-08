@@ -14,7 +14,7 @@ from models.domain.resource_template import ResourceTemplate
 from models.schemas.workspace_template import WorkspaceTemplateInResponse, get_sample_workspace_template_object, \
     WorkspaceTemplateInCreate
 
-from services.concatjsonschema import enrich_schema_defs
+from services.concatjsonschema import enrich_workspace_schema_defs
 from pydantic import parse_obj_as
 
 pytestmark = pytest.mark.asyncio
@@ -182,7 +182,7 @@ class TestWorkspaceTemplate:
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES),
                                      json=input_workspace_template.dict())
 
-        expected_template = parse_obj_as(WorkspaceTemplateInResponse, enrich_schema_defs(basic_resource_template))
+        expected_template = parse_obj_as(WorkspaceTemplateInResponse, enrich_workspace_schema_defs(basic_resource_template))
 
         assert json.loads(response.text)["required"] == expected_template.required
         assert json.loads(response.text)["properties"] == expected_template.properties

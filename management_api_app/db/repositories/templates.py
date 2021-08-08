@@ -12,7 +12,7 @@ from models.domain.resource_template import ResourceTemplate
 from models.schemas.template import TemplateInCreate
 
 
-class WorkspaceTemplateRepository(BaseRepository):
+class TemplateRepository(BaseRepository):
     def __init__(self, client: CosmosClient):
         super().__init__(client, config.STATE_STORE_RESOURCE_TEMPLATES_CONTAINER)
 

@@ -12,8 +12,8 @@ from db.repositories.base import BaseRepository
 from models.domain.resource import Deployment, Status
 from models.domain.resource_template import ResourceTemplate
 from models.schemas.workspace import WorkspaceInCreate
-from db.repositories.workspace_templates import WorkspaceTemplateRepository
-from services.concatjsonschema import enrich_schema_defs
+from db.repositories.templates import TemplateRepository
+from services.concatjsonschema import enrich_workspace_schema_defs
 from jsonschema import validate
 from services.authentication import extract_auth_information
 
@@ -27,9 +27,9 @@ class WorkspaceRepository(BaseRepository):
         return 'SELECT * FROM c WHERE c.resourceType = "workspace" AND c.isDeleted = false'
 
     def _get_current_workspace_template(self, template_name) -> ResourceTemplate:
-        workspace_template_repo = WorkspaceTemplateRepository(self._client)
+        workspace_template_repo = TemplateRepository(self._client)
         template = workspace_template_repo.get_current_workspace_template_by_name(template_name)
-        return enrich_schema_defs(template)
+        return enrich_workspace_schema_defs(template)
 
     @staticmethod
     def _validate_workspace_parameters(workspace_create, workspace_template):

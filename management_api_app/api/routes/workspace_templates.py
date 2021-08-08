@@ -1,21 +1,26 @@
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException
+from services.authentication import get_current_admin_user
+from api.dependencies.database import get_repository
+from services.concatjsonschema import enrich_workspace_schema_defs, enrich_workspace_service_schema_defs
 from starlette import status
 
 from models.domain.resource_template import ResourceTemplate
+from models.domain.resource import ResourceType
+
 from models.schemas.template import TemplateInCreate, TemplateInResponse
 from models.schemas.workspace_service_template import WorkspaceServiceTemplateInCreate, \
     WorkspaceServiceTemplateInResponse
-from services.authentication import get_current_admin_user
-from api.dependencies.database import get_repository
-from db.errors import EntityDoesNotExist
-from db.repositories.workspace_templates import WorkspaceTemplateRepository
 from models.schemas.workspace_template import (WorkspaceTemplateNamesInList, WorkspaceTemplateInCreate,
                                                WorkspaceTemplateInResponse)
-from models.domain.resource import ResourceType
+
+from db.errors import EntityDoesNotExist
+from db.repositories.templates import TemplateRepository
+
+
 from resources import strings
-from services.concatjsonschema import enrich_schema_defs, enrich_workspace_service_schema_defs
+
 
 router = APIRouter(dependencies=[Depends(get_current_admin_user)])
 
@@ -23,7 +28,7 @@ router = APIRouter(dependencies=[Depends(get_current_admin_user)])
 @router.get("/workspace-templates", response_model=WorkspaceTemplateNamesInList,
             name=strings.API_GET_WORKSPACE_TEMPLATES)
 async def get_workspace_templates(
-        workspace_template_repo: WorkspaceTemplateRepository = Depends(get_repository(WorkspaceTemplateRepository))
+        workspace_template_repo: TemplateRepository = Depends(get_repository(TemplateRepository))
 ) -> WorkspaceTemplateNamesInList:
     workspace_template_names = workspace_template_repo.get_workspace_template_names()
     return WorkspaceTemplateNamesInList(templateNames=workspace_template_names)
@@ -33,11 +38,11 @@ async def get_workspace_templates(
              name=strings.API_CREATE_WORKSPACE_TEMPLATES)
 async def create_workspace_template(
         workspace_template_create: WorkspaceTemplateInCreate,
-        workspace_template_repo: WorkspaceTemplateRepository = Depends(get_repository(WorkspaceTemplateRepository)),
+        workspace_template_repo: TemplateRepository = Depends(get_repository(TemplateRepository)),
 ) -> TemplateInResponse:
     template_created = create_template_by_resource_type(workspace_template_create, workspace_template_repo,
                                                         ResourceType.Workspace)
-    template = enrich_schema_defs(template_created)
+    template = enrich_workspace_schema_defs(template_created)
     return template
 
 
@@ -45,7 +50,7 @@ async def create_workspace_template(
              response_model=WorkspaceServiceTemplateInResponse, name=strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES)
 async def create_workspace_service_template(
         workspace_template_create: WorkspaceServiceTemplateInCreate,
-        workspace_template_repo: WorkspaceTemplateRepository = Depends(get_repository(WorkspaceTemplateRepository)),
+        workspace_template_repo: TemplateRepository = Depends(get_repository(TemplateRepository)),
 ) -> TemplateInResponse:
     template_created = create_template_by_resource_type(workspace_template_create,
                                                         workspace_template_repo,
@@ -58,11 +63,11 @@ async def create_workspace_service_template(
             name=strings.API_GET_WORKSPACE_TEMPLATE_BY_NAME)
 async def get_current_workspace_template_by_name(
         template_name: str,
-        workspace_template_repo: WorkspaceTemplateRepository = Depends(get_repository(WorkspaceTemplateRepository)),
+        workspace_template_repo: TemplateRepository = Depends(get_repository(TemplateRepository)),
 ) -> WorkspaceTemplateInResponse:
     try:
         template = workspace_template_repo.get_current_workspace_template_by_name(template_name)
-        template = enrich_schema_defs(template)
+        template = enrich_workspace_schema_defs(template)
         return template
     except EntityDoesNotExist:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.WORKSPACE_TEMPLATE_DOES_NOT_EXIST)
@@ -73,7 +78,7 @@ async def get_current_workspace_template_by_name(
 
 
 def create_template_by_resource_type(workspace_template_create: TemplateInCreate,
-                                     workspace_template_repo: WorkspaceTemplateRepository,
+                                     workspace_template_repo: TemplateRepository,
                                      resource_type: ResourceType) -> ResourceTemplate:
     try:
         template = workspace_template_repo.get_workspace_template_by_name_and_version(workspace_template_create.name,

@@ -48,7 +48,7 @@ def load_azuread_schema_def():
     return read_schema("azuread.json")
 
 
-def enrich_schema_defs(combine_with, print_result=None):
+def enrich_workspace_schema_defs(combine_with, print_result=None):
     """Adds to the provided template all UI and system properties
 
     Args:
