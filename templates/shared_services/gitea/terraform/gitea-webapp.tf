@@ -73,10 +73,10 @@ resource "azurerm_app_service" "gitea" {
 
     access_key = data.azurerm_storage_account.gitea.primary_access_key
     share_name = azurerm_storage_share.gitea.name
-    
+
     mount_path = "/data"
   }
-  
+
   logs {
     application_logs {
       file_system_level = "Information"

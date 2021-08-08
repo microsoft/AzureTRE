@@ -5,7 +5,7 @@ resource "azurerm_app_service_plan" "core" {
   reserved            = true
   kind                = "linux"
 
-  lifecycle { ignore_changes = [ tags ] }
+  lifecycle { ignore_changes = [tags] }
 
   sku {
     tier     = "PremiumV3"
@@ -46,11 +46,11 @@ resource "azurerm_app_service" "management_api" {
   }
 
   identity {
-    type = "UserAssigned"
-    identity_ids = [ var.managed_identity.id ]
+    type         = "UserAssigned"
+    identity_ids = [var.managed_identity.id]
   }
 
-  lifecycle { ignore_changes = [ tags ] }
+  lifecycle { ignore_changes = [tags] }
 
   site_config {
     linux_fx_version            = "DOCKER|${var.docker_registry_server}/${var.management_api_image_repository}:${var.management_api_image_tag}"
@@ -96,7 +96,7 @@ resource "azurerm_private_endpoint" "management_api_private_endpoint" {
   location            = var.location
   subnet_id           = var.shared_subnet
 
-  lifecycle { ignore_changes = [ tags ] }
+  lifecycle { ignore_changes = [tags] }
 
   private_service_connection {
     private_connection_resource_id = azurerm_app_service.management_api.id
