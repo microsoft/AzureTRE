@@ -1,14 +1,14 @@
-# FROM maven:3-jdk-11-openj9 AS client_build
+FROM maven:3-jdk-11-openj9 AS client_build
 
-# COPY ./guacamole-auth-azure/pom.xml pom.xml 
+COPY ./guacamole-auth-azure/pom.xml pom.xml 
 
-# COPY ./guacamole-auth-azure/src src
+COPY ./guacamole-auth-azure/src src
 
-# RUN mvn package
+RUN mvn package
 
 FROM guacamole/guacd:1.3.0
 
-# ARG GUACAMOLE_AZURE_VERSION=0.1
+ARG GUACAMOLE_AZURE_VERSION=0.1.1
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -34,13 +34,11 @@ RUN \
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 
 # retrieve auth integration from build image
-# COPY --from=client_build /target/guacamole-azure-${GUACAMOLE_AZURE_VERSION}.jar /guacamole/extensions/
+COPY --from=client_build /target/guacamole-auth-tre-${GUACAMOLE_AZURE_VERSION}.jar /guacamole/extensions/
 
 ENV CATALINA_BASE=/usr/share/tomcat9/
 
 ENV GUACAMOLE_HOME=/guacamole/
-
-RUN mkdir ${GUACAMOLE_HOME}
 
 RUN wget -O ${GUACAMOLE_HOME}/guacamole.war 'http://apache.org/dyn/closer.cgi?action=download&filename=guacamole/1.3.0/binary/guacamole-1.3.0.war'  
 
