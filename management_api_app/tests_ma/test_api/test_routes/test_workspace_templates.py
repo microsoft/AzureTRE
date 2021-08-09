@@ -26,7 +26,7 @@ class TestWorkspaceTemplate:
     def _prepare(self, app, admin_user):
         app.dependency_overrides[get_current_user] = admin_user
 
-    @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_workspace_template_names")
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_workspace_template_names")
     async def test_workspace_templates_returns_template_names(self, get_workspace_template_names_mock, app: FastAPI,
                                                               client: AsyncClient):
         expected_template_names = ["template1", "template2"]
@@ -52,9 +52,9 @@ class TestWorkspaceTemplate:
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
-    @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.create_workspace_template_item")
-    @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_current_workspace_template_by_name")
-    @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_workspace_template_by_name_and_version")
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.create_resource_template_item")
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_resource_template_by_name")
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_workspace_template_by_name_and_version")
     async def test_when_updating_current_and_template_not_found_create_one(self, get_name_ver_mock,
                                                                            get_current_mock,
                                                                            create_item_mock,
@@ -71,10 +71,10 @@ class TestWorkspaceTemplate:
                                      json=input_workspace_template.dict())
         assert response.status_code == status.HTTP_201_CREATED
 
-    @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.create_workspace_template_item")
-    @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.update_item")
-    @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_current_workspace_template_by_name")
-    @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_workspace_template_by_name_and_version")
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.create_resource_template_item")
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.update_item")
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_resource_template_by_name")
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_workspace_template_by_name_and_version")
     async def test_when_updating_current_and_template_found_update_and_add(self,
                                                                            get_workspace_template_by_name_and_version,
                                                                            get_current_workspace_template_by_name,
@@ -97,7 +97,7 @@ class TestWorkspaceTemplate:
         update_item_mock.assert_called_once_with(updated_current_workspace_template.dict())
         assert response.status_code == status.HTTP_201_CREATED
 
-    @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_workspace_template_by_name_and_version")
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_workspace_template_by_name_and_version")
     async def test_same_name_and_version_template_not_allowed(self, mock, app: FastAPI, client: AsyncClient,
                                                               input_workspace_template: WorkspaceTemplateInCreate):
         mock.return_value = ["exists"]
@@ -107,7 +107,7 @@ class TestWorkspaceTemplate:
 
         assert response.status_code == status.HTTP_409_CONFLICT
 
-    @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_current_workspace_template_by_name")
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_resource_template_by_name")
     async def test_workspace_templates_by_name_returns_workspace_template(self, get_workspace_template_by_name_mock,
                                                                           app: FastAPI, client: AsyncClient):
         get_workspace_template_by_name_mock.return_value = get_sample_workspace_template_object(
@@ -119,7 +119,7 @@ class TestWorkspaceTemplate:
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["name"] == "template1"
 
-    @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_current_workspace_template_by_name")
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_resource_template_by_name")
     async def test_workspace_templates_by_name_returns_404_if_template_does_not_exist(self,
                                                                                       get_workspace_template_by_name_mock,
                                                                                       app: FastAPI,
@@ -131,7 +131,7 @@ class TestWorkspaceTemplate:
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_current_workspace_template_by_name")
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_resource_template_by_name")
     async def test_workspace_templates_by_name_returns_503_on_database_error(self, get_workspace_template_by_name_mock,
                                                                              app: FastAPI, client: AsyncClient):
         get_workspace_template_by_name_mock.side_effect = UnableToAccessDatabase
@@ -141,9 +141,9 @@ class TestWorkspaceTemplate:
 
         assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
-    @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.create_workspace_template_item")
-    @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_current_workspace_template_by_name")
-    @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_workspace_template_by_name_and_version")
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.create_resource_template_item")
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_resource_template_by_name")
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_workspace_template_by_name_and_version")
     async def test_when_not_updating_current_and_new_registration_current_is_enforced(self, get_name_ver_mock,
                                                                                       get_current_mock,
                                                                                       create_item_mock,
@@ -163,13 +163,13 @@ class TestWorkspaceTemplate:
         assert response.status_code == status.HTTP_201_CREATED
         assert json.loads(response.text)["current"]
 
-    @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.create_workspace_template_item")
-    @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_current_workspace_template_by_name")
-    @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_workspace_template_by_name_and_version")
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.create_resource_template_item")
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_resource_template_by_name")
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_workspace_template_by_name_and_version")
     async def test_when_creating_template_enriched_template_is_returned(self,
                                                                         get_workspace_template_by_name_and_version,
                                                                         get_current_workspace_template_by_name,
-                                                                        create_workspace_template_item,
+                                                                        create_resource_template_item,
                                                                         app: FastAPI,
                                                                         client: AsyncClient,
                                                                         input_workspace_template: WorkspaceTemplateInCreate,
@@ -177,7 +177,7 @@ class TestWorkspaceTemplate:
         get_workspace_template_by_name_and_version.side_effect = EntityDoesNotExist
         get_current_workspace_template_by_name.side_effect = EntityDoesNotExist
 
-        create_workspace_template_item.return_value = basic_resource_template
+        create_resource_template_item.return_value = basic_resource_template
 
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES),
                                      json=input_workspace_template.dict())
@@ -187,9 +187,9 @@ class TestWorkspaceTemplate:
         assert json.loads(response.text)["required"] == expected_template.required
         assert json.loads(response.text)["properties"] == expected_template.properties
 
-    @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.create_workspace_template_item")
-    @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_current_workspace_template_by_name")
-    @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_workspace_template_by_name_and_version")
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.create_resource_template_item")
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_resource_template_by_name")
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_workspace_template_by_name_and_version")
     async def test_when_creating_workspace_template_workspace_resource_type_is_set(self,
                                                                                    get_workspace_template_by_name_and_version,
                                                                                    get_current_workspace_template_by_name,
@@ -208,9 +208,9 @@ class TestWorkspaceTemplate:
 
         create_workspace_template_item_mock.assert_called_once_with(input_workspace_template, ResourceType.Workspace)
 
-    @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.create_workspace_template_item")
-    @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_current_workspace_template_by_name")
-    @patch("api.routes.workspace_templates.WorkspaceTemplateRepository.get_workspace_template_by_name_and_version")
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.create_resource_template_item")
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_resource_template_by_name")
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_workspace_template_by_name_and_version")
     async def test_when_creating_workspace_service_template_service_resource_type_is_set(self,
                                                                                          get_workspace_template_by_name_and_version,
                                                                                          get_current_workspace_template_by_name,

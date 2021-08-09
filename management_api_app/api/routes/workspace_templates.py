@@ -37,7 +37,7 @@ async def create_workspace_template(
         template_created = create_template_by_resource_type(workspace_template_create,
                                                             workspace_template_repo,
                                                             ResourceType.Workspace)
-        template = enrich_workspace_service_schema_defs(template_created)
+        template = enrich_workspace_schema_defs(template_created)
         return template
     except EntityVersionExist:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_TEMPLATE_VERSION_EXISTS)

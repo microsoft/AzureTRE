@@ -24,7 +24,7 @@ def sample_workspace_template_as_dict(name: str, version: str = "1.0") -> dict:
     return sample_workspace_template(name, version).dict()
 
 
-@patch('db.repositories.workspace_templates.WorkspaceTemplateRepository.query')
+@patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
 @patch('azure.cosmos.CosmosClient')
 def test_get_by_name_queries_db(cosmos_client_mock, wt_query_mock):
     template_repo = ResourceTemplateRepository(cosmos_client_mock)
@@ -36,7 +36,7 @@ def test_get_by_name_queries_db(cosmos_client_mock, wt_query_mock):
     wt_query_mock.assert_called_once_with(query=expected_query)
 
 
-@patch('db.repositories.workspace_templates.WorkspaceTemplateRepository.query')
+@patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
 @patch('azure.cosmos.CosmosClient')
 def test_get_by_name_returns_all_matching_templates(cosmos_client_mock, wt_query_mock):
     template_repo = ResourceTemplateRepository(cosmos_client_mock)
@@ -52,7 +52,7 @@ def test_get_by_name_returns_all_matching_templates(cosmos_client_mock, wt_query
     assert len(templates) == len(workspace_templates_in_db)
 
 
-@patch('db.repositories.workspace_templates.WorkspaceTemplateRepository.query')
+@patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
 @patch('azure.cosmos.CosmosClient')
 def test_get_by_name_and_version_queries_db(cosmos_client_mock, wt_query_mock):
     template_repo = ResourceTemplateRepository(cosmos_client_mock)
@@ -64,7 +64,7 @@ def test_get_by_name_and_version_queries_db(cosmos_client_mock, wt_query_mock):
     wt_query_mock.assert_called_once_with(query=expected_query)
 
 
-@patch('db.repositories.workspace_templates.WorkspaceTemplateRepository.query')
+@patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
 @patch('azure.cosmos.CosmosClient')
 def test_get_by_name_and_version_returns_matching_template(cosmos_client_mock, wt_query_mock):
     template_repo = ResourceTemplateRepository(cosmos_client_mock)
@@ -78,7 +78,7 @@ def test_get_by_name_and_version_returns_matching_template(cosmos_client_mock, w
     assert template.name == template_name
 
 
-@patch('db.repositories.workspace_templates.WorkspaceTemplateRepository.query')
+@patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
 @patch('azure.cosmos.CosmosClient')
 def test_get_by_name_and_version_raises_entity_does_not_exist_if_no_template_found(cosmos_client_mock, wt_query_mock):
     template_repo = ResourceTemplateRepository(cosmos_client_mock)
@@ -90,7 +90,7 @@ def test_get_by_name_and_version_raises_entity_does_not_exist_if_no_template_fou
         template_repo.get_workspace_template_by_name_and_version(name=template_name, version=template_version)
 
 
-@patch('db.repositories.workspace_templates.WorkspaceTemplateRepository.query')
+@patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
 @patch('azure.cosmos.CosmosClient')
 def test_get_current_by_name_queries_db(cosmos_client_mock, wt_query_mock):
     template_repo = ResourceTemplateRepository(cosmos_client_mock)
@@ -102,7 +102,7 @@ def test_get_current_by_name_queries_db(cosmos_client_mock, wt_query_mock):
     wt_query_mock.assert_called_once_with(query=expected_query)
 
 
-@patch('db.repositories.workspace_templates.WorkspaceTemplateRepository.query')
+@patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
 @patch('azure.cosmos.CosmosClient')
 def test_get_current_by_name_returns_matching_template(cosmos_client_mock, wt_query_mock):
     template_repo = ResourceTemplateRepository(cosmos_client_mock)
@@ -114,7 +114,7 @@ def test_get_current_by_name_returns_matching_template(cosmos_client_mock, wt_qu
     assert template.name == template_name
 
 
-@patch('db.repositories.workspace_templates.WorkspaceTemplateRepository.query')
+@patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
 @patch('azure.cosmos.CosmosClient')
 def test_get_current_by_name_raises_entity_does_not_exist_if_no_template_found(cosmos_client_mock, wt_query_mock):
     template_repo = ResourceTemplateRepository(cosmos_client_mock)
@@ -124,7 +124,7 @@ def test_get_current_by_name_raises_entity_does_not_exist_if_no_template_found(c
         template_repo.get_current_resource_template_by_name(name="test")
 
 
-@patch('db.repositories.workspace_templates.WorkspaceTemplateRepository.query')
+@patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
 @patch('azure.cosmos.CosmosClient')
 def test_get_workspace_template_names_returns_unique_template_names(cosmos_client_mock, wt_query_mock):
     template_repo = ResourceTemplateRepository(cosmos_client_mock)
@@ -140,7 +140,7 @@ def test_get_workspace_template_names_returns_unique_template_names(cosmos_clien
     assert "template2" in template_names
 
 
-@patch('db.repositories.workspace_templates.WorkspaceTemplateRepository.create_item')
+@patch('db.repositories.resource_templates.ResourceTemplateRepository.create_item')
 @patch('uuid.uuid4')
 @patch('azure.cosmos.CosmosClient')
 def test_create_item(cosmos_mock, uuid_mock, create_mock, input_workspace_template):
@@ -161,7 +161,7 @@ def test_create_item(cosmos_mock, uuid_mock, create_mock, input_workspace_templa
     assert expected_resource_template == returned_template
 
 
-@patch('db.repositories.workspace_templates.WorkspaceTemplateRepository.create_item')
+@patch('db.repositories.resource_templates.ResourceTemplateRepository.create_item')
 @patch('uuid.uuid4')
 @patch('azure.cosmos.CosmosClient')
 def test_create_item_created_with_the_expected_type(cosmos_mock, uuid_mock, create_mock, input_workspace_template):
@@ -183,7 +183,7 @@ def test_create_item_created_with_the_expected_type(cosmos_mock, uuid_mock, crea
     assert expected_resource_template == returned_template
 
 
-@patch('db.repositories.workspace_templates.WorkspaceTemplateRepository.container')
+@patch('db.repositories.resource_templates.ResourceTemplateRepository.container')
 @patch('azure.cosmos.CosmosClient')
 def test_updating_an_item(cosmos_mock, container_mock):
     container_mock.upsert_item = MagicMock()
