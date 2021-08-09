@@ -8,7 +8,7 @@ from pydantic import parse_obj_as, UUID4
 from core import config
 from db.errors import EntityDoesNotExist
 from db.repositories.base import BaseRepository
-from db.repositories.workspace_templates import WorkspaceTemplateRepository
+from db.repositories.resource_templates import ResourceTemplateRepository
 from models.domain.resource import Deployment, Status
 from models.domain.resource_template import ResourceTemplate
 from models.domain.workspace import Workspace
@@ -27,9 +27,9 @@ class WorkspaceRepository(BaseRepository):
         return 'SELECT * FROM c WHERE c.resourceType = "workspace" AND c.deleted = false'
 
     def _get_current_workspace_template(self, template_name) -> ResourceTemplate:
-        workspace_template_repo = WorkspaceTemplateRepository(self._client)
-        template = workspace_template_repo.get_current_workspace_template_by_name(template_name)
-        return enrich_schema_defs(template)
+        workspace_template_repo = ResourceTemplateRepository(self._client)
+        template = workspace_template_repo.get_current_resource_template_by_name(template_name)
+        return enrich_workspace_schema_defs(template)
 
     @staticmethod
     def _validate_workspace_parameters(workspace_create, workspace_template):

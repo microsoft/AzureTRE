@@ -27,6 +27,9 @@ jobs:
           VALIDATE_YAML: true
           VALIDATE_TERRAFORM: true
           RUN_LOCAL: true
+      
+      - name: Terraform format Checkout
+        run: terraform fmt -check -recursive
 
       - name: Set up Python 3.8
         uses: actions/setup-python@v2

@@ -28,14 +28,14 @@ resource "azurerm_key_vault" "kv" {
   purge_protection_enabled = true
   tenant_id                = data.azurerm_client_config.current.tenant_id
 
-  lifecycle { ignore_changes = [ tags ] }
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone" "vaultcore" {
   name                = "privatelink.vaultcore.azure.net"
   resource_group_name = data.azurerm_resource_group.ws.name
 
-  lifecycle { ignore_changes = [ tags ] }
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "vaultcorelink" {
@@ -44,7 +44,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "vaultcorelink" {
   private_dns_zone_name = azurerm_private_dns_zone.vaultcore.name
   virtual_network_id    = data.azurerm_virtual_network.ws.id
 
-  lifecycle { ignore_changes = [ tags ] }
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_endpoint" "kvpe" {
@@ -53,7 +53,7 @@ resource "azurerm_private_endpoint" "kvpe" {
   resource_group_name = data.azurerm_resource_group.ws.name
   subnet_id           = data.azurerm_subnet.services.id
 
-  lifecycle { ignore_changes = [ tags ] }
+  lifecycle { ignore_changes = [tags] }
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group"

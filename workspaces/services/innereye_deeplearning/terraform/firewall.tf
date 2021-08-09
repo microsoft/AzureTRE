@@ -3,9 +3,8 @@ data "azurerm_firewall" "fw" {
   resource_group_name = "rg-${var.tre_id}"
 }
 
-
 locals {
-  allowedInnerEyeURLs           = ["*.anaconda.com", "*.anaconda.org", "binstar-cio-packages-prod.s3.amazonaws.com", "github.com", "*pypi.org", "*pythonhosted.org", "github-cloud.githubusercontent.com"]
+  allowedInnerEyeURLs = ["*.anaconda.com", "*.anaconda.org", "binstar-cio-packages-prod.s3.amazonaws.com", "github.com", "*pypi.org", "*pythonhosted.org", "github-cloud.githubusercontent.com"]
 }
 
 data "azurerm_client_config" "current" {}
@@ -24,15 +23,14 @@ data "external" "rule_priorities" {
   program = ["bash", "-c", "./get_firewall_priorities.sh"]
 
   query = {
-    firewall_name       = data.azurerm_firewall.fw.name
-    resource_group_name = data.azurerm_firewall.fw.resource_group_name
+    firewall_name                = data.azurerm_firewall.fw.name
+    resource_group_name          = data.azurerm_firewall.fw.resource_group_name
     service_resource_name_suffix = local.service_resource_name_suffix
   }
   depends_on = [
     null_resource.az_login
   ]
 }
-
 
 resource "azurerm_firewall_application_rule_collection" "innereyeapprulecollection" {
   name                = "arc-${local.service_resource_name_suffix}"

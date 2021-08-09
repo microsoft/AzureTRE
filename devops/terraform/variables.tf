@@ -14,12 +14,12 @@ variable "location" {
 }
 
 variable "acr_sku" {
-  type = string
-  default = "Standard"
+  type        = string
+  default     = "Standard"
   description = "Price tier for ACR"
 }
 
 variable "acr_name" {
-  type = string
+  type        = string
   description = "Name of ACR"
 }

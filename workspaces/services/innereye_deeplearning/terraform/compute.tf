@@ -26,7 +26,7 @@ resource "azurerm_resource_group_template_deployment" "deploy_compute_cluster" {
   name                = "dpl-${local.service_resource_name_suffix}_deploy_compute_cluster"
   resource_group_name = data.azurerm_resource_group.ws.name
 
-  template_content  = data.local_file.deploypl_compute_cluster.content
+  template_content = data.local_file.deploypl_compute_cluster.content
 
 
   # these key-value pairs are passed into the ARM Template's `parameters` block
@@ -71,7 +71,7 @@ resource "azurerm_resource_group_template_deployment" "deploy_compute_instance" 
   name                = "dpl-${local.service_resource_name_suffix}-deploy_compute_instance"
   resource_group_name = data.azurerm_resource_group.ws.name
 
-  template_content  = data.local_file.deploypl_compute_instance.content
+  template_content = data.local_file.deploypl_compute_instance.content
 
   # these key-value pairs are passed into the ARM Template's `parameters` block
   parameters_content = jsonencode({

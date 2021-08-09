@@ -9,5 +9,5 @@ locals {
   service_resource_name_suffix = "${var.tre_id}-ws-${var.workspace_id}-svc-${local.service_id}"
   core_vnet                    = "vnet-${var.tre_id}"
   core_resource_group_name     = "rg-${var.tre_id}"
-  vm_name                      = "wdsvm${local.service_id}"
+  vm_name                      = "win10vm${local.service_id}"
 }

@@ -3,7 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=2.61.0"
+      version = "=2.71.0"
     }
   }
   backend "azurerm" {
@@ -60,7 +60,7 @@ resource "azurerm_application_insights" "ai" {
   resource_group_name = data.azurerm_resource_group.ws.name
   application_type    = "web"
 
-  lifecycle { ignore_changes = [ tags ] }
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_machine_learning_workspace" "ml" {
@@ -75,21 +75,21 @@ resource "azurerm_machine_learning_workspace" "ml" {
     type = "SystemAssigned"
   }
 
-  lifecycle { ignore_changes = [ tags ] }
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone" "azureml" {
   name                = "privatelink.api.azureml.ms"
   resource_group_name = data.azurerm_resource_group.ws.name
 
-  lifecycle { ignore_changes = [ tags ] }
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone" "azuremlcert" {
   name                = "privatelink.cert.api.azureml.ms"
   resource_group_name = data.azurerm_resource_group.ws.name
 
-  lifecycle { ignore_changes = [ tags ] }
+  lifecycle { ignore_changes = [tags] }
 }
 
 
@@ -97,7 +97,7 @@ resource "azurerm_private_dns_zone" "notebooks" {
   name                = "privatelink.notebooks.azure.net"
   resource_group_name = data.azurerm_resource_group.ws.name
 
-  lifecycle { ignore_changes = [ tags ] }
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "azuremllink" {
@@ -106,7 +106,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "azuremllink" {
   private_dns_zone_name = azurerm_private_dns_zone.azureml.name
   virtual_network_id    = data.azurerm_virtual_network.ws.id
 
-  lifecycle { ignore_changes = [ tags ] }
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "azuremlcertlink" {
@@ -115,7 +115,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "azuremlcertlink" {
   private_dns_zone_name = azurerm_private_dns_zone.azuremlcert.name
   virtual_network_id    = data.azurerm_virtual_network.ws.id
 
-  lifecycle { ignore_changes = [ tags ] }
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "notebookslink" {
@@ -124,7 +124,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "notebookslink" {
   private_dns_zone_name = azurerm_private_dns_zone.notebooks.name
   virtual_network_id    = data.azurerm_virtual_network.ws.id
 
-  lifecycle { ignore_changes = [ tags ] }
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_endpoint" "mlpe" {
@@ -133,7 +133,7 @@ resource "azurerm_private_endpoint" "mlpe" {
   resource_group_name = data.azurerm_resource_group.ws.name
   subnet_id           = data.azurerm_subnet.services.id
 
-  lifecycle { ignore_changes = [ tags ] }
+  lifecycle { ignore_changes = [tags] }
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group"

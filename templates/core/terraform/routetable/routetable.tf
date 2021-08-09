@@ -4,12 +4,12 @@ resource "azurerm_route_table" "rt" {
   location                      = var.location
   disable_bgp_route_propagation = false
 
-  lifecycle { ignore_changes = [ tags ] }
+  lifecycle { ignore_changes = [tags] }
 
   route {
-    name           = "DefaultRoute"
-    address_prefix = "0.0.0.0/0"
-    next_hop_type  = "VirtualAppliance"
+    name                   = "DefaultRoute"
+    address_prefix         = "0.0.0.0/0"
+    next_hop_type          = "VirtualAppliance"
     next_hop_in_ip_address = var.firewall_private_ip_address
   }
 }

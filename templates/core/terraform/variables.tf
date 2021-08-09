@@ -137,3 +137,9 @@ variable "resource_processor_type" {
 }
 
 variable "debug" {}
+
+variable "gitea_image_tag" {
+  type        = string
+  description = "Tag for Gitea image"
+  default     = "main-latest"
+}
