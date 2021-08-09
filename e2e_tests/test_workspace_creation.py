@@ -1,10 +1,13 @@
 import pytest
 import asyncio
-import config
-from starlette import status
-from httpx import AsyncClient
-from resources import strings
+
 from contextlib import asynccontextmanager
+from httpx import AsyncClient
+from starlette import status
+
+import config
+from resources import strings
+
 
 pytestmark = pytest.mark.asyncio
 

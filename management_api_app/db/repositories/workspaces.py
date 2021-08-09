@@ -15,7 +15,7 @@ from models.domain.workspace import Workspace
 from models.schemas.workspace import WorkspaceInCreate, WorkspacePatchEnabled
 from resources import strings
 from services.authentication import extract_auth_information
-from services.concatjsonschema import enrich_schema_defs
+from services.concatjsonschema import enrich_workspace_schema_defs
 
 
 class WorkspaceRepository(BaseRepository):
