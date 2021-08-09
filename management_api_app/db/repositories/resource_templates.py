@@ -12,30 +12,28 @@ from models.domain.resource_template import ResourceTemplate
 from models.schemas.template import TemplateInCreate
 
 
-class TemplateRepository(BaseRepository):
+class ResourceTemplateRepository(BaseRepository):
     def __init__(self, client: CosmosClient):
         super().__init__(client, config.STATE_STORE_RESOURCE_TEMPLATES_CONTAINER)
 
     @staticmethod
-    def _workspace_template_by_name_query(name: str, resource_type: str = ResourceType.Workspace) -> str:
+    def _resource_template_by_name_query(name: str, resource_type: str = ResourceType.Workspace) -> str:
         return f'SELECT * FROM c WHERE c.resourceType = "{resource_type}" AND c.name = "{name}"'
 
     def get_workspace_templates_by_name(self, name: str) -> List[ResourceTemplate]:
-        query = self._workspace_template_by_name_query(name)
+        query = self._resource_template_by_name_query(name)
         resource_templates = self.query(query=query)
-        print(resource_templates)
         return parse_obj_as(List[ResourceTemplate], resource_templates)
 
-    def get_current_workspace_template_by_name(self, name: str, resource_type: str = ResourceType.Workspace) -> ResourceTemplate:
-        query = self._workspace_template_by_name_query(name, resource_type) + ' AND c.current = true'
+    def get_current_resource_template_by_name(self, name: str, resource_type: str = ResourceType.Workspace) -> ResourceTemplate:
+        query = self._resource_template_by_name_query(name, resource_type) + ' AND c.current = true'
         workspace_templates = self.query(query=query)
-        print(workspace_templates)
         if len(workspace_templates) != 1:
             raise EntityDoesNotExist
         return parse_obj_as(ResourceTemplate, workspace_templates[0])
 
     def get_workspace_template_by_name_and_version(self, name: str, version: str) -> ResourceTemplate:
-        query = self._workspace_template_by_name_query(name) + f' AND c.version = "{version}"'
+        query = self._resource_template_by_name_query(name) + f' AND c.version = "{version}"'
         workspace_templates = self.query(query=query)
         if len(workspace_templates) != 1:
             raise EntityDoesNotExist
@@ -47,8 +45,8 @@ class TemplateRepository(BaseRepository):
         workspace_template_names = [template["name"] for template in workspace_templates]
         return list(set(workspace_template_names))
 
-    def create_workspace_template_item(self, template_create: TemplateInCreate,
-                                       resource_type: ResourceType) -> ResourceTemplate:
+    def create_resource_template_item(self, template_create: TemplateInCreate,
+                                      resource_type: ResourceType) -> ResourceTemplate:
         item_id = str(uuid.uuid4())
         description = template_create.json_schema["description"]
         required = template_create.json_schema["required"]
