@@ -52,16 +52,16 @@ resource "azurerm_user_assigned_identity" "vmss_msi" {
 
 resource "azurerm_linux_virtual_machine_scale_set" "vm_linux" {
 
-  name                       = "vmss-rp-porter-${var.tre_id}"
-  location                   = var.location
-  resource_group_name        = var.resource_group_name
-  upgrade_mode               = "Automatic"
+  name                = "vmss-rp-porter-${var.tre_id}"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  upgrade_mode        = "Automatic"
 
   rolling_upgrade_policy {
-    max_batch_instance_percent = 100
-    max_unhealthy_instance_percent = 100
+    max_batch_instance_percent              = 100
+    max_unhealthy_instance_percent          = 100
     max_unhealthy_upgraded_instance_percent = 10
-    pause_time_between_batches = "PT1M"
+    pause_time_between_batches              = "PT1M"
 
   }
 

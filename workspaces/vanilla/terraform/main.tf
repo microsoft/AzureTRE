@@ -23,7 +23,7 @@ resource "azurerm_resource_group" "ws" {
     source  = "https://github.com/microsoft/AzureTRE/"
   }
 
-  lifecycle { ignore_changes = [ tags ] }
+  lifecycle { ignore_changes = [tags] }
 }
 
 module "network" {
