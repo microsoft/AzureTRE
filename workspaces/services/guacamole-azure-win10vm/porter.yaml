@@ -1,6 +1,6 @@
-name: tre-service-guacamole-win-dsvm
+name: tre-service-guacamole-win10vm
 version: 0.1.2
-description: "An Azure TRE User Resource Template for Guacamole (Windows DSVM)"
+description: "An Azure TRE User Resource Template for Guacamole (Windows 10)"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
 
@@ -43,7 +43,7 @@ parameters:
     default: false
 
 outputs:
-  - name: guacamole_win_dsvm_name
+  - name: guacamole_win10vm_name
     type: string
 
 mixins:
@@ -53,23 +53,27 @@ mixins:
 
 install:
   - terraform:
-      description: "Deploy Guacamole User Resource Service (Windows DSVM)"
+      description: "Deploy Guacamole User Resource Service (Windows 10)"
       vars:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
         mgmt_resource_group_name: "{{ bundle.parameters.mgmt_resource_group_name }}"
         parent_service_id: "{{ bundle.parameters.parent_service_id }}"
+        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
+        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
+        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
+        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.workspace_id }}-svc-guacamole-windsvm"
+        key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.workspace_id }}-svc-guacamole-winwin10vm"
       outputs:
-      - name: guacamole_win_dsvm_name
+      - name: guacamole_win10vm_name
 
 upgrade:
   - exec:
-      description: "Upgrade Guacamole User Resource Service (Windows DSVM)"
+      description: "Upgrade Guacamole User Resource Service (Windows 10)"
       command: echo
       arguments:
         - "This workspace service does not implement upgrade action"
@@ -84,4 +88,4 @@ uninstall:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.workspace_id }}-svc-guacamole-windsvm"
+        key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.workspace_id }}-svc-guacamole-winwin10vm"

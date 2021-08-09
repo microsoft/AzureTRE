@@ -3,7 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=2.64.0"
+      version = "=2.71.0"
     }
   }
   backend "azurerm" {
@@ -29,4 +29,10 @@ data "azurerm_virtual_network" "ws" {
 data "azurerm_network_security_group" "ws" {
   name                = "nsg-ws"
   resource_group_name = data.azurerm_virtual_network.ws.resource_group_name
+}
+
+data "azurerm_subnet" "services" {
+  name                 = "ServicesSubnet"
+  virtual_network_name = data.azurerm_virtual_network.ws.name
+  resource_group_name  = data.azurerm_resource_group.ws.name
 }
