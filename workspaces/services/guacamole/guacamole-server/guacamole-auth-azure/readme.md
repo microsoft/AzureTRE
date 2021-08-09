@@ -1,10 +1,10 @@
-## Guacamole Authorization Extension
+# Guacamole Authorization Extension
 
 This extension is built (maven) and is placed inside the extension directory.
 Guacamole tries to authorize using all the given extensions.
 Read more [here](https://guacamole.apache.org/doc/gug/guacamole-ext.html).
 
-### TRE Authorization extension
+## TRE Authorization extension
 
 This extension works in the following manner:
 
