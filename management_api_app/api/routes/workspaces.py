@@ -9,7 +9,7 @@ from api.dependencies.workspaces import get_workspace_by_workspace_id_from_path
 from db.repositories.workspaces import WorkspaceRepository
 from models.domain.authentication import User
 from models.domain.workspace import Workspace, WorkspaceRole
-from models.schemas.workspace import WorkspaceInCreate, WorkspaceIdInResponse, WorkspacesInList, WorkspaceInResponse, WorkspacePatch
+from models.schemas.workspace import WorkspaceInCreate, WorkspaceIdInResponse, WorkspacesInList, WorkspaceInResponse, WorkspacePatchEnabled
 from resources import strings
 from service_bus.resource_request_sender import send_resource_request_message
 from services.authentication import get_current_user, get_current_admin_user, get_access_service
@@ -70,7 +70,7 @@ async def retrieve_workspace_by_workspace_id(
 
 @router.patch("/workspaces/{workspace_id}", response_model=WorkspaceInResponse, name=strings.API_UPDATE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
 async def patch_workspace(
-        workspace_patch: WorkspacePatch,
+        workspace_patch: WorkspacePatchEnabled,
         workspace: Workspace = Depends(get_workspace_by_workspace_id_from_path),
         workspace_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository))
 ) -> WorkspaceInResponse:

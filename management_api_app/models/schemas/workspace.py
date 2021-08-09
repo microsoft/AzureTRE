@@ -95,7 +95,7 @@ class WorkspaceIdInResponse(BaseModel):
         }
 
 
-class WorkspacePatch(BaseModel):
+class WorkspacePatchEnabled(BaseModel):
     enabled: bool
 
     class Config:

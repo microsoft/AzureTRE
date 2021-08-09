@@ -12,7 +12,7 @@ from db.repositories.workspace_templates import WorkspaceTemplateRepository
 from models.domain.resource import Deployment, Status
 from models.domain.resource_template import ResourceTemplate
 from models.domain.workspace import Workspace
-from models.schemas.workspace import WorkspaceInCreate, WorkspacePatch
+from models.schemas.workspace import WorkspaceInCreate, WorkspacePatchEnabled
 from resources import strings
 from services.authentication import extract_auth_information
 from services.concatjsonschema import enrich_schema_defs
@@ -87,6 +87,6 @@ class WorkspaceRepository(BaseRepository):
     def update_workspace(self, workspace: Workspace):
         self.container.upsert_item(body=workspace.dict())
 
-    def patch_workspace(self, workspace: Workspace, workspace_patch: WorkspacePatch):
+    def patch_workspace(self, workspace: Workspace, workspace_patch: WorkspacePatchEnabled):
         workspace.resourceTemplateParameters["enabled"] = workspace_patch.enabled
         self.container.upsert_item(body=workspace.dict())

@@ -8,7 +8,7 @@ from db.errors import EntityDoesNotExist
 import db.repositories.workspaces
 from models.domain.resource import Deployment, Status, ResourceType
 from models.domain.workspace import Workspace
-from models.schemas.workspace import WorkspaceInCreate, WorkspacePatch
+from models.schemas.workspace import WorkspaceInCreate, WorkspacePatchEnabled
 
 
 @pytest.fixture
@@ -152,7 +152,7 @@ def test_patch_workspace_updates_item(cosmos_client_mock):
         resourceTemplateParameters={},
         deployment=Deployment(status=Status.NotDeployed, message=""),
     )
-    workspace_patch = WorkspacePatch(enabled=False)
+    workspace_patch = WorkspacePatchEnabled(enabled=False)
     patched_workspace_dict = workspace_to_patch.dict()
     patched_workspace_dict["resourceTemplateParameters"]["enabled"] = False
 
