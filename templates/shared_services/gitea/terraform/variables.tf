@@ -20,18 +20,13 @@ variable "docker_registry_server" {
   description = "Docker registry server"
 }
 
-variable "docker_registry_username" {
-  type        = string
-  description = "Docker registry username"
+variable "keyvault_id" {
+  type = string
 }
 
-variable "docker_registry_password" {
-  type        = string
-  description = "Docker registry password"
-  sensitive   = true
+variable "acr_id" {
+  type = string
 }
-
-variable "keyvault_id" {}
 
 variable "storage_account_name" {
   type        = string

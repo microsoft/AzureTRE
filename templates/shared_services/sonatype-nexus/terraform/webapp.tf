@@ -6,13 +6,11 @@ resource "azurerm_app_service" "nexus" {
   https_only          = true
 
   app_settings = {
-    "APPINSIGHTS_INSTRUMENTATIONKEY"      = data.azurerm_application_insights.core.instrumentation_key
-    "WEBSITES_PORT"                       = "8081" # nexus web-ui listens here
-    "WEBSITES_CONTAINER_START_TIME_LIMIT" = "900"  # nexus takes a while to start-up
-
-    "WEBSITE_VNET_ROUTE_ALL" = 1
-    "WEBSITE_DNS_SERVER"     = "168.63.129.16" # required to access storage over private endpoints
-
+    APPINSIGHTS_INSTRUMENTATIONKEY      = data.azurerm_application_insights.core.instrumentation_key
+    WEBSITES_PORT                       = "8081" # nexus web-ui listens here
+    WEBSITES_CONTAINER_START_TIME_LIMIT = "900"  # nexus takes a while to start-up
+    WEBSITE_VNET_ROUTE_ALL              = 1
+    WEBSITE_DNS_SERVER                  = "168.63.129.16" # required to access storage over private endpoints
     WEBSITES_ENABLE_APP_SERVICE_STORAGE = false
   }
 

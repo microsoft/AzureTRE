@@ -220,16 +220,15 @@ module "bastion" {
 }
 
 module "gitea" {
-  count = var.deploy_gitea == true ? 1 : 0
-  source                                     = "../../shared_services/gitea/terraform"
-  tre_id                                     = var.tre_id
-  location                                   = var.location
-  image_tag                                  = var.gitea_image_tag
-  docker_registry_server                     = var.docker_registry_server
-  docker_registry_username                   = var.docker_registry_username
-  docker_registry_password                   = var.docker_registry_password
-  keyvault_id                                = module.keyvault.keyvault_id
-  storage_account_name                       = module.storage.storage_account_name
+  count                  = var.deploy_gitea == true ? 1 : 0
+  source                 = "../../shared_services/gitea/terraform"
+  tre_id                 = var.tre_id
+  location               = var.location
+  image_tag              = var.gitea_image_tag
+  docker_registry_server = data.azurerm_container_registry.mgmt_acr.login_server
+  acr_id                 = data.azurerm_container_registry.mgmt_acr.id
+  keyvault_id            = module.keyvault.keyvault_id
+  storage_account_name   = module.storage.storage_account_name
 
   depends_on = [
     module.network
@@ -237,8 +236,7 @@ module "gitea" {
 }
 
 module "nexus" {
-  count = var.deploy_nexus == true ? 1 : 0
-
+  count                = var.deploy_nexus == true ? 1 : 0
   source               = "../../shared_services/sonatype-nexus/terraform"
   tre_id               = var.tre_id
   location             = var.location
