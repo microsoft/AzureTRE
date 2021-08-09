@@ -6,6 +6,7 @@ API_GET_HEALTH_STATUS = "Get health status"
 API_GET_ALL_WORKSPACES = "Get all workspaces"
 API_GET_WORKSPACE_BY_ID = "Get workspace by Id"
 API_CREATE_WORKSPACE = "Create a workspace"
+API_DELETE_WORKSPACE = "Delete workspace"
 API_UPDATE_WORKSPACE = "Update an existing workspace"
 
 API_GET_STATUS_OF_SERVICES = "Get status of services"
@@ -35,9 +36,10 @@ INVALID_AUTH_PROVIDER = "Invalid authentication provider"
 UNABLE_TO_REPLACE_CURRENT_TEMPLATE = "Unable to replace the existing 'current' template with this name"
 UNABLE_TO_PROCESS_REQUEST = "Unable to process request"
 WORKSPACE_DOES_NOT_EXIST = "Workspace does not exist"
+WORKSPACE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION = "The workspace needs to be disabled before you can delete it"
+WORKSPACE_SERVICES_NEED_TO_BE_DELETED_BEFORE_WORKSPACE = "All workspace services need to be deleted before you can delete the workspace"
 WORKSPACE_TEMPLATE_DOES_NOT_EXIST = "Could not retrieve the 'current' template with this name"
 WORKSPACE_TEMPLATE_VERSION_EXISTS = "A template with this version already exists"
-
 
 # Resource Status
 RESOURCE_STATUS_NOT_DEPLOYED = "not_deployed"

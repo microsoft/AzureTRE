@@ -40,3 +40,9 @@ class Resource(AzureTREModel):
     resourceTemplateParameters: dict = Field({}, title="Resource template parameters", description="Parameters for the deployment")
     deployment: Deployment = Field(Deployment(status=Status.NotDeployed, message=""), title="Deployment", description="Fields related to deployment of this resource")
     deleted: bool = Field(False, title="Is deleted", description="Marks the resource request as deleted (NOTE: this is not the deployment status)")
+    resourceType: ResourceType
+
+    def is_enabled(self) -> bool:
+        if "enabled" not in self.resourceTemplateParameters:
+            return True     # default behavior is enabled = True
+        return self.resourceTemplateParameters["enabled"] is True

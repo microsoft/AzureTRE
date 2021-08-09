@@ -29,7 +29,7 @@ class WorkspaceRepository(BaseRepository):
     def _get_current_workspace_template(self, template_name) -> ResourceTemplate:
         workspace_template_repo = ResourceTemplateRepository(self._client)
         template = workspace_template_repo.get_current_resource_template_by_name(template_name)
-        return enrich_workspace_schema_defs(template)
+        return parse_obj_as(ResourceTemplate, enrich_workspace_schema_defs(template))
 
     @staticmethod
     def _validate_workspace_parameters(workspace_create, workspace_template):
@@ -52,7 +52,7 @@ class WorkspaceRepository(BaseRepository):
 
         try:
             current_template = self._get_current_workspace_template(workspace_create.workspaceType)
-            template_version = current_template["version"]
+            template_version = current_template.version
         except EntityDoesNotExist:
             raise ValueError(f"The workspace type '{workspace_create.workspaceType}' does not exist")
 
@@ -80,6 +80,14 @@ class WorkspaceRepository(BaseRepository):
         )
 
         return workspace
+
+    def delete_workspace(self, workspace: Workspace):
+        workspace.deleted = True
+        self.container.upsert_item(body=workspace.dict())
+
+    def mark_workspace_as_not_deleted(self, workspace):
+        workspace.deleted = False
+        self.container.upsert_item(body=workspace.dict())
 
     def save_workspace(self, workspace: Workspace):
         self.create_item(workspace)

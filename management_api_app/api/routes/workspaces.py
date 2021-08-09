@@ -7,11 +7,12 @@ from starlette import status
 from api.dependencies.database import get_repository
 from api.dependencies.workspaces import get_workspace_by_workspace_id_from_path
 from db.repositories.workspaces import WorkspaceRepository
+from db.repositories.workspace_services import WorkspaceServiceRepository
 from models.domain.authentication import User
 from models.domain.workspace import Workspace, WorkspaceRole
 from models.schemas.workspace import WorkspaceInCreate, WorkspaceIdInResponse, WorkspacesInList, WorkspaceInResponse, WorkspacePatchEnabled
 from resources import strings
-from service_bus.resource_request_sender import send_resource_request_message
+from service_bus.resource_request_sender import send_resource_request_message, RequestAction
 from services.authentication import get_current_user, get_current_admin_user, get_access_service
 
 
@@ -46,7 +47,7 @@ async def create_workspace(workspace_create: WorkspaceInCreate, workspace_repo: 
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
 
     try:
-        await send_resource_request_message(workspace)
+        await send_resource_request_message(workspace, RequestAction.Install)
     except Exception as e:
         # TODO: Rollback DB change, issue #154
         logging.error(f"Failed send workspace resource request message: {e}")
@@ -76,3 +77,30 @@ async def patch_workspace(
 ) -> WorkspaceInResponse:
     workspace_repo.patch_workspace(workspace, workspace_patch)
     return WorkspaceInResponse(workspace=workspace)
+
+
+@router.delete("/workspaces/{workspace_id}", response_model=WorkspaceIdInResponse, name=strings.API_DELETE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
+async def delete_workspace(
+    workspace: Workspace = Depends(get_workspace_by_workspace_id_from_path),
+    workspace_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository)),
+    workspace_service_repo: WorkspaceServiceRepository = Depends(get_repository(WorkspaceServiceRepository))
+):
+    if not workspace.is_enabled():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION)
+    if len(workspace_service_repo.get_active_workspace_services_for_workspace(workspace.id)) > 0:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_SERVICES_NEED_TO_BE_DELETED_BEFORE_WORKSPACE)
+
+    try:
+        workspace_repo.delete_workspace(workspace)
+    except Exception as e:
+        logging.error(f"Failed to delete workspace instance in DB: {e}")
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
+
+    try:
+        await send_resource_request_message(workspace, RequestAction.UnInstall)
+    except Exception as e:
+        workspace_repo.mark_workspace_as_not_deleted(workspace)
+        logging.error(f"Failed send workspace resource delete message: {e}")
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
+
+    return WorkspaceIdInResponse(workspaceId=workspace.id)
