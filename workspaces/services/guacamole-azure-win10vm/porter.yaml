@@ -43,7 +43,7 @@ parameters:
     default: false
 
 outputs:
-  - name: guacamole_win_win10vm_name
+  - name: guacamole_win10vm_name
     type: string
 
 mixins:
@@ -69,7 +69,7 @@ install:
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.workspace_id }}-svc-guacamole-winwin10vm"
       outputs:
-      - name: guacamole_win_win10vm_name
+      - name: guacamole_win10vm_name
 
 upgrade:
   - exec:
