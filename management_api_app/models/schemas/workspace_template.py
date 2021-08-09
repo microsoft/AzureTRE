@@ -1,8 +1,10 @@
-from typing import List, Dict
-from pydantic import BaseModel, Field
+from typing import List
+
+from pydantic import BaseModel
 
 from models.domain.resource import ResourceType
 from models.domain.resource_template import ResourceTemplate, Property
+from models.schemas.template import TemplateInCreate, TemplateInResponse
 
 
 def get_sample_workspace_template_object(template_name: str = "tre-workspace-vanilla") -> ResourceTemplate:
@@ -49,11 +51,7 @@ class WorkspaceTemplateNamesInList(BaseModel):
         }
 
 
-class WorkspaceTemplateInCreate(BaseModel):
-    name: str = Field(title="Name of workspace template")
-    version: str = Field(title="Version of workspace template")
-    current: bool = Field(title="Mark this version as current")
-    json_schema: Dict = Field(title="JSON Schema compliant template")
+class WorkspaceTemplateInCreate(TemplateInCreate):
 
     class Config:
         schema_extra = {
@@ -97,8 +95,7 @@ class WorkspaceTemplateInCreate(BaseModel):
         }
 
 
-class WorkspaceTemplateInResponse(ResourceTemplate):
-    system_properties: Dict[str, Property] = Field(title="System properties")
+class WorkspaceTemplateInResponse(TemplateInResponse):
 
     class Config:
         schema_extra = {

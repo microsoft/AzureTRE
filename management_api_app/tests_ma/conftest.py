@@ -33,3 +33,17 @@ def basic_resource_template(input_workspace_template):
         required=input_workspace_template.json_schema["required"],
         properties=input_workspace_template.json_schema["properties"]
     )
+
+
+@pytest.fixture
+def basic_workspace_service_template(input_workspace_template):
+    return ResourceTemplate(
+        id="1234-5678",
+        name=input_workspace_template.name,
+        description=input_workspace_template.json_schema["description"],
+        version=input_workspace_template.name,
+        resourceType=ResourceType.WorkspaceService,
+        current=True,
+        required=input_workspace_template.json_schema["required"],
+        properties=input_workspace_template.json_schema["properties"]
+    )

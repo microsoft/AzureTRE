@@ -40,11 +40,15 @@ def load_workspace_schema_def():
     return read_schema("workspace.json")
 
 
+def load_workspace_service_schema_def():
+    return read_schema("workspace_service.json")
+
+
 def load_azuread_schema_def():
     return read_schema("azuread.json")
 
 
-def enrich_schema_defs(combine_with, print_result=None):
+def enrich_workspace_schema_defs(combine_with, print_result=None):
     """Adds to the provided template all UI and system properties
 
     Args:
@@ -52,12 +56,29 @@ def enrich_schema_defs(combine_with, print_result=None):
     Returns:
         [Dict]: [Enriched template with all required and system properties added]
     """
-    combine_with_dict = combine_with.dict()
     workspace_tuple = load_workspace_schema_def()
     schema_tuple = load_azuread_schema_def()
+    basic_blocks = [workspace_tuple, schema_tuple]
+    return combine_basic_blocks(combine_with, basic_blocks)
+
+
+def enrich_workspace_service_schema_defs(combine_with, print_result=None):
+    """Adds to the provided template all UI and system properties
+
+    Args:
+        combine_with ([Dict]): [Template to which UI and system properties are added].
+    Returns:
+        [Dict]: [Enriched template with all required and system properties added]
+    """
+    basic_blocks = [load_workspace_service_schema_def()]
+    return combine_basic_blocks(combine_with, basic_blocks)
+
+
+def combine_basic_blocks(combine_with, basic_blocks):
+    combine_with_dict = combine_with.dict()
     given_template_tuple = (combine_with_dict["required"],
                             combine_with_dict["properties"])
-    basic_blocks = [workspace_tuple, schema_tuple, given_template_tuple]
+    basic_blocks.append(given_template_tuple)
     combine_with_dict["required"] = merge_required(basic_blocks)
     combine_with_dict["properties"] = merge_properties(basic_blocks)
     combine_with_dict["system_properties"] = system_properties_block()

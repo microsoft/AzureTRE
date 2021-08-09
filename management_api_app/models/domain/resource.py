@@ -22,7 +22,7 @@ class ResourceType(str, Enum):
     Type of resource to deploy
     """
     Workspace = strings.RESOURCE_TYPE_WORKSPACE
-    Service = strings.RESOURCE_TYPE_SERVICE
+    WorkspaceService = strings.RESOURCE_TYPE_WORKSPACE_SERVICE
 
 
 class Deployment(AzureTREModel):
