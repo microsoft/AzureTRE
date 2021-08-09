@@ -5,12 +5,12 @@ from fastapi import FastAPI
 from httpx import AsyncClient
 from starlette import status
 
+from api.routes.workspaces import get_current_user
 from db.errors import EntityDoesNotExist
+from models.domain.authentication import User
 from models.domain.resource import Status, Deployment
 from models.domain.workspace import Workspace
 from resources import strings
-from api.routes.workspaces import get_current_user
-from models.domain.authentication import User
 
 
 pytestmark = pytest.mark.asyncio

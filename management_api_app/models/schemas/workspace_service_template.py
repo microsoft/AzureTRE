@@ -1,6 +1,6 @@
 from models.domain.resource import ResourceType
 from models.domain.resource_template import ResourceTemplate, Property
-from models.schemas.template import TemplateInCreate, TemplateInResponse
+from models.schemas.resource_template import ResourceTemplateInCreate, ResourceTemplateInResponse
 
 
 def get_sample_workspace_service_template_object(template_name: str = "tre-workspace-service") -> ResourceTemplate:
@@ -34,7 +34,7 @@ def get_sample_workspace_service_template_in_response() -> dict:
     return workspace_template
 
 
-class WorkspaceServiceTemplateInCreate(TemplateInCreate):
+class WorkspaceServiceTemplateInCreate(ResourceTemplateInCreate):
 
     class Config:
         schema_extra = {
@@ -55,7 +55,7 @@ class WorkspaceServiceTemplateInCreate(TemplateInCreate):
         }
 
 
-class WorkspaceServiceTemplateInResponse(TemplateInResponse):
+class WorkspaceServiceTemplateInResponse(ResourceTemplateInResponse):
 
     class Config:
         schema_extra = {

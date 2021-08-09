@@ -1,8 +1,7 @@
-import uuid
-from jsonschema.exceptions import ValidationError
-
-from mock import patch, MagicMock
 import pytest
+from mock import patch, MagicMock
+from jsonschema.exceptions import ValidationError
+import uuid
 
 from db.errors import EntityDoesNotExist
 import db.repositories.workspaces

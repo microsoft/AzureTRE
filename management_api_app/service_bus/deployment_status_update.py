@@ -2,19 +2,18 @@ import json
 import logging
 from contextlib import asynccontextmanager
 
+from azure.identity.aio import DefaultAzureCredential
+from azure.servicebus.aio import ServiceBusClient
 from fastapi import FastAPI
 from pydantic import ValidationError, parse_obj_as
 
-from azure.servicebus.aio import ServiceBusClient
-from azure.identity.aio import DefaultAzureCredential
-
 from core import config
-from resources import strings
-from db.errors import EntityDoesNotExist
 from api.dependencies.database import get_db_client
+from db.errors import EntityDoesNotExist
 from db.repositories.workspaces import WorkspaceRepository
-from models.domain.workspace import DeploymentStatusUpdateMessage, Workspace
 from models.domain.resource import Status
+from models.domain.workspace import DeploymentStatusUpdateMessage, Workspace
+from resources import strings
 
 
 @asynccontextmanager

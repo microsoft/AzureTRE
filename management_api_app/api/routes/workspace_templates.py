@@ -8,12 +8,12 @@ from db.errors import EntityDoesNotExist, EntityVersionExist
 from db.repositories.resource_templates import ResourceTemplateRepository
 from models.domain.resource import ResourceType
 from models.schemas.template import TemplateInResponse
-from models.schemas.workspace_template import (WorkspaceTemplateNamesInList, WorkspaceTemplateInCreate,
-                                               WorkspaceTemplateInResponse)
+from models.schemas.workspace_template import WorkspaceTemplateNamesInList, WorkspaceTemplateInCreate, WorkspaceTemplateInResponse
 from resources import strings
 from services.authentication import get_current_admin_user
 from services.concatjsonschema import enrich_workspace_schema_defs
 from services.resource_template_service import create_template_by_resource_type
+
 
 router = APIRouter(dependencies=[Depends(get_current_admin_user)])
 

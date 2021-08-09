@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 from models.domain.resource import ResourceType
 from models.domain.resource_template import ResourceTemplate, Property
-from models.schemas.template import TemplateInCreate, TemplateInResponse
+from models.schemas.resource_template import ResourceTemplateInCreate, ResourceTemplateInResponse
 
 
 def get_sample_workspace_template_object(template_name: str = "tre-workspace-vanilla") -> ResourceTemplate:
@@ -51,7 +51,7 @@ class WorkspaceTemplateNamesInList(BaseModel):
         }
 
 
-class WorkspaceTemplateInCreate(TemplateInCreate):
+class WorkspaceTemplateInCreate(ResourceTemplateInCreate):
 
     class Config:
         schema_extra = {
@@ -95,7 +95,7 @@ class WorkspaceTemplateInCreate(TemplateInCreate):
         }
 
 
-class WorkspaceTemplateInResponse(TemplateInResponse):
+class WorkspaceTemplateInResponse(ResourceTemplateInResponse):
 
     class Config:
         schema_extra = {
