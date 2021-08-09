@@ -8,6 +8,7 @@ from starlette import status
 from db.errors import EntityDoesNotExist
 from models.domain.resource import Status, Deployment
 from models.domain.workspace import Workspace
+from models.domain.workspace_service import WorkspaceService
 from resources import strings
 from api.routes.workspaces import get_current_user
 from models.domain.authentication import User
@@ -28,6 +29,30 @@ def create_sample_workspace_object(workspace_id, auth_info: dict = None):
     if auth_info:
         workspace.authInformation = auth_info
     return workspace
+
+
+def create_sample_workspace_service_object(workspace_service_id, workspace_id):
+    workspace_service = WorkspaceService(
+        id=workspace_service_id,
+        workspaceId=workspace_id,
+        description="My workspace",
+        resourceTemplateName="tre-workspace-vanilla",
+        resourceTemplateVersion="0.1.0",
+        resourceTemplateParameters={},
+        deployment=Deployment(status=Status.NotDeployed, message=""),
+    )
+
+    return workspace_service
+
+
+def create_sample_workspace_service_input_data():
+    return {
+        "workspaceServiceType": "test-workspace-service",
+        "properties": {
+            "display_name": "display",
+            "app_id": "f0acf127-a672-a672-a672-a15e5bf9f127"
+        }
+    }
 
 
 def create_sample_workspace_input_data():
@@ -110,6 +135,28 @@ async def test_workspaces_post_creates_workspace(create_workspace_item_mock, sav
 
     assert response.status_code == status.HTTP_202_ACCEPTED
     assert response.json()["workspaceId"] == workspace_id
+
+
+@ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+@ patch("api.routes.workspaces.send_resource_request_message")
+@ patch("api.routes.workspaces.WorkspaceServiceRepository.save_workspace_service")
+@ patch("api.routes.workspaces.WorkspaceServiceRepository.create_workspace_service_item")
+async def test_workspace_services_post_creates_workspace_service(create_workspace_service_item_mock, save_workspace_service_mock, send_resource_request_message_mock, get_workspace_mock, app: FastAPI, client: AsyncClient, admin_user: User):
+    workspace_id = "98b8799a-7281-4fc5-91d5-49684a4810ff"
+    auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123',
+                                              'roles': {'WorkspaceOwner': 'ab124', 'WorkspaceResearcher': 'ab125'}}
+    sample_workspace = create_sample_workspace_object(workspace_id, auth_info_user_in_workspace_owner_role)
+    get_workspace_mock.return_value = sample_workspace
+
+    workspace_service_id = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
+    create_workspace_service_item_mock.return_value = create_sample_workspace_service_object(workspace_service_id, workspace_id)
+    input_data = create_sample_workspace_service_input_data()
+
+    response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE, workspace_id=workspace_id), json=input_data)
+    print(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE, workspace_id=workspace_id))
+    print(response.json())
+    assert response.status_code == status.HTTP_202_ACCEPTED
+    assert response.json()["workspaceServiceId"] == workspace_service_id
 
 
 @ patch("api.routes.workspaces.send_resource_request_message")

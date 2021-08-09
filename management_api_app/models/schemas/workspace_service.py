@@ -55,7 +55,7 @@ class WorkspaceServiceInCreate(BaseModel):
 
 
 class WorkspaceServiceIdInResponse(BaseModel):
-    workspaceId: str
+    workspaceServiceId: str
 
     class Config:
         schema_extra = {
