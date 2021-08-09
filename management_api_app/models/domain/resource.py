@@ -42,3 +42,12 @@ class Resource(AzureTREModel):
     resourceTemplateParameters: dict = Field({}, title="Resource template parameters", description="Parameters for the deployment")
     deployment: Deployment = Field(Deployment(status=Status.NotDeployed, message=""), title="Deployment", description="Fields related to deployment of this resource")
     isDeleted: bool = Field(False, title="Is deleted", description="Marks the resource request as deleted (NOTE: this is not the deployment status)")
+
+    def get_resource_request_message_payload(self) -> dict:
+        return {
+            "action": "install",
+            "id": self.id,
+            "name": self.resourceTemplateName,
+            "version": self.resourceTemplateVersion,
+            "parameters": self.resourceTemplateParameters
+        }

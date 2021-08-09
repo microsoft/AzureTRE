@@ -14,7 +14,7 @@ from db.errors import EntityDoesNotExist
 from api.dependencies.database import get_db_client
 from db.repositories.workspaces import WorkspaceRepository
 from models.domain.workspace import DeploymentStatusUpdateMessage, Workspace
-from models.domain.resource import Status
+from models.domain.resource import Status, Resource
 
 
 @asynccontextmanager
@@ -57,7 +57,7 @@ async def receive_message():
                         await receiver.complete_message(msg)
 
 
-def create_updated_deployment_document(workspace: Workspace, message: DeploymentStatusUpdateMessage):
+def create_updated_deployment_document(workspace: dict, message: DeploymentStatusUpdateMessage):
     """Take a workspace and a deployment status update message and updates workspace with the message contents
 
     Args:
@@ -67,10 +67,10 @@ def create_updated_deployment_document(workspace: Workspace, message: Deployment
     Returns:
         [Workspace]: Workspace with the deployment sub doc updated
     """
-    if workspace.deployment.status == Status.Deployed:
+    if workspace["deployment"]["status"] == Status.Deployed:
         return workspace  # Never update a deployed workspace.
-    workspace.deployment.status = message.status
-    workspace.deployment.message = message.message
+    workspace["deployment"]["status"] = message.status
+    workspace["deployment"]["message"] = message.message
     return workspace
 
 
@@ -87,8 +87,10 @@ def update_status_in_database(workspace_repo: WorkspaceRepository, message: Depl
     result = False
 
     try:
-        workspace = workspace_repo.get_workspace_by_workspace_id(message.id)
-        workspace_repo.update_workspace(create_updated_deployment_document(workspace, message))
+        workspace = workspace_repo.get_workspace_dict_by_workspace_id(message.id)
+        print(workspace)
+        print(message)
+        workspace_repo.update_resource_dict(create_updated_deployment_document(workspace, message))
         result = True
     except EntityDoesNotExist:
         # Marking as true as this message will never succeed anyways and should be removed from the queue.

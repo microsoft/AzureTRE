@@ -6,6 +6,7 @@ from starlette import status
 
 from api.dependencies.database import get_repository
 from api.dependencies.workspaces import get_workspace_by_workspace_id_from_path
+from models.schemas.workspace_service import WorkspaceServiceIdInResponse, WorkspaceServiceInCreate
 from services.authentication import get_current_user, get_current_admin_user, get_access_service
 from db.repositories.workspaces import WorkspaceRepository
 from models.domain.workspace import Workspace, WorkspaceRole
@@ -55,37 +56,37 @@ async def create_workspace(workspace_create: WorkspaceInCreate, workspace_repo: 
     return WorkspaceIdInResponse(workspaceId=workspace.id)
 
 
-@router.post("/workspaces/{workspace_id}/workspace-services", status_code=status.HTTP_202_ACCEPTED,response_model=WorkspaceIdInResponse, name=strings.API_CREATE_WORKSPACE)
-async def create_workspace(workspace_create: WorkspaceInCreate,
+@router.post("/workspaces/{workspace_id}/workspace-services", status_code=status.HTTP_202_ACCEPTED,response_model=WorkspaceServiceIdInResponse, name=strings.API_CREATE_WORKSPACE_SERVICE)
+async def create_workspace_service(workspace_create: WorkspaceServiceInCreate,
                            workspace_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository)),
                            user: User = Depends(get_current_user),
                            workspace: Workspace = Depends(get_workspace_by_workspace_id_from_path)
-                           ) -> WorkspaceIdInResponse:
+                           ) -> WorkspaceServiceIdInResponse:
 
-    access_service = get_access_service()
-    if access_service.get_workspace_role(user, workspace) == WorkspaceRole.Owner:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.ACCESS_USER_IS_NOT_OWNER)
+    # access_service = get_access_service()
+    # if access_service.get_workspace_role(user, workspace) == WorkspaceRole.Owner:
+    #     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.ACCESS_USER_IS_NOT_OWNER)
 
     try:
-        workspace = workspace_repo.create_workspace_item(workspace_create)
+        workspace = workspace_repo.create_workspace_service_item(workspace_create, workspace.id)
     except (ValidationError, ValueError) as e:
-        logging.error(f"Failed create workspace model instance: {e}")
+        logging.error(f"Failed create workspace service model instance: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     try:
         workspace_repo.save_workspace(workspace)
     except Exception as e:
-        logging.error(f"Failed save workspace instance in DB: {e}")
+        logging.error(f"Failed save workspace service instance in DB: {e}")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
 
     try:
         await send_resource_request_message(workspace)
     except Exception as e:
         # TODO: Rollback DB change, issue #154
-        logging.error(f"Failed send workspace resource request message: {e}")
+        logging.error(f"Failed send workspace service resource request message: {e}")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
 
-    return WorkspaceIdInResponse(workspaceId=workspace.id)
+    return WorkspaceServiceIdInResponse(workspaceId=workspace.id)
 
 
 @router.get("/workspaces/{workspace_id}", response_model=WorkspaceInResponse, name=strings.API_GET_WORKSPACE_BY_ID)

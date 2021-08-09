@@ -17,13 +17,7 @@ async def send_resource_request_message(resource: Resource):
     :param resource: The resource to deploy.
     :type resource: Resource
     """
-    content = json.dumps({
-        "action": "install",
-        "id": resource.id,
-        "name": resource.resourceTemplateName,
-        "version": resource.resourceTemplateVersion,
-        "parameters": resource.resourceTemplateParameters
-    })
+    content = json.dumps(resource.get_resource_request_message_payload())
 
     resource_request_message = ServiceBusMessage(body=content, correlation_id=resource.id)
     logging.info(f"Sending resource request message with correlation ID {resource_request_message.correlation_id}")
