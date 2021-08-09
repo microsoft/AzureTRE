@@ -12,7 +12,7 @@ from models.schemas.workspace_template import (WorkspaceTemplateNamesInList, Wor
                                                WorkspaceTemplateInResponse)
 from resources import strings
 from services.authentication import get_current_admin_user
-from services.concatjsonschema import enrich_workspace_schema_defs, enrich_workspace_service_schema_defs
+from services.concatjsonschema import enrich_workspace_schema_defs
 from services.resource_template_service import create_template_by_resource_type
 
 router = APIRouter(dependencies=[Depends(get_current_admin_user)])
