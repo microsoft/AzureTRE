@@ -7,7 +7,7 @@ from api.dependencies.database import get_repository
 from db.errors import EntityDoesNotExist, EntityVersionExist
 from db.repositories.resource_templates import ResourceTemplateRepository
 from models.domain.resource import ResourceType
-from models.schemas.template import TemplateInResponse
+from models.schemas.resource_template import ResourceTemplateInResponse
 from models.schemas.workspace_template import WorkspaceTemplateNamesInList, WorkspaceTemplateInCreate, WorkspaceTemplateInResponse
 from resources import strings
 from services.authentication import get_current_admin_user
@@ -32,7 +32,7 @@ async def get_workspace_templates(
 async def create_workspace_template(
         workspace_template_create: WorkspaceTemplateInCreate,
         workspace_template_repo: ResourceTemplateRepository = Depends(get_repository(ResourceTemplateRepository)),
-) -> TemplateInResponse:
+) -> ResourceTemplateInResponse:
     try:
         template_created = create_template_by_resource_type(workspace_template_create,
                                                             workspace_template_repo,
