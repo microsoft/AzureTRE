@@ -5,9 +5,8 @@ from api.dependencies.database import get_repository
 from db.errors import EntityVersionExist
 from db.repositories.resource_templates import ResourceTemplateRepository
 from models.domain.resource import ResourceType
-from models.schemas.template import TemplateInResponse
-from models.schemas.workspace_service_template import WorkspaceServiceTemplateInCreate,\
-    WorkspaceServiceTemplateInResponse
+from models.schemas.resource_template import ResourceTemplateInResponse
+from models.schemas.workspace_service_template import WorkspaceServiceTemplateInCreate, WorkspaceServiceTemplateInResponse
 from resources import strings
 from services.authentication import get_current_admin_user
 from services.concatjsonschema import enrich_workspace_service_schema_defs
@@ -21,7 +20,7 @@ router = APIRouter(dependencies=[Depends(get_current_admin_user)])
 async def create_workspace_service_template(
         workspace_template_create: WorkspaceServiceTemplateInCreate,
         workspace_template_repo: ResourceTemplateRepository = Depends(get_repository(ResourceTemplateRepository)),
-) -> TemplateInResponse:
+) -> ResourceTemplateInResponse:
     try:
         template_created = create_template_by_resource_type(workspace_template_create,
                                                             workspace_template_repo,

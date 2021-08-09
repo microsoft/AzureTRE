@@ -2,8 +2,8 @@ from enum import Enum
 
 from pydantic import Field
 from pydantic.types import UUID4
-from models.domain.azuretremodel import AzureTREModel
 
+from models.domain.azuretremodel import AzureTREModel
 from models.domain.resource import Resource, ResourceType, Status
 
 

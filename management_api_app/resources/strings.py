@@ -6,6 +6,7 @@ API_GET_HEALTH_STATUS = "Get health status"
 API_GET_ALL_WORKSPACES = "Get all workspaces"
 API_GET_WORKSPACE_BY_ID = "Get workspace by Id"
 API_CREATE_WORKSPACE = "Create a workspace"
+API_UPDATE_WORKSPACE = "Update an existing workspace"
 
 API_GET_STATUS_OF_SERVICES = "Get status of services"
 

@@ -2,10 +2,10 @@ from db.errors import EntityDoesNotExist, EntityVersionExist
 from db.repositories.resource_templates import ResourceTemplateRepository
 from models.domain.resource_template import ResourceTemplate
 from models.domain.resource import ResourceType
-from models.schemas.template import TemplateInCreate
+from models.schemas.resource_template import ResourceTemplateInCreate
 
 
-def create_template_by_resource_type(workspace_template_create: TemplateInCreate,
+def create_template_by_resource_type(workspace_template_create: ResourceTemplateInCreate,
                                      workspace_template_repo: ResourceTemplateRepository,
                                      resource_type: ResourceType) -> ResourceTemplate:
     try:

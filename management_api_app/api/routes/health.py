@@ -1,5 +1,7 @@
 from datetime import datetime
+
 from fastapi import APIRouter
+
 from models.schemas.health import Pong
 from resources import strings
 
