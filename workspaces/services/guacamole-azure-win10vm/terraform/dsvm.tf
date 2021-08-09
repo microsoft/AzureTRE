@@ -33,7 +33,7 @@ resource "random_password" "password" {
   override_special = "_%@"
 }
 
-resource "azurerm_virtual_machine" "dsvm" {
+resource "azurerm_virtual_machine" "win10vm" {
   name                             = local.vm_name
   location                         = data.azurerm_resource_group.ws.location
   resource_group_name              = data.azurerm_resource_group.ws.name
@@ -43,9 +43,9 @@ resource "azurerm_virtual_machine" "dsvm" {
   delete_data_disks_on_termination = false
 
   storage_image_reference {
-    publisher = "microsoft-dsvm"
-    offer     = "dsvm-win-2019"
-    sku       = "server-2019-gen2"
+    publisher = "MicrosoftWindowsDesktop"
+    offer     = "windows-10"
+    sku       = "20h1-pron-g2"
     version   = "latest"
   }
 
