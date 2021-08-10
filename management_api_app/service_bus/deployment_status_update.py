@@ -86,8 +86,8 @@ def update_status_in_database(resource_repo: ResourceRepository, message: Deploy
     result = False
 
     try:
-        workspace = resource_repo.get_resource_dict_by_id(message.id)
-        resource_repo.update_resource_dict(create_updated_deployment_document(workspace, message))
+        resource = resource_repo.get_resource_dict_by_id(message.id)
+        resource_repo.update_resource_dict(create_updated_deployment_document(resource, message))
         result = True
     except EntityDoesNotExist:
         # Marking as true as this message will never succeed anyways and should be removed from the queue.

@@ -63,7 +63,7 @@ async def test_receiving_bad_json_logs_error(app, sb_client, logging_mock, paylo
     sb_client().get_queue_receiver().complete_message.assert_called_once_with(service_bus_received_message_mock)
 
 
-@patch('service_bus.deployment_status_update.WorkspaceRepository')
+@patch('service_bus.deployment_status_update.ResourceRepository')
 @patch('logging.error')
 @patch('service_bus.deployment_status_update.ServiceBusClient')
 @patch('fastapi.FastAPI')
@@ -83,7 +83,7 @@ async def test_receiving_good_message(app, sb_client, logging_mock, repo):
     sb_client().get_queue_receiver().complete_message.assert_called_once_with(service_bus_received_message_mock)
 
 
-@patch('service_bus.deployment_status_update.WorkspaceRepository')
+@patch('service_bus.deployment_status_update.ResourceRepository')
 @patch('logging.error')
 @patch('service_bus.deployment_status_update.ServiceBusClient')
 @patch('fastapi.FastAPI')
@@ -100,7 +100,7 @@ async def test_when_updating_non_existent_workspace_error_is_logged(app, sb_clie
     sb_client().get_queue_receiver().complete_message.assert_called_once_with(service_bus_received_message_mock)
 
 
-@patch('service_bus.deployment_status_update.WorkspaceRepository')
+@patch('service_bus.deployment_status_update.ResourceRepository')
 @patch('logging.error')
 @patch('service_bus.deployment_status_update.ServiceBusClient')
 @patch('fastapi.FastAPI')
