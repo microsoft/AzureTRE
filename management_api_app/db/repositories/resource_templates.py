@@ -21,7 +21,7 @@ class ResourceTemplateRepository(BaseRepository):
         return f'SELECT * FROM c WHERE c.resourceType = "{resource_type}" AND c.name = "{name}"'
 
     def get_basic_resource_template_information(self, resource_type: ResourceType) -> List[ResourceTemplateInformation]:
-        resource_template_info_query = f'SELECT c.name, c.description FROM c WHERE c.resourceType = "{resource_type}"'
+        resource_template_info_query = f'SELECT c.name, c.description FROM c WHERE c.resourceType = "{resource_type}" AND c.current = TRUE'
         resource_templates = self.query(query=resource_template_info_query)
         return [parse_obj_as(ResourceTemplateInformation, info) for info in resource_templates]
 
