@@ -2,7 +2,6 @@ import uuid
 from typing import List
 
 from azure.cosmos import CosmosClient
-from jsonschema import validate
 from pydantic import parse_obj_as, UUID4
 
 from core import config

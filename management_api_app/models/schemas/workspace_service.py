@@ -1,9 +1,9 @@
 from pydantic import BaseModel, Field
 
-from models.domain.workspace import Workspace
+from models.domain.workspace_service import WorkspaceService
 
 
-def get_sample_workspace(workspace_id: str, spec_workspace_id: str = "0001") -> dict:
+def get_sample_workspace(workspace_id: str) -> dict:
     return {
         "id": workspace_id,
         "workspaceId": "7289ru33-7265-4b5f-9eae-a1a62928772e",
@@ -24,8 +24,8 @@ def get_sample_workspace(workspace_id: str, spec_workspace_id: str = "0001") -> 
     }
 
 
-class WorkspaceInResponse(BaseModel):
-    workspace: Workspace
+class WorkspaceServiceInResponse(BaseModel):
+    workspaceService: WorkspaceService
 
     class Config:
         schema_extra = {

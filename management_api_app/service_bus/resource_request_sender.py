@@ -49,6 +49,5 @@ async def _send_message(message: ServiceBusMessage, queue: str):
 
         async with service_bus_client:
             sender = service_bus_client.get_queue_sender(queue_name=queue)
-
             async with sender:
                 await sender.send_messages(message)

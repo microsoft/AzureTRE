@@ -6,9 +6,8 @@ import pytest
 from db.errors import EntityDoesNotExist
 from db.repositories.workspace_services import WorkspaceServiceRepository
 from models.domain.resource import Deployment, Status, ResourceType
-from models.domain.workspace import Workspace
 from models.domain.workspace_service import WorkspaceService
-from models.schemas.workspace import WorkspaceInCreate, AuthenticationConfiguration, AuthProvider
+from models.schemas.workspace import AuthenticationConfiguration, AuthProvider
 from models.schemas.workspace_service import WorkspaceServiceInCreate
 
 

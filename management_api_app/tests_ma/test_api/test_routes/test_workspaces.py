@@ -176,8 +176,7 @@ async def test_workspace_services_post_creates_workspace_service(create_workspac
     input_data = create_sample_workspace_service_input_data()
 
     response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE, workspace_id=workspace_id), json=input_data)
-    print(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE, workspace_id=workspace_id))
-    print(response.json())
+
     assert response.status_code == status.HTTP_202_ACCEPTED
     assert response.json()["workspaceServiceId"] == workspace_service_id
 

@@ -10,9 +10,9 @@ from pydantic import ValidationError, parse_obj_as
 from core import config
 from api.dependencies.database import get_db_client
 from db.errors import EntityDoesNotExist
-from db.repositories.workspaces import WorkspaceRepository
-from models.domain.resource import Status, Resource
-from models.domain.workspace import DeploymentStatusUpdateMessage, Workspace
+from db.repositories.resources import ResourceRepository
+from models.domain.resource import Status
+from models.domain.workspace import DeploymentStatusUpdateMessage
 from resources import strings
 
 
@@ -73,11 +73,11 @@ def create_updated_deployment_document(workspace: dict, message: DeploymentStatu
     return workspace
 
 
-def update_status_in_database(workspace_repo: WorkspaceRepository, message: DeploymentStatusUpdateMessage):
+def update_status_in_database(resource_repo: ResourceRepository, message: DeploymentStatusUpdateMessage):
     """Updates the deployment sub document with message content
 
     Args:
-        workspace_repo ([WorkspaceRepository]): Handle to the workspace repository
+        resource_repo ([ResourceRepository]): Handle to the workspace repository
         message ([DeploymentStatusUpdateMessage]): Message which contains the updated information
 
     Returns:
@@ -86,8 +86,8 @@ def update_status_in_database(workspace_repo: WorkspaceRepository, message: Depl
     result = False
 
     try:
-        workspace = workspace_repo.get_resource_dict_by_id(message.id)
-        workspace_repo.update_resource_dict(create_updated_deployment_document(workspace, message))
+        workspace = resource_repo.get_resource_dict_by_id(message.id)
+        resource_repo.update_resource_dict(create_updated_deployment_document(workspace, message))
         result = True
     except EntityDoesNotExist:
         # Marking as true as this message will never succeed anyways and should be removed from the queue.
@@ -111,8 +111,8 @@ async def receive_message_and_update_deployment(app: FastAPI) -> None:
 
     try:
         async for message in receive_message_gen:
-            workspace_repo = WorkspaceRepository(get_db_client(app))
-            result = update_status_in_database(workspace_repo, message)
+            resource_repo = ResourceRepository(get_db_client(app))
+            result = update_status_in_database(resource_repo, message)
             await receive_message_gen.asend(result)
     except StopAsyncIteration:  # the async generator when finished signals end with this exception.
         pass
