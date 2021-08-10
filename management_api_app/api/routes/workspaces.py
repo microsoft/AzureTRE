@@ -85,7 +85,7 @@ async def delete_workspace(
     workspace_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository)),
     workspace_service_repo: WorkspaceServiceRepository = Depends(get_repository(WorkspaceServiceRepository))
 ):
-    if not workspace.is_enabled():
+    if workspace.is_enabled():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION)
     if len(workspace_service_repo.get_active_workspace_services_for_workspace(workspace.id)) > 0:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_SERVICES_NEED_TO_BE_DELETED_BEFORE_WORKSPACE)

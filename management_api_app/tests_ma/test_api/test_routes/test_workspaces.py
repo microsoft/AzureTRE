@@ -7,6 +7,8 @@ from starlette import status
 
 from api.routes.workspaces import get_current_user
 from db.errors import EntityDoesNotExist
+from db.repositories.workspaces import WorkspaceRepository
+from db.repositories.workspace_services import WorkspaceServiceRepository
 from models.domain.authentication import User
 from models.domain.resource import Status, Deployment
 from models.domain.workspace import Workspace
@@ -19,7 +21,6 @@ pytestmark = pytest.mark.asyncio
 def create_sample_workspace_object(workspace_id, auth_info: dict = None):
     workspace = Workspace(
         id=workspace_id,
-        description="My workspace",
         resourceTemplateName="tre-workspace-vanilla",
         resourceTemplateVersion="0.1.0",
         resourceTemplateParameters={},
@@ -153,7 +154,7 @@ async def test_workspaces_post_returns_202_on_successful_create(validate_workspa
 
 
 # [POST] /workspaces/
-@ patch("service_bus.resource_request_sender.send_resource_request_message")
+@ patch("api.routes.workspaces.send_resource_request_message")
 @ patch("api.routes.workspaces.WorkspaceRepository.save_workspace")
 @ patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item")
 @ patch("api.routes.workspaces.WorkspaceRepository._validate_workspace_parameters")
@@ -187,7 +188,7 @@ async def test_workspaces_post_returns_400_if_template_does_not_exist(validate_w
 
 # [PATCH] /workspaces/{workspace_id}
 @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
-async def test_workspaces_patch_returns_400_if_workspace_does_not_exist(get_workspace_mock, app: FastAPI, client: AsyncClient, admin_user: User):
+async def test_workspaces_patch_returns_404_if_workspace_does_not_exist(get_workspace_mock, app: FastAPI, client: AsyncClient, admin_user: User):
     app.dependency_overrides[get_current_user] = admin_user
 
     get_workspace_mock.side_effect = EntityDoesNotExist
@@ -198,3 +199,96 @@ async def test_workspaces_patch_returns_400_if_workspace_does_not_exist(get_work
     response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=workspace_id), json=input_data)
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+# [DELETE] /workspaces/{workspace_id}
+@ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+async def test_workspace_delete_returns_400_if_workspace_is_enabled(get_workspace_mock, app: FastAPI, client: AsyncClient, admin_user: User):
+    app.dependency_overrides[get_current_user] = admin_user
+    workspace_id = "933ad738-7265-4b5f-9eae-a1a62928772e"
+    workspace = create_sample_workspace_object(workspace_id)
+    workspace.resourceTemplateParameters["enabled"] = True
+    get_workspace_mock.return_value = workspace
+
+    response = await client.delete(app.url_path_for(strings.API_DELETE_WORKSPACE, workspace_id=workspace_id))
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+@pytest.fixture
+def disabled_workspace() -> Workspace:
+    workspace = create_sample_workspace_object("abc")
+    workspace.resourceTemplateParameters["enabled"] = False
+    return workspace
+
+
+# [DELETE] /workspaces/{workspace_id}
+@ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+@ patch("api.routes.workspaces.WorkspaceServiceRepository.get_active_workspace_services_for_workspace")
+async def test_workspace_delete_returns_400_if_associated_workspace_services_are_not_deleted(get_active_workspace_services_for_workspace_mock, get_workspace_mock, disabled_workspace, app: FastAPI, client: AsyncClient, admin_user: User):
+    app.dependency_overrides[get_current_user] = admin_user
+    get_workspace_mock.return_value = disabled_workspace
+    get_active_workspace_services_for_workspace_mock.return_value = ["some workspace service that is not deleted"]
+
+    response = await client.delete(app.url_path_for(strings.API_DELETE_WORKSPACE, workspace_id="933ad738-7265-4b5f-9eae-a1a62928772e"))
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+# [DELETE] /workspaces/{workspace_id}
+@ patch("api.dependencies.workspaces.get_repository")
+@ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+@ patch("api.routes.workspaces.WorkspaceServiceRepository.get_active_workspace_services_for_workspace")
+@ patch('azure.cosmos.CosmosClient')
+@ patch('api.routes.workspaces.WorkspaceRepository.delete_workspace')
+@ patch('api.routes.workspaces.send_resource_request_message')
+async def test_workspace_delete_deletes_workspace(send_request_message_mock, delete_workspace_mock, cosmos_client_mock, get_active_workspace_services_for_workspace_mock, get_workspace_mock, get_repository_mock, disabled_workspace, app: FastAPI, client: AsyncClient, admin_user: User):
+    app.dependency_overrides[get_current_user] = admin_user
+
+    get_workspace_mock.return_value = disabled_workspace
+    get_active_workspace_services_for_workspace_mock.return_value = []
+    get_repository_mock.side_effects = [WorkspaceRepository(cosmos_client_mock), WorkspaceServiceRepository(cosmos_client_mock)]
+
+    await client.delete(app.url_path_for(strings.API_DELETE_WORKSPACE, workspace_id="933ad738-7265-4b5f-9eae-a1a62928772e"))
+
+    delete_workspace_mock.assert_called_once()
+
+
+# [DELETE] /workspaces/{workspace_id}
+@ patch("api.dependencies.workspaces.get_repository")
+@ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+@ patch("api.routes.workspaces.WorkspaceServiceRepository.get_active_workspace_services_for_workspace")
+@ patch('azure.cosmos.CosmosClient')
+@ patch('api.routes.workspaces.WorkspaceRepository.delete_workspace')
+@ patch('api.routes.workspaces.send_resource_request_message')
+async def test_workspace_delete_sends_a_request_message_to_uninstall_the_workspace(send_request_message_mock, delete_workspace_mock, cosmos_client_mock, get_active_workspace_services_for_workspace_mock, get_workspace_mock, get_repository_mock, disabled_workspace, app: FastAPI, client: AsyncClient, admin_user: User):
+    app.dependency_overrides[get_current_user] = admin_user
+
+    get_workspace_mock.return_value = disabled_workspace
+    get_active_workspace_services_for_workspace_mock.return_value = []
+    get_repository_mock.side_effects = [WorkspaceRepository(cosmos_client_mock), WorkspaceServiceRepository(cosmos_client_mock)]
+
+    await client.delete(app.url_path_for(strings.API_DELETE_WORKSPACE, workspace_id="933ad738-7265-4b5f-9eae-a1a62928772e"))
+
+    send_request_message_mock.assert_called_once()
+
+
+# [DELETE] /workspaces/{workspace_id}
+@ patch("api.dependencies.workspaces.get_repository")
+@ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+@ patch("api.routes.workspaces.WorkspaceServiceRepository.get_active_workspace_services_for_workspace")
+@ patch('azure.cosmos.CosmosClient')
+@ patch('api.routes.workspaces.WorkspaceRepository.delete_workspace')
+@ patch('api.routes.workspaces.send_resource_request_message')
+@ patch('api.routes.workspaces.WorkspaceRepository.mark_workspace_as_not_deleted')
+async def test_workspace_delete_reverts_the_workspace_if_service_bus_call_fails(mark_workspace_as_not_deleted_mock, send_request_message_mock, delete_workspace_mock, cosmos_client_mock, get_active_workspace_services_for_workspace_mock, get_workspace_mock, get_repository_mock, disabled_workspace, app: FastAPI, client: AsyncClient, admin_user: User):
+    app.dependency_overrides[get_current_user] = admin_user
+
+    get_workspace_mock.return_value = disabled_workspace
+    get_active_workspace_services_for_workspace_mock.return_value = []
+    get_repository_mock.side_effects = [WorkspaceRepository(cosmos_client_mock), WorkspaceServiceRepository(cosmos_client_mock)]
+    send_request_message_mock.side_effect = Exception
+
+    await client.delete(app.url_path_for(strings.API_DELETE_WORKSPACE, workspace_id="933ad738-7265-4b5f-9eae-a1a62928772e"))
+
+    # assert we revert the workspace
+    mark_workspace_as_not_deleted_mock.assert_called_once()

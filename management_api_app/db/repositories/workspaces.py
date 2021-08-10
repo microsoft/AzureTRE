@@ -56,7 +56,7 @@ class WorkspaceRepository(BaseRepository):
         except EntityDoesNotExist:
             raise ValueError(f"The workspace type '{workspace_create.workspaceType}' does not exist")
 
-        self._validate_workspace_parameters(workspace_create.dict(), current_template)
+        self._validate_workspace_parameters(workspace_create.dict(), current_template.dict())
         auth_info = extract_auth_information(workspace_create.properties["app_id"])
 
         # system generated parameters
