@@ -56,28 +56,28 @@ async def receive_message():
                         await receiver.complete_message(msg)
 
 
-def create_updated_deployment_document(workspace: dict, message: DeploymentStatusUpdateMessage):
+def create_updated_deployment_document(resource: dict, message: DeploymentStatusUpdateMessage):
     """Take a workspace and a deployment status update message and updates workspace with the message contents
 
     Args:
-        workspace ([Workspace]): Workspace to update
+        resource ([dict]): Dictionary representing a resource to update
         message ([DeploymentStatusUpdateMessage]): Message which contains the updated information
 
     Returns:
-        [Workspace]: Workspace with the deployment sub doc updated
+        [dict]: Dictionary representing a resource with the deployment sub doc updated
     """
-    if workspace["deployment"]["status"] == Status.Deployed:
-        return workspace  # Never update a deployed workspace.
-    workspace["deployment"]["status"] = message.status
-    workspace["deployment"]["message"] = message.message
-    return workspace
+    if resource["deployment"]["status"] == Status.Deployed:
+        return resource  # Never update a deployed workspace.
+    resource["deployment"]["status"] = message.status
+    resource["deployment"]["message"] = message.message
+    return resource
 
 
 def update_status_in_database(resource_repo: ResourceRepository, message: DeploymentStatusUpdateMessage):
     """Updates the deployment sub document with message content
 
     Args:
-        resource_repo ([ResourceRepository]): Handle to the workspace repository
+        resource_repo ([ResourceRepository]): Handle to the resource repository
         message ([DeploymentStatusUpdateMessage]): Message which contains the updated information
 
     Returns:

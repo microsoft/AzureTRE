@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 from models.domain.workspace_service import WorkspaceService
 
 
-def get_sample_workspace(workspace_id: str) -> dict:
+def get_sample_workspace_service(workspace_id: str) -> dict:
     return {"id": workspace_id,
             "workspaceId": "7289ru33-7265-4b5f-9eae-a1a62928772e",
             "resourceTemplateName": "guacamole",
@@ -29,7 +29,7 @@ class WorkspaceServiceInResponse(BaseModel):
     class Config:
         schema_extra = {
             "example": {
-                "workspace": get_sample_workspace("933ad738-7265-4b5f-9eae-a1a62928772e")
+                "workspace": get_sample_workspace_service("933ad738-7265-4b5f-9eae-a1a62928772e")
             }
         }
 
