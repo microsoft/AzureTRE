@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List
 
 from pydantic import BaseModel, Field
 
@@ -14,3 +14,28 @@ class ResourceTemplateInCreate(BaseModel):
 
 class ResourceTemplateInResponse(ResourceTemplate):
     system_properties: Dict[str, Property] = Field(title="System properties")
+
+
+class ResourceTemplateInformation(BaseModel):
+    name: str = Field(title="Template name")
+    description: str = Field(title="Template description")
+
+
+class ResourceTemplateInformationInList(BaseModel):
+    templates: List[ResourceTemplateInformation]
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "templates": [
+                    {
+                        "name": "tre-workspace-vanilla",
+                        "description": "vanilla description"
+                    },
+                    {
+                        "name": "tre-workspace-base",
+                        "description": "base description"
+                    }
+                ]
+            }
+        }
