@@ -6,15 +6,15 @@ from starlette import status
 
 from api.dependencies.database import get_repository
 from api.dependencies.workspaces import get_workspace_by_workspace_id_from_path
-from db.repositories.workspace_services import WorkspaceServiceRepository
-from models.schemas.workspace_service import WorkspaceServiceIdInResponse, WorkspaceServiceInCreate
-from services.authentication import get_current_user, get_current_admin_user, get_access_service
 from db.repositories.workspaces import WorkspaceRepository
+from db.repositories.workspace_services import WorkspaceServiceRepository
+from models.domain.authentication import User
 from models.domain.workspace import Workspace, WorkspaceRole
-from models.schemas.workspace import WorkspaceInCreate, WorkspaceIdInResponse, WorkspacesInList, WorkspaceInResponse
+from models.schemas.workspace import WorkspaceInCreate, WorkspaceIdInResponse, WorkspacesInList, WorkspaceInResponse, WorkspacePatchEnabled
+from models.schemas.workspace_service import WorkspaceServiceIdInResponse, WorkspaceServiceInCreate
 from resources import strings
 from service_bus.resource_request_sender import send_resource_request_message
-from models.domain.authentication import User
+from services.authentication import get_current_user, get_current_admin_user, get_access_service
 
 
 router = APIRouter(dependencies=[Depends(get_current_user)])
@@ -38,13 +38,13 @@ async def create_workspace(workspace_create: WorkspaceInCreate, workspace_repo: 
     try:
         workspace = workspace_repo.create_workspace_item(workspace_create)
     except (ValidationError, ValueError) as e:
-        logging.error(f"Failed create workspace model instance: {e}")
+        logging.error(f"Failed to create workspace model instance: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     try:
         workspace_repo.save_workspace(workspace)
     except Exception as e:
-        logging.error(f"Failed save workspace instance in DB: {e}")
+        logging.error(f"Failed to save workspace instance in DB: {e}")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
 
     try:
@@ -103,4 +103,14 @@ async def retrieve_workspace_by_workspace_id(
     if access_service.get_workspace_role(user, workspace) == WorkspaceRole.NoRole:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.ACCESS_USER_IS_NOT_OWNER_OR_RESEARCHER)
 
+    return WorkspaceInResponse(workspace=workspace)
+
+
+@router.patch("/workspaces/{workspace_id}", response_model=WorkspaceInResponse, name=strings.API_UPDATE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
+async def patch_workspace(
+        workspace_patch: WorkspacePatchEnabled,
+        workspace: Workspace = Depends(get_workspace_by_workspace_id_from_path),
+        workspace_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository))
+) -> WorkspaceInResponse:
+    workspace_repo.patch_workspace(workspace, workspace_patch)
     return WorkspaceInResponse(workspace=workspace)

@@ -1,7 +1,9 @@
 import pytest
 from httpx import AsyncClient
-from resources import strings
+
 import config
+from resources import strings
+
 
 pytestmark = pytest.mark.asyncio
 

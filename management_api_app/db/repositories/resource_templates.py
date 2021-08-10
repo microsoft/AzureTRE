@@ -9,7 +9,7 @@ from db.errors import EntityDoesNotExist
 from db.repositories.base import BaseRepository
 from models.domain.resource import ResourceType
 from models.domain.resource_template import ResourceTemplate
-from models.schemas.template import TemplateInCreate
+from models.schemas.resource_template import ResourceTemplateInCreate
 
 
 class ResourceTemplateRepository(BaseRepository):
@@ -45,7 +45,7 @@ class ResourceTemplateRepository(BaseRepository):
         workspace_template_names = [template["name"] for template in workspace_templates]
         return list(set(workspace_template_names))
 
-    def create_resource_template_item(self, template_create: TemplateInCreate,
+    def create_resource_template_item(self, template_create: ResourceTemplateInCreate,
                                       resource_type: ResourceType) -> ResourceTemplate:
         item_id = str(uuid.uuid4())
         description = template_create.json_schema["description"]

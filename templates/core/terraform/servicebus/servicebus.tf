@@ -5,7 +5,7 @@ resource "azurerm_servicebus_namespace" "sb" {
   sku                 = "Premium"
   capacity            = "1"
 
-  lifecycle { ignore_changes = [ tags ] }
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_servicebus_queue" "workspacequeue" {
@@ -28,7 +28,7 @@ resource "azurerm_private_dns_zone" "servicebus" {
   name                = "privatelink.servicebus.windows.net"
   resource_group_name = var.resource_group_name
 
-  lifecycle { ignore_changes = [ tags ] }
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "servicebuslink" {
@@ -37,7 +37,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "servicebuslink" {
   private_dns_zone_name = azurerm_private_dns_zone.servicebus.name
   virtual_network_id    = var.core_vnet
 
-  lifecycle { ignore_changes = [ tags ] }
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_endpoint" "sbpe" {
@@ -46,7 +46,7 @@ resource "azurerm_private_endpoint" "sbpe" {
   resource_group_name = var.resource_group_name
   subnet_id           = var.resource_processor_subnet_id
 
-  lifecycle { ignore_changes = [ tags ] }
+  lifecycle { ignore_changes = [tags] }
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group"

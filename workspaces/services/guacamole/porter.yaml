@@ -68,6 +68,7 @@ install:
         acr_name: "{{ bundle.parameters.acr_name }}"
         mgmt_resource_group_name: "{{ bundle.parameters.mgmt_resource_group_name }}"
         guacamole_image_tag: "{{ bundle.parameters.guacamole_image_tag }}"
+        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"

@@ -19,10 +19,8 @@ resource "azurerm_mysql_server" "gitea" {
   geo_redundant_backup_enabled      = false
   infrastructure_encryption_enabled = false
   public_network_access_enabled     = false
-
-  # SSL disabled see task: #347 
-  ssl_enforcement_enabled           = false
-  ssl_minimal_tls_version_enforced  = "TLSEnforcementDisabled"
+  ssl_enforcement_enabled           = true
+  ssl_minimal_tls_version_enforced  = "TLS1_2"
 }
 
 resource "azurerm_mysql_database" "gitea" {
@@ -34,14 +32,14 @@ resource "azurerm_mysql_database" "gitea" {
 }
 
 resource "azurerm_private_endpoint" "private-endpoint" {
-  name                = "pe-mysql-${var.tre_id}"
+  name                = "pe-${azurerm_mysql_server.gitea.name}"
   location            = var.location
   resource_group_name = local.core_resource_group_name
   subnet_id           = data.azurerm_subnet.shared.id
 
   private_service_connection {
     private_connection_resource_id = azurerm_mysql_server.gitea.id
-    name                           = "pec-mysql-${var.tre_id}"
+    name                           = "psc-${azurerm_mysql_server.gitea.name}"
     subresource_names              = ["mysqlServer"]
     is_manual_connection           = false
   }
@@ -50,4 +48,10 @@ resource "azurerm_private_endpoint" "private-endpoint" {
     name                 = "privatelink.mysql.database.azure.com"
     private_dns_zone_ids = [data.azurerm_private_dns_zone.mysql.id]
   }
+}
+
+resource "azurerm_key_vault_secret" "db_password" {
+  name         = "${azurerm_mysql_server.gitea.name}-password"
+  value        = random_password.password.result
+  key_vault_id = var.keyvault_id
 }

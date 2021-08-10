@@ -1,14 +1,13 @@
-import uuid
-from jsonschema.exceptions import ValidationError
-
-from mock import patch, MagicMock
 import pytest
+from mock import patch, MagicMock
+from jsonschema.exceptions import ValidationError
+import uuid
 
-import db.repositories.workspaces
 from db.errors import EntityDoesNotExist
+import db.repositories.workspaces
 from models.domain.resource import Deployment, Status, ResourceType
 from models.domain.workspace import Workspace
-from models.schemas.workspace import WorkspaceInCreate, AuthenticationConfiguration, AuthProvider
+from models.schemas.workspace import WorkspaceInCreate, WorkspacePatchEnabled
 
 
 @pytest.fixture
@@ -20,7 +19,7 @@ def basic_workspace_request():
 def test_get_all_active_workspaces_calls_db_with_correct_query(cosmos_client_mock):
     workspace_repo = db.repositories.workspaces.WorkspaceRepository(cosmos_client_mock)
     workspace_repo.container.query_items = MagicMock()
-    expected_query = 'SELECT * FROM c WHERE c.resourceType = "workspace" AND c.isDeleted = false'
+    expected_query = 'SELECT * FROM c WHERE c.resourceType = "workspace" AND c.deleted = false'
 
     workspace_repo.get_all_active_workspaces()
 
@@ -38,7 +37,7 @@ def test_get_workspace_by_id_calls_db_with_correct_query(cosmos_client_mock):
         "deployment": {"status": Status.NotDeployed, "message": ""}
     }
     workspace_repo.container.query_items = MagicMock(return_value=[return_workspace])
-    expected_query = f'SELECT * FROM c WHERE c.resourceType = "workspace" AND c.isDeleted = false AND c.id="{str(workspace_id)}"'
+    expected_query = f'SELECT * FROM c WHERE c.resourceType = "workspace" AND c.deleted = false AND c.id="{str(workspace_id)}"'
 
     workspace_repo.get_workspace_by_workspace_id(workspace_id)
 
@@ -74,11 +73,11 @@ def test_create_workspace_item_creates_a_workspace_with_the_right_values(cosmos_
 
     workspace = workspace_repo.create_workspace_item(workspace_to_create)
 
-    assert workspace.displayName == basic_workspace_request.properties["display_name"]
-    assert workspace.description == basic_workspace_request.properties["description"]
     assert workspace.resourceTemplateName == basic_workspace_request.workspaceType
     assert workspace.resourceType == ResourceType.Workspace
     assert workspace.deployment.status == Status.NotDeployed
+    assert "display_name" in workspace.resourceTemplateParameters
+    assert "description" in workspace.resourceTemplateParameters
     assert "azure_location" in workspace.resourceTemplateParameters
     assert "workspace_id" in workspace.resourceTemplateParameters
     assert "tre_id" in workspace.resourceTemplateParameters
@@ -94,9 +93,6 @@ def test_create_workspace_item_raises_value_error_if_template_is_invalid(cosmos_
 
     workspace_to_create = WorkspaceInCreate(
         workspaceType="vanilla-tre",
-        displayName="my workspace",
-        description="some description",
-        authConfig=AuthenticationConfiguration(provider=AuthProvider.AAD, data={})
     )
     _get_current_workspace_template_mock.side_effect = EntityDoesNotExist
 
@@ -142,3 +138,24 @@ def test_create_workspace_item_does_not_accept_invalid_payload(cosmos_client_moc
         workspace_repo.create_workspace_item(workspace_to_create)
 
     assert exc_info.value.message == "'display_name' is a required property"
+
+
+@patch('azure.cosmos.CosmosClient')
+def test_patch_workspace_updates_item(cosmos_client_mock):
+    workspace_repo = db.repositories.workspaces.WorkspaceRepository(cosmos_client_mock)
+    workspace_repo.container.upsert_item = MagicMock()
+    workspace_to_patch = Workspace(
+        id="1234",
+        resourceTemplateName="vanilla-tre",
+        resourceTemplateVersion="0.1.0",
+        resourceTemplateParameters={},
+        deployment=Deployment(status=Status.NotDeployed, message=""),
+    )
+    workspace_patch = WorkspacePatchEnabled(enabled=False)
+    patched_workspace_dict = workspace_to_patch.dict()
+    patched_workspace_dict["resourceTemplateParameters"]["enabled"] = False
+
+    workspace_repo.patch_workspace(workspace_to_patch, workspace_patch)
+
+    workspace_repo.container.upsert_item.assert_called_once_with(body=patched_workspace_dict)
+    assert workspace_to_patch.resourceTemplateParameters["enabled"] is False

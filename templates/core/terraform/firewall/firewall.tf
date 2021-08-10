@@ -56,8 +56,8 @@ resource "azurerm_monitor_diagnostic_setting" "firewall" {
       enabled = false
       days    = 0
     }
-  } 
-   log {
+  }
+  log {
 
     category = "AzureFirewallNetworkRule"
     enabled  = true

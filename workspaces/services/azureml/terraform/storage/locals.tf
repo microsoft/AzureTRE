@@ -10,5 +10,5 @@ resource "random_string" "unique_id" {
 
 locals {
   service_resource_name_suffix = "${var.tre_id}-ws-${var.workspace_id}-svc-${var.service_id}"
-  storage_name             = lower(replace("stg${substr(local.service_resource_name_suffix, -8, -1)}", "-", ""))
+  storage_name                 = lower(replace("stg${substr(local.service_resource_name_suffix, -8, -1)}", "-", ""))
 }

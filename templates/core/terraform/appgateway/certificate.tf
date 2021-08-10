@@ -27,10 +27,10 @@ resource "azurerm_key_vault_certificate" "tlscert" {
       name = "Self"
     }
     key_properties {
-      key_size = 2048
+      key_size   = 2048
       exportable = true
-      key_type = "RSA"
-      reuse_key = false
+      key_type   = "RSA"
+      reuse_key  = false
     }
     secret_properties {
       content_type = "application/x-pkcs12"

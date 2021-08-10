@@ -51,6 +51,7 @@ cp templates/core/.env.sample templates/core/.env
 | `ADDRESS_SPACE` | The address space for the Azure TRE core virtual network. `/22` or larger. |
 | `MANAGEMENT_API_IMAGE_TAG` | The tag of the Management API image. Make it the same as `IMAGE_TAG` above.|
 | `RESOURCE_PROCESSOR_VMSS_PORTER_IMAGE_TAG` | The tag of the resource processor image. Make it the same as `IMAGE_TAG` above.|
+| `GITEA_IMAGE_TAG` | The tag of the Gitea image. Make it the same as `IMAGE_TAG` above.|
 | `SWAGGER_UI_CLIENT_ID` | Generated when following auth guide. Client ID for swagger client to make requests. |
 | `AAD_TENANT_ID` | Generated when following auth guide. Tenant id against which auth is performed. |
 | `API_CLIENT_ID` | Generated when following auth guide. Client id of the "TRE API". |

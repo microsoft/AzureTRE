@@ -1,5 +1,6 @@
 from enum import Enum
 from typing import List
+
 from pydantic import BaseModel, Field
 
 from models.domain.workspace import Workspace
@@ -10,6 +11,7 @@ def get_sample_workspace(workspace_id: str, spec_workspace_id: str = "0001") -> 
         "id": workspace_id,
         "displayName": "my workspace",
         "description": "some description",
+        "enabled": True,
         "resourceTemplateName": "tre-workspace-vanilla",
         "resourceTemplateVersion": "0.1.0",
         "resourceTemplateParameters": {
@@ -74,7 +76,11 @@ class WorkspaceInCreate(BaseModel):
         schema_extra = {
             "example": {
                 "workspaceType": "tre-workspace-vanilla",
-                "properties": {}
+                "properties": {
+                    "display_name": "the workspace display name",
+                    "description": "workspace description",
+                    "app_id": "9d52b04f-89cf-47b4-868a-e12be7133b36"
+                }
             }
         }
 
@@ -86,5 +92,16 @@ class WorkspaceIdInResponse(BaseModel):
         schema_extra = {
             "example": {
                 "workspaceId": "49a7445c-aae6-41ec-a539-30dfa90ab1ae",
+            }
+        }
+
+
+class WorkspacePatchEnabled(BaseModel):
+    enabled: bool
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "enabled": False
             }
         }

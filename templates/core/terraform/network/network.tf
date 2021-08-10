@@ -4,7 +4,7 @@ resource "azurerm_virtual_network" "core" {
   resource_group_name = var.resource_group_name
   address_space       = [var.address_space]
 
-  lifecycle { ignore_changes = [ tags ] }
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_subnet" "bastion" {
@@ -22,10 +22,10 @@ resource "azurerm_subnet" "azure_firewall" {
 }
 
 resource "azurerm_subnet" "app_gw" {
-  name                 = "AppGwSubnet"
-  virtual_network_name = azurerm_virtual_network.core.name
-  resource_group_name  = var.resource_group_name
-  address_prefixes     = [local.app_gw_subnet_address_prefix]
+  name                                           = "AppGwSubnet"
+  virtual_network_name                           = azurerm_virtual_network.core.name
+  resource_group_name                            = var.resource_group_name
+  address_prefixes                               = [local.app_gw_subnet_address_prefix]
   enforce_private_link_endpoint_network_policies = true
   enforce_private_link_service_network_policies  = true
 }
@@ -80,23 +80,23 @@ resource "azurerm_network_profile" "aciprofile" {
     }
   }
 
-  lifecycle { ignore_changes = [ tags ] }
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_subnet" "shared" {
-  name                                           = "SharedSubnet"
-  virtual_network_name                           = azurerm_virtual_network.core.name
-  resource_group_name                            = var.resource_group_name
-  address_prefixes                               = [local.shared_services_subnet_address_prefix]
+  name                 = "SharedSubnet"
+  virtual_network_name = azurerm_virtual_network.core.name
+  resource_group_name  = var.resource_group_name
+  address_prefixes     = [local.shared_services_subnet_address_prefix]
   # notice that private endpoints do not adhere to NSG rules
   enforce_private_link_endpoint_network_policies = true
 }
 
 resource "azurerm_subnet" "resource_processor" {
-  name                                           = "ResourceProcessorSubnet"
-  virtual_network_name                           = azurerm_virtual_network.core.name
-  resource_group_name                            = var.resource_group_name
-  address_prefixes                               = [local.resource_processor_subnet_address_prefix]
+  name                 = "ResourceProcessorSubnet"
+  virtual_network_name = azurerm_virtual_network.core.name
+  resource_group_name  = var.resource_group_name
+  address_prefixes     = [local.resource_processor_subnet_address_prefix]
   # notice that private endpoints do not adhere to NSG rules
   enforce_private_link_endpoint_network_policies = true
 }

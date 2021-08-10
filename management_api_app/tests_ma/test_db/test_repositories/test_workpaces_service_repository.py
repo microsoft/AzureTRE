@@ -35,8 +35,6 @@ def test_create_workspace_item_creates_a_workspace_with_the_right_values(cosmos_
     workspace_id = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
     workspace_service = workspace_service_repo.create_workspace_service_item(workspace_to_create, workspace_id)
 
-    assert workspace_service.displayName == basic_workspace_service_request.properties["display_name"]
-    assert workspace_service.description == basic_workspace_service_request.properties["description"]
     assert workspace_service.resourceTemplateName == basic_workspace_service_request.workspaceServiceType
     assert workspace_service.resourceType == ResourceType.WorkspaceService
     assert workspace_service.deployment.status == Status.NotDeployed

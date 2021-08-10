@@ -3,19 +3,18 @@ import pytest
 from mock import patch
 
 from fastapi import FastAPI
-from starlette import status
 from httpx import AsyncClient
+from pydantic import parse_obj_as
+from starlette import status
 
-from models.domain.resource import ResourceType
-from models.schemas.workspace_service_template import WorkspaceServiceTemplateInCreate
-from resources import strings
 from api.routes.workspaces import get_current_user
 from db.errors import EntityDoesNotExist
+from models.domain.resource import ResourceType
 from models.domain.resource_template import ResourceTemplate
+from models.schemas.workspace_service_template import WorkspaceServiceTemplateInCreate
 from models.schemas.workspace_template import WorkspaceTemplateInResponse, WorkspaceTemplateInCreate
-
+from resources import strings
 from services.concatjsonschema import enrich_workspace_service_schema_defs
-from pydantic import parse_obj_as
 
 pytestmark = pytest.mark.asyncio
 

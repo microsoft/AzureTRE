@@ -3,7 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=2.64.0"
+      version = "=2.71.0"
     }
   }
 
@@ -117,36 +117,6 @@ module "identity" {
   servicebus_namespace = module.servicebus.servicebus_namespace
 }
 
-module "resource_processor_function_cnab_driver" {
-  count                                      = var.resource_processor_type == "function_cnab_driver" ? 1 : 0
-  source                                     = "./processor_function"
-  tre_id                                     = var.tre_id
-  location                                   = var.location
-  resource_group_name                        = azurerm_resource_group.core.name
-  app_insights_connection_string             = azurerm_application_insights.core.connection_string
-  app_insights_instrumentation_key           = azurerm_application_insights.core.instrumentation_key
-  app_service_plan_id                        = module.api-webapp.app_service_plan_id
-  storage_account_name                       = module.storage.storage_account_name
-  storage_account_access_key                 = module.storage.storage_account_access_key
-  storage_state_path                         = module.storage.storage_state_path
-  core_vnet                                  = module.network.core
-  aci_subnet                                 = module.network.aci
-  docker_registry_username                   = var.docker_registry_username
-  docker_registry_password                   = var.docker_registry_password
-  docker_registry_server                     = var.docker_registry_server
-  service_bus_connection_string              = module.servicebus.connection_string
-  service_bus_resource_request_queue         = module.servicebus.workspacequeue
-  service_bus_deployment_status_update_queue = module.servicebus.service_bus_deployment_status_update_queue
-  mgmt_storage_account_name                  = var.mgmt_storage_account_name
-  mgmt_resource_group_name                   = var.mgmt_resource_group_name
-  terraform_state_container_name             = var.terraform_state_container_name
-  porter_output_container_name               = var.porter_output_container_name
-  arm_client_id                              = var.resource_processor_client_id
-  arm_client_secret                          = var.resource_processor_client_secret
-  management_api_image_tag                   = var.management_api_image_tag
-  managed_identity                           = module.identity.managed_identity
-}
-
 module "resource_processor_vmss_porter" {
   count                                           = var.resource_processor_type == "vmss_porter" ? 1 : 0
   source                                          = "./resource_processor/vmss_porter"
@@ -250,20 +220,23 @@ module "bastion" {
 }
 
 module "gitea" {
-  count = var.deploy_gitea == true ? 1 : 0
+  count                  = var.deploy_gitea == true ? 1 : 0
+  source                 = "../../shared_services/gitea/terraform"
+  tre_id                 = var.tre_id
+  location               = var.location
+  image_tag              = var.gitea_image_tag
+  docker_registry_server = data.azurerm_container_registry.mgmt_acr.login_server
+  acr_id                 = data.azurerm_container_registry.mgmt_acr.id
+  keyvault_id            = module.keyvault.keyvault_id
+  storage_account_name   = module.storage.storage_account_name
 
-  source   = "../../shared_services/gitea/terraform"
-  tre_id   = var.tre_id
-  location = var.location
-  
   depends_on = [
     module.network
   ]
 }
 
 module "nexus" {
-  count = var.deploy_nexus == true ? 1 : 0
-
+  count                = var.deploy_nexus == true ? 1 : 0
   source               = "../../shared_services/sonatype-nexus/terraform"
   tre_id               = var.tre_id
   location             = var.location

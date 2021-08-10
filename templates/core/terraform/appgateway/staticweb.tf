@@ -1,28 +1,28 @@
 data "azurerm_client_config" "deployer" {}
 
 resource "azurerm_storage_account" "staticweb" {
-    name = local.staticweb_storage_name
-    resource_group_name = var.resource_group_name
-    location = var.location
-    account_kind = "StorageV2"
-    account_tier = "Standard"
-    account_replication_type = "LRS"
-    enable_https_traffic_only = true
-    allow_blob_public_access = false
-    static_website {
-      index_document = "index.html"
-      error_404_document = "404.html"
-    }
-    tags = {
-        tre_id = var.tre_id
-    }
+  name                      = local.staticweb_storage_name
+  resource_group_name       = var.resource_group_name
+  location                  = var.location
+  account_kind              = "StorageV2"
+  account_tier              = "Standard"
+  account_replication_type  = "LRS"
+  enable_https_traffic_only = true
+  allow_blob_public_access  = false
+  static_website {
+    index_document     = "index.html"
+    error_404_document = "404.html"
+  }
+  tags = {
+    tre_id = var.tre_id
+  }
 
-    lifecycle { ignore_changes = [ tags ] }
+  lifecycle { ignore_changes = [tags] }
 
-    network_rules {
-      bypass         = ["AzureServices"]
-      default_action = "Deny"
-    }
+  network_rules {
+    bypass         = ["AzureServices"]
+    default_action = "Deny"
+  }
 }
 
 # Assign the identity deploying data contibutor rights.
@@ -39,7 +39,7 @@ resource "azurerm_private_endpoint" "webpe" {
   resource_group_name = var.resource_group_name
   subnet_id           = var.shared_subnet
 
-  lifecycle { ignore_changes = [ tags ] }
+  lifecycle { ignore_changes = [tags] }
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group-web"

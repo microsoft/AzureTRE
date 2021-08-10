@@ -124,5 +124,5 @@ Inbound traffic from the Internet is only allowed through the Application Gatewa
 | `AppGwSubnet` | Subnet for Azure Application Gateway controlling ingress traffic. |
 | `AzureFirewallSubnet` | Subnet for Azure Firewall controlling egress traffic. |
 | `ResourceProcessorSubnet` | Subnet for VMSS used by the Composition Service to host Docker containers to execute Porter bundles that deploys Workspaces. |
-| `WebAppSubnet` | Subnet for Management API and Resource Processor Function. |
+| `WebAppSubnet` | Subnet for Management API. |
 | `SharedSubnet` | Shared Services subnet for all things shared by TRE Management and Workspaces. Future Shared Services are Firewall Shared Service, Source Mirror Shared Service and Package Mirror Shared Service. |

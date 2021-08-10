@@ -2,21 +2,20 @@ import uuid
 from typing import List
 
 from azure.cosmos import CosmosClient
+from jsonschema import validate
 from pydantic import parse_obj_as, UUID4
 
 from core import config
-from db.repositories.resources import ResourceRepository
-from resources import strings
 from db.errors import EntityDoesNotExist
-from models.domain.workspace import Workspace
-from db.repositories.base import BaseRepository
+from db.repositories.resources import ResourceRepository
+from db.repositories.resource_templates import ResourceTemplateRepository
 from models.domain.resource import Deployment, Status, ResourceType
 from models.domain.resource_template import ResourceTemplate
-from models.schemas.workspace import WorkspaceInCreate
-from db.repositories.resource_templates import ResourceTemplateRepository
-from services.concatjsonschema import enrich_workspace_schema_defs
-from jsonschema import validate
+from models.domain.workspace import Workspace
+from models.schemas.workspace import WorkspaceInCreate, WorkspacePatchEnabled
+from resources import strings
 from services.authentication import extract_auth_information
+from services.concatjsonschema import enrich_workspace_schema_defs
 
 
 class WorkspaceRepository(ResourceRepository):
@@ -25,12 +24,16 @@ class WorkspaceRepository(ResourceRepository):
 
     @staticmethod
     def _active_workspaces_query():
-        return 'SELECT * FROM c WHERE c.isDeleted = false'
+        return 'SELECT * FROM c WHERE c.resourceType = "workspace" AND c.deleted = false'
 
     def _get_current_workspace_template(self, template_name) -> ResourceTemplate:
         workspace_template_repo = ResourceTemplateRepository(self._client)
         template = workspace_template_repo.get_current_resource_template_by_name(template_name, ResourceType.Workspace)
         return enrich_workspace_schema_defs(template)
+
+    @staticmethod
+    def _validate_workspace_parameters(workspace_create, workspace_template):
+        validate(instance=workspace_create["properties"], schema=workspace_template)
 
     def get_all_active_workspaces(self) -> List[Workspace]:
         query = self._active_workspaces_query()
@@ -76,8 +79,6 @@ class WorkspaceRepository(ResourceRepository):
 
         workspace = Workspace(
             id=full_workspace_id,
-            displayName=workspace_create.properties["display_name"],
-            description=workspace_create.properties["description"],
             resourceTemplateName=workspace_create.workspaceType,
             resourceTemplateVersion=template_version,
             resourceTemplateParameters=resource_spec_parameters,
@@ -95,3 +96,7 @@ class WorkspaceRepository(ResourceRepository):
 
     def update_resource_dict(self, resource_dict: dict):
         self.container.upsert_item(body=resource_dict)
+
+    def patch_workspace(self, workspace: Workspace, workspace_patch: WorkspacePatchEnabled):
+        workspace.resourceTemplateParameters["enabled"] = workspace_patch.enabled
+        self.container.upsert_item(body=workspace.dict())

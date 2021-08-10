@@ -1,10 +1,10 @@
 from fastapi import Depends, HTTPException, status
 
+from models.domain.authentication import User
 from models.schemas.workspace import AuthProvider
 from resources import strings
 from services.aad_authentication import authorize
 from services.aad_access_service import AADAccessService
-from models.domain.authentication import User
 from services.access_service import AccessService, AuthConfigValidationError
 
 

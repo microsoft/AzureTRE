@@ -11,7 +11,7 @@ resource "azurerm_resource_group" "mgmt" {
   name     = var.mgmt_resource_group_name
   location = var.location
 
-  lifecycle { ignore_changes = [ tags ] }
+  lifecycle { ignore_changes = [tags] }
 }
 
 
@@ -25,7 +25,7 @@ resource "azurerm_storage_account" "state_storage" {
   account_replication_type = "LRS"
   allow_blob_public_access = false
 
-  lifecycle { ignore_changes = [ tags ] }
+  lifecycle { ignore_changes = [tags] }
 }
 
 #
@@ -38,5 +38,5 @@ resource "azurerm_container_registry" "shared_acr" {
   sku                 = var.acr_sku
   admin_enabled       = true
 
-  lifecycle { ignore_changes = [ tags ] }
+  lifecycle { ignore_changes = [tags] }
 }

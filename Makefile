@@ -1,8 +1,8 @@
-.PHONY: bootstrap-init mgmt-deploy mgmt-destroy build-api-image push-api-image build-cnab-image push-cnab-image deploy-tre destroy-tre letsencrypt
+.PHONY: bootstrap-init mgmt-deploy mgmt-destroy build-api-image push-api-image deploy-tre destroy-tre letsencrypt
 
 SHELL:=/bin/bash
 
-all: bootstrap mgmt-deploy build-api-image push-api-image build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image tre-deploy
+all: bootstrap mgmt-deploy build-api-image push-api-image build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image build-gitea-image push-gitea-image tre-deploy
 
 bootstrap:
 	echo -e "\n\e[34m»»» 🧩 \e[96mBootstrap Terraform\e[0m..." \
@@ -31,20 +31,19 @@ build-api-image:
 	&& . ./devops/scripts/set_docker_sock_permission.sh \
 	&& docker build -t "$${ACR_NAME}.azurecr.io/microsoft/azuretre/management-api:$${IMAGE_TAG}" ./management_api_app/
 
-build-cnab-image:
-	echo -e "\n\e[34m»»» 🧩 \e[96mBuilding CNAB Image\e[0m..." \
-	&& . ./devops/scripts/check_dependencies.sh \
-	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& . ./devops/scripts/set_docker_sock_permission.sh \
-	&& docker build -t "$${ACR_NAME}.azurecr.io/microsoft/azuretre/cnab-aci:$${IMAGE_TAG}" ./CNAB_container/
-
-
 build-resource-processor-vm-porter-image:
 	echo -e "\n\e[34m»»» 🧩 \e[96mBuilding Image\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/set_docker_sock_permission.sh \
-	&& docker build -t "$${ACR_NAME}.azurecr.io/microsoft/azuretre/resource-processor-vm-porter:$${IMAGE_TAG}" -f ./processor_function/vm_porter/Dockerfile ./processor_function/
+	&& docker build -t "$${ACR_NAME}.azurecr.io/microsoft/azuretre/resource-processor-vm-porter:$${IMAGE_TAG}" -f ./resource_processor/vmss_porter/Dockerfile ./resource_processor/
+
+build-gitea-image:
+	echo -e "\n\e[34m»»» 🧩 \e[96mBuilding Gitea Image\e[0m..." \
+	&& . ./devops/scripts/check_dependencies.sh \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& . ./devops/scripts/set_docker_sock_permission.sh \
+	&& docker build -t "$${ACR_NAME}.azurecr.io/microsoft/azuretre/gitea:$${IMAGE_TAG}" -f ./templates/shared_services/gitea/Dockerfile .
 
 push-resource-processor-vm-porter-image:
 	echo -e "\n\e[34m»»» 🧩 \e[96mPushing Images\e[0m..." \
@@ -61,14 +60,14 @@ push-api-image:
 	&& . ./devops/scripts/set_docker_sock_permission.sh \
 	&& az acr login -n $${ACR_NAME} \
 	&& docker push "$${ACR_NAME}.azurecr.io/microsoft/azuretre/management-api:$${IMAGE_TAG}"
-
-push-cnab-image:
-	echo -e "\n\e[34m»»» 🧩 \e[96mPushing Images\e[0m..." \
+	
+push-gitea-image:
+	echo -e "\n\e[34m»»» 🧩 \e[96mPushing Gitea Image\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/set_docker_sock_permission.sh \
 	&& az acr login -n $${ACR_NAME} \
-	&& docker push "$${ACR_NAME}.azurecr.io/microsoft/azuretre/cnab-aci:$${IMAGE_TAG}"
+	&& docker push "$${ACR_NAME}.azurecr.io/microsoft/azuretre/gitea:$${IMAGE_TAG}"	
 
 tre-deploy:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDeploying TRE\e[0m..." \
@@ -78,12 +77,6 @@ tre-deploy:
 	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
 	&& cd ./templates/core/terraform/ && ./deploy.sh
-
-deploy-processor-function:
-	echo -e "\n\e[34m»»» 🧩 \e[96mDeploying processor function\e[0m..." \
-	&& . ./devops/scripts/check_dependencies.sh nodocker \
-	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
-	&& cd ./processor_function && func azure functionapp publish "processor-func-$${TRE_ID}" --python
 
 letsencrypt:
 	echo -e "\n\e[34m»»» 🧩 \e[96mRequesting LetsEncrypt SSL certificate\e[0m..." \

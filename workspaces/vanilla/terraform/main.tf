@@ -3,7 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=2.64.0"
+      version = "=2.71.0"
     }
   }
 
@@ -23,7 +23,7 @@ resource "azurerm_resource_group" "ws" {
     source  = "https://github.com/microsoft/AzureTRE/"
   }
 
-  lifecycle { ignore_changes = [ tags ] }
+  lifecycle { ignore_changes = [tags] }
 }
 
 module "network" {

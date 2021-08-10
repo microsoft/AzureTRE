@@ -5,8 +5,8 @@ from pathlib import Path
 from azure.cosmos import CosmosClient, PartitionKey, DatabaseProxy
 from fastapi import FastAPI
 
-from core import config
 from api.dependencies.database import get_db_client
+from core import config
 
 
 # Bootstrapping is temporary while the API does not have a register spec api implemented.
