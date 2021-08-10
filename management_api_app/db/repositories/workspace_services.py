@@ -31,7 +31,7 @@ class WorkspaceServiceRepository(ResourceRepository):
         except EntityDoesNotExist:
             raise ValueError(f"The workspace type '{workspace_create.workspaceServiceType}' does not exist")
 
-        self._validate_workspace_parameters(workspace_create.dict(), current_template)
+        self._validate_resource_parameters(workspace_create.dict(), current_template)
 
         workspace_service = WorkspaceService(
             id=full_workspace_service_id,

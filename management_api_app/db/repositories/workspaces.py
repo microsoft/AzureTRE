@@ -32,7 +32,7 @@ class WorkspaceRepository(ResourceRepository):
         return enrich_workspace_schema_defs(template)
 
     @staticmethod
-    def _validate_workspace_parameters(workspace_create, workspace_template):
+    def _validate_resource_parameters(workspace_create, workspace_template):
         validate(instance=workspace_create["properties"], schema=workspace_template)
 
     def get_all_active_workspaces(self) -> List[Workspace]:
@@ -47,13 +47,6 @@ class WorkspaceRepository(ResourceRepository):
             raise EntityDoesNotExist
         return parse_obj_as(Workspace, workspaces[0])
 
-    def get_workspace_dict_by_workspace_id(self, workspace_id: UUID4) -> dict:
-        query = self._active_workspaces_query() + f' AND c.id="{workspace_id}"'
-        workspaces = self.query(query=query)
-        if not workspaces:
-            raise EntityDoesNotExist
-        return workspaces[0]
-
     def create_workspace_item(self, workspace_create: WorkspaceInCreate) -> Workspace:
         full_workspace_id = str(uuid.uuid4())
 
@@ -63,7 +56,7 @@ class WorkspaceRepository(ResourceRepository):
         except EntityDoesNotExist:
             raise ValueError(f"The workspace type '{workspace_create.workspaceType}' does not exist")
 
-        self._validate_workspace_parameters(workspace_create.dict(), current_template)
+        self._validate_resource_parameters(workspace_create.dict(), current_template)
         auth_info = extract_auth_information(workspace_create.properties["app_id"])
 
         # system generated parameters
@@ -93,9 +86,6 @@ class WorkspaceRepository(ResourceRepository):
 
     def update_workspace(self, workspace: Workspace):
         self.container.upsert_item(body=workspace.dict())
-
-    def update_resource_dict(self, resource_dict: dict):
-        self.container.upsert_item(body=resource_dict)
 
     def patch_workspace(self, workspace: Workspace, workspace_patch: WorkspacePatchEnabled):
         workspace.resourceTemplateParameters["enabled"] = workspace_patch.enabled

@@ -5,7 +5,6 @@ from starlette.status import HTTP_404_NOT_FOUND
 from db.errors import EntityDoesNotExist
 from db.repositories.workspaces import WorkspaceRepository
 from api.dependencies.database import get_repository
-from models.domain.resource import ResourceType
 from models.domain.workspace import Workspace
 from resources import strings
 

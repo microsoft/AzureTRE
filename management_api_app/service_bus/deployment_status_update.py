@@ -86,7 +86,7 @@ def update_status_in_database(workspace_repo: WorkspaceRepository, message: Depl
     result = False
 
     try:
-        workspace = workspace_repo.get_workspace_dict_by_workspace_id(message.id)
+        workspace = workspace_repo.get_resource_dict_by_id(message.id)
         workspace_repo.update_resource_dict(create_updated_deployment_document(workspace, message))
         result = True
     except EntityDoesNotExist:
