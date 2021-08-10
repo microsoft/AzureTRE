@@ -1,4 +1,3 @@
-import uuid
 from jsonschema.exceptions import ValidationError
 
 from mock import patch, MagicMock

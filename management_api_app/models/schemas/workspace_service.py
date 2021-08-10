@@ -4,24 +4,23 @@ from models.domain.workspace_service import WorkspaceService
 
 
 def get_sample_workspace(workspace_id: str) -> dict:
-    return {
-        "id": workspace_id,
-        "workspaceId": "7289ru33-7265-4b5f-9eae-a1a62928772e",
-        "resourceTemplateName": "guacamole",
-        "resourceTemplateVersion": "0.1.0",
-        "resourceTemplateParameters": {
-            "displayName": "my workspace service",
-            "description": "some description",
-         },
-        "deployment": {
-            "status": "not_deployed",
-            "message": "This resource is not yet deployed"
-        },
-        "deleted": False,
-        "resourceType": "workspace-service",
-        "workspaceURL": "",
-        "authInformation": {}
-    }
+    return {"id": workspace_id,
+            "workspaceId": "7289ru33-7265-4b5f-9eae-a1a62928772e",
+            "resourceTemplateName": "guacamole",
+            "resourceTemplateVersion": "0.1.0",
+            "resourceTemplateParameters": {
+                "displayName": "my workspace service",
+                "description": "some description",
+            },
+            "deployment": {
+                "status": "not_deployed",
+                "message": "This resource is not yet deployed"
+            },
+            "deleted": False,
+            "resourceType": "workspace-service",
+            "workspaceURL": "",
+            "authInformation": {}
+            }
 
 
 class WorkspaceServiceInResponse(BaseModel):
@@ -37,7 +36,8 @@ class WorkspaceServiceInResponse(BaseModel):
 
 class WorkspaceServiceInCreate(BaseModel):
     workspaceServiceType: str = Field(title="Workspace service type", description="Bundle name")
-    properties: dict = Field({}, title="Workspace service parameters", description="Values for the parameters required by the workspace resource specification")
+    properties: dict = Field({}, title="Workspace service parameters",
+                             description="Values for the parameters required by the workspace resource specification")
 
     class Config:
         schema_extra = {
