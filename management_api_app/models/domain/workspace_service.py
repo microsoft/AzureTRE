@@ -9,7 +9,7 @@ class WorkspaceService(Resource):
     workspaceId: str = Field("", title="Workspace ID", description="Service target Workspace id")
     resourceType = ResourceType.WorkspaceService
 
-    def get_resource_request_message_payload(self) -> dict:
-        message_content = super().get_resource_request_message_payload()
+    def get_resource_request_message_payload(self, action: str) -> dict:
+        message_content = super().get_resource_request_message_payload(action)
         message_content["workspaceId"] = self.workspaceId
         return message_content

@@ -83,7 +83,7 @@ async def create_workspace_service(workspace_create: WorkspaceServiceInCreate,
                             detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
 
     try:
-        await send_resource_request_message(workspace_service)
+        await send_resource_request_message(workspace_service, RequestAction.Install)
     except Exception as e:
         # TODO: Rollback DB change, issue #154
         logging.error(f"Failed send workspace service resource request message: {e}")
