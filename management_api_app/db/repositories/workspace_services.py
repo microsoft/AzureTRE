@@ -1,6 +1,8 @@
 import uuid
+from typing import List
 
 from azure.cosmos import CosmosClient
+from pydantic import parse_obj_as
 
 from db.repositories.resources import ResourceRepository
 from models.domain.workspace_service import WorkspaceService
@@ -16,6 +18,14 @@ from services.concatjsonschema import enrich_workspace_service_schema_defs
 class WorkspaceServiceRepository(ResourceRepository):
     def __init__(self, client: CosmosClient):
         super().__init__(client)
+
+    def get_active_workspace_services_for_workspace(self, workspace_id: str) -> List[WorkspaceService]:
+        """
+        returns list of "non-deleted" workspace services linked to this workspace
+        """
+        query = f'SELECT * FROM c WHERE c.resourceType = "{ResourceType.WorkspaceService}" AND c.deleted = false AND c.workspaceId = "{workspace_id}"'
+        workspace_services = self.query(query=query)
+        return parse_obj_as(List[WorkspaceService], workspace_services)
 
     def _get_current_workspace_service_template(self, template_name) -> ResourceTemplate:
         resource_template_repo = ResourceTemplateRepository(self._client)

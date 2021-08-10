@@ -1,3 +1,4 @@
+from enum import Enum
 import json
 import logging
 
@@ -10,18 +11,23 @@ from core import config
 from models.domain.resource import Resource
 
 
-async def send_resource_request_message(resource: Resource):
+class RequestAction(str, Enum):
+    Install = "install"
+    UnInstall = "uninstall"
+
+
+async def send_resource_request_message(resource: Resource, action: RequestAction = RequestAction.Install):
     """
     Creates and sends a resource request message for the resource to the Service Bus.
     The resource ID is added to the message to serve as an correlation ID for the deployment process.
 
     :param resource: The resource to deploy.
-    :type resource: Resource
+    :param action: install, uninstall etc.
     """
-    content = json.dumps(resource.get_resource_request_message_payload())
+    content = json.dumps(resource.get_resource_request_message_payload(action))
 
     resource_request_message = ServiceBusMessage(body=content, correlation_id=resource.id)
-    logging.info(f"Sending resource request message with correlation ID {resource_request_message.correlation_id}")
+    logging.info(f"Sending resource request message with correlation ID {resource_request_message.correlation_id}, action: {action}")
     await _send_message(resource_request_message, config.SERVICE_BUS_RESOURCE_REQUEST_QUEUE)
 
 
@@ -49,5 +55,6 @@ async def _send_message(message: ServiceBusMessage, queue: str):
 
         async with service_bus_client:
             sender = service_bus_client.get_queue_sender(queue_name=queue)
+
             async with sender:
                 await sender.send_messages(message)

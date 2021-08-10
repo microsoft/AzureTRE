@@ -8,7 +8,7 @@ from core import config
 from db.errors import EntityDoesNotExist
 from db.repositories.resources import ResourceRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
-from models.domain.resource import Deployment, Status, ResourceType
+from models.domain.resource import Deployment, Status
 from models.domain.resource_template import ResourceTemplate
 from models.domain.workspace import Workspace
 from models.schemas.workspace import WorkspaceInCreate, WorkspacePatchEnabled
@@ -27,8 +27,8 @@ class WorkspaceRepository(ResourceRepository):
 
     def _get_current_workspace_template(self, template_name) -> ResourceTemplate:
         workspace_template_repo = ResourceTemplateRepository(self._client)
-        template = workspace_template_repo.get_current_resource_template_by_name(template_name, ResourceType.Workspace)
-        return enrich_workspace_schema_defs(template)
+        template = workspace_template_repo.get_current_resource_template_by_name(template_name)
+        return parse_obj_as(ResourceTemplate, enrich_workspace_schema_defs(template))
 
     def get_all_active_workspaces(self) -> List[Workspace]:
         query = self._active_workspaces_query()
@@ -47,11 +47,11 @@ class WorkspaceRepository(ResourceRepository):
 
         try:
             current_template = self._get_current_workspace_template(workspace_create.workspaceType)
-            template_version = current_template["version"]
+            template_version = current_template.version
         except EntityDoesNotExist:
             raise ValueError(f"The workspace type '{workspace_create.workspaceType}' does not exist")
 
-        self._validate_resource_parameters(workspace_create.dict(), current_template)
+        self._validate_resource_parameters(workspace_create.dict(), current_template.dict())
         auth_info = extract_auth_information(workspace_create.properties["app_id"])
 
         # system generated parameters
@@ -75,6 +75,14 @@ class WorkspaceRepository(ResourceRepository):
         )
 
         return workspace
+
+    def delete_workspace(self, workspace: Workspace):
+        workspace.deleted = True
+        self.container.upsert_item(body=workspace.dict())
+
+    def mark_workspace_as_not_deleted(self, workspace):
+        workspace.deleted = False
+        self.container.upsert_item(body=workspace.dict())
 
     def save_workspace(self, workspace: Workspace):
         self.create_item(workspace)

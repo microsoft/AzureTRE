@@ -15,6 +15,35 @@ def basic_workspace_request():
     return WorkspaceInCreate(workspaceType="vanilla-tre", properties={"display_name": "test", "description": "test", "app_id": "123"})
 
 
+@pytest.fixture
+def basic_workspace_template(basic_resource_template):
+    basic_resource_template.resourceType = ResourceType.Workspace
+    basic_resource_template.required = ["display_name", "description"]
+    basic_resource_template.properties = {
+        "display_name": {
+            "type": "string",
+            "title": "Name for the workspace",
+            "description": "The name of the workspace to be displayed to users"
+        },
+        "description": {
+            "type": "string",
+            "title": "Description of the workspace",
+            "description": "Description of the workspace"
+        },
+        "address_space": {
+            "type": "string",
+            "title": "Address space",
+            "description": "Network address space to be used by the workspace"
+        },
+        "enabled": {
+            "type": "boolean",
+            "title": "Is the workspace enabled",
+            "description": "Is the workspace enabled"
+        }
+    }
+    return basic_resource_template
+
+
 @patch('azure.cosmos.CosmosClient')
 def test_get_all_active_workspaces_calls_db_with_correct_query(cosmos_client_mock):
     workspace_repo = db.repositories.workspaces.WorkspaceRepository(cosmos_client_mock)
@@ -55,21 +84,18 @@ def test_get_workspace_by_id_throws_entity_does_not_exist_if_item_does_not_exist
 
 
 @patch('db.repositories.workspaces.extract_auth_information', return_value={})
+@patch('db.repositories.workspaces.WorkspaceRepository._validate_workspace_parameters')
 @patch('db.repositories.workspaces.WorkspaceRepository._get_current_workspace_template')
 @patch('azure.cosmos.CosmosClient')
 def test_create_workspace_item_creates_a_workspace_with_the_right_values(cosmos_client_mock,
                                                                          _get_current_workspace_template_mock,
-                                                                         _,
-                                                                         basic_resource_template, basic_workspace_request):
+                                                                         _validate_workspace_parameter_mock,
+                                                                         _extract_auth_info_mock,
+                                                                         basic_workspace_template, basic_workspace_request):
 
     workspace_repo = db.repositories.workspaces.WorkspaceRepository(cosmos_client_mock)
-
     workspace_to_create = basic_workspace_request
-
-    resource_template = basic_resource_template
-    resource_template.required = ["display_name", "description"]
-
-    _get_current_workspace_template_mock.return_value = basic_resource_template.dict()
+    _get_current_workspace_template_mock.return_value = basic_workspace_template
 
     workspace = workspace_repo.create_workspace_item(workspace_to_create)
 
@@ -132,7 +158,7 @@ def test_create_workspace_item_does_not_accept_invalid_payload(cosmos_client_moc
     resource_template = basic_resource_template
     resource_template.required = ["display_name"]
 
-    _get_current_workspace_template_mock.return_value = resource_template.dict()
+    _get_current_workspace_template_mock.return_value = resource_template
 
     with pytest.raises(ValidationError) as exc_info:
         workspace_repo.create_workspace_item(workspace_to_create)
@@ -159,3 +185,39 @@ def test_patch_workspace_updates_item(cosmos_client_mock):
 
     workspace_repo.container.upsert_item.assert_called_once_with(body=patched_workspace_dict)
     assert workspace_to_patch.resourceTemplateParameters["enabled"] is False
+
+
+@patch('azure.cosmos.CosmosClient')
+def test_delete_workspace_marks_workspace_as_deleted(cosmos_client_mock):
+    workspace_repo = db.repositories.workspaces.WorkspaceRepository(cosmos_client_mock)
+    workspace_repo.container.upsert_item = MagicMock()
+
+    workspace = Workspace(
+        id="1234",
+        resourceTemplateName="vanilla-tre",
+        resourceTemplateVersion="0.1.0",
+        resourceTemplateParameters={},
+        deployment=Deployment(status=Status.NotDeployed, message=""),
+        deleted=False
+    )
+    workspace_repo.delete_workspace(workspace)
+    workspace.deleted = True
+    workspace_repo.container.upsert_item.assert_called_once_with(body=workspace)
+
+
+@patch('azure.cosmos.CosmosClient')
+def test_mark_workspace_as_not_deleted_marks_workspace_as_not_deleted(cosmos_client_mock):
+    workspace_repo = db.repositories.workspaces.WorkspaceRepository(cosmos_client_mock)
+    workspace_repo.container.upsert_item = MagicMock()
+
+    workspace = Workspace(
+        id="1234",
+        resourceTemplateName="vanilla-tre",
+        resourceTemplateVersion="0.1.0",
+        resourceTemplateParameters={},
+        deployment=Deployment(status=Status.NotDeployed, message=""),
+        deleted=True
+    )
+    workspace_repo.mark_workspace_as_not_deleted(workspace)
+    workspace.deleted = False
+    workspace_repo.container.upsert_item.assert_called_once_with(body=workspace)
