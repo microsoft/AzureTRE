@@ -1,5 +1,3 @@
-from enum import Enum
-from typing import List
 from pydantic import BaseModel, Field
 
 from models.domain.workspace import Workspace
@@ -9,22 +7,18 @@ def get_sample_workspace(workspace_id: str, spec_workspace_id: str = "0001") -> 
     return {
         "id": workspace_id,
         "workspaceId": "7289ru33-7265-4b5f-9eae-a1a62928772e",
-        "displayName": "my workspace",
-        "description": "some description",
-        "resourceTemplateName": "tre-workspace-vanilla",
+        "resourceTemplateName": "guacamole",
         "resourceTemplateVersion": "0.1.0",
         "resourceTemplateParameters": {
-            "azure_location": "westeurope",
-            "workspace_id": spec_workspace_id,
-            "tre_id": "mytre-dev-1234",
-            "address_space": "10.2.1.0/24"
-        },
+            "displayName": "my workspace service",
+            "description": "some description",
+         },
         "deployment": {
             "status": "not_deployed",
             "message": "This resource is not yet deployed"
         },
-        "isDeleted": False,
-        "resourceType": "workspace",
+        "deleted": False,
+        "resourceType": "workspace-service",
         "workspaceURL": "",
         "authInformation": {}
     }

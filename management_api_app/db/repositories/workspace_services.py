@@ -29,7 +29,7 @@ class WorkspaceServiceRepository(ResourceRepository):
             current_template = self._get_current_workspace_service_template(workspace_create.workspaceServiceType)
             template_version = current_template["version"]
         except EntityDoesNotExist:
-            raise ValueError(f"The workspace type '{workspace_create.workspaceServiceType}' does not exist")
+            raise ValueError(f"The workspace service type '{workspace_create.workspaceServiceType}' does not exist")
 
         self._validate_resource_parameters(workspace_create.dict(), current_template)
 

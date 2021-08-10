@@ -24,7 +24,7 @@ def get_sample_workspace(workspace_id: str, spec_workspace_id: str = "0001") -> 
             "status": "not_deployed",
             "message": "This resource is not yet deployed"
         },
-        "isDeleted": False,
+        "deleted": False,
         "resourceType": "workspace",
         "workspaceURL": "",
         "authInformation": {}

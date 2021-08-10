@@ -31,10 +31,6 @@ class WorkspaceRepository(ResourceRepository):
         template = workspace_template_repo.get_current_resource_template_by_name(template_name, ResourceType.Workspace)
         return enrich_workspace_schema_defs(template)
 
-    @staticmethod
-    def _validate_resource_parameters(workspace_create, workspace_template):
-        validate(instance=workspace_create["properties"], schema=workspace_template)
-
     def get_all_active_workspaces(self) -> List[Workspace]:
         query = self._active_workspaces_query()
         workspaces = self.query(query=query)
