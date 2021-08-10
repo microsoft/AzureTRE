@@ -84,7 +84,7 @@ def test_get_workspace_by_id_throws_entity_does_not_exist_if_item_does_not_exist
 
 
 @patch('db.repositories.workspaces.extract_auth_information', return_value={})
-@patch('db.repositories.workspaces.WorkspaceRepository._validate_workspace_parameters')
+@patch('db.repositories.workspaces.WorkspaceRepository._validate_resource_parameters')
 @patch('db.repositories.workspaces.WorkspaceRepository._get_current_workspace_template')
 @patch('azure.cosmos.CosmosClient')
 def test_create_workspace_item_creates_a_workspace_with_the_right_values(cosmos_client_mock,

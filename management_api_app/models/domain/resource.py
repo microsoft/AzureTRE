@@ -47,9 +47,9 @@ class Resource(AzureTREModel):
             return True     # default behavior is enabled = True
         return self.resourceTemplateParameters["enabled"] is True
 
-    def get_resource_request_message_payload(self) -> dict:
+    def get_resource_request_message_payload(self, action: str) -> dict:
         return {
-            "action": "install",
+            "action": action,
             "id": self.id,
             "name": self.resourceTemplateName,
             "version": self.resourceTemplateVersion,
