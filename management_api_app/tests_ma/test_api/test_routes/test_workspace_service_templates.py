@@ -27,7 +27,7 @@ class TestWorkspaceTemplate:
 
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.create_resource_template_item")
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_resource_template_by_name")
-    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_workspace_template_by_name_and_version")
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_resource_template_by_name_and_version")
     async def test_when_updating_current_and_service_template_not_found_create_one(self, get_name_ver_mock,
                                                                                    get_current_mock,
                                                                                    create_item_mock,
@@ -47,9 +47,9 @@ class TestWorkspaceTemplate:
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.create_resource_template_item")
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.update_item")
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_resource_template_by_name")
-    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_workspace_template_by_name_and_version")
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_resource_template_by_name_and_version")
     async def test_when_updating_current_and_service_template_found_update_and_add(self,
-                                                                                   get_workspace_template_by_name_and_version,
+                                                                                   get_resource_template_by_name_and_version,
                                                                                    get_current_workspace_template_by_name,
                                                                                    update_item_mock,
                                                                                    create_workspace_template_item,
@@ -57,7 +57,7 @@ class TestWorkspaceTemplate:
                                                                                    client: AsyncClient,
                                                                                    input_workspace_template: WorkspaceTemplateInCreate,
                                                                                    basic_workspace_service_template: ResourceTemplate):
-        get_workspace_template_by_name_and_version.side_effect = EntityDoesNotExist
+        get_resource_template_by_name_and_version.side_effect = EntityDoesNotExist
 
         get_current_workspace_template_by_name.return_value = basic_workspace_service_template
         create_workspace_template_item.return_value = basic_workspace_service_template
@@ -72,16 +72,16 @@ class TestWorkspaceTemplate:
 
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.create_resource_template_item")
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_resource_template_by_name")
-    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_workspace_template_by_name_and_version")
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_resource_template_by_name_and_version")
     async def test_when_creating_service_template_enriched_service_template_is_returned(self,
-                                                                                        get_workspace_template_by_name_and_version,
+                                                                                        get_resource_template_by_name_and_version,
                                                                                         get_current_workspace_template_by_name,
                                                                                         create_resource_template_item,
                                                                                         app: FastAPI,
                                                                                         client: AsyncClient,
                                                                                         input_workspace_template: WorkspaceServiceTemplateInCreate,
                                                                                         basic_workspace_service_template: ResourceTemplate):
-        get_workspace_template_by_name_and_version.side_effect = EntityDoesNotExist
+        get_resource_template_by_name_and_version.side_effect = EntityDoesNotExist
         get_current_workspace_template_by_name.side_effect = EntityDoesNotExist
 
         create_resource_template_item.return_value = basic_workspace_service_template
@@ -97,16 +97,16 @@ class TestWorkspaceTemplate:
 
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.create_resource_template_item")
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_resource_template_by_name")
-    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_workspace_template_by_name_and_version")
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_resource_template_by_name_and_version")
     async def test_when_creating_workspace_service_template_service_resource_type_is_set(self,
-                                                                                         get_workspace_template_by_name_and_version,
+                                                                                         get_resource_template_by_name_and_version,
                                                                                          get_current_workspace_template_by_name,
                                                                                          create_workspace_template_item_mock,
                                                                                          app: FastAPI,
                                                                                          client: AsyncClient,
                                                                                          input_workspace_template: WorkspaceTemplateInCreate,
                                                                                          basic_workspace_service_template: ResourceTemplate):
-        get_workspace_template_by_name_and_version.side_effect = EntityDoesNotExist
+        get_resource_template_by_name_and_version.side_effect = EntityDoesNotExist
         get_current_workspace_template_by_name.side_effect = EntityDoesNotExist
 
         create_workspace_template_item_mock.return_value = basic_workspace_service_template

@@ -59,7 +59,7 @@ def test_get_by_name_and_version_queries_db(cosmos_client_mock, wt_query_mock):
     expected_query = 'SELECT * FROM c WHERE c.resourceType = "workspace" AND c.name = "test" AND c.version = "1.0"'
     wt_query_mock.return_value = [sample_workspace_template_as_dict(name="test", version="1.0")]
 
-    template_repo.get_workspace_template_by_name_and_version(name="test", version="1.0")
+    template_repo.get_resource_template_by_name_and_version(name="test", version="1.0")
 
     wt_query_mock.assert_called_once_with(query=expected_query)
 
@@ -73,7 +73,7 @@ def test_get_by_name_and_version_returns_matching_template(cosmos_client_mock, w
     workspace_templates_in_db = [sample_workspace_template_as_dict(name=template_name, version=template_version)]
     wt_query_mock.return_value = workspace_templates_in_db
 
-    template = template_repo.get_workspace_template_by_name_and_version(name=template_name, version=template_version)
+    template = template_repo.get_resource_template_by_name_and_version(name=template_name, version=template_version)
 
     assert template.name == template_name
 
@@ -87,7 +87,7 @@ def test_get_by_name_and_version_raises_entity_does_not_exist_if_no_template_fou
     wt_query_mock.return_value = []
 
     with pytest.raises(EntityDoesNotExist):
-        template_repo.get_workspace_template_by_name_and_version(name=template_name, version=template_version)
+        template_repo.get_resource_template_by_name_and_version(name=template_name, version=template_version)
 
 
 @patch('db.repositories.resource_templates.ResourceTemplateRepository.query')

@@ -1,6 +1,7 @@
 import pytest
 
 from models.domain.resource_template import ResourceTemplate, ResourceType
+from models.schemas.user_resource_template import UserResourceTemplateInCreate
 from models.schemas.workspace_template import WorkspaceTemplateInCreate
 
 
@@ -16,6 +17,23 @@ def input_workspace_template():
             "type": "object",
             "title": "My Workspace Template Custom Parameters",
             "description": "These parameters are specific to my workspace template",
+            "required": [],
+            "properties": {}
+        })
+
+
+@pytest.fixture
+def input_user_resource_template():
+    return UserResourceTemplateInCreate(
+        name="my-tre-user-resource",
+        version="0.0.1",
+        current=True,
+        json_schema={
+            "$schema": "http://json-schema.org/draft-07/schema",
+            "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/myworkspace/user_resource.json",
+            "type": "object",
+            "title": "My User Resource Template Custom Parameters",
+            "description": "These parameters are specific to my user resource template",
             "required": [],
             "properties": {}
         })

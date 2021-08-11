@@ -14,6 +14,7 @@ API_GET_STATUS_OF_SERVICES = "Get status of services"
 API_GET_WORKSPACE_TEMPLATES = "Get workspace template names"
 API_CREATE_WORKSPACE_TEMPLATES = "Register workspace template"
 API_CREATE_WORKSPACE_SERVICE_TEMPLATES = "Register workspace service template"
+API_CREATE_USER_RESOURCE_TEMPLATES = "Register user resource template"
 API_GET_WORKSPACE_TEMPLATE_BY_NAME = "Get workspace template by name"
 
 # State store status
@@ -38,7 +39,7 @@ UNABLE_TO_PROCESS_REQUEST = "Unable to process request"
 WORKSPACE_DOES_NOT_EXIST = "Workspace does not exist"
 WORKSPACE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION = "The workspace needs to be disabled before you can delete it"
 WORKSPACE_SERVICES_NEED_TO_BE_DELETED_BEFORE_WORKSPACE = "All workspace services need to be deleted before you can delete the workspace"
-WORKSPACE_TEMPLATE_DOES_NOT_EXIST = "Could not retrieve the 'current' template with this name"
+TEMPLATE_DOES_NOT_EXIST = "Could not retrieve the 'current' template with this name"
 WORKSPACE_TEMPLATE_VERSION_EXISTS = "A template with this version already exists"
 
 # Resource Status
@@ -52,6 +53,7 @@ RESOURCE_STATUS_FAILED = "failed"
 # Resource Type
 RESOURCE_TYPE_WORKSPACE = "workspace"
 RESOURCE_TYPE_WORKSPACE_SERVICE = "workspace-service"
+USER_RESOURCE = "user-resource"
 
 # Deployments
 RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE = "This resource has not yet been deployed"
