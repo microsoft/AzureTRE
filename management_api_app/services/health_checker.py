@@ -27,7 +27,7 @@ def get_store_key() -> str:
     if config.STATE_STORE_KEY:
         primary_master_key = config.STATE_STORE_KEY
     else:
-        credential = DefaultAzureCredential(managed_identity_client_id=config.MANAGED_IDENTITY_CLIENT_ID)
+        credential = DefaultAzureCredential(managed_identity_client_id=config.MANAGED_IDENTITY_CLIENT_ID, exclude_shared_token_cache_credential=True)
         cosmosdb_client = CosmosDBManagementClient(credential, subscription_id=config.SUBSCRIPTION_ID)
         database_keys = cosmosdb_client.database_accounts.list_keys(resource_group_name=config.RESOURCE_GROUP_NAME, account_name=config.COSMOSDB_ACCOUNT_NAME)
         primary_master_key = database_keys.primary_master_key
