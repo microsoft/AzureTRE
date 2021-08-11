@@ -22,7 +22,7 @@ router = APIRouter(dependencies=[Depends(get_current_admin_user)])
 
 @router.post("/workspace-service-templates", status_code=status.HTTP_201_CREATED,
              response_model=WorkspaceServiceTemplateInResponse, name=strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES)
-async def create_workspace_service_template(
+async def register_workspace_service_template(
         workspace_template_create: WorkspaceServiceTemplateInCreate,
         workspace_template_repo: ResourceTemplateRepository = Depends(get_repository(ResourceTemplateRepository)),
 ) -> ResourceTemplateInResponse:
