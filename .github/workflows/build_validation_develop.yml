@@ -8,6 +8,7 @@ jobs:
   build:
     name: "Lint and Test"
     runs-on: ubuntu-latest
+    environment: Dev
 
     steps:
       - name: Checkout code
