@@ -1,7 +1,5 @@
 from azure.core import exceptions
 from azure.cosmos import CosmosClient
-from azure.identity import DefaultAzureCredential
-from azure.mgmt.cosmosdb import CosmosDBManagementClient
 
 from api.dependencies.database import get_store_key
 from core import config
