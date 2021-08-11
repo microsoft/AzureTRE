@@ -149,7 +149,7 @@ def test_get_basic_resource_template_information_returns_unique_template_names(c
         {"name": "template2", "description": "description2"}
     ]
 
-    result = template_repo.get_basic_resource_template_information(ResourceType.Workspace)
+    result = template_repo.get_basic_resource_templates_information(ResourceType.Workspace)
 
     assert len(result) == 2
     assert result[0].name == "template1"

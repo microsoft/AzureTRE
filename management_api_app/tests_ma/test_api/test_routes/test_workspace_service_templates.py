@@ -26,13 +26,13 @@ class TestWorkspaceServiceTemplates:
     def _prepare(self, app, admin_user):
         app.dependency_overrides[get_current_user] = admin_user
 
-    @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.get_basic_resource_template_information")
-    async def test_get_workspace_templates_returns_template_names_and_description(self, get_basic_resource_template_info_mock, app: FastAPI, client: AsyncClient):
+    @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.get_basic_resource_templates_information")
+    async def test_get_workspace_templates_returns_template_names_and_description(self, get_basic_resource_templates_info_mock, app: FastAPI, client: AsyncClient):
         expected_templates = [
             ResourceTemplateInformation(name="template1", description="description1"),
             ResourceTemplateInformation(name="template2", description="description2")
         ]
-        get_basic_resource_template_info_mock.return_value = expected_templates
+        get_basic_resource_templates_info_mock.return_value = expected_templates
 
         response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_SERVICE_TEMPLATES))
 
