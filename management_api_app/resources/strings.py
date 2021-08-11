@@ -13,8 +13,10 @@ API_GET_STATUS_OF_SERVICES = "Get status of services"
 
 API_GET_WORKSPACE_TEMPLATES = "Get workspace template names"
 API_CREATE_WORKSPACE_TEMPLATES = "Register workspace template"
-API_CREATE_WORKSPACE_SERVICE_TEMPLATES = "Register workspace service template"
 API_GET_WORKSPACE_TEMPLATE_BY_NAME = "Get workspace template by name"
+
+API_GET_WORKSPACE_SERVICE_TEMPLATES = "Get workspace service templates"
+API_CREATE_WORKSPACE_SERVICE_TEMPLATES = "Register workspace service template"
 
 # State store status
 OK = "OK"

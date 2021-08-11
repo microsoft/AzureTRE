@@ -140,6 +140,22 @@ def test_get_workspace_template_names_returns_unique_template_names(cosmos_clien
     assert "template2" in template_names
 
 
+@patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
+@patch('azure.cosmos.CosmosClient')
+def test_get_basic_resource_template_information_returns_unique_template_names(cosmos_client_mock, rt_query_mock):
+    template_repo = ResourceTemplateRepository(cosmos_client_mock)
+    rt_query_mock.return_value = [
+        {"name": "template1", "description": "description1"},
+        {"name": "template2", "description": "description2"}
+    ]
+
+    result = template_repo.get_basic_resource_templates_information(ResourceType.Workspace)
+
+    assert len(result) == 2
+    assert result[0].name == "template1"
+    assert result[1].name == "template2"
+
+
 @patch('db.repositories.resource_templates.ResourceTemplateRepository.create_item')
 @patch('uuid.uuid4')
 @patch('azure.cosmos.CosmosClient')
