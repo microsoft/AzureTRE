@@ -184,7 +184,8 @@ resource "azurerm_firewall_application_rule_collection" "resource_processor_subn
       "registry-1.docker.io",
       "auth.docker.io",
       "*.azurecr.io",
-      "registry.terraform.io"
+      "registry.terraform.io",
+      "releases.hashicorp.com"
     ]
     source_addresses = data.azurerm_subnet.resource_processor.address_prefixes
   }
