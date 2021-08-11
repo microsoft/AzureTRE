@@ -98,7 +98,7 @@ module "api-webapp" {
   docker_registry_username                   = var.docker_registry_username
   docker_registry_password                   = var.docker_registry_password
   state_store_endpoint                       = module.state-store.endpoint
-  state_store_key                            = module.state-store.primary_key
+  cosmosdb_account_name                      = module.state-store.cosmosdb_account_name
   service_bus_resource_request_queue         = module.servicebus.workspacequeue
   service_bus_deployment_status_update_queue = module.servicebus.service_bus_deployment_status_update_queue
   managed_identity                           = module.identity.managed_identity

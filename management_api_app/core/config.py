@@ -15,10 +15,12 @@ TRE_ID: str = config("TRE_ID", default="")
 
 # State store configuration
 STATE_STORE_ENDPOINT: str = config("STATE_STORE_ENDPOINT", default="")      # Cosmos DB endpoint
-STATE_STORE_KEY: str = config("STATE_STORE_KEY", default="")                # Cosmos DB access key
+COSMOSDB_ACCOUNT_NAME: str = config("COSMOSDB_ACCOUNT_NAME", default="")                # Cosmos DB access key
 STATE_STORE_DATABASE = "AzureTRE"
 STATE_STORE_RESOURCES_CONTAINER = "Resources"
 STATE_STORE_RESOURCE_TEMPLATES_CONTAINER = "ResourceTemplates"
+SUBSCRIPTION_ID: str = config("SUBSCRIPTION_ID", default="")
+RESOURCE_GROUP_NAME: str = config("RESOURCE_GROUP_NAME", default="")
 
 # Service bus configuration
 SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE: str = config("SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE", default="")

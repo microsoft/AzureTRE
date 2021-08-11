@@ -123,7 +123,9 @@ See also: [Auth in code](#auth-in-code)
 | Environment variable name | Description |
 | ------------------------- | ----------- |
 | `STATE_STORE_ENDPOINT` | The Cosmos DB endpoint. Use `localhost` with an emulator. Example value: `https://localhost:8081` |
-| `STATE_STORE_KEY` | The Cosmos DB access key. |
+| `COSMOSDB_ACCOUNT_NAME` | The Cosmos DB account name. |
+| `SUBSCRIPTION_ID` | The Azure Subscription ID where Cosmos DB is lcoated. |
+| `RESOURCE_GROUP_NAME` | The Azure Resource Group name where Cosmos DB is lcoated. |
 
 ### Service Bus
 

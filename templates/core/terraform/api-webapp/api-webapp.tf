@@ -1,3 +1,5 @@
+data "azurerm_subscription" "current" {}
+
 resource "azurerm_app_service_plan" "core" {
   name                = "plan-${var.tre_id}"
   resource_group_name = var.resource_group_name
@@ -32,7 +34,7 @@ resource "azurerm_app_service" "management_api" {
     "DOCKER_REGISTRY_SERVER_URL"                 = "https://${var.docker_registry_server}"
     "DOCKER_REGISTRY_SERVER_PASSWORD"            = var.docker_registry_password
     "STATE_STORE_ENDPOINT"                       = var.state_store_endpoint
-    "STATE_STORE_KEY"                            = var.state_store_key
+    "COSMOSDB_ACCOUNT_NAME"                      = var.cosmosdb_account_name
     "SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE"      = "sb-${var.tre_id}.servicebus.windows.net"
     "SERVICE_BUS_RESOURCE_REQUEST_QUEUE"         = var.service_bus_resource_request_queue
     "SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE" = var.service_bus_deployment_status_update_queue
@@ -43,6 +45,8 @@ resource "azurerm_app_service" "management_api" {
     "AAD_TENANT_ID"                              = var.aad_tenant_id
     "API_CLIENT_ID"                              = var.api_client_id
     "API_CLIENT_SECRET"                          = var.api_client_secret
+    "RESOURCE_GROUP_NAME"                        = var.resource_group_name
+    "SUBSCRIPTION_ID"                            = data.azurerm_subscription.current.subscription_id
   }
 
   identity {
