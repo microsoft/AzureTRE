@@ -3,6 +3,7 @@ from typing import List
 
 from pydantic import BaseModel, Field
 
+from models.domain.resource import ResourceType
 from models.domain.workspace import Workspace
 
 
@@ -25,7 +26,7 @@ def get_sample_workspace(workspace_id: str, spec_workspace_id: str = "0001") -> 
             "message": "This resource is not yet deployed"
         },
         "deleted": False,
-        "resourceType": "workspace",
+        "resourceType": ResourceType.Workspace,
         "workspaceURL": "",
         "authInformation": {}
     }

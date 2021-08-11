@@ -286,7 +286,7 @@ async def test_workspace_delete_returns_400_if_associated_workspace_services_are
 @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
 @ patch("api.routes.workspaces.WorkspaceServiceRepository.get_active_workspace_services_for_workspace")
 @ patch('azure.cosmos.CosmosClient')
-@ patch('api.routes.workspaces.WorkspaceRepository.delete_workspace')
+@ patch('api.routes.workspaces.WorkspaceRepository.mark_workspace_as_deleted')
 @ patch('api.routes.workspaces.send_resource_request_message')
 async def test_workspace_delete_deletes_workspace(send_request_message_mock, delete_workspace_mock, cosmos_client_mock, get_active_workspace_services_for_workspace_mock, get_workspace_mock, get_repository_mock, disabled_workspace, app: FastAPI, client: AsyncClient, admin_user: User):
     app.dependency_overrides[get_current_user] = admin_user
@@ -305,7 +305,7 @@ async def test_workspace_delete_deletes_workspace(send_request_message_mock, del
 @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
 @ patch("api.routes.workspaces.WorkspaceServiceRepository.get_active_workspace_services_for_workspace")
 @ patch('azure.cosmos.CosmosClient')
-@ patch('api.routes.workspaces.WorkspaceRepository.delete_workspace')
+@ patch('api.routes.workspaces.WorkspaceRepository.mark_workspace_as_deleted')
 @ patch('api.routes.workspaces.send_resource_request_message')
 async def test_workspace_delete_sends_a_request_message_to_uninstall_the_workspace(send_request_message_mock, delete_workspace_mock, cosmos_client_mock, get_active_workspace_services_for_workspace_mock, get_workspace_mock, get_repository_mock, disabled_workspace, app: FastAPI, client: AsyncClient, admin_user: User):
     app.dependency_overrides[get_current_user] = admin_user
@@ -324,7 +324,7 @@ async def test_workspace_delete_sends_a_request_message_to_uninstall_the_workspa
 @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
 @ patch("api.routes.workspaces.WorkspaceServiceRepository.get_active_workspace_services_for_workspace")
 @ patch('azure.cosmos.CosmosClient')
-@ patch('api.routes.workspaces.WorkspaceRepository.delete_workspace')
+@ patch('api.routes.workspaces.WorkspaceRepository.mark_workspace_as_deleted')
 @ patch('api.routes.workspaces.send_resource_request_message')
 @ patch('api.routes.workspaces.WorkspaceRepository.mark_workspace_as_not_deleted')
 async def test_workspace_delete_reverts_the_workspace_if_service_bus_call_fails(mark_workspace_as_not_deleted_mock, send_request_message_mock, delete_workspace_mock, cosmos_client_mock, get_active_workspace_services_for_workspace_mock, get_workspace_mock, get_repository_mock, disabled_workspace, app: FastAPI, client: AsyncClient, admin_user: User):

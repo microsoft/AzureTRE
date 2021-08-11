@@ -76,7 +76,7 @@ class WorkspaceRepository(ResourceRepository):
 
         return workspace
 
-    def delete_workspace(self, workspace: Workspace):
+    def mark_workspace_as_deleted(self, workspace: Workspace):
         workspace.deleted = True
         self.container.upsert_item(body=workspace.dict())
 

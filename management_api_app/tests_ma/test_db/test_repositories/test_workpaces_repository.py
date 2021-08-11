@@ -200,7 +200,7 @@ def test_delete_workspace_marks_workspace_as_deleted(cosmos_client_mock):
         deployment=Deployment(status=Status.NotDeployed, message=""),
         deleted=False
     )
-    workspace_repo.delete_workspace(workspace)
+    workspace_repo.mark_workspace_as_deleted(workspace)
     workspace.deleted = True
     workspace_repo.container.upsert_item.assert_called_once_with(body=workspace)
 

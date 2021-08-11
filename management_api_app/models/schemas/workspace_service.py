@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 
+from models.domain.resource import ResourceType
 from models.domain.workspace_service import WorkspaceService
 
 
@@ -17,7 +18,7 @@ def get_sample_workspace_service(workspace_id: str) -> dict:
                 "message": "This resource is not yet deployed"
             },
             "deleted": False,
-            "resourceType": "workspace-service",
+            "resourceType": ResourceType.WorkspaceService,
             "workspaceURL": "",
             "authInformation": {}
             }
@@ -43,7 +44,10 @@ class WorkspaceServiceInCreate(BaseModel):
         schema_extra = {
             "example": {
                 "workspaceServiceType": "guacamole",
-                "properties": {}
+                "properties": {
+                    "displayName": "my workspace service",
+                    "description": "some description",
+                }
             }
         }
 
