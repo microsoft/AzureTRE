@@ -24,6 +24,8 @@ class TestWorkspaceTemplate:
     @pytest.fixture(autouse=True, scope='class')
     def _prepare(self, app, admin_user):
         app.dependency_overrides[get_current_user] = admin_user
+        yield
+        app.dependency_overrides = {}
 
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_workspace_template_names")
     async def test_workspace_templates_returns_template_names(self, get_workspace_template_names_mock, app: FastAPI,
