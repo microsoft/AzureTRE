@@ -13,6 +13,7 @@ def create_state_store_status() -> (StatusEnum, str):
     message = ""
     try:
         primary_master_key = get_store_key()
+        #primary_master_key=""
         client = CosmosClient(config.STATE_STORE_ENDPOINT, primary_master_key)    # noqa: F841 - flake 8 client is not used
     except exceptions.ServiceRequestError:
         status = StatusEnum.not_ok
