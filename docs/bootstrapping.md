@@ -28,8 +28,8 @@ A service principals need to be created to authorize CI/CD workflows to provisio
 
 1. Save the JSON output
 
-    * Locally
-    * In a [GitHub secret](https://docs.github.com/en/actions/reference/encrypted-secrets) called `AZURE_CREDENTIALS`.
+    * Locally - as you will need it later.
+    * Create a [GitHub secret](https://docs.github.com/en/actions/reference/encrypted-secrets) called `AZURE_CREDENTIALS` with the value of `clientSecret` property.
 
 ## Create app registrations
 
