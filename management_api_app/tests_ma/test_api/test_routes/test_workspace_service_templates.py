@@ -9,7 +9,6 @@ from starlette import status
 
 from api.routes.workspaces import get_current_user
 from db.errors import EntityDoesNotExist
-from db.repositories.user_resource_templates import UserResourceTemplateRepository
 from models.domain.resource import ResourceType
 from models.domain.resource_template import ResourceTemplate
 from models.domain.user_resource_template import UserResourceTemplate
@@ -120,43 +119,54 @@ class TestWorkspaceServiceTemplate:
         create_workspace_template_item_mock.assert_called_once_with(input_workspace_template,
                                                                     ResourceType.WorkspaceService)
 
-    @patch('azure.cosmos.CosmosClient')
-    @patch("api.dependencies.workspace_service_templates.get_repository")
+    @staticmethod
+    def get_workspace_service_template_by_name_from_path_mock():
+        return ResourceTemplate(
+            id="1234-5678",
+            name="my-tre-user-resource",
+            description="These parameters are specific to my user resource template",
+            version="0.0.1",
+            resourceType=ResourceType.WorkspaceService,
+            current=True,
+            required=[],
+            properties={}
+        )
+
+    @staticmethod
+    def create_base_response_user_template(input_user_resource_template: UserResourceTemplateInCreate, parent_workspace_service_name):
+        return UserResourceTemplate(
+            id="1234-5678",
+            name=input_user_resource_template.name,
+            parentWorkspaceService=parent_workspace_service_name,
+            description=input_user_resource_template.json_schema["description"],
+            version=input_user_resource_template.version,
+            resourceType=ResourceType.UserResource,
+            current=True,
+            required=input_user_resource_template.json_schema["required"],
+            properties=input_user_resource_template.json_schema["properties"]
+        )
+
     @patch("api.routes.workspace_service_templates.create_user_resource_template")
-    @patch("api.routes.workspace_service_templates.get_workspace_service_template_by_name_from_path")
+    @patch("api.dependencies.workspace_service_templates.UserResourceTemplateRepository.get_current_resource_template_by_name")
     async def test_when_creating_user_resource_template_template_returned_as_expected(self,
-                                                                                     get_workspace_service_template_by_name_from_path,
-                                                                                     create_user_resource_template_mock,
-                                                                                     get_repository_mock,
-                                                                                     cosmos_client_mock,
-                                                                                     app: FastAPI,
-                                                                                     client: AsyncClient,
-                                                                                     input_user_resource_template: UserResourceTemplateInCreate,
-                                                                                     basic_workspace_service_template: ResourceTemplate):
+                                                                                      get_current_resource_mock,
+                                                                                      create_user_resource_template_mock,
+                                                                                      app: FastAPI, client: AsyncClient,
+                                                                                      input_user_resource_template: UserResourceTemplateInCreate):
+        # from api.routes.workspace_service_templates import get_workspace_service_template_by_name_from_path
+        # app.dependency_overrides[get_workspace_service_template_by_name_from_path] = self.get_workspace_service_template_by_name_from_path_mock
+        get_current_resource_mock.return_value = self.get_workspace_service_template_by_name_from_path_mock()
+
         parent_workspace_service_name = "guacamole"
-
-        get_workspace_service_template_by_name_from_path.return_value = basic_workspace_service_template
-        get_repository_mock.return_value = UserResourceTemplateRepository(cosmos_client_mock)
-
-        user_resource_template = UserResourceTemplate(
-                id="1234-5678",
-                name=input_user_resource_template.name,
-                parentWorkspaceService=parent_workspace_service_name,
-                description=input_user_resource_template.json_schema["description"],
-                version=input_user_resource_template.name,
-                resourceType=ResourceType.UserResource,
-                current=True,
-                required=input_user_resource_template.json_schema["required"],
-                properties=input_user_resource_template.json_schema["properties"]
-            )
-
+        user_resource_template = self.create_base_response_user_template(input_user_resource_template, parent_workspace_service_name)
         create_user_resource_template_mock.return_value = user_resource_template
 
-        response = await client.post(app.url_path_for(strings.API_CREATE_USER_RESOURCE_TEMPLATES,
-                                                      template_name=parent_workspace_service_name),
+        expected_template = parse_obj_as(UserResourceTemplateInResponse, enrich_workspace_service_schema_defs(user_resource_template))
+
+        response = await client.post(app.url_path_for(strings.API_CREATE_USER_RESOURCE_TEMPLATES, template_name=parent_workspace_service_name),
                                      json=input_user_resource_template.dict())
 
-        expected_template = parse_obj_as(UserResourceTemplateInResponse,
-                                         enrich_workspace_service_schema_defs(user_resource_template))
+        # reset the dependency overrides
+        # app.dependency_overrides = {}
 
-        assert response == expected_template
+        assert response.json() == expected_template

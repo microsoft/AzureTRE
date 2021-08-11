@@ -41,15 +41,14 @@ async def create_workspace_service_template(
              response_model=UserResourceTemplateInResponse, name=strings.API_CREATE_USER_RESOURCE_TEMPLATES)
 async def register_user_resource_template(
         user_resource_template_create: UserResourceTemplateInCreate,
-        user_resource_template_repo: UserResourceTemplateRepository = Depends(
-            get_repository(UserResourceTemplateRepository)),
+        user_resource_template_repo: UserResourceTemplateRepository = Depends(get_repository(UserResourceTemplateRepository)),
         workspace_service_template: ResourceTemplate = Depends(get_workspace_service_template_by_name_from_path)
 ) -> UserResourceTemplateInResponse:
     try:
         template_created = create_user_resource_template(user_resource_template_create,
                                                          user_resource_template_repo,
                                                          workspace_service_template.name)
-        #template = enrich_workspace_service_schema_defs(template_created)
-        return template_created
+        enriched_template = enrich_workspace_service_schema_defs(template_created)
+        return enriched_template
     except EntityVersionExist:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_TEMPLATE_VERSION_EXISTS)
