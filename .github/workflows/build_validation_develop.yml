@@ -8,7 +8,6 @@ jobs:
   build:
     name: "Lint and Test"
     runs-on: ubuntu-latest
-    environment: Dev
 
     steps:
       - name: Checkout code
@@ -16,11 +15,6 @@ jobs:
         with:
           # Full git history is needed to get a proper list of changed files within `super-linter`
           fetch-depth: 0
-      
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Lint code base
         uses: github/super-linter@v3
