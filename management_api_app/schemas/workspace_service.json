@@ -5,11 +5,11 @@
   "title": "Workspace Service Default Parameters",
   "description": "These parameters are required for all workspaces services",
   "required": [
-      "displayName",
+      "display_name",
       "description"
   ],
   "properties": {
-      "displayName": {
+      "display_name": {
           "type": "string",
           "title": "Name for the workspace service",
           "description": "The name of the workspace service to be displayed to users"

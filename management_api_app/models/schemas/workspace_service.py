@@ -10,7 +10,7 @@ def get_sample_workspace_service(workspace_id: str) -> dict:
             "resourceTemplateName": "guacamole",
             "resourceTemplateVersion": "0.1.0",
             "resourceTemplateParameters": {
-                "displayName": "my workspace service",
+                "display_name": "my workspace service",
                 "description": "some description",
             },
             "deployment": {
@@ -45,7 +45,7 @@ class WorkspaceServiceInCreate(BaseModel):
             "example": {
                 "workspaceServiceType": "guacamole",
                 "properties": {
-                    "displayName": "my workspace service",
+                    "display_name": "my workspace service",
                     "description": "some description",
                 }
             }

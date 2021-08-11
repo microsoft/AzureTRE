@@ -46,7 +46,7 @@ class WorkspaceServiceRepository(ResourceRepository):
         workspace_service = WorkspaceService(
             id=full_workspace_service_id,
             workspaceId=workspace_id,
-            displayName=workspace_service_create.properties["displayName"],
+            displayName=workspace_service_create.properties["display_name"],
             description=workspace_service_create.properties["description"],
             resourceTemplateName=workspace_service_create.workspaceServiceType,
             resourceTemplateVersion=template_version,
