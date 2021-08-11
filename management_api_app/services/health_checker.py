@@ -12,10 +12,7 @@ def create_state_store_status() -> (StatusEnum, str):
     status = StatusEnum.ok
     message = ""
     try:
-        credential = DefaultAzureCredential(managed_identity_client_id=config.MANAGED_IDENTITY_CLIENT_ID)
-        cosmosdb_client = CosmosDBManagementClient(credential, subscription_id=config.SUBSCRIPTION_ID)
-        database_keys = cosmosdb_client.database_accounts.list_keys(resource_group_name=config.RESOURCE_GROUP_NAME, account_name=config.COSMOSDB_ACCOUNT_NAME)
-        primary_master_key = database_keys.primary_master_key
+        primary_master_key = get_store_key()
         client = CosmosClient(config.STATE_STORE_ENDPOINT, primary_master_key)    # noqa: F841 - flake 8 client is not used
     except exceptions.ServiceRequestError:
         status = StatusEnum.not_ok
@@ -24,3 +21,14 @@ def create_state_store_status() -> (StatusEnum, str):
         status = StatusEnum.not_ok
         message = strings.UNSPECIFIED_ERROR
     return status, message
+
+def get_store_key() -> str:
+    if config.STATE_STORE_KEY:
+        primary_master_key = config.STATE_STORE_KEY
+    else:
+        credential = DefaultAzureCredential(managed_identity_client_id=config.MANAGED_IDENTITY_CLIENT_ID)
+        cosmosdb_client = CosmosDBManagementClient(credential, subscription_id=config.SUBSCRIPTION_ID)
+        database_keys = cosmosdb_client.database_accounts.list_keys(resource_group_name=config.RESOURCE_GROUP_NAME, account_name=config.COSMOSDB_ACCOUNT_NAME)
+        primary_master_key = database_keys.primary_master_key
+    
+    return primary_master_key

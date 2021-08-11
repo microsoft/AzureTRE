@@ -18,11 +18,7 @@ def connect_to_db() -> CosmosClient:
     logging.debug(f"Connecting to {config.STATE_STORE_ENDPOINT}")
 
     try:
-        credential = DefaultAzureCredential(managed_identity_client_id=config.MANAGED_IDENTITY_CLIENT_ID)
-        cosmosdb_client = CosmosDBManagementClient(credential, subscription_id=config.SUBSCRIPTION_ID)
-        database_keys = cosmosdb_client.database_accounts.list_keys(resource_group_name=config.RESOURCE_GROUP_NAME, account_name=config.COSMOSDB_ACCOUNT_NAME)
-        primary_master_key = database_keys.primary_master_key
-
+        primary_master_key = get_store_key()
         if config.DEBUG:
             # ignore TLS(setup is pain) when on dev container and connecting to cosmosdb on windows host.
             cosmos_client = CosmosClient(config.STATE_STORE_ENDPOINT, primary_master_key, connection_verify=False)
@@ -33,6 +29,16 @@ def connect_to_db() -> CosmosClient:
     except Exception as e:
         logging.debug(f"Connection to state store could not be established: {e}")
 
+def get_store_key() -> str:
+    if config.STATE_STORE_KEY:
+        primary_master_key = config.STATE_STORE_KEY
+    else:
+        credential = DefaultAzureCredential(managed_identity_client_id=config.MANAGED_IDENTITY_CLIENT_ID)
+        cosmosdb_client = CosmosDBManagementClient(credential, subscription_id=config.SUBSCRIPTION_ID)
+        database_keys = cosmosdb_client.database_accounts.list_keys(resource_group_name=config.RESOURCE_GROUP_NAME, account_name=config.COSMOSDB_ACCOUNT_NAME)
+        primary_master_key = database_keys.primary_master_key
+    
+    return primary_master_key
 
 def get_db_client(app: FastAPI) -> CosmosClient:
     if not app.state.cosmos_client:
