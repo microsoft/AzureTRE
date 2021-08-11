@@ -2,12 +2,11 @@ import uuid
 from typing import List
 
 from azure.cosmos import CosmosClient
-from jsonschema import validate
 from pydantic import parse_obj_as, UUID4
 
 from core import config
 from db.errors import EntityDoesNotExist
-from db.repositories.base import BaseRepository
+from db.repositories.resources import ResourceRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
 from models.domain.resource import Deployment, Status
 from models.domain.resource_template import ResourceTemplate
@@ -18,9 +17,9 @@ from services.authentication import extract_auth_information
 from services.concatjsonschema import enrich_workspace_schema_defs
 
 
-class WorkspaceRepository(BaseRepository):
+class WorkspaceRepository(ResourceRepository):
     def __init__(self, client: CosmosClient):
-        super().__init__(client, config.STATE_STORE_RESOURCES_CONTAINER)
+        super().__init__(client)
 
     @staticmethod
     def _active_workspaces_query():
@@ -30,10 +29,6 @@ class WorkspaceRepository(BaseRepository):
         workspace_template_repo = ResourceTemplateRepository(self._client)
         template = workspace_template_repo.get_current_resource_template_by_name(template_name)
         return parse_obj_as(ResourceTemplate, enrich_workspace_schema_defs(template))
-
-    @staticmethod
-    def _validate_workspace_parameters(workspace_create, workspace_template):
-        validate(instance=workspace_create["properties"], schema=workspace_template)
 
     def get_all_active_workspaces(self) -> List[Workspace]:
         query = self._active_workspaces_query()
@@ -56,7 +51,7 @@ class WorkspaceRepository(BaseRepository):
         except EntityDoesNotExist:
             raise ValueError(f"The workspace type '{workspace_create.workspaceType}' does not exist")
 
-        self._validate_workspace_parameters(workspace_create.dict(), current_template.dict())
+        self._validate_resource_parameters(workspace_create.dict(), current_template.dict())
         auth_info = extract_auth_information(workspace_create.properties["app_id"])
 
         # system generated parameters
@@ -81,7 +76,7 @@ class WorkspaceRepository(BaseRepository):
 
         return workspace
 
-    def delete_workspace(self, workspace: Workspace):
+    def mark_workspace_as_deleted(self, workspace: Workspace):
         workspace.deleted = True
         self.container.upsert_item(body=workspace.dict())
 

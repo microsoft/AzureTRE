@@ -84,7 +84,7 @@ def test_get_workspace_by_id_throws_entity_does_not_exist_if_item_does_not_exist
 
 
 @patch('db.repositories.workspaces.extract_auth_information', return_value={})
-@patch('db.repositories.workspaces.WorkspaceRepository._validate_workspace_parameters')
+@patch('db.repositories.workspaces.WorkspaceRepository._validate_resource_parameters')
 @patch('db.repositories.workspaces.WorkspaceRepository._get_current_workspace_template')
 @patch('azure.cosmos.CosmosClient')
 def test_create_workspace_item_creates_a_workspace_with_the_right_values(cosmos_client_mock,
@@ -200,7 +200,7 @@ def test_delete_workspace_marks_workspace_as_deleted(cosmos_client_mock):
         deployment=Deployment(status=Status.NotDeployed, message=""),
         deleted=False
     )
-    workspace_repo.delete_workspace(workspace)
+    workspace_repo.mark_workspace_as_deleted(workspace)
     workspace.deleted = True
     workspace_repo.container.upsert_item.assert_called_once_with(body=workspace)
 
