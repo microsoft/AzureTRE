@@ -25,8 +25,7 @@ def connect_to_db() -> CosmosClient:
 
         if config.DEBUG:
             # ignore TLS(setup is pain) when on dev container and connecting to cosmosdb on windows host.
-            cosmos_client = CosmosClient(config.STATE_STORE_ENDPOINT, primary_master_key,
-                                             connection_verify=False)
+            cosmos_client = CosmosClient(config.STATE_STORE_ENDPOINT, primary_master_key,connection_verify=False)
         else:
             cosmos_client = CosmosClient(config.STATE_STORE_ENDPOINT, primary_master_key)
         logging.debug("Connection established")
