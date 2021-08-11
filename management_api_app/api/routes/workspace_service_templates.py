@@ -49,7 +49,7 @@ async def register_user_resource_template(
         template_created = create_user_resource_template(user_resource_template_create,
                                                          user_resource_template_repo,
                                                          workspace_service_template.name)
-        template = enrich_workspace_service_schema_defs(template_created)
-        return template
+        #template = enrich_workspace_service_schema_defs(template_created)
+        return template_created
     except EntityVersionExist:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_TEMPLATE_VERSION_EXISTS)

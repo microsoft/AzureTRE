@@ -38,7 +38,6 @@ def create_user_resource_template(user_resource_template_create: UserResourceTem
             user_resource_template_create.name,
             user_resource_template_create.version,
             ResourceType.UserResource)
-        print(template)
         if template:
             raise EntityVersionExist
     except EntityDoesNotExist:
