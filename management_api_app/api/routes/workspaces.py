@@ -11,6 +11,7 @@ from db.repositories.workspace_services import WorkspaceServiceRepository
 from models.domain.authentication import User
 from models.domain.workspace import Workspace, WorkspaceRole
 from models.schemas.workspace import WorkspaceInCreate, WorkspaceIdInResponse, WorkspacesInList, WorkspaceInResponse, WorkspacePatchEnabled
+from models.schemas.workspace_service import WorkspaceServiceIdInResponse, WorkspaceServiceInCreate
 from resources import strings
 from service_bus.resource_request_sender import send_resource_request_message, RequestAction
 from services.authentication import get_current_user, get_current_admin_user, get_access_service
@@ -56,6 +57,42 @@ async def create_workspace(workspace_create: WorkspaceInCreate, workspace_repo: 
     return WorkspaceIdInResponse(workspaceId=workspace.id)
 
 
+@router.post("/workspaces/{workspace_id}/workspace-services", status_code=status.HTTP_202_ACCEPTED,
+             response_model=WorkspaceServiceIdInResponse, name=strings.API_CREATE_WORKSPACE_SERVICE)
+async def create_workspace_service(workspace_create: WorkspaceServiceInCreate,
+                                   workspace_service_repo: WorkspaceServiceRepository = Depends(
+                                       get_repository(WorkspaceServiceRepository)),
+                                   user: User = Depends(get_current_user),
+                                   workspace: Workspace = Depends(get_workspace_by_workspace_id_from_path)
+                                   ) -> WorkspaceServiceIdInResponse:
+    access_service = get_access_service()
+    if access_service.get_workspace_role(user, workspace) != WorkspaceRole.Owner:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.ACCESS_USER_IS_NOT_OWNER)
+
+    try:
+        workspace_service = workspace_service_repo.create_workspace_service_item(workspace_create, workspace.id)
+    except (ValidationError, ValueError) as e:
+        logging.error(f"Failed create workspace service model instance: {e}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    try:
+        workspace_service_repo.save_workspace_service(workspace_service)
+    except Exception as e:
+        logging.error(f"Failed save workspace service instance in DB: {e}")
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                            detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
+
+    try:
+        await send_resource_request_message(workspace_service, RequestAction.Install)
+    except Exception as e:
+        # TODO: Rollback DB change, issue #154
+        logging.error(f"Failed send workspace service resource request message: {e}")
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                            detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
+
+    return WorkspaceServiceIdInResponse(workspaceServiceId=workspace_service.id)
+
+
 @router.get("/workspaces/{workspace_id}", response_model=WorkspaceInResponse, name=strings.API_GET_WORKSPACE_BY_ID)
 async def retrieve_workspace_by_workspace_id(
         user: User = Depends(get_current_user),
@@ -91,7 +128,7 @@ async def delete_workspace(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_SERVICES_NEED_TO_BE_DELETED_BEFORE_WORKSPACE)
 
     try:
-        workspace_repo.delete_workspace(workspace)
+        workspace_repo.mark_workspace_as_deleted(workspace)
     except Exception as e:
         logging.error(f"Failed to delete workspace instance in DB: {e}")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)

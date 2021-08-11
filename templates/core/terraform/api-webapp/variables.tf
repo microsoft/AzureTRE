@@ -14,7 +14,7 @@ variable "docker_registry_server" {}
 variable "docker_registry_username" {}
 variable "docker_registry_password" {}
 variable "state_store_endpoint" {}
-variable "state_store_key" {}
+variable "cosmosdb_account_name" {}
 variable "service_bus_resource_request_queue" {}
 variable "service_bus_deployment_status_update_queue" {}
 variable "managed_identity" {}

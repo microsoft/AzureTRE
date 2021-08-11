@@ -8,16 +8,24 @@ from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.user_resource_templates import UserResourceTemplateRepository
 from models.domain.resource import ResourceType
 from models.domain.resource_template import ResourceTemplate
-from models.schemas.resource_template import ResourceTemplateInResponse
 from models.schemas.user_resource_template import UserResourceTemplateInResponse, UserResourceTemplateInCreate
-from models.schemas.workspace_service_template import WorkspaceServiceTemplateInCreate, \
-    WorkspaceServiceTemplateInResponse
+from models.schemas.resource_template import ResourceTemplateInResponse, ResourceTemplateInformationInList
+from models.schemas.workspace_service_template import WorkspaceServiceTemplateInCreate, WorkspaceServiceTemplateInResponse
 from resources import strings
 from services.authentication import get_current_admin_user
 from services.concatjsonschema import enrich_workspace_service_schema_defs
 from services.resource_template_service import create_template_by_resource_type, create_user_resource_template
 
+
 router = APIRouter(dependencies=[Depends(get_current_admin_user)])
+
+
+@router.get("/workspace-service-templates", response_model=ResourceTemplateInformationInList, name=strings.API_GET_WORKSPACE_SERVICE_TEMPLATES)
+async def get_workspace_service_templates(
+        workspace_service_template_repo: ResourceTemplateRepository = Depends(get_repository(ResourceTemplateRepository))
+) -> ResourceTemplateInformationInList:
+    workspace_service_templates = workspace_service_template_repo.get_basic_resource_templates_information(ResourceType.WorkspaceService)
+    return ResourceTemplateInformationInList(templates=workspace_service_templates)
 
 
 @router.post("/workspace-service-templates", status_code=status.HTTP_201_CREATED,

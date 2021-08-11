@@ -10,9 +10,9 @@ from pydantic import ValidationError, parse_obj_as
 from core import config
 from api.dependencies.database import get_db_client
 from db.errors import EntityDoesNotExist
-from db.repositories.workspaces import WorkspaceRepository
+from db.repositories.resources import ResourceRepository
 from models.domain.resource import Status
-from models.domain.workspace import DeploymentStatusUpdateMessage, Workspace
+from models.domain.workspace import DeploymentStatusUpdateMessage
 from resources import strings
 
 
@@ -56,28 +56,28 @@ async def receive_message():
                         await receiver.complete_message(msg)
 
 
-def create_updated_deployment_document(workspace: Workspace, message: DeploymentStatusUpdateMessage):
+def create_updated_deployment_document(resource: dict, message: DeploymentStatusUpdateMessage):
     """Take a workspace and a deployment status update message and updates workspace with the message contents
 
     Args:
-        workspace ([Workspace]): Workspace to update
+        resource ([dict]): Dictionary representing a resource to update
         message ([DeploymentStatusUpdateMessage]): Message which contains the updated information
 
     Returns:
-        [Workspace]: Workspace with the deployment sub doc updated
+        [dict]: Dictionary representing a resource with the deployment sub doc updated
     """
-    if workspace.deployment.status == Status.Deployed:
-        return workspace  # Never update a deployed workspace.
-    workspace.deployment.status = message.status
-    workspace.deployment.message = message.message
-    return workspace
+    if resource["deployment"]["status"] == Status.Deployed:
+        return resource  # Never update a deployed workspace.
+    resource["deployment"]["status"] = message.status
+    resource["deployment"]["message"] = message.message
+    return resource
 
 
-def update_status_in_database(workspace_repo: WorkspaceRepository, message: DeploymentStatusUpdateMessage):
+def update_status_in_database(resource_repo: ResourceRepository, message: DeploymentStatusUpdateMessage):
     """Updates the deployment sub document with message content
 
     Args:
-        workspace_repo ([WorkspaceRepository]): Handle to the workspace repository
+        resource_repo ([ResourceRepository]): Handle to the resource repository
         message ([DeploymentStatusUpdateMessage]): Message which contains the updated information
 
     Returns:
@@ -86,8 +86,8 @@ def update_status_in_database(workspace_repo: WorkspaceRepository, message: Depl
     result = False
 
     try:
-        workspace = workspace_repo.get_workspace_by_workspace_id(message.id)
-        workspace_repo.update_workspace(create_updated_deployment_document(workspace, message))
+        resource = resource_repo.get_resource_dict_by_id(message.id)
+        resource_repo.update_resource_dict(create_updated_deployment_document(resource, message))
         result = True
     except EntityDoesNotExist:
         # Marking as true as this message will never succeed anyways and should be removed from the queue.
@@ -111,8 +111,8 @@ async def receive_message_and_update_deployment(app: FastAPI) -> None:
 
     try:
         async for message in receive_message_gen:
-            workspace_repo = WorkspaceRepository(get_db_client(app))
-            result = update_status_in_database(workspace_repo, message)
+            resource_repo = ResourceRepository(get_db_client(app))
+            result = update_status_in_database(resource_repo, message)
             await receive_message_gen.asend(result)
     except StopAsyncIteration:  # the async generator when finished signals end with this exception.
         pass
