@@ -31,7 +31,7 @@ async def get_workspace_service_templates(
 
 
 @router.get("/workspace-service-templates/{template_name}", response_model=WorkspaceServiceTemplateInResponse, name=strings.API_GET_WORKSPACE_SERVICE_TEMPLATE_BY_NAME)
-async def get_current_workspace_template_by_name(
+async def get_current_workspace_service_template_by_name(
         template_name: str,
         workspace_service_template_repo: ResourceTemplateRepository = Depends(get_repository(ResourceTemplateRepository))
 ) -> WorkspaceServiceTemplateInResponse:
