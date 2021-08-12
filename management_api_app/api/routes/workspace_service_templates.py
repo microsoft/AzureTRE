@@ -1,9 +1,11 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
 
 from api.dependencies.database import get_repository
 from api.dependencies.workspace_service_templates import get_workspace_service_template_by_name_from_path
-from db.errors import EntityVersionExist
+from db.errors import EntityVersionExist, EntityDoesNotExist
 from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.user_resource_templates import UserResourceTemplateRepository
 from models.domain.resource import ResourceType
@@ -26,6 +28,22 @@ async def get_workspace_service_templates(
 ) -> ResourceTemplateInformationInList:
     workspace_service_templates = workspace_service_template_repo.get_basic_resource_templates_information(ResourceType.WorkspaceService)
     return ResourceTemplateInformationInList(templates=workspace_service_templates)
+
+
+@router.get("/workspace-service-templates/{template_name}", response_model=WorkspaceServiceTemplateInResponse, name=strings.API_GET_WORKSPACE_SERVICE_TEMPLATE_BY_NAME)
+async def get_current_workspace_service_template_by_name(
+        template_name: str,
+        workspace_service_template_repo: ResourceTemplateRepository = Depends(get_repository(ResourceTemplateRepository))
+) -> WorkspaceServiceTemplateInResponse:
+    try:
+        template = workspace_service_template_repo.get_current_resource_template_by_name(template_name, ResourceType.WorkspaceService)
+        template = enrich_workspace_service_schema_defs(template)
+        return template
+    except EntityDoesNotExist:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.TEMPLATE_DOES_NOT_EXIST)
+    except Exception as e:
+        logging.debug(e)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
 
 
 @router.post("/workspace-service-templates", status_code=status.HTTP_201_CREATED,
