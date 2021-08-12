@@ -7,8 +7,8 @@ from api.dependencies.database import get_repository
 from db.errors import EntityDoesNotExist, EntityVersionExist
 from db.repositories.resource_templates import ResourceTemplateRepository
 from models.domain.resource import ResourceType
-from models.schemas.resource_template import ResourceTemplateInResponse
-from models.schemas.workspace_template import WorkspaceTemplateNamesInList, WorkspaceTemplateInCreate, WorkspaceTemplateInResponse
+from models.schemas.resource_template import ResourceTemplateInResponse, ResourceTemplateInformationInList
+from models.schemas.workspace_template import WorkspaceTemplateInCreate, WorkspaceTemplateInResponse
 from resources import strings
 from services.authentication import get_current_admin_user
 from services.concatjsonschema import enrich_workspace_schema_defs
@@ -18,13 +18,12 @@ from services.resource_template_service import create_template_by_resource_type
 router = APIRouter(dependencies=[Depends(get_current_admin_user)])
 
 
-@router.get("/workspace-templates", response_model=WorkspaceTemplateNamesInList,
-            name=strings.API_GET_WORKSPACE_TEMPLATES)
+@router.get("/workspace-templates", response_model=ResourceTemplateInformationInList, name=strings.API_GET_WORKSPACE_TEMPLATES)
 async def get_workspace_templates(
         workspace_template_repo: ResourceTemplateRepository = Depends(get_repository(ResourceTemplateRepository))
-) -> WorkspaceTemplateNamesInList:
-    workspace_template_names = workspace_template_repo.get_workspace_template_names()
-    return WorkspaceTemplateNamesInList(templateNames=workspace_template_names)
+) -> ResourceTemplateInformationInList:
+    workspace_templates = workspace_template_repo.get_basic_resource_templates_information(ResourceType.Workspace)
+    return ResourceTemplateInformationInList(templates=workspace_templates)
 
 
 @router.post("/workspace-templates", status_code=status.HTTP_201_CREATED, response_model=WorkspaceTemplateInResponse,

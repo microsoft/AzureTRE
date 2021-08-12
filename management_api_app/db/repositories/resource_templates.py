@@ -44,12 +44,6 @@ class ResourceTemplateRepository(BaseRepository):
             raise EntityDoesNotExist
         return parse_obj_as(ResourceTemplate, resource_templates[0])
 
-    def get_workspace_template_names(self) -> List[str]:
-        query = 'SELECT c.name FROM c'
-        workspace_templates = self.query(query=query)
-        workspace_template_names = [template["name"] for template in workspace_templates]
-        return list(set(workspace_template_names))
-
     def create_resource_template_item(self, template_create: ResourceTemplateInCreate,
                                       resource_type: ResourceType) -> ResourceTemplate:
         item_id = str(uuid.uuid4())
