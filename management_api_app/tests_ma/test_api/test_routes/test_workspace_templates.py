@@ -143,27 +143,17 @@ class TestWorkspaceTemplate:
         assert response.json()["name"] == template_name
         assert "description" in response.json()["required"]
 
+    @pytest.mark.parametrize("exception, expected_status", [(EntityDoesNotExist, status.HTTP_404_NOT_FOUND),
+                                                            (UnableToAccessDatabase, status.HTTP_503_SERVICE_UNAVAILABLE)])
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_resource_template_by_name")
-    async def test_workspace_templates_by_name_returns_404_if_template_does_not_exist(self,
-                                                                                      get_workspace_template_by_name_mock,
-                                                                                      app: FastAPI,
-                                                                                      client: AsyncClient):
-        get_workspace_template_by_name_mock.side_effect = EntityDoesNotExist
+    async def test_workspace_templates_by_name_returns_returns_error_status_based_on_exception(self, get_workspace_template_by_name_mock,
+                                                                                               exception, expected_status,
+                                                                                               app: FastAPI, client: AsyncClient):
+        get_workspace_template_by_name_mock.side_effect = exception
 
-        response = await client.get(
-            app.url_path_for(strings.API_GET_WORKSPACE_TEMPLATE_BY_NAME, template_name="tre-workspace-vanilla"))
+        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_TEMPLATE_BY_NAME, template_name="tre-workspace-vanilla"))
 
-        assert response.status_code == status.HTTP_404_NOT_FOUND
-
-    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_resource_template_by_name")
-    async def test_workspace_templates_by_name_returns_503_on_database_error(self, get_workspace_template_by_name_mock,
-                                                                             app: FastAPI, client: AsyncClient):
-        get_workspace_template_by_name_mock.side_effect = UnableToAccessDatabase
-
-        response = await client.get(
-            app.url_path_for(strings.API_GET_WORKSPACE_TEMPLATE_BY_NAME, template_name="tre-workspace-vanilla"))
-
-        assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+        assert response.status_code == expected_status
 
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.create_resource_template_item")
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_resource_template_by_name")
