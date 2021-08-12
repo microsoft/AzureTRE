@@ -220,6 +220,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123',
                                                   'roles': {'WorkspaceOwner': 'ab124', 'WorkspaceResearcher': 'ab125'}}
         sample_workspace = create_sample_workspace_object(workspace_id, auth_info_user_in_workspace_owner_role)
+        sample_workspace.deployment.status = Status.Deployed
         get_workspace_mock.return_value = sample_workspace
 
         workspace_service_id = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
