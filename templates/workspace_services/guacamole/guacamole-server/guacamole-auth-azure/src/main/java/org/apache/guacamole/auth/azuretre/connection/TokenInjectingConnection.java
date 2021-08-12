@@ -19,8 +19,13 @@
 
 package org.apache.guacamole.auth.azuretre.connection;
 
+import java.net.URI;
 import java.util.Map;
 
+import com.azure.identity.DefaultAzureCredential;
+import com.azure.identity.DefaultAzureCredentialBuilder;
+import com.azure.security.keyvault.secrets.SecretClient;
+import com.azure.security.keyvault.secrets.SecretClientBuilder;
 import org.apache.guacamole.GuacamoleException;
 import org.apache.guacamole.auth.azuretre.user.AzureTREAuthenticatedUser;
 import org.apache.guacamole.net.GuacamoleTunnel;
@@ -54,7 +59,7 @@ public class TokenInjectingConnection extends SimpleConnection {
 
         try {
 
-            JSONObject credsJsonObject = getConnectionCredentialsFromProjectAPI(user, this.getConfiguration().getParameter("azure-resource-id"));
+            JSONObject credsJsonObject = getConnectionCredentialsFromProjectAPI(this.getConfiguration().getParameter("azure-resource-id"));
 
             if (credsJsonObject != null) {
                 
@@ -72,61 +77,33 @@ public class TokenInjectingConnection extends SimpleConnection {
 
     }
 
-    private JSONObject getConnectionCredentialsFromProjectAPI(AzureTREAuthenticatedUser user, String resourceId)
+    private JSONObject getConnectionCredentialsFromProjectAPI(String resourceId)
             throws GuacamoleException, IOException {
 
-        JSONObject creds = null;
-
-        // Todo: Implement / Uncomment when the relevant API call is available for consumption
-        // https://github.com/microsoft/AzureTRE/issues/561
-        /*
-        try {
-            SSLContextBuilder builder = new SSLContextBuilder();
-            builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
-            SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(builder.build());
-            CloseableHttpClient httpclient = HttpClients.custom().setSSLSocketFactory(sslsf).build();
+        JSONObject creds;
+        String resourceSecret = null;
 
             try {
+                logger.info("Loading credentials from Azure Key Vault for secret " + resourceId + ".");
+                String keyVaultUri = String.format("https://%s.vault.azure.net",System.getenv("TRE_ID"));
 
-                URI projectUri = new URI(System.getenv("PROJECT_URL"));
+                DefaultAzureCredential credential = new DefaultAzureCredentialBuilder().build();
+                SecretClient secretClient = new SecretClientBuilder()
+                        .vaultUrl(keyVaultUri)
+                        .credential(credential)
+                        .buildClient();
 
-                // specify the host, protocol, and port
-                URIBuilder uriBuilder = new URIBuilder();
+                resourceSecret = secretClient.getSecret(resourceId).getValue();
 
-                uriBuilder.setScheme(projectUri.getScheme()).setHost(projectUri.getHost()).setPort(projectUri.getPort())
-                        .setPath("/api/userserviceinstancecredentials").setParameter("resourceID", resourceId);
-
-                URI uri = uriBuilder.build();
-                HttpGet httpget = new HttpGet(uri);
-                httpget.addHeader("Authorization", "Bearer " + user.getAccessToken());
-
-                CloseableHttpResponse httpResponse = httpclient.execute(httpget);
-
-                String json = EntityUtils.toString(httpResponse.getEntity());
-
-                if (json.length() != 0) {
-                    creds = new JSONObject(json);
-                }
 
             } catch (Exception e) {
-                e.printStackTrace();
-                throw new GuacamoleException(e.getMessage());
-            } finally {
-                // When HttpClient instance is no longer needed,
-                // shut down the connection manager to ensure
-                // immediate deallocation of all system resources
-                httpclient.close();
+                logger.error(e.getMessage(), e);
+
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new GuacamoleException(e.getMessage());
 
-        }
-        return creds;
 
-         */
 
-        String json = "{\"password\": \"" + System.getenv("TEMP_PASSWORD") + "\"}";
+        String json = "{\"password\": \"" + resourceSecret + "\"}";
         logger.info("returning stub creds" + json);
         creds = new JSONObject(json);
 
