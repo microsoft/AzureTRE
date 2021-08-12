@@ -237,7 +237,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     @patch("api.routes.workspaces.send_resource_request_message")
     @patch("api.routes.workspaces.UserResourceRepository.save_resource")
     @patch("api.routes.workspaces.UserResourceRepository.create_user_resource_item")
-    async def test_user_resources_post_creates_user_resource(create_user_resource_item_mock, save_resource_mock,
+    async def test_user_resources_post_creates_user_resource(self, create_user_resource_item_mock, save_resource_mock,
                                                              send_resource_request_message_mock,
                                                              get_workspace_service_mock, get_workspace_mock,
                                                              app: FastAPI, client: AsyncClient):
@@ -261,7 +261,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
 
     # [POST] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
-    async def test_user_resources_post_with_non_existing_workspace_id_returns_404(get_workspace_mock, app: FastAPI,
+    async def test_user_resources_post_with_non_existing_workspace_id_returns_404(self, get_workspace_mock, app: FastAPI,
                                                                                   client: AsyncClient):
         workspace_id = "98b8799a-7281-4fc5-91d5-49684a4810ff"
         parent_workspace_service_id = "937453d3-82da-4bfc-b6e9-9a7853ef753e"
@@ -277,7 +277,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     # [POST] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
-    async def test_user_resources_post_with_non_existing_service_id_returns_404(get_workspace_service_mock,
+    async def test_user_resources_post_with_non_existing_service_id_returns_404(self, get_workspace_service_mock,
                                                                                 get_workspace_mock, app: FastAPI,
                                                                                 client: AsyncClient):
         workspace_id = "98b8799a-7281-4fc5-91d5-49684a4810ff"
