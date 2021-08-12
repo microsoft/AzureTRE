@@ -17,21 +17,9 @@
       }
     },
     {
-      "name": "acr_name",
-      "source": {
-        "env": "ACR_NAME"
-      }
-    },
-    {
       "name": "mgmt_resource_group_name",
       "source": {
         "env": "MGMT_RESOURCE_GROUP_NAME"
-      }
-    },
-    {
-      "name": "guacamole_image_tag",
-      "source": {
-        "env": "GUACAMOLE_IMAGE_TAG"
       }
     },
     {

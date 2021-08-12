@@ -19,19 +19,10 @@ parameters:
     type: string
   - name: tre_id
     type: string
-  - name: acr_name
-    type: string
-    description: "Name of the azure container registry"
-    env: ACR_NAME
   - name: mgmt_resource_group_name
     type: string
     description: "Resource group containing the shared ACR"
     env: MGMT_RESOURCE_GROUP_NAME
-  - name: guacamole_image_tag
-    type: string
-    description: "Guacamole server image tag"
-    env: GUACAMOLE_IMAGE_TAG
-    default: "v0.0.1"
   - name: tfstate_resource_group_name
     type: string
     description: "Resource group containing the Terraform state storage account"
@@ -43,9 +34,6 @@ parameters:
     type: string
     default: "tfstate"
     description: "The name of the Terraform state storage container"
-  - name: arm_use_msi
-    env: ARM_USE_MSI
-    default: false
 
 outputs:
   - name: guacamole_workspace_name
@@ -65,10 +53,7 @@ install:
         arm_client_id: "{{ bundle.credentials.azure_client_id }}"
         arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
         arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
-        acr_name: "{{ bundle.parameters.acr_name }}"
         mgmt_resource_group_name: "{{ bundle.parameters.mgmt_resource_group_name }}"
-        guacamole_image_tag: "{{ bundle.parameters.guacamole_image_tag }}"
-        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
