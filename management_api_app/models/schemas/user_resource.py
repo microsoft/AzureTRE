@@ -11,7 +11,7 @@ def get_sample_user_resource(user_resource_id: str) -> dict:
             "resourceTemplateName": "vm",
             "resourceTemplateVersion": "0.1.0",
             "resourceTemplateParameters": {
-                "display_name": "my workspace service",
+                "display_name": "my user resource",
                 "description": "some description",
             },
             "deployment": {
