@@ -21,7 +21,7 @@ class ResourceTemplateRepository(BaseRepository):
         return f'SELECT * FROM c WHERE c.resourceType = "{resource_type}" AND c.name = "{name}"'
 
     def get_basic_resource_templates_information(self, resource_type: ResourceType) -> List[ResourceTemplateInformation]:
-        resource_template_info_query = f'SELECT c.name, c.description FROM c WHERE c.resourceType = "{resource_type}" AND c.current = TRUE'
+        resource_template_info_query = f'SELECT c.name, c.description FROM c WHERE c.resourceType = "{resource_type}" AND c.current = true'
         resource_templates = self.query(query=resource_template_info_query)
         return [parse_obj_as(ResourceTemplateInformation, info) for info in resource_templates]
 
@@ -43,12 +43,6 @@ class ResourceTemplateRepository(BaseRepository):
         if len(resource_templates) != 1:
             raise EntityDoesNotExist
         return parse_obj_as(ResourceTemplate, resource_templates[0])
-
-    def get_workspace_template_names(self) -> List[str]:
-        query = 'SELECT c.name FROM c'
-        workspace_templates = self.query(query=query)
-        workspace_template_names = [template["name"] for template in workspace_templates]
-        return list(set(workspace_template_names))
 
     def create_resource_template_item(self, template_create: ResourceTemplateInCreate,
                                       resource_type: ResourceType) -> ResourceTemplate:

@@ -12,6 +12,7 @@ from resources import strings
 from api.routes.workspaces import get_current_user
 from db.errors import EntityDoesNotExist, UnableToAccessDatabase
 from models.domain.resource_template import ResourceTemplate
+from models.schemas.resource_template import ResourceTemplateInformation
 from models.schemas.workspace_template import WorkspaceTemplateInResponse, get_sample_workspace_template_object, WorkspaceTemplateInCreate
 from services.concatjsonschema import enrich_workspace_schema_defs
 
@@ -27,20 +28,19 @@ class TestWorkspaceTemplate:
         yield
         app.dependency_overrides = {}
 
-    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_workspace_template_names")
-    async def test_workspace_templates_returns_template_names(self, get_workspace_template_names_mock, app: FastAPI,
-                                                              client: AsyncClient):
-        expected_template_names = ["template1", "template2"]
-        get_workspace_template_names_mock.return_value = expected_template_names
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_basic_resource_templates_information")
+    async def test_workspace_templates_returns_template_names_and_descriptions(self, get_workspace_template_infos_mock, app: FastAPI, client: AsyncClient):
+        expected_template_infos = [ResourceTemplateInformation(name="template1", description="description1"), ResourceTemplateInformation(name="template2", description="description2")]
+        get_workspace_template_infos_mock.return_value = expected_template_infos
 
         response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_TEMPLATES))
 
         assert response.status_code == status.HTTP_200_OK
 
-        actual_template_names = response.json()["templateNames"]
-        assert len(actual_template_names) == len(expected_template_names)
-        for name in expected_template_names:
-            assert name in actual_template_names
+        actual_template_infos = response.json()["templates"]
+        assert len(actual_template_infos) == len(expected_template_infos)
+        for name in expected_template_infos:
+            assert name in actual_template_infos
 
     async def test_post_does_not_create_a_template_with_bad_payload(self, app: FastAPI, client: AsyncClient):
         input_data = """
