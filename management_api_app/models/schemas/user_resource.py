@@ -42,7 +42,7 @@ class UserResourceInCreate(BaseModel):
     class Config:
         schema_extra = {
             "example": {
-                "userResourceType": "guacamole",
+                "userResourceType": "user-resource-type",
                 "properties": {
                     "display_name": "my user resource",
                     "description": "some description",

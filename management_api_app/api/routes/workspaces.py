@@ -71,7 +71,7 @@ async def create_workspace_service(workspace_create: WorkspaceServiceInCreate,
                                    workspace_service_repo: WorkspaceServiceRepository = Depends(
                                        get_repository(WorkspaceServiceRepository)),
                                    user: User = Depends(get_current_user),
-                                   workspace: Workspace = Depends(get_workspace_by_workspace_id_from_path)
+                                   workspace: Workspace = Depends(get_deployed_workspace_by_workspace_id_from_path)
                                    ) -> WorkspaceServiceIdInResponse:
     access_service = get_access_service()
     if access_service.get_workspace_role(user, workspace) != WorkspaceRole.Owner:
