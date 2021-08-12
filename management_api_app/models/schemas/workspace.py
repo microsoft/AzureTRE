@@ -10,9 +10,6 @@ from models.domain.workspace import Workspace
 def get_sample_workspace(workspace_id: str, spec_workspace_id: str = "0001") -> dict:
     return {
         "id": workspace_id,
-        "displayName": "my workspace",
-        "description": "some description",
-        "enabled": True,
         "resourceTemplateName": "tre-workspace-vanilla",
         "resourceTemplateVersion": "0.1.0",
         "resourceTemplateParameters": {
