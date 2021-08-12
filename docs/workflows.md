@@ -12,7 +12,7 @@ These are onetime configuration steps required to set up the GitHub Actions work
 | Secret name | Description |
 | ----------- | ----------- |
 | `AZURE_CREDENTIALS` | Explained in [Bootstrapping - Create service principals](./bootstrapping.md#create-service-principals). Main service principal credentials output. |
-| `TF_STATE_CONTAINER` | The name of the blob container to hold the Terraform state. Default value is `tfstate`. |
+| `TF_STATE_CONTAINER` | The name of the blob container to hold the Terraform state. By convention the value is `tfstate`. |
 | `MGMT_RESOURCE_GROUP` | The name of the shared resource group for all Azure TRE core resources. |
 | `STATE_STORAGE_ACCOUNT_NAME` | The name of the storage account to hold the Terraform state and other deployment artifacts. E.g. `mystorageaccount`. Not the script expects the Azure Storage account does not exist. |
 | `LOCATION` | The Azure location (region) for all resources. E.g. `westeurope` |
