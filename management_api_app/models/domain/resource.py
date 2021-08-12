@@ -2,6 +2,7 @@ from enum import Enum
 from pydantic import Field
 
 from models.domain.azuretremodel import AzureTREModel
+from models.domain.request_action import RequestAction
 from resources import strings
 
 
@@ -46,3 +47,12 @@ class Resource(AzureTREModel):
         if "enabled" not in self.resourceTemplateParameters:
             return True     # default behavior is enabled = True
         return self.resourceTemplateParameters["enabled"] is True
+
+    def get_resource_request_message_payload(self, action: RequestAction) -> dict:
+        return {
+            "action": action,
+            "id": self.id,
+            "name": self.resourceTemplateName,
+            "version": self.resourceTemplateVersion,
+            "parameters": self.resourceTemplateParameters
+        }
