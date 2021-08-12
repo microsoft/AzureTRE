@@ -1,7 +1,3 @@
-from typing import List
-
-from pydantic import BaseModel
-
 from models.domain.resource import ResourceType
 from models.domain.resource_template import ResourceTemplate, Property
 from models.schemas.resource_template import ResourceTemplateInCreate, ResourceTemplateInResponse
@@ -38,17 +34,6 @@ def get_sample_workspace_template_in_response() -> dict:
         "azure_location": Property(type="string"),
     }
     return workspace_template
-
-
-class WorkspaceTemplateNamesInList(BaseModel):
-    templateNames: List[str]
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "templateNames": ["tre-workspace-vanilla", "tre-workspace-base"]
-            }
-        }
 
 
 class WorkspaceTemplateInCreate(ResourceTemplateInCreate):

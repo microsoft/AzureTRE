@@ -126,22 +126,6 @@ def test_get_current_by_name_raises_entity_does_not_exist_if_no_template_found(c
 
 @patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
 @patch('azure.cosmos.CosmosClient')
-def test_get_workspace_template_names_returns_unique_template_names(cosmos_client_mock, wt_query_mock):
-    template_repo = ResourceTemplateRepository(cosmos_client_mock)
-    wt_query_mock.return_value = [
-        {"name": "template1"},
-        {"name": "template1"},
-        {"name": "template2"}
-    ]
-
-    template_names = template_repo.get_workspace_template_names()
-    assert len(template_names) == 2
-    assert "template1" in template_names
-    assert "template2" in template_names
-
-
-@patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
-@patch('azure.cosmos.CosmosClient')
 def test_get_basic_resource_template_information_returns_unique_template_names(cosmos_client_mock, rt_query_mock):
     template_repo = ResourceTemplateRepository(cosmos_client_mock)
     rt_query_mock.return_value = [
