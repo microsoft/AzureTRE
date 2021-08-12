@@ -19,6 +19,7 @@ API_CREATE_USER_RESOURCE_TEMPLATES = "Register user resource template"
 API_GET_WORKSPACE_TEMPLATE_BY_NAME = "Get workspace template by name"
 
 API_GET_WORKSPACE_SERVICE_TEMPLATES = "Get workspace service templates"
+API_GET_WORKSPACE_SERVICE_TEMPLATE_BY_NAME = "Get workspace service template by name"
 
 # State store status
 OK = "OK"

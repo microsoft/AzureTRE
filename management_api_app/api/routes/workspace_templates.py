@@ -50,7 +50,7 @@ async def get_current_workspace_template_by_name(
         workspace_template_repo: ResourceTemplateRepository = Depends(get_repository(ResourceTemplateRepository)),
 ) -> WorkspaceTemplateInResponse:
     try:
-        template = workspace_template_repo.get_current_resource_template_by_name(template_name)
+        template = workspace_template_repo.get_current_resource_template_by_name(template_name, ResourceType.Workspace)
         template = enrich_workspace_schema_defs(template)
         return template
     except EntityDoesNotExist:
