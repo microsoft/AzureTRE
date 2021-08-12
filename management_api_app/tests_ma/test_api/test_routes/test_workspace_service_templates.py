@@ -176,24 +176,17 @@ class TestWorkspaceServiceTemplates:
         assert "description" in response.json()["required"]
 
     # GET /workspace-service-templates/{template_name}
+    @pytest.mark.parametrize("exception, expected_status", [(EntityDoesNotExist, status.HTTP_404_NOT_FOUND),
+                                                            (UnableToAccessDatabase, status.HTTP_503_SERVICE_UNAVAILABLE)])
     @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.get_current_resource_template_by_name")
-    async def test_workspace_service_templates_by_name_returns_404_if_template_does_not_exist(self, get_workspace_service_template_by_name_mock,
-                                                                                              app: FastAPI, client: AsyncClient):
-        get_workspace_service_template_by_name_mock.side_effect = EntityDoesNotExist
+    async def test_workspace_service_templates_by_name_returns_error_status_based_on_exception(self, get_workspace_service_template_by_name_mock,
+                                                                                               exception, expected_status,
+                                                                                               app: FastAPI, client: AsyncClient):
+        get_workspace_service_template_by_name_mock.side_effect = exception
 
         response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_SERVICE_TEMPLATE_BY_NAME, template_name="template1"))
 
-        assert response.status_code == status.HTTP_404_NOT_FOUND
-
-    # GET /workspace-service-templates/{template_name}
-    @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.get_current_resource_template_by_name")
-    async def test_workspace_service_templates_by_name_returns_503_on_database_error(self, get_workspace_service_template_by_name_mock,
-                                                                                     app: FastAPI, client: AsyncClient):
-        get_workspace_service_template_by_name_mock.side_effect = UnableToAccessDatabase
-
-        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_SERVICE_TEMPLATE_BY_NAME, template_name="template1"))
-
-        assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+        assert response.status_code == expected_status
 
     # POST /workspace-service-templates/{template_name}/user-resource-templates
     @patch("api.routes.workspace_service_templates.create_user_resource_template")
