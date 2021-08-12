@@ -1,5 +1,5 @@
 resource "azurerm_app_service_plan" "guacamole" {
-  name                = "plan-gua-${local.service_resource_name_suffix}"
+  name                = "plan-${local.webapp_name}"
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
   kind                = "Linux"
@@ -12,7 +12,7 @@ resource "azurerm_app_service_plan" "guacamole" {
 }
 
 resource "azurerm_app_service" "guacamole" {
-  name                = "guacamole-${local.service_resource_name_suffix}"
+  name                = local.webapp_name
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
   app_service_plan_id = azurerm_app_service_plan.guacamole.id
@@ -20,7 +20,6 @@ resource "azurerm_app_service" "guacamole" {
 
   site_config {
     linux_fx_version                     = "DOCKER|${data.azurerm_container_registry.mgmt_acr.name}.azurecr.io/guac-server:v0.1.0"
-    always_on                            = true
     http2_enabled                        = true
     acr_use_managed_identity_credentials = true
   }
@@ -54,14 +53,14 @@ resource "azurerm_app_service_virtual_network_swift_connection" "guacamole" {
 }
 
 resource "azurerm_private_endpoint" "guacamole" {
-  name                = "pe-guacamole-${local.service_resource_name_suffix}"
+  name                = "pe-${local.webapp_name}"
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
   subnet_id           = data.azurerm_subnet.services.id
 
   private_service_connection {
     private_connection_resource_id = azurerm_app_service.guacamole.id
-    name                           = "psc-guacamole-${local.service_resource_name_suffix}"
+    name                           = "psc-${local.webapp_name}"
     subresource_names              = ["sites"]
     is_manual_connection           = false
   }
