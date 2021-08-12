@@ -232,8 +232,8 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         assert response.json()["workspaceServiceId"] == workspace_service_id
 
     # [POST] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources
-    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
-    @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_deployed_workspace_by_workspace_id")
+    @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_deployed_workspace_service_by_id")
     @patch("api.routes.workspaces.send_resource_request_message")
     @patch("api.routes.workspaces.UserResourceRepository.save_resource")
     @patch("api.routes.workspaces.UserResourceRepository.create_user_resource_item")
@@ -260,7 +260,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         assert response.json()["resourceId"] == user_resource_id
 
     # [POST] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources
-    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_deployed_workspace_by_workspace_id")
     async def test_user_resources_post_with_non_existing_workspace_id_returns_404(self, get_workspace_mock, app: FastAPI,
                                                                                   client: AsyncClient):
         workspace_id = "98b8799a-7281-4fc5-91d5-49684a4810ff"
@@ -275,8 +275,8 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     # [POST] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources
-    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
-    @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_deployed_workspace_by_workspace_id")
+    @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_deployed_workspace_service_by_id")
     async def test_user_resources_post_with_non_existing_service_id_returns_404(self, get_workspace_service_mock,
                                                                                 get_workspace_mock, app: FastAPI,
                                                                                 client: AsyncClient):
@@ -293,6 +293,48 @@ class TestWorkspaceRoutesThatRequireAdminRights:
                                                       service_id=parent_workspace_service_id), json=input_data)
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    # [POST] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    async def test_user_resources_post_with_non_deployed_workspace_id_returns_404(self, get_deployed_workspace_by_workspace_id_mock, app: FastAPI,
+                                                                                  client: AsyncClient):
+        workspace_id = "98b8799a-7281-4fc5-91d5-49684a4810ff"
+        parent_workspace_service_id = "937453d3-82da-4bfc-b6e9-9a7853ef753e"
+
+        sample_workspace = create_sample_workspace_object(workspace_id, {})
+        sample_workspace.deployment.status = Status.Failed
+        get_deployed_workspace_by_workspace_id_mock.return_value = sample_workspace
+
+        input_data = create_sample_user_resource_input_data()
+        response = await client.post(app.url_path_for(strings.API_CREATE_USER_RESOURCE, workspace_id=workspace_id,
+                                                      service_id=parent_workspace_service_id), json=input_data)
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.text == strings.WORKSPACE_IS_NOT_DEPLOYED
+
+    # [POST] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
+    async def test_user_resources_post_with_non_deployed_service_id_returns_404(self, get_workspace_service_mock,
+                                                                                get_workspace_mock, app: FastAPI,
+                                                                                client: AsyncClient):
+        workspace_id = "98b8799a-7281-4fc5-91d5-49684a4810ff"
+        parent_workspace_service_id = "937453d3-82da-4bfc-b6e9-9a7853ef753e"
+
+        sample_workspace = create_sample_workspace_object(workspace_id, {})
+        sample_workspace.deployment.status = Status.Deployed
+        get_workspace_mock.return_value = sample_workspace
+
+        sample_workspace_service = create_sample_workspace_service_object(workspace_id, parent_workspace_service_id)
+        sample_workspace_service.deployment.status = Status.Failed
+        get_workspace_service_mock.return_value = sample_workspace_service
+
+        input_data = create_sample_user_resource_input_data()
+        response = await client.post(app.url_path_for(strings.API_CREATE_USER_RESOURCE, workspace_id=workspace_id,
+                                                      service_id=parent_workspace_service_id), json=input_data)
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.text == strings.WORKSPACE_SERVICE_IS_NOT_DEPLOYED
 
     # [POST] /workspaces/
     @ patch("api.routes.workspaces.send_resource_request_message")

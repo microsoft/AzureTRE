@@ -8,7 +8,7 @@ from db.repositories.resources import ResourceRepository
 from models.domain.workspace_service import WorkspaceService
 from models.schemas.workspace_service import WorkspaceServiceInCreate
 from resources import strings
-from db.errors import EntityDoesNotExist
+from db.errors import EntityDoesNotExist, ResourceIsNotDeployed
 from models.domain.resource import Deployment, Status, ResourceType
 from models.domain.resource_template import ResourceTemplate
 from db.repositories.resource_templates import ResourceTemplateRepository
@@ -36,11 +36,20 @@ class WorkspaceServiceRepository(ResourceRepository):
         template = resource_template_repo.get_current_resource_template_by_name(template_name, ResourceType.WorkspaceService)
         return enrich_workspace_service_schema_defs(template)
 
+    def get_deployed_workspace_service_by_id(self, workspace_service_id: UUID4) -> WorkspaceService:
+        workspace_service = self.get_workspace_service_by_id(workspace_service_id)
+
+        if workspace_service.deployment.status != Status.Deployed:
+            raise ResourceIsNotDeployed
+
+        return workspace_service
+
     def get_workspace_service_by_id(self, workspace_service_id: UUID4) -> WorkspaceService:
         query = self._active_workspace_services_query() + f' AND c.id="{workspace_service_id}"'
         workspace_services = self.query(query=query)
         if not workspace_services:
             raise EntityDoesNotExist
+
         return parse_obj_as(WorkspaceService, workspace_services[0])
 
     def create_workspace_service_item(self, workspace_service_create: WorkspaceServiceInCreate, workspace_id: str) -> WorkspaceService:

@@ -5,7 +5,8 @@ from jsonschema.exceptions import ValidationError
 from starlette import status
 
 from api.dependencies.database import get_repository
-from api.dependencies.workspaces import get_workspace_by_workspace_id_from_path, get_workspace_service_by_id_from_path
+from api.dependencies.workspaces import get_workspace_by_workspace_id_from_path, \
+    get_deployed_workspace_by_workspace_id_from_path, get_deployed_workspace_service_by_id_from_path
 from db.repositories.user_resources import UserResourceRepository
 from db.repositories.workspaces import WorkspaceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
@@ -107,8 +108,8 @@ async def create_user_resource(user_resource_create: UserResourceInCreate,
                                user_resource_repo: UserResourceRepository = Depends(
                                    get_repository(UserResourceRepository)),
                                user: User = Depends(get_current_user),
-                               workspace: Workspace = Depends(get_workspace_by_workspace_id_from_path),
-                               workspace_service: WorkspaceService = Depends(get_workspace_service_by_id_from_path)
+                               workspace: Workspace = Depends(get_deployed_workspace_by_workspace_id_from_path),
+                               workspace_service: WorkspaceService = Depends(get_deployed_workspace_service_by_id_from_path)
                                ) -> UserResourceIdInResponse:
     access_service = get_access_service()
     role = access_service.get_workspace_role(user, workspace)
