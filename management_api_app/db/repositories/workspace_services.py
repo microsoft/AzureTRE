@@ -2,7 +2,7 @@ import uuid
 from typing import List
 
 from azure.cosmos import CosmosClient
-from pydantic import parse_obj_as
+from pydantic import parse_obj_as, UUID4
 
 from db.repositories.resources import ResourceRepository
 from models.domain.workspace_service import WorkspaceService
@@ -19,6 +19,10 @@ class WorkspaceServiceRepository(ResourceRepository):
     def __init__(self, client: CosmosClient):
         super().__init__(client)
 
+    @staticmethod
+    def _active_workspace_services_query():
+        return f'SELECT * FROM c WHERE c.resourceType = "{ResourceType.WorkspaceService}" AND c.deleted = false'
+
     def get_active_workspace_services_for_workspace(self, workspace_id: str) -> List[WorkspaceService]:
         """
         returns list of "non-deleted" workspace services linked to this workspace
@@ -31,6 +35,13 @@ class WorkspaceServiceRepository(ResourceRepository):
         resource_template_repo = ResourceTemplateRepository(self._client)
         template = resource_template_repo.get_current_resource_template_by_name(template_name, ResourceType.WorkspaceService)
         return enrich_workspace_service_schema_defs(template)
+
+    def get_workspace_service_by_id(self, workspace_service_id: UUID4) -> WorkspaceService:
+        query = self._active_workspace_services_query() + f' AND c.id="{workspace_service_id}"'
+        workspace_services = self.query(query=query)
+        if not workspace_services:
+            raise EntityDoesNotExist
+        return parse_obj_as(WorkspaceService, workspace_services[0])
 
     def create_workspace_service_item(self, workspace_service_create: WorkspaceServiceInCreate, workspace_id: str) -> WorkspaceService:
         full_workspace_service_id = str(uuid.uuid4())

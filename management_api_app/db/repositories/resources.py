@@ -5,6 +5,7 @@ from pydantic import UUID4
 from core import config
 from db.errors import EntityDoesNotExist
 from db.repositories.base import BaseRepository
+from models.domain.resource import Resource
 
 
 class ResourceRepository(BaseRepository):
@@ -28,3 +29,6 @@ class ResourceRepository(BaseRepository):
 
     def update_resource_dict(self, resource_dict: dict):
         self.container.upsert_item(body=resource_dict)
+
+    def save_resource(self, resource: Resource):
+        self.create_item(resource)

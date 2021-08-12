@@ -11,6 +11,7 @@ from db.repositories.workspaces import WorkspaceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
 from models.domain.authentication import User
 from models.domain.resource import Status, Deployment
+from models.domain.user_resource import UserResource
 from models.domain.workspace import Workspace
 from models.domain.workspace_service import WorkspaceService
 from resources import strings
@@ -36,8 +37,8 @@ def create_sample_workspace_service_object(workspace_service_id, workspace_id):
     workspace_service = WorkspaceService(
         id=workspace_service_id,
         workspaceId=workspace_id,
-        description="My workspace",
-        resourceTemplateName="tre-workspace-vanilla",
+        description="My workspace service",
+        resourceTemplateName="tre-workspace-service",
         resourceTemplateVersion="0.1.0",
         resourceTemplateParameters={},
         deployment=Deployment(status=Status.NotDeployed, message=""),
@@ -46,9 +47,34 @@ def create_sample_workspace_service_object(workspace_service_id, workspace_id):
     return workspace_service
 
 
+def create_sample_user_resource_object(user_resource_id, workspace_id, parent_workspace_service_id):
+    user_resource = UserResource(
+        id=user_resource_id,
+        workspaceId=workspace_id,
+        parentWorkspaceServiceId=parent_workspace_service_id,
+        description="My user resource",
+        resourceTemplateName="tre-user-resource",
+        resourceTemplateVersion="0.1.0",
+        resourceTemplateParameters={},
+        deployment=Deployment(status=Status.NotDeployed, message=""),
+    )
+
+    return user_resource
+
+
 def create_sample_workspace_service_input_data():
     return {
         "workspaceServiceType": "test-workspace-service",
+        "properties": {
+            "display_name": "display",
+            "app_id": "f0acf127-a672-a672-a672-a15e5bf9f127"
+        }
+    }
+
+
+def create_sample_user_resource_input_data():
+    return {
+        "userResourceType": "test-user-resource",
         "properties": {
             "display_name": "display",
             "app_id": "f0acf127-a672-a672-a672-a15e5bf9f127"
@@ -160,7 +186,7 @@ async def test_workspaces_post_calls_db_and_service_bus(validate_workspace_param
     send_resource_request_message_mock.assert_called_once()
 
 
-# [POST] /workspaces/{workspace_id}/services
+# [POST] /workspaces/{workspace_id}/workspace-services
 @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
 @ patch("api.routes.workspaces.send_resource_request_message")
 @ patch("api.routes.workspaces.WorkspaceServiceRepository.save_workspace_service")
@@ -180,6 +206,62 @@ async def test_workspace_services_post_creates_workspace_service(create_workspac
 
     assert response.status_code == status.HTTP_202_ACCEPTED
     assert response.json()["workspaceServiceId"] == workspace_service_id
+
+
+# [POST] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources
+@ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+@ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
+@ patch("api.routes.workspaces.send_resource_request_message")
+@ patch("api.routes.workspaces.UserResourceRepository.save_resource")
+@ patch("api.routes.workspaces.UserResourceRepository.create_user_resource_item")
+async def test_user_resources_post_creates_user_resource(create_user_resource_item_mock, save_resource_mock, send_resource_request_message_mock, get_workspace_service_mock, get_workspace_mock, app: FastAPI, client: AsyncClient):
+    workspace_id = "98b8799a-7281-4fc5-91d5-49684a4810ff"
+    parent_workspace_service_id = "937453d3-82da-4bfc-b6e9-9a7853ef753e"
+    auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123',
+                                              'roles': {'WorkspaceOwner': 'ab124', 'WorkspaceResearcher': 'ab125'}}
+    sample_workspace = create_sample_workspace_object(workspace_id, auth_info_user_in_workspace_owner_role)
+    get_workspace_mock.return_value = sample_workspace
+
+    user_resource_id = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
+    create_user_resource_item_mock.return_value = create_sample_user_resource_object(user_resource_id, workspace_id, parent_workspace_service_id)
+    input_data = create_sample_user_resource_input_data()
+
+    response = await client.post(app.url_path_for(strings.API_CREATE_USER_RESOURCE, workspace_id=workspace_id, service_id=parent_workspace_service_id), json=input_data)
+
+    assert response.status_code == status.HTTP_202_ACCEPTED
+    assert response.json()["resourceId"] == user_resource_id
+
+
+# [POST] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources
+@ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+async def test_user_resources_post_with_non_existing_workspace_id_returns_404(get_workspace_mock, app: FastAPI, client: AsyncClient):
+    workspace_id = "98b8799a-7281-4fc5-91d5-49684a4810ff"
+    parent_workspace_service_id = "937453d3-82da-4bfc-b6e9-9a7853ef753e"
+
+    get_workspace_mock.side_effect = EntityDoesNotExist
+
+    input_data = create_sample_user_resource_input_data()
+    response = await client.post(app.url_path_for(strings.API_CREATE_USER_RESOURCE, workspace_id=workspace_id, service_id=parent_workspace_service_id), json=input_data)
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+# [POST] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources
+@ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+@ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
+async def test_user_resources_post_with_non_existing_service_id_returns_404(get_workspace_service_mock, get_workspace_mock, app: FastAPI, client: AsyncClient):
+    workspace_id = "98b8799a-7281-4fc5-91d5-49684a4810ff"
+    parent_workspace_service_id = "937453d3-82da-4bfc-b6e9-9a7853ef753e"
+
+    sample_workspace = create_sample_workspace_object(workspace_id, {})
+    get_workspace_mock.return_value = sample_workspace
+
+    get_workspace_service_mock.side_effect = EntityDoesNotExist
+
+    input_data = create_sample_user_resource_input_data()
+    response = await client.post(app.url_path_for(strings.API_CREATE_USER_RESOURCE, workspace_id=workspace_id, service_id=parent_workspace_service_id), json=input_data)
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
 # [POST] /workspaces/
