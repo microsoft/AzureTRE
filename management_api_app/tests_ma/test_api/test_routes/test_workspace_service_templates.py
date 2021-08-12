@@ -22,7 +22,7 @@ from services.concatjsonschema import enrich_workspace_service_schema_defs
 pytestmark = pytest.mark.asyncio
 
 
-class TestWorkspaceServiceTemplates:
+class TestWorkspaceServiceTemplatesRequiringAdminRights:
     @pytest.fixture(autouse=True, scope='class')
     def _prepare(self, app, admin_user):
         app.dependency_overrides[get_current_user] = admin_user
@@ -210,3 +210,23 @@ class TestWorkspaceServiceTemplates:
             json=input_user_resource_template.dict())
 
         assert response.status_code == status.HTTP_409_CONFLICT
+
+
+class TestWorkspaceServiceTemplatesNotRequiringAdminRights:
+    @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.get_basic_template_infos_for_user_resource_templates_matching_service_template")
+    async def test_get_workspace_templates_returns_template_names_and_description(self,
+                                                                                  get_basic_resource_templates_info_mock,
+                                                                                  app: FastAPI, client: AsyncClient):
+        expected_templates = [
+            ResourceTemplateInformation(name="template1", description="description1"),
+            ResourceTemplateInformation(name="template2", description="description2")
+        ]
+        get_basic_resource_templates_info_mock.return_value = expected_templates
+
+        response = await client.get(app.url_path_for(strings.API_GET_USER_RESOURCE_TEMPLATES, template_name="parent_service_name"))
+
+        assert response.status_code == status.HTTP_200_OK
+        actual_templates = response.json()["templates"]
+        assert len(actual_templates) == len(expected_templates)
+        for template in expected_templates:
+            assert template in actual_templates
