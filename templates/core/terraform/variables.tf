@@ -83,17 +83,6 @@ variable "docker_registry_server" {
   description = "Docker registry server"
 }
 
-variable "docker_registry_username" {
-  type        = string
-  description = "Docker registry username"
-}
-
-variable "docker_registry_password" {
-  type        = string
-  description = "Docker registry password"
-  sensitive   = true
-}
-
 variable "swagger_ui_client_id" {
   type        = string
   description = "The client id (app id) of the registration in Azure AD for the Swagger UI"

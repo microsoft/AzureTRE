@@ -30,9 +30,7 @@ resource "azurerm_app_service" "management_api" {
     "XDT_MicrosoftApplicationInsights_Mode"      = "default"
     "WEBSITES_PORT"                              = "8000"
     "WEBSITE_VNET_ROUTE_ALL"                     = 1
-    "DOCKER_REGISTRY_SERVER_USERNAME"            = var.docker_registry_username
     "DOCKER_REGISTRY_SERVER_URL"                 = "https://${var.docker_registry_server}"
-    "DOCKER_REGISTRY_SERVER_PASSWORD"            = var.docker_registry_password
     "STATE_STORE_ENDPOINT"                       = var.state_store_endpoint
     "COSMOSDB_ACCOUNT_NAME"                      = var.cosmosdb_account_name
     "SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE"      = "sb-${var.tre_id}.servicebus.windows.net"
