@@ -17,10 +17,10 @@ from services.concatjsonschema import enrich_workspace_service_schema_defs
 from services.resource_template_service import create_template_by_resource_type, create_user_resource_template
 
 
-router = APIRouter(dependencies=[Depends(get_current_admin_user)])
+router = APIRouter()
 
 
-@router.get("/workspace-service-templates", response_model=ResourceTemplateInformationInList, name=strings.API_GET_WORKSPACE_SERVICE_TEMPLATES)
+@router.get("/workspace-service-templates", response_model=ResourceTemplateInformationInList, name=strings.API_GET_WORKSPACE_SERVICE_TEMPLATES, dependencies=[Depends(get_current_admin_user)])
 async def get_workspace_service_templates(
         workspace_service_template_repo: ResourceTemplateRepository = Depends(get_repository(ResourceTemplateRepository))
 ) -> ResourceTemplateInformationInList:
@@ -28,34 +28,36 @@ async def get_workspace_service_templates(
     return ResourceTemplateInformationInList(templates=workspace_service_templates)
 
 
-@router.post("/workspace-service-templates", status_code=status.HTTP_201_CREATED,
-             response_model=WorkspaceServiceTemplateInResponse, name=strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES)
+@router.post("/workspace-service-templates", status_code=status.HTTP_201_CREATED, response_model=WorkspaceServiceTemplateInResponse, name=strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES, dependencies=[Depends(get_current_admin_user)])
 async def register_workspace_service_template(
         workspace_template_create: WorkspaceServiceTemplateInCreate,
         workspace_template_repo: ResourceTemplateRepository = Depends(get_repository(ResourceTemplateRepository)),
 ) -> ResourceTemplateInResponse:
     try:
-        template_created = create_template_by_resource_type(workspace_template_create,
-                                                            workspace_template_repo,
-                                                            ResourceType.WorkspaceService)
-        template = enrich_workspace_service_schema_defs(template_created)
-        return template
+        template_created = create_template_by_resource_type(workspace_template_create, workspace_template_repo, ResourceType.WorkspaceService)
+        enriched_template = enrich_workspace_service_schema_defs(template_created)
+        return enriched_template
     except EntityVersionExist:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_TEMPLATE_VERSION_EXISTS)
 
 
-@router.post("/workspace-service-templates/{template_name}/user-resource-templates",
-             status_code=status.HTTP_201_CREATED,
-             response_model=UserResourceTemplateInResponse, name=strings.API_CREATE_USER_RESOURCE_TEMPLATES)
+@router.get("/workspace-service-templates/{template_name}/user-resource-templates", response_model=ResourceTemplateInformationInList, name=strings.API_GET_USER_RESOURCE_TEMPLATES)
+async def get_user_resource_templates_for_service_template(
+        template_name: str,
+        user_resource_template_repo: ResourceTemplateRepository = Depends(get_repository(ResourceTemplateRepository))
+) -> ResourceTemplateInformationInList:
+    user_resource_templates = user_resource_template_repo.get_basic_template_infos_for_user_resource_templates_matching_service_template(template_name)
+    return ResourceTemplateInformationInList(templates=user_resource_templates)
+
+
+@router.post("/workspace-service-templates/{template_name}/user-resource-templates", status_code=status.HTTP_201_CREATED, response_model=UserResourceTemplateInResponse, name=strings.API_CREATE_USER_RESOURCE_TEMPLATES, dependencies=[Depends(get_current_admin_user)])
 async def register_user_resource_template(
         user_resource_template_create: UserResourceTemplateInCreate,
         user_resource_template_repo: UserResourceTemplateRepository = Depends(get_repository(UserResourceTemplateRepository)),
         workspace_service_template: ResourceTemplate = Depends(get_workspace_service_template_by_name_from_path)
 ) -> UserResourceTemplateInResponse:
     try:
-        template_created = create_user_resource_template(user_resource_template_create,
-                                                         user_resource_template_repo,
-                                                         workspace_service_template.name)
+        template_created = create_user_resource_template(user_resource_template_create, user_resource_template_repo, workspace_service_template.name)
         enriched_template = enrich_workspace_service_schema_defs(template_created)
         return enriched_template
     except EntityVersionExist:

@@ -65,3 +65,6 @@ class ResourceTemplateRepository(BaseRepository):
 
     def update_item(self, resource_template: ResourceTemplate):
         self.container.upsert_item(resource_template.dict())
+
+    def get_basic_template_infos_for_user_resource_templates_matching_service_template(self, template_name):
+        raise NotImplementedError
