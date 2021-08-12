@@ -37,12 +37,12 @@ class ResourceTemplateRepository(BaseRepository):
             raise EntityDoesNotExist
         return parse_obj_as(ResourceTemplate, workspace_templates[0])
 
-    def get_workspace_template_by_name_and_version(self, name: str, version: str) -> ResourceTemplate:
-        query = self._resource_template_by_name_query(name) + f' AND c.version = "{version}"'
-        workspace_templates = self.query(query=query)
-        if len(workspace_templates) != 1:
+    def get_resource_template_by_name_and_version(self, name: str, version: str, resource_type: str = ResourceType.Workspace) -> ResourceTemplate:
+        query = self._resource_template_by_name_query(name, resource_type) + f' AND c.version = "{version}"'
+        resource_templates = self.query(query=query)
+        if len(resource_templates) != 1:
             raise EntityDoesNotExist
-        return parse_obj_as(ResourceTemplate, workspace_templates[0])
+        return parse_obj_as(ResourceTemplate, resource_templates[0])
 
     def get_workspace_template_names(self) -> List[str]:
         query = 'SELECT c.name FROM c'

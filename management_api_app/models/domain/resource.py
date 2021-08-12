@@ -24,6 +24,7 @@ class ResourceType(str, Enum):
     """
     Workspace = strings.RESOURCE_TYPE_WORKSPACE
     WorkspaceService = strings.RESOURCE_TYPE_WORKSPACE_SERVICE
+    UserResource = strings.USER_RESOURCE
 
 
 class Deployment(AzureTREModel):

@@ -1,6 +1,8 @@
 import pytest
 
 from models.domain.resource_template import ResourceTemplate, ResourceType
+from models.domain.user_resource_template import UserResourceTemplate
+from models.schemas.user_resource_template import UserResourceTemplateInCreate
 from models.schemas.workspace_template import WorkspaceTemplateInCreate
 
 
@@ -16,6 +18,23 @@ def input_workspace_template():
             "type": "object",
             "title": "My Workspace Template Custom Parameters",
             "description": "These parameters are specific to my workspace template",
+            "required": [],
+            "properties": {}
+        })
+
+
+@pytest.fixture
+def input_user_resource_template():
+    return UserResourceTemplateInCreate(
+        name="my-tre-user-resource",
+        version="0.0.1",
+        current=True,
+        json_schema={
+            "$schema": "http://json-schema.org/draft-07/schema",
+            "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/myworkspace/user_resource.json",
+            "type": "object",
+            "title": "My User Resource Template Custom Parameters",
+            "description": "These parameters are specific to my user resource template",
             "required": [],
             "properties": {}
         })
@@ -46,4 +65,19 @@ def basic_workspace_service_template(input_workspace_template):
         current=True,
         required=input_workspace_template.json_schema["required"],
         properties=input_workspace_template.json_schema["properties"]
+    )
+
+
+@pytest.fixture
+def basic_user_resource_template(input_user_resource_template):
+    return UserResourceTemplate(
+        id="1234-5678",
+        name=input_user_resource_template.name,
+        parentWorkspaceService="parent-workspace-service-name",
+        description=input_user_resource_template.json_schema["description"],
+        version=input_user_resource_template.version,
+        resourceType=ResourceType.UserResource,
+        current=True,
+        required=input_user_resource_template.json_schema["required"],
+        properties=input_user_resource_template.json_schema["properties"]
     )

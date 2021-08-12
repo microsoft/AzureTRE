@@ -54,7 +54,7 @@ async def get_current_workspace_template_by_name(
         template = enrich_workspace_schema_defs(template)
         return template
     except EntityDoesNotExist:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.WORKSPACE_TEMPLATE_DOES_NOT_EXIST)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.TEMPLATE_DOES_NOT_EXIST)
     except Exception as e:
         logging.debug(e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
