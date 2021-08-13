@@ -65,3 +65,8 @@ class ResourceTemplateRepository(BaseRepository):
 
     def update_item(self, resource_template: ResourceTemplate):
         self.container.upsert_item(resource_template.dict())
+
+    def get_basic_template_infos_for_user_resource_templates_matching_service_template(self, parent_service_name: str) -> List[ResourceTemplateInformation]:
+        query = f'SELECT c.name, c.description FROM c WHERE c.resourceType = "{ResourceType.UserResource}" AND c.parentWorkspaceService = "{parent_service_name}" AND c.current = true'
+        resource_templates = self.query(query=query)
+        return [parse_obj_as(ResourceTemplateInformation, info) for info in resource_templates]
