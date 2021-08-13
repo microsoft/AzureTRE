@@ -50,7 +50,7 @@ async def create_workspace(workspace_create: WorkspaceInCreate, workspace_repo: 
     try:
         await send_resource_request_message(workspace, RequestAction.Install)
     except Exception as e:
-        # TODO: Rollback DB change, issue #154
+        workspace_repo.delete_resource(workspace.id)
         logging.error(f"Failed send workspace resource request message: {e}")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
 
@@ -85,7 +85,7 @@ async def create_workspace_service(workspace_create: WorkspaceServiceInCreate,
     try:
         await send_resource_request_message(workspace_service, RequestAction.Install)
     except Exception as e:
-        # TODO: Rollback DB change, issue #154
+        workspace_service_repo.delete_resource(workspace_service.id)
         logging.error(f"Failed send workspace service resource request message: {e}")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                             detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
