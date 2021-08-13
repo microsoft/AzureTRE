@@ -17,7 +17,10 @@ class BaseRepository:
     def _get_container(self, container_name) -> ContainerProxy:
         try:
             database = self._client.get_database_client(config.STATE_STORE_DATABASE)
-            return database.create_container_if_not_exists(id=container_name, partition_key=PartitionKey(path="/appId"))
+            container = database.create_container_if_not_exists(id=container_name, partition_key=PartitionKey(path="/id"))
+            properties = container.read()
+            print(properties['partitionKey'])
+            return container
         except Exception:
             raise UnableToAccessDatabase
 
