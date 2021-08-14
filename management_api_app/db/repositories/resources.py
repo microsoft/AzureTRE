@@ -28,3 +28,6 @@ class ResourceRepository(BaseRepository):
 
     def update_resource_dict(self, resource_dict: dict):
         self.container.upsert_item(body=resource_dict)
+
+    def delete_resource(self, resource_id: str):
+        self.container.delete_item(item=resource_id, partition_key=resource_id)
