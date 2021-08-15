@@ -6,7 +6,6 @@ from db.errors import EntityDoesNotExist
 from db.repositories.workspace_services import WorkspaceServiceRepository
 from models.domain.resource import Deployment, Status, ResourceType
 from models.domain.workspace_service import WorkspaceService
-from models.schemas.workspace import AuthenticationConfiguration, AuthProvider
 from models.schemas.workspace_service import WorkspaceServiceInCreate
 
 
@@ -17,10 +16,7 @@ def basic_workspace_service_request():
 
 @patch('db.repositories.workspace_services.WorkspaceServiceRepository._get_current_workspace_service_template')
 @patch('azure.cosmos.CosmosClient')
-def test_create_workspace_item_creates_a_workspace_with_the_right_values(cosmos_client_mock,
-                                                                         _get_current_workspace_service_template_mock,
-                                                                         basic_workspace_service_template, basic_workspace_service_request):
-
+def test_create_workspace_item_creates_a_workspace_with_the_right_values(cosmos_client_mock, _get_current_workspace_service_template_mock, basic_workspace_service_template, basic_workspace_service_request):
     workspace_service_repo = WorkspaceServiceRepository(cosmos_client_mock)
 
     workspace_to_create = basic_workspace_service_request
@@ -45,12 +41,7 @@ def test_create_workspace_item_creates_a_workspace_with_the_right_values(cosmos_
 def test_create_workspace_item_raises_value_error_if_template_is_invalid(cosmos_client_mock, _get_current_workspace_service_template_mock, __):
     workspace_service_repo = WorkspaceServiceRepository(cosmos_client_mock)
 
-    workspace_service_to_create = WorkspaceServiceInCreate(
-        workspaceServiceType="workspace-service-type",
-        displayName="my workspace",
-        description="some description",
-        authConfig=AuthenticationConfiguration(provider=AuthProvider.AAD, data={})
-    )
+    workspace_service_to_create = WorkspaceServiceInCreate(workspaceServiceType="workspace-service-type")
 
     workspace_id = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
 
@@ -80,9 +71,7 @@ def test_save_workspace_saves_the_items_to_the_database(cosmos_client_mock):
 
 @patch('db.repositories.workspace_services.WorkspaceServiceRepository._get_current_workspace_service_template')
 @patch('azure.cosmos.CosmosClient')
-def test_create_workspace_item_does_not_accept_invalid_payload(cosmos_client_mock,
-                                                               _get_current_workspace_service_template_mock,
-                                                               basic_workspace_service_template, basic_workspace_service_request):
+def test_create_workspace_item_does_not_accept_invalid_payload(cosmos_client_mock, _get_current_workspace_service_template_mock, basic_workspace_service_template, basic_workspace_service_request):
     workspace_service_repo = WorkspaceServiceRepository(cosmos_client_mock)
 
     workspace_service_to_create = basic_workspace_service_request

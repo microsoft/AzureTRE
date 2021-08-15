@@ -3,7 +3,6 @@ import logging
 from pathlib import Path
 
 from azure.cosmos import CosmosClient, PartitionKey, DatabaseProxy
-from fastapi import FastAPI
 
 from api.dependencies.database import get_db_client
 from core import config
@@ -40,7 +39,7 @@ async def create_resource_templates(database: DatabaseProxy):
                 container.create_item(body=template)
 
 
-async def bootstrap_database(app: FastAPI) -> None:
+async def bootstrap_database(app) -> None:
     try:
         client: CosmosClient = get_db_client(app)
         if client:

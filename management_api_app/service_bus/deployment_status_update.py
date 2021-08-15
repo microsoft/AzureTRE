@@ -4,11 +4,10 @@ from contextlib import asynccontextmanager
 
 from azure.identity.aio import DefaultAzureCredential
 from azure.servicebus.aio import ServiceBusClient
-from fastapi import FastAPI
 from pydantic import ValidationError, parse_obj_as
 
-from core import config
 from api.dependencies.database import get_db_client
+from core import config
 from db.errors import EntityDoesNotExist
 from db.repositories.resources import ResourceRepository
 from models.domain.resource import Status
@@ -100,7 +99,7 @@ def update_status_in_database(resource_repo: ResourceRepository, message: Deploy
     return result
 
 
-async def receive_message_and_update_deployment(app: FastAPI) -> None:
+async def receive_message_and_update_deployment(app) -> None:
     """
     Receives messages from the deployment status update queue and updates the status for
     the associated resource in the state store.
