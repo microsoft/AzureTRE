@@ -20,7 +20,7 @@ router = APIRouter(dependencies=[Depends(get_current_admin_user)])
 
 @router.get("/workspace-templates", response_model=ResourceTemplateInformationInList, name=strings.API_GET_WORKSPACE_TEMPLATES)
 async def get_workspace_templates(template_repo=Depends(get_repository(ResourceTemplateRepository))) -> ResourceTemplateInformationInList:
-    templates_infos = template_repo.get_basic_resource_templates_information(ResourceType.Workspace)
+    templates_infos = template_repo.get_templates_information(ResourceType.Workspace)
     return ResourceTemplateInformationInList(templates=templates_infos)
 
 

@@ -44,13 +44,13 @@ class TestWorkspaceTemplate:
         app.dependency_overrides = {}
 
     # GET /workspace-templates
-    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_basic_resource_templates_information")
-    async def test_workspace_templates_returns_template_names_and_descriptions(self, get_workspace_template_infos_mock, app, client):
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_templates_information")
+    async def test_workspace_templates_returns_template_names_and_descriptions(self, get_template_infos_mock, app, client):
         expected_template_infos = [
             ResourceTemplateInformation(name="template1", description="description1"),
             ResourceTemplateInformation(name="template2", description="description2")
         ]
-        get_workspace_template_infos_mock.return_value = expected_template_infos
+        get_template_infos_mock.return_value = expected_template_infos
 
         response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_TEMPLATES))
 

@@ -43,21 +43,21 @@ class TestWorkspaceServiceTemplatesRequiringAdminRights:
         app.dependency_overrides = {}
 
     # GET /workspace-service-templates/
-    @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.get_basic_resource_templates_information")
-    async def test_get_workspace_service_templates_returns_template_names_and_description(self, get_basic_resource_templates_info_mock, app, client):
-        expected_templates = [
+    @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.get_templates_information")
+    async def test_get_workspace_service_templates_returns_template_names_and_description(self, get_templates_info_mock, app, client):
+        expected_template_infos = [
             ResourceTemplateInformation(name="template1", description="description1"),
             ResourceTemplateInformation(name="template2", description="description2")
         ]
-        get_basic_resource_templates_info_mock.return_value = expected_templates
+        get_templates_info_mock.return_value = expected_template_infos
 
         response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_SERVICE_TEMPLATES))
 
         assert response.status_code == status.HTTP_200_OK
-        actual_templates = response.json()["templates"]
-        assert len(actual_templates) == len(expected_templates)
-        for template in expected_templates:
-            assert template in actual_templates
+        actual_template_infos = response.json()["templates"]
+        assert len(actual_template_infos) == len(expected_template_infos)
+        for template_info in expected_template_infos:
+            assert template_info in actual_template_infos
 
     # POST /workspace-service-templates/
     @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.create_resource_template_item")
