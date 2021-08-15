@@ -73,3 +73,9 @@ resource "azurerm_virtual_machine" "win10vm" {
     parent_service_id = var.parent_service_id
   }
 }
+
+resource "azurerm_key_vault_secret" "win10vm_password" {
+  name         = "${local.vm_name}-admin-credentials"
+  value        =  "${random_string.username.result}\n${random_password.password.result}"
+  key_vault_id =  data.azurerm_key_vault.kv.id
+}
