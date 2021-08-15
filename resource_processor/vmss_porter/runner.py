@@ -199,7 +199,7 @@ async def runner(env_vars):
             try:
                 async for message in receive_message_gen:
                     logger_adapter.info(f"Message received for id={message['id']}")
-                    message_logger_adapter = get_message_id_logger(message['id']) # a logger to includes message id in every entry.
+                    message_logger_adapter = get_message_id_logger(message['id'])  # logger includes message id in every entry.
                     result = await deploy_porter_bundle(message, service_bus_client, env_vars, message_logger_adapter)
                     await receive_message_gen.asend(result)
             except StopAsyncIteration:  # the async generator when finished signals end with this exception.
