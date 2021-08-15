@@ -40,6 +40,7 @@ def initialize_logging(logging_level: int, correlation_id: str) -> logging.Logge
     """
     Adds the Application Insights handler for the root logger and sets the given logging level.
     Creates and returns a logger adapter that integrates the correlation ID, if given, to the log messages.
+    Note: This should be called only once, otherwise duplicate log entries could be produced.
 
     :param logging_level: The logging level to set e.g., logging.WARNING.
     :param correlation_id: Optional. The correlation ID that is passed on to the operation_Id in App Insights.
@@ -66,5 +67,23 @@ def initialize_logging(logging_level: int, correlation_id: str) -> logging.Logge
 
     adapter = logging.LoggerAdapter(logger, extra)
     adapter.debug(f"Logger adapter initialized with extra: {extra}")
+
+    return adapter
+
+
+def get_message_id_logger(correlation_id: str) -> logging.LoggerAdapter:
+    """
+    Gets a logger that includes message id for easy correlation between log entries.
+    :param correlation_id: Optional. The correlation ID that is passed on to the operation_Id in App Insights.
+    :returns: A modified logger adapter (from the original initiated one).
+    """
+    logger = logging.getLogger()
+    extra = None
+
+    if correlation_id:
+        extra = {'traceId': correlation_id}
+
+    adapter = logging.LoggerAdapter(logger, extra)
+    adapter.debug(f"Logger adapter now includes extra: {extra}")
 
     return adapter
