@@ -8,47 +8,35 @@ from models.schemas.resource_template import ResourceTemplateInCreate
 from models.schemas.user_resource_template import UserResourceTemplateInCreate
 
 
-def create_template_by_resource_type(resource_template_create: ResourceTemplateInCreate,
-                                     resource_template_repo: ResourceTemplateRepository,
-                                     resource_type: ResourceType) -> ResourceTemplate:
+def create_template_by_resource_type(template_input: ResourceTemplateInCreate, template_repo: ResourceTemplateRepository, resource_type: ResourceType) -> ResourceTemplate:
     try:
-        template = resource_template_repo.get_resource_template_by_name_and_version(resource_template_create.name,
-                                                                                    resource_template_create.version,
-                                                                                    resource_type)
+        template = template_repo.get_resource_template_by_name_and_version(template_input.name, template_input.version, resource_type)
         if template:
             raise EntityVersionExist
     except EntityDoesNotExist:
         try:
-            template = resource_template_repo.get_current_resource_template_by_name(resource_template_create.name,
-                                                                                    resource_type)
-            if resource_template_create.current:
+            template = template_repo.get_current_resource_template_by_name(template_input.name, resource_type)
+            if template_input.current:
                 template.current = False
-                resource_template_repo.update_item(template)
+                template_repo.update_item(template)
         except EntityDoesNotExist:
             # first registration
-            resource_template_create.current = True  # For first time registration, template is always marked current
-        return resource_template_repo.create_resource_template_item(resource_template_create, resource_type)
+            template_input.current = True  # For first time registration, template is always marked current
+        return template_repo.create_resource_template_item(template_input, resource_type)
 
 
-def create_user_resource_template(user_resource_template_create: UserResourceTemplateInCreate,
-                                  user_resource_template_repo: UserResourceTemplateRepository,
-                                  workspace_service_template_name: str) -> UserResourceTemplate:
+def create_user_resource_template(template_input: UserResourceTemplateInCreate, template_repo: UserResourceTemplateRepository, workspace_service_template_name: str) -> UserResourceTemplate:
     try:
-        template = user_resource_template_repo.get_resource_template_by_name_and_version(
-            user_resource_template_create.name,
-            user_resource_template_create.version,
-            ResourceType.UserResource)
+        template = template_repo.get_resource_template_by_name_and_version(template_input.name, template_input.version, ResourceType.UserResource)
         if template:
             raise EntityVersionExist
     except EntityDoesNotExist:
         try:
-            template = user_resource_template_repo.get_current_resource_template_by_name(
-                user_resource_template_create.name,
-                ResourceType.UserResource)
-            if user_resource_template_create.current:
+            template = template_repo.get_current_resource_template_by_name(template_input.name, ResourceType.UserResource)
+            if template_input.current:
                 template.current = False
-                user_resource_template_repo.update_item(template)
+                template_repo.update_item(template)
         except EntityDoesNotExist:
             # first registration
-            user_resource_template_create.current = True  # For first time registration, template is always marked current
-        return user_resource_template_repo.create_user_resource_template_item(user_resource_template_create, workspace_service_template_name)
+            template_input.current = True  # For first time registration, template is always marked current
+        return template_repo.create_user_resource_template_item(template_input, workspace_service_template_name)
