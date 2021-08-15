@@ -1,5 +1,5 @@
 name: tre-service-guacamole
-version: 0.1.2
+version: 0.1.8
 description: "An Azure TRE service for Guacamole"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -19,19 +19,12 @@ parameters:
     type: string
   - name: tre_id
     type: string
-  - name: acr_name
-    type: string
-    description: "Name of the azure container registry"
-    env: ACR_NAME
   - name: mgmt_resource_group_name
     type: string
     description: "Resource group containing the shared ACR"
     env: MGMT_RESOURCE_GROUP_NAME
-  - name: guacamole_image_tag
-    type: string
-    description: "Guacamole server image tag"
-    env: GUACAMOLE_IMAGE_TAG
-    default: "v0.0.1"
+
+  # the next 4 are automaticly sent by the resource processor call, so must be present.
   - name: tfstate_resource_group_name
     type: string
     description: "Resource group containing the Terraform state storage account"
@@ -65,10 +58,8 @@ install:
         arm_client_id: "{{ bundle.credentials.azure_client_id }}"
         arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
         arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
-        acr_name: "{{ bundle.parameters.acr_name }}"
-        mgmt_resource_group_name: "{{ bundle.parameters.mgmt_resource_group_name }}"
-        guacamole_image_tag: "{{ bundle.parameters.guacamole_image_tag }}"
         arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
+        mgmt_resource_group_name: "{{ bundle.parameters.mgmt_resource_group_name }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
