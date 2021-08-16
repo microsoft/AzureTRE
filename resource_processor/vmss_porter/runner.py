@@ -5,7 +5,7 @@ import socket
 import asyncio
 import logging
 
-from shared.logging import disable_unwanted_loggers, initialize_logging  # pylint: disable=import-error # noqa
+from shared.logging import disable_unwanted_loggers, initialize_logging, get_message_id_logger  # pylint: disable=import-error # noqa
 from resources import strings  # pylint: disable=import-error # noqa
 from contextlib import asynccontextmanager
 from azure.servicebus import ServiceBusMessage
@@ -199,7 +199,7 @@ async def runner(env_vars):
             try:
                 async for message in receive_message_gen:
                     logger_adapter.info(f"Message received for id={message['id']}")
-                    message_logger_adapter = initialize_logging(logging.INFO, message['id'])
+                    message_logger_adapter = get_message_id_logger(message['id'])  # logger includes message id in every entry.
                     result = await deploy_porter_bundle(message, service_bus_client, env_vars, message_logger_adapter)
                     await receive_message_gen.asend(result)
             except StopAsyncIteration:  # the async generator when finished signals end with this exception.
