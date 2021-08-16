@@ -194,3 +194,4 @@ sample.dat
 templates/core/terraform/scripts/index.html
 templates/core/terraform/scripts/validation.txt
 templates/core/terraform/plan
+e2e_tests/pytest_e2e.xml
