@@ -100,9 +100,9 @@ async def test_get_workspace_templates(template_name, token, verify) -> None:
         response = await client.get(
             f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACE_TEMPLATES}",
             headers=headers)
-        
+
         all_templates = [value for item in response.json()["templates"]
-                      for value in item.values()]
+                        for value in item.values()]
         assert (template_name in all_templates), f"No {template_name} template found"
 
 
