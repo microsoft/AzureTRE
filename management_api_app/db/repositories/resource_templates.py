@@ -5,12 +5,13 @@ from azure.cosmos import CosmosClient
 from pydantic import parse_obj_as
 
 from core import config
-from db.errors import EntityDoesNotExist
+from db.errors import EntityDoesNotExist, EntityVersionExist
 from db.repositories.base import BaseRepository
 from models.domain.resource import ResourceType
 from models.domain.resource_template import ResourceTemplate
 from models.domain.user_resource_template import UserResourceTemplate
 from models.schemas.resource_template import ResourceTemplateInCreate, ResourceTemplateInformation
+from services.concatjsonschema import enrich_workspace_schema_defs, enrich_workspace_service_schema_defs, enrich_user_resource_schema_defs
 
 
 class ResourceTemplateRepository(BaseRepository):
@@ -20,6 +21,15 @@ class ResourceTemplateRepository(BaseRepository):
     @staticmethod
     def _template_by_name_query(name: str, resource_type: ResourceType) -> str:
         return f'SELECT * FROM c WHERE c.resourceType = "{resource_type}" AND c.name = "{name}"'
+
+    @staticmethod
+    def enrich_template(template: ResourceTemplate) -> dict:
+        if template.resourceType == ResourceType.Workspace:
+            return enrich_workspace_schema_defs(template)
+        elif template.resourceType == ResourceType.WorkspaceService:
+            return enrich_workspace_service_schema_defs(template)
+        else:
+            return enrich_user_resource_schema_defs(template)
 
     def get_templates_information(self, resource_type: ResourceType, parent_service_name: str = "") -> List[ResourceTemplateInformation]:
         """
@@ -74,3 +84,25 @@ class ResourceTemplateRepository(BaseRepository):
 
         self.save_item(template)
         return template
+
+    def create_and_validate_template(self, template_input: ResourceTemplateInCreate, resource_type: ResourceType, workspace_service_template_name: str = "") -> dict:
+        """
+        Validates that we don't have a version conflict
+        Updates the current version for the template
+        Saves to the database and returns the enriched template
+        """
+        try:
+            template = self.get_template_by_name_and_version(template_input.name, template_input.version, resource_type)
+            if template:
+                raise EntityVersionExist
+        except EntityDoesNotExist:
+            try:
+                template = self.get_current_template(template_input.name, resource_type)
+                if template_input.current:
+                    template.current = False
+                    self.update_item(template)
+            except EntityDoesNotExist:
+                # first registration
+                template_input.current = True  # For first time registration, template is always marked current
+            created_template = self.create_template(template_input, resource_type, workspace_service_template_name)
+            return self.enrich_template(created_template)

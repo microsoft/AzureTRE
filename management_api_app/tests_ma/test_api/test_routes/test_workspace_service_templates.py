@@ -10,7 +10,6 @@ from db.errors import EntityDoesNotExist, EntityVersionExist, UnableToAccessData
 from models.domain.resource import ResourceType
 from models.domain.resource_template import ResourceTemplate
 from models.schemas.resource_template import ResourceTemplateInformation
-from models.schemas.user_resource_template import UserResourceTemplateInResponse
 from models.schemas.workspace_template import WorkspaceTemplateInResponse
 from resources import strings
 from services.concatjsonschema import enrich_workspace_service_schema_defs
@@ -109,14 +108,14 @@ class TestWorkspaceServiceTemplatesRequiringAdminRights:
     @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.create_template")
     @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.get_current_template")
     @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.get_template_by_name_and_version")
-    async def test_when_creating_workspace_service_template_service_resource_type_is_set(self, get_template_by_name_and_version_mock, get_current_template_mock, create_template_mock, app, client, input_workspace_template, basic_workspace_service_template):
+    async def test_when_creating_workspace_service_template_service_resource_type_is_set(self, get_template_by_name_and_version_mock, get_current_template_mock, create_template_mock, app, client, input_workspace_service_template, basic_workspace_service_template):
         get_template_by_name_and_version_mock.side_effect = EntityDoesNotExist
         get_current_template_mock.side_effect = EntityDoesNotExist
         create_template_mock.return_value = basic_workspace_service_template
 
-        await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES), json=input_workspace_template.dict())
+        await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES), json=input_workspace_service_template.dict())
 
-        create_template_mock.assert_called_once_with(input_workspace_template, ResourceType.WorkspaceService)
+        create_template_mock.assert_called_once_with(input_workspace_service_template, ResourceType.WorkspaceService, '')
 
     # GET /workspace-service-templates/{template_name}
     @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.get_current_template")
@@ -144,32 +143,31 @@ class TestWorkspaceServiceTemplatesRequiringAdminRights:
         assert response.status_code == expected_status
 
     # POST /workspace-service-templates/{template_name}/user-resource-templates
-    @patch("api.routes.workspace_service_templates.create_user_resource_template")
+    @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.create_and_validate_template")
     @patch("api.dependencies.workspace_service_templates.ResourceTemplateRepository.get_current_template")
-    async def test_when_creating_user_resource_template_it_is_returned_as_expected(self, get_current_template_mock, create_user_resource_template_mock, app, client, input_user_resource_template, basic_workspace_service_template, basic_user_resource_template):
+    async def test_when_creating_user_resource_template_it_is_returned_as_expected(self, get_current_template_mock, create_template_mock, app, client, input_user_resource_template, basic_workspace_service_template, user_resource_template_in_response):
         get_current_template_mock.return_value = basic_workspace_service_template
 
         parent_workspace_service_name = "guacamole"
-        basic_user_resource_template.parentWorkspaceService = parent_workspace_service_name
-        create_user_resource_template_mock.return_value = basic_user_resource_template
+        user_resource_template_in_response.parentWorkspaceService = parent_workspace_service_name
+        create_template_mock.return_value = user_resource_template_in_response
 
         response = await client.post(app.url_path_for(strings.API_CREATE_USER_RESOURCE_TEMPLATES, template_name=parent_workspace_service_name), json=input_user_resource_template.dict())
 
         assert json.loads(response.text)["resourceType"] == ResourceType.UserResource
         assert json.loads(response.text)["parentWorkspaceService"] == parent_workspace_service_name
-        assert json.loads(response.text)["name"] == basic_user_resource_template.name
+        assert json.loads(response.text)["name"] == user_resource_template_in_response.name
 
     # POST /workspace-service-templates/{template_name}/user-resource-templates
-    @patch("api.routes.workspace_service_templates.create_user_resource_template")
+    @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.create_and_validate_template")
     @patch("api.dependencies.workspace_service_templates.ResourceTemplateRepository.get_current_template")
-    async def test_when_creating_user_resource_template_enriched_service_template_is_returned(self, get_current_template_mock, create_user_resource_template_mock, app, client, input_user_resource_template, basic_workspace_service_template, basic_user_resource_template):
+    async def test_when_creating_user_resource_template_enriched_service_template_is_returned(self, get_current_template_mock, create_template_mock, app, client, input_user_resource_template, basic_workspace_service_template, user_resource_template_in_response):
         get_current_template_mock.return_value = basic_workspace_service_template
 
         parent_workspace_service_name = "guacamole"
-        basic_user_resource_template.parentWorkspaceService = parent_workspace_service_name
-        create_user_resource_template_mock.return_value = basic_user_resource_template
-
-        expected_template = parse_obj_as(UserResourceTemplateInResponse, enrich_workspace_service_schema_defs(basic_user_resource_template))
+        user_resource_template_in_response.parentWorkspaceService = parent_workspace_service_name
+        create_template_mock.return_value = user_resource_template_in_response
+        expected_template = user_resource_template_in_response
 
         response = await client.post(app.url_path_for(strings.API_CREATE_USER_RESOURCE_TEMPLATES, template_name=parent_workspace_service_name), json=input_user_resource_template.dict())
 
@@ -177,13 +175,12 @@ class TestWorkspaceServiceTemplatesRequiringAdminRights:
         assert json.loads(response.text)["required"] == expected_template.required
 
     # POST /workspace-service-templates/{template_name}/user-resource-templates
-    @patch("api.routes.workspace_service_templates.create_user_resource_template")
+    @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.create_and_validate_template")
     @patch("api.dependencies.workspace_service_templates.ResourceTemplateRepository.get_current_template")
-    async def test_when_creating_user_resource_template_returns_409_if_version_exists(self, get_current_template_mock, create_user_resource_template_mock, app, client, input_user_resource_template, basic_workspace_service_template, basic_user_resource_template):
+    async def test_when_creating_user_resource_template_returns_409_if_version_exists(self, get_current_template_mock, create_user_resource_template_mock, app, client, input_user_resource_template, basic_workspace_service_template, user_resource_template_in_response):
         get_current_template_mock.return_value = basic_workspace_service_template
 
         parent_workspace_service_name = "guacamole"
-        basic_user_resource_template.parentWorkspaceService = parent_workspace_service_name
         create_user_resource_template_mock.side_effect = EntityVersionExist
 
         response = await client.post(app.url_path_for(strings.API_CREATE_USER_RESOURCE_TEMPLATES, template_name=parent_workspace_service_name), json=input_user_resource_template.dict())

@@ -11,7 +11,6 @@ from resources import strings
 from db.errors import EntityDoesNotExist
 from models.domain.resource import Deployment, Status, ResourceType
 from db.repositories.resource_templates import ResourceTemplateRepository
-from services.concatjsonschema import enrich_workspace_service_schema_defs
 
 
 class WorkspaceServiceRepository(ResourceRepository):
@@ -27,9 +26,9 @@ class WorkspaceServiceRepository(ResourceRepository):
         return parse_obj_as(List[WorkspaceService], workspace_services)
 
     def _get_current_workspace_service_template(self, template_name) -> Dict:
-        resource_template_repo = ResourceTemplateRepository(self._client)
-        template = resource_template_repo.get_current_template(template_name, ResourceType.WorkspaceService)
-        return enrich_workspace_service_schema_defs(template)
+        template_repo = ResourceTemplateRepository(self._client)
+        template = template_repo.get_current_template(template_name, ResourceType.WorkspaceService)
+        return template_repo.enrich_template(template)
 
     def create_workspace_service_item(self, workspace_service_create: WorkspaceServiceInCreate, workspace_id: str) -> WorkspaceService:
         full_workspace_service_id = str(uuid.uuid4())

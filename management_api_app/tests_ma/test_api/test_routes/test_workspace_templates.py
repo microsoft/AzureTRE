@@ -171,7 +171,7 @@ class TestWorkspaceTemplate:
 
         await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_workspace_template.dict())
 
-        create_template_mock.assert_called_once_with(input_workspace_template, ResourceType.Workspace)
+        create_template_mock.assert_called_once_with(input_workspace_template, ResourceType.Workspace, '')
 
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.create_template")
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_template")
@@ -183,4 +183,4 @@ class TestWorkspaceTemplate:
 
         await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES), json=input_workspace_template.dict())
 
-        create_template_mock.assert_called_once_with(input_workspace_template, ResourceType.WorkspaceService)
+        create_template_mock.assert_called_once_with(input_workspace_template, ResourceType.WorkspaceService, '')

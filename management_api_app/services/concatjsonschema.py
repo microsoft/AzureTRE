@@ -44,6 +44,10 @@ def load_workspace_service_schema_def():
     return read_schema("workspace_service.json")
 
 
+def load_workspace_user_resource_def():
+    return read_schema("user_resource.json")
+
+
 def load_azuread_schema_def():
     return read_schema("azuread.json")
 
@@ -70,7 +74,21 @@ def enrich_workspace_service_schema_defs(combine_with):
     Returns:
         [Dict]: [Enriched template with all required and system properties added]
     """
-    basic_blocks = [load_workspace_service_schema_def()]
+    workspace_service_def = load_workspace_service_schema_def()
+    basic_blocks = [workspace_service_def]
+    return combine_basic_blocks(combine_with, basic_blocks)
+
+
+def enrich_user_resource_schema_defs(combine_with):
+    """Adds to the provided template all UI and system properties
+
+    Args:
+        combine_with: [Template to which UI and system properties are added].
+    Returns:
+        [Dict]: [Enriched template with all required and system properties added]
+    """
+    user_resource_def = load_workspace_user_resource_def()
+    basic_blocks = [user_resource_def]
     return combine_basic_blocks(combine_with, basic_blocks)
 
 

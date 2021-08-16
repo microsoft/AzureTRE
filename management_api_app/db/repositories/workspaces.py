@@ -85,7 +85,7 @@ class WorkspaceRepository(ResourceRepository):
         self.update_item(workspace)
 
     def save_workspace(self, workspace: Workspace):
-        self.create_item(workspace)
+        self.save_item(workspace)
 
     def update_workspace(self, workspace: Workspace):
         self.update_item(workspace)

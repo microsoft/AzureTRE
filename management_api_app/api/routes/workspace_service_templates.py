@@ -13,8 +13,6 @@ from models.schemas.resource_template import ResourceTemplateInResponse, Resourc
 from models.schemas.workspace_service_template import WorkspaceServiceTemplateInCreate, WorkspaceServiceTemplateInResponse
 from resources import strings
 from services.authentication import get_current_admin_user
-from services.concatjsonschema import enrich_workspace_service_schema_defs
-from services.resource_template_service import create_template_by_resource_type, create_user_resource_template
 
 
 router = APIRouter()
@@ -30,7 +28,7 @@ async def get_workspace_service_templates(template_repo=Depends(get_repository(R
 async def get_current_workspace_service_template_by_name(template_name: str, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> WorkspaceServiceTemplateInResponse:
     try:
         template = template_repo.get_current_template(template_name, ResourceType.WorkspaceService)
-        return enrich_workspace_service_schema_defs(template)
+        return template_repo.enrich_template(template)
     except EntityDoesNotExist:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.TEMPLATE_DOES_NOT_EXIST)
     except Exception as e:
@@ -41,8 +39,7 @@ async def get_current_workspace_service_template_by_name(template_name: str, tem
 @router.post("/workspace-service-templates", status_code=status.HTTP_201_CREATED, response_model=WorkspaceServiceTemplateInResponse, name=strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES, dependencies=[Depends(get_current_admin_user)])
 async def register_workspace_service_template(template_input: WorkspaceServiceTemplateInCreate, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> ResourceTemplateInResponse:
     try:
-        template = create_template_by_resource_type(template_input, template_repo, ResourceType.WorkspaceService)
-        return enrich_workspace_service_schema_defs(template)
+        return template_repo.create_and_validate_template(template_input, ResourceType.WorkspaceService)
     except EntityVersionExist:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_TEMPLATE_VERSION_EXISTS)
 
@@ -56,7 +53,6 @@ async def get_user_resource_templates_for_service_template(template_name: str, t
 @router.post("/workspace-service-templates/{template_name}/user-resource-templates", status_code=status.HTTP_201_CREATED, response_model=UserResourceTemplateInResponse, name=strings.API_CREATE_USER_RESOURCE_TEMPLATES, dependencies=[Depends(get_current_admin_user)])
 async def register_user_resource_template(template_input: UserResourceTemplateInCreate, template_repo=Depends(get_repository(ResourceTemplateRepository)), workspace_service_template=Depends(get_workspace_service_template_by_name_from_path)) -> UserResourceTemplateInResponse:
     try:
-        template = create_user_resource_template(template_input, template_repo, workspace_service_template.name)
-        return enrich_workspace_service_schema_defs(template)
+        return template_repo.create_and_validate_template(template_input, ResourceType.UserResource, workspace_service_template.name)
     except EntityVersionExist:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_TEMPLATE_VERSION_EXISTS)
