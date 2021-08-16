@@ -102,7 +102,7 @@ async def test_get_workspace_templates(template_name, token, verify) -> None:
             headers=headers)
 
         all_templates = [value for item in response.json()["templates"]
-                        for value in item.values()]
+                         for value in item.values()]
         assert (template_name in all_templates), f"No {template_name} template found"
 
 
