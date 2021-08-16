@@ -135,7 +135,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
 
     # [POST] /workspaces/
     @ patch("api.routes.workspaces.send_resource_request_message")
-    @ patch("api.routes.workspaces.WorkspaceRepository.save_workspace")
+    @ patch("api.routes.workspaces.WorkspaceRepository.save_item")
     @ patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item")
     async def test_workspaces_post_creates_workspace(self, create_workspace_item_mock, _, __, app, client, workspace_input):
         workspace_id = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
@@ -148,22 +148,22 @@ class TestWorkspaceRoutesThatRequireAdminRights:
 
     # [POST] /workspaces/
     @ patch("api.routes.workspaces.send_resource_request_message")
-    @ patch("api.routes.workspaces.WorkspaceRepository.save_workspace")
+    @ patch("api.routes.workspaces.WorkspaceRepository.save_item")
     @ patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item")
     @ patch("api.routes.workspaces.WorkspaceRepository._validate_resource_parameters")
-    async def test_workspaces_post_calls_db_and_service_bus(self, validate_workspace_parameters_mock, create_workspace_item_mock, save_workspace_mock, send_resource_request_message_mock, app, client, workspace_input):
+    async def test_workspaces_post_calls_db_and_service_bus(self, validate_workspace_parameters_mock, create_workspace_item_mock, save_item_mock, send_resource_request_message_mock, app, client, workspace_input):
         workspace_id = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
         validate_workspace_parameters_mock.return_value = None
         create_workspace_item_mock.return_value = sample_workspace(workspace_id)
 
         await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE), json=workspace_input)
 
-        save_workspace_mock.assert_called_once()
+        save_item_mock.assert_called_once()
         send_resource_request_message_mock.assert_called_once()
 
     # [POST] /workspaces/
     @ patch("api.routes.workspaces.send_resource_request_message")
-    @ patch("api.routes.workspaces.WorkspaceRepository.save_workspace")
+    @ patch("api.routes.workspaces.WorkspaceRepository.save_item")
     @ patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item")
     @ patch("api.routes.workspaces.WorkspaceRepository._validate_resource_parameters")
     async def test_workspaces_post_returns_202_on_successful_create(self, validate_workspace_parameters_mock, create_workspace_item_mock, _, __, app, client, workspace_input):
@@ -179,7 +179,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     # [POST] /workspaces/{workspace_id}/services
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
     @ patch("api.routes.workspaces.send_resource_request_message")
-    @ patch("api.routes.workspaces.WorkspaceServiceRepository.save_workspace_service")
+    @ patch("api.routes.workspaces.WorkspaceServiceRepository.save_item")
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.create_workspace_service_item")
     async def test_workspace_services_post_creates_workspace_service(self, create_workspace_service_item_mock, _, __, get_workspace_mock, app, client, workspace_service_input):
         workspace_id = "98b8799a-7281-4fc5-91d5-49684a4810ff"
@@ -195,12 +195,12 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         assert response.json()["workspaceServiceId"] == workspace_service_id
 
     # [POST] /workspaces/
-    @ patch("api.routes.workspaces.WorkspaceRepository.delete_resource")
+    @ patch("api.routes.workspaces.WorkspaceRepository.delete_item")
     @ patch("api.routes.workspaces.send_resource_request_message")
-    @ patch("api.routes.workspaces.WorkspaceRepository.save_workspace")
+    @ patch("api.routes.workspaces.WorkspaceRepository.save_item")
     @ patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item")
     @ patch("api.routes.workspaces.WorkspaceRepository._validate_resource_parameters")
-    async def test_workspaces_post_returns_503_if_service_bus_call_fails(self, validate_workspace_parameters_mock, create_workspace_item_mock, _, send_resource_request_message_mock, delete_resource_mock, app, client, workspace_input):
+    async def test_workspaces_post_returns_503_if_service_bus_call_fails(self, validate_workspace_parameters_mock, create_workspace_item_mock, _, send_resource_request_message_mock, delete_item_mock, app, client, workspace_input):
         workspace_id = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
         validate_workspace_parameters_mock.return_value = None
         create_workspace_item_mock.return_value = sample_workspace(workspace_id)
@@ -209,7 +209,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE), json=workspace_input)
 
         assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
-        delete_resource_mock.assert_called_once_with(workspace_id)
+        delete_item_mock.assert_called_once_with(workspace_id)
 
     # [POST] /workspaces/
     @ patch("api.routes.workspaces.WorkspaceRepository._get_current_workspace_template")

@@ -8,7 +8,7 @@ from core import config
 from db.errors import EntityDoesNotExist
 from db.repositories.resources import ResourceRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
-from models.domain.resource import Deployment, Status
+from models.domain.resource import Deployment, Status, ResourceType
 from models.domain.resource_template import ResourceTemplate
 from models.domain.workspace import Workspace
 from models.schemas.workspace import WorkspaceInCreate, WorkspacePatchEnabled
@@ -27,7 +27,7 @@ class WorkspaceRepository(ResourceRepository):
 
     def _get_current_workspace_template(self, template_name) -> ResourceTemplate:
         workspace_template_repo = ResourceTemplateRepository(self._client)
-        template = workspace_template_repo.get_current_resource_template_by_name(template_name)
+        template = workspace_template_repo.get_current_template(template_name, ResourceType.Workspace)
         return parse_obj_as(ResourceTemplate, enrich_workspace_schema_defs(template))
 
     def get_all_active_workspaces(self) -> List[Workspace]:
@@ -78,18 +78,18 @@ class WorkspaceRepository(ResourceRepository):
 
     def mark_workspace_as_deleted(self, workspace: Workspace):
         workspace.deleted = True
-        self.container.upsert_item(body=workspace.dict())
+        self.update_item(workspace)
 
     def mark_workspace_as_not_deleted(self, workspace):
         workspace.deleted = False
-        self.container.upsert_item(body=workspace.dict())
+        self.update_item(workspace)
 
     def save_workspace(self, workspace: Workspace):
         self.create_item(workspace)
 
     def update_workspace(self, workspace: Workspace):
-        self.container.upsert_item(body=workspace.dict())
+        self.update_item(workspace)
 
     def patch_workspace(self, workspace: Workspace, workspace_patch: WorkspacePatchEnabled):
         workspace.resourceTemplateParameters["enabled"] = workspace_patch.enabled
-        self.container.upsert_item(body=workspace.dict())
+        self.update_item(workspace)

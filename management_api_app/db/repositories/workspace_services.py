@@ -28,7 +28,7 @@ class WorkspaceServiceRepository(ResourceRepository):
 
     def _get_current_workspace_service_template(self, template_name) -> Dict:
         resource_template_repo = ResourceTemplateRepository(self._client)
-        template = resource_template_repo.get_current_resource_template_by_name(template_name, ResourceType.WorkspaceService)
+        template = resource_template_repo.get_current_template(template_name, ResourceType.WorkspaceService)
         return enrich_workspace_service_schema_defs(template)
 
     def create_workspace_service_item(self, workspace_service_create: WorkspaceServiceInCreate, workspace_id: str) -> WorkspaceService:
@@ -52,6 +52,3 @@ class WorkspaceServiceRepository(ResourceRepository):
         )
 
         return workspace_service
-
-    def save_workspace_service(self, workspace_service: WorkspaceService):
-        self.create_item(workspace_service)

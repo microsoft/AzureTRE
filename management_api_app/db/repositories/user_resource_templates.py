@@ -12,8 +12,7 @@ class UserResourceTemplateRepository(ResourceTemplateRepository):
     def __init__(self, client: CosmosClient):
         super().__init__(client)
 
-    def create_user_resource_template_item(self, template_create: UserResourceTemplateInCreate,
-                                           workspace_service_template_name: str) -> UserResourceTemplate:
+    def create_user_resource_template_item(self, template_create: UserResourceTemplateInCreate, workspace_service_template_name: str) -> UserResourceTemplate:
         item_id = str(uuid.uuid4())
         description = template_create.json_schema["description"]
         required = template_create.json_schema["required"]
@@ -29,5 +28,5 @@ class UserResourceTemplateRepository(ResourceTemplateRepository):
             required=required,
             properties=properties
         )
-        self.create_item(resource_template)
+        self.save_item(resource_template)
         return resource_template

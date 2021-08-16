@@ -20,55 +20,49 @@ class ResourceTemplateRepository(BaseRepository):
     def _template_by_name_query(name: str, resource_type: ResourceType) -> str:
         return f'SELECT * FROM c WHERE c.resourceType = "{resource_type}" AND c.name = "{name}"'
 
-    def get_templates_information(self, resource_type: ResourceType) -> List[ResourceTemplateInformation]:
+    def get_templates_information(self, resource_type: ResourceType, parent_service_name: str = "") -> List[ResourceTemplateInformation]:
         """
         Returns name/description for all current resource_type templates
         """
         query = f'SELECT c.name, c.description FROM c WHERE c.resourceType = "{resource_type}" AND c.current = true'
+        if resource_type == ResourceType.UserResource:
+            query += f' AND c.parentWorkspaceService = "{parent_service_name}"'
         template_infos = self.query(query=query)
         return [parse_obj_as(ResourceTemplateInformation, info) for info in template_infos]
 
-    def get_workspace_templates_by_name(self, name: str) -> List[ResourceTemplate]:
-        query = self._template_by_name_query(name, ResourceType.Workspace)
-        resource_templates = self.query(query=query)
-        return parse_obj_as(List[ResourceTemplate], resource_templates)
-
-    def get_current_resource_template_by_name(self, name: str, resource_type: ResourceType) -> ResourceTemplate:
-        query = self._template_by_name_query(name, resource_type) + ' AND c.current = true'
-        workspace_templates = self.query(query=query)
-        if len(workspace_templates) != 1:
+    def get_current_template(self, template_name: str, resource_type: ResourceType) -> ResourceTemplate:
+        """
+        Returns full template for the current version of the 'template_name' template
+        """
+        query = self._template_by_name_query(template_name, resource_type) + ' AND c.current = true'
+        templates = self.query(query=query)
+        if len(templates) != 1:
             raise EntityDoesNotExist
-        return parse_obj_as(ResourceTemplate, workspace_templates[0])
+        return parse_obj_as(ResourceTemplate, templates[0])
 
-    def get_resource_template_by_name_and_version(self, name: str, version: str, resource_type: ResourceType) -> ResourceTemplate:
+    def get_template_by_name_and_version(self, name: str, version: str, resource_type: ResourceType) -> ResourceTemplate:
+        """
+        Returns full template for the 'resource_type' template defined by 'template_name' and 'version'
+        """
         query = self._template_by_name_query(name, resource_type) + f' AND c.version = "{version}"'
-        resource_templates = self.query(query=query)
-        if len(resource_templates) != 1:
+        templates = self.query(query=query)
+        if len(templates) != 1:
             raise EntityDoesNotExist
-        return parse_obj_as(ResourceTemplate, resource_templates[0])
+        return parse_obj_as(ResourceTemplate, templates[0])
 
-    def create_resource_template_item(self, template_create: ResourceTemplateInCreate, resource_type: ResourceType) -> ResourceTemplate:
-        item_id = str(uuid.uuid4())
-        description = template_create.json_schema["description"]
-        required = template_create.json_schema["required"]
-        properties = template_create.json_schema["properties"]
-        resource_template = ResourceTemplate(
-            id=item_id,
-            name=template_create.name,
-            description=description,
-            version=template_create.version,
+    def create_template(self, template_input: ResourceTemplateInCreate, resource_type: ResourceType) -> ResourceTemplate:
+        """
+        creates a template based on the input (workspace and workspace-services template)
+        """
+        template = ResourceTemplate(
+            id=str(uuid.uuid4()),
+            name=template_input.name,
+            description=template_input.json_schema["description"],
+            version=template_input.version,
             resourceType=resource_type,
-            current=template_create.current,
-            required=required,
-            properties=properties
+            current=template_input.current,
+            required=template_input.json_schema["required"],
+            properties=template_input.json_schema["properties"],
         )
-        self.create_item(resource_template)
-        return resource_template
-
-    def update_item(self, resource_template: ResourceTemplate):
-        self.container.upsert_item(resource_template.dict())
-
-    def get_basic_template_infos_for_user_resource_templates_matching_service_template(self, parent_service_name: str) -> List[ResourceTemplateInformation]:
-        query = f'SELECT c.name, c.description FROM c WHERE c.resourceType = "{ResourceType.UserResource}" AND c.parentWorkspaceService = "{parent_service_name}" AND c.current = true'
-        resource_templates = self.query(query=query)
-        return [parse_obj_as(ResourceTemplateInformation, info) for info in resource_templates]
+        self.save_item(template)
+        return template

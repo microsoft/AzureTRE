@@ -27,5 +27,11 @@ class BaseRepository:
     def query(self, query: str):
         return list(self.container.query_items(query=query, enable_cross_partition_query=True))
 
-    def create_item(self, item: BaseModel):
+    def save_item(self, item: BaseModel):
         self.container.create_item(body=item.dict())
+
+    def update_item(self, item: BaseModel):
+        self.container.upsert_item(body=item.dict())
+
+    def delete_item(self, item_id: str):
+        self.container.delete_item(item=item_id, partition_key=item_id)

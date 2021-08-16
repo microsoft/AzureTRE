@@ -30,7 +30,7 @@ async def get_workspace_service_templates(template_repo=Depends(get_repository(R
 @router.get("/workspace-service-templates/{template_name}", response_model=WorkspaceServiceTemplateInResponse, name=strings.API_GET_WORKSPACE_SERVICE_TEMPLATE_BY_NAME)
 async def get_current_workspace_service_template_by_name(template_name: str, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> WorkspaceServiceTemplateInResponse:
     try:
-        template = template_repo.get_current_resource_template_by_name(template_name, ResourceType.WorkspaceService)
+        template = template_repo.get_current_template(template_name, ResourceType.WorkspaceService)
         return enrich_workspace_service_schema_defs(template)
     except EntityDoesNotExist:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.TEMPLATE_DOES_NOT_EXIST)
@@ -50,7 +50,7 @@ async def register_workspace_service_template(template_input: WorkspaceServiceTe
 
 @router.get("/workspace-service-templates/{template_name}/user-resource-templates", response_model=ResourceTemplateInformationInList, name=strings.API_GET_USER_RESOURCE_TEMPLATES)
 async def get_user_resource_templates_for_service_template(template_name: str, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> ResourceTemplateInformationInList:
-    template_infos = template_repo.get_basic_template_infos_for_user_resource_templates_matching_service_template(template_name)
+    template_infos = template_repo.get_templates_information(ResourceType.UserResource, template_name)
     return ResourceTemplateInformationInList(templates=template_infos)
 
 

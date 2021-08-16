@@ -38,7 +38,7 @@ async def create_workspace(workspace_create: WorkspaceInCreate, workspace_repo: 
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     try:
-        workspace_repo.save_workspace(workspace)
+        workspace_repo.save_item(workspace)
     except Exception as e:
         logging.error(f"Failed to save workspace instance in DB: {e}")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
@@ -46,7 +46,7 @@ async def create_workspace(workspace_create: WorkspaceInCreate, workspace_repo: 
     try:
         await send_resource_request_message(workspace, RequestAction.Install)
     except Exception as e:
-        workspace_repo.delete_resource(workspace.id)
+        workspace_repo.delete_item(workspace.id)
         logging.error(f"Failed send workspace resource request message: {e}")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
 
@@ -104,7 +104,7 @@ async def create_workspace_service(workspace_input: WorkspaceServiceInCreate, wo
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     try:
-        workspace_service_repo.save_workspace_service(workspace_service)
+        workspace_service_repo.save_item(workspace_service)
     except Exception as e:
         logging.error(f"Failed save workspace service instance in DB: {e}")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
@@ -112,7 +112,7 @@ async def create_workspace_service(workspace_input: WorkspaceServiceInCreate, wo
     try:
         await send_resource_request_message(workspace_service, RequestAction.Install)
     except Exception as e:
-        workspace_service_repo.delete_resource(workspace_service.id)
+        workspace_service_repo.delete_item(workspace_service.id)
         logging.error(f"Failed send workspace service resource request message: {e}")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
 

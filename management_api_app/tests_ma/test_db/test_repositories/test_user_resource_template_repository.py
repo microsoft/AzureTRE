@@ -5,10 +5,10 @@ from models.domain.resource import ResourceType
 from models.domain.user_resource_template import UserResourceTemplate
 
 
-@patch('db.repositories.user_resource_templates.UserResourceTemplateRepository.create_item')
+@patch('db.repositories.user_resource_templates.UserResourceTemplateRepository.save_item')
 @patch('uuid.uuid4')
 @patch('azure.cosmos.CosmosClient')
-def test_create_workspace_template_item_calls_create_item_with_the_correct_parameters(cosmos_mock, uuid_mock, create_mock, input_user_resource_template):
+def test_create_workspace_template_item_calls_create_item_with_the_correct_parameters(cosmos_mock, uuid_mock, save_item_mock, input_user_resource_template):
     user_resource_template_repo = UserResourceTemplateRepository(cosmos_mock)
     uuid_mock.return_value = "1234"
     workspace_service_template_name = "guacamole"
@@ -26,5 +26,5 @@ def test_create_workspace_template_item_calls_create_item_with_the_correct_param
         required=input_user_resource_template.json_schema["required"],
         current=input_user_resource_template.current
     )
-    create_mock.assert_called_once_with(expected_resource_template)
+    save_item_mock.assert_called_once_with(expected_resource_template)
     assert expected_resource_template == returned_template

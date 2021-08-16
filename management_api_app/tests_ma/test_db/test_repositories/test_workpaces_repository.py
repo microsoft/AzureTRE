@@ -132,7 +132,7 @@ def test_save_workspace_saves_the_items_to_the_database(cosmos_client_mock):
         deployment=Deployment(status=Status.NotDeployed, message="")
     )
 
-    workspace_repo.save_workspace(workspace)
+    workspace_repo.save_item(workspace)
 
     workspace_repo.container.create_item.assert_called_once_with(body=workspace)
 

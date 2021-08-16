@@ -36,7 +36,7 @@ async def register_workspace_template(template_input: WorkspaceTemplateInCreate,
 @router.get("/workspace-templates/{template_name}", response_model=WorkspaceTemplateInResponse, name=strings.API_GET_WORKSPACE_TEMPLATE_BY_NAME)
 async def get_current_workspace_template_by_name(template_name: str, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> WorkspaceTemplateInResponse:
     try:
-        template = template_repo.get_current_resource_template_by_name(template_name, ResourceType.Workspace)
+        template = template_repo.get_current_template(template_name, ResourceType.Workspace)
         return enrich_workspace_schema_defs(template)
     except EntityDoesNotExist:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.TEMPLATE_DOES_NOT_EXIST)
