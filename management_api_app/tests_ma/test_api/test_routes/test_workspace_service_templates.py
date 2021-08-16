@@ -145,7 +145,7 @@ class TestWorkspaceServiceTemplatesRequiringAdminRights:
 
     # POST /workspace-service-templates/{template_name}/user-resource-templates
     @patch("api.routes.workspace_service_templates.create_user_resource_template")
-    @patch("api.dependencies.workspace_service_templates.UserResourceTemplateRepository.get_current_template")
+    @patch("api.dependencies.workspace_service_templates.ResourceTemplateRepository.get_current_template")
     async def test_when_creating_user_resource_template_it_is_returned_as_expected(self, get_current_template_mock, create_user_resource_template_mock, app, client, input_user_resource_template, basic_workspace_service_template, basic_user_resource_template):
         get_current_template_mock.return_value = basic_workspace_service_template
 
@@ -161,7 +161,7 @@ class TestWorkspaceServiceTemplatesRequiringAdminRights:
 
     # POST /workspace-service-templates/{template_name}/user-resource-templates
     @patch("api.routes.workspace_service_templates.create_user_resource_template")
-    @patch("api.dependencies.workspace_service_templates.UserResourceTemplateRepository.get_current_template")
+    @patch("api.dependencies.workspace_service_templates.ResourceTemplateRepository.get_current_template")
     async def test_when_creating_user_resource_template_enriched_service_template_is_returned(self, get_current_template_mock, create_user_resource_template_mock, app, client, input_user_resource_template, basic_workspace_service_template, basic_user_resource_template):
         get_current_template_mock.return_value = basic_workspace_service_template
 
@@ -178,7 +178,7 @@ class TestWorkspaceServiceTemplatesRequiringAdminRights:
 
     # POST /workspace-service-templates/{template_name}/user-resource-templates
     @patch("api.routes.workspace_service_templates.create_user_resource_template")
-    @patch("api.dependencies.workspace_service_templates.UserResourceTemplateRepository.get_current_template")
+    @patch("api.dependencies.workspace_service_templates.ResourceTemplateRepository.get_current_template")
     async def test_when_creating_user_resource_template_returns_409_if_version_exists(self, get_current_template_mock, create_user_resource_template_mock, app, client, input_user_resource_template, basic_workspace_service_template, basic_user_resource_template):
         get_current_template_mock.return_value = basic_workspace_service_template
 

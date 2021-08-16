@@ -7,7 +7,6 @@ from api.dependencies.database import get_repository
 from api.dependencies.workspace_service_templates import get_workspace_service_template_by_name_from_path
 from db.errors import EntityVersionExist, EntityDoesNotExist
 from db.repositories.resource_templates import ResourceTemplateRepository
-from db.repositories.user_resource_templates import UserResourceTemplateRepository
 from models.domain.resource import ResourceType
 from models.schemas.user_resource_template import UserResourceTemplateInResponse, UserResourceTemplateInCreate
 from models.schemas.resource_template import ResourceTemplateInResponse, ResourceTemplateInformationInList
@@ -55,7 +54,7 @@ async def get_user_resource_templates_for_service_template(template_name: str, t
 
 
 @router.post("/workspace-service-templates/{template_name}/user-resource-templates", status_code=status.HTTP_201_CREATED, response_model=UserResourceTemplateInResponse, name=strings.API_CREATE_USER_RESOURCE_TEMPLATES, dependencies=[Depends(get_current_admin_user)])
-async def register_user_resource_template(template_input: UserResourceTemplateInCreate, template_repo=Depends(get_repository(UserResourceTemplateRepository)), workspace_service_template=Depends(get_workspace_service_template_by_name_from_path)) -> UserResourceTemplateInResponse:
+async def register_user_resource_template(template_input: UserResourceTemplateInCreate, template_repo=Depends(get_repository(ResourceTemplateRepository)), workspace_service_template=Depends(get_workspace_service_template_by_name_from_path)) -> UserResourceTemplateInResponse:
     try:
         template = create_user_resource_template(template_input, template_repo, workspace_service_template.name)
         return enrich_workspace_service_schema_defs(template)

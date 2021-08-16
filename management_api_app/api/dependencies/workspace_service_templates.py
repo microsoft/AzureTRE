@@ -3,13 +3,13 @@ from starlette.status import HTTP_404_NOT_FOUND
 
 from api.dependencies.database import get_repository
 from db.errors import EntityDoesNotExist
-from db.repositories.user_resource_templates import UserResourceTemplateRepository
+from db.repositories.resource_templates import ResourceTemplateRepository
 from models.domain.resource import ResourceType
 from models.domain.resource_template import ResourceTemplate
 from resources import strings
 
 
-async def get_workspace_service_template_by_name_from_path(template_name: str = Path(...), template_repo=Depends(get_repository(UserResourceTemplateRepository))) -> ResourceTemplate:
+async def get_workspace_service_template_by_name_from_path(template_name: str = Path(...), template_repo=Depends(get_repository(ResourceTemplateRepository))) -> ResourceTemplate:
     try:
         return template_repo.get_current_template(template_name, ResourceType.WorkspaceService)
     except EntityDoesNotExist:

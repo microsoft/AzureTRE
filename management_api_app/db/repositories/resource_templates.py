@@ -9,6 +9,7 @@ from db.errors import EntityDoesNotExist
 from db.repositories.base import BaseRepository
 from models.domain.resource import ResourceType
 from models.domain.resource_template import ResourceTemplate
+from models.domain.user_resource_template import UserResourceTemplate
 from models.schemas.resource_template import ResourceTemplateInCreate, ResourceTemplateInformation
 
 
@@ -50,19 +51,26 @@ class ResourceTemplateRepository(BaseRepository):
             raise EntityDoesNotExist
         return parse_obj_as(ResourceTemplate, templates[0])
 
-    def create_template(self, template_input: ResourceTemplateInCreate, resource_type: ResourceType) -> ResourceTemplate:
+    def create_template(self, template_input: ResourceTemplateInCreate, resource_type: ResourceType, parent_service_name: str = "") -> ResourceTemplate:
         """
         creates a template based on the input (workspace and workspace-services template)
         """
-        template = ResourceTemplate(
-            id=str(uuid.uuid4()),
-            name=template_input.name,
-            description=template_input.json_schema["description"],
-            version=template_input.version,
-            resourceType=resource_type,
-            current=template_input.current,
-            required=template_input.json_schema["required"],
-            properties=template_input.json_schema["properties"],
-        )
+        template = {
+            "id": str(uuid.uuid4()),
+            "name": template_input.name,
+            "description": template_input.json_schema["description"],
+            "version": template_input.version,
+            "resourceType": resource_type,
+            "current": template_input.current,
+            "required": template_input.json_schema["required"],
+            "properties": template_input.json_schema["properties"],
+        }
+
+        if resource_type == ResourceType.UserResource:
+            template["parentWorkspaceService"] = parent_service_name
+            template = parse_obj_as(UserResourceTemplate, template)
+        else:
+            template = parse_obj_as(ResourceTemplate, template)
+
         self.save_item(template)
         return template

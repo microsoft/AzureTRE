@@ -1,9 +1,7 @@
 from db.errors import EntityDoesNotExist, EntityVersionExist
 from db.repositories.resource_templates import ResourceTemplateRepository
-from db.repositories.user_resource_templates import UserResourceTemplateRepository
 from models.domain.resource_template import ResourceTemplate
 from models.domain.resource import ResourceType
-from models.domain.user_resource_template import UserResourceTemplate
 from models.schemas.resource_template import ResourceTemplateInCreate
 from models.schemas.user_resource_template import UserResourceTemplateInCreate
 
@@ -25,7 +23,7 @@ def create_template_by_resource_type(template_input: ResourceTemplateInCreate, t
         return template_repo.create_template(template_input, resource_type)
 
 
-def create_user_resource_template(template_input: UserResourceTemplateInCreate, template_repo: UserResourceTemplateRepository, workspace_service_template_name: str) -> UserResourceTemplate:
+def create_user_resource_template(template_input: UserResourceTemplateInCreate, template_repo: ResourceTemplateRepository, workspace_service_template_name: str) -> ResourceTemplate:
     try:
         template = template_repo.get_template_by_name_and_version(template_input.name, template_input.version, ResourceType.UserResource)
         if template:
@@ -39,4 +37,4 @@ def create_user_resource_template(template_input: UserResourceTemplateInCreate, 
         except EntityDoesNotExist:
             # first registration
             template_input.current = True  # For first time registration, template is always marked current
-        return template_repo.create_user_resource_template_item(template_input, workspace_service_template_name)
+        return template_repo.create_template(template_input, ResourceType.UserResource, workspace_service_template_name)
