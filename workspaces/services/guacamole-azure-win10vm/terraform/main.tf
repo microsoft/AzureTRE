@@ -38,6 +38,6 @@ data "azurerm_subnet" "services" {
 }
 
 data "azurerm_key_vault" "kv" {
-  name                = "kv-${var.tre_id}-${var.workspace_id}"
+  name                = "kv-guacamole-${var.tre_id}-${var.workspace_id}"
   resource_group_name = data.azurerm_resource_group.ws.name
 }
