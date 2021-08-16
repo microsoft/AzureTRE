@@ -189,8 +189,14 @@ class TestWorkspaceServiceTemplatesRequiringAdminRights:
 
 
 class TestWorkspaceServiceTemplatesNotRequiringAdminRights:
+    @pytest.fixture(autouse=True, scope='class')
+    def _prepare(self, app, non_admin_user):
+        app.dependency_overrides[get_current_user] = non_admin_user
+        yield
+        app.dependency_overrides = {}
+
     @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.get_templates_information")
-    async def test_get_workspace_templates_returns_template_names_and_description(self, get_templates_information_mock, app, client):
+    async def test_get_user_resource_templates_returns_template_names_and_description(self, get_templates_information_mock, app, client):
         expected_templates = [
             ResourceTemplateInformation(name="template1", description="description1"),
             ResourceTemplateInformation(name="template2", description="description2")

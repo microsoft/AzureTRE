@@ -12,7 +12,7 @@ from models.schemas.user_resource_template import UserResourceTemplateInResponse
 from models.schemas.resource_template import ResourceTemplateInResponse, ResourceTemplateInformationInList
 from models.schemas.workspace_service_template import WorkspaceServiceTemplateInCreate, WorkspaceServiceTemplateInResponse
 from resources import strings
-from services.authentication import get_current_admin_user
+from services.authentication import get_current_admin_user, get_current_user
 
 
 router = APIRouter()
@@ -24,7 +24,7 @@ async def get_workspace_service_templates(template_repo=Depends(get_repository(R
     return ResourceTemplateInformationInList(templates=templates_infos)
 
 
-@router.get("/workspace-service-templates/{template_name}", response_model=WorkspaceServiceTemplateInResponse, name=strings.API_GET_WORKSPACE_SERVICE_TEMPLATE_BY_NAME)
+@router.get("/workspace-service-templates/{template_name}", response_model=WorkspaceServiceTemplateInResponse, name=strings.API_GET_WORKSPACE_SERVICE_TEMPLATE_BY_NAME, dependencies=[Depends(get_current_admin_user)])
 async def get_current_workspace_service_template_by_name(template_name: str, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> WorkspaceServiceTemplateInResponse:
     try:
         template = template_repo.get_current_template(template_name, ResourceType.WorkspaceService)
@@ -44,7 +44,7 @@ async def register_workspace_service_template(template_input: WorkspaceServiceTe
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_TEMPLATE_VERSION_EXISTS)
 
 
-@router.get("/workspace-service-templates/{template_name}/user-resource-templates", response_model=ResourceTemplateInformationInList, name=strings.API_GET_USER_RESOURCE_TEMPLATES)
+@router.get("/workspace-service-templates/{template_name}/user-resource-templates", response_model=ResourceTemplateInformationInList, name=strings.API_GET_USER_RESOURCE_TEMPLATES, dependencies=[Depends(get_current_user)])
 async def get_user_resource_templates_for_service_template(template_name: str, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> ResourceTemplateInformationInList:
     template_infos = template_repo.get_templates_information(ResourceType.UserResource, template_name)
     return ResourceTemplateInformationInList(templates=template_infos)
