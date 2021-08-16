@@ -104,15 +104,7 @@ jobs:
           export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
           export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
           export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
-
-          echo $GITHUB_REF
-          if [ $GITHUB_EVENT_NAME == 'push' ] && [ $GITHUB_REF == 'refs/heads/develop' ]; then
-            IMAGE_TAG='develop-latest'
-          elif [ $GITHUB_EVENT_NAME == 'push' ] && [ $GITHUB_REF == 'refs/heads/main' ]; then
-            IMAGE_TAG='main-latest'
-          else
-            IMAGE_TAG=$GITHUB_SHA
-          fi
+          IMAGE_TAG=$GITHUB_SHA
 
           export IMAGE_TAG
           export TF_VAR_management_api_image_tag=$IMAGE_TAG

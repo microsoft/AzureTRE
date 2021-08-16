@@ -31,14 +31,7 @@ jobs:
           DOCKER_BUILDKIT: 1
           REPOSITORY_NAME: ${{ secrets.docker_registry_server }}/microsoft/azuretre/management-api
         run: |
-          echo $GITHUB_REF
-          if [ $GITHUB_EVENT_NAME == 'push' ] && [ $GITHUB_REF == 'refs/heads/develop' ]; then
-            TAG='develop-latest'
-          elif [ $GITHUB_EVENT_NAME == 'push' ] && [ $GITHUB_REF == 'refs/heads/main' ]; then
-            TAG='main-latest'
-          else
-            TAG=$GITHUB_SHA
-          fi
+          TAG=$GITHUB_SHA
 
           docker build -t ${{ env.REPOSITORY_NAME}}:$TAG management_api_app/
           docker push ${{ env.REPOSITORY_NAME}}:$TAG
