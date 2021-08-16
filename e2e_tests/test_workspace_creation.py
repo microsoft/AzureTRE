@@ -101,9 +101,8 @@ async def test_get_workspace_templates(template_name, token, verify) -> None:
             f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACE_TEMPLATES}",
             headers=headers)
 
-        all_templates = [value for item in response.json()["templates"]
-                         for value in item.values()]
-        assert (template_name in all_templates), f"No {template_name} template found"
+        template_names = [templates["name"] for templates in response.json()["templates"]]
+        assert (template_name in template_names), f"No {template_name} template found"
 
 
 @pytest.mark.smoke
