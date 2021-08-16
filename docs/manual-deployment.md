@@ -31,10 +31,10 @@ cp devops/.env.sample devops/.env
 | `TERRAFORM_STATE_CONTAINER_NAME` | The name of the blob container to hold the Terraform state *Default value is `tfstate`.* |
 | `IMAGE_TAG` | The default tag for Docker images that will be pushed to the container registry and deployed with the Azure TRE. |
 | `ACR_NAME` | A globally unique name for the Azure Container Registry (ACR) that will be created to store deployment images. |
-| `ARM_SUBSCRIPTION_ID` | *Optional for manual deployment.* The Azure subscription ID for all resources. |
+| `ARM_SUBSCRIPTION_ID` | The Azure subscription ID for all resources. |
 | `ARM_CLIENT_ID` | *Optional for manual deployment without logged-in credentials.* The client whose azure identity will be used to deloy the solution. |
 | `ARM_CLIENT_SECRET` | *Optional for manual deployment without logged-in credentials.* The password of the client defined in `ARM_CLIENT_ID`. |
-| `ARM_TENANT_ID` | *Optional for manual deployment without logged-in credentials.* The AAD tenant of the client defined in `ARM_CLIENT_ID`. |
+| `ARM_TENANT_ID` | The AAD tenant of the client defined in `ARM_CLIENT_ID`. |
 | `PORTER_OUTPUT_CONTAINER_NAME` | The name of the storage container where to store the workspace/workspace service deployment output. Workspaces and workspace templates are implemented using [Porter](https://porter.sh) bundles - hence the name of the variable. The storage account used is the one defined in `STATE_STORAGE_ACCOUNT_NAME`. |
 | `DEBUG` | If set to "true" disables purge protection of keyvault. |
 
