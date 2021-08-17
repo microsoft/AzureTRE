@@ -33,8 +33,8 @@ resource "azurerm_private_endpoint" "kvpe" {
 
 resource "azurerm_key_vault_access_policy" "current" {
   key_vault_id = azurerm_key_vault.kv.id
-  tenant_id    = data.azurerm_user_assigned_identity.vmss_msi_client.tenant_id
-  object_id    = data.azurerm_user_assigned_identity.vmss_msi_client.principal_id
+  tenant_id    = data.azurerm_user_assigned_identity.vmss_id.tenant_id
+  object_id    = data.azurerm_user_assigned_identity.vmss_id.principal_id
 
   secret_permissions = ["Get", "List", "Set", "Delete"]
 }

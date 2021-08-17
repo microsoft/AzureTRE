@@ -16,11 +16,10 @@ provider "azurerm" {
 
 data "azurerm_client_config" "current" {}
 
-data "azurerm_user_assigned_identity" "vmss_msi_client" {
+data "azurerm_user_assigned_identity" "vmss_id" {
   name                = "id-vmss-${var.tre_id}"
   resource_group_name = "rg-${var.tre_id}"
 }
-
 
 data "azurerm_resource_group" "ws" {
   name = "rg-${var.tre_id}-ws-${var.workspace_id}"
