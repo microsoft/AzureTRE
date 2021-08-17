@@ -5,22 +5,23 @@ from models.domain.user_resource import UserResource
 
 
 def get_sample_user_resource(user_resource_id: str) -> dict:
-    return {"id": user_resource_id,
-            "workspaceId": "7289ru33-7265-4b5f-9eae-a1a62928772e",
-            "parentWorkspaceServiceId": "e75f1ee1-9f55-414c-83da-aff677669249",
-            "resourceTemplateName": "vm",
-            "resourceTemplateVersion": "0.1.0",
-            "resourceTemplateParameters": {
-                "display_name": "my user resource",
-                "description": "some description",
-            },
-            "deployment": {
-                "status": "not_deployed",
-                "message": "This resource is not yet deployed"
-            },
-            "deleted": False,
-            "resourceType": ResourceType.UserResource
-            }
+    return {
+        "id": user_resource_id,
+        "workspaceId": "7289ru33-7265-4b5f-9eae-a1a62928772e",
+        "parentWorkspaceServiceId": "e75f1ee1-9f55-414c-83da-aff677669249",
+        "resourceTemplateName": "vm",
+        "resourceTemplateVersion": "0.1.0",
+        "resourceTemplateParameters": {
+            "display_name": "my user resource",
+            "description": "some description",
+        },
+        "deployment": {
+            "status": "not_deployed",
+            "message": "This resource is not yet deployed"
+        },
+        "deleted": False,
+        "resourceType": ResourceType.UserResource
+    }
 
 
 class UserResourceInResponse(BaseModel):
