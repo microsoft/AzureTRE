@@ -25,19 +25,30 @@ Authorization:  Bearer {{auth.response.body.access_token}}
 Content-type: application/json
 
 {
-  "displayName": "My workspace",
-  "description": "workspace for team X",
   "workspaceType": "tre-workspace-vanilla",
-  "parameters": {},
-  "authConfig": {
-    "provider": "AAD",
-    "data": {
-      "app_id": "<CHANGE_ME_APP_ID>"
-    }
-  }
+        "properties": {
+            "display_name": "E2E test",
+            "description": "workspace for E2E",
+            "app_id": "<CHANGE_ME_APP_ID>",
+            "address_space": "192.168.25.0/24"
+        }
 }
 
 ### Get workspace info for the provisioned workspace
 GET https://cse-msr-dev.westeurope.cloudapp.azure.com/api/workspaces/{{newworkspace.response.body.workspaceId}}
+Authorization:  Bearer {{auth.response.body.access_token}}
+Content-type: application/json
+
+### Disable workspace 
+PATCH https://cse-msr-dev.westeurope.cloudapp.azure.com/api/workspaces/{{newworkspace.response.body.workspaceId}}
+Authorization:  Bearer {{auth.response.body.access_token}}
+Content-type: application/json
+
+{
+  "enabled": false
+}
+
+### Delete workspace 
+DELETE https://cse-msr-dev.westeurope.cloudapp.azure.com/api/workspaces/{{newworkspace.response.body.workspaceId}}
 Authorization:  Bearer {{auth.response.body.access_token}}
 Content-type: application/json

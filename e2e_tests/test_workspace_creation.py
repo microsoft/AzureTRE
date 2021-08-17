@@ -12,36 +12,12 @@ from resources import strings
 pytestmark = pytest.mark.asyncio
 
 
-@pytest.fixture()
-def verify(pytestconfig):
-    if pytestconfig.getoption("verify").lower() == "true":
-        return True
-    elif pytestconfig.getoption("verify").lower() == "false":
-        return False
-
-
 workspace_templates = [
     (strings.VANILLA_WORKSPACE),
     (strings.DEV_TEST_LABS),
     (strings.INNEREYE_DEEPLEARNING),
     (strings.INNEREYE_DEEPLEARNING_INFERENCE)
 ]
-
-
-@pytest.fixture
-async def token(verify) -> str:
-    async with AsyncClient(verify=verify) as client:
-
-        headers = {'Content-Type': "application/x-www-form-urlencoded"}
-        payload = f"grant_type=password&resource={config.RESOURCE}&username={config.USERNAME}&password={config.PASSWORD}&scope={config.SCOPE}&client_id={config.CLIENT_ID}"
-
-        url = f"https://login.microsoftonline.com/{config.AUTH_TENANT_ID}/oauth2/token"
-        response = await client.post(url,
-                                     headers=headers, data=payload)
-        token = response.json()["access_token"]
-
-        assert token is not None, "Token not returned"
-        return token if (response.status_code == status.HTTP_200_OK) else None
 
 
 @asynccontextmanager
@@ -90,6 +66,10 @@ async def post_workspace_template(payload, token, verify):
             print(e)
             raise AssertionError
 
+        await disable_workspace(token, verify)
+
+        await delete_workspace(token, verify)
+
 
 @pytest.mark.smoke
 @pytest.mark.parametrize("template_name", workspace_templates)
@@ -125,6 +105,37 @@ async def test_create_vanilla_workspace(token, verify) -> None:
         }
     }
     await post_workspace_template(payload, token, verify)
+
+
+async def disable_workspace(token, verify) -> None:
+    async with AsyncClient(verify=verify) as client:
+        headers = {'Authorization': f'Bearer {token}'}
+
+        with open('workspace_id.txt', 'r') as f:
+            workspaceid = f.readline()
+
+        payload = {"enabled": "false"}
+
+        response = await client.patch(
+            f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACES}/{workspaceid}",
+            headers=headers, json=payload)
+
+        enabled = response.json()["workspace"]["resourceTemplateParameters"]["enabled"]
+        assert (enabled is False), "The workspace wasn't disabled"
+
+
+async def delete_workspace(token, verify) -> None:
+    async with AsyncClient(verify=verify) as client:
+        headers = {'Authorization': f'Bearer {token}'}
+
+        with open('workspace_id.txt', 'r') as f:
+            workspaceid = f.readline()
+
+        response = await client.delete(
+            f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACES}/{workspaceid}",
+            headers=headers)
+
+        assert (response.status_code == status.HTTP_200_OK), "The workspace couldn't be deleted"
 
 
 @pytest.mark.extended
