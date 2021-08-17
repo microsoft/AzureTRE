@@ -59,6 +59,7 @@ resource "azurerm_app_service" "management_api" {
     remote_debugging_enabled             = false
     scm_use_main_ip_restriction          = true
     acr_use_managed_identity_credentials = true
+    acr_user_managed_identity_client_id  = var.managed_identity.client_id
 
     cors {
       allowed_origins     = []
