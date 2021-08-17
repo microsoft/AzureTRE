@@ -66,6 +66,10 @@ async def post_workspace_template(payload, token, verify):
             print(f"Failed deployment status message: {message}")
             print(e)
             raise AssertionError
+        
+        await disable_vanilla_workspace(token, verify)
+
+        await delete_vanilla_workspace(token, verify)
 
 
 @pytest.mark.smoke
@@ -104,8 +108,7 @@ async def test_create_vanilla_workspace(token, verify) -> None:
     await post_workspace_template(payload, token, verify)
 
 
-@pytest.mark.smoke
-async def test_disable_vanilla_workspace(token, verify) -> None:
+async def disable_vanilla_workspace(token, verify) -> None:
     async with AsyncClient(verify=verify) as client:
         headers = {'Authorization': f'Bearer {token}'}
 
@@ -122,8 +125,7 @@ async def test_disable_vanilla_workspace(token, verify) -> None:
         assert (enabled is False), "The workspace wasn't disabled"
 
 
-@pytest.mark.smoke
-async def test_delete_vanilla_workspace(token, verify) -> None:
+async def delete_vanilla_workspace(token, verify) -> None:
     async with AsyncClient(verify=verify) as client:
         headers = {'Authorization': f'Bearer {token}'}
 
