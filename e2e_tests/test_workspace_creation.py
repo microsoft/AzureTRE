@@ -6,7 +6,6 @@ from httpx import AsyncClient
 from starlette import status
 
 import config
-from shared import token, verify
 from resources import strings
 
 
@@ -66,10 +65,10 @@ async def post_workspace_template(payload, token, verify):
             print(f"Failed deployment status message: {message}")
             print(e)
             raise AssertionError
-        
-        await disable_vanilla_workspace(token, verify)
 
-        await delete_vanilla_workspace(token, verify)
+        await disable_workspace(token, verify)
+
+        await delete_workspace(token, verify)
 
 
 @pytest.mark.smoke
@@ -108,7 +107,7 @@ async def test_create_vanilla_workspace(token, verify) -> None:
     await post_workspace_template(payload, token, verify)
 
 
-async def disable_vanilla_workspace(token, verify) -> None:
+async def disable_workspace(token, verify) -> None:
     async with AsyncClient(verify=verify) as client:
         headers = {'Authorization': f'Bearer {token}'}
 
@@ -125,7 +124,7 @@ async def disable_vanilla_workspace(token, verify) -> None:
         assert (enabled is False), "The workspace wasn't disabled"
 
 
-async def delete_vanilla_workspace(token, verify) -> None:
+async def delete_workspace(token, verify) -> None:
     async with AsyncClient(verify=verify) as client:
         headers = {'Authorization': f'Bearer {token}'}
 
