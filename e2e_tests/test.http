@@ -52,3 +52,23 @@ Content-type: application/json
 DELETE https://cse-msr-dev.westeurope.cloudapp.azure.com/api/workspaces/{{newworkspace.response.body.workspaceId}}
 Authorization:  Bearer {{auth.response.body.access_token}}
 Content-type: application/json
+
+### Create a workspace service template
+POST https://cse-msr-dev.westeurope.cloudapp.azure.com/api/workspace-service-templates
+Authorization:  Bearer {{auth.response.body.access_token}}
+Content-type: application/json
+
+{
+  "name": "e2e-test-workspace-service",
+  "version": "0.0.1",
+  "current": "true",
+  "json_schema": {
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/myworkspace/workspace_service.json",
+    "type": "object",
+    "title": "DONOTUSE - E2E workspace service",
+    "description": "DO NOT USE",
+    "required": [],
+    "properties": {}
+  }
+}

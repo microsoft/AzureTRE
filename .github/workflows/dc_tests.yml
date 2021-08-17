@@ -1,0 +1,68 @@
+name: DC E2E Test
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  e2e_tests:
+    name: "Run E2E Tests"
+    runs-on: ubuntu-latest
+    environment: Dev
+    needs: deploy_tre
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          # Full git history is needed to get a proper list of changed files within `super-linter`
+          fetch-depth: 0
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Install dependencies
+        run: |
+          cd e2e_tests
+          python -m pip install --upgrade pip
+          pip install pytest
+          pip install -r requirements.txt
+
+      - name: Test with pytest
+        shell: bash
+        env:
+          RESOURCE_LOCATION: "${{ secrets.LOCATION }}"
+          TRE_ID: "${{ secrets.TRE_ID }}"
+          RESOURCE: "${{ secrets.API_CLIENT_ID }}"
+          AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
+          CLIENT_ID: "${{ secrets.TEST_APP_ID }}"
+          USERNAME: "${{ secrets.TEST_USER_NAME }}"
+          PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
+          AUTH_APP_CLIENT_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
+        run: |
+          export SCOPE=$(echo "api://$RESOURCE/Workspace.Read api://$RESOURCE/Workspace.Write")
+          export RESOURCE_LOCATION=$RESOURCE_LOCATION
+          export TRE_ID=$TRE_ID
+          export RESOURCE=$RESOURCE
+          export AUTH_TENANT_ID=$AUTH_TENANT_ID
+          export CLIENT_ID=$CLIENT_ID
+          export USERNAME=$USERNAME
+          export PASSWORD=$PASSWORD
+          export AUTH_APP_CLIENT_ID=$AUTH_APP_CLIENT_ID
+          cd e2e_tests
+          PYTHONPATH=. python -m pytest -m smoke --junit-xml pytest_e2e.xml
+
+      - name: Expose workspace id
+        shell: bash
+        if: always()
+        run: |
+          cd e2e_tests
+          wkspc_id=`cat workspace_id.txt`
+          echo "WORKSPACE_ID=$wkspc_id" >> $GITHUB_ENV
+
