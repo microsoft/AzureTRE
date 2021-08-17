@@ -55,9 +55,9 @@ resource "azurerm_app_service" "management_api" {
   lifecycle { ignore_changes = [tags] }
 
   site_config {
-    linux_fx_version            = "DOCKER|${var.docker_registry_server}/${var.management_api_image_repository}:${var.management_api_image_tag}"
-    remote_debugging_enabled    = false
-    scm_use_main_ip_restriction = true
+    linux_fx_version                     = "DOCKER|${var.docker_registry_server}/${var.management_api_image_repository}:${var.management_api_image_tag}"
+    remote_debugging_enabled             = false
+    scm_use_main_ip_restriction          = true
     acr_use_managed_identity_credentials = true
 
     cors {
