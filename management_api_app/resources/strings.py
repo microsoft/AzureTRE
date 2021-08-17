@@ -13,7 +13,7 @@ API_UPDATE_WORKSPACE = "Update an existing workspace"
 API_GET_STATUS_OF_SERVICES = "Get status of services"
 
 API_CREATE_WORKSPACE_TEMPLATES = "Register workspace template"
-API_GET_WORKSPACE_TEMPLATES = "Get workspace template names"
+API_GET_WORKSPACE_TEMPLATES = "Get workspace templates"
 API_GET_WORKSPACE_TEMPLATE_BY_NAME = "Get workspace template by name"
 
 API_CREATE_WORKSPACE_SERVICE_TEMPLATES = "Register workspace service template"

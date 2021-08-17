@@ -2,9 +2,9 @@ from fastapi import Depends, HTTPException, Path
 from pydantic import UUID4
 from starlette.status import HTTP_404_NOT_FOUND
 
+from api.dependencies.database import get_repository
 from db.errors import EntityDoesNotExist
 from db.repositories.workspaces import WorkspaceRepository
-from api.dependencies.database import get_repository
 from models.domain.workspace import Workspace
 from resources import strings
 
