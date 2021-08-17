@@ -32,14 +32,12 @@ async def retrieve_users_active_workspaces(
     workspaces = workspace_repo.get_all_active_workspaces()
 
     access_service = get_access_service()
-    user_workspaces = [workspace for workspace in workspaces if
-                       access_service.get_workspace_role(user, workspace) != WorkspaceRole.NoRole]
+    user_workspaces = [workspace for workspace in workspaces if access_service.get_workspace_role(user, workspace) != WorkspaceRole.NoRole]
 
     return WorkspacesInList(workspaces=user_workspaces)
 
 
-@router.post("/workspaces", status_code=status.HTTP_202_ACCEPTED, response_model=WorkspaceIdInResponse,
-             name=strings.API_CREATE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
+@router.post("/workspaces", status_code=status.HTTP_202_ACCEPTED, response_model=WorkspaceIdInResponse, name=strings.API_CREATE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
 async def create_workspace(workspace_create: WorkspaceInCreate, workspace_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository))) -> WorkspaceIdInResponse:
     try:
         workspace = workspace_repo.create_workspace_item(workspace_create)
@@ -51,16 +49,14 @@ async def create_workspace(workspace_create: WorkspaceInCreate, workspace_repo: 
         workspace_repo.save_workspace(workspace)
     except Exception as e:
         logging.error(f"Failed to save workspace instance in DB: {e}")
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                            detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
 
     try:
         await send_resource_request_message(workspace, RequestAction.Install)
     except Exception as e:
         # TODO: Rollback DB change, issue #154
         logging.error(f"Failed send workspace resource request message: {e}")
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                            detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
 
     return WorkspaceIdInResponse(workspaceId=workspace.id)
 
