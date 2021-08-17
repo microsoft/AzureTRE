@@ -9,7 +9,6 @@ jobs:
     name: "Run E2E Tests"
     runs-on: ubuntu-latest
     environment: Dev
-    needs: deploy_tre
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
