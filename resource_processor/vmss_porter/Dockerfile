@@ -1,4 +1,4 @@
-FROM python:3.8
+FROM python:3.8.10
 
 # Azure CLI
 RUN apt-get update \
