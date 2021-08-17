@@ -31,6 +31,7 @@ To run the E2E tests locally:
 | `USERNAME` | The username of the [E2E User](auth.md#end-to-end-test-user). |
 | `PASSWORD` | The password of the [E2E User](auth.md#end-to-end-test-user). |
 | `AUTH_APP_CLIENT_ID` | The application (client) ID of the [Workspaces app](auth.md#workspaces). |
+| `ACR_NAME` | The Azure Tre ACR. |
 
 1. Run the e2e tests:
     ```bash

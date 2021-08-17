@@ -33,7 +33,7 @@ def read_schema(schema_file):
     workspace_schema_def = Path(__file__).parent / ".." / "schemas" / schema_file
     with open(workspace_schema_def) as schema_f:
         schema = json.load(schema_f)
-        return (schema["required"], schema["properties"])
+        return schema["required"], schema["properties"]
 
 
 def load_workspace_schema_def():
@@ -44,15 +44,19 @@ def load_workspace_service_schema_def():
     return read_schema("workspace_service.json")
 
 
+def load_workspace_user_resource_def():
+    return read_schema("user_resource.json")
+
+
 def load_azuread_schema_def():
     return read_schema("azuread.json")
 
 
-def enrich_workspace_schema_defs(combine_with, print_result=None):
+def enrich_workspace_schema_defs(combine_with):
     """Adds to the provided template all UI and system properties
 
     Args:
-        combine_with ([Dict]): [Template to which UI and system properties are added].
+        combine_with: [Template to which UI and system properties are added].
     Returns:
         [Dict]: [Enriched template with all required and system properties added]
     """
@@ -62,15 +66,29 @@ def enrich_workspace_schema_defs(combine_with, print_result=None):
     return combine_basic_blocks(combine_with, basic_blocks)
 
 
-def enrich_workspace_service_schema_defs(combine_with, print_result=None):
+def enrich_workspace_service_schema_defs(combine_with):
     """Adds to the provided template all UI and system properties
 
     Args:
-        combine_with ([Dict]): [Template to which UI and system properties are added].
+        combine_with: [Template to which UI and system properties are added].
     Returns:
         [Dict]: [Enriched template with all required and system properties added]
     """
-    basic_blocks = [load_workspace_service_schema_def()]
+    workspace_service_def = load_workspace_service_schema_def()
+    basic_blocks = [workspace_service_def]
+    return combine_basic_blocks(combine_with, basic_blocks)
+
+
+def enrich_user_resource_schema_defs(combine_with):
+    """Adds to the provided template all UI and system properties
+
+    Args:
+        combine_with: [Template to which UI and system properties are added].
+    Returns:
+        [Dict]: [Enriched template with all required and system properties added]
+    """
+    user_resource_def = load_workspace_user_resource_def()
+    basic_blocks = [user_resource_def]
     return combine_basic_blocks(combine_with, basic_blocks)
 
 

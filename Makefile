@@ -1,6 +1,7 @@
 .PHONY: bootstrap-init mgmt-deploy mgmt-destroy build-api-image push-api-image deploy-tre destroy-tre letsencrypt
 
 SHELL:=/bin/bash
+ROOTPATH:=$(shell pwd)
 
 all: bootstrap mgmt-deploy build-api-image push-api-image build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image build-gitea-image push-gitea-image tre-deploy
 
@@ -161,4 +162,4 @@ register-bundle:
 	&& ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& cd ${DIR} \
-	&& ../../devops/scripts/publish_register_bundle.sh --acr-name $${ACR_NAME} --bundle-type workspace --current --insecure
+	&& ${ROOTPATH}/devops/scripts/publish_register_bundle.sh --acr-name $${ACR_NAME} --bundle-type workspace --current --insecure

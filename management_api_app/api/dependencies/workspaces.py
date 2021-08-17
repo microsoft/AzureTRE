@@ -3,8 +3,9 @@ from pydantic import UUID4
 from starlette import status
 
 from api.dependencies.database import get_repository
-from db.errors import EntityDoesNotExist, ResourceIsNotDeployed
+from db.errors import ResourceIsNotDeployed
 from db.repositories.workspace_services import WorkspaceServiceRepository
+from db.errors import EntityDoesNotExist
 from db.repositories.workspaces import WorkspaceRepository
 from models.domain.workspace import Workspace
 from models.domain.workspace_service import WorkspaceService
