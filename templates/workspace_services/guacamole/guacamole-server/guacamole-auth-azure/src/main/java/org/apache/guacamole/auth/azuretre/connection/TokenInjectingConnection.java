@@ -80,7 +80,8 @@ public class TokenInjectingConnection extends SimpleConnection {
             throws GuacamoleException, IOException {
 
         JSONObject creds;
-        String resourceCreds = null;
+        String username = null;
+        String password = null;
 
         try {
             logger.info("Loading credentials from Azure Key Vault for secret " + resourceId + ".");
@@ -95,15 +96,19 @@ public class TokenInjectingConnection extends SimpleConnection {
                     .buildClient();
 
             String secretName = String.format("%s-admin-credentials");
-            resourceCreds = secretClient.getSecret(secretName).getValue();
-
+            String keyVaultResponse = secretClient.getSecret(secretName).getValue();
+            String[] resourceCreds = keyVaultResponse.split("\\n");
+            if (resourceCreds.length == 2) {
+                username = resourceCreds[0];
+                password = resourceCreds[1];
+            }
 
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }
 
 
-        String json = "{\"password\": \"" + resourceCreds + "\"}";
+        String json = "{\"password\": \"" + password + "\"}";
         logger.info("Returning stub creds" + json);
         creds = new JSONObject(json);
 
