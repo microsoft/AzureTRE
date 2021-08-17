@@ -33,5 +33,8 @@ class BaseRepository:
     def update_item(self, item: BaseModel):
         self.container.upsert_item(body=item.dict())
 
+    def update_item_dict(self, item_dict: dict):
+        self.container.upsert_item(body=item_dict)
+
     def delete_item(self, item_id: str):
         self.container.delete_item(item=item_id, partition_key=item_id)
