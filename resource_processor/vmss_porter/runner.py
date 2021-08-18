@@ -99,7 +99,7 @@ async def build_porter_command(msg_body, env_vars):
 
     porter_keys = await filter_parameters_not_needed_by_porter(msg_body, env_vars)
     for parameter in porter_keys:
-        porter_parameters = porter_parameters + f" --param {parameter}={msg_body['parameters'][parameter]}"
+        porter_parameters = porter_parameters + f" --param {parameter}=\"{msg_body['parameters'][parameter]}\""
 
     installation_id = msg_body['parameters']['tre_id'] + "-" + msg_body['parameters']['workspace_id']
 
@@ -109,7 +109,7 @@ async def build_porter_command(msg_body, env_vars):
     porter_parameters = porter_parameters + f" --param arm_use_msi={env_vars['arm_use_msi']}"
 
     command_line = [f"{azure_login_command(env_vars)} && az acr login --name {env_vars['registry_server'].replace('.azurecr.io','')} && porter "
-                    f"{msg_body['action']} {installation_id} "
+                    f"{msg_body['action']} \"{installation_id}\" "
                     f" --reference {env_vars['registry_server']}/{msg_body['name']}:v{msg_body['version']}"
                     f" {porter_parameters} --cred ./vmss_porter/azure.json --allow-docker-host-access"
                     f" && porter show {installation_id}"]
@@ -174,7 +174,7 @@ async def deploy_porter_bundle(msg_body, sb_client, env_vars, message_logger_ada
     porter_command = await build_porter_command(msg_body, env_vars)
     returncode, _, err = await run_porter(porter_command, env_vars)
     if returncode != 0:
-        error_message = "Error context message = " + " ".join(err.split('\n'))
+        error_message = "Error context message = " + " ".join(err.split('\n')) + " ; Command executed: ".join(porter_command)
         resource_request_message = service_bus_message_generator(msg_body, strings.RESOURCE_STATUS_FAILED, error_message)
         await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"]))
         message_logger_adapter.info(f"{installation_id}: Deployment job configuration failed error = {error_message}")
