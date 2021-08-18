@@ -69,7 +69,7 @@ public class ConnectionService {
       try {
 
         JSONArray vmsJsonArray = getVMsFromProjectAPI(user);
-        URI projectUri = new URI(System.getenv("PROJECT_URL"));
+        //URI projectUri = new URI(System.getenv("PROJECT_URL"));
 
         for (int i = 0; i < vmsJsonArray.length(); i++) {
 
@@ -82,11 +82,11 @@ public class ConnectionService {
           // Todo: uncomment when both xxxFromProjectAPI calls are implemented
           // https://github.com/microsoft/AzureTRE/issues/558
           // https://github.com/microsoft/AzureTRE/issues/561
-          //config.setParameter("hostname", vmJsonObject.get("name").toString() + "." + projectUri.getHost());
+         // config.setParameter("hostname", vmJsonObject.get("name").toString() + "." + projectUri.getHost());
           //config.setParameter("username", user.getIdentifier().split("@")[0].toLowerCase());
           // Todo: DELETE when the above is uncommented
-          config.setParameter("hostname", System.getenv("TEMP_HOSTNAME"));
-          config.setParameter("username", System.getenv("TEMP_USERNAME").toLowerCase());
+          config.setParameter("hostname", "10.2.1.7");
+          config.setParameter("username", "anatbal");
 
           config.setParameter("resize-method", "display-update");
           config.setParameter("azure-resource-id", vmJsonObject.get("resourceId").toString());
@@ -172,7 +172,7 @@ public class ConnectionService {
 
      */
 
-    String json = "[ {\"name\": \"1.1.1.1\", \"resourceId\": \"1\"} ]";
+    String json = "[ {\"name\": \"1.1.1.1\", \"resourceId\": \"1\"}, {\"name\": \"1.2.3.4\", \"resourceId\": \"2\"} ]";
     virtualMachines = new JSONArray(json);
 
     return virtualMachines;

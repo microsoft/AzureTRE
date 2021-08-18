@@ -22,10 +22,10 @@ package org.apache.guacamole.auth.azuretre.connection;
 import java.net.URI;
 import java.util.Map;
 
-import com.azure.identity.DefaultAzureCredential;
-import com.azure.identity.DefaultAzureCredentialBuilder;
-import com.azure.security.keyvault.secrets.SecretClient;
-import com.azure.security.keyvault.secrets.SecretClientBuilder;
+// import com.azure.identity.DefaultAzureCredential;
+// import com.azure.identity.DefaultAzureCredentialBuilder;
+// import com.azure.security.keyvault.secrets.SecretClient;
+// import com.azure.security.keyvault.secrets.SecretClientBuilder;
 import org.apache.guacamole.GuacamoleException;
 import org.apache.guacamole.auth.azuretre.user.AzureTREAuthenticatedUser;
 import org.apache.guacamole.net.GuacamoleTunnel;
@@ -79,39 +79,39 @@ public class TokenInjectingConnection extends SimpleConnection {
     private JSONObject getConnectionCredentialsFromProjectAPI(String resourceId)
             throws GuacamoleException, IOException {
 
-        JSONObject creds;
-        String username = null;
-        String password = null;
+        JSONObject creds = null;
+        // String username = null;
+        // String password = null;
 
-        try {
-            logger.info("Loading credentials from Azure Key Vault for secret " + resourceId + ".");
-            String keyVaultUri = String.format("https://kv-gucacamole-%s-%s.vault.azure.net"
-                    , System.getenv("TRE_ID")
-                    , System.getenv("WORKSPACE_ID"));
+        // try {
+        //     logger.info("Loading credentials from Azure Key Vault for secret " + resourceId + ".");
+        //     String keyVaultUri = String.format("https://kv-gucacamole-%s-%s.vault.azure.net"
+        //             , System.getenv("TRE_ID")
+        //             , System.getenv("WORKSPACE_ID"));
 
-            DefaultAzureCredential credential = new DefaultAzureCredentialBuilder().build();
-            SecretClient secretClient = new SecretClientBuilder()
-                    .vaultUrl(keyVaultUri)
-                    .credential(credential)
-                    .buildClient();
+        //     DefaultAzureCredential credential = new DefaultAzureCredentialBuilder().build();
+        //     SecretClient secretClient = new SecretClientBuilder()
+        //             .vaultUrl(keyVaultUri)
+        //             .credential(credential)
+        //             .buildClient();
 
-            String secretName = String.format("%s-admin-credentials");
-            String keyVaultResponse = secretClient.getSecret(secretName).getValue();
-            String[] resourceCreds = keyVaultResponse.split("\\n");
-            if (resourceCreds.length == 2) {
-                username = resourceCreds[0];
-                password = resourceCreds[1];
-            }
+        //     String secretName = String.format("%s-admin-credentials");
+        //     String keyVaultResponse = secretClient.getSecret(secretName).getValue();
+        //     String[] resourceCreds = keyVaultResponse.split("\\n");
+        //     if (resourceCreds.length == 2) {
+        //         username = resourceCreds[0];
+        //         password = resourceCreds[1];
+        //     }
 
-        } catch (Exception e) {
-            logger.error(e.getMessage(), e);
-        }
+        // } catch (Exception e) {
+        //     logger.error(e.getMessage(), e);
+        // }
 
 
-        String json = "{\"password\": \"" + password + "\"}";
-        logger.info("Returning stub creds" + json);
+        String json = "{\"password\": \"" + "!QAZ2wsx3edc" + "\"}";
+        logger.info("returning stub creds" + json);
         creds = new JSONObject(json);
-
+        
         return creds;
     }
 
