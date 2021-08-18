@@ -99,7 +99,7 @@ async def build_porter_command(msg_body, env_vars):
 
     porter_keys = await filter_parameters_not_needed_by_porter(msg_body, env_vars)
     for parameter in porter_keys:
-        porter_parameters = porter_parameters + f" --param {parameter}={msg_body['parameters'][parameter]}"
+        porter_parameters = porter_parameters + f" --param {parameter}=\"{msg_body['parameters'][parameter]}\""
 
     installation_id = msg_body['parameters']['tre_id'] + "-" + msg_body['parameters']['workspace_id']
 
