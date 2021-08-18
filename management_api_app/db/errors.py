@@ -8,3 +8,7 @@ class EntityVersionExist(Exception):
 
 class UnableToAccessDatabase(Exception):
     """Raised when we can't access the database"""
+
+
+class ResourceIsNotDeployed(Exception):
+    """Raised when trying to install resource under entity which haven't finalized its deployment."""
