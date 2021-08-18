@@ -51,6 +51,16 @@ class ResourceTemplateRepository(BaseRepository):
             raise EntityDoesNotExist
         return parse_obj_as(ResourceTemplate, templates[0])
 
+    def get_current_user_resource_template(self, user_resource_template_name, parent_service_name) -> UserResourceTemplate:
+        """
+        Returns full user_resource_template for the current version of the template_name, parent_service_template_name combo
+        """
+        query = self._template_by_name_query(user_resource_template_name, ResourceType.UserResource) + f' AND c.parentWorkspaceService = "{parent_service_name}" AND c.current = true'
+        templates = self.query(query=query)
+        if len(templates) != 1:
+            raise EntityDoesNotExist
+        return parse_obj_as(UserResourceTemplate, templates[0])
+
     def get_template_by_name_and_version(self, name: str, version: str, resource_type: ResourceType) -> ResourceTemplate:
         """
         Returns full template for the 'resource_type' template defined by 'template_name' and 'version'
