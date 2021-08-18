@@ -37,8 +37,7 @@ class UserResourceInResponse(BaseModel):
 
 class UserResourceInCreate(BaseModel):
     userResourceType: str = Field(title="User resource type", description="Bundle name")
-    properties: dict = Field({}, title="User resource parameters",
-                             description="Values for the parameters required by the user resource specification")
+    properties: dict = Field({}, title="User resource parameters", description="Values for the parameters required by the user resource specification")
 
     class Config:
         schema_extra = {
