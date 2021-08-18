@@ -53,16 +53,4 @@ This will trigger receiving of messages and you can freely debug the code by set
 
 ## Debugging deployed processor on Azure
 
-On Azure we use managed identity to authenticate to Azure and terraform takes care of setting things up. If you want to debug on the live instance you need to enable a few steps.
-
-The processor runs in a vnet and you cannot connect to it directly. To connect you can use bastion which should drop you into the shell on the VMSS instance.
-
-![Bastion](../../docs/assets/bastion.png "Bastion")
-
-You can check the status of the container running the processor using standard docker commands.
-
-If you want to start a processor container manually you can use the following command and execute from root(/) of filesystem.
-
-``docker run -v /var/run/docker.sock:/var/run/docker.sock --env-file .env --name resource_processor_vmss_porter_debug runner_image:tag``
-
-**runner_image:tag** can be obtained using ``docker ps``
+Check the section **Checking the Virtual Machine Scale Set(VMSS) instance running resource processor** in [debugging and troubleshooting guide](../../docs/ops_debugging_troubleshooting.md)
