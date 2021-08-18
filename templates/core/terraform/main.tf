@@ -191,15 +191,6 @@ module "routetable" {
   firewall_private_ip_address  = module.firewall.firewall_private_ip_address
 }
 
-module "acr" {
-  source              = "./acr"
-  tre_id              = var.tre_id
-  location            = var.location
-  resource_group_name = azurerm_resource_group.core.name
-  core_vnet           = module.network.core
-  shared_subnet       = module.network.shared
-}
-
 module "state-store" {
   source              = "./state-store"
   tre_id              = var.tre_id
