@@ -34,9 +34,7 @@ async def test_create_workspace_service_templates(token, verify) -> None:
             f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACE_SERVICE_TEMPLATES}",
             headers=headers, json=payload)
 
-        assert (response.status_code == status.HTTP_201_CREATED), "The workspace service template couldn't be created"
-        id = response.json()["id"]
-        print(id)
+        assert (response.status_code == status.HTTP_201_CREATED or response.status_code == status.HTTP_409_CONFLICT), "The workspace service template creation service returned unexpected response."
 
 
 @pytest.mark.smoke
