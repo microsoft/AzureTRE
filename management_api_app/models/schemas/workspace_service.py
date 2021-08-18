@@ -18,9 +18,7 @@ def get_sample_workspace_service(workspace_id: str) -> dict:
                 "message": "This resource is not yet deployed"
             },
             "deleted": False,
-            "resourceType": ResourceType.WorkspaceService,
-            "workspaceURL": "",
-            "authInformation": {}
+            "resourceType": ResourceType.WorkspaceService
             }
 
 
@@ -30,7 +28,7 @@ class WorkspaceServiceInResponse(BaseModel):
     class Config:
         schema_extra = {
             "example": {
-                "workspace": get_sample_workspace_service("933ad738-7265-4b5f-9eae-a1a62928772e")
+                "workspace_service": get_sample_workspace_service("933ad738-7265-4b5f-9eae-a1a62928772e")
             }
         }
 
@@ -38,7 +36,7 @@ class WorkspaceServiceInResponse(BaseModel):
 class WorkspaceServiceInCreate(BaseModel):
     workspaceServiceType: str = Field(title="Workspace service type", description="Bundle name")
     properties: dict = Field({}, title="Workspace service parameters",
-                             description="Values for the parameters required by the workspace resource specification")
+                             description="Values for the parameters required by the workspace service resource specification")
 
     class Config:
         schema_extra = {
