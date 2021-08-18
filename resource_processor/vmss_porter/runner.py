@@ -174,7 +174,7 @@ async def deploy_porter_bundle(msg_body, sb_client, env_vars, message_logger_ada
     porter_command = await build_porter_command(msg_body, env_vars)
     returncode, _, err = await run_porter(porter_command, env_vars)
     if returncode != 0:
-        error_message = "Error context message = " + " ".join(err.split('\n'))
+        error_message = "Error context message = " + " ".join(err.split('\n')) + " ; Command executed: ".join(porter_command.split('\n'))
         resource_request_message = service_bus_message_generator(msg_body, strings.RESOURCE_STATUS_FAILED, error_message)
         await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"]))
         message_logger_adapter.info(f"{installation_id}: Deployment job configuration failed error = {error_message}")
