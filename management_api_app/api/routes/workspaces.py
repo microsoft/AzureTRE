@@ -12,7 +12,7 @@ from db.repositories.workspace_services import WorkspaceServiceRepository
 from models.schemas.user_resource import UserResourceIdInResponse, UserResourceInCreate
 from models.domain.workspace import WorkspaceRole
 from models.schemas.workspace import WorkspaceInCreate, WorkspaceIdInResponse, WorkspacesInList, WorkspaceInResponse, WorkspacePatchEnabled
-from models.schemas.workspace_service import WorkspaceServiceIdInResponse, WorkspaceServiceInCreate
+from models.schemas.workspace_service import WorkspaceServiceIdInResponse, WorkspaceServiceInCreate, WorkspaceServicesInList
 from resources import strings
 from service_bus.resource_request_sender import send_resource_request_message, RequestAction
 from services.authentication import get_current_user, get_current_admin_user, get_access_service
@@ -100,12 +100,19 @@ async def delete_workspace(workspace=Depends(get_workspace_by_workspace_id_from_
     return WorkspaceIdInResponse(workspaceId=workspace.id)
 
 
+@router.get("/workspaces/{workspace_id}/workspace-services", response_model=WorkspaceServicesInList, name=strings.API_GET_ALL_WORKSPACE_SERVICES)
+async def retrieve_users_active_workspace_services(user=Depends(get_current_user), workspace=Depends(get_workspace_by_workspace_id_from_path), workspace_services_repo=Depends(get_repository(WorkspaceServiceRepository))) -> WorkspaceServicesInList:
+    validate_user_is_owner_or_researcher_in_workspace(user, workspace)
+    workspace_services = workspace_services_repo.get_active_workspace_services_for_workspace(workspace.id)
+    return WorkspaceServicesInList(workspaceServices=workspace_services)
+
+
 @router.post("/workspaces/{workspace_id}/workspace-services", status_code=status.HTTP_202_ACCEPTED, response_model=WorkspaceServiceIdInResponse, name=strings.API_CREATE_WORKSPACE_SERVICE)
-async def create_workspace_service(workspace_input: WorkspaceServiceInCreate, workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), user=Depends(get_current_user), workspace=Depends(get_workspace_by_workspace_id_from_path)) -> WorkspaceServiceIdInResponse:
+async def create_workspace_service(workspace_service_input: WorkspaceServiceInCreate, workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), user=Depends(get_current_user), workspace=Depends(get_workspace_by_workspace_id_from_path)) -> WorkspaceServiceIdInResponse:
     validate_user_is_owner_or_researcher_in_workspace(user, workspace)
 
     try:
-        workspace_service = workspace_service_repo.create_workspace_service_item(workspace_input, workspace.id)
+        workspace_service = workspace_service_repo.create_workspace_service_item(workspace_service_input, workspace.id)
     except (ValidationError, ValueError) as e:
         logging.error(f"Failed create workspace service model instance: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
