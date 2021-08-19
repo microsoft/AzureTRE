@@ -33,7 +33,7 @@ build-api-image:
 	&& docker build -t "$${ACR_NAME}.azurecr.io/microsoft/azuretre/management-api:$${IMAGE_TAG}" ./management_api_app/
 
 build-resource-processor-vm-porter-image:
-	echo -e "\n\e[34m»»» 🧩 \e[96mBuilding Image\e[0m..." \
+	echo -e "\n\e[34m»»» 🧩 \e[96mBuilding Resource Processor Image\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/set_docker_sock_permission.sh \
@@ -47,7 +47,7 @@ build-gitea-image:
 	&& docker build -t "$${ACR_NAME}.azurecr.io/microsoft/azuretre/gitea:$${IMAGE_TAG}" -f ./templates/shared_services/gitea/Dockerfile .
 
 push-resource-processor-vm-porter-image:
-	echo -e "\n\e[34m»»» 🧩 \e[96mPushing Images\e[0m..." \
+	echo -e "\n\e[34m»»» 🧩 \e[96mPushing Resource Processor Image\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/set_docker_sock_permission.sh \
@@ -55,7 +55,7 @@ push-resource-processor-vm-porter-image:
 	&& docker push "$${ACR_NAME}.azurecr.io/microsoft/azuretre/resource-processor-vm-porter:$${IMAGE_TAG}"
 
 push-api-image:
-	echo -e "\n\e[34m»»» 🧩 \e[96mPushing Images\e[0m..." \
+	echo -e "\n\e[34m»»» 🧩 \e[96mPushing API Image\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/set_docker_sock_permission.sh \
