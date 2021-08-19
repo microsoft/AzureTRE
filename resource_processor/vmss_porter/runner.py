@@ -100,13 +100,13 @@ def get_installation_id(msg_body):
 
 
 async def build_porter_command(msg_body, env_vars):
-    porter_parameter_keys = await get_porter_parameter_keys(msg_body, env_vars)    
+    porter_parameter_keys = await get_porter_parameter_keys(msg_body, env_vars)
     porter_parameters = ""
 
     for parameter_name in porter_parameter_keys:
         # first try to find the param in the msg body parameters collection
         parameter_value = msg_body['parameters'].get(parameter_name)
-        
+
         # if not found, try to get it from the env_vars (e.g. terraform state ones)
         if parameter_value is None:
             parameter_value = env_vars.get(parameter_name)
@@ -114,7 +114,14 @@ async def build_porter_command(msg_body, env_vars):
         # if not found, try to get it from the msg body root (e.g. id of the resource)
         if parameter_value is None:
             parameter_value = msg_body.get(parameter_name)
-        
+
+        # if still not found, might be a special case
+        if parameter_value is None:
+            if parameter_name == "mgmt_acr_name":
+                parameter_value = env_vars['registry_server'].replace('.azurecr.io','')
+            elif parameter_name == "mgmt_resource_group_name":
+                parameter_value = env_vars['tfstate_resource_group_name']
+
         # only append if we have a value, porter will complain anyway about missing parameters
         if parameter_value is not None:
             porter_parameters = porter_parameters + f" --param {parameter_name}=\"{parameter_value}\""
@@ -132,7 +139,7 @@ async def build_porter_command(msg_body, env_vars):
 async def build_porter_command_for_outputs(msg_body):
     installation_id = get_installation_id(msg_body)
     # we only need "real" outputs and use jq to remove the logs which are big
-    command_line = [f"porter show {installation_id} --output json | jq -c '. | select(.Outputs!=null) | .Outputs | del (.[] | select(.Name==\"io.cnab.outputs.invocationImageLogs\"))'"] 
+    command_line = [f"porter show {installation_id} --output json | jq -c '. | select(.Outputs!=null) | .Outputs | del (.[] | select(.Name==\"io.cnab.outputs.invocationImageLogs\"))'"]
     return command_line
 
 
