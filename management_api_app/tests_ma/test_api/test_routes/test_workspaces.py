@@ -1,13 +1,16 @@
+import uuid
 import pytest
-from mock import patch
+from mock import patch, MagicMock
 
+from fastapi import HTTPException
 from starlette import status
 
-from api.routes.workspaces import get_current_user
+from api.routes.workspaces import get_current_user, save_and_deploy_resource, validate_user_is_owner_or_researcher_in_workspace
 from db.errors import EntityDoesNotExist
+from db.repositories.resources import ResourceRepository
 from db.repositories.workspaces import WorkspaceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
-from models.domain.resource import Status, Deployment
+from models.domain.resource import Status, Deployment, RequestAction
 from models.domain.user_resource import UserResource
 from models.domain.workspace import Workspace
 from models.domain.workspace_service import WorkspaceService
@@ -39,6 +42,12 @@ def sample_workspace_service(workspace_service_id, workspace_id):
         resourceTemplateParameters={},
         deployment=Deployment(status=Status.NotDeployed, message=""),
     )
+
+
+@pytest.fixture
+def resource_repo() -> ResourceRepository:
+    with patch("azure.cosmos.CosmosClient") as cosmos_client_mock:
+        return ResourceRepository(cosmos_client_mock)
 
 
 @pytest.fixture
@@ -95,6 +104,79 @@ def disabled_workspace() -> Workspace:
     return workspace
 
 
+# Test helpers
+@patch("api.routes.workspaces.send_resource_request_message", return_value=None)
+async def test_save_and_deploy_resource_saves_item(_, resource_repo):
+    resource = sample_workspace(str(uuid.uuid4()))
+    resource_repo.save_item = MagicMock(return_value=None)
+
+    await save_and_deploy_resource(resource, resource_repo)
+
+    resource_repo.save_item.assert_called_once_with(resource)
+
+
+async def test_save_and_deploy_resource_raises_503_if_save_to_db_fails(resource_repo):
+    resource = sample_workspace(str(uuid.uuid4()))
+    resource_repo.save_item = MagicMock(side_effect=Exception)
+
+    with pytest.raises(HTTPException) as ex:
+        await save_and_deploy_resource(resource, resource_repo)
+    assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+
+
+@patch("api.routes.workspaces.send_resource_request_message", return_value=None)
+async def test_save_and_deploy_resource_sends_resource_request_message(send_resource_request_mock, resource_repo):
+    resource = sample_workspace(str(uuid.uuid4()))
+    resource_repo.save_item = MagicMock(return_value=None)
+
+    await save_and_deploy_resource(resource, resource_repo)
+
+    send_resource_request_mock.assert_called_once_with(resource, RequestAction.Install)
+
+
+@patch("api.routes.workspaces.send_resource_request_message")
+async def test_save_and_deploy_resource_raises_503_if_send_request_fails(send_resource_request_mock, resource_repo):
+    resource = sample_workspace(str(uuid.uuid4()))
+    resource_repo.save_item = MagicMock(return_value=None)
+    resource_repo.delete_item = MagicMock(return_value=None)
+    send_resource_request_mock.side_effect = Exception
+
+    with pytest.raises(HTTPException) as ex:
+        await save_and_deploy_resource(resource, resource_repo)
+    assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+
+
+@patch("api.routes.workspaces.send_resource_request_message")
+async def test_save_and_deploy_resource_deletes_item_from_db_if_send_request_fails(send_resource_request_mock, resource_repo):
+    resource = sample_workspace(str(uuid.uuid4()))
+    resource_repo.save_item = MagicMock(return_value=None)
+    resource_repo.delete_item = MagicMock(return_value=None)
+    send_resource_request_mock.side_effect = Exception
+
+    with pytest.raises(HTTPException):
+        await save_and_deploy_resource(resource, resource_repo)
+
+    resource_repo.delete_item.assert_called_once_with(resource.id)
+
+
+@patch("api.routes.workspaces.get_access_service")
+async def test_validate_user_is_owner_or_researcher_raises_403_if_user_is_not_owner_or_researcher(get_access_service_mock, non_admin_user):
+    from services.authentication import AADAccessService
+    from models.domain.workspace import WorkspaceRole
+
+    access_service = AADAccessService()
+    get_access_service_mock.return_value = access_service
+    access_service.get_workspace_role = MagicMock(return_value=WorkspaceRole.NoRole)
+    workspace = sample_workspace(str(uuid.uuid4()))
+    user = non_admin_user
+
+    with pytest.raises(HTTPException) as ex:
+        validate_user_is_owner_or_researcher_in_workspace(user, workspace)
+
+    assert ex.value.status_code == status.HTTP_403_FORBIDDEN
+    access_service.get_workspace_role.assert_called_once_with(user, workspace)
+
+
 class TestWorkspaceRoutesThatDontRequireAdminRights:
     # [GET] /workspaces
     @ patch("api.routes.workspaces.WorkspaceRepository.get_active_workspaces")
@@ -108,10 +190,11 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
     @ patch("api.routes.workspaces.WorkspaceRepository.get_active_workspaces")
     async def test_workspaces_get_list_returns_correct_data_when_resources_exist(self, get_workspaces_mock, app, client) -> None:
         auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'roles': {'WorkspaceOwner': 'ab124', 'WorkspaceResearcher': 'ab125'}}
+        auth_info_user_in_workspace_researcher_role = {'sp_id': 'ab123', 'roles': {'WorkspaceOwner': 'ab127', 'WorkspaceResearcher': 'ab124'}}
         auth_info_user_not_in_workspace_role = {'sp_id': 'ab127', 'roles': {'WorkspaceOwner': 'ab128', 'WorkspaceResearcher': 'ab129'}}
 
         valid_ws_1 = sample_workspace("2fdc9fba-726e-4db6-a1b8-9018a2165748", auth_info_user_in_workspace_owner_role)
-        valid_ws_2 = sample_workspace("000000d3-82da-4bfc-b6e9-9a7853ef753e", auth_info_user_in_workspace_owner_role)
+        valid_ws_2 = sample_workspace("000000d3-82da-4bfc-b6e9-9a7853ef753e", auth_info_user_in_workspace_researcher_role)
         invalid_ws = sample_workspace("00000045-82da-4bfc-b6e9-9a7853ef7534", auth_info_user_not_in_workspace_role)
 
         get_workspaces_mock.return_value = [valid_ws_1, valid_ws_2, invalid_ws]
@@ -150,6 +233,35 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
         response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id=workspace_id))
         actual_resource = response.json()["workspace"]
         assert actual_resource["id"] == workspace.id
+
+    # [GET] /workspaces/{workspace_id}/workspace-services
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @ patch("api.routes.workspaces.validate_user_is_owner_or_researcher_in_workspace", return_value=None)
+    @ patch("api.routes.workspaces.WorkspaceServiceRepository.get_active_workspace_services_for_workspace")
+    async def test_get_workspace_services_validates_user_is_owner_or_researcher(self, get_active_workspace_services_mock, validate_user_mock, get_workspace_by_id_mock, app, client):
+        workspace_id = "933ad738-7265-4b5f-9eae-a1a62928772e"
+        get_workspace_by_id_mock.return_value = sample_workspace(workspace_id)
+        get_active_workspace_services_mock.return_value = []
+
+        await client.get(app.url_path_for(strings.API_GET_ALL_WORKSPACE_SERVICES, workspace_id=workspace_id))
+
+        validate_user_mock.assert_called_once()
+
+    # [GET] /workspaces/{workspace_id}/workspace-services
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @ patch("api.routes.workspaces.validate_user_is_owner_or_researcher_in_workspace", return_value=None)
+    @ patch("api.routes.workspaces.WorkspaceServiceRepository.get_active_workspace_services_for_workspace", return_value=None)
+    async def test_get_workspace_services_returns_workspace_services_for_workspace(self, get_active_workspace_services_mock, validate_user_mock, get_workspace_by_id_mock, app, client):
+        workspace_id = "933ad738-7265-4b5f-9eae-a1a62928772e"
+        workspace_service_id = "abcad738-7265-4b5f-9eae-a1a62928772e"
+        get_workspace_by_id_mock.return_value = sample_workspace(workspace_id)
+        workspace_services = [sample_workspace_service(workspace_service_id, workspace_id)]
+        get_active_workspace_services_mock.return_value = workspace_services
+
+        response = await client.get(app.url_path_for(strings.API_GET_ALL_WORKSPACE_SERVICES, workspace_id=workspace_id))
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["workspaceServices"] == workspace_services
 
 
 class TestWorkspaceRoutesThatRequireAdminRights:
@@ -350,6 +462,21 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=workspace_id), json=input_data)
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    # [PATCH] /workspaces/{workspace_id}
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @ patch("api.routes.workspaces.WorkspaceRepository.patch_workspace")
+    async def test_workspaces_patch_patches_workspace(self, patch_workspace_mock, get_workspace_mock, app, client):
+        workspace_to_patch = sample_workspace("933ad738-7265-4b5f-9eae-a1a62928772e")
+        patch_workspace_mock.return_value = None
+        get_workspace_mock.return_value = workspace_to_patch
+        workspace_patch = {"enabled": True}
+
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=workspace_to_patch.id), json=workspace_patch)
+
+        patch_workspace_mock.assert_called_once_with(workspace_to_patch, workspace_patch)
+
+        assert response.status_code == status.HTTP_200_OK
 
     # [DELETE] /workspaces/{workspace_id}
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
