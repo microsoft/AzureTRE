@@ -19,7 +19,7 @@ resource "azurerm_app_service" "guacamole" {
   https_only          = true
 
   site_config {
-    linux_fx_version                     = "DOCKER|${data.azurerm_container_registry.mgmt_acr.name}.azurecr.io/guac-server:v0.1.0"
+    linux_fx_version                     = "DOCKER|${data.azurerm_container_registry.mgmt_acr.name}.azurecr.io/${var.image_name}:${var.image_tag}"
     http2_enabled                        = true
     acr_use_managed_identity_credentials = true
   }

@@ -23,12 +23,6 @@
       }
     },
     {
-      "name": "mgmt_resource_group_name",
-      "source": {
-        "env": "MGMT_RESOURCE_GROUP_NAME"
-      }
-    },
-    {
       "name": "tfstate_container_name",
       "source": {
         "env": "TERRAFORM_STATE_CONTAINER_NAME"

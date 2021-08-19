@@ -53,6 +53,10 @@ data "azurerm_private_dns_zone" "vaultcore" {
 }
 
 data "azurerm_container_registry" "mgmt_acr" {
-  name                = "acr${var.tre_id}"
+  name                = var.mgmt_acr_name
   resource_group_name = var.mgmt_resource_group_name
+}
+
+output "connection_uri" {
+  value = azurerm_app_service.guacamole.default_site_hostname
 }
