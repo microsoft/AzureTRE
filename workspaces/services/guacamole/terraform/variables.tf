@@ -5,3 +5,6 @@ variable "arm_client_secret" {}
 variable "arm_tenant_id" {}
 variable "arm_use_msi" {}
 variable "mgmt_resource_group_name" {}
+variable "mgmt_acr_name" {}
+variable "image_name" {}
+variable "image_tag" {}

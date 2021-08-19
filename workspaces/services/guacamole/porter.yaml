@@ -19,9 +19,21 @@ parameters:
     type: string
   - name: tre_id
     type: string
+  - name: image_name
+    type: string
+    default: "guac-server"
+    description: "The name of the guacamole image"
+  - name: image_tag
+    type: string
+    default: "v0.1.0"
+    description: "The tag of the guacamole image"
+  - name: acr_name
+    type: string
+    env: acr_name
+    description: "The devops ACR name"
   - name: mgmt_resource_group_name
     type: string
-    description: "Resource group containing the shared ACR"
+    description: "Resource group containing the devops ACR"
     env: MGMT_RESOURCE_GROUP_NAME
   # the next 4 are automaticly sent by the resource processor call, so must be present.
   - name: tfstate_resource_group_name
@@ -56,6 +68,9 @@ install:
       vars:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
+        image_name: "{{ bundle.parameters.image_name }}"
+        image_tag: "{{ bundle.parameters.image_tag }}"
+        mgmt_acr_name: "{{ bundle.parameters.acr_name }}"
         mgmt_resource_group_name: "{{ bundle.parameters.mgmt_resource_group_name }}"
         arm_client_id: "{{ bundle.credentials.azure_client_id }}"
         arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
@@ -82,6 +97,9 @@ uninstall:
       vars:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
+        image_name: "{{ bundle.parameters.image_name }}"
+        image_tag: "{{ bundle.parameters.image_tag }}"
+        mgmt_acr_name: "{{ bundle.parameters.acr_name }}"
         mgmt_resource_group_name: "{{ bundle.parameters.mgmt_resource_group_name }}"
         arm_client_id: "{{ bundle.credentials.azure_client_id }}"
         arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
