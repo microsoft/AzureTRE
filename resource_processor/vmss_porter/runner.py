@@ -118,7 +118,7 @@ async def build_porter_command(msg_body, env_vars):
         # if still not found, might be a special case
         if parameter_value is None:
             if parameter_name == "mgmt_acr_name":
-                parameter_value = env_vars['registry_server'].replace('.azurecr.io','')
+                parameter_value = env_vars['registry_server'].replace('.azurecr.io', '')
             elif parameter_name == "mgmt_resource_group_name":
                 parameter_value = env_vars['tfstate_resource_group_name']
 
@@ -233,7 +233,7 @@ async def get_porter_outputs(msg_body, env_vars, message_logger_adapter):
             logger_adapter.info(f"Got outputs as json: {outputs_json}")
         except ValueError:
             logger_adapter.info(f"Got outputs invalid json: {stdout}")
-        
+
         return True, outputs_json
 
 
