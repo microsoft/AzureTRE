@@ -37,7 +37,7 @@ def test_get_active_workspace_services_for_workspace_queries_db(workspace_servic
 
     workspace_service_repo.get_active_workspace_services_for_workspace(workspace_service_id)
 
-    workspace_service_repo.query.assert_called_once_with(query='SELECT * FROM c WHERE c.resourceType = "workspace-service" AND c.deleted = false AND c.workspaceId = "000000d3-82da-4bfc-b6e9-9a7853ef753e"')
+    workspace_service_repo.query.assert_called_once_with(query=WorkspaceServiceRepository.active_workspace_services_query(workspace_service_id))
 
 
 def test_get_deployed_workspace_service_by_id_raises_resource_is_not_deployed_if_not_deployed(workspace_service_repo, workspace_service):
@@ -67,7 +67,7 @@ def test_get_workspace_service_by_id_queries_db(workspace_service_repo, workspac
 
     workspace_service_repo.get_workspace_service_by_id(workspace_service_id)
 
-    workspace_service_repo.query.assert_called_once_with(query='SELECT * FROM c WHERE c.deleted = false AND c.resourceType = "workspace-service" AND c.id = "000000d3-82da-4bfc-b6e9-9a7853ef753e"')
+    workspace_service_repo.query.assert_called_once_with(query=workspace_service_repo._active_resources_by_type_and_id_query(workspace_service_id, ResourceType.WorkspaceService))
 
 
 @patch('db.repositories.workspace_services.WorkspaceServiceRepository.validate_input_against_template')

@@ -60,10 +60,14 @@ class ResourceRepository(BaseRepository):
 
         return template_version
 
-    def mark_resource_as_deleted(self, resource: Resource):
-        resource.deleted = True
+    def mark_resource_as_deleted(self, resource: Resource) -> Status:
+        current_deletion_status = resource.deployment.status
+
+        resource.deployment.status = Status.Deleted
         self.update_item(resource)
 
-    def mark_resource_as_not_deleted(self, resource: Resource):
-        resource.deleted = False
+        return current_deletion_status
+
+    def restore_previous_deletion_state(self, resource: Resource, previous_deletion_status: Status):
+        resource.deployment.status = previous_deletion_status
         self.update_item(resource)

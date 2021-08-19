@@ -16,11 +16,15 @@ class WorkspaceServiceRepository(ResourceRepository):
     def __init__(self, client: CosmosClient):
         super().__init__(client)
 
+    @staticmethod
+    def active_workspace_services_query(workspace_id: str):
+        return f'SELECT * FROM c WHERE c.resourceType = "{ResourceType.WorkspaceService}" AND c.deployment.status != "{Status.Deleted}" AND c.workspaceId = "{workspace_id}"'
+
     def get_active_workspace_services_for_workspace(self, workspace_id: str) -> List[WorkspaceService]:
         """
         returns list of "non-deleted" workspace services linked to this workspace
         """
-        query = f'SELECT * FROM c WHERE c.resourceType = "{ResourceType.WorkspaceService}" AND c.deployment.status != "{Status.Deleted}" AND c.workspaceId = "{workspace_id}"'
+        query = WorkspaceServiceRepository.active_workspace_services_query(workspace_id)
         workspace_services = self.query(query=query)
         return parse_obj_as(List[WorkspaceService], workspace_services)
 
