@@ -42,10 +42,10 @@ data "azurerm_key_vault" "kv" {
   resource_group_name = data.azurerm_resource_group.ws.name
 }
 
-output "guacamole_win10vm_address" {
+output "ip" {
   value = azurerm_network_interface.internal.private_ip_address
 }
 
-output "guacamole_win10vm_name" {
+output "hostname" {
   value = azurerm_virtual_machine.win10vm.name
 }

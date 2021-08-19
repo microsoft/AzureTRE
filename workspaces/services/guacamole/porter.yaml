@@ -40,7 +40,7 @@ parameters:
     default: false
 
 outputs:
-  - name: guacamole_url
+  - name: connection_uri
     type: string
     applyTo:
       - install
@@ -67,7 +67,7 @@ install:
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.workspace_id }}-svc-guacamole"
       outputs:
-      - name: guacamole_url
+      - name: connection_uri
 
 upgrade:
   - exec:

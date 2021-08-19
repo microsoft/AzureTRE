@@ -57,6 +57,6 @@ data "azurerm_container_registry" "mgmt_acr" {
   resource_group_name = var.mgmt_resource_group_name
 }
 
-output "guacamole_url" {
+output "connection_uri" {
   value = azurerm_app_service.guacamole.default_site_hostname
 }

@@ -39,11 +39,11 @@ parameters:
     default: false
 
 outputs:
-  - name: guacamole_win10vm_address
+  - name: ip
     type: string
     applyTo:
       - install
-  - name: guacamole_win10vm_name
+  - name: hostname
     type: string
     applyTo:
       - install
@@ -70,8 +70,8 @@ install:
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.workspace_id }}-svc-guacamole-winwin10vm"
       outputs:
-      - name: guacamole_win10vm_address
-      - name: guacamole_win10vm_name
+      - name: ip
+      - name: hostname
 
 upgrade:
   - exec:
