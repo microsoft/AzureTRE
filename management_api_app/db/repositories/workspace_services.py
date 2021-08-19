@@ -20,7 +20,7 @@ class WorkspaceServiceRepository(ResourceRepository):
         """
         returns list of "non-deleted" workspace services linked to this workspace
         """
-        query = f'SELECT * FROM c WHERE c.resourceType = "{ResourceType.WorkspaceService}" AND c.deleted = false AND c.workspaceId = "{workspace_id}"'
+        query = f'SELECT * FROM c WHERE c.resourceType = "{ResourceType.WorkspaceService}" AND c.deployment.status != "{Status.Deleted}" AND c.workspaceId = "{workspace_id}"'
         workspace_services = self.query(query=query)
         return parse_obj_as(List[WorkspaceService], workspace_services)
 

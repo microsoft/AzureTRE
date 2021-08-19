@@ -19,7 +19,7 @@ class WorkspaceRepository(ResourceRepository):
         super().__init__(client)
 
     def get_active_workspaces(self) -> List[Workspace]:
-        query = f'SELECT * FROM c WHERE c.resourceType = "{ResourceType.Workspace}" AND c.deleted = false'
+        query = f'SELECT * FROM c WHERE c.resourceType = "{ResourceType.Workspace}" AND c.deployment.status != "{Status.Deleted}"'
         workspaces = self.query(query=query)
         return parse_obj_as(List[Workspace], workspaces)
 

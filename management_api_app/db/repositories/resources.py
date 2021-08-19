@@ -6,7 +6,7 @@ from core import config
 from db.errors import EntityDoesNotExist
 from db.repositories.base import BaseRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
-from models.domain.resource import ResourceType, Resource
+from models.domain.resource import ResourceType, Resource, Status
 
 
 class ResourceRepository(BaseRepository):
@@ -15,7 +15,7 @@ class ResourceRepository(BaseRepository):
 
     @staticmethod
     def _active_resources_query():
-        return 'SELECT * FROM c WHERE c.deleted = false'
+        return f'SELECT * FROM c WHERE c.deployment.status != "{Status.Deleted}"'
 
     def _active_resources_by_type_query(self, resource_type: ResourceType):
         return self._active_resources_query() + f' AND c.resourceType = "{resource_type}"'
