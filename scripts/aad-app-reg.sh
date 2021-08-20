@@ -369,4 +369,4 @@ if [[ $grantAdminConsent -eq 1 ]]; then
 	az ad app permission admin-consent --id ${swaggerAppId}
 fi
 
-echo "done"
+echo "Done"
