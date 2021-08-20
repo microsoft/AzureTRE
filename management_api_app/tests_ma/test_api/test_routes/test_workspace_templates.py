@@ -8,7 +8,7 @@ from starlette import status
 from models.domain.resource import ResourceType
 from resources import strings
 from api.routes.workspaces import get_current_user
-from db.errors import EntityDoesNotExist, UnableToAccessDatabase
+from db.errors import DuplicateEntity, EntityDoesNotExist, UnableToAccessDatabase
 from models.domain.resource_template import ResourceTemplate
 from models.schemas.resource_template import ResourceTemplateInformation
 from models.schemas.workspace_template import WorkspaceTemplateInResponse
@@ -108,13 +108,13 @@ class TestWorkspaceTemplate:
 
         assert response.status_code == status.HTTP_409_CONFLICT
 
-    # GET /workspace-templates/{template_name}
+    # GET /workspace-templates/{workspace_template_name}
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_template")
     async def test_workspace_templates_by_name_returns_enriched_workspace_template(self, get_current_template_mock, app, client, workspace_template_without_enriching):
         template_name = "template1"
         get_current_template_mock.return_value = workspace_template_without_enriching(template_name)
 
-        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_TEMPLATE_BY_NAME, template_name=template_name))
+        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_TEMPLATE_BY_NAME, workspace_template_name=template_name))
 
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["name"] == template_name
@@ -122,13 +122,14 @@ class TestWorkspaceTemplate:
 
     @pytest.mark.parametrize("exception, expected_status", [
         (EntityDoesNotExist, status.HTTP_404_NOT_FOUND),
+        (DuplicateEntity, status.HTTP_500_INTERNAL_SERVER_ERROR),
         (UnableToAccessDatabase, status.HTTP_503_SERVICE_UNAVAILABLE)
     ])
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_template")
     async def test_workspace_templates_by_name_returns_returns_error_status_based_on_exception(self, get_current_template_mock, exception, expected_status, app, client):
         get_current_template_mock.side_effect = exception
 
-        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_TEMPLATE_BY_NAME, template_name="tre-workspace-vanilla"))
+        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_TEMPLATE_BY_NAME, workspace_template_name="tre-workspace-vanilla"))
 
         assert response.status_code == expected_status
 

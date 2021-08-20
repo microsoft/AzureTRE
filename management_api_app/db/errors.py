@@ -2,6 +2,10 @@ class EntityDoesNotExist(Exception):
     """Raised when entity was not found in database."""
 
 
+class DuplicateEntity(Exception):
+    """Raised when we have an unexpected duplicate (ex. two currents)"""
+
+
 class EntityVersionExist(Exception):
     """Raised when entity was not found in database."""
 
