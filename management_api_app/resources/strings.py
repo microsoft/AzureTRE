@@ -6,11 +6,14 @@ API_GET_HEALTH_STATUS = "Get health status"
 API_GET_ALL_WORKSPACES = "Get all workspaces"
 API_GET_WORKSPACE_BY_ID = "Get workspace by Id"
 API_CREATE_WORKSPACE = "Create a workspace"
-API_CREATE_WORKSPACE_SERVICE = "Create a workspace service"
-API_GET_ALL_WORKSPACE_SERVICES = "Get all workspace services for workspace"
-API_CREATE_USER_RESOURCE = "Create a user resource"
 API_DELETE_WORKSPACE = "Delete workspace"
 API_UPDATE_WORKSPACE = "Update an existing workspace"
+
+API_GET_ALL_WORKSPACE_SERVICES = "Get all workspace services for workspace"
+API_GET_WORKSPACE_SERVICE_BY_ID = "Get workspace service by Id"
+API_CREATE_WORKSPACE_SERVICE = "Create a workspace service"
+
+API_CREATE_USER_RESOURCE = "Create a user resource"
 
 API_GET_STATUS_OF_SERVICES = "Get status of services"
 
