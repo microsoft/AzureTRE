@@ -13,6 +13,30 @@ usage()
 	exit 1
 }
 
+# This function polls looking for an app registration with the given ID.
+# If after the number of retries no app registration is found, the function exits.
+wait_for_new_app_registration()
+{
+    apiAppId=$1
+    retries=10
+    counter=0
+    objectId=$(az ad app list --filter "appId eq '${apiAppId}'" --query '[0].objectId' --output tsv)
+
+    while [[ -z $objectId && $counter -lt $retries ]]; do
+        counter=$((counter+1))
+        echo "Waiting for App Registration with ID ${apiAppId} to show up (${counter}/${retries})..."
+        sleep 5
+        objectId=$(az ad app list --filter "appId eq '${apiAppId}'" --query '[0].objectId' --output tsv)
+    done
+
+    if [[ -z $objectId ]]; then
+        echo "Failed"
+        exit 1
+    fi
+
+    echo "App Registration with ID ${apiAppId} found"
+}
+
 if ! command -v az &> /dev/null; then
 	echo "This script requires Azure CLI" 1>&2
 	exit 1
@@ -217,9 +241,10 @@ if [[ -n ${apiAppObjectId} ]]; then
 	echo "Updated App Registration updated with ID ${apiAppId}"
 else
 	apiAppId=$(az rest --method POST --uri "${msGraphUri}/applications" --headers Content-Type=application/json --body "${apiApp}" -o tsv --query "appId")
-	echo "New App Registration created with ID ${apiAppId}"
+	echo "Creating a new App Registration with ID ${apiAppId}"
 
-    # TODO: Polling loop here
+    # Poll until the app registration is found in the listing.
+    wait_for_new_app_registration $apiAppId
 
 	# Update to set the identifier URI.
 	az ad app update --id ${apiAppId} --identifier-uris "api://${apiAppId}"
@@ -254,8 +279,6 @@ if [[ "$resetPassword" == 1 ]]; then
     spPassword=$(az ad sp credential reset --name ${apiAppId} --query 'password' --output tsv)
     echo "${appName} API app password (client secret): ${spPassword}"
 fi
-
-exit 0
 
 # This tag ensures the app is listed in the "Enterprise applications"
 az ad sp update --id $spId --set tags="['WindowsAzureActiveDirectoryIntegratedApp']"
@@ -320,10 +343,13 @@ if [[ -n ${existingSwaggerUIApp} ]]; then
 	echo "Updating app ${swaggerUIAppObjectId}"
 	az rest --method PATCH --uri "${msGraphUri}/applications/${swaggerUIAppObjectId}" --headers Content-Type=application/json --body "${swaggerUIApp}"
 	swaggerAppId=$(az ad app show --id ${swaggerUIAppObjectId} --query "appId" -o tsv)
-	echo "Updated App Registration with id ${swaggerAppId}"
+	echo "Updated App Registration with ID ${swaggerAppId}"
 else
 	swaggerAppId=$(az rest --method POST --uri "${msGraphUri}/applications" --headers Content-Type=application/json --body "${swaggerUIApp}" -o tsv --query "appId")
-	echo "New App Registration created with id ${swaggerAppId}"
+	echo "Creating a new App Registration with ID ${swaggerAppId}"
+
+    # Poll until the app registration is found in the listing.
+    wait_for_new_app_registration $swaggerAppId
 fi
 
 # Make the current user an owner of the application.
