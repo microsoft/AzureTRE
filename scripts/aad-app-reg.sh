@@ -57,7 +57,7 @@ fi
 declare tenant=$( az rest -m get -u https://graph.microsoft.com/v1.0/domains -o json | jq -r '.value[] | select(.isDefault == true) | .id')
 
 echo "You are about to create App Registrations in the Azure AD Tenant ${tenant}."
-read -p "Do you want to continue? (y/N)" -n 1 -r
+read -p "Do you want to continue? (y/N) " -n 1 -r
 echo
 if [[ ! $REPLY =~ ^[Yy]$ ]]
 then
@@ -214,10 +214,12 @@ if [[ -n ${apiAppObjectId} ]]; then
 	echo "Updating app ${apiAppObjectId}"
 	az rest --method PATCH --uri "${msGraphUri}/applications/${apiAppObjectId}" --headers Content-Type=application/json --body "${apiApp}"
 	apiAppId=$(az ad app show --id ${apiAppObjectId} --query "appId" -o tsv)
-	echo "Updated App Registration updated with id ${apiAppId}"
+	echo "Updated App Registration updated with ID ${apiAppId}"
 else
 	apiAppId=$(az rest --method POST --uri "${msGraphUri}/applications" --headers Content-Type=application/json --body "${apiApp}" -o tsv --query "appId")
-	echo "New App Registration created with id ${apiAppId}"
+	echo "New App Registration created with ID ${apiAppId}"
+
+    # TODO: Polling loop here
 
 	# Update to set the identifier URI.
 	az ad app update --id ${apiAppId} --identifier-uris "api://${apiAppId}"
@@ -229,11 +231,31 @@ az ad app owner add --id ${apiAppId} --owner-object-id $currentUserId
 # See if a service principal already exists
 spId=$(az ad sp list --filter "appId eq '${apiAppId}'" --query '[0].objectId' --output tsv)
 
+resetPassword=0
+
 # If not, create a new service principal
 if [[ -z "$spId" ]]; then
 	spId=$(az ad sp create --id ${apiAppId} --query 'objectId' --output tsv)
-	echo "New Service Principal created with id $spId"
+	echo "New Service Principal created with ID $spId"
+    resetPassword=1
+else
+    echo "Service Principal for the app already exists."
+    echo "Existing passwords (client secrets) cannot be queried. To view the password it needs to be reset."
+    read -p "Do you wish to reset the ${appName} API app password (y/N)? " -n 1 -r
+    echo
+
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        resetPassword=1
+    fi
 fi
+
+if [[ "$resetPassword" == 1 ]]; then
+    # Reset the app password (client secret) and display it
+    spPassword=$(az ad sp credential reset --name ${apiAppId} --query 'password' --output tsv)
+    echo "${appName} API app password (client secret): ${spPassword}"
+fi
+
+exit 0
 
 # This tag ensures the app is listed in the "Enterprise applications"
 az ad sp update --id $spId --set tags="['WindowsAzureActiveDirectoryIntegratedApp']"
