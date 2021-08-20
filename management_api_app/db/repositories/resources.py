@@ -6,7 +6,7 @@ from core import config
 from db.errors import EntityDoesNotExist
 from db.repositories.base import BaseRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
-from models.domain.resource import ResourceType, Resource
+from models.domain.resource import ResourceType, Resource, Status
 
 
 class ResourceRepository(BaseRepository):
@@ -15,7 +15,7 @@ class ResourceRepository(BaseRepository):
 
     @staticmethod
     def _active_resources_query():
-        return 'SELECT * FROM c WHERE c.deleted = false'
+        return f'SELECT * FROM c WHERE c.deployment.status != "{Status.Deleted}"'
 
     def _active_resources_by_type_query(self, resource_type: ResourceType):
         return self._active_resources_query() + f' AND c.resourceType = "{resource_type}"'
@@ -60,10 +60,14 @@ class ResourceRepository(BaseRepository):
 
         return template_version
 
-    def mark_resource_as_deleted(self, resource: Resource):
-        resource.deleted = True
+    def mark_resource_as_deleted(self, resource: Resource) -> Status:
+        current_deletion_status = resource.deployment.status
+
+        resource.deployment.status = Status.Deleted
         self.update_item(resource)
 
-    def mark_resource_as_not_deleted(self, resource: Resource):
-        resource.deleted = False
+        return current_deletion_status
+
+    def restore_previous_deletion_state(self, resource: Resource, previous_deletion_status: Status):
+        resource.deployment.status = previous_deletion_status
         self.update_item(resource)

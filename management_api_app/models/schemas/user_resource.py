@@ -19,7 +19,6 @@ def get_sample_user_resource(user_resource_id: str) -> dict:
             "status": "not_deployed",
             "message": "This resource is not yet deployed"
         },
-        "deleted": False,
         "resourceType": ResourceType.UserResource
     }
 
