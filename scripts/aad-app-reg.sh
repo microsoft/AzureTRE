@@ -17,16 +17,16 @@ usage()
 # If after the number of retries no app registration is found, the function exits.
 wait_for_new_app_registration()
 {
-    apiAppId=$1
+    appId=$1
     retries=10
     counter=0
-    objectId=$(az ad app list --filter "appId eq '${apiAppId}'" --query '[0].objectId' --output tsv)
+    objectId=$(az ad app list --filter "appId eq '${appId}'" --query '[0].objectId' --output tsv)
 
     while [[ -z $objectId && $counter -lt $retries ]]; do
         counter=$((counter+1))
-        echo "Waiting for App Registration with ID ${apiAppId} to show up (${counter}/${retries})..."
+        echo "Waiting for App Registration with ID ${appId} to show up (${counter}/${retries})..."
         sleep 5
-        objectId=$(az ad app list --filter "appId eq '${apiAppId}'" --query '[0].objectId' --output tsv)
+        objectId=$(az ad app list --filter "appId eq '${appId}'" --query '[0].objectId' --output tsv)
     done
 
     if [[ -z $objectId ]]; then
@@ -34,7 +34,7 @@ wait_for_new_app_registration()
         exit 1
     fi
 
-    echo "App Registration with ID ${apiAppId} found"
+    echo "App Registration with ID ${appId} found"
 }
 
 if ! command -v az &> /dev/null; then
