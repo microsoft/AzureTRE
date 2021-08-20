@@ -1,4 +1,3 @@
-from enum import Enum
 import json
 import logging
 
@@ -8,12 +7,8 @@ from azure.servicebus.aio import ServiceBusClient
 from contextlib import asynccontextmanager
 
 from core import config
+from models.domain.request_action import RequestAction
 from models.domain.resource import Resource
-
-
-class RequestAction(str, Enum):
-    Install = "install"
-    UnInstall = "uninstall"
 
 
 async def send_resource_request_message(resource: Resource, action: RequestAction = RequestAction.Install):
@@ -24,13 +19,7 @@ async def send_resource_request_message(resource: Resource, action: RequestActio
     :param resource: The resource to deploy.
     :param action: install, uninstall etc.
     """
-    content = json.dumps({
-        "action": action,
-        "id": resource.id,
-        "name": resource.resourceTemplateName,
-        "version": resource.resourceTemplateVersion,
-        "parameters": resource.resourceTemplateParameters
-    })
+    content = json.dumps(resource.get_resource_request_message_payload(action))
 
     resource_request_message = ServiceBusMessage(body=content, correlation_id=resource.id)
     logging.info(f"Sending resource request message with correlation ID {resource_request_message.correlation_id}, action: {action}")

@@ -1,7 +1,6 @@
 import pytest
 from mock import patch
 
-from fastapi import FastAPI
 from httpx import AsyncClient
 
 from models.schemas.status import StatusEnum
@@ -12,7 +11,7 @@ pytestmark = pytest.mark.asyncio
 
 
 @patch("api.routes.status.create_state_store_status")
-async def test_health_response_contains_cosmos_status(health_check_mock, app: FastAPI, client: AsyncClient) -> None:
+async def test_health_response_contains_cosmos_status(health_check_mock, app, client: AsyncClient) -> None:
     message = ""
     health_check_mock.return_value = StatusEnum.ok, message
 

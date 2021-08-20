@@ -30,6 +30,14 @@ def admin_user():
 
 
 @pytest.fixture(scope='module')
+def non_admin_user():
+    def inner():
+        from models.domain.authentication import User
+        return User(id="1234", name="test", email="test", roles=[], roleAssignments={"ab123": "ab124"})
+    return inner
+
+
+@pytest.fixture(scope='module')
 def app() -> FastAPI:
     from main import get_application
     from api.routes.workspaces import get_current_user

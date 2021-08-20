@@ -28,5 +28,5 @@ These are onetime configuration steps required to set up the GitHub Actions work
 | `DEPLOY_NEXUS` | If set to `false` disables deployment of the Nexus shared service. |
 | `TEST_APP_ID` | The application (client) ID of the [E2E Test app](./auth.md#tre-e2e-test) service principal. |
 | `TEST_USER_NAME` | The username of the [E2E Test User](./auth.md#end-to-end-test-user). |
-| `TEST_USER_NAME` | The password of the [E2E Test User](./auth.md#end-to-end-test-user). |
+| `TEST_USER_PASSWORD` | The password of the [E2E Test User](./auth.md#end-to-end-test-user). |
 | `TEST_WORKSPACE_APP_ID` | The application (client) ID of the [Workspaces app](./auth.md#workspaces) service principal. |

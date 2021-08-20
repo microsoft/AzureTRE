@@ -36,3 +36,16 @@ data "azurerm_subnet" "services" {
   virtual_network_name = data.azurerm_virtual_network.ws.name
   resource_group_name  = data.azurerm_resource_group.ws.name
 }
+
+data "azurerm_key_vault" "kv" {
+  name                = "kv-guacamole-${var.tre_id}-${var.workspace_id}"
+  resource_group_name = data.azurerm_resource_group.ws.name
+}
+
+output "ip" {
+  value = azurerm_network_interface.internal.private_ip_address
+}
+
+output "hostname" {
+  value = azurerm_virtual_machine.win10vm.name
+}

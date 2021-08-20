@@ -1,3 +1,5 @@
+data "azurerm_subscription" "current" {}
+
 resource "azurerm_app_service_plan" "core" {
   name                = "plan-${var.tre_id}"
   resource_group_name = var.resource_group_name
@@ -28,11 +30,9 @@ resource "azurerm_app_service" "management_api" {
     "XDT_MicrosoftApplicationInsights_Mode"      = "default"
     "WEBSITES_PORT"                              = "8000"
     "WEBSITE_VNET_ROUTE_ALL"                     = 1
-    "DOCKER_REGISTRY_SERVER_USERNAME"            = var.docker_registry_username
     "DOCKER_REGISTRY_SERVER_URL"                 = "https://${var.docker_registry_server}"
-    "DOCKER_REGISTRY_SERVER_PASSWORD"            = var.docker_registry_password
     "STATE_STORE_ENDPOINT"                       = var.state_store_endpoint
-    "STATE_STORE_KEY"                            = var.state_store_key
+    "COSMOSDB_ACCOUNT_NAME"                      = var.cosmosdb_account_name
     "SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE"      = "sb-${var.tre_id}.servicebus.windows.net"
     "SERVICE_BUS_RESOURCE_REQUEST_QUEUE"         = var.service_bus_resource_request_queue
     "SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE" = var.service_bus_deployment_status_update_queue
@@ -43,6 +43,8 @@ resource "azurerm_app_service" "management_api" {
     "AAD_TENANT_ID"                              = var.aad_tenant_id
     "API_CLIENT_ID"                              = var.api_client_id
     "API_CLIENT_SECRET"                          = var.api_client_secret
+    "RESOURCE_GROUP_NAME"                        = var.resource_group_name
+    "SUBSCRIPTION_ID"                            = data.azurerm_subscription.current.subscription_id
   }
 
   identity {
@@ -53,9 +55,11 @@ resource "azurerm_app_service" "management_api" {
   lifecycle { ignore_changes = [tags] }
 
   site_config {
-    linux_fx_version            = "DOCKER|${var.docker_registry_server}/${var.management_api_image_repository}:${var.management_api_image_tag}"
-    remote_debugging_enabled    = false
-    scm_use_main_ip_restriction = true
+    linux_fx_version                     = "DOCKER|${var.docker_registry_server}/${var.management_api_image_repository}:${var.management_api_image_tag}"
+    remote_debugging_enabled             = false
+    scm_use_main_ip_restriction          = true
+    acr_use_managed_identity_credentials = true
+    acr_user_managed_identity_client_id  = var.managed_identity.client_id
 
     cors {
       allowed_origins     = []

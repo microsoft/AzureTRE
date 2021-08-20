@@ -95,10 +95,8 @@ module "api-webapp" {
   management_api_image_repository            = var.management_api_image_repository
   management_api_image_tag                   = var.management_api_image_tag
   docker_registry_server                     = var.docker_registry_server
-  docker_registry_username                   = var.docker_registry_username
-  docker_registry_password                   = var.docker_registry_password
   state_store_endpoint                       = module.state-store.endpoint
-  state_store_key                            = module.state-store.primary_key
+  cosmosdb_account_name                      = module.state-store.cosmosdb_account_name
   service_bus_resource_request_queue         = module.servicebus.workspacequeue
   service_bus_deployment_status_update_queue = module.servicebus.service_bus_deployment_status_update_queue
   managed_identity                           = module.identity.managed_identity
@@ -191,15 +189,6 @@ module "routetable" {
   shared_subnet_id             = module.network.shared
   resource_processor_subnet_id = module.network.resource_processor
   firewall_private_ip_address  = module.firewall.firewall_private_ip_address
-}
-
-module "acr" {
-  source              = "./acr"
-  tre_id              = var.tre_id
-  location            = var.location
-  resource_group_name = azurerm_resource_group.core.name
-  core_vnet           = module.network.core
-  shared_subnet       = module.network.shared
 }
 
 module "state-store" {

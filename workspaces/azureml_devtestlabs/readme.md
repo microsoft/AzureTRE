@@ -32,5 +32,6 @@ Please follow the above links to learn more about how to access the services and
 
 1. Build and install the workspace:
 
+    `make porter-build DIR=./workspaces/azureml_devtestlabs`
     `make porter-publish DIR=./workspaces/azureml_devtestlabs`
     `make porter-install DIR=./workspaces/azureml_devtestlabs`
