@@ -21,3 +21,4 @@ variable "swagger_ui_client_id" {}
 variable "aad_tenant_id" {}
 variable "api_client_id" {}
 variable "api_client_secret" {}
+variable "acr_id" {}
