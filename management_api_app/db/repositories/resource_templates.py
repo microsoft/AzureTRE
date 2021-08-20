@@ -5,7 +5,7 @@ from azure.cosmos import CosmosClient
 from pydantic import parse_obj_as
 
 from core import config
-from db.errors import EntityDoesNotExist, EntityVersionExist
+from db.errors import DuplicateEntity, EntityDoesNotExist, EntityVersionExist
 from db.repositories.base import BaseRepository
 from models.domain.resource import ResourceType
 from models.domain.resource_template import ResourceTemplate
@@ -47,8 +47,10 @@ class ResourceTemplateRepository(BaseRepository):
         """
         query = self._template_by_name_query(template_name, resource_type) + ' AND c.current = true'
         templates = self.query(query=query)
-        if len(templates) != 1:
+        if len(templates) == 0:
             raise EntityDoesNotExist
+        if len(templates) > 1:
+            raise DuplicateEntity
         return parse_obj_as(ResourceTemplate, templates[0])
 
     def get_current_user_resource_template(self, user_resource_template_name, parent_service_name) -> UserResourceTemplate:
@@ -57,8 +59,10 @@ class ResourceTemplateRepository(BaseRepository):
         """
         query = self._template_by_name_query(user_resource_template_name, ResourceType.UserResource) + f' AND c.parentWorkspaceService = "{parent_service_name}" AND c.current = true'
         templates = self.query(query=query)
-        if len(templates) != 1:
+        if len(templates) == 0:
             raise EntityDoesNotExist
+        if len(templates) > 1:
+            raise DuplicateEntity
         return parse_obj_as(UserResourceTemplate, templates[0])
 
     def get_template_by_name_and_version(self, name: str, version: str, resource_type: ResourceType) -> ResourceTemplate:

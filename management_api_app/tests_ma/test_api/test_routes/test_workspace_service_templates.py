@@ -6,7 +6,7 @@ from pydantic import parse_obj_as
 from starlette import status
 
 from api.routes.workspaces import get_current_user
-from db.errors import EntityDoesNotExist, EntityVersionExist, UnableToAccessDatabase
+from db.errors import DuplicateEntity, EntityDoesNotExist, EntityVersionExist, UnableToAccessDatabase
 from models.domain.resource import ResourceType
 from models.domain.resource_template import ResourceTemplate
 from models.domain.user_resource_template import UserResourceTemplate
@@ -245,6 +245,7 @@ class TestWorkspaceServiceTemplatesNotRequiringAdminRights:
 
     @pytest.mark.parametrize("exception, expected_status", [
         (EntityDoesNotExist, status.HTTP_404_NOT_FOUND),
+        (DuplicateEntity, status.HTTP_500_INTERNAL_SERVER_ERROR),
         (UnableToAccessDatabase, status.HTTP_503_SERVICE_UNAVAILABLE)
     ])
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_user_resource_template")
