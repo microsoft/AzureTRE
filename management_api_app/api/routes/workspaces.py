@@ -127,7 +127,7 @@ async def create_user_resource(user_resource_create: UserResourceInCreate, user_
     validate_user_is_owner_or_researcher_in_workspace(user, workspace)
 
     try:
-        user_resource = user_resource_repo.create_user_resource_item(user_resource_create, workspace.id, workspace_service.id)
+        user_resource = user_resource_repo.create_user_resource_item(user_resource_create, workspace.id, workspace_service.id, user.id)
     except (ValidationError, ValueError) as e:
         logging.error(f"Failed create user resource model instance: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
