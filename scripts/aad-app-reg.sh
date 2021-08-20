@@ -361,7 +361,7 @@ swaggerSpId=$(az ad sp list --filter "appId eq '${swaggerAppId}'" --query '[0].o
 # If not, create a new service principal
 if [[ -z "$swaggerSpId" ]]; then
 	swaggerSpId=$(az ad sp create --id ${swaggerAppId} --query 'objectId' --output tsv)
-	echo "New Service Principal created with id $swaggerSpId"
+	echo "New Service Principal created with ID $swaggerSpId"
 fi
 
 # Grant admin consent on the required resources
