@@ -23,6 +23,12 @@ parameters:
     type: string
     description: "Resource group containing the shared ACR"
     env: PARENT_SERVICE_ID
+
+  # the following are added automatically by the resource processor
+  - name: id
+    type: string
+    description: "An Id for this installation"
+    env: id
   - name: tfstate_resource_group_name
     type: string
     description: "Resource group containing the Terraform state storage account"
@@ -68,7 +74,7 @@ install:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.workspace_id }}-svc-guacamole-winwin10vm"
+        key: "{{ bundle.parameters.id }}"
       outputs:
       - name: ip
       - name: hostname
@@ -95,4 +101,4 @@ uninstall:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.workspace_id }}-svc-guacamole-winwin10vm"
+        key: "{{ bundle.parameters.id }}"

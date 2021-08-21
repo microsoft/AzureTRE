@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 
 from opencensus.ext.azure.log_exporter import AzureLogHandler
 from opencensus.trace import config_integration
@@ -87,3 +88,33 @@ def get_message_id_logger(correlation_id: str) -> logging.LoggerAdapter:
     adapter.debug(f"Logger adapter now includes extra: {extra}")
 
     return adapter
+
+
+def shell_output_logger(console_output: str, prefix_item: str, logger: logging.LoggerAdapter, logging_level: int):
+    """
+    Logs the shell output (stdout/err) a line at a time with an option to remove ANSI control chars.
+    """
+    logger.log(logging_level, prefix_item)
+
+    if console_output is None:
+        return
+
+    # 7-bit C1 ANSI sequences
+    ansi_escape = re.compile(r'''
+        \x1B  # ESC
+        (?:   # 7-bit C1 Fe (except CSI)
+            [@-Z\\-_]
+        |     # or [ for CSI, followed by a control sequence
+            \[
+            [0-?]*  # Parameter bytes
+            [ -/]*  # Intermediate bytes
+            [@-~]   # Final byte
+        )
+    ''', re.VERBOSE)
+
+    for string in console_output.split('\n'):
+        if os.environ.get('DEBUG', False) is False:
+            string = ansi_escape.sub('', string)  # removes all ANSI formatting
+
+        if len(string) != 0:
+            logger.log(logging_level, string)
