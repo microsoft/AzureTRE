@@ -65,10 +65,15 @@ def create_updated_deployment_document(resource: dict, message: DeploymentStatus
     Returns:
         [dict]: Dictionary representing a resource with the deployment sub doc updated
     """
-    if resource["deployment"]["status"] == Status.Deployed:
-        return resource  # Never update a deployed workspace.
+    if resource["deployment"]["status"] in [Status.DeletingFailed, Status.Deleted]:
+        return resource  # cannot change terminal states
+    if resource["deployment"]["status"] in [Status.Failed, Status.Deployed, Status.Deleting]:
+        if message.status not in [Status.Deleted, Status.DeletingFailed]:
+            return resource  # can only transitions from deployed(deleting, failed) to deleted or failed to delete.
+
     resource["deployment"]["status"] = message.status
     resource["deployment"]["message"] = message.message
+
     return resource
 
 

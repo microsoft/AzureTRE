@@ -10,12 +10,13 @@ class Status(str, Enum):
     """
     Deployment status
     """
-    NotDeployed = strings.RESOURCE_STATUS_NOT_DEPLOYED
-    Deploying = strings.RESOURCE_STATUS_DEPLOYING
+    Failed = strings.RESOURCE_STATUS_FAILED
+    Deleted = strings.RESOURCE_STATUS_DELETED
     Deployed = strings.RESOURCE_STATUS_DEPLOYED
     Deleting = strings.RESOURCE_STATUS_DELETING
-    Deleted = strings.RESOURCE_STATUS_DELETED
-    Failed = strings.RESOURCE_STATUS_FAILED
+    Deploying = strings.RESOURCE_STATUS_DEPLOYING
+    NotDeployed = strings.RESOURCE_STATUS_NOT_DEPLOYED
+    DeletingFailed = strings.RESOURCE_STATUS_DELETING_FAILED
 
 
 class ResourceType(str, Enum):

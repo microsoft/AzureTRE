@@ -116,3 +116,72 @@ async def test_when_updating_and_state_store_exception(app, sb_client, logging_m
 
     logging_mock.assert_called_once_with(strings.STATE_STORE_ENDPOINT_NOT_RESPONDING + " ")
     sb_client().get_queue_receiver().complete_message.assert_not_called()
+
+
+@patch('service_bus.deployment_status_update.ResourceRepository')
+@patch('logging.error')
+@patch('service_bus.deployment_status_update.ServiceBusClient')
+@patch('fastapi.FastAPI')
+async def test_state_transitions_from_deployed_to_deploying_does_not_transition(app, sb_client, logging_mock, repo):
+    updated_message = test_sb_message
+    updated_message["status"] = Status.Deploying
+    service_bus_received_message_mock = ServiceBusReceivedMessageMock(updated_message)
+
+    sb_client().get_queue_receiver().receive_messages = AsyncMock(return_value=[service_bus_received_message_mock])
+    sb_client().get_queue_receiver().complete_message = AsyncMock()
+
+    expected_workspace = create_sample_workspace_object(test_sb_message["id"])
+    expected_workspace.deployment = Deployment(status=Status.Deployed, message="")
+    repo().get_resource_dict_by_id.return_value = expected_workspace.dict()
+
+    await receive_message_and_update_deployment(app)
+
+    repo().update_item_dict.assert_called_once_with(expected_workspace.dict())
+
+
+@patch('service_bus.deployment_status_update.ResourceRepository')
+@patch('logging.error')
+@patch('service_bus.deployment_status_update.ServiceBusClient')
+@patch('fastapi.FastAPI')
+async def test_state_transitions_from_deployed_to_deleted(app, sb_client, logging_mock, repo):
+    updated_message = test_sb_message
+    updated_message["status"] = Status.Deleted
+    service_bus_received_message_mock = ServiceBusReceivedMessageMock(updated_message)
+
+    sb_client().get_queue_receiver().receive_messages = AsyncMock(return_value=[service_bus_received_message_mock])
+    sb_client().get_queue_receiver().complete_message = AsyncMock()
+
+    workspace = create_sample_workspace_object(test_sb_message["id"])
+    workspace.deployment = Deployment(status=Status.Deployed, message="")
+    repo().get_resource_dict_by_id.return_value = workspace.dict()
+
+    expected_workspace = workspace
+    expected_workspace.deployment = Deployment(status=Status.Deleted, message=updated_message["message"])
+
+    await receive_message_and_update_deployment(app)
+
+    repo().update_item_dict.assert_called_once_with(expected_workspace.dict())
+
+
+@patch('service_bus.deployment_status_update.ResourceRepository')
+@patch('logging.error')
+@patch('service_bus.deployment_status_update.ServiceBusClient')
+@patch('fastapi.FastAPI')
+async def test_state_transitions_from_deployed_to_delete_failed(app, sb_client, logging_mock, repo):
+    updated_message = test_sb_message
+    updated_message["status"] = Status.DeletingFailed
+    service_bus_received_message_mock = ServiceBusReceivedMessageMock(updated_message)
+
+    sb_client().get_queue_receiver().receive_messages = AsyncMock(return_value=[service_bus_received_message_mock])
+    sb_client().get_queue_receiver().complete_message = AsyncMock()
+
+    workspace = create_sample_workspace_object(test_sb_message["id"])
+    workspace.deployment = Deployment(status=Status.Deployed, message="")
+    repo().get_resource_dict_by_id.return_value = workspace.dict()
+
+    expected_workspace = workspace
+    expected_workspace.deployment = Deployment(status=Status.DeletingFailed, message=updated_message["message"])
+
+    await receive_message_and_update_deployment(app)
+
+    repo().update_item_dict.assert_called_once_with(expected_workspace.dict())
