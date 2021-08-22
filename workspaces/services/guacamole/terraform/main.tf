@@ -22,12 +22,12 @@ data "azurerm_user_assigned_identity" "vmss_id" {
 }
 
 data "azurerm_resource_group" "ws" {
-  name = "rg-${var.tre_id}-ws-${var.workspace_id}"
+  name = "rg-${var.tre_id}-ws-${local.short_workspace_id}"
 }
 
 data "azurerm_virtual_network" "ws" {
-  name                = "vnet-${var.tre_id}-ws-${var.workspace_id}"
-  resource_group_name = "rg-${var.tre_id}-ws-${var.workspace_id}"
+  name                = "vnet-${var.tre_id}-ws-${local.short_workspace_id}"
+  resource_group_name = "rg-${var.tre_id}-ws-${local.short_workspace_id}"
 }
 
 data "azurerm_subnet" "web_apps" {

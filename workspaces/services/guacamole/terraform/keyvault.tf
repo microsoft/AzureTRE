@@ -1,6 +1,6 @@
 resource "azurerm_key_vault" "kv" {
   # One Keyvault across all Guacamole services
-  name                     = "kv-guacamole-${var.tre_id}-${var.workspace_id}"
+  name                     = "kv-guac-${var.tre_id}-${local.short_workspace_id}"
   location                 = data.azurerm_resource_group.ws.location
   resource_group_name      = data.azurerm_resource_group.ws.name
   sku_name                 = "standard"

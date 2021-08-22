@@ -27,9 +27,9 @@ parameters:
     type: string
     default: "v0.1.0"
     description: "The tag of the guacamole image"
-  - name: acr_name
+  - name: mgmt_acr_name
     type: string
-    env: acr_name
+    env: mgmt_acr_name
     description: "The devops ACR name"
   - name: mgmt_resource_group_name
     type: string
@@ -75,7 +75,7 @@ install:
         tre_id: "{{ bundle.parameters.tre_id }}"
         image_name: "{{ bundle.parameters.image_name }}"
         image_tag: "{{ bundle.parameters.image_tag }}"
-        mgmt_acr_name: "{{ bundle.parameters.acr_name }}"
+        mgmt_acr_name: "{{ bundle.parameters.mgmt_acr_name }}"
         mgmt_resource_group_name: "{{ bundle.parameters.mgmt_resource_group_name }}"
         arm_client_id: "{{ bundle.credentials.azure_client_id }}"
         arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
@@ -104,7 +104,7 @@ uninstall:
         tre_id: "{{ bundle.parameters.tre_id }}"
         image_name: "{{ bundle.parameters.image_name }}"
         image_tag: "{{ bundle.parameters.image_tag }}"
-        mgmt_acr_name: "{{ bundle.parameters.acr_name }}"
+        mgmt_acr_name: "{{ bundle.parameters.mgmt_acr_name }}"
         mgmt_resource_group_name: "{{ bundle.parameters.mgmt_resource_group_name }}"
         arm_client_id: "{{ bundle.credentials.azure_client_id }}"
         arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
