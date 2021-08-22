@@ -20,11 +20,8 @@
 package org.apache.guacamole.auth.azuretre.connection;
 
 import java.io.IOException;
-import java.net.URI;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
-
 import org.apache.guacamole.GuacamoleException;
 import org.apache.guacamole.auth.azuretre.AzureTREAuthenticationProvider;
 import org.apache.guacamole.auth.azuretre.user.AzureTREAuthenticatedUser;
@@ -36,21 +33,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ConnectionService {
-
   /**
    * Logger for this class.
    */
   private static final Logger logger = LoggerFactory.getLogger(ConnectionService.class);
 
-  public Map<String, Connection> getConnections(AzureTREAuthenticatedUser user) throws GuacamoleException {
+  public Map<String, Connection> getConnections(AzureTREAuthenticatedUser user)
+      throws GuacamoleException {
 
-    Map<String, Connection> connections = new TreeMap<String, Connection>();
+    Map<String, Connection> connections = new TreeMap<>();
     Map<String, GuacamoleConfiguration> configs = this.getConfigurations(user);
 
-    Iterator<Map.Entry<String, GuacamoleConfiguration>> iterator = configs.entrySet().iterator();
-    while (iterator.hasNext()) {
-      Map.Entry<String, GuacamoleConfiguration> config = iterator.next();
-      Connection connection = new TokenInjectingConnection(config.getKey(), config.getKey(), config.getValue(), true,user);
+    for (Map.Entry<String, GuacamoleConfiguration> config : configs.entrySet()) {
+      Connection connection = new TokenInjectingConnection(config.getKey(), config.getKey(),
+              config.getValue(), true, user);
       connection.setParentIdentifier(AzureTREAuthenticationProvider.ROOT_CONNECTION_GROUP);
       connections.putIfAbsent(config.getKey(), connection);
     }
@@ -63,13 +59,12 @@ public class ConnectionService {
   private Map<String, GuacamoleConfiguration> getConfigurations(AzureTREAuthenticatedUser user)
       throws GuacamoleException {
 
-    Map<String, GuacamoleConfiguration> configs = new TreeMap<String, GuacamoleConfiguration>();
+    Map<String, GuacamoleConfiguration> configs = new TreeMap<>();
 
     if (user != null) {
       try {
 
         JSONArray vmsJsonArray = getVMsFromProjectAPI(user);
-        //URI projectUri = new URI(System.getenv("PROJECT_URL"));
 
         for (int i = 0; i < vmsJsonArray.length(); i++) {
 
@@ -78,15 +73,7 @@ public class ConnectionService {
           config.setProtocol("RDP");
           JSONObject vmJsonObject = vmsJsonArray.getJSONObject(i);
           config.setProtocol("rdp");
-
-          // Todo: uncomment when both xxxFromProjectAPI calls are implemented
-          // https://github.com/microsoft/AzureTRE/issues/558
-          // https://github.com/microsoft/AzureTRE/issues/561
-         // config.setParameter("hostname", vmJsonObject.get("name").toString() + "." + projectUri.getHost());
-          //config.setParameter("username", user.getIdentifier().split("@")[0].toLowerCase());
-          // Todo: DELETE when the above is uncommented
-          config.setParameter("hostname", "10.2.1.7");
-          config.setParameter("username", "anatbal");
+          config.setParameter("hostname", (String) vmJsonObject.get("name"));
 
           config.setParameter("resize-method", "display-update");
           config.setParameter("azure-resource-id", vmJsonObject.get("resourceId").toString());
@@ -100,9 +87,9 @@ public class ConnectionService {
           config.setParameter("drive-path", System.getenv("GUAC_DRIVE_PATH"));
           config.setParameter("disable-download", System.getenv("GUAC_DISABLE_DOWNLOAD"));
 
-
-          logger.info("Adding VM: " + config.getParameter("hostname"));
-          configs.putIfAbsent(config.getParameter("hostname"), config);
+          String hostname = config.getParameter("hostname");
+          logger.info("Adding VM: " + hostname);
+          configs.putIfAbsent(hostname, config);
 
         }
       } catch (Exception e) {
@@ -116,7 +103,8 @@ public class ConnectionService {
 
   }
 
-  private JSONArray getVMsFromProjectAPI(AzureTREAuthenticatedUser user) throws GuacamoleException, IOException {
+  private JSONArray getVMsFromProjectAPI(AzureTREAuthenticatedUser user)
+          throws GuacamoleException, IOException {
 
     JSONArray virtualMachines;
 
@@ -171,8 +159,7 @@ public class ConnectionService {
     return virtualMachines;
 
      */
-
-    String json = "[ {\"name\": \"1.1.1.1\", \"resourceId\": \"1\"}, {\"name\": \"1.2.3.4\", \"resourceId\": \"2\"} ]";
+    String json = System.getenv("VM_LIST");
     virtualMachines = new JSONArray(json);
 
     return virtualMachines;

@@ -18,8 +18,7 @@
  */
 
 package org.apache.guacamole.auth.azuretre;
-import java.io.StringWriter;
-import java.io.PrintWriter;
+
 import com.auth0.jwk.Jwk;
 import com.auth0.jwk.UrlJwkProvider;
 import com.auth0.jwt.JWT;
@@ -95,9 +94,9 @@ public class AuthenticationProviderService {
 
 
             JWTVerifier verifier = JWT.require(algorithm)
-             .withAudience(System.getenv("AUDIENCE"))
-             .withClaimPresence("roles")
-             .withIssuer(System.getenv("ISSUER"))
+            .withAudience(System.getenv("AUDIENCE"))
+            .withClaimPresence("roles")
+            .withIssuer(System.getenv("ISSUER"))
             .build();
 
             DecodedJWT jwt = verifier.verify(accessToken);
@@ -116,12 +115,6 @@ public class AuthenticationProviderService {
             authenticatedUser.init(credentials, accessToken, username, objectId);
 
         } catch (Exception ex) {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            ex.printStackTrace(pw);
-            String sStackTrace = sw.toString(); // stack trace as a string
-            System.out.println(sStackTrace);
-            System.out.println(ex.toString());
             logger.info("Could not initialise user, possible access token verification issue: " + ex.getMessage());
             throw new GuacamoleInvalidCredentialsException(
                     "Could not initialise user, possible access token verification issue:" + ex.getMessage(),
