@@ -105,12 +105,14 @@ async def build_porter_command(msg_body, env_vars):
         logger_adapter.warning("Unknown proter parameters - explain probably failed.")
     else:
         for parameter_name in porter_parameter_keys:
-            # try to find the param in order of priorities: 
+            # try to find the param in order of priorities:
             # 1. msg parameters collection
             # 2. env_vars (e.g. terraform state ones)
             # 3. msg body root (e.g. id of the resource)
-            parameter_value = msg_body['parameters'].get(parameter_name,
-                env_vars.get(parameter_name,
+            parameter_value = msg_body['parameters'].get(
+                parameter_name,
+                env_vars.get(
+                    parameter_name,
                     msg_body.get(parameter_name)))
 
             # if still not found, might be a special case
@@ -191,7 +193,7 @@ def service_bus_message_generator(sb_message, status, deployment_message, output
         "id": sb_message["id"],
         "status": status,
         "message": f"{installation_id}: {deployment_message}"}
-    
+
     if outputs is not None:
         message_dict["outputs"] = outputs
 

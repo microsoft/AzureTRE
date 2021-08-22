@@ -95,7 +95,7 @@ def shell_output_logger(console_output: str, prefix_item: str, logger: logging.L
     Logs the shell output (stdout/err) a line at a time with an option to remove ANSI control chars.
     """
     logger.log(logging_level, prefix_item)
-    
+
     if console_output is None:
         return
 
@@ -115,6 +115,6 @@ def shell_output_logger(console_output: str, prefix_item: str, logger: logging.L
     for string in console_output.split('\n'):
         if os.environ.get('DEBUG', False) is False:
             string = ansi_escape.sub('', string)  # removes all ANSI formatting
-        
+
         if len(string) != 0:
-            logger.log(logging_level, string)        
+            logger.log(logging_level, string)
