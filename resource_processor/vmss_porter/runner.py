@@ -5,7 +5,7 @@ import socket
 import asyncio
 import logging
 
-from shared.logging import disable_unwanted_loggers, initialize_logging, get_message_id_logger  # pylint: disable=import-error # noqa
+from shared.logging import disable_unwanted_loggers, initialize_logging, get_message_id_logger, shell_output_logger  # pylint: disable=import-error # noqa
 from resources import strings  # pylint: disable=import-error # noqa
 from contextlib import asynccontextmanager
 from azure.servicebus import ServiceBusMessage
@@ -89,9 +89,7 @@ async def get_porter_parameter_keys(msg_body, env_vars):
         return porter_parameter_keys
     if stderr:
         result_stderr = stderr.decode()
-        logger_adapter.info('[stderr]')
-        for string in result_stderr.split('\n'):
-            logger_adapter.info(str(string))
+        shell_output_logger(result_stderr, '[stderr]', logger_adapter, logging.WARN)
 
 
 def get_installation_id(msg_body):
@@ -103,28 +101,26 @@ async def build_porter_command(msg_body, env_vars):
     porter_parameter_keys = await get_porter_parameter_keys(msg_body, env_vars)
     porter_parameters = ""
 
-    for parameter_name in porter_parameter_keys:
-        # first try to find the param in the msg body parameters collection
-        parameter_value = msg_body['parameters'].get(parameter_name)
+    if porter_parameter_keys is None:
+        logger_adapter.warning("Unknown proter parameters - explain probably failed.")
+    else:
+        for parameter_name in porter_parameter_keys:
+            # try to find the param in order of priorities: 
+            # 1. msg parameters collection
+            # 2. env_vars (e.g. terraform state ones)
+            # 3. msg body root (e.g. id of the resource)
+            parameter_value = msg_body['parameters'].get(parameter_name,
+                env_vars.get(parameter_name,
+                    msg_body.get(parameter_name)))
 
-        # if not found, try to get it from the env_vars (e.g. terraform state ones)
-        if parameter_value is None:
-            parameter_value = env_vars.get(parameter_name)
+            # if still not found, might be a special case
+            # (we give a chance to the method above to allow override of the special handeling done below)
+            if parameter_value is None:
+                parameter_value = get_special_porter_param_value(parameter_name, msg_body, env_vars)
 
-        # if not found, try to get it from the msg body root (e.g. id of the resource)
-        if parameter_value is None:
-            parameter_value = msg_body.get(parameter_name)
-
-        # if still not found, might be a special case
-        if parameter_value is None:
-            if parameter_name == "mgmt_acr_name":
-                parameter_value = env_vars['registry_server'].replace('.azurecr.io', '')
-            elif parameter_name == "mgmt_resource_group_name":
-                parameter_value = env_vars['tfstate_resource_group_name']
-
-        # only append if we have a value, porter will complain anyway about missing parameters
-        if parameter_value is not None:
-            porter_parameters = porter_parameters + f" --param {parameter_name}=\"{parameter_value}\""
+            # only append if we have a value, porter will complain anyway about missing parameters
+            if parameter_value is not None:
+                porter_parameters = porter_parameters + f" --param {parameter_name}=\"{parameter_value}\""
 
     installation_id = get_installation_id(msg_body)
 
@@ -134,6 +130,18 @@ async def build_porter_command(msg_body, env_vars):
                     f" {porter_parameters} --cred ./vmss_porter/azure.json --allow-docker-host-access"
                     f" && porter show {installation_id}"]
     return command_line
+
+
+def get_special_porter_param_value(parameter_name: str, msg_body, env_vars):
+    # some parameters might not have identical names and this comes to handle that
+    if parameter_name == "mgmt_acr_name":
+        return env_vars['registry_server'].replace('.azurecr.io', '')
+    if parameter_name == "mgmt_resource_group_name":
+        return env_vars['tfstate_resource_group_name']
+    if parameter_name == "workspace_id":
+        return msg_body.get("workspaceId")  # not included in all messgaes
+    if parameter_name == "parent_service_id":
+        return msg_body.get("parentWorkspaceServiceId")  # not included in all messgaes
 
 
 async def build_porter_command_for_outputs(msg_body):
@@ -168,28 +176,26 @@ async def run_porter(command, env_vars):
     result_stderr = None
     if stdout:
         result_stdout = stdout.decode()
-        logger_adapter.info('[stdout]')
-        for string in result_stdout.split('\n'):
-            if len(string) != 0:
-                logger_adapter.info(str(string))
+        shell_output_logger(result_stderr, '[stdout]', logger_adapter, logging.INFO)
+
     if stderr:
         result_stderr = stderr.decode()
-        logger_adapter.info('[stderr]')
-        for string in result_stderr.split('\n'):
-            if len(string) != 0:
-                logger_adapter.info(str(string))
+        shell_output_logger(result_stderr, '[stderr]', logger_adapter, logging.WARN)
 
     return (proc.returncode, result_stdout, result_stderr)
 
 
 def service_bus_message_generator(sb_message, status, deployment_message, outputs=None):
     installation_id = get_installation_id(sb_message)
-    resource_request_message = json.dumps({
+    message_dict = {
         "id": sb_message["id"],
         "status": status,
-        "message": f"{installation_id}: {deployment_message}",
-        "outputs": outputs
-    })
+        "message": f"{installation_id}: {deployment_message}"}
+    
+    if outputs is not None:
+        message_dict["outputs"] = outputs
+
+    resource_request_message = json.dumps(message_dict)
     return resource_request_message
 
 
