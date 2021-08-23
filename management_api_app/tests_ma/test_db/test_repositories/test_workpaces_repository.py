@@ -62,7 +62,7 @@ def workspace():
 
 def test_get_active_workspaces_queries_db(workspace_repo):
     workspace_repo.container.query_items = MagicMock()
-    expected_query = 'SELECT * FROM c WHERE c.resourceType = "workspace" AND c.deleted = false'
+    expected_query = workspace_repo.active_workspaces_query_string()
 
     workspace_repo.get_active_workspaces()
 
@@ -90,7 +90,7 @@ def test_get_workspace_by_id_raises_entity_does_not_exist_if_item_does_not_exist
 
 def test_get_workspace_by_id_queries_db(workspace_repo, workspace):
     workspace_repo.container.query_items = MagicMock(return_value=[workspace.dict()])
-    expected_query = 'SELECT * FROM c WHERE c.deleted = false AND c.resourceType = "workspace" AND c.id = "000000d3-82da-4bfc-b6e9-9a7853ef753e"'
+    expected_query = workspace_repo._active_resources_by_type_and_id_query(workspace.id, workspace.resourceType)
 
     workspace_repo.get_workspace_by_workspace_id(workspace.id)
 

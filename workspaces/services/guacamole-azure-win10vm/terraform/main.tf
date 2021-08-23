@@ -18,11 +18,11 @@ provider "azurerm" {
 data "azurerm_client_config" "current" {}
 
 data "azurerm_resource_group" "ws" {
-  name = "rg-${var.tre_id}-ws-${var.workspace_id}"
+  name = "rg-${var.tre_id}-ws-${local.short_workspace_id}"
 }
 
 data "azurerm_virtual_network" "ws" {
-  name                = "vnet-${var.tre_id}-ws-${var.workspace_id}"
+  name                = "vnet-${var.tre_id}-ws-${local.short_workspace_id}"
   resource_group_name = data.azurerm_resource_group.ws.name
 }
 
@@ -38,7 +38,7 @@ data "azurerm_subnet" "services" {
 }
 
 data "azurerm_key_vault" "kv" {
-  name                = "kv-guacamole-${var.tre_id}-${var.workspace_id}"
+  name                = "kv-guac-${var.tre_id}-${local.short_workspace_id}"
   resource_group_name = data.azurerm_resource_group.ws.name
 }
 

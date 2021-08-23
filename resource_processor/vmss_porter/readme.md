@@ -28,17 +28,19 @@ If you use visual studio code you can set up your launch.json to include the fol
         "AZURE_CLIENT_SECRET": "",
         "AZURE_TENANT_ID": "",
         "REGISTRY_SERVER": "",
-        "ARM_SUBSCRIPTION_ID": "",
         "TERRAFORM_STATE_CONTAINER_NAME": "",
         "MGMT_RESOURCE_GROUP_NAME": "",
         "MGMT_STORAGE_ACCOUNT_NAME": "",
-        "SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE": "deploy",
-        "SERVICE_BUS_RESOURCE_REQUEST_QUEUE": "",
+        "SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE": "deploymentstatus",
+        "SERVICE_BUS_RESOURCE_REQUEST_QUEUE": "workspacequeue",
         "SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE": "",
         "ARM_CLIENT_ID": "",
         "ARM_CLIENT_SECRET": "",
-        "ARM_TENANT_ID": ""
+        "ARM_TENANT_ID": "",
+        "ARM_SUBSCRIPTION_ID": "",
+        "ARM_USE_MSI": "false"
       }
+}
 ```
 
 When working locally we use a service principal (SP). This SP needs enough permissions to be able to talk to service bus and to deploy resources into the subscription. That means the service principal needs Owner access to subscription(ARM_SUBSCRIPTION_ID) and also needs **Azure Service Bus Data Sender** and **Azure Service Bus Data Receiver** on the service bus namespace defined above(SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE).

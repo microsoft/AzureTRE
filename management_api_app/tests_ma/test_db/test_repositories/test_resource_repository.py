@@ -31,14 +31,13 @@ def test_delete_workspace_marks_workspace_as_deleted(resource_repo):
         resourceTemplateVersion="0.1.0",
         resourceTemplateParameters={},
         deployment=Deployment(status=Status.NotDeployed, message=""),
-        deleted=False
     )
     resource_repo.mark_resource_as_deleted(workspace)
-    workspace.deleted = True
+    workspace.deployment.status = Status.Deleted
     resource_repo.update_item.assert_called_once_with(workspace)
 
 
-def test_mark_resource_as_not_deleted_marks_workspace_as_not_deleted(resource_repo):
+def test_restore_deletion_status(resource_repo):
     resource_repo.update_item = MagicMock(return_value=None)
 
     workspace = Workspace(
@@ -46,11 +45,9 @@ def test_mark_resource_as_not_deleted_marks_workspace_as_not_deleted(resource_re
         resourceTemplateName="vanilla-tre",
         resourceTemplateVersion="0.1.0",
         resourceTemplateParameters={},
-        deployment=Deployment(status=Status.NotDeployed, message=""),
-        deleted=True
+        deployment=Deployment(status=Status.Deleting, message=""),
     )
-    resource_repo.mark_resource_as_not_deleted(workspace)
-    workspace.deleted = False
+    resource_repo.restore_previous_deletion_state(workspace, Status.Deployed)
     resource_repo.update_item.assert_called_once_with(workspace)
 
 

@@ -20,7 +20,6 @@ def get_sample_workspace_service(workspace_id: str, workspace_service_id: str) -
             "status": "not_deployed",
             "message": "This resource is not yet deployed"
         },
-        "deleted": False,
         "resourceType": ResourceType.WorkspaceService
     }
 

@@ -85,7 +85,7 @@ async def delete_workspace(workspace=Depends(get_workspace_by_workspace_id_from_
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_SERVICES_NEED_TO_BE_DELETED_BEFORE_WORKSPACE)
 
     try:
-        workspace_repo.mark_resource_as_deleted(workspace)
+        previous_deletion_status = workspace_repo.mark_resource_as_deleted(workspace)
     except Exception as e:
         logging.error(f"Failed to delete workspace instance in DB: {e}")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
@@ -93,7 +93,7 @@ async def delete_workspace(workspace=Depends(get_workspace_by_workspace_id_from_
     try:
         await send_resource_request_message(workspace, RequestAction.UnInstall)
     except Exception as e:
-        workspace_repo.mark_resource_as_not_deleted(workspace)
+        workspace_repo.restore_previous_deletion_state(workspace, previous_deletion_status)
         logging.error(f"Failed send workspace resource delete message: {e}")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
 
@@ -127,7 +127,7 @@ async def create_user_resource(user_resource_create: UserResourceInCreate, user_
     validate_user_is_owner_or_researcher_in_workspace(user, workspace)
 
     try:
-        user_resource = user_resource_repo.create_user_resource_item(user_resource_create, workspace.id, workspace_service.id)
+        user_resource = user_resource_repo.create_user_resource_item(user_resource_create, workspace.id, workspace_service.id, user.id)
     except (ValidationError, ValueError) as e:
         logging.error(f"Failed create user resource model instance: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

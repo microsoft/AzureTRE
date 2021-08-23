@@ -41,7 +41,6 @@ class Resource(AzureTREModel):
     resourceTemplateVersion: str = Field(title="Resource template version", description="The version of the resource template (bundle) to deploy")
     resourceTemplateParameters: dict = Field({}, title="Resource template parameters", description="Parameters for the deployment")
     deployment: Deployment = Field(Deployment(status=Status.NotDeployed, message=""), title="Deployment", description="Fields related to deployment of this resource")
-    deleted: bool = Field(False, title="Is deleted", description="Marks the resource request as deleted (NOTE: this is not the deployment status)")
     resourceType: ResourceType
 
     def is_enabled(self) -> bool:
