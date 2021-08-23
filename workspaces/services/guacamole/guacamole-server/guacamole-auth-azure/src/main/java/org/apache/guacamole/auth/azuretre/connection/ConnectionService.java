@@ -92,15 +92,13 @@ public class ConnectionService {
           config.setParameter("azure-resource-id", vmJsonObject.get("resourceId").toString());
           config.setParameter("port", "3389");
           config.setParameter("ignore-cert", "true");
-
-          // Todo: replace hard coded values with config values
-          // https://github.com/microsoft/AzureTRE/issues/576
-          config.setParameter("disable-copy", "true");
-          config.setParameter("disable-paste", "false");
-          config.setParameter("enable-drive", "true");
-          config.setParameter("drive-name", "transfer");
-          config.setParameter("drive-path", "/guac-transfer");
-          config.setParameter("disable-download", "true");
+          
+          config.setParameter("disable-copy", System.getenv("GUAC_DISABLE_COPY"));
+          config.setParameter("disable-paste", System.getenv("GUAC_DISABLE_PASTE"));
+          config.setParameter("enable-drive", System.getenv("GUAC_ENABLE_DRIVE"));
+          config.setParameter("drive-name", System.getenv("GUAC_DRIVE_NAME"));
+          config.setParameter("drive-path", System.getenv("GUAC_DRIVE_PATH"));
+          config.setParameter("disable-download", System.getenv("GUAC_DISABLE_DOWNLOAD"));
 
 
           logger.info("Adding VM: " + config.getParameter("hostname"));
