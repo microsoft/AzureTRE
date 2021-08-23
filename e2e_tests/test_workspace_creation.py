@@ -12,6 +12,10 @@ from resources import strings
 pytestmark = pytest.mark.asyncio
 
 
+class InstallFailedException(Exception):
+    pass
+
+
 workspace_templates = [
     (strings.VANILLA_WORKSPACE),
     (strings.DEV_TEST_LABS),
@@ -31,13 +35,45 @@ async def get_template(template_name, token, verify):
         yield response
 
 
-async def deployment_done(client, workspaceid, headers) -> bool:
+async def install_done(client, workspaceid, headers):
+    install_terminal_states = [strings.RESOURCE_STATUS_DEPLOYED, strings.RESOURCE_STATUS_FAILED]
+    status, message = await check_deployment(client, workspaceid, headers)
+    return (True, status, message) if status in install_terminal_states else (False, status, message)
+
+
+async def delete_done(client, workspaceid, headers):
+    delete_terminal_states = [strings.RESOURCE_STATUS_DELETED, strings.RESOURCE_STATUS_DELETING_FAILED]
+    status, message = await check_deployment(client, workspaceid, headers)
+    print(status, message)
+    return (True, status, message) if status in delete_terminal_states else (False, status, message)
+
+
+async def check_deployment(client, workspaceid, headers) -> bool:
     response = await client.get(
         f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACES}/{workspaceid}",
         headers=headers)
-    status = response.json()["workspace"]["deployment"]["status"]
-    message = response.json()["workspace"]["deployment"]["message"]
-    return (True, status, message) if status in [strings.RESOURCE_STATUS_DEPLOYED, strings.RESOURCE_STATUS_FAILED] else (False, status, message)
+    print(response)
+    if response.status_code == 200:
+        status = response.json()["workspace"]["deployment"]["status"]
+        message = response.json()["workspace"]["deployment"]["message"]
+        return (status, message)
+    elif response.status_code == 404:
+        # Seems like the resource got delted
+        return (strings.RESOURCE_STATUS_DELETED, "Workspace was deleted")
+
+
+async def wait_for(func, client, workspaceid, headers, failure_state):
+    done, done_state, message = await func(client, workspaceid, headers)
+    while not done:
+        print(f'Done = {done}')
+        await asyncio.sleep(60)
+        done, done_state, message = await func(client, workspaceid, headers)
+    try:
+        assert done_state != failure_state
+    except Exception as e:
+        print(f"Failed to deploy status message: {message}")
+        print(e)
+        raise
 
 
 async def post_workspace_template(payload, token, verify):
@@ -55,20 +91,61 @@ async def post_workspace_template(payload, token, verify):
         with open('workspace_id.txt', 'w') as f:
             f.write(workspaceid)
 
-        done, done_state, message = await deployment_done(client, workspaceid, headers)
-        while not done:
-            await asyncio.sleep(60)
-            done, done_state, message = await deployment_done(client, workspaceid, headers)
         try:
-            assert done_state != strings.RESOURCE_STATUS_FAILED
-        except AssertionError as e:
-            print(f"Failed deployment status message: {message}")
-            print(e)
-            raise AssertionError
+            await wait_for(install_done, client, workspaceid, headers, strings.RESOURCE_STATUS_FAILED)
+            return workspaceid, True
+        except Exception:
+            return workspaceid, False
+
+
+async def disable_workspace(token, verify) -> None:
+    print('Disabling...')
+    async with AsyncClient(verify=verify) as client:
+        headers = {'Authorization': f'Bearer {token}'}
+
+        with open('workspace_id.txt', 'r') as f:
+            workspaceid = f.readline()
+
+        payload = {"enabled": "false"}
+
+        response = await client.patch(
+            f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACES}/{workspaceid}",
+            headers=headers, json=payload)
+
+        enabled = response.json()["workspace"]["resourceTemplateParameters"]["enabled"]
+        assert (enabled is False), "The workspace wasn't disabled"
+
+
+async def delete_workspace(token, verify) -> None:
+    print('Deleting...')
+    async with AsyncClient(verify=verify) as client:
+        headers = {'Authorization': f'Bearer {token}'}
+
+        with open('workspace_id.txt', 'r') as f:
+            workspaceid = f.readline()
+
+        response = await client.delete(
+            f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACES}/{workspaceid}",
+            headers=headers)
+
+        assert (response.status_code == status.HTTP_200_OK), "The workspace couldn't be deleted"
+
+
+async def disable_and_delete_workspace(workspaceid, install_status, token, verify):
+    async with AsyncClient(verify=verify) as client:
+        headers = {'Authorization': f'Bearer {token}'}
 
         await disable_workspace(token, verify)
 
         await delete_workspace(token, verify)
+
+        try:
+            await wait_for(delete_done, client, workspaceid, headers, strings.RESOURCE_STATUS_DELETING_FAILED)
+        except Exception:
+            raise
+        finally:
+            if not install_status:
+                raise InstallFailedException("Install was not done successfully")
 
 
 @pytest.mark.smoke
@@ -93,7 +170,7 @@ async def test_getting_templates(template_name, token, verify) -> None:
 
 
 @pytest.mark.smoke
-@pytest.mark.timeout(1200)
+@pytest.mark.timeout(1500)
 async def test_create_vanilla_workspace(token, verify) -> None:
     payload = {
         "workspaceType": "tre-workspace-vanilla",
@@ -104,38 +181,8 @@ async def test_create_vanilla_workspace(token, verify) -> None:
             "address_space": "192.168.25.0/24"  # Reserving this for E2E tests.
         }
     }
-    await post_workspace_template(payload, token, verify)
-
-
-async def disable_workspace(token, verify) -> None:
-    async with AsyncClient(verify=verify) as client:
-        headers = {'Authorization': f'Bearer {token}'}
-
-        with open('workspace_id.txt', 'r') as f:
-            workspaceid = f.readline()
-
-        payload = {"enabled": "false"}
-
-        response = await client.patch(
-            f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACES}/{workspaceid}",
-            headers=headers, json=payload)
-
-        enabled = response.json()["workspace"]["resourceTemplateParameters"]["enabled"]
-        assert (enabled is False), "The workspace wasn't disabled"
-
-
-async def delete_workspace(token, verify) -> None:
-    async with AsyncClient(verify=verify) as client:
-        headers = {'Authorization': f'Bearer {token}'}
-
-        with open('workspace_id.txt', 'r') as f:
-            workspaceid = f.readline()
-
-        response = await client.delete(
-            f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACES}/{workspaceid}",
-            headers=headers)
-
-        assert (response.status_code == status.HTTP_200_OK), "The workspace couldn't be deleted"
+    workspaceid, install_status = await post_workspace_template(payload, token, verify)
+    await disable_and_delete_workspace(workspaceid, install_status, token, verify)
 
 
 @pytest.mark.extended
