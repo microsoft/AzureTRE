@@ -24,27 +24,27 @@
 
 ```text
 ├── .github
-│   ├── ISSUE_TEMPLATE  - Templates for GitHub issues
-│   ├── linters         - Linter definitions for workflows
-│   └── workflows       - GitHub Actions workflows (CI/CD)
+│   ├── ISSUE_TEMPLATE     - Templates for GitHub issues
+│   ├── linters            - Linter definitions for workflows
+│   └── workflows          - GitHub Actions workflows (CI/CD)
 │
 ├── devops
-│   ├── scripts         - DevOps scripts
-│   └── terraform       - Terraform specific DevOps files/scripts for bootstrapping
+│   ├── scripts            - DevOps scripts
+│   └── terraform          - Terraform specific DevOps files/scripts for bootstrapping
 │
-├── docs                - Documentation
+├── docs                   - Documentation
 │
-├── e2e_tests           - pytest-based end-to-end tests
+├── e2e_tests              - pytest-based end-to-end tests
 │
-├── management_api_app  - Management API source code and docs
+├── management_api_app     - Management API source code and docs
 │
-├── resource_processor  - VMSS Porter Runner
+├── resource_processor     - VMSS Porter Runner
 │
-├── scripts             - Utility scripts
+├── scripts                - Utility scripts
 │
-├── templates
-│   ├── core/terraform  - Terraform definitions of Azure TRE core resources
-│   └── services...     - Terraform definitions for default workspace resources
-│
-└── workspaces          - Workspace templates
+└── templates
+    ├── core/terraform     - Terraform definitions of Azure TRE core resources
+    ├── shared_services    - Terraform definitions of shared services
+    ├── workspace_services - Workspace services
+    └── workspaces         - Workspace templates
 ```

@@ -6,7 +6,7 @@ API_WORKSPACE_TEMPLATES = "/api/workspace-templates"
 API_WORKSPACES = "/api/workspaces"
 API_WORKSPACE_SERVICE_TEMPLATES = "/api/workspace-service-templates"
 
-VANILLA_WORKSPACE = "tre-workspace-vanilla"
+BASE_WORKSPACE = "tre-workspace-base"
 DEV_TEST_LABS = "tre-workspace-azureml-devtestlabs"
 INNEREYE_DEEPLEARNING = "tre-workspace-innereye-deeplearning"
 INNEREYE_DEEPLEARNING_INFERENCE = "tre-workspace-innereye-deeplearning-inference"

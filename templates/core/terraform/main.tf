@@ -105,6 +105,7 @@ module "api-webapp" {
   aad_tenant_id                              = var.aad_tenant_id
   api_client_id                              = var.api_client_id
   api_client_secret                          = var.api_client_secret
+  acr_id                                     = data.azurerm_container_registry.mgmt_acr.id
 }
 
 module "identity" {
@@ -113,6 +114,7 @@ module "identity" {
   location             = var.location
   resource_group_name  = azurerm_resource_group.core.name
   servicebus_namespace = module.servicebus.servicebus_namespace
+  cosmos_id            = module.state-store.id
 }
 
 module "resource_processor_vmss_porter" {

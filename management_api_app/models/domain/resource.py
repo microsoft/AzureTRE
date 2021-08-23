@@ -57,3 +57,8 @@ class Resource(AzureTREModel):
             "version": self.resourceTemplateVersion,
             "parameters": self.resourceTemplateParameters
         }
+
+
+class Output(AzureTREModel):
+    Name: str = Field(title="", description="")
+    Value: str = Field(title="", description="")

@@ -29,8 +29,8 @@ class ResourceTemplateInformationInList(BaseModel):
             "example": {
                 "templates": [
                     {
-                        "name": "tre-workspace-vanilla",
-                        "description": "vanilla description"
+                        "name": "tre-workspace-base",
+                        "description": "base description"
                     },
                     {
                         "name": "tre-workspace-base",

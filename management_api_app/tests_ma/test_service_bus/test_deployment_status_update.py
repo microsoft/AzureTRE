@@ -25,6 +25,16 @@ test_sb_message = {
     "message": "test message"
 }
 
+test_sb_message_with_outputs = {
+    "id": "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76",
+    "status": Status.Deployed,
+    "message": "test message",
+    "outputs": [
+        {"Name": "name1", "Value": "value1", "Type": "type1"},
+        {"Name": "name2", "Value": "\"value2\"", "Type": "type2"}
+    ]
+}
+
 
 class ServiceBusReceivedMessageMock:
     def __init__(self, message: dict):
@@ -38,7 +48,7 @@ class ServiceBusReceivedMessageMock:
 def create_sample_workspace_object(workspace_id):
     return Workspace(
         id=workspace_id,
-        resourceTemplateName="tre-workspace-vanilla",
+        resourceTemplateName="tre-workspace-base",
         resourceTemplateVersion="0.1.0",
         resourceTemplateParameters={},
         deployment=Deployment(status=Status.NotDeployed, message="")
@@ -185,3 +195,54 @@ async def test_state_transitions_from_deployed_to_delete_failed(app, sb_client, 
     await receive_message_and_update_deployment(app)
 
     repo().update_item_dict.assert_called_once_with(expected_workspace.dict())
+
+
+@patch('service_bus.deployment_status_update.ResourceRepository')
+@patch('logging.error')
+@patch('service_bus.deployment_status_update.ServiceBusClient')
+@patch('fastapi.FastAPI')
+async def test_outputs_are_added_to_resource_item(app, sb_client, logging_mock, repo):
+    received_message = test_sb_message_with_outputs
+    received_message["status"] = Status.Deployed
+    service_bus_received_message_mock = ServiceBusReceivedMessageMock(received_message)
+
+    sb_client().get_queue_receiver().receive_messages = AsyncMock(return_value=[service_bus_received_message_mock])
+    sb_client().get_queue_receiver().complete_message = AsyncMock()
+
+    resource = create_sample_workspace_object(received_message["id"])
+    resource.resourceTemplateParameters = {"exitingName": "exitingValue"}
+    repo().get_resource_dict_by_id.return_value = resource.dict()
+
+    new_params = {"name1": "value1", "name2": "value2"}
+
+    expected_resource = resource
+    expected_resource.resourceTemplateParameters = {**resource.resourceTemplateParameters, **new_params}
+    expected_resource.deployment = Deployment(status=Status.Deployed, message=received_message["message"])
+
+    await receive_message_and_update_deployment(app)
+
+    repo().update_item_dict.assert_called_once_with(expected_resource.dict())
+
+
+@patch('service_bus.deployment_status_update.ResourceRepository')
+@patch('logging.error')
+@patch('service_bus.deployment_status_update.ServiceBusClient')
+@patch('fastapi.FastAPI')
+async def test_resourceTemplateParameters_dont_change_with_no_outputs(app, sb_client, logging_mock, repo):
+    received_message = test_sb_message
+    received_message["status"] = Status.Deployed
+    service_bus_received_message_mock = ServiceBusReceivedMessageMock(received_message)
+
+    sb_client().get_queue_receiver().receive_messages = AsyncMock(return_value=[service_bus_received_message_mock])
+    sb_client().get_queue_receiver().complete_message = AsyncMock()
+
+    resource = create_sample_workspace_object(received_message["id"])
+    resource.resourceTemplateParameters = {"exitingName": "exitingValue"}
+    repo().get_resource_dict_by_id.return_value = resource.dict()
+
+    expected_resource = resource
+    expected_resource.deployment = Deployment(status=Status.Deployed, message=received_message["message"])
+
+    await receive_message_and_update_deployment(app)
+
+    repo().update_item_dict.assert_called_once_with(expected_resource.dict())

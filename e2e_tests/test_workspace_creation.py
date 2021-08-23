@@ -17,7 +17,7 @@ class InstallFailedException(Exception):
 
 
 workspace_templates = [
-    (strings.VANILLA_WORKSPACE),
+    (strings.BASE_WORKSPACE),
     (strings.DEV_TEST_LABS),
     (strings.INNEREYE_DEEPLEARNING),
     (strings.INNEREYE_DEEPLEARNING_INFERENCE)
@@ -170,10 +170,10 @@ async def test_getting_templates(template_name, token, verify) -> None:
 
 
 @pytest.mark.smoke
-@pytest.mark.timeout(1500)
-async def test_create_vanilla_workspace(token, verify) -> None:
+@pytest.mark.timeout(1200)
+async def test_create_base_workspace(token, verify) -> None:
     payload = {
-        "workspaceType": "tre-workspace-vanilla",
+        "workspaceType": "tre-workspace-base",
         "properties": {
             "display_name": "E2E test",
             "description": "workspace for E2E",
