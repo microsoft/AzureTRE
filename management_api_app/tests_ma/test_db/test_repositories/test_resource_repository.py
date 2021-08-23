@@ -32,8 +32,8 @@ def test_delete_workspace_marks_workspace_as_deleted(resource_repo):
         resourceTemplateParameters={},
         deployment=Deployment(status=Status.NotDeployed, message=""),
     )
-    resource_repo.mark_resource_as_deleted(workspace)
-    workspace.deployment.status = Status.Deleted
+    resource_repo.mark_resource_as_deleting(workspace)
+    workspace.deployment.status = Status.Deleting
     resource_repo.update_item.assert_called_once_with(workspace)
 
 

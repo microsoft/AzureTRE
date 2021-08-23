@@ -5,6 +5,7 @@ RESOURCE_STATUS_DEPLOYED = "deployed"
 RESOURCE_STATUS_DELETING = "deleting"
 RESOURCE_STATUS_DELETED = "deleted"
 RESOURCE_STATUS_FAILED = "failed"
+RESOURCE_STATUS_DELETING_FAILED = "deleting_failed"
 
 # General info messages
 MESSAGE_PROCESSED = "Message processed"

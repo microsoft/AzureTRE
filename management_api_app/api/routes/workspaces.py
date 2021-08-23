@@ -85,7 +85,7 @@ async def delete_workspace(workspace=Depends(get_workspace_by_workspace_id_from_
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_SERVICES_NEED_TO_BE_DELETED_BEFORE_WORKSPACE)
 
     try:
-        previous_deletion_status = workspace_repo.mark_resource_as_deleted(workspace)
+        previous_deletion_status = workspace_repo.mark_resource_as_deleting(workspace)
     except Exception as e:
         logging.error(f"Failed to delete workspace instance in DB: {e}")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
