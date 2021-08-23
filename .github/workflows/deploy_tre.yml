@@ -139,7 +139,7 @@ jobs:
           timezone: Europe/Zurich
 
   publish_bundles:
-    name: Publish Vanilla Bundle
+    name: Publish Base Bundle
     needs: deploy_mgmt_infra
     runs-on: ubuntu-latest
     environment: Dev
@@ -160,7 +160,7 @@ jobs:
 
           export USE_ENV_VARS_NOT_FILES=true
 
-          make porter-publish DIR=./workspaces/vanilla
+          make porter-publish DIR=./templates/templates/workspaces/base
 
   e2e_tests:
     name: "Run E2E Tests"
@@ -287,10 +287,10 @@ jobs:
 
           export USE_ENV_VARS_NOT_FILES=true
 
-          make porter-publish DIR=./workspaces/services/azureml
-          make porter-publish DIR=./workspaces/services/devtestlabs
-          make porter-publish DIR=./workspaces/services/innereye_deeplearning
-          make porter-publish DIR=./workspaces/services/innereye_inference
+          make porter-publish DIR=./templates/workspace_services/azureml
+          make porter-publish DIR=./templates/workspace_services/devtestlabs
+          make porter-publish DIR=./templates/workspace_services/innereye_deeplearning
+          make porter-publish DIR=./templates/workspace_services/innereye_inference
   # deploy_azureml_devtestlabs_workspace:
   #   name: Deploy Azure ML and DevTest Labs Workspace
   #   needs: [publish_innereye_bundles]
@@ -324,8 +324,8 @@ jobs:
   #         export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
   #         curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
   #         export PATH=~/.porter/:$PATH
-  #         make porter-publish DIR=./workspaces/azureml_devtestlabs
-  #         make porter-install DIR=./workspaces/azureml_devtestlabs
+  #         make porter-publish DIR=./templates/workspaces/azureml_devtestlabs
+  #         make porter-install DIR=./templates/workspaces/azureml_devtestlabs
   # deploy_innereye_deeplearning_workspace:
   #   name: Deploy InnerEye Deep Learning Workspace
   #   needs: [deploy_azureml_devtestlabs_workspace]
@@ -359,8 +359,8 @@ jobs:
   #         export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
   #         curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
   #         export PATH=~/.porter/:$PATH
-  #         make porter-publish DIR=./workspaces/innereye_deeplearning
-  #         make porter-install DIR=./workspaces/innereye_deeplearning
+  #         make porter-publish DIR=./templates/workspaces/innereye_deeplearning
+  #         make porter-install DIR=./templates/workspaces/innereye_deeplearning
   # deploy_innereye_deeplearning_inference_workspace:
   #   name: Deploy InnerEye Deep Learning & Inference Workspace
   #   needs: [deploy_innereye_deeplearning_workspace]
@@ -396,5 +396,5 @@ jobs:
   #         export INFERENCE_SP_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
   #         curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
   #         export PATH=~/.porter/:$PATH
-  #         make porter-publish DIR=./workspaces/innereye_deeplearning_inference
-  #         make porter-install DIR=./workspaces/innereye_deeplearning_inference
+  #         make porter-publish DIR=./templates/workspaces/innereye_deeplearning_inference
+  #         make porter-install DIR=./templates/workspaces/innereye_deeplearning_inference

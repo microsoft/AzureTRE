@@ -3,11 +3,11 @@ from models.domain.resource_template import ResourceTemplate, Property
 from models.schemas.resource_template import ResourceTemplateInCreate, ResourceTemplateInResponse
 
 
-def get_sample_workspace_template_object(template_name: str = "tre-workspace-vanilla") -> ResourceTemplate:
+def get_sample_workspace_template_object(template_name: str = "tre-workspace-base") -> ResourceTemplate:
     return ResourceTemplate(
         id="a7a7a7bd-7f4e-4a4e-b970-dc86a6b31dfb",
         name=template_name,
-        description="vanilla workspace bundle",
+        description="base workspace bundle",
         version="0.1.0",
         resourceType=ResourceType.Workspace,
         current=True,

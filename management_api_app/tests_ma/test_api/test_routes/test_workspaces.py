@@ -23,7 +23,7 @@ pytestmark = pytest.mark.asyncio
 def sample_workspace(workspace_id, auth_info: dict = None):
     workspace = Workspace(
         id=workspace_id,
-        resourceTemplateName="tre-workspace-vanilla",
+        resourceTemplateName="tre-workspace-base",
         resourceTemplateVersion="0.1.0",
         resourceTemplateParameters={},
         deployment=Deployment(status=Status.NotDeployed, message=""),
@@ -37,7 +37,7 @@ def sample_workspace_service(workspace_service_id, workspace_id):
     return WorkspaceService(
         id=workspace_service_id,
         workspaceId=workspace_id,
-        resourceTemplateName="tre-workspace-vanilla",
+        resourceTemplateName="tre-workspace-base",
         resourceTemplateVersion="0.1.0",
         resourceTemplateParameters={},
         deployment=Deployment(status=Status.NotDeployed, message=""),

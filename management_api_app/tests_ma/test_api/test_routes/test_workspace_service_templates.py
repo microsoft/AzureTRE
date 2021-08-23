@@ -20,11 +20,11 @@ pytestmark = pytest.mark.asyncio
 
 @pytest.fixture
 def workspace_service_template_without_enriching():
-    def create_workspace_service_template(template_name: str = "vanilla-service-template"):
+    def create_workspace_service_template(template_name: str = "base-service-template"):
         return ResourceTemplate(
             id="a7a7a7bd-7f4e-4a4e-b970-dc86a6b31dfb",
             name=template_name,
-            description="vanilla service bundle",
+            description="base service bundle",
             version="0.1.0",
             resourceType=ResourceType.WorkspaceService,
             current=True,

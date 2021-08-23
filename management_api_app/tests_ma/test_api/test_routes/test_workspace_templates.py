@@ -20,11 +20,11 @@ pytestmark = pytest.mark.asyncio
 
 @pytest.fixture
 def workspace_template_without_enriching():
-    def create_workspace_template(template_name: str = "vanilla-workspace-template"):
+    def create_workspace_template(template_name: str = "base-workspace-template"):
         return ResourceTemplate(
             id="a7a7a7bd-7f4e-4a4e-b970-dc86a6b31dfb",
             name=template_name,
-            description="vanilla workspace bundle",
+            description="base workspace bundle",
             version="0.1.0",
             resourceType=ResourceType.Workspace,
             current=True,
@@ -129,7 +129,7 @@ class TestWorkspaceTemplate:
     async def test_workspace_templates_by_name_returns_returns_error_status_based_on_exception(self, get_current_template_mock, exception, expected_status, app, client):
         get_current_template_mock.side_effect = exception
 
-        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_TEMPLATE_BY_NAME, workspace_template_name="tre-workspace-vanilla"))
+        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_TEMPLATE_BY_NAME, workspace_template_name="tre-workspace-base"))
 
         assert response.status_code == expected_status
 

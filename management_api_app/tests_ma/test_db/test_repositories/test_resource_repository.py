@@ -19,7 +19,7 @@ def resource_repo():
 
 @pytest.fixture
 def workspace_input():
-    return WorkspaceInCreate(workspaceType="vanilla-tre", properties={"display_name": "test", "description": "test", "app_id": "123"})
+    return WorkspaceInCreate(workspaceType="base-tre", properties={"display_name": "test", "description": "test", "app_id": "123"})
 
 
 def test_delete_workspace_marks_workspace_as_deleted(resource_repo):
@@ -27,7 +27,7 @@ def test_delete_workspace_marks_workspace_as_deleted(resource_repo):
 
     workspace = Workspace(
         id="1234",
-        resourceTemplateName="vanilla-tre",
+        resourceTemplateName="base-tre",
         resourceTemplateVersion="0.1.0",
         resourceTemplateParameters={},
         deployment=Deployment(status=Status.NotDeployed, message=""),
@@ -42,7 +42,7 @@ def test_restore_deletion_status(resource_repo):
 
     workspace = Workspace(
         id="1234",
-        resourceTemplateName="vanilla-tre",
+        resourceTemplateName="base-tre",
         resourceTemplateVersion="0.1.0",
         resourceTemplateParameters={},
         deployment=Deployment(status=Status.Deleting, message=""),

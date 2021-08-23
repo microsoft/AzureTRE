@@ -11,7 +11,7 @@ from models.schemas.workspace import WorkspaceInCreate, WorkspacePatchEnabled
 
 @pytest.fixture
 def basic_workspace_request():
-    return WorkspaceInCreate(workspaceType="vanilla-tre", properties={"display_name": "test", "description": "test", "app_id": "123"})
+    return WorkspaceInCreate(workspaceType="base-tre", properties={"display_name": "test", "description": "test", "app_id": "123"})
 
 
 @pytest.fixture
@@ -130,7 +130,7 @@ def test_patch_workspace_updates_item(workspace_repo):
     workspace_repo.update_item = MagicMock(return_value=None)
     workspace_to_patch = Workspace(
         id="1234",
-        resourceTemplateName="vanilla-tre",
+        resourceTemplateName="base-tre",
         resourceTemplateVersion="0.1.0",
         resourceTemplateParameters={},
         deployment=Deployment(status=Status.NotDeployed, message=""),

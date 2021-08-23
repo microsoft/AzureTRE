@@ -53,8 +53,8 @@ The flow to provision a Workspace is the following (the flow is the same for all
     ```JSON
     {
             "action": "install",
-            "id": "vanilla",
-            "name": "VanillaWorkspaceTemplate",
+            "id": "base",
+            "name": "BaseWorkspaceTemplate",
             "version": "1.0",
             "parameters": {
                 "param1": "value1"
@@ -70,10 +70,10 @@ The flow to provision a Workspace is the following (the flow is the same for all
     porter <action> --reference <ACR name>.azurecr.io/bundles/<name>:<version> --params key=value --cred <credentials set name or file>
 
     # Example
-    porter install --reference msfttreacr.azurecr.io/bundles/VanillaWorkspaceTemplate:1.0 --params param1=value1 --cred azure.json
+    porter install --reference msfttreacr.azurecr.io/bundles/BaseWorkspaceTemplate:1.0 --params param1=value1 --cred azure.json
     ```
 
-    Deployments are carried out against the Azure Subscription using a User Assigned Managed Identity. The `azure.json` tells Porter where the credential information can be found and for the Resource Processor they are set as environment variables (Vanilla Workspace Template [azure.json](workspaces/vanilla/azure.json)).
+    Deployments are carried out against the Azure Subscription using a User Assigned Managed Identity. The `azure.json` tells Porter where the credential information can be found and for the Resource Processor they are set as environment variables (Base Workspace Template [azure.json](../templates/workspaces/base/azure.json)).
 
     Porter bundle actions are required to be idempotent, so if a deployment fails, the Resource Processor can retry.
 

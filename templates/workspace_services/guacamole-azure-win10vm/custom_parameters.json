@@ -1,0 +1,11 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/guacamole-azure-win10vm/custom_parameters.json",
+    "type": "object",
+    "title": "Guacamole Win10VM Template Custom Parameters",
+    "description": "Guacamole Win10VM template custom parameters",
+    "required": [
+    ],
+    "properties": {
+    }
+}
