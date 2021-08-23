@@ -78,45 +78,6 @@ parameters:
     type: string
     description: "An Id for this installation"
     env: id
-  - name: guac_disable_copy
-    type: boolean
-    default: true
-    env: guac_disable_copy
-    description: "Guacamole disable copy configuration"
-  - name: guac_disable_paste
-    type: boolean
-    default: false
-    env: guac_disable_paste
-    description: "Guacamole disable paste configuration"        
-  - name: guac_enable_drive
-    type: boolean
-    default: true
-    env: guac_enable_drive
-    description: "Guacamole enable drive configuration"   
-  - name: guac_drive_name
-    type: string
-    default: "transfer"
-    env: guac_drive_name
-    description: "Guacamole drive name configuration"
-  - name: guac_drive_path
-    type: string
-    default: "/guac-transfer"
-    env: guac_drive_path
-    description: "Guacamole drive path configuration"    
-  - name: guac_disable_download
-    type: boolean
-    default: true
-    env: guac_disable_download
-    description:  "Guacamole disable download configuration" 
-  - name: api_client_id
-    type: string
-    env: api_client_id
-    description: "Azure API client id"
-  - name: aad_tenant_id
-    type: string
-    env: aad_tenant_id
-    description: "AAD tenant id"      
-  # the next 4 are automaticly sent by the resource processor call, so must be present.
   - name: tfstate_resource_group_name
     type: string
     description: "Resource group containing the Terraform state storage account"
