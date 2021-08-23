@@ -44,7 +44,6 @@ async def install_done(client, workspaceid, headers):
 async def delete_done(client, workspaceid, headers):
     delete_terminal_states = [strings.RESOURCE_STATUS_DELETED, strings.RESOURCE_STATUS_DELETING_FAILED]
     status, message = await check_deployment(client, workspaceid, headers)
-    print(status, message)
     return (True, status, message) if status in delete_terminal_states else (False, status, message)
 
 
@@ -52,7 +51,6 @@ async def check_deployment(client, workspaceid, headers) -> bool:
     response = await client.get(
         f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACES}/{workspaceid}",
         headers=headers)
-    print(response)
     if response.status_code == 200:
         status = response.json()["workspace"]["deployment"]["status"]
         message = response.json()["workspace"]["deployment"]["message"]
@@ -65,7 +63,6 @@ async def check_deployment(client, workspaceid, headers) -> bool:
 async def wait_for(func, client, workspaceid, headers, failure_state):
     done, done_state, message = await func(client, workspaceid, headers)
     while not done:
-        print(f'Done = {done}')
         await asyncio.sleep(60)
         done, done_state, message = await func(client, workspaceid, headers)
     try:
@@ -99,7 +96,6 @@ async def post_workspace_template(payload, token, verify):
 
 
 async def disable_workspace(token, verify) -> None:
-    print('Disabling...')
     async with AsyncClient(verify=verify) as client:
         headers = {'Authorization': f'Bearer {token}'}
 
@@ -117,7 +113,6 @@ async def disable_workspace(token, verify) -> None:
 
 
 async def delete_workspace(token, verify) -> None:
-    print('Deleting...')
     async with AsyncClient(verify=verify) as client:
         headers = {'Authorization': f'Bearer {token}'}
 
