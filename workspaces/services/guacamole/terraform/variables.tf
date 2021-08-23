@@ -8,3 +8,11 @@ variable "mgmt_resource_group_name" {}
 variable "mgmt_acr_name" {}
 variable "image_name" {}
 variable "image_tag" {}
+variable "guac_disable_copy" {}
+variable "guac_disable_paste" {}
+variable "guac_enable_drive" {}
+variable "guac_drive_name" {}
+variable "guac_drive_path" {}
+variable "guac_disable_download" {}
+variable "api_client_id" {}
+variable "aad_tenant_id" {}
