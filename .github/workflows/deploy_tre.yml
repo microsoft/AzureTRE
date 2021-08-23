@@ -160,7 +160,7 @@ jobs:
 
           export USE_ENV_VARS_NOT_FILES=true
 
-          make porter-publish DIR=./templates/templates/workspaces/base
+          make porter-publish DIR=./templates/workspaces/base
 
   e2e_tests:
     name: "Run E2E Tests"

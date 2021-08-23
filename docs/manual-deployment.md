@@ -155,7 +155,7 @@ curl https://<azure_tre_fqdn>/api/health
 1. Run:
 
     ```cmd
-    register-bundle DIR=./templates/templates/workspaces/base
+    register-bundle DIR=./templates/workspaces/base
     ```
 
     Copy the resulting payload json.

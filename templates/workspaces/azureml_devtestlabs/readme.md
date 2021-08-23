@@ -12,8 +12,8 @@ Please follow the above links to learn more about how to access the services and
 1. Publish the bundles required for this workspace:
 
 - Base Workspace
-    `make porter-build DIR=./templates/templates/workspaces/base`
-    `make porter-publish DIR=./templates/templates/workspaces/base`
+    `make porter-build DIR=./templates/workspaces/base`
+    `make porter-publish DIR=./templates/workspaces/base`
 
 - Azure ML Service
     `make porter-build DIR=./templates/workspace_services/azureml`

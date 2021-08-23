@@ -14,7 +14,7 @@ See: [https://azure.microsoft.com/services/devtest-lab/](https://azure.microsoft
 | `WORKSPACE_ID` | The 4 character unique identifier used when deploying the base workspace bundle. |
 
 1. Build and install the Azure DevTest Labs Service bundle
-    - `make porter-build DIR=./templates/workspace_services/devtestlabs`  
+    - `make porter-build DIR=./templates/workspace_services/devtestlabs`
     - `make porter-install DIR=./templates/workspace_services/devtestlabs`
 
 ## Create and expose a VM via the Firewall
@@ -24,7 +24,7 @@ When this service used without a virtual desktop gateway it might be necessary t
 1. Create a DevTest Labs VM and open a port in the TRE firewall using the script provided.
 
     ```cmd
-    Usage: 
+    Usage:
         ./create_and_expose_vm.sh [-l --lab-name]  [-t --tre_id] [-w --workspace_id] [-n --vm-name] [-i --image-name]
 
     Options:
@@ -33,7 +33,7 @@ When this service used without a virtual desktop gateway it might be necessary t
         -w, --workspace_id         ID of the workspace
         -n, --vm-name              Name of the VM
         -i, --image-name:          Name of the VM Image
-    
+
     Example:
 
     ./templates/workspace_services/devtestlabs/create_and_expose_vm.sh --lab-name <lab_name> --tre-id <tre-id> --workspace-id <workspace-id> --vm-name <vmn-name> --image-name "Data Science Virtual Machine - Windows Server 2019"

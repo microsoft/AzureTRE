@@ -30,7 +30,7 @@ URLs:
 | `AZUREML_ACR_ID` | Azure sesource ID of the Azure Container Registry deployed as part of the Azure ML workspace service prerequisite. |
 
 1. Build and install the InnerEye Deep Learning Service bundle
-    - `make porter-build DIR=./templates/workspace_services/innereye_deeplearning`  
+    - `make porter-build DIR=./templates/workspace_services/innereye_deeplearning`
     - `make porter-install DIR=./templates/workspace_services/innereye_deeplearning`
 
 ## Running the InnerEye HelloWorld on AML Compute Cluster
