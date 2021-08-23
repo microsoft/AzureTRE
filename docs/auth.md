@@ -9,7 +9,7 @@ App registrations (represented by service principals) define the privileges enab
 
 It is recommended to run the [`/scripts/aad-app-reg.sh`](../scripts/aad-app-reg.sh) script to create the two main app registrations: "TRE API" and "TRE Swagger UI". It automatically setups the app registrations with the required permissions to run Azure TRE.
 
-Alternatively you can also choose to create the app registrations manually via Azure Portal - see [Quickstart: Register an application with the Microsoft identity platform](https://docs.microsoft.com/azure/active-directory/develop/quickstart-register-app) on how. The required setup with permissions is documented below.
+Alternatively you can also choose to create the app registrations manually via the Azure Portal - see [Quickstart: Register an application with the Microsoft identity platform](https://docs.microsoft.com/azure/active-directory/develop/quickstart-register-app) on how. The required setup with permissions is documented below.
 
 That is the authentication and authorization setup needed to run the Azure TRE. Below is details about the permissions and if you want to setup the end-to-end automated tests, as it requires a [third app registration](#tre-e2e-test).
 
