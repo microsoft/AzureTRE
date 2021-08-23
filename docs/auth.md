@@ -7,7 +7,7 @@ This document describes the authentication and authorization (A&A) of deployed A
 
 App registrations (represented by service principals) define the privileges enabling access to the TRE system (e.g., [Management API](../management_api_app/README.md)) as well as the workspaces.
 
-It is recommended to run the [`/scripts/aad-app-reg.sh`](../scripts/aad-app-reg.sh) script to create the two main app registrations: "TRE API" and "TRE Swagger UI". It automatically setup the app registrations with the required permissions to run Azure TRE.
+It is recommended to run the [`/scripts/aad-app-reg.sh`](../scripts/aad-app-reg.sh) script to create the two main app registrations: "TRE API" and "TRE Swagger UI". It automatically setups the app registrations with the required permissions to run Azure TRE.
 
 Alternatively you can also choose to create the app registrations manually via Azure Portal - see [Quickstart: Register an application with the Microsoft identity platform](https://docs.microsoft.com/azure/active-directory/develop/quickstart-register-app) on how. The required setup with permissions is documented below.
 
