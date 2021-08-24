@@ -15,6 +15,16 @@ from azure.identity.aio import DefaultAzureCredential
 logger_adapter = initialize_logging(logging.INFO, socket.gethostname())
 disable_unwanted_loggers()
 
+failed_status_string_for = {
+    "install": strings.RESOURCE_STATUS_FAILED,
+    "uninstall": strings.RESOURCE_STATUS_DELETING_FAILED
+}
+
+pass_status_string_for = {
+    "install": strings.RESOURCE_STATUS_DEPLOYED,
+    "uninstall": strings.RESOURCE_STATUS_DELETED
+}
+
 
 @asynccontextmanager
 async def default_credentials(msi_id):
@@ -203,15 +213,17 @@ def service_bus_message_generator(sb_message, status, deployment_message, output
 
 async def deploy_porter_bundle(msg_body, sb_client, env_vars, message_logger_adapter):
     installation_id = get_installation_id(msg_body)
-    message_logger_adapter.info(f"{installation_id}: Deployment job configuration starting")
+    job_type = "Deployment" if msg_body['action'] == "install" else "Deleting"
+    message_logger_adapter.info(f"{installation_id}: {job_type} job configuration starting")
     sb_sender = sb_client.get_queue_sender(queue_name=env_vars["deployment_status_queue"])
-    resource_request_message = service_bus_message_generator(msg_body, strings.RESOURCE_STATUS_DEPLOYING, "Deployment job starting")
-    await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"]))
+    if job_type == "Deployment":
+        resource_request_message = service_bus_message_generator(msg_body, strings.RESOURCE_STATUS_DEPLOYING, "Deployment job starting")
+        await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"]))
     porter_command = await build_porter_command(msg_body, env_vars)
     returncode, _, err = await run_porter(porter_command, env_vars)
     if returncode != 0:
         error_message = "Error context message = " + " ".join(err.split('\n')) + " ; Command executed: ".join(porter_command)
-        resource_request_message = service_bus_message_generator(msg_body, strings.RESOURCE_STATUS_FAILED, error_message)
+        resource_request_message = service_bus_message_generator(msg_body, failed_status_string_for[msg_body['action']], error_message)
         await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"]))
         message_logger_adapter.info(f"{installation_id}: Deployment job configuration failed error = {error_message}")
         return False
@@ -220,8 +232,8 @@ async def deploy_porter_bundle(msg_body, sb_client, env_vars, message_logger_ada
         # TODO: decide if this should "fail" the deployment
         _, outputs = await get_porter_outputs(msg_body, env_vars, message_logger_adapter)
 
-        success_message = "Deployment completed successfully."
-        resource_request_message = service_bus_message_generator(msg_body, strings.RESOURCE_STATUS_DEPLOYED, success_message, outputs)
+        success_message = f"{job_type} completed successfully."
+        resource_request_message = service_bus_message_generator(msg_body, pass_status_string_for[msg_body['action']], success_message, outputs)
         await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"]))
         message_logger_adapter.info(f"{installation_id}: {success_message}")
         return True

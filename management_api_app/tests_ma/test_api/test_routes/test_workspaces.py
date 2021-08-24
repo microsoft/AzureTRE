@@ -251,7 +251,7 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
     @ patch("api.routes.workspaces.validate_user_is_owner_or_researcher_in_workspace", return_value=None)
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.get_active_workspace_services_for_workspace", return_value=None)
-    async def test_get_workspace_services_returns_workspace_services_for_workspace(self, get_active_workspace_services_mock, validate_user_mock, get_workspace_by_id_mock, app, client):
+    async def test_get_workspace_services_returns_workspace_services_for_workspace(self, get_active_workspace_services_mock, _, get_workspace_by_id_mock, app, client):
         workspace_id = "933ad738-7265-4b5f-9eae-a1a62928772e"
         workspace_service_id = "abcad738-7265-4b5f-9eae-a1a62928772e"
         get_workspace_by_id_mock.return_value = sample_workspace(workspace_id)
@@ -262,6 +262,52 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
 
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["workspaceServices"] == workspace_services
+
+    @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
+    @ patch("api.routes.workspaces.get_workspace_by_id")
+    @ patch("api.routes.workspaces.validate_user_is_owner_or_researcher_in_workspace", return_value=None)
+    async def test_get_workspace_service_returns_workspace_service_result(self, _, get_workspace_mock, get_workspace_service_mock, app, client):
+        workspace_id = "933ad738-7265-4b5f-9eae-a1a62928772e"
+        workspace_service_id = "abcad738-7265-4b5f-9eae-a1a62928772e"
+        get_workspace_mock.return_value = sample_workspace(workspace_id)
+        workspace_service = sample_workspace_service(workspace_service_id, workspace_id)
+        get_workspace_service_mock.return_value = workspace_service
+
+        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_SERVICE_BY_ID, service_id=workspace_service_id))
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["workspaceService"] == workspace_service
+
+    @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
+    @ patch("api.routes.workspaces.get_workspace_by_id")
+    @ patch("api.routes.workspaces.validate_user_is_owner_or_researcher_in_workspace", return_value=None)
+    async def test_get_workspace_service_validates_that_user_is_owner_or_researcher_in_workspace(self, validate_user_mock, get_workspace_mock, get_workspace_service_mock, app, client):
+        workspace_id = "933ad738-7265-4b5f-9eae-a1a62928772e"
+        workspace_service_id = "abcad738-7265-4b5f-9eae-a1a62928772e"
+        get_workspace_mock.return_value = sample_workspace(workspace_id)
+        workspace_service = sample_workspace_service(workspace_service_id, workspace_id)
+        get_workspace_service_mock.return_value = workspace_service
+
+        await client.get(app.url_path_for(strings.API_GET_WORKSPACE_SERVICE_BY_ID, service_id=workspace_service_id))
+
+        validate_user_mock.assert_called_once()
+
+    @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", side_effect=EntityDoesNotExist)
+    async def test_get_workspace_service_raises_404_if_workspace_service_is_not_found(self, _, app, client):
+        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_SERVICE_BY_ID, service_id="abcad738-7265-4b5f-9eae-a1a62928772e"))
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id", side_effect=EntityDoesNotExist)
+    async def test_get_workspace_service_raises_404_if_associated_workspace_is_not_found(self, get_workspace_mock, get_workspace_service_mock, app, client):
+        workspace_id = "933ad738-7265-4b5f-9eae-a1a62928772e"
+        workspace_service_id = "abcad738-7265-4b5f-9eae-a1a62928772e"
+        get_workspace_service_mock.return_value = sample_workspace_service(workspace_service_id, workspace_id)
+
+        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_SERVICE_BY_ID, service_id=workspace_service_id))
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
 class TestWorkspaceRoutesThatRequireAdminRights:
@@ -505,7 +551,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.get_active_workspace_services_for_workspace")
     @ patch('azure.cosmos.CosmosClient')
-    @ patch('api.routes.workspaces.WorkspaceRepository.mark_resource_as_deleted')
+    @ patch('api.routes.workspaces.WorkspaceRepository.mark_resource_as_deleting')
     @ patch('api.routes.workspaces.send_resource_request_message')
     async def test_workspace_delete_deletes_workspace(self, _, delete_workspace_mock, cosmos_client_mock, get_active_workspace_services_for_workspace_mock, get_workspace_mock, get_repository_mock, disabled_workspace, app, client):
         get_workspace_mock.return_value = disabled_workspace
@@ -521,7 +567,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.get_active_workspace_services_for_workspace")
     @ patch('azure.cosmos.CosmosClient')
-    @ patch('api.routes.workspaces.WorkspaceRepository.mark_resource_as_deleted')
+    @ patch('api.routes.workspaces.WorkspaceRepository.mark_resource_as_deleting')
     @ patch('api.routes.workspaces.send_resource_request_message')
     async def test_workspace_delete_sends_a_request_message_to_uninstall_the_workspace(self, send_request_message_mock, _, cosmos_client_mock, get_active_workspace_services_for_workspace_mock, get_workspace_mock, get_repository_mock, disabled_workspace, app, client):
         get_workspace_mock.return_value = disabled_workspace
@@ -537,7 +583,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.get_active_workspace_services_for_workspace")
     @ patch('azure.cosmos.CosmosClient')
-    @ patch('api.routes.workspaces.WorkspaceRepository.mark_resource_as_deleted')
+    @ patch('api.routes.workspaces.WorkspaceRepository.mark_resource_as_deleting')
     @ patch('api.routes.workspaces.send_resource_request_message')
     @ patch('api.routes.workspaces.WorkspaceRepository.restore_previous_deletion_state')
     async def test_workspace_delete_reverts_the_workspace_if_service_bus_call_fails(self, restore_previous_deletion_state_mock, send_request_message_mock, _, cosmos_client_mock, get_active_workspace_services_for_workspace_mock, get_workspace_mock, get_repository_mock, disabled_workspace, app, client):

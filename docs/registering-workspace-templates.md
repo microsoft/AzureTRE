@@ -34,7 +34,7 @@ The script can also be used to generate the payload required by the API without 
 
 ### Registration using script
 
-To use the script to automatically register the template a user that does nto require an interactive login must be created as per the [e2e test user documentation here](auth.md#tre-e2e-test).
+To use the script to automatically register the template a user that does not require an interactive login must be created as per the [e2e test user documentation here](auth.md#tre-e2e-test).
 
 The script needs to be executed from within the bundle directory, for example `/templates/workspaces/azureml_devtestlabs/`. This script can be used as follows:
 

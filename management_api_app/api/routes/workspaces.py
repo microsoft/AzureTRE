@@ -5,14 +5,14 @@ from jsonschema.exceptions import ValidationError
 from starlette import status
 
 from api.dependencies.database import get_repository
-from api.dependencies.workspaces import get_workspace_by_workspace_id_from_path, get_deployed_workspace_by_workspace_id_from_path, get_deployed_workspace_service_by_id_from_path
+from api.dependencies.workspaces import get_workspace_by_workspace_id_from_path, get_deployed_workspace_by_workspace_id_from_path, get_deployed_workspace_service_by_id_from_path, get_workspace_service_by_id_from_path, get_workspace_by_id
 from db.repositories.user_resources import UserResourceRepository
 from db.repositories.workspaces import WorkspaceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
 from models.schemas.user_resource import UserResourceIdInResponse, UserResourceInCreate
 from models.domain.workspace import WorkspaceRole
 from models.schemas.workspace import WorkspaceInCreate, WorkspaceIdInResponse, WorkspacesInList, WorkspaceInResponse, WorkspacePatchEnabled
-from models.schemas.workspace_service import WorkspaceServiceIdInResponse, WorkspaceServiceInCreate, WorkspaceServicesInList
+from models.schemas.workspace_service import WorkspaceServiceIdInResponse, WorkspaceServiceInCreate, WorkspaceServicesInList, WorkspaceServiceInResponse
 from resources import strings
 from service_bus.resource_request_sender import send_resource_request_message, RequestAction
 from services.authentication import get_current_user, get_current_admin_user, get_access_service
@@ -85,7 +85,7 @@ async def delete_workspace(workspace=Depends(get_workspace_by_workspace_id_from_
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_SERVICES_NEED_TO_BE_DELETED_BEFORE_WORKSPACE)
 
     try:
-        previous_deletion_status = workspace_repo.mark_resource_as_deleted(workspace)
+        previous_deletion_status = workspace_repo.mark_resource_as_deleting(workspace)
     except Exception as e:
         logging.error(f"Failed to delete workspace instance in DB: {e}")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
@@ -135,3 +135,10 @@ async def create_user_resource(user_resource_create: UserResourceInCreate, user_
     await save_and_deploy_resource(user_resource, user_resource_repo)
 
     return UserResourceIdInResponse(resourceId=user_resource.id)
+
+
+@router.get("/workspace-services/{service_id}", response_model=WorkspaceServiceInResponse, name=strings.API_GET_WORKSPACE_SERVICE_BY_ID)
+async def retrieve_workspace_service_by_id(workspace_service=Depends(get_workspace_service_by_id_from_path), workspaces_repo=Depends(get_repository(WorkspaceRepository)), user=Depends(get_current_user)) -> WorkspaceServiceInResponse:
+    workspace = get_workspace_by_id(workspace_service.workspaceId, workspaces_repo)
+    validate_user_is_owner_or_researcher_in_workspace(user, workspace)
+    return WorkspaceServiceInResponse(workspaceService=workspace_service)

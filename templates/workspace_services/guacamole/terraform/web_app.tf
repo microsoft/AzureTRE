@@ -25,15 +25,26 @@ resource "azurerm_app_service" "guacamole" {
   }
 
   app_settings = {
-    "WEBSITE_VNET_ROUTE_ALL"         = "1"
-    "WEBSITE_DNS_SERVER"             = "168.63.129.16"
-    "SCM_DO_BUILD_DURING_DEPLOYMENT" = "True"
+    WEBSITES_PORT                  = "8080"
+    WEBSITE_VNET_ROUTE_ALL         = "1"
+    WEBSITE_DNS_SERVER             = "168.63.129.16"
+    SCM_DO_BUILD_DURING_DEPLOYMENT = "True"
 
-    "RESOURCE_GROUP"  = data.azurerm_resource_group.ws.name
-    "SUBSCRIPTION_ID" = data.azurerm_client_config.current.subscription_id
-    "TENANT_ID"       = data.azurerm_client_config.current.tenant_id
+    RESOURCE_GROUP  = data.azurerm_resource_group.ws.name
+    SUBSCRIPTION_ID = data.azurerm_client_config.current.subscription_id
+    TENANT_ID       = data.azurerm_client_config.current.tenant_id
+    WORKSPACE_ID    = "${var.workspace_id}"
+    TRE_ID          = "${var.tre_id}"
 
-    WEBSITES_PORT = "8080"
+    # Guacmole configuration
+    GUAC_DISABLE_COPY     = "${var.guac_disable_copy}"
+    GUAC_DISABLE_PASTE    = "${var.guac_disable_paste}"
+    GUAC_ENABLE_DRIVE     = "${var.guac_enable_drive}"
+    GUAC_DRIVE_NAME       = "${var.guac_drive_name}"
+    GUAC_DRIVE_PATH       = "${var.guac_drive_path}"
+    GUAC_DISABLE_DOWNLOAD = "${var.guac_disable_download}"
+    AUDIENCE              = "${var.api_client_id}"
+    ISSUER                = "${local.issuer}"
   }
 
   identity {
