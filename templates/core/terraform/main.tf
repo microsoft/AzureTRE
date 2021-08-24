@@ -114,6 +114,7 @@ module "identity" {
   location             = var.location
   resource_group_name  = azurerm_resource_group.core.name
   servicebus_namespace = module.servicebus.servicebus_namespace
+  cosmos_id            = module.state-store.id
 }
 
 module "resource_processor_vmss_porter" {
