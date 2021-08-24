@@ -38,7 +38,7 @@ class ServiceBusReceivedMessageMock:
 def create_sample_workspace_object(workspace_id):
     return Workspace(
         id=workspace_id,
-        resourceTemplateName="tre-workspace-vanilla",
+        resourceTemplateName="tre-workspace-base",
         resourceTemplateVersion="0.1.0",
         resourceTemplateParameters={},
         deployment=Deployment(status=Status.NotDeployed, message="")

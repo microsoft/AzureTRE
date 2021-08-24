@@ -2,7 +2,7 @@
   "templates": [
     {
     "id": "2b3f98a7-1152-4a24-8b9b-6513b8 bb23e7",
-    "name": "tre-workspace-vanilla",
+    "name": "tre-workspace-base",
     "description": "These parameters are specific to my workspace template",
     "version": "0.0.1",
     "resourceType": "workspace",

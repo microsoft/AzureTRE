@@ -150,12 +150,12 @@ You can also create a request to the `api/health` endpoint to verify that Manage
 curl https://<azure_tre_fqdn>/api/health
 ```
 
-## Publishing and registering the vanilla workspace bundle
+## Publishing and registering the base workspace bundle
 
 1. Run:
 
     ```cmd
-    register-bundle DIR=./workspaces/vanilla
+    register-bundle DIR=./templates/workspaces/base
     ```
 
     Copy the resulting payload json.
@@ -172,9 +172,9 @@ curl https://<azure_tre_fqdn>/api/health
 
 1. To verify regsitration of the template do `GET` operation on `/api/workspace-templates`. The name of the template should now be listed.
 
-## Creating a vanilla workspace
+## Creating a base workspace
 
-Now that we have published and registered a vanilla workspace bundle we can use the deployed API to create a vanilla workspace.
+Now that we have published and registered a base workspace bundle we can use the deployed API to create a base workspace.
 
 <!-- markdownlint-disable-next-line MD013 -->
 > All routes are auth protected.Click the green **Authorize** button to receive a token for swagger client.  
@@ -183,13 +183,13 @@ As explained in the [auth guide](auth.md), every workspace has a corresponding a
 
 Running the script will report app id of the generated app which needs to be used in the POST body below.
 
-Go to ``azure_tre_fqdn/docs`` and use POST /api/workspaces with the sample body to create a vanilla workspace.
+Go to ``azure_tre_fqdn/docs`` and use POST /api/workspaces with the sample body to create a base workspace.
 
 ```json
 {
   "displayName": "manual-from-swagger",
   "description": "workspace for team X",
-  "workspaceType": "tre-workspace-vanilla",
+  "workspaceType": "tre-workspace-base",
   "parameters": {},
   "authConfig": {
     "provider": "AAD",
