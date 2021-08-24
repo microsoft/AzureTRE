@@ -1,10 +1,11 @@
 from enum import Enum
+from typing import List
 
 from pydantic import Field
 from pydantic.types import UUID4
 
 from models.domain.azuretremodel import AzureTREModel
-from models.domain.resource import Resource, ResourceType, Status
+from models.domain.resource import Resource, ResourceType, Status, Output
 
 
 class WorkspaceRole(Enum):
@@ -17,6 +18,7 @@ class DeploymentStatusUpdateMessage(AzureTREModel):
     id: UUID4 = Field(title="", description="")
     status: Status = Field(title="", description="")
     message: str = Field(title="", description="")
+    outputs: List[Output] = Field(title="", description="", default=[])
 
 
 class Workspace(Resource):
