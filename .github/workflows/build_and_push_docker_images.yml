@@ -10,6 +10,11 @@ on:
       - management_api_app/**/*
   workflow_dispatch:
 
+# for each ref (branch/pr) run just the most recent, cancel other pending/running ones
+concurrency: 
+  group: "${{ github.workflow }}-${{ github.head_ref }}"
+  cancel-in-progress: true
+
 jobs:
   docker_build:
     name: Build & publish Management API
