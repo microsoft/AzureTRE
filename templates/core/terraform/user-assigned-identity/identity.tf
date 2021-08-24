@@ -18,3 +18,9 @@ resource "azurerm_role_assignment" "servicebus_receiver" {
   role_definition_name = "Azure Service Bus Data Receiver"
   principal_id         = azurerm_user_assigned_identity.id.principal_id
 }
+
+resource "azurerm_role_assignment" "cosmos_contributor" {
+  scope                = var.cosmos_id
+  role_definition_name = "Contributor"
+  principal_id         = azurerm_user_assigned_identity.id.principal_id
+}
