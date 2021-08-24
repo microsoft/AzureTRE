@@ -1,15 +1,15 @@
 # API
-fastapi[all]==0.65.2
+fastapi[all]==0.68.0
 fastapi-utils==0.2.1
 uvicorn[standard]==0.13.0
 gunicorn==20.1.0
 aiohttp==3.7.4.post0
-azure-core==1.15.0
+azure-core==1.17.0
 azure-cosmos==4.2.0
-azure-identity==1.6.0
+azure-identity==1.6.1
 azure-mgmt-cosmosdb==6.4.0
-azure-servicebus==7.2.0
+azure-servicebus==7.3.2
 opencensus-ext-azure==1.0.8
 opencensus-ext-logging==0.1.0
-msal==1.12.0
+msal==1.13.0
 jsonschema[format_nongpl]==3.2.0
