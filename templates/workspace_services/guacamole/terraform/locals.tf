@@ -11,5 +11,5 @@ locals {
   webapp_name                  = "guacamole-${local.service_resource_name_suffix}"
   core_vnet                    = "vnet-${var.tre_id}"
   core_resource_group_name     = "rg-${var.tre_id}"
-  issuer                        = "https://login.microsoftonline.com/${var.aad_tenant_id}/v2.0"
+  issuer                       = "https://login.microsoftonline.com/${var.aad_tenant_id}/v2.0"
 }
