@@ -105,6 +105,7 @@ module "api-webapp" {
   aad_tenant_id                              = var.aad_tenant_id
   api_client_id                              = var.api_client_id
   api_client_secret                          = var.api_client_secret
+  acr_id                                     = data.azurerm_container_registry.mgmt_acr.id
 }
 
 module "identity" {

@@ -216,6 +216,8 @@ resource "azurerm_monitor_diagnostic_setting" "webapp_management_api" {
   }
 }
 
-output "management_api_fqdn" {
-  value = azurerm_app_service.management_api.default_site_hostname
+resource "azurerm_role_assignment" "acrpull_role" {
+  scope                = var.acr_id
+  role_definition_name = "AcrPull"
+  principal_id         = var.managed_identity.principal_id
 }
