@@ -23,5 +23,5 @@ Inbound connectivity from within the VNET to the RDP port
 | `PARENT_SERVICE_ID` | The unique identifier of this service parent (a Guacamole service) |
 
 1. Build and install the Guacamole Service bundle
-    - `make porter-build DIR=./templates/workspace_services/guacamole-azure-win10vm`
-    - `make porter-install DIR=./templates/workspace_services/guacamole-azure-win10vm`
+    - `make porter-build DIR=./templates/workspace_services/guacamole/user_resources/guacamole-azure-win10vm`
+    - `make porter-install DIR=./templates/workspace_services/guacamole/user_resources/guacamole-azure-win10vm`
