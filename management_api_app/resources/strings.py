@@ -14,6 +14,7 @@ API_GET_WORKSPACE_SERVICE_BY_ID = "Get workspace service by Id"
 API_CREATE_WORKSPACE_SERVICE = "Create a workspace service"
 
 API_CREATE_USER_RESOURCE = "Create a user resource"
+API_GET_MY_USER_RESOURCES = "Get my user resources in the workspace service"
 
 API_GET_STATUS_OF_SERVICES = "Get status of services"
 

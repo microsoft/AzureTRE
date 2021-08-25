@@ -1,16 +1,15 @@
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from jsonschema.exceptions import ValidationError
-from starlette import status
 
 from api.dependencies.database import get_repository
 from api.dependencies.workspaces import get_workspace_by_workspace_id_from_path, get_deployed_workspace_by_workspace_id_from_path, get_deployed_workspace_service_by_id_from_path, get_workspace_service_by_id_from_path, get_workspace_by_id
 from db.repositories.user_resources import UserResourceRepository
 from db.repositories.workspaces import WorkspaceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
-from models.schemas.user_resource import UserResourceIdInResponse, UserResourceInCreate
 from models.domain.workspace import WorkspaceRole
+from models.schemas.user_resource import UserResourceIdInResponse, UserResourceInCreate, UserResourcesInList
 from models.schemas.workspace import WorkspaceInCreate, WorkspaceIdInResponse, WorkspacesInList, WorkspaceInResponse, WorkspacePatchEnabled
 from models.schemas.workspace_service import WorkspaceServiceIdInResponse, WorkspaceServiceInCreate, WorkspaceServicesInList, WorkspaceServiceInResponse
 from resources import strings
@@ -35,9 +34,13 @@ async def save_and_deploy_resource(resource, resource_repo):
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
 
 
-def validate_user_is_owner_or_researcher_in_workspace(user, workspace):
+def get_user_role_in_workspace(user, workspace):
     access_service = get_access_service()
-    role = access_service.get_workspace_role(user, workspace)
+    return access_service.get_workspace_role(user, workspace)
+
+
+def validate_user_is_owner_or_researcher_in_workspace(user, workspace):
+    role = get_user_role_in_workspace(user, workspace)
     if (role != WorkspaceRole.Researcher) and (role != WorkspaceRole.Owner):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.ACCESS_USER_IS_NOT_OWNER)
 
@@ -142,3 +145,17 @@ async def retrieve_workspace_service_by_id(workspace_service=Depends(get_workspa
     workspace = get_workspace_by_id(workspace_service.workspaceId, workspaces_repo)
     validate_user_is_owner_or_researcher_in_workspace(user, workspace)
     return WorkspaceServiceInResponse(workspaceService=workspace_service)
+
+
+@router.get("/workspace-services/{service_id}/user-resources", response_model=UserResourcesInList, name=strings.API_GET_MY_USER_RESOURCES)
+async def retrieve_user_resources_for_workspace_service(service_id: str, user=Depends(get_current_user), user_resource_repo=Depends(get_repository(UserResourceRepository)), workspace_repo=Depends(get_repository(WorkspaceRepository))) -> UserResourcesInList:
+    user_resources = user_resource_repo.get_user_resources_for_workspace_service(service_id)
+    if len(user_resources) > 0:
+        workspace = get_workspace_by_id(user_resources[0].workspaceId, workspace_repo)
+        role = get_user_role_in_workspace(user, workspace)
+        if role != WorkspaceRole.Researcher and role != WorkspaceRole.Owner:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.ACCESS_USER_IS_NOT_OWNER_OR_RESEARCHER)
+        if role == WorkspaceRole.Researcher:
+            # filter only to the user - for researchers
+            user_resources = [resource for resource in user_resources if resource.ownerId == user.id]
+    return UserResourcesInList(userResources=user_resources)

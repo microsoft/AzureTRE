@@ -1,3 +1,5 @@
+from typing import List
+
 from pydantic import BaseModel, Field
 
 from models.domain.resource import ResourceType
@@ -31,6 +33,20 @@ class UserResourceInResponse(BaseModel):
         schema_extra = {
             "example": {
                 "user_resource": get_sample_user_resource("933ad738-7265-4b5f-9eae-a1a62928772e")
+            }
+        }
+
+
+class UserResourcesInList(BaseModel):
+    userResources: List[UserResource] = Field([], title="User resources")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "userResources": [
+                    get_sample_user_resource("2fdc9fba-726e-4db6-a1b8-9018a2165748"),
+                    get_sample_user_resource("abcc9fba-726e-4db6-a1b8-9018a2165748")
+                ]
             }
         }
 
