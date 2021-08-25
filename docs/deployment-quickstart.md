@@ -37,5 +37,95 @@ Now, let's open the cloned repository in Visual Studio Code and connect to the d
 AzureTRE> code .
 ```
 
-> Visual Studio Code should recognize the available development container. For additional details on connecting to remote containers, please see the [Open an existing folder in a container](https://code.visualstudio.com/docs/remote/containers#_quick-start-open-an-existing-folder-in-a-container) quickstart.
+> Visual Studio Code should recognize the available development container and ask you to open the folder using it. For additional details on connecting to remote containers, please see the [Open an existing folder in a container](https://code.visualstudio.com/docs/remote/containers#_quick-start-open-an-existing-folder-in-a-container) quickstart.
 
+When you start the development container for the first time, the container will be built and usually this takes a few minutes.
+
+## Set environment configuration variables of shared management resources
+
+Open the `/devops/.env.sample` file and then save it without the .sample extension. You should now have a file called `.env` located in the `devops` folder.
+
+The `/devops/.env` file contains configuration variables for the shared management infrastructure which is used to support the deployment of one or more Azure TRE instances.
+
+You need to provide values for the following variables:
+
+* `LOCATION` - The Azure region to deploy to
+* `MGMT_RESOURCE_GROUP_NAME` - Resource group name
+* `MGMT_STORAGE_ACCOUNT_NAME` - Storage account name
+* `ACR_NAME` - Container registry name
+* `ARM_SUBSCRIPTION_ID` - Azure subscription id
+
+Comment out the following variables by starting the line with an hash `#`.
+
+* `ARM_TENANT_ID`
+* `ARM_CLIENT_ID`
+* `ARM_CLIENT_SECRET`
+
+The rest of the variables can have their default values. You should now have a `.env`file that looks similar to below.
+
+```plaintext
+# Management infrastructure
+LOCATION=westeurope
+MGMT_RESOURCE_GROUP_NAME=aztremgmt
+MGMT_STORAGE_ACCOUNT_NAME=aztremgmt
+TERRAFORM_STATE_CONTAINER_NAME=tfstate
+IMAGE_TAG=dev
+ACR_NAME=aztreacr
+
+ARM_SUBSCRIPTION_ID=12...54e
+
+# Azure Resource Manager credentials used for CI/CD pipelines
+# ARM_TENANT_ID=__CHANGE_ME__
+# ARM_CLIENT_ID=__CHANGE_ME__
+# ARM_CLIENT_SECRET=__CHANGE_ME__
+
+PORTER_OUTPUT_CONTAINER_NAME=porterout
+
+# Debug mode
+DEBUG="false"
+```
+
+> To retrieve your Azure subscription id, you can use the `az` command line interface available in the development container. In the terminal window in Visual Studio Code, type `az login` followed by `az account show` to see your default subscription. Please refer to `az account -help` for further details on how to change your active subscription if desired.
+
+## Set environment configuration variables of the Azure TRE instance
+
+Next up, you will set the configuration variables for the specific Azure TRE instance.
+
+Open the `/templates/core/.env.sample` file and then save it without the .sample extension. You should now have a file called `.env` located in the `/templates/core` folder.
+
+The Azure TRE management API is protected by Azure Active Directory. This requires an application registration for the API and another application registration for the Open API UI.
+
+Use the terminal window in Visual Studio Code to execute the following script from within the development container:
+
+```bash
+/workspaces/tre> ./scripts/aad-app-reg.sh -n aztrequickstart -r https://aztrequickstart.westeurope.cloudapp.azure.com/oidc-redirect
+```
+
+> Note: `aztrequickstart` is a placeholder for the unique name you have to choose for your Azure TRE instance. Likewise `westeurope` is a placeholder for the location where the resources will be deployed, this should match the value you set on the location variable in the previous step.
+
+Having the output from the `add-app-reg.sh` script, you can now provide the required values for the following variables in the `/templates/core/.env` configuration file:
+
+* `TRE_ID` - The identifier for your Azure TRE instance. Will be used for naming Azure resources. Needs to be globally unique.
+* `AAD_TENANT_ID` - The Azure AD tenant id
+* `API_CLIENT_ID` - Service principal id for the API
+* `API_CLIENT_SECRET` - Client secret for the API
+* `SWAGGER_UI_CLIENT_ID` - Service principal id for the Swagger (Open API) UI
+
+All other variables can have their default values for now. You should now have a `.env` file that looks similar to below.
+
+```plaintext
+#  Used for TRE deployment
+TRE_ID=aztrequickstart
+ADDRESS_SPACE="10.1.0.0/22"
+MANAGEMENT_API_IMAGE_TAG=dev
+RESOURCE_PROCESSOR_VMSS_PORTER_IMAGE_TAG=dev
+GITEA_IMAGE_TAG=dev
+DEPLOY_GITEA=true
+RESOURCE_PROCESSOR_TYPE="vmss_porter"
+
+# Auth configuration
+AAD_TENANT_ID=72e...45
+API_CLIENT_ID=af6...dc
+API_CLIENT_SECRET=abc...12
+SWAGGER_UI_CLIENT_ID=d87...12
+```
