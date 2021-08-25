@@ -81,10 +81,7 @@ public class TokenInjectingConnection extends SimpleConnection {
 
         try {
             logger.info("Loading credentials from Azure Key Vault for secret " + resourceName + ".");
-            String keyVaultUri = String.format("https://kv-guacamole-%s-%s.vault.azure.net"
-                    , System.getenv("TRE_ID")
-                    , System.getenv("WORKSPACE_ID"));
-
+            String keyVaultUri = System.getenv("KEYVAULT_URL");
             HttpClient httpClient = new NettyAsyncHttpClientBuilder().build();
             SecretClient secretClient = new SecretClientBuilder()
                     .vaultUrl(keyVaultUri)

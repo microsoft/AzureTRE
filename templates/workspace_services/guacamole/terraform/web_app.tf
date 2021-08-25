@@ -30,11 +30,8 @@ resource "azurerm_app_service" "guacamole" {
     WEBSITE_DNS_SERVER             = "168.63.129.16"
     SCM_DO_BUILD_DURING_DEPLOYMENT = "True"
 
-    RESOURCE_GROUP  = data.azurerm_resource_group.ws.name
-    SUBSCRIPTION_ID = data.azurerm_client_config.current.subscription_id
     TENANT_ID       = data.azurerm_client_config.current.tenant_id
-    WORKSPACE_ID    = "${var.workspace_id}"
-    TRE_ID          = "${var.tre_id}"
+    KEYVAULT_URL    = "${local.kv_url}"
 
     # Guacmole configuration
     GUAC_DISABLE_COPY     = "${var.guac_disable_copy}"
@@ -45,6 +42,19 @@ resource "azurerm_app_service" "guacamole" {
     GUAC_DISABLE_DOWNLOAD = "${var.guac_disable_download}"
     AUDIENCE              = "${var.api_client_id}"
     ISSUER                = "${local.issuer}"
+  }
+
+  logs {
+    application_logs {
+      file_system_level = "Information"
+    }
+
+    http_logs {
+      file_system {
+        retention_in_days = 7
+        retention_in_mb   = 100
+      }
+    }
   }
 
   identity {
