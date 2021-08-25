@@ -30,8 +30,8 @@ resource "azurerm_app_service" "guacamole" {
     WEBSITE_DNS_SERVER             = "168.63.129.16"
     SCM_DO_BUILD_DURING_DEPLOYMENT = "True"
 
-    TENANT_ID       = data.azurerm_client_config.current.tenant_id
-    KEYVAULT_URL    = "${local.kv_url}"
+    TENANT_ID    = data.azurerm_client_config.current.tenant_id
+    KEYVAULT_URL = "${local.kv_url}"
 
     # Guacmole configuration
     GUAC_DISABLE_COPY     = "${var.guac_disable_copy}"
