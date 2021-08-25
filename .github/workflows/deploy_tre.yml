@@ -8,6 +8,10 @@ on:
     branches: [develop, main]
   workflow_dispatch:
 
+# This will prevent multiple runs of this entire workflow.
+# We should NOT cancel running ones as that might destabilize the environment.
+concurrency: deploy-e2e
+
 jobs:
   deploy_mgmt_infra:
     name: Deploy Management Infrastructure
@@ -67,6 +71,8 @@ jobs:
     needs: deploy_mgmt_infra
     runs-on: ubuntu-latest
     environment: Dev
+    env:
+      DOCKER_BUILDKIT: 1
     steps:
       - name: Checkout
         uses: actions/checkout@v2
