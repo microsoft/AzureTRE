@@ -1,12 +1,12 @@
-from fastapi import Depends, HTTPException, Path
+from fastapi import Depends, HTTPException, Path, status
 from pydantic import UUID4
-from starlette import status
 
 from api.dependencies.database import get_repository
-from db.errors import ResourceIsNotDeployed
+from db.errors import EntityDoesNotExist, ResourceIsNotDeployed
+from db.repositories.user_resources import UserResourceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
-from db.errors import EntityDoesNotExist
 from db.repositories.workspaces import WorkspaceRepository
+from models.domain.user_resource import UserResource
 from models.domain.workspace import Workspace
 from models.domain.workspace_service import WorkspaceService
 from resources import strings
@@ -46,3 +46,10 @@ async def get_deployed_workspace_service_by_id_from_path(service_id: UUID4 = Pat
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.WORKSPACE_SERVICE_DOES_NOT_EXIST)
     except ResourceIsNotDeployed:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_SERVICE_IS_NOT_DEPLOYED)
+
+
+async def get_user_resource_by_id_from_path(resource_id: UUID4 = Path(...), user_resource_repo=Depends(get_repository(UserResourceRepository))) -> UserResource:
+    try:
+        return user_resource_repo.get_user_resource_by_id(resource_id)
+    except EntityDoesNotExist:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.USER_RESOURCE_DOES_NOT_EXIST)
