@@ -7,6 +7,8 @@ resource "azurerm_key_vault" "kv" {
   resource_group_name      = var.resource_group_name
   sku_name                 = "standard"
   purge_protection_enabled = var.debug == "true" ? false : true
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_key_vault_access_policy" "deployer" {

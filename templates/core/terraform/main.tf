@@ -222,7 +222,8 @@ module "gitea" {
   storage_account_name   = module.storage.storage_account_name
 
   depends_on = [
-    module.network
+    module.network,
+    module.api-webapp # it would have been better to depend on the plan itself and not the whole module
   ]
 }
 
@@ -234,6 +235,7 @@ module "nexus" {
   storage_account_name = module.storage.storage_account_name
 
   depends_on = [
-    module.network
+    module.network,
+    module.api-webapp # it would have been better to depend on the plan itself and not the whole module
   ]
 }
