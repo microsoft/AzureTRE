@@ -5,6 +5,7 @@ resource "random_password" "password" {
   min_numeric = 2
   min_special = 2
 }
+
 resource "azurerm_mysql_server" "gitea" {
   name                              = "mysql-${var.tre_id}"
   resource_group_name               = local.core_resource_group_name
@@ -21,6 +22,8 @@ resource "azurerm_mysql_server" "gitea" {
   public_network_access_enabled     = false
   ssl_enforcement_enabled           = true
   ssl_minimal_tls_version_enforced  = "TLS1_2"
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_mysql_database" "gitea" {
@@ -48,10 +51,16 @@ resource "azurerm_private_endpoint" "private-endpoint" {
     name                 = "privatelink.mysql.database.azure.com"
     private_dns_zone_ids = [data.azurerm_private_dns_zone.mysql.id]
   }
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_key_vault_secret" "db_password" {
   name         = "${azurerm_mysql_server.gitea.name}-password"
   value        = random_password.password.result
   key_vault_id = var.keyvault_id
+
+  depends_on = [
+    azurerm_key_vault_access_policy.gitea_policy
+  ]
 }
