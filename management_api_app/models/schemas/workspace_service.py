@@ -41,7 +41,7 @@ class WorkspaceServicesInList(BaseModel):
     class Config:
         schema_extra = {
             "example": {
-                "workspace_services": [
+                "workspaceServices": [
                     get_sample_workspace_service("933ad738-7265-4b5f-9eae-a1a62928772e", "2fdc9fba-726e-4db6-a1b8-9018a2165748"),
                     get_sample_workspace_service("933ad738-7265-4b5f-9eae-a1a62928772e", "abcc9fba-726e-4db6-a1b8-9018a2165748")
                 ]

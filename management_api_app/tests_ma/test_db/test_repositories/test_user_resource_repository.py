@@ -55,3 +55,12 @@ def test_create_user_resource_item_raises_value_error_if_template_is_invalid(val
 
     with pytest.raises(ValueError):
         user_resource_repo.create_user_resource_item(basic_user_resource_request, workspace_id, parent_workspace_service_id, user_id)
+
+
+@patch('db.repositories.user_resources.UserResourceRepository.query', return_value=[])
+def test_get_user_resources_for_workspace_queries_db(query_mock, user_resource_repo):
+    parent_workspace_service_id = "937453d3-82da-4bfc-b6e9-9a7853ef753e"
+
+    user_resource_repo.get_user_resources_for_workspace_service(parent_workspace_service_id)
+
+    query_mock.assert_called_once_with(query='SELECT * FROM c WHERE c.resourceType = "user-resource" AND c.deployment.status != "deleted" AND c.parentWorkspaceServiceId = "937453d3-82da-4bfc-b6e9-9a7853ef753e"')

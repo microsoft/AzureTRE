@@ -12,7 +12,7 @@ from db.repositories.workspaces import WorkspaceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
 from models.domain.resource import Status, Deployment, RequestAction
 from models.domain.user_resource import UserResource
-from models.domain.workspace import Workspace
+from models.domain.workspace import Workspace, WorkspaceRole
 from models.domain.workspace_service import WorkspaceService
 from resources import strings
 
@@ -300,7 +300,7 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
 
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id", side_effect=EntityDoesNotExist)
-    async def test_get_workspace_service_raises_404_if_associated_workspace_is_not_found(self, get_workspace_mock, get_workspace_service_mock, app, client):
+    async def test_get_workspace_service_raises_404_if_associated_workspace_is_not_found(self, _, get_workspace_service_mock, app, client):
         workspace_id = "933ad738-7265-4b5f-9eae-a1a62928772e"
         workspace_service_id = "abcad738-7265-4b5f-9eae-a1a62928772e"
         get_workspace_service_mock.return_value = sample_workspace_service(workspace_service_id, workspace_id)
@@ -308,6 +308,64 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
         response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_SERVICE_BY_ID, service_id=workspace_service_id))
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @ patch("api.routes.workspaces.UserResourceRepository.get_user_resources_for_workspace_service")
+    @ patch("api.routes.workspaces.get_workspace_by_id", return_value=None)
+    @ patch("api.routes.workspaces.get_user_role_in_workspace", return_value=WorkspaceRole.Owner)
+    async def test_get_user_resources_returns_all_user_resources_for_workspace_service_if_owner(self, _, __, get_user_resources_mock, app, client):
+        workspace_id = "933ad738-7265-4b5f-9eae-a1a62928772e"
+        workspace_service_id = "abcad738-7265-4b5f-9eae-a1a62928772e"
+        user_resources = [
+            sample_user_resource_object(user_resource_id="a33ad738-7265-4b5f-9eae-a1a62928772a", workspace_id=workspace_id, parent_workspace_service_id=workspace_service_id),
+            sample_user_resource_object(user_resource_id="b33ad738-7265-4b5f-9eae-a1a62928772a", workspace_id=workspace_id, parent_workspace_service_id=workspace_service_id),
+        ]
+        get_user_resources_mock.return_value = user_resources
+
+        response = await client.get(app.url_path_for(strings.API_GET_MY_USER_RESOURCES, service_id=workspace_service_id))
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["userResources"] == user_resources
+
+    @ patch("api.routes.workspaces.UserResourceRepository.get_user_resources_for_workspace_service")
+    @ patch("api.routes.workspaces.get_workspace_by_id", return_value=None)
+    @ patch("api.routes.workspaces.get_user_role_in_workspace", return_value=WorkspaceRole.Researcher)
+    async def test_get_user_resources_returns_own_user_resources_for_researcher(self, _, __, get_user_resources_mock, app, client, non_admin_user):
+        not_my_user_id = "def"
+        app.dependency_overrides[get_current_user] = non_admin_user
+        my_user_id = non_admin_user().id
+        workspace_id = "933ad738-7265-4b5f-9eae-a1a62928772e"
+        workspace_service_id = "abcad738-7265-4b5f-9eae-a1a62928772e"
+
+        my_user_resource1 = sample_user_resource_object(user_resource_id="a33ad738-7265-4b5f-9eae-a1a62928772a", workspace_id=workspace_id, parent_workspace_service_id=workspace_service_id)
+        my_user_resource1.ownerId = my_user_id
+        my_user_resource2 = sample_user_resource_object(user_resource_id="b33ad738-7265-4b5f-9eae-a1a62928772a", workspace_id=workspace_id, parent_workspace_service_id=workspace_service_id)
+        my_user_resource2.ownerId = my_user_id
+        not_my_user_resource = sample_user_resource_object(user_resource_id="c33ad738-7265-4b5f-9eae-a1a62928772a", workspace_id=workspace_id, parent_workspace_service_id=workspace_service_id)
+        not_my_user_resource.ownerId = not_my_user_id
+
+        get_user_resources_mock.return_value = [my_user_resource1, my_user_resource2, not_my_user_resource]
+
+        response = await client.get(app.url_path_for(strings.API_GET_MY_USER_RESOURCES, service_id=workspace_service_id))
+        assert response.status_code == status.HTTP_200_OK
+        actual_returned_resources = response.json()["userResources"]
+        assert my_user_resource1 in actual_returned_resources
+        assert my_user_resource2 in actual_returned_resources
+        assert not_my_user_resource not in actual_returned_resources
+
+        app.dependency_overrides = {}
+
+    @ patch("api.routes.workspaces.UserResourceRepository.get_user_resources_for_workspace_service")
+    @ patch("api.routes.workspaces.get_workspace_by_id", return_value=None)
+    @ patch("api.routes.workspaces.get_user_role_in_workspace", return_value=WorkspaceRole.NoRole)
+    async def test_get_user_resources_raises_401_if_user_is_not_researcher_or_owner(self, _, __, get_user_resources_mock, app, client, non_admin_user):
+        workspace_id = "933ad738-7265-4b5f-9eae-a1a62928772e"
+        workspace_service_id = "abcad738-7265-4b5f-9eae-a1a62928772e"
+
+        get_user_resources_mock.return_value = [sample_user_resource_object(user_resource_id="a33ad738-7265-4b5f-9eae-a1a62928772a", workspace_id=workspace_id, parent_workspace_service_id=workspace_service_id)]
+
+        response = await client.get(app.url_path_for(strings.API_GET_MY_USER_RESOURCES, service_id=workspace_service_id))
+
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 class TestWorkspaceRoutesThatRequireAdminRights:
