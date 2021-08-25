@@ -14,6 +14,8 @@ resource "azurerm_app_service" "nexus" {
     WEBSITES_ENABLE_APP_SERVICE_STORAGE = false
   }
 
+  lifecycle { ignore_changes = [tags] }
+
   site_config {
     linux_fx_version            = "DOCKER|sonatype/nexus3"
     remote_debugging_enabled    = false
@@ -78,6 +80,8 @@ resource "azurerm_private_endpoint" "nexus_private_endpoint" {
     name                 = "privatelink.azurewebsites.net"
     private_dns_zone_ids = [data.azurerm_private_dns_zone.azurewebsites.id]
   }
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_app_service_virtual_network_swift_connection" "nexus-integrated-vnet" {

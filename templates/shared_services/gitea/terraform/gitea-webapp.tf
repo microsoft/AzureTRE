@@ -6,6 +6,16 @@ resource "random_password" "gitea_passwd" {
   min_special = 2
 }
 
+# we have to use user-assigned to break a cycle in the dependencies: app identity, kv-policy, secrets in app settings
+resource "azurerm_user_assigned_identity" "gitea_id" {
+  resource_group_name = local.core_resource_group_name
+  location            = var.location
+
+  name = "id-gitea-${var.tre_id}"
+
+  lifecycle { ignore_changes = [tags] }
+}
+
 resource "azurerm_app_service" "gitea" {
   name                = local.webapp_name
   resource_group_name = local.core_resource_group_name
@@ -38,8 +48,11 @@ resource "azurerm_app_service" "gitea" {
     GITEA__database__PASSWD   = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.db_password.id})"
   }
 
+  lifecycle { ignore_changes = [tags] }
+
   identity {
-    type = "SystemAssigned"
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.gitea_id.id]
   }
 
   site_config {
@@ -47,6 +60,8 @@ resource "azurerm_app_service" "gitea" {
     remote_debugging_enabled             = false
     scm_use_main_ip_restriction          = true
     acr_use_managed_identity_credentials = true
+    acr_user_managed_identity_client_id  = azurerm_user_assigned_identity.gitea_id.client_id
+
 
     cors {
       allowed_origins     = []
@@ -112,6 +127,8 @@ resource "azurerm_private_endpoint" "gitea_private_endpoint" {
     name                 = "privatelink.azurewebsites.net"
     private_dns_zone_ids = [data.azurerm_private_dns_zone.azurewebsites.id]
   }
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_app_service_virtual_network_swift_connection" "gitea-integrated-vnet" {
@@ -216,8 +233,8 @@ resource "azurerm_monitor_diagnostic_setting" "webapp_gitea" {
 
 resource "azurerm_key_vault_access_policy" "gitea_policy" {
   key_vault_id = var.keyvault_id
-  tenant_id    = azurerm_app_service.gitea.identity.0.tenant_id
-  object_id    = azurerm_app_service.gitea.identity.0.principal_id
+  tenant_id    = azurerm_user_assigned_identity.gitea_id.tenant_id
+  object_id    = azurerm_user_assigned_identity.gitea_id.principal_id
 
   secret_permissions = ["Get", "List", ]
 }
@@ -226,6 +243,10 @@ resource "azurerm_key_vault_secret" "gitea_password" {
   name         = "${local.webapp_name}-admin-password"
   value        = random_password.gitea_passwd.result
   key_vault_id = var.keyvault_id
+
+  depends_on = [
+    azurerm_key_vault_access_policy.gitea_policy
+  ]
 }
 
 resource "azurerm_storage_share" "gitea" {
@@ -237,5 +258,12 @@ resource "azurerm_storage_share" "gitea" {
 resource "azurerm_role_assignment" "gitea_acrpull_role" {
   scope                = var.acr_id
   role_definition_name = "AcrPull"
-  principal_id         = azurerm_app_service.gitea.identity[0].principal_id
+  principal_id         = azurerm_user_assigned_identity.gitea_id.principal_id
+}
+
+# unfortunately we have to tell the webapp to use the user-assigned identity when accessing key-vault, no direct tf way.
+resource "null_resource" "webapp_vault_access_identity" {
+  provisioner "local-exec" {
+    command = "az resource update --ids ${azurerm_app_service.gitea.id} --set properties.keyVaultReferenceIdentity=${azurerm_user_assigned_identity.gitea_id.id}"
+  }
 }
