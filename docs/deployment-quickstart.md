@@ -156,3 +156,31 @@ The Azure TRE instance is initially deployed with an invalid self-signed SSL cer
 ```bash
 /workspaces/tre> make letsencrypt
 ```
+
+## Validate the deployment
+
+### Using curl
+
+Use `curl` to make a simple request to the status endpoint of the management API:
+
+```bash
+/workspaces/tre> curl https://<azure_tre_fqdn>/api/status
+```
+
+The expected response is:
+
+```json
+{"services":[{"service":"Cosmos DB","status":"OK","message":""}]}
+```
+
+### Using the API docs
+
+Open your browser and navigate to the `/docs` route of the management API:  `https://<azure_tre_fqdn>/docs` and click *Try it out* on the operation of choice.
+
+![Swagger UI](./assets/quickstart_swaggerui.png)
+
+## Next steps
+
+* Deploy a new workspace for Azure Machine Learning
+* [Enable users to access the Azure TRE instance](./auth.md#enabling-users)
+* [Create a new workspace template](./authoring-workspace-templates.md)
