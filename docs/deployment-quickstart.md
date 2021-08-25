@@ -98,10 +98,10 @@ The Azure TRE management API is protected by Azure Active Directory. This requir
 Use the terminal window in Visual Studio Code to execute the following script from within the development container:
 
 ```bash
-/workspaces/tre> ./scripts/aad-app-reg.sh -n aztrequickstart -r https://aztrequickstart.westeurope.cloudapp.azure.com/oidc-redirect
+/workspaces/tre> ./scripts/aad-app-reg.sh -n aztreqs -r https://aztreqs.westeurope.cloudapp.azure.com/oidc-redirect
 ```
 
-> Note: `aztrequickstart` is a placeholder for the unique name you have to choose for your Azure TRE instance. Likewise `westeurope` is a placeholder for the location where the resources will be deployed, this should match the value you set on the location variable in the previous step.
+> Note: `aztreqs` is a placeholder for the unique name you have to choose for your Azure TRE instance. Likewise `westeurope` is a placeholder for the location where the resources will be deployed, this should match the value you set on the location variable in the previous step.
 
 Having the output from the `add-app-reg.sh` script, you can now provide the required values for the following variables in the `/templates/core/.env` configuration file:
 
