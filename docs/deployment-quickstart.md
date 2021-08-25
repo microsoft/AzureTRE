@@ -105,7 +105,7 @@ Use the terminal window in Visual Studio Code to execute the following script fr
 
 Having the output from the `add-app-reg.sh` script, you can now provide the required values for the following variables in the `/templates/core/.env` configuration file:
 
-* `TRE_ID` - The identifier for your Azure TRE instance. Will be used for naming Azure resources. Needs to be globally unique.
+* `TRE_ID` - The identifier for your Azure TRE instance. Will be used for naming Azure resources. Needs to be globally unique and less than 12 characters.
 * `AAD_TENANT_ID` - The Azure AD tenant id
 * `API_CLIENT_ID` - Service principal id for the API
 * `API_CLIENT_SECRET` - Client secret for the API
@@ -115,7 +115,7 @@ All other variables can have their default values for now. You should now have a
 
 ```plaintext
 #  Used for TRE deployment
-TRE_ID=aztrequickstart
+TRE_ID=aztreqs
 ADDRESS_SPACE="10.1.0.0/22"
 MANAGEMENT_API_IMAGE_TAG=dev
 RESOURCE_PROCESSOR_VMSS_PORTER_IMAGE_TAG=dev
@@ -128,4 +128,31 @@ AAD_TENANT_ID=72e...45
 API_CLIENT_ID=af6...dc
 API_CLIENT_SECRET=abc...12
 SWAGGER_UI_CLIENT_ID=d87...12
+```
+
+## Deploy the Azure TRE instance
+
+You are now ready to deploy the Azure TRE instance. Execute the `all` action of the makefile using `make`:
+
+```bash
+/workspaces/tre> make all
+```
+
+Deploying a new Azure TRE instance takes aproximitly 30 minutes.
+
+Once the deployment is completed you will be presented with a few output variables, similar to below.
+
+```plaintext
+app_gateway_name = "agw-aztreqs"
+azure_tre_fqdn = "aztreqs.westeurope.cloudapp.azure.com"
+core_resource_group_name = "rg-aztreqs"
+keyvault_name = "kv-aztreqs"
+log_analytics_name = "log-aztreqs"
+static_web_storage = "stwebaztreqs"
+```
+
+The Azure TRE instance is initially deployed with an invalid self-signed SSL certificate. This certificate needs to be replaced with one valid for your configured domain name. To use a certificate from [Let's Encrypt](https://letsencrypt.org/), run the command:
+
+```bash
+/workspaces/tre> make letsencrypt
 ```
