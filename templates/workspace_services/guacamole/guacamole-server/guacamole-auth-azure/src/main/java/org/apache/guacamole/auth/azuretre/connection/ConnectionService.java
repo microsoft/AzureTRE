@@ -80,7 +80,7 @@ public class ConnectionService {
                     configs.putIfAbsent(hostname, config);
                 }
             } catch (final Exception ex) {
-                LOGGER.error("Exception getting VMs: ", ex);
+                LOGGER.error("Exception getting VMs", ex);
                 throw new GuacamoleException("Exception getting VMs: " + ex.getMessage());
             }
         }

@@ -63,7 +63,7 @@ public class AuthenticationProviderService {
 
                 return authenticatedUser;
             } catch (final MalformedURLException ex) {
-                LOGGER.error("Could not parse JWK Provider URL ", ex);
+                LOGGER.error("Could not parse JWK Provider URL", ex);
                 throw new GuacamoleException("Could not parse JWK Provider URL");
             }
         }
@@ -103,7 +103,7 @@ public class AuthenticationProviderService {
 
             authenticatedUser.init(credentials, accessToken, username, objectId);
         } catch (final Exception ex) {
-            LOGGER.error("Could not initialise user, possible access token verification issue: ", ex);
+            LOGGER.error("Could not initialise user, possible access token verification issue", ex);
             throw new GuacamoleInvalidCredentialsException(
                 "Could not initialise user, possible access token verification issue:" + ex.getMessage(),
                 CredentialsInfo.USERNAME_PASSWORD);
