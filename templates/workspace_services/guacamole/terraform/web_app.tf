@@ -62,6 +62,102 @@ resource "azurerm_app_service" "guacamole" {
   }
 }
 
+resource "azurerm_monitor_diagnostic_setting" "guacamole" {
+  name                       = "diag-${var.tre_id}"
+  target_resource_id         = azurerm_app_service.guacamole.id
+  log_analytics_workspace_id = data.azurerm_log_analytics_workspace.tre.id
+
+  log {
+    category = "AppServiceHTTPLogs"
+    enabled  = true
+
+    retention_policy {
+      days    = 1
+      enabled = false
+    }
+  }
+
+  log {
+    category = "AppServiceConsoleLogs"
+    enabled  = true
+
+    retention_policy {
+      days    = 1
+      enabled = false
+    }
+  }
+
+  log {
+    category = "AppServiceAppLogs"
+    enabled  = true
+
+    retention_policy {
+      days    = 1
+      enabled = false
+    }
+  }
+
+  log {
+    category = "AppServiceFileAuditLogs"
+    enabled  = true
+
+    retention_policy {
+      days    = 1
+      enabled = false
+    }
+  }
+
+  log {
+    category = "AppServiceAuditLogs"
+    enabled  = true
+
+    retention_policy {
+      days    = 1
+      enabled = false
+    }
+  }
+
+  log {
+    category = "AppServiceIPSecAuditLogs"
+    enabled  = true
+
+    retention_policy {
+      days    = 1
+      enabled = false
+    }
+  }
+
+  log {
+    category = "AppServicePlatformLogs"
+    enabled  = true
+
+    retention_policy {
+      days    = 1
+      enabled = false
+    }
+  }
+
+  log {
+    category = "AppServiceAntivirusScanAuditLogs"
+    enabled  = true
+
+    retention_policy {
+      days    = 1
+      enabled = false
+    }
+  }
+
+  metric {
+    category = "AllMetrics"
+    enabled  = true
+
+    retention_policy {
+      enabled = false
+    }
+  }
+}
+
+
 resource "azurerm_role_assignment" "guac_acr_pull" {
   scope                = data.azurerm_container_registry.mgmt_acr.id
   role_definition_name = "AcrPull"
