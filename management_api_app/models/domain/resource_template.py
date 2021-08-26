@@ -11,6 +11,16 @@ class Property(AzureTREModel):
     title: str = Field("", title="Property description")
     description: str = Field("", title="Property description")
     default: Any = Field(None, title="Default value for the property")
+    enum: List[str] = Field([], title="Enum values")
+    const: Any = Field(None, title="Constant value")
+    multipleOf: float = Field(None, title="Multiple of")
+    maximum: float = Field(None, title="Maximum value")
+    exclusiveMaximum: float = Field(None, title="Exclusive maximum value")
+    minimum: float = Field(None, title="Minimum value")
+    exclusiveMinimum: float = Field(None, title="Exclusive minimum value")
+    maxLength: int = Field(None, title="Maximum length")
+    minLength: int = Field(None, title="Minimum length")
+    pattern: str = Field(None, title="Pattern")
 
 
 class ResourceTemplate(AzureTREModel):
