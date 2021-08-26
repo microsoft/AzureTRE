@@ -59,9 +59,9 @@ public class ConnectionService {
                 final JSONArray vmsJsonArray = getVMsFromProjectAPI(user);
                 for (int i = 0; i < vmsJsonArray.length(); i++) {
                     final GuacamoleConfiguration config = new GuacamoleConfiguration();
+                    final JSONObject vmJsonObject = vmsJsonArray.getJSONObject(i);
 
                     config.setProtocol("RDP");
-                    final JSONObject vmJsonObject = vmsJsonArray.getJSONObject(i);
                     config.setProtocol("rdp");
                     config.setParameter("hostname", (String) vmJsonObject.get("name"));
                     config.setParameter("resize-method", "display-update");
@@ -76,11 +76,11 @@ public class ConnectionService {
                     config.setParameter("disable-download", System.getenv("GUAC_DISABLE_DOWNLOAD"));
 
                     final String hostname = config.getParameter("hostname");
-                    LOGGER.info("Adding VM: " + hostname);
+                    LOGGER.info("Adding a VM: {}", hostname);
                     configs.putIfAbsent(hostname, config);
                 }
             } catch (final Exception ex) {
-                LOGGER.error("Exception getting VMs: " + ex.getMessage());
+                LOGGER.error("Exception getting VMs: ", ex);
                 throw new GuacamoleException("Exception getting VMs: " + ex.getMessage());
             }
         }

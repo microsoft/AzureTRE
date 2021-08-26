@@ -53,7 +53,7 @@ public class AuthenticationProviderService {
         final HttpServletRequest request = credentials.getRequest();
         // Get the username from the header
         final String accessToken = request.getHeader("x-Access-Token");
-        LOGGER.info("### access token " + accessToken);
+        LOGGER.info("### access token {}", accessToken);
         if (accessToken != null) {
             final AzureTREAuthenticatedUser authenticatedUser = authenticatedUserProvider.get();
             try {
@@ -63,7 +63,7 @@ public class AuthenticationProviderService {
 
                 return authenticatedUser;
             } catch (final MalformedURLException ex) {
-                LOGGER.error("Could not parse JWK Provider URL " + ex.getMessage());
+                LOGGER.error("Could not parse JWK Provider URL ", ex);
                 throw new GuacamoleException("Could not parse JWK Provider URL");
             }
         }
@@ -103,7 +103,7 @@ public class AuthenticationProviderService {
 
             authenticatedUser.init(credentials, accessToken, username, objectId);
         } catch (final Exception ex) {
-            LOGGER.error("Could not initialise user, possible access token verification issue: " + ex.getMessage());
+            LOGGER.error("Could not initialise user, possible access token verification issue: ", ex);
             throw new GuacamoleInvalidCredentialsException(
                 "Could not initialise user, possible access token verification issue:" + ex.getMessage(),
                 CredentialsInfo.USERNAME_PASSWORD);
