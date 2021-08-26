@@ -111,7 +111,7 @@ async def retrieve_users_active_workspace_services(user=Depends(get_current_user
 
 
 @router.post("/workspaces/{workspace_id}/workspace-services", status_code=status.HTTP_202_ACCEPTED, response_model=WorkspaceServiceIdInResponse, name=strings.API_CREATE_WORKSPACE_SERVICE)
-async def create_workspace_service(workspace_service_input: WorkspaceServiceInCreate, workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), user=Depends(get_current_user), workspace=Depends(get_workspace_by_workspace_id_from_path)) -> WorkspaceServiceIdInResponse:
+async def create_workspace_service(workspace_service_input: WorkspaceServiceInCreate, workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), user=Depends(get_current_user), workspace=Depends(get_deployed_workspace_by_workspace_id_from_path)) -> WorkspaceServiceIdInResponse:
     validate_user_is_owner_or_researcher_in_workspace(user, workspace)
 
     try:
