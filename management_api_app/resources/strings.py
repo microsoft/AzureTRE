@@ -15,6 +15,7 @@ API_CREATE_WORKSPACE_SERVICE = "Create a workspace service"
 
 API_CREATE_USER_RESOURCE = "Create a user resource"
 API_GET_MY_USER_RESOURCES = "Get my user resources in the workspace service"
+API_GET_USER_RESOURCE = "Get user resource by id"
 
 API_GET_STATUS_OF_SERVICES = "Get status of services"
 
@@ -50,6 +51,7 @@ AUTH_CONFIGURATION_NOT_AVAILABLE_FOR_WORKSPACE = "Auth configuration not availab
 INVALID_AUTH_PROVIDER = "Invalid authentication provider"
 UNABLE_TO_REPLACE_CURRENT_TEMPLATE = "Unable to replace the existing 'current' template with this name"
 UNABLE_TO_PROCESS_REQUEST = "Unable to process request"
+USER_RESOURCE_DOES_NOT_EXIST = "User Resource does not exist"
 WORKSPACE_DOES_NOT_EXIST = "Workspace does not exist"
 WORKSPACE_IS_NOT_DEPLOYED = "Workspace is not deployed."
 WORKSPACE_SERVICE_DOES_NOT_EXIST = "Workspace service does not exist"
