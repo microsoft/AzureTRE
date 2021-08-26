@@ -64,6 +64,7 @@ public class TokenInjectingConnection extends SimpleConnection {
         try {
             LOGGER.info("Loading credentials from Azure Key Vault for secret " + resourceName + ".");
             final String keyVaultUri = System.getenv("KEYVAULT_URL");
+            /// Create an HttpClient manually as the class loader was unable to find the class to create a default one.
             final HttpClient httpClient = new NettyAsyncHttpClientBuilder().build();
             final SecretClient secretClient = new SecretClientBuilder()
                 .vaultUrl(keyVaultUri)
@@ -82,7 +83,7 @@ public class TokenInjectingConnection extends SimpleConnection {
             LOGGER.error("Error fetching username and password" + ex.getMessage());
             throw new GuacamoleException("Error fetching username and password: " + ex.getMessage());
         }
-        final String json = "{\"username\": \"" + username + "\",\"password\": \"" + password + "\"}";
+        final String json = String.format("{\"username\": \" %s \",\"password\": \"%s\"}", username, password);
         credentials = new JSONObject(json);
 
         return credentials;

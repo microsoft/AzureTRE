@@ -16,6 +16,7 @@
     </properties>
 
     <dependencies>
+<!--        There was a dependency clash here between jwks-rsa and azure-identity, hence their versions should match -->
         <dependency>
             <groupId>com.auth0</groupId>
             <artifactId>jwks-rsa</artifactId>

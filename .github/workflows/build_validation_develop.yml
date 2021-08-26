@@ -31,7 +31,6 @@ jobs:
           VALIDATE_PYTHON_FLAKE8: true
           VALIDATE_YAML: true
           VALIDATE_TERRAFORM: true
-          VALIDATE_JAVA: true
           RUN_LOCAL: true
       
       - name: Terraform format Checkout
