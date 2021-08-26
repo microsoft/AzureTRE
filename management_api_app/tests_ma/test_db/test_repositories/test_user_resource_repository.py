@@ -1,5 +1,7 @@
 from mock import patch
 import pytest
+
+from db.errors import EntityDoesNotExist
 from db.repositories.user_resources import UserResourceRepository
 from models.domain.resource import Status, ResourceType
 from models.domain.user_resource import UserResource
@@ -64,3 +66,26 @@ def test_get_user_resources_for_workspace_queries_db(query_mock, user_resource_r
     user_resource_repo.get_user_resources_for_workspace_service(parent_workspace_service_id)
 
     query_mock.assert_called_once_with(query='SELECT * FROM c WHERE c.resourceType = "user-resource" AND c.deployment.status != "deleted" AND c.parentWorkspaceServiceId = "937453d3-82da-4bfc-b6e9-9a7853ef753e"')
+
+
+@patch('db.repositories.user_resources.UserResourceRepository.get_resource_dict_by_type_and_id')
+def test_get_user_resource_returns_resource_if_found(get_resource_mock, user_resource_repo, user_resource):
+    get_resource_mock.return_value = user_resource.dict()
+
+    actual_resource = user_resource_repo.get_user_resource_by_id("000000d3-82da-4bfc-b6e9-9a7853ef753e")
+
+    assert actual_resource == user_resource
+
+
+@patch('db.repositories.user_resources.UserResourceRepository.query')
+def test_get_user_resource_by_id_queries_db(query_mock, user_resource_repo, user_resource):
+    query_mock.return_value = [user_resource.dict()]
+    user_resource_repo.get_user_resource_by_id("000000d3-82da-4bfc-b6e9-9a7853ef753e")
+
+    query_mock.assert_called_once_with(query='SELECT * FROM c WHERE c.deployment.status != "deleted" AND c.resourceType = "user-resource" AND c.id = "000000d3-82da-4bfc-b6e9-9a7853ef753e"')
+
+
+@patch('db.repositories.user_resources.UserResourceRepository.query', return_value=[])
+def test_get_user_resource_by_id_raises_entity_does_not_exist_if_not_found(_, user_resource_repo):
+    with pytest.raises(EntityDoesNotExist):
+        user_resource_repo.get_user_resource_by_id("000000d3-82da-4bfc-b6e9-9a7853ef753e")

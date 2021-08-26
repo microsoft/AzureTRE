@@ -1,4 +1,4 @@
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 
 from pydantic import Field
 
@@ -11,6 +11,16 @@ class Property(AzureTREModel):
     title: str = Field("", title="Property description")
     description: str = Field("", title="Property description")
     default: Any = Field(None, title="Default value for the property")
+    enum: Optional[List[str]] = Field(None, title="Enum values")
+    const: Optional[Any] = Field(None, title="Constant value")
+    multipleOf: Optional[float] = Field(None, title="Multiple of")
+    maximum: Optional[float] = Field(None, title="Maximum value")
+    exclusiveMaximum: Optional[float] = Field(None, title="Exclusive maximum value")
+    minimum: Optional[float] = Field(None, title="Minimum value")
+    exclusiveMinimum: Optional[float] = Field(None, title="Exclusive minimum value")
+    maxLength: Optional[int] = Field(None, title="Maximum length")
+    minLength: Optional[int] = Field(None, title="Minimum length")
+    pattern: Optional[str] = Field(None, title="Pattern")
 
 
 class ResourceTemplate(AzureTREModel):

@@ -4,12 +4,12 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from jsonschema.exceptions import ValidationError
 
 from api.dependencies.database import get_repository
-from api.dependencies.workspaces import get_workspace_by_workspace_id_from_path, get_deployed_workspace_by_workspace_id_from_path, get_deployed_workspace_service_by_id_from_path, get_workspace_service_by_id_from_path, get_workspace_by_id
+from api.dependencies.workspaces import get_workspace_by_workspace_id_from_path, get_deployed_workspace_by_workspace_id_from_path, get_deployed_workspace_service_by_id_from_path, get_workspace_service_by_id_from_path, get_workspace_by_id, get_user_resource_by_id_from_path
 from db.repositories.user_resources import UserResourceRepository
 from db.repositories.workspaces import WorkspaceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
 from models.domain.workspace import WorkspaceRole
-from models.schemas.user_resource import UserResourceIdInResponse, UserResourceInCreate, UserResourcesInList
+from models.schemas.user_resource import UserResourceInResponse, UserResourceIdInResponse, UserResourceInCreate, UserResourcesInList
 from models.schemas.workspace import WorkspaceInCreate, WorkspaceIdInResponse, WorkspacesInList, WorkspaceInResponse, WorkspacePatchEnabled
 from models.schemas.workspace_service import WorkspaceServiceIdInResponse, WorkspaceServiceInCreate, WorkspaceServicesInList, WorkspaceServiceInResponse
 from resources import strings
@@ -111,7 +111,7 @@ async def retrieve_users_active_workspace_services(user=Depends(get_current_user
 
 
 @router.post("/workspaces/{workspace_id}/workspace-services", status_code=status.HTTP_202_ACCEPTED, response_model=WorkspaceServiceIdInResponse, name=strings.API_CREATE_WORKSPACE_SERVICE)
-async def create_workspace_service(workspace_service_input: WorkspaceServiceInCreate, workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), user=Depends(get_current_user), workspace=Depends(get_workspace_by_workspace_id_from_path)) -> WorkspaceServiceIdInResponse:
+async def create_workspace_service(workspace_service_input: WorkspaceServiceInCreate, workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), user=Depends(get_current_user), workspace=Depends(get_deployed_workspace_by_workspace_id_from_path)) -> WorkspaceServiceIdInResponse:
     validate_user_is_owner_or_researcher_in_workspace(user, workspace)
 
     try:
@@ -159,3 +159,13 @@ async def retrieve_user_resources_for_workspace_service(service_id: str, user=De
             # filter only to the user - for researchers
             user_resources = [resource for resource in user_resources if resource.ownerId == user.id]
     return UserResourcesInList(userResources=user_resources)
+
+
+@router.get("/user-resources/{resource_id}", response_model=UserResourceInResponse, name=strings.API_GET_USER_RESOURCE)
+async def retrieve_user_resource_by_id(user_resource=Depends(get_user_resource_by_id_from_path), user=Depends(get_current_user), workspace_repo=Depends(get_repository(WorkspaceRepository))) -> UserResourceInResponse:
+    workspace = get_workspace_by_id(user_resource.workspaceId, workspace_repo)
+    role = get_user_role_in_workspace(user, workspace)
+    if role == WorkspaceRole.Owner or (role == WorkspaceRole.Researcher and user_resource.ownerId == user.id):
+        return UserResourceInResponse(userResource=user_resource)
+    else:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.ACCESS_USER_IS_NOT_OWNER_OR_RESEARCHER)

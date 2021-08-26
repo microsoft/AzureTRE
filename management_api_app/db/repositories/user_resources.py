@@ -44,3 +44,7 @@ class UserResourceRepository(ResourceRepository):
         query = self.active_user_resources_query(service_id)
         user_resources = self.query(query=query)
         return parse_obj_as(List[UserResource], user_resources)
+
+    def get_user_resource_by_id(self, resource_id: str) -> UserResource:
+        user_resource = self.get_resource_dict_by_type_and_id(resource_id, ResourceType.UserResource)
+        return parse_obj_as(UserResource, user_resource)
