@@ -16,7 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package org.apache.guacamole.auth.azuretre;
 
 import com.auth0.jwk.Jwk;
@@ -28,99 +27,86 @@ import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import org.apache.guacamole.GuacamoleException;
+import org.apache.guacamole.auth.azuretre.user.AzureTREAuthenticatedUser;
+import org.apache.guacamole.net.auth.Credentials;
+import org.apache.guacamole.net.auth.credentials.CredentialsInfo;
+import org.apache.guacamole.net.auth.credentials.GuacamoleInvalidCredentialsException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.servlet.http.HttpServletRequest;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.interfaces.RSAPublicKey;
 
-import javax.servlet.http.HttpServletRequest;
-import org.apache.guacamole.GuacamoleException;
-import org.apache.guacamole.net.auth.Credentials;
-import org.apache.guacamole.net.auth.credentials.CredentialsInfo;
-import org.apache.guacamole.net.auth.credentials.GuacamoleInvalidCredentialsException;
-import org.apache.guacamole.auth.azuretre.user.AzureTREAuthenticatedUser;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class AuthenticationProviderService {
 
-    private static final Logger logger = LoggerFactory.getLogger(AzureTREAuthenticationProvider.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AzureTREAuthenticationProvider.class);
 
     @Inject
     private Provider<AzureTREAuthenticatedUser> authenticatedUserProvider;
 
-    public AzureTREAuthenticatedUser authenticateUser(Credentials credentials) throws GuacamoleException {
-
-        logger.info("authenticateUser");
+    public AzureTREAuthenticatedUser authenticateUser(final Credentials credentials) throws GuacamoleException {
+        LOGGER.info("authenticateUser");
         // Pull HTTP header from request if present
-        HttpServletRequest request = credentials.getRequest();
-
+        final HttpServletRequest request = credentials.getRequest();
         // Get the username from the header
-        String accessToken = request.getHeader("x-Access-Token");
-
-        logger.info("### access token " + accessToken);
-
+        final String accessToken = request.getHeader("x-Access-Token");
+        LOGGER.info("### access token " + accessToken);
         if (accessToken != null) {
-            AzureTREAuthenticatedUser authenticatedUser = authenticatedUserProvider.get();
-
+            final AzureTREAuthenticatedUser authenticatedUser = authenticatedUserProvider.get();
             try {
-                UrlJwkProvider jwkProvider = new UrlJwkProvider(new URL(
-                        "https://login.microsoftonline.com/" + System.getenv("TENANT_ID") + "/discovery/v2.0/keys"));
+                final UrlJwkProvider jwkProvider = new UrlJwkProvider(new URL(
+                    "https://login.microsoftonline.com/" + System.getenv("TENANT_ID") + "/discovery/v2.0/keys"));
                 validateToken(credentials, accessToken, authenticatedUser, jwkProvider);
-                return authenticatedUser;
 
-            } catch (MalformedURLException ex) {
+                return authenticatedUser;
+            } catch (final MalformedURLException ex) {
+                LOGGER.error("Could not parse JWK Provider URL " + ex.getMessage());
                 throw new GuacamoleException("Could not parse JWK Provider URL");
             }
-
         }
 
         // Authentication not provided via header, yet, so we request it.
         throw new GuacamoleInvalidCredentialsException("Invalid login.", CredentialsInfo.USERNAME_PASSWORD);
-
     }
 
-    private void validateToken(Credentials credentials, String accessToken, AzureTREAuthenticatedUser authenticatedUser,
-            UrlJwkProvider jwkProvider) throws GuacamoleInvalidCredentialsException {
-
+    private void validateToken(final Credentials credentials, final String accessToken,
+                               final AzureTREAuthenticatedUser authenticatedUser,
+                               final UrlJwkProvider jwkProvider) throws GuacamoleInvalidCredentialsException {
         try {
+            if (System.getenv("AUDIENCE").length() == 0) {
+                throw new Exception("AUDIENCE is not provided");
+            }
+            if (System.getenv("ISSUER").length() == 0) {
+                throw new Exception("ISSUER is not provided");
+            }
+            final Jwk jwk = jwkProvider.get(JWT.decode(accessToken).getKeyId());
+            final Algorithm algorithm = Algorithm.RSA256((RSAPublicKey) jwk.getPublicKey(), null);
+            final JWTVerifier verifier = JWT.require(algorithm)
+                .withAudience(System.getenv("AUDIENCE"))
+                .withClaimPresence("roles")
+                .withIssuer(System.getenv("ISSUER"))
+                .build();
 
-            if(System.getenv("AUDIENCE").length() == 0) throw new Exception("AUDIENCE is not provided");
-            if(System.getenv("ISSUER").length() == 0) throw new Exception("ISSUER is not provided");
-
-            Jwk jwk = jwkProvider.get(JWT.decode(accessToken).getKeyId());
-            Algorithm algorithm = Algorithm.RSA256((RSAPublicKey) jwk.getPublicKey(), null);
-
-
-            JWTVerifier verifier = JWT.require(algorithm)
-            .withAudience(System.getenv("AUDIENCE"))
-            .withClaimPresence("roles")
-            .withIssuer(System.getenv("ISSUER"))
-            .build();
-
-            DecodedJWT jwt = verifier.verify(accessToken);
-
+            final DecodedJWT jwt = verifier.verify(accessToken);
             // Since we verify we have the correct Audience we validate the token if at least one role is present, no
             // matter which one.
-            Claim roles = jwt.getClaim("roles");
+            final Claim roles = jwt.getClaim("roles");
             if (roles == null || roles.isNull() || roles.asArray(Object.class).length == 0) {
                 throw new GuacamoleInvalidCredentialsException(
                     "Token must contain a 'roles' claim", CredentialsInfo.USERNAME_PASSWORD);
             }
-
-            String objectId = jwt.getClaim("oid").asString();
-            String username = jwt.getClaim("preferred_username").asString();
+            final String objectId = jwt.getClaim("oid").asString();
+            final String username = jwt.getClaim("preferred_username").asString();
 
             authenticatedUser.init(credentials, accessToken, username, objectId);
-
-        } catch (Exception ex) {
-            logger.info("Could not initialise user, possible access token verification issue: " + ex.getMessage());
+        } catch (final Exception ex) {
+            LOGGER.error("Could not initialise user, possible access token verification issue: " + ex.getMessage());
             throw new GuacamoleInvalidCredentialsException(
-                    "Could not initialise user, possible access token verification issue:" + ex.getMessage(),
-                    CredentialsInfo.USERNAME_PASSWORD);
+                "Could not initialise user, possible access token verification issue:" + ex.getMessage(),
+                CredentialsInfo.USERNAME_PASSWORD);
         }
-
     }
-
 }

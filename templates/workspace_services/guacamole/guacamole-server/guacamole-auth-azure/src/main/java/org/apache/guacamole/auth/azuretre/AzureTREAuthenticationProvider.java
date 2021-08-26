@@ -16,19 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package org.apache.guacamole.auth.azuretre;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.apache.guacamole.net.auth.AbstractAuthenticationProvider;
-import org.apache.guacamole.net.auth.AuthenticatedUser;
+import org.apache.guacamole.GuacamoleException;
 import org.apache.guacamole.auth.azuretre.user.AzureTREAuthenticatedUser;
 import org.apache.guacamole.auth.azuretre.user.UserContext;
-import org.apache.guacamole.GuacamoleException;
+import org.apache.guacamole.net.auth.AbstractAuthenticationProvider;
+import org.apache.guacamole.net.auth.AuthenticatedUser;
 import org.apache.guacamole.net.auth.Credentials;
-
-
 
 public class AzureTREAuthenticationProvider extends AbstractAuthenticationProvider {
 
@@ -37,10 +34,8 @@ public class AzureTREAuthenticationProvider extends AbstractAuthenticationProvid
     private final Injector injector;
 
     public AzureTREAuthenticationProvider() throws GuacamoleException {
-
         // Set up Guice injector.
         injector = Guice.createInjector(new AzureTREAuthenticationProviderModule(this));
-
     }
 
     @Override
@@ -49,32 +44,25 @@ public class AzureTREAuthenticationProvider extends AbstractAuthenticationProvid
     }
 
     @Override
-    public AzureTREAuthenticatedUser authenticateUser(Credentials credentials)
-            throws GuacamoleException {
-
+    public AzureTREAuthenticatedUser authenticateUser(final Credentials credentials) throws GuacamoleException {
         // Pass credentials to authentication service.
-        AuthenticationProviderService authProviderService = injector.getInstance(AuthenticationProviderService.class);
-        return authProviderService.authenticateUser(credentials);
+        final AuthenticationProviderService authProviderService;
+        authProviderService = injector.getInstance(AuthenticationProviderService.class);
 
+        return authProviderService.authenticateUser(credentials);
     }
 
     @Override
-    public UserContext getUserContext(AuthenticatedUser authenticatedUser) throws GuacamoleException {
-
-
+    public UserContext getUserContext(final AuthenticatedUser authenticatedUser) throws GuacamoleException {
         if (authenticatedUser != null) {
-
-            UserContext userContext = injector.getInstance(UserContext.class);
-
-            if (authenticatedUser instanceof AzureTREAuthenticatedUser)
+            final UserContext userContext = injector.getInstance(UserContext.class);
+            if (authenticatedUser instanceof AzureTREAuthenticatedUser) {
                 userContext.init((AzureTREAuthenticatedUser) authenticatedUser);
-                
+            }
+
             return userContext;
         }
-
         // Unauthorized
         return null;
-
     }
-    
 }
