@@ -61,6 +61,34 @@ resource "azurerm_private_endpoint" "sbpe" {
   }
 }
 
+resource "azurerm_servicebus_namespace_network_rule_set" "servicebus_network_rule_web_app" {
+  namespace_name      = azurerm_servicebus_namespace.sb.name
+  resource_group_name = var.resource_group_name
+
+  default_action = "Deny"
+
+  network_rules {
+    subnet_id                            = var.web_app_subnet_id
+    ignore_missing_vnet_service_endpoint = false
+  }
+
+  ip_rules = ["1.1.1.1"]
+}
+
+resource "azurerm_servicebus_namespace_network_rule_set" "servicebus_network_rule_resource_processor" {
+  namespace_name      = azurerm_servicebus_namespace.sb.name
+  resource_group_name = var.resource_group_name
+
+  default_action = "Deny"
+
+  network_rules {
+    subnet_id                            = var.resource_processor_subnet_id
+    ignore_missing_vnet_service_endpoint = false
+  }
+
+  ip_rules = ["1.1.1.1"]
+}
+
 output "servicebus_namespace" {
   value = azurerm_servicebus_namespace.sb
 }

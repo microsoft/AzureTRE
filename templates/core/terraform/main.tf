@@ -143,15 +143,15 @@ module "resource_processor_vmss_porter" {
   ]
 }
 
-
 module "servicebus" {
   source                       = "./servicebus"
+  tenant_id                    = data.azurerm_client_config.current.tenant_id
   tre_id                       = var.tre_id
   location                     = var.location
   resource_group_name          = azurerm_resource_group.core.name
-  resource_processor_subnet_id = module.network.resource_processor
   core_vnet                    = module.network.core
-  tenant_id                    = data.azurerm_client_config.current.tenant_id
+  web_app_subnet_id            = module.network.web_app
+  resource_processor_subnet_id = module.network.resource_processor
 }
 
 module "keyvault" {

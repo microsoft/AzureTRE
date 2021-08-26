@@ -115,7 +115,6 @@ resource "azurerm_private_endpoint" "management_api_private_endpoint" {
   }
 }
 
-
 resource "azurerm_app_service_virtual_network_swift_connection" "api-integrated-vnet" {
   app_service_id = azurerm_app_service.management_api.id
   subnet_id      = var.web_app_subnet
