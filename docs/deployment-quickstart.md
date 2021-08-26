@@ -93,7 +93,7 @@ Next up, you will set the configuration variables for the specific Azure TRE ins
 
 Open the `/templates/core/.env.sample` file and then save it without the .sample extension. You should now have a file called `.env` located in the `/templates/core` folder.
 
-The Azure TRE management API is protected by Azure Active Directory. This requires an application registration for the API and another application registration for the Open API UI.
+The Azure TRE API is protected by Azure Active Directory. This requires an application registration for the API and another application registration for the Open API UI.
 
 Use the terminal window in Visual Studio Code to execute the following script from within the development container:
 
@@ -161,7 +161,7 @@ The Azure TRE instance is initially deployed with an invalid self-signed SSL cer
 
 ### Using curl
 
-Use `curl` to make a simple request to the status endpoint of the management API:
+Use `curl` to make a simple request to the status endpoint of the API:
 
 ```bash
 /workspaces/tre> curl https://<azure_tre_fqdn>/api/status
@@ -175,7 +175,7 @@ The expected response is:
 
 ### Using the API docs
 
-Open your browser and navigate to the `/docs` route of the management API:  `https://<azure_tre_fqdn>/docs` and click *Try it out* on the operation of choice.
+Open your browser and navigate to the `/docs` route of the API:  `https://<azure_tre_fqdn>/docs` and click *Try it out* on the operation of choice.
 
 ![Swagger UI](./assets/quickstart_swaggerui.png)
 
