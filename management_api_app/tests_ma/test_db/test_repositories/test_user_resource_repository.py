@@ -10,7 +10,7 @@ from models.schemas.user_resource import UserResourceInCreate
 
 @pytest.fixture
 def basic_user_resource_request():
-    return UserResourceInCreate(userResourceType="user-resource-type", properties={"display_name": "test", "description": "test"})
+    return UserResourceInCreate(userResourceType="user-resource-type", properties={"display_name": "test", "description": "test", "tre_id": "test"})
 
 
 @pytest.fixture
@@ -31,6 +31,7 @@ def user_resource():
 
 
 @patch('db.repositories.user_resources.UserResourceRepository.validate_input_against_template')
+@patch('core.config.TRE_ID', "9876")
 def test_create_user_resource_item_creates_a_user_resource_with_the_right_values(validate_input_mock, user_resource_repo, basic_user_resource_request):
     user_resource_to_create = basic_user_resource_request
     validate_input_mock.return_value = basic_user_resource_request.userResourceType
@@ -46,6 +47,9 @@ def test_create_user_resource_item_creates_a_user_resource_with_the_right_values
     assert user_resource.workspaceId == workspace_id
     assert user_resource.parentWorkspaceServiceId == parent_workspace_service_id
     assert user_resource.ownerId == user_id
+    assert len(user_resource.resourceTemplateParameters["tre_id"]) > 0
+    # need to make sure request doesn't override system param
+    assert user_resource.resourceTemplateParameters["tre_id"] != "test"
 
 
 @patch('db.repositories.user_resources.UserResourceRepository.validate_input_against_template')
