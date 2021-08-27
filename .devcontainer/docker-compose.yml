@@ -7,7 +7,7 @@ services:
       context: ..
       dockerfile: .devcontainer/Dockerfile
       args:
-        VARIANT: "3.8"
+        VARIANT: "3.7"
         INSTALL_NODE: "false"
         NODE_VERSION: "lts/*"
     extra_hosts:
@@ -17,15 +17,15 @@ services:
       source: ..
       target: /workspaces/tre/
       consistency: cached
-    - type: bind
-      source: /var/run/docker.sock
-      target: /var/run/docker.sock
-    - type: bind
-      source: ../.bash_history
-      target: /home/vscode/.bash_history
-      consistency: cached
-    - type: bind
-      source: ${HOME}${USERPROFILE}/.azure
-      target: /home/vscode/.azure
-      consistency: cached
+    #- type: bind
+    #  source: /var/run/docker.sock
+    #  target: /var/run/docker.sock
+    #- type: bind
+    #  source: ../.bash_history
+    #  target: /home/vscode/.bash_history
+    #  consistency: cached
+    #- type: bind
+    #  source: ${HOME}${USERPROFILE}/.azure
+    #  target: /home/vscode/.azure
+    #  consistency: cached
     command: /bin/sh -c "while sleep 1000; do :; done"
