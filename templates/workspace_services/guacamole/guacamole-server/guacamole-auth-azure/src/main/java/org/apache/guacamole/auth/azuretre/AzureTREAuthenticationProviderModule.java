@@ -16,13 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package org.apache.guacamole.auth.azuretre;
 
 import com.google.inject.AbstractModule;
-
-import org.apache.guacamole.auth.azuretre.user.UserContext;
 import org.apache.guacamole.GuacamoleException;
+import org.apache.guacamole.auth.azuretre.user.UserContext;
 import org.apache.guacamole.environment.Environment;
 import org.apache.guacamole.environment.LocalEnvironment;
 import org.apache.guacamole.net.auth.AuthenticationProvider;
@@ -30,25 +28,18 @@ import org.apache.guacamole.net.auth.AuthenticationProvider;
 public class AzureTREAuthenticationProviderModule extends AbstractModule {
 
     private final Environment environment;
-    
+
     private final AuthenticationProvider authProvider;
 
-    public AzureTREAuthenticationProviderModule(AuthenticationProvider authProvider)
-            throws GuacamoleException {
-
+    public AzureTREAuthenticationProviderModule(final AuthenticationProvider authProvider) throws GuacamoleException {
         this.environment = new LocalEnvironment();
         this.authProvider = authProvider;
-
     }
 
     @Override
     protected void configure() {
-
         bind(AuthenticationProvider.class).toInstance(authProvider);
         bind(Environment.class).toInstance(environment);
-
         bind(UserContext.class);
-
     }
-
 }

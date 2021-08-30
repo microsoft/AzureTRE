@@ -30,9 +30,12 @@ class ResourceRepository(BaseRepository):
     def _validate_resource_parameters(resource_input, resource_template):
         validate(instance=resource_input["properties"], schema=resource_template)
 
-    def _get_enriched_template(self, template_name: str, resource_type: ResourceType):
+    def _get_enriched_template(self, template_name: str, resource_type: ResourceType, parent_template_name: str = ""):
         template_repo = ResourceTemplateRepository(self._client)
-        template = template_repo.get_current_template(template_name, resource_type)
+        if resource_type == ResourceType.UserResource:
+            template = template_repo.get_current_user_resource_template(template_name, parent_template_name)
+        else:
+            template = template_repo.get_current_template(template_name, resource_type)
         return template_repo.enrich_template(template)
 
     def get_resource_dict_by_id(self, resource_id: UUID4) -> dict:
@@ -49,12 +52,15 @@ class ResourceRepository(BaseRepository):
             raise EntityDoesNotExist
         return resources[0]
 
-    def validate_input_against_template(self, template_name: str, resource_input, resource_type: ResourceType) -> str:
+    def validate_input_against_template(self, template_name: str, resource_input, resource_type: ResourceType, parent_template_name: str = "") -> str:
         try:
-            template = self._get_enriched_template(template_name, resource_type)
+            template = self._get_enriched_template(template_name, resource_type, parent_template_name)
             template_version = template["version"]
         except EntityDoesNotExist:
-            raise ValueError(f'The template for "{template_name}" does not exist')
+            if resource_type == ResourceType.UserResource:
+                raise ValueError(f'The template "{template_name}" does not exist or is not valid for the workspace service type "{parent_template_name}"')
+            else:
+                raise ValueError(f'The template "{template_name}" does not exist')
 
         self._validate_resource_parameters(resource_input.dict(), template)
 

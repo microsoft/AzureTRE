@@ -38,40 +38,40 @@ parameters:
   - name: guac_disable_copy
     type: boolean
     default: true
-    env: guac_disable_copy
+    env: GUAC_DISABLE_COPY
     description: "Guacamole disable copy configuration"
   - name: guac_disable_paste
     type: boolean
     default: false
-    env: guac_disable_paste
+    env: GUAC_DISABLE_PASTE
     description: "Guacamole disable paste configuration"
   - name: guac_enable_drive
     type: boolean
     default: true
-    env: guac_enable_drive
+    env: GUAC_ENABLE_DRIVE
     description: "Guacamole enable drive configuration"
   - name: guac_drive_name
     type: string
     default: "transfer"
-    env: guac_drive_name
+    env: GUAC_DRIVE_NAME
     description: "Guacamole drive name configuration"
   - name: guac_drive_path
     type: string
     default: "/guac-transfer"
-    env: guac_drive_path
+    env: GUAC_DRIVE_PATH
     description: "Guacamole drive path configuration"
   - name: guac_disable_download
     type: boolean
     default: true
-    env: guac_disable_download
+    env: GUAC_DISABLE_DOWNLOAD
     description:  "Guacamole disable download configuration"
   - name: api_client_id
     type: string
-    env: api_client_id
+    env: API_CLIENT_ID
     description: "Azure API client id"
   - name: aad_tenant_id
     type: string
-    env: aad_tenant_id
+    env: AAD_TENANT_ID
     description: "AAD tenant id"
   # the following are added automatically by the resource processor
   - name: id
@@ -118,6 +118,14 @@ install:
         arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
         arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
         arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
+        guac_disable_copy: "{{ bundle.parameters.guac_disable_copy }}"
+        guac_disable_paste: "{{ bundle.parameters.guac_disable_paste }}"
+        guac_enable_drive: "{{ bundle.parameters.guac_enable_drive }}"
+        guac_drive_name: "{{ bundle.parameters.guac_drive_name }}"
+        guac_drive_path: "{{ bundle.parameters.guac_drive_path }}"
+        guac_disable_download: "{{ bundle.parameters.guac_disable_download }}"
+        api_client_id: "{{ bundle.parameters.api_client_id }}"
+        aad_tenant_id: "{{ bundle.parameters.aad_tenant_id }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
@@ -147,6 +155,14 @@ uninstall:
         arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
         arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
         arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
+        guac_disable_copy: "{{ bundle.parameters.guac_disable_copy }}"
+        guac_disable_paste: "{{ bundle.parameters.guac_disable_paste }}"
+        guac_enable_drive: "{{ bundle.parameters.guac_enable_drive }}"
+        guac_drive_name: "{{ bundle.parameters.guac_drive_name }}"
+        guac_drive_path: "{{ bundle.parameters.guac_drive_path }}"
+        guac_disable_download: "{{ bundle.parameters.guac_disable_download }}"
+        api_client_id: "{{ bundle.parameters.api_client_id }}"
+        aad_tenant_id: "{{ bundle.parameters.aad_tenant_id }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
