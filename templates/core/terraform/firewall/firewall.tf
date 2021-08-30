@@ -79,15 +79,12 @@ resource "azurerm_monitor_diagnostic_setting" "firewall" {
   }
 }
 
-
-
 resource "azurerm_firewall_application_rule_collection" "shared_services_subnet" {
   name                = "arc-shared_services_subnet"
   azure_firewall_name = azurerm_firewall.fw.name
   resource_group_name = azurerm_firewall.fw.resource_group_name
   priority            = 100
   action              = "Allow"
-
 
   rule {
     name = "package-sources"
@@ -110,7 +107,6 @@ resource "azurerm_firewall_application_rule_collection" "shared_services_subnet"
       "download.docker.com",
       "registry-1.docker.io",
       "auth.docker.io",
-      "*.azurecr.io",
       "registry.terraform.io"
     ]
     source_addresses = data.azurerm_subnet.shared.address_prefixes
@@ -124,10 +120,8 @@ resource "azurerm_firewall_network_rule_collection" "shared_services_subnet" {
   priority            = 100
   action              = "Allow"
 
-
   rule {
     name = "AzureServiceTags"
-
 
     protocols = [
       "TCP"
@@ -183,7 +177,6 @@ resource "azurerm_firewall_application_rule_collection" "resource_processor_subn
       "download.docker.com",
       "registry-1.docker.io",
       "auth.docker.io",
-      "*.azurecr.io",
       "registry.terraform.io",
       "releases.hashicorp.com"
     ]
@@ -202,10 +195,8 @@ resource "azurerm_firewall_network_rule_collection" "resource_processor_subnet" 
   priority            = 101
   action              = "Allow"
 
-
   rule {
     name = "AzureServiceTags"
-
 
     protocols = [
       "TCP"
@@ -215,7 +206,6 @@ resource "azurerm_firewall_network_rule_collection" "resource_processor_subnet" 
       "AzureActiveDirectory",
       "AzureResourceManager",
       "AzureContainerRegistry",
-      "AzureKeyVault",
       "AzureMonitor",
       "MicrosoftContainerRegistry",
       "Storage"
@@ -229,5 +219,41 @@ resource "azurerm_firewall_network_rule_collection" "resource_processor_subnet" 
 
   depends_on = [
     azurerm_firewall_application_rule_collection.resource_processor_subnet
+  ]
+}
+
+resource "azurerm_web_app_network_rule_collection" "web_app_subnet" {
+  name                = "nrc-web_app_subnet"
+  azure_firewall_name = azurerm_firewall.fw.name
+  resource_group_name = azurerm_firewall.fw.resource_group_name
+  priority            = 102
+  action              = "Allow"
+
+  rule {
+    name = "Azure-Services"
+
+    protocols = [
+      "TCP"
+    ]
+
+    destination_addresses = [
+      "AzureActiveDirectory",
+      "MicrosoftContainerRegistry",
+      "AzureContainerRegistry",
+      "AzureMonitor"
+    ]
+
+    target_fqdns = [
+      "graph.microsoft.com"
+    ]
+
+    destination_ports = [
+      "443"
+    ]
+    source_addresses = data.azurerm_subnet.web_app_subnet.address_prefixes
+  }
+
+  depends_on = [
+    azurerm_firewall_application_rule_collection.web_app_subnet
   ]
 }
