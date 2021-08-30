@@ -11,7 +11,7 @@ from models.schemas.workspace import WorkspaceInCreate, WorkspacePatchEnabled
 
 @pytest.fixture
 def basic_workspace_request():
-    return WorkspaceInCreate(workspaceType="base-tre", properties={"display_name": "test", "description": "test", "app_id": "123"})
+    return WorkspaceInCreate(workspaceType="base-tre", properties={"display_name": "test", "description": "test", "app_id": "123", "tre_id": "test"})
 
 
 @pytest.fixture
@@ -99,6 +99,8 @@ def test_get_workspace_by_id_queries_db(workspace_repo, workspace):
 
 @patch('db.repositories.workspaces.extract_auth_information', return_value={})
 @patch('db.repositories.workspaces.WorkspaceRepository.validate_input_against_template')
+@patch('core.config.RESOURCE_LOCATION', "useast2")
+@patch('core.config.TRE_ID', "9876")
 def test_create_workspace_item_creates_a_workspace_with_the_right_values(validate_input_mock, _, workspace_repo, basic_workspace_request):
     workspace_to_create = basic_workspace_request
     validate_input_mock.return_value = workspace_to_create.workspaceType
@@ -108,12 +110,13 @@ def test_create_workspace_item_creates_a_workspace_with_the_right_values(validat
     assert workspace.resourceTemplateName == workspace_to_create.workspaceType
     assert workspace.resourceType == ResourceType.Workspace
     assert workspace.deployment.status == Status.NotDeployed
-    assert "display_name" in workspace.resourceTemplateParameters
-    assert "description" in workspace.resourceTemplateParameters
-    assert "azure_location" in workspace.resourceTemplateParameters
-    assert "workspace_id" in workspace.resourceTemplateParameters
-    assert "tre_id" in workspace.resourceTemplateParameters
-    assert "address_space" in workspace.resourceTemplateParameters
+
+    for key in ["display_name", "description", "azure_location", "workspace_id", "tre_id", "address_space"]:
+        assert key in workspace.resourceTemplateParameters
+        assert len(workspace.resourceTemplateParameters[key]) > 0
+
+    # need to make sure request doesn't override system param
+    assert workspace.resourceTemplateParameters["tre_id"] != "test"
 
 
 @patch('db.repositories.workspaces.extract_auth_information', return_value={})

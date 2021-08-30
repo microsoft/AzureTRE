@@ -10,7 +10,7 @@ from models.schemas.workspace_service import WorkspaceServiceInCreate
 
 @pytest.fixture
 def basic_workspace_service_request():
-    return WorkspaceServiceInCreate(workspaceServiceType="workspace-service-type", properties={"display_name": "test", "description": "test"})
+    return WorkspaceServiceInCreate(workspaceServiceType="workspace-service-type", properties={"display_name": "test", "description": "test", "tre_id": "test"})
 
 
 @pytest.fixture
@@ -71,6 +71,7 @@ def test_get_workspace_service_by_id_queries_db(workspace_service_repo, workspac
 
 
 @patch('db.repositories.workspace_services.WorkspaceServiceRepository.validate_input_against_template')
+@patch('core.config.TRE_ID', "9876")
 def test_create_workspace_service_item_creates_a_workspace_with_the_right_values(validate_input_mock, workspace_service_repo, basic_workspace_service_request, basic_workspace_service_template):
     workspace_id = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
     workspace_service_to_create = basic_workspace_service_request
@@ -86,6 +87,9 @@ def test_create_workspace_service_item_creates_a_workspace_with_the_right_values
     assert workspace_service.resourceType == ResourceType.WorkspaceService
     assert workspace_service.deployment.status == Status.NotDeployed
     assert workspace_service.workspaceId == workspace_id
+    assert len(workspace_service.resourceTemplateParameters["tre_id"]) > 0
+    # need to make sure request doesn't override system param
+    assert workspace_service.resourceTemplateParameters["tre_id"] != "test"
 
 
 @patch('db.repositories.workspace_services.WorkspaceServiceRepository.validate_input_against_template')
