@@ -13,7 +13,7 @@ from models.domain.user_resource_template import UserResourceTemplate
 from models.schemas.resource_template import ResourceTemplateInformation
 from models.schemas.workspace_template import WorkspaceTemplateInResponse
 from resources import strings
-from services.concatjsonschema import enrich_workspace_service_schema_defs
+from services.schema_service import enrich_workspace_service_template
 
 pytestmark = pytest.mark.asyncio
 
@@ -119,7 +119,7 @@ class TestWorkspaceServiceTemplatesRequiringAdminRights:
 
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES), json=input_workspace_template.dict())
 
-        expected_template = parse_obj_as(WorkspaceTemplateInResponse, enrich_workspace_service_schema_defs(basic_workspace_service_template))
+        expected_template = parse_obj_as(WorkspaceTemplateInResponse, enrich_workspace_service_template(basic_workspace_service_template))
         assert json.loads(response.text)["required"] == expected_template.dict(exclude_unset=True)["required"]
         assert json.loads(response.text)["properties"] == expected_template.dict(exclude_unset=True)["properties"]
 
