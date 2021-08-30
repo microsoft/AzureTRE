@@ -231,7 +231,7 @@ class TestWorkspaceServiceTemplatesNotRequiringAdminRights:
             assert template in actual_templates
 
     # GET /workspace-service-templates/{service_template_name}/user-resource-templates/{user_resource_template_name}
-    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_user_resource_template")
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_template")
     async def test_user_resource_templates_by_name_returns_enriched_user_resource_template(self, get_current_template_mock, app, client, user_resource_template_without_enriching):
         service_template_name = "guacamole-service"
         user_resource_template_name = "vm-resource"
@@ -248,7 +248,7 @@ class TestWorkspaceServiceTemplatesNotRequiringAdminRights:
         (DuplicateEntity, status.HTTP_500_INTERNAL_SERVER_ERROR),
         (UnableToAccessDatabase, status.HTTP_503_SERVICE_UNAVAILABLE)
     ])
-    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_user_resource_template")
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_template")
     async def test_get_user_resource_templates_by_name_returns_returns_error_status_based_on_exception(self, get_current_template_mock, exception, expected_status, app, client):
         service_template_name = "guacamole-service"
         user_resource_template_name = "vm-resource"

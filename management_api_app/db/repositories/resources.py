@@ -32,10 +32,7 @@ class ResourceRepository(BaseRepository):
 
     def _get_enriched_template(self, template_name: str, resource_type: ResourceType, parent_template_name: str = ""):
         template_repo = ResourceTemplateRepository(self._client)
-        if resource_type == ResourceType.UserResource:
-            template = template_repo.get_current_user_resource_template(template_name, parent_template_name)
-        else:
-            template = template_repo.get_current_template(template_name, resource_type)
+        template = template_repo.get_current_template(template_name, resource_type, parent_template_name)
         return template_repo.enrich_template(template)
 
     def get_resource_dict_by_id(self, resource_id: UUID4) -> dict:
