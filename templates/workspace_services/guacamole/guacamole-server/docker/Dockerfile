@@ -1,10 +1,9 @@
 FROM maven:3-jdk-11-openj9 AS client_build
 
-COPY ./guacamole-auth-azure/pom.xml pom.xml 
-
+COPY ./guacamole-auth-azure/pom.xml pom.xml
 COPY ./guacamole-auth-azure/src src
-
 RUN mvn package
+
 
 FROM guacamole/guacd:1.3.0
 
@@ -32,15 +31,10 @@ RUN \
     mv apache-tomcat-${TOMCAT_VER}/ /usr/share/tomcat9/
 
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
-
-# retrieve auth integration from build image
-COPY --from=client_build /target/guacamole-auth-tre-${GUACAMOLE_AZURE_VERSION}.jar /guacamole/extensions/
-
 ENV CATALINA_BASE=/usr/share/tomcat9/
-
 ENV GUACAMOLE_HOME=/guacamole/
-
-RUN wget -O ${GUACAMOLE_HOME}/guacamole.war 'http://apache.org/dyn/closer.cgi?action=download&filename=guacamole/1.3.0/binary/guacamole-1.3.0.war'  
+ENV GUACAMOLE_LIB="${GUACAMOLE_HOME}/lib/"
+ENV CLASSPATH=${GUACAMOLE_LIB}:${CLASSPATH}
 
 RUN mkdir /guac-transfer
 
@@ -52,6 +46,11 @@ COPY ./docker/sshd_config /etc/ssh/
 
 COPY ./docker/services /etc/services.d/
 
-ENTRYPOINT [ "/init" ]
+# retrieve auth integration from build image
+COPY --from=client_build /target/lib/* ${GUACAMOLE_LIB}
+COPY --from=client_build /target/guacamole-auth-tre-${GUACAMOLE_AZURE_VERSION}.jar "${GUACAMOLE_HOME}/extensions/"
 
+RUN wget -O ${GUACAMOLE_HOME}/guacamole.war 'http://apache.org/dyn/closer.cgi?action=download&filename=guacamole/1.3.0/binary/guacamole-1.3.0.war'
+
+ENTRYPOINT [ "/init" ]
 EXPOSE 80 2222

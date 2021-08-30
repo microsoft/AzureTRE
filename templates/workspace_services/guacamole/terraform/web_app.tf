@@ -30,11 +30,8 @@ resource "azurerm_app_service" "guacamole" {
     WEBSITE_DNS_SERVER             = "168.63.129.16"
     SCM_DO_BUILD_DURING_DEPLOYMENT = "True"
 
-    RESOURCE_GROUP  = data.azurerm_resource_group.ws.name
-    SUBSCRIPTION_ID = data.azurerm_client_config.current.subscription_id
-    TENANT_ID       = data.azurerm_client_config.current.tenant_id
-    WORKSPACE_ID    = "${var.workspace_id}"
-    TRE_ID          = "${var.tre_id}"
+    TENANT_ID    = data.azurerm_client_config.current.tenant_id
+    KEYVAULT_URL = "${local.kv_url}"
 
     # Guacmole configuration
     GUAC_DISABLE_COPY     = "${var.guac_disable_copy}"
@@ -47,10 +44,119 @@ resource "azurerm_app_service" "guacamole" {
     ISSUER                = "${local.issuer}"
   }
 
+  logs {
+    application_logs {
+      file_system_level = "Information"
+    }
+
+    http_logs {
+      file_system {
+        retention_in_days = 7
+        retention_in_mb   = 100
+      }
+    }
+  }
+
   identity {
     type = "SystemAssigned"
   }
 }
+
+resource "azurerm_monitor_diagnostic_setting" "guacamole" {
+  name                       = "diag-${var.tre_id}"
+  target_resource_id         = azurerm_app_service.guacamole.id
+  log_analytics_workspace_id = data.azurerm_log_analytics_workspace.tre.id
+
+  log {
+    category = "AppServiceHTTPLogs"
+    enabled  = true
+
+    retention_policy {
+      days    = 1
+      enabled = false
+    }
+  }
+
+  log {
+    category = "AppServiceConsoleLogs"
+    enabled  = true
+
+    retention_policy {
+      days    = 1
+      enabled = false
+    }
+  }
+
+  log {
+    category = "AppServiceAppLogs"
+    enabled  = true
+
+    retention_policy {
+      days    = 1
+      enabled = false
+    }
+  }
+
+  log {
+    category = "AppServiceFileAuditLogs"
+    enabled  = true
+
+    retention_policy {
+      days    = 1
+      enabled = false
+    }
+  }
+
+  log {
+    category = "AppServiceAuditLogs"
+    enabled  = true
+
+    retention_policy {
+      days    = 1
+      enabled = false
+    }
+  }
+
+  log {
+    category = "AppServiceIPSecAuditLogs"
+    enabled  = true
+
+    retention_policy {
+      days    = 1
+      enabled = false
+    }
+  }
+
+  log {
+    category = "AppServicePlatformLogs"
+    enabled  = true
+
+    retention_policy {
+      days    = 1
+      enabled = false
+    }
+  }
+
+  log {
+    category = "AppServiceAntivirusScanAuditLogs"
+    enabled  = true
+
+    retention_policy {
+      days    = 1
+      enabled = false
+    }
+  }
+
+  metric {
+    category = "AllMetrics"
+    enabled  = true
+
+    retention_policy {
+      enabled = false
+    }
+  }
+}
+
 
 resource "azurerm_role_assignment" "guac_acr_pull" {
   scope                = data.azurerm_container_registry.mgmt_acr.id

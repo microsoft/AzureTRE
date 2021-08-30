@@ -19,10 +19,10 @@ class UserResourceRepository(ResourceRepository):
     def active_user_resources_query(service_id: str):
         return f'SELECT * FROM c WHERE c.resourceType = "{ResourceType.UserResource}" AND c.deployment.status != "{Status.Deleted}" AND c.parentWorkspaceServiceId = "{service_id}"'
 
-    def create_user_resource_item(self, user_resource_input: UserResourceInCreate, workspace_id: str, parent_workspace_service_id: str, user_id: str) -> UserResource:
+    def create_user_resource_item(self, user_resource_input: UserResourceInCreate, workspace_id: str, parent_workspace_service_id: str, parent_template_name: str, user_id: str) -> UserResource:
         full_user_resource_id = str(uuid.uuid4())
 
-        template_version = self.validate_input_against_template(user_resource_input.userResourceType, user_resource_input, ResourceType.UserResource)
+        template_version = self.validate_input_against_template(user_resource_input.userResourceType, user_resource_input, ResourceType.UserResource, parent_template_name)
 
         # we don't want something in the input to overwrite the system parameters, so dict.update can't work.
         resource_spec_parameters = {**user_resource_input.properties, **self.get_user_resource_spec_params()}
