@@ -159,8 +159,8 @@ class TestWorkspaceTemplate:
 
         expected_template = parse_obj_as(WorkspaceTemplateInResponse, enrich_workspace_schema_defs(basic_resource_template))
 
-        assert json.loads(response.text)["required"] == expected_template.required
-        assert json.loads(response.text)["properties"] == expected_template.properties
+        assert json.loads(response.text)["required"] == expected_template.dict(exclude_unset=True)["required"]
+        assert json.loads(response.text)["properties"] == expected_template.dict(exclude_unset=True)["properties"]
 
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.create_template")
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_template")

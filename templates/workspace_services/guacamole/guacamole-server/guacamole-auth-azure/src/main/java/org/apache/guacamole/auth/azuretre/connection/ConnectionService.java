@@ -16,14 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package org.apache.guacamole.auth.azuretre.connection;
-
-import java.io.IOException;
-import java.net.URI;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.TreeMap;
 
 import org.apache.guacamole.GuacamoleException;
 import org.apache.guacamole.auth.azuretre.AzureTREAuthenticationProvider;
@@ -35,93 +28,72 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
+import java.util.TreeMap;
+
 public class ConnectionService {
+    /**
+     * Logger for this class.
+     */
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionService.class);
 
-  /**
-   * Logger for this class.
-   */
-  private static final Logger logger = LoggerFactory.getLogger(ConnectionService.class);
+    public Map<String, Connection> getConnections(final AzureTREAuthenticatedUser user) throws GuacamoleException {
+        final Map<String, Connection> connections = new TreeMap<>();
+        final Map<String, GuacamoleConfiguration> configs = this.getConfigurations(user);
 
-  public Map<String, Connection> getConnections(AzureTREAuthenticatedUser user) throws GuacamoleException {
-
-    Map<String, Connection> connections = new TreeMap<String, Connection>();
-    Map<String, GuacamoleConfiguration> configs = this.getConfigurations(user);
-
-    Iterator<Map.Entry<String, GuacamoleConfiguration>> iterator = configs.entrySet().iterator();
-    while (iterator.hasNext()) {
-      Map.Entry<String, GuacamoleConfiguration> config = iterator.next();
-      Connection connection = new TokenInjectingConnection(config.getKey(), config.getKey(), config.getValue(), true,user);
-      connection.setParentIdentifier(AzureTREAuthenticationProvider.ROOT_CONNECTION_GROUP);
-      connections.putIfAbsent(config.getKey(), connection);
-    }
-
-    return connections;
-
-  }
-
-
-  private Map<String, GuacamoleConfiguration> getConfigurations(AzureTREAuthenticatedUser user)
-      throws GuacamoleException {
-
-    Map<String, GuacamoleConfiguration> configs = new TreeMap<String, GuacamoleConfiguration>();
-
-    if (user != null) {
-      try {
-
-        JSONArray vmsJsonArray = getVMsFromProjectAPI(user);
-        URI projectUri = new URI(System.getenv("PROJECT_URL"));
-
-        for (int i = 0; i < vmsJsonArray.length(); i++) {
-
-          GuacamoleConfiguration config = new GuacamoleConfiguration();
-
-          config.setProtocol("RDP");
-          JSONObject vmJsonObject = vmsJsonArray.getJSONObject(i);
-          config.setProtocol("rdp");
-
-          // Todo: uncomment when both xxxFromProjectAPI calls are implemented
-          // https://github.com/microsoft/AzureTRE/issues/558
-          // https://github.com/microsoft/AzureTRE/issues/561
-          //config.setParameter("hostname", vmJsonObject.get("name").toString() + "." + projectUri.getHost());
-          //config.setParameter("username", user.getIdentifier().split("@")[0].toLowerCase());
-          // Todo: DELETE when the above is uncommented
-          config.setParameter("hostname", System.getenv("TEMP_HOSTNAME"));
-          config.setParameter("username", System.getenv("TEMP_USERNAME").toLowerCase());
-
-          config.setParameter("resize-method", "display-update");
-          config.setParameter("azure-resource-id", vmJsonObject.get("resourceId").toString());
-          config.setParameter("port", "3389");
-          config.setParameter("ignore-cert", "true");
-          
-          config.setParameter("disable-copy", System.getenv("GUAC_DISABLE_COPY"));
-          config.setParameter("disable-paste", System.getenv("GUAC_DISABLE_PASTE"));
-          config.setParameter("enable-drive", System.getenv("GUAC_ENABLE_DRIVE"));
-          config.setParameter("drive-name", System.getenv("GUAC_DRIVE_NAME"));
-          config.setParameter("drive-path", System.getenv("GUAC_DRIVE_PATH"));
-          config.setParameter("disable-download", System.getenv("GUAC_DISABLE_DOWNLOAD"));
-
-
-          logger.info("Adding VM: " + config.getParameter("hostname"));
-          configs.putIfAbsent(config.getParameter("hostname"), config);
-
+        for (final Map.Entry<String, GuacamoleConfiguration> config : configs.entrySet()) {
+            final Connection connection = new TokenInjectingConnection(config.getKey(), config.getKey(),
+                config.getValue(), true);
+            connection.setParentIdentifier(AzureTREAuthenticationProvider.ROOT_CONNECTION_GROUP);
+            connections.putIfAbsent(config.getKey(), connection);
         }
-      } catch (Exception e) {
-        e.printStackTrace();
-        throw new GuacamoleException("Exception getting VMs: " + e.getMessage());
 
-      }
+        return connections;
     }
 
-    return configs;
+    private Map<String, GuacamoleConfiguration> getConfigurations(final AzureTREAuthenticatedUser user)
+        throws GuacamoleException {
+        final Map<String, GuacamoleConfiguration> configs = new TreeMap<>();
+        if (user != null) {
+            try {
+                final JSONArray vmsJsonArray = getVMsFromProjectAPI(user);
+                for (int i = 0; i < vmsJsonArray.length(); i++) {
+                    final GuacamoleConfiguration config = new GuacamoleConfiguration();
+                    final JSONObject vmJsonObject = vmsJsonArray.getJSONObject(i);
 
-  }
+                    config.setProtocol("RDP");
+                    config.setProtocol("rdp");
+                    config.setParameter("hostname", (String) vmJsonObject.get("name"));
+                    config.setParameter("resize-method", "display-update");
+                    config.setParameter("azure-resource-id", vmJsonObject.get("resourceId").toString());
+                    config.setParameter("port", "3389");
+                    config.setParameter("ignore-cert", "true");
+                    config.setParameter("disable-copy", System.getenv("GUAC_DISABLE_COPY"));
+                    config.setParameter("disable-paste", System.getenv("GUAC_DISABLE_PASTE"));
+                    config.setParameter("enable-drive", System.getenv("GUAC_ENABLE_DRIVE"));
+                    config.setParameter("drive-name", System.getenv("GUAC_DRIVE_NAME"));
+                    config.setParameter("drive-path", System.getenv("GUAC_DRIVE_PATH"));
+                    config.setParameter("disable-download", System.getenv("GUAC_DISABLE_DOWNLOAD"));
 
-  private JSONArray getVMsFromProjectAPI(AzureTREAuthenticatedUser user) throws GuacamoleException, IOException {
+                    final String hostname = config.getParameter("hostname");
+                    LOGGER.info("Adding a VM: {}", hostname);
+                    configs.putIfAbsent(hostname, config);
+                }
+            } catch (final Exception ex) {
+                LOGGER.error("Exception getting VMs", ex);
+                throw new GuacamoleException("Exception getting VMs: " + ex.getMessage());
+            }
+        }
 
-    JSONArray virtualMachines;
+        return configs;
+    }
 
-    // Todo: Implement / Uncomment when the relevant API call is available for consumption
-    // https://github.com/microsoft/AzureTRE/issues/558
+    private JSONArray getVMsFromProjectAPI(final AzureTREAuthenticatedUser user) {
+
+        final JSONArray virtualMachines;
+
+        // Todo: Implement / Uncomment when the relevant API call is available for consumption
+        // https://github.com/microsoft/AzureTRE/issues/558
     /*
     try {
       SSLContextBuilder builder = new SSLContextBuilder();
@@ -171,11 +143,9 @@ public class ConnectionService {
     return virtualMachines;
 
      */
+        final String json = System.getenv("VM_LIST");
+        virtualMachines = new JSONArray(json);
 
-    String json = "[ {\"name\": \"1.1.1.1\", \"resourceId\": \"1\"} ]";
-    virtualMachines = new JSONArray(json);
-
-    return virtualMachines;
-  }
-
+        return virtualMachines;
+    }
 }

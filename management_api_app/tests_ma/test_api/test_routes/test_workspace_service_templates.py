@@ -120,8 +120,8 @@ class TestWorkspaceServiceTemplatesRequiringAdminRights:
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES), json=input_workspace_template.dict())
 
         expected_template = parse_obj_as(WorkspaceTemplateInResponse, enrich_workspace_service_schema_defs(basic_workspace_service_template))
-        assert json.loads(response.text)["required"] == expected_template.required
-        assert json.loads(response.text)["properties"] == expected_template.properties
+        assert json.loads(response.text)["required"] == expected_template.dict(exclude_unset=True)["required"]
+        assert json.loads(response.text)["properties"] == expected_template.dict(exclude_unset=True)["properties"]
 
     # POST /workspace-service-templates/
     @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.create_template")

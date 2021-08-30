@@ -21,41 +21,38 @@ package org.apache.guacamole.auth.azuretre.user;
 
 
 import com.google.inject.Inject;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.guacamole.GuacamoleException;
 import org.apache.guacamole.auth.azuretre.AzureTREAuthenticationProvider;
+import org.apache.guacamole.auth.azuretre.connection.ConnectionService;
 import org.apache.guacamole.net.auth.AbstractUserContext;
 import org.apache.guacamole.net.auth.AuthenticationProvider;
 import org.apache.guacamole.net.auth.Connection;
 import org.apache.guacamole.net.auth.ConnectionGroup;
 import org.apache.guacamole.net.auth.Directory;
 import org.apache.guacamole.net.auth.User;
-import org.apache.guacamole.net.auth.simple.SimpleUser;
-import org.apache.guacamole.net.auth.simple.SimpleDirectory;
-import org.apache.guacamole.net.auth.simple.SimpleConnectionGroup;
-import org.apache.guacamole.auth.azuretre.connection.ConnectionService;
 import org.apache.guacamole.net.auth.UserGroup;
-import org.apache.guacamole.net.auth.simple.SimpleObjectPermissionSet;
 import org.apache.guacamole.net.auth.permission.ObjectPermissionSet;
-
+import org.apache.guacamole.net.auth.simple.SimpleConnectionGroup;
+import org.apache.guacamole.net.auth.simple.SimpleDirectory;
+import org.apache.guacamole.net.auth.simple.SimpleObjectPermissionSet;
+import org.apache.guacamole.net.auth.simple.SimpleUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 public class UserContext extends AbstractUserContext {
 
-    private static final Logger logger = LoggerFactory.getLogger(UserContext.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserContext.class);
 
     @Inject
     private ConnectionService connectionService;
 
     @Inject
     private AuthenticationProvider authProvider;
- 
-  
+
     private User self;
 
     private Directory<User> userDirectory;
@@ -66,36 +63,30 @@ public class UserContext extends AbstractUserContext {
 
     private ConnectionGroup rootGroup;
 
- 
-    public void init(AzureTREAuthenticatedUser user)
-            throws GuacamoleException {
-        
-        Map<String, User> users = new HashMap<>(1);
-        users.put(user.getIdentifier(),new SimpleUser(user.getIdentifier()));
-        
+
+    public void init(final AzureTREAuthenticatedUser user) throws GuacamoleException {
+        final Map<String, User> users = new HashMap<>(1);
+        users.put(user.getIdentifier(), new SimpleUser(user.getIdentifier()));
         userDirectory = new SimpleDirectory<>(
             users
         );
-
         // Query all accessible user groups
         userGroupDirectory = new SimpleDirectory<>(
             Collections.emptyMap()
         );
-
         // Query all accessible connections
-        connectionDirectory = new SimpleDirectory<>(        
+        connectionDirectory = new SimpleDirectory<>(
             connectionService.getConnections(user)
         );
-
         // Root group contains only connections
         rootGroup = new SimpleConnectionGroup(
             AzureTREAuthenticationProvider.ROOT_CONNECTION_GROUP,
             AzureTREAuthenticationProvider.ROOT_CONNECTION_GROUP,
             connectionDirectory.getIdentifiers(),
-            Collections.<String>emptyList()
+            Collections.emptyList()
         );
 
-        self = new SimpleUser(user.getIdentifier()){
+        self = new SimpleUser(user.getIdentifier()) {
 
             @Override
             public ObjectPermissionSet getUserPermissions() throws GuacamoleException {
@@ -113,8 +104,9 @@ public class UserContext extends AbstractUserContext {
             }
 
             @Override
-            public ObjectPermissionSet getConnectionGroupPermissions() throws GuacamoleException {
-                return new SimpleObjectPermissionSet(Collections.singleton(AzureTREAuthenticationProvider.ROOT_CONNECTION_GROUP));
+            public ObjectPermissionSet getConnectionGroupPermissions() {
+                return new SimpleObjectPermissionSet(
+                    Collections.singleton(AzureTREAuthenticationProvider.ROOT_CONNECTION_GROUP));
             }
 
         };
@@ -127,33 +119,32 @@ public class UserContext extends AbstractUserContext {
 
     @Override
     public AuthenticationProvider getAuthenticationProvider() {
-        logger.debug("getAuthenticationProvider");
+        LOGGER.debug("getAuthenticationProvider");
         return authProvider;
     }
 
     @Override
-    public Directory<User> getUserDirectory() throws GuacamoleException {
-        
-        logger.debug("getUserDirectory");
+    public Directory<User> getUserDirectory() {
+
+        LOGGER.debug("getUserDirectory");
         return userDirectory;
     }
 
     @Override
-    public Directory<UserGroup> getUserGroupDirectory() throws GuacamoleException {
-        logger.debug("getUserGroupDirectory");
+    public Directory<UserGroup> getUserGroupDirectory() {
+        LOGGER.debug("getUserGroupDirectory");
         return userGroupDirectory;
     }
 
     @Override
-    public Directory<Connection> getConnectionDirectory() throws GuacamoleException {
-        logger.debug("getConnectionDirectory");
+    public Directory<Connection> getConnectionDirectory() {
+        LOGGER.debug("getConnectionDirectory");
         return connectionDirectory;
     }
 
     @Override
-    public ConnectionGroup getRootConnectionGroup() throws GuacamoleException {
-        logger.debug("getRootConnectionGroup");
+    public ConnectionGroup getRootConnectionGroup() {
+        LOGGER.debug("getRootConnectionGroup");
         return rootGroup;
     }
-
 }

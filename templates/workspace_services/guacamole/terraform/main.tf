@@ -57,6 +57,11 @@ data "azurerm_container_registry" "mgmt_acr" {
   resource_group_name = var.mgmt_resource_group_name
 }
 
+data "azurerm_log_analytics_workspace" "tre" {
+  name                = "log-${var.tre_id}"
+  resource_group_name = local.core_resource_group_name
+}
+
 output "connection_uri" {
   value = azurerm_app_service.guacamole.default_site_hostname
 }
