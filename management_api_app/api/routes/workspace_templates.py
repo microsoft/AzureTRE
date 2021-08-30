@@ -19,10 +19,7 @@ router = APIRouter(dependencies=[Depends(get_current_admin_user)])
 
 def get_current_template_by_name(template_name: str, template_repo: ResourceTemplateRepository, resource_type: ResourceType, parent_service_template_name: str = "") -> dict:
     try:
-        if resource_type == ResourceType.UserResource:
-            template = template_repo.get_current_user_resource_template(template_name, parent_service_template_name)
-        else:
-            template = template_repo.get_current_template(template_name, resource_type)
+        template = template_repo.get_current_template(template_name, resource_type, parent_service_template_name)
         return template_repo.enrich_template(template)
     except EntityDoesNotExist:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.TEMPLATE_DOES_NOT_EXIST)
