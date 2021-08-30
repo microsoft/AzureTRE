@@ -46,16 +46,8 @@ class WorkspaceRepository(ResourceRepository):
 
         auth_info = extract_auth_information(workspace_input.properties["app_id"])
 
-        # system generated parameters
-        resource_spec_parameters = {
-            "azure_location": config.RESOURCE_LOCATION,
-            "workspace_id": full_workspace_id[-4:],
-            "tre_id": config.TRE_ID,
-            "address_space": "10.2.1.0/24"  # TODO: Calculate this value - Issue #52
-        }
-
-        # user provided parameters
-        resource_spec_parameters.update(workspace_input.properties)
+        # we don't want something in the input to overwrite the system parameters, so dict.update can't work.
+        resource_spec_parameters = {**workspace_input.properties, **self.get_workspace_spec_params(full_workspace_id)}
 
         workspace = Workspace(
             id=full_workspace_id,
@@ -71,3 +63,12 @@ class WorkspaceRepository(ResourceRepository):
     def patch_workspace(self, workspace: Workspace, workspace_patch: WorkspacePatchEnabled):
         workspace.resourceTemplateParameters["enabled"] = workspace_patch.enabled
         self.update_item(workspace)
+
+    def get_workspace_spec_params(self, full_workspace_id: str):
+        params = self.get_resource_base_spec_params()
+        params.update({
+            "azure_location": config.RESOURCE_LOCATION,
+            "workspace_id": full_workspace_id[-4:],  # TODO: remove with #729
+            "address_space": "10.2.1.0/24"  # TODO: Calculate this value - Issue #52
+        })
+        return params

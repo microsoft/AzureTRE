@@ -40,17 +40,23 @@ class WorkspaceServiceRepository(ResourceRepository):
         workspace_service = self.get_resource_dict_by_type_and_id(workspace_service_id, ResourceType.WorkspaceService)
         return parse_obj_as(WorkspaceService, workspace_service)
 
+    def get_workspace_service_spec_params(self):
+        return self.get_resource_base_spec_params()
+
     def create_workspace_service_item(self, workspace_service_input: WorkspaceServiceInCreate, workspace_id: str) -> WorkspaceService:
         full_workspace_service_id = str(uuid.uuid4())
 
         template_version = self.validate_input_against_template(workspace_service_input.workspaceServiceType, workspace_service_input, ResourceType.WorkspaceService)
+
+        # we don't want something in the input to overwrite the system parameters, so dict.update can't work.
+        resource_spec_parameters = {**workspace_service_input.properties, **self.get_workspace_service_spec_params()}
 
         workspace_service = WorkspaceService(
             id=full_workspace_service_id,
             workspaceId=workspace_id,
             resourceTemplateName=workspace_service_input.workspaceServiceType,
             resourceTemplateVersion=template_version,
-            resourceTemplateParameters=workspace_service_input.properties,
+            resourceTemplateParameters=resource_spec_parameters,
             deployment=Deployment(status=Status.NotDeployed, message=strings.RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE)
         )
 
