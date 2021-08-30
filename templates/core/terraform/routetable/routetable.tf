@@ -33,8 +33,3 @@ resource "azurerm_subnet_route_table_association" "rt_app_gw_subnet_association"
   subnet_id      = var.app_gw_subnet_id
   route_table_id = azurerm_route_table.rt.id
 }
-
-resource "azurerm_subnet_route_table_association" "rt_aci_subnet_association" {
-  subnet_id      = var.aci_subnet_id
-  route_table_id = azurerm_route_table.rt.id
-}

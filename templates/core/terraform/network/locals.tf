@@ -5,6 +5,5 @@ locals {
   bastion_subnet_address_prefix            = local.core_services_vnet_subnets[2] # .128 - .191
   web_app_subnet_address_prefix            = local.core_services_vnet_subnets[3] # .192 - .254
   shared_services_subnet_address_prefix    = local.core_services_vnet_subnets[4] # .0 - .254
-  aci_subnet_address_prefix                = local.core_services_vnet_subnets[5] # .0 - .254
   resource_processor_subnet_address_prefix = local.core_services_vnet_subnets[6] # .0 - .254
 }
