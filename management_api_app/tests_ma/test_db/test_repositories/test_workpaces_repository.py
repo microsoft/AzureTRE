@@ -15,35 +15,6 @@ def basic_workspace_request():
 
 
 @pytest.fixture
-def basic_workspace_template(basic_resource_template):
-    basic_resource_template.resourceType = ResourceType.Workspace
-    basic_resource_template.required = ["display_name", "description"]
-    basic_resource_template.properties = {
-        "display_name": {
-            "type": "string",
-            "title": "Name for the workspace",
-            "description": "The name of the workspace to be displayed to users"
-        },
-        "description": {
-            "type": "string",
-            "title": "Description of the workspace",
-            "description": "Description of the workspace"
-        },
-        "address_space": {
-            "type": "string",
-            "title": "Address space",
-            "description": "Network address space to be used by the workspace"
-        },
-        "enabled": {
-            "type": "boolean",
-            "title": "Is the workspace enabled",
-            "description": "Is the workspace enabled"
-        }
-    }
-    return basic_resource_template
-
-
-@pytest.fixture
 def workspace_repo():
     with patch('azure.cosmos.CosmosClient') as cosmos_client_mock:
         yield WorkspaceRepository(cosmos_client_mock)
