@@ -129,11 +129,8 @@ resource "azurerm_firewall_network_rule_collection" "shared_services_subnet" {
 
     destination_addresses = [
       "AzureActiveDirectory",
-      "AzureResourceManager",
-      "AzureContainerRegistry",
       "AzureMonitor",
       "MicrosoftContainerRegistry",
-      "Storage"
     ]
 
     destination_ports = [
@@ -207,7 +204,6 @@ resource "azurerm_firewall_network_rule_collection" "resource_processor_subnet" 
       "AzureResourceManager",
       "AzureContainerRegistry",
       "AzureMonitor",
-      "MicrosoftContainerRegistry",
       "Storage"
     ]
 
@@ -238,13 +234,13 @@ resource "azurerm_web_app_network_rule_collection" "web_app_subnet" {
 
     destination_addresses = [
       "AzureActiveDirectory",
-      "MicrosoftContainerRegistry",
       "AzureContainerRegistry",
       "AzureMonitor"
     ]
 
     target_fqdns = [
-      "graph.microsoft.com"
+      "graph.microsoft.com",
+      "download.docker.com"
     ]
 
     destination_ports = [

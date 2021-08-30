@@ -6,12 +6,12 @@ The Azure Trusted Research Environment (TRE) consists of multiple components, al
 
 The Azure TRE management plane consists of two groups of components:
 
-- Management API & Composition Service
+- TRE API & Composition Service
 - Shared Services
 
 > Shared Services is still work in progress. Please see [#23](https://github.com/microsoft/AzureTRE/issues/23), [#22](https://github.com/microsoft/AzureTRE/issues/21), & [#21](https://github.com/microsoft/AzureTRE/issues/21)
 
-Management API is a service that users can interact with to request changes to workspaces e.g., to create, update, delete workspaces and workspace services inside each workspace. The Composition Service is doing the actual work of mutating the state of each Workspace including the Workspace Services.
+TRE API is a service that users can interact with to request changes to workspaces e.g., to create, update, delete workspaces and workspace services inside each workspace. The Composition Service is doing the actual work of mutating the state of each Workspace including the Workspace Services.
 
 Ingress/egress components governs all inbound and outbound traffic from the public Internet to and from Azure TRE including the Workspaces. The Firewall Service is managing the egress rules of the Firewall.
 
@@ -27,7 +27,7 @@ The [TRE Administrator](./user-roles.md#tre-administrator) can register a Porter
 To do so requires:
 
 1. The Porter bundle to be pushed to the Azure Container Registry (ACR).
-1. Registering the Workspace through Management API.
+1. Registering the Workspace through TRE API.
 
 Details on how to [register a Workspace Template](registering-workspace-templates.md).
 
@@ -39,14 +39,14 @@ The Composition Service consists of multiple components.
 
 | Component Name | Responsibility / Description |
 | --- | --- |
-| Management API | An API responsible for performing all operations on Workspaces and managing Workspace Templates. |
+| TRE API | An API responsible for performing all operations on Workspaces and managing Workspace Templates. |
 | Configuration Store | Keeping the state of Workspaces and Workspace Templates. The store uses [Cosmos DB (SQL)](https://docs.microsoft.com/en-us/azure/cosmos-db/introduction). |
 | Service Bus | [Azure Service Bus](https://docs.microsoft.com/en-us/azure/service-bus-messaging/service-bus-messaging-overview) responsible for reliable delivery of messages between components.  |
 | Resource Processor | Responsible for starting the process of mutating a Workspace via a Workspace Template. |
 
 The flow to provision a Workspace is the following (the flow is the same for all kinds of mutations to a Workspace):
 
-1. A HTTP request to Management API to create a new Workspace. The request contains information like the name of the Workspace, the Workspace Template to use and the parameters required for the Workspace Template (Workspace Templates can via a JSON Schema expose the the parameters).
+1. A HTTP request to TRE API to create a new Workspace. The request contains information like the name of the Workspace, the Workspace Template to use and the parameters required for the Workspace Template (Workspace Templates can via a JSON Schema expose the the parameters).
 1. The desired state of the Workspace is updated in the Configuration Store.
 1. A command message with the Workspace Template reference and parameters are send to the `workspacequeue`.
 
@@ -109,14 +109,21 @@ Azure TRE VNETs are segregated allowing limited traffic between the TRE Manageme
 
 Each of these rules can be managed per Workspace.
 
-Each Workspace has a default route routing all egress traffic through the Azure Firewall, to ensure only explicitly allowed destinations on the Internet to be accessed. It is planned that all other subnet will use the same pattern (Issue [#421](https://github.com/microsoft/AzureTRE/issues/421))
+Each Workspace sand the management subnets has a default route routing all egress traffic through the Azure Firewall, to ensure only explicitly allowed destinations on the Internet to be accessed. The exceptions are the `AzureFirewallSubnet` and `AzureBastionSubnet`, which hosts the Azure Firewall and the [Azure Bastion](https://azure.microsoft.com/en-us/services/azure-bastion) - each of these does not route traffic to the [Azure Firewall](https://docs.microsoft.com/en-us/azure/firewall/) and therefore does not limit egress Internet traffic.
+
+The allowed egress trafic is described here:
+
+- [Resource Processor](../resource_processor/vmss_porter/readme.md#network-requirements)
+- [TRE API](../management_api_app/README.md#network-requirements)
+- [Gitea Shared Service](../templates/shared_services/gitea/readme.md#network-requirements)
+- [Nexus Shared Service](../templates/shared_services/sonatype-nexus/readme.md#network-requirements)
 
 The Azure Firewall rules are:
 
 - No default inbound rules – block all.
 - No default outbound rules – block all.
 
-Inbound traffic from the Internet is only allowed through the Application Gateway, which forwards HTTPS (port 443) call to the TRE Management API in the `WebAppSubnet`.
+Inbound traffic from the Internet is only allowed through the Application Gateway, which forwards HTTPS (port 443) call to the TRE API in the `WebAppSubnet`.
 
 | Subnet | Description |
 | -------| ----------- |
@@ -124,5 +131,5 @@ Inbound traffic from the Internet is only allowed through the Application Gatewa
 | `AppGwSubnet` | Subnet for Azure Application Gateway controlling ingress traffic. |
 | `AzureFirewallSubnet` | Subnet for Azure Firewall controlling egress traffic. |
 | `ResourceProcessorSubnet` | Subnet for VMSS used by the Composition Service to host Docker containers to execute Porter bundles that deploys Workspaces. |
-| `WebAppSubnet` | Subnet for Management API. |
-| `SharedSubnet` | Shared Services subnet for all things shared by TRE Management and Workspaces. Future Shared Services are Firewall Shared Service, Source Mirror Shared Service and Package Mirror Shared Service. |
+| `WebAppSubnet` | Subnet for TRE API. |
+| `SharedSubnet` | Shared Services subnet for all things shared by TRE instance and Workspaces. Future Shared Services are Firewall Shared Service, Source Mirror Shared Service and Package Mirror Shared Service. |

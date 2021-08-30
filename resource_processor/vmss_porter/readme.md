@@ -56,3 +56,26 @@ This will trigger receiving of messages and you can freely debug the code by set
 ## Debugging deployed processor on Azure
 
 Check the section **Checking the Virtual Machine Scale Set(VMSS) instance running resource processor** in [debugging and troubleshooting guide](../../docs/ops_debugging_troubleshooting.md)
+
+## Network requirements
+
+To be able to run the Resource Processer it need to be able to acccess the following resource outside the Azure TRE VNET via explicit allowed [Service Tags](https://docs.microsoft.com/en-us/azure/virtual-network/service-tags-overview) or URLs.
+
+| Service Tag / Destionation | Justification |
+| --- | --- |
+| AzureActiveDirectory | Authenticate with the User Assigned identity to access Azure Resource Manager and Azure Service Bus. |
+| AzureResourceManager | Access the Azure controle plane to deploy and manage Azure resources. |
+| AzureMonitor | Publish traces and logs to one central place for troubleshooting. |
+| AzureContainerRegistry | Pull the Resource Processer container image, as it is located in Azure Container Registry.  |
+| Storage | ?? |
+| packages.microsoft.com | ?? |
+| keyserver.ubuntu.com | ?? |
+| api.snapcraft.io | ?? |
+| azure.archive.ubuntu.com | ?? |
+| security.ubuntu.com | ?? |
+| entropy.ubuntu.com | ?? |
+| download.docker.com | Pull the Python base container image the Resource Processor is based on. |
+| registry-1.docker.io | ?? |
+| auth.docker.io | ?? |
+| registry.terraform.io | ?? |
+| releases.hashicorp.com | ?? |
