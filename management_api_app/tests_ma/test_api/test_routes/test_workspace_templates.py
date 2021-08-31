@@ -12,7 +12,7 @@ from db.errors import DuplicateEntity, EntityDoesNotExist, UnableToAccessDatabas
 from models.domain.resource_template import ResourceTemplate
 from models.schemas.resource_template import ResourceTemplateInformation
 from models.schemas.workspace_template import WorkspaceTemplateInResponse
-from services.concatjsonschema import enrich_workspace_schema_defs
+from services.schema_service import enrich_workspace_template
 
 
 pytestmark = pytest.mark.asyncio
@@ -157,7 +157,7 @@ class TestWorkspaceTemplate:
 
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_workspace_template.dict())
 
-        expected_template = parse_obj_as(WorkspaceTemplateInResponse, enrich_workspace_schema_defs(basic_resource_template))
+        expected_template = parse_obj_as(WorkspaceTemplateInResponse, enrich_workspace_template(basic_resource_template))
 
         assert json.loads(response.text)["required"] == expected_template.dict(exclude_unset=True)["required"]
         assert json.loads(response.text)["properties"] == expected_template.dict(exclude_unset=True)["properties"]
