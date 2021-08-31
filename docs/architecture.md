@@ -11,7 +11,7 @@ The Azure TRE management plane consists of two groups of components:
 
 > Shared Services is still work in progress. Please see [#23](https://github.com/microsoft/AzureTRE/issues/23), [#22](https://github.com/microsoft/AzureTRE/issues/21), & [#21](https://github.com/microsoft/AzureTRE/issues/21)
 
-TRE API is a service that users can interact with to request changes to workspaces e.g., to create, update, delete workspaces and workspace services inside each workspace. The Composition Service is doing the actual work of mutating the state of each Workspace including the Workspace Services.
+TRE API is a service that users can interact with to request changes to workspaces, workspace services and user resources e.g., to create, update and delete workspaces and workspace services inside each workspace. The Composition Service is doing the actual work of mutating the state of each Workspace including the Workspace Services.
 
 Ingress/egress components governs all inbound and outbound traffic from the public Internet to and from Azure TRE including the Workspaces. The Firewall Service is managing the egress rules of the Firewall.
 
@@ -109,7 +109,7 @@ Azure TRE VNETs are segregated allowing limited traffic between the TRE Manageme
 
 Each of these rules can be managed per Workspace.
 
-Each Workspace sand the management subnets has a default route routing all egress traffic through the Azure Firewall, to ensure only explicitly allowed destinations on the Internet to be accessed. The exceptions are the `AzureFirewallSubnet` and `AzureBastionSubnet`, which hosts the Azure Firewall and the [Azure Bastion](https://azure.microsoft.com/en-us/services/azure-bastion) - each of these does not route traffic to the [Azure Firewall](https://docs.microsoft.com/en-us/azure/firewall/) and therefore does not limit egress Internet traffic.
+Each Workspace and the management subnets have a default route routing all egress traffic through the Azure Firewall, to ensure only explicitly allowed destinations on the Internet to be accessed. The exceptions are the `AzureFirewallSubnet` and `AzureBastionSubnet`, which hosts the Azure Firewall and the [Azure Bastion](https://azure.microsoft.com/en-us/services/azure-bastion) - none of these route traffic to the [Azure Firewall](https://docs.microsoft.com/en-us/azure/firewall/) and therefore do not limit egress Internet traffic.
 
 The allowed egress trafic is described here:
 

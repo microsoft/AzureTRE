@@ -239,8 +239,7 @@ resource "azurerm_web_app_network_rule_collection" "web_app_subnet" {
     ]
 
     target_fqdns = [
-      "graph.microsoft.com",
-      "download.docker.com"
+      "graph.microsoft.com"
     ]
 
     destination_ports = [
