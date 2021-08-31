@@ -11,7 +11,7 @@ The management API is by default configured to not show detailed error messages 
 However, you can enable **DEBUG=true** in the configuration settings of the management API using Azure portal.
 
 1. Go to App Service for the management API and select Settings > Configuration.
-1. Click New Application Setting. 
+1. Click New Application Setting.
 1. in the new dialog box set Name = DEBUG and Value = true
 
 ![API Debug True](./assets/api_debug_true.png)

@@ -107,8 +107,8 @@ The **TRE e2e test** app registration is used to authorize end-to-end test scena
 
     ![Add auth platform](assets/aad-add-auth-platform.png)
 
-1. Allow public client flows (see the image below). This enables the end-to-end tests to use a username and password combination to authenticate. 
-   
+1. Allow public client flows (see the image below). This enables the end-to-end tests to use a username and password combination to authenticate.
+
    > **Note:** this should never be allowed for a production environment as it poses a security risk.
 
     ![Allow public client flows - Yes](./assets/app-reg-authentication-allow-public-client-flows-yes.png)
