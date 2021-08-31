@@ -31,8 +31,8 @@ resource "azurerm_app_service" "guacamole" {
     SCM_DO_BUILD_DURING_DEPLOYMENT = "True"
 
     TENANT_ID    = data.azurerm_client_config.current.tenant_id
-    KEYVAULT_URL = "${local.kv_url}"
-    API_URL      = "${local.api_url}"
+    KEYVAULT_URL = local.kv_url
+    API_URL      = local.api_url
     SERVICE_ID   = "${var.tre_resource_id}"
 
     # Guacmole configuration
@@ -43,7 +43,7 @@ resource "azurerm_app_service" "guacamole" {
     GUAC_DRIVE_PATH       = "${var.guac_drive_path}"
     GUAC_DISABLE_DOWNLOAD = "${var.guac_disable_download}"
     AUDIENCE              = "${var.api_client_id}"
-    ISSUER                = "${local.issuer}"
+    ISSUER                = local.issuer
   }
 
   logs {
@@ -198,7 +198,7 @@ resource "azurerm_network_security_rule" "allow-outbound-within-guacamole-and-ap
   destination_address_prefix  = data.azurerm_subnet.web_apps_core.address_prefix
   source_address_prefix       = data.azurerm_subnet.web_apps.address_prefix
   direction                   = "Outbound"
-  name                        = "outbound-within-guacamole-and-api-subnets"
+  name                        = "outbound-workspace-webapps-to-tre-core-webapps" # guacamole access to api
   network_security_group_name = data.azurerm_network_security_group.ws.name
   priority                    = 200
   protocol                    = "TCP"
@@ -212,7 +212,7 @@ resource "azurerm_network_security_rule" "allow-inbound-within-webapps-and-servi
   destination_address_prefix  = data.azurerm_subnet.services.address_prefix
   source_address_prefix       = data.azurerm_subnet.web_apps.address_prefix
   direction                   = "Inbound"
-  name                        = "inbound-within-webapps-and-services-subnets"
+  name                        = "inbound-rdp-from-webapps-to-services-subnets" # guacamole (webapp) and vm (service) are on different subnets
   network_security_group_name = data.azurerm_network_security_group.ws.name
   priority                    = 200
   protocol                    = "TCP"

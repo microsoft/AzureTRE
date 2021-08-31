@@ -7,7 +7,6 @@ resource "random_string" "unique_id" {
 locals {
   service_id                   = random_string.unique_id.result
   short_workspace_id           = substr(var.workspace_id, -4, -1)
-  location                     = data.azurerm_resource_group.ws.location
   service_resource_name_suffix = "${var.tre_id}-ws-${local.short_workspace_id}-svc-${local.service_id}"
   webapp_name                  = "guacamole-${local.service_resource_name_suffix}"
   core_vnet                    = "vnet-${var.tre_id}"
