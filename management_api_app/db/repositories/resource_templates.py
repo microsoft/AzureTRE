@@ -11,7 +11,7 @@ from models.domain.resource import ResourceType
 from models.domain.resource_template import ResourceTemplate
 from models.domain.user_resource_template import UserResourceTemplate
 from models.schemas.resource_template import ResourceTemplateInCreate, ResourceTemplateInformation
-from services.concatjsonschema import enrich_workspace_schema_defs, enrich_workspace_service_schema_defs, enrich_user_resource_schema_defs
+from services.schema_service import enrich_workspace_template, enrich_workspace_service_template, enrich_user_resource_template
 
 
 class ResourceTemplateRepository(BaseRepository):
@@ -25,11 +25,11 @@ class ResourceTemplateRepository(BaseRepository):
     @staticmethod
     def enrich_template(template: ResourceTemplate) -> dict:
         if template.resourceType == ResourceType.Workspace:
-            return enrich_workspace_schema_defs(template)
+            return enrich_workspace_template(template)
         elif template.resourceType == ResourceType.WorkspaceService:
-            return enrich_workspace_service_schema_defs(template)
+            return enrich_workspace_service_template(template)
         else:
-            return enrich_user_resource_schema_defs(template)
+            return enrich_user_resource_template(template)
 
     def get_templates_information(self, resource_type: ResourceType, parent_service_name: str = "") -> List[ResourceTemplateInformation]:
         """
