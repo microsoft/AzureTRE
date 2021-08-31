@@ -16,3 +16,4 @@ variable "guac_drive_path" {}
 variable "guac_disable_download" {}
 variable "api_client_id" {}
 variable "aad_tenant_id" {}
+variable "is_internal_network" {}

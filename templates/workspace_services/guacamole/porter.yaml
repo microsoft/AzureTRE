@@ -73,6 +73,11 @@ parameters:
     type: string
     env: AAD_TENANT_ID
     description: "AAD tenant id"
+  - name: is_internal_network
+    type: boolean
+    default: true
+    env: IS_INTERNAL_NETWORK
+    description: "Determines if the web app will be available over public/internet or private networks"
   # the following are added automatically by the resource processor
   - name: id
     type: string
