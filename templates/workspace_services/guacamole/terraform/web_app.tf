@@ -33,7 +33,7 @@ resource "azurerm_app_service" "guacamole" {
     TENANT_ID    = data.azurerm_client_config.current.tenant_id
     KEYVAULT_URL = "${local.kv_url}"
     PROJECT_URL  = "${local.project_url}"
-    SERVICE_ID   = "${var.key}"
+    SERVICE_ID   = "${var.tre_resource_id}"
 
     # Guacmole configuration
     GUAC_DISABLE_COPY     = "${var.guac_disable_copy}"
