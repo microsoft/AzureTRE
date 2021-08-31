@@ -23,21 +23,17 @@ import org.apache.guacamole.auth.azuretre.AzureTREAuthenticationProvider;
 import org.apache.guacamole.auth.azuretre.user.AzureTREAuthenticatedUser;
 import org.apache.guacamole.net.auth.Connection;
 import org.apache.guacamole.protocol.GuacamoleConfiguration;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.ssl.SSLContextBuilder;
-import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -104,38 +100,27 @@ public class ConnectionService {
 
     private JSONArray getVMsFromProjectAPI(final AzureTREAuthenticatedUser user) throws GuacamoleException {
         final JSONArray virtualMachines;
+
+        final String url = String.format("%s/api/workspace-services/%s/user-resources", System.getenv("API_URL"),
+            System.getenv("SERVICE_ID"));
+        final var client = HttpClient.newHttpClient();
+        final var request = HttpRequest.newBuilder(URI.create(url))
+            .header("accept", "application/json")
+            .header("Authorization", "Bearer " + user.getAccessToken())
+            .timeout(Duration.ofSeconds(5))
+            .build();
+        final HttpResponse<String> response;
         try {
-            SSLContextBuilder builder = new SSLContextBuilder();
-            builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
-            SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(builder.build());
-            CloseableHttpClient httpClient = HttpClients.custom().setSSLSocketFactory(sslsf).build();
-            try {
-                final URI projectUri = new URI(System.getenv("API_URL"));
-                final String serviceId = System.getenv("SERVICE_ID");
-                final URIBuilder uriBuilder = new URIBuilder()
-                    .setScheme(projectUri.getScheme())
-                    .setHost(projectUri.getHost())
-                    .setPath(String.format("api/workspace-services/%s/user-resources", serviceId));
-                final URI uri = uriBuilder.build();
-                final HttpGet httpget = new HttpGet(uri);
-                httpget.addHeader("Authorization", "Bearer " + user.getAccessToken());
-                final CloseableHttpResponse httpResponse = httpClient.execute(httpget);
-                final String json = EntityUtils.toString(httpResponse.getEntity());
-                if (json.length() != 0) {
-                    final JSONObject result = new JSONObject(json);
-                    virtualMachines = result.getJSONArray("userResources");
-                } else {
-                    virtualMachines = new JSONArray();
-                }
-            } catch (final Exception e) {
-                LOGGER.error("Failed to get user resources", e);
-                throw new GuacamoleException("Failed to get user resources: " + e.getMessage());
-            } finally {
-                httpClient.close();
-            }
-        } catch (final Exception e) {
-            LOGGER.error("Failed to close http connection", e);
-            throw new GuacamoleException("Failed to close http connection: " + e.getMessage());
+            response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (final IOException | InterruptedException ex) {
+            LOGGER.error("Connection failed", ex);
+            throw new GuacamoleException("Connection failed: " + ex.getMessage());
+        }
+        if (!response.body().isBlank()) {
+            final JSONObject result = new JSONObject(response.body());
+            virtualMachines = result.getJSONArray("userResources");
+        } else {
+            virtualMachines = new JSONArray();
         }
 
         return virtualMachines;
