@@ -26,12 +26,11 @@ import org.apache.guacamole.protocol.GuacamoleConfiguration;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.ssl.SSLContexts;
+import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -73,12 +72,12 @@ public class ConnectionService {
                     final JSONObject vmJsonObject = vmsJsonArray.getJSONObject(i);
                     final JSONObject templateParameters = (JSONObject) vmJsonObject.get("resourceTemplateParameters");
                     if (templateParameters.has("hostname") && templateParameters.has("ip")) {
-                        final String azure_resource_id = templateParameters.getString("hostname");
+                        final String azureResourceId = templateParameters.getString("hostname");
                         final String ip = templateParameters.getString("ip");
                         config.setProtocol("rdp");
                         config.setParameter("hostname", ip);
                         config.setParameter("resize-method", "display-update");
-                        config.setParameter("azure-resource-id", azure_resource_id);
+                        config.setParameter("azure-resource-id", azureResourceId);
                         config.setParameter("port", "3389");
                         config.setParameter("ignore-cert", "true");
                         config.setParameter("disable-copy", System.getenv("GUAC_DISABLE_COPY"));
@@ -106,13 +105,12 @@ public class ConnectionService {
     private JSONArray getVMsFromProjectAPI(final AzureTREAuthenticatedUser user) throws GuacamoleException {
         final JSONArray virtualMachines;
         try {
-            final CloseableHttpClient httpClient = HttpClients.custom()
-                .setSSLSocketFactory(new SSLConnectionSocketFactory(
-                    SSLContexts.custom().loadTrustMaterial(null, new TrustSelfSignedStrategy()).build(),
-                    NoopHostnameVerifier.INSTANCE)
-                ).build();
+            SSLContextBuilder builder = new SSLContextBuilder();
+            builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
+            SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(builder.build());
+            CloseableHttpClient httpClient = HttpClients.custom().setSSLSocketFactory(sslsf).build();
             try {
-                final URI projectUri = new URI(System.getenv("PROJECT_URL"));
+                final URI projectUri = new URI(System.getenv("API_URL"));
                 final String serviceId = System.getenv("SERVICE_ID");
                 final URIBuilder uriBuilder = new URIBuilder()
                     .setScheme(projectUri.getScheme())
