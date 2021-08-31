@@ -10,10 +10,11 @@ ARG NODE_VERSION="lts/*"
 RUN if [ "${INSTALL_NODE}" = "true" ]; then su vscode -c "umask 0002 && . /usr/local/share/nvm/nvm.sh && nvm install ${NODE_VERSION} 2>&1"; fi
 
 # Install terraform
+ARG TERRAFORM_VERSION
 RUN apt-get update && apt-get install -y gnupg software-properties-common curl \
-    && curl -fsSL https://apt.releases.hashicorp.com/gpg |  apt-key add - \
+    && curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add - \
     && apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
-    && apt-get update && apt-get install -y terraform
+    && apt-get update && apt-get install -y terraform "${TERRAFORM_VERSION}"
 
 # Install Azure CLI
 RUN curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
@@ -22,7 +23,7 @@ RUN curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 RUN groupadd --gid 1001 docker
 
 # Install Docker
-RUN apt-get update &&  sudo apt-get install -y  apt-transport-https ca-certificates curl gnupg  lsb-release \
+RUN apt-get update && sudo apt-get install -y  apt-transport-https ca-certificates curl gnupg  lsb-release \
     && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
     && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" \
     | tee /etc/apt/sources.list.d/docker.list > /dev/null \
@@ -38,7 +39,10 @@ RUN apt-get install -y python3 python3-venv libaugeas0 \
     && /opt/certbot/bin/pip install certbot
 
 # Install Porter
-RUN export PORTER_HOME=/home/vscode/.porter && curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && /home/vscode/.porter/porter mixin install docker  && chown -R vscode /home/vscode/.porter/
+RUN export PORTER_HOME=/home/vscode/.porter \
+    && curl -L https://cdn.porter.sh/latest/install-linux.sh | bash \
+    && ${PORTER_HOME}/porter mixin install docker \
+    && chown -R vscode ${PORTER_HOME}
 
 ENV PATH /home/vscode/.porter/:$PATH
 
