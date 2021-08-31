@@ -8,17 +8,17 @@ This document describes the authentication and authorization (A&A) of deployed A
 App registrations (represented by service principals) define the privileges enabling access to the TRE system (e.g., [Management API](../management_api_app/README.md)) as well as the workspaces.
 
 <!-- markdownlint-disable-next-line MD013 -->
-It is recommended to run the [`/scripts/aad-app-reg.sh`](../scripts/aad-app-reg.sh) script to create the two main app registrations: "TRE API" and "TRE Swagger UI". It automatically setups the app registrations with the required permissions to run Azure TRE. The script will create an app password (client secret) for the "TRE API" app; make sure to take note of it in the script output as it is only shown once.
+It is recommended to run the [`/scripts/aad-app-reg.sh`](../scripts/aad-app-reg.sh) script to create the two main app registrations: **TRE API** and **TRE Swagger UI**. This automatically sets up the app registrations with the required permissions to run Azure TRE. The script will create an app password (client secret) for the **TRE API** app; make sure to take note of it in the script output as it is only shown once.
 
 Alternatively you can also choose to create the app registrations manually via the Azure Portal - see [Quickstart: Register an application with the Microsoft identity platform](https://docs.microsoft.com/azure/active-directory/develop/quickstart-register-app) on how. The required setup with permissions is documented below.
 
-That is the authentication and authorization setup needed to run the Azure TRE. Below is details about the permissions and if you want to setup the end-to-end automated tests, as it requires a [third app registration](#tre-e2e-test).
+That is the authentication and authorization setup needed to run the Azure TRE. Below is details about the permissions and if you want to set up the end-to-end automated tests, as it requires a [third app registration](#tre-e2e-test).
 
 Workspaces rely on app registrations as well, and those are documented under [Workspaces](#workspaces).
 
 ### TRE API
 
-TRE API app registration defines the permissions, scopes and app roles for Management API users to authenticate and authorize API calls.
+The **TRE API** app registration defines the permissions, scopes and app roles for Management API users to authenticate and authorize API calls.
 
 #### API permissions - TRE API
 
@@ -45,13 +45,13 @@ See [Microsoft Graph permissions reference](https://docs.microsoft.com/graph/per
 
 #### Authentication - TRE API
 
-TRE API app registration requires no redirect URLs defined or anything else for that matter. From security standpoint it should be noted that public client flows should not be allowed (see image below taken from app registration authentication blade in Azure Portal).
+The **TRE API** app registration requires no redirect URLs defined or anything else for that matter. From a security standpoint it should be noted that public client flows should not be allowed (see the image below taken from app registration authentication blade in Azure Portal).
 
 ![Allow public client flows - No](./assets/app-reg-authentication-allow-public-client-flows-no.png)
 
 ### TRE Swagger UI
 
-TRE Swagger UI app registration:
+**TRE Swagger UI** app registration:
 
 * Controls the access to the Swagger UI of Management API
 * Has no scopes or app roles defined
@@ -80,12 +80,12 @@ The Swagger UI is a public client, so public client flows need to be enabled:
 
 ### TRE e2e test
 
-TRE e2e test app registration is used to authorize end-to-end test scenarios. It has no scopes or app roles defined.
+The **TRE e2e test** app registration is used to authorize end-to-end test scenarios. It has no scopes or app roles defined.
 
 > **Note:**
 >
 > * This app registration is only needed and used for **testing**
-> * As of writing this, there is no automated way provided for creating "TRE e2e test" app registration, but it needs to be created manually.
+> * As of writing this, there is no automated way provided for creating the **TRE e2e test** app registration, so it needs to be created manually.
 
 #### API permissions - TRE e2e test
 
@@ -100,14 +100,16 @@ TRE e2e test app registration is used to authorize end-to-end test scenarios. It
 
 1. Define Redirect URLs:
 
-    In TRE e2e test app registration go to Authentication -> Add platform -> Select Mobile & Desktop and add:
+    In the **TRE e2e test** app registration go to Authentication -> Add platform -> Select Mobile & Desktop and add:
 
     * `https://login.microsoftonline.com/common/oauth2/nativeclient`
     * `msal<TRE e2e test app registration application (client) ID>://auth`
 
     ![Add auth platform](assets/aad-add-auth-platform.png)
 
-1. Allow public client flows (see image below). This enables the end-to-end tests to use a username and password combination to authenticate. Note that this should never be allowed for a production environment as it poses a security risk.
+1. Allow public client flows (see the image below). This enables the end-to-end tests to use a username and password combination to authenticate. 
+   
+   > **Note:** this should never be allowed for a production environment as it poses a security risk.
 
     ![Allow public client flows - Yes](./assets/app-reg-authentication-allow-public-client-flows-yes.png)
 
@@ -115,9 +117,9 @@ TRE e2e test app registration is used to authorize end-to-end test scenarios. It
 
 The end-to-end test authentication and authorization is done via a dummy user, using its username and password, dedicated just for running the tests.
 
-The user is linked to the application (app registration) the same way as any users (see [Enabling users](#enabling-users)).
+The user is linked to the application (app registration) the same way as any other users (see [Enabling users](#enabling-users)).
 
-The end-to-end test should be added to TRE Administrator role exposed by the TRE API application, and to Owners role exposed by the Workspaces application.
+The end-to-end test should be added to **TRE Administrator** role exposed by the **TRE API** application, and to the **Owners** role exposed by the Workspaces application.
 
 ### Workspaces
 
