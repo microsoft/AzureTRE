@@ -46,8 +46,6 @@ resource "azurerm_subnet" "web_app" {
       actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
     }
   }
-
-  service_endpoints = ["Microsoft.ServiceBus"]
 }
 
 resource "azurerm_subnet" "aci" {
@@ -101,6 +99,4 @@ resource "azurerm_subnet" "resource_processor" {
   address_prefixes     = [local.resource_processor_subnet_address_prefix]
   # notice that private endpoints do not adhere to NSG rules
   enforce_private_link_endpoint_network_policies = true
-
-  service_endpoints = ["Microsoft.ServiceBus"]
 }
