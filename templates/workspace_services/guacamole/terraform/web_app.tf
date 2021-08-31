@@ -170,8 +170,8 @@ resource "azurerm_app_service_virtual_network_swift_connection" "guacamole" {
 }
 
 resource "azurerm_private_endpoint" "guacamole" {
-  # disabling this makes the webapp available on the public interet
-  count               = var.is_internal_network == true ? 1 : 0
+  # disabling this makes the webapp available on the public internet
+  count               = var.is_exposed_externally == false ? 1 : 0
   name                = "pe-${local.webapp_name}"
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
