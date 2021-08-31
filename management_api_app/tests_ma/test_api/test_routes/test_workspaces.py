@@ -480,7 +480,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         assert response.status_code == status.HTTP_202_ACCEPTED
         assert response.json()["workspaceId"] == workspace_id
 
-    # [POST] /workspaces/{workspace_id}/services
+    # [POST] /workspaces/{workspace_id}/workspace-services
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
     @ patch("api.routes.workspaces.send_resource_request_message")
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.save_item")
@@ -499,6 +499,37 @@ class TestWorkspaceRoutesThatRequireAdminRights:
 
         assert response.status_code == status.HTTP_202_ACCEPTED
         assert response.json()["workspaceServiceId"] == workspace_service_id
+
+    # [POST] /workspaces/{workspace_id}/workspace-services
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @ patch("api.routes.workspaces.WorkspaceServiceRepository.create_workspace_service_item", side_effect=ValueError)
+    async def test_workspace_services_post_raises_400_bad_request_if_input_is_bad(self, _, get_workspace_mock, app, client, workspace_service_input):
+        workspace_id = "98b8799a-7281-4fc5-91d5-49684a4810ff"
+        auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'roles': {'WorkspaceOwner': 'ab124', 'WorkspaceResearcher': 'ab125'}}
+        workspace = sample_workspace(workspace_id, auth_info_user_in_workspace_owner_role)
+        workspace.deployment.status = Status.Deployed
+        get_workspace_mock.return_value = workspace
+
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE, workspace_id=workspace_id), json=workspace_service_input)
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    # [POST] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_deployed_workspace_by_workspace_id")
+    @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_deployed_workspace_service_by_id")
+    @patch("api.routes.workspaces.UserResourceRepository.create_user_resource_item", side_effect=ValueError)
+    async def test_user_resources_post_raises_400_bad_request_if_input_is_bad(self, _, __, get_workspace_mock, app, client, sample_user_resource_input_data):
+        workspace_id = "98b8799a-7281-4fc5-91d5-49684a4810ff"
+        parent_workspace_service_id = "937453d3-82da-4bfc-b6e9-9a7853ef753e"
+        auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'roles': {'WorkspaceOwner': 'ab124', 'WorkspaceResearcher': 'ab125'}}
+        workspace = sample_workspace(workspace_id, auth_info_user_in_workspace_owner_role)
+        get_workspace_mock.return_value = workspace
+
+        input_data = sample_user_resource_input_data
+
+        response = await client.post(app.url_path_for(strings.API_CREATE_USER_RESOURCE, workspace_id=workspace_id, service_id=parent_workspace_service_id), json=input_data)
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     # [POST] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_deployed_workspace_by_workspace_id")
@@ -716,3 +747,16 @@ class TestWorkspaceRoutesThatRequireAdminRights:
 
         # assert we revert the workspace
         restore_previous_deletion_state_mock.assert_called_once()
+
+    # [DELETE] /workspaces/{workspace_id}
+    @ patch("api.dependencies.workspaces.get_repository")
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @ patch("api.routes.workspaces.WorkspaceServiceRepository.get_active_workspace_services_for_workspace")
+    @ patch('azure.cosmos.CosmosClient')
+    @ patch('api.routes.workspaces.WorkspaceRepository.mark_resource_as_deleting', side_effect=Exception)
+    async def test_workspace_delete_raises_503_if_marking_the_resource_as_deleted_in_the_db_fails(self, _, __, ___, get_workspace_mock, _____, client, app, disabled_workspace):
+        get_workspace_mock.return_value = disabled_workspace
+
+        response = await client.delete(app.url_path_for(strings.API_DELETE_WORKSPACE, workspace_id="933ad738-7265-4b5f-9eae-a1a62928772e"))
+
+        assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE

@@ -109,16 +109,33 @@ def test_get_enriched_template_returns_the_enriched_template(get_current_mock, r
 
     template = resource_repo._get_enriched_template("template1", ResourceType.Workspace)
 
-    get_current_mock.assert_called_once_with('template1', ResourceType.Workspace)
+    get_current_mock.assert_called_once_with('template1', ResourceType.Workspace, '')
     assert "display_name" in template["properties"]
 
 
-@patch("db.repositories.resources.ResourceTemplateRepository.get_current_user_resource_template")
-def test_get_enriched_template_returns_the_enriched_template_for_user_resources(get_current_urt_mock, resource_repo):
+@patch("db.repositories.resources.ResourceTemplateRepository.get_current_template")
+def test_get_enriched_template_returns_the_enriched_template_for_user_resources(get_current_mock, resource_repo):
     user_resource_template = UserResourceTemplate(id="abc", name="template1", description="", version="", resourceType=ResourceType.Workspace, current=True, required=[], properties={}, parentWorkspaceService="parent-template1")
-    get_current_urt_mock.return_value = user_resource_template
+    get_current_mock.return_value = user_resource_template
 
     template = resource_repo._get_enriched_template("template1", ResourceType.UserResource, "parent-template1")
 
-    get_current_urt_mock.assert_called_once_with('template1', 'parent-template1')
+    get_current_mock.assert_called_once_with('template1', ResourceType.UserResource, 'parent-template1')
     assert "display_name" in template["properties"]
+
+
+def test_get_resource_dict_by_id_queries_db(resource_repo):
+    item_id = "123"
+    resource_repo.query = MagicMock(return_value=[{"id": item_id}])
+
+    resource_repo.get_resource_dict_by_id(item_id)
+
+    resource_repo.query.assert_called_once_with(query='SELECT * FROM c WHERE c.deployment.status != "deleted" AND c.id = "123"')
+
+
+def test_get_resource_dict_by_id_raises_entity_does_not_exist_if_no_resources_come_back(resource_repo):
+    item_id = "123"
+    resource_repo.query = MagicMock(return_value=[])
+
+    with pytest.raises(EntityDoesNotExist):
+        resource_repo.get_resource_dict_by_id(item_id)

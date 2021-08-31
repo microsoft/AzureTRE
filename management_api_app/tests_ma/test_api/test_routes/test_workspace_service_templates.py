@@ -13,7 +13,7 @@ from models.domain.user_resource_template import UserResourceTemplate
 from models.schemas.resource_template import ResourceTemplateInformation
 from models.schemas.workspace_template import WorkspaceTemplateInResponse
 from resources import strings
-from services.concatjsonschema import enrich_workspace_service_schema_defs
+from services.schema_service import enrich_workspace_service_template
 
 pytestmark = pytest.mark.asyncio
 
@@ -119,7 +119,7 @@ class TestWorkspaceServiceTemplatesRequiringAdminRights:
 
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES), json=input_workspace_template.dict())
 
-        expected_template = parse_obj_as(WorkspaceTemplateInResponse, enrich_workspace_service_schema_defs(basic_workspace_service_template))
+        expected_template = parse_obj_as(WorkspaceTemplateInResponse, enrich_workspace_service_template(basic_workspace_service_template))
         assert json.loads(response.text)["required"] == expected_template.dict(exclude_unset=True)["required"]
         assert json.loads(response.text)["properties"] == expected_template.dict(exclude_unset=True)["properties"]
 
@@ -135,6 +135,13 @@ class TestWorkspaceServiceTemplatesRequiringAdminRights:
         await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES), json=input_workspace_service_template.dict())
 
         create_template_mock.assert_called_once_with(input_workspace_service_template, ResourceType.WorkspaceService, '')
+
+    # POST /workspace-service-templates/
+    @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.create_and_validate_template", side_effect=EntityVersionExist)
+    async def test_creating_a_template_raises_409_conflict_if_template_version_exists(self, _, client, app, input_workspace_service_template):
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES), json=input_workspace_service_template.dict())
+
+        assert response.status_code == status.HTTP_409_CONFLICT
 
     # GET /workspace-service-templates/{template_name}
     @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.get_current_template")
@@ -160,6 +167,15 @@ class TestWorkspaceServiceTemplatesRequiringAdminRights:
         response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_SERVICE_TEMPLATE_BY_NAME, service_template_name="template1"))
 
         assert response.status_code == expected_status
+
+    # POST /workspace-service-templates/{service_template_name}/user-resource-templates
+    @patch("api.dependencies.workspace_service_templates.ResourceTemplateRepository.get_current_template", side_effect=EntityDoesNotExist)
+    async def test_creating_user_resource_template_raises_404_if_service_template_does_not_exist(self, _, input_user_resource_template, app, client):
+        parent_workspace_service_name = "some_template_name"
+
+        response = await client.post(app.url_path_for(strings.API_CREATE_USER_RESOURCE_TEMPLATES, service_template_name=parent_workspace_service_name), json=input_user_resource_template.dict())
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
     # POST /workspace-service-templates/{template_name}/user-resource-templates
     @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.create_and_validate_template")
@@ -231,7 +247,7 @@ class TestWorkspaceServiceTemplatesNotRequiringAdminRights:
             assert template in actual_templates
 
     # GET /workspace-service-templates/{service_template_name}/user-resource-templates/{user_resource_template_name}
-    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_user_resource_template")
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_template")
     async def test_user_resource_templates_by_name_returns_enriched_user_resource_template(self, get_current_template_mock, app, client, user_resource_template_without_enriching):
         service_template_name = "guacamole-service"
         user_resource_template_name = "vm-resource"
@@ -248,7 +264,7 @@ class TestWorkspaceServiceTemplatesNotRequiringAdminRights:
         (DuplicateEntity, status.HTTP_500_INTERNAL_SERVER_ERROR),
         (UnableToAccessDatabase, status.HTTP_503_SERVICE_UNAVAILABLE)
     ])
-    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_user_resource_template")
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_template")
     async def test_get_user_resource_templates_by_name_returns_returns_error_status_based_on_exception(self, get_current_template_mock, exception, expected_status, app, client):
         service_template_name = "guacamole-service"
         user_resource_template_name = "vm-resource"

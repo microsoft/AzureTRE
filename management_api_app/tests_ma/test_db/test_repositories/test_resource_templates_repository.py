@@ -31,12 +31,27 @@ def sample_resource_template_as_dict(name: str, version: str = "1.0", resource_t
     return sample_resource_template(name, version, resource_type).dict()
 
 
+def sample_user_resource_template_as_dict(name: str, version: str = "1.0") -> dict:
+    template = UserResourceTemplate(id="123", name=name, description="", version=version, current=True, required=[], properties={}, parentWorkspaceService="parent_service")
+    return template.dict()
+
+
 @patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
 def test_get_by_name_and_version_queries_db(query_mock, resource_template_repo):
     expected_query = 'SELECT * FROM c WHERE c.resourceType = "workspace" AND c.name = "test" AND c.version = "1.0"'
     query_mock.return_value = [sample_resource_template_as_dict(name="test", version="1.0")]
 
     resource_template_repo.get_template_by_name_and_version(name="test", version="1.0", resource_type=ResourceType.Workspace)
+
+    query_mock.assert_called_once_with(query=expected_query)
+
+
+@patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
+def test_get_user_resource_template_by_name_and_version_queries_db(query_mock, resource_template_repo):
+    expected_query = 'SELECT * FROM c WHERE c.resourceType = "user-resource" AND c.name = "test" AND c.version = "1.0" AND c.parentWorkspaceService = "parent_service"'
+    query_mock.return_value = [sample_user_resource_template_as_dict(name="test", version="1.0")]
+
+    resource_template_repo.get_template_by_name_and_version(name="test", version="1.0", resource_type=ResourceType.UserResource, parent_service_name="parent_service")
 
     query_mock.assert_called_once_with(query=expected_query)
 
@@ -96,10 +111,10 @@ def test_get_current_by_name_raises_entity_does_not_exist_if_no_template_found(q
 def test_get_current_user_resource_template_queries_db(query_mock, resource_template_repo):
     template_name = "template1"
     parent_template_name = "parent_template1"
-    expected_query = 'SELECT * FROM c WHERE c.resourceType = "user-resource" AND c.name = "template1" AND c.parentWorkspaceService = "parent_template1" AND c.current = true'
+    expected_query = 'SELECT * FROM c WHERE c.resourceType = "user-resource" AND c.name = "template1" AND c.current = true AND c.parentWorkspaceService = "parent_template1"'
     query_mock.return_value = [sample_resource_template_as_dict(name=template_name)]
 
-    resource_template_repo.get_current_user_resource_template(template_name, parent_template_name)
+    resource_template_repo.get_current_template(template_name, ResourceType.UserResource, parent_template_name)
 
     query_mock.assert_called_once_with(query=expected_query)
 
@@ -110,7 +125,7 @@ def test_get_current_user_resource_template_returns_matching_template(query_mock
     parent_template_name = "parent_template1"
     query_mock.return_value = [sample_resource_template_as_dict(name=template_name)]
 
-    template = resource_template_repo.get_current_user_resource_template(template_name, parent_template_name)
+    template = resource_template_repo.get_current_template(template_name, ResourceType.UserResource, parent_template_name)
 
     assert template.name == template_name
 
@@ -120,7 +135,7 @@ def test_get_current_user_resource_template_raises_entity_does_not_exist_if_no_t
     query_mock.return_value = []
 
     with pytest.raises(EntityDoesNotExist):
-        resource_template_repo.get_current_user_resource_template("template1", "parent_template1")
+        resource_template_repo.get_current_template("template1", ResourceType.UserResource, "parent_template1")
 
 
 @patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
@@ -130,7 +145,7 @@ def test_get_current_user_resource_template_raises_duplicate_entity_if_multiple_
     query_mock.return_value = [sample_resource_template_as_dict(name=template_name), sample_resource_template_as_dict(name=template_name)]
 
     with pytest.raises(DuplicateEntity):
-        resource_template_repo.get_current_user_resource_template(template_name, parent_template_name)
+        resource_template_repo.get_current_template(template_name, ResourceType.UserResource, parent_template_name)
 
 
 @patch('db.repositories.resource_templates.ResourceTemplateRepository.query')

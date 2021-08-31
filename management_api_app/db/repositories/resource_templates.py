@@ -1,5 +1,5 @@
 import uuid
-from typing import List
+from typing import List, Union
 
 from azure.cosmos import CosmosClient
 from pydantic import parse_obj_as
@@ -11,7 +11,7 @@ from models.domain.resource import ResourceType
 from models.domain.resource_template import ResourceTemplate
 from models.domain.user_resource_template import UserResourceTemplate
 from models.schemas.resource_template import ResourceTemplateInCreate, ResourceTemplateInformation
-from services.concatjsonschema import enrich_workspace_schema_defs, enrich_workspace_service_schema_defs, enrich_user_resource_schema_defs
+from services.schema_service import enrich_workspace_template, enrich_workspace_service_template, enrich_user_resource_template
 
 
 class ResourceTemplateRepository(BaseRepository):
@@ -25,11 +25,11 @@ class ResourceTemplateRepository(BaseRepository):
     @staticmethod
     def enrich_template(template: ResourceTemplate) -> dict:
         if template.resourceType == ResourceType.Workspace:
-            return enrich_workspace_schema_defs(template)
+            return enrich_workspace_template(template)
         elif template.resourceType == ResourceType.WorkspaceService:
-            return enrich_workspace_service_schema_defs(template)
+            return enrich_workspace_service_template(template)
         else:
-            return enrich_user_resource_schema_defs(template)
+            return enrich_user_resource_template(template)
 
     def get_templates_information(self, resource_type: ResourceType, parent_service_name: str = "") -> List[ResourceTemplateInformation]:
         """
@@ -41,41 +41,39 @@ class ResourceTemplateRepository(BaseRepository):
         template_infos = self.query(query=query)
         return [parse_obj_as(ResourceTemplateInformation, info) for info in template_infos]
 
-    def get_current_template(self, template_name: str, resource_type: ResourceType) -> ResourceTemplate:
+    def get_current_template(self, template_name: str, resource_type: ResourceType, parent_service_name: str = "") -> Union[ResourceTemplate, UserResourceTemplate]:
         """
         Returns full template for the current version of the 'template_name' template
         """
         query = self._template_by_name_query(template_name, resource_type) + ' AND c.current = true'
+        if resource_type == ResourceType.UserResource:
+            query += f' AND c.parentWorkspaceService = "{parent_service_name}"'
         templates = self.query(query=query)
         if len(templates) == 0:
             raise EntityDoesNotExist
         if len(templates) > 1:
             raise DuplicateEntity
-        return parse_obj_as(ResourceTemplate, templates[0])
+        if resource_type == ResourceType.UserResource:
+            return parse_obj_as(UserResourceTemplate, templates[0])
+        else:
+            return parse_obj_as(ResourceTemplate, templates[0])
 
-    def get_current_user_resource_template(self, user_resource_template_name, parent_service_name) -> UserResourceTemplate:
-        """
-        Returns full user_resource_template for the current version of the template_name, parent_service_template_name combo
-        """
-        query = self._template_by_name_query(user_resource_template_name, ResourceType.UserResource) + f' AND c.parentWorkspaceService = "{parent_service_name}" AND c.current = true'
-        templates = self.query(query=query)
-        if len(templates) == 0:
-            raise EntityDoesNotExist
-        if len(templates) > 1:
-            raise DuplicateEntity
-        return parse_obj_as(UserResourceTemplate, templates[0])
-
-    def get_template_by_name_and_version(self, name: str, version: str, resource_type: ResourceType) -> ResourceTemplate:
+    def get_template_by_name_and_version(self, name: str, version: str, resource_type: ResourceType, parent_service_name: str = "") -> Union[ResourceTemplate, UserResourceTemplate]:
         """
         Returns full template for the 'resource_type' template defined by 'template_name' and 'version'
         """
         query = self._template_by_name_query(name, resource_type) + f' AND c.version = "{version}"'
+        if resource_type == ResourceType.UserResource:
+            query += f' AND c.parentWorkspaceService = "{parent_service_name}"'
         templates = self.query(query=query)
         if len(templates) != 1:
             raise EntityDoesNotExist
-        return parse_obj_as(ResourceTemplate, templates[0])
+        if resource_type == ResourceType.UserResource:
+            return parse_obj_as(UserResourceTemplate, templates[0])
+        else:
+            return parse_obj_as(ResourceTemplate, templates[0])
 
-    def create_template(self, template_input: ResourceTemplateInCreate, resource_type: ResourceType, parent_service_name: str = "") -> ResourceTemplate:
+    def create_template(self, template_input: ResourceTemplateInCreate, resource_type: ResourceType, parent_service_name: str = "") -> Union[ResourceTemplate, UserResourceTemplate]:
         """
         creates a template based on the input (workspace and workspace-services template)
         """
@@ -106,12 +104,12 @@ class ResourceTemplateRepository(BaseRepository):
         Saves to the database and returns the enriched template
         """
         try:
-            template = self.get_template_by_name_and_version(template_input.name, template_input.version, resource_type)
+            template = self.get_template_by_name_and_version(template_input.name, template_input.version, resource_type, workspace_service_template_name)
             if template:
                 raise EntityVersionExist
         except EntityDoesNotExist:
             try:
-                template = self.get_current_template(template_input.name, resource_type)
+                template = self.get_current_template(template_input.name, resource_type, workspace_service_template_name)
                 if template_input.current:
                     template.current = False
                     self.update_item(template)
