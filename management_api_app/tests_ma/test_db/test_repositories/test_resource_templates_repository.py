@@ -31,12 +31,27 @@ def sample_resource_template_as_dict(name: str, version: str = "1.0", resource_t
     return sample_resource_template(name, version, resource_type).dict()
 
 
+def sample_user_resource_template_as_dict(name: str, version: str = "1.0") -> dict:
+    template = UserResourceTemplate(id="123", name=name, description="", version=version, current=True, required=[], properties={}, parentWorkspaceService="parent_service")
+    return template.dict()
+
+
 @patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
 def test_get_by_name_and_version_queries_db(query_mock, resource_template_repo):
     expected_query = 'SELECT * FROM c WHERE c.resourceType = "workspace" AND c.name = "test" AND c.version = "1.0"'
     query_mock.return_value = [sample_resource_template_as_dict(name="test", version="1.0")]
 
     resource_template_repo.get_template_by_name_and_version(name="test", version="1.0", resource_type=ResourceType.Workspace)
+
+    query_mock.assert_called_once_with(query=expected_query)
+
+
+@patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
+def test_get_user_resource_template_by_name_and_version_queries_db(query_mock, resource_template_repo):
+    expected_query = 'SELECT * FROM c WHERE c.resourceType = "user-resource" AND c.name = "test" AND c.version = "1.0" AND c.parentWorkspaceService = "parent_service"'
+    query_mock.return_value = [sample_user_resource_template_as_dict(name="test", version="1.0")]
+
+    resource_template_repo.get_template_by_name_and_version(name="test", version="1.0", resource_type=ResourceType.UserResource, parent_service_name="parent_service")
 
     query_mock.assert_called_once_with(query=expected_query)
 

@@ -35,7 +35,8 @@ class ResourceRepository(BaseRepository):
         template = template_repo.get_current_template(template_name, resource_type, parent_template_name)
         return template_repo.enrich_template(template)
 
-    def get_resource_base_spec_params(self):
+    @staticmethod
+    def get_resource_base_spec_params():
         return {"tre_id": config.TRE_ID}
 
     def get_resource_dict_by_id(self, resource_id: UUID4) -> dict:
