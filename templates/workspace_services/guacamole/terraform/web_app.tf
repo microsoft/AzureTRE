@@ -191,3 +191,31 @@ resource "azurerm_private_endpoint" "guacamole" {
     private_dns_zone_ids = [data.azurerm_private_dns_zone.azurewebsites.id]
   }
 }
+
+resource "azurerm_network_security_rule" "allow-outbound-within-guacamole-and-api-subnets" {
+  access                      = "Allow"
+  destination_port_range      = "443"
+  destination_address_prefix  = data.azurerm_subnet.web_apps_core.address_prefix
+  source_address_prefix       = data.azurerm_subnet.web_apps.address_prefix
+  direction                   = "Outbound"
+  name                        = "outbound-within-guacamole-and-api-subnets"
+  network_security_group_name = data.azurerm_network_security_group.ws.name
+  priority                    = 200
+  protocol                    = "TCP"
+  resource_group_name         = data.azurerm_resource_group.ws.name
+  source_port_range           = "*"
+}
+
+resource "azurerm_network_security_rule" "allow-inbound-within-webapps-and-services-subnets" {
+  access                      = "Allow"
+  destination_port_range      = "3389"
+  destination_address_prefix  = data.azurerm_subnet.services.address_prefix
+  source_address_prefix       = data.azurerm_subnet.web_apps.address_prefix
+  direction                   = "Inbound"
+  name                        = "inbound-within-webapps-and-services-subnets"
+  network_security_group_name = data.azurerm_network_security_group.ws.name
+  priority                    = 200
+  protocol                    = "TCP"
+  resource_group_name         = data.azurerm_resource_group.ws.name
+  source_port_range           = "*"
+}
