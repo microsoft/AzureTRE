@@ -150,7 +150,6 @@ module "servicebus" {
   location                     = var.location
   resource_group_name          = azurerm_resource_group.core.name
   core_vnet                    = module.network.core
-  web_app_subnet_id            = module.network.web_app
   resource_processor_subnet_id = module.network.resource_processor
 }
 
