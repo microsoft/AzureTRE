@@ -61,13 +61,13 @@ Check the section **Checking the Virtual Machine Scale Set(VMSS) instance runnin
 
 To be able to run the Resource Processer it need to be able to acccess the following resource outside the Azure TRE VNET via explicit allowed [Service Tags](https://docs.microsoft.com/en-us/azure/virtual-network/service-tags-overview) or URLs.
 
-| Service Tag / Destionation | Justification |
+| Service Tag / Destination | Justification |
 | --- | --- |
 | AzureActiveDirectory | Authenticate with the User Assigned identity to access Azure Resource Manager and Azure Service Bus. |
 | AzureResourceManager | Access the Azure controle plane to deploy and manage Azure resources. |
 | AzureMonitor | Publish traces and logs to one central place for troubleshooting. |
 | AzureContainerRegistry | Pull the Resource Processer container image, as it is located in Azure Container Registry.  |
-| Storage | ?? |
+| Storage | The Porter bundles stores state between executions in an Azure Storage Account. |
 | packages.microsoft.com | ?? |
 | keyserver.ubuntu.com | ?? |
 | api.snapcraft.io | ?? |
