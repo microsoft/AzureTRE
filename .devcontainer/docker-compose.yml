@@ -10,6 +10,7 @@ services:
         VARIANT: "3.8"
         INSTALL_NODE: "false"
         NODE_VERSION: "lts/*"
+        TERRAFORM_VERSION: "1.0.5"
     extra_hosts:
     - "host.docker.internal:host-gateway"
     volumes:

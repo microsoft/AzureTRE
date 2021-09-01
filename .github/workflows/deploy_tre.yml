@@ -27,9 +27,9 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Install Terraform
-        uses: little-core-labs/install-terraform@v2.0.0
+        uses: hashicorp/setup-terraform@v1
         with:
-          version: 0.15.4
+          terraform_version: 1.0.5
 
       - name: Create Management Infrastructure
         shell: bash
@@ -83,9 +83,10 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Install Terraform
-        uses: little-core-labs/install-terraform@v2.0.0
+        uses: hashicorp/setup-terraform@v1
         with:
-          version: 0.15.4
+          terraform_version: 1.0.5
+
       - name: Deploy TRE
         shell: bash
         env:
