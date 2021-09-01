@@ -132,6 +132,7 @@ install:
         api_client_id: "{{ bundle.parameters.api_client_id }}"
         aad_tenant_id: "{{ bundle.parameters.aad_tenant_id }}"
         is_exposed_externally: "{{ bundle.parameters.is_exposed_externally }}"
+        tre_resource_id: "{{ bundle.parameters.id }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
