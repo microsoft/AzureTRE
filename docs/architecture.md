@@ -20,7 +20,7 @@ Shared Services are services available to all Workspaces. **Source Mirror** can 
 
 ## Composition Service
 
-The Composition Service is responsible for managing and mutating Workspaces and Workspace Service.
+The Composition Service is responsible for managing and mutating Workspaces and Workspace Services.
 
 A Workspace is an instance of a Workspace Template. A Workspace Template is implemented as a [Porter](https://porter.sh/) bundle - read more about [Authoring workspaces templates](./authoring-workspace-templates.md).
 
