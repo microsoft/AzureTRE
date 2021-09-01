@@ -8,7 +8,7 @@ Workspace authors are free to choose the technology stack for provisioning resou
 This document describes the requirements, and the process to author a template.
 
 > **Tip:** Use [the base workspace bundle](../templates/workspaces/base/README.md) and [others](../templates/workspaces/README.md) as reference or as the basis for the new bundle.
- 
+
 To create a bundle from scratch follow the Porter [Quickstart Guide](https://porter.sh/quickstart/) ([`porter create` CLI command](https://porter.sh/cli/porter_create/) will generate a new bundle in the current directory).
 
 ## Prerequisites

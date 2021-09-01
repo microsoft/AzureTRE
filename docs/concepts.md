@@ -4,7 +4,7 @@ Trusted Research Environments (TRE) enforce a secure boundary around distinct wo
 
 ![Concepts](./assets/treconcepts.png)
 
-A Trusted Research Environment (typically one per organization, or one per department in large organizations) consist of 
+A Trusted Research Environment (typically one per organization, or one per department in large organizations) consist of
 
 - One Composition Service (API, deployment engine etc. used to manage and deploy workspaces, workspace services and user resources)
 - One set of Shared Services used by all workspaces
@@ -79,7 +79,7 @@ All workspace services can be deployed to all workspaces.
 
 A User Resource is a resource that is only available to a particular researcher. For example a Guacamole VM.
 
-User Resources can be deployed to workspaces with a compatible workspace service. E.g. Guacamole VMs can only be deployed to workspaces where the Guacamole workspace service is deployed. 
+User Resources can be deployed to workspaces with a compatible workspace service. E.g. Guacamole VMs can only be deployed to workspaces where the Guacamole workspace service is deployed.
 
 ## Templates
 
