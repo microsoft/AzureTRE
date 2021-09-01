@@ -12,13 +12,13 @@ az account list
 az account set --subscription <subscription ID>
 ```
 
-> **Note:** When running locally the credentials of the logged in user will be used to deploy the infrastructure. Hence it is essential the user has enough permissions to deploy all resources.
+> **Note:** When running locally the credentials of the logged-in user will be used to deploy the infrastructure. Hence, it is essential that the user has enough permissions to deploy all resources.
 
 See [Sign in with Azure CLI](https://docs.microsoft.com/cli/azure/authenticate-azure-cli) for more details.
 
 ## Create service principals
 
-A service principals need to be created to authorize CI/CD workflows to provision resources for the TRE workspaces and workspace services.
+A service principal needs to be created to authorize CI/CD workflows to provision resources for the TRE workspaces and workspace services.
 
 1. Create a main service principal with "**Owner**" role:
 

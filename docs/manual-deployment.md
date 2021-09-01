@@ -13,7 +13,7 @@ By following this guide you will deploy a new Azure TRE instance for development
 
 Before running any of the scripts, the configuration variables need to be set. This is done in an `.env` file, and this file is read and parsed by the scripts.
 
-> Note: `.tfvars` file is not used, this is intentional. The `.env` file format is easier to parse, meaning we can use the values for bash scripts and other purposes.
+> **Note:** the `.tfvars` file is not used, this is intentional. The `.env` file format is easier to parse, meaning we can use the values for bash scripts and other purposes.
 
 Copy [/devops/.env.sample](../devops/.env.sample) to `/devops/.env`.
 
@@ -88,7 +88,7 @@ Note that there are rate limits with Let's Encrypt, so this should not be run wh
 
 ## Details of deployment and infrastructure
 
-The following section is for informational purpose and the steps don't need to be executed as they are part of make all above.
+The following section is for informational purposes, and the steps don't need to be executed as they are part of make all above.
 
 ### Management Infrastructure
 
@@ -98,7 +98,7 @@ We will create management infrastructure in your subscription. This includes res
 
 As a principle, we want all the Azure TRE resources defined in Terraform, including the storage account used by Terraform to hold its back-end state.
 
-A bootstrap script is used to creates the initial storage account and resource group using the Azure CLI. Then Terraform is initialized using this storage account as a back-end, and the storage account imported into the state.
+A bootstrap script is used to create the initial storage account and resource group using the Azure CLI. Then Terraform is initialized using this storage account as a back-end, and the storage account imported into the state.
 
 You can do this step using the following command but as stated above this is already part of ``make all``.
 
@@ -138,7 +138,7 @@ cd templates/core/terraform
 terraform output azure_tre_fqdn
 ```
 
-Open the following URL in a browser and you should see the Open API docs of Azure TRE Management API.
+Open the following URL in a browser, and you should see the Open API docs of Azure TRE Management API.
 
 ```plaintext
 https://<azure_tre_fqdn>/docs
@@ -170,14 +170,14 @@ curl https://<azure_tre_fqdn>/api/health
 
 1. Paste the payload json generated earlier into the `Request body` field, then click `Execute`. Review the server response.
 
-1. To verify regsitration of the template do `GET` operation on `/api/workspace-templates`. The name of the template should now be listed.
+1. To verify registration of the template do `GET` operation on `/api/workspace-templates`. The name of the template should now be listed.
 
 ## Creating a base workspace
 
 Now that we have published and registered a base workspace bundle we can use the deployed API to create a base workspace.
 
 <!-- markdownlint-disable-next-line MD013 -->
-> All routes are auth protected.Click the green **Authorize** button to receive a token for swagger client.  
+> **Note:** All routes are auth protected. Click the green **Authorize** button to receive a token for swagger client.  
 
 As explained in the [auth guide](auth.md), every workspace has a corresponding app registration which can be created using the helper script [../scripts/workspace-app-reg.py](../scripts/workspace-app-reg.py). Multiple workspaces can share an app registration.
 
@@ -200,9 +200,9 @@ Go to ``azure_tre_fqdn/docs`` and use POST /api/workspaces with the sample body 
 }
 ```
 
-The API will report the ``workspace_id`` of the created workspce, which can be used to query deployment status by using ``/api/workspaces/<workspace_id>``
+The API will report the ``workspace_id`` of the created workspace, which can be used to query deployment status by using ``/api/workspaces/<workspace_id>``
 
-You can also follow the progess in Azure portal as various resources come up.
+You can also follow the progress in Azure portal as various resources come up.
 
 <!-- markdownlint-disable-next-line MD013 -->
 > To query the status using the API your user needs to have TREResearcher or TREOwner role assigned to the app.

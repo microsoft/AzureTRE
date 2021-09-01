@@ -17,4 +17,4 @@ To run the Unit and E2E tests follow the [testing documentation](testing.md).
 
 ### Running management api locally
 
-To run management api locally follow the steps noted [here](../management_api_app/README.md#).
+To run management api locally follow the steps noted [here](../management_api_app/README.md).
