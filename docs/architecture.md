@@ -50,7 +50,7 @@ The Composition Service consists of multiple components.
 
 The flow to provision a Workspace is as follows (the flow is the same for all kinds of mutations to a Workspace):
 
-1. An HTTP request to Management API to create a new Workspace. The request contains information like the name of the Workspace, the Workspace Template to use, and the parameters required for the Workspace Template (Workspace Templates can expose the parameters via a JSON Schema ).
+1. An HTTP request to the TRE API to create a new Workspace. The request contains information like the name of the Workspace, the Workspace Template to use, and the parameters required for the Workspace Template (Workspace Templates can expose the parameters via a JSON Schema ).
 1. The desired state of the Workspace is updated in the Configuration Store.
 1. A command message with the Workspace Template reference and parameters are sent to the `workspacequeue`.
 
