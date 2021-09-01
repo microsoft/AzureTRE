@@ -73,6 +73,11 @@ parameters:
     type: string
     env: AAD_TENANT_ID
     description: "AAD tenant id"
+  - name: is_exposed_externally
+    type: boolean
+    default: false
+    env: IS_EXPOSED_EXTERNALLY
+    description: "Determines if the web app will be available over public/internet or private networks"
   # the following are added automatically by the resource processor
   - name: id
     type: string
@@ -126,6 +131,8 @@ install:
         guac_disable_download: "{{ bundle.parameters.guac_disable_download }}"
         api_client_id: "{{ bundle.parameters.api_client_id }}"
         aad_tenant_id: "{{ bundle.parameters.aad_tenant_id }}"
+        is_exposed_externally: "{{ bundle.parameters.is_exposed_externally }}"
+        tre_resource_id: "{{ bundle.parameters.id }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
@@ -163,6 +170,7 @@ uninstall:
         guac_disable_download: "{{ bundle.parameters.guac_disable_download }}"
         api_client_id: "{{ bundle.parameters.api_client_id }}"
         aad_tenant_id: "{{ bundle.parameters.aad_tenant_id }}"
+        is_exposed_externally: "{{ bundle.parameters.is_exposed_externally }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"

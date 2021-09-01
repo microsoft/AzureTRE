@@ -1,6 +1,6 @@
 # Adding Firewall Rules as part of a workspace or service deployment
 
-A TRE service may require certian firewall rules to be opened in the TRE firewall. Examples include:
+A TRE service may require certain firewall rules to be opened in the TRE firewall. Examples include:
 
 - Access to an external authorisation endpoint
 - Access to an external data store
@@ -10,11 +10,11 @@ Please be aware when opening firewall rules there is the potential for data to b
 
 ## Using Terraform to open firewall rules
 
-Until a mechanism to update shared services has been implemented firewall rule updates should be done using terraform as part of the service deployment. The aim is to create a firewall rule that grants access from the workspace's address space to the external location. The challenge being the rule must use a priority that has not been used by any other rule.
+Until a mechanism to update shared services has been implemented, firewall rule updates should be done using terraform as part of the service deployment. The aim is to create a firewall rule that grants access from the workspace's address space to the external location. A challenge with this is that the rule must use a priority that has not been used by any other rule.
 
 1. Create a `firewall.tf` file in the `terraform` directory of the workspace.
 
-1. Add the following code to the `firewall.tf` file to enable the TRE firewall and workspace netowrk to be referenced:
+1. Add the following code to the `firewall.tf` file to enable the TRE firewall and workspace network to be referenced:
 
     ```hcl
     data "azurerm_firewall" "fw" {
@@ -95,7 +95,7 @@ Until a mechanism to update shared services has been implemented firewall rule u
     jq -n --arg network_rule_priority "$NETWORK_RULE_PRIORITY" --arg application_rule_priority "$APPLICATION_RULE_PRIORITY" '{ "network_rule_priority":$network_rule_priority, "application_rule_priority":$application_rule_priority }'
     ```
 
-1. Create the firwall rule using a resource similar to the below:
+1. Create the firewall rule using a resource similar to the below:
 
     ```hcl
     resource "azurerm_firewall_application_rule_collection" "apprulecollection" {

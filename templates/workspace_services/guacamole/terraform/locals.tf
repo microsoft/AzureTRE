@@ -13,4 +13,5 @@ locals {
   core_resource_group_name     = "rg-${var.tre_id}"
   issuer                       = "https://login.microsoftonline.com/${var.aad_tenant_id}/v2.0"
   kv_url                       = "https://kv-guac-${var.tre_id}-${local.short_workspace_id}.vault.azure.net"
+  api_url                      = "https://api-${var.tre_id}.azurewebsites.net"
 }

@@ -30,6 +30,12 @@ data "azurerm_virtual_network" "ws" {
   resource_group_name = "rg-${var.tre_id}-ws-${local.short_workspace_id}"
 }
 
+data "azurerm_subnet" "web_apps_core" {
+  name                 = "WebAppSubnet"
+  virtual_network_name = "vnet-${var.tre_id}"
+  resource_group_name  = "rg-${var.tre_id}"
+}
+
 data "azurerm_subnet" "web_apps" {
   name                 = "WebAppsSubnet"
   virtual_network_name = data.azurerm_virtual_network.ws.name
@@ -60,6 +66,11 @@ data "azurerm_container_registry" "mgmt_acr" {
 data "azurerm_log_analytics_workspace" "tre" {
   name                = "log-${var.tre_id}"
   resource_group_name = local.core_resource_group_name
+}
+
+data "azurerm_network_security_group" "ws" {
+  name                = "nsg-ws"
+  resource_group_name = data.azurerm_virtual_network.ws.resource_group_name
 }
 
 output "connection_uri" {

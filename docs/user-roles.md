@@ -119,7 +119,7 @@ Expected skills:
 
 ## Data engineer
 
-Supporting role that is expected to build data movement pipelines between the data platform (not part of the TRE) and the TRE instance.
+Supporting role that is expected to build data movement pipelines between the data platform (not part of the TRE), and the TRE instance.
 
 Example tasks:
 
