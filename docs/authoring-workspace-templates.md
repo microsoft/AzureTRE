@@ -1,9 +1,15 @@
 # Authoring workspaces templates
 
 <!-- markdownlint-disable-next-line MD013 -->
-Azure TRE workspaces are [Porter](https://porter.sh/) bundles that in turn are based on [Cloud Native Application Bundles (CNAB)](https://cnab.io/). Workspace authors are free to choose the technology stack for provisioning resources (e.g., ARM templates, Terraform etc.), but the Azure TRE framework sets certain requirements for the bundle manifests, which specify the credentials, input and output parameters, deployment actions among other things. The document describes those requirements.
+Azure TRE workspaces, workspace services, and user resources are [Porter](https://porter.sh/) bundles that in turn are based on [Cloud Native Application Bundles (CNAB)](https://cnab.io/).
 
-**Use [the base workspace bundle](../templates/workspaces/base/README.md) and [others](../templates/workspaces/README.md) as reference** or as the basis for the new bundle. To start from scratch follow the Porter [Quickstart Guide](https://porter.sh/quickstart/) ([`porter create` CLI command](https://porter.sh/cli/porter_create/) will generate a new bundle in the current directory).
+Workspace authors are free to choose the technology stack for provisioning resources (e.g., ARM templates, Terraform etc.), but the Azure TRE framework sets certain requirements for the bundle manifests, which specify the credentials, input and output parameters, deployment actions among other things.
+
+This document describes the requirements, and the process to author a template.
+
+> **Tip:** Use [the base workspace bundle](../templates/workspaces/base/README.md) and [others](../templates/workspaces/README.md) as reference or as the basis for the new bundle.
+ 
+To create a bundle from scratch follow the Porter [Quickstart Guide](https://porter.sh/quickstart/) ([`porter create` CLI command](https://porter.sh/cli/porter_create/) will generate a new bundle in the current directory).
 
 ## Prerequisites
 
@@ -76,6 +82,29 @@ The required actions are the main two of CNAB spec:
 
 * `install` - Deploys/repairs the workspace Azure resources, and must be **idempotent**
 * `uninstall` - Tears down (deletes) the Azure resources of the workspace and its services
+
+## Workspace service bundle manifests
+
+Workspace service bundles are generated in the same way as workspace bundles.
+
+The mandatory parameters for workspace services are:
+
+| Parameter | Type | Description | Example value |
+| --------- | ---- | ----------- | ------------- |
+| `tre_id` | string | Unique ID of for the TRE instance. | `tre-dev-42` |
+| `workspace_id` | string | Unique 4-character long, alphanumeric workspace ID. | `0a9e` |
+
+## User resource bundle manifests
+
+User Resource bundles are generated in the same way as workspace bundles and workspace services bundles.
+The main difference is that a workspace service type needs to be supplied when registering a user resource template, as it only applies to a given workspace service.
+
+The mandatory parameters for User Resources are:
+
+| Parameter | Type | Description | Example value |
+| --------- | ---- | ----------- | ------------- |
+| `tre_id` | string | Unique ID of for the TRE instance. | `tre-dev-42` |
+| `workspace_id` | string | Unique 4-character long, alphanumeric workspace ID. | `0a9e` |
 
 ## Supported Porter mixins
 

@@ -1,27 +1,38 @@
 # Concepts
 
-Trusted Research Environments enforce a secure boundary around distinct workspaces to enable information governance controls to be enforced. Each workspace is accessible by a set of authorized users, prevents the exfiltration of sensitive data, and has access to one or more datasets provided by the data platform.
-
-One or more workspace services are deployed into a workspace to provide resources accessible by the [workspace users](./user-roles.md).
-
-The workspaces and the services can be deployed and managed via the API of the Composition Service.
+Trusted Research Environments (TRE) enforce a secure boundary around distinct workspaces to enable information governance controls to be enforced.
 
 ![Concepts](./assets/treconcepts.png)
 
-## Workspace
+A Trusted Research Environment (typically one per organization, or one per department in large organizations) consist of 
 
-A Workspace is a set of resources on a network with inbound traffic, restricted to authorised users, and outbound access restricted to defined network locations. The workspace is a security boundary and there should be zero transfer of data out from the workspace unless explicitly configured. Data transfer is not restricted within a workspace.
+- One Composition Service (API, deployment engine etc. used to manage and deploy workspaces, workspace services and user resources)
+- One set of Shared Services used by all workspaces
+- A number of workspaces, where each workspace is its own security boundary, and in turn contains Workspace Services and User Resources
 
-Workspaces can be configured with a variety of tools to enable tasks such as the development of machine learning models, data engineering, data analysis, and software development.
+Following are more detailed descriptions of the TRE concepts
 
-Multiple Workspaces can be created within a single Trusted Research Environment to create the required separation for your projects.
+- [Composition Service and API](#application-components-of-the-tre)
+- [Services](#services)
+- [Shared Services](#shared-services)
+- [Workspace](#workspace)
+- [Workspace Service](#workspace-service)
+- [User Resource](#user-resource)
+- [Templates](#templates)
 
-## Workspace Template
+## Application components of the TRE
 
-A Workspace Template is the model used to create Workspaces. It contains everything needed to create an instance of Workspace.
-It is possible to create multiple instances of the same Workspace in one TRE.
+A TRE consist of multiple processes orchestrating managing Workspaces and services. These are components that enables Researchers and TRE Admins to provision and manage Workspaces in a self-service manner. These components are of relevance for [Azure Administrators](./user-roles.md#Azure-administrator), [TRE service integrator](./user-roles.md#TRE-service-integrator) and [TRE developers](./user-roles.md#Azure-TRE-developer).
 
-## Service
+### Composition Service
+
+The Composition Service offers an abstraction over the lower-level Azure resources to allow for TRE users to provision resources in terms of workspaces and workspace services.
+
+The Composition Service exposes resources – based on above concepts – as an HTTP API where users and applications can model the desired representation of the TRE, i.e., define which workspaces should contain which workspace services.
+
+The Composition Service reconciles the desired state with the actual state by invoking Azure resource deployments.
+
+## Services
 
 A service provide one or more capabilities to you as a user of the TRE or to the TRE itself.  Depending on the type of the service it is scoped to the environment and shared across all workspaces (Shared Service) or scoped to a specific workspace (Workspace Service).
 
@@ -29,26 +40,57 @@ The types of services required for a research project varies greatly why extensi
 
 Some Workspace Services are accessible from outside the protected network, such as a Virtual Desktop. No data will be permitted to be transferred outside the protected network. Other services such as Azure Machine Learning might need access restricting to via a Virtual Desktop.
 
-Below are examples of services that are available in the Azure TRE solution.
-
 ### Shared Services
 
-These are services and resource shared by all workspaces.
+Shared Services are services and resource shared by all workspaces.
 
 - Firewall
 - Package Mirror
 - Git Mirror
 
-### Workspace Services
+## Workspace
 
-- Virtual Desktop
+A **Workspace** is a set of resources on a network with inbound traffic, restricted to authorised users, and outbound access restricted to defined network locations. The workspace is a security boundary and there should be zero transfer of data out from the workspace unless explicitly configured. Data transfer is not restricted within a workspace.
+
+The workspace itself contains only the bare essentials to provide this functionality, such as firewalls, storage etc.
+
+Workspaces can be enhanced with one or more building blocks called **Workspace Services** like Azure ML, Guacamole etc. to allow functionality such as development of machine learning models, data engineering, data analysis and software development.
+
+Multiple Workspaces can be created within a single Trusted Research Environment to create the required separation for your projects.
+
+Each workspace has [workspace users](./user-roles.md): one workspace owner, and one or more workspace researchers that can access the data and workspace services in the workspace. The workspace owner is also considered a workspace researcher.
+
+## Workspace Service
+
+A Workspace Service is a service, created as a building block, with pre-configured set of resources that can be applied to a workspace.
+
+Examples of Workspace Services are:
+
+- Guacamole (Virtual Desktops)
 - Azure Machine Learning
 
-## Application components of the TRE
+Unlike shared services, a workspace service is only accessible to the workspace users.
 
-TRE consist of multiple processes orchestrating managing Workspaces and services. These are components that enables Researchers and TRE Admins to provision and manage Workspaces in a self-service manner. These components are of relevance for [Azure Administrators](./user-roles.md#Azure-administrator), [TRE service integrator](./user-roles.md#TRE-service-integrator) and [TRE developers](./user-roles.md#Azure-TRE-developer).
+Some workspace services, such as Guacamole, allow users to add on user-specific resources (user resources)
 
-### Composition Service
+All workspace services can be deployed to all workspaces.
 
-The Composition Service offers an abstraction over the lower-level Azure resources to allow for TRE users to provision resources in terms of workspaces and workspace services. The Composition Service exposes resources – based on above concepts – as an HTTP API where users and applications can model the desired representation of the TRE, i.e., define which workspaces should contain which workspace services.
-The Composition Service reconciles the desired state with the actual state by invoking Azure resource deployments.
+## User Resource
+
+A User Resource is a resource that is only available to a particular researcher. For example a Guacamole VM.
+
+User Resources can be deployed to workspaces with a compatible workspace service. E.g. Guacamole VMs can only be deployed to workspaces where the Guacamole workspace service is deployed. 
+
+## Templates
+
+In order to deploy resources (workspaces, workspace services, user resources), the resources have to be defined in templates.
+
+A template contains everything needed to create an instance of the resource. Ex. a base workspace template, or a Guacamole workspace service template.
+
+The templates describe the porter bundles used, and the input parameters needed to deploy them.
+
+To use a template, and deploy a resource, the template needs to be registered in the TRE. This is done using the TRE API.
+
+> **Note:** Once a template is registered it can be used multiple times to deploy multiple workspaces, workspace services etc.
+
+If you want to author your own workspace, workspace service, or user resource template, consult the [template authoring guide](./authoring-workspace-templates.md)
