@@ -86,30 +86,40 @@ resource "azurerm_firewall_application_rule_collection" "shared_services_subnet"
   priority            = 100
   action              = "Allow"
 
-  rule {
-    name = "package-sources"
-    protocol {
-      port = "443"
-      type = "Https"
-    }
-    protocol {
-      port = "80"
-      type = "Http"
-    }
+  dynamic "rule" {
+    for_each = var.deploy_gitea ? [1] : []
+    content {
+      name = "gitea-sources"
+      protocol {
+        port = "443"
+        type = "Https"
+      }
+      protocol {
+        port = "80"
+        type = "Http"
+      }
 
-    target_fqdns = [
-      "packages.microsoft.com",
-      "keyserver.ubuntu.com",
-      "api.snapcraft.io",
-      "azure.archive.ubuntu.com",
-      "security.ubuntu.com",
-      "entropy.ubuntu.com",
-      "download.docker.com",
-      "registry-1.docker.io",
-      "auth.docker.io",
-      "registry.terraform.io"
-    ]
-    source_addresses = data.azurerm_subnet.shared.address_prefixes
+      target_fqdns     = local.gitea_allowed_fqdns
+      source_addresses = data.azurerm_subnet.shared.address_prefixes
+    }
+  }
+
+  dynamic "rule" {
+    for_each = var.deploy_nexus ? [1] : []
+    content {
+      name = "nexus-package-sources"
+      protocol {
+        port = "443"
+        type = "Https"
+      }
+      protocol {
+        port = "80"
+        type = "Http"
+      }
+
+      target_fqdns     = local.nexus_allowed_fqdns
+      source_addresses = data.azurerm_subnet.shared.address_prefixes
+    }
   }
 }
 
