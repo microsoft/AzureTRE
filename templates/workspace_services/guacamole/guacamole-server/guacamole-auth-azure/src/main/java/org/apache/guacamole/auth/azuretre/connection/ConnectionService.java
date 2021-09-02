@@ -28,6 +28,12 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -60,24 +66,28 @@ public class ConnectionService {
                 for (int i = 0; i < vmsJsonArray.length(); i++) {
                     final GuacamoleConfiguration config = new GuacamoleConfiguration();
                     final JSONObject vmJsonObject = vmsJsonArray.getJSONObject(i);
-
-                    config.setProtocol("RDP");
-                    config.setProtocol("rdp");
-                    config.setParameter("hostname", (String) vmJsonObject.get("name"));
-                    config.setParameter("resize-method", "display-update");
-                    config.setParameter("azure-resource-id", vmJsonObject.get("resourceId").toString());
-                    config.setParameter("port", "3389");
-                    config.setParameter("ignore-cert", "true");
-                    config.setParameter("disable-copy", System.getenv("GUAC_DISABLE_COPY"));
-                    config.setParameter("disable-paste", System.getenv("GUAC_DISABLE_PASTE"));
-                    config.setParameter("enable-drive", System.getenv("GUAC_ENABLE_DRIVE"));
-                    config.setParameter("drive-name", System.getenv("GUAC_DRIVE_NAME"));
-                    config.setParameter("drive-path", System.getenv("GUAC_DRIVE_PATH"));
-                    config.setParameter("disable-download", System.getenv("GUAC_DISABLE_DOWNLOAD"));
-
-                    final String hostname = config.getParameter("hostname");
-                    LOGGER.info("Adding a VM: {}", hostname);
-                    configs.putIfAbsent(hostname, config);
+                    final JSONObject templateParameters = (JSONObject) vmJsonObject.get("resourceTemplateParameters");
+                    if (templateParameters.has("hostname") && templateParameters.has("ip")) {
+                        final String azureResourceId = templateParameters.getString("hostname");
+                        final String ip = templateParameters.getString("ip");
+                        config.setProtocol("rdp");
+                        config.setParameter("hostname", ip);
+                        config.setParameter("resize-method", "display-update");
+                        config.setParameter("azure-resource-id", azureResourceId);
+                        config.setParameter("port", "3389");
+                        config.setParameter("ignore-cert", "true");
+                        config.setParameter("disable-copy", System.getenv("GUAC_DISABLE_COPY"));
+                        config.setParameter("disable-paste", System.getenv("GUAC_DISABLE_PASTE"));
+                        config.setParameter("enable-drive", System.getenv("GUAC_ENABLE_DRIVE"));
+                        config.setParameter("drive-name", System.getenv("GUAC_DRIVE_NAME"));
+                        config.setParameter("drive-path", System.getenv("GUAC_DRIVE_PATH"));
+                        config.setParameter("disable-download", System.getenv("GUAC_DISABLE_DOWNLOAD"));
+                        LOGGER.info("Adding a VM: {}", ip);
+                        configs.putIfAbsent(config.getParameter("hostname"), config);
+                    } else {
+                        LOGGER.info("Missing ip or hostname, skipping...");
+                        break;
+                    }
                 }
             } catch (final Exception ex) {
                 LOGGER.error("Exception getting VMs", ex);
@@ -88,63 +98,30 @@ public class ConnectionService {
         return configs;
     }
 
-    private JSONArray getVMsFromProjectAPI(final AzureTREAuthenticatedUser user) {
-
+    private JSONArray getVMsFromProjectAPI(final AzureTREAuthenticatedUser user) throws GuacamoleException {
         final JSONArray virtualMachines;
 
-        // Todo: Implement / Uncomment when the relevant API call is available for consumption
-        // https://github.com/microsoft/AzureTRE/issues/558
-    /*
-    try {
-      SSLContextBuilder builder = new SSLContextBuilder();
-      builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
-      SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(builder.build());
-      CloseableHttpClient httpclient = HttpClients.custom().setSSLSocketFactory(sslsf).build();
-
-      try {
-
-        URI projectUri = new URI(System.getenv("PROJECT_URL"));
-
-        // specify the host, protocol, and port
-        URIBuilder uriBuilder = new URIBuilder();
-
-        uriBuilder.setScheme(projectUri.getScheme()).setHost(projectUri.getHost()).setPort(projectUri.getPort())
-            .setPath("/api/userserviceinstances").setParameter("ResourceGroupId", System.getenv("RESOURCE_GROUP_ID"))
-            .setParameter("ResourceType", "virtual-desktop-guacamole");
-
-        URI uri = uriBuilder.build();
-        HttpGet httpget = new HttpGet(uri);
-        httpget.addHeader("Authorization", "Bearer " + user.getAccessToken());
-
-        CloseableHttpResponse httpResponse = httpclient.execute(httpget);
-
-        String json = EntityUtils.toString(httpResponse.getEntity());
-        if (json.length() != 0) {
-          virtualMachines = new JSONArray(json);
-        } else {
-          virtualMachines = new JSONArray();
+        final String url = String.format("%s/api/workspace-services/%s/user-resources", System.getenv("API_URL"),
+            System.getenv("SERVICE_ID"));
+        final var client = HttpClient.newHttpClient();
+        final var request = HttpRequest.newBuilder(URI.create(url))
+            .header("accept", "application/json")
+            .header("Authorization", "Bearer " + user.getAccessToken())
+            .timeout(Duration.ofSeconds(5))
+            .build();
+        final HttpResponse<String> response;
+        try {
+            response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (final IOException | InterruptedException ex) {
+            LOGGER.error("Connection failed", ex);
+            throw new GuacamoleException("Connection failed: " + ex.getMessage());
         }
-
-      } catch (Exception e) {
-        e.printStackTrace();
-        throw new GuacamoleException(e.getMessage());
-      } finally {
-        // When HttpClient instance is no longer needed,
-        // shut down the connection manager to ensure
-        // immediate deallocation of all system resources
-        httpclient.close();
-      }
-
-    } catch (Exception e) {
-      e.printStackTrace();
-      throw new GuacamoleException(e.getMessage());
-
-    }
-    return virtualMachines;
-
-     */
-        final String json = System.getenv("VM_LIST");
-        virtualMachines = new JSONArray(json);
+        if (!response.body().isBlank()) {
+            final JSONObject result = new JSONObject(response.body());
+            virtualMachines = result.getJSONArray("userResources");
+        } else {
+            virtualMachines = new JSONArray();
+        }
 
         return virtualMachines;
     }

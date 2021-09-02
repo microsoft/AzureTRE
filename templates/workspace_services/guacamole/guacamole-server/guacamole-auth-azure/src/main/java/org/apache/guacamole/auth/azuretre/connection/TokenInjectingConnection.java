@@ -49,8 +49,8 @@ public class TokenInjectingConnection extends SimpleConnection {
         final JSONObject credsJsonObject = getConnectionCredentialsFromProjectAPI(this.getConfiguration()
             .getParameter("azure-resource-id"));
         final GuacamoleConfiguration fullConfig = this.getFullConfiguration();
-        fullConfig.setParameter("username", credsJsonObject.get("username").toString());
-        fullConfig.setParameter("password", credsJsonObject.get("password").toString());
+        fullConfig.setParameter("username", credsJsonObject.getString("username"));
+        fullConfig.setParameter("password", credsJsonObject.getString("password"));
         this.setConfiguration(fullConfig);
 
         return super.connect(info, tokens);
@@ -83,7 +83,7 @@ public class TokenInjectingConnection extends SimpleConnection {
             LOGGER.error("Error fetching username and password", ex);
             throw new GuacamoleException("Error fetching username and password: " + ex.getMessage());
         }
-        final String json = String.format("{\"username\": \" %s \",\"password\": \"%s\"}", username, password);
+        final String json = String.format("{\"username\": \"%s\",\"password\": \"%s\"}", username, password);
         credentials = new JSONObject(json);
 
         return credentials;

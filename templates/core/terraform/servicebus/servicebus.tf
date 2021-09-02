@@ -61,6 +61,15 @@ resource "azurerm_private_endpoint" "sbpe" {
   }
 }
 
+# Dummy network rule set to block public endpoints
+# See https://docs.microsoft.com/azure/service-bus-messaging/service-bus-service-endpoints
+resource "azurerm_servicebus_namespace_network_rule_set" "servicebus_network_rule_set" {
+  namespace_name      = azurerm_servicebus_namespace.sb.name
+  resource_group_name = var.resource_group_name
+  default_action      = "Deny"
+  ip_rules            = ["0.0.0.0/32"]
+}
+
 output "servicebus_namespace" {
   value = azurerm_servicebus_namespace.sb
 }

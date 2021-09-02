@@ -39,7 +39,7 @@ AzureTRE> code .
 
 > Visual Studio Code should recognize the available development container and ask you to open the folder using it. For additional details on connecting to remote containers, please see the [Open an existing folder in a container](https://code.visualstudio.com/docs/remote/containers#_quick-start-open-an-existing-folder-in-a-container) quickstart.
 
-When you start the development container for the first time, the container will be built and usually this takes a few minutes.
+When you start the development container for the first time, the container will be built. This usually takes a few minutes.
 
 ## Set environment configuration variables of shared management resources
 
@@ -55,7 +55,7 @@ You need to provide values for the following variables:
 * `ACR_NAME` - Container registry name
 * `ARM_SUBSCRIPTION_ID` - Azure subscription id
 
-Comment out the following variables by starting the line with an hash `#`.
+Comment out the following variables by starting the line with a hash `#`.
 
 * `ARM_TENANT_ID`
 * `ARM_CLIENT_ID`
@@ -103,7 +103,7 @@ Use the terminal window in Visual Studio Code to execute the following script fr
 
 > Note: `aztreqs` is a placeholder for the unique name you have to choose for your Azure TRE instance. Likewise `westeurope` is a placeholder for the location where the resources will be deployed, this should match the value you set on the location variable in the previous step.
 
-Having the output from the `add-app-reg.sh` script, you can now provide the required values for the following variables in the `/templates/core/.env` configuration file:
+With the output from the `add-app-reg.sh` script, you can now provide the required values for the following variables in the `/templates/core/.env` configuration file:
 
 * `TRE_ID` - The identifier for your Azure TRE instance. Will be used for naming Azure resources. Needs to be globally unique and less than 12 characters.
 * `AAD_TENANT_ID` - The Azure AD tenant id
@@ -138,7 +138,7 @@ You are now ready to deploy the Azure TRE instance. Execute the `all` action of 
 /workspaces/tre> make all
 ```
 
-Deploying a new Azure TRE instance takes aproximitly 30 minutes.
+Deploying a new Azure TRE instance takes approximately 30 minutes.
 
 Once the deployment is completed you will be presented with a few output variables, similar to below.
 

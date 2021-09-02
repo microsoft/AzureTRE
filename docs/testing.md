@@ -34,6 +34,7 @@ To run the E2E tests locally:
 | `ACR_NAME` | The Azure Tre ACR. |
 
 1. Run the e2e tests:
-    ```bash
-    PYTHONPATH=. python -m pytest --junit-xml pytest_e2e.xml
-    ```
+
+   ```bash
+   PYTHONPATH=. python -m pytest --junit-xml pytest_e2e.xml
+   ```
