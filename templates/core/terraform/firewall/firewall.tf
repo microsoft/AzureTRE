@@ -87,7 +87,7 @@ resource "azurerm_firewall_application_rule_collection" "shared_services_subnet"
   action              = "Allow"
 
   dynamic "rule" {
-    for_each = var.deploy_gitea ? [1] : []
+    for_each = var.deploy_gitea && length(var.gitea_allowed_fqdns) > 0 ? [1] : []
     content {
       name = "gitea-sources"
       protocol {
@@ -99,13 +99,13 @@ resource "azurerm_firewall_application_rule_collection" "shared_services_subnet"
         type = "Http"
       }
 
-      target_fqdns     = local.gitea_allowed_fqdns
+      target_fqdns     = var.gitea_allowed_fqdns
       source_addresses = data.azurerm_subnet.shared.address_prefixes
     }
   }
 
   dynamic "rule" {
-    for_each = var.deploy_nexus ? [1] : []
+    for_each = var.deploy_nexus && length(var.nexus_allowed_fqdns) > 0 ? [1] : []
     content {
       name = "nexus-package-sources"
       protocol {
@@ -117,7 +117,7 @@ resource "azurerm_firewall_application_rule_collection" "shared_services_subnet"
         type = "Http"
       }
 
-      target_fqdns     = local.nexus_allowed_fqdns
+      target_fqdns     = var.nexus_allowed_fqdns
       source_addresses = data.azurerm_subnet.shared.address_prefixes
     }
   }
