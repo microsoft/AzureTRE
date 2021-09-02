@@ -63,8 +63,8 @@ module "storage" {
   tre_id              = var.tre_id
   location            = var.location
   resource_group_name = azurerm_resource_group.core.name
-  shared_subnet       = module.network.shared
-  core_vnet           = module.network.core
+  shared_subnet       = module.network.shared_subnet_id
+  core_vnet           = module.network.core_vnet_id
 }
 
 module "appgateway" {
@@ -72,8 +72,8 @@ module "appgateway" {
   tre_id                 = var.tre_id
   location               = var.location
   resource_group_name    = azurerm_resource_group.core.name
-  app_gw_subnet          = module.network.app_gw
-  shared_subnet          = module.network.shared
+  app_gw_subnet          = module.network.app_gw_subnet_id
+  shared_subnet          = module.network.shared_subnet_id
   management_api_fqdn    = module.api-webapp.management_api_fqdn
   keyvault_id            = module.keyvault.keyvault_id
   static_web_dns_zone_id = module.network.static_web_dns_zone_id
@@ -85,10 +85,10 @@ module "api-webapp" {
   tre_id                                     = var.tre_id
   location                                   = var.location
   resource_group_name                        = azurerm_resource_group.core.name
-  web_app_subnet                             = module.network.web_app
-  shared_subnet                              = module.network.shared
-  app_gw_subnet                              = module.network.app_gw
-  core_vnet                                  = module.network.core
+  web_app_subnet                             = module.network.web_app_subnet_id
+  shared_subnet                              = module.network.shared_subnet_id
+  app_gw_subnet                              = module.network.app_gw_subnet_id
+  core_vnet                                  = module.network.core_vnet_id
   app_insights_connection_string             = azurerm_application_insights.core.connection_string
   app_insights_instrumentation_key           = azurerm_application_insights.core.instrumentation_key
   log_analytics_workspace_id                 = azurerm_log_analytics_workspace.core.id
@@ -125,7 +125,7 @@ module "resource_processor_vmss_porter" {
   resource_group_name                             = azurerm_resource_group.core.name
   acr_id                                          = data.azurerm_container_registry.mgmt_acr.id
   app_insights_connection_string                  = azurerm_application_insights.core.connection_string
-  resource_processor_subnet_id                    = module.network.resource_processor
+  resource_processor_subnet_id                    = module.network.resource_processor_subnet_id
   docker_registry_server                          = var.docker_registry_server
   resource_processor_vmss_porter_image_repository = var.resource_processor_vmss_porter_image_repository
   resource_processor_vmss_porter_image_tag        = var.resource_processor_vmss_porter_image_tag
@@ -148,8 +148,8 @@ module "servicebus" {
   tre_id                       = var.tre_id
   location                     = var.location
   resource_group_name          = azurerm_resource_group.core.name
-  core_vnet                    = module.network.core
-  resource_processor_subnet_id = module.network.resource_processor
+  core_vnet                    = module.network.core_vnet_id
+  resource_processor_subnet_id = module.network.resource_processor_subnet_id
 }
 
 module "keyvault" {
@@ -157,8 +157,8 @@ module "keyvault" {
   tre_id                     = var.tre_id
   location                   = var.location
   resource_group_name        = azurerm_resource_group.core.name
-  shared_subnet              = module.network.shared
-  core_vnet                  = module.network.core
+  shared_subnet              = module.network.shared_subnet_id
+  core_vnet                  = module.network.core_vnet_id
   tenant_id                  = data.azurerm_client_config.current.tenant_id
   managed_identity_tenant_id = module.identity.managed_identity.tenant_id
   managed_identity_object_id = module.identity.managed_identity.principal_id
@@ -186,8 +186,8 @@ module "routetable" {
   tre_id                       = var.tre_id
   location                     = var.location
   resource_group_name          = azurerm_resource_group.core.name
-  shared_subnet_id             = module.network.shared
-  resource_processor_subnet_id = module.network.resource_processor
+  shared_subnet_id             = module.network.shared_subnet_id
+  resource_processor_subnet_id = module.network.resource_processor_subnet_id
   firewall_private_ip_address  = module.firewall.firewall_private_ip_address
 }
 
@@ -196,8 +196,8 @@ module "state-store" {
   tre_id              = var.tre_id
   location            = var.location
   resource_group_name = azurerm_resource_group.core.name
-  shared_subnet       = module.network.shared
-  core_vnet           = module.network.core
+  shared_subnet       = module.network.shared_subnet_id
+  core_vnet           = module.network.core_vnet_id
 }
 
 module "bastion" {
@@ -205,7 +205,7 @@ module "bastion" {
   tre_id              = var.tre_id
   location            = var.location
   resource_group_name = azurerm_resource_group.core.name
-  bastion_subnet      = module.network.bastion
+  bastion_subnet      = module.network.bastion_subnet_id
 }
 
 module "gitea" {
