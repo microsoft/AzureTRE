@@ -56,7 +56,7 @@ The workspace itself contains only the bare essentials to provide this functiona
 
 Workspaces can be enhanced with one or more building blocks called **workspace services** like Azure ML, Guacamole etc. to allow functionality such as development of machine learning models, data engineering, data analysis and software development.
 
-Multiple Workspaces can be created within a single Trusted Research Environment to create the required separation for your projects.
+Multiple workspaces can be created within a single Trusted Research Environment to create the required separation for your projects.
 
 Each workspace has [workspace users](./user-roles.md): one workspace owner, and one or more workspace researchers that can access the data and workspace services in the workspace. The workspace owner is also considered a workspace researcher.
 
