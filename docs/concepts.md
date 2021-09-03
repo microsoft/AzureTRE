@@ -22,7 +22,7 @@ Following are more detailed descriptions of the TRE concepts
 
 ## Application components of the TRE
 
-A TRE consist of multiple processes orchestrating managing Workspaces and services. These are components that enables Researchers and TRE Admins to provision and manage Workspaces in a self-service manner. These components are of relevance for [Azure Administrators](./user-roles.md#Azure-administrator), [TRE service integrator](./user-roles.md#TRE-service-integrator) and [TRE developers](./user-roles.md#Azure-TRE-developer).
+A TRE consist of multiple processes orchestrating managing workspaces and services. These are components that enable researchers and TRE admins to provision and manage workspaces in a self-service manner. The components are of relevance for [Azure administrators](./user-roles.md#Azure-administrator), [TRE service integrator](./user-roles.md#TRE-service-integrator) and [TRE developers](./user-roles.md#Azure-TRE-developer).
 
 ### Composition Service
 
