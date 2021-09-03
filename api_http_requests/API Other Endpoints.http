@@ -1,0 +1,5 @@
+### Get health status (no auth)
+
+GET {{baseUrl}}/health
+Accept: application/json
+
