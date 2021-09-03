@@ -1,0 +1,37 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_size = 2
+indent_style = space
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{tf,tfvars}]
+indent_size = 2
+indent_style = space
+
+[*.txt]
+indent_style = tab
+indent_size = 4
+
+[*.{diff,md}]
+trim_trailing_whitespace = false
+
+[{*.yaml,*.yml}]
+indent_size = 2
+
+[Makefile]
+indent_style = tab
+
+[*.py]
+indent_size = 4
+indent_style = space
+max_line_length = 120
+
+[*.java]
+max_line_length = 120
+# disable wildcard imports
+ij_java_class_count_to_use_import_on_demand = 99
+ij_java_names_count_to_use_import_on_demand = 99
