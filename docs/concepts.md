@@ -50,7 +50,7 @@ Shared Services are services and resource shared by all workspaces.
 
 ## Workspace
 
-A **Workspace** is a set of resources on a network with inbound traffic, restricted to authorised users, and outbound access restricted to defined network locations. The workspace is a security boundary and there should be zero transfer of data out from the workspace unless explicitly configured. Data transfer is not restricted within a workspace.
+A **workspace** is a set of resources on a network with inbound traffic, restricted to authorised users, and outbound access restricted to defined network locations. The workspace is a security boundary and there should be zero transfer of data out from the workspace unless explicitly configured. Data transfer is not restricted within a workspace.
 
 The workspace itself contains only the bare essentials to provide this functionality, such as firewalls, storage etc.
 
