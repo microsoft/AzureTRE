@@ -62,7 +62,7 @@ Each workspace has [workspace users](./user-roles.md): one workspace owner, and 
 
 ## Workspace Service
 
-A Workspace Service is a service, created as a building block, with pre-configured set of resources that can be applied to a workspace.
+A workspace service is a service, created as a building block, with pre-configured set of resources that can be applied to a workspace.
 
 Examples of Workspace Services are:
 
