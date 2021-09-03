@@ -77,7 +77,7 @@ All workspace services can be deployed to all workspaces.
 
 ## User Resource
 
-A User Resource is a resource that is only available to a particular researcher. For example a Guacamole VM.
+A user resource is a resource that is only available to a particular researcher. For example a Guacamole VM.
 
 User Resources can be deployed to workspaces with a compatible workspace service. E.g. Guacamole VMs can only be deployed to workspaces where the Guacamole workspace service is deployed.
 
