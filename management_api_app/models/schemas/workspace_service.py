@@ -85,4 +85,3 @@ class WorkspaceServicePatchEnabled(BaseModel):
                 "enabled": False
             }
         }
-

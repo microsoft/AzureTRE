@@ -111,7 +111,7 @@ async def retrieve_users_active_workspace_services(user=Depends(get_current_user
 
 
 @router.patch("/workspaces/{workspace_id}/workspace-services/{service_id}", response_model=WorkspaceServiceInResponse, name=strings.API_UPDATE_WORKSPACE_SERVICE)
-async def patch_workspace_service(workspace_service_patch: WorkspaceServicePatchEnabled, 
+async def patch_workspace_service(workspace_service_patch: WorkspaceServicePatchEnabled,
                                   workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)),
                                   user=Depends(get_current_user),
                                   workspace_service=Depends(get_workspace_service_by_id_from_path),

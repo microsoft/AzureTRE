@@ -62,7 +62,6 @@ class WorkspaceServiceRepository(ResourceRepository):
 
         return workspace_service
 
-
     def patch_workspace_service(self, workspace_service: WorkspaceService, workspace_service_patch: WorkspaceServicePatchEnabled):
         workspace_service.resourceTemplateParameters["enabled"] = workspace_service_patch.enabled
         self.update_item(workspace_service)

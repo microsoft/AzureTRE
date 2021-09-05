@@ -737,7 +737,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     async def test_workspaces_service_patch_returns_422_if_invalid_ws_id(self, get_workspace_mock, get_workspace_service_mock, app, client):
         workspace_id = "IAmNotEvenAGUID!"
         workspace_service_id = "933ad738-7265-4b5f-9eae-a1a62928772e"
-        
+
         workspace_service_to_patch = sample_workspace_service(workspace_service_id, workspace_id)
         get_workspace_service_mock.return_value = workspace_service_to_patch
         get_workspace_mock.return_value = sample_deployed_workspace(workspace_id)
@@ -769,14 +769,13 @@ class TestWorkspaceRoutesThatRequireAdminRights:
 
         assert response.status_code == status.HTTP_200_OK
 
-    
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.patch_workspace_service")
     async def test_workspaces_services_patch_is_not_allowed_for_non_ws_owners(self, patch_workspace_service_mock, get_workspace_mock, get_workspace_service_mock, app, client) -> None:
         workspace_id = "abcad738-7265-4b5f-9eae-a1a62928772e"
         workspace_service_id = "abcad738-7265-4b5f-9eae-a1a62928772e"
-        
+
         auth_info_user_in_workspace_researcher_role = {'sp_id': 'ab123', 'roles': {'WorkspaceOwner': 'ab127', 'WorkspaceResearcher': workspace_id}}
         patch_workspace_service_mock.return_value = None
         workspace_service_to_patch = sample_workspace_service(workspace_service_id, workspace_id)
