@@ -22,6 +22,11 @@ variable "address_space" {
   description = "Core services VNET Address Space"
 }
 
+variable "tre_address_space" {
+  type        = string
+  description = "Overall TRE Address Space pool, will be used for workspace VNETs, can be a supernet of address_space."
+}
+
 variable "api_image_repository" {
   type        = string
   description = "Repository for API image"

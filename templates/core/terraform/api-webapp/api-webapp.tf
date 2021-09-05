@@ -45,6 +45,8 @@ resource "azurerm_app_service" "api" {
     "API_CLIENT_SECRET"                          = var.api_client_secret
     "RESOURCE_GROUP_NAME"                        = var.resource_group_name
     "SUBSCRIPTION_ID"                            = data.azurerm_subscription.current.subscription_id
+    ADDRESS_SPACE                                = var.address_space
+    TRE_ADDRESS_SPACE                            = var.tre_address_space
   }
 
   identity {

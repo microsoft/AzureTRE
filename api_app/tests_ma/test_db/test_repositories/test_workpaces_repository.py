@@ -69,12 +69,17 @@ def test_get_workspace_by_id_queries_db(workspace_repo, workspace):
 
 
 @patch('db.repositories.workspaces.extract_auth_information', return_value={})
+@patch('db.repositories.workspaces.generate_new_cidr')
 @patch('db.repositories.workspaces.WorkspaceRepository.validate_input_against_template')
 @patch('core.config.RESOURCE_LOCATION', "useast2")
 @patch('core.config.TRE_ID', "9876")
-def test_create_workspace_item_creates_a_workspace_with_the_right_values(validate_input_mock, _, workspace_repo, basic_workspace_request):
+def test_create_workspace_item_creates_a_workspace_with_the_right_values(validate_input_mock, new_cidr_mock, _, workspace_repo, basic_workspace_request):
     workspace_to_create = basic_workspace_request
+    # make sure the input doesn't include an address_space so that one will be generated
+    workspace_to_create.properties.pop("address_space", None)
+
     validate_input_mock.return_value = workspace_to_create.workspaceType
+    new_cidr_mock.return_value = "1.2.3.4/24"
 
     workspace = workspace_repo.create_workspace_item(workspace_to_create)
 
@@ -87,7 +92,23 @@ def test_create_workspace_item_creates_a_workspace_with_the_right_values(validat
         assert len(workspace.resourceTemplateParameters[key]) > 0
 
     # need to make sure request doesn't override system param
-    assert workspace.resourceTemplateParameters["tre_id"] != "test"
+    assert workspace.resourceTemplateParameters["tre_id"] != workspace_to_create.properties["tre_id"]
+    # a new CIDR was allocated
+    assert workspace.resourceTemplateParameters["address_space"] == "1.2.3.4/24"
+
+
+@patch('db.repositories.workspaces.extract_auth_information', return_value={})
+@patch('db.repositories.workspaces.WorkspaceRepository.validate_input_against_template')
+@patch('core.config.RESOURCE_LOCATION', "useast2")
+@patch('core.config.TRE_ID', "9876")
+def test_create_workspace_item_creates_a_workspace_with_custom_address_space(validate_input_mock, _, workspace_repo, basic_workspace_request):
+    workspace_to_create = basic_workspace_request
+    workspace_to_create.properties["address_space"] = "192.168.0.0/24"
+    validate_input_mock.return_value = workspace_to_create.workspaceType
+
+    workspace = workspace_repo.create_workspace_item(workspace_to_create)
+
+    assert workspace.resourceTemplateParameters["address_space"] == workspace_to_create.properties["address_space"]
 
 
 @patch('db.repositories.workspaces.extract_auth_information', return_value={})
