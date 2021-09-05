@@ -11,7 +11,7 @@ from db.repositories.workspace_services import WorkspaceServiceRepository
 from models.domain.workspace import WorkspaceRole
 from models.schemas.user_resource import UserResourceInResponse, UserResourceIdInResponse, UserResourceInCreate, UserResourcesInList
 from models.schemas.workspace import WorkspaceInCreate, WorkspaceIdInResponse, WorkspacesInList, WorkspaceInResponse, WorkspacePatchEnabled
-from models.schemas.workspace_service import WorkspaceServiceIdInResponse, WorkspaceServiceInCreate, WorkspaceServicesInList, WorkspaceServiceInResponse
+from models.schemas.workspace_service import WorkspaceServiceIdInResponse, WorkspaceServiceInCreate, WorkspaceServicesInList, WorkspaceServiceInResponse, WorkspaceServicePatchEnabled
 from resources import strings
 from service_bus.resource_request_sender import send_resource_request_message, RequestAction
 from services.authentication import get_current_user, get_current_admin_user, get_access_service
@@ -108,6 +108,21 @@ async def retrieve_users_active_workspace_services(user=Depends(get_current_user
     validate_user_is_owner_or_researcher_in_workspace(user, workspace)
     workspace_services = workspace_services_repo.get_active_workspace_services_for_workspace(workspace.id)
     return WorkspaceServicesInList(workspaceServices=workspace_services)
+
+
+@router.patch("/workspaces/{workspace_id}/workspace-services/{service_id}", response_model=WorkspaceServiceInResponse, name=strings.API_UPDATE_WORKSPACE_SERVICE)
+async def patch_workspace_service(workspace_service_patch: WorkspaceServicePatchEnabled, 
+                                  workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)),
+                                  user=Depends(get_current_user),
+                                  workspace_service=Depends(get_workspace_service_by_id_from_path),
+                                  workspace=Depends(get_deployed_workspace_by_workspace_id_from_path)) -> WorkspaceInResponse:
+
+    role = get_user_role_in_workspace(user, workspace)
+    if role != WorkspaceRole.Owner:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.ACCESS_USER_IS_NOT_OWNER)
+
+    workspace_service_repo.patch_workspace_service(workspace_service, workspace_service_patch)
+    return WorkspaceServiceInResponse(workspaceService=workspace_service)
 
 
 @router.post("/workspaces/{workspace_id}/workspace-services", status_code=status.HTTP_202_ACCEPTED, response_model=WorkspaceServiceIdInResponse, name=strings.API_CREATE_WORKSPACE_SERVICE)
