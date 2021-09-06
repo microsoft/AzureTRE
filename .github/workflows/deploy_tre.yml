@@ -114,7 +114,7 @@ jobs:
           IMAGE_TAG=$GITHUB_SHA
 
           export IMAGE_TAG
-          export TF_VAR_management_api_image_tag=$IMAGE_TAG
+          export TF_VAR_api_image_tag=$IMAGE_TAG
           export TF_VAR_tre_id=$TRE_ID
           export TF_VAR_arm_subscription_id=$ARM_SUBSCRIPTION_ID
           export TF_VAR_arm_client_id=$ARM_CLIENT_ID

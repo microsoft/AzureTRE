@@ -117,7 +117,7 @@ All other variables can have their default values for now. You should now have a
 #  Used for TRE deployment
 TRE_ID=aztreqs
 ADDRESS_SPACE="10.1.0.0/22"
-MANAGEMENT_API_IMAGE_TAG=dev
+API_IMAGE_TAG=dev
 RESOURCE_PROCESSOR_VMSS_PORTER_IMAGE_TAG=dev
 GITEA_IMAGE_TAG=dev
 DEPLOY_GITEA=true
