@@ -12,6 +12,7 @@ API_UPDATE_WORKSPACE = "Update an existing workspace"
 API_GET_ALL_WORKSPACE_SERVICES = "Get all workspace services for workspace"
 API_GET_WORKSPACE_SERVICE_BY_ID = "Get workspace service by Id"
 API_CREATE_WORKSPACE_SERVICE = "Create a workspace service"
+API_UPDATE_WORKSPACE_SERVICE = "Update an existing workspace service"
 
 API_CREATE_USER_RESOURCE = "Create a user resource"
 API_GET_MY_USER_RESOURCES = "Get my user resources in the workspace service"

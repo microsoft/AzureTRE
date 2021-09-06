@@ -2,8 +2,7 @@ import uuid
 import pytest
 from mock import patch, MagicMock
 
-from fastapi import HTTPException
-from starlette import status
+from fastapi import HTTPException, status
 
 from api.routes.workspaces import get_current_user, save_and_deploy_resource, validate_user_is_owner_or_researcher_in_workspace
 from db.errors import EntityDoesNotExist
@@ -42,6 +41,19 @@ def sample_workspace_service(workspace_service_id, workspace_id):
         resourceTemplateParameters={},
         deployment=Deployment(status=Status.NotDeployed, message=""),
     )
+
+
+def sample_deployed_workspace(workspace_id, auth_info: dict = None):
+    workspace = Workspace(
+        id=workspace_id,
+        resourceTemplateName="tre-workspace-base",
+        resourceTemplateVersion="0.1.0",
+        resourceTemplateParameters={},
+        deployment=Deployment(status=Status.Deployed, message=""),
+    )
+    if auth_info:
+        workspace.authInformation = auth_info
+    return workspace
 
 
 @pytest.fixture
@@ -674,6 +686,89 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         patch_workspace_mock.assert_called_once_with(workspace_to_patch, workspace_patch)
 
         assert response.status_code == status.HTTP_200_OK
+
+    # [PATCH] /workspaces/{workspace_id}/services/{service_id}
+    @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
+    async def test_workspaces_service_patch_returns_404_if_workspace_service_does_not_exist(self, get_workspace_service_mock, app, client):
+        get_workspace_service_mock.side_effect = EntityDoesNotExist
+
+        workspace_id = "933ad738-7265-4b5f-9eae-a1a62928772e"
+        workspace_service_id = "abcad738-7265-4b5f-9eae-a1a62928772e"
+
+        input_data = '{"enabled": true}'
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE_SERVICE, workspace_id=workspace_id, service_id=workspace_service_id), json=input_data)
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    # [PATCH] /workspaces/{workspace_id}/services/{service_id}
+    @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    async def test_workspaces_service_patch_returns_404_if_workspace_does_not_exist(self, get_workspace_mock, get_workspace_service_mock, app, client):
+        get_workspace_mock.side_effect = EntityDoesNotExist
+
+        workspace_id = "933ad738-7265-4b5f-9eae-a1a62928772e"
+        workspace_service_id = "abcad738-7265-4b5f-9eae-a1a62928772e"
+
+        workspace_service_to_patch = sample_workspace_service(workspace_service_id, workspace_id)
+        get_workspace_service_mock.return_value = workspace_service_to_patch
+        input_data = '{"enabled": true}'
+
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE_SERVICE, workspace_id=workspace_id, service_id=workspace_service_id), json=input_data)
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    # [PATCH] /workspaces/{workspace_id}/services/{service_id}
+    @pytest.mark.parametrize('workspace_id, workspace_service_id', [("933ad738-7265-4b5f-9eae-a1a62928772e", "IAmNotEvenAGUID!"), ("IAmNotEvenAGUID!", "933ad738-7265-4b5f-9eae-a1a62928772e")])
+    @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    async def test_workspaces_service_patch_returns_422_if_invalid_id(self, get_workspace_mock, get_workspace_service_mock, app, client, workspace_id, workspace_service_id):
+        workspace_service_to_patch = sample_workspace_service(workspace_service_id, workspace_id)
+        get_workspace_service_mock.return_value = workspace_service_to_patch
+        get_workspace_mock.return_value = sample_deployed_workspace(workspace_id)
+
+        workspace_service_patch = {"enabled": True}
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE_SERVICE, workspace_id=workspace_id, service_id=workspace_service_id), json=workspace_service_patch)
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    # [PATCH] /workspaces/{workspace_id}/services/{service_id}
+    @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @ patch("api.routes.workspaces.WorkspaceServiceRepository.patch_workspace_service")
+    async def test_workspaces_services_patch_patches_workspace(self, patch_workspace_service_mock, get_workspace_mock, get_workspace_service_mock, app, client):
+        workspace_id = "933ad738-7265-4b5f-9eae-a1a62928772e"
+        workspace_service_id = "abcad738-7265-4b5f-9eae-a1a62928772e"
+
+        auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'roles': {'WorkspaceOwner': 'ab124', 'WorkspaceResearcher': 'ab125'}}
+
+        patch_workspace_service_mock.return_value = None
+
+        workspace_service_to_patch = sample_workspace_service(workspace_service_id, workspace_id)
+        get_workspace_service_mock.return_value = workspace_service_to_patch
+        get_workspace_mock.return_value = sample_deployed_workspace(workspace_id, auth_info_user_in_workspace_owner_role)
+
+        workspace_service_patch = {"enabled": True}
+
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE_SERVICE, workspace_id=workspace_id, service_id=workspace_service_id), json=workspace_service_patch)
+        patch_workspace_service_mock.assert_called_once_with(workspace_service_to_patch, workspace_service_patch)
+
+        assert response.status_code == status.HTTP_200_OK
+
+    @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @ patch("api.routes.workspaces.WorkspaceServiceRepository.patch_workspace_service")
+    async def test_workspaces_services_patch_is_not_allowed_for_non_ws_owners(self, patch_workspace_service_mock, get_workspace_mock, get_workspace_service_mock, app, client) -> None:
+        workspace_id = "abcad738-7265-4b5f-9eae-a1a62928772e"
+        workspace_service_id = "abcad738-7265-4b5f-9eae-a1a62928772e"
+
+        auth_info_user_in_workspace_researcher_role = {'sp_id': 'ab123', 'roles': {'WorkspaceOwner': 'ab127', 'WorkspaceResearcher': workspace_id}}
+        patch_workspace_service_mock.return_value = None
+        workspace_service_to_patch = sample_workspace_service(workspace_service_id, workspace_id)
+        get_workspace_service_mock.return_value = workspace_service_to_patch
+        get_workspace_mock.return_value = sample_deployed_workspace(workspace_id, auth_info_user_in_workspace_researcher_role)
+
+        workspace_service_patch = {"enabled": True}
+
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE_SERVICE, workspace_id=workspace_id, service_id=workspace_service_id), json=workspace_service_patch)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
 
     # [DELETE] /workspaces/{workspace_id}
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
