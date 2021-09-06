@@ -50,3 +50,5 @@ Options:
 ```
 
 In addition to generating the payload, the script posts the payload to the `/api/workspace-templates` endpoint. Once registered the template can be retrieved by a `GET` operation on `/api/workspace-templates`.
+
+> The same procedure can be followed to register workspace service templates and user resource templates

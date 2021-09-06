@@ -45,7 +45,7 @@ outputs:
 mixins:
   - exec
   - terraform:
-      clientVersion: 0.15.4
+      clientVersion: 1.0.5
 
 install:
   - terraform:

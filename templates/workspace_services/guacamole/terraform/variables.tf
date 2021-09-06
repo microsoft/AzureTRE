@@ -14,7 +14,5 @@ variable "guac_enable_drive" {}
 variable "guac_drive_name" {}
 variable "guac_drive_path" {}
 variable "guac_disable_download" {}
-variable "api_client_id" {}
-variable "aad_tenant_id" {}
 variable "is_exposed_externally" {}
 variable "tre_resource_id" {}
