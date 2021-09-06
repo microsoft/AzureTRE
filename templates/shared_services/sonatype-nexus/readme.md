@@ -24,13 +24,4 @@ To be able to run the Nexus Shared Service it need to be able to acccess the fol
 | AzureActiveDirectory | Authorize the signed in user against Azure Active Directory. |
 | AzureContainerRegistry | Pull the Nexus container image, as it is located in Azure Container Registry.  |
 | AzureMonitor | Forwards tracing an logs to central location for troubleshooting. |
-| packages.microsoft.com | ?? |
-| keyserver.ubuntu.com | ?? |
-| api.snapcraft.io | ?? |
-| azure.archive.ubuntu.com | ?? |
-| security.ubuntu.com | ?? |
-| entropy.ubuntu.com | ?? |
-| download.docker.com | Pull the official Nexus container image from Docker Hub. |
-| registry-1.docker.io | ?? |
-| auth.docker.io | ?? |
-| registry.terraform.io | ?? |
+| pypi.org | Enables Nexus to "proxy" python packages to use inside of workspaces |
