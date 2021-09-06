@@ -47,7 +47,8 @@
 		"hashicorp.terraform",
 		"github.vscode-pull-request-github",
 		"ms-kubernetes-tools.porter-vscode",
-		"davidanson.vscode-markdownlint"
+		"davidanson.vscode-markdownlint",
+    "editorconfig.editorconfig"
 	],
 	"forwardPorts": [8000]
 }

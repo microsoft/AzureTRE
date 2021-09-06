@@ -73,6 +73,11 @@ data "azurerm_network_security_group" "ws" {
   resource_group_name = data.azurerm_virtual_network.ws.resource_group_name
 }
 
+data "azurerm_app_service" "management_api_core" {
+  name                = "api-${var.tre_id}"
+  resource_group_name = "rg-${var.tre_id}"
+}
+
 output "connection_uri" {
   value = azurerm_app_service.guacamole.default_site_hostname
 }
