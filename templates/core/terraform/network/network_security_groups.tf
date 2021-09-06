@@ -1,12 +1,12 @@
-# Network Security Group for Azure Bastion
-# See https://docs.microsoft.com/en-us/azure/bastion/bastion-nsg
+# Network security group for Azure Bastion subnet
+# See https://docs.microsoft.com/azure/bastion/bastion-nsg
 resource "azurerm_network_security_group" "bastion" {
   name                = "nsg-bastion-subnet"
   location            = var.location
   resource_group_name = var.resource_group_name
 
   security_rule {
-    name                       = "BastionInboundAllowInternet"
+    name                       = "AllowInboundInternet"
     priority                   = 4000
     direction                  = "Inbound"
     access                     = "Allow"
@@ -18,7 +18,7 @@ resource "azurerm_network_security_group" "bastion" {
   }
 
   security_rule {
-    name                       = "BastionInboundAllowGatewayManager"
+    name                       = "AllowInboundGatewayManager"
     priority                   = 4001
     direction                  = "Inbound"
     access                     = "Allow"
@@ -30,7 +30,7 @@ resource "azurerm_network_security_group" "bastion" {
   }
 
   security_rule {
-    name                       = "BastionInboundAllowAzureLoadBalancer"
+    name                       = "AllowInboundAzureLoadBalancer"
     priority                   = 4002
     direction                  = "Inbound"
     access                     = "Allow"
@@ -42,7 +42,7 @@ resource "azurerm_network_security_group" "bastion" {
   }
 
   security_rule {
-    name                       = "BastionInboundAllowHostCommunication"
+    name                       = "AllowInboundHostCommunication"
     priority                   = 4003
     direction                  = "Inbound"
     access                     = "Allow"
@@ -53,20 +53,8 @@ resource "azurerm_network_security_group" "bastion" {
     destination_address_prefix = "VirtualNetwork"
   }
 
-  #security_rule {
-  #  name                       = "bastion-inbound-deny-all"
-  #  priority                   = 4010
-  #  direction                  = "Inbound"
-  #  access                     = "Deny"
-  #  protocol                   = "*"
-  #  source_port_range          = "*"
-  #  destination_port_range     = "*"
-  #  source_address_prefix      = "*"
-  #  destination_address_prefix = "*"
-  #}
-
   security_rule {
-    name                       = "BastionOutboundAllowSshRdp"
+    name                       = "AllowOutboundSshRdp"
     priority                   = 4020
     direction                  = "Outbound"
     access                     = "Allow"
@@ -78,7 +66,7 @@ resource "azurerm_network_security_group" "bastion" {
   }
 
   security_rule {
-    name                       = "BastionOutboundAllowAzureCloud"
+    name                       = "AllowOutboundAzureCloud"
     priority                   = 4021
     direction                  = "Outbound"
     access                     = "Allow"
@@ -90,7 +78,7 @@ resource "azurerm_network_security_group" "bastion" {
   }
 
   security_rule {
-    name                       = "BastionOutboundAllowHostCommunication"
+    name                       = "AllowOutboundHostCommunication"
     priority                   = 4022
     direction                  = "Outbound"
     access                     = "Allow"
@@ -102,7 +90,7 @@ resource "azurerm_network_security_group" "bastion" {
   }
 
   security_rule {
-    name                       = "BastionOutboundAllowGetSessionInformation"
+    name                       = "AllowOutboundGetSessionInformation"
     priority                   = 4023
     direction                  = "Outbound"
     access                     = "Allow"
@@ -112,18 +100,6 @@ resource "azurerm_network_security_group" "bastion" {
     source_address_prefix      = "*"
     destination_address_prefix = "Internet"
   }
-
-  #security_rule {
-  #  name                       = "bastion-outbound-deny-all"
-  #  priority                   = 4030
-  #  direction                  = "Outbound"
-  #  access                     = "Deny"
-  #  protocol                   = "*"
-  #  source_port_range          = "*"
-  #  destination_port_range     = "*"
-  #  source_address_prefix      = "*"
-  #  destination_address_prefix = "*"
-  #}
 }
 
 resource "azurerm_subnet_network_security_group_association" "bastion" {
@@ -131,32 +107,25 @@ resource "azurerm_subnet_network_security_group_association" "bastion" {
   network_security_group_id = azurerm_network_security_group.bastion.id
 }
 
-resource "azurerm_network_security_group" "web_app" {
-  name                = "nsg-web-app-subnet"
+# Network security group with only default security rules
+# See https://docs.microsoft.com/azure/virtual-network/network-security-groups-overview#default-security-rules
+resource "azurerm_network_security_group" "default_rules" {
+  name                = "nsg-default-rules"
   location            = var.location
   resource_group_name = var.resource_group_name
-
-  # TODO: The real rules - this is just a test rule
-  security_rule {
-    name                       = "webapp-inbound-allow-virtualnetwork"
-    priority                   = 3900
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "*"
-    source_port_range          = "*"
-    destination_port_range     = "*"
-    source_address_prefix      = "VirtualNetwork"
-    destination_address_prefix = "VirtualNetwork"
-  }
 }
 
 resource "azurerm_subnet_network_security_group_association" "web_app" {
   subnet_id                 = azurerm_subnet.web_app.id
-  network_security_group_id = azurerm_network_security_group.web_app.id
+  network_security_group_id = azurerm_network_security_group.default_rules.id
 }
 
-# Test multi-association
 resource "azurerm_subnet_network_security_group_association" "resource_processor" {
   subnet_id                 = azurerm_subnet.resource_processor.id
-  network_security_group_id = azurerm_network_security_group.web_app.id
+  network_security_group_id = azurerm_network_security_group.default_rules.id
+}
+
+resource "azurerm_subnet_network_security_group_association" "shared" {
+  subnet_id                 = azurerm_subnet.shared.id
+  network_security_group_id = azurerm_network_security_group.default_rules.id
 }

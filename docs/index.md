@@ -4,6 +4,7 @@
   * [Concepts](./concepts.md)
   * [User roles](./user-roles.md)
   * [Architecture](./architecture.md)
+  * [Networking](./networking.md)
   * [Logical data model](./logical-data-model.md)
 * Getting started
   * [Dev environment](./dev-environment.md)
