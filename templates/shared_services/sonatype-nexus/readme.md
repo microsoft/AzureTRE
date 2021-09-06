@@ -14,3 +14,14 @@ To deploy set `DEPLOY_NEXUS=true` in `templates/core/.env`.
 1. Use the password to login to Nexus and go through the initial setup wizard. You can allow anonymous access because the purpose of this service is to use publicly available software packages.
 1. On the admin screen, add **proxy** repositories as needed. Note that other types of repositories might be a way to move data in/out workspaces, and you should not allow that.
 1. Finally, share the repositories addresses with your users.
+
+## Network requirements
+
+To be able to run the Nexus Shared Service it need to be able to acccess the following resource outside the Azure TRE VNET via explicit allowed [Service Tags](https://docs.microsoft.com/en-us/azure/virtual-network/service-tags-overview) or URLs.
+
+| Service Tag / Destionation | Justification |
+| --- | --- |
+| AzureActiveDirectory | Authorize the signed in user against Azure Active Directory. |
+| AzureContainerRegistry | Pull the Nexus container image, as it is located in Azure Container Registry.  |
+| AzureMonitor | Forwards tracing an logs to central location for troubleshooting. |
+| pypi.org | Enables Nexus to "proxy" python packages to use inside of workspaces |
