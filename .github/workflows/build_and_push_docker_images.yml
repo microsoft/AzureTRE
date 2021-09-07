@@ -34,7 +34,7 @@ jobs:
       - name: Build & publish image
         env:
           DOCKER_BUILDKIT: 1
-          REPOSITORY_NAME: ${{ secrets.docker_registry_server }}/microsoft/azuretre/management-api
+          REPOSITORY_NAME: ${{ secrets.docker_registry_server }}/microsoft/azuretre/api
         run: |
           TAG=$GITHUB_SHA
 
