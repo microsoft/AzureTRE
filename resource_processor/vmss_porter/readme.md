@@ -69,7 +69,7 @@ To be able to run the Resource Processer it needs to acccess the following resou
 | AzureContainerRegistry | Pull the Resource Processer container image, as it is located in Azure Container Registry.  |
 | Storage | The Porter bundles stores state between executions in an Azure Storage Account. |
 
-To be able to install Docker, Porter and related packages on the Resource Processor, the VM must have access to download from the following URLs:
+To be able to install Docker, Porter and related packages ([script](/templates/core/terraform/resource_processor/vmss_porter/cloud-config.yaml)) on the Resource Processor, the VM must have access to download from the following URLs:
 
 * packages.microsoft.com
 * keyserver.ubuntu.com
