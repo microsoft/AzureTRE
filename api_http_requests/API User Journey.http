@@ -111,7 +111,9 @@ Content-Type: {{contentType}}
   }
 }
 
-### Create a workspace service (admin)
+# ----- WORKSPACE OWNER CREATES A WORKSPACE WITH A WORKSPACE SERVICE -----
+
+### Create a workspace service (workspace owner)
 
 POST {{baseUrl}}/workspaces/{{workspaceId}}/workspace-services
 Accept: {{contentType}}
@@ -128,9 +130,9 @@ Content-Type: {{contentType}}
 
 ###
 
-# ----- USER CREATES A USER RESOURCE -----
+# ----- RESEARCHER CREATES A USER RESOURCE -----
 
-### Create a user resource (owner/researcher)
+### Create a user resource (researcher)
 
 POST {{baseUrl}}/workspaces/{{workspaceId}}/workspace-services/{{workspaceServiceId}}/user-resources
 Accept: {{contentType}}
@@ -146,6 +148,10 @@ Content-Type: {{contentType}}
 }
 
 ###
+
+# ----- RESEARCHER OR WORKSPACE OWNER DELETES THE USER RESOURCE -----
+
+# ----- WORKSPACE OWNER DELETES THE WORKSPACE SERVICE -----
 
 # ----- ADMIN DELETES THE WORKSPACE -----
 
