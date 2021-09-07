@@ -39,9 +39,17 @@ def get_user_role_in_workspace(user, workspace):
     return access_service.get_workspace_role(user, workspace)
 
 
-def validate_user_is_owner_or_researcher_in_workspace(user, workspace):
+def validate_user_is_owner_or_researcher(user, workspace):
+    validate_user_has_valid_role_in_workspace(user, workspace, [WorkspaceRole.Owner, WorkspaceRole.Researcher])
+
+
+def validate_user_is_owner(user, workspace):
+    validate_user_has_valid_role_in_workspace(user, workspace, [WorkspaceRole.Owner])
+
+
+def validate_user_has_valid_role_in_workspace(user, workspace, valid_roles=None):
     role = get_user_role_in_workspace(user, workspace)
-    if (role != WorkspaceRole.Researcher) and (role != WorkspaceRole.Owner):
+    if role not in valid_roles:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.ACCESS_USER_IS_NOT_OWNER)
 
 
@@ -70,7 +78,7 @@ async def create_workspace(workspace_create: WorkspaceInCreate, workspace_repo=D
 
 @router.get("/workspaces/{workspace_id}", response_model=WorkspaceInResponse, name=strings.API_GET_WORKSPACE_BY_ID)
 async def retrieve_workspace_by_workspace_id(user=Depends(get_current_user), workspace=Depends(get_workspace_by_workspace_id_from_path)) -> WorkspaceInResponse:
-    validate_user_is_owner_or_researcher_in_workspace(user, workspace)
+    validate_user_is_owner_or_researcher(user, workspace)
     return WorkspaceInResponse(workspace=workspace)
 
 
@@ -105,14 +113,14 @@ async def delete_workspace(workspace=Depends(get_workspace_by_workspace_id_from_
 
 @router.get("/workspaces/{workspace_id}/workspace-services", response_model=WorkspaceServicesInList, name=strings.API_GET_ALL_WORKSPACE_SERVICES)
 async def retrieve_users_active_workspace_services(user=Depends(get_current_user), workspace=Depends(get_workspace_by_workspace_id_from_path), workspace_services_repo=Depends(get_repository(WorkspaceServiceRepository))) -> WorkspaceServicesInList:
-    validate_user_is_owner_or_researcher_in_workspace(user, workspace)
+    validate_user_is_owner_or_researcher(user, workspace)
     workspace_services = workspace_services_repo.get_active_workspace_services_for_workspace(workspace.id)
     return WorkspaceServicesInList(workspaceServices=workspace_services)
 
 
 @router.post("/workspaces/{workspace_id}/workspace-services", status_code=status.HTTP_202_ACCEPTED, response_model=WorkspaceServiceIdInResponse, name=strings.API_CREATE_WORKSPACE_SERVICE)
 async def create_workspace_service(workspace_service_input: WorkspaceServiceInCreate, workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), user=Depends(get_current_user), workspace=Depends(get_deployed_workspace_by_workspace_id_from_path)) -> WorkspaceServiceIdInResponse:
-    validate_user_is_owner_or_researcher_in_workspace(user, workspace)
+    validate_user_is_owner(user, workspace)
 
     try:
         workspace_service = workspace_service_repo.create_workspace_service_item(workspace_service_input, workspace.id)
@@ -126,18 +134,15 @@ async def create_workspace_service(workspace_service_input: WorkspaceServiceInCr
 
 
 @router.patch("/workspaces/{workspace_id}/workspace-services/{service_id}", response_model=WorkspaceServiceInResponse, name=strings.API_UPDATE_WORKSPACE_SERVICE)
-async def patch_workspace_service(workspace_service_patch: WorkspaceServicePatchEnabled, workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), user=Depends(get_current_user), workspace_service=Depends(get_workspace_service_by_id_from_path), workspace=Depends(get_deployed_workspace_by_workspace_id_from_path)) -> WorkspaceServiceInResponse:
-    role = get_user_role_in_workspace(user, workspace)
-    if role != WorkspaceRole.Owner:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.ACCESS_USER_IS_NOT_OWNER)
-
+async def patch_workspace_service(workspace_service_patch: WorkspaceServicePatchEnabled, workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), user=Depends(get_current_user), workspace_service=Depends(get_workspace_service_by_id_from_path), workspace=Depends(get_workspace_by_workspace_id_from_path)) -> WorkspaceServiceInResponse:
+    validate_user_is_owner_or_researcher(user, workspace)
     workspace_service_repo.patch_workspace_service(workspace_service, workspace_service_patch)
     return WorkspaceServiceInResponse(workspaceService=workspace_service)
 
 
 @router.post("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources", status_code=status.HTTP_202_ACCEPTED, response_model=UserResourceIdInResponse, name=strings.API_CREATE_USER_RESOURCE)
 async def create_user_resource(user_resource_create: UserResourceInCreate, user_resource_repo=Depends(get_repository(UserResourceRepository)), user=Depends(get_current_user), workspace=Depends(get_deployed_workspace_by_workspace_id_from_path), workspace_service=Depends(get_deployed_workspace_service_by_id_from_path)) -> UserResourceIdInResponse:
-    validate_user_is_owner_or_researcher_in_workspace(user, workspace)
+    validate_user_is_owner_or_researcher(user, workspace)
 
     try:
         user_resource = user_resource_repo.create_user_resource_item(user_resource_create, workspace.id, workspace_service.id, workspace_service.resourceTemplateName, user.id)
@@ -153,7 +158,7 @@ async def create_user_resource(user_resource_create: UserResourceInCreate, user_
 @router.get("/workspace-services/{service_id}", response_model=WorkspaceServiceInResponse, name=strings.API_GET_WORKSPACE_SERVICE_BY_ID)
 async def retrieve_workspace_service_by_id(workspace_service=Depends(get_workspace_service_by_id_from_path), workspaces_repo=Depends(get_repository(WorkspaceRepository)), user=Depends(get_current_user)) -> WorkspaceServiceInResponse:
     workspace = get_workspace_by_id(workspace_service.workspaceId, workspaces_repo)
-    validate_user_is_owner_or_researcher_in_workspace(user, workspace)
+    validate_user_is_owner_or_researcher(user, workspace)
     return WorkspaceServiceInResponse(workspaceService=workspace_service)
 
 
