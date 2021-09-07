@@ -8,8 +8,8 @@ variable "app_gw_subnet" {}
 variable "app_insights_connection_string" {}
 variable "app_insights_instrumentation_key" {}
 variable "log_analytics_workspace_id" {}
-variable "management_api_image_repository" {}
-variable "management_api_image_tag" {}
+variable "api_image_repository" {}
+variable "api_image_tag" {}
 variable "docker_registry_server" {}
 variable "state_store_endpoint" {}
 variable "cosmosdb_account_name" {}

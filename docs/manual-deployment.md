@@ -49,7 +49,7 @@ cp templates/core/.env.sample templates/core/.env
 | ------------------------- | ----------- |
 | `TRE_ID` | A globally unique identifier. `TRE_ID` can be found in the resource names of the Azure TRE instance; for example, a `TRE_ID` of `mytre-dev-3142` will result in a resource group name for Azure TRE instance of `rg-mytre-dev-3142`. This must be less than 12 characters. Allowed characters: Alphanumeric, underscores, and hyphens. |
 | `ADDRESS_SPACE` | The address space for the Azure TRE core virtual network. `/22` or larger. |
-| `MANAGEMENT_API_IMAGE_TAG` | The tag of the Management API image. Make it the same as `IMAGE_TAG` above.|
+| `API_IMAGE_TAG` | The tag of the API image. Make it the same as `IMAGE_TAG` above.|
 | `RESOURCE_PROCESSOR_VMSS_PORTER_IMAGE_TAG` | The tag of the resource processor image. Make it the same as `IMAGE_TAG` above.|
 | `GITEA_IMAGE_TAG` | The tag of the Gitea image. Make it the same as `IMAGE_TAG` above.|
 | `SWAGGER_UI_CLIENT_ID` | Generated when following auth guide. Client ID for swagger client to make requests. |
@@ -138,13 +138,13 @@ cd templates/core/terraform
 terraform output azure_tre_fqdn
 ```
 
-Open the following URL in a browser, and you should see the Open API docs of Azure TRE Management API.
+Open the following URL in a browser, and you should see the Open API docs of Azure TRE API.
 
 ```plaintext
 https://<azure_tre_fqdn>/docs
 ```
 
-You can also create a request to the `api/health` endpoint to verify that Management API is deployed and responds. You should see a *pong* response as a result of below request.
+You can also create a request to the `api/health` endpoint to verify that the API is deployed and responds. You should see a *pong* response as a result of below request.
 
 ```cmd
 curl https://<azure_tre_fqdn>/api/health

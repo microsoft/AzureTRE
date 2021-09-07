@@ -1,3 +1,3 @@
-output "management_api_fqdn" {
-  value = azurerm_app_service.management_api.default_site_hostname
+output "api_fqdn" {
+  value = azurerm_app_service.api.default_site_hostname
 }

@@ -5,7 +5,7 @@ This document describes the authentication and authorization (A&A) of deployed A
 
 ## App registrations
 
-App registrations (represented by service principals) define the privileges enabling access to the TRE system (e.g., [Management API](../management_api_app/README.md)) as well as the workspaces.
+App registrations (represented by service principals) define the privileges enabling access to the TRE system (e.g., [API](../api_app/README.md)) as well as the workspaces.
 
 <!-- markdownlint-disable-next-line MD013 -->
 It is recommended to run the [`/scripts/aad-app-reg.sh`](../scripts/aad-app-reg.sh) script to create the two main app registrations: **TRE API** and **TRE Swagger UI**. This automatically sets up the app registrations with the required permissions to run Azure TRE. The script will create an app password (client secret) for the **TRE API** app; make sure to take note of it in the script output as it is only shown once.
@@ -18,14 +18,14 @@ Workspaces rely on app registrations as well, and those are documented under [Wo
 
 ### TRE API
 
-The **TRE API** app registration defines the permissions, scopes and app roles for Management API users to authenticate and authorize API calls.
+The **TRE API** app registration defines the permissions, scopes and app roles for API users to authenticate and authorize API calls.
 
 #### API permissions - TRE API
 
 | API/permission name | Type | Description | Admin consent required | TRE usage |
 | ------------------- | ---- | ----------- | ---------------------- | --------- |
 | Microsoft Graph/Directory.Read.All (`https://graph.microsoft.com/Directory.Read.All`) | Application* | Allows the app to read data in your organization's directory, such as users, groups and apps, without a signed-in user. | Yes | Used e.g., to retrieve app registration details, user associated app roles etc. |
-| Microsoft Graph/User.Read.All (`https://graph.microsoft.com/User.Read.All`) | Application* | Allows the app to read user profiles without a signed in user. | Yes | Reading user role assignments to check that the user has permissions to execute an action e.g., to view workspaces. See [`aad_access_service.py`](../management_api_app/services/aad_access_service.py). |
+| Microsoft Graph/User.Read.All (`https://graph.microsoft.com/User.Read.All`) | Application* | Allows the app to read user profiles without a signed in user. | Yes | Reading user role assignments to check that the user has permissions to execute an action e.g., to view workspaces. See [`aad_access_service.py`](../api_app/services/aad_access_service.py). |
 
 *) See the difference between [delegated and application permission](https://docs.microsoft.com/graph/auth/auth-concepts#delegated-and-application-permissions) types.
 
@@ -53,7 +53,7 @@ The **TRE API** app registration requires no redirect URLs defined or anything e
 
 **TRE Swagger UI** app registration:
 
-* Controls the access to the Swagger UI of Management API
+* Controls the access to the Swagger UI of the TRE API
 * Has no scopes or app roles defined
 
 #### API permissions - TRE Swagger UI
@@ -125,7 +125,7 @@ The end-to-end test should be added to **TRE Administrator** role exposed by the
 
 Access to workspaces is also controlled using app registrations - one per workspace. The configuration of the app registration depends on the nature of the workspace, but this section covers the typical minimum settings.
 
-> **Note:** The app registration for a workspace is not created by [Management API](../management_api_app/README.md). One needs to be present (created manually) before using the API to provision a new workspace.
+> **Note:** The app registration for a workspace is not created by the [API](../api_app/README.md). One needs to be present (created manually) before using the API to provision a new workspace.
 
 #### Authentication - Workspaces
 
@@ -151,7 +151,7 @@ For a user to gain access to the system, they have to:
 1. Have an identity in Azure AD
 1. Be linked with an app registration and assigned a role
 
-When these requirements are met, the user can sign-in using their credentials and use their privileges to use Management API, login to workspace environment etc. based on their specific roles.
+When these requirements are met, the user can sign-in using their credentials and use their privileges to use the API, login to workspace environment etc. based on their specific roles.
 
 ![User linked with app registrations](./assets/aad-user-linked-with-app-regs.png)
 
