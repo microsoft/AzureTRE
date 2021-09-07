@@ -1,0 +1,88 @@
+### Register workspace template (admin)
+
+POST {{baseUrl}}/workspace-templates
+Accept: {{contentType}}
+Authorization: Bearer {{token}}
+Content-Type: {{contentType}}
+
+{
+  "name": "my-tre-workspace",
+  "version": "0.0.3",
+  "current": "true",
+  "json_schema": {
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/myworkspace/workspace.json",
+    "type": "object",
+    "title": "My Workspace Template",
+    "description": "My Workspace Template",
+    "required": [
+      "vm_size",
+      "no_of_vms"
+    ],
+    "properties": {
+      "vm_size": {
+        "$id": "#/properties/vm_size",
+        "type": "string",
+        "title": "VM size",
+        "description": "Size of the VMs in my workspace",
+        "default": "Standard_A1",
+        "enum": [
+          "Standard_A1",
+          "Standard_A2",
+          "Standard_A3"
+        ]
+      },
+      "no_of_vms": {
+        "$id": "#/properties/no_of_vms",
+        "type": "integer",
+        "title": "Number of VMs",
+        "description": "Number of virtual machines to be deployed in the workspace",
+        "default": 0
+      }
+    }
+  }
+}
+
+### Register workspace service template (admin)
+
+POST {{baseUrl}}/workspace-service-templates
+Accept: {{contentType}}
+Authorization: Bearer {{token}}
+Content-Type: {{contentType}}
+
+{
+  "name": "my-tre-workspace-service",
+  "version": "0.0.1",
+  "current": "true",
+  "json_schema": {
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/myworkspace/workspace_service.json",
+    "type": "object",
+    "title": "My Workspace Service Template",
+    "description": "My Workspace Service Template",
+    "required": [],
+    "properties": {}
+  }
+}
+
+### Register user resource template (admin)
+
+POST {{baseUrl}}/workspace-service-templates/my-tre-workspace-service/user-resource-templates
+Accept: {{contentType}}
+Authorization: Bearer {{token}}
+Content-Type: {{contentType}}
+
+{
+  "name": "my-tre-user-resource",
+  "version": "0.0.1",
+  "current": "true",
+  "json_schema": {
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/myworkspace/user_resource.json",
+    "type": "object",
+    "title": "My User Resource Template",
+    "description": "My User Resource Template",
+    "required": [],
+    "properties": {}
+  }
+}

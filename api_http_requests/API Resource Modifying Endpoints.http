@@ -1,0 +1,64 @@
+### Create a workspace (admin)
+
+POST {{baseUrl}}/workspaces
+Accept: {{contentType}}
+Authorization: Bearer {{token}}
+Content-Type: {{contentType}}
+
+{
+  "workspaceType": "{{workspaceTemplate}}",
+  "properties": {
+    "display_name": "my workspace",
+    "description": "my workspace",
+    "app_id": "{{appId}}",
+    "vm_size": "Standard_A1",
+    "no_of_vms": 2
+  }
+}
+
+### Create a workspace service (admin)
+
+POST {{baseUrl}}/workspaces/{{workspaceId}}/workspace-services
+Accept: {{contentType}}
+Authorization: Bearer {{token}}
+Content-Type: {{contentType}}
+
+{
+  "workspaceServiceType": "{{workspaceServiceTemplate}}",
+  "properties": {
+    "display_name": "my workspace service",
+    "description": "my workspace service"
+  }
+}
+
+### Create a user resource (owner/researcher)
+
+POST {{baseUrl}}/workspaces/{{workspaceId}}/workspace-services/{{workspaceServiceId}}/user-resources
+Accept: {{contentType}}
+Authorization: Bearer {{token}}
+Content-Type: {{contentType}}
+
+{
+  "userResourceType": "{{userResourceTemplate}}",
+  "properties": {
+    "display_name": "my user resource",
+    "description": "my user resource"
+  }
+}
+
+### Disable a workspace (admin)
+
+PATCH {{baseUrl}}/workspaces/{{workspaceId}}
+Accept: {{contentType}}
+Authorization: Bearer {{token}}
+Content-Type: {{contentType}}
+
+{
+  "enabled": false
+}
+
+### Delete a workspace (admin)
+
+DELETE {{baseUrl}}/workspaces/{{workspaceId}}
+Accept: {{contentType}}
+Authorization: Bearer {{token}}
