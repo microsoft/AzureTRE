@@ -59,23 +59,27 @@ Check the section **Checking the Virtual Machine Scale Set(VMSS) instance runnin
 
 ## Network requirements
 
-To be able to run the Resource Processer it need to be able to acccess the following resource outside the Azure TRE VNET via explicit allowed [Service Tags](https://docs.microsoft.com/en-us/azure/virtual-network/service-tags-overview) or URLs.
 
-| Service Tag / Destination | Justification |
+To be able to run the Resource Processer it needs to acccess the following resource outside the Azure TRE VNET via explicit allowed [Service Tags](https://docs.microsoft.com/en-us/azure/virtual-network/service-tags-overview) or URLs.
+
+| Service Tag | Justification |
 | --- | --- |
 | AzureActiveDirectory | Authenticate with the User Assigned identity to access Azure Resource Manager and Azure Service Bus. |
 | AzureResourceManager | Access the Azure controle plane to deploy and manage Azure resources. |
 | AzureMonitor | Publish traces and logs to one central place for troubleshooting. |
 | AzureContainerRegistry | Pull the Resource Processer container image, as it is located in Azure Container Registry.  |
 | Storage | The Porter bundles stores state between executions in an Azure Storage Account. |
-| packages.microsoft.com | ?? |
-| keyserver.ubuntu.com | ?? |
-| api.snapcraft.io | ?? |
-| azure.archive.ubuntu.com | ?? |
-| security.ubuntu.com | ?? |
-| entropy.ubuntu.com | ?? |
-| download.docker.com | Pull the Python base container image the Resource Processor is based on. |
-| registry-1.docker.io | ?? |
-| auth.docker.io | ?? |
-| registry.terraform.io | ?? |
-| releases.hashicorp.com | ?? |
+
+To be able to install Docker, Porter and related packages on the Resource Processor, the VM must have access to download from the following URLs:
+
+* packages.microsoft.com
+* keyserver.ubuntu.com
+* api.snapcraft.io
+* azure.archive.ubuntu.com
+* security.ubuntu.com
+* entropy.ubuntu.com
+* download.docker.com
+* registry-1.docker.io
+* auth.docker.io
+* registry.terraform.io
+* releases.hashicorp.com
