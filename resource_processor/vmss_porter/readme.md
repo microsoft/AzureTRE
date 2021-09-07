@@ -59,7 +59,6 @@ Check the section **Checking the Virtual Machine Scale Set(VMSS) instance runnin
 
 ## Network requirements
 
-
 To be able to run the Resource Processer it needs to acccess the following resource outside the Azure TRE VNET via explicit allowed [Service Tags](https://docs.microsoft.com/en-us/azure/virtual-network/service-tags-overview) or URLs.
 
 | Service Tag | Justification |
