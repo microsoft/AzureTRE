@@ -17,4 +17,4 @@ To run the Unit and E2E tests follow the [testing documentation](testing.md).
 
 ### Running the TRE API locally
 
-To run the TRE api locally follow the steps noted [here](../api_app/README.md).
+To run the TRE API locally follow the steps noted [here](../api_app/README.md).
