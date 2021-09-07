@@ -28,8 +28,3 @@ resource "azurerm_subnet_route_table_association" "rt_web_app_subnet_association
   subnet_id      = var.web_app_subnet_id
   route_table_id = azurerm_route_table.rt.id
 }
-
-resource "azurerm_subnet_route_table_association" "rt_app_gw_subnet_association" {
-  subnet_id      = var.app_gw_subnet_id
-  route_table_id = azurerm_route_table.rt.id
-}
