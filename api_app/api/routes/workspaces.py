@@ -11,7 +11,7 @@ from db.repositories.workspace_services import WorkspaceServiceRepository
 from models.domain.workspace import WorkspaceRole
 from models.schemas.user_resource import UserResourceInResponse, UserResourceIdInResponse, UserResourceInCreate, UserResourcesInList
 from models.schemas.workspace import WorkspaceInCreate, WorkspaceIdInResponse, WorkspacesInList, WorkspaceInResponse, WorkspacePatchEnabled
-from models.schemas.workspace_service import WorkspaceServiceIdInResponse, WorkspaceServiceInCreate, WorkspaceServicesInList, WorkspaceServiceInResponse
+from models.schemas.workspace_service import WorkspaceServiceIdInResponse, WorkspaceServiceInCreate, WorkspaceServicesInList, WorkspaceServiceInResponse, WorkspaceServicePatchEnabled
 from resources import strings
 from service_bus.resource_request_sender import send_resource_request_message, RequestAction
 from services.authentication import get_current_user, get_current_admin_user, get_access_service
@@ -123,6 +123,16 @@ async def create_workspace_service(workspace_service_input: WorkspaceServiceInCr
     await save_and_deploy_resource(workspace_service, workspace_service_repo)
 
     return WorkspaceServiceIdInResponse(workspaceServiceId=workspace_service.id)
+
+
+@router.patch("/workspaces/{workspace_id}/workspace-services/{service_id}", response_model=WorkspaceServiceInResponse, name=strings.API_UPDATE_WORKSPACE_SERVICE)
+async def patch_workspace_service(workspace_service_patch: WorkspaceServicePatchEnabled, workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), user=Depends(get_current_user), workspace_service=Depends(get_workspace_service_by_id_from_path), workspace=Depends(get_deployed_workspace_by_workspace_id_from_path)) -> WorkspaceServiceInResponse:
+    role = get_user_role_in_workspace(user, workspace)
+    if role != WorkspaceRole.Owner:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.ACCESS_USER_IS_NOT_OWNER)
+
+    workspace_service_repo.patch_workspace_service(workspace_service, workspace_service_patch)
+    return WorkspaceServiceInResponse(workspaceService=workspace_service)
 
 
 @router.post("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources", status_code=status.HTTP_202_ACCEPTED, response_model=UserResourceIdInResponse, name=strings.API_CREATE_USER_RESOURCE)

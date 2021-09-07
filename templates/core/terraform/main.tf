@@ -74,7 +74,7 @@ module "appgateway" {
   resource_group_name    = azurerm_resource_group.core.name
   app_gw_subnet          = module.network.app_gw_subnet_id
   shared_subnet          = module.network.shared_subnet_id
-  management_api_fqdn    = module.api-webapp.management_api_fqdn
+  api_fqdn               = module.api-webapp.api_fqdn
   keyvault_id            = module.keyvault.keyvault_id
   static_web_dns_zone_id = module.network.static_web_dns_zone_id
   depends_on             = [module.keyvault]
@@ -92,8 +92,8 @@ module "api-webapp" {
   app_insights_connection_string             = azurerm_application_insights.core.connection_string
   app_insights_instrumentation_key           = azurerm_application_insights.core.instrumentation_key
   log_analytics_workspace_id                 = azurerm_log_analytics_workspace.core.id
-  management_api_image_repository            = var.management_api_image_repository
-  management_api_image_tag                   = var.management_api_image_tag
+  api_image_repository                       = var.api_image_repository
+  api_image_tag                              = var.api_image_tag
   docker_registry_server                     = var.docker_registry_server
   state_store_endpoint                       = module.state-store.endpoint
   cosmosdb_account_name                      = module.state-store.cosmosdb_account_name

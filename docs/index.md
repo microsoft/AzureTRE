@@ -14,7 +14,7 @@
     1. [Manual deployment](./manual-deployment.md)
   * [Testing](./testing.md)
 * Composition Service components
-  * [Management API](../management_api_app/README.md)
+  * [API](../api_app/README.md)
   * [Resource Processor](../resource_processor/vmss_porter/readme.md)
 * Workspaces and workspace services
   * [Authoring workspace templates](./authoring-workspace-templates.md)
@@ -37,7 +37,7 @@
 │
 ├── e2e_tests              - pytest-based end-to-end tests
 │
-├── management_api_app     - Management API source code and docs
+├── api_app                - API source code and docs
 │
 ├── resource_processor     - VMSS Porter Runner
 │

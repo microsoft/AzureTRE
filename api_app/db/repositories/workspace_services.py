@@ -6,7 +6,7 @@ from pydantic import parse_obj_as
 
 from db.repositories.resources import ResourceRepository
 from models.domain.workspace_service import WorkspaceService
-from models.schemas.workspace_service import WorkspaceServiceInCreate
+from models.schemas.workspace_service import WorkspaceServiceInCreate, WorkspaceServicePatchEnabled
 from resources import strings
 from db.errors import ResourceIsNotDeployed
 from models.domain.resource import Deployment, Status, ResourceType
@@ -61,3 +61,7 @@ class WorkspaceServiceRepository(ResourceRepository):
         )
 
         return workspace_service
+
+    def patch_workspace_service(self, workspace_service: WorkspaceService, workspace_service_patch: WorkspaceServicePatchEnabled):
+        workspace_service.resourceTemplateParameters["enabled"] = workspace_service_patch.enabled
+        self.update_item(workspace_service)

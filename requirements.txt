@@ -1,2 +1,2 @@
 -r requirements-dev.txt
--r management_api_app/requirements.txt
+-r api_app/requirements.txt

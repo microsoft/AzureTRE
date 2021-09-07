@@ -6,7 +6,7 @@ The Azure Trusted Research Environment (TRE) consists of multiple components, al
 
 The Azure TRE management plane consists of two groups of components:
 
-- Management API & Composition Service
+- API & Composition Service
 - Shared Services
 
 > Shared Services is still work in progress. Please see [#23](https://github.com/microsoft/AzureTRE/issues/23), [#22](https://github.com/microsoft/AzureTRE/issues/21), & [#21](https://github.com/microsoft/AzureTRE/issues/21)
@@ -31,7 +31,7 @@ The [TRE Administrator](./user-roles.md#tre-administrator) can register a Porter
 This requires:
 
 1. The Porter bundle to be pushed to the Azure Container Registry (ACR).
-1. Registering the Workspace through Management API.
+1. Registering the Workspace through the API.
 
 Details on how to [register a Workspace Template](registering-workspace-templates.md).
 
@@ -43,7 +43,7 @@ The Composition Service consists of multiple components.
 
 | Component Name | Responsibility / Description |
 | --- | --- |
-| Management API | An API responsible for performing all operations on Workspaces and managing Workspace Templates. |
+| TRE API | An API responsible for performing all operations on Workspaces and managing Workspace Templates. |
 | Configuration Store | Keeping the state of Workspaces and Workspace Templates. The store uses [Cosmos DB (SQL)](https://docs.microsoft.com/en-us/azure/cosmos-db/introduction). |
 | Service Bus | [Azure Service Bus](https://docs.microsoft.com/en-us/azure/service-bus-messaging/service-bus-messaging-overview) responsible for reliable delivery of messages between components.  |
 | Resource Processor | Responsible for starting the process of mutating a Workspace via a Workspace Template. |
@@ -93,3 +93,40 @@ The flow to provision a Workspace is as follows (the flow is the same for all ki
 1. The Resource Processor sends events to the `deploymentstatus` queue on state changes and informs if the deployment succeeded or failed.
 1. The status of a Porter bundle execution is received.
 1. The status of a Porter bundle execution is updated in the Configuration Store.
+
+## Network Architecture
+
+The network topology is based on [hub-spoke](https://docs.microsoft.com/en-us/azure/architecture/reference-architectures/hybrid-networking/hub-spoke). The TRE Management VNET ([Azure Virtual Network](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-overview)) is the central hub and each Workspace are spokes.
+
+> **Note:** TRE Management is referred to as Core in scripts and code.
+
+![Network Architecture](./assets/network-architecture.png)
+
+Azure TRE VNETs are segregated allowing limited traffic between the TRE Management VNET and Workspace VNETs. The rules are managed in the `nsg-ws` Network Security Group (NSG):
+
+- Inbound traffic from TRE Management VNET to Workspace allowed for [Azure Bastion](https://docs.microsoft.com/en-us/azure/bastion/bastion-overview) (22, 3389) - All other inbound traffic from Core to Workspace denied.
+- Outbound traffic to `SharedSubnet` from Workspace allowed.
+- Outbound traffic to Internet allowed on HTTPS port 443 (next hop Azure Firewall).
+- All other outbound traffic denied.
+
+> In Azure traffic between subnets are allowed except explicitly denied.
+
+Each of these rules can be managed per Workspace.
+
+Each Workspace has a default route routing all egress traffic through the Azure Firewall, to ensure only explicitly allowed destinations on the Internet to be accessed. It is planned that all other subnet will use the same pattern (Issue [#421](https://github.com/microsoft/AzureTRE/issues/421))
+
+The Azure Firewall rules are:
+
+- No default inbound rules – block all.
+- No default outbound rules – block all.
+
+Inbound traffic from the Internet is only allowed through the Application Gateway, which forwards HTTPS (port 443) call to the TRE API in the `WebAppSubnet`.
+
+| Subnet | Description |
+| -------| ----------- |
+| `AzureBastionSubnet` | A dedicated subnet for Azure Bastion hosts. |
+| `AppGwSubnet` | Subnet for Azure Application Gateway controlling ingress traffic. |
+| `AzureFirewallSubnet` | Subnet for Azure Firewall controlling egress traffic. |
+| `ResourceProcessorSubnet` | Subnet for VMSS used by the Composition Service to host Docker containers to execute Porter bundles that deploys Workspaces. |
+| `WebAppSubnet` | Subnet for TRE API. |
+| `SharedSubnet` | Shared Services subnet for all things shared by TRE Management and Workspaces. Future Shared Services are Firewall Shared Service, Source Mirror Shared Service and Package Mirror Shared Service. |

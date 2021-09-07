@@ -1,6 +1,6 @@
-# Management API
+# TRE API
 
-Management API is a service that users can interact with to request changes to workspaces e.g., to create, update, delete workspaces and workspace services inside each workspace.
+The TRE API is a service that users can interact with to request changes to workspaces e.g., to create, update, delete workspaces and workspace services inside each workspace.
 
 *Table of contents:*
 
@@ -14,7 +14,7 @@ Management API is a service that users can interact with to request changes to w
   * [Service Bus](#service-bus)
   * [Logging and monitoring](#logging-and-monitoring)
   * [Service principal for API process identity](#service-principal-for-api-process-identity)
-* [Running Management API](#running-management-api)
+* [Running API](#running-api)
   * [Develop and run locally](#develop-and-run-locally)
   * [Develop and run in dev container](#develop-and-run-in-dev-container)
   * [Deploy with docker](#deploy-with-docker)
@@ -107,7 +107,7 @@ az role assignment create \
 
 ### Auth
 
-Management API depends on [TRE API](#tre-api) and [TRE Swagger UI](#tre-swagger-ui) app registrations. The API requires the environment variables listed in the table below to be present. See [Authentication and authorization](../docs/auth.md) for more information.
+The TRE API depends on [TRE API](#tre-api) and [TRE Swagger UI](#tre-swagger-ui) app registrations. The API requires the environment variables listed in the table below to be present. See [Authentication and authorization](../docs/auth.md) for more information.
 
 | Environment variable name | Description |
 | ------------------------- | ----------- |
@@ -152,7 +152,7 @@ See also: [Auth in code](#auth-in-code)
 | `AZURE_CLIENT_ID` |  |
 | `AZURE_CLIENT_SECRET` |  |
 
-## Running Management API
+## Running API
 
 ### Develop and run locally
 
@@ -164,11 +164,11 @@ See also: [Auth in code](#auth-in-code)
     pip install -r requirements.txt
     ```
 
-1. Copy `.env.tmpl` in the **management_api_app** folder to `.env` and configure the variables. Notice: You might also need to export those variables to your env (`export VAR_NAME=VALUE` for all vars in the .env file).
+1. Copy `.env.tmpl` in the **api_app** folder to `.env` and configure the variables. Notice: You might also need to export those variables to your env (`export VAR_NAME=VALUE` for all vars in the .env file).
 1. Start the web API
 
     ```cmd
-    cd management_api_app
+    cd api_app
     uvicorn main:app --reload
     ```
 
@@ -177,11 +177,11 @@ The API endpoints documentation and the Swagger UI will be available at [https:/
 ### Develop and run in dev container
 
 1. Open the project in Visual Studio Code in the DevContainer
-1. Copy `.env.sample` in the **management_api_app** folder to `.env` and configure the variables
+1. Copy `.env.sample` in the **api_app** folder to `.env` and configure the variables
 1. Start the web API
 
     ```cmd
-    cd management_api_app
+    cd api_app
     pip install -r requirements.txt
     uvicorn main:app --reload
     ```
@@ -195,7 +195,7 @@ You must have docker and docker-compose tools installed, and an Azure Cosmos DB 
 Then run:
 
 ```cmd
-cd management_api_app
+cd api_app
 docker compose up -d app
 ```
 
@@ -203,10 +203,10 @@ The API will be available at [https://localhost:8000/api](https://localhost:8000
 
 ## Implementation
 
-*Management API application folder structure.*
+*API application folder structure.*
 
 ```text
-management_api_app
+api_app
 ├── api              - API implementation
 │   ├── dependencies - Dependencies for routes definition
 │   ├── errors       - Definitions of error handlers
@@ -233,7 +233,7 @@ management_api_app
 
 ### Auth in code
 
-The bulk of the authentication and authorization (A&A) related code of Management API is located in `/management_api_app/services/` folder. The A&A code has an abstract base for enabling the possibility to add additional A&A service providers. The Azure Active Directory (AAD) specific implementation is derived as follows:
+The bulk of the authentication and authorization (A&A) related code of the API is located in `/api_app/services/` folder. The A&A code has an abstract base for enabling the possibility to add additional A&A service providers. The Azure Active Directory (AAD) specific implementation is derived as follows:
 
 ```plaintext
 AccessService (access_service.py) <─── AADAccessService (aad_access_service.py)
@@ -241,7 +241,7 @@ AccessService (access_service.py) <─── AADAccessService (aad_access_servic
 fastapi.security.OAuth2AuthorizationCodeBearer <─── AzureADAuthorization (aad_authentication.py)
 ```
 
-All the sensitive routes (API calls that can query sensitive data or modify resources) in Management API depend on having a "current user" authenticated. E.g., in [`/management_api_app/api/routes/workspaces.py`](./api/routes/workspaces.py):
+All the sensitive routes (API calls that can query sensitive data or modify resources) in the TRE API depend on having a "current user" authenticated. E.g., in [`/api_app/api/routes/workspaces.py`](./api/routes/workspaces.py):
 
 ```python
 router = APIRouter(dependencies=[Depends(get_current_user)])

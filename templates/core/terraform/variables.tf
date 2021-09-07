@@ -22,15 +22,15 @@ variable "address_space" {
   description = "Core services VNET Address Space"
 }
 
-variable "management_api_image_repository" {
+variable "api_image_repository" {
   type        = string
-  description = "Repository for Management API image"
-  default     = "microsoft/azuretre/management-api"
+  description = "Repository for API image"
+  default     = "microsoft/azuretre/api"
 }
 
-variable "management_api_image_tag" {
+variable "api_image_tag" {
   type        = string
-  description = "Tag for Management API image"
+  description = "Tag for API image"
   default     = "main-latest"
 }
 
