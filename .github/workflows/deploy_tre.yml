@@ -248,7 +248,7 @@ jobs:
           export PATH=~/.porter/:$PATH
           export USE_ENV_VARS_NOT_FILES=true
           export TRE_URL=$TRE_URL
-          export BUNDLE_TYPE=workspace-service
+          export BUNDLE_TYPE=workspace_service
 
           # Get TRE API access token
           # ************************
