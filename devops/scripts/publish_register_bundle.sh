@@ -8,7 +8,7 @@ function usage() {
 
     Options:
         -r, --acr-name        Azure Container Registry Name 
-        -t, --bundle-type     Bundle type, workspace
+        -t, --bundle-type     Bundle type, workspace or workspace_service
         -c, --current:        Make this the currently deployed version of this template
         -i, --insecure:       Bypass SSL certificate checks
         -u, --tre_url:        URL for the TRE (required for automatic registration)
@@ -39,8 +39,10 @@ while [ "$1" != "" ]; do
         case $1 in
         workspace)
         ;;
+        workspace_service)
+        ;;
         *)
-            echo "Bundle type must be workspace, not $1"
+            echo "Bundle type must be workspace or workspace_service, not $1"
             exit 1
         esac
         bundle_type=$1
@@ -100,7 +102,13 @@ if [[ -n  ${access_token+x} ]]; then
     fi
 
     echo -e "Server Response:\n"
-    eval "curl -X 'POST'  $tre_url/api/workspace-templates -H 'accept: application/json'  -H 'Content-Type: application/json'  -H 'Authorization: Bearer $access_token' -d '$payload'  $options"
+
+    if [[ $bundle_type == workspace ]]
+    then
+      eval "curl -X 'POST'  $tre_url/api/workspace-templates -H 'accept: application/json'  -H 'Content-Type: application/json'  -H 'Authorization: Bearer $access_token' -d '$payload'  $options"
+    else
+      eval "curl -X 'POST'  $tre_url/api/workspace-service-templates -H 'accept: application/json'  -H 'Content-Type: application/json'  -H 'Authorization: Bearer $access_token' -d '$payload'  $options"
+    fi
     echo -e "\n"
 else
     echo -e "Use the following payload to register the template:\n\n"
