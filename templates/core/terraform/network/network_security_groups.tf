@@ -107,12 +107,42 @@ resource "azurerm_subnet_network_security_group_association" "bastion" {
   network_security_group_id = azurerm_network_security_group.bastion.id
 }
 
+# Network security group for Application Gateway
+# See https://docs.microsoft.com/azure/application-gateway/configuration-infrastructure#network-security-groups
+resource "azurerm_network_security_group" "app_gw" {
+  name                = "nsg-app-gw"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+
+  security_rule {
+    name                       = "AllowInboundGatewayManager"
+    priority                   = 3800
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "65200-65535"
+    source_address_prefix      = "GatewayManager"
+    destination_address_prefix = "*"
+  }
+}
+
+resource "azurerm_subnet_network_security_group_association" "app_gw" {
+  subnet_id                 = azurerm_subnet.app_gw.id
+  network_security_group_id = azurerm_network_security_group.app_gw.id
+}
+
 # Network security group with only default security rules
 # See https://docs.microsoft.com/azure/virtual-network/network-security-groups-overview#default-security-rules
 resource "azurerm_network_security_group" "default_rules" {
   name                = "nsg-default-rules"
   location            = var.location
   resource_group_name = var.resource_group_name
+}
+
+resource "azurerm_subnet_network_security_group_association" "shared" {
+  subnet_id                 = azurerm_subnet.shared.id
+  network_security_group_id = azurerm_network_security_group.default_rules.id
 }
 
 resource "azurerm_subnet_network_security_group_association" "web_app" {
@@ -122,10 +152,5 @@ resource "azurerm_subnet_network_security_group_association" "web_app" {
 
 resource "azurerm_subnet_network_security_group_association" "resource_processor" {
   subnet_id                 = azurerm_subnet.resource_processor.id
-  network_security_group_id = azurerm_network_security_group.default_rules.id
-}
-
-resource "azurerm_subnet_network_security_group_association" "shared" {
-  subnet_id                 = azurerm_subnet.shared.id
   network_security_group_id = azurerm_network_security_group.default_rules.id
 }
