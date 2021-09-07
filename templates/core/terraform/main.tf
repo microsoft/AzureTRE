@@ -188,8 +188,8 @@ module "routetable" {
   resource_group_name          = azurerm_resource_group.core.name
   shared_subnet_id             = module.network.shared
   resource_processor_subnet_id = module.network.resource_processor
-  web_app_subnet_id            = module.network.web_app_subnet
-  app_gw_subnet_id             = module.network.app_gw_subnet
+  web_app_subnet_id            = module.network.web_app
+  app_gw_subnet_id             = module.network.app_gw
   firewall_private_ip_address  = module.firewall.firewall_private_ip_address
 }
 

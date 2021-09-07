@@ -144,14 +144,12 @@ resource "azurerm_firewall_network_rule_collection" "shared_services_subnet" {
   ]
 }
 
-
 resource "azurerm_firewall_application_rule_collection" "resource_processor_subnet" {
   name                = "arc-resource_processor_subnet"
   azure_firewall_name = azurerm_firewall.fw.name
   resource_group_name = azurerm_firewall.fw.resource_group_name
   priority            = 101
   action              = "Allow"
-
 
   rule {
     name = "package-sources"
@@ -218,7 +216,7 @@ resource "azurerm_firewall_network_rule_collection" "resource_processor_subnet" 
   ]
 }
 
-resource "azurerm_web_app_network_rule_collection" "web_app_subnet" {
+resource "azurerm_firewall_network_rule_collection" "web_app_subnet" {
   name                = "nrc-web_app_subnet"
   azure_firewall_name = azurerm_firewall.fw.name
   resource_group_name = azurerm_firewall.fw.resource_group_name
@@ -238,17 +236,30 @@ resource "azurerm_web_app_network_rule_collection" "web_app_subnet" {
       "AzureMonitor"
     ]
 
-    target_fqdns = [
-      "graph.microsoft.com"
-    ]
-
     destination_ports = [
       "443"
     ]
-    source_addresses = data.azurerm_subnet.web_app_subnet.address_prefixes
+    source_addresses = data.azurerm_subnet.web_app.address_prefixes
   }
+}
 
-  depends_on = [
-    azurerm_firewall_application_rule_collection.web_app_subnet
-  ]
+resource "azurerm_firewall_application_rule_collection" "web_app_subnet" {
+  name                = "arc-web_app_subnet"
+  azure_firewall_name = azurerm_firewall.fw.name
+  resource_group_name = azurerm_firewall.fw.resource_group_name
+  priority            = 102
+  action              = "Allow"
+
+  rule {
+    name = "package-sources"
+    protocol {
+      port = "443"
+      type = "Https"
+    }
+
+    target_fqdns = [
+      "graph.microsoft.com"
+    ]
+    source_addresses = data.azurerm_subnet.web_app.address_prefixes
+  }
 }
