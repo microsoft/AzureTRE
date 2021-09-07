@@ -160,6 +160,8 @@ curl https://<azure_tre_fqdn>/api/health
 
     Copy the resulting payload json.
 
+    >Note: executing on MacOS or Codespaces requires Docker sock permission to the Docker group. To grant permissions execute ```./devops/scripts/set_docker_sock_permission.sh```
+
 1. Navigate to the Swagger UI at `https://<azure_tre_fqdn>/docs`
 
 1. Log into the Swagger UI by clicking `Authorize`, then `Authorize` again. You will be redirected to the login page.
