@@ -113,7 +113,14 @@ Azure TRE VNETs are segregated allowing limited traffic between the TRE Manageme
 
 Each of these rules can be managed per Workspace.
 
-Each Workspace has a default route routing all egress traffic through the Azure Firewall, to ensure only explicitly allowed destinations on the Internet to be accessed. It is planned that all other subnet will use the same pattern (Issue [#421](https://github.com/microsoft/AzureTRE/issues/421))
+Each Workspace and the management subnets have a default route routing all egress traffic through the Azure Firewall, to ensure only explicitly allowed destinations on the Internet to be accessed. The exceptions are the `AzureFirewallSubnet` and `AzureBastionSubnet`, which hosts the Azure Firewall and the [Azure Bastion](https://azure.microsoft.com/en-us/services/azure-bastion) - none of these route traffic to the [Azure Firewall](https://docs.microsoft.com/en-us/azure/firewall/) and therefore do not limit egress Internet traffic.
+
+The allowed egress trafic is described here:
+
+- [Resource Processor](../resource_processor/vmss_porter/readme.md#network-requirements)
+- [TRE API](../api_app/README.md#network-requirements)
+- [Gitea Shared Service](../templates/shared_services/gitea/readme.md#network-requirements)
+- [Nexus Shared Service](../templates/shared_services/sonatype-nexus/readme.md#network-requirements)
 
 The Azure Firewall rules are:
 

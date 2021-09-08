@@ -132,10 +132,8 @@ resource "azurerm_firewall_network_rule_collection" "shared_services_subnet" {
   priority            = 100
   action              = "Allow"
 
-
   rule {
     name = "AzureServiceTags"
-
 
     protocols = [
       "TCP"
@@ -143,11 +141,8 @@ resource "azurerm_firewall_network_rule_collection" "shared_services_subnet" {
 
     destination_addresses = [
       "AzureActiveDirectory",
-      "AzureResourceManager",
-      "AzureContainerRegistry",
       "AzureMonitor",
-      "MicrosoftContainerRegistry",
-      "Storage"
+      "MicrosoftContainerRegistry"
     ]
 
     destination_ports = [
@@ -191,7 +186,6 @@ resource "azurerm_firewall_application_rule_collection" "resource_processor_subn
       "download.docker.com",
       "registry-1.docker.io",
       "auth.docker.io",
-      "*.azurecr.io",
       "registry.terraform.io",
       "releases.hashicorp.com"
     ]
@@ -210,10 +204,8 @@ resource "azurerm_firewall_network_rule_collection" "resource_processor_subnet" 
   priority            = 101
   action              = "Allow"
 
-
   rule {
     name = "AzureServiceTags"
-
 
     protocols = [
       "TCP"
@@ -223,9 +215,7 @@ resource "azurerm_firewall_network_rule_collection" "resource_processor_subnet" 
       "AzureActiveDirectory",
       "AzureResourceManager",
       "AzureContainerRegistry",
-      "AzureKeyVault",
       "AzureMonitor",
-      "MicrosoftContainerRegistry",
       "Storage"
     ]
 

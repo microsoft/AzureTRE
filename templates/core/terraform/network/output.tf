@@ -22,10 +22,6 @@ output "shared" {
   value = azurerm_subnet.shared.id
 }
 
-output "aci" {
-  value = azurerm_subnet.aci.id
-}
-
 output "resource_processor" {
   value = azurerm_subnet.resource_processor.id
 }
