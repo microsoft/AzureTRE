@@ -241,7 +241,7 @@ AccessService (access_service.py) <─── AADAccessService (aad_access_servic
 fastapi.security.OAuth2AuthorizationCodeBearer <─── AzureADAuthorization (aad_authentication.py)
 ```
 
-All the sensitive routes (API calls that can query sensitive data or modify resources) in the TRE API depend on having a "current user" authenticated. E.g., in [`/api_app/api/routes/workspaces.py`](./api/routes/workspaces.py):
+All the sensitive routes (API calls that can query sensitive data or modify resources) in the TRE API depend on having a "current user" authenticated. E.g., in [`/api_app/api/routes/workspaces.py`](api/routes/workspaces.py):
 
 ```python
 router = APIRouter(dependencies=[Depends(get_current_user)])
