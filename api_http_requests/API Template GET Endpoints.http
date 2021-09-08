@@ -1,0 +1,36 @@
+###
+# Get all workspace templates (admin)
+GET {{baseUrl}}/workspace-templates
+Accept: {{contentType}}
+Authorization: Bearer {{token}}
+
+###
+# Get details about the 'my-tre-workspace' template (admin)
+GET {{baseUrl}}/workspace-templates/{{workspaceTemplate}}
+Accept: {{contentType}}
+Authorization: Bearer {{token}}
+
+###
+# Get all workspace service templates (user)
+GET {{baseUrl}}/workspace-service-templates
+Accept: {{contentType}}
+Authorization: Bearer {{token}}
+
+###
+# Get details about the current 'my-tre-workspace-service' template (user)
+GET {{baseUrl}}/workspace-service-templates/{{workspaceServiceTemplate}}
+Accept: {{contentType}}
+Authorization: Bearer {{token}}
+
+###
+# Get all user resource templates for "my-tre-worksapce-service" (user)
+
+GET {{baseUrl}}/workspace-service-templates/{{workspaceServiceTemplate}}/user-resource-templates
+Accept: {{contentType}}
+Authorization: Bearer {{token}}
+
+###
+# Get details about the current 'my-tre-user-resource' template (user)
+GET {{baseUrl}}/workspace-service-templates/{{workspaceServiceTemplate}}/user-resource-templates/{{userResourceTemplate}}
+Accept: {{contentType}}
+Authorization: Bearer {{token}}

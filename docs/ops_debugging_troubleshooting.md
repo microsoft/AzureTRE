@@ -6,17 +6,17 @@ The steps listed below should be followed in order as that is how the message al
 
 ## Enabling DEBUG mode on the API
 
-The management API is by default configured to not show detailed error messages and stack trace when an error occurs. This is done to prevent leaking internal state to the outside world and to minimize information which an attacker could use against the deployed instance.
+The API is by default configured to not show detailed error messages and stack trace when an error occurs. This is done to prevent leaking internal state to the outside world and to minimize information which an attacker could use against the deployed instance.
 
-However, you can enable **DEBUG=true** in the configuration settings of the management API using Azure portal.
+However, you can enable **DEBUG=true** in the configuration settings of the API using Azure portal.
 
-1. Go to App Service for the management API and select Settings > Configuration.
+1. Go to App Service for the API and select Settings > Configuration.
 1. Click New Application Setting.
 1. in the new dialog box set Name = DEBUG and Value = true
 
 ![API Debug True](./assets/api_debug_true.png)
 
-With DEBUG mode enabled when an error occurs at the management API level it will display a detailed error message which should help in understanding why the payload was not accepted.
+With DEBUG mode enabled when an error occurs at the API level it will display a detailed error message which should help in understanding why the payload was not accepted.
 
 ## API logs using deployment center
 

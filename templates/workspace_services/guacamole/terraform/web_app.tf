@@ -42,7 +42,7 @@ resource "azurerm_app_service" "guacamole" {
     GUAC_DRIVE_NAME       = "${var.guac_drive_name}"
     GUAC_DRIVE_PATH       = "${var.guac_drive_path}"
     GUAC_DISABLE_DOWNLOAD = "${var.guac_disable_download}"
-    AUDIENCE              = "${var.api_client_id}"
+    AUDIENCE              = data.azurerm_app_service.api_core.app_settings["API_CLIENT_ID"]
     ISSUER                = local.issuer
   }
 

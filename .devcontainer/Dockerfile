@@ -2,7 +2,7 @@
 
 # [Choice] Python version: 3, 3.9, 3.8, 3.7, 3.6
 ARG VARIANT="3"
-FROM mcr.microsoft.com/vscode/devcontainers/python:0-${VARIANT}
+FROM mcr.microsoft.com/vscode/devcontainers/python:dev-${VARIANT}-buster
 
 # [Option] Install Node.js
 ARG INSTALL_NODE="true"
@@ -48,7 +48,7 @@ ENV PATH /home/vscode/.porter/:$PATH
 
 # Install requirements
 COPY ["requirements.txt", "requirements-dev.txt", "/tmp/pip-tmp/" ]
-COPY ["management_api_app/requirements.txt", "/tmp/pip-tmp/management_api_app/" ]
+COPY ["api_app/requirements.txt", "/tmp/pip-tmp/api_app/" ]
 RUN pip3 --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requirements.txt && rm -rf /tmp/pip-tmp
 
 RUN usermod -a -G docker vscode

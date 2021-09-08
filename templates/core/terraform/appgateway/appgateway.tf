@@ -73,7 +73,7 @@ resource "azurerm_application_gateway" "agw" {
   # Backend pool with the API App Service.
   backend_address_pool {
     name  = local.api_backend_pool_name
-    fqdns = [var.management_api_fqdn]
+    fqdns = [var.api_fqdn]
   }
 
   # Backend settings for api.

@@ -60,15 +60,15 @@ push-api-image:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/set_docker_sock_permission.sh \
 	&& az acr login -n $${ACR_NAME} \
-	&& docker push "$${ACR_NAME}.azurecr.io/microsoft/azuretre/management-api:$${IMAGE_TAG}"
-	
+	&& docker push "$${ACR_NAME}.azurecr.io/microsoft/azuretre/api:$${IMAGE_TAG}"
+
 push-gitea-image:
 	echo -e "\n\e[34m»»» 🧩 \e[96mPushing Gitea Image\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/set_docker_sock_permission.sh \
 	&& az acr login -n $${ACR_NAME} \
-	&& docker push "$${ACR_NAME}.azurecr.io/microsoft/azuretre/gitea:$${IMAGE_TAG}"	
+	&& docker push "$${ACR_NAME}.azurecr.io/microsoft/azuretre/gitea:$${IMAGE_TAG}"
 
 tre-deploy:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDeploying TRE\e[0m..." \
@@ -162,4 +162,4 @@ register-bundle:
 	&& ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& cd ${DIR} \
-	&& ${ROOTPATH}/devops/scripts/publish_register_bundle.sh --acr-name $${ACR_NAME} --bundle-type workspace --current --insecure
+	&& ${ROOTPATH}/devops/scripts/publish_register_bundle.sh --acr-name $${ACR_NAME} --bundle-type $${BUNDLE_TYPE} --current --insecure --tre_url $${TRE_URL} --access-token $${TOKEN}

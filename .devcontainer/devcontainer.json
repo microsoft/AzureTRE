@@ -23,11 +23,11 @@
 		"launch": {
 			"configurations": [
 				{
-					"name": "Management API",
+					"name": "API",
 					"type": "python",
 					"request": "launch",
 					"module": "uvicorn",
-					"cwd": "${workspaceFolder}/management_api_app",
+					"cwd": "${workspaceFolder}/api_app",
 					"args": [
 						"main:app",
 						"--reload"
@@ -47,7 +47,8 @@
 		"hashicorp.terraform",
 		"github.vscode-pull-request-github",
 		"ms-kubernetes-tools.porter-vscode",
-		"davidanson.vscode-markdownlint"
+		"davidanson.vscode-markdownlint",
+    "editorconfig.editorconfig"
 	],
 	"forwardPorts": [8000]
 }

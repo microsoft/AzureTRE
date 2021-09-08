@@ -16,7 +16,7 @@ resource "azurerm_app_service_plan" "core" {
   }
 }
 
-resource "azurerm_app_service" "management_api" {
+resource "azurerm_app_service" "api" {
   name                = "api-${var.tre_id}"
   resource_group_name = var.resource_group_name
   location            = var.location
@@ -55,7 +55,7 @@ resource "azurerm_app_service" "management_api" {
   lifecycle { ignore_changes = [tags] }
 
   site_config {
-    linux_fx_version                     = "DOCKER|${var.docker_registry_server}/${var.management_api_image_repository}:${var.management_api_image_tag}"
+    linux_fx_version                     = "DOCKER|${var.docker_registry_server}/${var.api_image_repository}:${var.api_image_tag}"
     remote_debugging_enabled             = false
     scm_use_main_ip_restriction          = true
     acr_use_managed_identity_credentials = true
@@ -94,7 +94,7 @@ resource "azurerm_app_service" "management_api" {
   }
 }
 
-resource "azurerm_private_endpoint" "management_api_private_endpoint" {
+resource "azurerm_private_endpoint" "api_private_endpoint" {
   name                = "pe-api-${var.tre_id}"
   resource_group_name = var.resource_group_name
   location            = var.location
@@ -103,7 +103,7 @@ resource "azurerm_private_endpoint" "management_api_private_endpoint" {
   lifecycle { ignore_changes = [tags] }
 
   private_service_connection {
-    private_connection_resource_id = azurerm_app_service.management_api.id
+    private_connection_resource_id = azurerm_app_service.api.id
     name                           = "psc-api-${var.tre_id}"
     subresource_names              = ["sites"]
     is_manual_connection           = false
@@ -116,13 +116,13 @@ resource "azurerm_private_endpoint" "management_api_private_endpoint" {
 }
 
 resource "azurerm_app_service_virtual_network_swift_connection" "api-integrated-vnet" {
-  app_service_id = azurerm_app_service.management_api.id
+  app_service_id = azurerm_app_service.api.id
   subnet_id      = var.web_app_subnet
 }
 
-resource "azurerm_monitor_diagnostic_setting" "webapp_management_api" {
+resource "azurerm_monitor_diagnostic_setting" "webapp_api" {
   name                       = "diag-${var.tre_id}"
-  target_resource_id         = azurerm_app_service.management_api.id
+  target_resource_id         = azurerm_app_service.api.id
   log_analytics_workspace_id = var.log_analytics_workspace_id
 
   log {

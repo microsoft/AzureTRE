@@ -1,0 +1,21 @@
+{
+  "templates": [
+    {
+    "id": "2b3f98a7-1152-4a24-8b9b-6513b8 bb23e7",
+    "name": "tre-workspace-base",
+    "description": "These parameters are specific to my workspace template",
+    "version": "0.0.1",
+    "resourceType": "workspace",
+    "current": true,
+    "type": "object",
+    "required": [
+    ],
+    "properties": {
+    },
+    "_rid": "q24aAPVBQEIHAAAAAAAAAA==",
+    "_self": "dbs/q24aAA==/colls/q24aAPVBQEI=/docs/q24aAPVBQEIHAAAAAAAAAA==/",
+    "_etag": "\"00000000-0000-0000-83da-95af04e001d7\"",
+    "_attachments": "attachments/",
+    "_ts": 1627495286
+  }]
+}

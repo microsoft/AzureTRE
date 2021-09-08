@@ -6,7 +6,7 @@ The Azure Trusted Research Environment (TRE) consists of multiple components, al
 
 The Azure TRE management plane consists of two groups of components:
 
-- TRE API & Composition Service
+- API & Composition Service
 - Shared Services
 
 > Shared Services is still work in progress. Please see [#23](https://github.com/microsoft/AzureTRE/issues/23), [#22](https://github.com/microsoft/AzureTRE/issues/21), & [#21](https://github.com/microsoft/AzureTRE/issues/21)
@@ -31,7 +31,7 @@ The [TRE Administrator](./user-roles.md#tre-administrator) can register a Porter
 This requires:
 
 1. The Porter bundle to be pushed to the Azure Container Registry (ACR).
-1. Registering the Workspace through TRE API.
+1. Registering the Workspace through the API.
 
 Details on how to [register a Workspace Template](registering-workspace-templates.md).
 
@@ -98,7 +98,7 @@ The flow to provision a Workspace is as follows (the flow is the same for all ki
 
 The network topology is based on [hub-spoke](https://docs.microsoft.com/en-us/azure/architecture/reference-architectures/hybrid-networking/hub-spoke). The TRE Management VNET ([Azure Virtual Network](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-overview)) is the central hub and each Workspace are spokes.
 
-> Note: TRE Management is referred to as Core in scripts and code.
+> **Note:** TRE Management is referred to as Core in scripts and code.
 
 ![Network Architecture](./assets/network-architecture.png)
 
