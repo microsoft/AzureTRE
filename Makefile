@@ -162,4 +162,4 @@ register-bundle:
 	&& ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& cd ${DIR} \
-	&& ${ROOTPATH}/devops/scripts/publish_register_bundle.sh --acr-name $${ACR_NAME} --bundle-type workspace --current --insecure
+	&& ${ROOTPATH}/devops/scripts/publish_register_bundle.sh --acr-name $${ACR_NAME} --bundle-type $${BUNDLE_TYPE} --current --insecure --tre_url $${TRE_URL} --access-token $${TOKEN}

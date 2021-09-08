@@ -16,7 +16,7 @@ Content-Type: {{contentType}}
   }
 }
 
-### Create a workspace service (admin)
+### Create a workspace service (workspace owner)
 
 POST {{baseUrl}}/workspaces/{{workspaceId}}/workspace-services
 Accept: {{contentType}}
@@ -31,7 +31,7 @@ Content-Type: {{contentType}}
   }
 }
 
-### Create a user resource (owner/researcher)
+### Create a user resource (workspace researcher)
 
 POST {{baseUrl}}/workspaces/{{workspaceId}}/workspace-services/{{workspaceServiceId}}/user-resources
 Accept: {{contentType}}
@@ -60,5 +60,22 @@ Content-Type: {{contentType}}
 ### Delete a workspace (admin)
 
 DELETE {{baseUrl}}/workspaces/{{workspaceId}}
+Accept: {{contentType}}
+Authorization: Bearer {{token}}
+
+### Disable a workspace service (workspace owner)
+
+PATCH {{baseUrl}}/workspaces/{{workspaceId}}/workspace-services/{{workspaceServiceId}}
+Accept: {{contentType}}
+Authorization: Bearer {{token}}
+Content-Type: {{contentType}}
+
+{
+  "enabled": false
+}
+
+### Delete a workspace service (workspace owner)
+
+DELETE {{baseUrl}}/workspaces/{{workspaceId}}/workspace-services/{{workspaceServiceId}}
 Accept: {{contentType}}
 Authorization: Bearer {{token}}
