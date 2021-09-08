@@ -154,7 +154,7 @@ async def patch_workspace_service(workspace_service_patch: WorkspaceServicePatch
 
 # USER RESOURCE ROUTES
 @user_resources_router.get("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources", response_model=UserResourcesInList, name=strings.API_GET_MY_USER_RESOURCES)
-async def retrieve_user_resources_for_workspace_service(service_id: str, user=Depends(get_current_user), workspace=Depends(get_workspace_by_workspace_id_from_path), user_resource_repo=Depends(get_repository(UserResourceRepository))) -> UserResourcesInList:
+async def retrieve_user_resources_for_workspace_service(workspace_id: str, service_id: str, user=Depends(get_current_user), workspace=Depends(get_workspace_by_workspace_id_from_path), user_resource_repo=Depends(get_repository(UserResourceRepository))) -> UserResourcesInList:
     user_resources = user_resource_repo.get_user_resources_for_workspace_service(service_id)
     validate_user_is_owner_or_researcher(user, workspace)
 
@@ -167,7 +167,7 @@ async def retrieve_user_resources_for_workspace_service(service_id: str, user=De
 
 
 @user_resources_router.get("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}", response_model=UserResourceInResponse, name=strings.API_GET_USER_RESOURCE)
-async def retrieve_user_resource_by_id(workspace=Depends(get_workspace_by_workspace_id_from_path), user_resource=Depends(get_user_resource_by_id_from_path), user=Depends(get_current_user)) -> UserResourceInResponse:
+async def retrieve_user_resource_by_id(workspace_id: str, service_id: str, resource_id: str, workspace=Depends(get_workspace_by_workspace_id_from_path), user_resource=Depends(get_user_resource_by_id_from_path), user=Depends(get_current_user)) -> UserResourceInResponse:
     role = get_user_role_in_workspace(user, workspace)
     if role == WorkspaceRole.Owner or (role == WorkspaceRole.Researcher and user_resource.ownerId == user.id):
         return UserResourceInResponse(userResource=user_resource)
