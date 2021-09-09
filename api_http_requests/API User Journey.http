@@ -153,6 +153,19 @@ Content-Type: {{contentType}}
 
 # ----- WORKSPACE OWNER DELETES THE WORKSPACE SERVICE -----
 
+PATCH {{baseUrl}}/workspaces/{{workspaceId}}/workspace-services/{{workspaceServiceId}}
+Accept: {{contentType}}
+Authorization: Bearer {{token}}
+Content-Type: {{contentType}}
+
+{
+  "enabled": false
+}
+
+DELETE {{baseUrl}}/workspaces/{{workspaceId}}/workspace-services/{{workspaceServiceId}}
+Accept: {{contentType}}
+Authorization: Bearer {{token}}
+
 # ----- ADMIN DELETES THE WORKSPACE -----
 
 ### Disable a workspace (admin)
