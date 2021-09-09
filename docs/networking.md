@@ -47,6 +47,6 @@ Azure TRE VNETs are segregated allowing limited traffic between the TRE Manageme
 - Outbound traffic to Internet allowed on HTTPS port 443 (next hop Azure Firewall).
 - All other outbound traffic denied.
 
-> In Azure traffic between subnets are allowed except explicitly denied.
+> In Azure, traffic between subnets are allowed except explicitly denied.
 
 Each of these rules can be managed per workspace.
