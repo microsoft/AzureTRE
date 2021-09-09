@@ -123,8 +123,15 @@ class TestWorkspaceServiceRoutesAccess:
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=None)
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id", return_value=sample_workspace())
     @patch("api.routes.workspaces.get_user_role_in_workspace", return_value=WorkspaceRole.NoRole)
-    async def test_patch_workspaces_services_raises_403_if_user_is_not_workspace_owner(self, _, __, ___, app, client) -> None:
+    async def test_patch_workspaces_service_raises_403_if_user_is_not_workspace_owner(self, _, __, ___, app, client) -> None:
         response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID), json={"enabled": False})
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=None)
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id", return_value=sample_workspace())
+    @patch("api.routes.workspaces.get_user_role_in_workspace", return_value=WorkspaceRole.NoRole)
+    async def test_delete_workspace_service_raises_403_if_user_is_not_workspace_owner(self, _, __, ___, app, client) -> None:
+        response = await client.delete(app.url_path_for(strings.API_DELETE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID))
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
 

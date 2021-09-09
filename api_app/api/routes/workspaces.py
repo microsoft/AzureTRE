@@ -161,7 +161,7 @@ async def patch_workspace_service(workspace_service_patch: WorkspaceServicePatch
     return WorkspaceServiceInResponse(workspaceService=workspace_service)
 
 
-@workspace_services_router.delete("/workspaces/{workspace_id}/workspace-services/{service_id}", response_model=WorkspaceServiceIdInResponse, name=strings.API_DELETE_WORKSPACE)
+@workspace_services_router.delete("/workspaces/{workspace_id}/workspace-services/{service_id}", response_model=WorkspaceServiceIdInResponse, name=strings.API_DELETE_WORKSPACE_SERVICE)
 async def delete_workspace_service(user=Depends(get_current_user), workspace=Depends(get_workspace_by_workspace_id_from_path), workspace_service=Depends(get_workspace_service_by_id_from_path), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), user_resource_repo=Depends(get_repository(UserResourceRepository))) -> WorkspaceServiceIdInResponse:
     validate_user_is_owner(user, workspace)
 
