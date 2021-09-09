@@ -42,10 +42,19 @@ data "azurerm_key_vault" "kv" {
   resource_group_name = data.azurerm_resource_group.ws.name
 }
 
+data "azurerm_app_service" "guacamole" {
+  name                = "guacamole-${var.tre_id}-ws-${local.short_workspace_id}-svc-${local.short_parent_id}"
+  resource_group_name = data.azurerm_resource_group.ws.name
+}
+
 output "ip" {
   value = azurerm_network_interface.internal.private_ip_address
 }
 
 output "hostname" {
   value = azurerm_virtual_machine.win10vm.name
+}
+
+output "connection_url" {
+  value = "${data.azurerm_app_service.guacamole.default_site_hostname}/guacamole/#/client/${textencodebase64("${azurerm_network_interface.internal.private_ip_address}\u0000c\u0000azuretre", "UTF-8")}"
 }
