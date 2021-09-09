@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from jsonschema.exceptions import ValidationError
 
 from api.dependencies.database import get_repository
-from api.dependencies.workspaces import get_workspace_by_workspace_id_from_path, get_deployed_workspace_by_workspace_id_from_path, get_deployed_workspace_service_by_id_from_path, get_workspace_service_by_id_from_path, get_workspace_by_id, get_user_resource_by_id_from_path
+from api.dependencies.workspaces import get_workspace_by_workspace_id_from_path, get_deployed_workspace_by_workspace_id_from_path, get_deployed_workspace_service_by_id_from_path, get_workspace_service_by_id_from_path, get_user_resource_by_id_from_path
 from db.repositories.user_resources import UserResourceRepository
 from db.repositories.workspaces import WorkspaceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
@@ -124,9 +124,8 @@ async def retrieve_users_active_workspace_services(user=Depends(get_current_user
     return WorkspaceServicesInList(workspaceServices=workspace_services)
 
 
-@workspace_services_router.get("/workspace-services/{service_id}", response_model=WorkspaceServiceInResponse, name=strings.API_GET_WORKSPACE_SERVICE_BY_ID)
-async def retrieve_workspace_service_by_id(workspace_service=Depends(get_workspace_service_by_id_from_path), workspaces_repo=Depends(get_repository(WorkspaceRepository)), user=Depends(get_current_user)) -> WorkspaceServiceInResponse:
-    workspace = get_workspace_by_id(workspace_service.workspaceId, workspaces_repo)
+@workspace_services_router.get("/workspaces/{workspace_id}/workspace-services/{service_id}", response_model=WorkspaceServiceInResponse, name=strings.API_GET_WORKSPACE_SERVICE_BY_ID)
+async def retrieve_workspace_service_by_id(user=Depends(get_current_user), workspace=Depends(get_workspace_by_workspace_id_from_path), workspace_service=Depends(get_workspace_service_by_id_from_path)) -> WorkspaceServiceInResponse:
     validate_user_is_owner_or_researcher(user, workspace)
     return WorkspaceServiceInResponse(workspaceService=workspace_service)
 
@@ -154,23 +153,21 @@ async def patch_workspace_service(workspace_service_patch: WorkspaceServicePatch
 
 
 # USER RESOURCE ROUTES
-@user_resources_router.get("/workspace-services/{service_id}/user-resources", response_model=UserResourcesInList, name=strings.API_GET_MY_USER_RESOURCES)
-async def retrieve_user_resources_for_workspace_service(service_id: str, user=Depends(get_current_user), user_resource_repo=Depends(get_repository(UserResourceRepository)), workspace_repo=Depends(get_repository(WorkspaceRepository))) -> UserResourcesInList:
+@user_resources_router.get("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources", response_model=UserResourcesInList, name=strings.API_GET_MY_USER_RESOURCES)
+async def retrieve_user_resources_for_workspace_service(workspace_id: str, service_id: str, user=Depends(get_current_user), workspace=Depends(get_workspace_by_workspace_id_from_path), user_resource_repo=Depends(get_repository(UserResourceRepository))) -> UserResourcesInList:
     user_resources = user_resource_repo.get_user_resources_for_workspace_service(service_id)
-    if len(user_resources) > 0:
-        workspace = get_workspace_by_id(user_resources[0].workspaceId, workspace_repo)
-        role = get_user_role_in_workspace(user, workspace)
-        if role != WorkspaceRole.Researcher and role != WorkspaceRole.Owner:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.ACCESS_USER_IS_NOT_OWNER_OR_RESEARCHER)
-        if role == WorkspaceRole.Researcher:
-            # filter only to the user - for researchers
-            user_resources = [resource for resource in user_resources if resource.ownerId == user.id]
+    validate_user_is_owner_or_researcher(user, workspace)
+
+    # filter only to the user - for researchers
+    role = get_user_role_in_workspace(user, workspace)
+    if role == WorkspaceRole.Researcher:
+        user_resources = [resource for resource in user_resources if resource.ownerId == user.id]
+
     return UserResourcesInList(userResources=user_resources)
 
 
-@user_resources_router.get("/user-resources/{resource_id}", response_model=UserResourceInResponse, name=strings.API_GET_USER_RESOURCE)
-async def retrieve_user_resource_by_id(user_resource=Depends(get_user_resource_by_id_from_path), user=Depends(get_current_user), workspace_repo=Depends(get_repository(WorkspaceRepository))) -> UserResourceInResponse:
-    workspace = get_workspace_by_id(user_resource.workspaceId, workspace_repo)
+@user_resources_router.get("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}", response_model=UserResourceInResponse, name=strings.API_GET_USER_RESOURCE)
+async def retrieve_user_resource_by_id(workspace_id: str, service_id: str, resource_id: str, workspace=Depends(get_workspace_by_workspace_id_from_path), user_resource=Depends(get_user_resource_by_id_from_path), user=Depends(get_current_user)) -> UserResourceInResponse:
     role = get_user_role_in_workspace(user, workspace)
     if role == WorkspaceRole.Owner or (role == WorkspaceRole.Researcher and user_resource.ownerId == user.id):
         return UserResourceInResponse(userResource=user_resource)

@@ -14,16 +14,16 @@ Accept: {{contentType}}
 Authorization: Bearer {{token}}
 
 ### Get specific workspace services (Workspace Owner or Researcher -- Get for own Workspace)
-GET {{baseUrl}}/workspace-services/{{workspaceServiceId}}
+GET {{baseUrl}}/workspaces/{{workspaceId}}/workspace-services/{{workspaceServiceId}}
 Accept: {{contentType}}
 Authorization: Bearer {{token}}
 
 ### Get user-resources (Workspace Owner or Researcher -- Get for own user resource)
-GET {{baseUrl}}/workspace-services/{{workspaceServiceId}}/user-resources
+GET {{baseUrl}}/workspaces/{{workspaceId}}/workspace-services/{{workspaceServiceId}}/user-resources
 Accept: {{contentType}}
 Authorization: Bearer {{token}}
 
 ### Get user-resources (Workspace Owner or Researcher -- Get for own user resource)
-GET {{baseUrl}}/user-resources/{{userResourceId}}
+GET {{baseUrl}}/workspaces/{{workspaceId}}/workspace-services/{{workspaceServiceId}}/user-resources/{{userResourceId}}
 Accept: {{contentType}}
 Authorization: Bearer {{token}}
