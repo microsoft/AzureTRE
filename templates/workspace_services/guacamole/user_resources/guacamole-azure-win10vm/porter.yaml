@@ -53,6 +53,10 @@ outputs:
     type: string
     applyTo:
       - install
+  - name: connection_url
+    type: string
+    applyTo:
+      - install
 
 mixins:
   - exec
@@ -70,6 +74,7 @@ install:
         arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
         arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
         arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
+        tre_resource_id: "{{ bundle.parameters.id }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
@@ -78,6 +83,7 @@ install:
       outputs:
       - name: ip
       - name: hostname
+      - name: connection_url
 
 upgrade:
   - exec:
@@ -97,6 +103,7 @@ uninstall:
         arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
         arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
         arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
+        tre_resource_id: "{{ bundle.parameters.id }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"

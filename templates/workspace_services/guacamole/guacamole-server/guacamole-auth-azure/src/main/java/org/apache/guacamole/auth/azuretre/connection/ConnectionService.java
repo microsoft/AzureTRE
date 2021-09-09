@@ -86,7 +86,6 @@ public class ConnectionService {
                         configs.putIfAbsent(config.getParameter("hostname"), config);
                     } else {
                         LOGGER.info("Missing ip or hostname, skipping...");
-                        break;
                     }
                 }
             } catch (final Exception ex) {
