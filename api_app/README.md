@@ -276,5 +276,6 @@ To be able to run the TRE API it needs to acccess the following resource outside
 | --- | --- |
 | AzureActiveDirectory | Authenticate with the User Assigned identity to access Azure Cosmos DB and Azure Service Bus. |
 | AzureMonitor | Publish traces and logs to one central place for troubleshooting. |
+| AzureResourceManager | To perform control plane operations, such as create database in State Store. |
 | AzureContainerRegistry | Pull the TRE API container image, as it is located in Azure Container Registry.  |
 | graph.microsoft.com | Lookup role assignments for Azure Active Directory user, to only show TRE resources and user has access to. |

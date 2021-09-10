@@ -247,6 +247,7 @@ resource "azurerm_firewall_network_rule_collection" "web_app_subnet" {
     destination_addresses = [
       "AzureActiveDirectory",
       "AzureContainerRegistry",
+      "AzureResourceManager",
       "AzureMonitor"
     ]
 
