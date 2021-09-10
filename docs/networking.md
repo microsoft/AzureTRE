@@ -19,7 +19,7 @@ The Core VNET is further devided into subnets.
 | `WebAppSubnet` | Subnet for TRE API. |
 | `SharedSubnet` | Shared Services subnet for all things shared by TRE Core and Workspaces. Such as Source Mirror Shared Service and Package Mirror Shared Service. |
 
-All subnets (Core and Workspace subnets) has a default route which directs egress traffic to the Azure Firewall, to ensure only explicitly allowed destinations on the Internet to be accessed. 
+All subnets (Core and Workspace subnets) has a default route which directs egress traffic to the Azure Firewall, to ensure only explicitly allowed destinations on the Internet to be accessed.
 There are couple of exceptions
 
 - `AzureFirewallSubnet` as it hosts the Azure Firewall which routes traffic to the Internet.
