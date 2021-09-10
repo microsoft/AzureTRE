@@ -30,10 +30,17 @@ def get_current_template_by_name(template_name: str, template_repo: ResourceTemp
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
 
 
+# WORKSPACE TEMPLATES
 @router.get("/workspace-templates", response_model=ResourceTemplateInformationInList, name=strings.API_GET_WORKSPACE_TEMPLATES)
 async def get_workspace_templates(template_repo=Depends(get_repository(ResourceTemplateRepository))) -> ResourceTemplateInformationInList:
     templates_infos = template_repo.get_templates_information(ResourceType.Workspace)
     return ResourceTemplateInformationInList(templates=templates_infos)
+
+
+@router.get("/workspace-templates/{workspace_template_name}", response_model=WorkspaceTemplateInResponse, name=strings.API_GET_WORKSPACE_TEMPLATE_BY_NAME, response_model_exclude_none=True)
+async def get_current_workspace_template_by_name(workspace_template_name: str, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> WorkspaceTemplateInResponse:
+    template = get_current_template_by_name(workspace_template_name, template_repo, ResourceType.Workspace)
+    return parse_obj_as(WorkspaceTemplateInResponse, template)
 
 
 @router.post("/workspace-templates", status_code=status.HTTP_201_CREATED, response_model=WorkspaceTemplateInResponse, response_model_exclude_none=True, name=strings.API_CREATE_WORKSPACE_TEMPLATES)
@@ -42,9 +49,3 @@ async def register_workspace_template(template_input: WorkspaceTemplateInCreate,
         return template_repo.create_and_validate_template(template_input, ResourceType.Workspace)
     except EntityVersionExist:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_TEMPLATE_VERSION_EXISTS)
-
-
-@router.get("/workspace-templates/{workspace_template_name}", response_model=WorkspaceTemplateInResponse, name=strings.API_GET_WORKSPACE_TEMPLATE_BY_NAME, response_model_exclude_none=True)
-async def get_current_workspace_template_by_name(workspace_template_name: str, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> WorkspaceTemplateInResponse:
-    template = get_current_template_by_name(workspace_template_name, template_repo, ResourceType.Workspace)
-    return parse_obj_as(WorkspaceTemplateInResponse, template)

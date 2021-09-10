@@ -51,6 +51,7 @@ Example tasks:
 - Manage shared services e.g., available packages in package mirror shared service.
 - Monitor workspace usage and billing.
 - Set and manage quotas.
+- Create and manage workspaces
 
 Expected skills:
 
@@ -67,6 +68,7 @@ Example tasks:
 - Import data and make it available within the workspace.
 - Enable services within the workspace.
 - Monitor billing and usage of the workspace.
+- Create and manage workspace services
 
 Expected skills:
 
@@ -80,6 +82,7 @@ Example tasks:
 
 - Import software packages needed to conduct research (PyPi, Conda, Apt).
 - Perform research using the services in the workspace.
+- Create and manage user resources
 
 Expected skills:
 

@@ -8,6 +8,7 @@ from starlette.exceptions import HTTPException
 from starlette.middleware.errors import ServerErrorMiddleware
 
 from api.routes.api import router as api_router
+from api.routes.api import tags_metadata
 from api.errors.http_error import http_error_handler
 from api.errors.validation_error import http422_error_handler
 from api.errors.generic_error import generic_error_handler
@@ -27,6 +28,7 @@ def get_application() -> FastAPI:
             "clientId": config.SWAGGER_UI_CLIENT_ID,
             "scopes": ["openid", "offline_access", f"api://{config.API_CLIENT_ID}/Workspace.Read", f"api://{config.API_CLIENT_ID}/Workspace.Write"]
         },
+        openapi_tags=tags_metadata
     )
 
     application.add_event_handler("startup", create_start_app_handler(application))
