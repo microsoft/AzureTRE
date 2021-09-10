@@ -61,7 +61,7 @@ def test_get_workspace_by_id_raises_entity_does_not_exist_if_item_does_not_exist
 
 def test_get_workspace_by_id_queries_db(workspace_repo, workspace):
     workspace_repo.container.query_items = MagicMock(return_value=[workspace.dict()])
-    expected_query = workspace_repo._active_resources_by_type_and_id_query(workspace.id, workspace.resourceType)
+    expected_query = f'SELECT * FROM c WHERE c.resourceType = "workspace" AND c.deployment.status != "deleted" AND c.id = "{workspace.id}"'
 
     workspace_repo.get_workspace_by_workspace_id(workspace.id)
 
