@@ -18,3 +18,10 @@ data "azurerm_subnet" "resource_processor" {
 
   resource_group_name = var.resource_group_name
 }
+
+data "azurerm_subnet" "web_app" {
+  name                 = "WebAppSubnet"
+  virtual_network_name = "vnet-${var.tre_id}"
+
+  resource_group_name = var.resource_group_name
+}

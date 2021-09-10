@@ -175,6 +175,8 @@ module "firewall" {
   location                   = var.location
   resource_group_name        = azurerm_resource_group.core.name
   log_analytics_workspace_id = azurerm_log_analytics_workspace.core.id
+  deploy_gitea               = var.deploy_gitea
+  deploy_nexus               = var.deploy_nexus
 
   depends_on = [
     module.network
@@ -188,6 +190,8 @@ module "routetable" {
   resource_group_name          = azurerm_resource_group.core.name
   shared_subnet_id             = module.network.shared_subnet_id
   resource_processor_subnet_id = module.network.resource_processor_subnet_id
+  web_app_subnet_id            = module.network.web_app_subnet_id
+  app_gw_subnet_id             = module.network.app_gw_subnet_id
   firewall_private_ip_address  = module.firewall.firewall_private_ip_address
 }
 
