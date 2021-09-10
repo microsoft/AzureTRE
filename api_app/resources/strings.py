@@ -18,6 +18,7 @@ API_DELETE_WORKSPACE_SERVICE = "Delete workspace service"
 API_CREATE_USER_RESOURCE = "Create a user resource"
 API_GET_MY_USER_RESOURCES = "Get my user resources in the workspace service"
 API_GET_USER_RESOURCE = "Get user resource by id"
+API_DELETE_USER_RESOURCE = "Delete user resource"
 
 API_GET_STATUS_OF_SERVICES = "Get status of services"
 
@@ -59,6 +60,7 @@ UNABLE_TO_PROCESS_REQUEST = "Unable to process request"
 
 USER_RESOURCE_DOES_NOT_EXIST = "User Resource does not exist"
 USER_RESOURCES_NEED_TO_BE_DELETED_BEFORE_WORKSPACE = "All user resources need to be deleted before you can delete the workspace service"
+USER_RESOURCE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION = "The resource needs to be disabled before you can delete it"
 
 WORKSPACE_DOES_NOT_EXIST = "Workspace does not exist"
 WORKSPACE_IS_NOT_DEPLOYED = "Workspace is not deployed."
