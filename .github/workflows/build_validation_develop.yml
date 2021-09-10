@@ -5,7 +5,7 @@ on:
     branches: [develop, main]
 
 # for each ref (branch/pr) run just the most recent, cancel other pending/running ones
-concurrency: 
+concurrency:
   group: "${{ github.workflow }}-${{ github.head_ref }}"
   cancel-in-progress: true
 
@@ -34,9 +34,14 @@ jobs:
           RUN_LOCAL: true
           VALIDATE_JAVA: true
           JAVA_FILE_NAME: checkstyle.xml
-      
-      - name: Terraform format Checkout
+
+      - name: Terraform format check
         run: terraform fmt -check -recursive
+
+      # find all terraform folders and run validate to catch configuration errors
+      - name: Terraform validation
+        run: |
+          find . -type d -name 'terraform' -not -path '*cnab*' -print0 | xargs -0 -I{} sh -c 'echo "***** Validating: {} *****"; terraform -chdir={} init -backend=false; terraform -chdir={} validate'
 
       - name: Set up Python 3.8
         uses: actions/setup-python@v2
