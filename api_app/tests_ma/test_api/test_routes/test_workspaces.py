@@ -124,6 +124,10 @@ def disabled_workspace_service():
     return WorkspaceService(id=SERVICE_ID, resourceTemplateName='template name', resourceTemplateVersion='1.0', resourceTemplateParameters={"enabled": False})
 
 
+def disabled_user_resource():
+    return UserResource(id=USER_RESOURCE_ID, resourceTemplateName='template name', resourceTemplateVersion='1.0', resourceTemplateParameters={"enabled": False})
+
+
 class TestWorkspaceHelpers:
     @patch("api.routes.workspaces.send_resource_request_message")
     async def test_save_and_deploy_resource_saves_item(self, _, resource_repo):
@@ -772,3 +776,47 @@ class TestUserResourcesRoutesThatDontRequireAdminRights:
 
         assert response.status_code == status.HTTP_409_CONFLICT
         assert response.text == strings.WORKSPACE_SERVICE_IS_NOT_DEPLOYED
+
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id")
+    @patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")
+    async def test_delete_user_resource_raises_400_if_user_resource_is_enabled(self, _, get_user_resource_mock, ___, app, client):
+        user_resource = sample_user_resource_object()
+        user_resource.resourceTemplateParameters["enabled"] = True
+        get_user_resource_mock.return_value = user_resource
+
+        response = await client.delete(app.url_path_for(strings.API_DELETE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID))
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id", return_value=disabled_user_resource())
+    @patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")
+    @patch("api.routes.workspaces.mark_resource_as_deleting", return_value=None)
+    @patch("api.routes.workspaces.send_uninstall_message")
+    async def test_delete_user_resource_marks_resource_as_deleting(self, _, mark_resource_mock, __, ___, ____, app, client):
+        await client.delete(app.url_path_for(strings.API_DELETE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID))
+        mark_resource_mock.assert_called_once()
+
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id", return_value=disabled_user_resource())
+    @patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")
+    @patch("api.routes.workspaces.mark_resource_as_deleting")
+    @patch("api.routes.workspaces.send_uninstall_message", return_value=None)
+    async def test_delete_user_resource_sends_uninstall_message(self, send_uninstall_mock, _, __, ___, ____, app, client):
+        await client.delete(app.url_path_for(strings.API_DELETE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID))
+        send_uninstall_mock.assert_called_once()
+
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id")
+    @patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")
+    @patch("api.routes.workspaces.mark_resource_as_deleting")
+    @patch("api.routes.workspaces.send_uninstall_message")
+    async def test_delete_user_resource_returns_resource_id(self, _, __, ___, get_user_resource_mock, ____, app, client):
+        user_resource = disabled_user_resource()
+        get_user_resource_mock.return_value = user_resource
+
+        response = await client.delete(app.url_path_for(strings.API_DELETE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID))
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["resourceId"] == user_resource.id
