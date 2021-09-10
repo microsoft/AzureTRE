@@ -57,10 +57,11 @@ def validate_user_is_workspace_owner_or_resource_owner(user, workspace, user_res
     role = get_user_role_in_workspace(user, workspace)
     if role == WorkspaceRole.Owner:
         return
-    elif role == WorkspaceRole.Researcher and user_resource.ownerId == user.id:
+
+    if role == WorkspaceRole.Researcher and user_resource.ownerId == user.id:
         return
-    else:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.ACCESS_USER_IS_NOT_OWNER_OR_RESEARCHER)
+
+    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.ACCESS_USER_IS_NOT_OWNER_OR_RESEARCHER)
 
 
 def validate_user_has_valid_role_in_workspace(user, workspace, valid_roles=None):
