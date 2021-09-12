@@ -13,10 +13,12 @@ API_GET_ALL_WORKSPACE_SERVICES = "Get all workspace services for workspace"
 API_GET_WORKSPACE_SERVICE_BY_ID = "Get workspace service by Id"
 API_CREATE_WORKSPACE_SERVICE = "Create a workspace service"
 API_UPDATE_WORKSPACE_SERVICE = "Update an existing workspace service"
+API_DELETE_WORKSPACE_SERVICE = "Delete workspace service"
 
 API_CREATE_USER_RESOURCE = "Create a user resource"
 API_GET_MY_USER_RESOURCES = "Get my user resources in the workspace service"
 API_GET_USER_RESOURCE = "Get user resource by id"
+API_DELETE_USER_RESOURCE = "Delete user resource"
 API_UPDATE_USER_RESOURCE = "Update an existing user resource"
 
 API_GET_STATUS_OF_SERVICES = "Get status of services"
@@ -45,23 +47,33 @@ ACCESS_APP_IS_MISSING_ROLE = "The App is missing role"
 ACCESS_PLEASE_SUPPLY_APP_ID = "Please supply the app_id for the AAD application"
 ACCESS_UNABLE_TO_GET_INFO_FOR_APP = "Unable to get app info for app:"
 ACCESS_UNABLE_TO_GET_ROLE_ASSIGNMENTS_FOR_USER = "Unable to get role assignments for user"
-ACCESS_USER_IS_NOT_OWNER_OR_RESEARCHER = "Researcher or Owner rights required to see workspace details"
-ACCESS_USER_IS_NOT_OWNER = "Owner rights required to install workspace service"
+
+ACCESS_USER_IS_NOT_OWNER_OR_RESEARCHER = "Workspace Researcher or Owner rights are required"
+ACCESS_USER_IS_NOT_OWNER = "Workspace Owner rights are required"
+
 AUTH_NOT_ASSIGNED_TO_ADMIN_ROLE = "Not assigned to admin role"
 AUTH_COULD_NOT_VALIDATE_CREDENTIALS = "Could not validate credentials"
 AUTH_CONFIGURATION_NOT_AVAILABLE_FOR_WORKSPACE = "Auth configuration not available for workspace"
 INVALID_AUTH_PROVIDER = "Invalid authentication provider"
+
 UNABLE_TO_REPLACE_CURRENT_TEMPLATE = "Unable to replace the existing 'current' template with this name"
 UNABLE_TO_PROCESS_REQUEST = "Unable to process request"
+
 USER_RESOURCE_DOES_NOT_EXIST = "User Resource does not exist"
+USER_RESOURCES_NEED_TO_BE_DELETED_BEFORE_WORKSPACE = "All user resources need to be deleted before you can delete the workspace service"
+USER_RESOURCE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION = "The resource needs to be disabled before you can delete it"
+
 WORKSPACE_DOES_NOT_EXIST = "Workspace does not exist"
 WORKSPACE_IS_NOT_DEPLOYED = "Workspace is not deployed."
+WORKSPACE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION = "The workspace needs to be disabled before you can delete it"
+
 WORKSPACE_SERVICE_DOES_NOT_EXIST = "Workspace service does not exist"
 WORKSPACE_SERVICE_IS_NOT_DEPLOYED = "Workspace service is not deployed."
-WORKSPACE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION = "The workspace needs to be disabled before you can delete it"
+WORKSPACE_SERVICE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION = "The workspace service needs to be disabled before you can delete it"
 WORKSPACE_SERVICES_NEED_TO_BE_DELETED_BEFORE_WORKSPACE = "All workspace services need to be deleted before you can delete the workspace"
-TEMPLATE_DOES_NOT_EXIST = "Could not retrieve the 'current' template with this name"
 WORKSPACE_TEMPLATE_VERSION_EXISTS = "A template with this version already exists"
+
+TEMPLATE_DOES_NOT_EXIST = "Could not retrieve the 'current' template with this name"
 NO_UNIQUE_CURRENT_FOR_TEMPLATE = "The template has multiple 'current' versions"
 
 # Resource Status

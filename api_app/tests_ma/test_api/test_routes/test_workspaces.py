@@ -3,12 +3,13 @@ from mock import patch, MagicMock
 
 from fastapi import HTTPException, status
 
-from api.routes.workspaces import get_current_user, save_and_deploy_resource, validate_user_is_owner_or_researcher
+from api.routes.workspaces import get_current_user, save_and_deploy_resource, validate_user_is_owner_or_researcher, \
+    validate_user_is_owner, mark_resource_as_deleting, send_uninstall_message
 from db.errors import EntityDoesNotExist
 from db.repositories.resources import ResourceRepository
 from db.repositories.workspaces import WorkspaceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
-from models.domain.resource import Status, Deployment, RequestAction
+from models.domain.resource import Status, Deployment, RequestAction, ResourceType
 from models.domain.user_resource import UserResource
 from models.domain.workspace import Workspace, WorkspaceRole
 from models.domain.workspace_service import WorkspaceService
@@ -131,6 +132,14 @@ def sample_user_resource_object(user_resource_id=USER_RESOURCE_ID, workspace_id=
     return user_resource
 
 
+def disabled_workspace_service():
+    return WorkspaceService(id=SERVICE_ID, resourceTemplateName='template name', resourceTemplateVersion='1.0', resourceTemplateParameters={"enabled": False})
+
+
+def disabled_user_resource():
+    return UserResource(id=USER_RESOURCE_ID, resourceTemplateName='template name', resourceTemplateVersion='1.0', resourceTemplateParameters={"enabled": False})
+
+
 class TestWorkspaceHelpers:
     @patch("api.routes.workspaces.send_resource_request_message")
     async def test_save_and_deploy_resource_saves_item(self, _, resource_repo):
@@ -195,6 +204,56 @@ class TestWorkspaceHelpers:
 
         assert ex.value.status_code == status.HTTP_403_FORBIDDEN
         access_service.get_workspace_role.assert_called_once_with(user, workspace)
+
+    @pytest.mark.parametrize('role', [WorkspaceRole.Researcher, WorkspaceRole.NoRole])
+    @patch("api.routes.workspaces.get_user_role_in_workspace")
+    async def test_validate_user_is_owner_raises_403_if_user_is_not_owner_of_workspace(self, get_role_mock, role, non_admin_user):
+        get_role_mock.return_value = role
+
+        with pytest.raises(HTTPException) as ex:
+            validate_user_is_owner(non_admin_user, sample_workspace())
+
+        assert ex.value.status_code == status.HTTP_403_FORBIDDEN
+
+    @patch("api.routes.workspaces.ResourceRepository.mark_resource_as_deleting", return_value=None)
+    async def test_mark_resource_as_deleting_marks_resource_as_deleting(self, mark_as_deleting_mock, resource_repo):
+        workspace = sample_workspace()
+
+        mark_resource_as_deleting(workspace, resource_repo, ResourceType.Workspace)
+
+        mark_as_deleting_mock.assert_called_once_with(workspace)
+
+    @patch("api.routes.workspaces.ResourceRepository.mark_resource_as_deleting", side_effect=Exception)
+    async def test_mark_resource_as_deleting_raises_503_if_db_exception(self, _, resource_repo):
+        with pytest.raises(HTTPException) as ex:
+            mark_resource_as_deleting(sample_workspace(), resource_repo, ResourceType.Workspace)
+        assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+
+    @patch("api.routes.workspaces.send_resource_request_message", return_value=None)
+    async def test_send_uninstall_message_sends_uninstall_message(self, send_request_mock, resource_repo):
+        workspace = sample_workspace()
+        await send_uninstall_message(workspace, resource_repo, Status.Deployed, ResourceType.Workspace)
+
+        send_request_mock.assert_called_once_with(workspace, RequestAction.UnInstall)
+
+    @patch("api.routes.workspaces.send_resource_request_message", side_effect=Exception)
+    async def test_send_uninstall_message_restores_status_on_service_bus_exception(self, _, resource_repo):
+        resource_repo.restore_previous_deletion_state = MagicMock(return_value=None)
+        workspace = sample_workspace()
+        prev_status = Status.Deployed
+
+        with pytest.raises(HTTPException):
+            await send_uninstall_message(workspace, resource_repo, prev_status, ResourceType.Workspace)
+
+        resource_repo.restore_previous_deletion_state.assert_called_once_with(workspace, prev_status)
+
+    @patch("api.routes.workspaces.send_resource_request_message", side_effect=Exception)
+    async def test_send_uninstall_message_raises_503_on_service_bus_exception(self, _, resource_repo):
+        resource_repo.restore_previous_deletion_state = MagicMock(return_value=None)
+
+        with pytest.raises(HTTPException) as ex:
+            await send_uninstall_message(sample_workspace(), resource_repo, Status.Deployed, ResourceType.Workspace)
+        assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
 
 class TestWorkspaceRoutesThatDontRequireAdminRights:
@@ -534,6 +593,64 @@ class TestWorkspaceServiceRoutesThatDontRequireAdminRights:
 
         assert response.status_code == status.HTTP_200_OK
 
+    # [DELETE] /workspaces/{workspace_id}/services/{service_id}
+    @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @patch("api.routes.workspaces.validate_user_is_owner")
+    async def test_delete_workspace_service_raises_400_if_workspace_service_is_enabled(self, _, __, get_workspace_service_mock, app, client):
+        workspace_service = sample_workspace_service()
+        workspace_service.resourceTemplateParameters["enabled"] = True
+        get_workspace_service_mock.return_value = workspace_service
+
+        response = await client.delete(app.url_path_for(strings.API_DELETE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID))
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=disabled_workspace_service())
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @patch("api.routes.workspaces.validate_user_is_owner")
+    @patch("api.routes.workspaces.UserResourceRepository.get_user_resources_for_workspace_service")
+    async def test_delete_workspace_service_raises_404_if_workspace_service_has_active_resources(self, get_user_resources_mock, __, ___, ____, app, client):
+        get_user_resources_mock.return_value = [sample_user_resource_object()]
+
+        response = await client.delete(app.url_path_for(strings.API_DELETE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID))
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=disabled_workspace_service())
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @patch("api.routes.workspaces.validate_user_is_owner")
+    @patch("api.routes.workspaces.UserResourceRepository.get_user_resources_for_workspace_service", return_value=[])
+    @patch("api.routes.workspaces.mark_resource_as_deleting", return_value=None)
+    @patch("api.routes.workspaces.send_uninstall_message")
+    async def test_delete_workspace_service_marks_the_resource_as_deleting(self, _, mark_resource_mock, __, ___, ____, _____, app, client):
+        await client.delete(app.url_path_for(strings.API_DELETE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID))
+        mark_resource_mock.assert_called_once()
+
+    @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=disabled_workspace_service())
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @patch("api.routes.workspaces.validate_user_is_owner")
+    @patch("api.routes.workspaces.UserResourceRepository.get_user_resources_for_workspace_service", return_value=[])
+    @patch("api.routes.workspaces.mark_resource_as_deleting")
+    @patch("api.routes.workspaces.send_uninstall_message")
+    async def test_delete_workspace_service_sends_uninstall_message(self, send_uninstall_mock, _, __, ___, ____, _____, app, client):
+        await client.delete(app.url_path_for(strings.API_DELETE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID))
+        send_uninstall_mock.assert_called_once()
+
+    @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @patch("api.routes.workspaces.validate_user_is_owner")
+    @patch("api.routes.workspaces.UserResourceRepository.get_user_resources_for_workspace_service", return_value=[])
+    @patch("api.routes.workspaces.mark_resource_as_deleting")
+    @patch("api.routes.workspaces.send_uninstall_message")
+    async def test_delete_workspace_service_returns_the_deleted_workspace_service_id(self, _, __, ___, ____, _____, workspace_service_mock, app, client):
+        workspace_service = disabled_workspace_service()
+        workspace_service_mock.return_value = workspace_service
+        response = await client.delete(app.url_path_for(strings.API_DELETE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID))
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["workspaceServiceId"] == workspace_service.id
+
 
 class TestUserResourcesRoutesThatDontRequireAdminRights:
     @pytest.fixture(autouse=True, scope='class')
@@ -672,6 +789,50 @@ class TestUserResourcesRoutesThatDontRequireAdminRights:
         assert response.status_code == status.HTTP_409_CONFLICT
         assert response.text == strings.WORKSPACE_SERVICE_IS_NOT_DEPLOYED
 
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id")
+    @patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")
+    async def test_delete_user_resource_raises_400_if_user_resource_is_enabled(self, _, get_user_resource_mock, ___, app, client):
+        user_resource = sample_user_resource_object()
+        user_resource.resourceTemplateParameters["enabled"] = True
+        get_user_resource_mock.return_value = user_resource
+
+        response = await client.delete(app.url_path_for(strings.API_DELETE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID))
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id", return_value=disabled_user_resource())
+    @patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")
+    @patch("api.routes.workspaces.mark_resource_as_deleting", return_value=None)
+    @patch("api.routes.workspaces.send_uninstall_message")
+    async def test_delete_user_resource_marks_resource_as_deleting(self, _, mark_resource_mock, __, ___, ____, app, client):
+        await client.delete(app.url_path_for(strings.API_DELETE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID))
+        mark_resource_mock.assert_called_once()
+
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id", return_value=disabled_user_resource())
+    @patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")
+    @patch("api.routes.workspaces.mark_resource_as_deleting")
+    @patch("api.routes.workspaces.send_uninstall_message", return_value=None)
+    async def test_delete_user_resource_sends_uninstall_message(self, send_uninstall_mock, _, __, ___, ____, app, client):
+        await client.delete(app.url_path_for(strings.API_DELETE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID))
+        send_uninstall_mock.assert_called_once()
+
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id")
+    @patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")
+    @patch("api.routes.workspaces.mark_resource_as_deleting")
+    @patch("api.routes.workspaces.send_uninstall_message")
+    async def test_delete_user_resource_returns_resource_id(self, _, __, ___, get_user_resource_mock, ____, app, client):
+        user_resource = disabled_user_resource()
+        get_user_resource_mock.return_value = user_resource
+
+        response = await client.delete(app.url_path_for(strings.API_DELETE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID))
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["resourceId"] == user_resource.id
+
     # [PATCH] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
     @ patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id", side_effect=EntityDoesNotExist)
     async def test_patch_user_resources_returns_404_if_user_resource_does_not_exist(self, _, app, client):
@@ -742,5 +903,3 @@ class TestUserResourcesRoutesThatDontRequireAdminRights:
 
         with pytest.raises(AuthConfigValidationError):
           await client.patch(app.url_path_for(strings.API_UPDATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID), json=user_resource_service_patch)
-
-

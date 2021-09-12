@@ -5,9 +5,11 @@ from jsonschema.exceptions import ValidationError
 
 from api.dependencies.database import get_repository
 from api.dependencies.workspaces import get_workspace_by_workspace_id_from_path, get_deployed_workspace_by_workspace_id_from_path, get_deployed_workspace_service_by_id_from_path, get_workspace_service_by_id_from_path, get_user_resource_by_id_from_path
+from db.repositories.resources import ResourceRepository
 from db.repositories.user_resources import UserResourceRepository
 from db.repositories.workspaces import WorkspaceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
+from models.domain.resource import ResourceType, Status, Resource
 from models.domain.workspace import WorkspaceRole
 from models.schemas.user_resource import UserResourceInResponse, UserResourceIdInResponse, UserResourceInCreate, UserResourcesInList, UserResourcePatchEnabled
 from models.schemas.workspace import WorkspaceInCreate, WorkspaceIdInResponse, WorkspacesInList, WorkspaceInResponse, WorkspacePatchEnabled
@@ -51,10 +53,38 @@ def validate_user_is_owner(user, workspace):
     validate_user_has_valid_role_in_workspace(user, workspace, [WorkspaceRole.Owner])
 
 
+def validate_user_is_workspace_owner_or_resource_owner(user, workspace, user_resource):
+    role = get_user_role_in_workspace(user, workspace)
+    if role == WorkspaceRole.Owner:
+        return
+
+    if role == WorkspaceRole.Researcher and user_resource.ownerId == user.id:
+        return
+
+    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.ACCESS_USER_IS_NOT_OWNER_OR_RESEARCHER)
+
+
 def validate_user_has_valid_role_in_workspace(user, workspace, valid_roles=None):
     role = get_user_role_in_workspace(user, workspace)
     if role not in valid_roles:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.ACCESS_USER_IS_NOT_OWNER)
+
+
+def mark_resource_as_deleting(resource: Resource, resource_repo: ResourceRepository, resource_type: ResourceType) -> Status:
+    try:
+        return resource_repo.mark_resource_as_deleting(resource)
+    except Exception as e:
+        logging.error(f"Failed to delete {resource_type} instance in DB: {e}")
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
+
+
+async def send_uninstall_message(resource: Resource, resource_repo: ResourceRepository, previous_deletion_status: Status, resource_type: ResourceType):
+    try:
+        await send_resource_request_message(resource, RequestAction.UnInstall)
+    except Exception as e:
+        resource_repo.restore_previous_deletion_state(resource, previous_deletion_status)
+        logging.error(f"Failed send {resource_type} resource delete message: {e}")
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
 
 
 # WORKSPACE ROUTERS
@@ -100,18 +130,8 @@ async def delete_workspace(workspace=Depends(get_workspace_by_workspace_id_from_
     if len(workspace_service_repo.get_active_workspace_services_for_workspace(workspace.id)) > 0:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_SERVICES_NEED_TO_BE_DELETED_BEFORE_WORKSPACE)
 
-    try:
-        previous_deletion_status = workspace_repo.mark_resource_as_deleting(workspace)
-    except Exception as e:
-        logging.error(f"Failed to delete workspace instance in DB: {e}")
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
-
-    try:
-        await send_resource_request_message(workspace, RequestAction.UnInstall)
-    except Exception as e:
-        workspace_repo.restore_previous_deletion_state(workspace, previous_deletion_status)
-        logging.error(f"Failed send workspace resource delete message: {e}")
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
+    previous_deletion_status = mark_resource_as_deleting(workspace, workspace_repo, ResourceType.Workspace)
+    await send_uninstall_message(workspace, workspace_repo, previous_deletion_status, ResourceType.Workspace)
 
     return WorkspaceIdInResponse(workspaceId=workspace.id)
 
@@ -152,6 +172,22 @@ async def patch_workspace_service(workspace_service_patch: WorkspaceServicePatch
     return WorkspaceServiceInResponse(workspaceService=workspace_service)
 
 
+@workspace_services_router.delete("/workspaces/{workspace_id}/workspace-services/{service_id}", response_model=WorkspaceServiceIdInResponse, name=strings.API_DELETE_WORKSPACE_SERVICE)
+async def delete_workspace_service(user=Depends(get_current_user), workspace=Depends(get_workspace_by_workspace_id_from_path), workspace_service=Depends(get_workspace_service_by_id_from_path), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), user_resource_repo=Depends(get_repository(UserResourceRepository))) -> WorkspaceServiceIdInResponse:
+    validate_user_is_owner(user, workspace)
+
+    if workspace_service.is_enabled():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_SERVICE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION)
+
+    if len(user_resource_repo.get_user_resources_for_workspace_service(workspace_service.id)) > 0:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.USER_RESOURCES_NEED_TO_BE_DELETED_BEFORE_WORKSPACE)
+
+    previous_deletion_status = mark_resource_as_deleting(workspace_service, workspace_service_repo, ResourceType.WorkspaceService)
+    await send_uninstall_message(workspace_service, workspace_service_repo, previous_deletion_status, ResourceType.WorkspaceService)
+
+    return WorkspaceServiceIdInResponse(workspaceServiceId=workspace_service.id)
+
+
 # USER RESOURCE ROUTES
 @user_resources_router.get("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources", response_model=UserResourcesInList, name=strings.API_GET_MY_USER_RESOURCES)
 async def retrieve_user_resources_for_workspace_service(workspace_id: str, service_id: str, user=Depends(get_current_user), workspace=Depends(get_workspace_by_workspace_id_from_path), user_resource_repo=Depends(get_repository(UserResourceRepository))) -> UserResourcesInList:
@@ -168,11 +204,8 @@ async def retrieve_user_resources_for_workspace_service(workspace_id: str, servi
 
 @user_resources_router.get("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}", response_model=UserResourceInResponse, name=strings.API_GET_USER_RESOURCE)
 async def retrieve_user_resource_by_id(workspace_id: str, service_id: str, resource_id: str, workspace=Depends(get_workspace_by_workspace_id_from_path), user_resource=Depends(get_user_resource_by_id_from_path), user=Depends(get_current_user)) -> UserResourceInResponse:
-    role = get_user_role_in_workspace(user, workspace)
-    if role == WorkspaceRole.Owner or (role == WorkspaceRole.Researcher and user_resource.ownerId == user.id):
-        return UserResourceInResponse(userResource=user_resource)
-    else:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.ACCESS_USER_IS_NOT_OWNER_OR_RESEARCHER)
+    validate_user_is_workspace_owner_or_resource_owner(user, workspace, user_resource)
+    return UserResourceInResponse(userResource=user_resource)
 
 
 @user_resources_router.post("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources", status_code=status.HTTP_202_ACCEPTED, response_model=UserResourceIdInResponse, name=strings.API_CREATE_USER_RESOURCE)
@@ -189,8 +222,23 @@ async def create_user_resource(user_resource_create: UserResourceInCreate, user_
 
     return UserResourceIdInResponse(resourceId=user_resource.id)
 
+
+@user_resources_router.delete("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}", response_model=UserResourceIdInResponse, name=strings.API_DELETE_USER_RESOURCE)
+async def delete_user_resource(workspace_id: str, service_id: str, resource_id: str, user=Depends(get_current_user), workspace=Depends(get_workspace_by_workspace_id_from_path), user_resource=Depends(get_user_resource_by_id_from_path), user_resource_repo=Depends(get_repository(UserResourceRepository))) -> UserResourceIdInResponse:
+    validate_user_is_workspace_owner_or_resource_owner(user, workspace, user_resource)
+
+    if user_resource.is_enabled():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.USER_RESOURCE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION)
+
+    previous_deletion_status = mark_resource_as_deleting(user_resource, user_resource_repo, ResourceType.UserResource)
+    await send_uninstall_message(user_resource, user_resource_repo, previous_deletion_status, ResourceType.UserResource)
+
+    return UserResourceIdInResponse(resourceId=user_resource.id)
+
+
 @user_resources_router.patch("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}", response_model=UserResourceInResponse, name=strings.API_UPDATE_USER_RESOURCE)
 async def patch_user_resource(workspace_id: str, service_id: str, resource_id: str, user_resource_patch: UserResourcePatchEnabled, user_resource=Depends(get_user_resource_by_id_from_path), user_resource_repo=Depends(get_repository(UserResourceRepository)), user=Depends(get_current_user), workspace_service=Depends(get_deployed_workspace_service_by_id_from_path), workspace=Depends(get_workspace_by_workspace_id_from_path)) -> UserResourceInResponse:
     validate_user_is_owner_or_researcher(user, workspace)
     user_resource_repo.patch_user_resource(user_resource, user_resource_patch)
     return UserResourceInResponse(userResource=user_resource)
+
