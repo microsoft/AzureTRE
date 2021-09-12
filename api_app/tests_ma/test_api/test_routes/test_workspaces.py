@@ -902,4 +902,4 @@ class TestUserResourcesRoutesThatDontRequireAdminRights:
         user_resource_service_patch = {"enabled": True}
 
         with pytest.raises(AuthConfigValidationError):
-          await client.patch(app.url_path_for(strings.API_UPDATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID), json=user_resource_service_patch)
+            await client.patch(app.url_path_for(strings.API_UPDATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID), json=user_resource_service_patch)

@@ -241,4 +241,3 @@ async def patch_user_resource(workspace_id: str, service_id: str, resource_id: s
     validate_user_is_owner_or_researcher(user, workspace)
     user_resource_repo.patch_user_resource(user_resource, user_resource_patch)
     return UserResourceInResponse(userResource=user_resource)
-

@@ -77,6 +77,7 @@ class UserResourceIdInResponse(BaseModel):
             }
         }
 
+
 class UserResourcePatchEnabled(BaseModel):
     enabled: bool
 
