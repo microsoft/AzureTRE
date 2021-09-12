@@ -17,6 +17,8 @@ jobs:
     name: Deploy Management Infrastructure
     runs-on: ubuntu-latest
     environment: Dev
+    env:
+      TF_INPUT: 0 # interactive is off
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -73,6 +75,7 @@ jobs:
     environment: Dev
     env:
       DOCKER_BUILDKIT: 1
+      TF_INPUT: 0 # interactive is off
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -97,6 +100,7 @@ jobs:
           LOCATION: ${{ secrets.LOCATION }}
           ACR_NAME: ${{ secrets.ACR_NAME }}
           ADDRESS_SPACE: ${{ secrets.ADDRESS_SPACE }}
+          TF_VAR_tre_address_space: ${{ secrets.TRE_ADDRESS_SPACE }}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
           TF_VAR_aad_tenant_id: "${{ secrets.AAD_TENANT_ID }}"
@@ -181,11 +185,11 @@ jobs:
           # ************************
           export RESPONSE=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d "grant_type=password&resource=${RESOURCE}&client_id=${CLIENT_ID}&username=${USERNAME}&password=${PASSWORD}&scope=default)" https://login.microsoftonline.com/${AUTH_TENANT_ID}/oauth2/token)
           export TOKEN=$(jq -r '.access_token' <<< "$RESPONSE")
-          
+
           # Check if base template is already registered
           # ********************************************
           export STATUS_CODE=$(curl -X "GET" "${TRE_URL}/api/workspace-templates/tre-workspace-base" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
-          
+
           if [[ ${STATUS_CODE} == 404 ]]
           then
             make register-bundle DIR=./templates/workspaces/base
@@ -194,7 +198,7 @@ jobs:
           # Check if azureml_devtestlabs template is already registered
           # ***********************************************************
           export STATUS_CODE=$(curl -X "GET" "${TRE_URL}/api/workspace-templates/tre-workspace-azureml-devtestlabs" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
-          
+
           if [[ ${STATUS_CODE} == 404 ]]
           then
             make register-bundle DIR=./templates/workspaces/azureml_devtestlabs
@@ -203,7 +207,7 @@ jobs:
           # Check if innereye_deeplearning template is already registered
           # *************************************************************
           export STATUS_CODE=$(curl -X "GET" "${TRE_URL}/api/workspace-templates/tre-workspace-innereye-deeplearning" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
-          
+
           if [[ ${STATUS_CODE} == 404 ]]
           then
             make register-bundle DIR=./templates/workspaces/innereye_deeplearning
@@ -212,7 +216,7 @@ jobs:
           # Check if innereye_deeplearning_inference template is already registered
           # ***********************************************************************
           export STATUS_CODE=$(curl -X "GET" "${TRE_URL}/api/workspace-templates/tre-workspace-innereye-deeplearning-inference" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
-          
+
           if [[ ${STATUS_CODE} == 404 ]]
           then
             make register-bundle DIR=./templates/workspaces/innereye_deeplearning_inference
@@ -254,11 +258,11 @@ jobs:
           # ************************
           export RESPONSE=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d "grant_type=password&resource=${RESOURCE}&client_id=${CLIENT_ID}&username=${USERNAME}&password=${PASSWORD}&scope=default)" https://login.microsoftonline.com/${AUTH_TENANT_ID}/oauth2/token)
           export TOKEN=$(jq -r '.access_token' <<< "$RESPONSE")
-          
+
           # Check if guacamole service template is already registered
           # *********************************************************
           export STATUS_CODE=$(curl -X "GET" "${TRE_URL}/api/workspace-service-templates/tre-service-guacamole" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
-          
+
           if [[ ${STATUS_CODE} == 404 ]]
           then
             make register-bundle DIR=./templates/workspace_services/guacamole
