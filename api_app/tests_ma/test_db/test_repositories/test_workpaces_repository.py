@@ -45,10 +45,10 @@ def test_get_deployed_workspace_by_id_raises_resource_is_not_deployed_if_not_dep
     sample_workspace = workspace
     sample_workspace.deployment = Deployment(status=Status.NotDeployed)
 
-    workspace_repo.get_workspace_by_workspace_id = MagicMock(return_value=sample_workspace)
+    workspace_repo.get_workspace_by_id = MagicMock(return_value=sample_workspace)
 
     with pytest.raises(ResourceIsNotDeployed):
-        workspace_repo.get_deployed_workspace_by_workspace_id(workspace_id)
+        workspace_repo.get_deployed_workspace_by_id(workspace_id)
 
 
 def test_get_workspace_by_id_raises_entity_does_not_exist_if_item_does_not_exist(workspace_repo):
@@ -56,14 +56,14 @@ def test_get_workspace_by_id_raises_entity_does_not_exist_if_item_does_not_exist
     workspace_repo.container.query_items = MagicMock(return_value=[])
 
     with pytest.raises(EntityDoesNotExist):
-        workspace_repo.get_workspace_by_workspace_id(workspace_id)
+        workspace_repo.get_workspace_by_id(workspace_id)
 
 
 def test_get_workspace_by_id_queries_db(workspace_repo, workspace):
     workspace_repo.container.query_items = MagicMock(return_value=[workspace.dict()])
     expected_query = f'SELECT * FROM c WHERE c.resourceType = "workspace" AND c.deployment.status != "deleted" AND c.id = "{workspace.id}"'
 
-    workspace_repo.get_workspace_by_workspace_id(workspace.id)
+    workspace_repo.get_workspace_by_id(workspace.id)
 
     workspace_repo.container.query_items.assert_called_once_with(query=expected_query, enable_cross_partition_query=True)
 

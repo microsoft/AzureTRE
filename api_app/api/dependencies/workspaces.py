@@ -14,7 +14,7 @@ from resources import strings
 
 def get_workspace_by_id(workspace_id: UUID4, workspaces_repo) -> Workspace:
     try:
-        return workspaces_repo.get_workspace_by_workspace_id(workspace_id)
+        return workspaces_repo.get_workspace_by_id(workspace_id)
     except EntityDoesNotExist:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.WORKSPACE_DOES_NOT_EXIST)
 
@@ -25,7 +25,7 @@ async def get_workspace_by_id_from_path(workspace_id: UUID4 = Path(...), workspa
 
 async def get_deployed_workspace_by_id_from_path(workspace_id: UUID4 = Path(...), workspaces_repo=Depends(get_repository(WorkspaceRepository))) -> Workspace:
     try:
-        return workspaces_repo.get_deployed_workspace_by_workspace_id(workspace_id)
+        return workspaces_repo.get_deployed_workspace_by_id(workspace_id)
     except EntityDoesNotExist:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.WORKSPACE_DOES_NOT_EXIST)
     except ResourceIsNotDeployed:
