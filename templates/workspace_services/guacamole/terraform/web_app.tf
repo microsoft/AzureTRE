@@ -34,6 +34,7 @@ resource "azurerm_app_service" "guacamole" {
     KEYVAULT_URL = local.kv_url
     API_URL      = local.api_url
     SERVICE_ID   = "${var.tre_resource_id}"
+    WORKSPACE_ID = "${var.workspace_id}"
 
     # Guacmole configuration
     GUAC_DISABLE_COPY     = "${var.guac_disable_copy}"
