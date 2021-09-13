@@ -29,7 +29,7 @@
         },
         "vm_size_sku": {
             "type": "String",
-            "defaultValue": "STANDARD_DS2_V2"
+            "defaultValue": "Standard_DS4_v2"
         }
     },
     "variables": {},
