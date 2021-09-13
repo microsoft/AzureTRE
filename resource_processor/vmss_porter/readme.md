@@ -56,3 +56,29 @@ This will trigger receiving of messages and you can freely debug the code by set
 ## Debugging deployed processor on Azure
 
 Check the section **Checking the Virtual Machine Scale Set(VMSS) instance running resource processor** in [debugging and troubleshooting guide](../../docs/ops_debugging_troubleshooting.md)
+
+## Network requirements
+
+To be able to run the Resource Processer it needs to acccess the following resource outside the Azure TRE VNET via explicit allowed [Service Tags](https://docs.microsoft.com/en-us/azure/virtual-network/service-tags-overview) or URLs.
+
+| Service Tag | Justification |
+| --- | --- |
+| AzureActiveDirectory | Authenticate with the User Assigned identity to access Azure Resource Manager and Azure Service Bus. |
+| AzureResourceManager | Access the Azure control plane to deploy and manage Azure resources. |
+| AzureMonitor | Publish traces and logs to one central place for troubleshooting. |
+| AzureContainerRegistry | Pull the Resource Processor container image, as it is located in Azure Container Registry.  |
+| Storage | The Porter bundles stores state between executions in an Azure Storage Account. |
+
+To be able to install Docker, Porter and related packages ([script](/templates/core/terraform/resource_processor/vmss_porter/cloud-config.yaml)) on the Resource Processor, the VM must have access to download from the following URLs:
+
+* packages.microsoft.com
+* keyserver.ubuntu.com
+* api.snapcraft.io
+* azure.archive.ubuntu.com
+* security.ubuntu.com
+* entropy.ubuntu.com
+* download.docker.com
+* registry-1.docker.io
+* auth.docker.io
+* registry.terraform.io
+* releases.hashicorp.com

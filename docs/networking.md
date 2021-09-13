@@ -8,14 +8,7 @@ The Trusted Research Environment (TRE) network topology is based on [hub-spoke](
 
 Azure TRE VNETs are segregated allowing limited traffic between the TRE Management VNET and Workspace VNETs. The security rules are managed by `nsg-ws` network security group. See [workspace network security groups (NSG)](#workspaces) further down.
 
-Each workspace has a default route routing all egress traffic through the Azure Firewall, to ensure only explicitly allowed destinations on the Internet to be accessed. It is planned that all other subnet will use the same pattern (Issue [#421](https://github.com/microsoft/AzureTRE/issues/421))
-
-The Azure Firewall rules are:
-
-- No default inbound rules – block all.
-- No default outbound rules – block all.
-
-Inbound traffic from the Internet is only allowed through the Application Gateway, which forwards HTTPS (port 443) call to the TRE API in the `WebAppSubnet`.
+The Core VNET is further devided into subnets.
 
 | Subnet | Description |
 | -------| ----------- |
@@ -24,7 +17,27 @@ Inbound traffic from the Internet is only allowed through the Application Gatewa
 | `AzureFirewallSubnet` | Subnet for Azure Firewall controlling egress traffic. |
 | `ResourceProcessorSubnet` | Subnet for VMSS used by the Composition Service to host Docker containers to execute Porter bundles that deploys Workspaces. |
 | `WebAppSubnet` | Subnet for TRE API. |
-| `SharedSubnet` | Shared Services subnet for all things shared by TRE Management and Workspaces. Future Shared Services are Firewall Shared Service, Source Mirror Shared Service and Package Mirror Shared Service. |
+| `SharedSubnet` | Shared Services subnet for all things shared by TRE Core and Workspaces. Such as Source Mirror Shared Service and Package Mirror Shared Service. |
+
+All subnets (Core and Workspace subnets) has a default route which directs egress traffic to the Azure Firewall, to ensure only explicitly allowed destinations on the Internet to be accessed.
+There are couple of exceptions
+
+- `AzureFirewallSubnet` as it hosts the Azure Firewall which routes traffic to the Internet.
+- `AzureBastionSubnet` as it hosts [Azure Bastion](https://azure.microsoft.com/en-us/services/azure-bastion) which is the management jumpbox within the VNET with Internet access.
+- `AppGwSubnet` as it hosts the Azure Application Gateway which has to be able to a ping the health endpoints e.g. TRE API.
+
+## Ingress and egress
+
+Ingress traffic from the Internet is only allowed through the Application Gateway, which forwards HTTPS (port 443) call to the TRE API in the `WebAppSubnet`.
+
+Egress traffic is routed through the Azure Firewall with a few exceptions and by default all ingress and egress traffic is denied except explicitly allowed.
+
+The explicitly allowed egress trafic is described here:
+
+- [Resource Processor](../resource_processor/vmss_porter/readme.md#network-requirements)
+- [TRE API](../api_app/README.md#network-requirements)
+- [Gitea Shared Service](../templates/shared_services/gitea/readme.md#network-requirements)
+- [Nexus Shared Service](../templates/shared_services/sonatype-nexus/readme.md#network-requirements)
 
 ## Network security groups
 
