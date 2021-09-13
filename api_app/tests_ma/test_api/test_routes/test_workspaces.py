@@ -292,19 +292,19 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
         assert valid_ws_2 in workspaces_from_response
 
     # [GET] /workspaces/{workspace_id}
-    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id", side_effect=EntityDoesNotExist)
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", side_effect=EntityDoesNotExist)
     async def test_get_workspace_by_id_get_returns_404_if_resource_is_not_found(self, _, app, client):
         response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id=WORKSPACE_ID))
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     # [GET] /workspaces/{workspace_id}
-    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     async def test_get_workspace_by_id_get_returns_422_if_workspace_id_is_not_a_uuid(self, _, app, client):
         response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id="not_valid"))
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     # [GET] /workspaces/{workspace_id}
-    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     async def test_get_workspace_by_id_get_returns_workspace_if_found(self, get_workspace_mock, app, client):
         auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'roles': {'WorkspaceOwner': 'ab124', 'WorkspaceResearcher': 'ab125'}}
         workspace = sample_workspace(auth_info=auth_info_user_in_workspace_owner_role)
@@ -373,13 +373,13 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     # [PATCH] /workspaces/{workspace_id}
-    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id", side_effect=EntityDoesNotExist)
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", side_effect=EntityDoesNotExist)
     async def test_patch_workspaces_returns_404_if_workspace_does_not_exist(self, _, app, client):
         response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=WORKSPACE_ID), json='{"enabled": true}')
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     # [PATCH] /workspaces/{workspace_id}
-    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @ patch("api.routes.workspaces.WorkspaceRepository.patch_workspace", return_value=None)
     async def test_patch_workspaces_patches_workspace(self, patch_workspace_mock, get_workspace_mock, app, client):
         workspace_to_patch = sample_workspace()
@@ -392,7 +392,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         assert response.status_code == status.HTTP_200_OK
 
     # [DELETE] /workspaces/{workspace_id}
-    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     async def test_delete_workspace_returns_400_if_workspace_is_enabled(self, get_workspace_mock, app, client):
         workspace = sample_workspace()
         workspace.resourceTemplateParameters["enabled"] = True
@@ -402,7 +402,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     # [DELETE] /workspaces/{workspace_id}
-    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.get_active_workspace_services_for_workspace")
     async def test_delete_workspace_returns_400_if_associated_workspace_services_are_not_deleted(self, get_active_workspace_services_for_workspace_mock, get_workspace_mock, disabled_workspace, app, client):
         get_workspace_mock.return_value = disabled_workspace
@@ -414,7 +414,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
 
     # [DELETE] /workspaces/{workspace_id}
     @ patch("api.dependencies.workspaces.get_repository")
-    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.get_active_workspace_services_for_workspace", return_value=[])
     @ patch('azure.cosmos.CosmosClient')
     @ patch('api.routes.workspaces.WorkspaceRepository.mark_resource_as_deleting')
@@ -429,7 +429,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
 
     # [DELETE] /workspaces/{workspace_id}
     @ patch("api.dependencies.workspaces.get_repository")
-    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.get_active_workspace_services_for_workspace", return_value=[])
     @ patch('azure.cosmos.CosmosClient')
     @ patch('api.routes.workspaces.WorkspaceRepository.mark_resource_as_deleting')
@@ -444,7 +444,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
 
     # [DELETE] /workspaces/{workspace_id}
     @ patch("api.dependencies.workspaces.get_repository")
-    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.get_active_workspace_services_for_workspace", return_value=[])
     @ patch('azure.cosmos.CosmosClient')
     @ patch('api.routes.workspaces.WorkspaceRepository.mark_resource_as_deleting')
@@ -461,7 +461,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
 
     # [DELETE] /workspaces/{workspace_id}
     @ patch("api.dependencies.workspaces.get_repository")
-    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.get_active_workspace_services_for_workspace")
     @ patch('azure.cosmos.CosmosClient')
     @ patch('api.routes.workspaces.WorkspaceRepository.mark_resource_as_deleting', side_effect=Exception)
@@ -481,7 +481,7 @@ class TestWorkspaceServiceRoutesThatDontRequireAdminRights:
         app.dependency_overrides = {}
 
     # [GET] /workspaces/{workspace_id}/workspace-services
-    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id", return_value=sample_workspace())
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
     @ patch("api.routes.workspaces.validate_user_has_valid_role_in_workspace")
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.get_active_workspace_services_for_workspace", return_value=None)
     async def test_get_workspace_services_returns_workspace_services_for_workspace(self, get_active_workspace_services_mock, _, __, app, client):
@@ -495,7 +495,7 @@ class TestWorkspaceServiceRoutesThatDontRequireAdminRights:
 
     # [GET] /workspaces/{workspace_id}/workspace-services/{service_id}
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
-    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id", return_value=sample_workspace())
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
     @ patch("api.routes.workspaces.validate_user_has_valid_role_in_workspace")
     async def test_get_workspace_service_returns_workspace_service_result(self, _, __, get_workspace_service_mock, app, client):
         workspace_service = sample_workspace_service()
@@ -507,13 +507,13 @@ class TestWorkspaceServiceRoutesThatDontRequireAdminRights:
         assert response.json()["workspaceService"] == workspace_service
 
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", side_effect=EntityDoesNotExist)
-    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id", return_value=None)
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=None)
     async def test_get_workspace_service_raises_404_if_workspace_service_is_not_found(self, _, __, app, client):
         response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_SERVICE_BY_ID, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID))
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
-    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id", side_effect=EntityDoesNotExist)
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", side_effect=EntityDoesNotExist)
     async def test_get_workspace_service_raises_404_if_associated_workspace_is_not_found(self, _, get_workspace_service_mock, app, client):
         get_workspace_service_mock.return_value = sample_workspace_service(SERVICE_ID, WORKSPACE_ID)
 
@@ -522,7 +522,7 @@ class TestWorkspaceServiceRoutesThatDontRequireAdminRights:
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     # [POST] /workspaces/{workspace_id}/workspace-services
-    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @ patch("api.routes.workspaces.send_resource_request_message")
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.save_item")
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.create_workspace_service_item", return_value=sample_workspace_service())
@@ -538,7 +538,7 @@ class TestWorkspaceServiceRoutesThatDontRequireAdminRights:
         assert response.json()["workspaceServiceId"] == SERVICE_ID
 
     # [POST] /workspaces/{workspace_id}/workspace-services
-    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.create_workspace_service_item", side_effect=ValueError)
     async def test_post_workspace_services_raises_400_bad_request_if_input_is_bad(self, _, get_workspace_mock, app, client, workspace_service_input):
         auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'roles': {'WorkspaceOwner': 'ab124', 'WorkspaceResearcher': 'ab125'}}
@@ -558,7 +558,7 @@ class TestWorkspaceServiceRoutesThatDontRequireAdminRights:
 
     # [PATCH] /workspaces/{workspace_id}/services/{service_id}
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=sample_workspace_service())
-    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id", side_effect=EntityDoesNotExist)
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", side_effect=EntityDoesNotExist)
     async def test_patch_workspaces_service_returns_404_if_workspace_does_not_exist(self, _, __, app, client):
         response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID), json='{"enabled": true}')
         assert response.status_code == status.HTTP_404_NOT_FOUND
@@ -566,7 +566,7 @@ class TestWorkspaceServiceRoutesThatDontRequireAdminRights:
     # [PATCH] /workspaces/{workspace_id}/services/{service_id}
     @pytest.mark.parametrize('workspace_id, workspace_service_id', [("933ad738-7265-4b5f-9eae-a1a62928772e", "IAmNotEvenAGUID!"), ("IAmNotEvenAGUID!", "933ad738-7265-4b5f-9eae-a1a62928772e")])
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
-    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     async def test_patch_workspaces_service_returns_422_if_invalid_id(self, get_workspace_mock, get_workspace_service_mock, app, client, workspace_id, workspace_service_id):
         workspace_service_to_patch = sample_workspace_service(workspace_service_id, workspace_id)
         get_workspace_service_mock.return_value = workspace_service_to_patch
@@ -577,7 +577,7 @@ class TestWorkspaceServiceRoutesThatDontRequireAdminRights:
 
     # [PATCH] /workspaces/{workspace_id}/services/{service_id}
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
-    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.patch_workspace_service", return_value=None)
     async def test_patch_workspaces_service_patches_workspace(self, patch_workspace_service_mock, get_workspace_mock, get_workspace_service_mock, app, client):
         auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'roles': {'WorkspaceOwner': 'ab124', 'WorkspaceResearcher': 'ab125'}}
@@ -595,7 +595,7 @@ class TestWorkspaceServiceRoutesThatDontRequireAdminRights:
 
     # [DELETE] /workspaces/{workspace_id}/services/{service_id}
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
-    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @patch("api.routes.workspaces.validate_user_is_owner")
     async def test_delete_workspace_service_raises_400_if_workspace_service_is_enabled(self, _, __, get_workspace_service_mock, app, client):
         workspace_service = sample_workspace_service()
@@ -607,7 +607,7 @@ class TestWorkspaceServiceRoutesThatDontRequireAdminRights:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=disabled_workspace_service())
-    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @patch("api.routes.workspaces.validate_user_is_owner")
     @patch("api.routes.workspaces.UserResourceRepository.get_user_resources_for_workspace_service")
     async def test_delete_workspace_service_raises_404_if_workspace_service_has_active_resources(self, get_user_resources_mock, __, ___, ____, app, client):
@@ -618,7 +618,7 @@ class TestWorkspaceServiceRoutesThatDontRequireAdminRights:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=disabled_workspace_service())
-    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @patch("api.routes.workspaces.validate_user_is_owner")
     @patch("api.routes.workspaces.UserResourceRepository.get_user_resources_for_workspace_service", return_value=[])
     @patch("api.routes.workspaces.mark_resource_as_deleting", return_value=None)
@@ -628,7 +628,7 @@ class TestWorkspaceServiceRoutesThatDontRequireAdminRights:
         mark_resource_mock.assert_called_once()
 
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=disabled_workspace_service())
-    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @patch("api.routes.workspaces.validate_user_is_owner")
     @patch("api.routes.workspaces.UserResourceRepository.get_user_resources_for_workspace_service", return_value=[])
     @patch("api.routes.workspaces.mark_resource_as_deleting")
@@ -638,7 +638,7 @@ class TestWorkspaceServiceRoutesThatDontRequireAdminRights:
         send_uninstall_mock.assert_called_once()
 
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
-    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @patch("api.routes.workspaces.validate_user_is_owner")
     @patch("api.routes.workspaces.UserResourceRepository.get_user_resources_for_workspace_service", return_value=[])
     @patch("api.routes.workspaces.mark_resource_as_deleting")
@@ -660,7 +660,7 @@ class TestUserResourcesRoutesThatDontRequireAdminRights:
         app.dependency_overrides = {}
 
     # GET /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources
-    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @ patch("api.routes.workspaces.UserResourceRepository.get_user_resources_for_workspace_service")
     @ patch("api.routes.workspaces.get_user_role_in_workspace", return_value=WorkspaceRole.Owner)
     async def test_get_user_resources_returns_all_user_resources_for_workspace_service_if_owner(self, _, get_user_resources_mock, __, app, client):
@@ -675,7 +675,7 @@ class TestUserResourcesRoutesThatDontRequireAdminRights:
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["userResources"] == user_resources
 
-    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @ patch("api.routes.workspaces.UserResourceRepository.get_user_resources_for_workspace_service")
     @ patch("api.routes.workspaces.get_user_role_in_workspace", return_value=WorkspaceRole.Researcher)
     async def test_get_user_resources_returns_own_user_resources_for_researcher(self, _, get_user_resources_mock, __, app, client, non_admin_user):
@@ -699,7 +699,7 @@ class TestUserResourcesRoutesThatDontRequireAdminRights:
         assert not_my_user_resource not in actual_returned_resources
 
     # GET /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
-    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @ patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id")
     @ patch("api.routes.workspaces.get_user_role_in_workspace", return_value=WorkspaceRole.Owner)
     async def test_get_user_resource_returns_a_user_resource_if_found(self, _, get_user_resource_mock, __, app, client):
@@ -711,7 +711,7 @@ class TestUserResourcesRoutesThatDontRequireAdminRights:
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["userResource"] == user_resource
 
-    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @ patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id", side_effect=EntityDoesNotExist)
     @ patch("api.routes.workspaces.get_user_role_in_workspace", return_value=WorkspaceRole.Owner)
     async def test_get_user_resource_raises_404_if_resource_not_found(self, _, __, ___, app, client):
@@ -719,7 +719,7 @@ class TestUserResourcesRoutesThatDontRequireAdminRights:
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     # [POST] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources
-    @patch("api.dependencies.workspaces.WorkspaceRepository.get_deployed_workspace_by_workspace_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_deployed_workspace_by_id")
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_deployed_workspace_service_by_id")
     @patch("api.routes.workspaces.UserResourceRepository.create_user_resource_item", side_effect=ValueError)
     async def test_post_user_resources_raises_400_bad_request_if_input_is_bad(self, _, __, get_workspace_mock, app, client, sample_user_resource_input_data):
@@ -731,7 +731,7 @@ class TestUserResourcesRoutesThatDontRequireAdminRights:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     # [POST] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources
-    @patch("api.dependencies.workspaces.WorkspaceRepository.get_deployed_workspace_by_workspace_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_deployed_workspace_by_id")
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_deployed_workspace_service_by_id")
     @patch("api.routes.workspaces.send_resource_request_message")
     @patch("api.routes.workspaces.UserResourceRepository.save_item")
@@ -748,20 +748,20 @@ class TestUserResourcesRoutesThatDontRequireAdminRights:
         assert response.json()["resourceId"] == USER_RESOURCE_ID
 
     # [POST] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources
-    @patch("api.dependencies.workspaces.WorkspaceRepository.get_deployed_workspace_by_workspace_id", side_effect=EntityDoesNotExist)
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_deployed_workspace_by_id", side_effect=EntityDoesNotExist)
     async def test_post_user_resources_with_non_existing_workspace_id_returns_404(self, _, app, client, sample_user_resource_input_data):
         response = await client.post(app.url_path_for(strings.API_CREATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID), json=sample_user_resource_input_data)
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     # [POST] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources
-    @patch("api.dependencies.workspaces.WorkspaceRepository.get_deployed_workspace_by_workspace_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_deployed_workspace_by_id")
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_deployed_workspace_service_by_id", side_effect=EntityDoesNotExist)
     async def test_post_user_resources_with_non_existing_service_id_returns_404(self, _, __, app, client, sample_user_resource_input_data):
         response = await client.post(app.url_path_for(strings.API_CREATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID), json=sample_user_resource_input_data)
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     # [POST] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources
-    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     async def test_post_user_resources_with_non_deployed_workspace_id_returns_404(self, get_deployed_workspace_by_workspace_id_mock, app, client, sample_user_resource_input_data):
         workspace = sample_workspace()
         workspace.deployment.status = Status.Failed
@@ -773,7 +773,7 @@ class TestUserResourcesRoutesThatDontRequireAdminRights:
         assert response.text == strings.WORKSPACE_IS_NOT_DEPLOYED
 
     # [POST] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources
-    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
     async def test_post_user_resources_with_non_deployed_service_id_returns_404(self, get_workspace_service_mock, get_workspace_mock, app, client, sample_user_resource_input_data):
         workspace = sample_workspace()
@@ -789,7 +789,7 @@ class TestUserResourcesRoutesThatDontRequireAdminRights:
         assert response.status_code == status.HTTP_409_CONFLICT
         assert response.text == strings.WORKSPACE_SERVICE_IS_NOT_DEPLOYED
 
-    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id")
     @patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")
     async def test_delete_user_resource_raises_400_if_user_resource_is_enabled(self, _, get_user_resource_mock, ___, app, client):
@@ -801,7 +801,7 @@ class TestUserResourcesRoutesThatDontRequireAdminRights:
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id", return_value=disabled_user_resource())
     @patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")
     @patch("api.routes.workspaces.mark_resource_as_deleting", return_value=None)
@@ -810,7 +810,7 @@ class TestUserResourcesRoutesThatDontRequireAdminRights:
         await client.delete(app.url_path_for(strings.API_DELETE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID))
         mark_resource_mock.assert_called_once()
 
-    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id", return_value=disabled_user_resource())
     @patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")
     @patch("api.routes.workspaces.mark_resource_as_deleting")
@@ -819,7 +819,7 @@ class TestUserResourcesRoutesThatDontRequireAdminRights:
         await client.delete(app.url_path_for(strings.API_DELETE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID))
         send_uninstall_mock.assert_called_once()
 
-    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_workspace_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id")
     @patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")
     @patch("api.routes.workspaces.mark_resource_as_deleting")
