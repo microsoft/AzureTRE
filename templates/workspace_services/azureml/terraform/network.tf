@@ -37,7 +37,7 @@ resource "azurerm_network_security_rule" "allow-AzureMachineLearning-inbound-442
   access                      = "Allow"
   destination_port_range      = "44224"
   destination_address_prefix  = "VirtualNetwork"
-  source_address_prefix       = "AzureMachineLearning"
+  source_address_prefix       = "Any"
   direction                   = "Inbound"
   name                        = "AzureMachineLearning-inbound-44224"
   network_security_group_name = data.azurerm_network_security_group.ws.name
