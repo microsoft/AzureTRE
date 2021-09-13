@@ -23,3 +23,8 @@ resource "azurerm_subnet_route_table_association" "rt_resource_processor_subnet_
   subnet_id      = var.resource_processor_subnet_id
   route_table_id = azurerm_route_table.rt.id
 }
+
+resource "azurerm_subnet_route_table_association" "rt_web_app_subnet_association" {
+  subnet_id      = var.web_app_subnet_id
+  route_table_id = azurerm_route_table.rt.id
+}

@@ -159,6 +159,7 @@ uninstall:
         guac_drive_path: "{{ bundle.parameters.guac_drive_path }}"
         guac_disable_download: "{{ bundle.parameters.guac_disable_download }}"
         is_exposed_externally: "{{ bundle.parameters.is_exposed_externally }}"
+        tre_resource_id: "{{ bundle.parameters.id }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
