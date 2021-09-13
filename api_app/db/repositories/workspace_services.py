@@ -8,7 +8,7 @@ from db.repositories.resources import ResourceRepository
 from models.domain.workspace_service import WorkspaceService
 from models.schemas.workspace_service import WorkspaceServiceInCreate, WorkspaceServicePatchEnabled
 from resources import strings
-from db.errors import ResourceIsNotDeployed
+from db.errors import ResourceIsNotDeployed, EntityDoesNotExist
 from models.domain.resource import Deployment, Status, ResourceType
 
 
@@ -28,17 +28,20 @@ class WorkspaceServiceRepository(ResourceRepository):
         workspace_services = self.query(query=query)
         return parse_obj_as(List[WorkspaceService], workspace_services)
 
-    def get_deployed_workspace_service_by_id(self, workspace_service_id: str) -> WorkspaceService:
-        workspace_service = self.get_workspace_service_by_id(workspace_service_id)
+    def get_deployed_workspace_service_by_id(self, workspace_id: str, service_id: str) -> WorkspaceService:
+        workspace_service = self.get_workspace_service_by_id(workspace_id, service_id)
 
         if workspace_service.deployment.status != Status.Deployed:
             raise ResourceIsNotDeployed
 
         return workspace_service
 
-    def get_workspace_service_by_id(self, workspace_service_id: str) -> WorkspaceService:
-        workspace_service = self.get_resource_dict_by_type_and_id(workspace_service_id, ResourceType.WorkspaceService)
-        return parse_obj_as(WorkspaceService, workspace_service)
+    def get_workspace_service_by_id(self, workspace_id: str, service_id: str) -> WorkspaceService:
+        query = self.active_workspace_services_query(workspace_id) + f' AND c.id = "{service_id}"'
+        workspace_services = self.query(query=query)
+        if not workspace_services:
+            raise EntityDoesNotExist
+        return parse_obj_as(WorkspaceService, workspace_services[0])
 
     def get_workspace_service_spec_params(self):
         return self.get_resource_base_spec_params()

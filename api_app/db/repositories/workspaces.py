@@ -5,7 +5,7 @@ from azure.cosmos import CosmosClient
 from pydantic import parse_obj_as
 
 from core import config
-from db.errors import ResourceIsNotDeployed
+from db.errors import ResourceIsNotDeployed, EntityDoesNotExist
 from db.repositories.resources import ResourceRepository
 from models.domain.resource import Deployment, Status, ResourceType
 from models.domain.workspace import Workspace
@@ -27,17 +27,20 @@ class WorkspaceRepository(ResourceRepository):
         workspaces = self.query(query=query)
         return parse_obj_as(List[Workspace], workspaces)
 
-    def get_deployed_workspace_by_workspace_id(self, workspace_id: str) -> Workspace:
-        workspace = self.get_workspace_by_workspace_id(workspace_id)
+    def get_deployed_workspace_by_id(self, workspace_id: str) -> Workspace:
+        workspace = self.get_workspace_by_id(workspace_id)
 
         if workspace.deployment.status != Status.Deployed:
             raise ResourceIsNotDeployed
 
         return workspace
 
-    def get_workspace_by_workspace_id(self, workspace_id: str) -> Workspace:
-        workspace = self.get_resource_dict_by_type_and_id(workspace_id, ResourceType.Workspace)
-        return parse_obj_as(Workspace, workspace)
+    def get_workspace_by_id(self, workspace_id: str) -> Workspace:
+        query = self.active_workspaces_query_string() + f' AND c.id = "{workspace_id}"'
+        workspaces = self.query(query=query)
+        if not workspaces:
+            raise EntityDoesNotExist
+        return parse_obj_as(Workspace, workspaces[0])
 
     def create_workspace_item(self, workspace_input: WorkspaceInCreate) -> Workspace:
         full_workspace_id = str(uuid.uuid4())
