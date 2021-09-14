@@ -17,6 +17,8 @@ jobs:
     name: Deploy Management Infrastructure
     runs-on: ubuntu-latest
     environment: Dev
+    env:
+      TF_INPUT: 0 # interactive is off
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -40,7 +42,6 @@ jobs:
           MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
           LOCATION: ${{ secrets.LOCATION }}
           ACR_NAME: ${{ secrets.ACR_NAME }}
-          ADDRESS_SPACE: ${{ secrets.ADDRESS_SPACE }}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
           PORTER_OUTPUT_CONTAINER_NAME: "${{ secrets.PORTER_OUTPUT_CONTAINER_NAME }}"
 
@@ -60,7 +61,6 @@ jobs:
           export TF_VAR_terraform_state_container_name=$TERRAFORM_STATE_CONTAINER_NAME
           export TF_VAR_location=$LOCATION
           export TF_VAR_acr_name=$ACR_NAME
-          export TF_VAR_address_space=$ADDRESS_SPACE
           export TF_VAR_porter_output_container_name=$PORTER_OUTPUT_CONTAINER_NAME
 
           make bootstrap
@@ -73,6 +73,7 @@ jobs:
     environment: Dev
     env:
       DOCKER_BUILDKIT: 1
+      TF_INPUT: 0 # interactive is off
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -96,7 +97,8 @@ jobs:
           MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
           LOCATION: ${{ secrets.LOCATION }}
           ACR_NAME: ${{ secrets.ACR_NAME }}
-          ADDRESS_SPACE: ${{ secrets.ADDRESS_SPACE }}
+          CORE_ADDRESS_SPACE: ${{ secrets.CORE_ADDRESS_SPACE }}
+          TF_VAR_tre_address_space: ${{ secrets.TRE_ADDRESS_SPACE }}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
           TF_VAR_aad_tenant_id: "${{ secrets.AAD_TENANT_ID }}"
@@ -124,7 +126,7 @@ jobs:
           export TF_VAR_terraform_state_container_name=$TERRAFORM_STATE_CONTAINER_NAME
           export TF_VAR_location=$LOCATION
           export TF_VAR_acr_name=$ACR_NAME
-          export TF_VAR_address_space=$ADDRESS_SPACE
+          export TF_VAR_core_address_space=$CORE_ADDRESS_SPACE
           export TF_VAR_porter_output_container_name=$PORTER_OUTPUT_CONTAINER_NAME
           export TF_VAR_debug="false"
           export TF_VAR_resource_processor_type="vmss_porter"
@@ -181,11 +183,11 @@ jobs:
           # ************************
           export RESPONSE=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d "grant_type=password&resource=${RESOURCE}&client_id=${CLIENT_ID}&username=${USERNAME}&password=${PASSWORD}&scope=default)" https://login.microsoftonline.com/${AUTH_TENANT_ID}/oauth2/token)
           export TOKEN=$(jq -r '.access_token' <<< "$RESPONSE")
-          
+
           # Check if base template is already registered
           # ********************************************
           export STATUS_CODE=$(curl -X "GET" "${TRE_URL}/api/workspace-templates/tre-workspace-base" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
-          
+
           if [[ ${STATUS_CODE} == 404 ]]
           then
             make register-bundle DIR=./templates/workspaces/base
@@ -194,7 +196,7 @@ jobs:
           # Check if azureml_devtestlabs template is already registered
           # ***********************************************************
           export STATUS_CODE=$(curl -X "GET" "${TRE_URL}/api/workspace-templates/tre-workspace-azureml-devtestlabs" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
-          
+
           if [[ ${STATUS_CODE} == 404 ]]
           then
             make register-bundle DIR=./templates/workspaces/azureml_devtestlabs
@@ -203,7 +205,7 @@ jobs:
           # Check if innereye_deeplearning template is already registered
           # *************************************************************
           export STATUS_CODE=$(curl -X "GET" "${TRE_URL}/api/workspace-templates/tre-workspace-innereye-deeplearning" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
-          
+
           if [[ ${STATUS_CODE} == 404 ]]
           then
             make register-bundle DIR=./templates/workspaces/innereye_deeplearning
@@ -212,7 +214,7 @@ jobs:
           # Check if innereye_deeplearning_inference template is already registered
           # ***********************************************************************
           export STATUS_CODE=$(curl -X "GET" "${TRE_URL}/api/workspace-templates/tre-workspace-innereye-deeplearning-inference" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
-          
+
           if [[ ${STATUS_CODE} == 404 ]]
           then
             make register-bundle DIR=./templates/workspaces/innereye_deeplearning_inference
@@ -254,11 +256,11 @@ jobs:
           # ************************
           export RESPONSE=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d "grant_type=password&resource=${RESOURCE}&client_id=${CLIENT_ID}&username=${USERNAME}&password=${PASSWORD}&scope=default)" https://login.microsoftonline.com/${AUTH_TENANT_ID}/oauth2/token)
           export TOKEN=$(jq -r '.access_token' <<< "$RESPONSE")
-          
+
           # Check if guacamole service template is already registered
           # *********************************************************
           export STATUS_CODE=$(curl -X "GET" "${TRE_URL}/api/workspace-service-templates/tre-service-guacamole" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
-          
+
           if [[ ${STATUS_CODE} == 404 ]]
           then
             make register-bundle DIR=./templates/workspace_services/guacamole

@@ -55,7 +55,7 @@ module "network" {
   tre_id              = var.tre_id
   location            = var.location
   resource_group_name = azurerm_resource_group.core.name
-  address_space       = var.address_space
+  core_address_space  = var.core_address_space
 }
 
 module "storage" {
@@ -106,6 +106,8 @@ module "api-webapp" {
   api_client_id                              = var.api_client_id
   api_client_secret                          = var.api_client_secret
   acr_id                                     = data.azurerm_container_registry.mgmt_acr.id
+  core_address_space                         = var.core_address_space
+  tre_address_space                          = var.tre_address_space
 }
 
 module "identity" {

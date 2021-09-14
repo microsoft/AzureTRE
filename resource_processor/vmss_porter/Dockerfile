@@ -1,4 +1,4 @@
-FROM python:3.8-buster
+FROM python:3.8-slim-buster
 
 # Azure CLI
 RUN apt-get update \
@@ -6,13 +6,13 @@ RUN apt-get update \
     && curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null \
     && AZ_REPO=$(lsb_release -cs) \
     && echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | tee /etc/apt/sources.list.d/azure-cli.list \
-    && apt-get update && apt-get -y install azure-cli 
+    && apt-get update && apt-get -y install azure-cli
 
 # Install terraform
 RUN apt-get update && apt-get install -y gnupg software-properties-common curl \
     && curl -fsSL https://apt.releases.hashicorp.com/gpg |  apt-key add - \
     && apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
-    && apt-get update && apt-get install -y terraform 
+    && apt-get update && apt-get install -y terraform
 
 # Install Porter
 RUN export PORTER_HOME=/root/.porter && curl -L https://cdn.porter.sh/latest/install-linux.sh | bash
@@ -37,5 +37,5 @@ RUN pip3 install -r requirements.txt
 COPY . /app
 
 WORKDIR /app/
- 
+
 CMD ["python","-u", "vmss_porter/runner.py"]
