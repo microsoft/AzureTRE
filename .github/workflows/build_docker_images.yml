@@ -96,12 +96,3 @@ jobs:
         with:
           name: test-results
           path: test-results
-
-  docker_build_all_check:
-    runs-on: ubuntu-latest
-    name: Build/test aggregate check
-    needs: docker_build
-    steps:
-      - name: Check all build steps status
-        if: ${{ needs.docker_build.result != 'success' }}
-        run: exit 1
