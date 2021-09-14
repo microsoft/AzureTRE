@@ -106,6 +106,8 @@ module "api-webapp" {
   api_client_id                              = var.api_client_id
   api_client_secret                          = var.api_client_secret
   acr_id                                     = data.azurerm_container_registry.mgmt_acr.id
+  address_space                              = var.address_space
+  tre_address_space                          = var.tre_address_space
 }
 
 module "identity" {
