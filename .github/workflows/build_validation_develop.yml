@@ -10,8 +10,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
-    name: "Lint and Test"
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
 
     steps:
