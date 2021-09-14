@@ -237,7 +237,7 @@ async def delete_user_resource(user=Depends(get_current_user), workspace=Depends
 
 
 @user_resources_router.patch("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}", response_model=UserResourceInResponse, name=strings.API_UPDATE_USER_RESOURCE)
-async def patch_user_resource(workspace_id: str, service_id: str, resource_id: str, user_resource_patch: UserResourcePatchEnabled, user_resource=Depends(get_user_resource_by_id_from_path), user_resource_repo=Depends(get_repository(UserResourceRepository)), user=Depends(get_current_user), workspace_service=Depends(get_deployed_workspace_service_by_id_from_path), workspace=Depends(get_workspace_by_workspace_id_from_path)) -> UserResourceInResponse:
-    validate_user_is_owner_or_researcher(user, workspace)
+async def patch_user_resource(user_resource_patch: UserResourcePatchEnabled, user=Depends(get_current_user), workspace=Depends(get_workspace_by_id_from_path), user_resource=Depends(get_user_resource_by_id_from_path), user_resource_repo=Depends(get_repository(UserResourceRepository))) -> UserResourceInResponse:
+    validate_user_is_workspace_owner_or_resource_owner(user, workspace, user_resource)
     user_resource_repo.patch_user_resource(user_resource, user_resource_patch)
     return UserResourceInResponse(userResource=user_resource)

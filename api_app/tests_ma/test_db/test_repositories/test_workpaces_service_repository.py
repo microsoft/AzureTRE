@@ -5,7 +5,7 @@ from db.errors import EntityDoesNotExist, ResourceIsNotDeployed
 from db.repositories.workspace_services import WorkspaceServiceRepository
 from models.domain.resource import Deployment, Status, ResourceType
 from models.domain.workspace_service import WorkspaceService
-from models.schemas.workspace_service import WorkspaceServiceInCreate
+from models.schemas.workspace_service import WorkspaceServiceInCreate, WorkspaceServicePatchEnabled
 
 
 WORKSPACE_ID = "abc000d3-82da-4bfc-b6e9-9a7853ef753e"
@@ -109,3 +109,15 @@ def test_create_workspace_item_raises_value_error_if_template_is_invalid(_, work
 
     with pytest.raises(ValueError):
         workspace_service_repo.create_workspace_service_item(workspace_service_to_create, WORKSPACE_ID)
+
+
+def test_patch_workspace_service_updates_item(workspace_service, workspace_service_repo):
+    workspace_service_repo.update_item = MagicMock(return_value=None)
+    workspace_service_patch = WorkspaceServicePatchEnabled(
+      enabled=True,
+    )
+
+    workspace_service_repo.patch_workspace_service(workspace_service, workspace_service_patch)
+    workspace_service.resourceTemplateParameters["enabled"] == False
+    workspace_service_repo.update_item.assert_called_once_with(workspace_service)
+

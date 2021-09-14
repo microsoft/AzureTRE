@@ -1,11 +1,11 @@
-from mock import patch
+from mock import patch, MagicMock
 import pytest
 
 from db.errors import EntityDoesNotExist
 from db.repositories.user_resources import UserResourceRepository
 from models.domain.resource import Status, ResourceType
 from models.domain.user_resource import UserResource
-from models.schemas.user_resource import UserResourceInCreate
+from models.schemas.user_resource import UserResourceInCreate, UserResourcePatchEnabled
 
 
 WORKSPACE_ID = "def000d3-82da-4bfc-b6e9-9a7853ef753e"
@@ -93,3 +93,14 @@ def test_get_user_resource_by_id_queries_db(query_mock, user_resource_repo, user
 def test_get_user_resource_by_id_raises_entity_does_not_exist_if_not_found(_, user_resource_repo):
     with pytest.raises(EntityDoesNotExist):
         user_resource_repo.get_user_resource_by_id(WORKSPACE_ID, SERVICE_ID, RESOURCE_ID)
+
+
+def test_patch_user_resource_updates_item(user_resource, user_resource_repo):
+    user_resource_repo.update_item = MagicMock(return_value=None)
+    user_resource_patch = UserResourcePatchEnabled(
+      enabled=True,
+    )
+
+    user_resource_repo.patch_user_resource(user_resource, user_resource_patch)
+    user_resource.resourceTemplateParameters["enabled"] == False
+    user_resource_repo.update_item.assert_called_once_with(user_resource)
