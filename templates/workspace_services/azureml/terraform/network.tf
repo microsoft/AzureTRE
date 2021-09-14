@@ -46,3 +46,17 @@ resource "azurerm_network_security_rule" "allow-AzureMachineLearning-inbound-442
   resource_group_name         = data.azurerm_resource_group.ws.name
   source_port_range           = "*"
 }
+
+resource "azurerm_network_security_rule" "allow-Outbound_Storage_445" {
+  access                      = "Allow"
+  destination_port_range      = "445"
+  destination_address_prefix  = "Storage"
+  source_address_prefix       = "VirtualNetwork"
+  direction                   = "Outbound"
+  name                        = "allow-Outbound_Storage_445"
+  network_security_group_name = data.azurerm_network_security_group.ws.name
+  priority                    = 130
+  protocol                    = "TCP"
+  resource_group_name         = data.azurerm_resource_group.ws.name
+  source_port_range           = "*"
+}
