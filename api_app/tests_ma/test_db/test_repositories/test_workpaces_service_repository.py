@@ -8,6 +8,10 @@ from models.domain.workspace_service import WorkspaceService
 from models.schemas.workspace_service import WorkspaceServiceInCreate
 
 
+WORKSPACE_ID = "abc000d3-82da-4bfc-b6e9-9a7853ef753e"
+SERVICE_ID = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
+
+
 @pytest.fixture
 def basic_workspace_service_request():
     return WorkspaceServiceInCreate(workspaceServiceType="workspace-service-type", properties={"display_name": "test", "description": "test", "tre_id": "test"})
@@ -22,7 +26,7 @@ def workspace_service_repo():
 @pytest.fixture
 def workspace_service():
     workspace_service = WorkspaceService(
-        id="000000d3-82da-4bfc-b6e9-9a7853ef753e",
+        id=SERVICE_ID,
         resourceTemplateVersion="0.1.0",
         resourceTemplateParameters={},
         resourceTemplateName="my-workspace-service",
@@ -30,62 +34,57 @@ def workspace_service():
     return workspace_service
 
 
-def test_get_active_workspace_services_for_workspace_queries_db(workspace_service_repo, workspace_service):
-    workspace_service_id = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
+def test_get_active_workspace_services_for_workspace_queries_db(workspace_service_repo):
     workspace_service_repo.query = MagicMock()
     workspace_service_repo.query.return_value = []
 
-    workspace_service_repo.get_active_workspace_services_for_workspace(workspace_service_id)
+    workspace_service_repo.get_active_workspace_services_for_workspace(WORKSPACE_ID)
 
-    workspace_service_repo.query.assert_called_once_with(query=WorkspaceServiceRepository.active_workspace_services_query(workspace_service_id))
+    workspace_service_repo.query.assert_called_once_with(query=WorkspaceServiceRepository.active_workspace_services_query(WORKSPACE_ID))
 
 
 def test_get_deployed_workspace_service_by_id_raises_resource_is_not_deployed_if_not_deployed(workspace_service_repo, workspace_service):
-    workspace_service_id = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
     service = workspace_service
     service.deployment = Deployment(status=Status.NotDeployed)
 
     workspace_service_repo.get_workspace_service_by_id = MagicMock(return_value=service)
 
     with pytest.raises(ResourceIsNotDeployed):
-        workspace_service_repo.get_deployed_workspace_service_by_id(workspace_service_id)
+        workspace_service_repo.get_deployed_workspace_service_by_id(WORKSPACE_ID, SERVICE_ID)
 
 
 def test_get_deployed_workspace_service_by_id_return_workspace_service_if_deployed(workspace_service_repo, workspace_service):
-    workspace_service_id = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
     service = workspace_service
     service.deployment = Deployment(status=Status.Deployed)
 
     workspace_service_repo.get_workspace_service_by_id = MagicMock(return_value=service)
 
-    actual_service = workspace_service_repo.get_deployed_workspace_service_by_id(workspace_service_id)
+    actual_service = workspace_service_repo.get_deployed_workspace_service_by_id(WORKSPACE_ID, SERVICE_ID)
 
     assert actual_service == service
 
 
 def test_get_workspace_service_by_id_raises_entity_does_not_exist_if_no_available_services(workspace_service_repo):
-    workspace_service_id = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
     workspace_service_repo.query = MagicMock()
     workspace_service_repo.query.return_value = []
 
     with pytest.raises(EntityDoesNotExist):
-        workspace_service_repo.get_workspace_service_by_id(workspace_service_id)
+        workspace_service_repo.get_workspace_service_by_id(WORKSPACE_ID, SERVICE_ID)
 
 
 def test_get_workspace_service_by_id_queries_db(workspace_service_repo, workspace_service):
-    workspace_service_id = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
     workspace_service_repo.query = MagicMock()
     workspace_service_repo.query.return_value = [workspace_service]
+    expected_query = f'SELECT * FROM c WHERE c.resourceType = "workspace-service" AND c.deployment.status != "deleted" AND c.workspaceId = "{WORKSPACE_ID}" AND c.id = "{SERVICE_ID}"'
 
-    workspace_service_repo.get_workspace_service_by_id(workspace_service_id)
+    workspace_service_repo.get_workspace_service_by_id(WORKSPACE_ID, SERVICE_ID)
 
-    workspace_service_repo.query.assert_called_once_with(query=workspace_service_repo._active_resources_by_type_and_id_query(workspace_service_id, ResourceType.WorkspaceService))
+    workspace_service_repo.query.assert_called_once_with(query=expected_query)
 
 
 @patch('db.repositories.workspace_services.WorkspaceServiceRepository.validate_input_against_template')
 @patch('core.config.TRE_ID', "9876")
 def test_create_workspace_service_item_creates_a_workspace_with_the_right_values(validate_input_mock, workspace_service_repo, basic_workspace_service_request, basic_workspace_service_template):
-    workspace_id = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
     workspace_service_to_create = basic_workspace_service_request
 
     resource_template = basic_workspace_service_template
@@ -93,22 +92,20 @@ def test_create_workspace_service_item_creates_a_workspace_with_the_right_values
 
     validate_input_mock.return_value = basic_workspace_service_request.workspaceServiceType
 
-    workspace_service = workspace_service_repo.create_workspace_service_item(workspace_service_to_create, workspace_id)
+    workspace_service = workspace_service_repo.create_workspace_service_item(workspace_service_to_create, WORKSPACE_ID)
 
     assert workspace_service.resourceTemplateName == basic_workspace_service_request.workspaceServiceType
     assert workspace_service.resourceType == ResourceType.WorkspaceService
     assert workspace_service.deployment.status == Status.NotDeployed
-    assert workspace_service.workspaceId == workspace_id
+    assert workspace_service.workspaceId == WORKSPACE_ID
     assert len(workspace_service.resourceTemplateParameters["tre_id"]) > 0
     # need to make sure request doesn't override system param
     assert workspace_service.resourceTemplateParameters["tre_id"] != "test"
 
 
-@patch('db.repositories.workspace_services.WorkspaceServiceRepository.validate_input_against_template')
-def test_create_workspace_item_raises_value_error_if_template_is_invalid(validate_input_mock, workspace_service_repo, basic_workspace_service_request):
-    workspace_id = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
+@patch('db.repositories.workspace_services.WorkspaceServiceRepository.validate_input_against_template', side_effect=ValueError)
+def test_create_workspace_item_raises_value_error_if_template_is_invalid(_, workspace_service_repo, basic_workspace_service_request):
     workspace_service_to_create = basic_workspace_service_request
-    validate_input_mock.side_effect = ValueError
 
     with pytest.raises(ValueError):
-        workspace_service_repo.create_workspace_service_item(workspace_service_to_create, workspace_id)
+        workspace_service_repo.create_workspace_service_item(workspace_service_to_create, WORKSPACE_ID)
