@@ -1,10 +1,12 @@
 # VMSS Processor
 
-## Build docker container
+## Build and run Docker container
 
-docker build -f ./vmss_porter/Dockerfile -t rp .
+```cmd
+docker build -t resource-processor-vm-porter -f ./vmss_porter/Dockerfile .
 
-docker run -it -v /var/run/docker.sock:/var/run/docker.sock  --env-file .env  rp
+docker run -it -v /var/run/docker.sock:/var/run/docker.sock --env-file .env resource-processor-vm-porter
+```
 
 ## Local development
 
