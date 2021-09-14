@@ -17,7 +17,7 @@ variable "acr_name" {
   description = "Management ACR name"
 }
 
-variable "address_space" {
+variable "core_address_space" {
   type        = string
   description = "Core services VNET Address Space"
 }

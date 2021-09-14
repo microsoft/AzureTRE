@@ -47,7 +47,7 @@ cp templates/core/.env.sample templates/core/.env
 | Environment variable name | Description |
 | ------------------------- | ----------- |
 | `TRE_ID` | A globally unique identifier. `TRE_ID` can be found in the resource names of the Azure TRE instance; for example, a `TRE_ID` of `mytre-dev-3142` will result in a resource group name for Azure TRE instance of `rg-mytre-dev-3142`. This must be less than 12 characters. Allowed characters: Alphanumeric, underscores, and hyphens. |
-| `ADDRESS_SPACE` | The address space for the Azure TRE core virtual network. `/22` or larger. |
+| `CORE_ADDRESS_SPACE` | The address space for the Azure TRE core virtual network. `/22` or larger. |
 | `TRE_ADDRESS_SPACE` | The address space for the whole TRE environment virtual network where workspaces networks will be created (can include the core network as well). E.g. `10.0.0.0/12`|
 | `API_IMAGE_TAG` | The tag of the API image. Make it the same as `IMAGE_TAG` above.|
 | `RESOURCE_PROCESSOR_VMSS_PORTER_IMAGE_TAG` | The tag of the resource processor image. Make it the same as `IMAGE_TAG` above.|

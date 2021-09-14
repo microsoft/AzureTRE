@@ -22,5 +22,5 @@ variable "aad_tenant_id" {}
 variable "api_client_id" {}
 variable "api_client_secret" {}
 variable "acr_id" {}
-variable "address_space" {}
+variable "core_address_space" {}
 variable "tre_address_space" {}
