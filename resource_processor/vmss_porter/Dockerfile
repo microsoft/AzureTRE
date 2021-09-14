@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y gnupg software-properties-common curl \
 RUN export PORTER_HOME=/root/.porter && curl -L https://cdn.porter.sh/latest/install-linux.sh | bash
 
 # Install Porter Azure plugin, see https://porter.sh/plugins/azure/
-RUN porter plugin install azure --url https://cdn.porter.sh/plugins/azure
+RUN /root/.porter/porter plugin install azure --url https://cdn.porter.sh/plugins/azure
 
 # Install Docker
 RUN apt-get update &&  apt-get install -y apt-transport-https ca-certificates curl gnupg  lsb-release \
@@ -41,4 +41,4 @@ COPY . /app
 
 WORKDIR /app/
 
-CMD ["python","-u", "vmss_porter/runner.py"]
+CMD ["python", "-u", "vmss_porter/runner.py"]

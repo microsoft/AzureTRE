@@ -37,6 +37,19 @@ write_files:
       ARM_USE_MSI=true
       APPLICATIONINSIGHTS_CONNECTION_STRING=${app_insights_connection_string}
 
+  # Porter Azure plugin config
+  - path: /root/.porter/config.toml
+    permissions: "0644"
+    append: true
+    content: |
+      default-storage = "azurestorage"
+      [[storage]]
+      name = "azurestorage"
+      plugin = "azure.blob"
+      [storage.config]
+      account="${mgmt_storage_account_name}"
+      resource-group="${mgmt_resource_group_name}"
+
 runcmd:
   - export DEBIAN_FRONTEND=noninteractive
   - az login --identity -u ${vmss_msi_id}
