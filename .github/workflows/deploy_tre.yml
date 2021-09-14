@@ -42,7 +42,6 @@ jobs:
           MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
           LOCATION: ${{ secrets.LOCATION }}
           ACR_NAME: ${{ secrets.ACR_NAME }}
-          ADDRESS_SPACE: ${{ secrets.ADDRESS_SPACE }}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
           PORTER_OUTPUT_CONTAINER_NAME: "${{ secrets.PORTER_OUTPUT_CONTAINER_NAME }}"
 
@@ -62,7 +61,6 @@ jobs:
           export TF_VAR_terraform_state_container_name=$TERRAFORM_STATE_CONTAINER_NAME
           export TF_VAR_location=$LOCATION
           export TF_VAR_acr_name=$ACR_NAME
-          export TF_VAR_address_space=$ADDRESS_SPACE
           export TF_VAR_porter_output_container_name=$PORTER_OUTPUT_CONTAINER_NAME
 
           make bootstrap
@@ -99,7 +97,7 @@ jobs:
           MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
           LOCATION: ${{ secrets.LOCATION }}
           ACR_NAME: ${{ secrets.ACR_NAME }}
-          ADDRESS_SPACE: ${{ secrets.ADDRESS_SPACE }}
+          CORE_ADDRESS_SPACE: ${{ secrets.CORE_ADDRESS_SPACE }}
           TF_VAR_tre_address_space: ${{ secrets.TRE_ADDRESS_SPACE }}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
@@ -128,7 +126,7 @@ jobs:
           export TF_VAR_terraform_state_container_name=$TERRAFORM_STATE_CONTAINER_NAME
           export TF_VAR_location=$LOCATION
           export TF_VAR_acr_name=$ACR_NAME
-          export TF_VAR_address_space=$ADDRESS_SPACE
+          export TF_VAR_core_address_space=$CORE_ADDRESS_SPACE
           export TF_VAR_porter_output_container_name=$PORTER_OUTPUT_CONTAINER_NAME
           export TF_VAR_debug="false"
           export TF_VAR_resource_processor_type="vmss_porter"
