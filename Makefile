@@ -37,7 +37,7 @@ build-resource-processor-vm-porter-image:
 	&& . ./devops/scripts/check_dependencies.sh \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/set_docker_sock_permission.sh \
-	&& docker build -t "$${ACR_NAME}.azurecr.io/microsoft/azuretre/resource-processor-vm-porter:$${IMAGE_TAG}" -f ./resource_processor/vmss_porter/Dockerfile ./resource_processor/
+	&& docker build -t "$${ACR_NAME}.azurecr.io/microsoft/azuretre/resource-processor-vm-porter:$${IMAGE_TAG}" -f ./resource_processor/vmss_porter/Dockerfile ./resource_processor/ --build-arg MGMT_RESOURCE_GROUP_NAME=${MGMT_RESOURCE_GROUP_NAME} --build-arg MGMT_STORAGE_ACCOUNT_NAME=${MGMT_STORAGE_ACCOUNT_NAME}
 
 build-gitea-image:
 	echo -e "\n\e[34m»»» 🧩 \e[96mBuilding Gitea Image\e[0m..." \

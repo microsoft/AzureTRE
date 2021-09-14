@@ -1,18 +1,30 @@
-# VMSS Processor
+# Resource Processor (VMSS)
 
-## Build and run Docker container
+## Build and run the container
 
-```cmd
-docker build -t resource-processor-vm-porter -f ./vmss_porter/Dockerfile .
+1. Collect the values for
+    * TRE management resource group name
+    * TRE management storage account name
 
-docker run -it -v /var/run/docker.sock:/var/run/docker.sock --env-file .env resource-processor-vm-porter
-```
+1. Navigate to `resource_processor/` folder and run `docker build` command:
+
+    ```cmd
+    docker build -t resource-processor-vm-porter -f ./vmss_porter/Dockerfile . --build-arg MGMT_RESOURCE_GROUP_NAME=<TRE management resource group name> --build-arg MGMT_STORAGE_ACCOUNT_NAME=<TRE management storage account name>
+    ```
+  
+1. Run the image:
+
+    ```cmd
+    docker run -it -v /var/run/docker.sock:/var/run/docker.sock --env-file .env resource-processor-vm-porter
+    ```
 
 ## Local development
 
-To work locally checkout the source code and run
+To work locally checkout the source code and run:
 
-``pip install -r requirements.txt``
+```cmd
+pip install -r ./vmss_porter/requirements.txt
+```
 
 If you use visual studio code you can set up your launch.json to include the follwing block which will enable launching and debugging.
 
@@ -45,7 +57,7 @@ If you use visual studio code you can set up your launch.json to include the fol
 }
 ```
 
-When working locally we use a service principal (SP). This SP needs enough permissions to be able to talk to service bus and to deploy resources into the subscription. That means the service principal needs Owner access to subscription(ARM_SUBSCRIPTION_ID) and also needs **Azure Service Bus Data Sender** and **Azure Service Bus Data Receiver** on the service bus namespace defined above(SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE).
+When working locally we use a service principal (SP). This SP needs enough permissions to be able to talk to service bus and to deploy resources into the subscription. That means the service principal needs Owner access to subscription(ARM_SUBSCRIPTION_ID) and also needs **Azure Service Bus Data Sender** and **Azure Service Bus Data Receiver** on the service bus namespace defined above (SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE).
 
 Once the above is setup you can simulate receiving messages from service bus by going to service bus explorer on the portal and using a message payload for SERVICE_BUS_RESOURCE_REQUEST_QUEUE as follows
 
@@ -54,6 +66,10 @@ Once the above is setup you can simulate receiving messages from service bus by 
 ```
 
 This will trigger receiving of messages and you can freely debug the code by setting breakpoints as desired.
+
+## Porter Azure plugin
+
+Resource Processor uses [Porter Azure plugin](https://github.com/getporter/azure-plugins) to store Porter data in TRE management storage account. The storage container, named `porter`, is created during the bootstrapping phase of TRE deployment. [`./vmss_porter/generate_porter_config.sh`](./vmss_porter/generate_porter_config.sh) script run during Docker build (see [`./vmss_porter/Dockerfile`](./vmss_porter/Dockerfile)) generates `config.toml` file in Porter home folder to enable the Azure plugin.
 
 ## Debugging deployed processor on Azure
 
