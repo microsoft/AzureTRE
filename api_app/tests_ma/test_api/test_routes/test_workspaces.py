@@ -13,7 +13,6 @@ from models.domain.resource import Status, Deployment, RequestAction, ResourceTy
 from models.domain.user_resource import UserResource
 from models.domain.workspace import Workspace, WorkspaceRole
 from models.domain.workspace_service import WorkspaceService
-from services.access_service import AuthConfigValidationError
 from resources import strings
 
 
@@ -855,7 +854,7 @@ class TestUserResourcesRoutesThatDontRequireAdminRights:
 
     # [PATCH] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
     @ patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id")
-    @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value = sample_workspace_service())
+    @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=sample_workspace_service())
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @ patch("api.routes.workspaces.UserResourceRepository.patch_user_resource", return_value=None)
     async def test_patch_user_resources_patches_user_resource(self, patch_user_resource_mock, get_workspace_mock, get_workspace_service_mock, get_user_resource_mock, app, client):

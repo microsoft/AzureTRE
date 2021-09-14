@@ -206,7 +206,6 @@ class TestUserResourcesRoutesAccess:
         response = await client.delete(app.url_path_for(strings.API_DELETE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID))
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
-
     # [PATCH] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
     @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id")
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=None)
@@ -214,7 +213,6 @@ class TestUserResourcesRoutesAccess:
     async def test_patch_user_resource_raises_403_if_user_is_not_workspace_owner_or_researcher(self, _, __, ___, app, client):
         response = await client.patch(app.url_path_for(strings.API_UPDATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID), json={"enabled": False})
         assert response.status_code == status.HTTP_403_FORBIDDEN
-
 
     # [PATCH] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
     @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id")
