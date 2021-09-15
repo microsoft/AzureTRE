@@ -23,9 +23,6 @@ class ResourceRepository(BaseRepository):
     def _active_resources_by_id_query(self, resource_id: str):
         return self._active_resources_query() + f' AND c.id = "{resource_id}"'
 
-    def _active_resources_by_type_and_id_query(self, resource_id: str, resource_type: ResourceType):
-        return self._active_resources_by_type_query(resource_type) + f' AND c.id = "{resource_id}"'
-
     @staticmethod
     def _validate_resource_parameters(resource_input, resource_template):
         validate(instance=resource_input["properties"], schema=resource_template)
@@ -41,13 +38,6 @@ class ResourceRepository(BaseRepository):
 
     def get_resource_dict_by_id(self, resource_id: UUID4) -> dict:
         query = self._active_resources_by_id_query(str(resource_id))
-        resources = self.query(query=query)
-        if not resources:
-            raise EntityDoesNotExist
-        return resources[0]
-
-    def get_resource_dict_by_type_and_id(self, resource_id: str, resource_type: ResourceType) -> dict:
-        query = self._active_resources_by_type_and_id_query(resource_id, resource_type)
         resources = self.query(query=query)
         if not resources:
             raise EntityDoesNotExist

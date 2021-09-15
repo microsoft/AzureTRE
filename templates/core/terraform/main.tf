@@ -55,7 +55,7 @@ module "network" {
   tre_id              = var.tre_id
   location            = var.location
   resource_group_name = azurerm_resource_group.core.name
-  address_space       = var.address_space
+  core_address_space  = var.core_address_space
 }
 
 module "storage" {
@@ -106,6 +106,8 @@ module "api-webapp" {
   api_client_id                              = var.api_client_id
   api_client_secret                          = var.api_client_secret
   acr_id                                     = data.azurerm_container_registry.mgmt_acr.id
+  core_address_space                         = var.core_address_space
+  tre_address_space                          = var.tre_address_space
 }
 
 module "identity" {
@@ -175,6 +177,8 @@ module "firewall" {
   location                   = var.location
   resource_group_name        = azurerm_resource_group.core.name
   log_analytics_workspace_id = azurerm_log_analytics_workspace.core.id
+  deploy_gitea               = var.deploy_gitea
+  deploy_nexus               = var.deploy_nexus
 
   depends_on = [
     module.network
@@ -188,6 +192,8 @@ module "routetable" {
   resource_group_name          = azurerm_resource_group.core.name
   shared_subnet_id             = module.network.shared_subnet_id
   resource_processor_subnet_id = module.network.resource_processor_subnet_id
+  web_app_subnet_id            = module.network.web_app_subnet_id
+  app_gw_subnet_id             = module.network.app_gw_subnet_id
   firewall_private_ip_address  = module.firewall.firewall_private_ip_address
 }
 

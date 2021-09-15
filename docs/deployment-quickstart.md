@@ -98,6 +98,12 @@ The Azure TRE API is protected by Azure Active Directory. This requires an appli
 Use the terminal window in Visual Studio Code to execute the following script from within the development container:
 
 ```bash
+/workspaces/tre> az login
+```
+
+> note: in case you have several subscriptions and would like to change your default subscription use ```az account set --subscription desired_subscription_id```
+
+```bash
 /workspaces/tre> ./scripts/aad-app-reg.sh -n aztreqs -r https://aztreqs.westeurope.cloudapp.azure.com/oidc-redirect
 ```
 
@@ -116,7 +122,8 @@ All other variables can have their default values for now. You should now have a
 ```plaintext
 #  Used for TRE deployment
 TRE_ID=aztreqs
-ADDRESS_SPACE="10.1.0.0/22"
+CORE_ADDRESS_SPACE="10.1.0.0/22"
+TRE_ADDRESS_SPACE="10.0.0.0/12"
 API_IMAGE_TAG=dev
 RESOURCE_PROCESSOR_VMSS_PORTER_IMAGE_TAG=dev
 GITEA_IMAGE_TAG=dev

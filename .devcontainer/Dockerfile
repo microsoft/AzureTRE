@@ -47,8 +47,9 @@ RUN export PORTER_HOME=/home/vscode/.porter \
 ENV PATH /home/vscode/.porter/:$PATH
 
 # Install requirements
-COPY ["requirements.txt", "requirements-dev.txt", "/tmp/pip-tmp/" ]
-COPY ["api_app/requirements.txt", "/tmp/pip-tmp/api_app/" ]
+COPY ["requirements.txt", "/tmp/pip-tmp/" ]
+COPY ["api_app/requirements.txt", "api_app/requirements-dev.txt", "/tmp/pip-tmp/api_app/" ]
+COPY ["resource_processor/vmss_porter/requirements.txt", "/tmp/pip-tmp/resource_processor/vmss_porter/" ]
 RUN pip3 --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requirements.txt && rm -rf /tmp/pip-tmp
 
 RUN usermod -a -G docker vscode
