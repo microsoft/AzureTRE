@@ -11,11 +11,11 @@
   * [Authentication & authorization](./auth.md)
   * The two ways of provisioning an instance of Azure TRE:
     1. [GitHub Actions workflows (CI/CD)](./workflows.md)
-    1. [Manual deployment](./manual-deployment.md)
-  * [Testing](./testing.md)
+    1. [Quickstart](./deployment-quickstart.md)/[Manual deployment](./manual-deployment.md)
 * Composition Service components
   * [API](../api_app/README.md)
-  * [Resource Processor](../resource_processor/vmss_porter/readme.md)
+  * [Resource Processor](../resource_processor/README.md)
+  * [End-to-end tests](../e2e_tests/README.md)
 * Workspaces and workspace services
   * [Authoring workspace templates](./authoring-workspace-templates.md)
   * [Registering workspace templates](./registering-workspace-templates.md)
