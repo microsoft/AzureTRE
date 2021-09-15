@@ -17,9 +17,14 @@ variable "acr_name" {
   description = "Management ACR name"
 }
 
-variable "address_space" {
+variable "core_address_space" {
   type        = string
   description = "Core services VNET Address Space"
+}
+
+variable "tre_address_space" {
+  type        = string
+  description = "Overall TRE Address Space pool, will be used for workspace VNETs, can be a supernet of address_space."
 }
 
 variable "api_image_repository" {

@@ -12,7 +12,7 @@ resource "azurerm_app_service_plan" "core" {
   sku {
     tier     = "PremiumV3"
     capacity = 1
-    size     = "P1v3"
+    size     = "P1V3"
   }
 }
 
@@ -45,6 +45,8 @@ resource "azurerm_app_service" "api" {
     "API_CLIENT_SECRET"                          = var.api_client_secret
     "RESOURCE_GROUP_NAME"                        = var.resource_group_name
     "SUBSCRIPTION_ID"                            = data.azurerm_subscription.current.subscription_id
+    CORE_ADDRESS_SPACE                           = var.core_address_space
+    TRE_ADDRESS_SPACE                            = var.tre_address_space
   }
 
   identity {
