@@ -97,9 +97,7 @@ def test_get_user_resource_by_id_raises_entity_does_not_exist_if_not_found(_, us
 
 def test_patch_user_resource_updates_item(user_resource, user_resource_repo):
     user_resource_repo.update_item = MagicMock(return_value=None)
-    user_resource_patch = UserResourcePatchEnabled(
-        enabled=True,
-    )
+    user_resource_patch = UserResourcePatchEnabled(enabled=True)
 
     user_resource_repo.patch_user_resource(user_resource, user_resource_patch)
     user_resource.resourceTemplateParameters["enabled"] = False
