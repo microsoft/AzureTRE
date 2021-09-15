@@ -2,10 +2,6 @@
 
 ## Build and run the container
 
-1. Collect the values for
-    * TRE management resource group name
-    * TRE management storage account name
-
 1. Navigate to `resource_processor/` folder and run `docker build` command:
 
     ```cmd
