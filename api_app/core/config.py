@@ -7,7 +7,8 @@ config = Config(".env")
 API_PREFIX = "/api"
 PROJECT_NAME: str = config("PROJECT_NAME", default="Azure TRE API")
 DEBUG: bool = config("DEBUG", cast=bool, default=False)
-VERSION = "0.0.0"
+VERSION = "0.1.0"
+API_DESCRIPTION = "Welcome to the Azure TRE API - for more information about templates and workspaces see the [Azure TRE documentation](https://github.com/microsoft/AzureTRE/blob/main/docs/concepts.md)"
 
 # Resource Info
 RESOURCE_LOCATION: str = config("RESOURCE_LOCATION", default="")
