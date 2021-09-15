@@ -1,9 +1,5 @@
 FROM python:3.8-buster
 
-# TRE management resource group and storage account names are required by Porter Azure plugin configuration
-ARG MGMT_RESOURCE_GROUP_NAME
-ARG MGMT_STORAGE_ACCOUNT_NAME
-
 # Install Azure CLI
 RUN apt-get update \
     && apt-get -y install ca-certificates curl apt-transport-https lsb-release gnupg \
@@ -23,10 +19,6 @@ RUN export PORTER_HOME=/root/.porter && curl -L https://cdn.porter.sh/latest/ins
 
 # Install Porter Azure plugin, see https://porter.sh/plugins/azure/
 RUN /root/.porter/porter plugin install azure --url https://cdn.porter.sh/plugins/azure
-
-# Generate configuration for Porter Azure plugin
-COPY ./vmss_porter/generate_porter_config.sh .
-RUN ./generate_porter_config.sh >> /root/.porter/config.toml
 
 # Install Docker
 RUN apt-get update &&  apt-get install -y apt-transport-https ca-certificates curl gnupg  lsb-release \
@@ -49,4 +41,4 @@ COPY . /app
 
 WORKDIR /app/
 
-CMD ["python", "-u", "vmss_porter/runner.py"]
+CMD ["./run.sh"]

@@ -9,9 +9,9 @@
 1. Navigate to `resource_processor/` folder and run `docker build` command:
 
     ```cmd
-    docker build -t resource-processor-vm-porter -f ./vmss_porter/Dockerfile . --build-arg MGMT_RESOURCE_GROUP_NAME=<TRE management resource group name> --build-arg MGMT_STORAGE_ACCOUNT_NAME=<TRE management storage account name>
+    docker build -t resource-processor-vm-porter -f ./vmss_porter/Dockerfile .
     ```
-  
+
 1. Run the image:
 
     ```cmd
@@ -69,7 +69,7 @@ This will trigger receiving of messages and you can freely debug the code by set
 
 ## Porter Azure plugin
 
-Resource Processor uses [Porter Azure plugin](https://github.com/getporter/azure-plugins) to store Porter data in TRE management storage account. The storage container, named `porter`, is created during the bootstrapping phase of TRE deployment. [`./vmss_porter/generate_porter_config.sh`](./vmss_porter/generate_porter_config.sh) script run during Docker build (see [`./vmss_porter/Dockerfile`](./vmss_porter/Dockerfile)) generates `config.toml` file in Porter home folder to enable the Azure plugin.
+Resource Processor uses [Porter Azure plugin](https://github.com/getporter/azure-plugins) to store Porter data in TRE management storage account. The storage container, named `porter`, is created during the bootstrapping phase of TRE deployment. [`run.sh`](./run.sh) script generates `config.toml` file in Porter home folder to enable the Azure plugin when the image is started.
 
 ## Debugging deployed processor on Azure
 
