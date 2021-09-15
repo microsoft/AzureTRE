@@ -8,7 +8,7 @@ from db.errors import EntityDoesNotExist
 from db.repositories.resources import ResourceRepository
 from models.domain.resource import ResourceType, Status, Deployment
 from models.domain.user_resource import UserResource
-from models.schemas.user_resource import UserResourceInCreate
+from models.schemas.user_resource import UserResourceInCreate, UserResourcePatchEnabled
 from resources import strings
 
 
@@ -58,3 +58,7 @@ class UserResourceRepository(ResourceRepository):
 
     def get_user_resource_spec_params(self):
         return self.get_resource_base_spec_params()
+
+    def patch_user_resource(self, user_resource: UserResource, user_resource_patch: UserResourcePatchEnabled):
+        user_resource.resourceTemplateParameters["enabled"] = user_resource_patch.enabled
+        self.update_item(user_resource)
