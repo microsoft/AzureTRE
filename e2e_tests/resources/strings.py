@@ -5,11 +5,14 @@ API_STATUS = "/api/status"
 API_WORKSPACE_TEMPLATES = "/api/workspace-templates"
 API_WORKSPACES = "/api/workspaces"
 API_WORKSPACE_SERVICE_TEMPLATES = "/api/workspace-service-templates"
+API_WORKSPACE_SERVICES = "workspace-services"
 
 BASE_WORKSPACE = "tre-workspace-base"
 DEV_TEST_LABS = "tre-workspace-azureml-devtestlabs"
 INNEREYE_DEEPLEARNING = "tre-workspace-innereye-deeplearning"
 INNEREYE_DEEPLEARNING_INFERENCE = "tre-workspace-innereye-deeplearning-inference"
+
+GUACAMOLE_SERVICE = "tre-service-guacamole"
 
 TEST_WORKSPACE_SERVICE_TEMPLATE = "e2e-test-workspace-service"
 
