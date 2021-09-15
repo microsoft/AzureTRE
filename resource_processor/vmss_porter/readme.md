@@ -68,6 +68,7 @@ To be able to run the Resource Processer it needs to acccess the following resou
 | AzureMonitor | Publish traces and logs to one central place for troubleshooting. |
 | AzureContainerRegistry | Pull the Resource Processor container image, as it is located in Azure Container Registry.  |
 | Storage | The Porter bundles stores state between executions in an Azure Storage Account. |
+| AzureKeyVault | The Porter bundles might need to create an Azure Key Vault inside of the Workspace. To verify the creation, before a private link connection is created, Terraform needs to reach Key Vault over public network |
 
 To be able to install Docker, Porter and related packages ([script](/templates/core/terraform/resource_processor/vmss_porter/cloud-config.yaml)) on the Resource Processor, the VM must have access to download from the following URLs:
 
