@@ -36,11 +36,6 @@ resource "azurerm_app_service" "guacamole" {
     SERVICE_ID   = "${var.tre_resource_id}"
     WORKSPACE_ID = "${var.workspace_id}"
 
-    # Webapp with pe won't pull the guacamole image without these
-    DOCKER_REGISTRY_SERVER_URL      = "${data.azurerm_container_registry.mgmt_acr.login_server}"
-    DOCKER_REGISTRY_SERVER_USERNAME = "${data.azurerm_container_registry.mgmt_acr.admin_username}"
-    DOCKER_REGISTRY_SERVER_PASSWORD = "${data.azurerm_container_registry.mgmt_acr.admin_password}"
-
     # Guacmole configuration
     GUAC_DISABLE_COPY     = "${var.guac_disable_copy}"
     GUAC_DISABLE_PASTE    = "${var.guac_disable_paste}"
