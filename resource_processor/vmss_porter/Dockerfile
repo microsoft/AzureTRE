@@ -1,4 +1,4 @@
-FROM python:3.8-buster
+FROM python:3.8-slim-buster
 
 # Install Azure CLI
 RUN apt-get update \

@@ -12,6 +12,11 @@ on:
 # We should NOT cancel running ones as that might destabilize the environment.
 concurrency: deploy-e2e
 
+env:
+  USE_ENV_VARS_NOT_FILES: true
+  DOCKER_BUILDKIT: 1
+  TF_INPUT: 0 # interactive is off
+
 jobs:
   deploy_mgmt_infra:
     name: Deploy Management Infrastructure
@@ -34,34 +39,22 @@ jobs:
       - name: Create Management Infrastructure
         shell: bash
         env:
-          TRE_ID: ${{ secrets.TRE_ID }}
-          TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TF_STATE_CONTAINER }}
-          MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP }}
-          MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
-          LOCATION: ${{ secrets.LOCATION }}
-          ACR_NAME: ${{ secrets.ACR_NAME }}
-          ADDRESS_SPACE: ${{ secrets.ADDRESS_SPACE }}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-          PORTER_OUTPUT_CONTAINER_NAME: "${{ secrets.PORTER_OUTPUT_CONTAINER_NAME }}"
+          TF_VAR_tre_id: ${{ secrets.TRE_ID }}
+          TF_VAR_terraform_state_container_name: ${{ secrets.TF_STATE_CONTAINER }}
+          TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
+          TF_VAR_mgmt_storage_account_name: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+          LOCATION: ${{ secrets.LOCATION }} # scripts are using this too
+          TF_VAR_location: ${{ secrets.LOCATION }}
+          ACR_NAME: ${{ secrets.ACR_NAME }} # scripts are using this too
+          TF_VAR_acr_name: ${{ secrets.ACR_NAME }}
+          TF_VAR_porter_output_container_name: "${{ secrets.PORTER_OUTPUT_CONTAINER_NAME }}"
 
         run: |
-          export USE_ENV_VARS_NOT_FILES=true
           export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
           export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
           export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
           export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
-
-          export TF_VAR_tre_id=$TRE_ID
-          export TF_VAR_arm_subscription_id=$ARM_SUBSCRIPTION_ID
-          export TF_VAR_arm_client_id=$ARM_CLIENT_ID
-          export TF_VAR_arm_client_secret=$ARM_CLIENT_SECRET
-          export TF_VAR_mgmt_storage_account_name=$MGMT_STORAGE_ACCOUNT_NAME
-          export TF_VAR_mgmt_resource_group_name=$MGMT_RESOURCE_GROUP_NAME
-          export TF_VAR_terraform_state_container_name=$TERRAFORM_STATE_CONTAINER_NAME
-          export TF_VAR_location=$LOCATION
-          export TF_VAR_acr_name=$ACR_NAME
-          export TF_VAR_address_space=$ADDRESS_SPACE
-          export TF_VAR_porter_output_container_name=$PORTER_OUTPUT_CONTAINER_NAME
 
           make bootstrap
           make mgmt-deploy
@@ -71,8 +64,6 @@ jobs:
     needs: deploy_mgmt_infra
     runs-on: ubuntu-latest
     environment: Dev
-    env:
-      DOCKER_BUILDKIT: 1
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -90,48 +81,36 @@ jobs:
       - name: Deploy TRE
         shell: bash
         env:
-          TRE_ID: ${{ secrets.TRE_ID }}
-          TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TF_STATE_CONTAINER }}
-          MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP }}
-          MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
-          LOCATION: ${{ secrets.LOCATION }}
-          ACR_NAME: ${{ secrets.ACR_NAME }}
-          ADDRESS_SPACE: ${{ secrets.ADDRESS_SPACE }}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+          TF_VAR_tre_id: ${{ secrets.TRE_ID }}
+          TF_VAR_terraform_state_container_name: ${{ secrets.TF_STATE_CONTAINER }}
+          TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
+          TF_VAR_mgmt_storage_account_name: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+          LOCATION: ${{ secrets.LOCATION }} # scripts are using this too
+          TF_VAR_location: ${{ secrets.LOCATION }}
+          ACR_NAME: ${{ secrets.ACR_NAME }} # scripts are using this too
+          TF_VAR_acr_name: ${{ secrets.ACR_NAME }}
+          TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
+          TF_VAR_tre_address_space: ${{ secrets.TRE_ADDRESS_SPACE }}
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
           TF_VAR_aad_tenant_id: "${{ secrets.AAD_TENANT_ID }}"
           TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
-          PORTER_OUTPUT_CONTAINER_NAME: "${{ secrets.PORTER_OUTPUT_CONTAINER_NAME }}"
+          TF_VAR_porter_output_container_name: "${{ secrets.PORTER_OUTPUT_CONTAINER_NAME }}"
+          TF_VAR_debug: false
+          IMAGE_TAG: ${{ github.sha }} # scripts are using this too
+          TF_VAR_api_image_tag: ${{ github.sha }}
+          TF_VAR_resource_processor_type: "vmss_porter"
+          TF_VAR_resource_processor_vmss_porter_image_tag: ${{ github.sha }}
+          TF_VAR_deploy_gitea: true
+          TF_VAR_gitea_image_tag: ${{ github.sha }}
+          TF_VAR_deploy_nexus: true
 
         run: |
-          export env
-          export USE_ENV_VARS_NOT_FILES=true
           export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
           export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
           export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
           export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
-          IMAGE_TAG=$GITHUB_SHA
-
-          export IMAGE_TAG
-          export TF_VAR_api_image_tag=$IMAGE_TAG
-          export TF_VAR_tre_id=$TRE_ID
-          export TF_VAR_arm_subscription_id=$ARM_SUBSCRIPTION_ID
-          export TF_VAR_arm_client_id=$ARM_CLIENT_ID
-          export TF_VAR_arm_client_secret=$ARM_CLIENT_SECRET
-          export TF_VAR_mgmt_storage_account_name=$MGMT_STORAGE_ACCOUNT_NAME
-          export TF_VAR_mgmt_resource_group_name=$MGMT_RESOURCE_GROUP_NAME
-          export TF_VAR_terraform_state_container_name=$TERRAFORM_STATE_CONTAINER_NAME
-          export TF_VAR_location=$LOCATION
-          export TF_VAR_acr_name=$ACR_NAME
-          export TF_VAR_address_space=$ADDRESS_SPACE
-          export TF_VAR_porter_output_container_name=$PORTER_OUTPUT_CONTAINER_NAME
-          export TF_VAR_debug="false"
-          export TF_VAR_resource_processor_type="vmss_porter"
-          export TF_VAR_resource_processor_vmss_porter_image_tag=$IMAGE_TAG
-          export TF_VAR_deploy_gitea=true
-          export TF_VAR_gitea_image_tag=$IMAGE_TAG
-          export TF_VAR_deploy_nexus=true
 
           make all
 
@@ -170,22 +149,20 @@ jobs:
           PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
           AUTH_APP_CLIENT_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
           TRE_URL: "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
+          BUNDLE_TYPE: "workspace"
         run: |
           curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
           export PATH=~/.porter/:$PATH
-          export USE_ENV_VARS_NOT_FILES=true
-          export TRE_URL=$TRE_URL
-          export BUNDLE_TYPE=workspace
 
           # Get TRE API access token
           # ************************
           export RESPONSE=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d "grant_type=password&resource=${RESOURCE}&client_id=${CLIENT_ID}&username=${USERNAME}&password=${PASSWORD}&scope=default)" https://login.microsoftonline.com/${AUTH_TENANT_ID}/oauth2/token)
           export TOKEN=$(jq -r '.access_token' <<< "$RESPONSE")
-          
+
           # Check if base template is already registered
           # ********************************************
           export STATUS_CODE=$(curl -X "GET" "${TRE_URL}/api/workspace-templates/tre-workspace-base" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
-          
+
           if [[ ${STATUS_CODE} == 404 ]]
           then
             make register-bundle DIR=./templates/workspaces/base
@@ -194,7 +171,7 @@ jobs:
           # Check if azureml_devtestlabs template is already registered
           # ***********************************************************
           export STATUS_CODE=$(curl -X "GET" "${TRE_URL}/api/workspace-templates/tre-workspace-azureml-devtestlabs" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
-          
+
           if [[ ${STATUS_CODE} == 404 ]]
           then
             make register-bundle DIR=./templates/workspaces/azureml_devtestlabs
@@ -203,7 +180,7 @@ jobs:
           # Check if innereye_deeplearning template is already registered
           # *************************************************************
           export STATUS_CODE=$(curl -X "GET" "${TRE_URL}/api/workspace-templates/tre-workspace-innereye-deeplearning" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
-          
+
           if [[ ${STATUS_CODE} == 404 ]]
           then
             make register-bundle DIR=./templates/workspaces/innereye_deeplearning
@@ -212,7 +189,7 @@ jobs:
           # Check if innereye_deeplearning_inference template is already registered
           # ***********************************************************************
           export STATUS_CODE=$(curl -X "GET" "${TRE_URL}/api/workspace-templates/tre-workspace-innereye-deeplearning-inference" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
-          
+
           if [[ ${STATUS_CODE} == 404 ]]
           then
             make register-bundle DIR=./templates/workspaces/innereye_deeplearning_inference
@@ -243,22 +220,20 @@ jobs:
           PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
           AUTH_APP_CLIENT_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
           TRE_URL: "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
+          BUNDLE_TYPE: "workspace_service"
         run: |
           curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
           export PATH=~/.porter/:$PATH
-          export USE_ENV_VARS_NOT_FILES=true
-          export TRE_URL=$TRE_URL
-          export BUNDLE_TYPE=workspace_service
 
           # Get TRE API access token
           # ************************
           export RESPONSE=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d "grant_type=password&resource=${RESOURCE}&client_id=${CLIENT_ID}&username=${USERNAME}&password=${PASSWORD}&scope=default)" https://login.microsoftonline.com/${AUTH_TENANT_ID}/oauth2/token)
           export TOKEN=$(jq -r '.access_token' <<< "$RESPONSE")
-          
+
           # Check if guacamole service template is already registered
           # *********************************************************
           export STATUS_CODE=$(curl -X "GET" "${TRE_URL}/api/workspace-service-templates/tre-service-guacamole" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
-          
+
           if [[ ${STATUS_CODE} == 404 ]]
           then
             make register-bundle DIR=./templates/workspace_services/guacamole
@@ -284,8 +259,6 @@ jobs:
           curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
           export PATH=~/.porter/:$PATH
 
-          export USE_ENV_VARS_NOT_FILES=true
-
           make porter-publish DIR=./templates/workspace_services/azureml
           make porter-publish DIR=./templates/workspace_services/devtestlabs
           make porter-publish DIR=./templates/workspace_services/innereye_deeplearning
@@ -299,9 +272,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-        with:
-          # Full git history is needed to get a proper list of changed files within `super-linter`
-          fetch-depth: 0
 
       - name: Set up Python 3.8
         uses: actions/setup-python@v2

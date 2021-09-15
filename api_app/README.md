@@ -74,7 +74,6 @@ az cosmosdb create -n $COSMOS_NAME -g $RESOURCE_GROUP --locations regionName=$LO
 az cosmosdb sql database create -a $COSMOS_NAME -g $RESOURCE_GROUP -n $COSMOS_DB_NAME
 ```
 
-
 [Create a service principal](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli) and assign it permissions to access Service Bus:
 
 ```bash
@@ -184,6 +183,7 @@ The API endpoints documentation and the Swagger UI will be available at [https:/
     ```cmd
     cd api_app
     pip install -r requirements.txt
+    pip install -r requirements-dev.txt
     uvicorn main:app --reload
     ```
 
