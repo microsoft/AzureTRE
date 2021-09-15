@@ -11,7 +11,7 @@ from db.repositories.workspaces import WorkspaceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
 from models.domain.resource import ResourceType, Status, Resource
 from models.domain.workspace import WorkspaceRole
-from models.schemas.user_resource import UserResourceInResponse, UserResourceIdInResponse, UserResourceInCreate, UserResourcesInList
+from models.schemas.user_resource import UserResourceInResponse, UserResourceIdInResponse, UserResourceInCreate, UserResourcesInList, UserResourcePatchEnabled
 from models.schemas.workspace import WorkspaceInCreate, WorkspaceIdInResponse, WorkspacesInList, WorkspaceInResponse, WorkspacePatchEnabled
 from models.schemas.workspace_service import WorkspaceServiceIdInResponse, WorkspaceServiceInCreate, WorkspaceServicesInList, WorkspaceServiceInResponse, WorkspaceServicePatchEnabled
 from resources import strings
@@ -234,3 +234,10 @@ async def delete_user_resource(user=Depends(get_current_user), workspace=Depends
     await send_uninstall_message(user_resource, user_resource_repo, previous_deletion_status, ResourceType.UserResource)
 
     return UserResourceIdInResponse(resourceId=user_resource.id)
+
+
+@user_resources_router.patch("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}", response_model=UserResourceInResponse, name=strings.API_UPDATE_USER_RESOURCE)
+async def patch_user_resource(user_resource_patch: UserResourcePatchEnabled, user=Depends(get_current_user), workspace=Depends(get_workspace_by_id_from_path), user_resource=Depends(get_user_resource_by_id_from_path), user_resource_repo=Depends(get_repository(UserResourceRepository))) -> UserResourceInResponse:
+    validate_user_is_workspace_owner_or_resource_owner(user, workspace, user_resource)
+    user_resource_repo.patch_user_resource(user_resource, user_resource_patch)
+    return UserResourceInResponse(userResource=user_resource)
