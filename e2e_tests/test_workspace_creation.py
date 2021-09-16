@@ -164,7 +164,7 @@ async def test_getting_templates(template_name, token, verify) -> None:
         assert (response.status_code == status.HTTP_200_OK), f"GET Request for {template_name} creation failed"
 
 
-@pytest.mark.smoke
+@pytest.mark.extended
 @pytest.mark.timeout(1200)
 async def test_create_base_workspace(token, verify) -> None:
     payload = {
@@ -172,8 +172,7 @@ async def test_create_base_workspace(token, verify) -> None:
         "properties": {
             "display_name": "E2E test",
             "description": "workspace for E2E",
-            "app_id": f"{config.AUTH_APP_CLIENT_ID}",
-            "address_space": "192.168.25.0/24"  # Reserving this for E2E tests.
+            "app_id": f"{config.AUTH_APP_CLIENT_ID}"
         }
     }
     workspaceid, install_status = await post_workspace_template(payload, token, verify)
@@ -189,7 +188,6 @@ async def test_create_devtestlabs_workspace(token, verify) -> None:
             "display_name": "E2E test",
             "description": "workspace for E2E",
             "app_id": f"{config.AUTH_APP_CLIENT_ID}",
-            "address_space": "192.168.25.0/24",
             "acr_name": f"{config.ACR_NAME}"
         }
     }
@@ -205,7 +203,6 @@ async def test_create_innereys_dl_workspace(token, verify) -> None:
             "display_name": "E2E test",
             "description": "workspace for E2E",
             "app_id": f"{config.AUTH_APP_CLIENT_ID}",
-            "address_space": "192.168.25.0/24",
             "acr_name": f"{config.ACR_NAME}"
         }
     }
@@ -221,7 +218,6 @@ async def test_create_innereys_dl_inference_workspace(token, verify) -> None:
             "display_name": "E2E test",
             "description": "workspace for E2E",
             "app_id": f"{config.AUTH_APP_CLIENT_ID}",
-            "address_space": "192.168.25.0/24",
             "acr_name": f"{config.ACR_NAME}"
         }
     }

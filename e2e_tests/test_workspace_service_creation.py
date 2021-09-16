@@ -161,16 +161,15 @@ async def test_create_guacamole_service_into_base_workspace(token, verify) -> No
         "properties": {
             "display_name": "E2E test guacamole service",
             "description": "workspace for E2E",
-            "app_id": f"{config.AUTH_APP_CLIENT_ID}",
-            "address_space": "192.168.25.0/24"  # Reserving this for E2E tests.
+            "app_id": f"{config.AUTH_APP_CLIENT_ID}"
         }
     }
     workspace_id, install_status = await post_workspace_template(payload, token, verify)
 
     service_payload = {
-        "workspaceType": "tre-service-guacamole",
+        "workspaceServiceType": "tre-service-guacamole",
         "properties": {
-            "display_name": "Guacamole test test",
+            "display_name": "Guacamole service test",
             "description": "Guacamole service for E2E test",
         }
     }
