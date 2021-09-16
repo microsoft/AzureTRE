@@ -165,21 +165,6 @@ async def test_getting_templates(template_name, token, verify) -> None:
 
 
 @pytest.mark.extended
-@pytest.mark.timeout(1200)
-async def test_create_base_workspace(token, verify) -> None:
-    payload = {
-        "workspaceType": "tre-workspace-base",
-        "properties": {
-            "display_name": "E2E test",
-            "description": "workspace for E2E",
-            "app_id": f"{config.AUTH_APP_CLIENT_ID}"
-        }
-    }
-    workspaceid, install_status = await post_workspace_template(payload, token, verify)
-    await disable_and_delete_workspace(workspaceid, install_status, token, verify)
-
-
-@pytest.mark.extended
 @pytest.mark.timeout(1800)
 async def test_create_devtestlabs_workspace(token, verify) -> None:
     payload = {
