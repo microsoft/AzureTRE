@@ -17,7 +17,8 @@ The TRE API is a service that users can interact with to request changes to work
 * [Running API](#running-api)
   * [Develop and run locally](#develop-and-run-locally)
   * [Develop and run in dev container](#develop-and-run-in-dev-container)
-  * [Deploy with docker](#deploy-with-docker)
+  * [Deploy with Docker](#deploy-with-docker)
+* [Unit tests](#unit-tests)
 * [Implementation](#implementation)
   * [Auth in code](#auth-in-code)
 * [Workspace requests](#workspace-requests)
@@ -188,9 +189,9 @@ The API endpoints documentation and the Swagger UI will be available at [https:/
 
 The API endpoints documentation and the Swagger UI will be available at [https://localhost:8000/docs](https://localhost:8000/docs).
 
-### Deploy with docker
+### Deploy with Docker
 
-You must have docker and docker-compose tools installed, and an Azure Cosmos DB configured in `.env` as described above.
+You must have Docker and Docker Compose tools installed, and an Azure Cosmos DB configured in `.env` as described above.
 
 Then run:
 
@@ -200,6 +201,16 @@ docker compose up -d app
 ```
 
 The API will be available at [https://localhost:8000/api](https://localhost:8000/api) in your browser.
+
+## Unit tests
+
+The unit tests are written with pytest and located in folder `/api_app/tests_ma/`.
+
+Run all unit tests with the following command in the root folder of the repository:
+
+```cmd
+pytest --ignore=e2e_tests
+```
 
 ## Implementation
 
