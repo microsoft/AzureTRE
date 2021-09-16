@@ -68,6 +68,12 @@ data "azurerm_subnet" "bastion" {
   name                 = "AzureBastionSubnet"
 }
 
+data "azurerm_subnet" "resourceprocessor" {
+  resource_group_name  = var.core_resource_group_name
+  virtual_network_name = var.core_vnet
+  name                 = "ResourceProcessorSubnet"
+}
+
 resource "azurerm_network_security_group" "ws" {
   location            = var.location
   name                = "nsg-ws"
@@ -183,6 +189,22 @@ resource "azurerm_network_security_rule" "allow-inbound-from-bastion" {
   resource_group_name         = var.resource_group_name
   source_address_prefixes = [
     data.azurerm_subnet.bastion.address_prefix
+  ]
+  source_port_range = "*"
+}
+
+resource "azurerm_network_security_rule" "allow-inbound-from-resourceprocessor" {
+  access                       = "Allow"
+  destination_address_prefixes = azurerm_subnet.services.address_prefixes
+  destination_port_range       = "443"
+  direction                    = "Inbound"
+  name                         = "allow-inbound-from-resourceprocessor"
+  network_security_group_name  = azurerm_network_security_group.ws.name
+  priority                     = 120
+  protocol                     = "Tcp"
+  resource_group_name          = var.resource_group_name
+  source_address_prefixes = [
+    data.azurerm_subnet.resourceprocessor.address_prefix
   ]
   source_port_range = "*"
 }

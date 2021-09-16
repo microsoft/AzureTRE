@@ -79,8 +79,6 @@ resource "azurerm_monitor_diagnostic_setting" "firewall" {
   }
 }
 
-
-
 resource "azurerm_firewall_application_rule_collection" "shared_services_subnet" {
   name                = "arc-shared_services_subnet"
   azure_firewall_name = azurerm_firewall.fw.name
@@ -156,7 +154,6 @@ resource "azurerm_firewall_network_rule_collection" "shared_services_subnet" {
   ]
 }
 
-
 resource "azurerm_firewall_application_rule_collection" "resource_processor_subnet" {
   name                = "arc-resource_processor_subnet"
   azure_firewall_name = azurerm_firewall.fw.name
@@ -216,7 +213,8 @@ resource "azurerm_firewall_network_rule_collection" "resource_processor_subnet" 
       "AzureResourceManager",
       "AzureContainerRegistry",
       "AzureMonitor",
-      "Storage"
+      "Storage",
+      "AzureKeyVault"
     ]
 
     destination_ports = [
@@ -256,6 +254,10 @@ resource "azurerm_firewall_network_rule_collection" "web_app_subnet" {
     ]
     source_addresses = data.azurerm_subnet.web_app.address_prefixes
   }
+
+  depends_on = [
+    azurerm_firewall_network_rule_collection.resource_processor_subnet
+  ]
 }
 
 resource "azurerm_firewall_application_rule_collection" "web_app_subnet" {
@@ -277,4 +279,8 @@ resource "azurerm_firewall_application_rule_collection" "web_app_subnet" {
     ]
     source_addresses = data.azurerm_subnet.web_app.address_prefixes
   }
+
+  depends_on = [
+    azurerm_firewall_network_rule_collection.web_app_subnet
+  ]
 }
