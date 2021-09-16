@@ -1,0 +1,11 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/innereye_deeplearning/custom_parameters.json",
+    "type": "object",
+    "title": "InnerEye Deeplearning service template",
+    "description": "InnerEye Deeplearning template",
+    "required": [
+    ],
+    "properties": {
+    }
+}

@@ -213,7 +213,8 @@ resource "azurerm_firewall_network_rule_collection" "resource_processor_subnet" 
       "AzureResourceManager",
       "AzureContainerRegistry",
       "AzureMonitor",
-      "Storage"
+      "Storage",
+      "AzureKeyVault"
     ]
 
     destination_ports = [

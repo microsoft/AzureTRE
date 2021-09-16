@@ -226,6 +226,11 @@ jobs:
           curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
           export PATH=~/.porter/:$PATH
 
+          make porter-build DIR=./templates/workspace_services/azureml
+          make porter-build DIR=./templates/workspace_services/devtestlabs
+          make porter-build DIR=./templates/workspace_services/innereye_deeplearning
+          make porter-build DIR=./templates/workspace_services/innereye_inference
+
           # Get TRE API access token
           # ************************
           export RESPONSE=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d "grant_type=password&resource=${RESOURCE}&client_id=${CLIENT_ID}&username=${USERNAME}&password=${PASSWORD}&scope=default)" https://login.microsoftonline.com/${AUTH_TENANT_ID}/oauth2/token)
@@ -240,36 +245,47 @@ jobs:
             make register-bundle DIR=./templates/workspace_services/guacamole
           fi
 
-  publish_innereye_service_bundles:
-    name: Publish InnerEye Service Bundles
-    runs-on: ubuntu-latest
-    environment: Dev
-    needs: [deploy_tre]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-      - name: Publish bundles
-        shell: bash
-        env:
-          ACR_NAME: ${{ secrets.ACR_NAME }}
-        run: |
-          curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
-          export PATH=~/.porter/:$PATH
+          # Check if azureml service template is already registered
+          # *********************************************************
+          export STATUS_CODE=$(curl -X "GET" "${TRE_URL}/api/workspace-service-templates/tre-service-azureml" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
 
-          make porter-publish DIR=./templates/workspace_services/azureml
-          make porter-publish DIR=./templates/workspace_services/devtestlabs
-          make porter-publish DIR=./templates/workspace_services/innereye_deeplearning
-          make porter-publish DIR=./templates/workspace_services/innereye_inference
+          if [[ ${STATUS_CODE} == 404 ]]
+          then
+            make register-bundle DIR=./templates/workspace_services/azureml
+          fi
+
+          # Check if devtestlabs service template is already registered
+          # *********************************************************
+          export STATUS_CODE=$(curl -X "GET" "${TRE_URL}/api/workspace-service-templates/tre-service-devtestlabs" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
+
+          if [[ ${STATUS_CODE} == 404 ]]
+          then
+            make register-bundle DIR=./templates/workspace_services/devtestlabs
+          fi
+
+          # Check if tre-service-innereye-deeplearning service template is already registered
+          # *********************************************************
+          export STATUS_CODE=$(curl -X "GET" "${TRE_URL}/api/workspace-service-templates/tre-service-innereye-deeplearning" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
+
+          if [[ ${STATUS_CODE} == 404 ]]
+          then
+            make register-bundle DIR=./templates/workspace_services/innereye_deeplearning
+          fi
+
+          # Check if tre-service-innereye-inference service template is already registered
+          # *********************************************************
+          export STATUS_CODE=$(curl -X "GET" "${TRE_URL}/api/workspace-service-templates/tre-service-innereye-inference" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
+
+          if [[ ${STATUS_CODE} == 404 ]]
+          then
+            make register-bundle DIR=./templates/workspace_services/innereye_inference
+          fi
 
   e2e_tests:
     name: "Run E2E Tests"
     runs-on: ubuntu-latest
     environment: Dev
-    needs: [publish_and_register_workspace_bundles, publish_and_register_workspace_service_bundles, publish_innereye_service_bundles]
+    needs: [publish_and_register_workspace_bundles, publish_and_register_workspace_service_bundles]
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -365,32 +381,6 @@ jobs:
         with:
           files: artifacts/**/*.xml
 
-  publish_innereye_bundles:
-    name: Publish InnerEye Bundles
-    runs-on: ubuntu-latest
-    environment: Dev
-    needs: [e2e_tests]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-      - name: Publish bundles
-        shell: bash
-        env:
-          ACR_NAME: ${{ secrets.ACR_NAME }}
-        run: |
-          curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
-          export PATH=~/.porter/:$PATH
-
-          export USE_ENV_VARS_NOT_FILES=true
-
-          make porter-publish DIR=./templates/workspace_services/azureml
-          make porter-publish DIR=./templates/workspace_services/devtestlabs
-          make porter-publish DIR=./templates/workspace_services/innereye_deeplearning
-          make porter-publish DIR=./templates/workspace_services/innereye_inference
   # deploy_azureml_devtestlabs_workspace:
   #   name: Deploy Azure ML and DevTest Labs Workspace
   #   needs: [publish_innereye_bundles]
