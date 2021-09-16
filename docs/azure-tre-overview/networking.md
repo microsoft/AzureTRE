@@ -37,7 +37,7 @@ The explicitly allowed egress traffic is described here:
 - [Resource Processor](composition-service/resource-processor.md#network-requirements)
 - [TRE API](composition-service/api.md#network-requirements)
 - [Gitea Shared Service](shared-services/gitea.md#network-requirements)
-- [Nexus Shared Service](shared-services/nexus-shared-service.md#network-requirements)
+- [Nexus Shared Service](shared-services/nexus.md#network-requirements)
 
 ## Network security groups
 

@@ -34,3 +34,46 @@ markdown_extensions:
   - pymdownx.tabbed
   - mdx_truly_sane_lists
   - pymdownx.tasklist
+
+nav:
+  - Azure TRE Overview:
+      - Concepts: 'azure-tre-overview/concepts.md'
+      - User Roles: 'azure-tre-overview/user-roles.md'
+      - Architecture: 'azure-tre-overview/architecture.md'
+      - Network Architecture: 'azure-tre-overview/networking.md'
+      - Composition Service:
+          - API: 'azure-tre-overview/composition-service/api.md'
+          - Resource Processor: 'azure-tre-overview/composition-service/resource-processor.md'
+      - Shared Services:
+          - Gitea (Source Mirror): 'azure-tre-overview/shared-services/gitea.md'
+          - Nexus (Package Mirror): 'azure-tre-overview/shared-services/nexus.md'
+  - Deployment Quickstart: 'deployment-quickstart.md'
+  - TRE Admins:
+      - Deploying the TRE:
+          - Authentication and Authorization: 'tre-admins/deploying-the-tre/auth.md'
+          - Bootstrapping: 'tre-admins/deploying-the-tre/bootstrapping.md'
+          - Manual Deployment: 'tre-admins/deploying-the-tre/manual-deployment.md'
+          - Workflow Deployment: 'tre-admins/deploying-the-tre/workflows.md'
+      - Troubleshooting Guide: 'tre-admins/troubleshooting-guide.md'
+  - TRE Developers:
+      - Developer Guide: 'tre-developers/developer-guide.md'
+      - Development Environment: 'tre-developers/dev-environment.md'
+      - End to End Tests: 'tre-developers/end-to-end-tests.md'
+  - TRE Workspace Authors:
+      - Authoring Workspace Templates: 'tre-workspace-authors/authoring-workspace-templates.md'
+      - Firewall Rules: 'tre-workspace-authors/firewall-rules.md'
+      - Registering Workspace Templates: 'tre-workspace-authors/registering-workspace-templates.md'
+  - Workspace Templates:
+      - Workspaces:
+          - Base: 'workspace-templates/workspaces/base.md'
+          - Azure ML DevTest Labs: 'workspace-templates/workspaces/azure-ml-dev-test-labs.md'
+          - InnerEye Deep Learning: 'workspace-templates/workspaces/inner-eye-deep-learning.md'
+          - InnerEye Inferending: 'workspace-templates/workspaces/inner-eye-deep-learning-inferencing.md'
+      - Workspace Services:
+          - Azure ML: 'workspace-templates/workspace-services/azure-ml.md'
+          - DevTest Labs: 'workspace-templates/workspace-services/dev-test-labs.md'
+          - Guacamole: 'workspace-templates/workspace-services/guacamole.md'
+          - InnerEye Deep Learning: 'workspace-templates/workspace-services/inner-eye-deep-learning.md'
+          - InnerEye Inferencing: 'workspace-templates/workspace-services/inner-eye-inference.md'
+      - User Resources:
+          - Guacamole Win10 VM: 'workspace-templates/user-resources/guacamole-win10-vm.md'
