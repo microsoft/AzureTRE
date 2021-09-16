@@ -110,7 +110,7 @@ async def delete_workspace_service(workspaceid, workspaceserviceid, token, verif
         headers = {'Authorization': f'Bearer {token}'}
 
         response = await client.delete(
-            f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACES}/{workspaceid}/strings.API_WORKSPACE_SERVICES/{workspaceserviceid}",
+            f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACES}/{workspaceid}/{strings.API_WORKSPACE_SERVICES}/{workspaceserviceid}",
             headers=headers)
 
         assert (response.status_code == status.HTTP_200_OK), "The workspace service couldn't be deleted"
