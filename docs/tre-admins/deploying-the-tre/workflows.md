@@ -9,6 +9,7 @@ These are onetime configuration steps required to set up the GitHub Actions work
 1. Set other repository secrets as explained in the table below
 
 *Required repository secrets for the CI/CD.*
+
 | Secret name | Description |
 | ----------- | ----------- |
 | `AZURE_CREDENTIALS` | Explained in [Bootstrapping - Create service principals](bootstrapping.md#create-service-principals). Main service principal credentials output. |

@@ -2,7 +2,8 @@
 
 The Trusted Research Environment (TRE) network topology is based on [hub-spoke](https://docs.microsoft.com/en-us/azure/architecture/reference-architectures/hybrid-networking/hub-spoke). The TRE Management VNET ([Azure Virtual Network](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-overview)) is the central hub and each workspace is a spoke.
 
-> Note: TRE Management is referred to as **core** in scripts and code.
+!!! note
+    TRE Management is referred to as **core** in scripts and code.
 
 ![Network architecture](../assets/network-architecture.png)
 
@@ -60,6 +61,7 @@ Azure TRE VNETs are segregated allowing limited traffic between the TRE Manageme
 - Outbound traffic to Internet allowed on HTTPS port 443 (next hop Azure Firewall).
 - All other outbound traffic denied.
 
-> In Azure, traffic between subnets are allowed except explicitly denied.
-
 Each of these rules can be managed per workspace.
+
+!!! caution
+    In Azure, traffic between subnets are allowed except explicitly denied.

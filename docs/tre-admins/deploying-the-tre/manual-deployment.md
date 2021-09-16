@@ -13,51 +13,52 @@ By following this guide you will deploy a new Azure TRE instance for development
 
 Before running any of the scripts, the configuration variables need to be set. This is done in an `.env` file, and this file is read and parsed by the scripts.
 
-> **Note:** the `.tfvars` file is not used, this is intentional. The `.env` file format is easier to parse, meaning we can use the values for bash scripts and other purposes.
+!!! info
+    The `.tfvars` file is not used, this is intentional. The `.env` file format is easier to parse, meaning we can use the values for bash scripts and other purposes.
 
-Copy `/devops/.env.sample` to `/devops/.env`.
+1. Copy `/devops/.env.sample` to `/devops/.env`.
 
-```cmd
-cp devops/.env.sample devops/.env
-```
+  ```cmd
+  cp devops/.env.sample devops/.env
+  ```
 
- Then, open the `.env` file in a text editor and set the values for the required variables described in the table below:
+  Then, open the `.env` file in a text editor and set the values for the required variables described in the table below:
 
-| Environment variable name | Description |
-| ------------------------- | ----------- |
-| `LOCATION` | The Azure location (region) for all resources. |
-| `MGMT_RESOURCE_GROUP_NAME` | The shared resource group for all management resources, including the storage account. |
-| `MGMT_STORAGE_ACCOUNT_NAME` | The name of the storage account to hold the Terraform state and other deployment artifacts. |
-| `TERRAFORM_STATE_CONTAINER_NAME` | The name of the blob container to hold the Terraform state *Default value is `tfstate`.* |
-| `IMAGE_TAG` | The default tag for Docker images that will be pushed to the container registry and deployed with the Azure TRE. |
-| `ACR_NAME` | A globally unique name for the Azure Container Registry (ACR) that will be created to store deployment images. |
-| `ARM_SUBSCRIPTION_ID` | *Optional for manual deployment. If not specified the `az cli` selected subscription will be used.* The Azure subscription ID for all resources. |
-| `ARM_CLIENT_ID` | *Optional for manual deployment without logged-in credentials.* The client whose azure identity will be used to deploy the solution. |
-| `ARM_CLIENT_SECRET` | *Optional for manual deployment without logged-in credentials.* The password of the client defined in `ARM_CLIENT_ID`. |
-| `ARM_TENANT_ID` | *Optional for manual deployment. If not specified the `az cli` selected subscription will be used.* The AAD tenant of the client defined in `ARM_CLIENT_ID`. |
-| `PORTER_OUTPUT_CONTAINER_NAME` | The name of the storage container where to store the workspace/workspace service deployment output. Workspaces and workspace templates are implemented using [Porter](https://porter.sh) bundles - hence the name of the variable. The storage account used is the one defined in `STATE_STORAGE_ACCOUNT_NAME`. |
-| `DEBUG` | If set to "true" disables purge protection of keyvault. |
+  | Environment variable name | Description |
+  | ------------------------- | ----------- |
+  | `LOCATION` | The Azure location (region) for all resources. |
+  | `MGMT_RESOURCE_GROUP_NAME` | The shared resource group for all management resources, including the storage account. |
+  | `MGMT_STORAGE_ACCOUNT_NAME` | The name of the storage account to hold the Terraform state and other deployment artifacts. |
+  | `TERRAFORM_STATE_CONTAINER_NAME` | The name of the blob container to hold the Terraform state *Default value is `tfstate`.* |
+  | `IMAGE_TAG` | The default tag for Docker images that will be pushed to the container registry and deployed with the Azure TRE. |
+  | `ACR_NAME` | A globally unique name for the Azure Container Registry (ACR) that will be created to store deployment images. |
+  | `ARM_SUBSCRIPTION_ID` | *Optional for manual deployment. If not specified the `az cli` selected subscription will be used.* The Azure subscription ID for all resources. |
+  | `ARM_CLIENT_ID` | *Optional for manual deployment without logged-in credentials.* The client whose azure identity will be used to deploy the solution. |
+  | `ARM_CLIENT_SECRET` | *Optional for manual deployment without logged-in credentials.* The password of the client defined in `ARM_CLIENT_ID`. |
+  | `ARM_TENANT_ID` | *Optional for manual deployment. If not specified the `az cli` selected subscription will be used.* The AAD tenant of the client defined in `ARM_CLIENT_ID`. |
+  | `PORTER_OUTPUT_CONTAINER_NAME` | The name of the storage container where to store the workspace/workspace service deployment output. Workspaces and workspace templates are implemented using [Porter](https://porter.sh) bundles - hence the name of the variable. The storage account used is the one defined in `STATE_STORAGE_ACCOUNT_NAME`. |
+  | `DEBUG` | If set to "true" disables purge protection of keyvault. |
 
-Copy `/templates/core/.env.sample` to `/templates/core/.env` and set values for all variables described in the table below:
+1. Copy `/templates/core/.env.sample` to `/templates/core/.env` and set values for all variables described in the table below:
 
-```cmd
-cp templates/core/.env.sample templates/core/.env
-```
+  ```cmd
+  cp templates/core/.env.sample templates/core/.env
+  ```
 
-| Environment variable name | Description |
-| ------------------------- | ----------- |
-| `TRE_ID` | A globally unique identifier. `TRE_ID` can be found in the resource names of the Azure TRE instance; for example, a `TRE_ID` of `mytre-dev-3142` will result in a resource group name for Azure TRE instance of `rg-mytre-dev-3142`. This must be less than 12 characters. Allowed characters: Alphanumeric, underscores, and hyphens. |
-| `CORE_ADDRESS_SPACE` | The address space for the Azure TRE core virtual network. `/22` or larger. |
-| `TRE_ADDRESS_SPACE` | The address space for the whole TRE environment virtual network where workspaces networks will be created (can include the core network as well). E.g. `10.0.0.0/12`|
-| `API_IMAGE_TAG` | The tag of the API image. Make it the same as `IMAGE_TAG` above.|
-| `RESOURCE_PROCESSOR_VMSS_PORTER_IMAGE_TAG` | The tag of the resource processor image. Make it the same as `IMAGE_TAG` above.|
-| `GITEA_IMAGE_TAG` | The tag of the Gitea image. Make it the same as `IMAGE_TAG` above.|
-| `SWAGGER_UI_CLIENT_ID` | Generated when following auth guide. Client ID for swagger client to make requests. |
-| `AAD_TENANT_ID` | Generated when following auth guide. Tenant id against which auth is performed. |
-| `API_CLIENT_ID` | Generated when following auth guide. Client id of the "TRE API". |
-| `API_CLIENT_SECRET` | Generated when following auth guide. Client secret of the "TRE API". |
-| `DEPLOY_GITEA` | If set to `false` disables deployment of the Gitea shared service. |
-| `DEPLOY_NEXUS` | If set to `false` disables deployment of the Nexus shared service. |
+  | Environment variable name | Description |
+  | ------------------------- | ----------- |
+  | `TRE_ID` | A globally unique identifier. `TRE_ID` can be found in the resource names of the Azure TRE instance; for example, a `TRE_ID` of `mytre-dev-3142` will result in a resource group name for Azure TRE instance of `rg-mytre-dev-3142`. This must be less than 12 characters. Allowed characters: Alphanumeric, underscores, and hyphens. |
+  | `CORE_ADDRESS_SPACE` | The address space for the Azure TRE core virtual network. `/22` or larger. |
+  | `TRE_ADDRESS_SPACE` | The address space for the whole TRE environment virtual network where workspaces networks will be created (can include the core network as well). E.g. `10.0.0.0/12`|
+  | `API_IMAGE_TAG` | The tag of the API image. Make it the same as `IMAGE_TAG` above.|
+  | `RESOURCE_PROCESSOR_VMSS_PORTER_IMAGE_TAG` | The tag of the resource processor image. Make it the same as `IMAGE_TAG` above.|
+  | `GITEA_IMAGE_TAG` | The tag of the Gitea image. Make it the same as `IMAGE_TAG` above.|
+  | `SWAGGER_UI_CLIENT_ID` | Generated when following auth guide. Client ID for swagger client to make requests. |
+  | `AAD_TENANT_ID` | Generated when following auth guide. Tenant id against which auth is performed. |
+  | `API_CLIENT_ID` | Generated when following auth guide. Client id of the "TRE API". |
+  | `API_CLIENT_SECRET` | Generated when following auth guide. Client secret of the "TRE API". |
+  | `DEPLOY_GITEA` | If set to `false` disables deployment of the Gitea shared service. |
+  | `DEPLOY_NEXUS` | If set to `false` disables deployment of the Nexus shared service. |
 
 ### Deploy
 
@@ -84,7 +85,8 @@ The Azure TRE is initially deployed with an invalid self-signed SSL certificate.
 make letsencrypt
 ```
 
-Note that there are rate limits with Let's Encrypt, so this should not be run when not needed.
+!!! caution
+    There are rate limits with Let's Encrypt, so this should not be run when not needed.
 
 ## Details of deployment and infrastructure
 
@@ -102,7 +104,9 @@ A bootstrap script is used to create the initial storage account and resource gr
 
 You can do this step using the following command but as stated above this is already part of ``make all``.
 
-- `make bootstrap`
+```cmd
+make bootstrap
+```
 
 This script should never need running a second time even if the other management resources are modified.
 
@@ -110,7 +114,9 @@ This script should never need running a second time even if the other management
 
 The deployment of the rest of the shared management resources is done via Terraform, and the various `.tf` files in the root of this repo.
 
-- `make mgmt-deploy`
+```cmd
+make mgmt-deploy
+```
 
 This Terraform creates & configures the following:
 
@@ -176,8 +182,8 @@ curl https://<azure_tre_fqdn>/api/health
 
 Now that we have published and registered a base workspace bundle we can use the deployed API to create a base workspace.
 
-<!-- markdownlint-disable-next-line MD013 -->
-> **Note:** All routes are auth protected. Click the green **Authorize** button to receive a token for swagger client.  
+!!! info
+    All routes are auth protected. Click the green **Authorize** button to receive a token for swagger client.  
 
 As explained in the [auth guide](auth.md), every workspace has a corresponding app registration which can be created using the helper script `/scripts/workspace-app-reg.py`. Multiple workspaces can share an app registration.
 
@@ -204,8 +210,8 @@ The API will report the ``workspace_id`` of the created workspace, which can be 
 
 You can also follow the progress in Azure portal as various resources come up.
 
-<!-- markdownlint-disable-next-line MD013 -->
-> To query the status using the API your user needs to have TREResearcher or TREOwner role assigned to the app.
+!!! info
+    To query the status using the API your user needs to have TREResearcher or TREOwner role assigned to the app.
 
 ## Deleting the Azure TRE deployment
 

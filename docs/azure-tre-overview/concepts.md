@@ -91,6 +91,7 @@ The templates describe the porter bundles used, and the input parameters needed 
 
 To use a template, and deploy a resource, the template needs to be registered in the TRE. This is done using the TRE API.
 
-> **Note:** Once a template is registered it can be used multiple times to deploy multiple workspaces, workspace services etc.
+!!! tip
+    Once a template is registered it can be used multiple times to deploy multiple workspaces, workspace services etc.
 
 If you want to author your own workspace, workspace service, or user resource template, consult the [template authoring guide](../tre-workspace-authors/authoring-workspace-templates.md)

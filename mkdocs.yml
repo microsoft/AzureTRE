@@ -68,7 +68,7 @@ nav:
           - Base: 'workspace-templates/workspaces/base.md'
           - Azure ML DevTest Labs: 'workspace-templates/workspaces/azure-ml-dev-test-labs.md'
           - InnerEye Deep Learning: 'workspace-templates/workspaces/inner-eye-deep-learning.md'
-          - InnerEye Inferending: 'workspace-templates/workspaces/inner-eye-deep-learning-inferencing.md'
+          - InnerEye Inferencing: 'workspace-templates/workspaces/inner-eye-deep-learning-inferencing.md'
       - Workspace Services:
           - Azure ML: 'workspace-templates/workspace-services/azure-ml.md'
           - DevTest Labs: 'workspace-templates/workspace-services/dev-test-labs.md'

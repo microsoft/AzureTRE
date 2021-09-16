@@ -2,10 +2,12 @@
 
 See: [https://github.com/microsoft/InnerEye-Inference](https://github.com/microsoft/InnerEye-Inference)
 
+## Prerequisites
+
+- [A workspace with an InnerEye Deep Learning bundle installed](../workspaces/inner-eye-deep-learning.md)
+
 ## Manual Deployment
 
-1. Prerequisites for deployment:
-    - [A workspace with an InnerEye Deep Learning bundle installed](../workspaces/inner-eye-deep-learning.md)
 
 1. Create a service principal with contributor rights over the subscription. This will be replaced with a Managed Identity in the future:
 
@@ -24,8 +26,11 @@ See: [https://github.com/microsoft/InnerEye-Inference](https://github.com/micros
   | `INFERENCE_SP_CLIENT_SECRET` | Service principal client secret used by the inference service to connect to Azure ML. Use the output from the step above. |
 
 1. Build and deploy the InnerEye Inference service
-    - `make porter-build DIR=./templates/workspace_services/innereye_inference`  
-    - `make porter-install DIR=./templates/workspace_services/innereye_inference`
+   
+  ```cmd
+  make porter-build DIR=./templates/workspace_services/innereye_inference
+  make porter-install DIR=./templates/workspace_services/innereye_inference
+  ```
 
 1. Log onto a VM in the workspace and run:
 
@@ -39,12 +44,19 @@ See: [https://github.com/microsoft/InnerEye-Inference](https://github.com/micros
 
 The workspace service provision an App Service Plan and an App Service for hosting the inference webapp. The webapp will be integrated into the workspace network, allowing the webapp to connect to the AML workspace. Following the setup you will need to:
 
-- Create a new container in your storage account for storing inference images called `inferencedatastore`.
-- Create a new folder in that container called `imagedata`.
-- Navigate to the ml.azure.com, `Datastores` and create a new datastore named `inferencedatastore` and connect it to the newly created container.
-- The key used for authentication is the `inference_auth_key` provided as an output of the service deployment.
-- Test the service by sending a GET or POST command using curl or Invoke-WebRequest:
+1. Create a new container in your storage account for storing inference images called `inferencedatastore`.
+1. Create a new folder in that container called `imagedata`.
+1. Navigate to the ml.azure.com, `Datastores` and create a new datastore named `inferencedatastore` and connect it to the newly created container.
+1. The key used for authentication is the `inference_auth_key` provided as an output of the service deployment.
+1. Test the service by sending a GET or POST command using curl or Invoke-WebRequest:
   - Simple ping:
-  ```Invoke-WebRequest https://yourservicename.azurewebsites.net/v1/ping -Headers @{'Accept' = 'application/json'; 'API_AUTH_SECRET' = 'your-secret-1234-1123445'}```
+
+    ```cmd
+    Invoke-WebRequest https://yourservicename.azurewebsites.net/v1/ping -Headers @{'Accept' = 'application/json'; 'API_AUTH_SECRET' = 'your-secret-1234-1123445'}
+    ```
+
   - Test connection with AML:
-  ```Invoke-WebRequest https://yourservicename.azurewebsites.net/v1/model/start/HelloWorld:1 -Method POST -Headers @{'Accept' = 'application/json'; 'API_AUTH_SECRET' = 'your-secret-1234-1123445'}```
+  
+    ```cmd
+    Invoke-WebRequest https://yourservicename.azurewebsites.net/v1/model/start/HelloWorld:1 -Method POST -Headers @{'Accept' = 'application/json'; 'API_AUTH_SECRET' = 'your-secret-1234-1123445'}
+    ```

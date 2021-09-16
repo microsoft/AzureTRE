@@ -2,27 +2,6 @@
 
 The TRE API is a service that users can interact with to request changes to workspaces e.g., to create, update, delete workspaces and workspace services inside each workspace.
 
-*Table of contents:*
-
-* [Prerequisites](#prerequisites)
-  * [Tools](#tools)
-  * [Azure resources](#azure-resources)
-    * [Creating resources (Bash)](#creating-resources-bash)
-* [Configuration](#configuration)
-  * [Auth](#auth)
-  * [State store](#state-store)
-  * [Service Bus](#service-bus)
-  * [Logging and monitoring](#logging-and-monitoring)
-  * [Service principal for API process identity](#service-principal-for-api-process-identity)
-* [Running API](#running-api)
-  * [Develop and run locally](#develop-and-run-locally)
-  * [Develop and run in dev container](#develop-and-run-in-dev-container)
-  * [Deploy with Docker](#deploy-with-docker)
-* [Unit tests](#unit-tests)
-* [Implementation](#implementation)
-  * [Auth in code](#auth-in-code)
-* [Workspace requests](#workspace-requests)
-
 ## Prerequisites
 
 ### Tools
@@ -93,7 +72,8 @@ az role assignment create \
     --scope /subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.ServiceBus/namespaces/$SERVICE_BUS_NAMESPACE
 ```
 
-> Keep in mind that Azure role assignments may take up to five minutes to propagate.
+!!! caution
+    Keep in mind that Azure role assignments may take up to five minutes to propagate.
 
 ## Configuration
 
@@ -277,7 +257,8 @@ Some workspace routes require `authConfig` field in the request body. The AAD sp
 }
 ```
 
-> **Note:** The app registration for a workspace is not created by the API. One needs to be present (created manually) before using the API to provision a new workspace.
+!!! caution
+    The app registration for a workspace is not created by the API. One needs to be present (created manually) before using the API to provision a new workspace.
 
 ## Network requirements
 

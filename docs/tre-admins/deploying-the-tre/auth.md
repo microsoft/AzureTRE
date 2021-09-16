@@ -82,10 +82,9 @@ The Swagger UI is a public client, so public client flows need to be enabled:
 
 The **TRE e2e test** app registration is used to authorize end-to-end test scenarios. It has no scopes or app roles defined.
 
-> **Note:**
->
-> * This app registration is only needed and used for **testing**
-> * As of writing this, there is no automated way provided for creating the **TRE e2e test** app registration, so it needs to be created manually.
+!!! note
+    * This app registration is only needed and used for **testing**
+    * As of writing this, there is no automated way provided for creating the **TRE e2e test** app registration, so it needs to be created manually.
 
 #### API permissions - TRE e2e test
 
@@ -109,9 +108,11 @@ The **TRE e2e test** app registration is used to authorize end-to-end test scena
 
 1. Allow public client flows (see the image below). This enables the end-to-end tests to use a username and password combination to authenticate.
 
-   > **Note:** this should never be allowed for a production environment as it poses a security risk.
-
     ![Allow public client flows - Yes](../../assets/app-reg-authentication-allow-public-client-flows-yes.png)
+
+!!! warning
+    Public client flows should never be allowed for a production environment as it poses a security risk.
+
 
 #### End-to-end test user
 
@@ -125,7 +126,8 @@ The end-to-end test should be added to **TRE Administrator** role exposed by the
 
 Access to workspaces is also controlled using app registrations - one per workspace. The configuration of the app registration depends on the nature of the workspace, but this section covers the typical minimum settings.
 
-> **Note:** The app registration for a workspace is not created by the [API](../../azure-tre-overview/composition-service/api.md). One needs to be present (created manually) before using the API to provision a new workspace.
+!!! caution
+    The app registration for a workspace is not created by the [API](../../azure-tre-overview/composition-service/api.md). One needs to be present (created manually) before using the API to provision a new workspace.
 
 #### Authentication - Workspaces
 

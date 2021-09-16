@@ -9,7 +9,8 @@ The Azure TRE management plane consists of two groups of components:
 - API & Composition Service
 - Shared Services
 
-> Shared Services is still work in progress. Please see [#23](https://github.com/microsoft/AzureTRE/issues/23), [#22](https://github.com/microsoft/AzureTRE/issues/21), & [#21](https://github.com/microsoft/AzureTRE/issues/21)
+!!! todo
+    Shared Services is still work in progress. Please see [#23](https://github.com/microsoft/AzureTRE/issues/23), [#22](https://github.com/microsoft/AzureTRE/issues/21), & [#21](https://github.com/microsoft/AzureTRE/issues/21)
 
 The TRE API is a service that users can interact with to request changes to workspaces e.g., to create, update, delete workspaces and workspace services inside each workspace. The Composition Service is doing the actual work of mutating the state of each Workspace including the Workspace Services.
 
@@ -35,10 +36,6 @@ This requires:
 
 Details on how to [register a Workspace Template](../tre-workspace-authors/registering-workspace-templates.md).
 
-### Provision a Workspace
-
-![Composition Service](../assets/composition-service.png)
-
 The Composition Service consists of multiple components.
 
 | Component Name | Responsibility / Description |
@@ -47,6 +44,10 @@ The Composition Service consists of multiple components.
 | Configuration Store | Keeping the state of Workspaces and Workspace Templates. The store uses [Cosmos DB (SQL)](https://docs.microsoft.com/en-us/azure/cosmos-db/introduction). |
 | Service Bus | [Azure Service Bus](https://docs.microsoft.com/en-us/azure/service-bus-messaging/service-bus-messaging-overview) responsible for reliable delivery of messages between components.  |
 | Resource Processor | Responsible for starting the process of mutating a Workspace via a Workspace Template. |
+
+## Provisioning a Workspace
+
+![Composition Service](../assets/composition-service.png)
 
 The flow to provision a Workspace is as follows (the flow is the same for all kinds of mutations to a Workspace):
 
@@ -81,19 +82,16 @@ The flow to provision a Workspace is as follows (the flow is the same for all ki
 
     Porter bundle actions are required to be idempotent, so if a deployment fails, the Resource Processor can retry.
 
-    > The Resource Processor is a Docker container running on a Linux VM scale set.
-
 1. The Porter Docker bundle is pulled from the Azure Container Registry (ACR) and executed.
 1. The Porter bundle executes against Azure Resource Manager to provision Azure resources. Any kind of infrastructure of code frameworks like ARM, Terraform, or Pulumi can be used or scripted via PowerShell or Azure CLI.
 1. State and output management is handled via Azure Storage Containers. State for keeping persistent state between executions of a bundled with the same Workspace.
-
-    > Currently, the bundle keeps state between executions in a Storage Container (TF state) passed in a parameters to the bundle. An enhancement issues [#536](https://github.com/microsoft/AzureTRE/issues/536) exists to configure Porter state management.
-
 1. For the time being, the Porter bundle updates Firewall rules directly setting egress rules. An enhancement to implement a Shared Firewall services is planned ([#23](https://github.com/microsoft/AzureTRE/issues/23)).
 1. The Resource Processor sends events to the `deploymentstatus` queue on state changes and informs if the deployment succeeded or failed.
 1. The status of a Porter bundle execution is received.
 1. The status of a Porter bundle execution is updated in the Configuration Store.
 
-## Network architecture
+!!! info
+    The Resource Processor is a Docker container running on a Linux VM scale set.
 
-See [networking](networking.md).
+!!! todo
+    Currently, the bundle keeps state between executions in a Storage Container (TF state) passed in a parameters to the bundle. An enhancement issues [#536](https://github.com/microsoft/AzureTRE/issues/536) exists to configure Porter state management.

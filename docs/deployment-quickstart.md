@@ -37,7 +37,8 @@ Now, let's open the cloned repository in Visual Studio Code and connect to the d
 AzureTRE> code .
 ```
 
-> Visual Studio Code should recognize the available development container and ask you to open the folder using it. For additional details on connecting to remote containers, please see the [Open an existing folder in a container](https://code.visualstudio.com/docs/remote/containers#_quick-start-open-an-existing-folder-in-a-container) quickstart.
+!!! tip
+    Visual Studio Code should recognize the available development container and ask you to open the folder using it. For additional details on connecting to remote containers, please see the [Open an existing folder in a container](https://code.visualstudio.com/docs/remote/containers#_quick-start-open-an-existing-folder-in-a-container) quickstart.
 
 When you start the development container for the first time, the container will be built. This usually takes a few minutes.
 
@@ -85,7 +86,8 @@ PORTER_OUTPUT_CONTAINER_NAME=porterout
 DEBUG="false"
 ```
 
-> To retrieve your Azure subscription id, you can use the `az` command line interface available in the development container. In the terminal window in Visual Studio Code, type `az login` followed by `az account show` to see your default subscription. Please refer to `az account -help` for further details on how to change your active subscription if desired.
+!!! tip
+    To retrieve your Azure subscription id, you can use the `az` command line interface available in the development container. In the terminal window in Visual Studio Code, type `az login` followed by `az account show` to see your default subscription. Please refer to `az account -help` for further details on how to change your active subscription if desired.
 
 ## Set environment configuration variables of the Azure TRE instance
 
@@ -101,13 +103,15 @@ Use the terminal window in Visual Studio Code to execute the following script fr
 /workspaces/tre> az login
 ```
 
-> note: in case you have several subscriptions and would like to change your default subscription use ```az account set --subscription desired_subscription_id```
+!!! note
+    In case you have several subscriptions and would like to change your default subscription use ```az account set --subscription desired_subscription_id```
 
 ```bash
 /workspaces/tre> ./scripts/aad-app-reg.sh -n aztreqs -r https://aztreqs.westeurope.cloudapp.azure.com/oidc-redirect
 ```
 
-> Note: `aztreqs` is a placeholder for the unique name you have to choose for your Azure TRE instance. Likewise `westeurope` is a placeholder for the location where the resources will be deployed, this should match the value you set on the location variable in the previous step.
+!!! note
+    `aztreqs` is a placeholder for the unique name you have to choose for your Azure TRE instance. Likewise `westeurope` is a placeholder for the location where the resources will be deployed, this should match the value you set on the location variable in the previous step.
 
 With the output from the `add-app-reg.sh` script, you can now provide the required values for the following variables in the `/templates/core/.env` configuration file:
 

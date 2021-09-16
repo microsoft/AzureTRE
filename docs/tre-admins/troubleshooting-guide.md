@@ -72,7 +72,8 @@ If you see messages hanging in the service bus queue then the resource processor
 
 The processor runs in a vnet, and you cannot connect to it directly. If the instance is up then you need to connect to the instance using Bastion. Bastion is already deployed, and you can use the username ``adminuser`` and the password is stored in the keyvault under the secret ``resource-processor-vmss-password``
 
-> **Note:** You cannot see secrets unless you are added to a suitable Access Policy for the keyvault.
+!!! info
+    You cannot see secrets unless you are added to a suitable Access Policy for the keyvault.
 
 ![VMSS Password](../assets/vmss_password.png)
 
@@ -97,7 +98,8 @@ docker run -v /var/run/docker.sock:/var/run/docker.sock --env-file .env --name r
 
 **runner_image:tag** can be obtained using ``docker ps``
 
-> **Note:** All logs which you see from the resource processor should also be transferred to the App Insights instance as noted above, so it is not essential to follow the progress by logging into the instance. Logging into the instance and starting a container manually is helpful in live debugging.
+!!! info
+    All logs which you see from the resource processor should also be transferred to the App Insights instance as noted above, so it is not essential to follow the progress by logging into the instance. Logging into the instance and starting a container manually is helpful in live debugging.
 
 ### Updating the running container
 

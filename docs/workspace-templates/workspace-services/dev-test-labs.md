@@ -2,20 +2,25 @@
 
 See: [https://azure.microsoft.com/services/devtest-lab/](https://azure.microsoft.com/services/devtest-lab/)
 
+## Prerequisites
+
+- [A base workspace bundle installed](../../../templates/workspaces/base)
+
 ## Manual Deployment
 
-1. Prerequisites for deployment:
-    - [A base workspace bundle installed](../../../templates/workspaces/base)
 
 1. Create a copy of `templates/workspace_services/devtestlabs/.env.sample` with the name `.env` and update with the Workspace ID used when deploying the base workspace.
 
-| Environment variable name | Description |
-| ------------------------- | ----------- |
-| `WORKSPACE_ID` | The 4 character unique identifier used when deploying the base workspace bundle. |
+  | Environment variable name | Description |
+  | ------------------------- | ----------- |
+  | `WORKSPACE_ID` | The 4 character unique identifier used when deploying the base workspace bundle. |
 
 1. Build and install the Azure DevTest Labs Service bundle
-    - `make porter-build DIR=./templates/workspace_services/devtestlabs`
-    - `make porter-install DIR=./templates/workspace_services/devtestlabs`
+   
+  ```cmd
+  make porter-build DIR=./templates/workspace_services/devtestlabs
+  make porter-install DIR=./templates/workspace_services/devtestlabs
+  ```
 
 ## Create and expose a VM via the Firewall
 

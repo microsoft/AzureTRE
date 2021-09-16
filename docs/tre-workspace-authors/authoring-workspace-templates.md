@@ -7,7 +7,8 @@ Workspace authors are free to choose the technology stack for provisioning resou
 
 This document describes the requirements, and the process to author a template.
 
-> **Tip:** Use [the base workspace bundle](../workspace-templates/workspaces/base.md) as reference or as the basis for the new bundle.
+!!! tip
+    Use [the base workspace bundle](../workspace-templates/workspaces/base.md) as reference or as the basis for the new bundle.
 
 To create a bundle from scratch follow the Porter [Quickstart Guide](https://porter.sh/quickstart/) ([`porter create` CLI command](https://porter.sh/cli/porter_create/) will generate a new bundle in the current directory).
 
@@ -74,7 +75,8 @@ Any **custom parameters** are picked up by Azure TRE API and will be queried fro
 
 ### Output
 
-> **TBD:** After a workspace with virtual machines is implemented this section can be written based on that. ([Outputs in Porter documentation](https://porter.sh/author-bundles/#outputs) to be linked here too.)
+!!! todo
+    After a workspace with virtual machines is implemented this section can be written based on that. ([Outputs in Porter documentation](https://porter.sh/author-bundles/#outputs) to be linked here too.)
 
 ### Actions
 

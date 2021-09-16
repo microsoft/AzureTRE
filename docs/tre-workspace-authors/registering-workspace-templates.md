@@ -24,7 +24,7 @@ The script can also be used to generate the payload required by the API without 
 1. Log into the Swagger UI by clicking `Authorize`, then `Authorize` again. You will be redirected to the login page.
 1. Once logged in. Click `Try it out` on the `POST` `/api/workspace-templates` operation:
 
-![Post Workspace Template](../assets/post-template.png)
+  ![Post Workspace Template](../assets/post-template.png)
 
 1. Paste the payload json generated earlier into the `Request body` field, then click `Execute`. Review the server response.
 1. To verify registration of the template do `GET` operation on `/api/workspace-templates`. The name of the template should now be listed.
@@ -51,4 +51,5 @@ Options:
 
 In addition to generating the payload, the script posts the payload to the `/api/workspace-templates` endpoint. Once registered the template can be retrieved by a `GET` operation on `/api/workspace-templates`.
 
-> The same procedure can be followed to register workspace service templates and user resource templates
+!!! tip
+    Follow the same procedure to register workspace service templates and user resource templates

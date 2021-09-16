@@ -25,17 +25,21 @@ Service Tags:
 - Storage.`{AzureRegion}`
 - AzureContainerRegistry
 
-## Manual Deployment
+## Prerequisites
 
-1. Prerequisites for deployment:
-    - [A base workspace bundle installed](../../../templates/workspaces/base)
+- [A base workspace bundle installed](../../../templates/workspaces/base)
+
+## Manual Deployment
 
 1. Create a copy of `templates/workspace_services/azureml/.env.sample` with the name `.env` and update the variables with the appropriate values.
 
-| Environment variable name | Description |
-| ------------------------- | ----------- |
-| `WORKSPACE_ID` | The 4 character unique identifier used when deploying the base workspace bundle. |
+  | Environment variable name | Description |
+  | ------------------------- | ----------- |
+  | `WORKSPACE_ID` | The 4 character unique identifier used when deploying the base workspace bundle. |
 
 1. Build and install the Azure ML Service bundle
-    - `make porter-build DIR=./templates/workspace_services/azureml`
-    - `make porter-install DIR=./templates/workspace_services/azureml`
+   
+  ```cmd
+  make porter-build DIR=./templates/workspace_services/azureml
+  make porter-install DIR=./templates/workspace_services/azureml
+  ```
