@@ -189,5 +189,5 @@ Open your browser and navigate to the `/api/docs` route of the API:  `https://<a
 ## Next steps
 
 * Deploy a new workspace for Azure Machine Learning
-* [Enable users to access the Azure TRE instance](./auth.md#enabling-users)
-* [Create a new workspace template](./authoring-workspace-templates.md)
+* [Enable users to access the Azure TRE instance](tre-admins/deploying-the-tre/auth.md#enabling-users)
+* [Create a new workspace template](tre-workspace-authors/authoring-workspace-templates.md)

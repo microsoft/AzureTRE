@@ -1,0 +1,36 @@
+site_name: Azure TRE
+site_url: https://github.com/microsoft/AzureTRE
+site_description: Azure TRE
+site_author: Microsoft
+
+repo_url: https://github.com/microsoft/AzureTre/
+edit_uri: ""
+
+theme:
+  name: material
+  custom_dir: mkdocs-overrides
+  font:
+    text: Roboto
+    code: Roboto Mono
+  palette:
+    scheme: default
+    primary: blue grey
+    accent: indigo
+  logo: assets/ms_icon.png
+  favicon: assets/ms_icon.png
+  features:
+    - navigation.instant
+    - navigation.indexes
+
+plugins:
+  - search
+
+markdown_extensions:
+  - meta
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.pathconverter
+  - pymdownx.tabbed
+  - mdx_truly_sane_lists
+  - pymdownx.tasklist
