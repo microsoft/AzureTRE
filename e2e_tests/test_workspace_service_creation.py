@@ -59,11 +59,11 @@ async def check_service_deployment(client, workspace_id, workspace_service_id, h
         return (strings.RESOURCE_STATUS_DELETED, "Workspace service was deleted")
 
 
-async def wait_for_service(func, client, workspaceid, workspaceserviceid, headers, failure_state):
-    done, done_state, message = await func(client, workspaceid, headers)
+async def wait_for_service(func, client, workspace_id, workspace_service_id, headers, failure_state):
+    done, done_state, message = await func(client, workspace_id, workspace_service_id, headers)
     while not done:
         await asyncio.sleep(60)
-        done, done_state, message = await func(client, workspaceid, workspaceserviceid, headers)
+        done, done_state, message = await func(client, workspace_id, workspace_service_id, headers)
     try:
         assert done_state != failure_state
     except Exception as e:
@@ -105,12 +105,12 @@ async def disable_workspace_service(workspace_id, workspace_service_id, token, v
         assert (enabled is False), "The workspace service wasn't disabled"
 
 
-async def delete_workspace_service(workspaceid, workspaceserviceid, token, verify) -> None:
+async def delete_workspace_service(workspace_id, workspace_service_id, token, verify) -> None:
     async with AsyncClient(verify=verify) as client:
         headers = {'Authorization': f'Bearer {token}'}
 
         response = await client.delete(
-            f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACES}/{workspaceid}/{strings.API_WORKSPACE_SERVICES}/{workspaceserviceid}",
+            f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACES}/{workspace_id}/{strings.API_WORKSPACE_SERVICES}/{workspace_service_id}",
             headers=headers)
 
         assert (response.status_code == status.HTTP_200_OK), "The workspace service couldn't be deleted"
