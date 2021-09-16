@@ -154,7 +154,7 @@ async def test_getting_templates(template_name, token, verify) -> None:
 
 
 @pytest.mark.smoke
-@pytest.mark.timeout(1200)
+@pytest.mark.timeout(3000)
 async def test_create_guacamole_service_into_base_workspace(token, verify) -> None:
     payload = {
         "workspaceType": "tre-workspace-base",
