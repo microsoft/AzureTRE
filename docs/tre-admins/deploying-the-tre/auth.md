@@ -71,8 +71,8 @@ The **TRE API** app registration requires no redirect URLs defined or anything e
 
 Redirect URLs:
 
-* `https://<app name>.<location>.cloudapp.azure.com/docs/oauth2-redirect`
-* `http://localhost:8000/docs/oauth2-redirect` - For local testing
+- `https://<app name>.<location>.cloudapp.azure.com/docs/oauth2-redirect`
+- `http://localhost:8000/docs/oauth2-redirect` - For local testing
 
 The Swagger UI is a public client, so public client flows need to be enabled:
 
@@ -101,8 +101,10 @@ The **TRE e2e test** app registration is used to authorize end-to-end test scena
 
     In the **TRE e2e test** app registration go to Authentication -> Add platform -> Select Mobile & Desktop and add:
 
-    * `https://login.microsoftonline.com/common/oauth2/nativeclient`
-    * `msal<TRE e2e test app registration application (client) ID>://auth`
+    ```cmd
+    https://login.microsoftonline.com/common/oauth2/nativeclient
+    msal<TRE e2e test app registration application (client) ID>://auth
+    ```
 
     ![Add auth platform](../../assets/aad-add-auth-platform.png)
 

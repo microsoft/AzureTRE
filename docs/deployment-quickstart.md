@@ -50,17 +50,21 @@ The `/devops/.env` file contains configuration variables for the shared manageme
 
 You need to provide values for the following variables:
 
-* `LOCATION` - The Azure region to deploy to
-* `MGMT_RESOURCE_GROUP_NAME` - Resource group name
-* `MGMT_STORAGE_ACCOUNT_NAME` - Storage account name
-* `ACR_NAME` - Container registry name
-* `ARM_SUBSCRIPTION_ID` - Azure subscription id
+| VARIABLE | DESCRIPTION |
+| -- | -- |
+| `LOCATION` | The Azure region to deploy to |
+| `MGMT_RESOURCE_GROUP_NAME` | Resource group name |
+| `MGMT_STORAGE_ACCOUNT_NAME` | Storage account name |
+| `ACR_NAME` | Container registry name |
+| `ARM_SUBSCRIPTION_ID` | Azure subscription id |
 
 Comment out the following variables by starting the line with a hash `#`.
 
-* `ARM_TENANT_ID`
-* `ARM_CLIENT_ID`
-* `ARM_CLIENT_SECRET`
+```cmd
+# ARM_TENANT_ID=...
+# ARM_CLIENT_ID=...
+# ARM_CLIENT_SECRET=...
+```
 
 The rest of the variables can have their default values. You should now have a `.env`file that looks similar to below.
 
@@ -115,11 +119,13 @@ Use the terminal window in Visual Studio Code to execute the following script fr
 
 With the output from the `add-app-reg.sh` script, you can now provide the required values for the following variables in the `/templates/core/.env` configuration file:
 
-* `TRE_ID` - The identifier for your Azure TRE instance. Will be used for naming Azure resources. Needs to be globally unique and less than 12 characters.
-* `AAD_TENANT_ID` - The Azure AD tenant id
-* `API_CLIENT_ID` - Service principal id for the API
-* `API_CLIENT_SECRET` - Client secret for the API
-* `SWAGGER_UI_CLIENT_ID` - Service principal id for the Swagger (Open API) UI
+| VARIABLE | DESCRIPTION |
+| -- | -- |
+| `TRE_ID` | The identifier for your Azure TRE instance. Will be used for naming Azure resources. Needs to be globally unique and less than 12 characters. |
+| `AAD_TENANT_ID` | The Azure AD tenant id |
+| `API_CLIENT_ID` | Service principal id for the API |
+| `API_CLIENT_SECRET` | Client secret for the API |
+| `SWAGGER_UI_CLIENT_ID` | Service principal id for the Swagger (Open API) UI |
 
 All other variables can have their default values for now. You should now have a `.env` file that looks similar to below.
 
