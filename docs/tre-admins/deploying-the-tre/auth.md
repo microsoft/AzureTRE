@@ -8,7 +8,7 @@ This document describes the authentication and authorization (A&A) of deployed A
 App registrations (represented by service principals) define the privileges enabling access to the TRE system (e.g., [API](../../azure-tre-overview/composition-service/api.md)) as well as the workspaces.
 
 <!-- markdownlint-disable-next-line MD013 -->
-It is recommended to run the [`/scripts/aad-app-reg.sh`](../../../scripts/aad-app-reg.sh) script to create the two main app registrations: **TRE API** and **TRE Swagger UI**. This automatically sets up the app registrations with the required permissions to run Azure TRE. The script will create an app password (client secret) for the **TRE API** app; make sure to take note of it in the script output as it is only shown once.
+It is recommended to run the `/scripts/aad-app-reg.sh` script to create the two main app registrations: **TRE API** and **TRE Swagger UI**. This automatically sets up the app registrations with the required permissions to run Azure TRE. The script will create an app password (client secret) for the **TRE API** app; make sure to take note of it in the script output as it is only shown once.
 
 Alternatively you can also choose to create the app registrations manually via the Azure Portal - see [Quickstart: Register an application with the Microsoft identity platform](https://docs.microsoft.com/azure/active-directory/develop/quickstart-register-app) on how. The required setup with permissions is documented below.
 
@@ -25,7 +25,7 @@ The **TRE API** app registration defines the permissions, scopes and app roles f
 | API/permission name | Type | Description | Admin consent required | Status | TRE usage |
 | ------------------- | ---- | ----------- | ---------------------- | ------ | --------- |
 | Microsoft Graph/Directory.Read.All (`https://graph.microsoft.com/Directory.Read.All`) | Application* | Allows the app to read data in your organization's directory, such as users, groups and apps, without a signed-in user. | Yes | Granted for *[directory name]* | Used e.g., to retrieve app registration details, user associated app roles etc. |
-| Microsoft Graph/User.Read.All (`https://graph.microsoft.com/User.Read.All`) | Application* | Allows the app to read user profiles without a signed in user. | Yes | Granted for *[directory name]* | Reading user role assignments to check that the user has permissions to execute an action e.g., to view workspaces. See [`aad_access_service.py`](../../../api_app/services/aad_access_service.py). |
+| Microsoft Graph/User.Read.All (`https://graph.microsoft.com/User.Read.All`) | Application* | Allows the app to read user profiles without a signed in user. | Yes | Granted for *[directory name]* | Reading user role assignments to check that the user has permissions to execute an action e.g., to view workspaces. See `/api_app/services/aad_access_service.py`. |
 
 *) See the difference between [delegated and application permission](https://docs.microsoft.com/graph/auth/auth-concepts#delegated-and-application-permissions) types.
 

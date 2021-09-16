@@ -4,7 +4,7 @@ See: [https://azure.microsoft.com/services/machine-learning/](https://azure.micr
 
 This service installs the following resources into an existing virtual network within the workspace:
 
-![Azure Machine Learning Service](../../../templates/workspace_services/azureml/images/aml_service.png)
+![Azure Machine Learning Service](images/aml_service.png)
 
 ## Firewall Rules
 

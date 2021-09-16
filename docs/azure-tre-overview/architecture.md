@@ -77,7 +77,7 @@ The flow to provision a Workspace is as follows (the flow is the same for all ki
     porter install --reference msfttreacr.azurecr.io/bundles/BaseWorkspaceTemplate:1.0 --params param1=value1 --cred azure.json
     ```
 
-    Deployments are carried out against the Azure Subscription using a User Assigned Managed Identity. The `azure.json` tells Porter where the credential information can be found and for the Resource Processor they are set as environment variables (Base Workspace Template [azure.json](../../templates/workspaces/base/azure.json)).
+    Deployments are carried out against the Azure Subscription using a User Assigned Managed Identity. The `azure.json` tells Porter where the credential information can be found and for the Resource Processor they are set as environment variables.
 
     Porter bundle actions are required to be idempotent, so if a deployment fails, the Resource Processor can retry.
 

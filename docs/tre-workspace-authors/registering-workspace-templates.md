@@ -4,7 +4,7 @@ To deploy a new type of Workspace, we need to register a Workspace Template usin
 
 ## Porter Bundles
 
-Porter bundles can either be registered interactively using the Swagger UI or automatically using the utility script (useful in CI/CD scenarios). The script is provided at: [../devops/scripts/publish_register_bundle.sh](../../devops/scripts/publish_register_bundle.sh).
+Porter bundles can either be registered interactively using the Swagger UI or automatically using the utility script (useful in CI/CD scenarios). The script is provided at `/devops/scripts/publish_register_bundle.sh`.
 
 The script can also be used to generate the payload required by the API without actually calling the API. The script carries out the following actions:
 

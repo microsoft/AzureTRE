@@ -65,7 +65,7 @@ This will trigger receiving of messages, and you can freely debug the code by se
 
 ## Porter Azure plugin
 
-Resource Processor uses [Porter Azure plugin](https://github.com/getporter/azure-plugins) to store Porter data in TRE management storage account. The storage container, named `porter`, is created during the bootstrapping phase of TRE deployment. [`run.sh`](../../../resource_processor/run.sh) script generates `config.toml` file in Porter home folder to enable the Azure plugin when the image is started.
+Resource Processor uses [Porter Azure plugin](https://github.com/getporter/azure-plugins) to store Porter data in TRE management storage account. The storage container, named `porter`, is created during the bootstrapping phase of TRE deployment. The `/resource_processor/run.sh` script generates a `config.toml` file in Porter home folder to enable the Azure plugin when the image is started.
 
 ## Debugging deployed processor on Azure
 

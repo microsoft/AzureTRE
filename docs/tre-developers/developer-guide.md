@@ -13,7 +13,7 @@ The supported development environment for Azure TRE is devcontainer. Please see 
 
 ## Running the Unit and E2E tests
 
-To run the Unit and E2E tests follow the [testing documentation](testing.md).
+To run the Unit and E2E tests follow the [testing documentation](end-to-end-tests.md).
 
 ### Running the TRE API locally
 

@@ -43,7 +43,7 @@ The explicitly allowed egress traffic is described here:
 
 ### TRE Management/core
 
-Network security groups (NSG), and their security rules for TRE core resources are defined in [`/templates/core/terraform/network/network_security_groups.tf`](../../templates/core/terraform/network/network_security_groups.tf).
+Network security groups (NSG), and their security rules for TRE core resources are defined in `/templates/core/terraform/network/network_security_groups.tf`.
 
 | Network security group | Associated subnet(s) |
 | ---------------------- | -------------------- |

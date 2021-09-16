@@ -15,7 +15,7 @@ Before running any of the scripts, the configuration variables need to be set. T
 
 > **Note:** the `.tfvars` file is not used, this is intentional. The `.env` file format is easier to parse, meaning we can use the values for bash scripts and other purposes.
 
-Copy [/devops/.env.sample](../../../devops/.env.sample) to `/devops/.env`.
+Copy `/devops/.env.sample` to `/devops/.env`.
 
 ```cmd
 cp devops/.env.sample devops/.env
@@ -38,7 +38,7 @@ cp devops/.env.sample devops/.env
 | `PORTER_OUTPUT_CONTAINER_NAME` | The name of the storage container where to store the workspace/workspace service deployment output. Workspaces and workspace templates are implemented using [Porter](https://porter.sh) bundles - hence the name of the variable. The storage account used is the one defined in `STATE_STORAGE_ACCOUNT_NAME`. |
 | `DEBUG` | If set to "true" disables purge protection of keyvault. |
 
-Copy [/templates/core/.env.sample](../../../templates/core/.env.sample) to `/templates/core/.env` and set values for all variables described in the table below:
+Copy `/templates/core/.env.sample` to `/templates/core/.env` and set values for all variables described in the table below:
 
 ```cmd
 cp templates/core/.env.sample templates/core/.env
@@ -179,7 +179,7 @@ Now that we have published and registered a base workspace bundle we can use the
 <!-- markdownlint-disable-next-line MD013 -->
 > **Note:** All routes are auth protected. Click the green **Authorize** button to receive a token for swagger client.  
 
-As explained in the [auth guide](auth.md), every workspace has a corresponding app registration which can be created using the helper script [../scripts/workspace-app-reg.py](../../../scripts/workspace-app-reg.py). Multiple workspaces can share an app registration.
+As explained in the [auth guide](auth.md), every workspace has a corresponding app registration which can be created using the helper script `/scripts/workspace-app-reg.py`. Multiple workspaces can share an app registration.
 
 Running the script will report app id of the generated app which needs to be used in the POST body below.
 
