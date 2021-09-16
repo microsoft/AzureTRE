@@ -77,7 +77,7 @@ async def post_workspace_service_template(workspace_id, payload, token, verify):
         headers = {'Authorization': f'Bearer {token}'}
 
         response = await client.post(
-            f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACES}/{workspace_id}/strings.API_WORKSPACE_SERVICES",
+            f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACES}/{workspace_id}/{strings.API_WORKSPACE_SERVICES}",
             headers=headers, json=payload)
 
         assert (response.status_code == status.HTTP_202_ACCEPTED), f"Request for workspace service {payload['workspaceServiceType']} creation failed"
