@@ -285,7 +285,7 @@ jobs:
     name: "Run E2E Tests"
     runs-on: ubuntu-latest
     environment: Dev
-    needs: [publish_and_register_workspace_bundles, publish_and_register_workspace_service_bundles, publish_innereye_service_bundles]
+    needs: [publish_and_register_workspace_bundles, publish_and_register_workspace_service_bundles]
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
