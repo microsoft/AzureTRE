@@ -37,5 +37,6 @@ Please follow the above links to learn more about how to access the services and
 
 1. Build and install the workspace:
 
+    `make porter-build DIR=./templates/workspaces/innereye_deeplearning`
     `make porter-publish DIR=./templates/workspaces/innereye_deeplearning`
     `make porter-install DIR=./templates/workspaces/innereye_deeplearning`

@@ -22,10 +22,10 @@ The **TRE API** app registration defines the permissions, scopes and app roles f
 
 #### API permissions - TRE API
 
-| API/permission name | Type | Description | Admin consent required | TRE usage |
-| ------------------- | ---- | ----------- | ---------------------- | --------- |
-| Microsoft Graph/Directory.Read.All (`https://graph.microsoft.com/Directory.Read.All`) | Application* | Allows the app to read data in your organization's directory, such as users, groups and apps, without a signed-in user. | Yes | Used e.g., to retrieve app registration details, user associated app roles etc. |
-| Microsoft Graph/User.Read.All (`https://graph.microsoft.com/User.Read.All`) | Application* | Allows the app to read user profiles without a signed in user. | Yes | Reading user role assignments to check that the user has permissions to execute an action e.g., to view workspaces. See [`aad_access_service.py`](../api_app/services/aad_access_service.py). |
+| API/permission name | Type | Description | Admin consent required | Status | TRE usage |
+| ------------------- | ---- | ----------- | ---------------------- | ------ | --------- |
+| Microsoft Graph/Directory.Read.All (`https://graph.microsoft.com/Directory.Read.All`) | Application* | Allows the app to read data in your organization's directory, such as users, groups and apps, without a signed-in user. | Yes | Granted for *[directory name]* | Used e.g., to retrieve app registration details, user associated app roles etc. |
+| Microsoft Graph/User.Read.All (`https://graph.microsoft.com/User.Read.All`) | Application* | Allows the app to read user profiles without a signed in user. | Yes | Granted for *[directory name]* | Reading user role assignments to check that the user has permissions to execute an action e.g., to view workspaces. See [`aad_access_service.py`](../api_app/services/aad_access_service.py). |
 
 *) See the difference between [delegated and application permission](https://docs.microsoft.com/graph/auth/auth-concepts#delegated-and-application-permissions) types.
 
@@ -58,12 +58,12 @@ The **TRE API** app registration requires no redirect URLs defined or anything e
 
 #### API permissions - TRE Swagger UI
 
-| API/permission name | Type | Description | Admin consent required |
-| ------------------- | ---- | ----------- | ---------------------- |
-| Microsoft Graph/offline_access (`https://graph.microsoft.com/offline_access`) | Delegated* | Allows the app to see and update the data you gave it access to, even when users are not currently using the app. | No |
-| Microsoft Graph/openid (`https://graph.microsoft.com/openid`) | Delegated* | Allows users to sign in to the app with their work or school accounts and allows the app to see basic user profile information. | No |
-| TRE API/Workspace.Read (`api://<TRE API Application (client) ID>/Workspace.Read`) | Delegated* | See [TRE API app registration scopes](#scopes---tre-api). | No |
-| TRE API/Workspace.Write (`api://<TRE API Application (client) ID>/Workspace.Write`) | Delegated* | See [TRE API app registration scopes](#scopes---tre-api). | No |
+| API/permission name | Type | Description | Admin consent required | Status |
+| ------------------- | ---- | ----------- | ---------------------- | ------ |
+| Microsoft Graph/offline_access (`https://graph.microsoft.com/offline_access`) | Delegated* | Allows the app to see and update the data you gave it access to, even when users are not currently using the app. | No | Granted for *[directory name]* |
+| Microsoft Graph/openid (`https://graph.microsoft.com/openid`) | Delegated* | Allows users to sign in to the app with their work or school accounts and allows the app to see basic user profile information. | No | Granted for *[directory name]* |
+| TRE API/Workspace.Read (`api://<TRE API Application (client) ID>/Workspace.Read`) | Delegated* | See [TRE API app registration scopes](#scopes---tre-api). | No | Granted for *[directory name]* |
+| TRE API/Workspace.Write (`api://<TRE API Application (client) ID>/Workspace.Write`) | Delegated* | See [TRE API app registration scopes](#scopes---tre-api). | No | Granted for *[directory name]* |
 
 *) See the difference between [delegated and application permission](https://docs.microsoft.com/graph/auth/auth-concepts#delegated-and-application-permissions) types.
 
