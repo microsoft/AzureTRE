@@ -98,7 +98,7 @@ async def disable_workspace_service(workspace_id, workspace_service_id, token, v
         payload = {"enabled": "false"}
 
         response = await client.patch(
-            f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACES}/{workspace_id}/strings.API_WORKSPACE_SERVICES//{workspace_service_id}",
+            f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACES}/{workspace_id}/{strings.API_WORKSPACE_SERVICES}/{workspace_service_id}",
             headers=headers, json=payload)
 
         enabled = response.json()["workspace_service"]["resourceTemplateParameters"]["enabled"]
@@ -170,7 +170,7 @@ async def test_create_guacamole_service_into_base_workspace(token, verify) -> No
         "workspaceServiceType": "tre-service-guacamole",
         "properties": {
             "display_name": "Guacamole service test",
-            "description": "Guacamole service for E2E test",
+            "description": "Guacamole service for E2E test"
         }
     }
 
