@@ -101,7 +101,7 @@ async def disable_workspace_service(workspace_id, workspace_service_id, token, v
             f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACES}/{workspace_id}/{strings.API_WORKSPACE_SERVICES}/{workspace_service_id}",
             headers=headers, json=payload)
 
-        enabled = response.json()["workspace_service"]["resourceTemplateParameters"]["enabled"]
+        enabled = response.json()["workspaceService"]["resourceTemplateParameters"]["enabled"]
         assert (enabled is False), "The workspace service wasn't disabled"
 
 
