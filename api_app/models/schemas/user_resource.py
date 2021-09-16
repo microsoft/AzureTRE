@@ -76,3 +76,14 @@ class UserResourceIdInResponse(BaseModel):
                 "resourceId": "49a7445c-aae6-41ec-a539-30dfa90ab1ae",
             }
         }
+
+
+class UserResourcePatchEnabled(BaseModel):
+    enabled: bool
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "enabled": False
+            }
+        }

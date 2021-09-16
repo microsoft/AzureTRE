@@ -53,6 +53,7 @@ mixins:
   - exec
   - docker
   - az
+
 install:
   - az:
       description: "az login"
