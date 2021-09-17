@@ -17,4 +17,4 @@ To run the Unit and E2E tests follow the [testing documentation](end-to-end-test
 
 ### Running the TRE API locally
 
-To run the TRE API locally follow the steps noted [here](../azure-tre-overview/composition-service/api.md).
+To run the TRE API locally follow the steps noted [here](api.md).

@@ -43,3 +43,33 @@ contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additio
 This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft trademarks or logos is subject to and must follow [Microsoft's Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 Any use of third-party trademarks or logos are subject to those third-party's policies.
+
+
+## Repository structure
+
+```text
+├── .github
+│   ├── ISSUE_TEMPLATE     - Templates for GitHub issues
+│   ├── linters            - Linter definitions for workflows
+│   └── workflows          - GitHub Actions workflows (CI/CD)
+│
+├── devops
+│   ├── scripts            - DevOps scripts
+│   └── terraform          - Terraform specific DevOps files/scripts for bootstrapping
+│
+├── docs                   - Documentation
+│
+├── e2e_tests              - pytest-based end-to-end tests
+│
+├── api_app                - API source code and docs
+│
+├── resource_processor     - VMSS Porter Runner
+│
+├── scripts                - Utility scripts
+│
+└── templates
+    ├── core/terraform     - Terraform definitions of Azure TRE core resources
+    ├── shared_services    - Terraform definitions of shared services
+    ├── workspace_services - Workspace services
+    └── workspaces         - Workspace templates
+```

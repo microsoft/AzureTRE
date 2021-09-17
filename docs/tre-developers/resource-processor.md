@@ -69,7 +69,7 @@ Resource Processor uses [Porter Azure plugin](https://github.com/getporter/azure
 
 ## Debugging deployed processor on Azure
 
-Check the section **Checking the Virtual Machine Scale Set(VMSS) instance running resource processor** in [debugging and troubleshooting guide](../../tre-admins/troubleshooting-guide.md)
+Check the section **Checking the Virtual Machine Scale Set(VMSS) instance running resource processor** in [debugging and troubleshooting guide](../tre-admins/troubleshooting-guide.md)
 
 ## Network requirements
 

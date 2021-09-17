@@ -5,7 +5,7 @@ This document describes the authentication and authorization (A&A) of deployed A
 
 ## App registrations
 
-App registrations (represented by service principals) define the privileges enabling access to the TRE system (e.g., [API](../../azure-tre-overview/composition-service/api.md)) as well as the workspaces.
+App registrations (represented by service principals) define the privileges enabling access to the TRE system (e.g., [API](../../tre-developers/api.md)) as well as the workspaces.
 
 <!-- markdownlint-disable-next-line MD013 -->
 It is recommended to run the `/scripts/aad-app-reg.sh` script to create the two main app registrations: **TRE API** and **TRE Swagger UI**. This automatically sets up the app registrations with the required permissions to run Azure TRE. The script will create an app password (client secret) for the **TRE API** app; make sure to take note of it in the script output as it is only shown once.
@@ -129,7 +129,7 @@ The end-to-end test should be added to **TRE Administrator** role exposed by the
 Access to workspaces is also controlled using app registrations - one per workspace. The configuration of the app registration depends on the nature of the workspace, but this section covers the typical minimum settings.
 
 !!! caution
-    The app registration for a workspace is not created by the [API](../../azure-tre-overview/composition-service/api.md). One needs to be present (created manually) before using the API to provision a new workspace.
+    The app registration for a workspace is not created by the [API](../../tre-developers/api.md). One needs to be present (created manually) before using the API to provision a new workspace.
 
 #### Authentication - Workspaces
 
