@@ -3,19 +3,32 @@
 # Setup Script
 set -euo pipefail
 
-usage()
+function usage()
 {
-    echo "Usage: $(basename $BASH_SOURCE) -n <app-name> [-r <reply-url>] [-a]" 1>&2
-    echo 1>&2
-    echo 'For example:' 1>&2
-    echo "./$(basename $BASH_SOURCE) -n TRE -r https://mydre.region.cloudapp.azure.com/oidc-redirect" 1>&2
-    echo 1>&2
+    cat << USAGE
+
+Utility script for creating app registrations required by Azure TRE.
+The script will create and configure two app registrations, one for the API and another for Swagger UI.
+You must be logged in using Azure CLI with sufficient privileges to modify Azure Active Directory to run this script.
+
+Usage: $0 -n <app-name> [-r <reply-url>] [-a]
+
+Options:
+    -n      Required. The prefix for the app (registration) names e.g., "TRE".
+    -r      Reply/redirect URL, for the Swagger UI app, where the auth server sends the user after authorization.
+    -a      Optional, but recommended. Grants admin consent for the app registrations, when this flag is set.
+            Requires directory admin privileges to the Azure AD in question.
+
+Example:
+    $0 -n TRE -r https://mydre.region.cloudapp.azure.com/oidc-redirect -a
+
+USAGE
     exit 1
 }
 
 # This function polls looking for an app registration with the given ID.
 # If after the number of retries no app registration is found, the function exits.
-wait_for_new_app_registration()
+function wait_for_new_app_registration()
 {
     appId=$1
     retries=10
@@ -24,7 +37,7 @@ wait_for_new_app_registration()
 
     while [[ -z $objectId && $counter -lt $retries ]]; do
         counter=$((counter+1))
-        echo "Waiting for App Registration with ID ${appId} to show up (${counter}/${retries})..."
+        echo "Waiting for app registration with ID ${appId} to show up (${counter}/${retries})..."
         sleep 5
         objectId=$(az ad app list --filter "appId eq '${appId}'" --query '[0].objectId' --output tsv)
     done
@@ -34,7 +47,7 @@ wait_for_new_app_registration()
         exit 1
     fi
 
-    echo "App Registration with ID ${appId} found"
+    echo "App registration with ID ${appId} found"
 }
 
 if ! command -v az &> /dev/null; then
@@ -80,7 +93,7 @@ fi
 
 declare tenant=$( az rest -m get -u https://graph.microsoft.com/v1.0/domains -o json | jq -r '.value[] | select(.isDefault == true) | .id')
 
-echo "You are about to create App Registrations in the Azure AD Tenant ${tenant}."
+echo "You are about to create app registrations in the Azure AD tenant \"${tenant}\"."
 read -p "Do you want to continue? (y/N) " -n 1 -r
 echo
 if [[ ! $REPLY =~ ^[Yy]$ ]]
@@ -114,11 +127,11 @@ function get_existing_app() {
     return 1
 }
 
-# Is the API app already registered?
 declare existingApiApp=$(get_existing_app "${appName} API")
 
 if [[ -n ${existingApiApp} ]]; then
     apiAppObjectId=$(echo ${existingApiApp} | jq -r '.objectId')
+
     # Get existing ids of roles and scopes.
     userRoleId=$(echo "$existingApiApp" | jq -r '.appRoles[] | select(.value == "TREUser").id')
     adminRoleId=$(echo "$existingApiApp" | jq -r '.appRoles[] | select(.value == "TREAdmin").id')
@@ -234,14 +247,15 @@ declare apiApp=$(jq -c . << JSON
 JSON
 )
 
+# Is the API app already registered?
 if [[ -n ${apiAppObjectId} ]]; then
-    echo "Updating app ${apiAppObjectId}"
+    echo "Updating API app registration with ID ${apiAppObjectId}"
     az rest --method PATCH --uri "${msGraphUri}/applications/${apiAppObjectId}" --headers Content-Type=application/json --body "${apiApp}"
     apiAppId=$(az ad app show --id ${apiAppObjectId} --query "appId" -o tsv)
-    echo "Updated App Registration updated with ID ${apiAppId}"
+    echo "API app registration with ID ${apiAppId} updated"
 else
     apiAppId=$(az rest --method POST --uri "${msGraphUri}/applications" --headers Content-Type=application/json --body "${apiApp}" -o tsv --query "appId")
-    echo "Creating a new App Registration with ID ${apiAppId}"
+    echo "Creating a new API app registration, ${appName} API, with ID ${apiAppId}"
 
     # Poll until the app registration is found in the listing.
     wait_for_new_app_registration $apiAppId
@@ -261,10 +275,10 @@ resetPassword=0
 # If not, create a new service principal
 if [[ -z "$spId" ]]; then
     spId=$(az ad sp create --id ${apiAppId} --query 'objectId' --output tsv)
-    echo "New Service Principal created with ID $spId"
+    echo "New service principal created with ID $spId"
     resetPassword=1
 else
-    echo "Service Principal for the app already exists."
+    echo "Service principal for the app already exists."
     echo "Existing passwords (client secrets) cannot be queried. To view the password it needs to be reset."
     read -p "Do you wish to reset the ${appName} API app password (y/N)? " -n 1 -r
     echo
@@ -280,12 +294,12 @@ if [[ "$resetPassword" == 1 ]]; then
     echo "${appName} API app password (client secret): ${spPassword}"
 fi
 
-# This tag ensures the app is listed in the "Enterprise applications"
+# This tag ensures the app is listed in "Enterprise applications"
 az ad sp update --id $spId --set tags="['WindowsAzureActiveDirectoryIntegratedApp']"
 
 # Grant admin consent on the required resource accesses (Graph API)
 if [[ $grantAdminConsent -eq 1 ]]; then
-    echo "Granting Admin Consent for ${apiAppId}"
+    echo "Granting admin consent for ${appName} API app (${apiAppId}) - NOTE: Directory admin privileges required for this step"
     az ad app permission admin-consent --id ${apiAppId}
 fi
 
@@ -334,19 +348,18 @@ declare swaggerUIApp=$(jq -c . << JSON
 JSON
 )
 
-echo "Register the \"${appName}Swagger UI\" application"
-
-# Is the API app already registered?
+# Is the Swagger UI app already registered?
 declare existingSwaggerUIApp=$(get_existing_app "${appName} Swagger UI")
+
 if [[ -n ${existingSwaggerUIApp} ]]; then
     swaggerUIAppObjectId=$(echo "${existingSwaggerUIApp}" | jq -r '.objectId')
-    echo "Updating app ${swaggerUIAppObjectId}"
+    echo "Updating Swagger UI app with ID ${swaggerUIAppObjectId}"
     az rest --method PATCH --uri "${msGraphUri}/applications/${swaggerUIAppObjectId}" --headers Content-Type=application/json --body "${swaggerUIApp}"
     swaggerAppId=$(az ad app show --id ${swaggerUIAppObjectId} --query "appId" -o tsv)
-    echo "Updated App Registration with ID ${swaggerAppId}"
+    echo "Swagger UI app registration with ID ${swaggerAppId} updated"
 else
     swaggerAppId=$(az rest --method POST --uri "${msGraphUri}/applications" --headers Content-Type=application/json --body "${swaggerUIApp}" -o tsv --query "appId")
-    echo "Creating a new App Registration with ID ${swaggerAppId}"
+    echo "Creating a new app registration, ${appName} Swagger UI, with ID ${swaggerAppId}"
 
     # Poll until the app registration is found in the listing.
     wait_for_new_app_registration $swaggerAppId
@@ -355,18 +368,28 @@ fi
 # Make the current user an owner of the application.
 az ad app owner add --id ${swaggerAppId} --owner-object-id $currentUserId
 
+if [[ -n ${replyUrl} ]]; then
+    echo "Adding reply/redirect URL \"${replyUrl}\" to ${appName} Swagger UI app"
+    az ad app update --id ${swaggerAppId} --reply-urls ${replyUrl} http://localhost:8000/docs/oauth2-redirect
+fi
+
 # See if a service principal already exists
 swaggerSpId=$(az ad sp list --filter "appId eq '${swaggerAppId}'" --query '[0].objectId' --output tsv)
 
 # If not, create a new service principal
 if [[ -z "$swaggerSpId" ]]; then
     swaggerSpId=$(az ad sp create --id ${swaggerAppId} --query 'objectId' --output tsv)
-    echo "New Service Principal created with ID $swaggerSpId"
+    echo "New service principal, ${appName} Swagger UI, created with ID $swaggerSpId"
 fi
 
 # Grant admin consent on the required resources
 if [[ $grantAdminConsent -eq 1 ]]; then
+    echo "Granting admin consent for ${appName} Swagger UI app (${swaggerAppId}) - NOTE: Directory admin privileges required for this step"
     az ad app permission admin-consent --id ${swaggerAppId}
 fi
+
+# Allow public client flow
+echo "Enabling public client flow for ${appName} Swagger UI app"
+az ad app update --id ${swaggerAppId} --set publicClient=true
 
 echo "Done"
