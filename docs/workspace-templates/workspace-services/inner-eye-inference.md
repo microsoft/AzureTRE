@@ -26,7 +26,7 @@ See: [https://github.com/microsoft/InnerEye-Inference](https://github.com/micros
   | `INFERENCE_SP_CLIENT_SECRET` | Service principal client secret used by the inference service to connect to Azure ML. Use the output from the step above. |
 
 1. Build and deploy the InnerEye Inference service
-   
+
   ```cmd
   make porter-build DIR=./templates/workspace_services/innereye_inference
   make porter-install DIR=./templates/workspace_services/innereye_inference
@@ -49,13 +49,14 @@ The workspace service provision an App Service Plan and an App Service for hosti
 1. Navigate to the ml.azure.com, `Datastores` and create a new datastore named `inferencedatastore` and connect it to the newly created container.
 1. The key used for authentication is the `inference_auth_key` provided as an output of the service deployment.
 1. Test the service by sending a GET or POST command using curl or Invoke-WebRequest:
-  - Simple ping:
+   
+   Simple ping:
 
     ```cmd
     Invoke-WebRequest https://yourservicename.azurewebsites.net/v1/ping -Headers @{'Accept' = 'application/json'; 'API_AUTH_SECRET' = 'your-secret-1234-1123445'}
     ```
 
-  - Test connection with AML:
+    Test connection with AML:
   
     ```cmd
     Invoke-WebRequest https://yourservicename.azurewebsites.net/v1/model/start/HelloWorld:1 -Method POST -Headers @{'Accept' = 'application/json'; 'API_AUTH_SECRET' = 'your-secret-1234-1123445'}

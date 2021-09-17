@@ -26,7 +26,7 @@ URLs:
   | `GUACAMOLE_IMAGE_TAG` | Image tag of the Guacamole server |
 
 1. Build and install the Guacamole Service bundle
-   
+
   ```cmd
   make porter-build DIR=./templates/workspace_services/guacamole
   make porter-install DIR=./templates/workspace_services/guacamole

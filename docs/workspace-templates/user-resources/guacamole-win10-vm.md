@@ -24,7 +24,7 @@ Please be aware that the following Firewall rules are opened for the workspace w
   | `PARENT_SERVICE_ID` | The unique identifier of this service parent (a Guacamole service) |
 
 1. Build and install the Guacamole Service bundle
-   
+
   ```cmd
   make porter-build DIR=./templates/workspace_services/guacamole/user_resources/guacamole-azure-win10vm
   make porter-install DIR=./templates/workspace_services/guacamole/user_resources/guacamole-azure-win10vm

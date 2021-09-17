@@ -27,7 +27,7 @@ A service principal needs to be created to authorize CI/CD workflows to provisio
     az ad sp create-for-rbac --name "sp-aztre-core" --role Owner --scopes /subscriptions/<subscription_id> --sdk-auth
     ```
 
-1. Save the JSON output locally - as you will need it later. 
+1. Save the JSON output locally - as you will need it later.
 1. Create a [GitHub secret](https://docs.github.com/en/actions/reference/encrypted-secrets) called `AZURE_CREDENTIALS` with the JSON output.
 
 ## Create app registrations

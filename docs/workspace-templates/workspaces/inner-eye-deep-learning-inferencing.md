@@ -14,7 +14,7 @@ Follow the links to learn more about how to access the services and any firewall
 1. Publish the bundles required for this workspace:
 
   *Base Workspace*
-   
+
   ```cmd
   make porter-build DIR=./templates/workspaces/base
   make porter-publish DIR=./templates/workspaces/base

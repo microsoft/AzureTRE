@@ -83,8 +83,8 @@ The Swagger UI is a public client, so public client flows need to be enabled:
 The **TRE e2e test** app registration is used to authorize end-to-end test scenarios. It has no scopes or app roles defined.
 
 !!! note
-    * This app registration is only needed and used for **testing**
-    * As of writing this, there is no automated way provided for creating the **TRE e2e test** app registration, so it needs to be created manually.
+    - This app registration is only needed and used for **testing**
+    - As of writing this, there is no automated way provided for creating the **TRE e2e test** app registration, so it needs to be created manually.
 
 #### API permissions - TRE e2e test
 

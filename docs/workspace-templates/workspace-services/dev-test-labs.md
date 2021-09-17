@@ -16,7 +16,7 @@ See: [https://azure.microsoft.com/services/devtest-lab/](https://azure.microsoft
   | `WORKSPACE_ID` | The 4 character unique identifier used when deploying the base workspace bundle. |
 
 1. Build and install the Azure DevTest Labs Service bundle
-   
+
   ```cmd
   make porter-build DIR=./templates/workspace_services/devtestlabs
   make porter-install DIR=./templates/workspace_services/devtestlabs
