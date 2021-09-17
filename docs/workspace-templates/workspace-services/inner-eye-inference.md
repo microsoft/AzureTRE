@@ -49,7 +49,7 @@ The workspace service provision an App Service Plan and an App Service for hosti
 1. Navigate to the ml.azure.com, `Datastores` and create a new datastore named `inferencedatastore` and connect it to the newly created container.
 1. The key used for authentication is the `inference_auth_key` provided as an output of the service deployment.
 1. Test the service by sending a GET or POST command using curl or Invoke-WebRequest:
-   
+
    Simple ping:
 
     ```cmd
