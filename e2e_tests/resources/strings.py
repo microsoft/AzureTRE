@@ -12,7 +12,11 @@ DEV_TEST_LABS = "tre-workspace-azureml-devtestlabs"
 INNEREYE_DEEPLEARNING = "tre-workspace-innereye-deeplearning"
 INNEREYE_DEEPLEARNING_INFERENCE = "tre-workspace-innereye-deeplearning-inference"
 
+AZUREML_SERVICE = "tre-service-azureml"
+DEVTESTLABS_SERVICE = "tre-service-devtestlabs"
 GUACAMOLE_SERVICE = "tre-service-guacamole"
+INNEREYE_DEEPLEARNING_SERVICE = "tre-service-innereye-deeplearning"
+INNEREYE_INFERENCE_SERVICE = "tre-service-innereye-inference"
 
 TEST_WORKSPACE_SERVICE_TEMPLATE = "e2e-test-workspace-service"
 

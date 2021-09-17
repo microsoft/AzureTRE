@@ -19,7 +19,11 @@ class InstallFailedException(Exception):
 
 
 workspace_service_templates = [
-    (strings.GUACAMOLE_SERVICE)
+    (strings.AZUREML_SERVICE),
+    (strings.DEVTESTLABS_SERVICE),
+    (strings.GUACAMOLE_SERVICE),
+    (strings.INNEREYE_DEEPLEARNING_SERVICE),
+    (strings.INNEREYE_INFERENCE_SERVICE)
 ]
 
 
@@ -48,11 +52,11 @@ async def delete_service_done(client, workspace_id, workspace_service_id, header
 
 async def check_service_deployment(client, workspace_id, workspace_service_id, headers) -> bool:
     response = await client.get(
-        f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACES}/{workspace_id}/strings.API_WORKSPACE_SERVICES/{workspace_service_id}",
+        f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACES}/{workspace_id}/{strings.API_WORKSPACE_SERVICES}/{workspace_service_id}",
         headers=headers)
     if response.status_code == 200:
-        status = response.json()["workspace_service"]["deployment"]["status"]
-        message = response.json()["workspace_service"]["deployment"]["message"]
+        status = response.json()["workspaceService"]["deployment"]["status"]
+        message = response.json()["workspaceService"]["deployment"]["message"]
         return (status, message)
     elif response.status_code == 404:
         # Seems like the resource got deleted
