@@ -1,8 +1,10 @@
-# Dev environment
+# Setting up your dev environment
 
 The supported development environments for Azure TRE are:
 
-* [Dev container](#dev-container)
+- [Dev container](#dev-container)
+- Local development
+- GitHub Codespaces
 
 ## Prerequisites
 

@@ -1,6 +1,11 @@
 # End-to-end (E2E) tests
 
-To run the E2E tests locally:
+## Prerequisites
+
+1. Authentication and Authorization configuration set up as noted [here](../tre-admins/deploying-the-tre/auth.md)
+1. An Azure Tre deployed environment.
+
+## Running the End-to-End tests locally
 
 1. Navigate to the `e2e_tests` folder: `cd e2e_tests`
 1. Define the following environment variables:

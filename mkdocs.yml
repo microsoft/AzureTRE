@@ -53,8 +53,7 @@ nav:
           - Workflow Deployment: 'tre-admins/deploying-the-tre/workflows.md'
       - Troubleshooting Guide: 'tre-admins/troubleshooting-guide.md'
   - TRE Developers:
-      - Developer Guide: 'tre-developers/developer-guide.md'
-      - Development Environment: 'tre-developers/dev-environment.md'
+      - Dev Environment: 'tre-developers/dev-environment.md'
       - API: 'tre-developers/api.md'
       - Resource Processor: 'tre-developers/resource-processor.md'
       - End to End Tests: 'tre-developers/end-to-end-tests.md'
