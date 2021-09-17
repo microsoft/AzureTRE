@@ -25,6 +25,7 @@ def get_application() -> FastAPI:
         description=config.API_DESCRIPTION,
         version=config.VERSION,
         docs_url="/api/docs",
+        swagger_ui_oauth2_redirect_url="/api/docs/oauth2-redirect",
         swagger_ui_init_oauth={
             "usePkceWithAuthorizationCodeGrant": True,
             "clientId": config.SWAGGER_UI_CLIENT_ID,
