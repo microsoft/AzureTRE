@@ -173,7 +173,7 @@ async def test_create_guacamole_service_into_base_workspace(token, verify) -> No
     # Enable when guacamole deletion bug is fixed
     #############################################
     # service_payload = {
-    #    "workspaceServiceType": "tre-service-azureml",
+    #    "workspaceServiceType": "tre-service-guacamole",
     #    "properties": {
     #        "display_name": "Workspace service test",
     #        "description": "Workspace service for E2E test"
