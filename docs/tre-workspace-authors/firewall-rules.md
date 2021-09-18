@@ -16,7 +16,7 @@ Until a mechanism to update shared services has been implemented, firewall rule 
 
 1. Add the following code to the `firewall.tf` file to enable the TRE firewall and workspace network to be referenced:
 
-    ```hcl
+    ```terraform
     data "azurerm_firewall" "fw" {
         name                = "fw-${var.tre_id}"
         resource_group_name = "rg-${var.tre_id}"
@@ -30,7 +30,7 @@ Until a mechanism to update shared services has been implemented, firewall rule 
 
 1. Define a local variable that contains the locations that access should be allowed to, and the naming format for the service resources for example:
 
-    ```hcl
+    ```terraform
     locals {
         allowed_urls                     = ["*.anaconda.com", "*.anaconda.org"]
         service_resource_name_suffix    = "${var.tre_id}-ws-${var.workspace_id}-svc-${local.service_id}"
@@ -39,7 +39,7 @@ Until a mechanism to update shared services has been implemented, firewall rule 
 
 1. Log into the Azure CLI using service principal details:
 
-    ```hcl
+    ```terraform
     resource "null_resource" "az_login" {
         provisioner "local-exec" {
             command = "az login --identity -u '${var.arm_client_id}'"
@@ -53,7 +53,7 @@ Until a mechanism to update shared services has been implemented, firewall rule 
 
 1. Call the `get_firewall_priorities.sh` script to find the next available priority:
 
-    ```hcl
+    ```terraform
     data "external" "rule_priorities" {
         program = ["bash", "-c", "./get_firewall_priorities.sh"]
 
@@ -97,7 +97,7 @@ Until a mechanism to update shared services has been implemented, firewall rule 
 
 1. Create the firewall rule using a resource similar to the below:
 
-    ```hcl
+    ```terraform
     resource "azurerm_firewall_application_rule_collection" "apprulecollection" {
         name                = "arc-${local.service_resource_name_suffix}"
         azure_firewall_name = data.azurerm_firewall.fw.name

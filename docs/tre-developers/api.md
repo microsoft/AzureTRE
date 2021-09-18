@@ -15,7 +15,7 @@ The TRE API is a service that users can interact with to request changes to work
   * You can use the [Cosmos DB Emulator](https://docs.microsoft.com/azure/cosmos-db/local-emulator?tabs=cli%2Cssl-netstd21) for testing locally
 * [Azure Service Bus](https://docs.microsoft.com/azure/service-bus-messaging/service-bus-messaging-overview)
 * Service principal for the API to access Azure services such as Azure Service Bus
-* AAD applications (for the API and Swagger UI) - see [Authentication & authorization](../../tre-admins/deploying-the-tre/auth.md) for more information
+* AAD applications (for the API and Swagger UI) - see [Authentication & authorization](../tre-admins/deploying-the-tre/auth.md) for more information
 
 #### Creating resources (Bash)
 
@@ -85,16 +85,16 @@ az role assignment create \
 | `TRE_ID` | The Azure TRE instance name - used for deployment of resources (can be set to anything when debugging locally). Example value: `mytre-dev-3142` |
 | `RESOURCE_LOCATION` | The location (region) to deploy resources (e.g., workspaces) to. This can be set to anything as the deployment service is not called locally. Example value: `westeurope` |
 
-### Auth
+### Authentication and Authorization
 
-The TRE API depends on [TRE API](../../tre-admins/deploying-the-tre/auth.md#tre-api) and [TRE Swagger UI](../../tre-admins/deploying-the-tre/auth.md#tre-swagger-ui) app registrations. The API requires the environment variables listed in the table below to be present. See [Authentication and authorization](../../tre-admins/deploying-the-tre/auth.md) for more information.
+The TRE API depends on [TRE API](../tre-admins/deploying-the-tre/auth.md#tre-api) and [TRE Swagger UI](../tre-admins/deploying-the-tre/auth.md#tre-swagger-ui) app registrations. The API requires the environment variables listed in the table below to be present. See [Authentication and authorization](../tre-admins/deploying-the-tre/auth.md) for more information.
 
 | Environment variable name | Description |
 | ------------------------- | ----------- |
 | `AAD_TENANT_ID` | The tenant ID of the Azure AD. |
-| `API_CLIENT_ID` | The application (client) ID of the [TRE API](../../tre-admins/deploying-the-tre/auth.md#tre-api) service principal. |
-| `API_CLIENT_SECRET` | The application password (client secret) of the [TRE API](../../tre-admins/deploying-the-tre/auth.md#tre-api) service principal. |
-| `SWAGGER_UI_CLIENT_ID` | The application (client) ID of the [TRE Swagger UI](../../tre-admins/deploying-the-tre/auth.md#tre-swagger-ui) service principal. |
+| `API_CLIENT_ID` | The application (client) ID of the [TRE API](../tre-admins/deploying-the-tre/auth.md#tre-api) service principal. |
+| `API_CLIENT_SECRET` | The application password (client secret) of the [TRE API](../tre-admins/deploying-the-tre/auth.md#tre-api) service principal. |
+| `SWAGGER_UI_CLIENT_ID` | The application (client) ID of the [TRE Swagger UI](../tre-admins/deploying-the-tre/auth.md#tre-swagger-ui) service principal. |
 
 See also: [Auth in code](#auth-in-code)
 
@@ -132,7 +132,7 @@ See also: [Auth in code](#auth-in-code)
 | `AZURE_CLIENT_ID` |  |
 | `AZURE_CLIENT_SECRET` |  |
 
-## Running API
+## Running the API
 
 ### Develop and run locally
 
@@ -154,7 +154,7 @@ See also: [Auth in code](#auth-in-code)
 
 The API endpoints documentation and the Swagger UI will be available at [https://localhost:8000/docs](https://localhost:8000/docs).
 
-### Develop and run in dev container
+### Develop and run in a dev container
 
 1. Open the project in Visual Studio Code in the DevContainer
 1. Copy `.env.sample` in the **api_app** folder to `.env` and configure the variables
@@ -192,9 +192,7 @@ Run all unit tests with the following command in the root folder of the reposito
 pytest --ignore=e2e_tests
 ```
 
-## Implementation
-
-*API application folder structure.*
+## API application folder structure
 
 ```text
 api_app
@@ -222,7 +220,7 @@ api_app
 └── main.py          - FastAPI application creation and configuration
 ```
 
-### Auth in code
+## Auth in code
 
 The bulk of the authentication and authorization (A&A) related code of the API is located in `/api_app/services/` folder. The A&A code has an abstract base for enabling the possibility to add additional A&A service providers. The Azure Active Directory (AAD) specific implementation is derived as follows:
 
@@ -242,9 +240,9 @@ Where `APIRouter` is part of the [FastAPI](https://fastapi.tiangolo.com/).
 
 The user details, once authenticated, are stored as an instance of the custom `User` class.
 
-## Workspace requests
+## Auth in workspace requests
 
-Some workspace routes require `authConfig` field in the request body. The AAD specific implementation expects a dictionary inside `data` field to contain the application (client) ID of the [app registration associated with workspace](../../tre-admins/deploying-the-tre/auth.md#workspaces):
+Some workspace routes require `authConfig` field in the request body. The AAD specific implementation expects a dictionary inside `data` field to contain the application (client) ID of the [app registration associated with workspace](../tre-admins/deploying-the-tre/auth.md#workspaces):
 
 ```json
 {
