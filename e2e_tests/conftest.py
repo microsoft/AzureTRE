@@ -28,8 +28,7 @@ async def token(verify) -> str:
         payload = f"grant_type=password&resource={config.RESOURCE}&username={config.USERNAME}&password={config.PASSWORD}&scope={config.SCOPE}&client_id={config.CLIENT_ID}"
 
         url = f"https://login.microsoftonline.com/{config.AUTH_TENANT_ID}/oauth2/token"
-        response = await client.post(url,
-                                     headers=headers, data=payload)
+        response = await client.post(url, headers=headers, data=payload)
         token = response.json()["access_token"]
 
         assert token is not None, "Token not returned"

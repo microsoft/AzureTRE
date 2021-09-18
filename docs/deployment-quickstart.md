@@ -37,7 +37,8 @@ Now, let's open the cloned repository in Visual Studio Code and connect to the d
 AzureTRE> code .
 ```
 
-> Visual Studio Code should recognize the available development container and ask you to open the folder using it. For additional details on connecting to remote containers, please see the [Open an existing folder in a container](https://code.visualstudio.com/docs/remote/containers#_quick-start-open-an-existing-folder-in-a-container) quickstart.
+!!! tip
+    Visual Studio Code should recognize the available development container and ask you to open the folder using it. For additional details on connecting to remote containers, please see the [Open an existing folder in a container](https://code.visualstudio.com/docs/remote/containers#_quick-start-open-an-existing-folder-in-a-container) quickstart.
 
 When you start the development container for the first time, the container will be built. This usually takes a few minutes.
 
@@ -49,17 +50,21 @@ The `/devops/.env` file contains configuration variables for the shared manageme
 
 You need to provide values for the following variables:
 
-* `LOCATION` - The Azure region to deploy to
-* `MGMT_RESOURCE_GROUP_NAME` - Resource group name
-* `MGMT_STORAGE_ACCOUNT_NAME` - Storage account name
-* `ACR_NAME` - Container registry name
-* `ARM_SUBSCRIPTION_ID` - Azure subscription id
+| VARIABLE | DESCRIPTION |
+| -- | -- |
+| `LOCATION` | The Azure region to deploy to |
+| `MGMT_RESOURCE_GROUP_NAME` | Resource group name |
+| `MGMT_STORAGE_ACCOUNT_NAME` | Storage account name |
+| `ACR_NAME` | Container registry name |
+| `ARM_SUBSCRIPTION_ID` | Azure subscription id |
 
 Comment out the following variables by starting the line with a hash `#`.
 
-* `ARM_TENANT_ID`
-* `ARM_CLIENT_ID`
-* `ARM_CLIENT_SECRET`
+```cmd
+# ARM_TENANT_ID=...
+# ARM_CLIENT_ID=...
+# ARM_CLIENT_SECRET=...
+```
 
 The rest of the variables can have their default values. You should now have a `.env`file that looks similar to below.
 
@@ -85,7 +90,8 @@ PORTER_OUTPUT_CONTAINER_NAME=porterout
 DEBUG="false"
 ```
 
-> To retrieve your Azure subscription id, you can use the `az` command line interface available in the development container. In the terminal window in Visual Studio Code, type `az login` followed by `az account show` to see your default subscription. Please refer to `az account -help` for further details on how to change your active subscription if desired.
+!!! tip
+    To retrieve your Azure subscription id, you can use the `az` command line interface available in the development container. In the terminal window in Visual Studio Code, type `az login` followed by `az account show` to see your default subscription. Please refer to `az account -help` for further details on how to change your active subscription if desired.
 
 ## Set environment configuration variables of the Azure TRE instance
 
@@ -101,21 +107,25 @@ Use the terminal window in Visual Studio Code to execute the following script fr
 /workspaces/tre> az login
 ```
 
-> note: in case you have several subscriptions and would like to change your default subscription use ```az account set --subscription desired_subscription_id```
+!!! note
+    In case you have several subscriptions and would like to change your default subscription use ```az account set --subscription desired_subscription_id```
 
 ```bash
 /workspaces/tre> ./scripts/aad-app-reg.sh -n aztreqs -r https://aztreqs.westeurope.cloudapp.azure.com/oidc-redirect
 ```
 
-> Note: `aztreqs` is a placeholder for the unique name you have to choose for your Azure TRE instance. Likewise `westeurope` is a placeholder for the location where the resources will be deployed, this should match the value you set on the location variable in the previous step.
+!!! note
+    `aztreqs` is a placeholder for the unique name you have to choose for your Azure TRE instance. Likewise `westeurope` is a placeholder for the location where the resources will be deployed, this should match the value you set on the location variable in the previous step.
 
 With the output from the `add-app-reg.sh` script, you can now provide the required values for the following variables in the `/templates/core/.env` configuration file:
 
-* `TRE_ID` - The identifier for your Azure TRE instance. Will be used for naming Azure resources. Needs to be globally unique and less than 12 characters.
-* `AAD_TENANT_ID` - The Azure AD tenant id
-* `API_CLIENT_ID` - Service principal id for the API
-* `API_CLIENT_SECRET` - Client secret for the API
-* `SWAGGER_UI_CLIENT_ID` - Service principal id for the Swagger (Open API) UI
+| VARIABLE | DESCRIPTION |
+| -- | -- |
+| `TRE_ID` | The identifier for your Azure TRE instance. Will be used for naming Azure resources. Needs to be globally unique and less than 12 characters. |
+| `AAD_TENANT_ID` | The Azure AD tenant id |
+| `API_CLIENT_ID` | Service principal id for the API |
+| `API_CLIENT_SECRET` | Client secret for the API |
+| `SWAGGER_UI_CLIENT_ID` | Service principal id for the Swagger (Open API) UI |
 
 All other variables can have their default values for now. You should now have a `.env` file that looks similar to below.
 
@@ -182,12 +192,12 @@ The expected response is:
 
 ### Using the API docs
 
-Open your browser and navigate to the `/docs` route of the API:  `https://<azure_tre_fqdn>/docs` and click *Try it out* on the operation of choice.
+Open your browser and navigate to the `/api/docs` route of the API:  `https://<azure_tre_fqdn>/api/docs` and click *Try it out* on the operation of choice.
 
 ![Swagger UI](./assets/quickstart_swaggerui.png)
 
 ## Next steps
 
 * Deploy a new workspace for Azure Machine Learning
-* [Enable users to access the Azure TRE instance](./auth.md#enabling-users)
-* [Create a new workspace template](./authoring-workspace-templates.md)
+* [Enable users to access the Azure TRE instance](tre-admins/deploying-the-tre/auth.md#enabling-users)
+* [Create a new workspace template](tre-workspace-authors/authoring-workspace-templates.md)
