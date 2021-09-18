@@ -79,5 +79,5 @@ data "azurerm_app_service" "api_core" {
 }
 
 output "connection_uri" {
-  value = azurerm_app_service.guacamole.default_site_hostname
+  value = "https://${azurerm_app_service.guacamole.default_site_hostname}/guacamole"
 }

@@ -99,9 +99,8 @@ public class ConnectionService {
 
     private JSONArray getVMsFromProjectAPI(final AzureTREAuthenticatedUser user) throws GuacamoleException {
         final JSONArray virtualMachines;
-
-        final String url = String.format("%s/api/workspace-services/%s/user-resources", System.getenv("API_URL"),
-            System.getenv("SERVICE_ID"));
+        final String url = String.format("%s/api/workspaces/%s/workspace-services/%s/user-resources",
+            System.getenv("API_URL"), System.getenv("WORKSPACE_ID"), System.getenv("SERVICE_ID"));
         final var client = HttpClient.newHttpClient();
         final var request = HttpRequest.newBuilder(URI.create(url))
             .header("accept", "application/json")

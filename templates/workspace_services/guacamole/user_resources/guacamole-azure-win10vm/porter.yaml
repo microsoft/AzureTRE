@@ -53,7 +53,7 @@ outputs:
     type: string
     applyTo:
       - install
-  - name: connection_url
+  - name: connection_uri
     type: string
     applyTo:
       - install
@@ -83,7 +83,7 @@ install:
       outputs:
       - name: ip
       - name: hostname
-      - name: connection_url
+      - name: connection_uri
 
 upgrade:
   - exec:
