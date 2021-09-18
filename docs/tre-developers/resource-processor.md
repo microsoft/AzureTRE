@@ -67,9 +67,9 @@ This will trigger receiving of messages, and you can freely debug the code by se
 
 Resource Processor uses [Porter Azure plugin](https://github.com/getporter/azure-plugins) to store Porter data in TRE management storage account. The storage container, named `porter`, is created during the bootstrapping phase of TRE deployment. The `/resource_processor/run.sh` script generates a `config.toml` file in Porter home folder to enable the Azure plugin when the image is started.
 
-## Debugging deployed processor on Azure
+## Debugging the deployed processor on Azure
 
-Check the section **Checking the Virtual Machine Scale Set(VMSS) instance running resource processor** in [debugging and troubleshooting guide](../../tre-admins/troubleshooting-guide.md)
+See the [debugging and troubleshooting guide](../tre-admins/troubleshooting-guide.md)
 
 ## Network requirements
 
