@@ -157,7 +157,7 @@ async def test_getting_templates(template_name, token, verify) -> None:
         assert (response.status_code == status.HTTP_200_OK), f"GET Request for {template_name} creation failed"
 
 
-@pytest.mark.smoke
+@pytest.mark.extended
 @pytest.mark.timeout(3000)
 async def test_create_guacamole_service_into_base_workspace(token, verify) -> None:
     payload = {
@@ -171,10 +171,10 @@ async def test_create_guacamole_service_into_base_workspace(token, verify) -> No
     workspace_id, install_status = await post_workspace_template(payload, token, verify)
 
     service_payload = {
-        "workspaceServiceType": "tre-service-guacamole",
+        "workspaceServiceType": "tre-service-azureml",
         "properties": {
-            "display_name": "Guacamole service test",
-            "description": "Guacamole service for E2E test"
+            "display_name": "Workspace service test",
+            "description": "Workspace service for E2E test"
         }
     }
 
