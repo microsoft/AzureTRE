@@ -3,7 +3,7 @@
 SHELL:=/bin/bash
 ROOTPATH:=$(shell pwd)
 
-all: bootstrap mgmt-deploy build-api-image push-api-image build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image build-gitea-image push-gitea-image tre-deploy
+all: bootstrap mgmt-deploy build-api-image push-api-image build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image build-gitea-image push-gitea-image build-guacamole-image push-guacamole-image tre-deploy
 
 bootstrap:
 	echo -e "\n\e[34m»»» 🧩 \e[96mBootstrap Terraform\e[0m..." \
@@ -46,6 +46,14 @@ build-gitea-image:
 	&& . ./devops/scripts/set_docker_sock_permission.sh \
 	&& docker build -t "$${ACR_NAME}.azurecr.io/microsoft/azuretre/gitea:$${IMAGE_TAG}" -f ./templates/shared_services/gitea/Dockerfile .
 
+build-guacamole-image:
+	echo -e "\n\e[34m»»» 🧩 \e[96mBuilding Guacamole Image\e[0m..." \
+	&& . ./devops/scripts/check_dependencies.sh \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& . ./devops/scripts/set_docker_sock_permission.sh \
+	&& cd ./templates/workspace_services/guacamole/guacamole-server/ \
+	&& docker build -t "$${ACR_NAME}.azurecr.io/microsoft/azuretre/guac-server:$${IMAGE_TAG}" -f ./docker/Dockerfile .
+
 push-resource-processor-vm-porter-image:
 	echo -e "\n\e[34m»»» 🧩 \e[96mPushing Resource Processor Image\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh \
@@ -69,6 +77,14 @@ push-gitea-image:
 	&& . ./devops/scripts/set_docker_sock_permission.sh \
 	&& az acr login -n $${ACR_NAME} \
 	&& docker push "$${ACR_NAME}.azurecr.io/microsoft/azuretre/gitea:$${IMAGE_TAG}"
+
+push-guacamole-image:
+	echo -e "\n\e[34m»»» 🧩 \e[96mPushing Guacamole Image\e[0m..." \
+	&& . ./devops/scripts/check_dependencies.sh \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& . ./devops/scripts/set_docker_sock_permission.sh \
+	&& az acr login -n $${ACR_NAME} \
+	&& docker push "$${ACR_NAME}.azurecr.io/microsoft/azuretre/guac-server:$${IMAGE_TAG}"
 
 tre-deploy:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDeploying TRE\e[0m..." \

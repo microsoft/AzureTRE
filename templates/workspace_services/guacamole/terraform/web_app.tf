@@ -19,7 +19,7 @@ resource "azurerm_app_service" "guacamole" {
   https_only          = true
 
   site_config {
-    linux_fx_version                     = "DOCKER|${data.azurerm_container_registry.mgmt_acr.name}.azurecr.io/${var.image_name}:${var.image_tag}"
+    linux_fx_version                     = "DOCKER|${data.azurerm_container_registry.mgmt_acr.login_server}/microsoft/azuretre/${var.image_name}:${var.image_tag}"
     http2_enabled                        = true
     acr_use_managed_identity_credentials = true
   }
@@ -34,6 +34,7 @@ resource "azurerm_app_service" "guacamole" {
     KEYVAULT_URL = local.kv_url
     API_URL      = local.api_url
     SERVICE_ID   = "${var.tre_resource_id}"
+    WORKSPACE_ID = "${var.workspace_id}"
 
     # Guacmole configuration
     GUAC_DISABLE_COPY     = "${var.guac_disable_copy}"
