@@ -65,7 +65,17 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-        # TODO: Add testing (#817) before this
+      - name: "Test image: guacamole_server"
+        if: (steps.filter.outputs.guacamole_server == 'true' || github.event_name == 'workflow_dispatch')
+        uses: docker/build-push-action@v2
+        with:
+          context: ./templates/workspace_services/guacamole/guacamole-server
+          file: ./templates/workspace_services/guacamole/guacamole-server/docker/Dockerfile
+          outputs: type=local,dest=test-results
+          target: test-results
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
       - name: "Build image: guacamole_server"
         if: (steps.filter.outputs.guacamole_server == 'true' || github.event_name == 'workflow_dispatch')
         uses: docker/build-push-action@v2
