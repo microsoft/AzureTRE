@@ -1,5 +1,7 @@
 # Azure Trusted Research Environment
 
+[Full documentation](https://microsoft.github.io/AzureTRE/)
+
 ## Project Status
 
 The aim is to bring together learnings from past customer engagements where TREs have been built into a single reference solution. This is a solution accelerator aiming to be a great starting point for a customized TRE solution. You're encouraged to download and customize the solution to meet your requirements
@@ -17,10 +19,6 @@ Trusted Research Environments (TREs) enforce a secure boundary around distinct w
 Workspaces can be configured with a variety of tools to enable tasks such as the development of machine learning models, data engineering, data analysis, and software development. Authorized users should be able to deploy and configure their tools without a dependency on IT teams.
 
 A successful Trusted Research Environments enables users to be as productive, if not more productive than they would be working in environments without strict information governance controls.
-
-## Documentation
-
-See [Index](./docs/index.md) to get started.
 
 ## Support
 
