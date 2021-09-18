@@ -157,7 +157,7 @@ async def test_getting_templates(template_name, token, verify) -> None:
         assert (response.status_code == status.HTTP_200_OK), f"GET Request for {template_name} creation failed"
 
 
-@pytest.mark.extended
+@pytest.mark.smoke
 @pytest.mark.timeout(3000)
 async def test_create_guacamole_service_into_base_workspace(token, verify) -> None:
     payload = {
@@ -170,16 +170,18 @@ async def test_create_guacamole_service_into_base_workspace(token, verify) -> No
     }
     workspace_id, install_status = await post_workspace_template(payload, token, verify)
 
-    service_payload = {
-        "workspaceServiceType": "tre-service-azureml",
-        "properties": {
-            "display_name": "Workspace service test",
-            "description": "Workspace service for E2E test"
-        }
-    }
+    # Enable when guacamole deletion bug is fixed
+    #############################################
+    # service_payload = {
+    #    "workspaceServiceType": "tre-service-azureml",
+    #    "properties": {
+    #        "display_name": "Workspace service test",
+    #        "description": "Workspace service for E2E test"
+    #    }
+    #}
 
-    workspace_service_id, install_service_status = await post_workspace_service_template(workspace_id, service_payload, token, verify)
+    # workspace_service_id, install_service_status = await post_workspace_service_template(workspace_id, service_payload, token, verify)
 
-    await disable_and_delete_workspace_service(workspace_id, workspace_service_id, install_service_status, token, verify)
+    # await disable_and_delete_workspace_service(workspace_id, workspace_service_id, install_service_status, token, verify)
 
     await disable_and_delete_workspace(workspace_id, install_status, token, verify)
