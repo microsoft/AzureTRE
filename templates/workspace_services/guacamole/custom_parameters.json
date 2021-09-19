@@ -1,88 +1,52 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema",
-    "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/guacamole/custom_parameters.json",
-    "type": "object",
-    "title": "Guacamole service template",
-    "description": "Guacamole service template",
-    "required": [
-    ],
-    "properties": {
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/guacamole/custom_parameters.json",
+  "type": "object",
+  "title": "Guacamole service template",
+  "description": "Guacamole service template",
+  "required": [],
+  "properties": {
+    "guac_disable_copy": {
+      "$id": "#/properties/guac_disable_copy",
+      "type": "boolean",
+      "title": "Disable 'Copy'",
+      "description": "Disable Copy functionality"
+    },
+    "guac_disable_paste": {
+      "$id": "#/properties/guac_disable_paste",
+      "type": "boolean",
+      "title": "Disable 'Paste'",
+      "description": "Disable Paste functionality"
+    },
+    "guac_enable_drive": {
+      "$id": "#/properties/guac_enable_drive",
+      "type": "boolean",
+      "title": "Enable Drive",
+      "description": "Enable mounted drive"
+    },
+    "guac_drive_name": {
+      "$id": "#/properties/guac_drive_name",
+      "type": "string",
+      "title": "Mounted drive's name",
+      "description": "The name of the mounted drive"
+    },
+    "guac_drive_path": {
+      "$id": "#/properties/guac_drive_path",
+      "type": "string",
+      "title": "Drive's path",
+      "description": "The mount path, e.g. (/guac-transfer)"
+    },
+    "guac_disable_download": {
+      "$id": "#/properties/guac_disable_download",
+      "type": "boolean",
+      "title": "Disable files download",
+      "description": "Disable files download"
+    },
+    "is_exposed_externally": {
+      "$id": "#/properties/is_exposed_externally",
+      "type": "boolean",
+      "title": "Expose externally",
+      "description": "Is the Guacamole service exposed outside of the vnet"
     }
+  }
 }
-
-/*
-- name: workspace_id
-    type: string
-  - name: tre_id
-    type: string
-  - name: image_name
-    type: string
-    default: "guac-server"
-    description: "The name of the guacamole image"
-  - name: image_tag
-    type: string
-    default: "v0.1.0"
-    description: "The tag of the guacamole image"
-  - name: mgmt_acr_name
-    type: string
-    env: mgmt_acr_name
-    description: "The devops ACR name"
-  - name: mgmt_resource_group_name
-    type: string
-    description: "Resource group containing the devops ACR"
-    env: MGMT_RESOURCE_GROUP_NAME
-  - name: guac_disable_copy
-    type: boolean
-    default: true
-    env: GUAC_DISABLE_COPY
-    description: "Guacamole disable copy configuration"
-  - name: guac_disable_paste
-    type: boolean
-    default: false
-    env: GUAC_DISABLE_PASTE
-    description: "Guacamole disable paste configuration"
-  - name: guac_enable_drive
-    type: boolean
-    default: true
-    env: GUAC_ENABLE_DRIVE
-    description: "Guacamole enable drive configuration"
-  - name: guac_drive_name
-    type: string
-    default: "transfer"
-    env: GUAC_DRIVE_NAME
-    description: "Guacamole drive name configuration"
-  - name: guac_drive_path
-    type: string
-    default: "/guac-transfer"
-    env: GUAC_DRIVE_PATH
-    description: "Guacamole drive path configuration"
-  - name: guac_disable_download
-    type: boolean
-    default: true
-    env: GUAC_DISABLE_DOWNLOAD
-    description:  "Guacamole disable download configuration"
-  - name: is_exposed_externally
-    type: boolean
-    default: false
-    env: IS_EXPOSED_EXTERNALLY
-    description: "Determines if the web app will be available over public/internet or private networks"
-  # the following are added automatically by the resource processor
-  - name: id
-    type: string
-    description: "An Id for this installation"
-    env: id
-  - name: tfstate_resource_group_name
-    type: string
-    description: "Resource group containing the Terraform state storage account"
-  - name: tfstate_storage_account_name
-    type: string
-    description: "The name of the Terraform state storage account"
-  - name: tfstate_container_name
-    env: tfstate_container_name
-    type: string
-    default: "tfstate"
-    description: "The name of the Terraform state storage container"
-  - name: arm_use_msi
-    env: ARM_USE_MSI
-    default: false
-*/
