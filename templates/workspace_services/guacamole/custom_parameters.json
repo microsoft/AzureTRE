@@ -9,3 +9,80 @@
     "properties": {
     }
 }
+
+/*
+- name: workspace_id
+    type: string
+  - name: tre_id
+    type: string
+  - name: image_name
+    type: string
+    default: "guac-server"
+    description: "The name of the guacamole image"
+  - name: image_tag
+    type: string
+    default: "v0.1.0"
+    description: "The tag of the guacamole image"
+  - name: mgmt_acr_name
+    type: string
+    env: mgmt_acr_name
+    description: "The devops ACR name"
+  - name: mgmt_resource_group_name
+    type: string
+    description: "Resource group containing the devops ACR"
+    env: MGMT_RESOURCE_GROUP_NAME
+  - name: guac_disable_copy
+    type: boolean
+    default: true
+    env: GUAC_DISABLE_COPY
+    description: "Guacamole disable copy configuration"
+  - name: guac_disable_paste
+    type: boolean
+    default: false
+    env: GUAC_DISABLE_PASTE
+    description: "Guacamole disable paste configuration"
+  - name: guac_enable_drive
+    type: boolean
+    default: true
+    env: GUAC_ENABLE_DRIVE
+    description: "Guacamole enable drive configuration"
+  - name: guac_drive_name
+    type: string
+    default: "transfer"
+    env: GUAC_DRIVE_NAME
+    description: "Guacamole drive name configuration"
+  - name: guac_drive_path
+    type: string
+    default: "/guac-transfer"
+    env: GUAC_DRIVE_PATH
+    description: "Guacamole drive path configuration"
+  - name: guac_disable_download
+    type: boolean
+    default: true
+    env: GUAC_DISABLE_DOWNLOAD
+    description:  "Guacamole disable download configuration"
+  - name: is_exposed_externally
+    type: boolean
+    default: false
+    env: IS_EXPOSED_EXTERNALLY
+    description: "Determines if the web app will be available over public/internet or private networks"
+  # the following are added automatically by the resource processor
+  - name: id
+    type: string
+    description: "An Id for this installation"
+    env: id
+  - name: tfstate_resource_group_name
+    type: string
+    description: "Resource group containing the Terraform state storage account"
+  - name: tfstate_storage_account_name
+    type: string
+    description: "The name of the Terraform state storage account"
+  - name: tfstate_container_name
+    env: tfstate_container_name
+    type: string
+    default: "tfstate"
+    description: "The name of the Terraform state storage container"
+  - name: arm_use_msi
+    env: ARM_USE_MSI
+    default: false
+*/
