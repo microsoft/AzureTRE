@@ -91,7 +91,7 @@ if [[ $(az account list --only-show-errors -o json | jq 'length') -eq 0 ]]; then
     exit 1
 fi
 
-declare tenant=$( az rest -m get -u https://graph.microsoft.com/v1.0/domains -o json | jq -r '.value[] | select(.isDefault == true) | .id')
+declare tenant=$(az rest -m get -u https://graph.microsoft.com/v1.0/domains -o json | jq -r '.value[] | select(.isDefault == true) | .id')
 
 echo "You are about to create app registrations in the Azure AD tenant \"${tenant}\"."
 read -p "Do you want to continue? (y/N) " -n 1 -r
@@ -393,3 +393,14 @@ echo "Enabling public client flow for ${appName} Swagger UI app"
 az ad app update --id ${swaggerAppId} --set publicClient=true
 
 echo "Done"
+
+# Output the variables for .env files
+cat << ENV_VARS
+
+Variables:
+
+AAD_TENANT_ID=$(az account show | jq -r '.tenantId')
+API_CLIENT_ID=${apiAppId}
+API_CLIENT_SECRET=${spPassword}
+SWAGGER_UI_CLIENT_ID=${swaggerAppId}
+ENV_VARS
