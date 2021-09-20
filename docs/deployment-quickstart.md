@@ -111,13 +111,13 @@ Use the terminal window in Visual Studio Code to execute the following script fr
     In case you have several subscriptions and would like to change your default subscription use ```az account set --subscription desired_subscription_id```
 
 ```bash
-/workspaces/tre> ./scripts/aad-app-reg.sh -n aztreqs -r https://aztreqs.westeurope.cloudapp.azure.com/oidc-redirect
+/workspaces/tre> ./scripts/aad-app-reg.sh -n aztreqs -r https://aztreqs.westeurope.cloudapp.azure.com/oidc-redirect -a
 ```
 
 !!! note
     `aztreqs` is a placeholder for the unique name you have to choose for your Azure TRE instance. Likewise `westeurope` is a placeholder for the location where the resources will be deployed, this should match the value you set on the location variable in the previous step.
 
-With the output from the `add-app-reg.sh` script, you can now provide the required values for the following variables in the `/templates/core/.env` configuration file:
+With the output from the `aad-app-reg.sh` script, you can now provide the required values for the following variables in the `/templates/core/.env` configuration file:
 
 | VARIABLE | DESCRIPTION |
 | -- | -- |
