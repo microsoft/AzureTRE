@@ -60,6 +60,7 @@ jobs:
           make bootstrap
           make mgmt-deploy
 
+
   deploy_tre:
     name: Deploy TRE
     needs: deploy_mgmt_infra
