@@ -3,8 +3,6 @@
 data "azurerm_firewall" "fw" {
   name                = "fw-${var.tre_id}"
   resource_group_name = "rg-${var.tre_id}"
-
-
 }
 
 resource "null_resource" "az_login" {
@@ -29,8 +27,6 @@ data "external" "rule_priorities" {
   ]
 }
 
-
-
 resource "azurerm_firewall_network_rule_collection" "networkrulecollection" {
   name                = "nrc-${local.service_resource_name_suffix}"
   azure_firewall_name = data.azurerm_firewall.fw.name
@@ -43,12 +39,11 @@ resource "azurerm_firewall_network_rule_collection" "networkrulecollection" {
 
     source_addresses = data.azurerm_virtual_network.ws.address_space
 
-
     destination_ports = [
       "*"
     ]
 
-    destination_addresses = [ "AzureActiveDirectory"]
+    destination_addresses = ["AzureActiveDirectory"]
     protocols = [
       "TCP"
     ]

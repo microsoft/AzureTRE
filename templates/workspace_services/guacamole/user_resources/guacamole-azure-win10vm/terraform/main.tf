@@ -38,7 +38,7 @@ data "azurerm_subnet" "services" {
 }
 
 data "azurerm_key_vault" "kv" {
-  name                = "kv-guac-${var.tre_id}-${local.short_workspace_id}"
+  name                = "kv-${var.tre_id}-${local.short_workspace_id}-${local.short_parent_id}"
   resource_group_name = data.azurerm_resource_group.ws.name
 }
 
