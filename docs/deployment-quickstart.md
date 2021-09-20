@@ -122,10 +122,10 @@ With the output from the `add-app-reg.sh` script, you can now provide the requir
 | VARIABLE | DESCRIPTION |
 | -- | -- |
 | `TRE_ID` | The identifier for your Azure TRE instance. Will be used for naming Azure resources. Needs to be globally unique and less than 12 characters. |
-| `AAD_TENANT_ID` | The Azure AD tenant id |
-| `API_CLIENT_ID` | Service principal id for the API |
-| `API_CLIENT_SECRET` | Client secret for the API |
-| `SWAGGER_UI_CLIENT_ID` | Service principal id for the Swagger (Open API) UI |
+| `AAD_TENANT_ID` | The Azure AD Tenant ID |
+| `API_CLIENT_ID` | API application (client) ID |
+| `API_CLIENT_SECRET` | API application client secret |
+| `SWAGGER_UI_CLIENT_ID` | Swagger (OpenAPI) UI application (client) ID |
 
 All other variables can have their default values for now. You should now have a `.env` file that looks similar to below.
 
