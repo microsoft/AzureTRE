@@ -18,14 +18,14 @@ def no_database():
 
 def override_get_user():
     from models.domain.authentication import User
-    return User(id="1234", name="test", email="test", roles=[""], roleAssignments={"ab123": "ab124"})
+    return User(id="1234", name="test", email="test", roles=[""], roleAssignments=[("ab123", "ab124")])
 
 
 @pytest.fixture(scope='module')
 def admin_user():
     def inner():
         from models.domain.authentication import User
-        return User(id="1234", name="test", email="test", roles=["TREAdmin"], roleAssignments={"ab123": "ab124"})
+        return User(id="1234", name="test", email="test", roles=["TREAdmin"], roleAssignments=[("ab123", "ab124")])
     return inner
 
 
@@ -33,7 +33,7 @@ def admin_user():
 def non_admin_user():
     def inner():
         from models.domain.authentication import User
-        return User(id="1234", name="test", email="test", roles=[], roleAssignments={"ab123": "ab124"})
+        return User(id="1234", name="test", email="test", roles=[], roleAssignments=[("ab123", "ab124")])
     return inner
 
 

@@ -1,10 +1,11 @@
 import logging
+from typing import List
 
 import requests
 from msal import ConfidentialClientApplication
 
 from core import config
-from models.domain.authentication import User
+from models.domain.authentication import User, RoleAssignment
 from models.domain.workspace import Workspace, WorkspaceRole
 from resources import strings
 from services.access_service import AccessService, AuthConfigValidationError
@@ -73,14 +74,14 @@ class AADAccessService(AccessService):
 
         return auth_info
 
-    def get_user_role_assignments(self, user_id: str) -> dict:
+    def get_user_role_assignments(self, user_id: str) -> List[RoleAssignment]:
         graph_data = self._get_role_assignment_graph_data(user_id)
 
         if 'value' not in graph_data:
             logging.debug(graph_data)
             raise AuthConfigValidationError(f"{strings.ACCESS_UNABLE_TO_GET_ROLE_ASSIGNMENTS_FOR_USER} {user_id}")
 
-        return {role_assignment['resourceId']: role_assignment['appRoleId'] for role_assignment in graph_data['value']}
+        return [RoleAssignment(role_assignment['resourceId'], role_assignment['appRoleId']) for role_assignment in graph_data['value']]
 
     @staticmethod
     def get_workspace_role(user: User, workspace: Workspace) -> WorkspaceRole:
@@ -93,9 +94,8 @@ class AADAccessService(AccessService):
         if 'WorkspaceOwner' not in workspace_roles or 'WorkspaceResearcher' not in workspace_roles:
             raise AuthConfigValidationError(strings.AUTH_CONFIGURATION_NOT_AVAILABLE_FOR_WORKSPACE)
 
-        if workspace_sp_id in user.roleAssignments:
-            if workspace_roles['WorkspaceOwner'] == user.roleAssignments[workspace_sp_id]:
-                return WorkspaceRole.Owner
-            if workspace_roles['WorkspaceResearcher'] == user.roleAssignments[workspace_sp_id]:
-                return WorkspaceRole.Researcher
+        if RoleAssignment(resource_id=workspace_sp_id, role_id=workspace_roles['WorkspaceOwner']) in user.roleAssignments:
+            return WorkspaceRole.Owner
+        if RoleAssignment(resource_id=workspace_sp_id, role_id=workspace_roles['WorkspaceResearcher']) in user.roleAssignments:
+            return WorkspaceRole.Researcher
         return WorkspaceRole.NoRole
