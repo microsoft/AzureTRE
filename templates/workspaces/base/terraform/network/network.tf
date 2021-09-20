@@ -94,6 +94,11 @@ resource "azurerm_subnet_network_security_group_association" "services" {
   subnet_id                 = azurerm_subnet.services.id
 }
 
+resource "azurerm_subnet_network_security_group_association" "webapps" {
+  network_security_group_id = azurerm_network_security_group.ws.id
+  subnet_id                 = azurerm_subnet.webapps.id
+}
+
 resource "azurerm_network_security_rule" "deny-outbound-override" {
   access                      = "Deny"
   destination_address_prefix  = "*"
@@ -253,6 +258,11 @@ data "azurerm_route_table" "rt" {
 resource "azurerm_subnet_route_table_association" "rt_services_subnet_association" {
   route_table_id = data.azurerm_route_table.rt.id
   subnet_id      = azurerm_subnet.services.id
+}
+
+resource "azurerm_subnet_route_table_association" "rt_webapps_subnet_association" {
+  route_table_id = data.azurerm_route_table.rt.id
+  subnet_id      = azurerm_subnet.webapps.id
 }
 
 data "azurerm_private_dns_zone" "azurewebsites" {
