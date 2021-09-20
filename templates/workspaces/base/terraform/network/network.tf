@@ -281,3 +281,21 @@ resource "azurerm_private_dns_zone_virtual_network_link" "azurewebsites" {
 
   lifecycle { ignore_changes = [tags] }
 }
+
+data "azurerm_private_dns_zone" "keyvault" {
+  name                = "privatelink.vaultcore.azure.net"
+  resource_group_name = var.core_resource_group_name
+
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "keyvault" {
+  resource_group_name   = var.core_resource_group_name
+  virtual_network_id    = azurerm_virtual_network.ws.id
+  private_dns_zone_name = data.azurerm_private_dns_zone.keyvault.name
+
+  name                 = "keyvault-link-${azurerm_virtual_network.ws.name}"
+  registration_enabled = false
+
+  lifecycle { ignore_changes = [tags] }
+}
+
