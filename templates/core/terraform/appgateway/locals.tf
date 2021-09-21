@@ -3,7 +3,7 @@ locals {
 
   staticweb_backend_pool_name = "beap-staticweb"
   api_backend_pool_name       = "beap-api"
-  nexus_backend_pool_name       = "beap-nexus"
+  nexus_backend_pool_name     = "beap-nexus"
   app_path_map_name           = "upm-application"
   redirect_path_map_name      = "upm-redirect"
 
