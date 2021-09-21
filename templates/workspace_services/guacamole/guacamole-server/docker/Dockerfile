@@ -4,6 +4,8 @@ COPY ./guacamole-auth-azure/pom.xml pom.xml
 COPY ./guacamole-auth-azure/src src
 RUN mvn package
 
+FROM scratch as test-results
+COPY --from=client_build /target/surefire-reports/*.xml ./
 
 FROM guacamole/guacd:1.3.0
 

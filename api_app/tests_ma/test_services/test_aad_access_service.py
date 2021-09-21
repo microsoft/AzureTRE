@@ -1,7 +1,7 @@
 import pytest
 from mock import patch
 
-from models.domain.authentication import User
+from models.domain.authentication import User, RoleAssignment
 from models.domain.workspace import Workspace, WorkspaceRole
 from services.aad_access_service import AADAccessService
 from services.access_service import AuthConfigValidationError
@@ -61,22 +61,22 @@ def test_extract_workspace__returns_sp_id_and_roles(get_app_sp_graph_data_mock):
 @pytest.mark.parametrize('user, workspace, expected_role',
                          [
                              # user not a member of the workspace app
-                             (User(roleAssignments={'abc123': 'abc124'}, id='123', name="test", email="t@t.com"),
+                             (User(roleAssignments=[RoleAssignment(resource_id="ab123", role_id="ab124")], id='123', name="test", email="t@t.com"),
                               Workspace(authInformation={'sp_id': 'abc127', 'roles': {'WorkspaceOwner': 'abc128', 'WorkspaceResearcher': 'abc129'}},
                                         id='abc', resourceTemplateName='template-name', resourceTemplateVersion='0.1.0'),
                               WorkspaceRole.NoRole),
                              # user is member of the workspace app but not in role
-                             (User(roleAssignments={'abc127': 'abc124'}, id='123', name="test", email="t@t.com"),
+                             (User(roleAssignments=[RoleAssignment(resource_id="ab127", role_id="ab124")], id='123', name="test", email="t@t.com"),
                               Workspace(authInformation={'sp_id': 'abc127', 'roles': {'WorkspaceOwner': 'abc128', 'WorkspaceResearcher': 'abc129'}},
                                         id='abc', resourceTemplateName='template-name', resourceTemplateVersion='0.1.0'),
                               WorkspaceRole.NoRole),
                              # user has owner role in workspace
-                             (User(roleAssignments={'abc127': 'abc128'}, id='123', name="test", email="t@t.com"),
+                             (User(roleAssignments=[RoleAssignment(resource_id="abc127", role_id="abc128")], id='123', name="test", email="t@t.com"),
                               Workspace(authInformation={'sp_id': 'abc127', 'roles': {'WorkspaceOwner': 'abc128', 'WorkspaceResearcher': 'abc129'}},
                                         id='abc', resourceTemplateName='template-name', resourceTemplateVersion='0.1.0'),
                               WorkspaceRole.Owner),
                              # user has researcher role in workspace
-                             (User(roleAssignments={'abc127': 'abc129'}, id='123', name="test", email="t@t.com"),
+                             (User(roleAssignments=[RoleAssignment(resource_id="abc127", role_id="abc129")], id='123', name="test", email="t@t.com"),
                               Workspace(authInformation={'sp_id': 'abc127', 'roles': {'WorkspaceOwner': 'abc128', 'WorkspaceResearcher': 'abc129'}},
                                         id='abc', resourceTemplateName='template-name', resourceTemplateVersion='0.1.0'),
                               WorkspaceRole.Researcher)
@@ -92,7 +92,7 @@ def test_get_workspace_role_returns_correct_owner(user: User, workspace: Workspa
 def test_raises_auth_config_error_if_workspace_auth_config_is_not_set():
     access_service = AADAccessService()
 
-    user = User(id='123', name="test", email="t@t.com", roleAssignments={'abc123': 'abc124'})
+    user = User(id='123', name="test", email="t@t.com", roleAssignments=[("ab123", "ab124")])
     workspace_with_no_auth_config = Workspace(id='abc', resourceTemplateName='template-name', resourceTemplateVersion='0.1.0')
 
     with pytest.raises(AuthConfigValidationError):
@@ -102,7 +102,7 @@ def test_raises_auth_config_error_if_workspace_auth_config_is_not_set():
 def test_raises_auth_config_error_if_auth_info_has_incorrect_roles():
     access_service = AADAccessService()
 
-    user = User(id='123', name="test", email="t@t.com", roleAssignments={'abc123': 'abc124'})
+    user = User(id='123', name="test", email="t@t.com", roleAssignments=[("ab123", "ab124")])
     workspace_with_auth_info_but_no_roles = Workspace(
         id='abc',
         resourceTemplateName='template-name',

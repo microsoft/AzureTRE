@@ -37,13 +37,10 @@ markdown_extensions:
 
 nav:
   - Azure TRE Overview:
-      - Concepts: 'azure-tre-overview/concepts.md'
+      - Concepts: 'index.md'
       - User Roles: 'azure-tre-overview/user-roles.md'
       - Architecture: 'azure-tre-overview/architecture.md'
       - Network Architecture: 'azure-tre-overview/networking.md'
-      - Composition Service:
-          - API: 'azure-tre-overview/composition-service/api.md'
-          - Resource Processor: 'azure-tre-overview/composition-service/resource-processor.md'
       - Shared Services:
           - Gitea (Source Mirror): 'azure-tre-overview/shared-services/gitea.md'
           - Nexus (Package Mirror): 'azure-tre-overview/shared-services/nexus.md'
@@ -56,8 +53,9 @@ nav:
           - Workflow Deployment: 'tre-admins/deploying-the-tre/workflows.md'
       - Troubleshooting Guide: 'tre-admins/troubleshooting-guide.md'
   - TRE Developers:
-      - Developer Guide: 'tre-developers/developer-guide.md'
-      - Development Environment: 'tre-developers/dev-environment.md'
+      - Dev Environment: 'tre-developers/dev-environment.md'
+      - API: 'tre-developers/api.md'
+      - Resource Processor: 'tre-developers/resource-processor.md'
       - End to End Tests: 'tre-developers/end-to-end-tests.md'
   - TRE Workspace Authors:
       - Authoring Workspace Templates: 'tre-workspace-authors/authoring-workspace-templates.md'
