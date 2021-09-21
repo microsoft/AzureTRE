@@ -76,6 +76,11 @@ resource "azurerm_application_gateway" "agw" {
     fqdns = [var.api_fqdn]
   }
 
+  backend_address_pool {
+    name  = local.nexus_backend_pool_name
+    fqdns = [var.nexus_fqdn]
+  }
+
   # Backend settings for api.
   # Using custom probe to test specific health endpoint
   backend_http_settings {
@@ -86,6 +91,17 @@ resource "azurerm_application_gateway" "agw" {
     request_timeout                     = 60
     pick_host_name_from_backend_address = true
     probe_name                          = local.api_probe_name
+  }
+
+  backend_http_settings {
+    name                                = local.nexus_http_setting_name
+    cookie_based_affinity               = "Disabled"
+    port                                = 443
+    protocol                            = "Https"
+    request_timeout                     = 60
+    pick_host_name_from_backend_address = true
+    probe_name                          = local.nexus_probe_name
+    path                                = "/"
   }
 
   # Backend settings for static web.
@@ -106,6 +122,16 @@ resource "azurerm_application_gateway" "agw" {
     interval                                  = 15
     protocol                                  = "Https"
     path                                      = "/api/health"
+    timeout                                   = "30"
+    unhealthy_threshold                       = "3"
+  }
+
+  probe {
+    name                                      = local.nexus_probe_name
+    pick_host_name_from_backend_http_settings = true
+    interval                                  = 15
+    protocol                                  = "Https"
+    path                                      = "/"
     timeout                                   = "30"
     unhealthy_threshold                       = "3"
   }
@@ -153,6 +179,13 @@ resource "azurerm_application_gateway" "agw" {
       paths                      = ["/api/*", "/api/docs", "/openapi.json", "/api/docs/oauth2-redirect"]
       backend_address_pool_name  = local.api_backend_pool_name
       backend_http_settings_name = local.api_http_setting_name
+    }
+
+    path_rule {
+      name                       = "nexus"
+      paths                      = ["/nexus*"]
+      backend_address_pool_name  = local.nexus_backend_pool_name
+      backend_http_settings_name = local.nexus_http_setting_name
     }
   }
 
