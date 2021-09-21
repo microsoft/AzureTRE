@@ -206,7 +206,7 @@ jobs:
             ("workspace_service") TRE_GET_PATH="api/workspace-service-templates" ;;
           esac
 
-          # Check if base template is already registered
+          # Check if template is already registered
           STATUS_CODE=$(curl -X "GET" "${TRE_URL}/${TRE_GET_PATH}/${TEMPLATE_NAME}" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
 
           if [[ ${STATUS_CODE} == 404 ]]
