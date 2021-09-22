@@ -21,7 +21,7 @@ resource "azurerm_app_service" "nexus" {
     remote_debugging_enabled    = false
     scm_use_main_ip_restriction = true
 
-    # always_on       = true
+    always_on       = true
     min_tls_version = "1.2"
 
     ip_restriction {
