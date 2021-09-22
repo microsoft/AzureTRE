@@ -3,7 +3,7 @@
 SHELL:=/bin/bash
 ROOTPATH:=$(shell pwd)
 
-all: bootstrap mgmt-deploy build-api-image push-api-image build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image build-gitea-image push-gitea-image build-guacamole-image push-guacamole-image tre-deploy
+all: bootstrap mgmt-deploy build-api-image push-api-image build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image build-gitea-image push-gitea-image build-guacamole-image push-guacamole-image tre-deploy config-nexus
 
 bootstrap:
 	echo -e "\n\e[34m»»» 🧩 \e[96mBootstrap Terraform\e[0m..." \
@@ -179,3 +179,9 @@ register-bundle:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& cd ${DIR} \
 	&& ${ROOTPATH}/devops/scripts/publish_register_bundle.sh --acr-name $${ACR_NAME} --bundle-type $${BUNDLE_TYPE} --current --insecure --tre_url $${TRE_URL} --access-token $${TOKEN}
+
+config-nexus:
+	echo -e "\n\e[34m»»» 🧩 \e[96mConfiguring Nexus\e[0m..." \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
+	&& cd ${ROOTPATH}/templates/shared_services/sonatype-nexus/nexus_conf && ./configure_nexus.sh 
