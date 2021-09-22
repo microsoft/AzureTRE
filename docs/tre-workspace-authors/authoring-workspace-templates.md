@@ -108,17 +108,6 @@ The mandatory parameters for User Resources are:
 | `tre_id` | string | Unique ID of for the TRE instance. | `tre-dev-42` |
 | `workspace_id` | string | Unique 4-character long, alphanumeric workspace ID. | `0a9e` |
 
-## Supported Porter mixins
-
-The deployment runner of Azure TRE supports the following [Porter mixins](https://porter.sh/mixins/):
-
-* [exec](https://porter.sh/mixins/exec/)
-* [az](https://github.com/getporter/az-mixin)
-* [arm](https://porter.sh/mixins/arm/)
-* [terraform](https://github.com/getporter/terraform-mixin)
-
-To add support for additional mixins including custom ones, the TRE Porter installation script `/devops/scripts/install_porter.sh` needs to be modified.
-
 ## Versioning
 
 Workspace versions are the bundle versions specified in [the metadata](https://porter.sh/author-bundles/#bundle-metadata). The bundle versions should match the image tags in the container registry (see [Publishing workspace bundle](#publishing-workspace-bundle)).
