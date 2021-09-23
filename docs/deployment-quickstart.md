@@ -111,21 +111,21 @@ Use the terminal window in Visual Studio Code to execute the following script fr
     In case you have several subscriptions and would like to change your default subscription use ```az account set --subscription desired_subscription_id```
 
 ```bash
-/workspaces/tre> ./scripts/aad-app-reg.sh -n aztreqs -r https://aztreqs.westeurope.cloudapp.azure.com/oidc-redirect
+/workspaces/tre> ./scripts/aad-app-reg.sh -n aztreqs -r https://aztreqs.westeurope.cloudapp.azure.com/oidc-redirect -a
 ```
 
 !!! note
     `aztreqs` is a placeholder for the unique name you have to choose for your Azure TRE instance. Likewise `westeurope` is a placeholder for the location where the resources will be deployed, this should match the value you set on the location variable in the previous step.
 
-With the output from the `add-app-reg.sh` script, you can now provide the required values for the following variables in the `/templates/core/.env` configuration file:
+With the output from the `aad-app-reg.sh` script, you can now provide the required values for the following variables in the `/templates/core/.env` configuration file:
 
 | VARIABLE | DESCRIPTION |
 | -- | -- |
 | `TRE_ID` | The identifier for your Azure TRE instance. Will be used for naming Azure resources. Needs to be globally unique and less than 12 characters. |
-| `AAD_TENANT_ID` | The Azure AD tenant id |
-| `API_CLIENT_ID` | Service principal id for the API |
-| `API_CLIENT_SECRET` | Client secret for the API |
-| `SWAGGER_UI_CLIENT_ID` | Service principal id for the Swagger (Open API) UI |
+| `AAD_TENANT_ID` | The Azure AD Tenant ID |
+| `API_CLIENT_ID` | API application (client) ID |
+| `API_CLIENT_SECRET` | API application client secret |
+| `SWAGGER_UI_CLIENT_ID` | Swagger (OpenAPI) UI application (client) ID |
 
 All other variables can have their default values for now. You should now have a `.env` file that looks similar to below.
 
