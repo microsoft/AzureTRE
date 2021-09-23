@@ -6,21 +6,6 @@ data "local_file" "deploypl_compute_instance" {
   filename = "${path.module}/nopipcompute/deploypl_compute_instance.json"
 }
 
-# open required NSG rules SECURITY ISSUE
-resource "azurerm_network_security_rule" "aml-compute-storage-access" {
-  access                      = "Allow"
-  destination_address_prefix  = "Storage.${data.azurerm_resource_group.ws.location}"
-  destination_port_range      = "445"
-  direction                   = "Outbound"
-  name                        = "allow-aml-compute-storage-access"
-  network_security_group_name = data.azurerm_network_security_group.ws.name
-  priority                    = 1000
-  protocol                    = "TCP"
-  resource_group_name         = data.azurerm_resource_group.ws.name
-  source_address_prefix       = "VirtualNetwork"
-  source_port_range           = "*"
-}
-
 # need to add existing VNET
 resource "azurerm_resource_group_template_deployment" "deploy_compute_cluster" {
   name                = "dpl-${local.service_resource_name_suffix}_deploy_compute_cluster"
