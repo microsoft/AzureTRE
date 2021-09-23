@@ -3,9 +3,9 @@ variable "tre_id" {
   description = "Unique TRE ID"
 }
 
-variable "workspace_id" {
+variable "tre_resource_id" {
   type        = string
-  description = "Unique 4-character long, alphanumeric workspace ID"
+  description = "Resource ID"
 }
 
 variable "location" {

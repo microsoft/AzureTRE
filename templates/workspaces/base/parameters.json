@@ -23,9 +23,9 @@
       }
     },
     {
-      "name": "workspace_id",
+      "name": "id",
       "source": {
-        "env": "WORKSPACE_ID"
+        "env": "ID"
       }
     },
     {
