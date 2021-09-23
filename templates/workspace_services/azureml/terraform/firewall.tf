@@ -17,7 +17,7 @@ resource "null_resource" "az_login_sp" {
   triggers = {
     timestamp = timestamp()
   }
-  
+
 }
 
 resource "null_resource" "az_login_msi" {
