@@ -65,14 +65,14 @@ data "azurerm_private_dns_zone" "azurewebsites" {
 }
 
 resource "azurerm_private_endpoint" "inference" {
-  name                = "pe-inference-${var.tre_id}"
+  name                = "pe-inference-${local.service_resource_name_suffix}"
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
   subnet_id           = data.azurerm_subnet.services.id
 
   private_service_connection {
     private_connection_resource_id = azurerm_app_service.inference.id
-    name                           = "psc-inference-${var.tre_id}"
+    name                           = "psc-inference-${local.service_resource_name_suffix}"
     subresource_names              = ["sites"]
     is_manual_connection           = false
   }
