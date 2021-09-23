@@ -8,11 +8,13 @@
     "properties": {
         "inference_sp_client_id": {
             "type": "string",
+            "title": "Service Principal Client ID for AML Access",
             "description": "The client id of the service principal used to access the Azure ML workspace",
             "default": ""
         },
         "inference_sp_client_secret": {
             "type": "string",
+            "title": "Service Principal Client Secret for AML Access",
             "description": "The client secret of the service principal used to access the Azure ML workspace",
             "default": ""
         }
