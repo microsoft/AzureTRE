@@ -83,5 +83,5 @@ repo_settings='{
 # Set additional repository parameters
 url=${gitea_url}/api/v1/repos/${username}/${REPO_NAME}?access_token=${token}
 
-response=$(curl -X PATCH ${URL} -H "accept: application/json" -H "Content-Type: application/json" -k -d "${repo_settings}")
+response=$(curl -X PATCH ${url} -H "accept: application/json" -H "Content-Type: application/json" -k -d "${repo_settings}")
 echo $response
