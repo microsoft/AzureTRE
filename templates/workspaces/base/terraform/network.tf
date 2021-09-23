@@ -195,7 +195,7 @@ resource "azurerm_network_security_rule" "allow-outbound-from-webapp-to-core-web
   network_security_group_name = azurerm_network_security_group.ws.name
   priority                    = 130
   protocol                    = "TCP"
-  resource_group_name         = var.resource_group_name
+  resource_group_name         = azurerm_resource_group.ws.name
   source_port_range           = "*"
 }
 
@@ -246,7 +246,7 @@ resource "azurerm_network_security_rule" "allow-inbound-rdp-from-webapp-to-servi
   network_security_group_name = azurerm_network_security_group.ws.name
   priority                    = 130
   protocol                    = "TCP"
-  resource_group_name         = var.resource_group_name
+  resource_group_name         = azurerm_resource_group.ws.name
   source_port_range           = "*"
 }
 
