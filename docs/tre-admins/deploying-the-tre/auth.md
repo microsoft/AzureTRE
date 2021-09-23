@@ -74,10 +74,6 @@ Redirect URLs:
 - `https://<app name>.<location>.cloudapp.azure.com/docs/oauth2-redirect`
 - `http://localhost:8000/docs/oauth2-redirect` - For local testing
 
-The Swagger UI is a public client, so public client flows need to be enabled:
-
-![Allow public client flows - Yes](../../assets/app-reg-authentication-allow-public-client-flows-yes.png)
-
 ### TRE e2e test
 
 The **TRE e2e test** app registration is used to authorize end-to-end test scenarios. It has no scopes or app roles defined.
