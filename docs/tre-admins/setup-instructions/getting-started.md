@@ -18,7 +18,7 @@ The Azure TRE solution contains a [development container](https://code.visualstu
 
 The files for the dev container are located in `/.devcontainer/` folder.
 
-## *Optional:* Install pre-commit hooks
+## *Optional:* Install pre-commit hooks TODO: Interesting only for the developer
 
 Pre commit hooks help you lint your python code on each git commit, to avoid having to fail the build when submitting a PR. Installing pre-commit hooks is completely optional.
 

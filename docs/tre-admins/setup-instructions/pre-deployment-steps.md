@@ -85,7 +85,7 @@ Next, you will set the configuration variables for the specific Azure TRE instan
     | `API_CLIENT_SECRET` | API application client secret. |
     | `SWAGGER_UI_CLIENT_ID` | Swagger (OpenAPI) UI application (client) ID. |
 
-5. All other variables can have their default values for now. You should now have a `.env` file that looks similar to below:
+1. All other variables can have their default values for now. You should now have a `.env` file that looks similar to below:
 
     ```plaintext
     #  Used for TRE deployment
