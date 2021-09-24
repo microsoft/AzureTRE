@@ -18,12 +18,20 @@ Workspaces rely on app registrations as well, and those are documented under [Wo
 
 The `/scripts/aad-app-reg.sh` script automatically sets up the app registrations with the required permissions to run Azure TRE. It will create and configure the two main app registrations: **TRE API** and **TRE Swagger UI**.
 
+Example on how to run the script:
+
 ```bash
 ./aad-app-reg.sh \
     -n <Prefix of the app registration names e.g., TRE> \
-    -r https://mytre.westeurope.cloudapp.azure.com/oidc-redirect \
+    -r https://<TRE ID>.<Azure location>.cloudapp.azure.com/oidc-redirect \
     -a
 ```
+
+| Argument | Description |
+| -------- | ----------- |
+| `-n` | The prefix of the name of the app registrations. `TRE` will give you `TRE API` and `TRE Swagger UI`. |
+| `-r` | The reply URL for the Swagger UI app. Use the values of the [environment variables](./environment-variables.md) `TRE_ID` and `LOCATION` in the URL. Reply URL for the localhost, `http://localhost:8000/docs/oauth2-redirect`, will be added by default. |
+| `-a` | Grants admin consent for the app registrations. This is required for them to function properly, but requires AAD admin privileges. |
 
 !!! caution
     The script will create an app password (client secret) for the **TRE API** app; make sure to take note of it in the script output as it is only shown once. In case the secret is lost, the script, when run again, can reset it and display the new one.
