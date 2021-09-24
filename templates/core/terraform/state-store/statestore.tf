@@ -30,8 +30,7 @@ resource "azurerm_cosmosdb_sql_database" "tre-db" {
   account_name        = azurerm_cosmosdb_account.tre-db-account.name
   throughput          = 400
 
-  lifecycle { 
-    ignore_changes = [tags] 
+  lifecycle {
     prevent_destroy = true
   }
 }
