@@ -8,13 +8,18 @@ This document describes the authentication and authorization (A&A) of deployed A
 App registrations (represented by service principals) define the privileges enabling access to the TRE system (e.g., [API](../../tre-developers/api.md)) as well as the workspaces.
 
 <!-- markdownlint-disable-next-line MD013 -->
-It is recommended to run the `/scripts/aad-app-reg.sh` script to create the two main app registrations: **TRE API** and **TRE Swagger UI**. This automatically sets up the app registrations with the required permissions to run Azure TRE. The script will create an app password (client secret) for the **TRE API** app; make sure to take note of it in the script output as it is only shown once.
-
-Alternatively you can also choose to create the app registrations manually via the Azure Portal - see [Quickstart: Register an application with the Microsoft identity platform](https://docs.microsoft.com/azure/active-directory/develop/quickstart-register-app) on how. The required setup with permissions is documented below.
+It is recommended to run the `/scripts/aad-app-reg.sh` script to create the two main app registrations: **TRE API** and **TRE Swagger UI**. Alternatively you can also choose to create the app registrations manually via the Azure Portal - see [Quickstart: Register an application with the Microsoft identity platform](https://docs.microsoft.com/azure/active-directory/develop/quickstart-register-app) on how. The required setup with permissions is documented below.
 
 That is the authentication and authorization setup needed to run the Azure TRE. Below is details about the permissions and if you want to set up the end-to-end automated tests, as it requires a [third app registration](#tre-e2e-test).
 
 Workspaces rely on app registrations as well, and those are documented under [Workspaces](#workspaces).
+
+### App registration script
+
+The `/scripts/aad-app-reg.sh` script automatically sets up the app registrations with the required permissions to run Azure TRE.
+
+!!! caution
+    The script will create an app password (client secret) for the **TRE API** app; make sure to take note of it in the script output as it is only shown once. In case the secret is lost, the script, when run again, can reset it and display the new one.
 
 ### TRE API
 
