@@ -5,7 +5,7 @@ on:
     # 1am each night https://crontab.guru/#0_1_*_*_*
     - cron: "0 1 * * *"
   push:
-    # branches: [develop, main]
+    branches: [develop, main]
   workflow_dispatch:
 
 # This will prevent multiple runs of this entire workflow.
@@ -61,6 +61,7 @@ jobs:
           make mgmt-deploy
           make images
 
+
   deploy_tre:
     name: Deploy TRE
     needs: deploy_mgmt_infra
@@ -110,7 +111,7 @@ jobs:
           export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
           export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
 
-          # make tre-deploy
+          make tre-deploy
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
@@ -208,60 +209,6 @@ jobs:
 
           # Check if template is already registered
           STATUS_CODE=$(curl -X "GET" "${TRE_URL}/${TRE_GET_PATH}/${TEMPLATE_NAME}" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
-
-          if [[ ${STATUS_CODE} == 404 ]]
-          then
-            make register-bundle DIR=${{ matrix.BUNDLE_DIR }}
-          else
-            if [[ ${STATUS_CODE} != 200 ]]
-            then
-              echo "::warning ::API returned unexpected http status: ${STATUS_CODE}"
-            fi
-          fi
-
-  publish_and_register_user_resources:
-    # user resources depend on their parent services and can't be part of the matrix above
-    name: Register User Resource
-    if: ${{ false }}  # TODO: fix this to successfully run
-    runs-on: ubuntu-latest
-    needs: [prepare_bundle_registration, publish_and_register_bundles]
-    strategy:
-      matrix:
-        include:
-          - { BUNDLE_TYPE: "user_resource", BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-win10vm", TRE_URL_SUFFIX: "api/workspace-service-templates/tre-service-guacamole/user_resource-templates/tre-service-guacamole-win10vm"}
-    environment: Dev
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Install porter
-        run: |
-          curl -L https://cdn.porter.sh/latest/install-linux.sh | bash
-          ~/.porter/porter mixin install docker
-          echo "~/.porter/" >> $GITHUB_PATH
-
-      - name: Publish and register bundles
-        shell: bash
-        env:
-          ACR_NAME: ${{ secrets.ACR_NAME }}
-          TRE_URL: "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
-          BUNDLE_TYPE: ${{ matrix.BUNDLE_TYPE }}
-          TOKEN: ${{ needs.prepare_bundle_registration.api_token }}
-        run: |
-          set -o errexit
-          set -o pipefail
-          set -o nounset
-
-          # test that porter is able to build the bundle
-          make porter-build DIR=${{ matrix.BUNDLE_DIR }}
-
-          # Check if base template is already registered
-          STATUS_CODE=$(curl -X "GET" "${TRE_URL}/${{ matrix.TRE_URL_SUFFIX }}" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
 
           if [[ ${STATUS_CODE} == 404 ]]
           then

@@ -140,7 +140,6 @@ terraform-destroy:
 	&& . ./devops/scripts/load_terraform_env.sh ${DIR}/.env \
 	&& cd ${DIR}/terraform/ && ./destroy.sh
 
-
 porter-build:
 	echo -e "\n\e[34m»»» 🧩 \e[96mBuilding ${DIR} bundle\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh porter \
