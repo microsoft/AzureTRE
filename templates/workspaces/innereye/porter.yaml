@@ -1,7 +1,7 @@
-name: tre-workspace-innereye-deeplearning-inference
+name: tre-workspace-innereye
 
-version: 0.1.5
-description: "A Azure TRE workspace with Azure Machine Learning, Dev Test Labs, InnerEye deep learning and inference"
+version: 0.1.8
+description: "An Azure TRE workspace with Azure Machine Learning, Dev Test Labs and InnerEye deep learning"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
 
@@ -19,13 +19,9 @@ parameters:
   - name: tre_id
     type: string
     description: "The ID of the parent TRE instance e.g., mytre-dev-3142"
-  - name: workspace_id
+  - name: id
     type: string
-  - name: inference_sp_client_id
-    type: string
-  - name: inference_sp_client_secret
-    type: string
-    description: "Unique 4-digit workspace ID"
+    description: "ID for this resource"
   - name: azure_location
     env: LOCATION
     type: string
@@ -34,10 +30,12 @@ parameters:
     type: string
     description: "VNet address space for the workspace services"
     default: "10.2.1.0/24"
-  - name: acr_name
+  - name: mgmt_acr_name
     type: string
-    description: "Name of the azure container registry"
-    env: ACR_NAME
+  - name: inference_sp_client_id
+    type: string
+  - name: inference_sp_client_secret
+    type: string 
   - name: tfstate_resource_group_name
     type: string
     description: "Resource group containing the Terraform state storage account"
@@ -57,8 +55,8 @@ parameters:
 
 mixins:
   - exec
-  - docker
   - az
+  - docker
 
 install:
   - az:
@@ -74,22 +72,13 @@ install:
         - acr
         - login
       flags:
-        name: "{{ bundle.parameters.acr_name }}"
+        name: "{{ bundle.parameters.mgmt_acr_name }}"
   - exec:
       description: "Install Base Workspace service"
       command: ./install_workspace_base.sh
   - exec:
-      description: "Install DevTestLabs service"
-      command: ./install_service_devtestlabs.sh
-  - exec:
-      description: "Install Azure ML service"
-      command: ./install_service_azureml.sh
-  - exec:
       description: "Install InnerEye Deep Learning service"
-      command: ./install_service_innereye_deeplearning.sh
-  - exec:
-      description: "Install InnerEye inference service"
-      command: ./install_service_innereye_inference.sh
+      command: ./install_service_innereye.sh
 
 upgrade:
   - exec:
@@ -98,7 +87,7 @@ upgrade:
       arguments:
         - "This workspace does not implement upgrade action"
 
-uninstall:
+uninstall:  
 - exec:
       description: "Uninstall workspace"
       command: echo

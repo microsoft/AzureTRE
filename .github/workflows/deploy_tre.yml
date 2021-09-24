@@ -169,32 +169,15 @@ jobs:
             make register-bundle DIR=./templates/workspaces/base
           fi
 
-          # Check if azureml_devtestlabs template is already registered
-          # ***********************************************************
-          export STATUS_CODE=$(curl -X "GET" "${TRE_URL}/api/workspace-templates/tre-workspace-azureml-devtestlabs" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
-
-          if [[ ${STATUS_CODE} == 404 ]]
-          then
-            make register-bundle DIR=./templates/workspaces/azureml_devtestlabs
-          fi
-
-          # Check if innereye_deeplearning template is already registered
+          # Check if innereye template is already registered
           # *************************************************************
-          export STATUS_CODE=$(curl -X "GET" "${TRE_URL}/api/workspace-templates/tre-workspace-innereye-deeplearning" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
+          export STATUS_CODE=$(curl -X "GET" "${TRE_URL}/api/workspace-templates/tre-workspace-innereye" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
 
           if [[ ${STATUS_CODE} == 404 ]]
           then
-            make register-bundle DIR=./templates/workspaces/innereye_deeplearning
+            make register-bundle DIR=./templates/workspaces/innereye
           fi
 
-          # Check if innereye_deeplearning_inference template is already registered
-          # ***********************************************************************
-          export STATUS_CODE=$(curl -X "GET" "${TRE_URL}/api/workspace-templates/tre-workspace-innereye-deeplearning-inference" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
-
-          if [[ ${STATUS_CODE} == 404 ]]
-          then
-            make register-bundle DIR=./templates/workspaces/innereye_deeplearning_inference
-          fi
 
   publish_and_register_workspace_service_bundles:
     name: Publish and Register Workspace Service Bundles
@@ -262,23 +245,14 @@ jobs:
           then
             make register-bundle DIR=./templates/workspace_services/devtestlabs
           fi
-
-          # Check if tre-service-innereye-deeplearning service template is already registered
+          
+          # Check if tre-service-innereye service template is already registered
           # *********************************************************
-          export STATUS_CODE=$(curl -X "GET" "${TRE_URL}/api/workspace-service-templates/tre-service-innereye-deeplearning" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
+          export STATUS_CODE=$(curl -X "GET" "${TRE_URL}/api/workspace-service-templates/tre-service-innereye" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
 
           if [[ ${STATUS_CODE} == 404 ]]
           then
-            make register-bundle DIR=./templates/workspace_services/innereye_deeplearning
-          fi
-
-          # Check if tre-service-innereye-inference service template is already registered
-          # *********************************************************
-          export STATUS_CODE=$(curl -X "GET" "${TRE_URL}/api/workspace-service-templates/tre-service-innereye-inference" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
-
-          if [[ ${STATUS_CODE} == 404 ]]
-          then
-            make register-bundle DIR=./templates/workspace_services/innereye_inference
+            make register-bundle DIR=./templates/workspace_services/innereye
           fi
 
   e2e_tests:

@@ -1,0 +1,23 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://github.com/microsoft/AzureTRE/workspaces/innereye/custom_parameters.json",
+    "type": "object",
+    "title": "InnerEye Workspace",
+    "description": "Installs Azure ML and InnerEye components. Please be aware this tempalte opens up additional firewall rules to enable Azure ML to function",
+    "required": [
+        "inference_sp_client_id",
+        "inference_sp_client_secret"
+    ],
+    "properties": {
+        "inference_sp_client_id": {
+            "type": "string",
+            "description": "The client id of the service principal used to access the Azure ML workspace",
+            "default": ""
+        },
+        "inference_sp_client_secret": {
+            "type": "string",
+            "description": "The client secret of the service principal used to access the Azure ML workspace",
+            "default": ""
+        }
+    }
+}

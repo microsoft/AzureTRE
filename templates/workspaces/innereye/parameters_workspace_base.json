@@ -1,19 +1,31 @@
 {
   "schemaVersion": "1.0.0-DRAFT+TODO",
-  "name": "service-azureml",
-  "created": "2021-06-03T11:54:54.0225968Z",
-  "modified": "2021-06-03T11:54:54.0225968Z",
+  "name": "workspace-base",
+  "created": "2021-06-04T13:37:29.5071039+03:00",
+  "modified": "2021-06-04T13:37:29.5071039+03:00",
   "parameters": [
     {
-      "name": "workspace_id",
+      "name": "address_space",
       "source": {
-        "env": "WORKSPACE_ID"
+        "env": "ADDRESS_SPACE"
+      }
+    },
+    {
+      "name": "azure_location",
+      "source": {
+        "env": "LOCATION"
       }
     },
     {
       "name": "tre_id",
       "source": {
         "env": "TRE_ID"
+      }
+    },
+    {
+      "name": "id",
+      "source": {
+        "env": "ID"
       }
     },
     {
