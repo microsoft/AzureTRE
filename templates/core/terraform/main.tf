@@ -229,7 +229,8 @@ module "gitea" {
 
   depends_on = [
     module.network,
-    module.api-webapp # it would have been better to depend on the plan itself and not the whole module
+    module.api-webapp, # it would have been better to depend on the plan itself and not the whole module
+    module.keyvault
   ]
 }
 
@@ -242,6 +243,7 @@ module "nexus" {
 
   depends_on = [
     module.network,
-    module.api-webapp # it would have been better to depend on the plan itself and not the whole module
+    module.api-webapp, # it would have been better to depend on the plan itself and not the whole module
+    module.keyvault
   ]
 }
