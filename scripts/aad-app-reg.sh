@@ -441,10 +441,6 @@ if [[ $grantAdminConsent -eq 1 ]]; then
     az ad app permission grant --id $swaggerSpId --api $apiAppId --scope "Workspace.Read Workspace.Write"
 fi
 
-# Allow public client flow
-echo "Enabling public client flow for ${appName} Swagger UI app"
-az ad app update --id ${swaggerAppId} --set publicClient=true
-
 echo "Done"
 
 # Output the variables for .env files
