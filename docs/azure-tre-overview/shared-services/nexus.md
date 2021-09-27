@@ -7,17 +7,25 @@ Documentation on Nexus can be found here: [https://help.sonatype.com/repomanager
 
 To deploy set `DEPLOY_NEXUS=true` in `templates/core/.env`.
 
-## Configure
+Nexus will be deployed as part of the main TRE terraform deployment. A configuration script will be executed once the container is running to:
 
-1. Wait for the application to come online - it can take a few minutes... and then navigate to its homepage. You can find the url by looking at the management resource group and finding a web application whose name start with nexus.
-1. Retrieve the initial admin password from the "admin.password" file. You will find it by going to TRE management resource group -> storage account named "stg\<TRE-ID\>" -> "File Shares" -> "nexus-data".
-1. Use the password to login to Nexus and go through the initial setup wizard. You can allow anonymous access because the purpose of this service is to use publicly available software packages.
-1. On the admin screen, add **proxy** repositories as needed. Note that other types of repositories might be a way to move data in/out workspaces, and you should not allow that.
-1. Finally, share the repositories addresses with your users.
+1. Reset the default password and set a new one.
+2. Store the new password in Key Vault under 'nexus-<TRE_ID>-admin-password'
+3. Create an anonymous default PyPI proxy repository
+
+## Setup and usage  
+
+1. A TRE Administrator can access Nexus from the public network through the application gateway on: https://<TRE_ID>.<REGION>.cloudapp.azure.com/nexus/ using the password found in the Key Vault
+2. A researcher can access Nexus from within the workspace by using the internal Nexus URL of: https://nexus-<TRE_ID>.azurewebsites.net/  
+3. To fetch Python packages from the PyPI proxy, a researcher can use pip install while specifying the proxy server:
+
+    ```bash
+    pip install packagename --index-url https://nexus-<TRE_ID>.azurewebsites.net/repository/pypi-proxy-repo/simple
+    ```
 
 ## Network requirements
 
-To be able to run the Nexus Shared Service it needs to be able to access the following resource outside the Azure TRE VNET via explicit allowed [Service Tags](https://docs.microsoft.com/en-us/azure/virtual-network/service-tags-overview) or URLs.
+Nexus Shared Service requires access to the following resources outside of the Azure TRE VNET. These are set as part of the firewall provisioning pipeline via explicit allow on [Service Tags](https://docs.microsoft.com/en-us/azure/virtual-network/service-tags-overview) or URLs. Notice that since Nexus Shared Service is running on an App Service, the outgoing exceptions are made for the calls coming out of the Web App Subnet.
 
 | Service Tag / Destination | Justification |
 | --- | --- |
