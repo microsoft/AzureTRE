@@ -61,8 +61,8 @@ Next, you will set the configuration variables for the specific Azure TRE instan
    ```bash
    /workspaces/tre> az login
    ```
-   
-  !!! note 
+
+  !!! note
       In case you have several subscriptions and would like to change your default subscription use `az account set --subscription <desired subscription ID>`
 
 1. Open the `/templates/core/.env.sample` file and then save it without the .sample extension. You should now have a file called `.env` located in the `/templates/core` folder.

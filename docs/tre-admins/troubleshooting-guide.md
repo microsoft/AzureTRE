@@ -43,7 +43,7 @@ Initially the status is always reported as:
 
 This should eventually change as the message flows through the system.
 
-If the message remains at this stage, you should first verify that the message arrived in the service bus. 
+If the message remains at this stage, you should first verify that the message arrived in the service bus.
 
 In the Azure portal:
 
@@ -85,7 +85,7 @@ Verify that the VMSS instance is up and healthy.
 
 ![VMSS Running](../assets/vmss_running.png)
 
-The processor runs in a vnet, and you cannot connect to it directly. 
+The processor runs in a vnet, and you cannot connect to it directly.
 
 1. Connect to the instance using Bastion. Bastion is already deployed, and you can use the username `adminuser`. The password is stored in the keyvault under the secret `resource-processor-vmss-password`
 
@@ -98,15 +98,15 @@ The processor runs in a vnet, and you cannot connect to it directly.
 
 1. After logging in you should check the status of **cloud-init** which is used to bootstrap the machine with docker and start the processor. Log files for cloud init are
 
-  * `/var/log/cloud-init.log`
-  * `/var/log/cloud-init-output.log`
+   - `/var/log/cloud-init.log`
+   - `/var/log/cloud-init-output.log`
 
-  If the docker container is pulled as shown in logs then the resource processor should start.
+   If the docker container is pulled as shown in logs then the resource processor should start.
 
 1. Check the status of the container using `docker ps`
 
-  If you see nothing (and the container was pulled) then the processor has either not started yet or it has crashed. 
-  
+  If you see nothing (and the container was pulled) then the processor has either not started yet or it has crashed.
+
 1. Check the status of all docker processes using `docker ps -a` which should show you if the container terminated prematurely.
 1. Get the logs from the container using `docker logs <container_id>` command.
 
