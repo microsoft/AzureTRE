@@ -33,3 +33,17 @@ A service principal needs to be created to authorize CI/CD workflows to provisio
 ## Create app registrations
 
 Create app registrations for auth based on the [Authentication & authorization](auth.md) guide.
+
+## Bootstrap target in Makefile
+
+As a principle, we want all the Azure TRE resources defined in Terraform, including the storage account used by Terraform to hold its back-end state.
+
+A bootstrap script is used to create the initial storage account and resource group using the Azure CLI. Then Terraform is initialized using this storage account as a back-end, and the storage account imported into the state.
+
+You can do this step using the following command but as stated above this is already part of ``make all``.
+
+```cmd
+make bootstrap
+```
+
+This script should never need running a second time even if the other management resources are modified.
