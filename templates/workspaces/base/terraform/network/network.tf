@@ -42,6 +42,12 @@ data "azurerm_virtual_network" "core" {
   resource_group_name = var.core_resource_group_name
 }
 
+data "azurerm_subnet" "core_webapps" {
+  name                 = "WebAppSubnet"
+  virtual_network_name = "vnet-${var.tre_id}"
+  resource_group_name  = "rg-${var.tre_id}"
+}
+
 resource "azurerm_virtual_network_peering" "ws-core-peer" {
   name                      = "ws-core-peer-${var.tre_id}-ws-${var.workspace_id}"
   resource_group_name       = var.resource_group_name
@@ -86,6 +92,11 @@ resource "azurerm_network_security_group" "ws" {
 resource "azurerm_subnet_network_security_group_association" "services" {
   network_security_group_id = azurerm_network_security_group.ws.id
   subnet_id                 = azurerm_subnet.services.id
+}
+
+resource "azurerm_subnet_network_security_group_association" "webapps" {
+  network_security_group_id = azurerm_network_security_group.ws.id
+  subnet_id                 = azurerm_subnet.webapps.id
 }
 
 resource "azurerm_network_security_rule" "deny-outbound-override" {
@@ -174,6 +185,22 @@ resource "azurerm_network_security_rule" "allow-outbound-to-internet" {
 }
 
 
+resource "azurerm_network_security_rule" "allow-outbound-from-webapp-to-core-webapp" {
+  access                      = "Allow"
+  destination_port_range      = "443"
+  destination_address_prefix  = data.azurerm_subnet.core_webapps.address_prefix
+  source_address_prefix       = azurerm_subnet.webapps.address_prefix
+  direction                   = "Outbound"
+  name                        = "outbound-workspace-webapps-to-tre-core-webapps"
+  network_security_group_name = azurerm_network_security_group.ws.name
+  priority                    = 130
+  protocol                    = "TCP"
+  resource_group_name         = var.resource_group_name
+  source_port_range           = "*"
+}
+
+
+
 resource "azurerm_network_security_rule" "allow-inbound-from-bastion" {
   access                       = "Allow"
   destination_address_prefixes = azurerm_subnet.services.address_prefixes
@@ -209,6 +236,20 @@ resource "azurerm_network_security_rule" "allow-inbound-from-resourceprocessor" 
   source_port_range = "*"
 }
 
+resource "azurerm_network_security_rule" "allow-inbound-rdp-from-webapp-to-services" {
+  access                      = "Allow"
+  destination_port_range      = "3389"
+  destination_address_prefix  = azurerm_subnet.services.address_prefix
+  source_address_prefix       = azurerm_subnet.webapps.address_prefix
+  direction                   = "Inbound"
+  name                        = "inbound-rdp-from-webapps-to-services-subnets"
+  network_security_group_name = azurerm_network_security_group.ws.name
+  priority                    = 130
+  protocol                    = "TCP"
+  resource_group_name         = var.resource_group_name
+  source_port_range           = "*"
+}
+
 data "azurerm_route_table" "rt" {
   name                = "rt-${var.tre_id}"
   resource_group_name = var.core_resource_group_name
@@ -217,6 +258,11 @@ data "azurerm_route_table" "rt" {
 resource "azurerm_subnet_route_table_association" "rt_services_subnet_association" {
   route_table_id = data.azurerm_route_table.rt.id
   subnet_id      = azurerm_subnet.services.id
+}
+
+resource "azurerm_subnet_route_table_association" "rt_webapps_subnet_association" {
+  route_table_id = data.azurerm_route_table.rt.id
+  subnet_id      = azurerm_subnet.webapps.id
 }
 
 data "azurerm_private_dns_zone" "azurewebsites" {
@@ -235,3 +281,21 @@ resource "azurerm_private_dns_zone_virtual_network_link" "azurewebsites" {
 
   lifecycle { ignore_changes = [tags] }
 }
+
+data "azurerm_private_dns_zone" "keyvault" {
+  name                = "privatelink.vaultcore.azure.net"
+  resource_group_name = var.core_resource_group_name
+
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "keyvault" {
+  resource_group_name   = var.core_resource_group_name
+  virtual_network_id    = azurerm_virtual_network.ws.id
+  private_dns_zone_name = data.azurerm_private_dns_zone.keyvault.name
+
+  name                 = "keyvault-link-${azurerm_virtual_network.ws.name}"
+  registration_enabled = false
+
+  lifecycle { ignore_changes = [tags] }
+}
+

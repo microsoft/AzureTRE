@@ -10,6 +10,8 @@ RUN apt-get update \
 
 RUN az config set extension.use_dynamic_install=yes_without_prompt
 
+RUN az extension add --name azure-firewall
+
 ARG BUNDLE_DIR
 
 # This is a template Dockerfile for the bundle's invocation image

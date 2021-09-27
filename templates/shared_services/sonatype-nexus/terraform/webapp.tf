@@ -12,6 +12,7 @@ resource "azurerm_app_service" "nexus" {
     WEBSITE_VNET_ROUTE_ALL              = 1
     WEBSITE_DNS_SERVER                  = "168.63.129.16" # required to access storage over private endpoints
     WEBSITES_ENABLE_APP_SERVICE_STORAGE = false
+    DOCKER_REGISTRY_SERVER_URL          = "https://index.docker.io/v1"
   }
 
   lifecycle { ignore_changes = [tags] }
@@ -21,7 +22,7 @@ resource "azurerm_app_service" "nexus" {
     remote_debugging_enabled    = false
     scm_use_main_ip_restriction = true
 
-    # always_on       = true
+    always_on       = true
     min_tls_version = "1.2"
 
     ip_restriction {

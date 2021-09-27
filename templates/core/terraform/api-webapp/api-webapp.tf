@@ -68,7 +68,7 @@ resource "azurerm_app_service" "api" {
       support_credentials = false
     }
 
-    always_on       = true
+    always_on       = false
     min_tls_version = "1.2"
 
     ip_restriction {
