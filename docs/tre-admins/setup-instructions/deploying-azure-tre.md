@@ -44,6 +44,12 @@ The expected response is:
 {"services":[{"service":"Cosmos DB","status":"OK","message":""}]}
 ```
 
+You can also create a request to the `api/health` endpoint to verify that the API is deployed and responds. You should see a *pong* response as a result of the request below:
+
+```cmd
+curl https://<azure_tre_fqdn>/api/health
+```
+
 ### Using the API docs
 
 Open your browser and navigate to the `/api/docs` route of the API:  `https://<azure_tre_fqdn>/api/docs` and click *Try it out* on the operation of choice.
@@ -52,6 +58,8 @@ Open your browser and navigate to the `/api/docs` route of the API:  `https://<a
 
 ## Next steps
 
+* [Install base workspace bundle](installing-base-workspace.md)
 * Deploy a new workspace for Azure Machine Learning
-* [Enable users to access the Azure TRE instance](tre-admins/deploying-the-tre/auth.md#enabling-users)
-* [Create a new workspace template](tre-workspace-authors/authoring-workspace-templates.md)
+* [Enable users to access the Azure TRE instance](../auth.md#enabling-users)
+* [Create a new workspace template](../../tre-workspace-authors/authoring-workspace-templates.md)
+* [Tear-down Azure TRE](tear-down.md)

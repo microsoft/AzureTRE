@@ -5,7 +5,7 @@ This document describes the authentication and authorization (A&A) of deployed A
 
 ## App registrations
 
-App registrations (represented by service principals) define the privileges enabling access to the TRE system (e.g., [API](../../tre-developers/api.md)) as well as the workspaces.
+App registrations (represented by service principals) define the privileges enabling access to the TRE system (e.g., [API](../tre-developers/api.md)) as well as the workspaces.
 
 <!-- markdownlint-disable-next-line MD013 -->
 It is recommended to run the `/scripts/aad-app-reg.sh` script to create the app registrations. Alternatively you can also choose to create the app registrations manually via the Azure Portal - see [Quickstart: Register an application with the Microsoft identity platform](https://docs.microsoft.com/azure/active-directory/develop/quickstart-register-app) on how. The required setup with permissions is documented below.
@@ -67,7 +67,7 @@ See [Microsoft Graph permissions reference](https://docs.microsoft.com/graph/per
 
 The **TRE API** app registration requires no redirect URLs defined or anything else for that matter. From a security standpoint it should be noted that public client flows should not be allowed (see the image below taken from app registration authentication blade in Azure Portal).
 
-![Allow public client flows - No](../../assets/app-reg-authentication-allow-public-client-flows-no.png)
+![Allow public client flows - No](../assets/app-reg-authentication-allow-public-client-flows-no.png)
 
 ### TRE Swagger UI
 
@@ -91,12 +91,8 @@ The **TRE API** app registration requires no redirect URLs defined or anything e
 
 Redirect URLs:
 
-- `https://<app name>.<location>.cloudapp.azure.com/docs/oauth2-redirect`
-- `http://localhost:8000/docs/oauth2-redirect` - For local testing
-
-The Swagger UI is a public client, so public client flows need to be enabled:
-
-![Allow public client flows - Yes](../../assets/app-reg-authentication-allow-public-client-flows-yes.png)
+* `https://<TRE ID>.<Azure location>.cloudapp.azure.com/docs/oauth2-redirect`
+* `http://localhost:8000/docs/oauth2-redirect` - For local testing
 
 ### TRE e2e test
 
@@ -126,11 +122,11 @@ The **TRE e2e test** app registration is used to authorize end-to-end test scena
     msal<TRE e2e test app registration application (client) ID>://auth
     ```
 
-    ![Add auth platform](../../assets/aad-add-auth-platform.png)
+    ![Add auth platform](../assets/aad-add-auth-platform.png)
 
 1. Allow public client flows (see the image below). This enables the end-to-end tests to use a username and password combination to authenticate.
 
-    ![Allow public client flows - Yes](../../assets/app-reg-authentication-allow-public-client-flows-yes.png)
+    ![Allow public client flows - Yes](../assets/app-reg-authentication-allow-public-client-flows-yes.png)
 
 !!! warning
     Public client flows should never be allowed for a production environment as it poses a security risk.
@@ -149,7 +145,7 @@ The end-to-end test should be added to **TRE Administrator** role exposed by the
 Access to workspaces is also controlled using app registrations - one per workspace. The configuration of the app registration depends on the nature of the workspace, but this section covers the typical minimum settings.
 
 !!! caution
-    The app registration for a workspace is not created by the [API](../../tre-developers/api.md). One needs to be present (created manually) before using the API to provision a new workspace.
+    The app registration for a workspace is not created by the [API](../tre-developers/api.md). One needs to be present (created manually) before using the API to provision a new workspace.
 
 #### Authentication - Workspaces
 
@@ -177,8 +173,8 @@ For a user to gain access to the system, they have to:
 
 When these requirements are met, the user can sign-in using their credentials and use their privileges to use the API, login to workspace environment etc. based on their specific roles.
 
-![User linked with app registrations](../../assets/aad-user-linked-with-app-regs.png)
+![User linked with app registrations](../assets/aad-user-linked-with-app-regs.png)
 
 The users can also be linked via the Enterprise application view:
 
-![Adding users to Enterprise application](../../assets/adding-users-to-enterprise-application.png)
+![Adding users to Enterprise application](../assets/adding-users-to-enterprise-application.png)
