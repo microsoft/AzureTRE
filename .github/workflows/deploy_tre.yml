@@ -213,6 +213,12 @@ jobs:
           if [[ ${STATUS_CODE} == 404 ]]
           then
             make register-bundle DIR=${{ matrix.BUNDLE_DIR }}
+          else
+            if [[ ${STATUS_CODE} != 200 ]]
+            then
+              echo "::warning ::API returned unexpected http status: ${STATUS_CODE}"
+              exit 1
+            fi
           fi
 
   e2e_tests:
