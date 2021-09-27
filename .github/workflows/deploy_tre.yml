@@ -181,7 +181,7 @@ jobs:
 
       - name: Install porter
         run: |
-          curl -L https://cdn.porter.sh/latest/install-linux.sh | bash
+          curl -L https://cdn.porter.sh/v0.38.6/install-linux.sh | bash
           ~/.porter/porter mixin install docker
           echo "~/.porter/" >> $GITHUB_PATH
 
