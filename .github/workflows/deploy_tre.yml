@@ -255,14 +255,6 @@ jobs:
           AUTH_APP_CLIENT_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
         run: |
           export SCOPE="api://${RESOURCE}/Workspace.Read api://${RESOURCE}/Workspace.Write"
-          # export RESOURCE_LOCATION=$RESOURCE_LOCATION
-          # export TRE_ID=$TRE_ID
-          # export RESOURCE=$RESOURCE
-          # export AUTH_TENANT_ID=$AUTH_TENANT_ID
-          # export CLIENT_ID=$CLIENT_ID
-          # export USERNAME=$USERNAME
-          # export PASSWORD=$PASSWORD
-          # export AUTH_APP_CLIENT_ID=$AUTH_APP_CLIENT_ID
           cd e2e_tests
           PYTHONPATH=. python -m pytest -m smoke --junit-xml pytest_e2e.xml
 
