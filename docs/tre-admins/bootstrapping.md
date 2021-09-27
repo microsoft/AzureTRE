@@ -4,7 +4,7 @@ This document covers the steps that have to be executed manually before Azure TR
 
 ## Login to Azure
 
-Run `login` command and select the Azure subscription you wish to deploy Azure TRE to:
+Log in to Azure using `az login` and select the Azure subscription you wish to deploy Azure TRE to:
 
 ```cmd
 az login
@@ -40,10 +40,6 @@ As a principle, we want all the Azure TRE resources defined in Terraform, includ
 
 A bootstrap script is used to create the initial storage account and resource group using the Azure CLI. Then Terraform is initialized using this storage account as a back-end, and the storage account imported into the state.
 
-You can do this step using the following command but as stated above this is already part of ``make all``.
-
-```cmd
-make bootstrap
-```
+You bootstrap the environment using `make bootstrap`, but as stated above this is already part of ``make all``.
 
 This script should never need running a second time even if the other management resources are modified.

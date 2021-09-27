@@ -53,7 +53,11 @@ If you use visual studio code you can set up your launch.json to include the fol
 }
 ```
 
-When working locally we use a service principal (SP). This SP needs enough permissions to be able to talk to service bus and to deploy resources into the subscription. That means the service principal needs Owner access to subscription(ARM_SUBSCRIPTION_ID) and also needs **Azure Service Bus Data Sender** and **Azure Service Bus Data Receiver** on the service bus namespace defined above (SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE).
+When working locally, we use a service principal (SP).
+
+This SP needs enough permissions to be able to talk to service bus and to deploy resources into the subscription.
+
+That means the service principal needs Owner access to subscription(ARM_SUBSCRIPTION_ID) and also needs **Azure Service Bus Data Sender** and **Azure Service Bus Data Receiver** on the service bus namespace defined above (SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE).
 
 Once the above is set up you can simulate receiving messages from service bus by going to service bus explorer on the portal and using a message payload for SERVICE_BUS_RESOURCE_REQUEST_QUEUE as follows
 
@@ -73,7 +77,7 @@ See the [debugging and troubleshooting guide](../tre-admins/troubleshooting-guid
 
 ## Network requirements
 
-To be able to run the Resource Processor it needs to access the following resource outside the Azure TRE VNET via explicit allowed [Service Tags](https://docs.microsoft.com/en-us/azure/virtual-network/service-tags-overview) or URLs.
+The Resource Processor needs to access the following resources outside the Azure TRE VNET via explicit allowed [Service Tags](https://docs.microsoft.com/en-us/azure/virtual-network/service-tags-overview) or URLs.
 
 | Service Tag | Justification |
 | --- | --- |
@@ -84,7 +88,7 @@ To be able to run the Resource Processor it needs to access the following resour
 | Storage | The Porter bundles stores state between executions in an Azure Storage Account. |
 | AzureKeyVault | The Porter bundles might need to create an Azure Key Vault inside of the Workspace. To verify the creation, before a private link connection is created, Terraform needs to reach Key Vault over public network |
 
-To be able to install Docker, Porter and related packages ([script](/templates/core/terraform/resource_processor/vmss_porter/cloud-config.yaml)) on the Resource Processor, the VM must have access to download from the following URLs:
+To install Docker, Porter and related packages ([script](/templates/core/terraform/resource_processor/vmss_porter/cloud-config.yaml)) on the Resource Processor, the VM must have access to download from the following URLs:
 
 * packages.microsoft.com
 * keyserver.ubuntu.com

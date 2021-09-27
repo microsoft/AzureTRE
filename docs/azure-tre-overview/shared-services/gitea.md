@@ -1,6 +1,6 @@
 # Gitea Shared Service
 
-As outbound access to public git repositories such as GitHub is often blocked a Git mirror may be required. Gitea can be deployed as a shared service to offer this functionality.
+As outbound access to public git repositories such as GitHub is often blocked a git mirror may be required. Gitea can be deployed as a shared service to offer this functionality.
 
 Documentation on Gitea can be found here: [https://docs.gitea.io/](https://docs.gitea.io/).
 
@@ -10,11 +10,11 @@ To deploy set `DEPLOY_GITEA=true` in `templates/core/.env`
 
 ## Getting Started
 
-In order to connect to the gitea admin console use the user "gitea_admin". The user's password can be found in keyvault as gitea password.
+Connect to the Gitea admin console (https://yourtreuri/gitea/) with the `gitea_admin` user. You can find the password in keyvault as `gitea password`.
 
 ## Network requirements
 
-To be able to run the Gitea Shared Service it needs to be able to access the following resource outside the Azure TRE VNET via explicit allowed [Service Tags](https://docs.microsoft.com/en-us/azure/virtual-network/service-tags-overview) or URLs.
+Gitea needs to be able to access the following resource outside the Azure TRE VNET via explicitly allowed [Service Tags](https://docs.microsoft.com/en-us/azure/virtual-network/service-tags-overview) or URLs.
 
 | Service Tag / Destination | Justification |
 | --- | --- |

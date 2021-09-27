@@ -1,7 +1,6 @@
 # Authoring workspaces templates
 
-<!-- markdownlint-disable-next-line MD013 -->
-Azure TRE workspaces, workspace services, and user resources are [Porter](https://porter.sh/) bundles that in turn are based on [Cloud Native Application Bundles (CNAB)](https://cnab.io/).
+Azure TRE workspaces, workspace services, and user resources are [Porter](https://porter.sh/) bundles. Porter bundles are based on [Cloud Native Application Bundles (CNAB)](https://cnab.io/).
 
 Workspace authors are free to choose the technology stack for provisioning resources (e.g., ARM templates, Terraform etc.), but the Azure TRE framework sets certain requirements for the bundle manifests, which specify the credentials, input and output parameters, deployment actions among other things.
 
@@ -33,10 +32,12 @@ A workspace bundle requires the following [credentials](https://porter.sh/author
 
 The credentials are provided as environment variables by the deployment runner. The bundle author must use the following environment variable names:
 
-* `ARM_TENANT_ID`
-* `ARM_SUBSCRIPTION_ID`
-* `ARM_CLIENT_ID`
-* `ARM_CLIENT_SECRET`
+```bash
+ARM_TENANT_ID
+ARM_SUBSCRIPTION_ID
+ARM_CLIENT_ID
+ARM_CLIENT_SECRET
+```
 
 The names of the Porter credentials (`name` field in `porter.yaml`) can be freely chosen by the author.
 
@@ -58,7 +59,7 @@ credentials:
 
 This section describes the mandatory [(input) parameters](https://porter.sh/author-bundles/#parameters) of a workspace bundle manifest.
 
-| Parameter | Type | Description | Example value |
+| <div style="width:120px">Parameter</div> | Type | Description | Example value |
 | --------- | ---- | ----------- | ------------- |
 | `tre_id` | string | Unique ID of for the TRE instance. | `tre-dev-42` |
 | `workspace_id` | string | Unique 4-character long, alphanumeric workspace ID. | `0a9e` |
