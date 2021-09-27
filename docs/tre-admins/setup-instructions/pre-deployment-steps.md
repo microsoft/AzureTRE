@@ -88,7 +88,7 @@ Next, you will set the configuration variables for the specific Azure TRE instan
 1. All other variables can have their default values for now. You should now have a `.env` file that looks similar to below:
 
     ```plaintext
-    #  Used for TRE deployment
+    # Used for TRE deployment
     TRE_ID=mytre
     CORE_ADDRESS_SPACE="10.1.0.0/22"
     TRE_ADDRESS_SPACE="10.0.0.0/12"
@@ -107,7 +107,7 @@ Next, you will set the configuration variables for the specific Azure TRE instan
 
 ## Add admin user
 
-TODO
+Make the **TRE Administrators** and **TRE Users** roles, defined by the API app registration, are assigned to your user and others as required. See [Enabling users](../auth.md#enabling-users) for instructions.
 
 ## Next steps
 
