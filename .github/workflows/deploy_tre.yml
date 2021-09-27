@@ -5,7 +5,7 @@ on:
     # 1am each night https://crontab.guru/#0_1_*_*_*
     - cron: "0 1 * * *"
   push:
-    branches: [develop, main]
+    branches: [develop, main, deniscep/874-nexus-wrap]
   workflow_dispatch:
 
 # This will prevent multiple runs of this entire workflow.
@@ -112,6 +112,7 @@ jobs:
           export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
 
           make tre-deploy
+          make config-nexus
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
