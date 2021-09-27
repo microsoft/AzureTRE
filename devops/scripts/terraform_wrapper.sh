@@ -54,27 +54,27 @@ while [ "$1" != "" ]; do
 done
 
 
-if [[ -z ${mgmt_resource_group_name+x} ]]; then  
+if [[ -z ${mgmt_resource_group_name+x} ]]; then
     echo -e "No terraform state resource group name provided\n"
     usage
 fi
 
-if [[ -z ${mgmt_storage_account_name+x} ]]; then  
+if [[ -z ${mgmt_storage_account_name+x} ]]; then
     echo -e "No terraform state storage account name provided\n"
     usage
 fi
 
-if [[ -z ${container_name+x} ]]; then  
+if [[ -z ${container_name+x} ]]; then
     echo -e "No terraform state container name provided\n"
     usage
 fi
 
-if [[ -z ${key+x} ]]; then 
+if [[ -z ${key+x} ]]; then
     echo -e "No key provided\n"
     usage
 fi
 
-if [[ -z ${tf_command+x} ]]; then 
+if [[ -z ${tf_command+x} ]]; then
     echo -e "No command provided\n"
     usage
 fi
@@ -89,14 +89,14 @@ terraform init -input=false -backend=true -reconfigure -upgrade \
 RUN_COMMAND=1
 LOG_FILE="tmp$$.log"
 while [ $RUN_COMMAND = 1 ]
-do 
+do
     RUN_COMMAND=0
     TF_CMD="$tf_command"
-  
+
     script -c "$TF_CMD" $LOG_FILE
 
-    LOCKED_STATE=$(cat tmp$$.log |  grep -c 'Error acquiring the state lock') || true; 
-    TF_ERROR=$(cat tmp$$.log |  grep -c 'Error') || true; 
+    LOCKED_STATE=$(cat tmp$$.log |  grep -c 'Error acquiring the state lock') || true;
+    TF_ERROR=$(cat tmp$$.log |  grep -c 'Error ') || true;
     if [[ $LOCKED_STATE > 0  ]];
     then
         RUN_COMMAND=1

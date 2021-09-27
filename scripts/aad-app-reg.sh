@@ -385,6 +385,13 @@ declare swaggerRequiredResourceAccess=$(jq -c . << JSON
 JSON
 )
 
+redirectUris="\"http://localhost:8000/docs/oauth2-redirect\""
+
+if [[ -n ${replyUrl} ]]; then
+    echo "Adding reply/redirect URL \"${replyUrl}\" to ${appName} Swagger UI app"
+    redirectUris="${redirectUris}, \"${replyUrl}\""
+fi
+
 declare swaggerUIApp=$(jq -c . << JSON
 {
     "displayName": "${appName} Swagger UI",
@@ -392,7 +399,7 @@ declare swaggerUIApp=$(jq -c . << JSON
     "requiredResourceAccess": ${swaggerRequiredResourceAccess},
     "spa": {
         "redirectUris": [
-            "http://localhost:8000/docs/oauth2-redirect"
+            ${redirectUris}
         ]
     }
 }
@@ -419,11 +426,6 @@ fi
 # Make the current user an owner of the application.
 az ad app owner add --id ${swaggerAppId} --owner-object-id $currentUserId
 
-if [[ -n ${replyUrl} ]]; then
-    echo "Adding reply/redirect URL \"${replyUrl}\" to ${appName} Swagger UI app"
-    az ad app update --id ${swaggerAppId} --reply-urls ${replyUrl} http://localhost:8000/docs/oauth2-redirect
-fi
-
 # See if a service principal already exists
 swaggerSpId=$(az ad sp list --filter "appId eq '${swaggerAppId}'" --query '[0].objectId' --output tsv)
 
@@ -440,10 +442,6 @@ if [[ $grantAdminConsent -eq 1 ]]; then
     az ad app permission grant --id $swaggerSpId --api $msGraphObjectId --scope "offline_access openid"
     az ad app permission grant --id $swaggerSpId --api $apiAppId --scope "Workspace.Read Workspace.Write"
 fi
-
-# Allow public client flow
-echo "Enabling public client flow for ${appName} Swagger UI app"
-az ad app update --id ${swaggerAppId} --set publicClient=true
 
 echo "Done"
 

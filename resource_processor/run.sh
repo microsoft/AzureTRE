@@ -14,7 +14,7 @@ default-storage = "azurestorage"
 
 [[storage]]
 name = "azurestorage"
-plugin = "azure.blob"
+plugin = "azure.table"
 
 [storage.config]
 account="${MGMT_STORAGE_ACCOUNT_NAME}"
