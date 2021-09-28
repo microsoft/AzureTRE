@@ -14,20 +14,9 @@ resource "azurerm_storage_share" "storage_state_path" {
   quota                = 50
 }
 
-resource "azurerm_private_dns_zone" "blobcore" {
+data "azurerm_private_dns_zone" "blobcore" {
   name                = "privatelink.blob.core.windows.net"
   resource_group_name = var.resource_group_name
-
-  lifecycle { ignore_changes = [tags] }
-}
-
-resource "azurerm_private_dns_zone_virtual_network_link" "blobcorelink" {
-  name                  = "blobcorelink"
-  resource_group_name   = var.resource_group_name
-  private_dns_zone_name = azurerm_private_dns_zone.blobcore.name
-  virtual_network_id    = var.core_vnet
-
-  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_endpoint" "blobpe" {
@@ -40,7 +29,7 @@ resource "azurerm_private_endpoint" "blobpe" {
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group-blobcore"
-    private_dns_zone_ids = [azurerm_private_dns_zone.blobcore.id]
+    private_dns_zone_ids = [data.azurerm_private_dns_zone.blobcore.id]
   }
 
   private_service_connection {
@@ -51,20 +40,9 @@ resource "azurerm_private_endpoint" "blobpe" {
   }
 }
 
-resource "azurerm_private_dns_zone" "filecore" {
+data "azurerm_private_dns_zone" "filecore" {
   name                = "privatelink.file.core.windows.net"
   resource_group_name = var.resource_group_name
-
-  lifecycle { ignore_changes = [tags] }
-}
-
-resource "azurerm_private_dns_zone_virtual_network_link" "filecorelink" {
-  name                  = "filecorelink"
-  resource_group_name   = var.resource_group_name
-  private_dns_zone_name = azurerm_private_dns_zone.filecore.name
-  virtual_network_id    = var.core_vnet
-
-  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_endpoint" "filepe" {
@@ -77,7 +55,7 @@ resource "azurerm_private_endpoint" "filepe" {
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group-filecore"
-    private_dns_zone_ids = [azurerm_private_dns_zone.filecore.id]
+    private_dns_zone_ids = [data.azurerm_private_dns_zone.filecore.id]
   }
 
   private_service_connection {

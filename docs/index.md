@@ -4,47 +4,29 @@ Trusted Research Environments (TRE) enforce a secure boundary around distinct wo
 
 ![Concepts](assets/treconcepts.png)
 
-A Trusted Research Environment (typically one per organization, or one per department in large organizations) consist of
+A Trusted Research Environment (typically one per organization, or one per department in large organizations) consist of:
 
-- One Composition Service (API, deployment engine etc. used to manage and deploy workspaces, workspace services and user resources)
-- One set of Shared Services used by all workspaces
-- A number of workspaces, where each workspace is its own security boundary, and in turn contains Workspace Services and User Resources
+- One **Composition Service** (API, deployment engine etc. used to manage and deploy workspaces, workspace services and user resources)
+- One set of **Shared Services** used by all workspaces
+- A number of **Workspaces**, where each workspace is its own security boundary, and in turn contains **Workspace Services** and User Resources
 
-Following are more detailed descriptions of the TRE concepts
-
-- [Composition Service and API](#application-components-of-the-tre)
-- [Services](#services)
-- [Shared Services](#shared-services)
-- [Workspace](#workspace)
-- [Workspace Service](#workspace-service)
-- [User Resource](#user-resource)
-- [Templates](#templates)
-
-## Application components of the TRE
-
-A TRE consist of multiple processes orchestrating managing workspaces and services. These are components that enable researchers and TRE admins to provision and manage workspaces in a self-service manner.
-
-The components are of relevance for [Azure administrators](azure-tre-overview/user-roles.md#Azure-administrator), [TRE service integrator](azure-tre-overview/user-roles.md#TRE-service-integrator) and [TRE developers](azure-tre-overview/user-roles.md#Azure-TRE-developer).
-
-### Composition Service
+## The Composition Service
 
 The Composition Service offers an abstraction over the lower-level Azure resources to allow for TRE users to provision resources in terms of workspaces and workspace services.
 
-The Composition Service exposes resources – based on above concepts – as an HTTP API where users and applications can model the desired representation of the TRE, i.e., define which workspaces should contain which workspace services.
-
 The Composition Service reconciles the desired state with the actual state by invoking Azure resource deployments.
 
-## Services
+The composition service is fronted by an API that helps the TRE Admin, TRE Workspace Owners and TRE Researchers create and manage the **workspaces** and **workspace services**.
 
-A service provide one or more capabilities to you as a user of the TRE or to the TRE itself.  Depending on the type of the service it is scoped to the environment and shared across all workspaces (Shared Service) or scoped to a specific workspace (Workspace Service).
+## Shared Services
+
+A service provides one or more capabilities to you as a user of the TRE or to the TRE itself.  Depending on the type of the service it is scoped to the environment and shared across all workspaces (Shared Service) or scoped to a specific workspace (Workspace Service).
 
 The types of services required for a research project varies greatly why extensibility is a key aspect of the Azure TRE solution. New services can be developed by you and your organization to fit your needs.
 
-Some Workspace Services are accessible from outside the protected network, such as a Virtual Desktop. No data will be permitted to be transferred outside the protected network. Other services such as Azure Machine Learning might need access restricting to via a Virtual Desktop.
+**Shared Services** are services and resource shared by all workspaces. These services are created once, when the TRE is deployed and managed by the TRE Administrator.
 
-### Shared Services
-
-Shared Services are services and resource shared by all workspaces.
+Examples of shared services are:
 
 - Firewall
 - Package Mirror
@@ -52,15 +34,17 @@ Shared Services are services and resource shared by all workspaces.
 
 ## Workspace
 
-A **workspace** is a set of resources on a network with inbound traffic, restricted to authorised users, and outbound access restricted to defined network locations. The workspace is a security boundary and there should be zero transfer of data out from the workspace unless explicitly configured. Data transfer is not restricted within a workspace.
+A **workspace** is a set of resources on a network, with inbound traffic restricted to authorised users, and outbound access restricted to defined network locations.
+
+The workspace is a security boundary and there should be zero transfer of data out from the workspace unless explicitly configured. Data transfer is not restricted within a workspace.
 
 The workspace itself contains only the bare essentials to provide this functionality, such as firewalls, storage etc.
 
 Workspaces can be enhanced with one or more building blocks called **workspace services** like Azure ML, Guacamole etc. to allow functionality such as development of machine learning models, data engineering, data analysis and software development.
 
-Multiple workspaces can be created within a single Trusted Research Environment to create the required separation for your projects.
+Multiple workspaces can be created within a single Trusted Research Environment to enable the required separation for your projects.
 
-Each workspace has [workspace users](azure-tre-overview/user-roles.md): one workspace owner, and one or more workspace researchers that can access the data and workspace services in the workspace. The workspace owner is also considered a workspace researcher.
+Each workspace has [workspace users](azure-tre-overview/user-roles.md): one **workspace owner**, and one or more **workspace researchers** that can access the data and workspace services in the workspace. The workspace owner is also considered a workspace researcher.
 
 ## Workspace Service
 

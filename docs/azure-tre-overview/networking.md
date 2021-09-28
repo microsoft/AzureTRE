@@ -11,7 +11,7 @@ Azure TRE VNETs are segregated allowing limited traffic between the TRE Manageme
 
 The Core VNET is further divided into subnets.
 
-| Subnet | Description |
+| <div style="width:200px">Subnet</div> | Description |
 | -------| ----------- |
 | `AzureBastionSubnet` | A dedicated subnet for Azure Bastion hosts. |
 | `AppGwSubnet` | Subnet for Azure Application Gateway controlling ingress traffic. |
@@ -20,8 +20,9 @@ The Core VNET is further divided into subnets.
 | `WebAppSubnet` | Subnet for TRE API. |
 | `SharedSubnet` | Shared Services subnet for all things shared by TRE Core and Workspaces. Such as Source Mirror Shared Service and Package Mirror Shared Service. |
 
-All subnets (Core and Workspace subnets) has a default route which directs egress traffic to the Azure Firewall, to ensure only explicitly allowed destinations on the Internet to be accessed.
-There are a couple of exceptions
+All subnets (Core and Workspace subnets) have a default route which directs egress traffic to the Azure Firewall to ensure only explicitly allowed destinations on the Internet to be accessed.
+
+There are a couple of exceptions:
 
 - `AzureFirewallSubnet` as it hosts the Azure Firewall which routes traffic to the Internet.
 - `AzureBastionSubnet` as it hosts [Azure Bastion](https://azure.microsoft.com/en-us/services/azure-bastion) which is the management jump box within the VNET with Internet access.

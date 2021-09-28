@@ -65,6 +65,10 @@ module "storage" {
   resource_group_name = azurerm_resource_group.core.name
   shared_subnet       = module.network.shared_subnet_id
   core_vnet           = module.network.core_vnet_id
+
+  depends_on = [
+    module.network
+  ]
 }
 
 module "appgateway" {
@@ -229,7 +233,8 @@ module "gitea" {
 
   depends_on = [
     module.network,
-    module.api-webapp # it would have been better to depend on the plan itself and not the whole module
+    module.api-webapp, # it would have been better to depend on the plan itself and not the whole module
+    module.keyvault
   ]
 }
 
@@ -242,6 +247,7 @@ module "nexus" {
 
   depends_on = [
     module.network,
-    module.api-webapp # it would have been better to depend on the plan itself and not the whole module
+    module.api-webapp, # it would have been better to depend on the plan itself and not the whole module
+    module.keyvault
   ]
 }
