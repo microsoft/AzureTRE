@@ -101,7 +101,7 @@ The processor runs in a VNET, and you cannot connect to it directly.
    - `/var/log/cloud-init.log`
    - `/var/log/cloud-init-output.log`
 
-   If the docker container is pulled as shown in logs then the resource processor should start.
+   If the Docker container is pulled as shown in logs then the resource processor should start.
 
 1. Check the status of the container using `docker ps`
 
