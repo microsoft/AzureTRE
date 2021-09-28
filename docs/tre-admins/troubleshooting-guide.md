@@ -77,7 +77,7 @@ Received deployment status update message with correlation ID 28fcf096-6962-498b
 
 It should also be evident from the message flow where the current processing is stuck or failed. Failed deployment status should also be available in the `GET /api/workspaces/{workspace_id}` and this is just another way to confirm it.
 
-## Checking the Virtual Machine Scale Set(VMSS) instance running resource processor
+## Checking the Virtual Machine Scale Set (VMSS) instance running resource processor
 
 If you see messages hanging in the service bus queue then the resource processor is not up and running.
 
