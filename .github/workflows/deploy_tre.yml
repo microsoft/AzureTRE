@@ -112,6 +112,7 @@ jobs:
           export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
 
           make tre-deploy
+          make config-nexus
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
