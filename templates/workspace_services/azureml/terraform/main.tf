@@ -19,11 +19,11 @@ data "azurerm_client_config" "current" {}
 
 
 data "azurerm_resource_group" "ws" {
-  name = "rg-${var.tre_id}-ws-${var.workspace_id}"
+  name = "rg-${var.tre_id}-ws-${local.short_workspace_id}"
 }
 
 data "azurerm_virtual_network" "ws" {
-  name                = "vnet-${var.tre_id}-ws-${var.workspace_id}"
+  name                = "vnet-${var.tre_id}-ws-${local.short_workspace_id}"
   resource_group_name = data.azurerm_resource_group.ws.name
 }
 
@@ -31,27 +31,6 @@ data "azurerm_subnet" "services" {
   name                 = "ServicesSubnet"
   virtual_network_name = data.azurerm_virtual_network.ws.name
   resource_group_name  = data.azurerm_virtual_network.ws.resource_group_name
-}
-
-module "kv" {
-  source       = "./keyvault"
-  tre_id       = var.tre_id
-  workspace_id = var.workspace_id
-  service_id   = local.service_id
-}
-
-module "storage" {
-  source       = "./storage"
-  tre_id       = var.tre_id
-  workspace_id = var.workspace_id
-  service_id   = local.service_id
-}
-
-module "acr" {
-  source       = "./acr"
-  tre_id       = var.tre_id
-  workspace_id = var.workspace_id
-  service_id   = local.service_id
 }
 
 resource "azurerm_application_insights" "ai" {
@@ -63,14 +42,23 @@ resource "azurerm_application_insights" "ai" {
   lifecycle { ignore_changes = [tags] }
 }
 
+data "azurerm_key_vault" "ws" {
+  name                = local.keyvault_name
+  resource_group_name = data.azurerm_resource_group.ws.name
+}
+
+data "azurerm_storage_account" "ws" {
+  name                = local.storage_name
+  resource_group_name = data.azurerm_resource_group.ws.name
+}
+
 resource "azurerm_machine_learning_workspace" "ml" {
   name                    = local.workspace_name
   location                = data.azurerm_resource_group.ws.location
   resource_group_name     = data.azurerm_resource_group.ws.name
   application_insights_id = azurerm_application_insights.ai.id
-  key_vault_id            = module.kv.keyvault_id
-  storage_account_id      = module.storage.storage_account_id
-
+  key_vault_id            = data.azurerm_key_vault.ws.id
+  storage_account_id      = data.azurerm_storage_account.ws.id
   identity {
     type = "SystemAssigned"
   }
@@ -78,55 +66,21 @@ resource "azurerm_machine_learning_workspace" "ml" {
   lifecycle { ignore_changes = [tags] }
 }
 
-resource "azurerm_private_dns_zone" "azureml" {
+data "azurerm_private_dns_zone" "azureml" {
   name                = "privatelink.api.azureml.ms"
-  resource_group_name = data.azurerm_resource_group.ws.name
-
-  lifecycle { ignore_changes = [tags] }
+  resource_group_name = local.core_resource_group_name
 }
 
-resource "azurerm_private_dns_zone" "azuremlcert" {
+data "azurerm_private_dns_zone" "azuremlcert" {
   name                = "privatelink.cert.api.azureml.ms"
-  resource_group_name = data.azurerm_resource_group.ws.name
-
-  lifecycle { ignore_changes = [tags] }
+  resource_group_name = local.core_resource_group_name
 }
 
 
-resource "azurerm_private_dns_zone" "notebooks" {
+data "azurerm_private_dns_zone" "notebooks" {
   name                = "privatelink.notebooks.azure.net"
-  resource_group_name = data.azurerm_resource_group.ws.name
-
-  lifecycle { ignore_changes = [tags] }
+  resource_group_name = local.core_resource_group_name
 }
-
-resource "azurerm_private_dns_zone_virtual_network_link" "azuremllink" {
-  name                  = "azuremllink-${local.service_resource_name_suffix}"
-  resource_group_name   = data.azurerm_resource_group.ws.name
-  private_dns_zone_name = azurerm_private_dns_zone.azureml.name
-  virtual_network_id    = data.azurerm_virtual_network.ws.id
-
-  lifecycle { ignore_changes = [tags] }
-}
-
-resource "azurerm_private_dns_zone_virtual_network_link" "azuremlcertlink" {
-  name                  = "azuremlcertlink-${local.service_resource_name_suffix}"
-  resource_group_name   = data.azurerm_resource_group.ws.name
-  private_dns_zone_name = azurerm_private_dns_zone.azuremlcert.name
-  virtual_network_id    = data.azurerm_virtual_network.ws.id
-
-  lifecycle { ignore_changes = [tags] }
-}
-
-resource "azurerm_private_dns_zone_virtual_network_link" "notebookslink" {
-  name                  = "notebookslink-${local.service_resource_name_suffix}"
-  resource_group_name   = data.azurerm_resource_group.ws.name
-  private_dns_zone_name = azurerm_private_dns_zone.notebooks.name
-  virtual_network_id    = data.azurerm_virtual_network.ws.id
-
-  lifecycle { ignore_changes = [tags] }
-}
-
 resource "azurerm_private_endpoint" "mlpe" {
   name                = "mlpe-${local.service_resource_name_suffix}"
   location            = data.azurerm_resource_group.ws.location
@@ -137,7 +91,7 @@ resource "azurerm_private_endpoint" "mlpe" {
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group"
-    private_dns_zone_ids = [azurerm_private_dns_zone.azureml.id, azurerm_private_dns_zone.notebooks.id, azurerm_private_dns_zone.azuremlcert.id]
+    private_dns_zone_ids = [data.azurerm_private_dns_zone.azureml.id, data.azurerm_private_dns_zone.notebooks.id, data.azurerm_private_dns_zone.azuremlcert.id]
   }
 
   private_service_connection {

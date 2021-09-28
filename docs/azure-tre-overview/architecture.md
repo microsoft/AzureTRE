@@ -1,6 +1,10 @@
 # Azure TRE Architecture
 
-The Azure Trusted Research Environment (TRE) consists of multiple components, all encapsulated in networks with restricted ingress- & egress traffic. There is one network for the management components and one network per Workspace. All traffic has to be explicitly allowed by the Application Gateway or the Firewall.
+The Azure Trusted Research Environment (TRE) consists of multiple components, all encapsulated in networks with restricted ingress- & egress traffic.
+
+There is one network for the management components and one network per Workspace.
+
+All traffic has to be explicitly allowed by the Application Gateway or the Firewall.
 
 ![Architecture overview](../assets/archtecture-overview.png)
 
@@ -51,9 +55,9 @@ The Composition Service consists of multiple components.
 
 The flow to provision a Workspace is as follows (the flow is the same for all kinds of mutations to a Workspace):
 
-1. An HTTP request to the TRE API to create a new Workspace. The request contains information like the name of the Workspace, the Workspace Template to use, and the parameters required for the Workspace Template (Workspace Templates can expose the parameters via a JSON Schema ).
-1. The desired state of the Workspace is updated in the Configuration Store.
-1. A command message with the Workspace Template reference and parameters are sent to the `workspacequeue`.
+1. TRE Admin sends an HTTP request to the TRE API to create a new Workspace. The request contains information like the name of the Workspace, the Workspace Template to use, and the parameters required for the Workspace Template (Workspace Templates can expose the parameters via a JSON Schema ).
+1. The API saves the desired state of the Workspace in the Configuration Store.
+1. The API sends a command message with the Workspace Template reference and parameters to the `workspacequeue`.
 
     ```JSON
     {
@@ -84,11 +88,11 @@ The flow to provision a Workspace is as follows (the flow is the same for all ki
 
 1. The Porter Docker bundle is pulled from the Azure Container Registry (ACR) and executed.
 1. The Porter bundle executes against Azure Resource Manager to provision Azure resources. Any kind of infrastructure of code frameworks like ARM, Terraform, or Pulumi can be used or scripted via PowerShell or Azure CLI.
-1. State and output management is handled via Azure Storage Containers. State for keeping persistent state between executions of a bundled with the same Workspace.
+1. Porter stores state and outputs in Azure Storage Containers. State for keeping persistent state between executions of a bundled with the same Workspace.
 1. For the time being, the Porter bundle updates Firewall rules directly setting egress rules. An enhancement to implement a Shared Firewall services is planned ([#23](https://github.com/microsoft/AzureTRE/issues/23)).
 1. The Resource Processor sends events to the `deploymentstatus` queue on state changes and informs if the deployment succeeded or failed.
-1. The status of a Porter bundle execution is received.
-1. The status of a Porter bundle execution is updated in the Configuration Store.
+1. The API receives the status of the Porter bundle execution.
+1. The API updates the status of the Porter bundle execution in the Configuration Store.
 
 !!! info
     The Resource Processor is a Docker container running on a Linux VM scale set.
