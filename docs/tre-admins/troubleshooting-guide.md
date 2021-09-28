@@ -96,7 +96,7 @@ The processor runs in a VNET, and you cannot connect to it directly.
 
   ![Bastion](../assets/bastion.png "Bastion")
 
-1. After logging in you should check the status of **cloud-init** which is used to bootstrap the machine with docker and start the processor. Log files for cloud init are
+1. After logging in you should check the status of **cloud-init** which is used to bootstrap the machine with docker and start the processor. Log files for cloud init are:
 
    - `/var/log/cloud-init.log`
    - `/var/log/cloud-init-output.log`
