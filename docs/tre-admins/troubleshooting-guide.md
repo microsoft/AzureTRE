@@ -107,7 +107,7 @@ The processor runs in a VNET, and you cannot connect to it directly.
 
   If you see nothing (and the container was pulled) then the processor has either not started yet or it has crashed.
 
-1. Check the status of all docker processes using `docker ps -a` which should show you if the container terminated prematurely.
+1. Check the status of all Docker processes using `docker ps -a` which should show you if the container terminated prematurely.
 1. Get the logs from the container using `docker logs <container_id>` command.
 
 To start a processor container manually:
