@@ -15,8 +15,8 @@ Nexus will be deployed as part of the main TRE terraform deployment. A configura
 
 ## Setup and usage  
 
-1. A TRE Administrator can access Nexus from the public network through the application gateway on: https://<TRE_ID>.<REGION>.cloudapp.azure.com/nexus/ using the password found in the Key Vault
-2. A researcher can access Nexus from within the workspace by using the internal Nexus URL of: https://nexus-<TRE_ID>.azurewebsites.net/  
+1. A TRE Administrator can access Nexus from the public network through the application gateway on: [https://<TRE_ID>.<REGION>.cloudapp.azure.com/nexus/](https://<TRE_ID>.<REGION>.cloudapp.azure.com/nexus/) using the password found in the Key Vault
+2. A researcher can access Nexus from within the workspace by using the internal Nexus URL of: [https://nexus-<TRE_ID>.azurewebsites.net/](https://nexus-<TRE_ID>.azurewebsites.net/)
 3. To fetch Python packages from the PyPI proxy, a researcher can use pip install while specifying the proxy server:
 
     ```bash
@@ -25,7 +25,8 @@ Nexus will be deployed as part of the main TRE terraform deployment. A configura
 
 ## Network requirements
 
-Nexus Shared Service requires access to the following resources outside of the Azure TRE VNET. These are set as part of the firewall provisioning pipeline via explicit allow on [Service Tags](https://docs.microsoft.com/en-us/azure/virtual-network/service-tags-overview) or URLs. Notice that since Nexus Shared Service is running on an App Service, the outgoing exceptions are made for the calls coming out of the Web App Subnet.
+Nexus Shared Service requires access to resources outside of the Azure TRE VNET. These are set as part of the firewall provisioning pipeline via explicit allow on [Service Tags](https://docs.microsoft.com/en-us/azure/virtual-network/service-tags-overview) or URLs.
+Notice that since Nexus Shared Service is running on an App Service, the outgoing exceptions are made for the calls coming out of the Web App Subnet.
 
 | Service Tag / Destination | Justification |
 | --- | --- |
