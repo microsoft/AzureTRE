@@ -40,6 +40,6 @@ As a principle, we want all the Azure TRE resources defined in Terraform, includ
 
 A bootstrap script is used to create the initial storage account and resource group using the Azure CLI. Then Terraform is initialized using this storage account as a back-end, and the storage account imported into the state.
 
-You bootstrap the environment using `make bootstrap`, but as stated above this is already part of ``make all``.
+You bootstrap the environment using `make bootstrap`, but as stated above this is already part of `make all`.
 
 This script should never need running a second time even if the other management resources are modified.
