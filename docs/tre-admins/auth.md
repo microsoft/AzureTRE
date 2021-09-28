@@ -1,18 +1,19 @@
 # Authentication and authorization
 
-<!-- markdownlint-disable-next-line MD013 -->
-This document describes the authentication and authorization (A&A) of deployed Azure TRE system. The backbone of A&A is [Azure Active Directory (AAD)](https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-whatis). It holds the identities of all TRE/workspace users, including administrators, and connects the identities with app registrations defining the privileges per user roles.
+[Azure Active Directory (AAD)](https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-whatis) is the backbone of Authentication and Authorization in the TRE.
+
+It holds the identities of all TRE/workspace users, including administrators, and connects the identities with app registrations defining the privileges per user roles.
 
 ## App registrations
 
 App registrations (represented by service principals) define the privileges enabling access to the TRE system (e.g., [API](../tre-developers/api.md)) as well as the workspaces.
 
-<!-- markdownlint-disable-next-line MD013 -->
-It is recommended to run the `/scripts/aad-app-reg.sh` script to create the app registrations. Alternatively you can also choose to create the app registrations manually via the Azure Portal - see [Quickstart: Register an application with the Microsoft identity platform](https://docs.microsoft.com/azure/active-directory/develop/quickstart-register-app) on how. The required setup with permissions is documented below.
+You can create the app registrations needed for the API by running the `/scripts/aad-app-reg.sh` script.
 
-That is the authentication and authorization setup needed to run the Azure TRE. Below is details about the permissions and if you want to set up the end-to-end automated tests, as it requires a [third app registration](#tre-e2e-test).
+Alternatively, you can create the app registrations manually via the [Azure Portal](https://docs.microsoft.com/azure/active-directory/develop/quickstart-register-app). The requirements are listed below.
 
-Workspaces rely on app registrations as well, and those are documented under [Workspaces](#workspaces).
+!!! note
+    Additional app registrations are required to run the E2E tests, and also to create workspaces - these are not configured by the `aad-app-reg.sh` script. Find information below on how to set these up.
 
 ### App registration script
 

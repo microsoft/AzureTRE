@@ -5,7 +5,7 @@
 
 ## For shared management resources in `/devops/.env`
 
-| Environment variable name | Description |
+| <div style="width: 330px">Environment variable name</div> | Description |
 | ------------------------- | ----------- |
 | `LOCATION` | The Azure location (region) for all resources. |
 | `MGMT_RESOURCE_GROUP_NAME` | The shared resource group for all management resources, including the storage account. |
@@ -22,7 +22,7 @@
 
 ## For Azure TRE instance in `/templates/core/.env`
 
-| Environment variable name | Description |
+| <div style="width: 330px">Environment variable name</div> | Description |
 | ------------------------- | ----------- |
 | `TRE_ID` | A globally unique identifier. `TRE_ID` can be found in the resource names of the Azure TRE instance; for example, a `TRE_ID` of `mytre-dev` will result in a resource group name for Azure TRE instance of `rg-mytre-dev`. This must be less than 12 characters. Allowed characters: Alphanumeric, underscores, and hyphens. |
 | `CORE_ADDRESS_SPACE` | The address space for the Azure TRE core virtual network. `/22` or larger. |

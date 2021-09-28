@@ -20,24 +20,24 @@ The files for the dev container are located in `/.devcontainer/` folder.
 
 ## Clone the Azure TRE Git repository
 
-Clone the Azure TRE Git repository on GitHub to your local computer.
+1. Clone the Azure TRE Git repository on GitHub to your local computer.
 
-```cmd
-git clone https://github.com/microsoft/AzureTRE.git
-```
+  ```cmd
+  git clone https://github.com/microsoft/AzureTRE.git
+  ```
 
-The Git repository will host some basic configuration for the TRE instances that are deployed from a given repository. Create a new branch for the instance that you are about to deploy.
+  The Git repository will host some basic configuration for the TRE instances that are deployed from a given repository. Create a new branch for the instance that you are about to deploy.
 
-```cmd
-cd AzureTRE
-AzureTRE> git checkout -b quickstartenv
-```
+  ```cmd
+  cd AzureTRE
+  AzureTRE> git checkout -b quickstartenv
+  ```
 
-Now, let's open the cloned repository in Visual Studio Code and connect to the development container.
+1. Open the cloned repository in Visual Studio Code and connect to the development container.
 
-```cmd
-AzureTRE> code .
-```
+  ```cmd
+  AzureTRE> code .
+  ```
 
 !!! tip
     Visual Studio Code should recognize the available development container and ask you to open the folder using it. For additional details on connecting to remote containers, please see the [Open an existing folder in a container](https://code.visualstudio.com/docs/remote/containers#_quick-start-open-an-existing-folder-in-a-container) quickstart.

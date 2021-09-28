@@ -1,6 +1,7 @@
 # Nexus Shared Service
 
-This service allows users in workspaces to access external software packages securely by relying on Sonatype Nexus (RepoManager).
+Sonatype Nexus (RepoManager) allows users in workspaces to access external software packages securely.
+
 Documentation on Nexus can be found here: [https://help.sonatype.com/repomanager3/](https://help.sonatype.com/repomanager3/).
 
 ## Deploy
