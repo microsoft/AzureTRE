@@ -46,5 +46,5 @@ data "azurerm_storage_account" "gitea" {
 }
 
 data "local_file" "version" {
-    filename = "${path.module}/../version.txt"
+  filename = "${path.module}/../version.txt"
 }
