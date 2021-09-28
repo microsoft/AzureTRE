@@ -1,0 +1,50 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/guacamole/custom_parameters.json",
+    "type": "object",
+    "title": "Azure Virtual Desktop service template",
+    "description": "Azure Virtual Desktop service template",
+    "required": [
+    ],
+    "properties": {
+        "localAdminName": {
+            "type": "string",
+            "title": "Local Admin Name",
+            "description": "The name of the local administrator account to be created on the virtual machine.",
+            "default": "adminuser"
+        },
+        "localAdminPassword": {
+            "type": "string",
+            "title": "Local Admin Password",
+            "description": "The password of the local administrator account to be created on the virtual machine."
+        },
+        "vmSize": {
+            "type": "string",
+            "title": "Virtual Machine Size",
+            "description": "The size of the virtual machine to be created.",
+            "enum": [
+                "Standard_D2_v3",
+                "Standard_D4_v3",
+                "Standard_D8_v3",
+                "Standard_D16_v3"
+            ],
+            "default": "Standard_D2_v3"
+        },
+        "vmCount": {
+            "type": "integer", 
+            "title": "Number of Virtual Machines",
+            "description": "The number of virtual machines to be created.",
+            "default": 1
+        },
+        "vmLicenseType": {
+            "type": "string",
+            "title": "Virtual Machine License Type",
+            "description": "The license type of the virtual machine to be created.",
+            "enum": [
+                "Windows_Server",
+                "Windows_Client"
+            ],
+            "default": "Windows_Client"
+        }
+    }
+}

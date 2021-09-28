@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "1.0.0-DRAFT+TODO",
+  "name": "avd-aad",
+  "created": "2021-06-03T11:54:54.0225968Z",
+  "modified": "2021-06-03T11:54:54.0225968Z",
+  "parameters": [
+    {
+      "name": "id",
+      "source": {
+        "env": "ID"
+      }
+    },
+    {
+      "name": "workspace_id",
+      "source": {
+        "env": "WORKSPACE_ID"
+      }
+    },
+    {
+      "name": "tre_id",
+      "source": {
+        "env": "TRE_ID"
+      }
+    },
+    {
+      "name": "azure_location",
+      "source": {
+        "env": "AZURE_LOCATION"
+      }
+    },
+    {
+      "name": "localAdminName",
+      "source": {
+        "env": "LOCAL_ADMIN_NAME"
+      }
+    },
+    {
+      "name": "localAdminPassword",
+      "source": { 
+        "env": "LOCAL_ADMIN_PASSWORD"
+      }
+    },
+    {
+      "name": "vmSize",
+      "source": {
+        "env": "VM_SIZE"
+      }
+    },
+    {
+      "name": "vmCount",
+      "source": {
+        "env": "VM_COUNT"
+      }
+    },
+    {
+      "name": "vmLicenseType",
+      "source": {
+        "env": "VM_LICENSE_TYPE"
+      }
+    }
+  ]
+}
