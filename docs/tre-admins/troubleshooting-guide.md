@@ -85,7 +85,7 @@ Verify that the VMSS instance is up and healthy.
 
 ![VMSS Running](../assets/vmss_running.png)
 
-The processor runs in a vnet, and you cannot connect to it directly.
+The processor runs in a VNET, and you cannot connect to it directly.
 
 1. Connect to the instance using Bastion. Bastion is already deployed, and you can use the username `adminuser`. The password is stored in the keyvault under the secret `resource-processor-vmss-password`
 
