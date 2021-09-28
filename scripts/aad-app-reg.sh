@@ -339,6 +339,8 @@ else
     fi
 fi
 
+spPassword=""
+
 if [[ "$resetPassword" == 1 ]]; then
     # Reset the app password (client secret) and display it
     spPassword=$(az ad sp credential reset --name ${apiAppId} --query 'password' --output tsv)
@@ -454,4 +456,11 @@ AAD_TENANT_ID=$(az account show | jq -r '.tenantId')
 API_CLIENT_ID=${apiAppId}
 API_CLIENT_SECRET=${spPassword}
 SWAGGER_UI_CLIENT_ID=${swaggerAppId}
+
 ENV_VARS
+
+if [[ $grantAdminConsent -eq 0 ]]; then
+    echo "NOTE: Make sure the API permissions of the app registrations have admin consent granted."
+    echo "Run this script with flag -a to grant admin consent or configure the registrations in Azure Portal."
+    echo "See APP REGISTRATIONS in documentation for more information."
+fi
