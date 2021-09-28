@@ -10,7 +10,7 @@ These are onetime configuration steps required to set up the GitHub Actions work
 
 *Required repository secrets for the CI/CD.*
 
-| Secret name | Description |
+| <div style="width: 230px">Secret name</div> | Description |
 | ----------- | ----------- |
 | `AZURE_CREDENTIALS` | Explained in [Bootstrapping - Create service principals](bootstrapping.md#create-service-principals). Main service principal credentials output. |
 | `TF_STATE_CONTAINER` | The name of the blob container to hold the Terraform state. By convention the value is `tfstate`. |

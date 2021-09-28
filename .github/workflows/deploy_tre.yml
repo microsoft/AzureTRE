@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 # This will prevent multiple runs of this entire workflow.
-# We should NOT cancel running ones as that might destabilize the environment.
+# We should NOT cancel in progress runs as that can destabilize the environment.
 concurrency: deploy-e2e
 
 env:
@@ -44,12 +44,12 @@ jobs:
           TF_VAR_terraform_state_container_name: ${{ secrets.TF_STATE_CONTAINER }}
           TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
           TF_VAR_mgmt_storage_account_name: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
-          LOCATION: ${{ secrets.LOCATION }} # scripts are using this too
           TF_VAR_location: ${{ secrets.LOCATION }}
-          ACR_NAME: ${{ secrets.ACR_NAME }} # scripts are using this too
           TF_VAR_acr_name: ${{ secrets.ACR_NAME }}
           TF_VAR_porter_output_container_name: "${{ secrets.PORTER_OUTPUT_CONTAINER_NAME }}"
-
+          ACR_NAME: ${{ secrets.ACR_NAME }} # scripts are using this too
+          LOCATION: ${{ secrets.LOCATION }} # scripts are using this too
+          IMAGE_TAG: ${{ github.sha }}
         run: |
           export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
           export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
@@ -59,6 +59,8 @@ jobs:
 
           make bootstrap
           make mgmt-deploy
+          make images
+
 
   deploy_tre:
     name: Deploy TRE
@@ -87,9 +89,7 @@ jobs:
           TF_VAR_terraform_state_container_name: ${{ secrets.TF_STATE_CONTAINER }}
           TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
           TF_VAR_mgmt_storage_account_name: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
-          LOCATION: ${{ secrets.LOCATION }} # scripts are using this too
           TF_VAR_location: ${{ secrets.LOCATION }}
-          ACR_NAME: ${{ secrets.ACR_NAME }} # scripts are using this too
           TF_VAR_acr_name: ${{ secrets.ACR_NAME }}
           TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
           TF_VAR_tre_address_space: ${{ secrets.TRE_ADDRESS_SPACE }}
@@ -99,21 +99,20 @@ jobs:
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
           TF_VAR_porter_output_container_name: "${{ secrets.PORTER_OUTPUT_CONTAINER_NAME }}"
           TF_VAR_debug: false
-          IMAGE_TAG: ${{ github.sha }} # scripts are using this too
           TF_VAR_api_image_tag: ${{ github.sha }}
           TF_VAR_resource_processor_type: "vmss_porter"
           TF_VAR_resource_processor_vmss_porter_image_tag: ${{ github.sha }}
           TF_VAR_deploy_gitea: true
           TF_VAR_gitea_image_tag: ${{ github.sha }}
           TF_VAR_deploy_nexus: true
-
         run: |
           export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
           export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
           export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
           export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
 
-          make all
+          make tre-deploy
+          make config-nexus
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
@@ -125,141 +124,107 @@ jobs:
           notification-color: dc3545
           timezone: Europe/Zurich
 
-  publish_and_register_workspace_bundles:
-    name: Publish and Register Workspace Bundles
+  prepare_bundle_registration:
+    name: Prepare Bundle Registration
     runs-on: ubuntu-latest
     needs: [deploy_tre]
     environment: Dev
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-      - name: Publish and register workspace bundles
+      - name: Get API Token
         shell: bash
         env:
-          ACR_NAME: ${{ secrets.ACR_NAME }}
-          RESOURCE_LOCATION: "${{ secrets.LOCATION }}"
-          TRE_ID: "${{ secrets.TRE_ID }}"
           RESOURCE: "${{ secrets.API_CLIENT_ID }}"
           AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           CLIENT_ID: "${{ secrets.TEST_APP_ID }}"
           USERNAME: "${{ secrets.TEST_USER_NAME }}"
           PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
-          AUTH_APP_CLIENT_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
-          TRE_URL: "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
-          BUNDLE_TYPE: "workspace"
         run: |
-          curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
-          export PATH=~/.porter/:$PATH
+          set -o errexit
+          set -o pipefail
+          set -o nounset
 
-          # Get TRE API access token
-          # ************************
-          export RESPONSE=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d "grant_type=password&resource=${RESOURCE}&client_id=${CLIENT_ID}&username=${USERNAME}&password=${PASSWORD}&scope=default)" https://login.microsoftonline.com/${AUTH_TENANT_ID}/oauth2/token)
-          export TOKEN=$(jq -r '.access_token' <<< "$RESPONSE")
+          TOKEN=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d "grant_type=password&resource=${RESOURCE}&client_id=${CLIENT_ID}&username=${USERNAME}&password=${PASSWORD}&scope=default)" https://login.microsoftonline.com/${AUTH_TENANT_ID}/oauth2/token | jq -r '.access_token')
 
-          # Check if base template is already registered
-          # ********************************************
-          export STATUS_CODE=$(curl -X "GET" "${TRE_URL}/api/workspace-templates/tre-workspace-base" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
+          # Set output
+          echo "::set-output name=api_token::$( echo "${TOKEN}" )"
 
-          if [[ ${STATUS_CODE} == 404 ]]
-          then
-            make register-bundle DIR=./templates/workspaces/base
-          fi
-
-          # Check if innereye template is already registered
-          # *************************************************************
-          export STATUS_CODE=$(curl -X "GET" "${TRE_URL}/api/workspace-templates/tre-workspace-innereye" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
-
-          if [[ ${STATUS_CODE} == 404 ]]
-          then
-            make register-bundle DIR=./templates/workspaces/innereye
-          fi
-
-
-  publish_and_register_workspace_service_bundles:
-    name: Publish and Register Workspace Service Bundles
+  publish_and_register_bundles:
+    name: Register Bundle
     runs-on: ubuntu-latest
-    needs: [deploy_tre]
+    needs: [deploy_tre, prepare_bundle_registration]
+    strategy:
+      matrix:
+        include:
+        # bundles type can be inferred from the bundle dir (but this is more explicit)
+          - { BUNDLE_TYPE: "workspace", BUNDLE_DIR: "./templates/workspaces/base"}
+          - { BUNDLE_TYPE: "workspace", BUNDLE_DIR: "./templates/workspaces/innereye"}
+          - { BUNDLE_TYPE: "workspace_service", BUNDLE_DIR: "./templates/workspace_services/guacamole"}
+          - { BUNDLE_TYPE: "workspace_service", BUNDLE_DIR: "./templates/workspace_services/azureml"}
+          - { BUNDLE_TYPE: "workspace_service", BUNDLE_DIR: "./templates/workspace_services/devtestlabs"}
+          - { BUNDLE_TYPE: "workspace_service", BUNDLE_DIR: "./templates/workspace_services/innereye"}
     environment: Dev
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+
       - name: Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-      - name: Publish and register workspace bundles
+
+      - name: Install yq
+        run: |
+          sudo wget -O /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.13.0/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: Install porter
+        run: |
+          curl -L https://cdn.porter.sh/v0.38.6/install-linux.sh | bash
+          ~/.porter/porter mixin install docker
+          echo "~/.porter/" >> $GITHUB_PATH
+
+      - name: Publish and register bundles
         shell: bash
         env:
           ACR_NAME: ${{ secrets.ACR_NAME }}
-          RESOURCE_LOCATION: "${{ secrets.LOCATION }}"
-          TRE_ID: "${{ secrets.TRE_ID }}"
-          RESOURCE: "${{ secrets.API_CLIENT_ID }}"
-          AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
-          CLIENT_ID: "${{ secrets.TEST_APP_ID }}"
-          USERNAME: "${{ secrets.TEST_USER_NAME }}"
-          PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
-          AUTH_APP_CLIENT_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
           TRE_URL: "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
-          BUNDLE_TYPE: "workspace_service"
+          BUNDLE_TYPE: ${{ matrix.BUNDLE_TYPE }}
+          TOKEN: ${{ needs.prepare_bundle_registration.api_token }}
         run: |
-          curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
-          export PATH=~/.porter/:$PATH
+          set -o errexit
+          set -o pipefail
+          set -o nounset
 
-          make porter-build DIR=./templates/workspace_services/azureml
-          make porter-build DIR=./templates/workspace_services/devtestlabs
-          make porter-build DIR=./templates/workspace_services/innereye_deeplearning
-          make porter-build DIR=./templates/workspace_services/innereye_inference
+          # test that porter is able to build the bundle
+          make porter-build DIR=${{ matrix.BUNDLE_DIR }}
 
-          # Get TRE API access token
-          # ************************
-          export RESPONSE=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d "grant_type=password&resource=${RESOURCE}&client_id=${CLIENT_ID}&username=${USERNAME}&password=${PASSWORD}&scope=default)" https://login.microsoftonline.com/${AUTH_TENANT_ID}/oauth2/token)
-          export TOKEN=$(jq -r '.access_token' <<< "$RESPONSE")
+          TEMPLATE_NAME=$(yq eval '.name' ${{ matrix.BUNDLE_DIR }}/porter.yaml)
 
-          # Check if guacamole service template is already registered
-          # *********************************************************
-          export STATUS_CODE=$(curl -X "GET" "${TRE_URL}/api/workspace-service-templates/tre-service-guacamole" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
+          case "${BUNDLE_TYPE}" in
+            ("workspace") TRE_GET_PATH="api/workspace-templates" ;;
+            ("workspace_service") TRE_GET_PATH="api/workspace-service-templates" ;;
+          esac
 
-          if [[ ${STATUS_CODE} == 404 ]]
-          then
-            make register-bundle DIR=./templates/workspace_services/guacamole
-          fi
-
-          # Check if azureml service template is already registered
-          # *********************************************************
-          export STATUS_CODE=$(curl -X "GET" "${TRE_URL}/api/workspace-service-templates/tre-service-azureml" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
+          # Check if template is already registered
+          STATUS_CODE=$(curl -X "GET" "${TRE_URL}/${TRE_GET_PATH}/${TEMPLATE_NAME}" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
 
           if [[ ${STATUS_CODE} == 404 ]]
           then
-            make register-bundle DIR=./templates/workspace_services/azureml
-          fi
-
-          # Check if devtestlabs service template is already registered
-          # *********************************************************
-          export STATUS_CODE=$(curl -X "GET" "${TRE_URL}/api/workspace-service-templates/tre-service-devtestlabs" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
-
-          if [[ ${STATUS_CODE} == 404 ]]
-          then
-            make register-bundle DIR=./templates/workspace_services/devtestlabs
-          fi
-          
-          # Check if tre-service-innereye service template is already registered
-          # *********************************************************
-          export STATUS_CODE=$(curl -X "GET" "${TRE_URL}/api/workspace-service-templates/tre-service-innereye" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
-
-          if [[ ${STATUS_CODE} == 404 ]]
-          then
-            make register-bundle DIR=./templates/workspace_services/innereye
+            make register-bundle DIR=${{ matrix.BUNDLE_DIR }}
+          else
+            if [[ ${STATUS_CODE} != 200 ]]
+            then
+              echo "::warning ::API returned unexpected http status: ${STATUS_CODE}"
+              exit 1
+            fi
           fi
 
   e2e_tests:
     name: "Run E2E Tests"
     runs-on: ubuntu-latest
     environment: Dev
-    needs: [publish_and_register_workspace_bundles, publish_and_register_workspace_service_bundles]
+    # needs: [publish_and_register_user_resources]
+    needs: [publish_and_register_bundles]
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -288,17 +253,10 @@ jobs:
           PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
           AUTH_APP_CLIENT_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
         run: |
-          export SCOPE=$(echo "api://$RESOURCE/Workspace.Read api://$RESOURCE/Workspace.Write")
-          export RESOURCE_LOCATION=$RESOURCE_LOCATION
-          export TRE_ID=$TRE_ID
-          export RESOURCE=$RESOURCE
-          export AUTH_TENANT_ID=$AUTH_TENANT_ID
-          export CLIENT_ID=$CLIENT_ID
-          export USERNAME=$USERNAME
-          export PASSWORD=$PASSWORD
-          export AUTH_APP_CLIENT_ID=$AUTH_APP_CLIENT_ID
+          export SCOPE="api://${RESOURCE}/Workspace.Read api://${RESOURCE}/Workspace.Write"
           cd e2e_tests
           PYTHONPATH=. python -m pytest -m smoke --junit-xml pytest_e2e.xml
+
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
         if: ${{ failure() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') }}
@@ -329,136 +287,15 @@ jobs:
           notification-color: 28a745
           timezone: Europe/Zurich
 
-      - name: Upload Unit Test Results
+      - name: Upload Test Results
         if: always()
         uses: actions/upload-artifact@v2
         with:
           name: E2E Test Results (Python ${{ matrix.python-version }})
           path: "./e2e_tests/pytest_e2e.xml"
 
-  publish-test-results:
-    name: "Publish E2E Tests Results"
-    needs: e2e_tests
-    runs-on: ubuntu-latest
-    # the build job might be skipped, we don't need to run this job then
-    if: success() || failure()
-
-    steps:
-      - name: Download Artifacts
-        uses: actions/download-artifact@v2
-        with:
-          path: artifacts
-
-      - name: Publish Unit Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v1
+      - name: Publish Test Results
         if: always()
+        uses: EnricoMi/publish-unit-test-result-action@v1
         with:
-          files: artifacts/**/*.xml
-
-  # deploy_azureml_devtestlabs_workspace:
-  #   name: Deploy Azure ML and DevTest Labs Workspace
-  #   needs: [publish_innereye_bundles]
-  #   runs-on: ubuntu-latest
-  #   environment: Dev
-  #   steps:
-  #   - name: Checkout
-  #     uses: actions/checkout@v2
-  #   - name: Azure Login
-  #     uses: azure/login@v1
-  #     with:
-  #       creds: ${{ secrets.AZURE_CREDENTIALS }}
-  #   - name: Publish and deploy azureml_devtestlabs workspace bundle
-  #     shell: bash
-  #     env:
-  #       TRE_ID: ${{ secrets.TRE_ID }}
-  #       LOCATION: ${{ secrets.LOCATION }}
-  #       WORKSPACE_ID: "0002"
-  #       ADDRESS_SPACE: "10.2.2.0/24"
-  #       ACR_NAME: ${{ secrets.ACR_NAME }}
-  #       TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TF_STATE_CONTAINER }}
-  #       MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP }}
-  #       MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
-  #       AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-  #     run: |
-  #         export USE_ENV_VARS_NOT_FILES=true
-  #         export env
-  #         export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
-  #         export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
-  #         export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
-  #         export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
-  #         curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
-  #         export PATH=~/.porter/:$PATH
-  #         make porter-publish DIR=./templates/workspaces/azureml_devtestlabs
-  #         make porter-install DIR=./templates/workspaces/azureml_devtestlabs
-  # deploy_innereye_deeplearning_workspace:
-  #   name: Deploy InnerEye Deep Learning Workspace
-  #   needs: [deploy_azureml_devtestlabs_workspace]
-  #   runs-on: ubuntu-latest
-  #   environment: Dev
-  #   steps:
-  #   - name: Checkout
-  #     uses: actions/checkout@v2
-  #   - name: Azure Login
-  #     uses: azure/login@v1
-  #     with:
-  #       creds: ${{ secrets.AZURE_CREDENTIALS }}
-  #   - name: Publish and deploy azureml_devtestlabs workspace bundle
-  #     shell: bash
-  #     env:
-  #       TRE_ID: ${{ secrets.TRE_ID }}
-  #       LOCATION: ${{ secrets.LOCATION }}
-  #       WORKSPACE_ID: "0003"
-  #       ADDRESS_SPACE: "10.2.3.0/24"
-  #       ACR_NAME: ${{ secrets.ACR_NAME }}
-  #       TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TF_STATE_CONTAINER }}
-  #       MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP }}
-  #       MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
-  #       AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-  #     run: |
-  #         export USE_ENV_VARS_NOT_FILES=true
-  #         export env
-  #         export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
-  #         export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
-  #         export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
-  #         export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
-  #         curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
-  #         export PATH=~/.porter/:$PATH
-  #         make porter-publish DIR=./templates/workspaces/innereye_deeplearning
-  #         make porter-install DIR=./templates/workspaces/innereye_deeplearning
-  # deploy_innereye_deeplearning_inference_workspace:
-  #   name: Deploy InnerEye Deep Learning & Inference Workspace
-  #   needs: [deploy_innereye_deeplearning_workspace]
-  #   runs-on: ubuntu-latest
-  #   environment: Dev
-  #   steps:
-  #   - name: Checkout
-  #     uses: actions/checkout@v2
-  #   - name: Azure Login
-  #     uses: azure/login@v1
-  #     with:
-  #       creds: ${{ secrets.AZURE_CREDENTIALS }}
-  #   - name: Publish and deploy innereye_deeplearning_inference workspace bundle
-  #     shell: bash
-  #     env:
-  #       TRE_ID: ${{ secrets.TRE_ID }}
-  #       LOCATION: ${{ secrets.LOCATION }}
-  #       WORKSPACE_ID: "0004"
-  #       ADDRESS_SPACE: "10.2.4.0/24"
-  #       ACR_NAME: ${{ secrets.ACR_NAME }}
-  #       TERRAFORM_STATE_CONTAINER_NAME: ${{ secrets.TF_STATE_CONTAINER }}
-  #       MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP }}
-  #       MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
-  #       AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-  #     run: |
-  #         export USE_ENV_VARS_NOT_FILES=true
-  #         export env
-  #         export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
-  #         export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
-  #         export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
-  #         export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
-  #         export INFERENCE_SP_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
-  #         export INFERENCE_SP_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
-  #         curl -L https://cdn.porter.sh/latest/install-linux.sh | bash && ~/.porter/porter mixin install docker
-  #         export PATH=~/.porter/:$PATH
-  #         make porter-publish DIR=./templates/workspaces/innereye_deeplearning_inference
-  #         make porter-install DIR=./templates/workspaces/innereye_deeplearning_inference
+          files: "./e2e_tests/pytest_e2e.xml"

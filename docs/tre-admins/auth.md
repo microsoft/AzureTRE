@@ -1,20 +1,41 @@
 # Authentication and authorization
 
-<!-- markdownlint-disable-next-line MD013 -->
-This document describes the authentication and authorization (A&A) of deployed Azure TRE system. The backbone of A&A is [Azure Active Directory (AAD)](https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-whatis). It holds the identities of all TRE/workspace users, including administrators, and connects the identities with app registrations defining the privileges per user roles.
+[Azure Active Directory (AAD)](https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-whatis) is the backbone of Authentication and Authorization in the TRE.
+
+It holds the identities of all TRE/workspace users, including administrators, and connects the identities with app registrations defining the privileges per user roles.
 
 ## App registrations
 
-App registrations (represented by service principals) define the privileges enabling access to the TRE system (e.g., [API](../../tre-developers/api.md)) as well as the workspaces.
+App registrations (represented by service principals) define the privileges enabling access to the TRE system (e.g., [API](../tre-developers/api.md)) as well as the workspaces.
 
-<!-- markdownlint-disable-next-line MD013 -->
-It is recommended to run the `/scripts/aad-app-reg.sh` script to create the two main app registrations: **TRE API** and **TRE Swagger UI**. This automatically sets up the app registrations with the required permissions to run Azure TRE. The script will create an app password (client secret) for the **TRE API** app; make sure to take note of it in the script output as it is only shown once.
+You can create the app registrations needed for the API by running the `/scripts/aad-app-reg.sh` script.
 
-Alternatively you can also choose to create the app registrations manually via the Azure Portal - see [Quickstart: Register an application with the Microsoft identity platform](https://docs.microsoft.com/azure/active-directory/develop/quickstart-register-app) on how. The required setup with permissions is documented below.
+Alternatively, you can create the app registrations manually via the [Azure Portal](https://docs.microsoft.com/azure/active-directory/develop/quickstart-register-app). The requirements are listed below.
 
-That is the authentication and authorization setup needed to run the Azure TRE. Below is details about the permissions and if you want to set up the end-to-end automated tests, as it requires a [third app registration](#tre-e2e-test).
+!!! note
+    Additional app registrations are required to run the E2E tests, and also to create workspaces - these are not configured by the `aad-app-reg.sh` script. Find information below on how to set these up.
 
-Workspaces rely on app registrations as well, and those are documented under [Workspaces](#workspaces).
+### App registration script
+
+The `/scripts/aad-app-reg.sh` script automatically sets up the app registrations with the required permissions to run Azure TRE. It will create and configure the two main app registrations: **TRE API** and **TRE Swagger UI**.
+
+Example on how to run the script:
+
+```bash
+./aad-app-reg.sh \
+    -n <Prefix of the app registration names e.g., TRE> \
+    -r https://<TRE ID>.<Azure location>.cloudapp.azure.com/oidc-redirect \
+    -a
+```
+
+| Argument | Description |
+| -------- | ----------- |
+| `-n` | The prefix of the name of the app registrations. `TRE` will give you `TRE API` and `TRE Swagger UI`. |
+| `-r` | The reply URL for the Swagger UI app. Use the values of the [environment variables](./environment-variables.md) `TRE_ID` and `LOCATION` in the URL. Reply URL for the localhost, `http://localhost:8000/docs/oauth2-redirect`, will be added by default. |
+| `-a` | Grants admin consent for the app registrations. This is required for them to function properly, but requires AAD admin privileges. |
+
+!!! caution
+    The script will create an app password (client secret) for the **TRE API** app; make sure to take note of it in the script output as it is only shown once. In case the secret is lost, the script, when run again, can reset it and display the new one.
 
 ### TRE API
 
@@ -47,7 +68,7 @@ See [Microsoft Graph permissions reference](https://docs.microsoft.com/graph/per
 
 The **TRE API** app registration requires no redirect URLs defined or anything else for that matter. From a security standpoint it should be noted that public client flows should not be allowed (see the image below taken from app registration authentication blade in Azure Portal).
 
-![Allow public client flows - No](../../assets/app-reg-authentication-allow-public-client-flows-no.png)
+![Allow public client flows - No](../assets/app-reg-authentication-allow-public-client-flows-no.png)
 
 ### TRE Swagger UI
 
@@ -71,8 +92,8 @@ The **TRE API** app registration requires no redirect URLs defined or anything e
 
 Redirect URLs:
 
-- `https://<app name>.<location>.cloudapp.azure.com/docs/oauth2-redirect`
-- `http://localhost:8000/docs/oauth2-redirect` - For local testing
+* `https://<TRE ID>.<Azure location>.cloudapp.azure.com/docs/oauth2-redirect`
+* `http://localhost:8000/docs/oauth2-redirect` - For local testing
 
 ### TRE e2e test
 
@@ -102,11 +123,11 @@ The **TRE e2e test** app registration is used to authorize end-to-end test scena
     msal<TRE e2e test app registration application (client) ID>://auth
     ```
 
-    ![Add auth platform](../../assets/aad-add-auth-platform.png)
+    ![Add auth platform](../assets/aad-add-auth-platform.png)
 
 1. Allow public client flows (see the image below). This enables the end-to-end tests to use a username and password combination to authenticate.
 
-    ![Allow public client flows - Yes](../../assets/app-reg-authentication-allow-public-client-flows-yes.png)
+    ![Allow public client flows - Yes](../assets/app-reg-authentication-allow-public-client-flows-yes.png)
 
 !!! warning
     Public client flows should never be allowed for a production environment as it poses a security risk.
@@ -125,7 +146,7 @@ The end-to-end test should be added to **TRE Administrator** role exposed by the
 Access to workspaces is also controlled using app registrations - one per workspace. The configuration of the app registration depends on the nature of the workspace, but this section covers the typical minimum settings.
 
 !!! caution
-    The app registration for a workspace is not created by the [API](../../tre-developers/api.md). One needs to be present (created manually) before using the API to provision a new workspace.
+    The app registration for a workspace is not created by the [API](../tre-developers/api.md). One needs to be present (created manually) before using the API to provision a new workspace.
 
 #### Authentication - Workspaces
 
@@ -153,8 +174,8 @@ For a user to gain access to the system, they have to:
 
 When these requirements are met, the user can sign-in using their credentials and use their privileges to use the API, login to workspace environment etc. based on their specific roles.
 
-![User linked with app registrations](../../assets/aad-user-linked-with-app-regs.png)
+![User linked with app registrations](../assets/aad-user-linked-with-app-regs.png)
 
 The users can also be linked via the Enterprise application view:
 
-![Adding users to Enterprise application](../../assets/adding-users-to-enterprise-application.png)
+![Adding users to Enterprise application](../assets/adding-users-to-enterprise-application.png)
