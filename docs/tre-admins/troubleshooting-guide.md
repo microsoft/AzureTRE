@@ -90,7 +90,7 @@ The processor runs in a VNET, and you cannot connect to it directly.
 1. Connect to the instance using Bastion. Bastion is already deployed, and you can use the username `adminuser`. The password is stored in the keyvault under the secret `resource-processor-vmss-password`
 
   !!! info
-      You cannot see secrets unless you are added to a suitable Access Policy for the keyvault.
+      You cannot see secrets unless you are added to a suitable access policy for the Key Vault.
 
   ![VMSS Password](../assets/vmss_password.png)
 
