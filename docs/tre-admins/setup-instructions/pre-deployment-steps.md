@@ -108,7 +108,7 @@ SWAGGER_UI_CLIENT_ID=d87...12
 
 ## Add admin user
 
-Make the **TRE Administrators** and **TRE Users** roles, defined by the API app registration, are assigned to your user and others as required. See [Enabling users](../auth.md#enabling-users) for instructions.
+Make sure the **TRE Administrators** and **TRE Users** roles, defined by the API app registration, are assigned to your user and others as required. See [Enabling users](../auth.md#enabling-users) for instructions.
 
 ## Next steps
 
