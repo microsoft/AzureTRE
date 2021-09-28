@@ -3,9 +3,9 @@ output "azureml_workspace_name" {
 }
 
 output "azureml_acr_id" {
-  value = module.acr.id
+  value = azurerm_container_registry.acr.id
 }
 
 output "azureml_storage_account_id" {
-  value = module.storage.storage_account_id
+  value = data.azurerm_storage_account.ws.id
 }
