@@ -8,11 +8,12 @@ ARG USER=porter
 RUN useradd -ms /bin/bash $USER
 USER $USER
 
-# Install Porter & Azure CNAB driver.
-ENV ACC_CLOUD='true'
-RUN curl https://raw.githubusercontent.com/deislabs/cnab-azure-driver/main/install-in-azure-cloudshell.sh | /bin/bash
-ENV ACC_CLOUD=
-ENV PATH="/home/$USER/.porter:/home/$USER/.cnab-azure-driver:$PATH"
+# Install Porter 
+RUN export PORTER_HOME=/home/$USER/.porter \
+    && curl -L https://cdn.porter.sh/latest/install-linux.sh | bash \
+    && ${PORTER_HOME}/porter mixin install docker
+
+ENV PATH /home/$USER/.porter/:$PATH
 
 USER root
 

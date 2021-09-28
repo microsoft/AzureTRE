@@ -12,10 +12,8 @@ pytestmark = pytest.mark.asyncio
 
 
 workspace_templates = [
-    strings.BASE_WORKSPACE,
-    strings.DEV_TEST_LABS,
-    strings.INNEREYE_DEEPLEARNING,
-    strings.INNEREYE_DEEPLEARNING_INFERENCE
+    (strings.BASE_WORKSPACE),
+    (strings.INNEREYE)
 ]
 
 
