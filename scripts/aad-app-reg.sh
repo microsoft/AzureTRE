@@ -339,6 +339,8 @@ else
     fi
 fi
 
+spPassword=""
+
 if [[ "$resetPassword" == 1 ]]; then
     # Reset the app password (client secret) and display it
     spPassword=$(az ad sp credential reset --name ${apiAppId} --query 'password' --output tsv)
@@ -385,6 +387,13 @@ declare swaggerRequiredResourceAccess=$(jq -c . << JSON
 JSON
 )
 
+redirectUris="\"http://localhost:8000/docs/oauth2-redirect\""
+
+if [[ -n ${replyUrl} ]]; then
+    echo "Adding reply/redirect URL \"${replyUrl}\" to ${appName} Swagger UI app"
+    redirectUris="${redirectUris}, \"${replyUrl}\""
+fi
+
 declare swaggerUIApp=$(jq -c . << JSON
 {
     "displayName": "${appName} Swagger UI",
@@ -392,7 +401,7 @@ declare swaggerUIApp=$(jq -c . << JSON
     "requiredResourceAccess": ${swaggerRequiredResourceAccess},
     "spa": {
         "redirectUris": [
-            "http://localhost:8000/docs/oauth2-redirect"
+            ${redirectUris}
         ]
     }
 }
@@ -419,11 +428,6 @@ fi
 # Make the current user an owner of the application.
 az ad app owner add --id ${swaggerAppId} --owner-object-id $currentUserId
 
-if [[ -n ${replyUrl} ]]; then
-    echo "Adding reply/redirect URL \"${replyUrl}\" to ${appName} Swagger UI app"
-    az ad app update --id ${swaggerAppId} --reply-urls ${replyUrl} http://localhost:8000/docs/oauth2-redirect
-fi
-
 # See if a service principal already exists
 swaggerSpId=$(az ad sp list --filter "appId eq '${swaggerAppId}'" --query '[0].objectId' --output tsv)
 
@@ -441,10 +445,6 @@ if [[ $grantAdminConsent -eq 1 ]]; then
     az ad app permission grant --id $swaggerSpId --api $apiAppId --scope "Workspace.Read Workspace.Write"
 fi
 
-# Allow public client flow
-echo "Enabling public client flow for ${appName} Swagger UI app"
-az ad app update --id ${swaggerAppId} --set publicClient=true
-
 echo "Done"
 
 # Output the variables for .env files
@@ -456,4 +456,11 @@ AAD_TENANT_ID=$(az account show | jq -r '.tenantId')
 API_CLIENT_ID=${apiAppId}
 API_CLIENT_SECRET=${spPassword}
 SWAGGER_UI_CLIENT_ID=${swaggerAppId}
+
 ENV_VARS
+
+if [[ $grantAdminConsent -eq 0 ]]; then
+    echo "NOTE: Make sure the API permissions of the app registrations have admin consent granted."
+    echo "Run this script with flag -a to grant admin consent or configure the registrations in Azure Portal."
+    echo "See APP REGISTRATIONS in documentation for more information."
+fi

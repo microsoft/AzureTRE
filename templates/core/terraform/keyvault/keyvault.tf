@@ -16,8 +16,8 @@ resource "azurerm_key_vault_access_policy" "deployer" {
   tenant_id    = data.azurerm_client_config.deployer.tenant_id
   object_id    = data.azurerm_client_config.deployer.object_id
 
-  key_permissions         = ["Get", "List", "Update", "Create", "Import", "Delete", ]
-  secret_permissions      = ["Get", "List", "Set", "Delete"]
+  key_permissions         = ["Get", "List", "Update", "Create", "Import", "Delete"]
+  secret_permissions      = ["Get", "List", "Set", "Delete", "Purge"]
   certificate_permissions = ["Get", "List", "Update", "Create", "Import", "Delete", "Purge"]
   storage_permissions     = ["Get", "List", "Update", "Delete"]
 }

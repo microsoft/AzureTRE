@@ -44,16 +44,19 @@ nav:
       - Shared Services:
           - Gitea (Source Mirror): 'azure-tre-overview/shared-services/gitea.md'
           - Nexus (Package Mirror): 'azure-tre-overview/shared-services/nexus.md'
-  - Deployment Quickstart: 'deployment-quickstart.md'
   - TRE Admins:
-      - Deploying the TRE:
-          - Authentication and Authorization: 'tre-admins/deploying-the-tre/auth.md'
-          - Bootstrapping: 'tre-admins/deploying-the-tre/bootstrapping.md'
-          - Manual Deployment: 'tre-admins/deploying-the-tre/manual-deployment.md'
-          - Workflow Deployment: 'tre-admins/deploying-the-tre/workflows.md'
+      - Setup Instructions:
+          - 1. Getting Started: 'tre-admins/setup-instructions/getting-started.md'
+          - 2. Pre-deployment Steps: 'tre-admins/setup-instructions/pre-deployment-steps.md'
+          - 3. Deploying Azure TRE: 'tre-admins/setup-instructions/deploying-azure-tre.md'
+          - 4. Installing Base Workspace: 'tre-admins/setup-instructions/installing-base-workspace.md'
+          - Tear-down: 'tre-admins/setup-instructions/tear-down.md'
+      - Environment Variables: 'tre-admins/environment-variables.md'
+      - Authentication and Authorization: 'tre-admins/auth.md'
+      - Bootstrapping: 'tre-admins/bootstrapping.md'
+      - Workflow Deployment: 'tre-admins/workflows.md'
       - Troubleshooting Guide: 'tre-admins/troubleshooting-guide.md'
   - TRE Developers:
-      - Dev Environment: 'tre-developers/dev-environment.md'
       - API: 'tre-developers/api.md'
       - Resource Processor: 'tre-developers/resource-processor.md'
       - End to End Tests: 'tre-developers/end-to-end-tests.md'

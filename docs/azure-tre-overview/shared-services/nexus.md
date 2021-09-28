@@ -1,6 +1,7 @@
 # Nexus Shared Service
 
-This service allows users in workspaces to access external software packages securely by relying on Sonatype Nexus (RepoManager).
+Sonatype Nexus (RepoManager) allows users in workspaces to access external software packages securely.
+
 Documentation on Nexus can be found here: [https://help.sonatype.com/repomanager3/](https://help.sonatype.com/repomanager3/).
 
 ## Deploy
@@ -17,7 +18,7 @@ To deploy set `DEPLOY_NEXUS=true` in `templates/core/.env`.
 
 ## Network requirements
 
-To be able to run the Nexus Shared Service it needs to be able to access the following resource outside the Azure TRE VNET via explicit allowed [Service Tags](https://docs.microsoft.com/en-us/azure/virtual-network/service-tags-overview) or URLs.
+The Nexus Shared Service needs to be able to access the following resource outside the Azure TRE VNET via explicit allowed [Service Tags](https://docs.microsoft.com/en-us/azure/virtual-network/service-tags-overview) or URLs.
 
 | Service Tag / Destination | Justification |
 | --- | --- |
