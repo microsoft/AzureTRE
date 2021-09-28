@@ -5,7 +5,7 @@ on:
     # 1am each night https://crontab.guru/#0_1_*_*_*
     - cron: "0 1 * * *"
   push:
-    branches: [develop, main]
+    branches: [develop, main, deniscep/874-nexus-wrap]
   workflow_dispatch:
 
 # This will prevent multiple runs of this entire workflow.
@@ -49,7 +49,6 @@ jobs:
           TF_VAR_porter_output_container_name: "${{ secrets.PORTER_OUTPUT_CONTAINER_NAME }}"
           ACR_NAME: ${{ secrets.ACR_NAME }} # scripts are using this too
           LOCATION: ${{ secrets.LOCATION }} # scripts are using this too
-          IMAGE_TAG: ${{ github.sha }}
         run: |
           export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
           export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
@@ -99,11 +98,8 @@ jobs:
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
           TF_VAR_porter_output_container_name: "${{ secrets.PORTER_OUTPUT_CONTAINER_NAME }}"
           TF_VAR_debug: false
-          TF_VAR_api_image_tag: ${{ github.sha }}
           TF_VAR_resource_processor_type: "vmss_porter"
-          TF_VAR_resource_processor_vmss_porter_image_tag: ${{ github.sha }}
           TF_VAR_deploy_gitea: true
-          TF_VAR_gitea_image_tag: ${{ github.sha }}
           TF_VAR_deploy_nexus: true
         run: |
           export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
@@ -112,6 +108,7 @@ jobs:
           export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
 
           make tre-deploy
+          make config-nexus
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4

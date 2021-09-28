@@ -95,7 +95,6 @@ module "api-webapp" {
   app_insights_instrumentation_key           = azurerm_application_insights.core.instrumentation_key
   log_analytics_workspace_id                 = azurerm_log_analytics_workspace.core.id
   api_image_repository                       = var.api_image_repository
-  api_image_tag                              = var.api_image_tag
   docker_registry_server                     = var.docker_registry_server
   state_store_endpoint                       = module.state-store.endpoint
   cosmosdb_account_name                      = module.state-store.cosmosdb_account_name
@@ -132,7 +131,6 @@ module "resource_processor_vmss_porter" {
   resource_processor_subnet_id                    = module.network.resource_processor_subnet_id
   docker_registry_server                          = var.docker_registry_server
   resource_processor_vmss_porter_image_repository = var.resource_processor_vmss_porter_image_repository
-  resource_processor_vmss_porter_image_tag        = var.resource_processor_vmss_porter_image_tag
   service_bus_namespace_id                        = module.servicebus.id
   service_bus_resource_request_queue              = module.servicebus.workspacequeue
   service_bus_deployment_status_update_queue      = module.servicebus.service_bus_deployment_status_update_queue
@@ -221,7 +219,6 @@ module "gitea" {
   source                 = "../../shared_services/gitea/terraform"
   tre_id                 = var.tre_id
   location               = var.location
-  image_tag              = var.gitea_image_tag
   docker_registry_server = data.azurerm_container_registry.mgmt_acr.login_server
   acr_id                 = data.azurerm_container_registry.mgmt_acr.id
   keyvault_id            = module.keyvault.keyvault_id

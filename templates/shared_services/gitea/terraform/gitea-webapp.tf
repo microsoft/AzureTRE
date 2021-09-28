@@ -56,7 +56,7 @@ resource "azurerm_app_service" "gitea" {
   }
 
   site_config {
-    linux_fx_version                     = "DOCKER|${var.docker_registry_server}/microsoft/azuretre/gitea:${var.image_tag}"
+    linux_fx_version                     = "DOCKER|${var.docker_registry_server}/microsoft/azuretre/gitea:${local.version}"
     remote_debugging_enabled             = false
     scm_use_main_ip_restriction          = true
     acr_use_managed_identity_credentials = true

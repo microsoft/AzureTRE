@@ -45,3 +45,6 @@ data "azurerm_storage_account" "gitea" {
   resource_group_name = local.core_resource_group_name
 }
 
+data "local_file" "version" {
+    filename = "${path.module}/../version.txt"
+}
