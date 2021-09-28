@@ -17,7 +17,6 @@ URLs:
 
 ## Manual Deployment
 
-
 1. Create a copy of `templates/workspace_services/guacamole/.env.sample` with the name `.env` and update the variables with the appropriate values.
 
   | Environment variable name | Description |
