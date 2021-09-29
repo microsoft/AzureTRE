@@ -11,6 +11,7 @@ fi
 
 cat > /root/.porter/config.toml << EOF
 default-storage = "azurestorage"
+no-logs = true
 
 [[storage]]
 name = "azurestorage"

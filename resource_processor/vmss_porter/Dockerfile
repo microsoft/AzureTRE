@@ -1,7 +1,7 @@
 FROM python:3.8-slim-buster
 
 # Specify the Porter version to install
-ENV PORTER_PERMALINK=v0.38.6
+ENV PORTER_PERMALINK=v0.38.7
 
 # Install Azure CLI
 RUN apt-get update \

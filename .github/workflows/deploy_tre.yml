@@ -46,7 +46,6 @@ jobs:
           TF_VAR_mgmt_storage_account_name: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
           TF_VAR_location: ${{ secrets.LOCATION }}
           TF_VAR_acr_name: ${{ secrets.ACR_NAME }}
-          TF_VAR_porter_output_container_name: "${{ secrets.PORTER_OUTPUT_CONTAINER_NAME }}"
           ACR_NAME: ${{ secrets.ACR_NAME }} # scripts are using this too
           LOCATION: ${{ secrets.LOCATION }} # scripts are using this too
           IMAGE_TAG: ${{ github.sha }}
@@ -97,7 +96,6 @@ jobs:
           TF_VAR_aad_tenant_id: "${{ secrets.AAD_TENANT_ID }}"
           TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
-          TF_VAR_porter_output_container_name: "${{ secrets.PORTER_OUTPUT_CONTAINER_NAME }}"
           TF_VAR_debug: false
           TF_VAR_api_image_tag: ${{ github.sha }}
           TF_VAR_resource_processor_type: "vmss_porter"
