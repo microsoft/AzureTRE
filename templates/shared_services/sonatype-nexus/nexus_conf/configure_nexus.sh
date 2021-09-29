@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ $DEPLOY_NEXUS==true ] 
+if [ $DEPLOY_NEXUS != true ];
 then
   echo -e "\e[33m»»» Nexus deployment not enabled (DEPLOY_NEXUS not true); exiting"
   exit
