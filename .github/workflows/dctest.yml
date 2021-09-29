@@ -1,0 +1,92 @@
+name: DC Test
+
+on:
+  schedule:
+    # 1am each night https://crontab.guru/#0_1_*_*_*
+    - cron: "0 1 * * *"
+  push:
+    branches: [develop, main,deniscep/859-version-tags]
+  workflow_dispatch:
+
+# This will prevent multiple runs of this entire workflow.
+# We should NOT cancel in progress runs as that can destabilize the environment.
+
+env:
+  USE_ENV_VARS_NOT_FILES: true
+  DOCKER_BUILDKIT: 1
+  TF_INPUT: 0 # interactive is off
+
+jobs:
+
+  publish_and_register_bundles:
+    name: Register Bundle
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+        # bundles type can be inferred from the bundle dir (but this is more explicit)
+          - { BUNDLE_TYPE: "workspace", BUNDLE_DIR: "./templates/workspaces/base"}
+          - { BUNDLE_TYPE: "workspace", BUNDLE_DIR: "./templates/workspaces/innereye"}
+          - { BUNDLE_TYPE: "workspace_service", BUNDLE_DIR: "./templates/workspace_services/guacamole"}
+          - { BUNDLE_TYPE: "workspace_service", BUNDLE_DIR: "./templates/workspace_services/azureml"}
+          - { BUNDLE_TYPE: "workspace_service", BUNDLE_DIR: "./templates/workspace_services/devtestlabs"}
+          - { BUNDLE_TYPE: "workspace_service", BUNDLE_DIR: "./templates/workspace_services/innereye"}
+    environment: Dev
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Install yq
+        run: |
+          sudo wget -O /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.13.0/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: Install porter
+        run: |
+          curl -L https://cdn.porter.sh/v0.38.6/install-linux.sh | bash
+          ~/.porter/porter mixin install docker
+          echo "~/.porter/" >> $GITHUB_PATH
+
+      - name: Publish and register bundles
+        shell: bash
+        env:
+          RESOURCE: "${{ secrets.API_CLIENT_ID }}"
+          AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
+          CLIENT_ID: "${{ secrets.TEST_APP_ID }}"
+          USERNAME: "${{ secrets.TEST_USER_NAME }}"
+          PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+          TRE_URL: "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
+          BUNDLE_TYPE: ${{ matrix.BUNDLE_TYPE }}
+        run: |
+          set -o errexit
+          set -o pipefail
+          set -o nounset
+
+          # test that porter is able to build the bundle
+          make porter-build DIR=${{ matrix.BUNDLE_DIR }}
+
+          TEMPLATE_NAME=$(yq eval '.name' ${{ matrix.BUNDLE_DIR }}/porter.yaml)
+
+          case "${BUNDLE_TYPE}" in
+            ("workspace") TRE_GET_PATH="api/workspace-templates" ;;
+            ("workspace_service") TRE_GET_PATH="api/workspace-service-templates" ;;
+          esac
+
+          TOKEN=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d "grant_type=password&resource=${RESOURCE}&client_id=${CLIENT_ID}&username=${USERNAME}&password=${PASSWORD}&scope=default)" https://login.microsoftonline.com/${AUTH_TENANT_ID}/oauth2/token | jq -r '.access_token')
+
+          make register-bundle DIR=${{ matrix.BUNDLE_DIR }}
+
+          # Check that the template got registered
+          STATUS_CODE=$(curl -X "GET" "${TRE_URL}/${TRE_GET_PATH}/${TEMPLATE_NAME}" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
+
+          if [[ ${STATUS_CODE} != 200 ]]
+          then
+            echo "::warning ::Template API check for ${BUNDLE_TYPE} ${TEMPLATE_NAME} returned http status: ${STATUS_CODE}"
+            exit 1
+          fi
