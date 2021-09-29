@@ -25,9 +25,7 @@ jobs:
   deploy_tre:
     name: Deploy TRE
     runs-on: ubuntu-latest
-    if: |
-      github.event.pull_request.head.repo.full_name == github.repository
-      || contains(github.event.pull_request.labels.*.name, 'safe to test')
+
     environment: Dev
     steps:
       - name: Checkout
@@ -90,9 +88,7 @@ jobs:
   publish_and_register_bundles:
     name: Register Bundle
     runs-on: ubuntu-latest
-    if: |
-      github.event.pull_request.head.repo.full_name == github.repository
-      || contains(github.event.pull_request.labels.*.name, 'safe to test')
+
     needs: [deploy_tre]
     strategy:
       matrix:
@@ -168,9 +164,7 @@ jobs:
     name: "Run E2E Tests"
     runs-on: ubuntu-latest
     environment: Dev
-    if: |
-      github.event.pull_request.head.repo.full_name == github.repository
-      || contains(github.event.pull_request.labels.*.name, 'safe to test')
+
     # needs: [publish_and_register_user_resources]
     needs: [publish_and_register_bundles]
     steps:
