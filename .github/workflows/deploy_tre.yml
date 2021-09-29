@@ -21,55 +21,9 @@ env:
   TF_INPUT: 0 # interactive is off
 
 jobs:
-  deploy_mgmt_infra:
-    name: Deploy Management Infrastructure
-    runs-on: ubuntu-latest
-    if: |
-      github.event.pull_request.head.repo.full_name == github.repository
-      || contains(github.event.pull_request.labels.*.name, 'safe to test')
-    environment: Dev
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Install Terraform
-        uses: hashicorp/setup-terraform@v1
-        with:
-          terraform_version: 1.0.5
-
-      - name: Create Management Infrastructure
-        shell: bash
-        env:
-          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-          TF_VAR_tre_id: ${{ secrets.TRE_ID }}
-          TF_VAR_terraform_state_container_name: ${{ secrets.TF_STATE_CONTAINER }}
-          TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
-          TF_VAR_mgmt_storage_account_name: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
-          TF_VAR_location: ${{ secrets.LOCATION }}
-          TF_VAR_acr_name: ${{ secrets.ACR_NAME }}
-          ACR_NAME: ${{ secrets.ACR_NAME }} # scripts are using this too
-          LOCATION: ${{ secrets.LOCATION }} # scripts are using this too
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
-          export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
-          export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
-          export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
-          export TF_VAR_arm_subscription_id=$ARM_SUBSCRIPTION_ID
-
-          make bootstrap
-          make mgmt-deploy
-          make images
-
 
   deploy_tre:
     name: Deploy TRE
-    needs: deploy_mgmt_infra
     runs-on: ubuntu-latest
     if: |
       github.event.pull_request.head.repo.full_name == github.repository
@@ -106,20 +60,22 @@ jobs:
           TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
           TF_VAR_debug: false
-          TF_VAR_api_image_tag: ${{ github.sha }}
           TF_VAR_resource_processor_type: "vmss_porter"
-          TF_VAR_resource_processor_vmss_porter_image_tag: ${{ github.sha }}
           TF_VAR_deploy_gitea: true
-          TF_VAR_gitea_image_tag: ${{ github.sha }}
           TF_VAR_deploy_nexus: true
+          DEPLOY_NEXUS: true
+          ACR_NAME: ${{ secrets.ACR_NAME }} # scripts are using this too
+          LOCATION: ${{ secrets.LOCATION }} # scripts are using this too
+          TRE_URL: "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
+          TRE_ID: "${{secrets.TRE_ID}}"
         run: |
           export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
           export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
           export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
           export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
-
-          make tre-deploy
-          make config-nexus
+          export TF_VAR_arm_subscription_id=$ARM_SUBSCRIPTION_ID
+          
+          make all
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
@@ -131,40 +87,13 @@ jobs:
           notification-color: dc3545
           timezone: Europe/Zurich
 
-  prepare_bundle_registration:
-    name: Prepare Bundle Registration
-    runs-on: ubuntu-latest
-    if: |
-      github.event.pull_request.head.repo.full_name == github.repository
-      || contains(github.event.pull_request.labels.*.name, 'safe to test')
-    needs: [deploy_tre]
-    environment: Dev
-    steps:
-      - name: Get API Token
-        shell: bash
-        env:
-          RESOURCE: "${{ secrets.API_CLIENT_ID }}"
-          AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
-          CLIENT_ID: "${{ secrets.TEST_APP_ID }}"
-          USERNAME: "${{ secrets.TEST_USER_NAME }}"
-          PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
-        run: |
-          set -o errexit
-          set -o pipefail
-          set -o nounset
-
-          TOKEN=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d "grant_type=password&resource=${RESOURCE}&client_id=${CLIENT_ID}&username=${USERNAME}&password=${PASSWORD}&scope=default)" https://login.microsoftonline.com/${AUTH_TENANT_ID}/oauth2/token | jq -r '.access_token')
-
-          # Set output
-          echo "::set-output name=api_token::$( echo "${TOKEN}" )"
-
   publish_and_register_bundles:
     name: Register Bundle
     runs-on: ubuntu-latest
     if: |
       github.event.pull_request.head.repo.full_name == github.repository
       || contains(github.event.pull_request.labels.*.name, 'safe to test')
-    needs: [deploy_tre, prepare_bundle_registration]
+    needs: [deploy_tre]
     strategy:
       matrix:
         include:
@@ -199,10 +128,14 @@ jobs:
       - name: Publish and register bundles
         shell: bash
         env:
+          RESOURCE: "${{ secrets.API_CLIENT_ID }}"
+          AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
+          CLIENT_ID: "${{ secrets.TEST_APP_ID }}"
+          USERNAME: "${{ secrets.TEST_USER_NAME }}"
+          PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
           ACR_NAME: ${{ secrets.ACR_NAME }}
           TRE_URL: "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
           BUNDLE_TYPE: ${{ matrix.BUNDLE_TYPE }}
-          TOKEN: ${{ needs.prepare_bundle_registration.api_token }}
         run: |
           set -o errexit
           set -o pipefail
@@ -218,18 +151,17 @@ jobs:
             ("workspace_service") TRE_GET_PATH="api/workspace-service-templates" ;;
           esac
 
-          # Check if template is already registered
+          export TOKEN=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d "grant_type=password&resource=${RESOURCE}&client_id=${CLIENT_ID}&username=${USERNAME}&password=${PASSWORD}&scope=default)" https://login.microsoftonline.com/${AUTH_TENANT_ID}/oauth2/token | jq -r '.access_token')
+
+          make register-bundle DIR=${{ matrix.BUNDLE_DIR }}
+
+          # Check that the template got registered
           STATUS_CODE=$(curl -X "GET" "${TRE_URL}/${TRE_GET_PATH}/${TEMPLATE_NAME}" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
 
-          if [[ ${STATUS_CODE} == 404 ]]
+          if [[ ${STATUS_CODE} != 200 ]]
           then
-            make register-bundle DIR=${{ matrix.BUNDLE_DIR }}
-          else
-            if [[ ${STATUS_CODE} != 200 ]]
-            then
-              echo "::warning ::API returned unexpected http status: ${STATUS_CODE}"
-              exit 1
-            fi
+            echo "::warning ::Template API check for ${BUNDLE_TYPE} ${TEMPLATE_NAME} returned http status: ${STATUS_CODE}"
+            exit 1
           fi
 
   e2e_tests:

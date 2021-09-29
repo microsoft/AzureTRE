@@ -36,7 +36,6 @@ LOCATION=westeurope
 MGMT_RESOURCE_GROUP_NAME=aztremgmt
 MGMT_STORAGE_ACCOUNT_NAME=aztremgmt
 TERRAFORM_STATE_CONTAINER_NAME=tfstate
-IMAGE_TAG=dev
 ACR_NAME=aztreacr
 
 ARM_SUBSCRIPTION_ID=12...54e
@@ -74,7 +73,6 @@ Next, you will set the configuration variables for the specific Azure TRE instan
   !!! note
       The full functionality of the script requires directory admin privileges. You may need to contact your friendly AAD admin to complete this step. The app registrations can be created manually in Azure Portal too. For more information, see [Authentication and authorization](../auth.md).
 
-
   With the output of the script, you can now provide the required auth related values for the following variables in the `/templates/core/.env` configuration file:
 
   | Variable | Description |
@@ -91,9 +89,6 @@ All other variables can have their default values for now. You should now have a
 TRE_ID=mytre
 CORE_ADDRESS_SPACE="10.1.0.0/22"
 TRE_ADDRESS_SPACE="10.0.0.0/12"
-API_IMAGE_TAG=dev
-RESOURCE_PROCESSOR_VMSS_PORTER_IMAGE_TAG=dev
-GITEA_IMAGE_TAG=dev
 DEPLOY_GITEA=true
 RESOURCE_PROCESSOR_TYPE="vmss_porter"
 

@@ -33,22 +33,10 @@ variable "api_image_repository" {
   default     = "microsoft/azuretre/api"
 }
 
-variable "api_image_tag" {
-  type        = string
-  description = "Tag for API image"
-  default     = "main-latest"
-}
-
 variable "resource_processor_vmss_porter_image_repository" {
   type        = string
   description = "Repository for resource processor vmms porter image"
   default     = "microsoft/azuretre/resource-processor-vm-porter"
-}
-
-variable "resource_processor_vmss_porter_image_tag" {
-  type        = string
-  description = "Tag for  resource processor vmms porter image"
-  default     = "main-latest"
 }
 
 variable "mgmt_storage_account_name" {
@@ -126,9 +114,3 @@ variable "resource_processor_type" {
 }
 
 variable "debug" {}
-
-variable "gitea_image_tag" {
-  type        = string
-  description = "Tag for Gitea image"
-  default     = "main-latest"
-}
