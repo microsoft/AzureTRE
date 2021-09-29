@@ -54,11 +54,6 @@ variable "terraform_state_container_name" {
   description = "Name of the storage container for Terraform state"
 }
 
-variable "porter_output_container_name" {
-  type        = string
-  description = "Name of the storage container for Porter output"
-}
-
 variable "resource_processor_client_id" {
   type        = string
   default     = ""
