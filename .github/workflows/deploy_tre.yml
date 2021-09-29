@@ -5,7 +5,7 @@ on:
     # 1am each night https://crontab.guru/#0_1_*_*_*
     - cron: "0 1 * * *"
   push:
-    branches: [develop, main]
+    branches: [develop, main, deniscep/859-version-tags]
   workflow_dispatch:
 
 # This will prevent multiple runs of this entire workflow.
@@ -145,18 +145,15 @@ jobs:
 
           TOKEN=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d "grant_type=password&resource=${RESOURCE}&client_id=${CLIENT_ID}&username=${USERNAME}&password=${PASSWORD}&scope=default)" https://login.microsoftonline.com/${AUTH_TENANT_ID}/oauth2/token | jq -r '.access_token')
 
-          # Check if template is already registered
+          make register-bundle DIR=${{ matrix.BUNDLE_DIR }}
+
+          # Check that the template got registered
           STATUS_CODE=$(curl -X "GET" "${TRE_URL}/${TRE_GET_PATH}/${TEMPLATE_NAME}" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
 
-          if [[ ${STATUS_CODE} == 404 ]]
+          if [[ ${STATUS_CODE} != 200 ]]
           then
-            make register-bundle DIR=${{ matrix.BUNDLE_DIR }}
-          else
-            if [[ ${STATUS_CODE} != 200 ]]
-            then
-              echo "::warning ::API returned unexpected http status: ${STATUS_CODE}"
-              exit 1
-            fi
+            echo "::warning ::Template API check for ${BUNDLE_TYPE} ${TEMPLATE_NAME} returned http status: ${STATUS_CODE}"
+            exit 1
           fi
 
   e2e_tests:
