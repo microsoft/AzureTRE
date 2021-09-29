@@ -8,7 +8,7 @@ on:
     branches: [develop, main, deniscep/859-version-tags]
   pull_request_target:
     types: [labeled]
-    branches: [develop]
+    branches: [develop, deniscep/859-version-tags]
   workflow_dispatch:
 
 # This will prevent multiple runs of this entire workflow.
