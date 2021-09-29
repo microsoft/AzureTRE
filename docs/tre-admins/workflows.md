@@ -31,3 +31,32 @@ These are onetime configuration steps required to set up the GitHub Actions work
 | `TEST_USER_NAME` | The username of the [E2E Test User](auth.md#end-to-end-test-user). |
 | `TEST_USER_PASSWORD` | The password of the [E2E Test User](auth.md#end-to-end-test-user). |
 | `TEST_WORKSPACE_APP_ID` | The application (client) ID of the [Workspaces app](auth.md#workspaces) service principal. |
+
+## Pull request security
+
+Many of the workflows access [GitHub repository secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets) and malicious code in workflows pose a security risk. Thus, pull requests (PRs) from forks cannot be allowed to execute workflows freely. By default, workflows are not run by pull requests from forks, but can be enabled with [`pull_request_target` event](https://docs.github.com/en/actions/learn-github-actions/events-that-trigger-workflows#pull_request_target).
+
+However, changes reviewed and found safe should be able to execute workflows. A label, that can only be assigned by authorized project members, can be used to safeguard workflow execution:
+
+```yaml
+on:
+  pull_request_target:
+    types: [labeled]
+    branches: [develop]
+
+jobs:
+  my_job:
+    if: |
+      github.event.pull_request.head.repo.full_name == github.repository
+      || contains(github.event.pull_request.labels.*.name, 'safe to test')
+```
+
+The snippet above contains two conditions:
+
+1. Checking the name of the originating repository of the PR. In case the PR is from a fork the condition evaluates to `false`. `github.repository` (see [`github` context](https://docs.github.com/en/actions/learn-github-actions/contexts#github-context)) evaluates into string e.g., "microsoft/AzureTRE".
+2. Checking if the pull request has a label "safe to test".
+
+Effectively, the two conditions allow the job execution for all PRs originating from internal branches, but only allow PRs originating from a fork with "safe to test" label assigned to do so. The workflows of fork PRs will remain in "skipped" state until the label is set.
+
+!!! caution
+    Any job **without** the condition is allowed to execute even if the PR originates from a fork.
