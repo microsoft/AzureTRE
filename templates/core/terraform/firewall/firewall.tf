@@ -23,7 +23,7 @@ resource "azurerm_firewall" "fw" {
 }
 
 resource "azurerm_management_lock" "fw" {
-  name       =  azurerm_firewall.fw.name
+  name       = azurerm_firewall.fw.name
   scope      = azurerm_firewall.fw.id
   lock_level = "CanNotDelete"
   notes      = "Locked to prevent accidental deletion"
