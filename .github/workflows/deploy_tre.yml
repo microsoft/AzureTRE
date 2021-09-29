@@ -5,7 +5,7 @@ on:
     # 1am each night https://crontab.guru/#0_1_*_*_*
     - cron: "0 1 * * *"
   push:
-    branches: [develop, main]
+    branches: [develop, main,deniscep/859-version-tags]
   workflow_dispatch:
 
 # This will prevent multiple runs of this entire workflow.
@@ -58,7 +58,6 @@ jobs:
           TF_VAR_resource_processor_type: "vmss_porter"
           TF_VAR_deploy_gitea: true
           TF_VAR_deploy_nexus: true
-          DEPLOY_NEXUS: true
           ACR_NAME: ${{ secrets.ACR_NAME }} # scripts are using this too
           LOCATION: ${{ secrets.LOCATION }} # scripts are using this too
           TRE_URL: "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
@@ -69,6 +68,7 @@ jobs:
           export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
           export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
           export TF_VAR_arm_subscription_id=$ARM_SUBSCRIPTION_ID
+          export DEPLOY_NEXUS=$TF_VAR_deploy_nexus
 
           make all
 
