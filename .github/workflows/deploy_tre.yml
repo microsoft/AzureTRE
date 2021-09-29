@@ -5,10 +5,10 @@ on:
     # 1am each night https://crontab.guru/#0_1_*_*_*
     - cron: "0 1 * * *"
   push:
-    branches: [develop, main, deniscep/859-version-tags]
+    branches: [develop, main]
   pull_request_target:
     types: [labeled]
-    branches: [develop, deniscep/859-version-tags]
+    branches: [develop]
   workflow_dispatch:
 
 # This will prevent multiple runs of this entire workflow.
@@ -25,7 +25,9 @@ jobs:
   deploy_tre:
     name: Deploy TRE
     runs-on: ubuntu-latest
-
+    if: |
+      github.event.pull_request.head.repo.full_name == github.repository
+      || contains(github.event.pull_request.labels.*.name, 'safe to test')
     environment: Dev
     steps:
       - name: Checkout
@@ -88,7 +90,9 @@ jobs:
   publish_and_register_bundles:
     name: Register Bundle
     runs-on: ubuntu-latest
-
+    if: |
+      github.event.pull_request.head.repo.full_name == github.repository
+      || contains(github.event.pull_request.labels.*.name, 'safe to test')
     needs: [deploy_tre]
     strategy:
       matrix:
@@ -164,7 +168,9 @@ jobs:
     name: "Run E2E Tests"
     runs-on: ubuntu-latest
     environment: Dev
-
+    if: |
+      github.event.pull_request.head.repo.full_name == github.repository
+      || contains(github.event.pull_request.labels.*.name, 'safe to test')
     # needs: [publish_and_register_user_resources]
     needs: [publish_and_register_bundles]
     steps:
