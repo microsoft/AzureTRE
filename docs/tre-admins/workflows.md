@@ -56,7 +56,13 @@ The snippet above contains two conditions:
 1. Checking the name of the originating repository of the PR. In case the PR is from a fork the condition evaluates to `false`. `github.repository` (see [`github` context](https://docs.github.com/en/actions/learn-github-actions/contexts#github-context)) evaluates into string e.g., "microsoft/AzureTRE".
 2. Checking if the pull request has a label "safe to test".
 
-Effectively, the two conditions allow the job execution for all PRs originating from internal branches, but only allow PRs originating from a fork with "safe to test" label assigned to do so. The workflows of fork PRs will remain in "skipped" state until the label is set.
+Effectively, the two conditions allow the job execution for all PRs originating from internal branches, but only allow PRs originating from a fork with "safe to test" label assigned to do so. The jobs for fork PRs will remain in "skipped" state until the label is set.
 
 !!! caution
     Any job **without** the condition is allowed to execute even if the PR originates from a fork.
+
+To also enable automatic job execution when a PR is merged (e.g., for deployment workflows), additional condition is required:
+
+```yaml
+    if: github.event_name == 'push'
+```
