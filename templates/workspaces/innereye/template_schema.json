@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
-    "$id": "https://github.com/microsoft/AzureTRE/workspaces/innereye/custom_parameters.json",
+    "$id": "https://github.com/microsoft/AzureTRE/workspaces/innereye/template_schema.json",
     "type": "object",
     "title": "InnerEye Workspace",
     "description": "Installs Azure ML and InnerEye components. Please be aware this tempalte opens up additional firewall rules to enable Azure ML to function",
