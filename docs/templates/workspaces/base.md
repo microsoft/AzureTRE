@@ -6,7 +6,7 @@ The base workspace template contains the following resources:
 
 - Virtual Network
 - Storage Account
-- KeyVault
+- Key Vault
 - VNet Peer to Core VNet
 - Network Security Group
 
