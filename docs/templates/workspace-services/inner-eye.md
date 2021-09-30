@@ -75,7 +75,7 @@ URLs:
 
 ## Configuring and testing inference service
 
-The workspace service provision an App Service Plan and an App Service for hosting the inference webapp. The webapp will be integrated into the workspace network, allowing the webapp to connect to the AML workspace. Following the setup you will need to:
+The workspace service provisions an App Service Plan and an App Service for hosting the inference webapp. The webapp will be integrated into the workspace network, allowing the webapp to connect to the AML workspace. Following the setup you will need to:
 
 1. Log onto a VM in the workspace and run:
 
