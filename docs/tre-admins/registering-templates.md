@@ -16,7 +16,7 @@ The script can also be used to generate the payload required by the API without 
 1. We will use the utility script to generate the payload. The script needs to be executed from within the bundle directory, for example `/templates/workspaces/base/`. This script can be used as follows:
 
    ```cmd
-   ../../../devops/scripts/publish_register_bundle.sh -r <acr_name> -i -t workspace>
+   ../../../devops/scripts/publish_register_bundle.sh -r <acr_name> -i -t workspace
    ```
 
    Copy the resulting payload json.
