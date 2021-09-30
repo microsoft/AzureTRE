@@ -7,7 +7,7 @@ Workspace authors are free to choose the technology stack for provisioning resou
 This document describes the requirements, and the process to author a template.
 
 !!! tip
-    Use [the base workspace bundle](../workspace-templates/workspaces/base.md) as reference or as the basis for the new bundle.
+    Use [the base workspace bundle](../tre-templates/workspaces/base.md) as reference or as the basis for the new bundle.
 
 To create a bundle from scratch follow the Porter [Quickstart Guide](https://porter.sh/quickstart/) ([`porter create` CLI command](https://porter.sh/cli/porter_create/) will generate a new bundle in the current directory).
 
@@ -117,4 +117,4 @@ TRE does not provide means to update an existing workspace to a newer version. I
 
 ## Publishing workspace bundle
 
-See [Registering workspace templates](registering-workspace-templates.md).
+See [Registering workspace templates](../tre-admins/registering-templates.md).
