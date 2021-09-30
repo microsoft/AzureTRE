@@ -38,7 +38,7 @@ This requires:
 1. The Porter bundle to be pushed to the Azure Container Registry (ACR).
 1. Registering the Workspace through the API.
 
-Details on how to [register a Workspace Template](../tre-workspace-authors/registering-workspace-templates.md).
+Details on how to [register a Workspace Template](../tre-admins/registering-templates.md).
 
 The Composition Service consists of multiple components.
 
