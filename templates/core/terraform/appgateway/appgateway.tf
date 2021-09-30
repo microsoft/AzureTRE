@@ -24,7 +24,7 @@ resource "azurerm_application_gateway" "agw" {
 
   sku {
     name     = "Standard_Large"
-    tier     = "Standard_Large"
+    tier     = "Standard"
     capacity = 1
   }
 
