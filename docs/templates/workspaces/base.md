@@ -1,6 +1,6 @@
 # Azure TRE base workspace
 
-The base workspace template is the foundation that all other workspaces and workpace services are built upon. Alternative workspace architectures could be used however the tempaltes provided in this repository rely on the specific architecture of this base workspace.
+The base workspace template is the foundation that all other workspaces and workpace services are built upon. Alternative workspace architectures could be used. However, the templates provided in this repository rely on the specific architecture of this base workspace.
 
 The base workspace template contains the following resources:
 
