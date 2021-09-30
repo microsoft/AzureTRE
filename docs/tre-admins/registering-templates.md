@@ -1,10 +1,10 @@
-# Registering Workspace Templates
+# Registering Templates
 
-To deploy a new type of Workspace, we need to register a Workspace Template using the API.
+To enable users to deploy Workspaces, Workspace Services or User Resources, we need to register their Templates using the API.
 
 ## Porter Bundles
 
-Porter bundles can either be registered interactively using the Swagger UI or automatically using the utility script (useful in CI/CD scenarios). The script is provided at `/devops/scripts/publish_register_bundle.sh`.
+Templates are envapsulated in [Porter](https://porter.sh) bundles. Porter bundles can either be registered interactively using the Swagger UI or automatically using the utility script (useful in CI/CD scenarios). The script is provided at `/devops/scripts/publish_register_bundle.sh`.
 
 The script can also be used to generate the payload required by the API without actually calling the API. The script carries out the following actions:
 
@@ -13,11 +13,12 @@ The script can also be used to generate the payload required by the API without 
 
 ### Registration using Swagger UI
 
-1. We will use the utility script to generate the payload. The script needs to be executed from within the bundle directory, for example `/templates/workspaces/azureml_devtestlabs/`. This script can be used as follows:
+1. We will use the utility script to generate the payload. The script needs to be executed from within the bundle directory, for example `/templates/workspaces/base/`. This script can be used as follows:
 
    ```cmd
-   ../../../devops/scripts/publish_register_bundle.sh -r <acr_name> -i -t workspace
+   ../../../devops/scripts/publish_register_bundle.sh -r <acr_name> -i -t workspace>
    ```
+
    Copy the resulting payload json.
 
 1. Navigate to the Swagger UI at `/docs`
@@ -33,7 +34,7 @@ The script can also be used to generate the payload required by the API without 
 
 To use the script to automatically register the template, a user that does not require an interactive login must be created as per the [e2e test user documentation here](../tre-admins/auth.md#tre-e2e-test).
 
-The script needs to be executed from within the bundle directory, for example `/templates/workspaces/azureml_devtestlabs/`.
+The script needs to be executed from within the bundle directory, for example `/templates/workspaces/base/`.
 
 This script can be used as follows:
 

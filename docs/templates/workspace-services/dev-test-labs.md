@@ -8,12 +8,12 @@ See: [https://azure.microsoft.com/services/devtest-lab/](https://azure.microsoft
 
 ## Manual Deployment
 
-
 1. Create a copy of `templates/workspace_services/devtestlabs/.env.sample` with the name `.env` and update with the Workspace ID used when deploying the base workspace.
 
   | Environment variable name | Description |
   | ------------------------- | ----------- |
-  | `WORKSPACE_ID` | The 4 character unique identifier used when deploying the base workspace bundle. |
+  | `ID` | A GUID to identify the workspace service. The last 4 characters of this `ID` can be found in the resource names of the workspace service resources. |
+  | `WORKSPACE_ID` | The GUID identifier used when deploying the base workspace bundle. |
 
 1. Build and install the Azure DevTest Labs Service bundle
 

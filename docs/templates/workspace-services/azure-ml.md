@@ -35,7 +35,8 @@ Service Tags:
 
   | Environment variable name | Description |
   | ------------------------- | ----------- |
-  | `WORKSPACE_ID` | The 4 character unique identifier used when deploying the base workspace bundle. |
+  | `ID` | A GUID to identify the workspace service. The last 4 characters of this `ID` can be found in the resource names of the workspace service resources. |
+  | `WORKSPACE_ID` | The GUID identifier used when deploying the base workspace bundle. |
 
 1. Build and install the Azure ML Service bundle
 
