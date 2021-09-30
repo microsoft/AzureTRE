@@ -3,7 +3,7 @@
     "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/guacamole/user_resources/guacamole-azure-win10vm/template_schema.json",
     "type": "object",
     "title": "Windows 10 Virtual Machine",
-    "description": "Windows 10 virtual Machine",
+    "description": "Windows 10 virtual machine.",
     "required": [
     ],
     "properties": {
