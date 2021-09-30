@@ -6,10 +6,9 @@ See: [https://guacamole.apache.org/](https://guacamole.apache.org/)
 
 Please be aware that the following Firewall rules are opened for the workspace when this service is deployed:
 
-URLs:
+Service Tags:
 
-!!! todo
-    Add firewall rules
+- AzureActiveDirectory
 
 ## Prerequisites
 
@@ -21,8 +20,8 @@ URLs:
 
   | Environment variable name | Description |
   | ------------------------- | ----------- |
-  | `WORKSPACE_ID` | The 4 character unique identifier used when deploying the base workspace bundle. |
-  | `GUACAMOLE_IMAGE_TAG` | Image tag of the Guacamole server |
+  | `ID` | A GUID to identify the workspace service. The last 4 characters of this `ID` can be found in the resource names of the workspace service resources. |
+  | `WORKSPACE_ID` | The GUID identifier used when deploying the base workspace bundle. |
 
 1. Build and install the Guacamole Service bundle
 
