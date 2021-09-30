@@ -3,12 +3,6 @@
 This is a User Resource Service template. It contains a Windows 10 to be used by TRE researchers and to be connected using a [Guacamole server](https://guacamole.apache.org/).
 It blocks all inbound and outbound traffic to the internet and allows only RDP connections from within the vnet.
 
-## Firewall Rules
-
-Please be aware that the following Firewall rules are opened for the workspace when this service is deployed:
-
-- Inbound connectivity from within the VNET to the RDP port
-
 ## Prerequisites
 
 - [A base workspace bundle installed](../workspaces/base.md)
@@ -20,7 +14,8 @@ Please be aware that the following Firewall rules are opened for the workspace w
 
   | Environment variable name | Description |
   | ------------------------- | ----------- |
-  | `WORKSPACE_ID` | The 4 character unique identifier used when deploying the base workspace bundle. |
+  | `ID` | A GUID to identify the workspace service. The last 4 characters of this `ID` can be found in the resource names of the workspace service resources. |
+  | `WORKSPACE_ID` | The GUID identifier used when deploying the base workspace bundle. |
   | `PARENT_SERVICE_ID` | The unique identifier of this service parent (a Guacamole service) |
 
 1. Build and install the Guacamole Service bundle

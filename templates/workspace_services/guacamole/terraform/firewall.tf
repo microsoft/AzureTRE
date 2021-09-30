@@ -44,6 +44,7 @@ resource "azurerm_firewall_network_rule_collection" "networkrulecollection" {
     ]
 
     destination_addresses = ["AzureActiveDirectory"]
+
     protocols = [
       "TCP"
     ]
