@@ -3,7 +3,7 @@
     "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/azureml/template_schema.json",
     "type": "object",
     "title": "Azure Machine Learning",
-    "description": "Install Azure Machine Learning.  Please be aware this template opens up additional firewall rules to enable Azure ML to function.",
+    "description": "Installs Azure Machine Learning. Please be aware this template opens up additional firewall rules to enable Azure ML to function.",
     "required": [
     ],
     "properties": {
