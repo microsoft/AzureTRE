@@ -13,7 +13,8 @@ pytestmark = pytest.mark.asyncio
 workspace_service_templates = [
     (strings.AZUREML_SERVICE),
     (strings.DEVTESTLABS_SERVICE),
-    (strings.GUACAMOLE_SERVICE)
+    (strings.GUACAMOLE_SERVICE),
+    (strings.INNEREYE_SERVICE)
 ]
 
 
@@ -31,7 +32,7 @@ async def test_get_workspace_service_templates(template_name, token, verify) -> 
 @pytest.mark.parametrize("template_name", workspace_service_templates)
 async def test_getting_templates(template_name, token, verify) -> None:
     async with get_service_template(template_name, token, verify) as response:
-        assert (response.status_code == status.HTTP_200_OK), f"GET Request for {template_name} creation failed"
+        assert (response.status_code == status.HTTP_200_OK), f"GET Request for {template_name} failed"
 
 
 @pytest.mark.smoke
