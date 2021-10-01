@@ -25,9 +25,9 @@ Shared Services are services available to all Workspaces. **Source Mirror** can 
 
 ## Azure Resources
 
-The following diagram shows the Azure components deployed as part of a typical TRE deployment.
+The following diagram shows the Azure components deployed as part of a typical TRE deployment. The exact configuration will vary depending on the specific deployment.
 
-![Architecture overview](../assets/architecture-azure.png)
+![Azure Architecture Diagram](../assets/architecture-azure.png)
 
 ## Composition Service
 
