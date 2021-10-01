@@ -37,7 +37,7 @@ Before you can run the `deploy_tre.yml` pipeline there are some one-time configu
 
   See [Sign in with Azure CLI](https://docs.microsoft.com/cli/azure/authenticate-azure-cli) for more details.
 
-1. Create a Service Principal
+1. Create a service principal
 
   A service principal needs to be created to authorize CI/CD workflows to provision resources for the TRE workspaces and workspace services.
 
