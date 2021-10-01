@@ -54,7 +54,7 @@ Before you can run the `deploy_tre.yml` pipeline there are some one-time configu
 
   | <div style="width: 230px">Secret name</div> | Description |
   | ----------- | ----------- |
-  | `AZURE_CREDENTIALS` | The json output from the previous step |
+  | `AZURE_CREDENTIALS` | The JSON output from the previous step |
 
 ### Decide on a TRE ID and Azure Resource Location
 
