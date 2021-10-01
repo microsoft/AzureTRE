@@ -98,7 +98,7 @@ Configure the TEST_WORKSPACE_APP_ID repository secret
 
 | <div style="width: 230px">Secret name</div> | Description |
 | ----------- | ----------- |
-| `TEST_WORKSPACE_APP_ID` | The application (client) ID of the Workspaces app Service Principal. |
+| `TEST_WORKSPACE_APP_ID` | The application (client) ID of the Workspaces app. |
 
 ### Create a Teams Webhook for deployment notifications
 
