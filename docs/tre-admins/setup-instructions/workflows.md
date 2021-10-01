@@ -76,7 +76,7 @@ Configure the TRE API and Swagger UI repository secrets
 | `AAD_TENANT_ID` | The tenant ID of the Azure AD. |
 | `SWAGGER_UI_CLIENT_ID` | The application (client) ID of the TRE Swagger UI app. |
 | `API_CLIENT_ID` | The application (client) ID of the TRE API app. |
-| `API_CLIENT_SECRET` | The application password (client secret) of the TRE API Service Principal. |
+| `API_CLIENT_SECRET` | The application password (client secret) of the TRE API app. |
 
 ### Create an app registration and a user for the E2E tests
 
