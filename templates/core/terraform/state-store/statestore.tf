@@ -28,6 +28,13 @@ resource "azurerm_cosmosdb_sql_database" "tre-db" {
   throughput          = 400
 }
 
+resource "azurerm_management_lock" "tre-db" {
+  name       = "tre-db-lock"
+  scope      = resource.azurerm_cosmosdb_sql_database.tre-db.id
+  lock_level = "CanNotDelete"
+  notes      = "Locked to prevent accidental deletion"
+}
+
 resource "azurerm_private_dns_zone" "cosmos" {
   name                = "privatelink.documents.azure.com"
   resource_group_name = var.resource_group_name

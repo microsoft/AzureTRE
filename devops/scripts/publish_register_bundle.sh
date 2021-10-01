@@ -94,7 +94,7 @@ porter publish --registry "$acr_name.azurecr.io" --debug
 
 explain_json=$(porter explain -o json)
 
-payload=$(echo $explain_json | jq --argfile json_schema custom_parameters.json --arg current "$current" --arg bundle_type "$bundle_type" '. + {"json_schema": $json_schema, "resourceType": $bundle_type, "current": $current}')
+payload=$(echo $explain_json | jq --argfile json_schema template_schema.json --arg current "$current" --arg bundle_type "$bundle_type" '. + {"json_schema": $json_schema, "resourceType": $bundle_type, "current": $current}')
 
 if [[ -n  ${access_token+x} ]]; then
     if [[ -n ${insecure+x} ]]; then

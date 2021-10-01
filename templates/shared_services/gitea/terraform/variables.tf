@@ -8,12 +8,6 @@ variable "location" {
   description = "Azure location (region) for deployment of core TRE services"
 }
 
-variable "image_tag" {
-  type        = string
-  description = "Tag for Gitea image"
-  default     = "main-latest"
-}
-
 variable "docker_registry_server" {
   type        = string
   description = "Docker registry server"

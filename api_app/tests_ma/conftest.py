@@ -17,8 +17,8 @@ def input_workspace_template():
             "$schema": "http://json-schema.org/draft-07/schema",
             "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/myworkspace/workspace.json",
             "type": "object",
-            "title": "My Workspace Template Custom Parameters",
-            "description": "These parameters are specific to my workspace template",
+            "title": "My Workspace Template",
+            "description": "This is a test workspace template schema.",
             "required": [],
             "properties": {}
         })
@@ -34,8 +34,8 @@ def input_workspace_service_template():
             "$schema": "http://json-schema.org/draft-07/schema",
             "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/myworkspace/workspace_service.json",
             "type": "object",
-            "title": "My Workspace Service Template Custom Parameters",
-            "description": "These parameters are specific to my workspace service template",
+            "title": "My Workspace Service Template",
+            "description": "This is a test workspace service template schema.",
             "required": [],
             "properties": {}
         })
@@ -51,8 +51,8 @@ def input_user_resource_template():
             "$schema": "http://json-schema.org/draft-07/schema",
             "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/myworkspace/user_resource.json",
             "type": "object",
-            "title": "My User Resource Template Custom Parameters",
-            "description": "These parameters are specific to my user resource template",
+            "title": "My User Resource Template",
+            "description": "These is a test user resource template schema",
             "required": [],
             "properties": {}
         })
