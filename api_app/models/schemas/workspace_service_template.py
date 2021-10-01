@@ -46,8 +46,8 @@ class WorkspaceServiceTemplateInCreate(ResourceTemplateInCreate):
                     "$schema": "http://json-schema.org/draft-07/schema",
                     "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/myworkspace/workspace_service.json",
                     "type": "object",
-                    "title": "My Workspace Service Template Custom Parameters",
-                    "description": "These parameters are specific to my workspace service template",
+                    "title": "My Workspace Service Template",
+                    "description": "These is a test workspace service resource template schema",
                     "required": [],
                     "properties": {}
                 }
