@@ -114,6 +114,14 @@ letsencrypt:
 	&& cd ./templates/core/terraform/ && . ./outputs.sh \
 	&& cd ./scripts/ && ./letsencrypt.sh
 
+tre-stop:
+	echo -e "\n\e[34m»»» 🧩 \e[96mStopping TRE\e[0m..." \
+	&& pwsh -c ./devops/scripts/Control-TRE.ps1 -Action "Stop"
+
+tre-start:
+	echo -e "\n\e[34m»»» 🧩 \e[96mStarting TRE\e[0m..." \
+	&& pwsh -c ./devops/scripts/Control-TRE.ps1 -Action "Start"
+
 tre-destroy:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDestroying TRE\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
