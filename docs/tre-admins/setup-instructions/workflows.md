@@ -20,7 +20,7 @@ Before you can run the `deploy_tre.yml` pipeline there are some one-time configu
 1. Configure repository secrets
 1. Deploy the TRE using the workflow
 
-### Create a Service Principal for provisioning resources
+### Create a service principal for provisioning resources
 
 1. Login to Azure
 
