@@ -56,7 +56,7 @@ Before you can run the `deploy_tre.yml` pipeline there are some one-time configu
   | ----------- | ----------- |
   | `AZURE_CREDENTIALS` | The JSON output from the previous step |
 
-### Decide on a TRE ID and Azure Resource Location
+### Decide on a TRE ID and Azure resources location
 
 Configure the TRE ID and LOCATION repository secrets
 
