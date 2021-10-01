@@ -11,7 +11,7 @@ Before you can run the `deploy_tre.yml` pipeline there are some one-time configu
 !!! tip
     In some of the steps below, you are asked to configure repository secrets. Follow the [GitHub guide](https://docs.github.com/en/actions/security-guides/encrypted-secrets) on creating repository secrets if you are unfamiliar with this step.
 
-1. Create a Service Principal for the subscription so that the workflow can provision Azure resources.
+1. Create a service principal for the subscription so that the workflow can provision Azure resources.
 1. Decide on a TRE ID and Azure Resource Location
 1. Create app registrations for API authentication
 1. Create app registrations and a user for the E2E tests
