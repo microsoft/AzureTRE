@@ -86,7 +86,7 @@ Configure the E2E Test repository secrets
 
 | <div style="width: 230px">Secret name</div> | Description |
 | ----------- | ----------- |
-| `TEST_APP_ID` | The application (client) ID of the E2E Test app Service Principal |
+| `TEST_APP_ID` | The application (client) ID of the E2E Test app |
 | `TEST_USER_NAME` | The username of the E2E Test User |
 | `TEST_USER_PASSWORD` | The password of the E2E Test User |
 
