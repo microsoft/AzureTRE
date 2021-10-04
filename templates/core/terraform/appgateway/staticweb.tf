@@ -43,6 +43,14 @@ resource "azurerm_storage_account_network_rules" "staticweb" {
   ]
 }
 
+# Assign the role to allow uploading content to the storage account
+# Needed for uploading certificates
+resource "azurerm_role_assignment" "stgwriter" {
+  scope                = azurerm_storage_account.staticweb.id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = data.azurerm_client_config.deployer.object_id
+}
+
 resource "azurerm_private_endpoint" "webpe" {
   name                = "pe-web-${local.staticweb_storage_name}"
   location            = var.location
