@@ -3,8 +3,6 @@ locals {
 
   staticweb_backend_pool_name = "beap-staticweb"
   api_backend_pool_name       = "beap-api"
-  nexus_backend_pool_name     = "beap-nexus"
-  gitea_backend_pool_name     = "beap-gitea"
   app_path_map_name           = "upm-application"
   redirect_path_map_name      = "upm-redirect"
 
@@ -15,11 +13,8 @@ locals {
 
   api_http_setting_name       = "be-htst-api"
   staticweb_http_setting_name = "be-htst-staticweb"
-  nexus_http_setting_name     = "be-htst-nexus"
-  gitea_http_setting_name     = "be-htst-gitea"
+
   api_probe_name              = "hp-api"
-  nexus_probe_name            = "hp-nexus"
-  gitea_probe_name            = "hp-gitea"
 
   insecure_listener_name = "httplstn-insecure"
   secure_listener_name   = "httplstn-secure"

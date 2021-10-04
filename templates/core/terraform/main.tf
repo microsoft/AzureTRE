@@ -79,8 +79,6 @@ module "appgateway" {
   app_gw_subnet          = module.network.app_gw_subnet_id
   shared_subnet          = module.network.shared_subnet_id
   api_fqdn               = module.api-webapp.api_fqdn
-  nexus_fqdn             = var.deploy_nexus == true ? module.nexus[0].nexus_fqdn : "/"
-  gitea_fqdn             = var.deploy_gitea == true ? module.gitea[0].gitea_fqdn : "/"
   keyvault_id            = module.keyvault.keyvault_id
   static_web_dns_zone_id = module.network.static_web_dns_zone_id
   depends_on             = [module.keyvault]

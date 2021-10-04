@@ -1,11 +1,5 @@
 #!/bin/bash
 
-if [ $DEPLOY_NEXUS != true ];
-then
-  echo -e "\e[33m»»» Nexus deployment not enabled (DEPLOY_NEXUS not true); exiting"
-  exit
-fi
-
 export NEXUS_URL="${TRE_URL}/nexus/"
 export NEXUS_ADMIN_PASSWORD_NAME="nexus-${TRE_ID,,}-admin-password"
 export KEYVAULT_NAME="kv-${TRE_ID}"
