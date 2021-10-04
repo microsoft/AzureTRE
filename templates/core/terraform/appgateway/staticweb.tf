@@ -38,6 +38,7 @@ resource "azurerm_storage_blob" "staticweb" {
   storage_account_name   = azurerm_storage_account.staticweb.name
   storage_container_name = azurerm_storage_container.staticweb.name
   type                   = "Block"
+  content_type           = "text/html"
   source_content         = local.staticweb_index_file_content
 }
 
