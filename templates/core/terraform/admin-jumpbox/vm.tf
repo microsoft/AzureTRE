@@ -63,6 +63,10 @@ resource "azurerm_virtual_machine" "jumpbox" {
     admin_username = random_string.username.result
     admin_password = random_password.password.result
   }
+
+  os_profile_windows_config {
+  }
+
   tags = {
     environment = "staging"
   }
