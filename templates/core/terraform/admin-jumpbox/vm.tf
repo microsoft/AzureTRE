@@ -12,6 +12,29 @@ resource "azurerm_network_interface" "jumpbox-nic" {
   }
 }
 
+resource "random_string" "username" {
+  length      = 4
+  upper       = true
+  lower       = true
+  number      = true
+  min_numeric = 1
+  min_lower   = 1
+  special     = false
+}
+
+resource "random_password" "password" {
+  length           = 16
+  lower            = true
+  min_lower        = 1
+  upper            = true
+  min_upper        = 1
+  number           = true
+  min_numeric      = 1
+  special          = true
+  min_special      = 1
+  override_special = "_%@"
+}
+
 resource "azurerm_virtual_machine" "jumpbox" {
   name                = "vm-${var.tre_id}"
   resource_group_name = var.resource_group_name

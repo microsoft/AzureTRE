@@ -216,6 +216,15 @@ module "bastion" {
   bastion_subnet      = module.network.bastion_subnet_id
 }
 
+module "jumpbox" {
+  source              = "./admin-jumpbox"
+  tre_id              = var.tre_id
+  location            = var.location
+  resource_group_name = azurerm_resource_group.core.name
+  shared_subnet       = module.network.shared_subnet_id
+  keyvault_id            = module.keyvault.keyvault_id
+}
+
 module "gitea" {
   count                  = var.deploy_gitea == true ? 1 : 0
   source                 = "../../shared_services/gitea/terraform"
