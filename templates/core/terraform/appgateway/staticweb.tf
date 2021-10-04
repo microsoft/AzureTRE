@@ -43,8 +43,7 @@ resource "azurerm_storage_account_network_rules" "staticweb" {
   ]
 }
 
-# Assign the role to allow uploading content to the storage account
-# Needed for uploading certificates
+# Assign the "Storage Blob Data Contributor" role needed for uploading certificates to the storage account
 resource "azurerm_role_assignment" "stgwriter" {
   scope                = azurerm_storage_account.staticweb.id
   role_definition_name = "Storage Blob Data Contributor"
