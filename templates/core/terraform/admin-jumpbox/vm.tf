@@ -49,7 +49,7 @@ resource "azurerm_virtual_machine" "jumpbox" {
   storage_image_reference {
     publisher = "MicrosoftWindowsDesktop"
     offer     = "windows-10"
-    sku       = "21h1-pro-g2"
+    sku       = "20h2-pro-g2"
     version   = "latest"
   }
   storage_os_disk {
