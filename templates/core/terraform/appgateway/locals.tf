@@ -1,6 +1,8 @@
 locals {
   staticweb_storage_name = lower(replace("stweb${var.tre_id}", "-", ""))
 
+  staticweb_index_file_content = "<!DOCTYPE html><html lang=\"en\" xmlns=\"http://www.w3.org/1999/xhtml\"><head><meta charset=\"utf-8\"/><title></title></head><body></body></html>"
+
   staticweb_backend_pool_name = "beap-staticweb"
   api_backend_pool_name       = "beap-api"
   nexus_backend_pool_name     = "beap-nexus"

@@ -9,10 +9,12 @@ resource "azurerm_storage_account" "staticweb" {
   account_replication_type  = "LRS"
   enable_https_traffic_only = true
   allow_blob_public_access  = false
+
   static_website {
     index_document     = "index.html"
     error_404_document = "404.html"
   }
+
   tags = {
     tre_id = var.tre_id
   }
@@ -23,6 +25,20 @@ resource "azurerm_storage_account" "staticweb" {
     bypass         = ["AzureServices"]
     default_action = "Deny"
   }
+}
+
+resource "azurerm_storage_container" "staticweb" {
+  name                  = "$web"
+  storage_account_name  = azurerm_storage_account.staticweb.name
+  container_access_type = "private"
+}
+
+resource "azurerm_storage_blob" "staticweb" {
+  name                   = "index.html"
+  storage_account_name   = azurerm_storage_account.staticweb.name
+  storage_container_name = azurerm_storage_container.staticweb.name
+  type                   = "Block"
+  source_content         = local.staticweb_index_file_content
 }
 
 # Assign the identity deploying data contibutor rights.

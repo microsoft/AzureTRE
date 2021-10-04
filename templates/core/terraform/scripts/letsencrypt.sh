@@ -3,70 +3,6 @@ set -e
 
 script_dir=$(realpath $(dirname "${BASH_SOURCE[0]}"))
 
-if [[ -z ${STORAGE_ACCOUNT} ]]; then
-  echo "STORAGE_ACCOUNT not set"
-  exit 1
-fi
-
-IPADDR=$(curl ipecho.net/plain; echo)
-
-echo "Creating network rule on storage account ${STORAGE_ACCOUNT} for $IPADDR"
-az storage account network-rule add --account-name "${STORAGE_ACCOUNT}" --ip-address $IPADDR
-echo "Waiting for network rule to take effect"
-sleep 30s
-echo "Created network rule on storage account"
-
-staticenabled=$(az storage blob service-properties show -o tsv \
-    --account-name "${STORAGE_ACCOUNT}" \
-    --auth-mode login \
-    --query 'staticWebsite.enabled')
-
-if [[ ${staticenabled} = 'false' ]]; then
-    # Enable static-website hosting
-    echo "Enabling static Web hosting on storage account"
-    az storage blob service-properties update \
-        --account-name "${STORAGE_ACCOUNT}" \
-        --auth-mode login \
-        --static-website \
-        --index-document 'index.html'
-else
-    echo "Static Web hosting already enabled on storage account"
-fi
-
-# Create the default index.html page
-cat << EOF > index.html
-<!DOCTYPE html>
-<html lang="en" xmlns="http://www.w3.org/1999/xhtml"><head><meta charset="utf-8"/><title></title></head><body></body></html>
-EOF
-
-echo "Checking for index.html file in storage account"
-
-isindex=$(az storage blob list -o json \
-    --account-name "${STORAGE_ACCOUNT}" \
-    --auth-mode login \
-    --container-name '$web' \
-    --query "[?name=='index.html'].name" \
-    | jq 'length')
-
-if [[ ${isindex} -lt 1 ]]; then
-    echo "Uploading index.html file"
-    # Upload the default index.html page
-    az storage blob upload \
-        --account-name "${STORAGE_ACCOUNT}" \
-        --auth-mode login \
-        --container-name '$web' \
-        --file index.html \
-        --name index.html \
-        --no-progress \
-        --only-show-errors
-
-    # Wait a bit for the App gateway health probe to notice.
-    echo "Waiting 30s for health probe"
-    sleep 30s
-else
-    echo "index.html already present"
-fi
-
 ledir=$(pwd)/letsencrypt
 
 mkdir -p "${ledir}/logs"
@@ -117,7 +53,3 @@ else
         --cert-file "${CERT_DIR}/aci.pfx" \
         --cert-password "${CERT_PASSWORD}"
 fi
-
-echo "Removing network rule on storage account"
-az storage account network-rule remove --account-name ${STORAGE_ACCOUNT} --ip-address ${IPADDR}
-echo "Removed network rule on storage account"
