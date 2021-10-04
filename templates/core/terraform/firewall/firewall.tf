@@ -86,6 +86,45 @@ resource "azurerm_monitor_diagnostic_setting" "firewall" {
   }
 }
 
+resource "azurerm_firewall_application_rule_collection" "shared_subnet" {
+  name                = "arc-shared_subnet"
+  azure_firewall_name = azurerm_firewall.fw.name
+  resource_group_name = azurerm_firewall.fw.resource_group_name
+  priority            = 100
+  action              = "Allow"
+
+
+  rule {
+    name = "admin-resources"
+    protocol {
+      port = "443"
+      type = "Https"
+    }
+    protocol {
+      port = "80"
+      type = "Http"
+    }
+
+    target_fqdns = [
+      "go.microsoft.com",
+      "*.azureedge.net",
+      "github.com",
+      "*powershellgallery.com",
+      "git-scm.com",
+      "*githubusercontent.com",
+      "*core.windows.net",
+      "aka.ms,management.azure.com",
+      "graph.microsoft.com",
+      "login.microsoftonline.com",
+      "aadcdn.msftauth.net",
+      "graph.windows.net"
+    ]
+    source_addresses = data.azurerm_subnet.shared_subnet.address_prefixes
+  }
+
+}
+
+
 resource "azurerm_firewall_application_rule_collection" "resource_processor_subnet" {
   name                = "arc-resource_processor_subnet"
   azure_firewall_name = azurerm_firewall.fw.name
@@ -120,6 +159,11 @@ resource "azurerm_firewall_application_rule_collection" "resource_processor_subn
     ]
     source_addresses = data.azurerm_subnet.resource_processor.address_prefixes
   }
+
+  depends_on = [
+    azurerm_firewall_application_rule_collection.shared_subnet
+  ]
+
 
 }
 
