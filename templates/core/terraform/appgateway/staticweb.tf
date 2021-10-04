@@ -10,21 +10,16 @@ resource "azurerm_storage_account" "staticweb" {
   enable_https_traffic_only = true
   allow_blob_public_access  = false
 
+  tags = {
+    tre_id = var.tre_id
+  }
+
   static_website {
     index_document     = "index.html"
     error_404_document = "404.html"
   }
 
-  tags = {
-    tre_id = var.tre_id
-  }
-
   lifecycle { ignore_changes = [tags] }
-
-  network_rules {
-    bypass         = ["AzureServices"]
-    default_action = "Deny"
-  }
 }
 
 resource "azurerm_storage_container" "staticweb" {
@@ -42,12 +37,16 @@ resource "azurerm_storage_blob" "staticweb" {
   source_content         = local.staticweb_index_file_content
 }
 
-# Assign the identity deploying data contibutor rights.
-# Needed to upload content to static web.
-resource "azurerm_role_assignment" "stgwriter" {
-  scope                = azurerm_storage_account.staticweb.id
-  role_definition_name = "Storage Blob Data Contributor"
-  principal_id         = data.azurerm_client_config.deployer.object_id
+resource "azurerm_storage_account_network_rules" "staticweb" {
+  resource_group_name  = var.resource_group_name
+  storage_account_name = azurerm_storage_account.staticweb.name
+
+  default_action = "Deny"
+  bypass         = ["AzureServices"]
+
+  depends_on = [
+    azurerm_storage_blob.staticweb
+  ]
 }
 
 resource "azurerm_private_endpoint" "webpe" {
