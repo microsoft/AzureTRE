@@ -41,8 +41,8 @@ resource "azurerm_storage_account_network_rules" "staticweb" {
   resource_group_name  = var.resource_group_name
   storage_account_name = azurerm_storage_account.staticweb.name
 
-  default_action = "Deny"
   bypass         = ["AzureServices"]
+  default_action = "Deny"
 
   depends_on = [
     azurerm_storage_blob.staticweb
