@@ -22,16 +22,10 @@ resource "azurerm_storage_account" "staticweb" {
   lifecycle { ignore_changes = [tags] }
 }
 
-resource "azurerm_storage_container" "staticweb" {
-  name                  = "$web"
-  storage_account_name  = azurerm_storage_account.staticweb.name
-  container_access_type = "private"
-}
-
 resource "azurerm_storage_blob" "staticweb" {
   name                   = "index.html"
   storage_account_name   = azurerm_storage_account.staticweb.name
-  storage_container_name = azurerm_storage_container.staticweb.name
+  storage_container_name = "$web"
   type                   = "Block"
   content_type           = "text/html"
   source_content         = local.staticweb_index_file_content
