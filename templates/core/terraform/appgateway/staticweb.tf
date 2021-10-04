@@ -29,6 +29,8 @@ resource "azurerm_storage_blob" "staticweb" {
   type                   = "Block"
   content_type           = "text/html"
   source_content         = local.staticweb_index_file_content
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_storage_account_network_rules" "staticweb" {
