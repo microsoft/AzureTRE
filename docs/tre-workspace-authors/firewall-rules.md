@@ -1,5 +1,8 @@
 # Adding Firewall Rules as part of a workspace or service deployment
 
+!!! note
+    Creating firewall rules will in the future only be allowed through the firewall shared services [#882](https://github.com/microsoft/AzureTRE/issues/882).
+
 A TRE service may require certain firewall rules to be opened in the TRE firewall. Examples include:
 
 - Access to an external authorisation endpoint
