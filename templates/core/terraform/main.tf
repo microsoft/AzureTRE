@@ -222,7 +222,7 @@ module "jumpbox" {
   location            = var.location
   resource_group_name = azurerm_resource_group.core.name
   shared_subnet       = module.network.shared_subnet_id
-  keyvault_id            = module.keyvault.keyvault_id
+  keyvault_id         = module.keyvault.keyvault_id
 }
 
 module "gitea" {

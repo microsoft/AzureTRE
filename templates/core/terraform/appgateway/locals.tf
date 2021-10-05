@@ -14,7 +14,7 @@ locals {
   api_http_setting_name       = "be-htst-api"
   staticweb_http_setting_name = "be-htst-staticweb"
 
-  api_probe_name              = "hp-api"
+  api_probe_name = "hp-api"
 
   insecure_listener_name = "httplstn-insecure"
   secure_listener_name   = "httplstn-secure"
