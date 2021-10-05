@@ -30,11 +30,9 @@ resource "azurerm_storage_blob" "staticweb" {
   content_type           = "text/html"
   source_content         = local.staticweb_index_file_content
 
-  tags = {
-    tre_id = var.tre_id
+  lifecycle {
+    ignore_changes = all
   }
-
-  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_storage_account_network_rules" "staticweb" {
