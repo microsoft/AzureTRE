@@ -1,6 +1,6 @@
 data "azurerm_subscription" "current" {}
 
-resource "azurerm_network_interface" "jumpbox-nic" {
+resource "azurerm_network_interface" "jumpbox_nic" {
   name                = "nic-vm-${var.tre_id}"
   resource_group_name = var.resource_group_name
   location            = var.location
@@ -39,7 +39,7 @@ resource "azurerm_virtual_machine" "jumpbox" {
   name                  = "vm-${var.tre_id}"
   resource_group_name   = var.resource_group_name
   location              = var.location
-  network_interface_ids = [azurerm_network_interface.jumpbox-nic.id]
+  network_interface_ids = [azurerm_network_interface.jumpbox_nic.id]
   vm_size               = "Standard_DS1_v2"
 
   delete_os_disk_on_termination = true
@@ -72,7 +72,7 @@ resource "azurerm_virtual_machine" "jumpbox" {
   }
 }
 
-resource "azurerm_key_vault_secret" "jumpbox-credentials" {
+resource "azurerm_key_vault_secret" "jumpbox_credentials" {
   name         = "${azurerm_virtual_machine.jumpbox.name}-admin-credentials"
   value        = "${random_string.username.result}\n${random_password.password.result}"
   key_vault_id = var.keyvault_id

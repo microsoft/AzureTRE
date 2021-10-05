@@ -45,12 +45,12 @@ keyVaultName="kv-"$tre_id
 tokenSecretName="gitea-"$tre_id"-admin-token"
 pwdSecretName="gitea-"$tre_id"-admin-password"
 
-gitea_url="https://gitea-$tre_id.azurewebsites.net"
+giteaUrl="https://gitea-$tre_id.azurewebsites.net"
 
 # Check if access token exists
-token_exists=$(az keyvault secret list --vault-name $keyVaultName --query "contains([].id, 'https://$keyVaultName.vault.azure.net/secrets/$tokenSecretName')")
+tokenExists=$(az keyvault secret list --vault-name $keyVaultName --query "contains([].id, 'https://$keyVaultName.vault.azure.net/secrets/$tokenSecretName')")
 
-if $token_exists
+if $tokenExists
 then
   response=$(az keyvault secret show --vault-name $keyVaultName --name $tokenSecretName)
   token=$(jq -r '.value' <<< "$response")
@@ -61,7 +61,7 @@ else
 
   credentials=$username:$password
   data='{"name": "'${username}'"}'
-  url=${gitea_url}/api/v1/users/${username}/tokens
+  url=${giteaUrl}/api/v1/users/${username}/tokens
 
   # Create new access token
   response=$(curl -X POST -H "Content-Type: application/json" -k -d "${data}" -u ${credentials} ${url})
@@ -89,7 +89,7 @@ repo='{
 }'
 
 # Mirror repository
-url=${gitea_url}/api/v1/repos/migrate?access_token=${token}
+url=${giteaUrl}/api/v1/repos/migrate?access_token=${token}
 
 response=$(curl -X POST ${url} -H "accept: application/json" -H "Content-Type: application/json" -k -d "${repo}")
 echo $response
@@ -104,7 +104,7 @@ repo_settings='{
 }'
 
 # Set additional repository parameters
-url=${gitea_url}/api/v1/repos/${username}/${REPO_NAME}?access_token=${token}
+url=${giteaUrl}/api/v1/repos/${username}/${REPO_NAME}?access_token=${token}
 
 response=$(curl -X PATCH ${url} -H "accept: application/json" -H "Content-Type: application/json" -k -d "${repo_settings}")
 echo $response
