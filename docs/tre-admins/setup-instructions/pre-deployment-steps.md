@@ -41,9 +41,9 @@ ACR_NAME=aztreacr
 ARM_SUBSCRIPTION_ID=12...54e
 
 # Azure Resource Manager credentials used for CI/CD pipelines
-# ARM_TENANT_ID=__CHANGE_ME__
-# ARM_CLIENT_ID=__CHANGE_ME__
-# ARM_CLIENT_SECRET=__CHANGE_ME__
+# ARM_TENANT_ID=
+# ARM_CLIENT_ID=
+# ARM_CLIENT_SECRET=
 
 # Debug mode
 DEBUG="false"
