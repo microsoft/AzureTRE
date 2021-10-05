@@ -34,9 +34,9 @@ URLs:
 1. Build and install the InnerEye Deep Learning Service bundle
 
   ```cmd
-  make porter-build DIR=./templates/workspace_services/innereye_deeplearning
-  make porter-publish DIR=./templates/workspace_services/innereye_deeplearning
-  make porter-install DIR=./templates/workspace_services/innereye_deeplearning
+  make porter-build DIR=./templates/workspace_services/innereye
+  make porter-publish DIR=./templates/workspace_services/innereye
+  make porter-install DIR=./templates/workspace_services/innereye
   ```
 
 ## Running the InnerEye HelloWorld on AML Compute Cluster
