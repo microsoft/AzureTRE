@@ -125,7 +125,6 @@ resource "azurerm_firewall_application_rule_collection" "shared_subnet" {
 
 }
 
-
 resource "azurerm_firewall_application_rule_collection" "resource_processor_subnet" {
   name                = "arc-resource_processor_subnet"
   azure_firewall_name = azurerm_firewall.fw.name
