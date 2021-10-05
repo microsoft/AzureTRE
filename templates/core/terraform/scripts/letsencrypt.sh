@@ -11,12 +11,46 @@ fi
 IPADDR=$(curl ipecho.net/plain; echo)
 
 # The storage account is protected by network rules
-# The rules need to be temporarily lifted so that the certificate can be uploaded
+# The rules need to be temporarily lifted so that the index.html file, if required, and certificate can be uploaded
 echo "Creating network rule on storage account ${STORAGE_ACCOUNT} for $IPADDR"
 az storage account network-rule add --account-name "${STORAGE_ACCOUNT}" --ip-address $IPADDR
 echo "Waiting for network rule to take effect"
 sleep 30s
 echo "Created network rule on storage account"
+
+echo "Checking for index.html file in storage account"
+
+# Create the default index.html page
+cat << EOF > index.html
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml"><head><meta charset="utf-8"/><title></title></head><body></body></html>
+EOF
+
+indexExists=$(az storage blob list -o json \
+    --account-name "${STORAGE_ACCOUNT}" \
+    --auth-mode login \
+    --container-name '$web' \
+    --query "[?name=='index.html'].name" \
+    | jq 'length')
+
+if [[ ${indexExists} -lt 1 ]]; then
+    echo "Uploading index.html file"
+
+    az storage blob upload \
+        --account-name "${STORAGE_ACCOUNT}" \
+        --auth-mode login \
+        --container-name '$web' \
+        --file index.html \
+        --name index.html \
+        --no-progress \
+        --only-show-errors
+
+    # Wait a bit for the App Gateway health probe to notice
+    echo "Waiting 30s for health probe"
+    sleep 30s
+else
+    echo "index.html already present"
+fi
 
 ledir=$(pwd)/letsencrypt
 
