@@ -1,39 +1,62 @@
 #!/bin/bash
 set -e
 
+function usage() {
+    cat <<USAGE
+
+    Usage: $0  [-t --tre-id] 
+
+    Options:
+        -t, --tre-id               ID of the TRE
+        -g, --github-repo          URL to the github repo to clone e.g "https://github.com/Microsoft/AzureTRE"
+USAGE
+    exit 1
+}
+
+# if no arguments are provided, return usage function
+if [ $# -eq 0 ]; then
+    usage # run usage function
+fi
+
+while [ "$1" != "" ]; do
+    case $1 in
+    -t | --tre-id)
+        shift
+        tre_id=$1
+        ;;
+    -g | --github-repo)
+        shift
+        github_repo=$1
+        ;;
+
+    esac
+    shift # remove the current value for `$1` and use the next
+done
+
 # These variables need to be set
 # ******************************
-# TRE_ID=
-# LOCATION=
+# tre-id=
+# github-repo=
 
-# TENANT_ID=
-# SUBSCRIPTION_ID=
-# ARM_CLIENT_ID=
-# ARM_CLIENT_SECRET=
-
-# ORGANISATION=microsoft
-# REPO_NAME=InnerEye-DeepLearning
 
 username=gitea_admin
 
-keyVaultName="kv-"$TRE_ID
-tokenSecretName="gitea-"$TRE_ID"-admin-token"
-pwdSecretName="gitea-"$TRE_ID"-admin-password"
+keyVaultName="kv-"$tre_id
+tokenSecretName="gitea-"$tre_id"-admin-token"
+pwdSecretName="gitea-"$tre_id"-admin-password"
 
-gitea_url="https://$TRE_ID.$LOCATION.cloudapp.azure.com/gitea"
-
-az login --service-principal --username $ARM_CLIENT_ID --password $ARM_CLIENT_SECRET --tenant $TENANT_ID > /dev/null
+gitea_url="https://gitea-$tre_id.azurewebsites.net"
 
 # Check if access token exists
-token_exists=$(az keyvault secret list --subscription $SUBSCRIPTION_ID --vault-name $keyVaultName --query "contains([].id, 'https://$keyVaultName.vault.azure.net/secrets/$tokenSecretName')")
+token_exists=$(az keyvault secret list --vault-name $keyVaultName --query "contains([].id, 'https://$keyVaultName.vault.azure.net/secrets/$tokenSecretName')")
 
 if $token_exists
 then
-  response=$(az keyvault secret show --subscription $SUBSCRIPTION_ID --vault-name $keyVaultName --name $tokenSecretName)
+  response=$(az keyvault secret show --vault-name $keyVaultName --name $tokenSecretName)
   token=$(jq -r '.value' <<< "$response")
 else
   # Get admin password from keyvault
-  response=$(az keyvault secret show --subscription $SUBSCRIPTION_ID --vault-name $keyVaultName --name $pwdSecretName)
+  response=$(az keyvault secret show --vault-name $keyVaultName --name $pwdSecretName)
   password=$(jq -r '.value' <<< "$response")
 
   credentials=$username:$password

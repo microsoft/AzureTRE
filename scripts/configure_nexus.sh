@@ -4,10 +4,10 @@ set -e
 function usage() {
     cat <<USAGE
 
-    Usage: $0  [-t --tre_id] 
+    Usage: $0  [-t --tre-id] 
 
     Options:
-        -t, --tre_id               ID of the TRE
+        -t, --tre-id               ID of the TRE
 USAGE
     exit 1
 }
