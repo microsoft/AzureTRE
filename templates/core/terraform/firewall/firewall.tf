@@ -164,8 +164,6 @@ resource "azurerm_firewall_application_rule_collection" "resource_processor_subn
   depends_on = [
     azurerm_firewall_application_rule_collection.shared_subnet
   ]
-
-
 }
 
 resource "azurerm_firewall_network_rule_collection" "resource_processor_subnet" {
