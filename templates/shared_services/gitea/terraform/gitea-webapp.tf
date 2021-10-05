@@ -30,11 +30,11 @@ resource "azurerm_app_service" "gitea" {
     WEBSITE_DNS_SERVER                  = "168.63.129.16" # required to access storage over private endpoints
     WEBSITES_ENABLE_APP_SERVICE_STORAGE = false
 
-    GITEA_USERNAME = "gitea_admin"
+    GITEA_USERNAME = "giteaadmin"
     GITEA_PASSWD   = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.gitea_password.id})"
     GITEA_EMAIL    = "giteaadmin@tre.com"
 
-    GITEA__server__ROOT_URL              = "https://${local.webapp_name}.azurewebsites.net/gitea/"
+    GITEA__server__ROOT_URL              = "https://${local.webapp_name}.azurewebsites.net/"
     GITEA__log_0x2E_console__COLORIZE    = "false" # Azure monitor doens't show colors, so this is easier to read.
     GITEA__picture__DISABLE_GRAVATAR     = "true"  # external avaters are not available due to network restrictions
     GITEA__security__INSTALL_LOCK        = true
