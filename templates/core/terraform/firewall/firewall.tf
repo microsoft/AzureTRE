@@ -95,6 +95,7 @@ resource "azurerm_firewall_application_rule_collection" "shared_subnet" {
 
   rule {
     name = "admin-resources"
+
     protocol {
       port = "443"
       type = "Https"
