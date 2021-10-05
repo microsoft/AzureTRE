@@ -32,7 +32,7 @@ resource "azurerm_app_service" "gitea" {
 
     GITEA_USERNAME = "giteaadmin"
     GITEA_PASSWD   = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.gitea_password.id})"
-    GITEA_EMAIL    = "giteaadmin@tre.com"
+    GITEA_EMAIL    = "giteaadmin@azuretre.com"
 
     GITEA__server__ROOT_URL              = "https://${local.webapp_name}.azurewebsites.net/"
     GITEA__log_0x2E_console__COLORIZE    = "false" # Azure monitor doens't show colors, so this is easier to read.
