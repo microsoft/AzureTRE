@@ -73,7 +73,7 @@ resource "azurerm_virtual_machine" "jumpbox" {
 }
 
 resource "azurerm_key_vault_secret" "jumpbox_credentials" {
-  name         = "${azurerm_virtual_machine.jumpbox.name}-admin-credentials"
+  name         = "${azurerm_virtual_machine.jumpbox.name}-jumpbox-admin-credentials"
   value        = "${random_string.username.result}\n${random_password.password.result}"
   key_vault_id = var.keyvault_id
 }

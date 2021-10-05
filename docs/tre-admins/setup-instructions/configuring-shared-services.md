@@ -4,7 +4,7 @@ Complete the configuration of the shared services (Nexus and Gitea) from inside 
 
 ## Prepare the admin jumpbox
 
-1. Sign in to the admin jumpbox provisioned as part of the TRE deployment using Bastion. The credentials for the jumpbox are located in the KeyVault under "vm-<tre-id>-admin-credentials"
+1. Sign in to the admin jumpbox provisioned as part of the TRE deployment using Bastion. The credentials for the jumpbox are located in the KeyVault under "vm-<tre-id>-jumpbox-admin-credentials"
 2. Download Git for Windows from [https://git-scm.com/download/win](https://git-scm.com/download/win) and install
 3. Download Azure CLI from [https://aka.ms/installazurecliwindows](https://aka.ms/installazurecliwindows) and install
 4. Open Git Bash
