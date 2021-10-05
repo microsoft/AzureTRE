@@ -122,7 +122,6 @@ resource "azurerm_firewall_application_rule_collection" "shared_subnet" {
     ]
     source_addresses = data.azurerm_subnet.shared.address_prefixes
   }
-
 }
 
 resource "azurerm_firewall_application_rule_collection" "resource_processor_subnet" {
