@@ -20,7 +20,7 @@
   !!! tip
       To retrieve your Azure subscription ID, use the `az` command line interface available in the development container. In the terminal window in Visual Studio Code, type `az login` followed by `az account show` to see your default subscription. Please refer to `az account -help` for further details on how to change your active subscription.
 
-2. Comment out the following variables by starting the line with a hash `#`.
+2. Comment out the following variables by starting the line with a hash `#`. WHY?
 
   ```cmd
   # ARM_TENANT_ID=...
