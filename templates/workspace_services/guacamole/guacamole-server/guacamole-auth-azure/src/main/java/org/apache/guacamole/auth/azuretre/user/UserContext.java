@@ -143,7 +143,7 @@ public class UserContext extends AbstractUserContext {
     @Override
     public Directory<Connection> getConnectionDirectory() throws GuacamoleException {
         LOGGER.debug("getConnectionDirectory");
-        // fix for github issue #850 - instead of returning connectionDirectory object we query again to get all accessible connections
+        // instead of returning connectionDirectory object we query to get all accessible connections (fix for #850)
         return new SimpleDirectory<>(
              connectionService.getConnections(treUser)
         );
