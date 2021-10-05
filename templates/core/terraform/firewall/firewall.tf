@@ -100,6 +100,7 @@ resource "azurerm_firewall_application_rule_collection" "shared_subnet" {
       port = "443"
       type = "Https"
     }
+
     protocol {
       port = "80"
       type = "Http"
