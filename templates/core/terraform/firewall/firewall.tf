@@ -120,6 +120,7 @@ resource "azurerm_firewall_application_rule_collection" "shared_subnet" {
       "aadcdn.msftauth.net",
       "graph.windows.net"
     ]
+
     source_addresses = data.azurerm_subnet.shared.address_prefixes
   }
 }
