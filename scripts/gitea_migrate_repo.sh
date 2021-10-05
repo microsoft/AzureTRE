@@ -39,7 +39,7 @@ done
 # github-repo=
 
 
-username=gitea_admin
+username=giteaadmin
 
 keyVaultName="kv-"$tre_id
 tokenSecretName="gitea-"$tre_id"-admin-token"
@@ -50,15 +50,20 @@ giteaUrl="https://gitea-$tre_id.azurewebsites.net"
 # Check if access token exists
 tokenExists=$(az keyvault secret list --vault-name $keyVaultName --query "contains([].id, 'https://$keyVaultName.vault.azure.net/secrets/$tokenSecretName')")
 
+
 if $tokenExists
 then
   response=$(az keyvault secret show --vault-name $keyVaultName --name $tokenSecretName)
   token=$(jq -r '.value' <<< "$response")
-else
+fi
+
+
+if [ -z $token ] || [ "$token" = "null" ] 
+then
   # Get admin password from keyvault
   response=$(az keyvault secret show --vault-name $keyVaultName --name $pwdSecretName)
   password=$(jq -r '.value' <<< "$response")
-
+  
   credentials=$username:$password
   data='{"name": "'${username}'"}'
   url=${giteaUrl}/api/v1/users/${username}/tokens

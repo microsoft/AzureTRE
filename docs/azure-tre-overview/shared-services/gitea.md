@@ -10,7 +10,7 @@ To deploy set `DEPLOY_GITEA=true` in `templates/core/.env`
 
 ## Getting Started
 
-Connect to the Gitea admin console `https://yourtreuri/gitea/` with the `gitea_admin` user. You can find the password in keyvault as `gitea password`.
+Connect to the Gitea admin console `https://yourtreuri/gitea/` with the `giteaadmin` user. You can find the password in keyvault as `gitea password`.
 
 ## Network requirements
 
