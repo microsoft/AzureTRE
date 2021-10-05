@@ -10,6 +10,8 @@ fi
 
 IPADDR=$(curl ipecho.net/plain; echo)
 
+# The storage account is protected by network rules
+# The rules need to be temporarily lifted so that the certificate can be uploaded
 echo "Creating network rule on storage account ${STORAGE_ACCOUNT} for $IPADDR"
 az storage account network-rule add --account-name "${STORAGE_ACCOUNT}" --ip-address $IPADDR
 echo "Waiting for network rule to take effect"

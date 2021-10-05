@@ -30,6 +30,9 @@ resource "azurerm_storage_blob" "staticweb" {
   content_type           = "text/html"
   source_content         = local.staticweb_index_file_content
 
+  # The storage will not be accessible to Terraform once the network security rules have been applied
+  # Luckily, this blob will not have to be changed once it is created
+  # Hence, we tell Terraform not to touch it again:
   lifecycle {
     ignore_changes = all
   }
@@ -42,6 +45,8 @@ resource "azurerm_storage_account_network_rules" "staticweb" {
   bypass         = ["AzureServices"]
   default_action = "Deny"
 
+  # The rule has to be applied AFTER the blob has been created
+  # Otherwise Terraform will fail as it cannot access the storage account
   depends_on = [
     azurerm_storage_blob.staticweb
   ]
