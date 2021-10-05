@@ -24,7 +24,7 @@ Example on how to run the script:
 ```bash
 ./aad-app-reg.sh \
     -n <Prefix of the app registration names e.g., TRE> \
-    -r https://<TRE ID>.<Azure location>.cloudapp.azure.com/api/docs/oaut2-redirect \
+    -r https://<TRE ID>.<Azure location>.cloudapp.azure.com/api/docs/oauth2-redirect \
     -a
 ```
 
@@ -131,7 +131,6 @@ The **TRE e2e test** app registration is used to authorize end-to-end test scena
 
 !!! warning
     Public client flows should never be allowed for a production environment as it poses a security risk.
-
 
 #### End-to-end test user
 

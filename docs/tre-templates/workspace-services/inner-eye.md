@@ -18,7 +18,7 @@ URLs:
 
 ## Prerequisites
 
-- [A workspace with an Azure ML Service bundle installed](../../../templates/workspace_services/azureml)
+- [A workspace with an Azure ML Service bundle installed](azure-ml.md)
 
 ## Manual Deployment
 
@@ -98,7 +98,7 @@ The workspace service provisions an App Service Plan and an App Service for host
     ```
 
     Test connection with AML:
-  
+
     ```cmd
     Invoke-WebRequest https://yourservicename.azurewebsites.net/v1/model/start/HelloWorld:1 -Method POST -Headers @{'Accept' = 'application/json'; 'API_AUTH_SECRET' = 'your-secret-1234-1123445'}
     ```

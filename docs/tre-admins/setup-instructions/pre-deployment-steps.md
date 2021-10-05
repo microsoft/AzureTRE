@@ -67,7 +67,7 @@ Next, you will set the configuration variables for the specific Azure TRE instan
 1. Run the `/scripts/aad-app-reg.sh` script to create API and Swagger UI app registrations and their service principals. The details of the script are covered [app registration script](../auth.md#app-registration-script) section of the auth document. Below is a sample where `TRE_ID` has value `mytre` and the Azure location is `westeurope`:
 
   ```bash
-  /workspaces/tre> ./scripts/aad-app-reg.sh -n TRE -r https://mytre.westeurope.cloudapp.azure.com/api/docs/oaut2-redirect -a
+  /workspaces/tre> ./scripts/aad-app-reg.sh -n TRE -r https://mytre.westeurope.cloudapp.azure.com/api/docs/oauth2-redirect -a
   ```
 
   !!! note
