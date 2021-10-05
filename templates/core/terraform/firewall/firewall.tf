@@ -93,7 +93,6 @@ resource "azurerm_firewall_application_rule_collection" "shared_subnet" {
   priority            = 100
   action              = "Allow"
 
-
   rule {
     name = "admin-resources"
     protocol {
