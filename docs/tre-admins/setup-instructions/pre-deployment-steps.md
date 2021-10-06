@@ -7,7 +7,7 @@
 
 1. Open the `/devops/.env.sample` file and then save it without the .sample extension. You should now have a file called `.env` located in the `/devops` folder. The file contains configuration variables for the shared management infrastructure which is used to support the deployment of one or more Azure TRE instances.
 
-  You need to provide values for the following variables:
+2. Provide the values for the following variables:
 
   | Variable | Description |
   | -------- | ----------- |
@@ -19,14 +19,6 @@
 
   !!! tip
       To retrieve your Azure subscription ID, use the `az` command line interface available in the development container. In the terminal window in Visual Studio Code, type `az login` followed by `az account show` to see your default subscription. Please refer to `az account -help` for further details on how to change your active subscription.
-
-1. Comment out the following variables by starting the line with a hash `#`.
-
-  ```cmd
-  # ARM_TENANT_ID=...
-  # ARM_CLIENT_ID=...
-  # ARM_CLIENT_SECRET=...
-  ```
 
 The rest of the variables can have their default values. You should now have a `.env` file that looks similar to the one below:
 
@@ -40,10 +32,10 @@ ACR_NAME=aztreacr
 
 ARM_SUBSCRIPTION_ID=12...54e
 
-# Azure Resource Manager credentials used for CI/CD pipelines
-# ARM_TENANT_ID=
-# ARM_CLIENT_ID=
-# ARM_CLIENT_SECRET=
+# If you want to deploy using GitHub Actions or not use the currently signed in  credentials, override the 3 below vars
+# ARM_TENANT_ID=__CHANGE_ME__
+# ARM_CLIENT_ID=__CHANGE_ME__
+# ARM_CLIENT_SECRET=__CHANGE_ME__
 
 # Debug mode
 DEBUG="false"
