@@ -85,7 +85,7 @@ repo='{
   "milestones": true,
   "mirror": true,
   "mirror_interval": "12h0m0s",
-  "private": true,
+  "private": false,
   "pull_requests": true,
   "releases": true,
   "repo_name": "'${github_repo##*/}'",
