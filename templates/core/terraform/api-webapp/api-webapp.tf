@@ -222,3 +222,10 @@ resource "azurerm_role_assignment" "acrpull_role" {
   role_definition_name = "AcrPull"
   principal_id         = var.managed_identity.principal_id
 }
+
+#Reset AcrUserManagedIdentityID once everything else is up-to-date
+resource "null_resource" "acr_identity_fix" {
+  provisioner "local-exec" {
+    command = "az rest --method PATCH --uri \"${azurerm_app_service.api.id}?api-version=2021-01-01\" --body \"{'properties':{'AcrUserManagedIdentityID':'${var.managed_identity.id}', 'acrUseManagedIdentityCreds':'true'}}\""
+  }
+}

@@ -264,6 +264,6 @@ resource "azurerm_role_assignment" "gitea_acrpull_role" {
 # unfortunately we have to tell the webapp to use the user-assigned identity when accessing key-vault, no direct tf way.
 resource "null_resource" "webapp_vault_access_identity" {
   provisioner "local-exec" {
-    command = "az rest --method PATCH --uri \"${azurerm_app_service.gitea.id}?api-version=2021-01-01\" --body \"{'properties':{'keyVaultReferenceIdentity':'${azurerm_user_assigned_identity.gitea_id.id}}\""
+    command = "az rest --method PATCH --uri \"${azurerm_app_service.gitea.id}?api-version=2021-01-01\" --body \"{'properties':{'keyVaultReferenceIdentity':'${azurerm_user_assigned_identity.gitea_id.id}'}}\""
   }
 }
