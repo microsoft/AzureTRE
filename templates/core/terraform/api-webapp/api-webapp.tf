@@ -94,6 +94,10 @@ resource "azurerm_app_service" "api" {
       }
     }
   }
+    depends_on = [
+      azurerm_role_assignment.acrpull_role
+    ]
+
 }
 
 resource "azurerm_private_endpoint" "api_private_endpoint" {
@@ -115,6 +119,7 @@ resource "azurerm_private_endpoint" "api_private_endpoint" {
     name                 = "privatelink.azurewebsites.net"
     private_dns_zone_ids = [var.azurewebsites_dns_zone_id]
   }
+
 }
 
 resource "azurerm_app_service_virtual_network_swift_connection" "api-integrated-vnet" {
