@@ -66,7 +66,7 @@ See [Microsoft Graph permissions reference](https://docs.microsoft.com/graph/per
 
 #### Authentication - TRE API
 
-The **TRE API** app registration requires no redirect URLs defined or anything else for that matter. From a security standpoint it should be noted that public client flows should not be allowed (see the image below taken from app registration authentication blade in Azure Portal).
+The **TRE API** app registration requires no redirect URLs defined or anything else for that matter. From a security standpoint it should be noted that public client flows should not be allowed. As the identity of the client application cannot be verified (see the image below taken from app registration authentication blade in Azure Portal).
 
 ![Allow public client flows - No](../assets/app-reg-authentication-allow-public-client-flows-no.png)
 
@@ -130,7 +130,7 @@ The **TRE e2e test** app registration is used to authorize end-to-end test scena
     ![Allow public client flows - Yes](../assets/app-reg-authentication-allow-public-client-flows-yes.png)
 
 !!! warning
-    Public client flows should never be allowed for a production environment as it poses a security risk.
+    OAuth 2.0 Public client flow cannot verify the the client application identity, it should only be enabled if needed.
 
 
 #### End-to-end test user
