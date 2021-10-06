@@ -67,11 +67,11 @@ then
   credentials=$username:$password
   data='{"name": "'${username}'"}'
   url=${giteaUrl}/api/v1/users/${username}/tokens
-  echo $credentials
+  
   # Create new access token
   response=$(curl -X POST -H "Content-Type: application/json" -k -d "${data}" -u ${credentials} ${url})
   token=$(jq -r '.sha1' <<< "$response")
-  echo $response
+  
   # Store access token to keyvault
   az keyvault secret set --name $tokenSecretName --vault-name $keyVaultName --value $token > /dev/null
 fi
