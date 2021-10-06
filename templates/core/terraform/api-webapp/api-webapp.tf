@@ -94,10 +94,6 @@ resource "azurerm_app_service" "api" {
       }
     }
   }
-    depends_on = [
-      azurerm_role_assignment.acrpull_role
-    ]
-
 }
 
 resource "azurerm_private_endpoint" "api_private_endpoint" {
@@ -119,7 +115,6 @@ resource "azurerm_private_endpoint" "api_private_endpoint" {
     name                 = "privatelink.azurewebsites.net"
     private_dns_zone_ids = [var.azurewebsites_dns_zone_id]
   }
-
 }
 
 resource "azurerm_app_service_virtual_network_swift_connection" "api-integrated-vnet" {
@@ -226,14 +221,4 @@ resource "azurerm_role_assignment" "acrpull_role" {
   scope                = var.acr_id
   role_definition_name = "AcrPull"
   principal_id         = var.managed_identity.principal_id
-}
-
-#Reset AcrUserManagedIdentityID once everything else is up-to-date
-resource "null_resource" "acr_identity_fix" {
-  provisioner "local-exec" {
-    command = "az rest --method PATCH --uri \"${azurerm_app_service.api.id}?api-version=2021-01-01\" --body \"{'properties':{'AcrUserManagedIdentityID':'${var.managed_identity.id}', 'acrUseManagedIdentityCreds':'true'}}\""
-  }
-  depends_on = [
-    azurerm_monitor_diagnostic_setting.webapp_api,azurerm_app_service_virtual_network_swift_connection.api-integrated-vnet,azurerm_private_endpoint.api_private_endpoint,azurerm_app_service.api
-  ]
 }
