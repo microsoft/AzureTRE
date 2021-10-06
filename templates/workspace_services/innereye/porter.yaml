@@ -13,7 +13,7 @@ credentials:
     env: ARM_CLIENT_ID
   - name: azure_client_secret
     env: ARM_CLIENT_SECRET
-    
+
 parameters:
   - name: workspace_id
     type: string
@@ -45,10 +45,6 @@ parameters:
     env: ARM_USE_MSI
     default: false
 
-outputs:
-  - name: azureml_compute_cluster_name
-    type: string
-
 mixins:
   - exec
   - az
@@ -62,8 +58,17 @@ install:
       arguments:
         - login
       flags:
-        identity:
+        service-principal:
         username: "{{ bundle.credentials.azure_client_id}}"
+        password: "{{ bundle.credentials.azure_client_secret}}"
+        tenant: "{{ bundle.credentials.azure_tenant_id}}"
+  # - az:
+  #     description: "az login"
+  #     arguments:
+  #       - login
+  #     flags:
+  #       identity:
+  #       username: "{{ bundle.credentials.azure_client_id}}"
   - az:
       description: "acr login"
       arguments:
