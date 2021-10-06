@@ -5,10 +5,10 @@
 1. Run:
 
     ```cmd
-    /workspaces/tre> make register-bundle DIR=./templates/workspaces/base
+    /workspaces/tre> make register-bundle DIR=./templates/workspaces/base BUNDLE_TYPE=workspace
     ```
 
-    Copy the resulting payload json.
+    Copy the resulting JSON payload.
 
 1. Navigate to the Swagger UI at `https://<azure_tre_fqdn>/docs`
 
