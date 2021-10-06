@@ -67,28 +67,26 @@ then
   credentials=$username:$password
   data='{"name": "'${username}'"}'
   url=${giteaUrl}/api/v1/users/${username}/tokens
-
   # Create new access token
   response=$(curl -X POST -H "Content-Type: application/json" -k -d "${data}" -u ${credentials} ${url})
   token=$(jq -r '.sha1' <<< "$response")
-
   # Store access token to keyvault
   az keyvault secret set --name $tokenSecretName --vault-name $keyVaultName --value $token > /dev/null
 fi
 
 # Repository migration parameters
 repo='{
-  "clone_addr": "https://github.com/'${ORGANISATION}'/'${REPO_NAME}'",
+  "clone_addr": "'${github_repo}'",
   "issues": true,
   "labels": true,
   "lfs": false,
   "milestones": true,
   "mirror": true,
   "mirror_interval": "12h0m0s",
-  "private": true,
+  "private": false,
   "pull_requests": true,
   "releases": true,
-  "repo_name": "'${REPO_NAME}'",
+  "repo_name": "'${github_repo##*/}'",
   "service": "github",
   "wiki": true
 }'
@@ -109,7 +107,7 @@ repo_settings='{
 }'
 
 # Set additional repository parameters
-url=${giteaUrl}/api/v1/repos/${username}/${REPO_NAME}?access_token=${token}
+url=${giteaUrl}/api/v1/repos/${username}/${github_repo##*/}?access_token=${token}
 
 response=$(curl -X PATCH ${url} -H "accept: application/json" -H "Content-Type: application/json" -k -d "${repo_settings}")
 echo $response
