@@ -27,7 +27,7 @@ Service Tags:
 
 ## Prerequisites
 
-- [A base workspace bundle installed](../../../templates/workspaces/base)
+- [A base workspace bundle installed](../workspaces/base.md)
 
 ## Manual Deployment
 

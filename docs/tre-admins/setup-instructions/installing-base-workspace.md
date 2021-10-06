@@ -10,7 +10,7 @@
 
     Copy the resulting JSON payload.
 
-1. Navigate to the Swagger UI at `https://<azure_tre_fqdn>/docs`
+1. Navigate to the Swagger UI at `https://<azure_tre_fqdn>/api/docs`
 
 1. Log into the Swagger UI by clicking `Authorize`, then `Authorize` again. You will be redirected to the login page.
 
