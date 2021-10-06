@@ -5,7 +5,7 @@ on:
     # 1am each night https://crontab.guru/#0_1_*_*_*
     - cron: "0 1 * * *"
   push:
-    branches: [develop, main]
+    branches: [develop, main, deniscep/innereye-test]
   pull_request_target:
     types: [labeled]
     branches: [develop]
@@ -27,9 +27,11 @@ jobs:
     # The conditions below define the desired behaviour of the deployment workflow:
     #   1. The workflow must NOT be triggered automatically by an opened pull request
     #   2. It should be possible to manually trigger the workflow for PRs originating from forks (using "safe to test" label)
-    #   3. The workflow must run for push i.e., merge
+    #   3. The workflow must run when scheduled, pushed (i.e., merge) or manually triggered
     if: |
-      github.event_name == 'push'
+      github.event.name == 'schedule'
+      || github.event_name == 'push'
+      || github.event_name == 'workflow_dispatch'
       || contains(github.event.pull_request.labels.*.name, 'safe to test')
     environment: Dev
     steps:
@@ -94,7 +96,9 @@ jobs:
     name: Register Bundle
     runs-on: ubuntu-latest
     if: |
-      github.event_name == 'push'
+      github.event.name == 'schedule'
+      || github.event_name == 'push'
+      || github.event_name == 'workflow_dispatch'
       || contains(github.event.pull_request.labels.*.name, 'safe to test')
     needs: [deploy_tre]
     strategy:
@@ -172,7 +176,9 @@ jobs:
     runs-on: ubuntu-latest
     environment: Dev
     if: |
-      github.event_name == 'push'
+      github.event.name == 'schedule'
+      || github.event_name == 'push'
+      || github.event_name == 'workflow_dispatch'
       || contains(github.event.pull_request.labels.*.name, 'safe to test')
     # needs: [publish_and_register_user_resources]
     needs: [publish_and_register_bundles]
