@@ -39,7 +39,7 @@ done
 # github-repo=
 
 
-username=gitea-admin
+username=giteaadmin
 
 keyVaultName="kv-"$tre_id
 tokenSecretName="gitea-"$tre_id"-admin-token"
@@ -78,7 +78,7 @@ fi
 
 # Repository migration parameters
 repo='{
-  "clone_addr": "https://github.com/'${ORGANISATION}'/'${REPO_NAME}'",
+  "clone_addr": "'${github_repo}'",
   "issues": true,
   "labels": true,
   "lfs": false,
@@ -88,7 +88,7 @@ repo='{
   "private": true,
   "pull_requests": true,
   "releases": true,
-  "repo_name": "'${REPO_NAME}'",
+  "repo_name": "'${github_repo##*/}'",
   "service": "github",
   "wiki": true
 }'
@@ -109,7 +109,7 @@ repo_settings='{
 }'
 
 # Set additional repository parameters
-url=${giteaUrl}/api/v1/repos/${username}/${REPO_NAME}?access_token=${token}
+url=${giteaUrl}/api/v1/repos/${username}/${github_repo##*/}?access_token=${token}
 
 response=$(curl -X PATCH ${url} -H "accept: application/json" -H "Content-Type: application/json" -k -d "${repo_settings}")
 echo $response
