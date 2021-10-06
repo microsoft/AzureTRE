@@ -32,7 +32,7 @@ resource "azurerm_app_service" "gitea" {
 
     GITEA_USERNAME = "giteaadmin"
     GITEA_PASSWD   = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.gitea_password.id})"
-    GITEA_EMAIL    = "giteaadmin@tre.com"
+    GITEA_EMAIL    = "giteaadmin@azuretre.com"
 
     GITEA__server__ROOT_URL              = "https://${local.webapp_name}.azurewebsites.net/"
     GITEA__log_0x2E_console__COLORIZE    = "false" # Azure monitor doens't show colors, so this is easier to read.
@@ -264,6 +264,6 @@ resource "azurerm_role_assignment" "gitea_acrpull_role" {
 # unfortunately we have to tell the webapp to use the user-assigned identity when accessing key-vault, no direct tf way.
 resource "null_resource" "webapp_vault_access_identity" {
   provisioner "local-exec" {
-    command = "az resource update --ids ${azurerm_app_service.gitea.id} --set properties.keyVaultReferenceIdentity=${azurerm_user_assigned_identity.gitea_id.id}"
+    command = "az rest --method PATCH --uri \"${azurerm_app_service.gitea.id}?api-version=2021-01-01\" --body \"{'properties':{'keyVaultReferenceIdentity':'${azurerm_user_assigned_identity.gitea_id.id}'}}\""
   }
 }

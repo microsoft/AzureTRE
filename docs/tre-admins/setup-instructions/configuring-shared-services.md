@@ -1,6 +1,6 @@
 # Configuring Shared Services
 
-Complete the configuration of the shared services (Nexus and Gitea) from inside of the TRE environment:
+Complete the configuration of the shared services (Nexus and Gitea) from inside of the TRE environment.
 
 ## Prepare the admin jumpbox
 

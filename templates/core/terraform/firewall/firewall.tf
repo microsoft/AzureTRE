@@ -166,6 +166,37 @@ resource "azurerm_firewall_application_rule_collection" "resource_processor_subn
   ]
 }
 
+resource "azurerm_firewall_network_rule_collection" "general" {
+  name                = "general"
+  azure_firewall_name = azurerm_firewall.fw.name
+  resource_group_name = azurerm_firewall.fw.resource_group_name
+  priority            = 100
+  action              = "Allow"
+
+  rule {
+    name = "time"
+
+    protocols = [
+      "UDP"
+    ]
+
+    destination_addresses = [
+      "*"
+    ]
+
+    destination_ports = [
+      "123"
+    ]
+    source_addresses = [
+      "*"
+    ]
+  }
+
+  depends_on = [
+    azurerm_firewall_application_rule_collection.resource_processor_subnet
+  ]
+}
+
 resource "azurerm_firewall_network_rule_collection" "resource_processor_subnet" {
   name                = "nrc-resource_processor_subnet"
   azure_firewall_name = azurerm_firewall.fw.name
@@ -196,7 +227,7 @@ resource "azurerm_firewall_network_rule_collection" "resource_processor_subnet" 
   }
 
   depends_on = [
-    azurerm_firewall_application_rule_collection.resource_processor_subnet
+    azurerm_firewall_network_rule_collection.general
   ]
 }
 
