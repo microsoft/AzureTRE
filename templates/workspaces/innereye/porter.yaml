@@ -1,6 +1,6 @@
 name: tre-workspace-innereye
 
-version: 0.1.8
+version: 0.1.9
 description: "An Azure TRE workspace with Azure Machine Learning, Dev Test Labs and InnerEye deep learning"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
