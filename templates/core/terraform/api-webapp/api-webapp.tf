@@ -228,4 +228,7 @@ resource "null_resource" "acr_identity_fix" {
   provisioner "local-exec" {
     command = "az rest --method PATCH --uri \"${azurerm_app_service.api.id}?api-version=2021-01-01\" --body \"{'properties':{'AcrUserManagedIdentityID':'${var.managed_identity.id}', 'acrUseManagedIdentityCreds':'true'}}\""
   }
+  depends_on = [
+    azurerm_monitor_diagnostic_setting.webapp_api,azurerm_app_service_virtual_network_swift_connection.api-integrated-vnet,azurerm_private_endpoint.api_private_endpoint,azurerm_app_service.api
+  ]
 }
