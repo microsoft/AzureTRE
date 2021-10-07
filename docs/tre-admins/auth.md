@@ -15,6 +15,8 @@ Alternatively, you can create the app registrations manually via the [Azure Port
 !!! note
     Additional app registrations are required to run the E2E tests, and also to create workspaces - these are not configured by the `aad-app-reg.sh` script. Find information below on how to set these up.
 
+Some of the applications require **admin consent** to allow them to validate users against the AAD. Check the Microsoft Docs on [Configure the admin consent workflow](https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/configure-admin-consent-workflow) on how to request admin consent and handle admin consent requests.
+
 ### App registration script
 
 The `/scripts/aad-app-reg.sh` script automatically sets up the app registrations with the required permissions to run Azure TRE. It will create and configure the two main app registrations: **TRE API** and **TRE Swagger UI**.
@@ -24,14 +26,14 @@ Example on how to run the script:
 ```bash
 ./aad-app-reg.sh \
     -n <Prefix of the app registration names e.g., TRE> \
-    -r https://<TRE ID>.<Azure location>.cloudapp.azure.com/oidc-redirect \
+    -r https://<TRE ID>.<Azure location>.cloudapp.azure.com/api/docs/oauth2-redirect \
     -a
 ```
 
 | Argument | Description |
 | -------- | ----------- |
 | `-n` | The prefix of the name of the app registrations. `TRE` will give you `TRE API` and `TRE Swagger UI`. |
-| `-r` | The reply URL for the Swagger UI app. Use the values of the [environment variables](./environment-variables.md) `TRE_ID` and `LOCATION` in the URL. Reply URL for the localhost, `http://localhost:8000/docs/oauth2-redirect`, will be added by default. |
+| `-r` | The reply URL for the Swagger UI app. Use the values of the [environment variables](./environment-variables.md) `TRE_ID` and `LOCATION` in the URL. Reply URL for the localhost, `http://localhost:8000/api/docs/oauth2-redirect`, will be added by default. |
 | `-a` | Grants admin consent for the app registrations. This is required for them to function properly, but requires AAD admin privileges. |
 
 !!! caution
@@ -131,7 +133,6 @@ The **TRE e2e test** app registration is used to authorize end-to-end test scena
 
 !!! warning
     Public client flows should never be allowed for a production environment as it poses a security risk.
-
 
 #### End-to-end test user
 

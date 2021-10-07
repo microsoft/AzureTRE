@@ -3,7 +3,7 @@
 SHELL:=/bin/bash
 ROOTPATH:=$(shell pwd)
 
-all: bootstrap mgmt-deploy images tre-deploy config-nexus
+all: bootstrap mgmt-deploy images tre-deploy
 images: build-api-image push-api-image build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image build-gitea-image push-gitea-image build-guacamole-image push-guacamole-image
 
 bootstrap:
