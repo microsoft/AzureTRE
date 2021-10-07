@@ -31,7 +31,8 @@ data "external" "nsg_AML_rule_priorities_inbound" {
   }
   depends_on = [
     null_resource.az_login_sp,
-    null_resource.az_login_msi
+    null_resource.az_login_msi,
+    azurerm_network_security_rule.allow-batch-inbound
   ]
 }
 

@@ -35,10 +35,13 @@ resource "azurerm_app_service" "gitea" {
     GITEA_EMAIL    = "giteaadmin@azuretre.com"
 
     GITEA__server__ROOT_URL              = "https://${local.webapp_name}.azurewebsites.net/"
+    GITEA__server__LFS_START_SERVER      = "true"
+    GITEA__server__LFS_CONTENT_PATH      = "/data/git/lfs"
     GITEA__log_0x2E_console__COLORIZE    = "false" # Azure monitor doens't show colors, so this is easier to read.
     GITEA__picture__DISABLE_GRAVATAR     = "true"  # external avaters are not available due to network restrictions
     GITEA__security__INSTALL_LOCK        = true
     GITEA__service__DISABLE_REGISTRATION = true
+
 
     GITEA__database__SSL_MODE = "true"
     GITEA__database__DB_TYPE  = "mysql"
