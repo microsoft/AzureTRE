@@ -154,6 +154,7 @@ resource "azurerm_application_gateway" "agw" {
       backend_address_pool_name  = local.api_backend_pool_name
       backend_http_settings_name = local.api_http_setting_name
     }
+
   }
 
   # Redirect any HTTP traffic to HTTPS unless its the ACME challenge path used for LetsEncrypt validation.

@@ -1,5 +1,5 @@
 name: tre-workspace-base
-version: 0.1.1
+version: 0.1.5
 description: "A base Azure TRE workspace"
 registry: azuretre
 
@@ -17,11 +17,10 @@ parameters:
   - name: tre_id
     type: string
     description: "The ID of the parent TRE instance e.g., mytre-dev-3142"
-  - name: workspace_id
+  - name: id
     type: string
-    description: "Unique 4-character long, alphanumeric workspace ID"
-    minLength: 4
-    maxLength: 4
+    description: "the resource ID for this installation"
+    env: id
   - name: azure_location
     type: string
     description: "Azure location (region) to deploy to"
@@ -53,14 +52,14 @@ install:
       input: false
       vars:
         tre_id: "{{ bundle.parameters.tre_id }}"
-        workspace_id: "{{ bundle.parameters.workspace_id }}"
+        tre_resource_id: "{{ bundle.parameters.id }}"
         location: "{{ bundle.parameters.azure_location }}"
         address_space: "{{ bundle.parameters.address_space }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.workspace_id }}"
+        key: "tre-workspace-base-{{ bundle.parameters.id }}"
 
 upgrade:
   - exec:
@@ -75,11 +74,11 @@ uninstall:
       input: false
       vars:
         tre_id: "{{ bundle.parameters.tre_id }}"
-        workspace_id: "{{ bundle.parameters.workspace_id }}"
+        tre_resource_id: "{{ bundle.parameters.id }}"
         location: "{{ bundle.parameters.azure_location }}"
         address_space: "{{ bundle.parameters.address_space }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.workspace_id }}"
+        key: "tre-workspace-base-{{ bundle.parameters.id }}"

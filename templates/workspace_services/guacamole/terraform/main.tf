@@ -30,12 +30,6 @@ data "azurerm_virtual_network" "ws" {
   resource_group_name = "rg-${var.tre_id}-ws-${local.short_workspace_id}"
 }
 
-data "azurerm_subnet" "web_apps_core" {
-  name                 = "WebAppSubnet"
-  virtual_network_name = "vnet-${var.tre_id}"
-  resource_group_name  = "rg-${var.tre_id}"
-}
-
 data "azurerm_subnet" "web_apps" {
   name                 = "WebAppsSubnet"
   virtual_network_name = data.azurerm_virtual_network.ws.name

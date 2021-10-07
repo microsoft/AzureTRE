@@ -7,10 +7,10 @@ variable "deploy_gitea" {}
 variable "nexus_allowed_fqdns" {
   type        = string
   description = "comma seperated string of allowed FQDNs for Nexus"
-  default     = "pypi.org"
+  default     = "*pypi.org"
 }
 variable "gitea_allowed_fqdns" {
   type        = string
   description = "comma seperated string of allowed FQDNs for Gitea"
-  default     = "github.com, www.github.com"
+  default     = "github.com, www.github.com, api.github.com"
 }

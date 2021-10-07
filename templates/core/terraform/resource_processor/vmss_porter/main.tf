@@ -16,7 +16,7 @@ data "template_file" "cloudconfig" {
     arm_subscription_id                             = data.azurerm_subscription.current.subscription_id
     arm_tenant_id                                   = data.azurerm_client_config.current.tenant_id
     resource_processor_vmss_porter_image_repository = var.resource_processor_vmss_porter_image_repository
-    resource_processor_vmss_porter_image_tag        = var.resource_processor_vmss_porter_image_tag
+    resource_processor_vmss_porter_image_tag        = local.version
     app_insights_connection_string                  = var.app_insights_connection_string
   }
 }

@@ -11,10 +11,11 @@ fi
 
 cat > /root/.porter/config.toml << EOF
 default-storage = "azurestorage"
+no-logs = true
 
 [[storage]]
 name = "azurestorage"
-plugin = "azure.blob"
+plugin = "azure.table"
 
 [storage.config]
 account="${MGMT_STORAGE_ACCOUNT_NAME}"

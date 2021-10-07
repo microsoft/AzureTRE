@@ -46,10 +46,18 @@ RUN export PORTER_HOME=/home/vscode/.porter \
 
 ENV PATH /home/vscode/.porter/:$PATH
 
+# Install PowerShell and Az module
+RUN apt-get update && apt-get install -y wget apt-transport-https software-properties-common && \
+    wget -q https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb && \
+    dpkg -i packages-microsoft-prod.deb && \
+    apt-get update && apt-get install -y powershell && \
+    pwsh -c Install-Module Az -Force
+
 # Install requirements
 COPY ["requirements.txt", "/tmp/pip-tmp/" ]
 COPY ["api_app/requirements.txt", "api_app/requirements-dev.txt", "/tmp/pip-tmp/api_app/" ]
 COPY ["resource_processor/vmss_porter/requirements.txt", "/tmp/pip-tmp/resource_processor/vmss_porter/" ]
+COPY ["docs/requirements.txt", "/tmp/pip-tmp/docs/"]
 RUN pip3 --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requirements.txt && rm -rf /tmp/pip-tmp
 
 RUN usermod -a -G docker vscode

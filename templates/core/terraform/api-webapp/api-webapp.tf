@@ -57,7 +57,7 @@ resource "azurerm_app_service" "api" {
   lifecycle { ignore_changes = [tags] }
 
   site_config {
-    linux_fx_version                     = "DOCKER|${var.docker_registry_server}/${var.api_image_repository}:${var.api_image_tag}"
+    linux_fx_version                     = "DOCKER|${var.docker_registry_server}/${var.api_image_repository}:${local.version}"
     remote_debugging_enabled             = false
     scm_use_main_ip_restriction          = true
     acr_use_managed_identity_credentials = true
@@ -68,7 +68,7 @@ resource "azurerm_app_service" "api" {
       support_credentials = false
     }
 
-    always_on       = true
+    always_on       = false
     min_tls_version = "1.2"
 
     ip_restriction {

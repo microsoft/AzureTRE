@@ -30,9 +30,9 @@ resource "azurerm_app_service" "gitea" {
     WEBSITE_DNS_SERVER                  = "168.63.129.16" # required to access storage over private endpoints
     WEBSITES_ENABLE_APP_SERVICE_STORAGE = false
 
-    GITEA_USERNAME = "gitea_admin"
+    GITEA_USERNAME = "giteaadmin"
     GITEA_PASSWD   = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.gitea_password.id})"
-    GITEA_EMAIL    = "giteaadmin@tre.com"
+    GITEA_EMAIL    = "giteaadmin@azuretre.com"
 
     GITEA__server__ROOT_URL              = "https://${local.webapp_name}.azurewebsites.net/"
     GITEA__log_0x2E_console__COLORIZE    = "false" # Azure monitor doens't show colors, so this is easier to read.
@@ -56,7 +56,7 @@ resource "azurerm_app_service" "gitea" {
   }
 
   site_config {
-    linux_fx_version                     = "DOCKER|${var.docker_registry_server}/microsoft/azuretre/gitea:${var.image_tag}"
+    linux_fx_version                     = "DOCKER|${var.docker_registry_server}/microsoft/azuretre/gitea:${local.version}"
     remote_debugging_enabled             = false
     scm_use_main_ip_restriction          = true
     acr_use_managed_identity_credentials = true
@@ -264,6 +264,6 @@ resource "azurerm_role_assignment" "gitea_acrpull_role" {
 # unfortunately we have to tell the webapp to use the user-assigned identity when accessing key-vault, no direct tf way.
 resource "null_resource" "webapp_vault_access_identity" {
   provisioner "local-exec" {
-    command = "az resource update --ids ${azurerm_app_service.gitea.id} --set properties.keyVaultReferenceIdentity=${azurerm_user_assigned_identity.gitea_id.id}"
+    command = "az rest --method PATCH --uri \"${azurerm_app_service.gitea.id}?api-version=2021-01-01\" --body \"{'properties':{'keyVaultReferenceIdentity':'${azurerm_user_assigned_identity.gitea_id.id}'}}\""
   }
 }

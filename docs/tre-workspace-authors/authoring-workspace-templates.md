@@ -1,14 +1,13 @@
 # Authoring workspaces templates
 
-<!-- markdownlint-disable-next-line MD013 -->
-Azure TRE workspaces, workspace services, and user resources are [Porter](https://porter.sh/) bundles that in turn are based on [Cloud Native Application Bundles (CNAB)](https://cnab.io/).
+Azure TRE workspaces, workspace services, and user resources are [Porter](https://porter.sh/) bundles. Porter bundles are based on [Cloud Native Application Bundles (CNAB)](https://cnab.io/).
 
 Workspace authors are free to choose the technology stack for provisioning resources (e.g., ARM templates, Terraform etc.), but the Azure TRE framework sets certain requirements for the bundle manifests, which specify the credentials, input and output parameters, deployment actions among other things.
 
 This document describes the requirements, and the process to author a template.
 
 !!! tip
-    Use [the base workspace bundle](../workspace-templates/workspaces/base.md) as reference or as the basis for the new bundle.
+    Use [the base workspace bundle](../tre-templates/workspaces/base.md) as reference or as the basis for the new bundle.
 
 To create a bundle from scratch follow the Porter [Quickstart Guide](https://porter.sh/quickstart/) ([`porter create` CLI command](https://porter.sh/cli/porter_create/) will generate a new bundle in the current directory).
 
@@ -33,10 +32,12 @@ A workspace bundle requires the following [credentials](https://porter.sh/author
 
 The credentials are provided as environment variables by the deployment runner. The bundle author must use the following environment variable names:
 
-* `ARM_TENANT_ID`
-* `ARM_SUBSCRIPTION_ID`
-* `ARM_CLIENT_ID`
-* `ARM_CLIENT_SECRET`
+```bash
+ARM_TENANT_ID
+ARM_SUBSCRIPTION_ID
+ARM_CLIENT_ID
+ARM_CLIENT_SECRET
+```
 
 The names of the Porter credentials (`name` field in `porter.yaml`) can be freely chosen by the author.
 
@@ -58,7 +59,7 @@ credentials:
 
 This section describes the mandatory [(input) parameters](https://porter.sh/author-bundles/#parameters) of a workspace bundle manifest.
 
-| Parameter | Type | Description | Example value |
+| <div style="width:120px">Parameter</div> | Type | Description | Example value |
 | --------- | ---- | ----------- | ------------- |
 | `tre_id` | string | Unique ID of for the TRE instance. | `tre-dev-42` |
 | `workspace_id` | string | Unique 4-character long, alphanumeric workspace ID. | `0a9e` |
@@ -71,7 +72,7 @@ Similarly to `tre_id`, `workspace_id` is used in the resource names of the works
 
 All the values for the required parameters will be provided by the deployment runner.
 
-Any **custom parameters** are picked up by Azure TRE API and will be queried from the user deploying the workspace bundle so make sure to write clear descriptions of the parameters as these are shown in the user interface to guide the user.
+Any **custom parameters** are picked up by Azure TRE API and will be queried from the user deploying the workspace bundle. Custom parameters should also be defined in the `template_schema.json` file at the root of the bundle. This file follows the [JSON schema standard](http://json-schema.org/) and can be used by a user interface to generate a UI for the user to input the parameters.
 
 ### Output
 
@@ -108,17 +109,6 @@ The mandatory parameters for User Resources are:
 | `tre_id` | string | Unique ID of for the TRE instance. | `tre-dev-42` |
 | `workspace_id` | string | Unique 4-character long, alphanumeric workspace ID. | `0a9e` |
 
-## Supported Porter mixins
-
-The deployment runner of Azure TRE supports the following [Porter mixins](https://porter.sh/mixins/):
-
-* [exec](https://porter.sh/mixins/exec/)
-* [az](https://github.com/getporter/az-mixin)
-* [arm](https://porter.sh/mixins/arm/)
-* [terraform](https://github.com/getporter/terraform-mixin)
-
-To add support for additional mixins including custom ones, the TRE Porter installation script `/devops/scripts/install_porter.sh` needs to be modified.
-
 ## Versioning
 
 Workspace versions are the bundle versions specified in [the metadata](https://porter.sh/author-bundles/#bundle-metadata). The bundle versions should match the image tags in the container registry (see [Publishing workspace bundle](#publishing-workspace-bundle)).
@@ -127,4 +117,4 @@ TRE does not provide means to update an existing workspace to a newer version. I
 
 ## Publishing workspace bundle
 
-See [Registering workspace templates](registering-workspace-templates.md).
+See [Registering workspace templates](../tre-admins/registering-templates.md).

@@ -1,5 +1,8 @@
 FROM python:3.8-slim-buster
 
+# Specify the Porter version to install
+ENV PORTER_PERMALINK=v0.38.7
+
 # Install Azure CLI
 RUN apt-get update \
     && apt-get -y install ca-certificates curl apt-transport-https lsb-release gnupg \
@@ -15,7 +18,7 @@ RUN apt-get update && apt-get install -y gnupg software-properties-common curl \
     && apt-get update && apt-get install -y terraform
 
 # Install Porter
-RUN export PORTER_HOME=/root/.porter && curl -L https://cdn.porter.sh/latest/install-linux.sh | bash
+RUN export PORTER_HOME=/root/.porter && curl -L https://cdn.porter.sh/${PORTER_PERMALINK}/install-linux.sh | bash
 
 # Install Porter Azure plugin, see https://porter.sh/plugins/azure/
 RUN /root/.porter/porter plugin install azure --url https://cdn.porter.sh/plugins/azure

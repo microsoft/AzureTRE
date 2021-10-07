@@ -8,15 +8,12 @@ API_WORKSPACE_SERVICE_TEMPLATES = "/api/workspace-service-templates"
 API_WORKSPACE_SERVICES = "workspace-services"
 
 BASE_WORKSPACE = "tre-workspace-base"
-DEV_TEST_LABS = "tre-workspace-azureml-devtestlabs"
-INNEREYE_DEEPLEARNING = "tre-workspace-innereye-deeplearning"
-INNEREYE_DEEPLEARNING_INFERENCE = "tre-workspace-innereye-deeplearning-inference"
+INNEREYE = "tre-workspace-innereye"
 
 AZUREML_SERVICE = "tre-service-azureml"
 DEVTESTLABS_SERVICE = "tre-service-devtestlabs"
 GUACAMOLE_SERVICE = "tre-service-guacamole"
-INNEREYE_DEEPLEARNING_SERVICE = "tre-service-innereye-deeplearning"
-INNEREYE_INFERENCE_SERVICE = "tre-service-innereye-inference"
+INNEREYE_SERVICE = "tre-service-innereye"
 
 TEST_WORKSPACE_SERVICE_TEMPLATE = "e2e-test-workspace-service"
 

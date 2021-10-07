@@ -44,8 +44,8 @@ class WorkspaceTemplateInCreate(ResourceTemplateInCreate):
                     "$schema": "http://json-schema.org/draft-07/schema",
                     "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/myworkspace/workspace.json",
                     "type": "object",
-                    "title": "My Workspace Template Custom Parameters",
-                    "description": "These parameters are specific to my workspace template",
+                    "title": "My Workspace Template",
+                    "description": "This is a test workspace template schema",
                     "required": [
                         "vm_size",
                         "no_of_vms"
