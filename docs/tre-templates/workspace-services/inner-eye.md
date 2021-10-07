@@ -50,6 +50,7 @@ URLs:
 
   ```cmd
   ./scripts/gitea_migrate_repo.sh -t <tre_id> -g https://github.com/microsoft/InnerEye-DeepLearning
+  ./scripts/gitea_migrate_repo.sh -t <tre_id> -g https://github.com/analysiscenter/radio
   ```
 
 ### Setup the InnerEye run from AML Compute Instance
@@ -59,12 +60,13 @@ URLs:
 3. Pull the InnerEye-DeepLearning git repo from Gitea mirror and configure:
 
   ```cmd
-  git clone https://gitea-<tre-id>.azurewebsites.net/giteaadmin/InnerEye-DeepLearning
+  git clone https://gitea-<TRE_ID>.azurewebsites.net/giteaadmin/InnerEye-DeepLearning
   cd InnerEye-DeepLearning
   curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
   sudo apt-get install git-lfs
   git lfs install
   git lfs pull
+  export PIP_INDEX_URL=https://nexus-<TRE_ID>.azurewebsites.net/repository/pypi-proxy-repo/simple
   conda init
   conda env create --file environment.yml
   conda activate InnerEye
