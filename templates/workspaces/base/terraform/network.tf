@@ -200,8 +200,8 @@ resource "azurerm_network_security_rule" "allow-outbound-from-webapp-to-core-web
 }
 
 resource "azurerm_network_security_rule" "allow-outbound-rdp-and-https-from-services-to-webapps" {
-  access                      = "Allow"
-  destination_port_ranges      = [
+  access = "Allow"
+  destination_port_ranges = [
     "443",
     "3389",
   ]
@@ -252,8 +252,8 @@ resource "azurerm_network_security_rule" "allow-inbound-from-resourceprocessor" 
 }
 
 resource "azurerm_network_security_rule" "allow-inbound-rdp-and-https-from-webapp-to-services" {
-  access                      = "Allow"
-  destination_port_ranges      = [
+  access = "Allow"
+  destination_port_ranges = [
     "443",
     "3389",
   ]
