@@ -97,7 +97,6 @@ module "api-webapp" {
   app_insights_instrumentation_key           = azurerm_application_insights.core.instrumentation_key
   log_analytics_workspace_id                 = azurerm_log_analytics_workspace.core.id
   api_image_repository                       = var.api_image_repository
-  docker_registry_server                     = var.docker_registry_server
   state_store_endpoint                       = module.state-store.endpoint
   cosmosdb_account_name                      = module.state-store.cosmosdb_account_name
   service_bus_resource_request_queue         = module.servicebus.workspacequeue
@@ -108,9 +107,11 @@ module "api-webapp" {
   aad_tenant_id                              = var.aad_tenant_id
   api_client_id                              = var.api_client_id
   api_client_secret                          = var.api_client_secret
-  acr_id                                     = data.azurerm_container_registry.mgmt_acr.id
+  mgmt_acr_id                                = data.azurerm_container_registry.mgmt_acr.id
+  mgmt_acr_name                              = data.azurerm_container_registry.mgmt_acr.name
   core_address_space                         = var.core_address_space
   tre_address_space                          = var.tre_address_space
+  mgmt_resource_group_name                   = var.mgmt_resource_group_name
 }
 
 module "identity" {

@@ -30,7 +30,6 @@ resource "azurerm_app_service" "api" {
     "XDT_MicrosoftApplicationInsights_Mode"      = "default"
     "WEBSITES_PORT"                              = "8000"
     "WEBSITE_VNET_ROUTE_ALL"                     = 1
-    "DOCKER_REGISTRY_SERVER_URL"                 = "https://${var.docker_registry_server}"
     "STATE_STORE_ENDPOINT"                       = var.state_store_endpoint
     "COSMOSDB_ACCOUNT_NAME"                      = var.cosmosdb_account_name
     "SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE"      = "sb-${var.tre_id}.servicebus.windows.net"
@@ -45,8 +44,12 @@ resource "azurerm_app_service" "api" {
     "API_CLIENT_SECRET"                          = var.api_client_secret
     "RESOURCE_GROUP_NAME"                        = var.resource_group_name
     "SUBSCRIPTION_ID"                            = data.azurerm_subscription.current.subscription_id
-    CORE_ADDRESS_SPACE                           = var.core_address_space
-    TRE_ADDRESS_SPACE                            = var.tre_address_space
+    "CORE_ADDRESS_SPACE"                         = var.core_address_space
+    "TRE_ADDRESS_SPACE"                          = var.tre_address_space
+    # Solving the pulling from acr problem
+    "DOCKER_REGISTRY_SERVER_URL"      = "${data.azurerm_container_registry.mgmt_acr.login_server}"
+    "DOCKER_REGISTRY_SERVER_USERNAME" = "${data.azurerm_container_registry.mgmt_acr.admin_username}"
+    "DOCKER_REGISTRY_SERVER_PASSWORD" = "${data.azurerm_container_registry.mgmt_acr.admin_password}"
   }
 
   identity {
@@ -57,11 +60,9 @@ resource "azurerm_app_service" "api" {
   lifecycle { ignore_changes = [tags] }
 
   site_config {
-    linux_fx_version                     = "DOCKER|${var.docker_registry_server}/${var.api_image_repository}:${local.version}"
-    remote_debugging_enabled             = false
-    scm_use_main_ip_restriction          = true
-    acr_use_managed_identity_credentials = true
-    acr_user_managed_identity_client_id  = var.managed_identity.client_id
+    linux_fx_version            = "DOCKER|${data.azurerm_container_registry.mgmt_acr.login_server}/${var.api_image_repository}:${local.version}"
+    remote_debugging_enabled    = false
+    scm_use_main_ip_restriction = true
 
     cors {
       allowed_origins     = []
@@ -215,10 +216,4 @@ resource "azurerm_monitor_diagnostic_setting" "webapp_api" {
       enabled = false
     }
   }
-}
-
-resource "azurerm_role_assignment" "acrpull_role" {
-  scope                = var.acr_id
-  role_definition_name = "AcrPull"
-  principal_id         = var.managed_identity.principal_id
 }
