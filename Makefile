@@ -195,3 +195,16 @@ register-bundle:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& cd ${DIR} \
 	&& ${ROOTPATH}/devops/scripts/publish_register_bundle.sh --acr-name $${ACR_NAME} --bundle-type $${BUNDLE_TYPE} --current --insecure --tre_url $${TRE_URL} --access-token $${TOKEN}
+
+register-bundle-payload:
+	echo -e "\n\e[34m»»» 🧩 \e[96mPublishing ${DIR} bundle\e[0m..." \
+	&& ./devops/scripts/check_dependencies.sh porter \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& cd ${DIR} \
+	&& ${ROOTPATH}/devops/scripts/publish_register_bundle.sh --acr-name $${ACR_NAME} --bundle-type ${BUNDLE_TYPE} --current
+
+config-nexus:
+	echo -e "\n\e[34m»»» 🧩 \e[96mConfiguring Nexus\e[0m..." \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
+	&& cd ${ROOTPATH}/templates/shared_services/sonatype-nexus/nexus_conf && ./configure_nexus.sh
