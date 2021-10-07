@@ -80,7 +80,8 @@ jobs:
           export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
           export TF_VAR_arm_subscription_id=$ARM_SUBSCRIPTION_ID
 
-          make all
+          #make all
+          make tre-deploy
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
