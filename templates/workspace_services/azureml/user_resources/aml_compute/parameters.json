@@ -29,12 +29,6 @@
       }
     },
     {
-      "name": "azure_location",
-      "source": {
-        "env": "AZURE_LOCATION"
-      }
-    },
-    {
       "name": "vm_size",
       "source": {
         "env": "VM_SIZE"

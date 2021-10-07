@@ -7,7 +7,7 @@
     "required": [
     ],
     "properties": {
-        "vmSize": {
+        "vm_size": {
             "type": "string",
             "title": "Virtual Machine Size",
             "description": "The size of the virtual machine to be created.",
@@ -18,6 +18,20 @@
                 "Standard_D16_v3"
             ],
             "default": "Standard_D2_v3"
+        },
+        "auth_tenant_id": {
+            "type": "string",
+            "title": "Azure Active Directory Tenant ID",
+            "description": "The Azure Active Directory tenant ID of User who will be using the compute instance",
+            "default": "",
+            "minLength": 1
+        },
+        "user_object_id": {
+            "type": "string",
+            "title": "Azure Active Directory User Object ID",
+            "description": "The Azure Active Directory user object ID of User who will be using the compute instance",
+            "default": "",
+            "minLength": 1
         }
     }
 }
