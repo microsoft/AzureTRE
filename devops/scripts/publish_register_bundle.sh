@@ -68,8 +68,7 @@ done
 
 if [[ -n ${tre_url+x} ]]; then
     if [[ -z ${access_token+x} ]]; then
-        echo -e "No Azure access token provided\n"
-        usage
+        echo -e "WARNING!!! No Azure access token provided. Automatic bundle registration not possible. Use the script output to self-register. See documentation for more details.\n"
     fi
 fi
 

@@ -9,12 +9,14 @@ resource "azurerm_storage_account" "staticweb" {
   account_replication_type  = "LRS"
   enable_https_traffic_only = true
   allow_blob_public_access  = false
+
+  tags = {
+    tre_id = var.tre_id
+  }
+
   static_website {
     index_document     = "index.html"
     error_404_document = "404.html"
-  }
-  tags = {
-    tre_id = var.tre_id
   }
 
   lifecycle { ignore_changes = [tags] }
@@ -25,8 +27,7 @@ resource "azurerm_storage_account" "staticweb" {
   }
 }
 
-# Assign the identity deploying data contibutor rights.
-# Needed to upload content to static web.
+# Assign the "Storage Blob Data Contributor" role needed for uploading certificates to the storage account
 resource "azurerm_role_assignment" "stgwriter" {
   scope                = azurerm_storage_account.staticweb.id
   role_definition_name = "Storage Blob Data Contributor"
