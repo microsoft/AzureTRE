@@ -12,5 +12,5 @@ variable "nexus_allowed_fqdns" {
 variable "gitea_allowed_fqdns" {
   type        = string
   description = "comma seperated string of allowed FQDNs for Gitea"
-  default     = "github.com, www.github.com, api.github.com"
+  default     = "github.com, www.github.com, api.github.com, git-lfs.github.com"
 }
