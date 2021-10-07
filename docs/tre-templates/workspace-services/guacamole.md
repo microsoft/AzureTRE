@@ -22,6 +22,7 @@ Service Tags:
   | ------------------------- | ----------- |
   | `ID` | A GUID to identify the workspace service. The last 4 characters of this `ID` can be found in the resource names of the workspace service resources. |
   | `WORKSPACE_ID` | The GUID identifier used when deploying the base workspace bundle. |
+  | `GUACAMOLE_IMAGE_TAG` | The tag of the Guacamole Image to use - the tag will be the version (you can find the version in `templates\workspace\services\guacamole\version.txt`) |
 
 1. Build and install the Guacamole Service bundle
 
