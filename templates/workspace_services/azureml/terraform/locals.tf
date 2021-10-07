@@ -1,4 +1,3 @@
-# Random unique id
 data "azurerm_network_service_tags" "storage" {
   location        = data.azurerm_resource_group.ws.location
   service         = "Storage"

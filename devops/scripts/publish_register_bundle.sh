@@ -41,8 +41,10 @@ while [ "$1" != "" ]; do
         ;;
         workspace_service)
         ;;
+        user_resource)
+        ;;
         *)
-            echo "Bundle type must be workspace or workspace_service, not $1"
+            echo "Bundle type must be workspace, workspace_service or user_resource, not $1"
             exit 1
         esac
         bundle_type=$1
