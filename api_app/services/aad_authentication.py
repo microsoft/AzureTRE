@@ -58,7 +58,7 @@ class AzureADAuthorization(OAuth2AuthorizationCodeBearer):
     def _decode_token(self, token: str) -> dict:
         key_id = self._get_key_id(token)
         key = self._get_token_key(key_id)
-        return jwt.decode(token, key, verify=True, algorithms=['RS256'], audience=config.API_AUDIENCE)
+        return jwt.decode(token, key, options={"verify_signature": True}, algorithms=['RS256'], audience=config.API_AUDIENCE)
 
     @staticmethod
     def _get_key_id(token: str) -> str:
