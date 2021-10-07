@@ -8,7 +8,6 @@ locals {
   core_resource_group_name       = "rg-${var.tre_id}"
   aad_tenant_id                  = data.azurerm_app_service.api_core.app_settings["AAD_TENANT_ID"]
   issuer                         = "https://login.microsoftonline.com/${local.aad_tenant_id}/v2.0"
-  kv_url                         = "https://kv-${var.tre_id}-${local.short_workspace_id}-${local.short_service_id}.vault.azure.net"
   api_url                        = "https://api-${var.tre_id}.azurewebsites.net"
   keyvault_name                  = lower("kv-${substr(local.workspace_resource_name_suffix, -20, -1)}")
 }
