@@ -23,6 +23,12 @@ Ingress/egress components governs all inbound and outbound traffic from the publ
 Shared Services are services available to all Workspaces. **Source Mirror** can mirror source repositories such as GitHub, but only allowing read-access, hence data from a Workspace cannot be pushed to a source repository.
 **Package Mirror** is also a read-only front for developer/researcher application package services like NPM, PyPI, and NuGet and operating system application package services like apt-get and Windows Package Manager (winget).
 
+## Azure Resources
+
+The following diagram shows the Azure components deployed as part of a typical TRE deployment. The exact configuration will vary depending on the specific deployment.
+
+![Azure Architecture Diagram](../assets/architecture-azure.png)
+
 ## Composition Service
 
 The Composition Service is responsible for managing and mutating Workspaces and Workspace Services.

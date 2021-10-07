@@ -20,7 +20,7 @@
   !!! tip
       To retrieve your Azure subscription ID, use the `az` command line interface available in the development container. In the terminal window in Visual Studio Code, type `az login` followed by `az account show` to see your default subscription. Please refer to `az account -help` for further details on how to change your active subscription.
 
-2. Comment out the following variables by starting the line with a hash `#`.
+1. Comment out the following variables by starting the line with a hash `#`.
 
   ```cmd
   # ARM_TENANT_ID=...
@@ -67,7 +67,7 @@ Next, you will set the configuration variables for the specific Azure TRE instan
 1. Run the `/scripts/aad-app-reg.sh` script to create API and Swagger UI app registrations and their service principals. The details of the script are covered [app registration script](../auth.md#app-registration-script) section of the auth document. Below is a sample where `TRE_ID` has value `mytre` and the Azure location is `westeurope`:
 
   ```bash
-  /workspaces/tre> ./scripts/aad-app-reg.sh -n TRE -r https://mytre.westeurope.cloudapp.azure.com/oidc-redirect -a
+  /workspaces/tre> ./scripts/aad-app-reg.sh -n TRE -r https://mytre.westeurope.cloudapp.azure.com/api/docs/oauth2-redirect -a
   ```
 
   !!! note
