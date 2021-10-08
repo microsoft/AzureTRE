@@ -27,21 +27,18 @@ resource "azurerm_app_service" "gitea" {
     APPINSIGHTS_INSTRUMENTATIONKEY      = data.azurerm_application_insights.core.instrumentation_key
     WEBSITES_PORT                       = "3000"
     WEBSITE_VNET_ROUTE_ALL              = 1
-    WEBSITE_DNS_SERVER                  = "168.63.129.16" # required to access storage over private endpoints
     WEBSITES_ENABLE_APP_SERVICE_STORAGE = false
 
     GITEA_USERNAME = "giteaadmin"
     GITEA_PASSWD   = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.gitea_password.id})"
     GITEA_EMAIL    = "giteaadmin@azuretre.com"
 
-    GITEA__server__ROOT_URL              = "https://${local.webapp_name}.azurewebsites.net/"
+    GITEA__server__ROOT_URL              = "https://${local.webapp_name}.azurewebsites.net"
     GITEA__server__LFS_START_SERVER      = "true"
-    GITEA__server__LFS_CONTENT_PATH      = "/data/git/lfs"
     GITEA__log_0x2E_console__COLORIZE    = "false" # Azure monitor doens't show colors, so this is easier to read.
     GITEA__picture__DISABLE_GRAVATAR     = "true"  # external avaters are not available due to network restrictions
     GITEA__security__INSTALL_LOCK        = true
     GITEA__service__DISABLE_REGISTRATION = true
-
 
     GITEA__database__SSL_MODE = "true"
     GITEA__database__DB_TYPE  = "mysql"
@@ -71,8 +68,9 @@ resource "azurerm_app_service" "gitea" {
       support_credentials = false
     }
 
-    always_on       = true
-    min_tls_version = "1.2"
+    always_on              = true
+    min_tls_version        = "1.2"
+    vnet_route_all_enabled = true
 
     ip_restriction {
       action     = "Deny"

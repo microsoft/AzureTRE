@@ -5,7 +5,7 @@ on:
     # 1am each night https://crontab.guru/#0_1_*_*_*
     - cron: "0 1 * * *"
   push:
-    branches: [develop, main, deniscep/innereye-fixes]
+    branches: [develop, main]
   pull_request_target:
     types: [labeled]
     branches: [develop]
@@ -80,8 +80,7 @@ jobs:
           export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
           export TF_VAR_arm_subscription_id=$ARM_SUBSCRIPTION_ID
 
-          #make all
-          make tre-deploy
+          make all
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
