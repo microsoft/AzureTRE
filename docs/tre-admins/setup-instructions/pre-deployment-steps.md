@@ -32,7 +32,7 @@ ACR_NAME=aztreacr
 
 ARM_SUBSCRIPTION_ID=12...54e
 
-# If you want to deploy using GitHub Actions or not use the currently signed in  credentials, override the 3 below vars
+# If you want to override the currently signed in credentials
 # ARM_TENANT_ID=__CHANGE_ME__
 # ARM_CLIENT_ID=__CHANGE_ME__
 # ARM_CLIENT_SECRET=__CHANGE_ME__

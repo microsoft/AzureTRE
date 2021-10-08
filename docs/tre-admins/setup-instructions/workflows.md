@@ -56,14 +56,6 @@ Before you can run the `deploy_tre.yml` pipeline there are some one-time configu
   | ----------- | ----------- |
   | `AZURE_CREDENTIALS` | The JSON output from the previous step |
 
-1. Remove the `#` from the 3 variables in the `/devops/.env`, as they will be automatically set by the AZURE_CREDENTIALS above:
-
-```plaintext
-# ARM_TENANT_ID=__CHANGE_ME__
-# ARM_CLIENT_ID=__CHANGE_ME__
-# ARM_CLIENT_SECRET=__CHANGE_ME__
-```
-
 ### Decide on a TRE ID and Azure resources location
 
 Configure the TRE ID and LOCATION repository secrets
