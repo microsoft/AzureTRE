@@ -68,7 +68,7 @@ resource "azurerm_app_service" "api" {
       support_credentials = false
     }
 
-    always_on       = false
+    always_on       = true
     min_tls_version = "1.2"
 
     ip_restriction {
@@ -215,10 +215,4 @@ resource "azurerm_monitor_diagnostic_setting" "webapp_api" {
       enabled = false
     }
   }
-}
-
-resource "azurerm_role_assignment" "acrpull_role" {
-  scope                = var.acr_id
-  role_definition_name = "AcrPull"
-  principal_id         = var.managed_identity.principal_id
 }

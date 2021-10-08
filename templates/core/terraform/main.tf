@@ -3,7 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=2.71.0"
+      version = "=2.80.0"
     }
   }
 
@@ -85,6 +85,16 @@ module "appgateway" {
   depends_on             = [module.keyvault]
 }
 
+module "identity" {
+  source               = "./user-assigned-identity"
+  tre_id               = var.tre_id
+  location             = var.location
+  resource_group_name  = azurerm_resource_group.core.name
+  servicebus_namespace = module.servicebus.servicebus_namespace
+  cosmos_id            = module.state-store.id
+  acr_id               = data.azurerm_container_registry.mgmt_acr.id
+}
+
 module "api-webapp" {
   source                                     = "./api-webapp"
   tre_id                                     = var.tre_id
@@ -112,15 +122,12 @@ module "api-webapp" {
   acr_id                                     = data.azurerm_container_registry.mgmt_acr.id
   core_address_space                         = var.core_address_space
   tre_address_space                          = var.tre_address_space
-}
 
-module "identity" {
-  source               = "./user-assigned-identity"
-  tre_id               = var.tre_id
-  location             = var.location
-  resource_group_name  = azurerm_resource_group.core.name
-  servicebus_namespace = module.servicebus.servicebus_namespace
-  cosmos_id            = module.state-store.id
+  depends_on = [
+    module.identity,
+    module.servicebus,
+    module.state-store
+  ]
 }
 
 module "resource_processor_vmss_porter" {
@@ -224,6 +231,9 @@ module "jumpbox" {
   resource_group_name = azurerm_resource_group.core.name
   shared_subnet       = module.network.shared_subnet_id
   keyvault_id         = module.keyvault.keyvault_id
+  depends_on = [
+    module.keyvault
+  ]
 }
 
 module "gitea" {

@@ -2,21 +2,20 @@
 # Manual edits may be lost in future updates.
 
 provider "registry.terraform.io/hashicorp/azurerm" {
-  version     = "2.71.0"
-  constraints = "2.71.0"
+  version     = "2.80.0"
+  constraints = "2.80.0"
   hashes = [
-    "h1:RiFIxNI4Yr9CqleqEdgg1ydLAZ5JiYiz6l5iTD3WcuU=",
-    "h1:ULax/q7p3Tl0l8DnXV9GNmdDRR1MHpimyLq8OP6E6I0=",
-    "zh:2b9d8a703a0222f72cbceb8d2bdb580066afdcd7f28b6ad65d5ed935319b5433",
-    "zh:332988f4c1747bcc8ebd32734bf8de2bea4c13a6fbd08d7eb97d0c43d335b15e",
-    "zh:3a902470276ba48e23ad4dd6baff16a9ce3b60b29c0b07064dbe96ce4640a31c",
-    "zh:5eaa0d0c2c6554913421be10fbf4bb6a9ef98fbbd750d3d1f02c99798aae2c22",
-    "zh:67859f40ed2f770f33ace9d3911e8b9c9be505947b38a0578e6d097f5db1d4bf",
-    "zh:7cd9bf4899fe383fc7eeede03cad138d637244878cd295a7a1044ca20ca0652c",
-    "zh:afcb82c1382a1a9d63a41137321e077144aad768e4e46057a7ea604d067b4181",
-    "zh:c6e358759ed00a628dcfe7adb0906b2c98576ac3056fdd70930786d404e1da66",
-    "zh:cb3390c34f6790ad656929d0268ab3bc082678e8cbe2add0a177cf7896068844",
-    "zh:cc213dbf59cf41506e86b83492ccfef6ef5f34d4d00d9e49fc8a01fee253f4ee",
-    "zh:d1e8c9b507e2d187ea2447ae156028ba3f76db2164674761987c14217d04fee5",
+    "h1:hdeAgSZUaq54ornF5yquG/c91U+Ou6cMaQTQj3TVLRc=",
+    "zh:08b09b80ff1f759d3cafa57e07bf3c3b50ab8148fbec3df7508825eb64f077b9",
+    "zh:1f7d9d7638c717faf92cb2283f53f586915a3b646f8b09157876d87515795535",
+    "zh:231255fa6c4434b9221623da02ce397fb3e894feeebed62b0181de775ed93769",
+    "zh:2765faa3dc09e99bd3d5c5fc84d62953bda411a4dcd65ddcbc4a37d0aa245e95",
+    "zh:3ef55ae0b81f0cc9bbc17a3992f54868a7368c012ce68dd8ed80db79efd10f14",
+    "zh:6a90b95872f941e93b97086d9a6d2cc7c1a1db4fb8ff54472f22207a350266f2",
+    "zh:7877496115affc512befcef8e555670a93678f8955aba8353c58dc63b851551c",
+    "zh:8556030dcd628350accdefd3ac02980285213e7211195663f9d10793ec3791f6",
+    "zh:8ef7452e4dd67dc5591186e8ec087db8b41272e24fa56929e24cbe029e909b2c",
+    "zh:9b29361f2c6f4798c0c31aac18dc00ddf932d9d431c8bcf359ae96538ea7ba13",
+    "zh:fd9bc393454af6396901806333ff1f60d1806bcda1711b4e768843174c14ef30",
   ]
 }

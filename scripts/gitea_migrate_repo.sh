@@ -79,7 +79,7 @@ repo='{
   "clone_addr": "'${github_repo}'",
   "issues": true,
   "labels": true,
-  "lfs": false,
+  "lfs": true,
   "milestones": true,
   "mirror": true,
   "mirror_interval": "12h0m0s",
