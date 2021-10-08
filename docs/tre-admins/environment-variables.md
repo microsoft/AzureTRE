@@ -25,9 +25,9 @@
 | `TRE_ID` | A globally unique identifier. `TRE_ID` can be found in the resource names of the Azure TRE instance; for example, a `TRE_ID` of `mytre-dev` will result in a resource group name for Azure TRE instance of `rg-mytre-dev`. This must be less than 12 characters. Allowed characters: Alphanumeric, underscores, and hyphens. |
 | `CORE_ADDRESS_SPACE` | The address space for the Azure TRE core virtual network. `/22` or larger. |
 | `TRE_ADDRESS_SPACE` | The address space for the whole TRE environment virtual network where workspaces networks will be created (can include the core network as well). E.g. `10.0.0.0/12`|
-| `SWAGGER_UI_CLIENT_ID` | Generated when following auth guide. Client ID for swagger client to make requests. |
-| `AAD_TENANT_ID` | Generated when following auth guide. Tenant id against which auth is performed. |
-| `API_CLIENT_ID` | Generated when following auth guide. Client id of the "TRE API". |
-| `API_CLIENT_SECRET` | Generated when following auth guide. Client secret of the "TRE API". |
-| `DEPLOY_GITEA` | If set to `false` disables deployment of the Gitea shared service. |
-| `DEPLOY_NEXUS` | If set to `false` disables deployment of the Nexus shared service. |
+| `SWAGGER_UI_CLIENT_ID` | Generated when following [pre-deployment steps](./setup-instructions/pre-deployment-steps.md) guide. Client ID for swagger client to make requests. |
+| `AAD_TENANT_ID` | Generated when following [pre-deployment steps](./setup-instructions/pre-deployment-steps.md) guide. Tenant id against which auth is performed. |
+| `API_CLIENT_ID` | Generated when following [pre-deployment steps](./setup-instructions/pre-deployment-steps.md) guide. Client id of the "TRE API". |
+| `API_CLIENT_SECRET` | Generated when following [pre-deployment steps](./setup-instructions/pre-deployment-steps.md) guide. Client secret of the "TRE API". |
+| `DEPLOY_GITEA` | If set to `false` disables deployment of the [Gitea shared service](../azure-tre-overview/shared-services/gitea.md). |
+| `DEPLOY_NEXUS` | If set to `false` disables deployment of the [Nexus shared service](../azure-tre-overview/shared-services/nexus.md). |

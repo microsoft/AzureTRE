@@ -199,7 +199,22 @@ resource "azurerm_network_security_rule" "allow-outbound-from-webapp-to-core-web
   source_port_range           = "*"
 }
 
-
+resource "azurerm_network_security_rule" "allow-outbound-rdp-and-https-from-webapps-to-services" {
+  access = "Allow"
+  destination_port_ranges = [
+    "443",
+    "3389",
+  ]
+  destination_address_prefix  = azurerm_subnet.services.address_prefix
+  source_address_prefix       = azurerm_subnet.webapps.address_prefix
+  direction                   = "Outbound"
+  name                        = "outbound-rdp-and-https-from-services-to-webapps-subnets"
+  network_security_group_name = azurerm_network_security_group.ws.name
+  priority                    = 140
+  protocol                    = "TCP"
+  resource_group_name         = azurerm_resource_group.ws.name
+  source_port_range           = "*"
+}
 
 resource "azurerm_network_security_rule" "allow-inbound-from-bastion" {
   access                       = "Allow"
@@ -236,13 +251,16 @@ resource "azurerm_network_security_rule" "allow-inbound-from-resourceprocessor" 
   source_port_range = "*"
 }
 
-resource "azurerm_network_security_rule" "allow-inbound-rdp-from-webapp-to-services" {
-  access                      = "Allow"
-  destination_port_range      = "3389"
+resource "azurerm_network_security_rule" "allow-inbound-rdp-and-https-from-webapp-to-services" {
+  access = "Allow"
+  destination_port_ranges = [
+    "443",
+    "3389",
+  ]
   destination_address_prefix  = azurerm_subnet.services.address_prefix
   source_address_prefix       = azurerm_subnet.webapps.address_prefix
   direction                   = "Inbound"
-  name                        = "inbound-rdp-from-webapps-to-services-subnets"
+  name                        = "inbound-rdp-and-https-from-webapps-to-services-subnets"
   network_security_group_name = azurerm_network_security_group.ws.name
   priority                    = 130
   protocol                    = "TCP"

@@ -37,8 +37,8 @@ data "azurerm_subnet" "services" {
   resource_group_name  = data.azurerm_resource_group.ws.name
 }
 
-data "azurerm_key_vault" "kv" {
-  name                = "kv-${var.tre_id}-${local.short_workspace_id}-${local.short_parent_id}"
+data "azurerm_key_vault" "ws" {
+  name                = local.keyvault_name
   resource_group_name = data.azurerm_resource_group.ws.name
 }
 

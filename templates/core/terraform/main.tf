@@ -34,6 +34,7 @@ resource "azurerm_resource_group" "core" {
 resource "azurerm_application_insights" "core" {
   name                = "appi-${var.tre_id}"
   resource_group_name = azurerm_resource_group.core.name
+  workspace_id        = azurerm_log_analytics_workspace.core.id
   location            = var.location
   application_type    = "web"
 

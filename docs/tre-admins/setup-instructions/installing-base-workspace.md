@@ -5,7 +5,7 @@
 1. Run:
 
     ```cmd
-    make register-bundle DIR=./templates/workspaces/base BUNDLE_TYPE=workspace
+    /workspaces/tre> make register-bundle DIR=./templates/workspaces/base BUNDLE_TYPE=workspace
     ```
 
     Copy the resulting JSON payload.
@@ -37,15 +37,11 @@ Go to ``azure_tre_fqdn/docs`` and use POST /api/workspaces with the sample body 
 
 ```json
 {
-  "displayName": "manual-from-swagger",
-  "description": "workspace for team X",
   "workspaceType": "tre-workspace-base",
-  "parameters": {},
-  "authConfig": {
-    "provider": "AAD",
-    "data": {
-      "app_id": "app id created above"
-    }
+  "properties": {
+    "display_name": "manual-from-swagger",
+    "description": "workspace for team X",
+    "app_id": "app id created above"
   }
 }
 ```
