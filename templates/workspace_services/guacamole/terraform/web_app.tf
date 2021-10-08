@@ -31,7 +31,7 @@ resource "azurerm_app_service" "guacamole" {
     SCM_DO_BUILD_DURING_DEPLOYMENT = "True"
 
     TENANT_ID    = data.azurerm_client_config.current.tenant_id
-    KEYVAULT_URL = local.kv_url
+    KEYVAULT_URL = data.azurerm_key_vault.ws.vault_uri
     API_URL      = local.api_url
     SERVICE_ID   = "${var.tre_resource_id}"
     WORKSPACE_ID = "${var.workspace_id}"
@@ -45,6 +45,10 @@ resource "azurerm_app_service" "guacamole" {
     GUAC_DISABLE_DOWNLOAD = "${var.guac_disable_download}"
     AUDIENCE              = data.azurerm_app_service.api_core.app_settings["API_CLIENT_ID"]
     ISSUER                = local.issuer
+    # Solving the pulling from acr problem
+    DOCKER_REGISTRY_SERVER_URL      = "${data.azurerm_container_registry.mgmt_acr.login_server}"
+    DOCKER_REGISTRY_SERVER_USERNAME = "${data.azurerm_container_registry.mgmt_acr.admin_username}"
+    DOCKER_REGISTRY_SERVER_PASSWORD = "${data.azurerm_container_registry.mgmt_acr.admin_password}"
   }
 
   logs {
@@ -192,3 +196,20 @@ resource "azurerm_private_endpoint" "guacamole" {
     private_dns_zone_ids = [data.azurerm_private_dns_zone.azurewebsites.id]
   }
 }
+
+resource "azurerm_key_vault_access_policy" "current" {
+  key_vault_id = data.azurerm_key_vault.ws.id
+  tenant_id    = data.azurerm_user_assigned_identity.vmss_id.tenant_id
+  object_id    = data.azurerm_user_assigned_identity.vmss_id.principal_id
+
+  secret_permissions = ["Get", "List", "Set", "Delete"]
+}
+
+resource "azurerm_key_vault_access_policy" "guacamole" {
+  key_vault_id = data.azurerm_key_vault.ws.id
+  tenant_id    = azurerm_app_service.guacamole.identity.0.tenant_id
+  object_id    = azurerm_app_service.guacamole.identity.0.principal_id
+
+  secret_permissions = ["Get", "List", ]
+}
+

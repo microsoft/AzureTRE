@@ -55,6 +55,8 @@ public class UserContext extends AbstractUserContext {
 
     private User self;
 
+    private AzureTREAuthenticatedUser treUser;
+
     private Directory<User> userDirectory;
 
     private Directory<UserGroup> userGroupDirectory;
@@ -86,6 +88,8 @@ public class UserContext extends AbstractUserContext {
             Collections.emptyList()
         );
 
+        // Store TRE user to allow refresh of connection directory (github issue #850)
+        treUser = user;
         self = new SimpleUser(user.getIdentifier()) {
 
             @Override
@@ -137,9 +141,12 @@ public class UserContext extends AbstractUserContext {
     }
 
     @Override
-    public Directory<Connection> getConnectionDirectory() {
+    public Directory<Connection> getConnectionDirectory() throws GuacamoleException {
         LOGGER.debug("getConnectionDirectory");
-        return connectionDirectory;
+        // instead of returning connectionDirectory object we query to get all accessible connections (fix for #850)
+        return new SimpleDirectory<>(
+             connectionService.getConnections(treUser)
+        );
     }
 
     @Override
