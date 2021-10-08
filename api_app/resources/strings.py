@@ -54,6 +54,7 @@ ACCESS_USER_IS_NOT_OWNER = "Workspace Owner rights are required"
 AUTH_NOT_ASSIGNED_TO_ADMIN_ROLE = "Not assigned to admin role"
 AUTH_COULD_NOT_VALIDATE_CREDENTIALS = "Could not validate credentials"
 AUTH_CONFIGURATION_NOT_AVAILABLE_FOR_WORKSPACE = "Auth configuration not available for workspace"
+AUTH_UNABLE_TO_VALIDATE_TOKEN = "Unable to decode or validate token"
 INVALID_AUTH_PROVIDER = "Invalid authentication provider"
 
 UNABLE_TO_REPLACE_CURRENT_TEMPLATE = "Unable to replace the existing 'current' template with this name"
