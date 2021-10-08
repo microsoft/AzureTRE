@@ -16,7 +16,7 @@ The Azure TRE core plane consists of two groups of components:
 - Shared Services
 
 !!! todo
-    The Shared Services [#23](https://github.com/microsoft/AzureTRE/issues/23) and Firewall Shared Service [#882](https://github.com/microsoft/AzureTRE/issues/882) is still work in progress.
+    The Shared Services [#23](https://github.com/microsoft/AzureTRE/issues/23) and Firewall Shared Service [#882](https://github.com/microsoft/AzureTRE/issues/882) are still work in progress.
 
 The TRE API is a service that users can interact with to request changes to workspaces e.g., to create, update, delete workspaces and workspace services inside each workspace. The Composition Service is doing the actual work of mutating the state of each Workspace including the Workspace Services.
 
