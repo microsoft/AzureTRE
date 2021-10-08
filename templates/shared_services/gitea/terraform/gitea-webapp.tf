@@ -26,7 +26,6 @@ resource "azurerm_app_service" "gitea" {
   app_settings = {
     APPINSIGHTS_INSTRUMENTATIONKEY      = data.azurerm_application_insights.core.instrumentation_key
     WEBSITES_PORT                       = "3000"
-    WEBSITE_VNET_ROUTE_ALL              = 1
     WEBSITES_ENABLE_APP_SERVICE_STORAGE = false
 
     GITEA_USERNAME = "giteaadmin"
