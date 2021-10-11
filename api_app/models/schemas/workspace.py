@@ -66,13 +66,13 @@ class WorkspacesInList(BaseModel):
 
 
 class WorkspaceInCreate(BaseModel):
-    workspaceType: str = Field(title="Workspace type", description="Bundle name")
+    templateName: str = Field(title="Workspace type", description="Bundle name")
     properties: dict = Field({}, title="Workspace parameters", description="Values for the parameters required by the workspace resource specification")
 
     class Config:
         schema_extra = {
             "example": {
-                "workspaceType": "tre-workspace-base",
+                "templateName": "tre-workspace-base",
                 "properties": {
                     "display_name": "the workspace display name",
                     "description": "workspace description",

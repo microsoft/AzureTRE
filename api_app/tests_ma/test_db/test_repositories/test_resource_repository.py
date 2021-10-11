@@ -20,7 +20,7 @@ def resource_repo():
 
 @pytest.fixture
 def workspace_input():
-    return WorkspaceInCreate(workspaceType="base-tre", properties={"display_name": "test", "description": "test", "app_id": "123"})
+    return WorkspaceInCreate(templateName="base-tre", properties={"display_name": "test", "description": "test", "app_id": "123"})
 
 
 def test_delete_workspace_marks_workspace_as_deleted(resource_repo):
@@ -96,7 +96,7 @@ def test_validate_input_against_template_raises_value_error_if_payload_is_invali
                                                            required=["display_name"],
                                                            properties={}).dict()
     # missing display name
-    workspace_input = WorkspaceInCreate(workspaceType="template1")
+    workspace_input = WorkspaceInCreate(templateName="template1")
 
     with pytest.raises(ValidationError):
         resource_repo.validate_input_against_template("template1", workspace_input, ResourceType.Workspace)

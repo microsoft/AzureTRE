@@ -14,7 +14,7 @@ SERVICE_ID = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
 
 @pytest.fixture
 def basic_workspace_service_request():
-    return WorkspaceServiceInCreate(workspaceServiceType="workspace-service-type", properties={"display_name": "test", "description": "test", "tre_id": "test"})
+    return WorkspaceServiceInCreate(templateName="workspace-service-type", properties={"display_name": "test", "description": "test", "tre_id": "test"})
 
 
 @pytest.fixture
@@ -90,11 +90,11 @@ def test_create_workspace_service_item_creates_a_workspace_with_the_right_values
     resource_template = basic_workspace_service_template
     resource_template.required = ["display_name", "description"]
 
-    validate_input_mock.return_value = basic_workspace_service_request.workspaceServiceType
+    validate_input_mock.return_value = basic_workspace_service_request.templateName
 
     workspace_service = workspace_service_repo.create_workspace_service_item(workspace_service_to_create, WORKSPACE_ID)
 
-    assert workspace_service.resourceTemplateName == basic_workspace_service_request.workspaceServiceType
+    assert workspace_service.resourceTemplateName == basic_workspace_service_request.templateName
     assert workspace_service.resourceType == ResourceType.WorkspaceService
     assert workspace_service.deployment.status == Status.NotDeployed
     assert workspace_service.workspaceId == WORKSPACE_ID

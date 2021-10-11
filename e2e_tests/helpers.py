@@ -61,7 +61,7 @@ async def post_workspace_template(payload, token, verify) -> (str, bool):
 
         response = await client.post(f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACES}", headers=headers, json=payload)
 
-        assert (response.status_code == status.HTTP_202_ACCEPTED), f"Request for workspace {payload['workspaceType']} creation failed"
+        assert (response.status_code == status.HTTP_202_ACCEPTED), f"Request for workspace {payload['templateName']} creation failed"
 
         workspace_id = response.json()["workspaceId"]
         write_workspace_id(workspace_id)
@@ -177,7 +177,7 @@ async def post_workspace_service_template(workspace_id, payload, token, verify):
     async with AsyncClient(verify=verify) as client:
         response = await client.post(f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACES}/{workspace_id}/{strings.API_WORKSPACE_SERVICES}", headers=get_auth_header(token), json=payload)
 
-        assert (response.status_code == status.HTTP_202_ACCEPTED), f"Request for workspace service {payload['workspaceServiceType']} creation failed"
+        assert (response.status_code == status.HTTP_202_ACCEPTED), f"Request for workspace service {payload['templateName']} creation failed"
 
         workspace_service_id = response.json()["workspaceServiceId"]
 

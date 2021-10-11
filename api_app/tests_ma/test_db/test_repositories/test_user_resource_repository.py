@@ -16,7 +16,7 @@ USER_ID = "abc000d3-82da-4bfc-b6e9-9a7853ef753e"
 
 @pytest.fixture
 def basic_user_resource_request():
-    return UserResourceInCreate(userResourceType="user-resource-type", properties={"display_name": "test", "description": "test", "tre_id": "test"})
+    return UserResourceInCreate(templateName="user-resource-type", properties={"display_name": "test", "description": "test", "tre_id": "test"})
 
 
 @pytest.fixture
@@ -40,11 +40,11 @@ def user_resource():
 @patch('core.config.TRE_ID', "9876")
 def test_create_user_resource_item_creates_a_user_resource_with_the_right_values(validate_input_mock, user_resource_repo, basic_user_resource_request):
     user_resource_to_create = basic_user_resource_request
-    validate_input_mock.return_value = basic_user_resource_request.userResourceType
+    validate_input_mock.return_value = basic_user_resource_request.templateName
 
     user_resource = user_resource_repo.create_user_resource_item(user_resource_to_create, WORKSPACE_ID, SERVICE_ID, "parent-service-type", USER_ID)
 
-    assert user_resource.resourceTemplateName == basic_user_resource_request.userResourceType
+    assert user_resource.resourceTemplateName == basic_user_resource_request.templateName
     assert user_resource.resourceType == ResourceType.UserResource
     assert user_resource.deployment.status == Status.NotDeployed
     assert user_resource.workspaceId == WORKSPACE_ID
