@@ -18,10 +18,16 @@ resource "azurerm_application_insights" "core" {
   lifecycle { ignore_changes = [tags] }
 }
 
+data "local_file" "ampls_arm_template" {
+  filename = "${path.module}/ampls.json"
+}
+
 resource "azurerm_resource_group_template_deployment" "ampls_core" {
   name                = "ampls-${var.tre_id}"
   resource_group_name = var.resource_group_name
   deployment_mode     = "Incremental"
+  template_content    = data.local_file.ampls_arm_template.content
+
   parameters_content  = jsonencode({
     "private_link_scope_name" = {
       value = "ampls-${var.tre_id}"
@@ -33,64 +39,4 @@ resource "azurerm_resource_group_template_deployment" "ampls_core" {
       value = azurerm_application_insights.core.name
     }
   })
-  template_content = <<-EOT
-    {
-      "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-      "contentVersion": "1.0.0.0",
-      "parameters": {
-        "private_link_scope_name": {
-          "type": "String"
-        },
-        "workspace_name": {
-          "type": "String"
-        },
-        "app_insights_name": {
-          "type": "String"
-        }
-      },
-      "variables": {},
-      "resources": [
-        {
-          "type": "microsoft.insights/privatelinkscopes",
-          "apiVersion": "2021-07-01-preview",
-          "name": "[parameters('private_link_scope_name')]",
-          "location": "global",
-          "properties": {
-            "accessModeSettings": {
-              "queryAccessMode":"Open",
-              "ingestionAccessMode":"Open"
-            }
-          }
-        },
-        {
-          "type": "microsoft.insights/privatelinkscopes/scopedresources",
-          "apiVersion": "2019-10-17-preview",
-          "name": "[concat(parameters('private_link_scope_name'), '/', concat(parameters('workspace_name'), '-connection'))]",
-          "dependsOn": [
-            "[resourceId('microsoft.insights/privatelinkscopes', parameters('private_link_scope_name'))]"
-          ],
-          "properties": {
-            "linkedResourceId": "[resourceId('microsoft.operationalinsights/workspaces', parameters('workspace_name'))]"
-          }
-        },
-        {
-          "type": "microsoft.insights/privatelinkscopes/scopedresources",
-          "apiVersion": "2019-10-17-preview",
-          "name": "[concat(parameters('private_link_scope_name'), '/', concat(parameters('app_insights_name'), '-connection'))]",
-          "dependsOn": [
-            "[resourceId('microsoft.insights/privatelinkscopes', parameters('private_link_scope_name'))]"
-          ],
-          "properties": {
-            "linkedResourceId": "[resourceId('microsoft.insights/components', parameters('app_insights_name'))]"
-          }
-        }
-      ],
-      "outputs": {
-        "resourceID": {
-          "type": "String",
-          "value": "[resourceId('microsoft.insights/privatelinkscopes', parameters('private_link_scope_name'))]"
-        }
-      }
-    }
-  EOT
 }
