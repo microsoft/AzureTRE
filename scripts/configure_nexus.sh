@@ -32,8 +32,6 @@ export NEXUS_ADMIN_PASSWORD_NAME="nexus-${tre_id,,}-admin-password"
 export KEYVAULT_NAME="kv-${tre_id}"
 export STORAGE_ACCOUNT_NAME="stg${tre_id//-/}"
 
-echo ${KEYVAULT_NAME}
-
 export NEXUS_PASS=$(az keyvault secret show --name ${NEXUS_ADMIN_PASSWORD_NAME} --vault-name ${KEYVAULT_NAME} -o json | jq -r '.value')
 
 if [ -z "$NEXUS_PASS" ]; then
@@ -70,5 +68,5 @@ if [[ ${STATUS_CODE} == 404 ]]
     $NEXUS_URL/service/rest/v1/repositories/apt/proxy \
     -H 'accept: application/json' \
     -H 'Content-Type: application/json' \
-    -d '@pypi_proxy_conf.json'
+    -d '@./scripts/pypi_proxy_conf.json'
 fi
