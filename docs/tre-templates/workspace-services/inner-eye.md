@@ -15,6 +15,8 @@ URLs:
 - binstar-cio-packages-prod.s3.amazonaws.com
 - *pythonhosted.org
 - github-cloud.githubusercontent.com
+- azure.archive.ubuntu.com (git lfs package)
+- packagecloud.io (git lfs package installation script)
 
 ## Prerequisites
 
@@ -24,37 +26,49 @@ URLs:
 
 1. Create a copy of `templates/workspace_services/innereye_deeplearning/.env.sample` with the name `.env` and update the variables with the appropriate values.
 
-  | Environment variable name | Description |
-  | ------------------------- | ----------- |
-  | `ID` | A GUID to identify the workspace service. The last 4 characters of this `ID` can be found in the resource names of the workspace service resources. |
-  | `WORKSPACE_ID` | The GUID identifier used when deploying the base workspace bundle. |
-  | `INFERENCE_SP_CLIENT_ID` | Service principal client ID used by the inference service to connect to Azure ML. Use the output from the step above. |
-  | `INFERENCE_SP_CLIENT_SECRET` | Service principal client secret used by the inference service to connect to Azure ML. Use the output from the step above. |
+    | Environment variable name | Description |
+    | ------------------------- | ----------- |
+    | `ID` | A GUID to identify the workspace service. The last 4 characters of this `ID` can be found in the resource names of the workspace service resources. |
+    | `WORKSPACE_ID` | The GUID identifier used when deploying the base workspace bundle. |
+    | `INFERENCE_SP_CLIENT_ID` | Service principal client ID used by the inference service to connect to Azure ML. Use the output from the step above. |
+    | `INFERENCE_SP_CLIENT_SECRET` | Service principal client secret used by the inference service to connect to Azure ML. Use the output from the step above. |
 
 1. Build and install the InnerEye Deep Learning Service bundle
 
-  ```cmd
-  make porter-build DIR=./templates/workspace_services/innereye
-  make porter-publish DIR=./templates/workspace_services/innereye
-  make porter-install DIR=./templates/workspace_services/innereye
-  ```
+    ```cmd
+    make porter-build DIR=./templates/workspace_services/innereye
+    make porter-publish DIR=./templates/workspace_services/innereye
+    make porter-install DIR=./templates/workspace_services/innereye
+    ```
 
 ## Running the InnerEye HelloWorld on AML Compute Cluster
 
-1. Log onto a VM in the workspace, open PowerShell and run:
+### Preparation steps performed by the TRE Admin
+
+1. Ensure that you have completed ["Configuring Shared Services"](../tre-admins/setup-instructions/configuring-shared-services.md)
+2. Log onto a TREAdmin Jumpbox and mirror Github repos needed by InnerEye Helloworld:
 
   ```cmd
-  git clone https://github.com/microsoft/InnerEye-DeepLearning
-  cd InnerEye-DeepLearning
-  git lfs install
-  git lfs pull
-  conda init
-  conda env create --file environment.yml
+  ./scripts/gitea_migrate_repo.sh -t <tre_id> -g https://github.com/microsoft/InnerEye-DeepLearning
+  ./scripts/gitea_migrate_repo.sh -t <tre_id> -g https://github.com/analysiscenter/radio
   ```
 
-1. Restart PowerShell and navigate to the "InnerEye-DeepLearning" folder
+### Setup the InnerEye run from AML Compute Instance
+
+1. Log onto a VM in the workspace, open Edge and navigate to [ml.azure.com](https://ml.azure.com)
+2. Select the Notebooks tab and then click Terminal. This should open a terminal on a running compute instance
+3. Pull the InnerEye-DeepLearning git repo from Gitea mirror and configure:
 
   ```cmd
+  git clone https://gitea-<TRE_ID>.azurewebsites.net/giteaadmin/InnerEye-DeepLearning
+  cd InnerEye-DeepLearning
+  curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
+  sudo apt-get install git-lfs
+  git lfs install
+  git lfs pull
+  export PIP_INDEX_URL=https://nexus-<TRE_ID>.azurewebsites.net/repository/pypi-proxy-repo/simple
+  conda init
+  conda env create --file environment.yml
   conda activate InnerEye
   ```
 
@@ -79,11 +93,11 @@ The workspace service provisions an App Service Plan and an App Service for host
 
 1. Log onto a VM in the workspace and run:
 
-  ```cmd
-  git clone https://github.com/microsoft/InnerEye-Inference
-  cd InnerEye-Inference
-  az webapp up --name <inference-app-name> -g <resource-group-name>
-  ```
+    ```cmd
+    git clone https://github.com/microsoft/InnerEye-Inference
+    cd InnerEye-Inference
+    az webapp up --name <inference-app-name> -g <resource-group-name>
+    ```
 
 1. Create a new container in your storage account for storing inference images called `inferencedatastore`.
 1. Create a new folder in that container called `imagedata`.

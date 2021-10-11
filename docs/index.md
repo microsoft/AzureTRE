@@ -44,7 +44,7 @@ Workspaces can be enhanced with one or more building blocks called **workspace s
 
 Multiple workspaces can be created within a single Trusted Research Environment to enable the required separation for your projects.
 
-Each workspace has [workspace users](azure-tre-overview/user-roles.md): one **workspace owner**, and one or more **workspace researchers** that can access the data and workspace services in the workspace. The workspace owner is also considered a workspace researcher.
+Each workspace has [workspace users](azure-tre-overview/user-roles.md): a **workspace owner** (normally only one), and one or more **workspace researchers** that can access the data and workspace services in the workspace. The workspace owner is also considered a workspace researcher.
 
 ## Workspace Service
 
@@ -63,7 +63,7 @@ All workspace services can be deployed to all workspaces.
 
 ## User Resource
 
-A user resource is a resource that is only available to a particular researcher. For example a Guacamole VM.
+A user resource is a resource that is only available to a particular researcher. For example a virtual machine exposed by Guacamole.
 
 User resources can be deployed to workspaces with a compatible workspace service. E.g. Guacamole VMs can only be deployed to workspaces where the Guacamole workspace service is deployed.
 

@@ -109,10 +109,10 @@ resource "azurerm_firewall_application_rule_collection" "shared_subnet" {
     target_fqdns = [
       "go.microsoft.com",
       "*.azureedge.net",
-      "github.com",
+      "*github.com",
       "*powershellgallery.com",
       "git-scm.com",
-      "*githubusercontent.com",
+      "github-cloud.githubusercontent.com",
       "*core.windows.net",
       "aka.ms",
       "management.azure.com",
