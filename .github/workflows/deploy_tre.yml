@@ -5,7 +5,7 @@ on:
     # 1am each night https://crontab.guru/#0_1_*_*_*
     - cron: "0 1 * * *"
   push:
-    branches: [develop, main, deniscep/1021-innereye-not-deploying]
+    branches: [develop, main]
   pull_request_target:
     types: [labeled]
     branches: [develop]
