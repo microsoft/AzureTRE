@@ -1,5 +1,5 @@
 name: tre-service-innereye
-version: 0.1.4
+version: 0.1.5
 description: "An Azure TRE service for InnerEye Deep Learning"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -58,17 +58,8 @@ install:
       arguments:
         - login
       flags:
-        service-principal:
+        identity:
         username: "{{ bundle.credentials.azure_client_id}}"
-        password: "{{ bundle.credentials.azure_client_secret}}"
-        tenant: "{{ bundle.credentials.azure_tenant_id}}"
-  # - az:
-  #     description: "az login"
-  #     arguments:
-  #       - login
-  #     flags:
-  #       identity:
-  #       username: "{{ bundle.credentials.azure_client_id}}"
   - az:
       description: "acr login"
       arguments:
