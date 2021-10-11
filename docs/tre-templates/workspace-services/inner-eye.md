@@ -46,36 +46,44 @@ URLs:
 ### Preparation steps performed by the TRE Admin
 
 1. Ensure that you have completed ["Configuring Shared Services"](../tre-admins/setup-instructions/configuring-shared-services.md)
-2. Log onto a TREAdmin Jumpbox and mirror Github repos needed by InnerEye Helloworld:
+1. Log onto a TREAdmin Jumpbox and mirror Github repos needed by InnerEye Helloworld:
 
-  ```cmd
-  ./scripts/gitea_migrate_repo.sh -t <tre_id> -g https://github.com/microsoft/InnerEye-DeepLearning
-  ./scripts/gitea_migrate_repo.sh -t <tre_id> -g https://github.com/analysiscenter/radio
-  ```
+    ```cmd
+    ./scripts/gitea_migrate_repo.sh -t <tre_id> -g https://github.com/microsoft/InnerEye-DeepLearning
+    ./scripts/gitea_migrate_repo.sh -t <tre_id> -g https://github.com/analysiscenter/radio
+    ```
 
 ### Setup the InnerEye run from AML Compute Instance
 
 1. Log onto a VM in the workspace, open Edge and navigate to [ml.azure.com](https://ml.azure.com)
-2. Select the Notebooks tab and then click Terminal. This should open a terminal on a running compute instance
-3. Pull the InnerEye-DeepLearning git repo from Gitea mirror and configure:
+1. Select the Notebooks tab and then click Terminal. This should open a terminal on a running compute instance
+1. Pull the InnerEye-DeepLearning git repo from Gitea mirror and configure:
 
-  ```cmd
-  git clone https://gitea-<TRE_ID>.azurewebsites.net/giteaadmin/InnerEye-DeepLearning
-  cd InnerEye-DeepLearning
-  curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
-  sudo apt-get install git-lfs
-  git lfs install
-  git lfs pull
-  export PIP_INDEX_URL=https://nexus-<TRE_ID>.azurewebsites.net/repository/pypi-proxy-repo/simple
-  conda init
-  conda env create --file environment.yml
-  conda activate InnerEye
-  ```
+    ```cmd
+    git clone https://gitea-<TRE_ID>.azurewebsites.net/giteaadmin/InnerEye-DeepLearning
+    cd InnerEye-DeepLearning
+    curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
+    sudo apt-get install git-lfs
+    git lfs install
+    git lfs pull
+    export PIP_INDEX_URL=https://nexus-<TRE_ID>.azurewebsites.net/repository/pypi-proxy-repo/simple
+    conda init
+    conda env create --file environment.yml
+    conda activate InnerEye
+    ```
+1. Get storage keys for your storage: 
 
-1. Open Azure Storage Explorer and connect to your Storage Account using name and access key
-1. On the storage account create a container with name ```datasets``` and a folder named ```hello_world```
-1. Copy `dataset.csv` file from `Tests/ML/test_data/dataset.csv` to the `hello_world` folder
-1. Copy the whole `train_and_test_data` folder from `Test/ML/test_data/train_and_test_data` to the `hello_world` folder
+    ```az storage account keys list --account-name stgws<workspace_id>```
+1. Create a "datasets" container 
+    
+    ```az storage container create --name datasets --account-name stgws<workspace_id>```
+1. Copy `dataset.csv` file from `Tests/ML/test_data/dataset.csv` to the `hello_world` folder:
+    
+    ```az storage blob upload --account-name stgws<workspace_id> --container-name datasets --file ./Tests/ML/test_data/dataset.csv --name /hello_world/dataset.csv```
+1. Copy the whole `train_and_test_data` folder from `Test/ML/test_data/train_and_test_data` to the `hello_world` folder:
+
+    ```az storage blob directory upload -c datasets --account-name stgws<workspace_id> -s "./Test/ML/test_data/train_and_test_data" -d hello_world --recursive```
+  
 1. Update the following variables in `InnerEye/settings.yml`: subscription_id, resource_group, workspace_name, cluster (see [AML setup](https://github.com/microsoft/InnerEye-DeepLearning/blob/main/docs/setting_up_aml.md) for more details).
 1. Open your browser to ml.azure.com, login, select the right Subscription and AML workspace and then navigate to `Data stores`. Create a New datastore named `innereyedatasets` and link it to your storage account and datasets container.
 1. Back from PowerShell run
