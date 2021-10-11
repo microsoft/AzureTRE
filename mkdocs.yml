@@ -1,0 +1,77 @@
+site_name: Azure TRE
+site_url: https://github.com/microsoft/AzureTRE
+site_description: Azure TRE
+site_author: Microsoft
+
+repo_url: https://github.com/microsoft/AzureTre/
+edit_uri: ""
+
+theme:
+  name: material
+  custom_dir: mkdocs-overrides
+  font:
+    text: Roboto
+    code: Roboto Mono
+  palette:
+    scheme: default
+    primary: blue grey
+    accent: indigo
+  logo: assets/ms_icon.png
+  favicon: assets/ms_icon.png
+  features:
+    - navigation.instant
+    - navigation.indexes
+
+plugins:
+  - search
+
+markdown_extensions:
+  - meta
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.pathconverter
+  - pymdownx.tabbed
+  - mdx_truly_sane_lists
+  - pymdownx.tasklist
+
+nav:
+  - Azure TRE Overview:
+      - Concepts: 'index.md'
+      - User Roles: 'azure-tre-overview/user-roles.md'
+      - Architecture: 'azure-tre-overview/architecture.md'
+      - Network Architecture: 'azure-tre-overview/networking.md'
+      - Shared Services:
+          - Gitea (Source Mirror): 'azure-tre-overview/shared-services/gitea.md'
+          - Nexus (Package Mirror): 'azure-tre-overview/shared-services/nexus.md'
+  - TRE Admins:
+      - Setup Instructions:
+          - 1. Getting Started: 'tre-admins/setup-instructions/getting-started.md'
+          - 2. Pre-deployment Steps: 'tre-admins/setup-instructions/pre-deployment-steps.md'
+          - 3. Deploying Azure TRE: 'tre-admins/setup-instructions/deploying-azure-tre.md'
+          - 3b. Deploying Azure TRE with GitHub workflows: 'tre-admins/setup-instructions/workflows.md'
+          - 4. Configuring Shared Services: 'tre-admins/setup-instructions/configuring-shared-services.md'
+          - 5. Installing Base Workspace: 'tre-admins/setup-instructions/installing-base-workspace.md'
+          - Tear-down: 'tre-admins/setup-instructions/tear-down.md'
+      - Environment Variables: 'tre-admins/environment-variables.md'
+      - Authentication and Authorization: 'tre-admins/auth.md'
+      - Registering Templates: 'tre-admins/registering-templates.md'
+      - Troubleshooting Guide: 'tre-admins/troubleshooting-guide.md'
+  - TRE Developers:
+      - API: 'tre-developers/api.md'
+      - Resource Processor: 'tre-developers/resource-processor.md'
+      - End to End Tests: 'tre-developers/end-to-end-tests.md'
+  - TRE Workspace Authors:
+      - Authoring Workspace Templates: 'tre-workspace-authors/authoring-workspace-templates.md'
+      - Firewall Rules: 'tre-workspace-authors/firewall-rules.md'
+  - Templates:
+      - Workspaces:
+          - Base: 'tre-templates/workspaces/base.md'
+          - InnerEye: 'tre-templates/workspaces/inner-eye.md'
+      - Workspace Services:
+          - Azure ML: 'tre-templates/workspace-services/azure-ml.md'
+          - DevTest Labs: 'tre-templates/workspace-services/dev-test-labs.md'
+          - Guacamole: 'tre-templates/workspace-services/guacamole.md'
+          - InnerEye: 'tre-templates/workspace-services/inner-eye.md'
+      - User Resources:
+          - Guacamole Win10 VM: 'tre-templates/user-resources/guacamole-win10-vm.md'

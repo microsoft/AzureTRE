@@ -1,0 +1,74 @@
+# Retrieve Bearer token
+# @name auth
+POST https://login.microsoftonline.com/<CHANGE_ME_TENANT_ID>/oauth2/token HTTP/1.1
+Content-type: application/x-www-form-urlencoded	
+
+grant_type=password
+&resource=__CHANGE_ME_
+&username=__CHANGE_ME_
+&password=__CHANGE_ME_
+&scope=__CHANGE_ME_
+&client_id=__CHANGE_ME_
+
+#############################
+# Create workspace template
+
+### Get all workspace templates
+GET https://cse-msr-dev.westeurope.cloudapp.azure.com/api/workspace-templates
+Authorization:  Bearer {{auth.response.body.access_token}}
+Content-type: application/json
+
+### Create a new workspace with an id
+# @name newworkspace
+POST https://cse-msr-dev.westeurope.cloudapp.azure.com/api/workspaces
+Authorization:  Bearer {{auth.response.body.access_token}}
+Content-type: application/json
+
+{
+  "workspaceType": "tre-workspace-base",
+        "properties": {
+            "display_name": "E2E test",
+            "description": "workspace for E2E",
+            "app_id": "<CHANGE_ME_APP_ID>",
+            "address_space": "192.168.25.0/24"
+        }
+}
+
+### Get workspace info for the provisioned workspace
+GET https://cse-msr-dev.westeurope.cloudapp.azure.com/api/workspaces/{{newworkspace.response.body.workspaceId}}
+Authorization:  Bearer {{auth.response.body.access_token}}
+Content-type: application/json
+
+### Disable workspace 
+PATCH https://cse-msr-dev.westeurope.cloudapp.azure.com/api/workspaces/{{newworkspace.response.body.workspaceId}}
+Authorization:  Bearer {{auth.response.body.access_token}}
+Content-type: application/json
+
+{
+  "enabled": false
+}
+
+### Delete workspace 
+DELETE https://cse-msr-dev.westeurope.cloudapp.azure.com/api/workspaces/{{newworkspace.response.body.workspaceId}}
+Authorization:  Bearer {{auth.response.body.access_token}}
+Content-type: application/json
+
+### Create a workspace service template
+POST https://cse-msr-dev.westeurope.cloudapp.azure.com/api/workspace-service-templates
+Authorization:  Bearer {{auth.response.body.access_token}}
+Content-type: application/json
+
+{
+  "name": "e2e-test-workspace-service",
+  "version": "0.0.1",
+  "current": "true",
+  "json_schema": {
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/myworkspace/workspace_service.json",
+    "type": "object",
+    "title": "DONOTUSE - E2E workspace service",
+    "description": "DO NOT USE",
+    "required": [],
+    "properties": {}
+  }
+}

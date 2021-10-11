@@ -1,0 +1,54 @@
+{
+	"name": "AzureTRE",
+	"workspaceFolder": "/workspaces/tre",
+	"dockerComposeFile": "docker-compose.yml",
+	"service": "dev",
+	"remoteUser": "vscode",
+	// Set *default* container specific settings.json values on container create.
+	"settings": {
+		"terminal.integrated.defaultProfile.linux": "bash",
+		"python.pythonPath": "/usr/local/bin/python",
+		"python.linting.enabled": true,
+		"python.linting.pylintEnabled": true,
+		"python.formatting.autopep8Path": "/usr/local/py-utils/bin/autopep8",
+		"python.formatting.blackPath": "/usr/local/py-utils/bin/black",
+		"python.formatting.yapfPath": "/usr/local/py-utils/bin/yapf",
+		"python.linting.banditPath": "/usr/local/py-utils/bin/bandit",
+		"python.linting.flake8Path": "/usr/local/py-utils/bin/flake8",
+		"python.linting.mypyPath": "/usr/local/py-utils/bin/mypy",
+		"python.linting.pycodestylePath": "/usr/local/py-utils/bin/pycodestyle",
+		"python.linting.pydocstylePath": "/usr/local/py-utils/bin/pydocstyle",
+		"python.linting.pylintPath": "/usr/local/py-utils/bin/pylint",
+		"launch": {
+			"configurations": [
+				{
+					"name": "API",
+					"type": "python",
+					"request": "launch",
+					"module": "uvicorn",
+					"cwd": "${workspaceFolder}/api_app",
+					"args": [
+						"main:app",
+						"--reload"
+					],
+					"jinja": true,
+					"env": {
+						"STATE_STORE_ENDPOINT": "https://host.docker.internal:8081"
+					}
+				},
+			],
+			"compounds": []
+		}
+	},
+	// Add the IDs of extensions you want installed when the container is created.
+	"extensions": [
+		"ms-python.python",
+		"hashicorp.terraform",
+		"github.vscode-pull-request-github",
+		"ms-kubernetes-tools.porter-vscode",
+		"davidanson.vscode-markdownlint",
+    	"editorconfig.editorconfig",
+		"github.vscode-pull-request-github"
+	],
+	"forwardPorts": [8000]
+}

@@ -1,0 +1,24 @@
+version: '3.2'
+services:
+  dev:
+    hostname: 'tredev'
+    image: 'tredev'
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+      args:
+        VARIANT: "3.8"
+        INSTALL_NODE: "false"
+        NODE_VERSION: "lts/*"
+        TERRAFORM_VERSION: "1.0.5"
+    extra_hosts:
+    - "host.docker.internal:host-gateway"
+    volumes:
+    - type: bind
+      source: ..
+      target: /workspaces/tre/
+      consistency: cached
+    - type: bind
+      source: /var/run/docker.sock
+      target: /var/run/docker.sock
+    command: /bin/sh -c "while sleep 1000; do :; done"

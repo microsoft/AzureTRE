@@ -1,12 +1,10 @@
 # Azure Trusted Research Environment
 
+[Full documentation](https://microsoft.github.io/AzureTRE/)
+
 ## Project Status
 
-**This project is currently under active development, and not yet ready for production deployments.**
-
-Development is being carried out in the [develop](https://github.com/microsoft/AzureTRE/tree/develop/) branch.
-
-The aim is to bring together learnings from past customer engagements where TREs have been built into a single reference solution.  This is a solution accelerator aiming to be a great starting point for a customized TRE solution. You're encouraged to download and customize the solution to meet your requirements
+The aim is to bring together learnings from past customer engagements where TREs have been built into a single reference solution. This is a solution accelerator aiming to be a great starting point for a customized TRE solution. You're encouraged to download and customize the solution to meet your requirements
 
 This project does not have a dedicated team of maintainers but relies on you and the community to maintain and enhance the solution. Microsoft will on project-to-project basis continue to extend the solution in collaboration with customers and partners. No guarantees can be offered as to response times on issues, feature requests, or to the long term road map for the project.
 
@@ -45,3 +43,33 @@ contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additio
 This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft trademarks or logos is subject to and must follow [Microsoft's Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 Any use of third-party trademarks or logos are subject to those third-party's policies.
+
+
+## Repository structure
+
+```text
+├── .github
+│   ├── ISSUE_TEMPLATE     - Templates for GitHub issues
+│   ├── linters            - Linter definitions for workflows
+│   └── workflows          - GitHub Actions workflows (CI/CD)
+│
+├── devops
+│   ├── scripts            - DevOps scripts
+│   └── terraform          - Terraform specific DevOps files/scripts for bootstrapping
+│
+├── docs                   - Documentation
+│
+├── e2e_tests              - pytest-based end-to-end tests
+│
+├── api_app                - API source code and docs
+│
+├── resource_processor     - VMSS Porter Runner
+│
+├── scripts                - Utility scripts
+│
+└── templates
+    ├── core/terraform     - Terraform definitions of Azure TRE core resources
+    ├── shared_services    - Terraform definitions of shared services
+    ├── workspace_services - Workspace services
+    └── workspaces         - Workspace templates
+```

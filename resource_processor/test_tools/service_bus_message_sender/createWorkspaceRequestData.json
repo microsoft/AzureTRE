@@ -1,0 +1,12 @@
+{
+  "action":"install",
+  "id":"0c03ba50-f671-4bf1-9312-97b5f14e42cc",
+  "name":"tre-workspace-base",
+  "version":"0.1.0",
+  "parameters":{
+    "address_space":"10.2.1.0/24",
+    "azure_location":"westeurope",
+    "tre_id":"cse-msr-dev",
+    "workspace_id":"42cc"
+  }
+}

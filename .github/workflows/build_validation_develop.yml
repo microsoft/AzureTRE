@@ -1,0 +1,50 @@
+name: Build Validation
+
+on:
+  pull_request:
+    branches: [develop, main]
+  pull_request_target:
+    types: [labeled]
+    branches: [develop]
+
+# for each ref (branch/pr) run just the most recent, cancel other pending/running ones
+concurrency:
+  group: "${{ github.workflow }}-${{ github.head_ref }}"
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    if: |
+      github.event.pull_request.head.repo.full_name == github.repository
+      || contains(github.event.pull_request.labels.*.name, 'safe to test')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          # Full git history is needed to get a proper list of changed files within `super-linter`
+          fetch-depth: 0
+
+      - name: Lint code base
+        uses: github/super-linter@v4
+        env:
+          VALIDATE_ALL_CODEBASE: false
+          DEFAULT_BRANCH: develop
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VALIDATE_MARKDOWN: true
+          VALIDATE_PYTHON_FLAKE8: true
+          VALIDATE_YAML: true
+          VALIDATE_TERRAFORM: true
+          RUN_LOCAL: true
+          VALIDATE_JAVA: true
+          JAVA_FILE_NAME: checkstyle.xml
+
+      - name: Terraform format check
+        run: terraform fmt -check -recursive
+
+      # find all terraform folders and run validate to catch configuration errors
+      - name: Terraform validation
+        run: |
+          find . -type d -name 'terraform' -not -path '*cnab*' -print0 | xargs -0 -I{} sh -c 'echo "***** Validating: {} *****"; terraform -chdir={} init -backend=false; terraform -chdir={} validate'

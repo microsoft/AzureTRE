@@ -1,0 +1,29 @@
+### Get all workspaces (Workspace Owner or Researcher -- Get own Workspaces)
+GET {{baseUrl}}/workspaces
+Accept: {{contentType}}
+Authorization: Bearer {{token}}
+
+### Get workspace (Workspace Owner or Researcher -- Get own Workspace)
+GET {{baseUrl}}/workspaces/{{workspaceId}}
+Accept: {{contentType}}
+Authorization: Bearer {{token}}
+
+### Get workspace services (Workspace Owner or Researcher -- Get for own Workspace)
+GET {{baseUrl}}/workspaces/{{workspaceId}}/workspace-services
+Accept: {{contentType}}
+Authorization: Bearer {{token}}
+
+### Get specific workspace services (Workspace Owner or Researcher -- Get for own Workspace)
+GET {{baseUrl}}/workspaces/{{workspaceId}}/workspace-services/{{workspaceServiceId}}
+Accept: {{contentType}}
+Authorization: Bearer {{token}}
+
+### Get user-resources (Workspace Owner or Researcher -- Get for own user resource)
+GET {{baseUrl}}/workspaces/{{workspaceId}}/workspace-services/{{workspaceServiceId}}/user-resources
+Accept: {{contentType}}
+Authorization: Bearer {{token}}
+
+### Get user-resources (Workspace Owner or Researcher -- Get for own user resource)
+GET {{baseUrl}}/workspaces/{{workspaceId}}/workspace-services/{{workspaceServiceId}}/user-resources/{{userResourceId}}
+Accept: {{contentType}}
+Authorization: Bearer {{token}}

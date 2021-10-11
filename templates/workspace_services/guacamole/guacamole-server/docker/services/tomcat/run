@@ -1,0 +1,8 @@
+#!/usr/bin/with-contenv sh
+echo >&2 "starting tomcat"
+sed -i "s#port=\"8080\"#port=\"8080\" maxHttpHeaderSize=\"65536\"#" /usr/share/tomcat9/conf/server.xml
+sed -i "s#unpackWARs=\"true\" autoDeploy=\"true\">#><Context path=\"guacamole\" docBase=\"${GUACAMOLE_HOME}guacamole.war\"/>#" /usr/share/tomcat9/conf/server.xml
+# uncomment below to debug
+#sed -i "s#</Host>#<Valve className=\"org.apache.catalina.valves.AccessLogValve\" directory=\"/proc/self/fd\" prefix=\"1\" suffix=\"\" rotatable=\"false\" pattern=\"%h %l %u %t %r; %s %b %{X-Access-Token}i\" /></Host>#" /etc/tomcat9/server.xml
+#cat   /etc/tomcat9/server.xml
+exec sh /usr/share/tomcat9/bin/catalina.sh run
