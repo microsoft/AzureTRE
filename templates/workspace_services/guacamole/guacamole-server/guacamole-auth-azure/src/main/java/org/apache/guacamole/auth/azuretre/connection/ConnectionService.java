@@ -66,7 +66,7 @@ public class ConnectionService {
                 for (int i = 0; i < vmsJsonArray.length(); i++) {
                     final GuacamoleConfiguration config = new GuacamoleConfiguration();
                     final JSONObject vmJsonObject = vmsJsonArray.getJSONObject(i);
-                    final JSONObject templateParameters = (JSONObject) vmJsonObject.get("resourceTemplateParameters");
+                    final JSONObject templateParameters = (JSONObject) vmJsonObject.get("properties");
                     if (templateParameters.has("hostname") && templateParameters.has("ip")) {
                         final String azureResourceId = templateParameters.getString("hostname");
                         final String ip = templateParameters.getString("ip");

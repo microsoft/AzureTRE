@@ -63,22 +63,22 @@ def test_extract_workspace__returns_sp_id_and_roles(get_app_sp_graph_data_mock):
                              # user not a member of the workspace app
                              (User(roleAssignments=[RoleAssignment(resource_id="ab123", role_id="ab124")], id='123', name="test", email="t@t.com"),
                               Workspace(authInformation={'sp_id': 'abc127', 'roles': {'WorkspaceOwner': 'abc128', 'WorkspaceResearcher': 'abc129'}},
-                                        id='abc', resourceTemplateName='template-name', resourceTemplateVersion='0.1.0'),
+                                        id='abc', templateName='template-name', templateVersion='0.1.0'),
                               WorkspaceRole.NoRole),
                              # user is member of the workspace app but not in role
                              (User(roleAssignments=[RoleAssignment(resource_id="ab127", role_id="ab124")], id='123', name="test", email="t@t.com"),
                               Workspace(authInformation={'sp_id': 'abc127', 'roles': {'WorkspaceOwner': 'abc128', 'WorkspaceResearcher': 'abc129'}},
-                                        id='abc', resourceTemplateName='template-name', resourceTemplateVersion='0.1.0'),
+                                        id='abc', templateName='template-name', templateVersion='0.1.0'),
                               WorkspaceRole.NoRole),
                              # user has owner role in workspace
                              (User(roleAssignments=[RoleAssignment(resource_id="abc127", role_id="abc128")], id='123', name="test", email="t@t.com"),
                               Workspace(authInformation={'sp_id': 'abc127', 'roles': {'WorkspaceOwner': 'abc128', 'WorkspaceResearcher': 'abc129'}},
-                                        id='abc', resourceTemplateName='template-name', resourceTemplateVersion='0.1.0'),
+                                        id='abc', templateName='template-name', templateVersion='0.1.0'),
                               WorkspaceRole.Owner),
                              # user has researcher role in workspace
                              (User(roleAssignments=[RoleAssignment(resource_id="abc127", role_id="abc129")], id='123', name="test", email="t@t.com"),
                               Workspace(authInformation={'sp_id': 'abc127', 'roles': {'WorkspaceOwner': 'abc128', 'WorkspaceResearcher': 'abc129'}},
-                                        id='abc', resourceTemplateName='template-name', resourceTemplateVersion='0.1.0'),
+                                        id='abc', templateName='template-name', templateVersion='0.1.0'),
                               WorkspaceRole.Researcher)
                          ])
 def test_get_workspace_role_returns_correct_owner(user: User, workspace: Workspace, expected_role: WorkspaceRole):
@@ -93,7 +93,7 @@ def test_raises_auth_config_error_if_workspace_auth_config_is_not_set():
     access_service = AADAccessService()
 
     user = User(id='123', name="test", email="t@t.com", roleAssignments=[("ab123", "ab124")])
-    workspace_with_no_auth_config = Workspace(id='abc', resourceTemplateName='template-name', resourceTemplateVersion='0.1.0')
+    workspace_with_no_auth_config = Workspace(id='abc', templateName='template-name', templateVersion='0.1.0')
 
     with pytest.raises(AuthConfigValidationError):
         _ = access_service.get_workspace_role(user, workspace_with_no_auth_config)
@@ -105,8 +105,8 @@ def test_raises_auth_config_error_if_auth_info_has_incorrect_roles():
     user = User(id='123', name="test", email="t@t.com", roleAssignments=[("ab123", "ab124")])
     workspace_with_auth_info_but_no_roles = Workspace(
         id='abc',
-        resourceTemplateName='template-name',
-        resourceTemplateVersion='0.1.0',
+        templateName='template-name',
+        templateVersion='0.1.0',
         authInformation={'sp_id': '123', 'roles': {}})
 
     with pytest.raises(AuthConfigValidationError):
