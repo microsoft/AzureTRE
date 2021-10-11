@@ -28,7 +28,7 @@ resource "azurerm_resource_group_template_deployment" "ampls_core" {
   deployment_mode     = "Incremental"
   template_content    = data.local_file.ampls_arm_template.content
 
-  parameters_content  = jsonencode({
+  parameters_content = jsonencode({
     "private_link_scope_name" = {
       value = "ampls-${var.tre_id}"
     }
