@@ -71,14 +71,14 @@ URLs:
     conda env create --file environment.yml
     conda activate InnerEye
     ```
-1. Get storage keys for your storage: 
+1. Get storage keys for your storage:
 
     ```az storage account keys list --account-name stgws<workspace_id>```
-1. Create a "datasets" container 
-    
+1. Create a "datasets" container
+
     ```az storage container create --name datasets --account-name stgws<workspace_id>```
 1. Copy `dataset.csv` file from `Tests/ML/test_data/dataset.csv` to the `hello_world` folder:
-    
+
     ```az storage blob upload --account-name stgws<workspace_id> --container-name datasets --file ./Tests/ML/test_data/dataset.csv --name /hello_world/dataset.csv```
 1. Copy the whole `train_and_test_data` folder from `Test/ML/test_data/train_and_test_data` to the `hello_world` folder:
 
