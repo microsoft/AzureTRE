@@ -18,8 +18,8 @@ class ResourceTemplateInResponse(ResourceTemplate):
 
 class ResourceTemplateInformation(BaseModel):
     name: str = Field(title="Template name")
-    title: str = Field(title="Template title")
-    description: str = Field(title="Template description")
+    title: str = Field(title="Template title",default="")
+    description: str = Field(title="Template description",default="")
 
 
 class ResourceTemplateInformationInList(BaseModel):

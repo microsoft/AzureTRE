@@ -35,11 +35,10 @@ class ResourceTemplateRepository(BaseRepository):
         """
         Returns name/description for all current resource_type templates
         """
-        query = f'SELECT c.name, c.description FROM c WHERE c.resourceType = "{resource_type}" AND c.current = true'
+        query = f'SELECT c.name, c.title, c.description FROM c WHERE c.resourceType = "{resource_type}" AND c.current = true'
         if resource_type == ResourceType.UserResource:
             query += f' AND c.parentWorkspaceService = "{parent_service_name}"'
         template_infos = self.query(query=query)
-
         return [parse_obj_as(ResourceTemplateInformation, info) for info in template_infos]
 
     def get_current_template(self, template_name: str, resource_type: ResourceType, parent_service_name: str = "") -> Union[ResourceTemplate, UserResourceTemplate]:
