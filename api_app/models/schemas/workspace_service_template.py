@@ -7,6 +7,7 @@ def get_sample_workspace_service_template_object(template_name: str = "tre-works
     return ResourceTemplate(
         id="a7a7a7bd-7f4e-4a4e-b970-dc86a6b31dfb",
         name=template_name,
+        title="Workspace Service",
         description="workspace service bundle",
         version="0.1.0",
         resourceType=ResourceType.WorkspaceService,

@@ -151,8 +151,8 @@ def test_get_current_user_resource_template_raises_duplicate_entity_if_multiple_
 @patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
 def test_get_templates_information_returns_unique_template_names(query_mock, resource_template_repo):
     query_mock.return_value = [
-        {"name": "template1", "description": "description1"},
-        {"name": "template2", "description": "description2"}
+        {"name": "template1", "title": "title1", "description": "description1"},
+        {"name": "template2", "title": "title2", "description": "description2"}
     ]
 
     result = resource_template_repo.get_templates_information(ResourceType.Workspace)
@@ -172,6 +172,7 @@ def test_create_workspace_template_item_calls_create_item_with_the_correct_param
     expected_resource_template = ResourceTemplate(
         id="1234",
         name=input_workspace_template.name,
+        title=input_workspace_template.json_schema["title"],
         description=input_workspace_template.json_schema["description"],
         version=input_workspace_template.version,
         resourceType=ResourceType.Workspace,
@@ -193,6 +194,7 @@ def test_create_user_resource_template_item_calls_create_item_with_the_correct_p
     expected_resource_template = UserResourceTemplate(
         id="1234",
         name=input_user_resource_template.name,
+        title=input_user_resource_template.json_schema["title"],
         description=input_user_resource_template.json_schema["description"],
         version=input_user_resource_template.version,
         resourceType=ResourceType.UserResource,
@@ -214,6 +216,7 @@ def test_create_item_created_with_the_expected_type(uuid_mock, save_item_mock, r
     expected_resource_template = ResourceTemplate(
         id="1234",
         name=input_workspace_template.name,
+        title=input_workspace_template.json_schema["title"],
         description=input_workspace_template.json_schema["description"],
         version=input_workspace_template.version,
         resourceType=expected_type,

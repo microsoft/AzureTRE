@@ -39,6 +39,7 @@ class ResourceTemplateRepository(BaseRepository):
         if resource_type == ResourceType.UserResource:
             query += f' AND c.parentWorkspaceService = "{parent_service_name}"'
         template_infos = self.query(query=query)
+
         return [parse_obj_as(ResourceTemplateInformation, info) for info in template_infos]
 
     def get_current_template(self, template_name: str, resource_type: ResourceType, parent_service_name: str = "") -> Union[ResourceTemplate, UserResourceTemplate]:
@@ -80,6 +81,7 @@ class ResourceTemplateRepository(BaseRepository):
         template = {
             "id": str(uuid.uuid4()),
             "name": template_input.name,
+            "title": template_input.json_schema["title"],
             "description": template_input.json_schema["description"],
             "version": template_input.version,
             "resourceType": resource_type,
