@@ -30,7 +30,7 @@ parameters:
     type: string
   - name: vmSize
     type: string
-    default: 'Standard_DS2_v3'
+    default: 'Standard_DS2as_v4'
   - name: vmCount
     type: integer
     default: 1

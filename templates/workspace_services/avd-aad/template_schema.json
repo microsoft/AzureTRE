@@ -23,12 +23,12 @@
             "title": "Virtual Machine Size",
             "description": "The size of the virtual machine to be created.",
             "enum": [
-                "Standard_D2_v3",
-                "Standard_D4_v3",
-                "Standard_D8_v3",
-                "Standard_D16_v3"
+                "Standard_D2as_v4",
+                "Standard_D4as_v4",
+                "Standard_D8as_v4",
+                "Standard_D16as_v4"
             ],
-            "default": "Standard_D2_v3"
+            "default": "Standard_D2as_v4"
         },
         "vmCount": {
             "type": "integer",

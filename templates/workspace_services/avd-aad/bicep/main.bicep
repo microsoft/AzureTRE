@@ -6,8 +6,8 @@ param treId string
 param tags object = {}
 param localAdminName string = 'adminuser'
 @secure()
-param localAdminPassword string 
-param vmSize string = 'Standard_D2_v3'
+param localAdminPassword string
+param vmSize string = 'Standard_D2as_v4'
 param vmCount int = 1
 param vmLicenseType string = 'Windows_Client'
 
