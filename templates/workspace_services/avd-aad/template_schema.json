@@ -2,8 +2,8 @@
     "$schema": "http://json-schema.org/draft-07/schema",
     "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/guacamole/custom_parameters.json",
     "type": "object",
-    "title": "Azure Virtual Desktop service template",
-    "description": "Azure Virtual Desktop service template",
+    "title": "Azure Virtual Desktop Service",
+    "description": "Azure Virtual Desktop service integrated with Azure Active Directory",
     "required": [
     ],
     "properties": {
@@ -31,7 +31,7 @@
             "default": "Standard_D2_v3"
         },
         "vmCount": {
-            "type": "integer", 
+            "type": "integer",
             "title": "Number of Virtual Machines",
             "description": "The number of virtual machines to be created.",
             "default": 1
