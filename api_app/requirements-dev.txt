@@ -1,4 +1,5 @@
 # Dev requirements
+pytest-asyncio
 asgi-lifespan~=1.0.1
 httpx~=0.18.1
 mock==4.0.3

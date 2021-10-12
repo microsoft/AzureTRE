@@ -17,7 +17,7 @@ from models.schemas.workspace_service import WorkspaceServiceIdInResponse, Works
 from resources import strings
 from service_bus.resource_request_sender import send_resource_request_message, RequestAction
 from services.authentication import get_current_user, get_current_admin_user, get_access_service
-
+from services.azure_resource_status import get_azure_resource_status
 
 workspaces_router = APIRouter(dependencies=[Depends(get_current_user)])
 workspace_services_router = APIRouter(dependencies=[Depends(get_current_user)])
@@ -199,12 +199,20 @@ async def retrieve_user_resources_for_workspace_service(workspace_id: str, servi
     if role == WorkspaceRole.Researcher:
         user_resources = [resource for resource in user_resources if resource.ownerId == user.id]
 
+    for user_resource in user_resources:
+        if 'azure_resource_id' in user_resource.properties:
+            user_resource.azureStatus = get_azure_resource_status(user_resource.properties['azure_resource_id'])
+
     return UserResourcesInList(userResources=user_resources)
 
 
 @user_resources_router.get("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}", response_model=UserResourceInResponse, name=strings.API_GET_USER_RESOURCE)
 async def retrieve_user_resource_by_id(workspace=Depends(get_workspace_by_id_from_path), user_resource=Depends(get_user_resource_by_id_from_path), user=Depends(get_current_user)) -> UserResourceInResponse:
     validate_user_is_workspace_owner_or_resource_owner(user, workspace, user_resource)
+
+    if 'azure_resource_id' in user_resource.properties:
+        user_resource.azureStatus = get_azure_resource_status(user_resource.properties['azure_resource_id'])
+
     return UserResourceInResponse(userResource=user_resource)
 
 
