@@ -7,7 +7,7 @@ function usage() {
     Usage: $0 [-u --tre_url]  [-c --current] [-i --insecure]
 
     Options:
-        -r, --acr-name        Azure Container Registry Name 
+        -r, --acr-name        Azure Container Registry Name
         -t, --bundle-type     Bundle type, workspace or workspace_service
         -c, --current:        Make this the currently deployed version of this template
         -i, --insecure:       Bypass SSL certificate checks
@@ -41,8 +41,10 @@ while [ "$1" != "" ]; do
         ;;
         workspace_service)
         ;;
+        user_resource)
+        ;;
         *)
-            echo "Bundle type must be workspace or workspace_service, not $1"
+            echo "Bundle type must be workspace, workspace_service or user_resource, not $1"
             exit 1
         esac
         bundle_type=$1
@@ -65,25 +67,24 @@ while [ "$1" != "" ]; do
 done
 
 if [[ -n ${tre_url+x} ]]; then
-    if [[ -z ${access_token+x} ]]; then  
-        echo -e "No Azure access token provided\n"
-        usage
+    if [[ -z ${access_token+x} ]]; then
+        echo -e "WARNING!!! No Azure access token provided. Automatic bundle registration not possible. Use the script output to self-register. See documentation for more details.\n"
     fi
 fi
 
-if [[ -n ${access_token+x} ]]; then  
-    if [[ -z ${tre_url+x} ]]; then  
+if [[ -n ${access_token+x} ]]; then
+    if [[ -z ${tre_url+x} ]]; then
         echo -e "No TRE URL provided\n"
         usage
     fi
 fi
 
-if [[ -z ${acr_name+x} ]]; then  
+if [[ -z ${acr_name+x} ]]; then
     echo -e "No Azure Container Registry name provided\n"
     usage
 fi
 
-if [[ -z ${bundle_type+x} ]]; then 
+if [[ -z ${bundle_type+x} ]]; then
     echo -e "No bundle type provided\n"
     usage
 fi

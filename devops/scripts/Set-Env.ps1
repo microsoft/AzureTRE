@@ -3,9 +3,10 @@
 
 $EnvFilePath = $args[0]
 $EnvFileContent = Get-Content -Path $EnvFilePath
-
 $EnvFileContent | ForEach-Object {
+  if($_ -like "*=*") {
     $KeyValue = $_ -split "=", 2
-    [Environment]::SetEnvironmentVariable($KeyValue[0], $KeyValue[1])
-    Write-Output "Set $($KeyValue[0]) (value has length $($KeyValue[1].length))"
+    [Environment]::SetEnvironmentVariable($KeyValue[0], $($KeyValue[1] -replace '"', ""))
+  }
 }
+

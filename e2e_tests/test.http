@@ -1,7 +1,7 @@
 # Retrieve Bearer token
 # @name auth
 POST https://login.microsoftonline.com/<CHANGE_ME_TENANT_ID>/oauth2/token HTTP/1.1
-Content-type: application/x-www-form-urlencoded	
+Content-type: application/x-www-form-urlencoded
 
 grant_type=password
 &resource=__CHANGE_ME_
@@ -25,13 +25,13 @@ Authorization:  Bearer {{auth.response.body.access_token}}
 Content-type: application/json
 
 {
-  "workspaceType": "tre-workspace-base",
-        "properties": {
-            "display_name": "E2E test",
-            "description": "workspace for E2E",
-            "app_id": "<CHANGE_ME_APP_ID>",
-            "address_space": "192.168.25.0/24"
-        }
+  "templateName": "tre-workspace-base",
+  "properties": {
+      "display_name": "E2E test",
+      "description": "workspace for E2E",
+      "app_id": "<CHANGE_ME_APP_ID>",
+      "address_space": "192.168.25.0/24"
+  }
 }
 
 ### Get workspace info for the provisioned workspace
@@ -39,7 +39,7 @@ GET https://cse-msr-dev.westeurope.cloudapp.azure.com/api/workspaces/{{newworksp
 Authorization:  Bearer {{auth.response.body.access_token}}
 Content-type: application/json
 
-### Disable workspace 
+### Disable workspace
 PATCH https://cse-msr-dev.westeurope.cloudapp.azure.com/api/workspaces/{{newworkspace.response.body.workspaceId}}
 Authorization:  Bearer {{auth.response.body.access_token}}
 Content-type: application/json
@@ -48,7 +48,7 @@ Content-type: application/json
   "enabled": false
 }
 
-### Delete workspace 
+### Delete workspace
 DELETE https://cse-msr-dev.westeurope.cloudapp.azure.com/api/workspaces/{{newworkspace.response.body.workspaceId}}
 Authorization:  Bearer {{auth.response.body.access_token}}
 Content-type: application/json

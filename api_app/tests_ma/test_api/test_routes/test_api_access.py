@@ -19,15 +19,15 @@ USER_RESOURCE_ID = 'abcad738-7265-4b5f-9eae-a1a62928772e'
 
 
 def sample_workspace():
-    return Workspace(id=WORKSPACE_ID, resourceTemplateName='template name', resourceTemplateVersion='1.0')
+    return Workspace(id=WORKSPACE_ID, templateName='template name', templateVersion='1.0')
 
 
 def sample_workspace_service():
-    return WorkspaceService(id=SERVICE_ID, resourceTemplateName='template name', resourceTemplateVersion='1.0')
+    return WorkspaceService(id=SERVICE_ID, templateName='template name', templateVersion='1.0')
 
 
 def sample_user_resource():
-    return UserResource(id=USER_RESOURCE_ID, resourceTemplateName='template name', resourceTemplateVersion='1.0')
+    return UserResource(id=USER_RESOURCE_ID, templateName='template name', templateVersion='1.0')
 
 
 # TEMPLATES
@@ -110,7 +110,7 @@ class TestWorkspaceServiceRoutesAccess:
     async def test_post_workspace_service_raises_403_if_user_is_not_owner(self, get_role_mock, __, ___, role, app, client):
         get_role_mock.return_value = role
         workspace_service_input = {
-            "workspaceServiceType": "test-workspace-service",
+            "templateName": "test-workspace-service",
             "properties": {
                 "display_name": "display",
                 "app_id": "f0acf127-a672-a672-a672-a15e5bf9f127"
@@ -179,7 +179,7 @@ class TestUserResourcesRoutesAccess:
     @patch("api.routes.workspaces.get_user_role_in_workspace", return_value=WorkspaceRole.NoRole)
     async def test_post_user_resource_raises_403_if_user_is_not_workspace_owner_or_researcher(self, _, __, ___, app, client):
         input_data = {
-            "userResourceType": "test-user-resource",
+            "templateName": "test-user-resource",
             "properties": {"display_name": "display"}
         }
         response = await client.post(app.url_path_for(strings.API_CREATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID), json=input_data)

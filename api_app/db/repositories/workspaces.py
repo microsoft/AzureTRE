@@ -46,7 +46,7 @@ class WorkspaceRepository(ResourceRepository):
     def create_workspace_item(self, workspace_input: WorkspaceInCreate) -> Workspace:
         full_workspace_id = str(uuid.uuid4())
 
-        template_version = self.validate_input_against_template(workspace_input.workspaceType, workspace_input, ResourceType.Workspace)
+        template_version = self.validate_input_against_template(workspace_input.templateName, workspace_input, ResourceType.Workspace)
 
         auth_info = extract_auth_information(workspace_input.properties["app_id"])
 
@@ -60,9 +60,9 @@ class WorkspaceRepository(ResourceRepository):
 
         workspace = Workspace(
             id=full_workspace_id,
-            resourceTemplateName=workspace_input.workspaceType,
-            resourceTemplateVersion=template_version,
-            resourceTemplateParameters=resource_spec_parameters,
+            templateName=workspace_input.templateName,
+            templateVersion=template_version,
+            properties=resource_spec_parameters,
             deployment=Deployment(status=Status.NotDeployed, message=strings.RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE),
             authInformation=auth_info
         )
@@ -70,13 +70,13 @@ class WorkspaceRepository(ResourceRepository):
         return workspace
 
     def get_new_address_space(self, cidr_netmask: int = 24):
-        networks = [x.resourceTemplateParameters["address_space"] for x in self.get_active_workspaces()]
+        networks = [x.properties["address_space"] for x in self.get_active_workspaces()]
 
         new_address_space = generate_new_cidr(networks, cidr_netmask)
         return new_address_space
 
     def patch_workspace(self, workspace: Workspace, workspace_patch: WorkspacePatchEnabled):
-        workspace.resourceTemplateParameters["enabled"] = workspace_patch.enabled
+        workspace.properties["enabled"] = workspace_patch.enabled
         self.update_item(workspace)
 
     def get_workspace_spec_params(self, full_workspace_id: str):

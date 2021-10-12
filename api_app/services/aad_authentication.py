@@ -33,10 +33,15 @@ class AzureADAuthorization(OAuth2AuthorizationCodeBearer):
 
         try:
             decoded_token = self._decode_token(token)
+        except Exception as e:
+            logging.debug(e)
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.AUTH_UNABLE_TO_VALIDATE_TOKEN, headers={"WWW-Authenticate": "Bearer"})
+
+        try:
             return self._get_user_from_token(decoded_token)
         except Exception as e:
             logging.debug(e)
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.AUTH_COULD_NOT_VALIDATE_CREDENTIALS, headers={"WWW-Authenticate": "Bearer"})
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.ACCESS_UNABLE_TO_GET_ROLE_ASSIGNMENTS_FOR_USER, headers={"WWW-Authenticate": "Bearer"})
 
     @staticmethod
     def _get_user_from_token(decoded_token: dict) -> User:
@@ -53,7 +58,7 @@ class AzureADAuthorization(OAuth2AuthorizationCodeBearer):
     def _decode_token(self, token: str) -> dict:
         key_id = self._get_key_id(token)
         key = self._get_token_key(key_id)
-        return jwt.decode(token, key, verify=True, algorithms=['RS256'], audience=config.API_AUDIENCE)
+        return jwt.decode(token, key, options={"verify_signature": True}, algorithms=['RS256'], audience=config.API_AUDIENCE)
 
     @staticmethod
     def _get_key_id(token: str) -> str:

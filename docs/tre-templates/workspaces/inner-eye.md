@@ -30,10 +30,10 @@ Follow the links to learn more about how to access the services and any firewall
   | Environment variable name | Description |
   | ------------------------- | ----------- |
   | `ID` | A GUID to identify the workspace. The last 4 characters of this `ID` can be found in the resource names of the workspace resources; for example, a `ID` of `2e84dad0-9d4f-42bd-8e44-3d04095eab12` will result in a resource group name for workspace of `rg-<tre-id>-ab12`. |
-  | `ADDRESS_SPACE` | The address space for the workspace virtual network, must be inside the `TRE_ADDRESS_SPACE` defined when dploying the TRE and not overlap with any other address spaces. |
+  | `ADDRESS_SPACE` | The address space for the workspace virtual network, must be inside the `TRE_ADDRESS_SPACE` defined when deploying the TRE and not overlap with any other address spaces. |
   | `INFERENCE_SP_CLIENT_ID` | Service principal client ID used by the inference service to connect to Azure ML. Use the output from the step above. |
   | `INFERENCE_SP_CLIENT_SECRET` | Service principal client secret used by the inference service to connect to Azure ML. Use the output from the step above. |
-  
+
 1. Build and install the workspace:
 
   ```cmd

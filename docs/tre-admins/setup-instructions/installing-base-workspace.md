@@ -5,12 +5,12 @@
 1. Run:
 
     ```cmd
-    register-bundle DIR=./templates/workspaces/base
+    /workspaces/tre> make register-bundle DIR=./templates/workspaces/base BUNDLE_TYPE=workspace
     ```
 
-    Copy the resulting payload json.
+    Copy the resulting JSON payload.
 
-1. Navigate to the Swagger UI at `https://<azure_tre_fqdn>/docs`
+1. Navigate to the Swagger UI at `https://<azure_tre_fqdn>/api/docs`
 
 1. Log into the Swagger UI by clicking `Authorize`, then `Authorize` again. You will be redirected to the login page.
 
@@ -37,15 +37,11 @@ Go to ``azure_tre_fqdn/docs`` and use POST /api/workspaces with the sample body 
 
 ```json
 {
-  "displayName": "manual-from-swagger",
-  "description": "workspace for team X",
-  "workspaceType": "tre-workspace-base",
-  "parameters": {},
-  "authConfig": {
-    "provider": "AAD",
-    "data": {
-      "app_id": "app id created above"
-    }
+  "templateName": "tre-workspace-base",
+  "properties": {
+    "display_name": "manual-from-swagger",
+    "description": "workspace for team X",
+    "app_id": "app id created above"
   }
 }
 ```

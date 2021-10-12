@@ -39,7 +39,7 @@ async def test_getting_templates(template_name, token, verify) -> None:
 @pytest.mark.timeout(3000)
 async def test_create_guacamole_service_into_base_workspace(token, verify) -> None:
     payload = {
-        "workspaceType": "tre-workspace-base",
+        "templateName": "tre-workspace-base",
         "properties": {
             "display_name": "E2E test guacamole service",
             "description": "workspace for E2E",
@@ -51,7 +51,7 @@ async def test_create_guacamole_service_into_base_workspace(token, verify) -> No
 #   Enable when guacamole service deletion bug is fixed
 #   ***************************************************
 #   service_payload = {
-#       "workspaceServiceType": "tre-service-guacamole",
+#       "templateName": "tre-service-guacamole",
 #       "properties": {
 #           "display_name": "Workspace service test",
 #           "description": "Workspace service for E2E test"

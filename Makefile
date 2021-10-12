@@ -3,7 +3,7 @@
 SHELL:=/bin/bash
 ROOTPATH:=$(shell pwd)
 
-all: bootstrap mgmt-deploy images tre-deploy config-nexus
+all: bootstrap mgmt-deploy images tre-deploy
 images: build-api-image push-api-image build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image build-gitea-image push-gitea-image build-guacamole-image push-guacamole-image
 
 bootstrap:
@@ -114,6 +114,14 @@ letsencrypt:
 	&& cd ./templates/core/terraform/ && . ./outputs.sh \
 	&& cd ./scripts/ && ./letsencrypt.sh
 
+tre-stop:
+	echo -e "\n\e[34m»»» 🧩 \e[96mStopping TRE\e[0m..." \
+	&& pwsh -c ./devops/scripts/Control-TRE.ps1 -Action "Stop"
+
+tre-start:
+	echo -e "\n\e[34m»»» 🧩 \e[96mStarting TRE\e[0m..." \
+	&& pwsh -c ./devops/scripts/Control-TRE.ps1 -Action "Start"
+
 tre-destroy:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDestroying TRE\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
@@ -188,8 +196,9 @@ register-bundle:
 	&& cd ${DIR} \
 	&& ${ROOTPATH}/devops/scripts/publish_register_bundle.sh --acr-name $${ACR_NAME} --bundle-type $${BUNDLE_TYPE} --current --insecure --tre_url $${TRE_URL} --access-token $${TOKEN}
 
-config-nexus:
-	echo -e "\n\e[34m»»» 🧩 \e[96mConfiguring Nexus\e[0m..." \
+register-bundle-payload:
+	echo -e "\n\e[34m»»» 🧩 \e[96mPublishing ${DIR} bundle\e[0m..." \
+	&& ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
-	&& cd ${ROOTPATH}/templates/shared_services/sonatype-nexus/nexus_conf && ./configure_nexus.sh
+	&& cd ${DIR} \
+	&& ${ROOTPATH}/devops/scripts/publish_register_bundle.sh --acr-name $${ACR_NAME} --bundle-type ${BUNDLE_TYPE} --current

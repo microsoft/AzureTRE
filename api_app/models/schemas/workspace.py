@@ -10,9 +10,9 @@ from models.domain.workspace import Workspace
 def get_sample_workspace(workspace_id: str, spec_workspace_id: str = "0001") -> dict:
     return {
         "id": workspace_id,
-        "resourceTemplateName": "tre-workspace-base",
-        "resourceTemplateVersion": "0.1.0",
-        "resourceTemplateParameters": {
+        "templateName": "tre-workspace-base",
+        "templateVersion": "0.1.0",
+        "properties": {
             "azure_location": "westeurope",
             "workspace_id": spec_workspace_id,
             "tre_id": "mytre-dev-1234",
@@ -66,13 +66,13 @@ class WorkspacesInList(BaseModel):
 
 
 class WorkspaceInCreate(BaseModel):
-    workspaceType: str = Field(title="Workspace type", description="Bundle name")
+    templateName: str = Field(title="Workspace type", description="Bundle name")
     properties: dict = Field({}, title="Workspace parameters", description="Values for the parameters required by the workspace resource specification")
 
     class Config:
         schema_extra = {
             "example": {
-                "workspaceType": "tre-workspace-base",
+                "templateName": "tre-workspace-base",
                 "properties": {
                     "display_name": "the workspace display name",
                     "description": "workspace description",

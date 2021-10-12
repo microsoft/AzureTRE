@@ -16,7 +16,7 @@ USER_ID = "abc000d3-82da-4bfc-b6e9-9a7853ef753e"
 
 @pytest.fixture
 def basic_user_resource_request():
-    return UserResourceInCreate(userResourceType="user-resource-type", properties={"display_name": "test", "description": "test", "tre_id": "test"})
+    return UserResourceInCreate(templateName="user-resource-type", properties={"display_name": "test", "description": "test", "tre_id": "test"})
 
 
 @pytest.fixture
@@ -29,9 +29,9 @@ def user_resource_repo():
 def user_resource():
     user_resource = UserResource(
         id=RESOURCE_ID,
-        resourceTemplateVersion="0.1.0",
-        resourceTemplateParameters={},
-        resourceTemplateName="my-workspace-service",
+        templateVersion="0.1.0",
+        properties={},
+        templateName="my-workspace-service",
     )
     return user_resource
 
@@ -40,19 +40,19 @@ def user_resource():
 @patch('core.config.TRE_ID', "9876")
 def test_create_user_resource_item_creates_a_user_resource_with_the_right_values(validate_input_mock, user_resource_repo, basic_user_resource_request):
     user_resource_to_create = basic_user_resource_request
-    validate_input_mock.return_value = basic_user_resource_request.userResourceType
+    validate_input_mock.return_value = basic_user_resource_request.templateName
 
     user_resource = user_resource_repo.create_user_resource_item(user_resource_to_create, WORKSPACE_ID, SERVICE_ID, "parent-service-type", USER_ID)
 
-    assert user_resource.resourceTemplateName == basic_user_resource_request.userResourceType
+    assert user_resource.templateName == basic_user_resource_request.templateName
     assert user_resource.resourceType == ResourceType.UserResource
     assert user_resource.deployment.status == Status.NotDeployed
     assert user_resource.workspaceId == WORKSPACE_ID
     assert user_resource.parentWorkspaceServiceId == SERVICE_ID
     assert user_resource.ownerId == USER_ID
-    assert len(user_resource.resourceTemplateParameters["tre_id"]) > 0
+    assert len(user_resource.properties["tre_id"]) > 0
     # need to make sure request doesn't override system param
-    assert user_resource.resourceTemplateParameters["tre_id"] != "test"
+    assert user_resource.properties["tre_id"] != "test"
 
 
 @patch('db.repositories.user_resources.UserResourceRepository.validate_input_against_template', side_effect=ValueError)
@@ -100,5 +100,5 @@ def test_patch_user_resource_updates_item(user_resource, user_resource_repo):
     user_resource_patch = UserResourcePatchEnabled(enabled=True)
 
     user_resource_repo.patch_user_resource(user_resource, user_resource_patch)
-    user_resource.resourceTemplateParameters["enabled"] = False
+    user_resource.properties["enabled"] = False
     user_resource_repo.update_item.assert_called_once_with(user_resource)
