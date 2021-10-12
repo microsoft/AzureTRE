@@ -46,7 +46,7 @@ class WorkspaceRepository(ResourceRepository):
     def create_workspace_item(self, workspace_input: WorkspaceInCreate) -> Workspace:
         full_workspace_id = str(uuid.uuid4())
 
-        template_version = self.validate_input_against_template(workspace_input.workspaceType, workspace_input, ResourceType.Workspace)
+        template_version = self.validate_input_against_template(workspace_input.templateName, workspace_input, ResourceType.Workspace)
 
         auth_info = extract_auth_information(workspace_input.properties["app_id"])
 
@@ -60,7 +60,7 @@ class WorkspaceRepository(ResourceRepository):
 
         workspace = Workspace(
             id=full_workspace_id,
-            templateName=workspace_input.workspaceType,
+            templateName=workspace_input.templateName,
             templateVersion=template_version,
             properties=resource_spec_parameters,
             deployment=Deployment(status=Status.NotDeployed, message=strings.RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE),

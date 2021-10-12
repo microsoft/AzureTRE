@@ -11,7 +11,7 @@ from models.schemas.workspace import WorkspaceInCreate, WorkspacePatchEnabled
 
 @pytest.fixture
 def basic_workspace_request():
-    return WorkspaceInCreate(workspaceType="base-tre", properties={"display_name": "test", "description": "test", "app_id": "123", "tre_id": "test"})
+    return WorkspaceInCreate(templateName="base-tre", properties={"display_name": "test", "description": "test", "app_id": "123", "tre_id": "test"})
 
 
 @pytest.fixture
@@ -78,12 +78,12 @@ def test_create_workspace_item_creates_a_workspace_with_the_right_values(validat
     # make sure the input doesn't include an address_space so that one will be generated
     workspace_to_create.properties.pop("address_space", None)
 
-    validate_input_mock.return_value = workspace_to_create.workspaceType
+    validate_input_mock.return_value = workspace_to_create.templateName
     new_cidr_mock.return_value = "1.2.3.4/24"
 
     workspace = workspace_repo.create_workspace_item(workspace_to_create)
 
-    assert workspace.templateName == workspace_to_create.workspaceType
+    assert workspace.templateName == workspace_to_create.templateName
     assert workspace.resourceType == ResourceType.Workspace
     assert workspace.deployment.status == Status.NotDeployed
 
@@ -104,7 +104,7 @@ def test_create_workspace_item_creates_a_workspace_with_the_right_values(validat
 def test_create_workspace_item_creates_a_workspace_with_custom_address_space(validate_input_mock, _, workspace_repo, basic_workspace_request):
     workspace_to_create = basic_workspace_request
     workspace_to_create.properties["address_space"] = "192.168.0.0/24"
-    validate_input_mock.return_value = workspace_to_create.workspaceType
+    validate_input_mock.return_value = workspace_to_create.templateName
 
     workspace = workspace_repo.create_workspace_item(workspace_to_create)
 

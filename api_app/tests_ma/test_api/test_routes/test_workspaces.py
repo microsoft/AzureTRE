@@ -34,7 +34,7 @@ def resource_repo() -> ResourceRepository:
 @pytest.fixture
 def workspace_input():
     return {
-        "workspaceType": "test-workspace",
+        "templateName": "test-workspace",
         "properties": {
             "display_name": "display",
             "app_id": APP_ID
@@ -45,7 +45,7 @@ def workspace_input():
 @pytest.fixture
 def workspace_service_input():
     return {
-        "workspaceServiceType": "test-workspace-service",
+        "templateName": "test-workspace-service",
         "properties": {
             "display_name": "display"
         }
@@ -55,7 +55,7 @@ def workspace_service_input():
 @pytest.fixture
 def sample_user_resource_input_data():
     return {
-        "userResourceType": "test-user-resource",
+        "templateName": "test-user-resource",
         "properties": {
             "display_name": "display",
         }
