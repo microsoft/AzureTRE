@@ -28,9 +28,15 @@ class TRECosmosDBMigrations:
 
 def main():
     migrations = TRECosmosDBMigrations()
+    # PR 1030
     migrations.renameCosmosDBFields("Resources", 'resourceTemplateName', 'templateName')
     migrations.renameCosmosDBFields("Resources", 'resourceTemplateVersion', 'templateVersion')
     migrations.renameCosmosDBFields("Resources", 'resourceTemplateParameters', 'properties')
+
+    # PR 1031
+    migrations.renameCosmosDBFields("Resources", 'workspaceType', 'templateName')
+    migrations.renameCosmosDBFields("Resources", 'workspaceServiceType', 'templateName')
+    migrations.renameCosmosDBFields("Resources", 'userResourceType', 'templateName')
 
 
 if __name__ == "__main__":
