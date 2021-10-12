@@ -16,9 +16,9 @@ def create_test_resource():
     return Resource(
         id=str(uuid.uuid4()),
         resourceType=ResourceType.Workspace,
-        resourceTemplateName="Test resource template name",
-        resourceTemplateVersion="2.718",
-        resourceTemplateParameters={"testParameter": "testValue"},
+        templateName="Test resource template name",
+        templateVersion="2.718",
+        properties={"testParameter": "testValue"},
         deployment=Deployment(
             status=Status.NotDeployed,
             message="Deployment test message"

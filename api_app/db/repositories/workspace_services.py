@@ -57,14 +57,14 @@ class WorkspaceServiceRepository(ResourceRepository):
         workspace_service = WorkspaceService(
             id=full_workspace_service_id,
             workspaceId=workspace_id,
-            resourceTemplateName=workspace_service_input.templateName,
-            resourceTemplateVersion=template_version,
-            resourceTemplateParameters=resource_spec_parameters,
+            templateName=workspace_service_input.templateName,
+            templateVersion=template_version,
+            properties=resource_spec_parameters,
             deployment=Deployment(status=Status.NotDeployed, message=strings.RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE)
         )
 
         return workspace_service
 
     def patch_workspace_service(self, workspace_service: WorkspaceService, workspace_service_patch: WorkspaceServicePatchEnabled):
-        workspace_service.resourceTemplateParameters["enabled"] = workspace_service_patch.enabled
+        workspace_service.properties["enabled"] = workspace_service_patch.enabled
         self.update_item(workspace_service)

@@ -65,16 +65,16 @@ def sample_user_resource_input_data():
 @pytest.fixture
 def disabled_workspace() -> Workspace:
     workspace = sample_workspace(WORKSPACE_ID)
-    workspace.resourceTemplateParameters["enabled"] = False
+    workspace.properties["enabled"] = False
     return workspace
 
 
 def sample_workspace(workspace_id=WORKSPACE_ID, auth_info: dict = {}):
     workspace = Workspace(
         id=workspace_id,
-        resourceTemplateName="tre-workspace-base",
-        resourceTemplateVersion="0.1.0",
-        resourceTemplateParameters={},
+        templateName="tre-workspace-base",
+        templateVersion="0.1.0",
+        properties={},
         deployment=Deployment(status=Status.NotDeployed, message=""),
     )
     if auth_info:
@@ -85,9 +85,9 @@ def sample_workspace(workspace_id=WORKSPACE_ID, auth_info: dict = {}):
 def sample_deployed_workspace(workspace_id=WORKSPACE_ID, auth_info: dict = {}):
     workspace = Workspace(
         id=workspace_id,
-        resourceTemplateName="tre-workspace-base",
-        resourceTemplateVersion="0.1.0",
-        resourceTemplateParameters={},
+        templateName="tre-workspace-base",
+        templateVersion="0.1.0",
+        properties={},
         deployment=Deployment(status=Status.Deployed, message=""),
     )
     if auth_info:
@@ -99,9 +99,9 @@ def sample_workspace_service(workspace_service_id=SERVICE_ID, workspace_id=WORKS
     return WorkspaceService(
         id=workspace_service_id,
         workspaceId=workspace_id,
-        resourceTemplateName="tre-workspace-base",
-        resourceTemplateVersion="0.1.0",
-        resourceTemplateParameters={},
+        templateName="tre-workspace-base",
+        templateVersion="0.1.0",
+        properties={},
         deployment=Deployment(status=Status.NotDeployed, message=""),
     )
 
@@ -111,9 +111,9 @@ def sample_user_resource_object(user_resource_id=USER_RESOURCE_ID, workspace_id=
         id=user_resource_id,
         workspaceId=workspace_id,
         parentWorkspaceServiceId=parent_workspace_service_id,
-        resourceTemplateName="tre-user-resource",
-        resourceTemplateVersion="0.1.0",
-        resourceTemplateParameters={},
+        templateName="tre-user-resource",
+        templateVersion="0.1.0",
+        properties={},
         deployment=Deployment(status=Status.NotDeployed, message=""),
     )
 
@@ -121,11 +121,11 @@ def sample_user_resource_object(user_resource_id=USER_RESOURCE_ID, workspace_id=
 
 
 def disabled_workspace_service():
-    return WorkspaceService(id=SERVICE_ID, resourceTemplateName='template name', resourceTemplateVersion='1.0', resourceTemplateParameters={"enabled": False})
+    return WorkspaceService(id=SERVICE_ID, templateName='template name', templateVersion='1.0', properties={"enabled": False})
 
 
 def disabled_user_resource():
-    return UserResource(id=USER_RESOURCE_ID, resourceTemplateName='template name', resourceTemplateVersion='1.0', resourceTemplateParameters={"enabled": False})
+    return UserResource(id=USER_RESOURCE_ID, templateName='template name', templateVersion='1.0', properties={"enabled": False})
 
 
 class TestWorkspaceHelpers:
@@ -383,7 +383,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     async def test_delete_workspace_returns_400_if_workspace_is_enabled(self, get_workspace_mock, app, client):
         workspace = sample_workspace()
-        workspace.resourceTemplateParameters["enabled"] = True
+        workspace.properties["enabled"] = True
         get_workspace_mock.return_value = workspace
 
         response = await client.delete(app.url_path_for(strings.API_DELETE_WORKSPACE, workspace_id=WORKSPACE_ID))
@@ -587,7 +587,7 @@ class TestWorkspaceServiceRoutesThatDontRequireAdminRights:
     @patch("api.routes.workspaces.validate_user_is_owner")
     async def test_delete_workspace_service_raises_400_if_workspace_service_is_enabled(self, _, __, get_workspace_service_mock, app, client):
         workspace_service = sample_workspace_service()
-        workspace_service.resourceTemplateParameters["enabled"] = True
+        workspace_service.properties["enabled"] = True
         get_workspace_service_mock.return_value = workspace_service
 
         response = await client.delete(app.url_path_for(strings.API_DELETE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID))
@@ -782,7 +782,7 @@ class TestUserResourcesRoutesThatDontRequireAdminRights:
     @patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")
     async def test_delete_user_resource_raises_400_if_user_resource_is_enabled(self, _, get_user_resource_mock, ___, app, client):
         user_resource = sample_user_resource_object()
-        user_resource.resourceTemplateParameters["enabled"] = True
+        user_resource.properties["enabled"] = True
         get_user_resource_mock.return_value = user_resource
 
         response = await client.delete(app.url_path_for(strings.API_DELETE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID))
