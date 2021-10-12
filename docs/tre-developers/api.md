@@ -15,7 +15,7 @@ The TRE API is a service that users can interact with to request changes to work
   * You can use the [Cosmos DB Emulator](https://docs.microsoft.com/azure/cosmos-db/local-emulator?tabs=cli%2Cssl-netstd21) for testing locally
 * [Azure Service Bus](https://docs.microsoft.com/azure/service-bus-messaging/service-bus-messaging-overview)
 * Service principal for the API to access Azure services such as Azure Service Bus
-* AAD applications (for the API and Swagger UI) - see [Authentication & authorization](../tre-admins/deploying-the-tre/auth.md) for more information
+* AAD applications (for the API and Swagger UI) - see [Authentication & authorization](../tre-admins/auth.md) for more information
 
 #### Creating resources (Bash)
 
@@ -29,7 +29,7 @@ az account list
 az account set --subscription <subscription ID>
 ```
 
-Azure Service Bus:
+Provision Azure Service Bus:
 
 ```bash
 RESOURCE_GROUP=<resource group name>
@@ -43,7 +43,7 @@ az servicebus queue create --resource-group $RESOURCE_GROUP --namespace-name $SE
 az servicebus queue create --resource-group $RESOURCE_GROUP --namespace-name $SERVICE_BUS_NAMESPACE --name $SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE
 ```
 
-Azure Cosmos DB:
+Provision Azure Cosmos DB:
 
 ```bash
 COSMOS_NAME=<cosmos_name>
@@ -79,7 +79,7 @@ az role assignment create \
 
 ### General
 
-| Environment variable name | Description |
+| <div style="width: 340px">Environment variable name</div> | Description |
 | ------------------------- | ----------- |
 | `DEBUG` | When set to `True`, the debugging information for unhandled exceptions is shown in the Swagger UI and logging is more verbose. |
 | `TRE_ID` | The Azure TRE instance name - used for deployment of resources (can be set to anything when debugging locally). Example value: `mytre-dev-3142` |
@@ -87,20 +87,20 @@ az role assignment create \
 
 ### Authentication and Authorization
 
-The TRE API depends on [TRE API](../tre-admins/deploying-the-tre/auth.md#tre-api) and [TRE Swagger UI](../tre-admins/deploying-the-tre/auth.md#tre-swagger-ui) app registrations. The API requires the environment variables listed in the table below to be present. See [Authentication and authorization](../tre-admins/deploying-the-tre/auth.md) for more information.
+The TRE API depends on [TRE API](../tre-admins/auth.md#tre-api) and [TRE Swagger UI](../tre-admins/auth.md#tre-swagger-ui) app registrations. The API requires the environment variables listed in the table below to be present. See [Authentication and authorization](../tre-admins/auth.md) for more information.
 
-| Environment variable name | Description |
+| <div style="width: 340px">Environment variable name</div> | Description |
 | ------------------------- | ----------- |
 | `AAD_TENANT_ID` | The tenant ID of the Azure AD. |
-| `API_CLIENT_ID` | The application (client) ID of the [TRE API](../tre-admins/deploying-the-tre/auth.md#tre-api) service principal. |
-| `API_CLIENT_SECRET` | The application password (client secret) of the [TRE API](../tre-admins/deploying-the-tre/auth.md#tre-api) service principal. |
-| `SWAGGER_UI_CLIENT_ID` | The application (client) ID of the [TRE Swagger UI](../tre-admins/deploying-the-tre/auth.md#tre-swagger-ui) service principal. |
+| `API_CLIENT_ID` | The application (client) ID of the [TRE API](../tre-admins/auth.md#tre-api) service principal. |
+| `API_CLIENT_SECRET` | The application password (client secret) of the [TRE API](../tre-admins/auth.md#tre-api) service principal. |
+| `SWAGGER_UI_CLIENT_ID` | The application (client) ID of the [TRE Swagger UI](../tre-admins/auth.md#tre-swagger-ui) service principal. |
 
 See also: [Auth in code](#auth-in-code)
 
 ### State store
 
-| Environment variable name | Description |
+| <div style="width: 340px">Environment variable name</div> | Description |
 | ------------------------- | ----------- |
 | `STATE_STORE_ENDPOINT` | The Cosmos DB endpoint. Use `localhost` with an emulator. Example value: `https://localhost:8081` |
 | `STATE_STORE_KEY` | The Cosmos DB key. Use only with localhost emulator. |
@@ -110,7 +110,7 @@ See also: [Auth in code](#auth-in-code)
 
 ### Service Bus
 
-| Environment variable name | Description |
+| <div style="width: 340px">Environment variable name</div> | Description |
 | ------------------------- | ----------- |
 | `SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE` | Example value: `<your namespace>.servicebus.windows.net` |
 | `SERVICE_BUS_RESOURCE_REQUEST_QUEUE` | The queue for resource request messages sent by the API. Example value: `workspacequeue` |
@@ -118,19 +118,19 @@ See also: [Auth in code](#auth-in-code)
 
 ### Logging and monitoring
 
-| Environment variable name | Description |
+| <div style="width: 340px">Environment variable name</div> | Description |
 | ------------------------- | ----------- |
 | `APPLICATIONINSIGHTS_CONNECTION_STRING` | Application Insights connection string - can be left blank when debugging locally. |
 | `APPINSIGHTS_INSTRUMENTATIONKEY` | Application Insights instrumentation key - can be left blank when debugging locally. |
 
 ### Service principal for API process identity
 
-| Environment variable name | Description |
+| <div style="width: 340px">Environment variable name</div> | Description |
 | ------------------------- | ----------- |
-| `AZURE_SUBSCRIPTION_ID` |  |
-| `AZURE_TENANT_ID` |  |
-| `AZURE_CLIENT_ID` |  |
-| `AZURE_CLIENT_SECRET` |  |
+| `AZURE_SUBSCRIPTION_ID` | Azure Subscription ID |
+| `AZURE_TENANT_ID` | Azure Tenant ID |
+| `AZURE_CLIENT_ID` | API Service Principal ID |
+| `AZURE_CLIENT_SECRET` | API Service Principal Secret |
 
 ## Running the API
 
@@ -152,7 +152,7 @@ See also: [Auth in code](#auth-in-code)
     uvicorn main:app --reload
     ```
 
-The API endpoints documentation and the Swagger UI will be available at [https://localhost:8000/docs](https://localhost:8000/docs).
+The API endpoints documentation and the Swagger UI will be available at [https://localhost:8000/api/docs](https://localhost:8000/api/docs).
 
 ### Develop and run in a dev container
 
@@ -167,7 +167,7 @@ The API endpoints documentation and the Swagger UI will be available at [https:/
     uvicorn main:app --reload
     ```
 
-The API endpoints documentation and the Swagger UI will be available at [https://localhost:8000/docs](https://localhost:8000/docs).
+The API endpoints documentation and the Swagger UI will be available at [https://localhost:8000/api/docs](https://localhost:8000/api/docs).
 
 ### Deploy with Docker
 
@@ -242,7 +242,7 @@ The user details, once authenticated, are stored as an instance of the custom `U
 
 ## Auth in workspace requests
 
-Some workspace routes require `authConfig` field in the request body. The AAD specific implementation expects a dictionary inside `data` field to contain the application (client) ID of the [app registration associated with workspace](../tre-admins/deploying-the-tre/auth.md#workspaces):
+Some workspace routes require `authConfig` field in the request body. The AAD specific implementation expects a dictionary inside `data` field to contain the application (client) ID of the [app registration associated with workspace](../tre-admins/auth.md#workspaces):
 
 ```json
 {

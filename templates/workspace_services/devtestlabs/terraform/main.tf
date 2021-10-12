@@ -2,7 +2,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=2.62.0"
+      version = "=2.71.0"
     }
   }
 
@@ -14,12 +14,13 @@ provider "azurerm" {
   features {}
 }
 
+
 data "azurerm_resource_group" "ws" {
-  name = "rg-${var.tre_id}-ws-${var.workspace_id}"
+  name = "rg-${var.tre_id}-ws-${local.short_workspace_id}"
 }
 
 data "azurerm_virtual_network" "ws" {
-  name                = "vnet-${var.tre_id}-ws-${var.workspace_id}"
+  name                = "vnet-${var.tre_id}-ws-${local.short_workspace_id}"
   resource_group_name = data.azurerm_resource_group.ws.name
 }
 
