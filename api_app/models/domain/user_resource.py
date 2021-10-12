@@ -11,6 +11,7 @@ class UserResource(Resource):
     workspaceId: str = Field("", title="Workspace ID", description="Service target Workspace id")
     ownerId: str = Field("", title="Owner of the user resource")
     parentWorkspaceServiceId: str = Field("", title="Parent Workspace Service ID", description="Service target Workspace Service id")
+    azureStatus: dict = Field({}, title="Azure Status", description="Azure status, varies per user resoruce")
     resourceType = ResourceType.UserResource
 
     def get_resource_request_message_payload(self, action: RequestAction) -> dict:
