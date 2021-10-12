@@ -33,7 +33,7 @@ class ResourceTemplateRepository(BaseRepository):
 
     def get_templates_information(self, resource_type: ResourceType, parent_service_name: str = "") -> List[ResourceTemplateInformation]:
         """
-        Returns name/description for all current resource_type templates
+        Returns name/title/description for all current resource_type templates
         """
         query = f'SELECT c.name, c.title, c.description FROM c WHERE c.resourceType = "{resource_type}" AND c.current = true'
         if resource_type == ResourceType.UserResource:
