@@ -12,7 +12,7 @@ resource "azurerm_app_service_plan" "core" {
   sku {
     tier     = "PremiumV3"
     capacity = 1
-    size     = "P1V3"
+    size     = "P1v3"
   }
 }
 

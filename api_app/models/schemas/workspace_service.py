@@ -10,9 +10,9 @@ def get_sample_workspace_service(workspace_id: str, workspace_service_id: str) -
     return {
         "id": workspace_service_id,
         "workspaceId": workspace_id,
-        "resourceTemplateName": "guacamole",
-        "resourceTemplateVersion": "0.1.0",
-        "resourceTemplateParameters": {
+        "templateName": "guacamole",
+        "templateVersion": "0.1.0",
+        "properties": {
             "display_name": "my workspace service",
             "description": "some description",
         },

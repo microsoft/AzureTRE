@@ -33,9 +33,9 @@ class UserResourceRepository(ResourceRepository):
             workspaceId=workspace_id,
             ownerId=user_id,
             parentWorkspaceServiceId=parent_workspace_service_id,
-            resourceTemplateName=user_resource_input.userResourceType,
-            resourceTemplateVersion=template_version,
-            resourceTemplateParameters=resource_spec_parameters,
+            templateName=user_resource_input.userResourceType,
+            templateVersion=template_version,
+            properties=resource_spec_parameters,
             deployment=Deployment(status=Status.NotDeployed, message=strings.RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE)
         )
 
@@ -60,5 +60,5 @@ class UserResourceRepository(ResourceRepository):
         return self.get_resource_base_spec_params()
 
     def patch_user_resource(self, user_resource: UserResource, user_resource_patch: UserResourcePatchEnabled):
-        user_resource.resourceTemplateParameters["enabled"] = user_resource_patch.enabled
+        user_resource.properties["enabled"] = user_resource_patch.enabled
         self.update_item(user_resource)

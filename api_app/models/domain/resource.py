@@ -38,24 +38,24 @@ class Resource(AzureTREModel):
     Resource request
     """
     id: str = Field(title="Id", description="GUID identifying the resource request")
-    resourceTemplateName: str = Field(title="Resource template name", description="The resource template (bundle) to deploy")
-    resourceTemplateVersion: str = Field(title="Resource template version", description="The version of the resource template (bundle) to deploy")
-    resourceTemplateParameters: dict = Field({}, title="Resource template parameters", description="Parameters for the deployment")
+    templateName: str = Field(title="Resource template name", description="The resource template (bundle) to deploy")
+    templateVersion: str = Field(title="Resource template version", description="The version of the resource template (bundle) to deploy")
+    properties: dict = Field({}, title="Resource template parameters", description="Parameters for the deployment")
     deployment: Deployment = Field(Deployment(status=Status.NotDeployed, message=""), title="Deployment", description="Fields related to deployment of this resource")
     resourceType: ResourceType
 
     def is_enabled(self) -> bool:
-        if "enabled" not in self.resourceTemplateParameters:
+        if "enabled" not in self.properties:
             return True     # default behavior is enabled = True
-        return self.resourceTemplateParameters["enabled"] is True
+        return self.properties["enabled"] is True
 
     def get_resource_request_message_payload(self, action: RequestAction) -> dict:
         return {
             "action": action,
             "id": self.id,
-            "name": self.resourceTemplateName,
-            "version": self.resourceTemplateVersion,
-            "parameters": self.resourceTemplateParameters
+            "name": self.templateName,
+            "version": self.templateVersion,
+            "parameters": self.properties
         }
 
 
