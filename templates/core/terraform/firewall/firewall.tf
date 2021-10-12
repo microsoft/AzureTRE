@@ -112,7 +112,7 @@ resource "azurerm_firewall_application_rule_collection" "shared_subnet" {
       "*github.com",
       "*powershellgallery.com",
       "git-scm.com",
-      "github-cloud.githubusercontent.com",
+      "*githubusercontent.com",
       "*core.windows.net",
       "aka.ms",
       "management.azure.com",

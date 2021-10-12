@@ -12,9 +12,9 @@ def get_sample_user_resource(user_resource_id: str) -> dict:
         "ownerId": "abc9ru33-7265-4b5f-9eae-a1a62928772e",
         "workspaceId": "7289ru33-7265-4b5f-9eae-a1a62928772e",
         "parentWorkspaceServiceId": "e75f1ee1-9f55-414c-83da-aff677669249",
-        "resourceTemplateName": "vm",
-        "resourceTemplateVersion": "0.1.0",
-        "resourceTemplateParameters": {
+        "templateName": "vm",
+        "templateVersion": "0.1.0",
+        "properties": {
             "display_name": "my user resource",
             "description": "some description",
         },

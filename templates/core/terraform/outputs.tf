@@ -3,7 +3,7 @@ output "core_resource_group_name" {
 }
 
 output "log_analytics_name" {
-  value = azurerm_log_analytics_workspace.core.name
+  value = module.azure_monitor.log_analytics_workspace_name
 }
 
 output "azure_tre_fqdn" {
