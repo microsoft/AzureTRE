@@ -28,9 +28,9 @@ def test_delete_workspace_marks_workspace_as_deleted(resource_repo):
 
     workspace = Workspace(
         id="1234",
-        resourceTemplateName="base-tre",
-        resourceTemplateVersion="0.1.0",
-        resourceTemplateParameters={},
+        templateName="base-tre",
+        templateVersion="0.1.0",
+        properties={},
         deployment=Deployment(status=Status.NotDeployed, message=""),
     )
     resource_repo.mark_resource_as_deleting(workspace)
@@ -43,9 +43,9 @@ def test_restore_deletion_status_updates_db(resource_repo):
 
     workspace = Workspace(
         id="1234",
-        resourceTemplateName="base-tre",
-        resourceTemplateVersion="0.1.0",
-        resourceTemplateParameters={},
+        templateName="base-tre",
+        templateVersion="0.1.0",
+        properties={},
         deployment=Deployment(status=Status.Deleting, message=""),
     )
     resource_repo.restore_previous_deletion_state(workspace, Status.Deployed)

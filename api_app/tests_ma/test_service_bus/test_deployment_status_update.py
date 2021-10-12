@@ -48,9 +48,9 @@ class ServiceBusReceivedMessageMock:
 def create_sample_workspace_object(workspace_id):
     return Workspace(
         id=workspace_id,
-        resourceTemplateName="tre-workspace-base",
-        resourceTemplateVersion="0.1.0",
-        resourceTemplateParameters={},
+        templateName="tre-workspace-base",
+        templateVersion="0.1.0",
+        properties={},
         deployment=Deployment(status=Status.NotDeployed, message="")
     )
 
@@ -210,13 +210,13 @@ async def test_outputs_are_added_to_resource_item(app, sb_client, logging_mock, 
     sb_client().get_queue_receiver().complete_message = AsyncMock()
 
     resource = create_sample_workspace_object(received_message["id"])
-    resource.resourceTemplateParameters = {"exitingName": "exitingValue"}
+    resource.properties = {"exitingName": "exitingValue"}
     repo().get_resource_dict_by_id.return_value = resource.dict()
 
     new_params = {"name1": "value1", "name2": "value2"}
 
     expected_resource = resource
-    expected_resource.resourceTemplateParameters = {**resource.resourceTemplateParameters, **new_params}
+    expected_resource.properties = {**resource.properties, **new_params}
     expected_resource.deployment = Deployment(status=Status.Deployed, message=received_message["message"])
 
     await receive_message_and_update_deployment(app)
@@ -228,7 +228,7 @@ async def test_outputs_are_added_to_resource_item(app, sb_client, logging_mock, 
 @patch('logging.error')
 @patch('service_bus.deployment_status_update.ServiceBusClient')
 @patch('fastapi.FastAPI')
-async def test_resourceTemplateParameters_dont_change_with_no_outputs(app, sb_client, logging_mock, repo):
+async def test_properties_dont_change_with_no_outputs(app, sb_client, logging_mock, repo):
     received_message = test_sb_message
     received_message["status"] = Status.Deployed
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(received_message)
@@ -237,7 +237,7 @@ async def test_resourceTemplateParameters_dont_change_with_no_outputs(app, sb_cl
     sb_client().get_queue_receiver().complete_message = AsyncMock()
 
     resource = create_sample_workspace_object(received_message["id"])
-    resource.resourceTemplateParameters = {"exitingName": "exitingValue"}
+    resource.properties = {"exitingName": "exitingValue"}
     repo().get_resource_dict_by_id.return_value = resource.dict()
 
     expected_resource = resource
