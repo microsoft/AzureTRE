@@ -18,7 +18,8 @@ class ResourceTemplateInResponse(ResourceTemplate):
 
 class ResourceTemplateInformation(BaseModel):
     name: str = Field(title="Template name")
-    description: str = Field(title="Template description")
+    title: str = Field(title="Template title", default="")
+    description: str = Field(title="Template description", default="")
 
 
 class ResourceTemplateInformationInList(BaseModel):
@@ -30,10 +31,12 @@ class ResourceTemplateInformationInList(BaseModel):
                 "templates": [
                     {
                         "name": "tre-workspace-base",
+                        "title": "Base Workspace",
                         "description": "base description"
                     },
                     {
                         "name": "tre-workspace-base",
+                        "title": "Base Workspace",
                         "description": "base description"
                     }
                 ]

@@ -55,13 +55,13 @@ class UserResourcesInList(BaseModel):
 
 
 class UserResourceInCreate(BaseModel):
-    userResourceType: str = Field(title="User resource type", description="Bundle name")
+    templateName: str = Field(title="User resource type", description="Bundle name")
     properties: dict = Field({}, title="User resource parameters", description="Values for the parameters required by the user resource specification")
 
     class Config:
         schema_extra = {
             "example": {
-                "userResourceType": "user-resource-type",
+                "templateName": "user-resource-type",
                 "properties": {
                     "display_name": "my user resource",
                     "description": "some description",

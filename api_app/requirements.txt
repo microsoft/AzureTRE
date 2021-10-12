@@ -1,6 +1,6 @@
 # API
-aiohttp==3.7.4.post0
 azure-core==1.19.0
+aiohttp==3.7.4
 azure-cosmos==4.2.0
 azure-identity==1.6.1
 azure-mgmt-cosmosdb==6.4.0

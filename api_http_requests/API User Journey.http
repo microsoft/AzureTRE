@@ -101,7 +101,7 @@ Authorization: Bearer {{token}}
 Content-Type: {{contentType}}
 
 {
-  "workspaceType": "{{workspaceTemplate}}",
+  "templateName": "{{workspaceTemplate}}",
   "properties": {
     "display_name": "my workspace",
     "description": "my workspace",
@@ -121,7 +121,7 @@ Authorization: Bearer {{token}}
 Content-Type: {{contentType}}
 
 {
-  "workspaceServiceType": "{{workspaceServiceTemplate}}",
+  "templateName": "{{workspaceServiceTemplate}}",
   "properties": {
     "display_name": "my workspace service",
     "description": "my workspace service"
@@ -140,7 +140,7 @@ Authorization: Bearer {{token}}
 Content-Type: {{contentType}}
 
 {
-  "userResourceType": "{{userResourceTemplate}}",
+  "templateName": "{{userResourceTemplate}}",
   "properties": {
     "display_name": "my user resource",
     "description": "my user resource"

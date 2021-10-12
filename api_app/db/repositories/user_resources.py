@@ -23,7 +23,7 @@ class UserResourceRepository(ResourceRepository):
     def create_user_resource_item(self, user_resource_input: UserResourceInCreate, workspace_id: str, parent_workspace_service_id: str, parent_template_name: str, user_id: str) -> UserResource:
         full_user_resource_id = str(uuid.uuid4())
 
-        template_version = self.validate_input_against_template(user_resource_input.userResourceType, user_resource_input, ResourceType.UserResource, parent_template_name)
+        template_version = self.validate_input_against_template(user_resource_input.templateName, user_resource_input, ResourceType.UserResource, parent_template_name)
 
         # we don't want something in the input to overwrite the system parameters, so dict.update can't work.
         resource_spec_parameters = {**user_resource_input.properties, **self.get_user_resource_spec_params()}
@@ -33,7 +33,7 @@ class UserResourceRepository(ResourceRepository):
             workspaceId=workspace_id,
             ownerId=user_id,
             parentWorkspaceServiceId=parent_workspace_service_id,
-            templateName=user_resource_input.userResourceType,
+            templateName=user_resource_input.templateName,
             templateVersion=template_version,
             properties=resource_spec_parameters,
             deployment=Deployment(status=Status.NotDeployed, message=strings.RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE)
