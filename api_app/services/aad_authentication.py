@@ -11,6 +11,8 @@ from core import config
 from models.domain.authentication import User
 from services.aad_access_service import AADAccessService
 from resources import strings
+from api.dependencies.database import get_db_client_from_request
+from db.repositories.workspaces import WorkspaceRepository
 
 
 class AzureADAuthorization(OAuth2AuthorizationCodeBearer):
@@ -32,7 +34,25 @@ class AzureADAuthorization(OAuth2AuthorizationCodeBearer):
         token: str = await super(AzureADAuthorization, self).__call__(request)
 
         try:
-            decoded_token = self._decode_token(token)
+            ws_app_reg_id = config.API_AUDIENCE
+            workspace_id = None
+            if "workspace_id" not in request.path_params:
+                logging.debug("workspace_id was not provided. using the default app registration")
+            else:
+                try:
+                    workspace_id = request.path_params['workspace_id']
+                    ws_repo = WorkspaceRepository(get_db_client_from_request(request))
+                    workspace = ws_repo.get_workspace_by_id(workspace_id)
+                    ws_app_reg_id = workspace.authInformation['sp_id']
+                except Exception as e:
+                    logging.error("Failed to fetch matching workspace app registration id for workspace id: %s", workspace_id)
+
+            decoded_token = self._decode_token(token, ws_app_reg_id)
+        except Exception as e:
+            logging.debug(e)
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.AUTH_UNABLE_TO_VALIDATE_TOKEN, headers={"WWW-Authenticate": "Bearer"})
+
+        try:
             return self._get_user_from_token(decoded_token)
         except Exception as e:
             logging.debug(e)
@@ -50,10 +70,12 @@ class AzureADAuthorization(OAuth2AuthorizationCodeBearer):
                     roles=decoded_token.get('roles', []),
                     roleAssignments=role_assignments)
 
-    def _decode_token(self, token: str) -> dict:
+    def _decode_token(self, token: str, ws_app_reg_id: str) -> dict:
         key_id = self._get_key_id(token)
         key = self._get_token_key(key_id)
-        return jwt.decode(token, key, algorithms=['RS256'], audience=config.API_AUDIENCE)
+
+        logging.debug("workspace app registration id: %s", ws_app_reg_id)
+        return jwt.decode(token, key, algorithms=['RS256'], audience=ws_app_reg_id)
 
     @staticmethod
     def _get_key_id(token: str) -> str:
