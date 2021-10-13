@@ -25,9 +25,6 @@ from opencensus.trace.samplers import ProbabilitySampler
 from opencensus.trace.span import SpanKind
 from opencensus.trace.tracer import Tracer
 
-
-APPINSIGHTS_INSTRUMENTATIONKEY = os.environ["APPINSIGHTS_INSTRUMENTATIONKEY"]
-
 HTTP_URL = COMMON_ATTRIBUTES['HTTP_URL']
 HTTP_STATUS_CODE = COMMON_ATTRIBUTES['HTTP_STATUS_CODE']
 
@@ -80,7 +77,7 @@ async def update_deployment_status() -> None:
 
 @app.middleware("http")
 async def add_process_time_header(request: Request, call_next):
-    tracer = Tracer(exporter=AzureExporter(connection_string=f'InstrumentationKey={APPINSIGHTS_INSTRUMENTATIONKEY}'), sampler=ProbabilitySampler(1.0))
+    tracer = Tracer(exporter=AzureExporter(connection_string=f'InstrumentationKey={os.getenv("APPINSIGHTS_INSTRUMENTATIONKEY")}'), sampler=ProbabilitySampler(1.0))
     with tracer.span("main") as span:
         span.span_kind = SpanKind.SERVER
 
