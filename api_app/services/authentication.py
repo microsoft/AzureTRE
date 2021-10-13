@@ -31,3 +31,15 @@ async def get_current_admin_user(user: User = Depends(get_current_user)) -> User
     if 'TREAdmin' not in user.roles:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.AUTH_NOT_ASSIGNED_TO_ADMIN_ROLE, headers={"WWW-Authenticate": "Bearer"})
     return user
+
+
+async def get_current_ws_owner_user(user: User = Depends(get_current_user)) -> User:
+    if 'WorkspaceOwner' not in user.roles:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.ACCESS_USER_IS_NOT_OWNER, headers={"WWW-Authenticate": "Bearer"})
+    return user
+
+
+async def get_current_ws_researcher_user(user: User = Depends(get_current_user)) -> User:
+    if 'WorkspaceResearcher' not in user.roles:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.AUTH_NOT_ASSIGNED_TO_ADMIN_ROLE, headers={"WWW-Authenticate": "Bearer"})
+    return user
