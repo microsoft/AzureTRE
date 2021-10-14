@@ -30,7 +30,8 @@ def workspace_service_template_without_enriching():
             current=True,
             type="object",
             required=[],
-            properties={}
+            properties={},
+            actions=[]
         )
     return create_workspace_service_template
 
@@ -48,6 +49,7 @@ def user_resource_template_without_enriching():
             type="object",
             required=[],
             properties={},
+            actions=[],
             parentWorkspaceService=parent_service
         )
     return create_user_resource_template

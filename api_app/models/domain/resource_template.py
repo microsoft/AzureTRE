@@ -23,6 +23,11 @@ class Property(AzureTREModel):
     pattern: Optional[str] = Field(None, title="Pattern")
 
 
+class CustomAction(AzureTREModel):
+    name: str = Field(None, title="Custom action name")
+    description: str = Field("", title="Action description")
+
+
 class ResourceTemplate(AzureTREModel):
     id: str
     name: str = Field(title="Unique template name")
@@ -34,3 +39,4 @@ class ResourceTemplate(AzureTREModel):
     type: str = "object"
     required: List[str] = Field(title="List of properties which must be provided")
     properties: Dict[str, Property] = Field(title="Template properties")
+    actions: List[CustomAction] = Field(title="Template custom actions")
