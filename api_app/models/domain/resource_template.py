@@ -39,4 +39,4 @@ class ResourceTemplate(AzureTREModel):
     type: str = "object"
     required: List[str] = Field(title="List of properties which must be provided")
     properties: Dict[str, Property] = Field(title="Template properties")
-    actions: List[CustomAction] = Field(title="Template custom actions")
+    actions: List[CustomAction] = Field(default=[],title="Template custom actions")
