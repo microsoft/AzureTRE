@@ -1,7 +1,8 @@
 import logging
+import os
 import uvicorn
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi_utils.tasks import repeat_every
 from starlette.exceptions import HTTPException
@@ -16,6 +17,16 @@ from core import config
 from core.events import create_start_app_handler, create_stop_app_handler
 from services.logging import disable_unwanted_loggers, initialize_logging
 from service_bus.deployment_status_update import receive_message_and_update_deployment
+
+# Opencensus Azure imports
+from opencensus.ext.azure.trace_exporter import AzureExporter
+from opencensus.trace.attributes_helper import COMMON_ATTRIBUTES
+from opencensus.trace.samplers import ProbabilitySampler
+from opencensus.trace.span import SpanKind
+from opencensus.trace.tracer import Tracer
+
+HTTP_URL = COMMON_ATTRIBUTES['HTTP_URL']
+HTTP_STATUS_CODE = COMMON_ATTRIBUTES['HTTP_STATUS_CODE']
 
 
 def get_application() -> FastAPI:
@@ -62,6 +73,20 @@ async def initialize_logging_on_startup():
 @repeat_every(seconds=20, wait_first=True, logger=logging.getLogger())
 async def update_deployment_status() -> None:
     await receive_message_and_update_deployment(app)
+
+
+@app.middleware("http")
+async def add_process_time_header(request: Request, call_next):
+    tracer = Tracer(exporter=AzureExporter(connection_string=f'InstrumentationKey={os.getenv("APPINSIGHTS_INSTRUMENTATIONKEY")}'), sampler=ProbabilitySampler(1.0))
+    with tracer.span("main") as span:
+        span.span_kind = SpanKind.SERVER
+
+        response = await call_next(request)
+
+        tracer.add_attribute_to_current_span(attribute_key=HTTP_STATUS_CODE, attribute_value=response.status_code)
+        tracer.add_attribute_to_current_span(attribute_key=HTTP_URL, attribute_value=str(request.url))
+
+    return response
 
 
 if __name__ == "__main__":

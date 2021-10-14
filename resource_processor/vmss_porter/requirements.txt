@@ -1,6 +1,6 @@
-azure-servicebus==7.3.3
-opencensus-ext-azure==1.0.8
-opencensus-ext-logging==0.1.0
+azure-servicebus==7.3.4
+opencensus-ext-azure==1.1.0
+opencensus-ext-logging==0.1.1
 azure-identity==1.6.1
 chardet==3.0.4
-aiohttp==3.7.4.post0
+aiohttp==3.7.4

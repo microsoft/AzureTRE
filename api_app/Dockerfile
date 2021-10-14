@@ -1,12 +1,11 @@
 FROM python:3.8-slim-buster as base
 COPY requirements.txt .
 RUN pip3 install -r requirements.txt
-COPY . /api
-
 
 FROM base as test
 COPY requirements-dev.txt .
 RUN pip3 install -r requirements-dev.txt
+COPY . /api
 WORKDIR /api
 RUN pytest --junit-xml /test-results/api-pytest.xml --ignore e2e_tests
 
@@ -16,6 +15,7 @@ COPY --from=test /test-results/*.xml .
 
 
 FROM base as runtime
+COPY . /api
 WORKDIR /api
 RUN groupadd -r api && useradd -r -s /bin/false -g api api_user
 USER api_user
