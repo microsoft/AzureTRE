@@ -47,8 +47,9 @@
 		"github.vscode-pull-request-github",
 		"ms-kubernetes-tools.porter-vscode",
 		"davidanson.vscode-markdownlint",
-    	"editorconfig.editorconfig",
-		"github.vscode-pull-request-github"
+    "editorconfig.editorconfig",
+		"github.vscode-pull-request-github",
+    "mikestead.dotenv"
 	],
 	"forwardPorts": [8000]
 }
