@@ -22,6 +22,7 @@ resource "azurerm_app_service" "guacamole" {
     linux_fx_version                     = "DOCKER|${data.azurerm_container_registry.mgmt_acr.login_server}/microsoft/azuretre/${var.image_name}:${var.image_tag}"
     http2_enabled                        = true
     acr_use_managed_identity_credentials = true
+    always_on                            = true
   }
 
   app_settings = {
@@ -45,10 +46,6 @@ resource "azurerm_app_service" "guacamole" {
     GUAC_DISABLE_DOWNLOAD = "${var.guac_disable_download}"
     AUDIENCE              = data.azurerm_app_service.api_core.app_settings["API_CLIENT_ID"]
     ISSUER                = local.issuer
-    # Solving the pulling from acr problem
-    DOCKER_REGISTRY_SERVER_URL      = "${data.azurerm_container_registry.mgmt_acr.login_server}"
-    DOCKER_REGISTRY_SERVER_USERNAME = "${data.azurerm_container_registry.mgmt_acr.admin_username}"
-    DOCKER_REGISTRY_SERVER_PASSWORD = "${data.azurerm_container_registry.mgmt_acr.admin_password}"
   }
 
   logs {
