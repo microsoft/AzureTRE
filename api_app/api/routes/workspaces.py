@@ -16,7 +16,7 @@ from models.schemas.workspace import WorkspaceInCreate, WorkspaceIdInResponse, W
 from models.schemas.workspace_service import WorkspaceServiceIdInResponse, WorkspaceServiceInCreate, WorkspaceServicesInList, WorkspaceServiceInResponse, WorkspaceServicePatchEnabled
 from resources import strings
 from service_bus.resource_request_sender import send_resource_request_message, RequestAction
-from services.authentication import get_current_tre_user, get_current_ws_user, get_current_admin_user, get_access_service, get_current_ws_owner_user
+from services.authentication import get_current_tre_user, get_current_ws_user, get_current_admin_user, get_access_service
 from services.authentication import extract_auth_information
 
 
@@ -139,8 +139,9 @@ async def delete_workspace(workspace=Depends(get_workspace_by_id_from_path), wor
 
 
 # WORKSPACE SERVICES ROUTES
-@workspace_services_router.get("/workspaces/{workspace_id}/workspace-services", response_model=WorkspaceServicesInList, name=strings.API_GET_ALL_WORKSPACE_SERVICES, dependencies=[Depends(get_current_ws_owner_user)])
-async def retrieve_users_active_workspace_services(workspace=Depends(get_workspace_by_id_from_path), workspace_services_repo=Depends(get_repository(WorkspaceServiceRepository))) -> WorkspaceServicesInList:
+@workspace_services_router.get("/workspaces/{workspace_id}/workspace-services", response_model=WorkspaceServicesInList, name=strings.API_GET_ALL_WORKSPACE_SERVICES)
+async def retrieve_users_active_workspace_services(user=Depends(get_current_ws_user), workspace=Depends(get_workspace_by_id_from_path), workspace_services_repo=Depends(get_repository(WorkspaceServiceRepository))) -> WorkspaceServicesInList:
+    validate_user_is_owner(user, workspace)
     workspace_services = workspace_services_repo.get_active_workspace_services_for_workspace(workspace.id)
     return WorkspaceServicesInList(workspaceServices=workspace_services)
 

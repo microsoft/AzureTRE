@@ -40,10 +40,10 @@ def non_admin_user():
 @pytest.fixture(scope='module')
 def app() -> FastAPI:
     from main import get_application
-    from api.routes.workspaces import get_current_user
+    from api.routes.workspaces import get_current_tre_user
 
     the_app = get_application()
-    the_app.dependency_overrides[get_current_user] = override_get_user
+    the_app.dependency_overrides[get_current_tre_user] = override_get_user
     return the_app
 
 

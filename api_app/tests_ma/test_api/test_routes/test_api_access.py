@@ -3,7 +3,7 @@ from mock import patch
 
 from fastapi import status
 
-from api.routes.workspaces import get_current_user
+from api.routes.workspaces import get_current_ws_user, get_current_tre_user
 from models.domain.user_resource import UserResource
 from models.domain.workspace import Workspace, WorkspaceRole
 from models.domain.workspace_service import WorkspaceService
@@ -35,7 +35,7 @@ class TestTemplateRoutesThatRequireAdminRights:
     @pytest.fixture(autouse=True, scope='class')
     def log_in_with_non_admin(self, app, non_admin_user):
         # try accessing the route with a non-admin user
-        app.dependency_overrides[get_current_user] = non_admin_user
+        app.dependency_overrides[get_current_tre_user] = non_admin_user
         yield
         app.dependency_overrides = {}
 
@@ -61,7 +61,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     @pytest.fixture(autouse=True, scope='class')
     def log_in_with_non_admin(self, app, non_admin_user):
         # try accessing the route with a non-admin user
-        app.dependency_overrides[get_current_user] = non_admin_user
+        app.dependency_overrides[get_current_tre_user] = non_admin_user
         yield
         app.dependency_overrides = {}
 
@@ -82,7 +82,7 @@ class TestWorkspaceServiceRoutesAccess:
     @pytest.fixture(autouse=True, scope='class')
     def log_in_with_non_admin(self, app, non_admin_user):
         # try accessing the route with a non-admin user
-        app.dependency_overrides[get_current_user] = non_admin_user
+        app.dependency_overrides[get_current_ws_user] = non_admin_user
         yield
         app.dependency_overrides = {}
 
@@ -139,7 +139,7 @@ class TestUserResourcesRoutesAccess:
     @pytest.fixture(autouse=True, scope='class')
     def log_in_with_non_admin(self, app, non_admin_user):
         # try accessing the route with a non-admin user
-        app.dependency_overrides[get_current_user] = non_admin_user
+        app.dependency_overrides[get_current_ws_user] = non_admin_user
         yield
         app.dependency_overrides = {}
 

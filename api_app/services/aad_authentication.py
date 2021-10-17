@@ -47,7 +47,7 @@ class AzureADAuthorization(OAuth2AuthorizationCodeBearer):
             decoded_token = self._decode_token(token, app_reg_id)
         except Exception as e:
             logging.debug(e)
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.AUTH_UNABLE_TO_VALIDATE_TOKEN, headers={"WWW-Authenticate": "Bearer"})
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.AUTH_COULD_NOT_VALIDATE_CREDENTIALS, headers={"WWW-Authenticate": "Bearer"})
 
         try:
             return self._get_user_from_token(decoded_token)

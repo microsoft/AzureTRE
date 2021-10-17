@@ -3,7 +3,7 @@ from mock import patch, MagicMock
 
 from fastapi import HTTPException, status
 
-from api.routes.workspaces import get_current_user, save_and_deploy_resource, validate_user_is_owner_or_researcher, \
+from api.routes.workspaces import get_current_ws_user, get_current_tre_user, save_and_deploy_resource, validate_user_is_owner_or_researcher, \
     validate_user_is_owner, mark_resource_as_deleting, send_uninstall_message
 from db.errors import EntityDoesNotExist
 from db.repositories.resources import ResourceRepository
@@ -247,7 +247,7 @@ class TestWorkspaceHelpers:
 class TestWorkspaceRoutesThatDontRequireAdminRights:
     @pytest.fixture(autouse=True, scope='class')
     def log_in_with_non_admin_user(self, app, non_admin_user):
-        app.dependency_overrides[get_current_user] = non_admin_user
+        app.dependency_overrides[get_current_tre_user] = non_admin_user
         yield
         app.dependency_overrides = {}
 
@@ -306,7 +306,7 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
 class TestWorkspaceRoutesThatRequireAdminRights:
     @pytest.fixture(autouse=True, scope='class')
     def _prepare(self, app, admin_user):
-        app.dependency_overrides[get_current_user] = admin_user
+        app.dependency_overrides[get_current_tre_user] = admin_user
         yield
         app.dependency_overrides = {}
 
@@ -314,7 +314,8 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     @ patch("api.routes.workspaces.send_resource_request_message")
     @ patch("api.routes.workspaces.WorkspaceRepository.save_item")
     @ patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item", return_value=sample_workspace())
-    async def test_post_workspaces_creates_workspace(self, _, __, ___, app, client, workspace_input):
+    @ patch("api.routes.workspaces.extract_auth_information")
+    async def test_post_workspaces_creates_workspace(self, _, __, ___, ____, app, client, workspace_input):
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE), json=workspace_input)
 
         assert response.status_code == status.HTTP_202_ACCEPTED
@@ -325,7 +326,8 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     @ patch("api.routes.workspaces.WorkspaceRepository.save_item")
     @ patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item", return_value=sample_workspace())
     @ patch("api.routes.workspaces.WorkspaceRepository._validate_resource_parameters")
-    async def test_post_workspaces_calls_db_and_service_bus(self, _, __, save_item_mock, send_resource_request_message_mock, app, client, workspace_input):
+    @ patch("api.routes.workspaces.extract_auth_information")
+    async def test_post_workspaces_calls_db_and_service_bus(self, _, __, ___, save_item_mock, send_resource_request_message_mock, app, client, workspace_input):
         await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE), json=workspace_input)
 
         save_item_mock.assert_called_once()
@@ -336,7 +338,8 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     @ patch("api.routes.workspaces.WorkspaceRepository.save_item")
     @ patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item", return_value=sample_workspace())
     @ patch("api.routes.workspaces.WorkspaceRepository._validate_resource_parameters")
-    async def test_post_workspaces_returns_202_on_successful_create(self, _, __, ___, ____, app, client, workspace_input):
+    @ patch("api.routes.workspaces.extract_auth_information")
+    async def test_post_workspaces_returns_202_on_successful_create(self, _, __, ___, ____, _____, app, client, workspace_input):
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE), json=workspace_input)
 
         assert response.status_code == status.HTTP_202_ACCEPTED
@@ -348,7 +351,8 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     @ patch("api.routes.workspaces.WorkspaceRepository.save_item")
     @ patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item", return_value=sample_workspace())
     @ patch("api.routes.workspaces.WorkspaceRepository._validate_resource_parameters")
-    async def test_post_workspaces_returns_503_if_service_bus_call_fails(self, _, __, ___, ____, delete_item_mock, app, client, workspace_input):
+    @ patch("api.routes.workspaces.extract_auth_information")
+    async def test_post_workspaces_returns_503_if_service_bus_call_fails(self, _, __, ___, ____, _____, delete_item_mock, app, client, workspace_input):
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE), json=workspace_input)
 
         assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
@@ -464,7 +468,8 @@ class TestWorkspaceRoutesThatRequireAdminRights:
 class TestWorkspaceServiceRoutesThatDontRequireAdminRights:
     @pytest.fixture(autouse=True, scope='class')
     def log_in_with_non_admin_user(self, app, non_admin_user):
-        app.dependency_overrides[get_current_user] = non_admin_user
+        # The following ws services requires the WS app registration
+        app.dependency_overrides[get_current_ws_user] = non_admin_user
         yield
         app.dependency_overrides = {}
 
@@ -643,7 +648,7 @@ class TestWorkspaceServiceRoutesThatDontRequireAdminRights:
 class TestUserResourcesRoutesThatDontRequireAdminRights:
     @pytest.fixture(autouse=True, scope='class')
     def log_in_with_non_admin_user(self, app, non_admin_user):
-        app.dependency_overrides[get_current_user] = non_admin_user
+        app.dependency_overrides[get_current_ws_user] = non_admin_user
         yield
         app.dependency_overrides = {}
 
