@@ -10,8 +10,8 @@ from models.domain.resource import Resource, ResourceType, Status, Output
 
 class WorkspaceRole(Enum):
     NoRole = 0
-    Researcher = 1
-    Owner = 2
+    Researcher = "WorkspaceResearcher"
+    Owner = "WorkspaceOwner"
 
 
 class DeploymentStatusUpdateMessage(AzureTREModel):

@@ -1,6 +1,7 @@
 from fastapi import Depends, HTTPException, status
 
 from models.domain.authentication import User
+from models.domain.workspace import WorkspaceRole
 from models.schemas.workspace import AuthProvider
 from resources import strings
 from services.aad_authentication import authorize_tre_app, authorize_ws_app
@@ -22,11 +23,14 @@ def get_access_service(provider: str = AuthProvider.AAD) -> AccessService:
         return AADAccessService()
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.INVALID_AUTH_PROVIDER)
 
+
 async def get_current_tre_user(user: User = Depends(authorize_tre_app)) -> User:
     return user
 
+
 async def get_current_ws_user(user: User = Depends(authorize_ws_app)) -> User:
     return user
+
 
 async def get_current_admin_user(user: User = Depends(get_current_tre_user)) -> User:
     if 'TREAdmin' not in user.roles:
@@ -35,12 +39,12 @@ async def get_current_admin_user(user: User = Depends(get_current_tre_user)) -> 
 
 
 async def get_current_ws_owner_user(user: User = Depends(get_current_ws_user)) -> User:
-    if 'WorkspaceOwner' not in user.roles:
+    if WorkspaceRole.Owner.value not in user.roles:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.ACCESS_USER_IS_NOT_OWNER, headers={"WWW-Authenticate": "Bearer"})
     return user
 
 
-async def get_current_ws_researcher_user(user: User = Depends(get_current_ws_user)) -> User:
-    if 'WorkspaceResearcher' not in user.roles:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.AUTH_NOT_ASSIGNED_TO_ADMIN_ROLE, headers={"WWW-Authenticate": "Bearer"})
+async def get_current_ws_owner_researcher_user(user: User = Depends(get_current_ws_user)) -> User:
+    if not any(role in [WorkspaceRole.Owner.value, WorkspaceRole.Researcher.value] for role in user.roles):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.ACCESS_USER_IS_NOT_OWNER_OR_RESEARCHER, headers={"WWW-Authenticate": "Bearer"})
     return user

@@ -76,14 +76,11 @@ class AzureADAuthorization(OAuth2AuthorizationCodeBearer):
     @staticmethod
     def _get_user_from_token(decoded_token: dict) -> User:
         user_id = decoded_token['oid']
-        access_service = AADAccessService()
-        role_assignments = access_service.get_user_role_assignments(user_id)
 
         return User(id=user_id,
                     name=decoded_token.get('name', ''),
                     email=decoded_token.get('email', ''),
-                    roles=decoded_token.get('roles', []),
-                    roleAssignments=role_assignments)
+                    roles=decoded_token.get('roles', []))
 
     def _decode_token(self, token: str, ws_app_reg_id: str) -> dict:
         key_id = self._get_key_id(token)
