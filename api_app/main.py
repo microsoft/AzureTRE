@@ -78,9 +78,10 @@ async def initialize_logging_on_startup():
 async def update_deployment_status() -> None:
     await receive_message_and_update_deployment(app)
 
+
 @app.middleware("http")
 async def add_process_time_header(request: Request, call_next):
-    tracer = Tracer(exporter=AzureExporter(connection_string=f'InstrumentationKey={os.getenv("APPINSIGHTS_INSTRUMENTATIONKEY")}', sampler=ProbabilitySampler(1.0)),sampler=ProbabilitySampler(1.0))
+    tracer = Tracer(exporter=AzureExporter(connection_string=f'InstrumentationKey={os.getenv("APPINSIGHTS_INSTRUMENTATIONKEY")}', sampler=ProbabilitySampler(1.0)))
 
     with tracer.span("main") as span:
         span.span_kind = SpanKind.SERVER
