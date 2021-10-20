@@ -125,7 +125,7 @@ async def retrieve_users_active_workspace_services(workspace=Depends(get_workspa
     return WorkspaceServicesInList(workspaceServices=workspace_services)
 
 
-@workspace_services_router.get("/workspaces/{workspace_id}/workspace-services/{service_id}", response_model=WorkspaceServiceInResponse, name=strings.API_GET_WORKSPACE_SERVICE_BY_ID, dependencies=[Depends(get_current_ws_owner_researcher_user)])
+@workspace_services_router.get("/workspaces/{workspace_id}/workspace-services/{service_id}", response_model=WorkspaceServiceInResponse, name=strings.API_GET_WORKSPACE_SERVICE_BY_ID, dependencies=[Depends(get_current_ws_owner_researcher_user), Depends(get_workspace_by_id_from_path)])
 async def retrieve_workspace_service_by_id(workspace_service=Depends(get_workspace_service_by_id_from_path)) -> WorkspaceServiceInResponse:
     return WorkspaceServiceInResponse(workspaceService=workspace_service)
 
@@ -144,7 +144,7 @@ async def create_workspace_service(workspace_service_input: WorkspaceServiceInCr
     return WorkspaceServiceIdInResponse(workspaceServiceId=workspace_service.id)
 
 
-@workspace_services_router.patch("/workspaces/{workspace_id}/workspace-services/{service_id}", response_model=WorkspaceServiceInResponse, name=strings.API_UPDATE_WORKSPACE_SERVICE, dependencies=[Depends(get_current_ws_owner_researcher_user)])
+@workspace_services_router.patch("/workspaces/{workspace_id}/workspace-services/{service_id}", response_model=WorkspaceServiceInResponse, name=strings.API_UPDATE_WORKSPACE_SERVICE, dependencies=[Depends(get_current_ws_owner_researcher_user), Depends(get_workspace_by_id_from_path)])
 async def patch_workspace_service(workspace_service_patch: WorkspaceServicePatchEnabled, workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), workspace_service=Depends(get_workspace_service_by_id_from_path)) -> WorkspaceServiceInResponse:
     workspace_service_repo.patch_workspace_service(workspace_service, workspace_service_patch)
     return WorkspaceServiceInResponse(workspaceService=workspace_service)
@@ -210,7 +210,7 @@ async def delete_user_resource(user=Depends(get_current_ws_owner_researcher_user
     return UserResourceIdInResponse(resourceId=user_resource.id)
 
 
-@user_resources_router.patch("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}", response_model=UserResourceInResponse, name=strings.API_UPDATE_USER_RESOURCE)
+@user_resources_router.patch("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}", response_model=UserResourceInResponse, name=strings.API_UPDATE_USER_RESOURCE, dependencies=[Depends(get_workspace_by_id_from_path), Depends(get_workspace_service_by_id_from_path)])
 async def patch_user_resource(user_resource_patch: UserResourcePatchEnabled, user=Depends(get_current_ws_owner_researcher_user), user_resource=Depends(get_user_resource_by_id_from_path), user_resource_repo=Depends(get_repository(UserResourceRepository))) -> UserResourceInResponse:
     validate_user_is_workspace_owner_or_resource_owner(user, user_resource)
     user_resource_repo.patch_user_resource(user_resource, user_resource_patch)
