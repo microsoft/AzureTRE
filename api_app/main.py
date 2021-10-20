@@ -63,14 +63,6 @@ def get_application() -> FastAPI:
 app = get_application()
 
 
-def get_log_exporter():
-    try:
-        exporter = AzureExporter(connection_string=f'InstrumentationKey={os.getenv("APPINSIGHTS_INSTRUMENTATIONKEY")}', sampler=ProbabilitySampler(1.0))
-        return exporter
-    except ValueError as e:
-        logging.error(f"Failed to create Application Insights log exporter: {e}")
-
-
 @app.on_event("startup")
 async def initialize_logging_on_startup():
     if config.DEBUG:
@@ -86,13 +78,9 @@ async def initialize_logging_on_startup():
 async def update_deployment_status() -> None:
     await receive_message_and_update_deployment(app)
 
-
-exporter = get_log_exporter()
-
-
 @app.middleware("http")
 async def add_process_time_header(request: Request, call_next):
-    tracer = Tracer(exporter=exporter)
+    tracer = Tracer(exporter=AzureExporter(connection_string=f'InstrumentationKey={os.getenv("APPINSIGHTS_INSTRUMENTATIONKEY")}', sampler=ProbabilitySampler(1.0)),sampler=ProbabilitySampler(1.0))
 
     with tracer.span("main") as span:
         span.span_kind = SpanKind.SERVER
