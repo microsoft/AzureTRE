@@ -76,6 +76,11 @@ resource "azurerm_resource_group_template_deployment" "ampls_core" {
       value = local.app_insights_name
     }
   })
+
+  depends_on = [
+    azurerm_log_analytics_workspace.core,
+    azurerm_resource_group_template_deployment.app_insights_core
+  ]
 }
 
 resource "azurerm_private_endpoint" "azure_monitor_private_endpoint" {
