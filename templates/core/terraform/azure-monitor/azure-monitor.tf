@@ -76,6 +76,11 @@ resource "azurerm_resource_group_template_deployment" "ampls_core" {
       value = local.app_insights_name
     }
   })
+
+  depends_on = [
+    azurerm_log_analytics_workspace.core,
+    azurerm_resource_group_template_deployment.app_insights_core
+  ]
 }
 
 resource "azurerm_private_endpoint" "azure_monitor_private_endpoint" {
@@ -94,7 +99,8 @@ resource "azurerm_private_endpoint" "azure_monitor_private_endpoint" {
   }
 
   private_dns_zone_group {
-    name                 = "azure-monitor-private-dns-zone-group"
+    name = "azure-monitor-private-dns-zone-group"
+
     private_dns_zone_ids = [
       var.azure_monitor_dns_zone_id,
       var.azure_monitor_oms_opinsights_dns_zone_id,
