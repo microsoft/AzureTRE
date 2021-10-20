@@ -25,8 +25,12 @@ from opencensus.trace.samplers import ProbabilitySampler
 from opencensus.trace.span import SpanKind
 from opencensus.trace.tracer import Tracer
 
-HTTP_URL = COMMON_ATTRIBUTES['HTTP_URL']
-HTTP_STATUS_CODE = COMMON_ATTRIBUTES['HTTP_STATUS_CODE']
+HTTP_HOST = COMMON_ATTRIBUTES["HTTP_HOST"]
+HTTP_METHOD = COMMON_ATTRIBUTES["HTTP_METHOD"]
+HTTP_PATH = COMMON_ATTRIBUTES["HTTP_PATH"]
+HTTP_ROUTE = COMMON_ATTRIBUTES["HTTP_ROUTE"]
+HTTP_URL = COMMON_ATTRIBUTES["HTTP_URL"]
+HTTP_STATUS_CODE = COMMON_ATTRIBUTES["HTTP_STATUS_CODE"]
 
 
 def get_application() -> FastAPI:
@@ -59,6 +63,14 @@ def get_application() -> FastAPI:
 app = get_application()
 
 
+def get_log_exporter():
+    try:
+        exporter = AzureExporter(connection_string=f'InstrumentationKey={os.getenv("APPINSIGHTS_INSTRUMENTATIONKEY")}', sampler=ProbabilitySampler(1.0))
+        return exporter
+    except ValueError as e:
+        logging.error(f"Failed to create Application Insights log exporter: {e}")
+
+
 @app.on_event("startup")
 async def initialize_logging_on_startup():
     if config.DEBUG:
@@ -75,17 +87,24 @@ async def update_deployment_status() -> None:
     await receive_message_and_update_deployment(app)
 
 
+exporter = get_log_exporter()
+
+
 @app.middleware("http")
 async def add_process_time_header(request: Request, call_next):
-    tracer = Tracer(exporter=AzureExporter(connection_string=f'InstrumentationKey={os.getenv("APPINSIGHTS_INSTRUMENTATIONKEY")}'), sampler=ProbabilitySampler(1.0))
+    tracer = Tracer(exporter=exporter)
+
     with tracer.span("main") as span:
         span.span_kind = SpanKind.SERVER
 
+        tracer.add_attribute_to_current_span(HTTP_HOST, request.url.hostname)
+        tracer.add_attribute_to_current_span(HTTP_METHOD, request.method)
+        tracer.add_attribute_to_current_span(HTTP_PATH, request.url.path)
+        tracer.add_attribute_to_current_span(HTTP_ROUTE, request.url.path)
+        tracer.add_attribute_to_current_span(HTTP_URL, str(request.url))
+
         response = await call_next(request)
-
-        tracer.add_attribute_to_current_span(attribute_key=HTTP_STATUS_CODE, attribute_value=response.status_code)
-        tracer.add_attribute_to_current_span(attribute_key=HTTP_URL, attribute_value=str(request.url))
-
+        tracer.add_attribute_to_current_span(HTTP_STATUS_CODE, response.status_code)
     return response
 
 
