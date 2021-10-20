@@ -1,3 +1,96 @@
+# For recommended Azure private DNS zone names see https://docs.microsoft.com/azure/private-link/private-endpoint-dns#azure-services-dns-zone-configuration
+
+# Azure Monitor requires 5 DNS zones:
+# - privatelink.monitor.azure.com
+# - privatelink.oms.opinsights.azure.com
+# - privatelink.ods.opinsights.azure.com
+# - privatelink.agentsvc.azure-automation.net
+# - privatelink.blob.core.windows.net (used also by Storage module)
+resource "azurerm_private_dns_zone" "azure_monitor" {
+  name                = "privatelink.monitor.azure.com"
+  resource_group_name = var.resource_group_name
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "azure_monitor" {
+  name                  = "azure-monitor-link"
+  resource_group_name   = var.resource_group_name
+  virtual_network_id    = azurerm_virtual_network.core.id
+  private_dns_zone_name = azurerm_private_dns_zone.azure_monitor.name
+  registration_enabled  = false
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_private_dns_zone" "azure_monitor_oms_opinsights" {
+  name                = "privatelink.oms.opinsights.azure.com"
+  resource_group_name = var.resource_group_name
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "azure_monitor_oms_opinsights" {
+  name                  = "azure-monitor-link"
+  resource_group_name   = var.resource_group_name
+  virtual_network_id    = azurerm_virtual_network.core.id
+  private_dns_zone_name = azurerm_private_dns_zone.azure_monitor_oms_opinsights.name
+  registration_enabled  = false
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_private_dns_zone" "azure_monitor_ods_opinsights" {
+  name                = "privatelink.ods.opinsights.azure.com"
+  resource_group_name = var.resource_group_name
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "azure_monitor_ods_opinsights" {
+  name                  = "azure-monitor-link"
+  resource_group_name   = var.resource_group_name
+  virtual_network_id    = azurerm_virtual_network.core.id
+  private_dns_zone_name = azurerm_private_dns_zone.azure_monitor_ods_opinsights.name
+  registration_enabled  = false
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_private_dns_zone" "azure_monitor_agentsvc" {
+  name                = "privatelink.agentsvc.azure-automation.net"
+  resource_group_name = var.resource_group_name
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "azure_monitor_agentsvc" {
+  name                  = "azure-monitor-link"
+  resource_group_name   = var.resource_group_name
+  virtual_network_id    = azurerm_virtual_network.core.id
+  private_dns_zone_name = azurerm_private_dns_zone.azure_monitor_agentsvc.name
+  registration_enabled  = false
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+# Blob DNS zone is used by both Azure Monitor and Storage modules
+resource "azurerm_private_dns_zone" "blobcore" {
+  name                = "privatelink.blob.core.windows.net"
+  resource_group_name = var.resource_group_name
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "blobcore" {
+  name                  = "blobcorelink"
+  resource_group_name   = var.resource_group_name
+  private_dns_zone_name = azurerm_private_dns_zone.blobcore.name
+  virtual_network_id    = azurerm_virtual_network.core.id
+
+  lifecycle { ignore_changes = [tags] }
+}
+
 
 resource "azurerm_private_dns_zone" "azurewebsites" {
   name                = "privatelink.azurewebsites.net"
@@ -34,6 +127,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "mysql" {
   lifecycle { ignore_changes = [tags] }
 }
 
+
 resource "azurerm_private_dns_zone" "static_web" {
   name                = "privatelink.web.core.windows.net"
   resource_group_name = var.resource_group_name
@@ -67,21 +161,6 @@ resource "azurerm_private_dns_zone_virtual_network_link" "filecorelink" {
   lifecycle { ignore_changes = [tags] }
 }
 
-resource "azurerm_private_dns_zone" "blobcore" {
-  name                = "privatelink.blob.core.windows.net"
-  resource_group_name = var.resource_group_name
-
-  lifecycle { ignore_changes = [tags] }
-}
-
-resource "azurerm_private_dns_zone_virtual_network_link" "blobcore" {
-  name                  = "blobcorelink"
-  resource_group_name   = var.resource_group_name
-  private_dns_zone_name = azurerm_private_dns_zone.blobcore.name
-  virtual_network_id    = azurerm_virtual_network.core.id
-
-  lifecycle { ignore_changes = [tags] }
-}
 
 resource "azurerm_private_dns_zone" "vaultcore" {
   name                = "privatelink.vaultcore.azure.net"
@@ -116,12 +195,14 @@ resource "azurerm_private_dns_zone_virtual_network_link" "acrlink" {
   lifecycle { ignore_changes = [tags] }
 }
 
+
 resource "azurerm_private_dns_zone" "azureml" {
   name                = "privatelink.api.azureml.ms"
   resource_group_name = var.resource_group_name
 
   lifecycle { ignore_changes = [tags] }
 }
+
 
 resource "azurerm_private_dns_zone" "azuremlcert" {
   name                = "privatelink.cert.api.azureml.ms"

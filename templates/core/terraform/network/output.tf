@@ -26,6 +26,26 @@ output "resource_processor_subnet_id" {
   value = azurerm_subnet.resource_processor.id
 }
 
+output "azure_monitor_dns_zone_id" {
+  value = azurerm_private_dns_zone.azure_monitor.id
+}
+
+output "azure_monitor_oms_opinsights_dns_zone_id" {
+  value = azurerm_private_dns_zone.azure_monitor_oms_opinsights.id
+}
+
+output "azure_monitor_ods_opinsights_dns_zone_id" {
+  value = azurerm_private_dns_zone.azure_monitor_ods_opinsights.id
+}
+
+output "azure_monitor_agentsvc_dns_zone_id" {
+  value = azurerm_private_dns_zone.azure_monitor_agentsvc.id
+}
+
+output "blob_core_dns_zone_id" {
+  value = azurerm_private_dns_zone.blobcore.id
+}
+
 output "azurewebsites_dns_zone_id" {
   value = azurerm_private_dns_zone.azurewebsites.id
 }
