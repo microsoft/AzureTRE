@@ -23,7 +23,7 @@ resource "azurerm_storage_account" "app_insights" {
 }
 
 data "local_file" "app_insights_arm_template" {
-  filename = "${path.module}/ampls.json"
+  filename = "${path.module}/app_insights.json"
 }
 
 # Application Insights
