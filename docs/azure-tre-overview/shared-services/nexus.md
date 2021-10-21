@@ -34,5 +34,4 @@ Notice that since Nexus Shared Service is running on an App Service, the outgoin
 | --- | --- |
 | AzureActiveDirectory | Authorize the signed in user against Azure Active Directory. |
 | AzureContainerRegistry | Pull the Nexus container image, as it is located in Azure Container Registry.  |
-| AzureMonitor | Forwards tracing an logs to central location for troubleshooting. |
 | pypi.org | Enables Nexus to "proxy" python packages to use inside of workspaces |
