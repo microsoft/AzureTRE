@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi_utils.tasks import repeat_every
 
-from services.tracing import TracerMiddleware
+from services.tracing import RequestTracerMiddleware
 from opencensus.trace.samplers import ProbabilitySampler
 
 from starlette.exceptions import HTTPException
@@ -44,9 +44,9 @@ def get_application() -> FastAPI:
     application.add_event_handler("shutdown", create_stop_app_handler(application))
 
     try:
-        application.middleware("http")(TracerMiddleware(application, exporter=AzureExporter(connection_string=f'InstrumentationKey={os.getenv("APPINSIGHTS_INSTRUMENTATIONKEY")}', sampler=ProbabilitySampler(1.0))))
+        application.middleware("http")(RequestTracerMiddleware(application, exporter=AzureExporter(connection_string=f'InstrumentationKey={os.getenv("APPINSIGHTS_INSTRUMENTATIONKEY")}', sampler=ProbabilitySampler(1.0))))
     except Exception as e:
-        logging.error(f"Failed to add http TracerMiddleware: {e}")
+        logging.error(f"Failed to add http RequestTracerMiddleware: {e}")
 
     application.add_middleware(ServerErrorMiddleware, handler=generic_error_handler)
     application.add_exception_handler(HTTPException, http_error_handler)

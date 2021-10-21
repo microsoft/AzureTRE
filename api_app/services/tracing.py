@@ -23,7 +23,7 @@ HTTP_STATUS_CODE = attributes_helper.COMMON_ATTRIBUTES["HTTP_STATUS_CODE"]
 module_logger = logging.getLogger(__name__)
 
 
-class TracerMiddleware:
+class RequestTracerMiddleware:
     def __init__(
         self,
         app: ASGIApp,
@@ -71,7 +71,7 @@ class TracerMiddleware:
             tracer.add_attribute_to_current_span(HTTP_PATH, request.url.path)
             tracer.add_attribute_to_current_span(HTTP_ROUTE, request.url.path)
             tracer.add_attribute_to_current_span(HTTP_URL, str(request.url))
-            
+
             execution_context.set_opencensus_attr(
                 "excludelist_hostnames", self.excludelist_hostnames
             )
