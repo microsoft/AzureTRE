@@ -65,10 +65,13 @@ class TracerMiddleware:
             span = tracer.start_span()
             span.span_kind = span_module.SpanKind.SERVER
             span.name = "[{}]{}".format(request.method, request.url)
+
             tracer.add_attribute_to_current_span(HTTP_HOST, request.url.hostname)
             tracer.add_attribute_to_current_span(HTTP_METHOD, request.method)
             tracer.add_attribute_to_current_span(HTTP_PATH, request.url.path)
+            tracer.add_attribute_to_current_span(HTTP_ROUTE, request.url.path)
             tracer.add_attribute_to_current_span(HTTP_URL, str(request.url))
+            
             execution_context.set_opencensus_attr(
                 "excludelist_hostnames", self.excludelist_hostnames
             )
