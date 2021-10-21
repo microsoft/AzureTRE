@@ -65,7 +65,7 @@ class AzureADAuthorization(OAuth2AuthorizationCodeBearer):
             workspace_id = request.path_params['workspace_id']
             ws_repo = WorkspaceRepository(get_db_client_from_request(request))
             workspace = ws_repo.get_workspace_by_id(workspace_id)
-            ws_app_reg_id = workspace.authInformation['sp_id']
+            ws_app_reg_id = workspace.authInformation['app_id']
 
             return ws_app_reg_id
         except Exception as e:

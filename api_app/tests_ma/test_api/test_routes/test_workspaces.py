@@ -422,28 +422,6 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         app.dependency_overrides[get_current_ws_user] = owner_user
         yield
         app.dependency_overrides = {}
-    #
-    # # [GET] /workspaces/{workspace_id}
-    # @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", side_effect=EntityDoesNotExist)
-    # async def test_get_workspace_by_id_get_returns_404_if_resource_is_not_found(self, _, app, client):
-    #     response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id=WORKSPACE_ID))
-    #     assert response.status_code == status.HTTP_404_NOT_FOUND
-    #
-    # # [GET] /workspaces/{workspace_id}
-    # @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
-    # async def test_get_workspace_by_id_get_returns_422_if_workspace_id_is_not_a_uuid(self, _, app, client):
-    #     response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id="not_valid"))
-    #     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-    #
-    # # [GET] /workspaces/{workspace_id}
-    # @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
-    # async def test_get_workspace_by_id_get_returns_workspace_if_found(self, get_workspace_mock, app, client):
-    #     workspace = sample_workspace()
-    #     get_workspace_mock.return_value = sample_workspace()
-    #
-    #     response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id=WORKSPACE_ID))
-    #     actual_resource = response.json()["workspace"]
-    #     assert actual_resource["id"] == workspace.id
 
     # [GET] /workspaces/{workspace_id}/workspace-services
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
@@ -685,6 +663,28 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
         app.dependency_overrides[get_current_ws_user] = researcher_user
         yield
         app.dependency_overrides = {}
+
+        # [GET] /workspaces/{workspace_id}
+        @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", side_effect=EntityDoesNotExist)
+        async def test_get_workspace_by_id_get_returns_404_if_resource_is_not_found(self, _, app, client):
+            response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id=WORKSPACE_ID))
+            assert response.status_code == status.HTTP_404_NOT_FOUND
+
+        # [GET] /workspaces/{workspace_id}
+        @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+        async def test_get_workspace_by_id_get_returns_422_if_workspace_id_is_not_a_uuid(self, _, app, client):
+            response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id="not_valid"))
+            assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+        # [GET] /workspaces/{workspace_id}
+        @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+        async def test_get_workspace_by_id_get_returns_workspace_if_found(self, get_workspace_mock, app, client):
+            workspace = sample_workspace()
+            get_workspace_mock.return_value = sample_workspace()
+
+            response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id=WORKSPACE_ID))
+            actual_resource = response.json()["workspace"]
+            assert actual_resource["id"] == workspace.id
 
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id")

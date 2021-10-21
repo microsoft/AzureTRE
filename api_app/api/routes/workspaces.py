@@ -80,7 +80,7 @@ async def retrieve_users_active_workspaces(user=Depends(get_current_tre_user), w
     return WorkspacesInList(workspaces=user_workspaces)
 
 
-@workspaces_router.get("/workspaces/{workspace_id}", response_model=WorkspaceInResponse, name=strings.API_GET_WORKSPACE_BY_ID, dependencies=[Depends(get_current_ws_owner_researcher_user)])
+@workspace_services_router.get("/workspaces/{workspace_id}", response_model=WorkspaceInResponse, name=strings.API_GET_WORKSPACE_BY_ID, dependencies=[Depends(get_current_ws_owner_researcher_user)])
 async def retrieve_workspace_by_workspace_id(workspace=Depends(get_workspace_by_id_from_path)) -> WorkspaceInResponse:
     return WorkspaceInResponse(workspace=workspace)
 

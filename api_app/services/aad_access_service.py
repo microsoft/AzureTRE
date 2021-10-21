@@ -72,6 +72,8 @@ class AADAccessService(AccessService):
             if role not in auth_info['roles']:
                 raise AuthConfigValidationError(f"{strings.ACCESS_APP_IS_MISSING_ROLE} {role}")
 
+        auth_info["app_id"] = data["app_id"]
+
         return auth_info
 
     def get_user_role_assignments(self, user_id: str) -> List[RoleAssignment]:
