@@ -38,6 +38,10 @@ The explicitly allowed egress traffic is described here:
 - [Gitea Shared Service](shared-services/gitea.md#network-requirements)
 - [Nexus Shared Service](shared-services/nexus.md#network-requirements)
 
+## Azure Monitor
+
+Azure Monitor resources are secured using [Azure Monitor Private Link Scope (AMPLS)](https://docs.microsoft.com/azure/azure-monitor/logs/private-link-security) keeping all traffic inside the Microsoft Azure backbone network. The Azure Monitor resources and their network configuration is defined in `/templates/core/terraform/azure-monitor` folder and the required private DNS zones in file `/templates/core/terraform/network/dns_zones.tf`.
+
 ## Network security groups
 
 ### TRE Core
