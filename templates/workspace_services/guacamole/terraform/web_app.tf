@@ -46,9 +46,9 @@ resource "azurerm_app_service" "guacamole" {
     AUDIENCE              = "${var.openid_client_id}"
     ISSUER                = local.issuer
 
-    OPENID_AUTHORIZATION_ENDPOINT = "${var.openid_authorization_endpoint}"
-    OPENID_JWKS_ENDPOINT          = "${var.openid_jwks_endpoint}"
-    OPENID_ISSUER                 = "${var.openid_issuer}"
+    OPENID_AUTHORIZATION_ENDPOINT = "https://login.microsoftonline.com/${data.azurerm_client_config.current.tenant_id}/oauth2/v2.0/authorize"
+    OPENID_JWKS_ENDPOINT          = "https://login.microsoftonline.com/${data.azurerm_client_config.current.tenant_id}/discovery/v2.0/keys"
+    OPENID_ISSUER                 = "https://login.microsoftonline.com/${data.azurerm_client_config.current.tenant_id}/v2.0"
     OPENID_CLIENT_ID              = "${var.openid_client_id}"
     OPENID_REDIRECT_URI           = "https://${local.webapp_name}.azurewebsites.net/guacamole/"
     OPENID_USERNAME_CLAIM_TYPE    = "email"

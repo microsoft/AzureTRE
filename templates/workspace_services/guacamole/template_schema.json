@@ -36,24 +36,6 @@
       "title": "Expose externally",
       "description": "Is the Guacamole service exposed outside of the vnet"
     },
-    "openid_authorization_endpoint": {
-      "$id": "#/properties/openid_authorization_endpoint",
-      "type": "string",
-      "title": "OpenID authorization endpoint",
-      "description": "The authorization endpoint (URI) of the OpenID service."
-    },
-    "openid_jwks_endpoint": {
-      "$id": "#/properties/openid_jwks_endpoint",
-      "type": "string",
-      "title": "OpenID JWKS endpoint",
-      "description": "The endpoint (URI) of the JWKS service which defines how received ID tokens (JSON Web Tokens or JWTs) shall be validated"
-    },
-    "openid_issuer": {
-      "$id": "#/properties/openid_issuer",
-      "type": "string",
-      "title": "OpenID issuer",
-      "description": "The issuer to expect for all received ID tokens"
-    },
     "openid_client_id": {
       "$id": "#/properties/openid_client_id",
       "type": "string",
