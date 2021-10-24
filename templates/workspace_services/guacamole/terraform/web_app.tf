@@ -43,8 +43,16 @@ resource "azurerm_app_service" "guacamole" {
     GUAC_DRIVE_NAME       = "${var.guac_drive_name}"
     GUAC_DRIVE_PATH       = "${var.guac_drive_path}"
     GUAC_DISABLE_DOWNLOAD = "${var.guac_disable_download}"
-    AUDIENCE              = data.azurerm_app_service.api_core.app_settings["API_CLIENT_ID"]
+    AUDIENCE              = "${var.openid_client_id}"
     ISSUER                = local.issuer
+
+    OPENID_AUTHORIZATION_ENDPOINT = "${var.openid_authorization_endpoint}"
+    OPENID_JWKS_ENDPOINT          = "${var.openid_jwks_endpoint}"
+    OPENID_ISSUER                 = "${var.openid_issuer}"
+    OPENID_CLIENT_ID              = "${var.openid_client_id}"
+    OPENID_REDIRECT_URI           = "https://${local.webapp_name}.azurewebsites.net/guacamole/"
+    OPENID_USERNAME_CLAIM_TYPE    = "email"
+
     # Solving the pulling from acr problem
     DOCKER_REGISTRY_SERVER_URL      = "${data.azurerm_container_registry.mgmt_acr.login_server}"
     DOCKER_REGISTRY_SERVER_USERNAME = "${data.azurerm_container_registry.mgmt_acr.admin_username}"

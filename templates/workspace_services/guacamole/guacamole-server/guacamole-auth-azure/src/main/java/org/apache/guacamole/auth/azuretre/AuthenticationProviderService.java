@@ -47,30 +47,6 @@ public class AuthenticationProviderService {
     @Inject
     private Provider<AzureTREAuthenticatedUser> authenticatedUserProvider;
 
-    public AzureTREAuthenticatedUser authenticateUser(final Credentials credentials) throws GuacamoleException {
-        LOGGER.info("authenticateUser");
-        // Pull HTTP header from request if present
-        final HttpServletRequest request = credentials.getRequest();
-        // Get the username from the header
-        final String accessToken = request.getHeader("x-Access-Token");
-        LOGGER.info("### access token {}", accessToken);
-        if (accessToken != null) {
-            final AzureTREAuthenticatedUser authenticatedUser = authenticatedUserProvider.get();
-            try {
-                final UrlJwkProvider jwkProvider = new UrlJwkProvider(new URL(
-                    "https://login.microsoftonline.com/" + System.getenv("TENANT_ID") + "/discovery/v2.0/keys"));
-                validateToken(credentials, accessToken, authenticatedUser, jwkProvider);
-
-                return authenticatedUser;
-            } catch (final MalformedURLException ex) {
-                LOGGER.error("Could not parse JWK Provider URL", ex);
-                throw new GuacamoleException("Could not parse JWK Provider URL");
-            }
-        }
-
-        // Authentication not provided via header, yet, so we request it.
-        throw new GuacamoleInvalidCredentialsException("Invalid login.", CredentialsInfo.USERNAME_PASSWORD);
-    }
 
     private void validateToken(final Credentials credentials, final String accessToken,
                                final AzureTREAuthenticatedUser authenticatedUser,

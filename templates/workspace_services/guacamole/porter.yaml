@@ -71,6 +71,22 @@ parameters:
     default: false
     env: IS_EXPOSED_EXTERNALLY
     description: "Determines if the web app will be available over public/internet or private networks"
+  - name: openid_authorization_endpoint
+    type: string
+    env: OPENID_AUTHORIZATION_ENDPOINT
+    description: "The authorization endpoint (URI) of the OpenID service"
+  - name: openid_jwks_endpoint
+    type: string
+    env: OPENID_JWKS_ENDPOINT
+    description: "The endpoint (URI) of the JWKS service which defines how received ID tokens (JSON Web Tokens or JWTs) shall be validated"
+  - name: openid_issuer
+    type: string
+    env: OPENID_ISSUER
+    description: "The issuer to expect for all received ID tokens"
+  - name: openid_client_id
+    type: string
+    env: OPENID_CLIENT_ID
+    description: "The OpenID client ID which should be submitted to the OpenID service when necessary. This value is typically provided to you by the OpenID service when OpenID credentials are generated for your application"
   # the following are added automatically by the resource processor
   - name: id
     type: string
@@ -123,6 +139,10 @@ install:
         guac_drive_path: "{{ bundle.parameters.guac_drive_path }}"
         guac_disable_download: "{{ bundle.parameters.guac_disable_download }}"
         is_exposed_externally: "{{ bundle.parameters.is_exposed_externally }}"
+        openid_authorization_endpoint: "{{ bundle.parameters.openid_authorization_endpoint }}"
+        openid_jwks_endpoint: "{{ bundle.parameters.openid_jwks_endpoint }}"
+        openid_issuer: "{{ bundle.parameters.openid_issuer }}"
+        openid_client_id: "{{ bundle.parameters.openid_client_id }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
@@ -160,6 +180,10 @@ uninstall:
         guac_drive_path: "{{ bundle.parameters.guac_drive_path }}"
         guac_disable_download: "{{ bundle.parameters.guac_disable_download }}"
         is_exposed_externally: "{{ bundle.parameters.is_exposed_externally }}"
+        openid_authorization_endpoint: "{{ bundle.parameters.openid_authorization_endpoint }}"
+        openid_jwks_endpoint: "{{ bundle.parameters.openid_jwks_endpoint }}"
+        openid_issuer: "{{ bundle.parameters.openid_issuer }}"
+        openid_client_id: "{{ bundle.parameters.openid_client_id }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
