@@ -37,7 +37,7 @@ public class AuthenticationProviderService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AzureTREAuthenticationProvider.class);
 
-    public void validateToken(final String accessToken, final UrlJwkProvider jwkProvider) throws GuacamoleInvalidCredentialsException {
+    public void validateToken(final String token, final UrlJwkProvider jwkProvider) throws GuacamoleInvalidCredentialsException {
 
         try {
             if (System.getenv("AUDIENCE").length() == 0) {
@@ -47,7 +47,7 @@ public class AuthenticationProviderService {
                 throw new Exception("ISSUER is not provided");
             }
 
-            final Jwk jwk = jwkProvider.get(JWT.decode(accessToken).getKeyId());
+            final Jwk jwk = jwkProvider.get(JWT.decode(token).getKeyId());
             final Algorithm algorithm = Algorithm.RSA256((RSAPublicKey) jwk.getPublicKey(), null);
             final JWTVerifier verifier = JWT.require(algorithm)
                 .withAudience(System.getenv("AUDIENCE"))
@@ -55,7 +55,7 @@ public class AuthenticationProviderService {
                 .withIssuer(System.getenv("ISSUER"))
                 .build();
 
-            final DecodedJWT jwt = verifier.verify(accessToken);
+            final DecodedJWT jwt = verifier.verify(token);
             // Since we verify we have the correct Audience we validate the token if at least one role is present, no
             // matter which one.
             final Claim roles = jwt.getClaim("roles");
