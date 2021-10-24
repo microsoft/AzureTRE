@@ -243,7 +243,6 @@ public class AuthenticationProviderServiceTests {
             environmentVariables.set("AUDIENCE", audience);
             environmentVariables.set("ISSUER", issuer);
 
-            environmentVariables.set("OPENID_JWKS_ENDPOINT", "https://login.microsoftonline.com/00000000-0000-0000-0000-000000000000/discovery/v2.0/keys");
             final AuthenticationProviderService azureTREAuthenticationProviderService =
                 new AuthenticationProviderService();
             final Method validateToken =
@@ -280,7 +279,6 @@ public class AuthenticationProviderServiceTests {
             environmentVariables.set("AUDIENCE", audience);
             environmentVariables.set("ISSUER", issuer);
 
-            environmentVariables.set("OPENID_JWKS_ENDPOINT", "https://login.microsoftonline.com/00000000-0000-0000-0000-000000000000/discovery/v2.0/keys");
             final AuthenticationProviderService azureTREAuthenticationProviderService =
                 new AuthenticationProviderService();
             final Method validateToken =
