@@ -25,32 +25,20 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import org.apache.guacamole.GuacamoleException;
-import org.apache.guacamole.auth.azuretre.user.AzureTREAuthenticatedUser;
-import org.apache.guacamole.net.auth.Credentials;
 import org.apache.guacamole.net.auth.credentials.CredentialsInfo;
 import org.apache.guacamole.net.auth.credentials.GuacamoleInvalidCredentialsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.http.HttpServletRequest;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.security.interfaces.RSAPublicKey;
+import java.util.List;
 
 public class AuthenticationProviderService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AzureTREAuthenticationProvider.class);
 
-    @Inject
-    private Provider<AzureTREAuthenticatedUser> authenticatedUserProvider;
+    public void validateToken(final String accessToken, final UrlJwkProvider jwkProvider) throws GuacamoleInvalidCredentialsException {
 
-
-    private void validateToken(final Credentials credentials, final String accessToken,
-                               final AzureTREAuthenticatedUser authenticatedUser,
-                               final UrlJwkProvider jwkProvider) throws GuacamoleInvalidCredentialsException {
         try {
             if (System.getenv("AUDIENCE").length() == 0) {
                 throw new Exception("AUDIENCE is not provided");
@@ -58,6 +46,7 @@ public class AuthenticationProviderService {
             if (System.getenv("ISSUER").length() == 0) {
                 throw new Exception("ISSUER is not provided");
             }
+
             final Jwk jwk = jwkProvider.get(JWT.decode(accessToken).getKeyId());
             final Algorithm algorithm = Algorithm.RSA256((RSAPublicKey) jwk.getPublicKey(), null);
             final JWTVerifier verifier = JWT.require(algorithm)
@@ -74,14 +63,17 @@ public class AuthenticationProviderService {
                 throw new GuacamoleInvalidCredentialsException(
                     "Token must contain a 'roles' claim", CredentialsInfo.USERNAME_PASSWORD);
             }
-            final String objectId = jwt.getClaim("oid").asString();
-            final String username = jwt.getClaim("preferred_username").asString();
 
-            authenticatedUser.init(credentials, accessToken, username, objectId);
+            List<String> rolesList = roles.asList(String.class);
+            if (rolesList.stream().noneMatch(x -> x.equalsIgnoreCase("WorkspaceOwner")
+                || x.equalsIgnoreCase("WorkspaceResearcher"))) {
+                throw new GuacamoleInvalidCredentialsException(
+                    "User must have a workspace owner or workspace researcher role", CredentialsInfo.USERNAME_PASSWORD);
+            }
         } catch (final Exception ex) {
-            LOGGER.error("Could not initialise user, possible access token verification issue", ex);
+            LOGGER.error("Could not validate token", ex);
             throw new GuacamoleInvalidCredentialsException(
-                "Could not initialise user, possible access token verification issue:" + ex.getMessage(),
+                "Could not validate token:" + ex.getMessage(),
                 CredentialsInfo.USERNAME_PASSWORD);
         }
     }

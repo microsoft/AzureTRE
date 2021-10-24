@@ -18,6 +18,7 @@
  */
 package org.apache.guacamole.auth.azuretre;
 
+import com.auth0.jwk.UrlJwkProvider;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.guacamole.GuacamoleException;
@@ -27,6 +28,8 @@ import org.apache.guacamole.net.auth.AbstractAuthenticationProvider;
 import org.apache.guacamole.net.auth.AuthenticatedUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.net.URL;
 
 public class AzureTREAuthenticationProvider extends AbstractAuthenticationProvider {
 
@@ -58,6 +61,27 @@ public class AzureTREAuthenticationProvider extends AbstractAuthenticationProvid
         if (authenticatedUser != null) {
             LOGGER.debug("Got user identifier: " + authenticatedUser.getIdentifier());
             String token = authenticatedUser.getCredentials().getRequest().getParameter(PARAMETER_NAME);
+
+            final AuthenticationProviderService authProviderService;
+            authProviderService = injector.getInstance(AuthenticationProviderService.class);
+
+            // Validate the token 'again', the OpenID extension verified it, but it didn't verify
+            // that we got the correct roles. The fact that a valid token was returned doesn't mean
+            // this user is an Owner or a Researcher. If its not, break, don't try to get any VMs.
+            // Note: At the moment there is NO apparent way to UN-Authorize a user that a previous
+            // extension authorized... (The user will see an empty list of VMs)
+            // Note2: The API app will also verify the token an in any case will not return any vms
+            // in this case.
+            try {
+                final UrlJwkProvider jwkProvider =
+                    new UrlJwkProvider(new URL(System.getenv("OPENID_JWKS_ENDPOINT")));
+                authProviderService.validateToken(token, jwkProvider);
+            }
+            catch (final Exception ex) {
+                // Failed to validate the token
+                LOGGER.error("Failed to validate token. ex: " + ex);
+                return null;
+            }
 
             AzureTREAuthenticatedUser treUser = new AzureTREAuthenticatedUser();
             treUser.init(authenticatedUser.getCredentials(), token, authenticatedUser.getIdentifier(), null);
