@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
+from typing import List
 
 from models.domain.workspace import Workspace, WorkspaceRole
-from models.domain.authentication import User
+from models.domain.authentication import User, RoleAssignment
 
 
 class AuthConfigValidationError(Exception):
@@ -19,5 +20,5 @@ class AccessService(ABC):
 
     @staticmethod
     @abstractmethod
-    def get_workspace_role(user: User, workspace: Workspace) -> WorkspaceRole:
+    def get_workspace_role(user: User, workspace: Workspace, user_role_assignments: List[RoleAssignment]) -> WorkspaceRole:
         pass

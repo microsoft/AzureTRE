@@ -88,25 +88,25 @@ def test_get_workspace_role_returns_correct_owner(get_user_role_assignments_mock
     get_user_role_assignments_mock.return_value = user.roleAssignments
 
     access_service = AADAccessService()
-    actual_role = access_service.get_workspace_role(user, workspace)
+    actual_role = access_service.get_workspace_role(user, workspace, access_service.get_user_role_assignments(user.id))
 
     assert actual_role == expected_role
 
-
-def test_raises_auth_config_error_if_workspace_auth_config_is_not_set():
+@patch("services.aad_access_service.AADAccessService.get_user_role_assignments", return_value = [("ab123", "ab124")])
+def test_raises_auth_config_error_if_workspace_auth_config_is_not_set(_):
     access_service = AADAccessService()
 
-    user = User(id='123', name="test", email="t@t.com", roleAssignments=[("ab123", "ab124")])
+    user = User(id='123', name="test", email="t@t.com")
     workspace_with_no_auth_config = Workspace(id='abc', resourceTemplateName='template-name', resourceTemplateVersion='0.1.0')
 
     with pytest.raises(AuthConfigValidationError):
-        _ = access_service.get_workspace_role(user, workspace_with_no_auth_config)
+        _ = access_service.get_workspace_role(user, workspace_with_no_auth_config, access_service.get_user_role_assignments(user.id))
 
-
-def test_raises_auth_config_error_if_auth_info_has_incorrect_roles():
+@patch("services.aad_access_service.AADAccessService.get_user_role_assignments", return_value = [("ab123", "ab124")])
+def test_raises_auth_config_error_if_auth_info_has_incorrect_roles(_):
     access_service = AADAccessService()
 
-    user = User(id='123', name="test", email="t@t.com", roleAssignments=[("ab123", "ab124")])
+    user = User(id='123', name="test", email="t@t.com")
     workspace_with_auth_info_but_no_roles = Workspace(
         id='abc',
         resourceTemplateName='template-name',
@@ -114,4 +114,4 @@ def test_raises_auth_config_error_if_auth_info_has_incorrect_roles():
         authInformation={'sp_id': '123', 'roles': {}})
 
     with pytest.raises(AuthConfigValidationError):
-        _ = access_service.get_workspace_role(user, workspace_with_auth_info_but_no_roles)
+        _ = access_service.get_workspace_role(user, workspace_with_auth_info_but_no_roles, access_service.get_user_role_assignments())

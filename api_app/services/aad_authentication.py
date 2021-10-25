@@ -9,7 +9,6 @@ from fastapi.security import OAuth2AuthorizationCodeBearer
 
 from core import config
 from models.domain.authentication import User
-from services.aad_access_service import AADAccessService
 from resources import strings
 from api.dependencies.database import get_db_client_from_request
 from db.repositories.workspaces import WorkspaceRepository

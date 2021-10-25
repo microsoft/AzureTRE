@@ -85,7 +85,7 @@ class AADAccessService(AccessService):
 
         return [RoleAssignment(role_assignment['resourceId'], role_assignment['appRoleId']) for role_assignment in graph_data['value']]
 
-    def get_workspace_role(self, user: User, workspace: Workspace) -> WorkspaceRole:
+    def get_workspace_role(self, user: User, workspace: Workspace, user_role_assignments: List[RoleAssignment]) -> WorkspaceRole:
         if 'sp_id' not in workspace.authInformation or 'roles' not in workspace.authInformation:
             raise AuthConfigValidationError(strings.AUTH_CONFIGURATION_NOT_AVAILABLE_FOR_WORKSPACE)
 
@@ -94,8 +94,6 @@ class AADAccessService(AccessService):
 
         if 'WorkspaceOwner' not in workspace_roles or 'WorkspaceResearcher' not in workspace_roles:
             raise AuthConfigValidationError(strings.AUTH_CONFIGURATION_NOT_AVAILABLE_FOR_WORKSPACE)
-
-        user_role_assignments = self.get_user_role_assignments(user.id)
 
         if RoleAssignment(resource_id=workspace_sp_id, role_id=workspace_roles['WorkspaceOwner']) in user_role_assignments:
             return WorkspaceRole.Owner

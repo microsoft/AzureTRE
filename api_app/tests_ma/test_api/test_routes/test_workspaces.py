@@ -9,12 +9,13 @@ from db.errors import EntityDoesNotExist
 from db.repositories.resources import ResourceRepository
 from db.repositories.workspaces import WorkspaceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
+from models.domain.authentication import RoleAssignment
 from models.domain.resource import Status, Deployment, RequestAction, ResourceType
 from models.domain.user_resource import UserResource
 from models.domain.workspace import Workspace, WorkspaceRole
 from models.domain.workspace_service import WorkspaceService
 from resources import strings
-
+from services.aad_access_service import AADAccessService
 
 pytestmark = pytest.mark.asyncio
 
@@ -226,31 +227,35 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
 
     # [GET] /workspaces
     @ patch("api.routes.workspaces.WorkspaceRepository.get_active_workspaces")
-    async def test_get_workspaces_returns_empty_list_when_no_resources_exist(self, get_workspaces_mock, app, client) -> None:
+    @ patch("api.routes.workspaces.get_user_role_assignments", return_value = [])
+    async def test_get_workspaces_returns_empty_list_when_no_resources_exist(self, access_service_mock, get_workspaces_mock, app, client) -> None:
         get_workspaces_mock.return_value = []
+        access_service_mock.get_workspace_role.return_value = [WorkspaceRole.Owner]
 
         response = await client.get(app.url_path_for(strings.API_GET_ALL_WORKSPACES))
         assert response.json() == {"workspaces": []}
 
     # [GET] /workspaces
-    # @ patch("api.routes.workspaces.WorkspaceRepository.get_active_workspaces")
-    # async def test_get_workspaces_returns_correct_data_when_resources_exist(self, get_workspaces_mock, app, client) -> None:
-    #     auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'roles': {'WorkspaceOwner': 'ab124', 'WorkspaceResearcher': 'ab125'}}
-    #     auth_info_user_in_workspace_researcher_role = {'sp_id': 'ab123', 'roles': {'WorkspaceOwner': 'ab127', 'WorkspaceResearcher': 'ab124'}}
-    #     auth_info_user_not_in_workspace_role = {'sp_id': 'ab127', 'roles': {'WorkspaceOwner': 'ab128', 'WorkspaceResearcher': 'ab129'}}
-    #
-    #     valid_ws_1 = sample_workspace(auth_info=auth_info_user_in_workspace_owner_role)
-    #     valid_ws_2 = sample_workspace(auth_info=auth_info_user_in_workspace_researcher_role)
-    #     invalid_ws = sample_workspace(auth_info=auth_info_user_not_in_workspace_role)
-    #
-    #     get_workspaces_mock.return_value = [valid_ws_1, valid_ws_2, invalid_ws]
-    #
-    #     response = await client.get(app.url_path_for(strings.API_GET_ALL_WORKSPACES))
-    #     workspaces_from_response = response.json()["workspaces"]
-    #
-    #     assert len(workspaces_from_response) == 2
-    #     assert valid_ws_1 in workspaces_from_response
-    #     assert valid_ws_2 in workspaces_from_response
+    @ patch("api.routes.workspaces.WorkspaceRepository.get_active_workspaces")
+    @patch("api.routes.workspaces.get_user_role_assignments")
+    async def test_get_workspaces_returns_correct_data_when_resources_exist(self, access_service_mock, get_workspaces_mock, app, client) -> None:
+        auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'roles': {'WorkspaceOwner': 'ab124', 'WorkspaceResearcher': 'ab125'}}
+        auth_info_user_in_workspace_researcher_role = {'sp_id': 'ab123', 'roles': {'WorkspaceOwner': 'ab127', 'WorkspaceResearcher': 'ab126'}}
+        auth_info_user_not_in_workspace_role = {'sp_id': 'ab127', 'roles': {'WorkspaceOwner': 'ab128', 'WorkspaceResearcher': 'ab129'}}
+
+        valid_ws_1 = sample_workspace(auth_info=auth_info_user_in_workspace_owner_role)
+        valid_ws_2 = sample_workspace(auth_info=auth_info_user_in_workspace_researcher_role)
+        invalid_ws = sample_workspace(auth_info=auth_info_user_not_in_workspace_role)
+
+        get_workspaces_mock.return_value = [valid_ws_1, valid_ws_2, invalid_ws]
+        access_service_mock.return_value = [RoleAssignment('ab123', 'ab124'), RoleAssignment('ab123', 'ab126')]
+
+        response = await client.get(app.url_path_for(strings.API_GET_ALL_WORKSPACES))
+        workspaces_from_response = response.json()["workspaces"]
+
+        assert len(workspaces_from_response) == 2
+        assert valid_ws_1 in workspaces_from_response
+        assert valid_ws_2 in workspaces_from_response
 
 
 class TestWorkspaceRoutesThatRequireAdminRights:
