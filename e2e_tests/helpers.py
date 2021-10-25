@@ -61,7 +61,7 @@ async def post_workspace_template(payload, token, verify) -> (str, bool):
 
         response = await client.post(f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACES}", headers=headers, json=payload)
 
-        assert (response.status_code == status.HTTP_202_ACCEPTED), f"Request for workspace {payload['workspaceType']} creation failed"
+        assert (response.status_code == status.HTTP_202_ACCEPTED), f"Request for workspace {payload['templateName']} creation failed"
 
         workspace_id = response.json()["workspaceId"]
         write_workspace_id(workspace_id)
@@ -99,7 +99,7 @@ async def disable_workspace(token, verify) -> None:
 
         response = await client.patch(f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACES}/{workspace_id}", headers=get_auth_header(token), json=payload)
 
-        enabled = response.json()["workspace"]["resourceTemplateParameters"]["enabled"]
+        enabled = response.json()["workspace"]["properties"]["enabled"]
         assert (enabled is False), "The workspace wasn't disabled"
 
 
@@ -177,7 +177,7 @@ async def post_workspace_service_template(workspace_id, payload, token, verify):
     async with AsyncClient(verify=verify) as client:
         response = await client.post(f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACES}/{workspace_id}/{strings.API_WORKSPACE_SERVICES}", headers=get_auth_header(token), json=payload)
 
-        assert (response.status_code == status.HTTP_202_ACCEPTED), f"Request for workspace service {payload['workspaceServiceType']} creation failed"
+        assert (response.status_code == status.HTTP_202_ACCEPTED), f"Request for workspace service {payload['templateName']} creation failed"
 
         workspace_service_id = response.json()["workspaceServiceId"]
 
@@ -194,7 +194,7 @@ async def disable_workspace_service(workspace_id, workspace_service_id, token, v
 
         response = await client.patch(f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACES}/{workspace_id}/{strings.API_WORKSPACE_SERVICES}/{workspace_service_id}", headers=get_auth_header(token), json=payload)
 
-        enabled = response.json()["workspaceService"]["resourceTemplateParameters"]["enabled"]
+        enabled = response.json()["workspaceService"]["properties"]["enabled"]
         assert (enabled is False), "The workspace service wasn't disabled"
 
 
@@ -202,6 +202,14 @@ async def delete_workspace_service(workspace_id, workspace_service_id, token, ve
     async with AsyncClient(verify=verify) as client:
         response = await client.delete(f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACES}/{workspace_id}/{strings.API_WORKSPACE_SERVICES}/{workspace_service_id}", headers=get_auth_header(token))
         assert (response.status_code == status.HTTP_200_OK), "The workspace service couldn't be deleted"
+
+
+async def ping_guacamole_workspace_service(workspace_id, workspace_service_id, token, verify) -> None:
+    async with AsyncClient(verify=verify) as client:
+        short_workspace_id = workspace_id[-4:]
+        short_workspace_service_id = workspace_service_id[-4:]
+        response = await client.get(f"https://guacamole-{config.TRE_ID}-ws-{short_workspace_id}-svc-{short_workspace_service_id}.azurewebsites.net/guacamole", headers={'x-access-token': f'{token}'}, timeout=300)
+        assert (response.status_code == status.HTTP_200_OK), "Guacamole cannot be reached"
 
 
 async def disable_and_delete_workspace_service(workspace_id, workspace_service_id, install_status, token, verify):

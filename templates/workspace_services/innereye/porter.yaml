@@ -1,5 +1,5 @@
 name: tre-service-innereye
-version: 0.1.2
+version: 0.1.5
 description: "An Azure TRE service for InnerEye Deep Learning"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -13,7 +13,7 @@ credentials:
     env: ARM_CLIENT_ID
   - name: azure_client_secret
     env: ARM_CLIENT_SECRET
-    
+
 parameters:
   - name: workspace_id
     type: string
@@ -44,10 +44,6 @@ parameters:
   - name: arm_use_msi
     env: ARM_USE_MSI
     default: false
-
-outputs:
-  - name: azureml_compute_cluster_name
-    type: string
 
 mixins:
   - exec

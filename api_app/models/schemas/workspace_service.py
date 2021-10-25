@@ -10,9 +10,9 @@ def get_sample_workspace_service(workspace_id: str, workspace_service_id: str) -
     return {
         "id": workspace_service_id,
         "workspaceId": workspace_id,
-        "resourceTemplateName": "guacamole",
-        "resourceTemplateVersion": "0.1.0",
-        "resourceTemplateParameters": {
+        "templateName": "guacamole",
+        "templateVersion": "0.1.0",
+        "properties": {
             "display_name": "my workspace service",
             "description": "some description",
         },
@@ -50,13 +50,13 @@ class WorkspaceServicesInList(BaseModel):
 
 
 class WorkspaceServiceInCreate(BaseModel):
-    workspaceServiceType: str = Field(title="Workspace service type", description="Bundle name")
+    templateName: str = Field(title="Workspace service type", description="Bundle name")
     properties: dict = Field({}, title="Workspace service parameters", description="Values for the parameters required by the workspace service resource specification")
 
     class Config:
         schema_extra = {
             "example": {
-                "workspaceServiceType": "guacamole",
+                "templateName": "guacamole",
                 "properties": {
                     "display_name": "my workspace service",
                     "description": "some description",

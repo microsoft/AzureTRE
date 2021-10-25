@@ -2,7 +2,7 @@
 
 To deploy the Azure TRE using GitHub workflows, create a fork of the repository.
 
-Deployment is done using the `/.github\workflows\deploy_tre.yml` workflow. This method is also used to deploy the dev/test environment for the original Azure TRE repository.
+Deployment is done using the `/.github/workflows/deploy_tre.yml` workflow. This method is also used to deploy the dev/test environment for the original Azure TRE repository.
 
 ## Setup instructions
 

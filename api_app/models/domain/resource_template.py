@@ -26,6 +26,7 @@ class Property(AzureTREModel):
 class ResourceTemplate(AzureTREModel):
     id: str
     name: str = Field(title="Unique template name")
+    title: str = Field("", title="Template title or friendly name")
     description: str = Field(title="Template description")
     version: str = Field(title="Template version")
     resourceType: ResourceType = Field(title="Type of resource this template is for (workspace/service)")

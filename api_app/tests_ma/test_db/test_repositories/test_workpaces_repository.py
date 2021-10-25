@@ -11,7 +11,7 @@ from models.schemas.workspace import WorkspaceInCreate, WorkspacePatchEnabled
 
 @pytest.fixture
 def basic_workspace_request():
-    return WorkspaceInCreate(workspaceType="base-tre", properties={"display_name": "test", "description": "test", "app_id": "123", "tre_id": "test"})
+    return WorkspaceInCreate(templateName="base-tre", properties={"display_name": "test", "description": "test", "app_id": "123", "tre_id": "test"})
 
 
 @pytest.fixture
@@ -24,9 +24,9 @@ def workspace_repo():
 def workspace():
     workspace = Workspace(
         id="000000d3-82da-4bfc-b6e9-9a7853ef753e",
-        resourceTemplateVersion="0.1.0",
-        resourceTemplateParameters={},
-        resourceTemplateName="my-workspace-service",
+        templateVersion="0.1.0",
+        properties={},
+        templateName="my-workspace-service",
     )
     return workspace
 
@@ -77,23 +77,23 @@ def test_create_workspace_item_creates_a_workspace_with_the_right_values(validat
     # make sure the input doesn't include an address_space so that one will be generated
     workspace_to_create.properties.pop("address_space", None)
 
-    validate_input_mock.return_value = workspace_to_create.workspaceType
+    validate_input_mock.return_value = workspace_to_create.templateName
     new_cidr_mock.return_value = "1.2.3.4/24"
 
     workspace = workspace_repo.create_workspace_item(workspace_to_create, {})
 
-    assert workspace.resourceTemplateName == workspace_to_create.workspaceType
+    assert workspace.templateName == workspace_to_create.templateName
     assert workspace.resourceType == ResourceType.Workspace
     assert workspace.deployment.status == Status.NotDeployed
 
     for key in ["display_name", "description", "azure_location", "workspace_id", "tre_id", "address_space"]:
-        assert key in workspace.resourceTemplateParameters
-        assert len(workspace.resourceTemplateParameters[key]) > 0
+        assert key in workspace.properties
+        assert len(workspace.properties[key]) > 0
 
     # need to make sure request doesn't override system param
-    assert workspace.resourceTemplateParameters["tre_id"] != workspace_to_create.properties["tre_id"]
+    assert workspace.properties["tre_id"] != workspace_to_create.properties["tre_id"]
     # a new CIDR was allocated
-    assert workspace.resourceTemplateParameters["address_space"] == "1.2.3.4/24"
+    assert workspace.properties["address_space"] == "1.2.3.4/24"
 
 
 @patch('db.repositories.workspaces.WorkspaceRepository.validate_input_against_template')
@@ -102,11 +102,11 @@ def test_create_workspace_item_creates_a_workspace_with_the_right_values(validat
 def test_create_workspace_item_creates_a_workspace_with_custom_address_space(validate_input_mock, workspace_repo, basic_workspace_request):
     workspace_to_create = basic_workspace_request
     workspace_to_create.properties["address_space"] = "192.168.0.0/24"
-    validate_input_mock.return_value = workspace_to_create.workspaceType
+    validate_input_mock.return_value = workspace_to_create.templateName
 
     workspace = workspace_repo.create_workspace_item(workspace_to_create, {})
 
-    assert workspace.resourceTemplateParameters["address_space"] == workspace_to_create.properties["address_space"]
+    assert workspace.properties["address_space"] == workspace_to_create.properties["address_space"]
 
 
 @patch('db.repositories.workspaces.WorkspaceRepository.validate_input_against_template')
@@ -122,14 +122,14 @@ def test_patch_workspace_updates_item(workspace_repo):
     workspace_repo.update_item = MagicMock(return_value=None)
     workspace_to_patch = Workspace(
         id="1234",
-        resourceTemplateName="base-tre",
-        resourceTemplateVersion="0.1.0",
-        resourceTemplateParameters={},
+        templateName="base-tre",
+        templateVersion="0.1.0",
+        properties={},
         deployment=Deployment(status=Status.NotDeployed, message=""),
     )
     workspace_patch = WorkspacePatchEnabled(enabled=False)
 
     workspace_repo.patch_workspace(workspace_to_patch, workspace_patch)
 
-    workspace_to_patch.resourceTemplateParameters["enabled"] = False
+    workspace_to_patch.properties["enabled"] = False
     workspace_repo.update_item.assert_called_once_with(workspace_to_patch)

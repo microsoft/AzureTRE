@@ -14,7 +14,7 @@ SERVICE_ID = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
 
 @pytest.fixture
 def basic_workspace_service_request():
-    return WorkspaceServiceInCreate(workspaceServiceType="workspace-service-type", properties={"display_name": "test", "description": "test", "tre_id": "test"})
+    return WorkspaceServiceInCreate(templateName="workspace-service-type", properties={"display_name": "test", "description": "test", "tre_id": "test"})
 
 
 @pytest.fixture
@@ -27,9 +27,9 @@ def workspace_service_repo():
 def workspace_service():
     workspace_service = WorkspaceService(
         id=SERVICE_ID,
-        resourceTemplateVersion="0.1.0",
-        resourceTemplateParameters={},
-        resourceTemplateName="my-workspace-service",
+        templateVersion="0.1.0",
+        properties={},
+        templateName="my-workspace-service",
     )
     return workspace_service
 
@@ -90,17 +90,17 @@ def test_create_workspace_service_item_creates_a_workspace_with_the_right_values
     resource_template = basic_workspace_service_template
     resource_template.required = ["display_name", "description"]
 
-    validate_input_mock.return_value = basic_workspace_service_request.workspaceServiceType
+    validate_input_mock.return_value = basic_workspace_service_request.templateName
 
     workspace_service = workspace_service_repo.create_workspace_service_item(workspace_service_to_create, WORKSPACE_ID)
 
-    assert workspace_service.resourceTemplateName == basic_workspace_service_request.workspaceServiceType
+    assert workspace_service.templateName == basic_workspace_service_request.templateName
     assert workspace_service.resourceType == ResourceType.WorkspaceService
     assert workspace_service.deployment.status == Status.NotDeployed
     assert workspace_service.workspaceId == WORKSPACE_ID
-    assert len(workspace_service.resourceTemplateParameters["tre_id"]) > 0
+    assert len(workspace_service.properties["tre_id"]) > 0
     # need to make sure request doesn't override system param
-    assert workspace_service.resourceTemplateParameters["tre_id"] != "test"
+    assert workspace_service.properties["tre_id"] != "test"
 
 
 @patch('db.repositories.workspace_services.WorkspaceServiceRepository.validate_input_against_template', side_effect=ValueError)
@@ -118,5 +118,5 @@ def test_patch_workspace_service_updates_item(workspace_service, workspace_servi
     )
 
     workspace_service_repo.patch_workspace_service(workspace_service, workspace_service_patch)
-    workspace_service.resourceTemplateParameters["enabled"] = False
+    workspace_service.properties["enabled"] = False
     workspace_service_repo.update_item.assert_called_once_with(workspace_service)

@@ -78,7 +78,7 @@ def create_updated_deployment_document(resource: dict, message: DeploymentStatus
     # lets not limit when we update them and have the resource process make that decision.
     output_dict = {output.Name: output.Value.strip("'").strip('"') for output in message.outputs}
 
-    resource["resourceTemplateParameters"].update(output_dict)
+    resource["properties"].update(output_dict)
 
     return resource
 

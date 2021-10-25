@@ -8,7 +8,6 @@ locals {
   service_resource_name_suffix   = "${var.tre_id}-ws-${local.short_workspace_id}-svc-${local.short_service_id}"
   aml_workspace_name             = lower("ml-${substr(local.service_resource_name_suffix, -30, -1)}")
   aml_compute_id                 = substr("${var.tre_id}${var.workspace_id}${local.short_service_id}", -12, -1)
-  aml_compute_instance_name      = "ci-${local.aml_compute_id}"
   aml_compute_cluster_name       = "cp-${local.aml_compute_id}"
   azureml_acr_name               = lower(replace("acr${substr(local.service_resource_name_suffix, -8, -1)}", "-", ""))
 }

@@ -1,13 +1,10 @@
 # Network Architecture
 
-The Trusted Research Environment (TRE) network topology is based on [hub-spoke](https://docs.microsoft.com/en-us/azure/architecture/reference-architectures/hybrid-networking/hub-spoke). The TRE Management VNET ([Azure Virtual Network](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-overview)) is the central hub and each workspace is a spoke.
-
-!!! note
-    TRE Management is referred to as **core** in scripts and code.
+The Trusted Research Environment (TRE) network topology is based on [hub-spoke](https://docs.microsoft.com/en-us/azure/architecture/reference-architectures/hybrid-networking/hub-spoke). The TRE Core VNET ([Azure Virtual Network](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-overview)) is the central hub and each workspace is a spoke.
 
 ![Network architecture](../assets/network-architecture.png)
 
-Azure TRE VNETs are segregated allowing limited traffic between the TRE Management VNET and Workspace VNETs. The security rules are managed by `nsg-ws` network security group. See [workspace network security groups (NSG)](#workspaces) further down.
+Azure TRE VNETs are segregated allowing limited traffic between the TRE Core VNET and Workspace VNETs. The security rules are managed by `nsg-ws` network security group. See [workspace network security groups (NSG)](#workspaces) further down.
 
 The Core VNET is further divided into subnets.
 
@@ -41,9 +38,13 @@ The explicitly allowed egress traffic is described here:
 - [Gitea Shared Service](shared-services/gitea.md#network-requirements)
 - [Nexus Shared Service](shared-services/nexus.md#network-requirements)
 
+## Azure Monitor
+
+Azure Monitor resources are secured using [Azure Monitor Private Link Scope (AMPLS)](https://docs.microsoft.com/azure/azure-monitor/logs/private-link-security) keeping all traffic inside the Microsoft Azure backbone network. The Azure Monitor resources and their network configuration is defined in `/templates/core/terraform/azure-monitor` folder and the required private DNS zones in file `/templates/core/terraform/network/dns_zones.tf`.
+
 ## Network security groups
 
-### TRE Management/core
+### TRE Core
 
 Network security groups (NSG), and their security rules for TRE core resources are defined in `/templates/core/terraform/network/network_security_groups.tf`.
 
@@ -55,9 +56,9 @@ Network security groups (NSG), and their security rules for TRE core resources a
 
 ### Workspaces
 
-Azure TRE VNETs are segregated allowing limited traffic between the TRE Management VNET and Workspace VNETs. The rules to manage and limit the traffic between the TRE Management VNET and Workspace VNETs are defined by the `nsg-ws` network security group:
+Azure TRE VNETs are segregated allowing limited traffic between the TRE Core VNET and Workspace VNETs. The rules to manage and limit the traffic between the TRE Core VNET and Workspace VNETs are defined by the `nsg-ws` network security group:
 
-- Inbound traffic from TRE Management VNET to workspace allowed for [Azure Bastion](https://docs.microsoft.com/en-us/azure/bastion/bastion-overview) (22, 3389) - All other inbound traffic from Core to workspace denied.
+- Inbound traffic from TRE Core VNET to workspace allowed for [Azure Bastion](https://docs.microsoft.com/en-us/azure/bastion/bastion-overview) (22, 3389) - All other inbound traffic from Core to workspace denied.
 - Outbound traffic to `SharedSubnet` from Workspace allowed.
 - Outbound traffic to Internet allowed on HTTPS port 443 (next hop Azure Firewall).
 - All other outbound traffic denied.

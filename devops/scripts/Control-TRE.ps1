@@ -9,7 +9,7 @@ param (
 
 Set-AzContext -SubscriptionId $env:ARM_SUBSCRIPTION_ID -ErrorAction Continue
 foreach ($eacherror in $Error) {
-  if ($eacherror.Exception.ToString() -like "*Run Connect-AzAccount to login.*") {
+  if ($eacherror.ToString() -like "*Run Connect-AzAccount to login.*" -or $eacherror.ToString() -like "*Please provide a valid tenant or a valid subscription.") {
     Write-Host "Login failed. Please check your credentials and try again."
     Connect-AzAccount -UseDeviceAuthentication
     Set-AzContext -SubscriptionId $env:ARM_SUBSCRIPTION_ID

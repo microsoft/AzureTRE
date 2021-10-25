@@ -64,8 +64,8 @@ class TestWorkspaceServiceTemplatesRequiringAdminRights:
     @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.get_templates_information")
     async def test_get_workspace_service_templates_returns_template_names_and_description(self, get_templates_info_mock, app, client):
         expected_template_infos = [
-            ResourceTemplateInformation(name="template1", description="description1"),
-            ResourceTemplateInformation(name="template2", description="description2")
+            ResourceTemplateInformation(name="template1", title="template 1", description="description1"),
+            ResourceTemplateInformation(name="template2", title="template 2", description="description2")
         ]
         get_templates_info_mock.return_value = expected_template_infos
 
@@ -233,8 +233,8 @@ class TestWorkspaceServiceTemplatesNotRequiringAdminRights:
     @patch("api.routes.workspace_service_templates.ResourceTemplateRepository.get_templates_information")
     async def test_get_user_resource_templates_returns_template_names_and_description(self, get_templates_information_mock, app, client):
         expected_templates = [
-            ResourceTemplateInformation(name="template1", description="description1"),
-            ResourceTemplateInformation(name="template2", description="description2")
+            ResourceTemplateInformation(name="template1", title="template 1", description="description1"),
+            ResourceTemplateInformation(name="template2", title="template 2", description="description2")
         ]
         get_templates_information_mock.return_value = expected_templates
 

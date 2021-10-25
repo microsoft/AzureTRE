@@ -1,5 +1,5 @@
 name: tre-service-azureml
-version: 0.1.8
+version: 0.1.9
 description: "An Azure TRE service for Azure Machine Learning"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -13,7 +13,7 @@ credentials:
     env: ARM_CLIENT_ID
   - name: azure_client_secret
     env: ARM_CLIENT_SECRET
-    
+
 parameters:
   - name: workspace_id
     type: string

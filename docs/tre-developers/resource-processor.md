@@ -83,7 +83,6 @@ The Resource Processor needs to access the following resources outside the Azure
 | --- | --- |
 | AzureActiveDirectory | Authenticate with the User Assigned identity to access Azure Resource Manager and Azure Service Bus. |
 | AzureResourceManager | Access the Azure control plane to deploy and manage Azure resources. |
-| AzureMonitor | Publish traces and logs to one central place for troubleshooting. |
 | AzureContainerRegistry | Pull the Resource Processor container image, as it is located in Azure Container Registry.  |
 | Storage | The Porter bundles stores state between executions in an Azure Storage Account. |
 | AzureKeyVault | The Porter bundles might need to create an Azure Key Vault inside of the Workspace. To verify the creation, before a private link connection is created, Terraform needs to reach Key Vault over public network |

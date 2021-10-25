@@ -7,6 +7,20 @@ resource "azurerm_user_assigned_identity" "id" {
   lifecycle { ignore_changes = [tags] }
 }
 
+data "azurerm_subscription" "current" {}
+
+resource "azurerm_role_assignment" "vm_contributor" {
+  scope                = data.azurerm_subscription.current.id
+  role_definition_name = "Virtual Machine Contributor"
+  principal_id         = azurerm_user_assigned_identity.id.principal_id
+}
+
+resource "azurerm_role_assignment" "acrpull_role" {
+  scope                = var.acr_id
+  role_definition_name = "AcrPull"
+  principal_id         = azurerm_user_assigned_identity.id.principal_id
+}
+
 resource "azurerm_role_assignment" "servicebus_sender" {
   scope                = var.servicebus_namespace.id
   role_definition_name = "Azure Service Bus Data Sender"

@@ -46,13 +46,13 @@ class AzureADAuthorization(OAuth2AuthorizationCodeBearer):
             decoded_token = self._decode_token(token, app_reg_id)
         except Exception as e:
             logging.debug(e)
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.AUTH_COULD_NOT_VALIDATE_CREDENTIALS, headers={"WWW-Authenticate": "Bearer"})
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.AUTH_UNABLE_TO_VALIDATE_TOKEN, headers={"WWW-Authenticate": "Bearer"})
 
         try:
             return self._get_user_from_token(decoded_token)
         except Exception as e:
             logging.debug(e)
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.AUTH_COULD_NOT_VALIDATE_CREDENTIALS, headers={"WWW-Authenticate": "Bearer"})
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.ACCESS_UNABLE_TO_GET_ROLE_ASSIGNMENTS_FOR_USER, headers={"WWW-Authenticate": "Bearer"})
 
     @staticmethod
     def _fetch_ws_app_reg_id_from_ws_id(request: Request) -> str:
@@ -86,7 +86,7 @@ class AzureADAuthorization(OAuth2AuthorizationCodeBearer):
         key = self._get_token_key(key_id)
 
         logging.debug("workspace app registration id: %s", ws_app_reg_id)
-        return jwt.decode(token, key, algorithms=['RS256'], audience=ws_app_reg_id)
+        return jwt.decode(token, key, options={"verify_signature": True}, algorithms=['RS256'], audience=ws_app_reg_id)
 
     @staticmethod
     def _get_key_id(token: str) -> str:
