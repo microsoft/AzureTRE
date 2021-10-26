@@ -35,7 +35,7 @@ parameters:
   - name: inference_sp_client_id
     type: string
   - name: inference_sp_client_secret
-    type: string 
+    type: string
   - name: tfstate_resource_group_name
     type: string
     description: "Resource group containing the Terraform state storage account"
@@ -87,9 +87,17 @@ upgrade:
       arguments:
         - "This workspace does not implement upgrade action"
 
-uninstall:  
-- exec:
-      description: "Uninstall workspace"
-      command: echo
+uninstall:
+  - az:
+      description: "az login"
       arguments:
-        - "This workspace does not implement uninstall action"
+        - login
+      flags:
+        identity:
+        username: "{{ bundle.credentials.azure_client_id}}"
+  - exec:
+      description: "Delete resource group and vnet peering"
+      command: ./uninstall_workspace.sh
+      arguments:
+        - "{{ bundle.parameters.tre_id }}"
+        - "{{ bundle.parameters.id }}"
