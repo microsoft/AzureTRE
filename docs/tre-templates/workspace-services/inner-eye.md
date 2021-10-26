@@ -18,30 +18,27 @@ URLs:
 - azure.archive.ubuntu.com (git lfs package)
 - packagecloud.io (git lfs package installation script)
 
-## Prerequisites
+## Initial setup
 
-- [A workspace with an Azure ML Service bundle installed](azure-ml.md)
+Provision an InnerEye workspace by invoking a POST to ```https://<treid>.<region>.cloudapp.azure.com/api/workspaces``` with the following payload:
 
-## Manual Deployment
+```json
+    {
+    "templateName": "tre-workspace-innereye",
+            "properties": {
+                "display_name": "InnerEye",
+                "description": "InnerEyer workspace",
+                "app_id": "<app_id>",
+                "acr_name": "<acrname>",
+                "inference_sp_client_id": "<spn_client_id>",
+                "inference_sp_client_secret": "<spn_client_secret>"
+            }
+    }
+```
 
-1. Create a copy of `templates/workspace_services/innereye_deeplearning/.env.sample` with the name `.env` and update the variables with the appropriate values.
+This will provision Base Workspace, with AML service and InnerEye service, including InnerEye Inference web app.
 
-    | Environment variable name | Description |
-    | ------------------------- | ----------- |
-    | `ID` | A GUID to identify the workspace service. The last 4 characters of this `ID` can be found in the resource names of the workspace service resources. |
-    | `WORKSPACE_ID` | The GUID identifier used when deploying the base workspace bundle. |
-    | `INFERENCE_SP_CLIENT_ID` | Service principal client ID used by the inference service to connect to Azure ML. Use the output from the step above. |
-    | `INFERENCE_SP_CLIENT_SECRET` | Service principal client secret used by the inference service to connect to Azure ML. Use the output from the step above. |
-
-1. Build and install the InnerEye Deep Learning Service bundle
-
-    ```cmd
-    make porter-build DIR=./templates/workspace_services/innereye
-    make porter-publish DIR=./templates/workspace_services/innereye
-    make porter-install DIR=./templates/workspace_services/innereye
-    ```
-
-## Running the InnerEye HelloWorld on AML Compute Cluster
+## Running the InnerEye HelloWorld
 
 ### Preparation steps performed by the TRE Admin
 
@@ -133,4 +130,25 @@ The workspace service provisions an App Service Plan and an App Service for host
 
     ```cmd
     Invoke-WebRequest https://yourservicename.azurewebsites.net/v1/model/start/HelloWorld:1 -Method POST -Headers @{'Accept' = 'application/json'; 'API_AUTH_SECRET' = 'your-secret-1234-1123445'}
+    ```
+
+## Alternative: Local Deployment
+
+Instead of provisioning InnerEye workspace service through AzureTRE API, you can also provision resources directly by invoking porter bundles:
+
+1. Create a copy of `templates/workspace_services/innereye/.env.sample` with the name `.env` and update the variables with the appropriate values.
+
+    | Environment variable name | Description |
+    | ------------------------- | ----------- |
+    | `ID` | A GUID to identify the workspace service. The last 4 characters of this `ID` can be found in the resource names of the workspace service resources. |
+    | `WORKSPACE_ID` | The GUID identifier used when deploying the base workspace bundle. |
+    | `INFERENCE_SP_CLIENT_ID` | Service principal client ID used by the inference service to connect to Azure ML. Use the output from the step above. |
+    | `INFERENCE_SP_CLIENT_SECRET` | Service principal client secret used by the inference service to connect to Azure ML. Use the output from the step above. |
+
+1. Build and install the InnerEye Deep Learning Service bundle
+
+    ```cmd
+    make porter-build DIR=./templates/workspace_services/innereye
+    make porter-publish DIR=./templates/workspace_services/innereye
+    make porter-install DIR=./templates/workspace_services/innereye
     ```
