@@ -55,7 +55,9 @@ parameters:
 
 mixins:
   - exec
-  - az
+  - az:
+      extensions:
+      - azure-firewall
   - docker
 
 install:
