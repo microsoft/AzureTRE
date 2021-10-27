@@ -29,7 +29,7 @@ Provision an InnerEye workspace by invoking a POST to ```https://<treid>.<region
                 "display_name": "InnerEye",
                 "description": "InnerEyer workspace",
                 "app_id": "<app_id>",
-                "acr_name": "<acrname>",
+               
                 "inference_sp_client_id": "<spn_client_id>",
                 "inference_sp_client_secret": "<spn_client_secret>"
             }
