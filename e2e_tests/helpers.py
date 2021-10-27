@@ -28,9 +28,9 @@ def get_auth_header(token: str) -> dict:
 
 
 @asynccontextmanager
-async def get_template(template_name, token, verify):
+async def get_template(template_name, admin_token, verify):
     async with AsyncClient(verify=verify) as client:
-        headers = {'Authorization': f'Bearer {token}'}
+        headers = {'Authorization': f'Bearer {admin_token}'}
 
         response = await client.get(f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACE_TEMPLATES}/{template_name}", headers=headers)
         yield response
@@ -55,19 +55,21 @@ async def check_deployment(client, workspace_id, headers) -> (str, str):
         return strings.RESOURCE_STATUS_DELETED, "Workspace was deleted"
 
 
-async def post_workspace_template(payload, token, verify) -> (str, bool):
+async def post_workspace_template(payload, workspace_owner_token, admin_token, verify) -> (str, bool):
     async with AsyncClient(verify=verify) as client:
-        headers = {'Authorization': f'Bearer {token}'}
+        admin_auth_headers = {'Authorization': f'Bearer {admin_token}'}
 
-        response = await client.post(f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACES}", headers=headers, json=payload)
+        response = await client.post(f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACES}", headers=admin_auth_headers, json=payload)
 
         assert (response.status_code == status.HTTP_202_ACCEPTED), f"Request for workspace {payload['templateName']} creation failed"
 
         workspace_id = response.json()["workspaceId"]
         write_workspace_id(workspace_id)
 
+        owner_auth_headers = {'Authorization': f'Bearer {workspace_owner_token}'}
+
         try:
-            await wait_for(install_done, client, workspace_id, headers, strings.RESOURCE_STATUS_FAILED)
+            await wait_for(install_done, client, workspace_id, owner_auth_headers, strings.RESOURCE_STATUS_FAILED)
             return workspace_id, True
         except Exception:
             return workspace_id, False
@@ -92,26 +94,26 @@ async def wait_for(func, client, workspace_id, headers, failure_state):
         raise
 
 
-async def disable_workspace(token, verify) -> None:
+async def disable_workspace(admin_token, verify) -> None:
     async with AsyncClient(verify=verify) as client:
         payload = {"enabled": "false"}
         workspace_id = read_workspace_id()
 
-        response = await client.patch(f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACES}/{workspace_id}", headers=get_auth_header(token), json=payload)
+        response = await client.patch(f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACES}/{workspace_id}", headers=get_auth_header(admin_token), json=payload)
 
         enabled = response.json()["workspace"]["properties"]["enabled"]
         assert (enabled is False), "The workspace wasn't disabled"
 
 
-async def disable_and_delete_workspace(workspace_id, install_status, token, verify):
+async def disable_and_delete_workspace(workspace_id, install_status, workspace_owner_token, admin_token, verify):
     async with AsyncClient(verify=verify) as client:
-        headers = get_auth_header(token)
 
-        await disable_workspace(token, verify)
-        await delete_workspace(token, verify)
+        await disable_workspace(admin_token, verify)
+        await delete_workspace(admin_token, verify)
 
+        owner_auth_headers = get_auth_header(workspace_owner_token)
         try:
-            await wait_for(delete_done, client, workspace_id, headers, strings.RESOURCE_STATUS_DELETING_FAILED)
+            await wait_for(delete_done, client, workspace_id, owner_auth_headers, strings.RESOURCE_STATUS_DELETING_FAILED)
         except Exception:
             raise
         finally:
