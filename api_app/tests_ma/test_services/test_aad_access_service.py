@@ -92,7 +92,8 @@ def test_get_workspace_role_returns_correct_owner(get_user_role_assignments_mock
 
     assert actual_role == expected_role
 
-@patch("services.aad_access_service.AADAccessService.get_user_role_assignments", return_value = [("ab123", "ab124")])
+
+@patch("services.aad_access_service.AADAccessService.get_user_role_assignments", return_value=[("ab123", "ab124")])
 def test_raises_auth_config_error_if_workspace_auth_config_is_not_set(_):
     access_service = AADAccessService()
 
@@ -102,7 +103,8 @@ def test_raises_auth_config_error_if_workspace_auth_config_is_not_set(_):
     with pytest.raises(AuthConfigValidationError):
         _ = access_service.get_workspace_role(user, workspace_with_no_auth_config, access_service.get_user_role_assignments(user.id))
 
-@patch("services.aad_access_service.AADAccessService.get_user_role_assignments", return_value = [("ab123", "ab124")])
+
+@patch("services.aad_access_service.AADAccessService.get_user_role_assignments", return_value=[("ab123", "ab124")])
 def test_raises_auth_config_error_if_auth_info_has_incorrect_roles(_):
     access_service = AADAccessService()
 

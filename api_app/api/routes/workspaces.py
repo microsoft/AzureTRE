@@ -51,9 +51,11 @@ def validate_user_is_workspace_owner_or_resource_owner(user, user_resource):
 
     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.ACCESS_USER_IS_NOT_OWNER_OR_RESEARCHER)
 
+
 def get_user_role_assignments(user):
     access_service = get_access_service()
     return access_service.get_user_role_assignments(user.id)
+
 
 def mark_resource_as_deleting(resource: Resource, resource_repo: ResourceRepository, resource_type: ResourceType) -> Status:
     try:

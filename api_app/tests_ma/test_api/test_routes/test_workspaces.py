@@ -226,7 +226,7 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
 
     # [GET] /workspaces
     @ patch("api.routes.workspaces.WorkspaceRepository.get_active_workspaces")
-    @ patch("api.routes.workspaces.get_user_role_assignments", return_value = [])
+    @ patch("api.routes.workspaces.get_user_role_assignments", return_value=[])
     async def test_get_workspaces_returns_empty_list_when_no_resources_exist(self, access_service_mock, get_workspaces_mock, app, client) -> None:
         get_workspaces_mock.return_value = []
         access_service_mock.get_workspace_role.return_value = [WorkspaceRole.Owner]
@@ -881,51 +881,6 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
         assert response.status_code == status.HTTP_200_OK
 
     # [DELETE] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources
-    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
-    @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id")
-    @patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")
-    async def test_delete_user_resource_raises_400_if_user_resource_is_enabled(self, _, get_user_resource_mock, ___, app, client):
-        user_resource = sample_user_resource_object()
-        user_resource.properties["enabled"] = True
-        get_user_resource_mock.return_value = user_resource
-
-        response = await client.delete(app.url_path_for(strings.API_DELETE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID))
-
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-
-    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
-    @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id", return_value=disabled_user_resource())
-    @patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")
-    @patch("api.routes.workspaces.mark_resource_as_deleting", return_value=None)
-    @patch("api.routes.workspaces.send_uninstall_message")
-    async def test_delete_user_resource_marks_resource_as_deleting(self, _, mark_resource_mock, __, ___, ____, app, client):
-        await client.delete(app.url_path_for(strings.API_DELETE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID))
-        mark_resource_mock.assert_called_once()
-
-    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
-    @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id", return_value=disabled_user_resource())
-    @patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")
-    @patch("api.routes.workspaces.mark_resource_as_deleting")
-    @patch("api.routes.workspaces.send_uninstall_message", return_value=None)
-    async def test_delete_user_resource_sends_uninstall_message(self, send_uninstall_mock, _, __, ___, ____, app, client):
-        await client.delete(app.url_path_for(strings.API_DELETE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID))
-        send_uninstall_mock.assert_called_once()
-
-    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
-    @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id")
-    @patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")
-    @patch("api.routes.workspaces.mark_resource_as_deleting")
-    @patch("api.routes.workspaces.send_uninstall_message")
-    async def test_delete_user_resource_returns_resource_id(self, _, __, ___, get_user_resource_mock, ____, app, client):
-        user_resource = disabled_user_resource()
-        get_user_resource_mock.return_value = user_resource
-
-        response = await client.delete(app.url_path_for(strings.API_DELETE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID))
-
-        assert response.status_code == status.HTTP_200_OK
-        assert response.json()["resourceId"] == user_resource.id
-
-
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id")
     @patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")

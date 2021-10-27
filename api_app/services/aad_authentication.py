@@ -18,6 +18,7 @@ class AzureADAuthorization(OAuth2AuthorizationCodeBearer):
     _jwt_keys: dict = {}
 
     _default_app_reg_id = None
+
     def __init__(self, aad_instance: str, aad_tenant: str, auto_error: bool = True, app_reg_id: str = None):
         super(AzureADAuthorization, self).__init__(
             authorizationUrl=f"{aad_instance}/{aad_tenant}/oauth2/v2.0/authorize",
@@ -70,7 +71,6 @@ class AzureADAuthorization(OAuth2AuthorizationCodeBearer):
         except Exception as e:
             logging.error(e)
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.AUTH_COULD_NOT_VALIDATE_CREDENTIALS)
-
 
     @staticmethod
     def _get_user_from_token(decoded_token: dict) -> User:

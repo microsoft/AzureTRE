@@ -4,9 +4,8 @@ from mock import patch
 from fastapi import status
 
 from api.routes.workspaces import get_current_ws_user, get_current_tre_user
-from models.domain.authentication import User
 from models.domain.user_resource import UserResource
-from models.domain.workspace import Workspace, WorkspaceRole
+from models.domain.workspace import Workspace
 from models.domain.workspace_service import WorkspaceService
 from resources import strings
 
@@ -179,7 +178,7 @@ class TestUserResourcesOwnerOrResearcherRoutesAccess:
     @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id")
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=None)
-    async def test_patch_user_resource_raises_403_if_user_is_not_workspace_owner_or_researcher(self, _, __, ___,app, client):
+    async def test_patch_user_resource_raises_403_if_user_is_not_workspace_owner_or_researcher(self, _, __, ___, app, client):
         response = await client.patch(app.url_path_for(strings.API_UPDATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID), json={"enabled": False})
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
@@ -238,4 +237,3 @@ class TestUserResourcesRoutesOwnerOrResourceOwnerAccess:
         response = await client.patch(app.url_path_for(strings.API_UPDATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID), json={"enabled": False})
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
-

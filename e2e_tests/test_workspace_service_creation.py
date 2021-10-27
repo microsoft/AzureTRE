@@ -44,9 +44,7 @@ async def test_create_guacamole_service_into_base_workspace(admin_token, workspa
         "properties": {
             "display_name": "E2E test guacamole service",
             "description": "workspace for E2E",
-            "app_id": f"{config.AUTH_APP_CLIENT_ID}",
-            "vm_size": "Standard_A1",
-            "no_of_vms":0
+            "app_id": f"{config.AUTH_APP_CLIENT_ID}"
         }
     }
     workspace_id, install_status = await post_workspace_template(payload, workspace_owner_token, admin_token, verify)

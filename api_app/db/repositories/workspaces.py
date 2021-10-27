@@ -47,7 +47,6 @@ class WorkspaceRepository(ResourceRepository):
 
         template_version = self.validate_input_against_template(workspace_input.templateName, workspace_input, ResourceType.Workspace)
 
-
         # if address_space isn't provided in the input, generate a new one.
         # TODO: #772 check that the provided address_space is available in the network.
         # TODO: #773 allow custom sized networks to be requested
