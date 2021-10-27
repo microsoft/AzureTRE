@@ -15,7 +15,7 @@ def pytest_addoption(parser):
 @pytest.fixture
 def verify(pytestconfig):
     if pytestconfig.getoption("verify").lower() == "true":
-        return False
+        return True
     elif pytestconfig.getoption("verify").lower() == "false":
         return False
 

@@ -1,7 +1,6 @@
 # Dev requirements
 flake8==3.9.2
 pre-commit==2.13.0
-pytest-asyncio==0.15.1
 
 -r api_app/requirements.txt
 -r api_app/requirements-dev.txt
