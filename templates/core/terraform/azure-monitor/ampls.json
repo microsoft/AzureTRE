@@ -50,7 +50,7 @@
     }
   ],
   "outputs": {
-    "resourceID": {
+    "resourceId": {
       "type": "String",
       "value": "[resourceId('microsoft.insights/privatelinkscopes', parameters('private_link_scope_name'))]"
     }

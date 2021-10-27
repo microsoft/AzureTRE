@@ -3,7 +3,8 @@ from httpx import AsyncClient
 from starlette import status
 
 import config
-from helpers import get_service_template, post_workspace_template, disable_and_delete_workspace, get_auth_header
+from helpers import get_service_template, post_workspace_template, disable_and_delete_workspace, get_auth_header, \
+    post_workspace_service_template, disable_and_delete_workspace_service, ping_guacamole_workspace_service
 from resources import strings
 
 
@@ -48,18 +49,17 @@ async def test_create_guacamole_service_into_base_workspace(token, verify) -> No
     }
     workspace_id, install_status = await post_workspace_template(payload, token, verify)
 
-#   Enable when guacamole service deletion bug is fixed
-#   ***************************************************
-#   service_payload = {
-#       "templateName": "tre-service-guacamole",
-#       "properties": {
-#           "display_name": "Workspace service test",
-#           "description": "Workspace service for E2E test"
-#       }
-#   }
-#
-#   workspace_service_id, install_service_status = await post_workspace_service_template(workspace_id, service_payload, token, verify)
-#
-#   await disable_and_delete_workspace_service(workspace_id, workspace_service_id, install_service_status, token, verify)
+    service_payload = {
+        "templateName": "tre-service-guacamole",
+        "properties": {
+            "display_name": "Workspace service test",
+            "description": "Workspace service for E2E test"
+        }
+    }
+    workspace_service_id, install_service_status = await post_workspace_service_template(workspace_id, service_payload, token, verify)
+
+    await ping_guacamole_workspace_service(workspace_id, workspace_service_id, token, verify)
+
+    await disable_and_delete_workspace_service(workspace_id, workspace_service_id, install_service_status, token, verify)
 
     await disable_and_delete_workspace(workspace_id, install_status, token, verify)
