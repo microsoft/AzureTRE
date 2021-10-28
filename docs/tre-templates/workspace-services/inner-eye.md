@@ -29,7 +29,6 @@ Provision an InnerEye workspace by invoking a POST to ```https://<treid>.<region
                 "display_name": "InnerEye",
                 "description": "InnerEyer workspace",
                 "app_id": "<app_id>",
-               
                 "inference_sp_client_id": "<spn_client_id>",
                 "inference_sp_client_secret": "<spn_client_secret>"
             }
@@ -42,7 +41,7 @@ This will provision Base Workspace, with AML service and InnerEye service, inclu
 
 ### Preparation steps performed by the TRE Admin
 
-1. Ensure that you have completed ["Configuring Shared Services"](../tre-admins/setup-instructions/configuring-shared-services.md)
+1. Ensure that you have completed ["Configuring Shared Services"](../../tre-admins/setup-instructions/configuring-shared-services.md)
 1. Log onto a TREAdmin Jumpbox and mirror Github repos needed by InnerEye Helloworld:
 
     ```cmd
@@ -100,7 +99,7 @@ This will provision Base Workspace, with AML service and InnerEye service, inclu
    ```
 
 1. The runner will provide you with a link and ask you to open it to login. Copy the link and open it in browser (Edge) on the DSVM and login. The run will continue after login.
-1. In your browser navigate to ml.azure.com and open the `Experiments` tab to follow the progress of the training
+1. In your browser navigate to [https://ml.azure.com](https://ml.azure.com) and open the `Experiments` tab to follow the progress of the training
 
 ## Configuring and testing inference service
 
