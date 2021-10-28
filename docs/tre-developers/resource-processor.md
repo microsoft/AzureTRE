@@ -107,8 +107,10 @@ To install Docker, Porter and related packages ([script](/templates/core/terrafo
 
 The notable challenges that needed to be solved included Porter automation, namely hosting environment, managing workspace (deployment) states and concurrency.
 
+<!-- markdownlint-disable MD013 -->
 Hosting the Porter runner in a container is an expected design idea and appealing due to its cost effectiveness among other things. However, that would create a nested Docker environment, "Docker in Docker". Although this is possible using [Azure CNAB Driver](https://github.com/deislabs/cnab-azure-driver), the solution is less reliable and troubleshooting becomes difficult; due to the environment's ephemeral nature, there is not much in addition to the [Application Insights](https://docs.microsoft.com/azure/azure-monitor/app/app-insights-overview) logs the developer can rely on. In contrast, the developer can always log in to the VM and see what's going on and run tests manually to reproduce bugs.
 
 Porter can keep tap on the installations, but Azure TRE needs a state record that is more tangible. It is instead the responsibility of the API to maintain the state of deployments in Cosmos DB. The state is updated when a user deploys, modifies or deletes workspaces and based on the deployment status messages sent by Resource Processor. All possible states of a workspace or a workspace service are defined by the API in [`resource.py` file](https://github.com/microsoft/AzureTRE/blob/main/api_app/models/domain/resource.py).
 
 Azure TRE is a multi-user environment with some of its core resources shared by workspaces. This can lead into problems, for example, changing the firewall rules, which is required by some workspaces, cannot be done in parallel. Two concurrent workspace deployments would cause one of them to fail. Resource Processor blindly executes the requests it reads from Service Bus. Thus, it is the API that manages the concurrency.
+<!-- markdownlint-enable MD013 -->

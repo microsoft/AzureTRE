@@ -50,7 +50,11 @@ To automate Porter it needs a place to live in Azure TRE. The home chosen for Po
 
 ![Resource Processor overview](../assets/resource-processor-overview.jpg)
 
-During the deployment of Resource Processor itself it is given the credentials of a managed identity with the privileges to modify and deploy resources to the subscription associated with the Azure TRE instance. Resource Processor later then uses these credentials to receive and send Service Bus messages, authorizes Porter to deploy Porter bundles and to access the storage account to update installation data. The logic in Resource Processor is written in Python. The Resource Processor implementation is located in [`resource_processor` folder](https://github.com/microsoft/AzureTRE/blob/main/resource_processor/) of the repository.
+<!-- markdownlint-disable MD013 -->
+During the deployment of Resource Processor itself it is given the credentials of a managed identity with the privileges to modify and deploy resources to the subscription associated with the Azure TRE instance. Resource Processor later then uses these credentials to receive and send Service Bus messages, authorizes Porter to deploy Porter bundles and to access the storage account to update installation data.
+<!-- markdownlint-enable MD013 -->
+
+The logic in Resource Processor is written in Python. The Resource Processor implementation is located in [`resource_processor` folder](https://github.com/microsoft/AzureTRE/blob/main/resource_processor/) of the repository.
 
 The [TRE Administrator](user-roles.md#tre-administrator) can register a Porter bundle to use the Composition Service to provision instances of the Workspace Templates.
 
