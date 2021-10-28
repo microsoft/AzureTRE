@@ -18,34 +18,30 @@ URLs:
 - azure.archive.ubuntu.com (git lfs package)
 - packagecloud.io (git lfs package installation script)
 
-## Prerequisites
+## Initial setup
 
-- [A workspace with an Azure ML Service bundle installed](azure-ml.md)
+Provision an InnerEye workspace by invoking a POST to ```https://<treid>.<region>.cloudapp.azure.com/api/workspaces``` with the following payload:
 
-## Manual Deployment
+```json
+    {
+    "templateName": "tre-workspace-innereye",
+            "properties": {
+                "display_name": "InnerEye",
+                "description": "InnerEyer workspace",
+                "app_id": "<app_id>",
+                "inference_sp_client_id": "<spn_client_id>",
+                "inference_sp_client_secret": "<spn_client_secret>"
+            }
+    }
+```
 
-1. Create a copy of `templates/workspace_services/innereye_deeplearning/.env.sample` with the name `.env` and update the variables with the appropriate values.
+This will provision Base Workspace, with AML service and InnerEye service, including InnerEye Inference web app.
 
-    | Environment variable name | Description |
-    | ------------------------- | ----------- |
-    | `ID` | A GUID to identify the workspace service. The last 4 characters of this `ID` can be found in the resource names of the workspace service resources. |
-    | `WORKSPACE_ID` | The GUID identifier used when deploying the base workspace bundle. |
-    | `INFERENCE_SP_CLIENT_ID` | Service principal client ID used by the inference service to connect to Azure ML. Use the output from the step above. |
-    | `INFERENCE_SP_CLIENT_SECRET` | Service principal client secret used by the inference service to connect to Azure ML. Use the output from the step above. |
-
-1. Build and install the InnerEye Deep Learning Service bundle
-
-    ```cmd
-    make porter-build DIR=./templates/workspace_services/innereye
-    make porter-publish DIR=./templates/workspace_services/innereye
-    make porter-install DIR=./templates/workspace_services/innereye
-    ```
-
-## Running the InnerEye HelloWorld on AML Compute Cluster
+## Running the InnerEye HelloWorld
 
 ### Preparation steps performed by the TRE Admin
 
-1. Ensure that you have completed ["Configuring Shared Services"](../tre-admins/setup-instructions/configuring-shared-services.md)
+1. Ensure that you have completed ["Configuring Shared Services"](../../tre-admins/setup-instructions/configuring-shared-services.md)
 1. Log onto a TREAdmin Jumpbox and mirror Github repos needed by InnerEye Helloworld:
 
     ```cmd
@@ -55,8 +51,9 @@ URLs:
 
 ### Setup the InnerEye run from AML Compute Instance
 
-1. Log onto a VM in the workspace, open Edge and navigate to [ml.azure.com](https://ml.azure.com)
-1. Select the Notebooks tab and then click Terminal. This should open a terminal on a running compute instance
+1. Log onto a VM in the workspace
+1. In the VM open your browser and navigate to [ml.azure.com](https://ml.azure.com), login, select the right Subscription and AML workspace.
+1. Select the Notebooks tab and then click Terminal. This will open a terminal on a running compute instance
 1. Pull the InnerEye-DeepLearning git repo from Gitea mirror and configure:
 
     ```cmd
@@ -71,29 +68,38 @@ URLs:
     conda env create --file environment.yml
     conda activate InnerEye
     ```
-1. Get storage keys for your storage:
 
-    ```az storage account keys list --account-name stgws<workspace_id>```
+1. Login to AzureCLI and set default subscription if needed
+
+    ```cmd
+    az login
+    az account set --subscription 
+    ```
+
 1. Create a "datasets" container
 
     ```az storage container create --name datasets --account-name stgws<workspace_id>```
 1. Copy `dataset.csv` file from `Tests/ML/test_data/dataset.csv` to the `hello_world` folder:
 
-    ```az storage blob upload --account-name stgws<workspace_id> --container-name datasets --file ./Tests/ML/test_data/dataset.csv --name /hello_world/dataset.csv```
+    ```az storage blob upload --account-name stgws<workspace_id> --container-name datasets --file ./Tests/ML/test_data/dataset.csv --name hello_world/dataset.csv```
 1. Copy the whole `train_and_test_data` folder from `Test/ML/test_data/train_and_test_data` to the `hello_world` folder:
 
-    ```az storage blob directory upload -c datasets --account-name stgws<workspace_id> -s "./Test/ML/test_data/train_and_test_data" -d hello_world --recursive```
-  
+    ```az storage blob directory upload -c datasets --account-name stgws<workspace_id> -s "./Tests/ML/test_data/train_and_test_data" -d hello_world --recursive```
+
+1. Get storage keys for your storage:
+
+    ```az storage account keys list --account-name stgws<workspace_id>```
+
 1. Update the following variables in `InnerEye/settings.yml`: subscription_id, resource_group, workspace_name, cluster (see [AML setup](https://github.com/microsoft/InnerEye-DeepLearning/blob/main/docs/setting_up_aml.md) for more details).
-1. Open your browser to ml.azure.com, login, select the right Subscription and AML workspace and then navigate to `Data stores`. Create a New datastore named `innereyedatasets` and link it to your storage account and datasets container.
-1. Back from PowerShell run
+1. Navigate to `Data stores` in AML Workspace. Create a New datastore named `innereyedatasets` and link it to your storage account and datasets container. Use the key collected from the step above.
+1. Back from the Terminal run
 
    ```cmd
    python InnerEye/ML/runner.py --model=HelloWorld --azureml=True
    ```
 
 1. The runner will provide you with a link and ask you to open it to login. Copy the link and open it in browser (Edge) on the DSVM and login. The run will continue after login.
-1. In your browser navigate to ml.azure.com and open the `Experiments` tab to follow the progress of the training
+1. In your browser navigate to [https://ml.azure.com](https://ml.azure.com) and open the `Experiments` tab to follow the progress of the training
 
 ## Configuring and testing inference service
 
@@ -123,4 +129,25 @@ The workspace service provisions an App Service Plan and an App Service for host
 
     ```cmd
     Invoke-WebRequest https://yourservicename.azurewebsites.net/v1/model/start/HelloWorld:1 -Method POST -Headers @{'Accept' = 'application/json'; 'API_AUTH_SECRET' = 'your-secret-1234-1123445'}
+    ```
+
+## Alternative: Local Deployment
+
+Instead of provisioning InnerEye workspace service through AzureTRE API, you can also provision resources directly by invoking porter bundles:
+
+1. Create a copy of `templates/workspace_services/innereye/.env.sample` with the name `.env` and update the variables with the appropriate values.
+
+    | Environment variable name | Description |
+    | ------------------------- | ----------- |
+    | `ID` | A GUID to identify the workspace service. The last 4 characters of this `ID` can be found in the resource names of the workspace service resources. |
+    | `WORKSPACE_ID` | The GUID identifier used when deploying the base workspace bundle. |
+    | `INFERENCE_SP_CLIENT_ID` | Service principal client ID used by the inference service to connect to Azure ML. Use the output from the step above. |
+    | `INFERENCE_SP_CLIENT_SECRET` | Service principal client secret used by the inference service to connect to Azure ML. Use the output from the step above. |
+
+1. Build and install the InnerEye Deep Learning Service bundle
+
+    ```cmd
+    make porter-build DIR=./templates/workspace_services/innereye
+    make porter-publish DIR=./templates/workspace_services/innereye
+    make porter-install DIR=./templates/workspace_services/innereye
     ```
