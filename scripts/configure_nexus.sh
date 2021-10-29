@@ -4,7 +4,7 @@ set -e
 function usage() {
     cat <<USAGE
 
-    Usage: $0  [-t --tre-id] 
+    Usage: $0  [-t --tre-id]
 
     Options:
         -t, --tre-id               ID of the TRE
@@ -36,12 +36,12 @@ export NEXUS_PASS=$(az keyvault secret show --name ${NEXUS_ADMIN_PASSWORD_NAME} 
 
 if [ -z "$NEXUS_PASS" ]; then
     # The pass couldn't be found in Key Vault, fetching from nexus_data
-    while [ $(az storage file exists -p admin.password -s nexus-data --account-name ${STORAGE_ACCOUNT_NAME,,} -o json | jq '.exists')==false ]; do
+    while [ $(az storage file exists -p admin.password -s nexus-data --account-name ${STORAGE_ACCOUNT_NAME,,} -o json | jq '.exists') == false ]; do
         echo "Waiting for admin pass..."
         sleep 10
     done
 
-    # The initial password file exists, let's get it 
+    # The initial password file exists, let's get it
     az storage file download -p admin.password -s nexus-data --account-name ${STORAGE_ACCOUNT_NAME,,}
     export NEXUS_PASS=`cat admin.password`
 
@@ -61,7 +61,7 @@ fi
 #Check if the repo already exists
 export STATUS_CODE=$(curl -iu admin:$NEXUS_PASS -X "GET" "${NEXUS_URL}/service/rest/v1/repositories/apt/proxy/pypi-proxy-repo" -H "accept: application/json" -k -s -w "%{http_code}" -o /dev/null)
 
-if [[ ${STATUS_CODE} == 404 ]] 
+if [[ ${STATUS_CODE} == 404 ]]
  then
     # Let's create pypi proxy
     curl -iu admin:$NEXUS_PASS -XPOST \
