@@ -215,7 +215,6 @@ resource "azurerm_firewall_network_rule_collection" "resource_processor_subnet" 
       "AzureActiveDirectory",
       "AzureResourceManager",
       "AzureContainerRegistry",
-      "AzureMonitor",
       "Storage",
       "AzureKeyVault"
     ]
@@ -248,8 +247,7 @@ resource "azurerm_firewall_network_rule_collection" "web_app_subnet" {
     destination_addresses = [
       "AzureActiveDirectory",
       "AzureContainerRegistry",
-      "AzureResourceManager",
-      "AzureMonitor"
+      "AzureResourceManager"
     ]
 
     destination_ports = [
