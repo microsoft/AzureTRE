@@ -44,7 +44,7 @@ The Composition Service is responsible for managing and mutating Workspaces and 
 
 A Workspace is an instance of a Workspace Template. A Workspace Template is implemented as a [Porter](https://porter.sh/) bundle - read more about [Authoring workspaces templates](../tre-workspace-authors/authoring-workspace-templates.md).
 
-A Porter bundle is a fully encapsulated versioned bundle with everything needed (binaries, scripts, IoC templates etc.) to provision an instance of Workspace Template.
+A Porter bundle is a fully encapsulated versioned bundle with everything needed (binaries, scripts, IaC templates etc.) to provision an instance of Workspace Template.
 
 To automate Porter it needs a place to live in Azure TRE. The home chosen for Porter to run was a Linux virtual machine. This Azure TRE component encompassing Porter and its dependencies is called **Resource Processor**.
 
