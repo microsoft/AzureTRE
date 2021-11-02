@@ -8,6 +8,7 @@ from fastapi import Request, HTTPException, status
 from fastapi.security import OAuth2AuthorizationCodeBearer
 
 from core import config
+from db.errors import EntityDoesNotExist
 from models.domain.authentication import User
 from resources import strings
 from api.dependencies.database import get_db_client_from_request
@@ -68,6 +69,8 @@ class AzureADAuthorization(OAuth2AuthorizationCodeBearer):
             ws_app_reg_id = workspace.authInformation['app_id']
 
             return ws_app_reg_id
+        except EntityDoesNotExist:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.WORKSPACE_DOES_NOT_EXIST)
         except Exception as e:
             logging.error(e)
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.AUTH_COULD_NOT_VALIDATE_CREDENTIALS)
