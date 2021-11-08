@@ -1,6 +1,7 @@
 import logging
 import os
 from opencensus.ext.azure.trace_exporter import AzureExporter
+from starlette.middleware.base import BaseHTTPMiddleware, DispatchFunction
 import uvicorn
 
 from fastapi import FastAPI
@@ -44,9 +45,9 @@ def get_application() -> FastAPI:
     application.add_event_handler("shutdown", create_stop_app_handler(application))
 
     try:
-        application.middleware("http")(RequestTracerMiddleware(application, exporter=AzureExporter(connection_string=f'InstrumentationKey={os.getenv("APPINSIGHTS_INSTRUMENTATIONKEY")}', sampler=ProbabilitySampler(1.0))))
+        application.add_middleware(RequestTracerMiddleware, exporter=AzureExporter(connection_string=f'InstrumentationKey={os.getenv("APPINSIGHTS_INSTRUMENTATIONKEY")}', sampler=ProbabilitySampler(1.0)))
     except Exception as e:
-        logging.error(f"Failed to add http RequestTracerMiddleware: {e}")
+        logging.error(f"Failed to add RequestTracerMiddleware: {e}")
 
     application.add_middleware(ServerErrorMiddleware, handler=generic_error_handler)
     application.add_exception_handler(HTTPException, http_error_handler)
