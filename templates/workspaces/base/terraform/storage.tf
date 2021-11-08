@@ -6,11 +6,15 @@ resource "azurerm_storage_account" "stg" {
   account_replication_type = "GRS"
 
   lifecycle { ignore_changes = [tags] }
+}
 
-  network_rules {
-    bypass         = ["AzureServices"]
-    default_action = "Deny"
-  }
+resource "azurerm_storage_account_network_rules" "stgrules" {
+  resource_group_name  = azurerm_resource_group.ws.name
+  storage_account_name = azurerm_storage_account.stg.name
+
+  default_action             = "Deny"
+  virtual_network_subnet_ids = [azurerm_subnet.services.id]
+  bypass                     = ["AzureServices"]
 }
 
 resource "azurerm_private_endpoint" "stgfilepe" {
