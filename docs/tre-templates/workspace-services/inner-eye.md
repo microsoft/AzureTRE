@@ -47,6 +47,7 @@ This will provision Base Workspace, with AML service and InnerEye service, inclu
     ```cmd
     ./scripts/gitea_migrate_repo.sh -t <tre_id> -g https://github.com/microsoft/InnerEye-DeepLearning
     ./scripts/gitea_migrate_repo.sh -t <tre_id> -g https://github.com/analysiscenter/radio
+    ./scripts/gitea_migrate_repo.sh -t <tre_id> -g https://github.com/microsoft/InnerEye-Inference
     ```
 
 ### Setup the InnerEye run from AML Compute Instance
@@ -108,16 +109,37 @@ The workspace service provisions an App Service Plan and an App Service for host
 1. Log onto a VM in the workspace and run:
 
     ```cmd
-    git clone https://github.com/microsoft/InnerEye-Inference
+    git clone https://gitea-<TRE_ID>.azurewebsites.net/giteaadmin/InnerEye-Inference
     cd InnerEye-Inference
+    ```
+
+1. Create a file named "set_environment.sh" with the following variables as content:
+
+    ```bash
+    #!/bin/bash
+    export CUSTOMCONNSTR_AZUREML_SERVICE_PRINCIPAL_SECRET=<inference_sp_client_secret-from-above>
+    export CUSTOMCONNSTR_API_AUTH_SECRET=<generate-a-random-guid--that-is-used-for-authentication>
+    export CLUSTER=<name-of-compute-cluster>
+    export WORKSPACE_NAME=<name-of-AML-workspace>
+    export EXPERIMENT_NAME=<name-of-AML-experiment>
+    export RESOURCE_GROUP=<name-of-resource-group>
+    export SUBSCRIPTION_ID=<subscription-id>
+    export APPLICATION_ID=<inference_sp_client_id-from-above>
+    export TENANT_ID=<tenant-id>
+    export DATASTORE_NAME=inferencedatastore
+    export IMAGE_DATA_FOLDER=imagedata
+    ```
+
+1. Upload the configuration file to the web app:
+
+    ```cmd
     az webapp up --name <inference-app-name> -g <resource-group-name>
     ```
 
 1. Create a new container in your storage account for storing inference images called `inferencedatastore`.
 1. Create a new folder in that container called `imagedata`.
 1. Navigate to the ml.azure.com, `Datastores` and create a new datastore named `inferencedatastore` and connect it to the newly created container.
-1. The key used for authentication is the `inference_auth_key` provided as an output of the service deployment.
-1. Test the service by sending a GET or POST command using curl or Invoke-WebRequest:
+1. Test the service by sending a GET or POST command using curl or Invoke-WebRequest where API_AUTH_SECRET is the random GUID generated for CUSTOMCONNSTR_API_AUTH_SECRET above:
 
    Simple ping:
 
@@ -129,25 +151,4 @@ The workspace service provisions an App Service Plan and an App Service for host
 
     ```cmd
     Invoke-WebRequest https://yourservicename.azurewebsites.net/v1/model/start/HelloWorld:1 -Method POST -Headers @{'Accept' = 'application/json'; 'API_AUTH_SECRET' = 'your-secret-1234-1123445'}
-    ```
-
-## Alternative: Local Deployment
-
-Instead of provisioning InnerEye workspace service through AzureTRE API, you can also provision resources directly by invoking porter bundles:
-
-1. Create a copy of `templates/workspace_services/innereye/.env.sample` with the name `.env` and update the variables with the appropriate values.
-
-    | Environment variable name | Description |
-    | ------------------------- | ----------- |
-    | `ID` | A GUID to identify the workspace service. The last 4 characters of this `ID` can be found in the resource names of the workspace service resources. |
-    | `WORKSPACE_ID` | The GUID identifier used when deploying the base workspace bundle. |
-    | `INFERENCE_SP_CLIENT_ID` | Service principal client ID used by the inference service to connect to Azure ML. Use the output from the step above. |
-    | `INFERENCE_SP_CLIENT_SECRET` | Service principal client secret used by the inference service to connect to Azure ML. Use the output from the step above. |
-
-1. Build and install the InnerEye Deep Learning Service bundle
-
-    ```cmd
-    make porter-build DIR=./templates/workspace_services/innereye
-    make porter-publish DIR=./templates/workspace_services/innereye
-    make porter-install DIR=./templates/workspace_services/innereye
     ```
