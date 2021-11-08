@@ -1,7 +1,6 @@
 import logging
 import os
 from opencensus.ext.azure.trace_exporter import AzureExporter
-from starlette.middleware.base import BaseHTTPMiddleware, DispatchFunction
 import uvicorn
 
 from fastapi import FastAPI
