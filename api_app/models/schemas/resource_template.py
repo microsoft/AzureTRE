@@ -2,7 +2,7 @@ from typing import Dict, List
 
 from pydantic import BaseModel, Field
 
-from models.domain.resource_template import ResourceTemplate, Property
+from models.domain.resource_template import CustomAction, ResourceTemplate, Property
 
 
 class ResourceTemplateInCreate(BaseModel):
@@ -10,6 +10,7 @@ class ResourceTemplateInCreate(BaseModel):
     version: str = Field(title="Template version")
     current: bool = Field(title="Mark this version as current")
     json_schema: Dict = Field(title="JSON Schema compliant template")
+    customActions: List[CustomAction] = Field(default=[], title="Custom actions")
 
 
 class ResourceTemplateInResponse(ResourceTemplate):
