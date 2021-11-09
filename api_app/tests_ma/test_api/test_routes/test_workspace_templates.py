@@ -7,7 +7,7 @@ from starlette import status
 
 from models.domain.resource import ResourceType
 from resources import strings
-from api.routes.workspaces import get_current_user
+from api.routes.workspaces import get_current_tre_user
 from db.errors import DuplicateEntity, EntityDoesNotExist, UnableToAccessDatabase
 from models.domain.resource_template import ResourceTemplate, CustomAction
 from models.schemas.resource_template import ResourceTemplateInformation
@@ -40,7 +40,7 @@ class TestWorkspaceTemplate:
 
     @pytest.fixture(autouse=True, scope='class')
     def _prepare(self, app, admin_user):
-        app.dependency_overrides[get_current_user] = admin_user
+        app.dependency_overrides[get_current_tre_user] = admin_user
         yield
         app.dependency_overrides = {}
 
