@@ -1,7 +1,7 @@
 from pydantic import Field
 
 from models.domain.resource import ResourceType
-from models.domain.resource_template import Property
+from models.domain.resource_template import CustomAction, Property
 from models.domain.user_resource_template import UserResourceTemplate
 from models.schemas.resource_template import ResourceTemplateInCreate, ResourceTemplateInResponse
 
@@ -21,7 +21,8 @@ def get_sample_user_resource_template_object(template_name: str = "guacamole-vm"
         properties={
             "display_name": Property(type="string"),
             "description": Property(type="string")
-        }
+        },
+        actions=[CustomAction()]
     )
 
 
@@ -49,8 +50,15 @@ class UserResourceTemplateInCreate(ResourceTemplateInCreate):
                     "title": "My User Resource Template",
                     "description": "These is a test user resource template schema",
                     "required": [],
-                    "properties": {}
-                }
+                    "properties": {},
+
+                },
+                "customActions": [
+                    {
+                        "name": "start",
+                        "description": "Starts a VM"
+                    }
+                ]
             }
         }
 

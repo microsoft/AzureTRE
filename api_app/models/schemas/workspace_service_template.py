@@ -1,5 +1,5 @@
 from models.domain.resource import ResourceType
-from models.domain.resource_template import ResourceTemplate, Property
+from models.domain.resource_template import ResourceTemplate, Property, CustomAction
 from models.schemas.resource_template import ResourceTemplateInCreate, ResourceTemplateInResponse
 
 
@@ -17,7 +17,8 @@ def get_sample_workspace_service_template_object(template_name: str = "tre-works
         properties={
             "display_name": Property(type="string"),
             "description": Property(type="string")
-        }
+        },
+        actions=[CustomAction()]
     )
 
 
@@ -51,7 +52,13 @@ class WorkspaceServiceTemplateInCreate(ResourceTemplateInCreate):
                     "description": "These is a test workspace service resource template schema",
                     "required": [],
                     "properties": {}
-                }
+                },
+                "customActions": [
+                    {
+                        "name": "disable",
+                        "description": "Deallocates resources"
+                    }
+                ]
             }
         }
 
