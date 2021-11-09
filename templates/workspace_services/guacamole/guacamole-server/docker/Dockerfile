@@ -52,6 +52,13 @@ COPY ./docker/services /etc/services.d/
 COPY --from=client_build /target/lib/* ${GUACAMOLE_LIB}
 COPY --from=client_build /target/guacamole-auth-tre-${GUACAMOLE_AZURE_VERSION}.jar "${GUACAMOLE_HOME}/extensions/"
 
+RUN wget https://apache.org/dyn/closer.lua/guacamole/1.3.0/binary/guacamole-auth-openid-1.3.0.tar.gz?action=download -O guacamole-auth-openid-1.3.0.tar.gz \
+&& tar zxvpf guacamole-auth-openid-1.3.0.tar.gz && rm guacamole-auth-openid-1.3.0.tar.gz
+
+RUN cp ./guacamole-auth-openid-1.3.0/guacamole-auth-openid-1.3.0.jar "${GUACAMOLE_HOME}/extensions/"
+
+RUN rm -rf ./guacamole-auth-openid-1.3.0
+
 RUN wget -O ${GUACAMOLE_HOME}/guacamole.war 'http://apache.org/dyn/closer.cgi?action=download&filename=guacamole/1.3.0/binary/guacamole-1.3.0.war'
 
 ENTRYPOINT [ "/init" ]

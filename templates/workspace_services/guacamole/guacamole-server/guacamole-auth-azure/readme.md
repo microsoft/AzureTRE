@@ -8,6 +8,6 @@ Read more [here](https://guacamole.apache.org/doc/gug/guacamole-ext.html).
 
 This extension works in the following manner:
 
-1. recieves the acccess token from the header : x-access-token
+1. receives a token from the OpenId extension
 2. The extension call the project api to get the user's vm list
 3. When connect request is made, the extension call the project api to get the password to the selected vm and inject it into the Guacamole configurations.

@@ -71,6 +71,10 @@ parameters:
     default: false
     env: IS_EXPOSED_EXTERNALLY
     description: "Determines if the web app will be available over public/internet or private networks"
+  - name: openid_client_id
+    type: string
+    env: OPENID_CLIENT_ID
+    description: "The OpenID client ID which should be submitted to the OpenID service when necessary. This value is typically provided to you by the OpenID service when OpenID credentials are generated for your application"
   # the following are added automatically by the resource processor
   - name: id
     type: string
@@ -123,6 +127,7 @@ install:
         guac_drive_path: "{{ bundle.parameters.guac_drive_path }}"
         guac_disable_download: "{{ bundle.parameters.guac_disable_download }}"
         is_exposed_externally: "{{ bundle.parameters.is_exposed_externally }}"
+        openid_client_id: "{{ bundle.parameters.openid_client_id }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
@@ -160,6 +165,7 @@ uninstall:
         guac_drive_path: "{{ bundle.parameters.guac_drive_path }}"
         guac_disable_download: "{{ bundle.parameters.guac_disable_download }}"
         is_exposed_externally: "{{ bundle.parameters.is_exposed_externally }}"
+        openid_client_id: "{{ bundle.parameters.openid_client_id }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
