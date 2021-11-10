@@ -1,9 +1,11 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import HTTPException, status
+
+from core import config
 
 from models.domain.authentication import User
 from models.schemas.workspace import AuthProvider
 from resources import strings
-from services.aad_authentication import authorize_tre_app, authorize_ws_app
+from services.aad_authentication import AzureADAuthorization
 from services.aad_access_service import AADAccessService
 from services.access_service import AccessService, AuthConfigValidationError
 
@@ -23,27 +25,12 @@ def get_access_service(provider: str = AuthProvider.AAD) -> AccessService:
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.INVALID_AUTH_PROVIDER)
 
 
-async def get_current_tre_user(user: User = Depends(authorize_tre_app)) -> User:
-    return user
+get_current_tre_user: User = AzureADAuthorization(app_reg_id=config.API_AUDIENCE, require_one_of_roles=["TREUser"])
 
+get_current_admin_user: User = AzureADAuthorization(app_reg_id=config.API_AUDIENCE, require_one_of_roles=["TREAdmin"])
 
-async def get_current_ws_user(user: User = Depends(authorize_ws_app)) -> User:
-    return user
+get_current_workspace_owner_user: User = AzureADAuthorization(require_one_of_roles=["WorkspaceOwner"])
 
+get_current_workspace_researcher_user: User = AzureADAuthorization(require_one_of_roles=["WorkspaceResearcher"])
 
-async def get_current_admin_user(user: User = Depends(get_current_tre_user)) -> User:
-    if 'TREAdmin' not in user.roles:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.AUTH_NOT_ASSIGNED_TO_ADMIN_ROLE, headers={"WWW-Authenticate": "Bearer"})
-    return user
-
-
-async def get_current_workspace_owner_user(user: User = Depends(get_current_ws_user)) -> User:
-    if "WorkspaceOwner" not in user.roles:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.ACCESS_USER_IS_NOT_OWNER, headers={"WWW-Authenticate": "Bearer"})
-    return user
-
-
-async def get_current_workspace_owner_or_researcher_user(user: User = Depends(get_current_ws_user)) -> User:
-    if not any(role in ["WorkspaceOwner", "WorkspaceResearcher"] for role in user.roles):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.ACCESS_USER_IS_NOT_OWNER_OR_RESEARCHER, headers={"WWW-Authenticate": "Bearer"})
-    return user
+get_current_workspace_owner_or_researcher_user: User = AzureADAuthorization(require_one_of_roles=["WorkspaceOwner", "WorkspaceResearcher"])

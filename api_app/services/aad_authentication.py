@@ -19,22 +19,22 @@ class AzureADAuthorization(OAuth2AuthorizationCodeBearer):
     _jwt_keys: dict = {}
 
     _default_app_reg_id = None
+    require_one_of_roles = None
 
-    def __init__(self, aad_instance: str, aad_tenant: str, auto_error: bool = True, app_reg_id: str = None):
+    def __init__(self, auto_error: bool = True, app_reg_id: str = None, require_one_of_roles: list = None):
         super(AzureADAuthorization, self).__init__(
-            authorizationUrl=f"{aad_instance}/{aad_tenant}/oauth2/v2.0/authorize",
-            tokenUrl=f"{aad_instance}/{aad_tenant}/oauth2/v2.0/token",
-            refreshUrl=f"{aad_instance}/{aad_tenant}/oauth2/v2.0/token",
-            scheme_name="oauth2", scopes={
-                f"api://{config.API_CLIENT_ID}/Workspace.Read": "List and Get TRE Workspaces",
-                f"api://{config.API_CLIENT_ID}/Workspace.Write": "Modify TRE Workspaces"
-            },
+            authorizationUrl=f"{config.AAD_INSTANCE}/{config.AAD_TENANT_ID}/oauth2/v2.0/authorize",
+            tokenUrl=f"{config.AAD_INSTANCE}/{config.AAD_TENANT_ID}/oauth2/v2.0/token",
+            refreshUrl=f"{config.AAD_INSTANCE}/{config.AAD_TENANT_ID}/oauth2/v2.0/token",
+            scheme_name="oauth2",
             auto_error=auto_error
         )
         logging.debug("default app registration id set to: %s", app_reg_id)
         self._default_app_reg_id = app_reg_id
+        self.require_one_of_roles = require_one_of_roles
 
     async def __call__(self, request: Request) -> User:
+
         token: str = await super(AzureADAuthorization, self).__call__(request)
 
         try:
@@ -51,7 +51,10 @@ class AzureADAuthorization(OAuth2AuthorizationCodeBearer):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.AUTH_UNABLE_TO_VALIDATE_TOKEN, headers={"WWW-Authenticate": "Bearer"})
 
         try:
-            return self._get_user_from_token(decoded_token)
+            user = self._get_user_from_token(decoded_token)
+            if not any(role in self.require_one_of_roles for role in user.roles):
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f'{strings.ACCESS_USER_DOES_NOT_HAVE_REQUIRED_ROLE}: {self.require_one_of_roles}', headers={"WWW-Authenticate": "Bearer"})
+            return user
         except Exception as e:
             logging.debug(e)
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.ACCESS_UNABLE_TO_GET_ROLE_ASSIGNMENTS_FOR_USER, headers={"WWW-Authenticate": "Bearer"})
@@ -66,7 +69,7 @@ class AzureADAuthorization(OAuth2AuthorizationCodeBearer):
             workspace_id = request.path_params['workspace_id']
             ws_repo = WorkspaceRepository(get_db_client_from_request(request))
             workspace = ws_repo.get_workspace_by_id(workspace_id)
-            ws_app_reg_id = workspace.authInformation['app_id']
+            ws_app_reg_id = workspace.properties['app_id']
 
             return ws_app_reg_id
         except EntityDoesNotExist:
@@ -127,8 +130,3 @@ class AzureADAuthorization(OAuth2AuthorizationCodeBearer):
                         AzureADAuthorization._jwt_keys[key['kid']] = pub_key.save_pkcs1()
 
         return AzureADAuthorization._jwt_keys[key_id]
-
-
-authorize_tre_app = \
-    AzureADAuthorization(config.AAD_INSTANCE, config.AAD_TENANT_ID, True, config.API_AUDIENCE)
-authorize_ws_app = AzureADAuthorization(config.AAD_INSTANCE, config.AAD_TENANT_ID)

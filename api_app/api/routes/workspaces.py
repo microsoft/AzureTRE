@@ -1,10 +1,17 @@
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from collections import defaultdict
+from typing import Any, DefaultDict, Dict, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi.openapi.docs import get_swagger_ui_html
+from fastapi.openapi.utils import get_openapi
+
 from jsonschema.exceptions import ValidationError
 
 from api.dependencies.database import get_repository
 from api.dependencies.workspaces import get_workspace_by_id_from_path, get_deployed_workspace_by_id_from_path, get_deployed_workspace_service_by_id_from_path, get_workspace_service_by_id_from_path, get_user_resource_by_id_from_path
+from core import config
 from db.repositories.resources import ResourceRepository
 from db.repositories.user_resources import UserResourceRepository
 from db.repositories.workspaces import WorkspaceRepository
@@ -16,14 +23,24 @@ from models.schemas.workspace import WorkspaceInCreate, WorkspaceIdInResponse, W
 from models.schemas.workspace_service import WorkspaceServiceIdInResponse, WorkspaceServiceInCreate, WorkspaceServicesInList, WorkspaceServiceInResponse, WorkspaceServicePatchEnabled
 from resources import strings
 from service_bus.resource_request_sender import send_resource_request_message, RequestAction
-from services.authentication import get_current_tre_user, get_current_ws_user, get_current_admin_user, \
+from services.authentication import get_current_tre_user, get_current_admin_user, \
     get_access_service, get_current_workspace_owner_user, get_current_workspace_owner_or_researcher_user
 from services.authentication import extract_auth_information
 from services.azure_resource_status import get_azure_resource_status
 
-workspaces_router = APIRouter(dependencies=[Depends(get_current_tre_user)])
-workspace_services_router = APIRouter(dependencies=[Depends(get_current_ws_user)])
-user_resources_router = APIRouter(dependencies=[Depends(get_current_ws_user)])
+tags_metadata = [
+    {"name": "workspaces", "description": "**Workspace Owners and Researchers** can view their own workspaces"},
+    {"name": "workspace services", "description": "**Workspace Owners** administer workspace services, **Workspace Owners and Researchers** can view services in the workspaces they belong to"},
+    {"name": "user resources", "description": "**Researchers** administer and can view their own researchers, **Workspace Owners** can view/update/delete all user resources in their workspaces"},
+    {"name": "status", "description": "Status of API and related resources"},
+]
+
+tre_router = APIRouter(dependencies=[Depends(get_current_tre_user)])
+
+workspace_swagger_router = APIRouter()
+workspaces_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user)])
+workspace_services_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user)])
+user_resources_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user)])
 
 
 # HELPER FUNCTIONS
@@ -74,8 +91,8 @@ async def send_uninstall_message(resource: Resource, resource_repo: ResourceRepo
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
 
 
-# WORKSPACE ROUTERS
-@workspaces_router.get("/workspaces", response_model=WorkspacesInList, name=strings.API_GET_ALL_WORKSPACES)
+# WORKSPACE ROUTES
+@tre_router.get("/workspaces", response_model=WorkspacesInList, name=strings.API_GET_ALL_WORKSPACES)
 async def retrieve_users_active_workspaces(user=Depends(get_current_tre_user), workspace_repo=Depends(get_repository(WorkspaceRepository))) -> WorkspacesInList:
     workspaces = workspace_repo.get_active_workspaces()
 
@@ -86,12 +103,12 @@ async def retrieve_users_active_workspaces(user=Depends(get_current_tre_user), w
     return WorkspacesInList(workspaces=user_workspaces)
 
 
-@workspace_services_router.get("/workspaces/{workspace_id}", response_model=WorkspaceInResponse, name=strings.API_GET_WORKSPACE_BY_ID, dependencies=[Depends(get_current_workspace_owner_or_researcher_user)])
-async def retrieve_workspace_by_workspace_id(workspace=Depends(get_workspace_by_id_from_path)) -> WorkspaceInResponse:
+@tre_router.get("/workspaces/{workspace_id}", response_model=WorkspaceInResponse, name=strings.API_GET_WORKSPACE_BY_ID, dependencies=[Depends(get_current_workspace_owner_or_researcher_user)])
+async def retrieve_workspace_by_workspace_id_admin(workspace=Depends(get_workspace_by_id_from_path)) -> WorkspaceInResponse:
     return WorkspaceInResponse(workspace=workspace)
 
 
-@workspaces_router.post("/workspaces", status_code=status.HTTP_202_ACCEPTED, response_model=WorkspaceIdInResponse, name=strings.API_CREATE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
+@tre_router.post("/workspaces", status_code=status.HTTP_202_ACCEPTED, response_model=WorkspaceIdInResponse, name=strings.API_CREATE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
 async def create_workspace(workspace_create: WorkspaceInCreate, workspace_repo=Depends(get_repository(WorkspaceRepository))) -> WorkspaceIdInResponse:
     try:
         auth_info = extract_auth_information(workspace_create.properties["app_id"])
@@ -105,13 +122,13 @@ async def create_workspace(workspace_create: WorkspaceInCreate, workspace_repo=D
     return WorkspaceIdInResponse(workspaceId=workspace.id)
 
 
-@workspaces_router.patch("/workspaces/{workspace_id}", response_model=WorkspaceInResponse, name=strings.API_UPDATE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
+@tre_router.patch("/workspaces/{workspace_id}", response_model=WorkspaceInResponse, name=strings.API_UPDATE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
 async def patch_workspace(workspace_patch: WorkspacePatchEnabled, workspace=Depends(get_workspace_by_id_from_path), workspace_repo=Depends(get_repository(WorkspaceRepository))) -> WorkspaceInResponse:
     workspace_repo.patch_workspace(workspace, workspace_patch)
     return WorkspaceInResponse(workspace=workspace)
 
 
-@workspaces_router.delete("/workspaces/{workspace_id}", response_model=WorkspaceIdInResponse, name=strings.API_DELETE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
+@tre_router.delete("/workspaces/{workspace_id}", response_model=WorkspaceIdInResponse, name=strings.API_DELETE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
 async def delete_workspace(workspace=Depends(get_workspace_by_id_from_path), workspace_repo=Depends(get_repository(WorkspaceRepository)), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository))) -> WorkspaceIdInResponse:
     if workspace.is_enabled():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION)
@@ -229,3 +246,56 @@ async def patch_user_resource(user_resource_patch: UserResourcePatchEnabled, use
     validate_user_is_workspace_owner_or_resource_owner(user, user_resource)
     user_resource_repo.patch_user_resource(user_resource, user_resource_patch)
     return UserResourceInResponse(userResource=user_resource)
+
+
+workspace_router = APIRouter(prefix=config.API_PREFIX)
+workspace_router.include_router(workspaces_router, tags=["workspaces"])
+workspace_router.include_router(workspace_services_router, tags=["workspace services"])
+workspace_router.include_router(user_resources_router, tags=["user resources"])
+
+workspace_openapi: DefaultDict[str, Optional[Dict[str, Any]]] = defaultdict(lambda: None)
+
+
+@workspace_swagger_router.get("/workspaces/{workspace_id}/openapi.json", include_in_schema=False, name="workspace_openapi")
+async def get_openapi_json(workspace_id: str, request: Request, workspace_repo=Depends(get_repository(WorkspaceRepository))):
+    global workspace_openapi
+
+    if workspace_openapi[workspace_id] is None:
+
+        workspace_openapi[workspace_id] = get_openapi(
+            title=f"{config.PROJECT_NAME} - Workspace {workspace_id}",
+            description=config.API_DESCRIPTION,
+            version=config.VERSION,
+            routes=workspace_router.routes,
+            tags=tags_metadata
+        )
+
+        workspace = workspace_repo.get_workspace_by_id(workspace_id)
+        ws_app_reg_id = workspace.properties['app_id']
+        workspace_scopes = {
+            f"api://{ws_app_reg_id}/Workspace.Read": "List and Get TRE Workspaces"
+        }
+        workspace_openapi[workspace_id]['components']['securitySchemes']['oauth2']['flows']['authorizationCode']['scopes'] = workspace_scopes
+
+    return workspace_openapi[workspace_id]
+
+
+@workspace_swagger_router.get("/workspaces/{workspace_id}/docs", include_in_schema=False, name="workspace_swagger")
+async def get_swagger(workspace_id, request: Request, workspace_repo=Depends(get_repository(WorkspaceRepository))):
+
+    workspace = workspace_repo.get_workspace_by_id(workspace_id)
+    ws_app_reg_id = workspace.properties['app_id']
+    swagger_ui_html = get_swagger_ui_html(
+        openapi_url="openapi.json",
+        title=request.app.title + " - Swagger UI",
+        oauth2_redirect_url="/api/docs/oauth2-redirect",
+        init_oauth={
+            "usePkceWithAuthorizationCodeGrant": True,
+            "clientId": config.SWAGGER_UI_CLIENT_ID,
+            "scopes": ["openid", "offline_access", f"api://{ws_app_reg_id}/Workspace.Read"]
+        }
+    )
+
+    return swagger_ui_html
+
+workspace_router.include_router(workspace_swagger_router)
