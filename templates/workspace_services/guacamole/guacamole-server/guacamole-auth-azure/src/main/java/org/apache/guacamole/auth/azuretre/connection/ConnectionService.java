@@ -103,10 +103,11 @@ public class ConnectionService {
             System.getenv("API_URL"), System.getenv("WORKSPACE_ID"), System.getenv("SERVICE_ID"));
         final var client = HttpClient.newHttpClient();
         final var request = HttpRequest.newBuilder(URI.create(url))
-            .header("accept", "application/json")
+            .header("Accept", "application/json")
             .header("Authorization", "Bearer " + user.getAccessToken())
             .timeout(Duration.ofSeconds(5))
             .build();
+
         final HttpResponse<String> response;
         try {
             response = client.send(request, HttpResponse.BodyHandlers.ofString());

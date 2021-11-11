@@ -33,14 +33,14 @@ public class AzureTREAuthenticatedUser extends AbstractAuthenticatedUser {
 
     private String objectId;
 
-    private String accessToken;
+    private String token;
 
     public void init(final Credentials credentials,
-                     final String accessToken,
+                     final String token,
                      final String username,
                      final String objectId) {
         this.credentials = credentials;
-        this.accessToken = accessToken;
+        this.token = token;
         this.objectId = objectId;
         setIdentifier(username.toLowerCase());
     }
@@ -56,7 +56,7 @@ public class AzureTREAuthenticatedUser extends AbstractAuthenticatedUser {
     }
 
     public String getAccessToken() {
-        return accessToken;
+        return token;
     }
     public String getObjectId() {
         return objectId;
