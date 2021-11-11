@@ -13,6 +13,7 @@ resource "azurerm_subnet" "services" {
   virtual_network_name = azurerm_virtual_network.ws.name
   resource_group_name  = azurerm_resource_group.ws.name
   address_prefixes     = [local.services_subnet_address_prefix]
+  service_endpoints    = ["Microsoft.Storage"]
   # notice that private endpoints do not adhere to NSG rules
   enforce_private_link_endpoint_network_policies = true
   enforce_private_link_service_network_policies  = true
