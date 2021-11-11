@@ -3,7 +3,7 @@ from mock import patch
 
 from fastapi import status
 
-from api.routes.workspaces import get_current_ws_user, get_current_tre_user
+from services.authentication import get_tre_user, get_ws_user
 from models.domain.user_resource import UserResource
 from models.domain.workspace import Workspace
 from models.domain.workspace_service import WorkspaceService
@@ -35,7 +35,7 @@ class TestTemplateRoutesThatRequireAdminRights:
     @pytest.fixture(autouse=True, scope='class')
     def log_in_with_non_admin(self, app, non_admin_user):
         # try accessing the route with a non-admin user
-        app.dependency_overrides[get_current_tre_user] = non_admin_user
+        app.dependency_overrides[get_tre_user] = non_admin_user
         yield
         app.dependency_overrides = {}
 
@@ -61,7 +61,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     @pytest.fixture(autouse=True, scope='class')
     def log_in_with_non_owner(self, app, non_owner_user):
         # try accessing the route with a non-owner user
-        app.dependency_overrides[get_current_tre_user] = non_owner_user
+        app.dependency_overrides[get_tre_user] = non_owner_user
         yield
         app.dependency_overrides = {}
 
@@ -82,7 +82,7 @@ class TestWorkspaceServiceOwnerRoutesAccess:
     @pytest.fixture(autouse=True, scope='class')
     def log_in_with_non_owner(self, app, non_owner_user):
         # try accessing the route with a non-admin user
-        app.dependency_overrides[get_current_ws_user] = non_owner_user
+        app.dependency_overrides[get_ws_user] = non_owner_user
         yield
         app.dependency_overrides = {}
 
@@ -111,7 +111,7 @@ class TestWorkspaceServiceOwnerOrResearcherRoutesAccess:
     @pytest.fixture(autouse=True, scope='class')
     def log_in_with_non_owner_or_researcher(self, app, no_workspace_role_user):
         # try accessing the route with a non-admin user
-        app.dependency_overrides[get_current_ws_user] = no_workspace_role_user
+        app.dependency_overrides[get_ws_user] = no_workspace_role_user
         yield
         app.dependency_overrides = {}
 
@@ -141,7 +141,7 @@ class TestUserResourcesOwnerOrResearcherRoutesAccess:
     @pytest.fixture(autouse=True, scope='class')
     def log_in_with_non_owner_or_researcher(self, app, no_workspace_role_user):
         # try accessing the route with a non-admin user
-        app.dependency_overrides[get_current_ws_user] = no_workspace_role_user
+        app.dependency_overrides[get_ws_user] = no_workspace_role_user
         yield
         app.dependency_overrides = {}
 
@@ -197,7 +197,7 @@ class TestUserResourcesRoutesOwnerOrResourceOwnerAccess:
     @pytest.fixture(autouse=True, scope='class')
     def log_in_with_non_owner(self, app, non_owner_user):
         # try accessing the route with a non-admin user
-        app.dependency_overrides[get_current_ws_user] = non_owner_user
+        app.dependency_overrides[get_ws_user] = non_owner_user
         yield
         app.dependency_overrides = {}
 

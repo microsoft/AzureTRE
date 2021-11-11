@@ -11,21 +11,21 @@ from models.schemas.user_resource_template import UserResourceTemplateInResponse
 from models.schemas.resource_template import ResourceTemplateInResponse, ResourceTemplateInformationInList
 from models.schemas.workspace_service_template import WorkspaceServiceTemplateInCreate, WorkspaceServiceTemplateInResponse
 from resources import strings
-from services.authentication import get_current_admin_user, get_current_tre_user
+from services.authentication import get_current_admin_user, get_current_tre_user, get_current_tre_user_or_tre_admin
 
 
-service_templates_router = APIRouter(dependencies=[Depends(get_current_tre_user)])
-user_resource_templates_router = APIRouter(dependencies=[Depends(get_current_tre_user)])
+service_templates_router = APIRouter(dependencies=[Depends(get_current_tre_user_or_tre_admin)])
+user_resource_templates_router = APIRouter(dependencies=[Depends(get_current_tre_user_or_tre_admin)])
 
 
 # WORKSPACE SERVICE TEMPLATES
-@service_templates_router.get("/workspace-service-templates", response_model=ResourceTemplateInformationInList, name=strings.API_GET_WORKSPACE_SERVICE_TEMPLATES, dependencies=[Depends(get_current_tre_user)])
+@service_templates_router.get("/workspace-service-templates", response_model=ResourceTemplateInformationInList, name=strings.API_GET_WORKSPACE_SERVICE_TEMPLATES, dependencies=[Depends(get_current_tre_user_or_tre_admin)])
 async def get_workspace_service_templates(template_repo=Depends(get_repository(ResourceTemplateRepository))) -> ResourceTemplateInformationInList:
     templates_infos = template_repo.get_templates_information(ResourceType.WorkspaceService)
     return ResourceTemplateInformationInList(templates=templates_infos)
 
 
-@service_templates_router.get("/workspace-service-templates/{service_template_name}", response_model=WorkspaceServiceTemplateInResponse, response_model_exclude_none=True, name=strings.API_GET_WORKSPACE_SERVICE_TEMPLATE_BY_NAME, dependencies=[Depends(get_current_tre_user)])
+@service_templates_router.get("/workspace-service-templates/{service_template_name}", response_model=WorkspaceServiceTemplateInResponse, response_model_exclude_none=True, name=strings.API_GET_WORKSPACE_SERVICE_TEMPLATE_BY_NAME, dependencies=[Depends(get_current_tre_user_or_tre_admin)])
 async def get_current_workspace_service_template_by_name(service_template_name: str, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> WorkspaceServiceTemplateInResponse:
     template = get_current_template_by_name(service_template_name, template_repo, ResourceType.WorkspaceService)
     return parse_obj_as(WorkspaceServiceTemplateInResponse, template)
@@ -40,7 +40,7 @@ async def register_workspace_service_template(template_input: WorkspaceServiceTe
 
 
 # USER RESOURCE TEMPLATES
-@user_resource_templates_router.get("/workspace-service-templates/{service_template_name}/user-resource-templates", response_model=ResourceTemplateInformationInList, name=strings.API_GET_USER_RESOURCE_TEMPLATES, dependencies=[Depends(get_current_tre_user)])
+@user_resource_templates_router.get("/workspace-service-templates/{service_template_name}/user-resource-templates", response_model=ResourceTemplateInformationInList, name=strings.API_GET_USER_RESOURCE_TEMPLATES, dependencies=[Depends(get_current_tre_user_or_tre_admin)])
 async def get_user_resource_templates_for_service_template(service_template_name: str, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> ResourceTemplateInformationInList:
     template_infos = template_repo.get_templates_information(ResourceType.UserResource, service_template_name)
     return ResourceTemplateInformationInList(templates=template_infos)

@@ -21,7 +21,7 @@ class AzureADAuthorization(OAuth2AuthorizationCodeBearer):
     _default_app_reg_id = None
     require_one_of_roles = None
 
-    def __init__(self, auto_error: bool = True, app_reg_id: str = None, require_one_of_roles: list = None):
+    def __init__(self, auto_error: bool = True, app_reg_id: str = None):
         super(AzureADAuthorization, self).__init__(
             authorizationUrl=f"{config.AAD_INSTANCE}/{config.AAD_TENANT_ID}/oauth2/v2.0/authorize",
             tokenUrl=f"{config.AAD_INSTANCE}/{config.AAD_TENANT_ID}/oauth2/v2.0/token",
@@ -31,7 +31,6 @@ class AzureADAuthorization(OAuth2AuthorizationCodeBearer):
         )
         logging.debug("default app registration id set to: %s", app_reg_id)
         self._default_app_reg_id = app_reg_id
-        self.require_one_of_roles = require_one_of_roles
 
     async def __call__(self, request: Request) -> User:
 
@@ -51,10 +50,7 @@ class AzureADAuthorization(OAuth2AuthorizationCodeBearer):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.AUTH_UNABLE_TO_VALIDATE_TOKEN, headers={"WWW-Authenticate": "Bearer"})
 
         try:
-            user = self._get_user_from_token(decoded_token)
-            if not any(role in self.require_one_of_roles for role in user.roles):
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f'{strings.ACCESS_USER_DOES_NOT_HAVE_REQUIRED_ROLE}: {self.require_one_of_roles}', headers={"WWW-Authenticate": "Bearer"})
-            return user
+            return self._get_user_from_token(decoded_token)
         except Exception as e:
             logging.debug(e)
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.ACCESS_UNABLE_TO_GET_ROLE_ASSIGNMENTS_FOR_USER, headers={"WWW-Authenticate": "Bearer"})
