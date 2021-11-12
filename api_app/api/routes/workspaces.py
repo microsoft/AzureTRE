@@ -24,7 +24,7 @@ from models.schemas.workspace_service import WorkspaceServiceIdInResponse, Works
 from resources import strings
 from service_bus.resource_request_sender import send_resource_request_message, RequestAction
 from services.authentication import get_current_admin_user, \
-    get_access_service, get_current_workspace_owner_user, get_current_workspace_owner_or_researcher_user, get_current_tre_user_or_tre_admin
+    get_access_service, get_current_workspace_owner_user, get_current_workspace_owner_or_researcher_user, get_current_tre_user_or_tre_admin, get_current_workspace_owner_or_researcher_user_or_tre_admin
 from services.authentication import extract_auth_information
 from services.azure_resource_status import get_azure_resource_status
 
@@ -38,7 +38,7 @@ tags_metadata = [
 tre_router = APIRouter(dependencies=[Depends(get_current_tre_user_or_tre_admin)])
 
 workspace_swagger_router = APIRouter()
-workspaces_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user)])
+workspaces_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_tre_admin)])
 workspace_services_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user)])
 user_resources_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user)])
 
@@ -93,18 +93,22 @@ async def send_uninstall_message(resource: Resource, resource_repo: ResourceRepo
 
 # WORKSPACE ROUTES
 @tre_router.get("/workspaces", response_model=WorkspacesInList, name=strings.API_GET_ALL_WORKSPACES)
-async def retrieve_users_active_workspaces(user=Depends(get_current_tre_user_or_tre_admin), workspace_repo=Depends(get_repository(WorkspaceRepository))) -> WorkspacesInList:
-    workspaces = workspace_repo.get_active_workspaces()
+async def retrieve_users_active_workspaces(request: Request, user=Depends(get_current_tre_user_or_tre_admin), workspace_repo=Depends(get_repository(WorkspaceRepository))) -> WorkspacesInList:
 
-    access_service = get_access_service()
-    user_role_assignments = get_user_role_assignments(user)
-    user_workspaces = [workspace for workspace in workspaces if access_service.get_workspace_role(user, workspace, user_role_assignments) != WorkspaceRole.NoRole]
+    try:
+        user = await get_current_admin_user(request)
+        return WorkspacesInList(workspaces=workspace_repo.get_active_workspaces())
 
-    return WorkspacesInList(workspaces=user_workspaces)
+    except Exception:
+        workspaces = workspace_repo.get_active_workspaces()
+
+        access_service = get_access_service()
+        user_role_assignments = get_user_role_assignments(user)
+        user_workspaces = [workspace for workspace in workspaces if access_service.get_workspace_role(user, workspace, user_role_assignments) != WorkspaceRole.NoRole]
+        return WorkspacesInList(workspaces=user_workspaces)
 
 
-@workspaces_router.get("/workspaces/{workspace_id}", response_model=WorkspaceInResponse, name=strings.API_GET_WORKSPACE_BY_ID, dependencies=[Depends(get_current_workspace_owner_or_researcher_user)])
-@tre_router.get("/workspaces/{workspace_id}", response_model=WorkspaceInResponse, name=strings.API_GET_WORKSPACE_BY_ID, dependencies=[Depends(get_current_admin_user)])
+@workspaces_router.get("/workspaces/{workspace_id}", response_model=WorkspaceInResponse, name=strings.API_GET_WORKSPACE_BY_ID, dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_tre_admin)])
 async def retrieve_workspace_by_workspace_id(workspace=Depends(get_workspace_by_id_from_path)) -> WorkspaceInResponse:
     return WorkspaceInResponse(workspace=workspace)
 

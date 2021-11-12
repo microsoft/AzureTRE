@@ -16,6 +16,14 @@ def no_database():
                     yield
 
 
+@pytest.fixture(autouse=True)
+def no_auth_token():
+    """ overrides validating and decoding tokens for all tests"""
+    with patch('services.aad_authentication.AccessService.__call__', return_value="token"):
+        with patch('services.aad_authentication.AzureADAuthorization._decode_token', return_value="decoded_token"):
+            yield
+
+
 def override_get_user():
     from models.domain.authentication import User
     return User(id="1234", name="test", email="test", roles=[""], roleAssignments=[("ab123", "ab124")])
