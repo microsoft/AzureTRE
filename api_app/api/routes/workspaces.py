@@ -116,6 +116,7 @@ async def retrieve_workspace_by_workspace_id(workspace=Depends(get_workspace_by_
 @tre_router.post("/workspaces", status_code=status.HTTP_202_ACCEPTED, response_model=WorkspaceIdInResponse, name=strings.API_CREATE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
 async def create_workspace(workspace_create: WorkspaceInCreate, workspace_repo=Depends(get_repository(WorkspaceRepository))) -> WorkspaceIdInResponse:
     try:
+        # TODO: This requires Directory.ReadAll ( Application.Read.All ) to be enabled in the Azure AD application to enable a users workspaces to be listed. This should be made optional.
         auth_info = extract_auth_information(workspace_create.properties["app_id"])
         workspace = workspace_repo.create_workspace_item(workspace_create, auth_info)
     except (ValidationError, ValueError) as e:

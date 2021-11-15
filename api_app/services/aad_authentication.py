@@ -23,6 +23,9 @@ class AzureADAuthorization(AccessService):
 
     require_one_of_roles = None
 
+    TRE_CORE_ROLES = ['TREAdmin', 'TREUser']
+    WORKSPACE_ROLES = ['WorkspaceOwner', 'WorkspaceResearcher']
+
     def __init__(self, auto_error: bool = True, require_one_of_roles: list = None):
         super(AzureADAuthorization, self).__init__(
             authorizationUrl=f"{config.AAD_INSTANCE}/{config.AAD_TENANT_ID}/oauth2/v2.0/authorize",
@@ -39,7 +42,8 @@ class AzureADAuthorization(AccessService):
 
         decoded_token = None
 
-        if 'workspace_id' in request.path_params:
+        # Try workspace app registration if appropriate
+        if 'workspace_id' in request.path_params and any(role in self.require_one_of_roles for role in self.WORKSPACE_ROLES):
             # as we have a workspace_id not given, try decoding token
             logging.debug("Workspace ID was provided. Getting Workspace API app registration")
             try:
@@ -49,12 +53,17 @@ class AzureADAuthorization(AccessService):
                 logging.debug("Failed to decode using workspace_id, try with TRE API app registration")
                 pass
 
-        if decoded_token is None:
+        # Try TRE API app registration if appropriate
+        if decoded_token is None and any(role in self.require_one_of_roles for role in self.TRE_CORE_ROLES):
             try:
                 decoded_token = self._decode_token(token, config.API_AUDIENCE)
             except jwt.exceptions.InvalidSignatureError:
                 logging.debug("Failed to decode using TRE API app registration")
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.AUTH_UNABLE_TO_VALIDATE_TOKEN)
+                pass
+
+        # Failed to decode token using either app registration
+        if decoded_token is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.AUTH_UNABLE_TO_VALIDATE_TOKEN)
 
         try:
             user = self._get_user_from_token(decoded_token)
