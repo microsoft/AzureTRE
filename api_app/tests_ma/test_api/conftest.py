@@ -54,14 +54,6 @@ def owner_user():
 
 
 @pytest.fixture(scope='module')
-def non_owner_user():
-    def inner():
-        from models.domain.authentication import User
-        return User(id="1234", name="test", email="test", roles=["WorkspaceResearcher"])
-    return inner
-
-
-@pytest.fixture(scope='module')
 def researcher_user():
     def inner():
         from models.domain.authentication import User

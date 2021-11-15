@@ -228,8 +228,8 @@ class TestWorkspaceServiceTemplatesRequiringAdminRights:
 
 class TestWorkspaceServiceTemplatesNotRequiringAdminRights:
     @pytest.fixture(autouse=True, scope='class')
-    def _prepare(self, app, non_admin_user):
-        app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_tre_admin] = non_admin_user
+    def _prepare(self, app, researcher_user):
+        app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_tre_admin] = researcher_user
         yield
         app.dependency_overrides = {}
 

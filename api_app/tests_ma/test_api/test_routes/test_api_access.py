@@ -58,9 +58,9 @@ class TestTemplateRoutesThatRequireAdminRights:
 # RESOURCES
 class TestWorkspaceRoutesThatRequireAdminRights:
     @pytest.fixture(autouse=True, scope='class')
-    def log_in_with_non_owner(self, app, non_owner_user):
+    def log_in_with_non_owner(self, app, researcher_user):
         # try accessing the route with a non-owner user
-        with patch('services.aad_authentication.AzureADAuthorization._get_user_from_token', return_value=non_owner_user()):
+        with patch('services.aad_authentication.AzureADAuthorization._get_user_from_token', return_value=researcher_user()):
             with patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace()):
                 yield
 
@@ -79,9 +79,9 @@ class TestWorkspaceRoutesThatRequireAdminRights:
 
 class TestWorkspaceServiceOwnerRoutesAccess:
     @pytest.fixture(autouse=True, scope='class')
-    def log_in_with_non_owner(self, app, non_owner_user):
+    def log_in_with_non_owner(self, app, researcher_user):
         # try accessing the route with a non-admin user
-        with patch('services.aad_authentication.AzureADAuthorization._get_user_from_token', return_value=non_owner_user()):
+        with patch('services.aad_authentication.AzureADAuthorization._get_user_from_token', return_value=researcher_user()):
             with patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace()):
                 yield
 
@@ -176,9 +176,9 @@ class TestUserResourcesOwnerOrResearcherRoutesAccess:
 
 class TestUserResourcesRoutesOwnerOrResourceOwnerAccess:
     @pytest.fixture(autouse=True, scope='class')
-    def log_in_with_non_owner(self, app, non_owner_user):
+    def log_in_with_non_owner(self, app, researcher_user):
         # try accessing the route with a non-admin user
-        with patch('services.aad_authentication.AzureADAuthorization._get_user_from_token', return_value=non_owner_user()):
+        with patch('services.aad_authentication.AzureADAuthorization._get_user_from_token', return_value=researcher_user()):
             with patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace()):
                 yield
 
