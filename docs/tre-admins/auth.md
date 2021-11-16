@@ -48,7 +48,7 @@ The **TRE API** app registration defines the permissions, scopes and app roles f
 | API/permission name | Type | Description | Admin consent required | Status | TRE usage |
 | ------------------- | ---- | ----------- | ---------------------- | ------ | --------- |
 | Microsoft Graph/Directory.Read.All (`https://graph.microsoft.com/Directory.Read.All`) | Application* | Allows the app to read data in your organization's directory, such as users, groups and apps, without a signed-in user. | Yes | Granted for *[directory name]* | Used e.g., to retrieve app registration details, user associated app roles etc. |
-| Microsoft Graph/User.Read.All (`https://graph.microsoft.com/User.Read.All`) | Application* | Allows the app to read user profiles without a signed in user. | Yes | Granted for *[directory name]* | Reading user role assignments to check that the user has permissions to execute an action e.g., to view workspaces. See `/api_app/services/aad_access_service.py`. |
+| Microsoft Graph/User.Read.All (`https://graph.microsoft.com/User.Read.All`) | Application* | Allows the app to read user profiles without a signed in user. | Yes | Granted for *[directory name]* | Reading user role assignments to check that the user has permissions to execute an action e.g., to view workspaces. See `/api_app/services/aad_authentication.py`. |
 
 *) See the difference between [delegated and application permission](https://docs.microsoft.com/graph/auth/auth-concepts#delegated-and-application-permissions) types.
 
