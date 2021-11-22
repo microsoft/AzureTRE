@@ -23,9 +23,9 @@ from services.authentication import get_current_admin_user, \
 from services.authentication import extract_auth_information
 from services.azure_resource_status import get_azure_resource_status
 
-workspaces_admin_router = APIRouter(dependencies=[Depends(get_current_tre_user_or_tre_admin)])
-
+workspaces_core_router = APIRouter(dependencies=[Depends(get_current_tre_user_or_tre_admin)])
 workspaces_shared_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_tre_admin)])
+workspaces_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user)])
 workspace_services_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user)])
 user_resources_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user)])
 
@@ -79,7 +79,7 @@ async def send_uninstall_message(resource: Resource, resource_repo: ResourceRepo
 
 
 # WORKSPACE ROUTES
-@workspaces_admin_router.get("/workspaces", response_model=WorkspacesInList, name=strings.API_GET_ALL_WORKSPACES)
+@workspaces_core_router.get("/workspaces", response_model=WorkspacesInList, name=strings.API_GET_ALL_WORKSPACES)
 async def retrieve_users_active_workspaces(request: Request, user=Depends(get_current_tre_user_or_tre_admin), workspace_repo=Depends(get_repository(WorkspaceRepository))) -> WorkspacesInList:
 
     try:
@@ -100,7 +100,7 @@ async def retrieve_workspace_by_workspace_id(workspace=Depends(get_workspace_by_
     return WorkspaceInResponse(workspace=workspace)
 
 
-@workspaces_admin_router.post("/workspaces", status_code=status.HTTP_202_ACCEPTED, response_model=WorkspaceIdInResponse, name=strings.API_CREATE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
+@workspaces_core_router.post("/workspaces", status_code=status.HTTP_202_ACCEPTED, response_model=WorkspaceIdInResponse, name=strings.API_CREATE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
 async def create_workspace(workspace_create: WorkspaceInCreate, workspace_repo=Depends(get_repository(WorkspaceRepository))) -> WorkspaceIdInResponse:
     try:
         # TODO: This requires Directory.ReadAll ( Application.Read.All ) to be enabled in the Azure AD application to enable a users workspaces to be listed. This should be made optional.
@@ -115,13 +115,13 @@ async def create_workspace(workspace_create: WorkspaceInCreate, workspace_repo=D
     return WorkspaceIdInResponse(workspaceId=workspace.id)
 
 
-@workspaces_admin_router.patch("/workspaces/{workspace_id}", response_model=WorkspaceInResponse, name=strings.API_UPDATE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
+@workspaces_core_router.patch("/workspaces/{workspace_id}", response_model=WorkspaceInResponse, name=strings.API_UPDATE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
 async def patch_workspace(workspace_patch: WorkspacePatchEnabled, workspace=Depends(get_workspace_by_id_from_path), workspace_repo=Depends(get_repository(WorkspaceRepository))) -> WorkspaceInResponse:
     workspace_repo.patch_workspace(workspace, workspace_patch)
     return WorkspaceInResponse(workspace=workspace)
 
 
-@workspaces_admin_router.delete("/workspaces/{workspace_id}", response_model=WorkspaceIdInResponse, name=strings.API_DELETE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
+@workspaces_core_router.delete("/workspaces/{workspace_id}", response_model=WorkspaceIdInResponse, name=strings.API_DELETE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
 async def delete_workspace(workspace=Depends(get_workspace_by_id_from_path), workspace_repo=Depends(get_repository(WorkspaceRepository)), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository))) -> WorkspaceIdInResponse:
     if workspace.is_enabled():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION)

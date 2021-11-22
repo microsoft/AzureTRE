@@ -4,7 +4,7 @@ from mock import patch
 
 from pydantic import parse_obj_as
 from starlette import status
-from services.authentication import get_current_admin_user
+from services.authentication import get_current_admin_user, get_current_tre_user_or_tre_admin
 
 from models.domain.resource import ResourceType
 from resources import strings
@@ -39,6 +39,7 @@ class TestWorkspaceTemplate:
 
     @pytest.fixture(autouse=True, scope='class')
     def _prepare(self, app, admin_user):
+        app.dependency_overrides[get_current_tre_user_or_tre_admin] = admin_user
         app.dependency_overrides[get_current_admin_user] = admin_user
         yield
         app.dependency_overrides = {}
