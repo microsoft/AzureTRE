@@ -56,8 +56,7 @@ See [Microsoft Graph permissions reference](https://docs.microsoft.com/graph/per
 
 #### Scopes - TRE API
 
-* `api://<Application (client) ID>/` **`Workspace.Read`** - Allow the app to get information about the TRE workspaces on behalf of the signed-in user
-* `api://<Application (client) ID>/` **`Workspace.Write`** - Allow the app to create, update or delete TRE workspaces on behalf of the signed-in user
+* `api://<Application (client) ID>/` **`user_impersonation`** - Allow the app to access the TRE API on behalf of the signed-in user
 
 #### App roles - TRE API
 
@@ -85,8 +84,7 @@ The **TRE API** app registration requires no redirect URLs defined or anything e
 | ------------------- | ---- | ----------- | ---------------------- | ------ |
 | Microsoft Graph/offline_access (`https://graph.microsoft.com/offline_access`) | Delegated* | Allows the app to see and update the data you gave it access to, even when users are not currently using the app. | No | Granted for *[directory name]* |
 | Microsoft Graph/openid (`https://graph.microsoft.com/openid`) | Delegated* | Allows users to sign in to the app with their work or school accounts and allows the app to see basic user profile information. | No | Granted for *[directory name]* |
-| TRE API/Workspace.Read (`api://<TRE API Application (client) ID>/Workspace.Read`) | Delegated* | See [TRE API app registration scopes](#scopes---tre-api). | No | Granted for *[directory name]* |
-| TRE API/Workspace.Write (`api://<TRE API Application (client) ID>/Workspace.Write`) | Delegated* | See [TRE API app registration scopes](#scopes---tre-api). | No | Granted for *[directory name]* |
+| TRE API/user_impersonation (`api://<TRE API Application (client) ID>/user_impersonation`) | Delegated* | See [TRE API app registration scopes](#scopes---tre-api). | No | Granted for *[directory name]* |
 
 *) See the difference between [delegated and application permission](https://docs.microsoft.com/graph/auth/auth-concepts#delegated-and-application-permissions) types.
 
@@ -111,8 +109,7 @@ The **TRE e2e test** app registration is used to authorize end-to-end test scena
 | ------------------- | ---- | ----------- | ---------------------- |
 | Microsoft Graph/openid (`https://graph.microsoft.com/openid`) | Delegated | Allows users to sign in to the app with their work or school accounts and allows the app to see basic user profile information. | No |
 | Microsoft Graph/User.Read (`https://graph.microsoft.com/User.Read`) | Delegated | Allows users to sign-in to the app, and allows the app to read the profile of signed-in users. It also allows the app to read basic company information of signed-in users. | No |
-| <TRE APP client>.Workspace.Read | Delegated | Allow the app to get information about the TRE workspaces on behalf of the signed-in user | No |
-| <TRE APP client>.Workspace.Write | Delegated | Allow the app to create, update or delete TRE workspaces on behalf of the signed-in user | No |
+| <TRE APP client>.user_impersonation | Delegated | Allow the app access the TRE API on behalf of the signed-in user | No |
 
 #### Authentication - TRE e2e test
 
@@ -158,6 +155,7 @@ Same as [TRE API](#authentication---tre-api).
 | API/permission name | Type | Description | Admin consent required |
 | ------------------- | ---- | ----------- | ---------------------- |
 | Microsoft Graph/User.Read (`https://graph.microsoft.com/User.Read`) | Delegated | Allows users to sign-in to the app, and allows the app to read the profile of signed-in users. It also allows the app to read basic company information of signed-in users. | No |
+| Workspace API/user_impersonation (`api://<Workspace API Application (client) ID>/user_impersonation`) | Delegated* | Allows the app to access the workspace API on behalf of the user | No | Granted for *[directory name]* |
 
 #### App roles
 
