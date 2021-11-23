@@ -12,7 +12,7 @@ We will use the [Guacamole workspace service bundle](./tre-templates/workspace-s
 
     Copy the resulting JSON payload.
 
-1. Navigate to the Swagger UI at `https://<azure_tre_fqdn>/api/docs`. 
+1. Navigate to the Swagger UI at `https://<azure_tre_fqdn>/api/docs`.
 
 1. Log into the Swagger UI by clicking `Authorize`, then `Authorize` again. You will be redirected to the login page.
 
@@ -104,7 +104,6 @@ Once the workspace service has been created, we can use the workspace API to cre
 }
 ```
 
-The API will report the ``resourceId`` of the created user resource, which can be used to query deployment status by using ``/api/workspaces/<workspace_id>/workspace-service/<workspace_service_id>/user_resources/<resource_id>``. 
+The API will report the ``resourceId`` of the created user resource, which can be used to query deployment status by using ``/api/workspaces/<workspace_id>/workspace-service/<workspace_service_id>/user_resources/<resource_id>``.
 
 You can also follow the progress in Azure portal as various resources come up. Once deployment has completed you can connect to the user resource using the `connection_uri` property returned by the API.
-

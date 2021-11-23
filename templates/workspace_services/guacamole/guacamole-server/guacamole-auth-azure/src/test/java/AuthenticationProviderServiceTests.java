@@ -245,8 +245,11 @@ public class AuthenticationProviderServiceTests {
 
             final AuthenticationProviderService azureTREAuthenticationProviderService =
                 new AuthenticationProviderService();
-            final Method validateToken =
-                AuthenticationProviderService.class.getDeclaredMethod("validateToken", String.class, UrlJwkProvider.class);
+            final Method validateToken = AuthenticationProviderService.class.getDeclaredMethod(
+                                                                              "validateToken",
+                                                                              String.class,
+                                                                              UrlJwkProvider.class
+                                                                            );
             validateToken.setAccessible(true);
 
             try {
@@ -281,8 +284,11 @@ public class AuthenticationProviderServiceTests {
 
             final AuthenticationProviderService azureTREAuthenticationProviderService =
                 new AuthenticationProviderService();
-            final Method validateToken =
-                AuthenticationProviderService.class.getDeclaredMethod("validateToken", String.class, UrlJwkProvider.class);
+            final Method validateToken = AuthenticationProviderService.class.getDeclaredMethod(
+                                            "validateToken",
+                                            String.class,
+                                            UrlJwkProvider.class
+                                          );
             validateToken.setAccessible(true);
             validateToken.invoke(azureTREAuthenticationProviderService, jwtToken, jwkProvider);
         }
@@ -328,8 +334,11 @@ public class AuthenticationProviderServiceTests {
 
             final AuthenticationProviderService azureTREAuthenticationProviderService =
                 new AuthenticationProviderService();
-            final Method validateToken =
-                AuthenticationProviderService.class.getDeclaredMethod("validateToken", String.class, UrlJwkProvider.class);
+            final Method validateToken = AuthenticationProviderService.class.getDeclaredMethod(
+                                            "validateToken",
+                                            String.class,
+                                            UrlJwkProvider.class
+                                          );
             validateToken.setAccessible(true);
 
             try {
@@ -367,8 +376,11 @@ public class AuthenticationProviderServiceTests {
 
             final AuthenticationProviderService azureTREAuthenticationProviderService =
                 new AuthenticationProviderService();
-            final Method validateToken =
-                AuthenticationProviderService.class.getDeclaredMethod("validateToken", String.class, UrlJwkProvider.class);
+            final Method validateToken =  AuthenticationProviderService.class.getDeclaredMethod(
+                                            "validateToken",
+                                            String.class,
+                                            UrlJwkProvider.class
+                                          );
             validateToken.setAccessible(true);
 
             try {
@@ -405,8 +417,11 @@ public class AuthenticationProviderServiceTests {
 
             final AuthenticationProviderService azureTREAuthenticationProviderService =
                 new AuthenticationProviderService();
-            final Method validateToken =
-                AuthenticationProviderService.class.getDeclaredMethod("validateToken", String.class, UrlJwkProvider.class);
+            final Method validateToken = AuthenticationProviderService.class.getDeclaredMethod(
+                                                                              "validateToken",
+                                                                              String.class,
+                                                                              UrlJwkProvider.class
+                                                                            );
             validateToken.setAccessible(true);
 
             try {

@@ -37,7 +37,8 @@ public class AuthenticationProviderService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AzureTREAuthenticationProvider.class);
 
-    public void validateToken(final String token, final UrlJwkProvider jwkProvider) throws GuacamoleInvalidCredentialsException {
+    public void validateToken(final String token, final UrlJwkProvider jwkProvider)
+        throws GuacamoleInvalidCredentialsException {
 
         try {
             if (System.getenv("AUDIENCE").length() == 0) {
