@@ -4,16 +4,15 @@ from mock import patch
 
 from pydantic import parse_obj_as
 from starlette import status
+from services.authentication import get_current_admin_user, get_current_tre_user_or_tre_admin
 
 from models.domain.resource import ResourceType
 from resources import strings
-from api.routes.workspaces import get_current_tre_user
 from db.errors import DuplicateEntity, EntityDoesNotExist, UnableToAccessDatabase
 from models.domain.resource_template import ResourceTemplate, CustomAction
 from models.schemas.resource_template import ResourceTemplateInformation
 from models.schemas.workspace_template import WorkspaceTemplateInResponse
 from services.schema_service import enrich_workspace_template
-
 
 pytestmark = pytest.mark.asyncio
 
@@ -40,7 +39,8 @@ class TestWorkspaceTemplate:
 
     @pytest.fixture(autouse=True, scope='class')
     def _prepare(self, app, admin_user):
-        app.dependency_overrides[get_current_tre_user] = admin_user
+        app.dependency_overrides[get_current_tre_user_or_tre_admin] = admin_user
+        app.dependency_overrides[get_current_admin_user] = admin_user
         yield
         app.dependency_overrides = {}
 

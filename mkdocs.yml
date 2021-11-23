@@ -52,6 +52,7 @@ nav:
           - 3b. Deploying Azure TRE with GitHub workflows: 'tre-admins/setup-instructions/workflows.md'
           - 4. Configuring Shared Services: 'tre-admins/setup-instructions/configuring-shared-services.md'
           - 5. Installing Base Workspace: 'tre-admins/setup-instructions/installing-base-workspace.md'
+          - 6. Installing Workspace Service and User Resource: 'installing-workspace-service-and-user-resource.md'
           - Tear-down: 'tre-admins/setup-instructions/tear-down.md'
       - Environment Variables: 'tre-admins/environment-variables.md'
       - Authentication and Authorization: 'tre-admins/auth.md'
