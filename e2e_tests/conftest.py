@@ -44,8 +44,6 @@ async def workspace_owner_token(verify) -> str:
 
         url = f"https://login.microsoftonline.com/{config.AUTH_TENANT_ID}/oauth2/token"
         response = await client.post(url, headers=headers, data=payload)
-        print(config.TEST_WORKSPACE_APP_ID)
-        print(response.json())
         token = response.json()["access_token"]
 
         assert token is not None, "Token not returned"
