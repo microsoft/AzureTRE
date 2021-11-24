@@ -144,7 +144,7 @@ However, changes reviewed and found safe should be able to execute workflows. A 
 on:
   pull_request_target:
     types: [labeled]
-    branches: [develop]
+    branches: [main]
 
 jobs:
   my_job:
