@@ -42,7 +42,7 @@ async def test_create_devtestlabs_workspace(workspace_owner_token, admin_token, 
         "properties": {
             "display_name": "E2E test",
             "description": "workspace for E2E",
-            "app_id": f"{config.AUTH_APP_CLIENT_ID}",
+            "app_id": f"{config.TEST_WORKSPACE_APP_ID}",
             "acr_name": f"{config.ACR_NAME}"
         }
     }
@@ -57,7 +57,7 @@ async def test_create_innereye_dl_workspace(workspace_owner_token, admin_token, 
         "properties": {
             "display_name": "E2E test",
             "description": "workspace for E2E",
-            "app_id": f"{config.AUTH_APP_CLIENT_ID}",
+            "app_id": f"{config.TEST_WORKSPACE_APP_ID}",
             "acr_name": f"{config.ACR_NAME}"
         }
     }
@@ -72,7 +72,7 @@ async def test_create_innereye_dl_inference_workspace(workspace_owner_token, adm
         "properties": {
             "display_name": "E2E test",
             "description": "workspace for E2E",
-            "app_id": f"{config.AUTH_APP_CLIENT_ID}",
+            "app_id": f"{config.TEST_WORKSPACE_APP_ID}",
             "acr_name": f"{config.ACR_NAME}"
         }
     }

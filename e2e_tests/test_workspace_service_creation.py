@@ -44,7 +44,7 @@ async def test_create_guacamole_service_into_base_workspace(admin_token, workspa
         "properties": {
             "display_name": "E2E test guacamole service",
             "description": "workspace for E2E",
-            "app_id": f"{config.AUTH_APP_CLIENT_ID}"
+            "app_id": f"{config.TEST_WORKSPACE_APP_ID}"
         }
     }
     workspace_id, install_status = await post_workspace_template(payload, workspace_owner_token, admin_token, verify)
@@ -54,7 +54,7 @@ async def test_create_guacamole_service_into_base_workspace(admin_token, workspa
         "properties": {
             "display_name": "Workspace service test",
             "description": "Workspace service for E2E test",
-            "openid_client_id": f"{config.AUTH_APP_CLIENT_ID}"
+            "openid_client_id": f"{config.TEST_WORKSPACE_APP_ID}"
         }
     }
     workspace_service_id, install_service_status = await post_workspace_service_template(workspace_id, service_payload, workspace_owner_token, verify)

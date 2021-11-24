@@ -40,10 +40,12 @@ async def workspace_owner_token(verify) -> str:
     async with AsyncClient(verify=verify) as client:
 
         headers = {'Content-Type': "application/x-www-form-urlencoded"}
-        payload = f"grant_type=password&resource={config.AUTH_APP_CLIENT_ID}&username={config.USERNAME}&password={config.PASSWORD}&scope=open_id+profile+email&client_id={config.AUTH_APP_CLIENT_ID}"
+        payload = f"grant_type=password&resource={config.TEST_WORKSPACE_APP_ID}&username={config.USERNAME}&password={config.PASSWORD}&scope=api://{config.TEST_WORKSPACE_APP_ID}/user_impersonation&client_id={config.TEST_WORKSPACE_APP_ID}"
 
         url = f"https://login.microsoftonline.com/{config.AUTH_TENANT_ID}/oauth2/token"
         response = await client.post(url, headers=headers, data=payload)
+        print(config.TEST_WORKSPACE_APP_ID)
+        print(response.json())
         token = response.json()["access_token"]
 
         assert token is not None, "Token not returned"

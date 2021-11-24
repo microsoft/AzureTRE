@@ -208,9 +208,10 @@ jobs:
           CLIENT_ID: "${{ secrets.TEST_APP_ID }}"
           USERNAME: "${{ secrets.TEST_USER_NAME }}"
           PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
-          AUTH_APP_CLIENT_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
+          TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
         run: |
           export SCOPE="api://${RESOURCE}/Workspace.Read api://${RESOURCE}/Workspace.Write"
+          export WORKSPACE_SCOPE="api://${TEST_WORKSPACE_APP_ID}/user_impersonation"
           cd e2e_tests
           PYTHONPATH=. python -m pytest -m smoke --junit-xml pytest_e2e.xml
 
