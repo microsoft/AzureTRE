@@ -5,10 +5,10 @@ on:
     # 1am each night https://crontab.guru/#0_1_*_*_*
     - cron: "0 1 * * *"
   push:
-    branches: [develop, main]
+    branches: [main]
   pull_request_target:
     types: [labeled]
-    branches: [develop]
+    branches: [main]
   workflow_dispatch:
 
 # This will prevent multiple runs of this entire workflow.
@@ -84,7 +84,7 @@ jobs:
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
-        if: ${{ failure() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') }}
+        if: ${{ failure() && github.ref == 'refs/heads/main' }}
         with:
           github-token: ${{ github.token }}
           ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
@@ -217,7 +217,7 @@ jobs:
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
-        if: ${{ failure() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') }}
+        if: ${{ failure() && github.ref == 'refs/heads/main'}}
         continue-on-error: true
         with:
           github-token: ${{ github.token }}
@@ -236,7 +236,7 @@ jobs:
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
-        if: ${{ success() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') }}
+        if: ${{ success() && github.ref == 'refs/heads/main' }}
         continue-on-error: true
         with:
           github-token: ${{ github.token }}
