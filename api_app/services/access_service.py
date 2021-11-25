@@ -1,14 +1,16 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
+from typing import List
 
+from fastapi.security import OAuth2AuthorizationCodeBearer
 from models.domain.workspace import Workspace, WorkspaceRole
-from models.domain.authentication import User
+from models.domain.authentication import User, RoleAssignment
 
 
 class AuthConfigValidationError(Exception):
     """Raised when the input auth information is invalid"""
 
 
-class AccessService(ABC):
+class AccessService(OAuth2AuthorizationCodeBearer):
     @abstractmethod
     def extract_workspace_auth_information(self, data: dict) -> dict:
         pass
@@ -19,5 +21,5 @@ class AccessService(ABC):
 
     @staticmethod
     @abstractmethod
-    def get_workspace_role(user: User, workspace: Workspace) -> WorkspaceRole:
+    def get_workspace_role(user: User, workspace: Workspace, user_role_assignments: List[RoleAssignment]) -> WorkspaceRole:
         pass

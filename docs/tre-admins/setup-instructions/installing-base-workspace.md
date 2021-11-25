@@ -46,9 +46,13 @@ Go to ``azure_tre_fqdn/docs`` and use POST /api/workspaces with the sample body 
 }
 ```
 
-The API will report the ``workspace_id`` of the created workspace, which can be used to query deployment status by using ``/api/workspaces/<workspace_id>``
+The API will report the ``workspace_id`` of the created workspace, which can be used to query deployment status by using ``/api/workspaces/<workspace_id>``. Record the workspace id as you will need it in the next step.
 
 You can also follow the progress in Azure portal as various resources come up.
 
 !!! info
     To query the status using the API your user needs to have `TREResearcher` or `TREOwner` role assigned to the app.
+
+## Next steps
+
+* [Installing a workspace service](./installing-workspace-service-and-user-resource.md)
