@@ -54,7 +54,7 @@ if [ -z "$NEXUS_PASS" ]; then
         $NEXUS_URL/service/rest/v1/security/users/admin/change-password
 
     #Let's store the new pass into Key Vault
-    az keyvault secret set --name ${NEXUS_ADMIN_PASSWORD_NAME} --vault-name ${KEYVAULT_NAME}--value $NEW_PASSWORD
+    az keyvault secret set --name ${NEXUS_ADMIN_PASSWORD_NAME} --vault-name ${KEYVAULT_NAME} --value $NEW_PASSWORD
     export NEXUS_PASS=$NEW_PASSWORD
 fi
 

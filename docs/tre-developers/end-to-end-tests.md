@@ -20,7 +20,7 @@
     | `SCOPE` | Scope(s) for the token. | `api://<TRE API app client ID>/user_impersonation` |
     | `USERNAME` | The username of the [E2E User](../tre-admins/auth.md#end-to-end-test-user). | |
     | `PASSWORD` | The password of the [E2E User](../tre-admins/auth.md#end-to-end-test-user). | |
-    | `AUTH_APP_CLIENT_ID` | The application (client) ID of the [workspaces app](../tre-admins/auth.md#workspaces). | |
+    | `TEST_WORKSPACE_APP_ID` | The application (client) ID of the [workspaces app](../tre-admins/auth.md#workspaces). | |
     | `ACR_NAME` | The name of the TRE container registry. | |
 
 1. Run the E2E tests:

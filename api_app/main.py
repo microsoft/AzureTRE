@@ -14,7 +14,6 @@ from starlette.exceptions import HTTPException
 from starlette.middleware.errors import ServerErrorMiddleware
 
 from api.routes.api import router as api_router
-from api.routes.api import tags_metadata
 from api.errors.http_error import http_error_handler
 from api.errors.validation_error import http422_error_handler
 from api.errors.generic_error import generic_error_handler
@@ -30,14 +29,9 @@ def get_application() -> FastAPI:
         debug=config.DEBUG,
         description=config.API_DESCRIPTION,
         version=config.VERSION,
-        docs_url="/api/docs",
-        swagger_ui_oauth2_redirect_url="/api/docs/oauth2-redirect",
-        swagger_ui_init_oauth={
-            "usePkceWithAuthorizationCodeGrant": True,
-            "clientId": config.SWAGGER_UI_CLIENT_ID,
-            "scopes": ["openid", "offline_access", f"api://{config.API_CLIENT_ID}/user_impersonation"]
-        },
-        openapi_tags=tags_metadata
+        docs_url=None,
+        redoc_url=None,
+        openapi_url=None
     )
 
     application.add_event_handler("startup", create_start_app_handler(application))
@@ -52,7 +46,7 @@ def get_application() -> FastAPI:
     application.add_exception_handler(HTTPException, http_error_handler)
     application.add_exception_handler(RequestValidationError, http422_error_handler)
 
-    application.include_router(api_router, prefix=config.API_PREFIX)
+    application.include_router(api_router)
     return application
 
 
