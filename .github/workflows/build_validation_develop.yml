@@ -2,10 +2,10 @@ name: Build Validation
 
 on:
   pull_request:
-    branches: [develop, main]
+    branches: [main]
   pull_request_target:
     types: [labeled]
-    branches: [develop]
+    branches: [main]
 
 # for each ref (branch/pr) run just the most recent, cancel other pending/running ones
 concurrency:
@@ -31,7 +31,7 @@ jobs:
         uses: github/super-linter@v4
         env:
           VALIDATE_ALL_CODEBASE: false
-          DEFAULT_BRANCH: develop
+          DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_MARKDOWN: true
           VALIDATE_PYTHON_FLAKE8: true
