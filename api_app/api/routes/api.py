@@ -67,7 +67,7 @@ async def get_swagger(request: Request):
         init_oauth={
             "usePkceWithAuthorizationCodeGrant": True,
             "clientId": config.SWAGGER_UI_CLIENT_ID,
-            "scopes": ["openid", "offline_access", f"api://{config.API_CLIENT_ID}/Workspace.Read"]
+            "scopes": ["openid", "offline_access", f"api://{config.API_CLIENT_ID}/user_impersonation"]
         }
     )
 
@@ -107,7 +107,7 @@ async def get_openapi_json(workspace_id: str, request: Request, workspace_repo=D
         workspace = workspace_repo.get_workspace_by_id(workspace_id)
         ws_app_reg_id = workspace.properties['app_id']
         workspace_scopes = {
-            f"api://{ws_app_reg_id}/Workspace.Read": "List and Get TRE Workspaces"
+            f"api://{ws_app_reg_id}/user_impersonation": "List and Get TRE Workspaces"
         }
         openapi_definitions[workspace_id]['components']['securitySchemes']['oauth2']['flows']['authorizationCode']['scopes'] = workspace_scopes
 
@@ -126,7 +126,7 @@ async def get_workspace_swagger(workspace_id, request: Request, workspace_repo=D
         init_oauth={
             "usePkceWithAuthorizationCodeGrant": True,
             "clientId": config.SWAGGER_UI_CLIENT_ID,
-            "scopes": ["openid", "offline_access", f"api://{ws_app_reg_id}/Workspace.Read"]
+            "scopes": ["openid", "offline_access", f"api://{ws_app_reg_id}/user_impersonation"]
         }
     )
 
