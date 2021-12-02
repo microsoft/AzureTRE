@@ -13,7 +13,6 @@ resource "azurerm_storage_account_network_rules" "stgrules" {
   storage_account_name = azurerm_storage_account.stg.name
 
   default_action             = "Deny"
-  virtual_network_subnet_ids = [azurerm_subnet.services.id]
   bypass                     = ["AzureServices"]
 }
 
