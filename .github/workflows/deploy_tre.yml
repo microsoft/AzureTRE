@@ -5,10 +5,10 @@ on:
     # 1am each night https://crontab.guru/#0_1_*_*_*
     - cron: "0 1 * * *"
   push:
-    branches: [develop, main]
+    branches: [main]
   pull_request_target:
     types: [labeled]
-    branches: [develop]
+    branches: [main]
   workflow_dispatch:
 
 # This will prevent multiple runs of this entire workflow.
@@ -84,7 +84,7 @@ jobs:
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
-        if: ${{ failure() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') }}
+        if: ${{ failure() && github.ref == 'refs/heads/main' }}
         with:
           github-token: ${{ github.token }}
           ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
@@ -208,15 +208,16 @@ jobs:
           CLIENT_ID: "${{ secrets.TEST_APP_ID }}"
           USERNAME: "${{ secrets.TEST_USER_NAME }}"
           PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
-          AUTH_APP_CLIENT_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
+          TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
         run: |
-          export SCOPE="api://${RESOURCE}/Workspace.Read api://${RESOURCE}/Workspace.Write"
+          export SCOPE="api://${RESOURCE}/user_impersonation"
+          export WORKSPACE_SCOPE="api://${TEST_WORKSPACE_APP_ID}/user_impersonation"
           cd e2e_tests
           PYTHONPATH=. python -m pytest -m smoke --junit-xml pytest_e2e.xml
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
-        if: ${{ failure() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') }}
+        if: ${{ failure() && github.ref == 'refs/heads/main'}}
         continue-on-error: true
         with:
           github-token: ${{ github.token }}
@@ -235,7 +236,7 @@ jobs:
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
-        if: ${{ success() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') }}
+        if: ${{ success() && github.ref == 'refs/heads/main' }}
         continue-on-error: true
         with:
           github-token: ${{ github.token }}

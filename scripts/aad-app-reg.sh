@@ -8,19 +8,24 @@ function usage()
     cat << USAGE
 
 Utility script for creating app registrations required by Azure TRE.
-The script will create and configure two app registrations, one for the API and another for Swagger UI.
+By default script will create and configure two app registrations, one for the API and another for Swagger UI.
+Alternatively using the -w flag will create an app registration for a TRE workspace
 You must be logged in using Azure CLI with sufficient privileges to modify Azure Active Directory to run this script.
 
-Usage: $0 -n <app-name> [-r <reply-url>] [-a]
+Usage: $0 -n <app-name> [-r <reply-url>] [-w] [-a] [-s]
 
 Options:
-    -n      Required. The prefix for the app (registration) names e.g., "TRE".
+    -n      Required. The prefix for the app (registration) names e.g., "TRE", or "Workspace One".
     -r      Reply/redirect URL, for the Swagger UI app, where the auth server sends the user after authorization.
+    -w      Create an app registration for a TRE workspace rather than the core TRE API and UI.
     -a      Optional, but recommended. Grants admin consent for the app registrations, when this flag is set.
             Requires directory admin privileges to the Azure AD in question.
+    -s      Optional, when -w and -a are specified the client ID of the swagger app must be provided.
 
-Example:
-    $0 -n TRE -r https://mydre.region.cloudapp.azure.com/oidc-redirect -a
+Examples:
+    $0 -n TRE -r https://mydre.region.cloudapp.azure.com/api/docs/oidc-redirect -a
+
+    $0 -n 'Workspace One' -r https://mydre.region.cloudapp.azure.com/api/docs/oidc-redirect -w
 
 USAGE
     exit 1
@@ -32,6 +37,8 @@ if ! command -v az &> /dev/null; then
 fi
 
 declare grantAdminConsent=0
+declare swaggerSpId=""
+declare workspace=0
 declare appName=""
 declare replyUrl=""
 declare currentUserId=""
@@ -39,7 +46,7 @@ declare spId=""
 declare msGraphUri="https://graph.microsoft.com/v1.0"
 
 # Initialize parameters specified from command line
-while getopts ":n:r:a" arg; do
+while getopts ":n:r:aws:" arg; do
     case "${arg}" in
         n)
             appName=${OPTARG}
@@ -50,6 +57,12 @@ while getopts ":n:r:a" arg; do
         a)
             grantAdminConsent=1
         ;;
+        w)
+            workspace=1
+        ;;
+        s)
+            swaggerSpId=${OPTARG}
+        ;;
         ?)
             echo "Invalid option: -${OPTARG}."
             exit 2
@@ -59,6 +72,11 @@ done
 
 if [[ -z "$appName" ]]; then
     echo "Please specify the application name" 1>&2
+    usage
+fi
+
+if [[ -z "$swaggerSpId"] && [$grantAdminConsent -eq 1 ]]; then
+    echo "Please specify the swagger application client ID so that admin consent can be granted" 1>&2
     usage
 fi
 
@@ -154,8 +172,10 @@ currentUserId=$(az ad signed-in-user show --query 'objectId' --output tsv)
 # Generate GUIDS
 declare userRoleId=$(cat /proc/sys/kernel/random/uuid)
 declare adminRoleId=$(cat /proc/sys/kernel/random/uuid)
-declare workspaceReadId=$(cat /proc/sys/kernel/random/uuid)
-declare workspaceWriteId=$(cat /proc/sys/kernel/random/uuid)
+declare researcherRoleId=$(cat /proc/sys/kernel/random/uuid)
+declare ownerRoleId=$(cat /proc/sys/kernel/random/uuid)
+
+declare apiUserImpersonationScopeID=$(cat /proc/sys/kernel/random/uuid)
 
 declare apiAppObjectId=""
 
@@ -181,15 +201,21 @@ if [[ -n ${existingApiApp} ]]; then
     apiAppObjectId=$(echo ${existingApiApp} | jq -r '.objectId')
 
     # Get existing IDs of roles and scopes.
-    userRoleId=$(echo "$existingApiApp" | jq -r '.appRoles[] | select(.value == "TREUser").id')
-    adminRoleId=$(echo "$existingApiApp" | jq -r '.appRoles[] | select(.value == "TREAdmin").id')
-    workspaceReadId=$(echo "$existingApiApp" | jq -r '.oauth2Permissions[] | select(.value == "Workspace.Read").id')
-    workspaceWriteId=$(echo "$existingApiApp" | jq -r '.oauth2Permissions[] | select(.value == "Workspace.Write").id')
+    if [[ $workspace -eq 0 ]]; then
+      userRoleId=$(echo "$existingApiApp" | jq -r '.appRoles[] | select(.value == "TREUser").id')
+      adminRoleId=$(echo "$existingApiApp" | jq -r '.appRoles[] | select(.value == "TREAdmin").id')
+      if [[ -z "${userRoleId}" ]]; then userRoleId=$(cat /proc/sys/kernel/random/uuid); fi
+      if [[ -z "${adminRoleId}" ]]; then adminRoleId=$(cat /proc/sys/kernel/random/uuid); fi
+    else
+      researcherRoleId=$(echo "$existingApiApp" | jq -r '.appRoles[] | select(.value == "WorkspaceResearcher").id')
+      ownerRoleId=$(echo "$existingApiApp" | jq -r '.appRoles[] | select(.value == "WorkspaceOwner").id')
+      if [[ -z "${researcherRoleId}" ]]; then researcherRoleId=$(cat /proc/sys/kernel/random/uuid); fi
+      if [[ -z "${ownerRoleId}" ]]; then ownerRoleId=$(cat /proc/sys/kernel/random/uuid); fi
+    fi
+    apiUserImpersonationScopeID=$(echo "$existingApiApp" | jq -r '.oauth2Permissions[] | select(.value == "user_impersonation").id')
 
-    if [[ -z "${userRoleId}" ]]; then userRoleId=$(cat /proc/sys/kernel/random/uuid); fi
-    if [[ -z "${adminRoleId}" ]]; then adminRoleId=$(cat /proc/sys/kernel/random/uuid); fi
-    if [[ -z "${workspaceReadId}" ]]; then workspaceReadId=$(cat /proc/sys/kernel/random/uuid); fi
-    if [[ -z "${workspaceWriteId}" ]]; then workspaceWriteId=$(cat /proc/sys/kernel/random/uuid); fi
+
+    if [[ -z "${apiUserImpersonationScopeID}" ]]; then apiUserImpersonationScopeID=$(cat /proc/sys/kernel/random/uuid); fi
 fi
 
 declare appRoles=$(jq -c . << JSON
@@ -216,27 +242,57 @@ declare appRoles=$(jq -c . << JSON
 JSON
 )
 
+declare workspaceAppRoles=$(jq -c . << JSON
+[
+    {
+        "id": "${ownerRoleId}",
+        "allowedMemberTypes": [ "User" ],
+        "description": "Provides workspace owners access to the Workspace.",
+        "displayName": "Workspace Owner",
+        "isEnabled": true,
+        "origin": "Application",
+        "value": "WorkspaceOwner"
+    },
+    {
+        "id": "${researcherRoleId}",
+        "allowedMemberTypes": [ "User" ],
+        "description": "Provides researchers access to the Workspace.",
+        "displayName": "Workspace Researcher",
+        "isEnabled": true,
+        "origin": "Application",
+        "value": "WorkspaceResearcher"
+    }
+]
+JSON
+)
+
 declare oauth2PermissionScopes=$(jq -c . << JSON
 [
     {
-        "adminConsentDescription": "Allow the app to get information about the ${appName} workspaces on behalf of the signed-in user.",
-        "adminConsentDisplayName": "List and Get ${appName} Workspaces",
-        "id": "${workspaceReadId}",
+        "adminConsentDescription": "Allow the app to access the TRE API on behalf of the signed-in user.",
+        "adminConsentDisplayName": "Access the TRE API on behalf of signed-in user",
+        "id": "${apiUserImpersonationScopeID}",
         "isEnabled": true,
         "type": "User",
-        "userConsentDescription": "Allow the app to get information about the ${appName} workspaces on your behalf.",
-        "userConsentDisplayName": "Get the ${appName} Workspaces you have access to",
-        "value": "Workspace.Read"
-    },
+        "userConsentDescription": "Allow the app to access the TRE API on your behalf.",
+        "userConsentDisplayName": "Access the TRE API",
+        "value": "user_impersonation"
+    }
+]
+JSON
+)
+
+declare workspaceOauth2PermissionScopes=$(jq -c . << JSON
+[
     {
-        "adminConsentDescription": "Allow the app to create, update or delete ${appName} workspaces on behalf of the signed-in user.",
-        "adminConsentDisplayName": "Modify ${appName} Workspaces",
-        "id": "${workspaceWriteId}",
+        "adminConsentDescription": "Allow the app to access the Workspace API on behalf of the signed-in user.",
+        "adminConsentDisplayName": "Access the Workspace API on behalf of signed-in user",
+        "id": "${apiUserImpersonationScopeID}",
         "isEnabled": true,
         "type": "User",
-        "userConsentDescription": "Allow the app to create, update or delete ${appName} workspaces on your behalf.",
-        "userConsentDisplayName": "Modify ${appName} Workspaces for you",
-        "value": "Workspace.Write"
+        "userConsentDescription": "Allow the app to access the Workspace API on your behalf.",
+        "userConsentDisplayName": "Access the Workspace API",
+        "value": "user_impersonation"
     }
 ]
 JSON
@@ -283,7 +339,8 @@ declare apiRequiredResourceAccess=$(jq -c . << JSON
 JSON
 )
 
-declare apiApp=$(jq -c . << JSON
+if [[ $workspace -eq 0 ]]; then
+  declare apiApp=$(jq -c . << JSON
 {
     "displayName": "${appName} API",
     "api": {
@@ -296,6 +353,22 @@ declare apiApp=$(jq -c . << JSON
 }
 JSON
 )
+
+else
+    declare apiApp=$(jq -c . << JSON
+{
+    "displayName": "${appName} API",
+    "api": {
+        "requestedAccessTokenVersion": 2,
+        "oauth2PermissionScopes": ${workspaceOauth2PermissionScopes}
+    },
+    "appRoles": ${workspaceAppRoles},
+    "signInAudience": "AzureADMyOrg"
+}
+JSON
+)
+fi
+
 
 # Is the API app already registered?
 if [[ -n ${apiAppObjectId} ]]; then
@@ -350,18 +423,21 @@ fi
 # This tag ensures the app is listed in "Enterprise applications"
 az ad sp update --id $spId --set tags="['WindowsAzureActiveDirectoryIntegratedApp']"
 
-# Grant admin consent on the required resource accesses (Graph API)
-if [[ $grantAdminConsent -eq 1 ]]; then
-    echo "Granting admin consent for ${appName} API app (service principal ID ${spId}) - NOTE: Directory admin privileges required for this step"
-    grant_admin_consent $spId $msGraphObjectId $directoryReadAllId
-    grant_admin_consent $spId $msGraphObjectId $userReadAllId
-fi
+# If a TRE core app reg
+if [[ $workspace -eq 0 ]]; then
 
-# Now create the app for the Swagger UI
-declare scope_openid=$(get_msgraph_scope "openid")
-declare scope_offline_access=$(get_msgraph_scope "offline_access")
+  # Grant admin consent on the required resource accesses (Graph API)
+  if [[ $grantAdminConsent -eq 1 ]]; then
+      echo "Granting admin consent for ${appName} API app (service principal ID ${spId}) - NOTE: Directory admin privileges required for this step"
+      grant_admin_consent $spId $msGraphObjectId $directoryReadAllId
+      grant_admin_consent $spId $msGraphObjectId $userReadAllId
+  fi
 
-declare swaggerRequiredResourceAccess=$(jq -c . << JSON
+  # Now create the app for the Swagger UI
+  declare scope_openid=$(get_msgraph_scope "openid")
+  declare scope_offline_access=$(get_msgraph_scope "offline_access")
+
+  declare swaggerRequiredResourceAccess=$(jq -c . << JSON
 [
     {
         "resourceAppId": "00000003-0000-0000-c000-000000000000",
@@ -374,11 +450,7 @@ declare swaggerRequiredResourceAccess=$(jq -c . << JSON
         "resourceAppId": "${apiAppId}",
         "resourceAccess": [
             {
-                "id": "${workspaceReadId}",
-                "type": "Scope"
-            },
-            {
-                "id": "${workspaceWriteId}",
+                "id": "${apiUserImpersonationScopeID}",
                 "type": "Scope"
             }
         ]
@@ -387,14 +459,14 @@ declare swaggerRequiredResourceAccess=$(jq -c . << JSON
 JSON
 )
 
-redirectUris="\"http://localhost:8000/docs/oauth2-redirect\""
+  redirectUris="\"http://localhost:8000/docs/oauth2-redirect\""
 
-if [[ -n ${replyUrl} ]]; then
-    echo "Adding reply/redirect URL \"${replyUrl}\" to ${appName} Swagger UI app"
-    redirectUris="${redirectUris}, \"${replyUrl}\""
-fi
+  if [[ -n ${replyUrl} ]]; then
+      echo "Adding reply/redirect URL \"${replyUrl}\" to ${appName} Swagger UI app"
+      redirectUris="${redirectUris}, \"${replyUrl}\""
+  fi
 
-declare swaggerUIApp=$(jq -c . << JSON
+  declare swaggerUIApp=$(jq -c . << JSON
 {
     "displayName": "${appName} Swagger UI",
     "signInAudience": "AzureADMyOrg",
@@ -408,47 +480,55 @@ declare swaggerUIApp=$(jq -c . << JSON
 JSON
 )
 
-# Is the Swagger UI app already registered?
-declare existingSwaggerUIApp=$(get_existing_app "${appName} Swagger UI")
+  # Is the Swagger UI app already registered?
+  declare existingSwaggerUIApp=$(get_existing_app "${appName} Swagger UI")
 
-if [[ -n ${existingSwaggerUIApp} ]]; then
-    swaggerUIAppObjectId=$(echo "${existingSwaggerUIApp}" | jq -r '.objectId')
-    echo "Updating Swagger UI app with ID ${swaggerUIAppObjectId}"
-    az rest --method PATCH --uri "${msGraphUri}/applications/${swaggerUIAppObjectId}" --headers Content-Type=application/json --body "${swaggerUIApp}"
-    swaggerAppId=$(az ad app show --id ${swaggerUIAppObjectId} --query "appId" --output tsv)
-    echo "Swagger UI app registration with ID ${swaggerAppId} updated"
+  if [[ -n ${existingSwaggerUIApp} ]]; then
+      swaggerUIAppObjectId=$(echo "${existingSwaggerUIApp}" | jq -r '.objectId')
+      echo "Updating Swagger UI app with ID ${swaggerUIAppObjectId}"
+      az rest --method PATCH --uri "${msGraphUri}/applications/${swaggerUIAppObjectId}" --headers Content-Type=application/json --body "${swaggerUIApp}"
+      swaggerAppId=$(az ad app show --id ${swaggerUIAppObjectId} --query "appId" --output tsv)
+      echo "Swagger UI app registration with ID ${swaggerAppId} updated"
+  else
+      swaggerAppId=$(az rest --method POST --uri "${msGraphUri}/applications" --headers Content-Type=application/json --body "${swaggerUIApp}" --output tsv --query "appId")
+      echo "Creating a new app registration, ${appName} Swagger UI, with ID ${swaggerAppId}"
+
+      # Poll until the app registration is found in the listing.
+      wait_for_new_app_registration $swaggerAppId
+  fi
+
+  # Make the current user an owner of the application.
+  az ad app owner add --id ${swaggerAppId} --owner-object-id $currentUserId
+
+  # See if a service principal already exists
+  swaggerSpId=$(az ad sp list --filter "appId eq '${swaggerAppId}'" --query '[0].objectId' --output tsv)
+
+  # If not, create a new service principal
+  if [[ -z "$swaggerSpId" ]]; then
+      swaggerSpId=$(az ad sp create --id ${swaggerAppId} --query 'objectId' --output tsv)
+      echo "Creating a new service principal, for ${appName} Swagger UI app, with ID $swaggerSpId"
+      wait_for_new_service_principal $swaggerSpId
+  fi
+
+  # Grant admin consent for the delegated scopes
+  if [[ $grantAdminConsent -eq 1 ]]; then
+      echo "Granting admin consent for ${appName} Swagger UI app (service principal ID ${swaggerSpId})"
+      az ad app permission grant --id $swaggerSpId --api $msGraphObjectId --scope "offline_access openid"
+      az ad app permission grant --id $swaggerSpId --api $apiAppId --scope "user_impersonation"
+  fi
 else
-    swaggerAppId=$(az rest --method POST --uri "${msGraphUri}/applications" --headers Content-Type=application/json --body "${swaggerUIApp}" --output tsv --query "appId")
-    echo "Creating a new app registration, ${appName} Swagger UI, with ID ${swaggerAppId}"
-
-    # Poll until the app registration is found in the listing.
-    wait_for_new_app_registration $swaggerAppId
-fi
-
-# Make the current user an owner of the application.
-az ad app owner add --id ${swaggerAppId} --owner-object-id $currentUserId
-
-# See if a service principal already exists
-swaggerSpId=$(az ad sp list --filter "appId eq '${swaggerAppId}'" --query '[0].objectId' --output tsv)
-
-# If not, create a new service principal
-if [[ -z "$swaggerSpId" ]]; then
-    swaggerSpId=$(az ad sp create --id ${swaggerAppId} --query 'objectId' --output tsv)
-    echo "Creating a new service principal, for ${appName} Swagger UI app, with ID $swaggerSpId"
-    wait_for_new_service_principal $swaggerSpId
-fi
-
-# Grant admin consent for the delegated scopes
-if [[ $grantAdminConsent -eq 1 ]]; then
-    echo "Granting admin consent for ${appName} Swagger UI app (service principal ID ${swaggerSpId})"
-    az ad app permission grant --id $swaggerSpId --api $msGraphObjectId --scope "offline_access openid"
-    az ad app permission grant --id $swaggerSpId --api $apiAppId --scope "Workspace.Read Workspace.Write"
+  # Grant admin consent for the delegated workspace scopes
+  if [[ $grantAdminConsent -eq 1 ]]; then
+      echo "Granting admin consent for ${appName} Swagger UI app (service principal ID ${swaggerSpId})"
+      az ad app permission grant --id $swaggerSpId --api $apiAppId --scope "user_impersonation"
+  fi
 fi
 
 echo "Done"
 
 # Output the variables for .env files
-cat << ENV_VARS
+if [[ $workspace -eq 0 ]]; then
+  cat << ENV_VARS
 
 Variables:
 
@@ -458,6 +538,18 @@ API_CLIENT_SECRET=${spPassword}
 SWAGGER_UI_CLIENT_ID=${swaggerAppId}
 
 ENV_VARS
+
+else
+  cat << ENV_VARS
+
+Variables:
+
+AAD_TENANT_ID=$(az account show | jq -r '.tenantId')
+WORKSPACE_API_CLIENT_ID=${apiAppId}
+WORKSPACE_API_CLIENT_SECRET=${spPassword}
+
+ENV_VARS
+fi
 
 if [[ $grantAdminConsent -eq 0 ]]; then
     echo "NOTE: Make sure the API permissions of the app registrations have admin consent granted."

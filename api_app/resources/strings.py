@@ -50,6 +50,7 @@ ACCESS_UNABLE_TO_GET_ROLE_ASSIGNMENTS_FOR_USER = "Unable to get role assignments
 
 ACCESS_USER_IS_NOT_OWNER_OR_RESEARCHER = "Workspace Researcher or Owner rights are required"
 ACCESS_USER_IS_NOT_OWNER = "Workspace Owner rights are required"
+ACCESS_USER_DOES_NOT_HAVE_REQUIRED_ROLE = "The user is missing a required role"
 
 AUTH_NOT_ASSIGNED_TO_ADMIN_ROLE = "Not assigned to admin role"
 AUTH_COULD_NOT_VALIDATE_CREDENTIALS = "Could not validate credentials"

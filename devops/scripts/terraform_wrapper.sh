@@ -96,7 +96,7 @@ do
     script -c "$TF_CMD" $LOG_FILE
 
     LOCKED_STATE=$(cat tmp$$.log |  grep -c 'Error acquiring the state lock') || true;
-    TF_ERROR=$(cat tmp$$.log |  grep -c 'Error ') || true;
+    TF_ERROR=$(cat tmp$$.log |  grep -c 'COMMAND_EXIT_CODE="1"') || true;
     if [[ $LOCKED_STATE > 0  ]];
     then
         RUN_COMMAND=1
