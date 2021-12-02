@@ -26,7 +26,6 @@ import org.apache.guacamole.auth.azuretre.user.AzureTREAuthenticatedUser;
 import org.apache.guacamole.net.auth.Credentials;
 import org.apache.guacamole.net.auth.credentials.GuacamoleInvalidCredentialsException;
 import org.hamcrest.CoreMatchers;
-import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.EnvironmentVariables;
@@ -168,7 +167,7 @@ public class AuthenticationProviderServiceTests {
         return jwtToken;
     }
 
-    private String generateValidJWTToken()
+    private String internalGenerateValidJWTToken(String validRole)
         throws IllegalArgumentException, NoSuchAlgorithmException, InvalidKeySpecException {
 
         final Algorithm algorithm = Algorithm.RSA256((RSAPublicKey) getPublicKey(), (RSAPrivateKey) getPrivateKey());
@@ -179,7 +178,7 @@ public class AuthenticationProviderServiceTests {
         c.add(Calendar.HOUR, 24);
         final Date expireDate = c.getTime();
 
-        final String[] validUserRoles = {"Project-User", "Another-Role"};
+        final String[] validUserRoles = {validRole, "Another-Role"};
 
         final String jwtToken = JWT.create().withIssuer(issuer).withKeyId("dummy_keyid").withAudience(audience)
             .withIssuedAt(currentDate).withExpiresAt(expireDate).withClaim("oid", "dummy_oid")
@@ -187,6 +186,18 @@ public class AuthenticationProviderServiceTests {
             .sign(algorithm);
 
         return jwtToken;
+    }
+
+    private String generateValidJWTToken()
+        throws IllegalArgumentException, NoSuchAlgorithmException, InvalidKeySpecException {
+
+        return internalGenerateValidJWTToken("WorkspaceOwner");
+    }
+
+    private String generateValidJWTTokenWithWrongRole()
+        throws IllegalArgumentException, NoSuchAlgorithmException, InvalidKeySpecException {
+
+        return internalGenerateValidJWTToken("NotTheRightRole");
     }
 
     private String generateExpiredJWTToken()
@@ -211,10 +222,10 @@ public class AuthenticationProviderServiceTests {
     }
 
     @Test
-    public void validateTokenReturnsValidAzureTREAuthenticatedUser()
+    public void validateTokenFailsWhenNoNeededRole()
         throws Exception {
 
-        final String jwtToken = generateValidJWTToken();
+        final String jwtToken = generateValidJWTTokenWithWrongRole();
         final PublicKey publicKey = getPublicKey();
         final Algorithm algorithm = Algorithm.RSA256((RSAPublicKey) publicKey, null);
 
@@ -234,17 +245,67 @@ public class AuthenticationProviderServiceTests {
 
             final AuthenticationProviderService azureTREAuthenticationProviderService =
                 new AuthenticationProviderService();
-            final Method validateToken =
-                AuthenticationProviderService.class.getDeclaredMethod("validateToken", Credentials.class,
-                    String.class, AzureTREAuthenticatedUser.class, UrlJwkProvider.class);
+            final Method validateToken = AuthenticationProviderService.class.getDeclaredMethod(
+                                                                              "validateToken",
+                                                                              String.class,
+                                                                              UrlJwkProvider.class
+                                                                            );
             validateToken.setAccessible(true);
-            validateToken.invoke(azureTREAuthenticationProviderService, credentials, jwtToken, authenticatedUser,
-                jwkProvider);
 
-            Assert.assertEquals("dummy_oid", authenticatedUser.getObjectId());
-            Assert.assertEquals("dummy_preferred_username", authenticatedUser.getIdentifier());
-
+            try {
+                validateToken.invoke(azureTREAuthenticationProviderService, jwtToken, jwkProvider);
+                fail("Exception not thrown");
+            } catch (final InvocationTargetException e) {
+                assertEquals(GuacamoleInvalidCredentialsException.class, e.getTargetException().getClass());
+            }
         }
+    }
+
+    private void validateTokenSucceedWhenValidRole(String role)
+        throws Exception {
+
+        final String jwtToken = internalGenerateValidJWTToken(role);
+        final PublicKey publicKey = getPublicKey();
+        final Algorithm algorithm = Algorithm.RSA256((RSAPublicKey) publicKey, null);
+
+        try (MockedStatic<Algorithm> mockAlgorithm = Mockito.mockStatic(Algorithm.class)) {
+
+            mockAlgorithm.when(() -> Algorithm.RSA256((RSAPublicKey) publicKey, null)).thenReturn(algorithm);
+
+            final Jwk jwk = mock(Jwk.class);
+            final UrlJwkProvider jwkProvider = mock(UrlJwkProvider.class);
+            final Credentials credentials = mock(Credentials.class);
+            final AzureTREAuthenticatedUser authenticatedUser = new AzureTREAuthenticatedUser();
+
+            when(jwk.getPublicKey()).thenReturn(publicKey);
+            when(jwkProvider.get("dummy_keyid")).thenReturn(jwk);
+            environmentVariables.set("AUDIENCE", audience);
+            environmentVariables.set("ISSUER", issuer);
+
+            final AuthenticationProviderService azureTREAuthenticationProviderService =
+                new AuthenticationProviderService();
+            final Method validateToken = AuthenticationProviderService.class.getDeclaredMethod(
+                                            "validateToken",
+                                            String.class,
+                                            UrlJwkProvider.class
+                                          );
+            validateToken.setAccessible(true);
+            validateToken.invoke(azureTREAuthenticationProviderService, jwtToken, jwkProvider);
+        }
+    }
+
+    @Test
+    public void validateTokenSucceedWhenResearcherRole()
+        throws Exception {
+
+        validateTokenSucceedWhenValidRole("WorkspaceResearcher");
+    }
+
+    @Test
+    public void validateTokenSucceedWhenOwnerRole()
+        throws Exception {
+
+        validateTokenSucceedWhenValidRole("WorkspaceOwner");
     }
 
 
@@ -273,14 +334,15 @@ public class AuthenticationProviderServiceTests {
 
             final AuthenticationProviderService azureTREAuthenticationProviderService =
                 new AuthenticationProviderService();
-            final Method validateToken =
-                AuthenticationProviderService.class.getDeclaredMethod("validateToken", Credentials.class,
-                    String.class, AzureTREAuthenticatedUser.class, UrlJwkProvider.class);
+            final Method validateToken = AuthenticationProviderService.class.getDeclaredMethod(
+                                            "validateToken",
+                                            String.class,
+                                            UrlJwkProvider.class
+                                          );
             validateToken.setAccessible(true);
 
             try {
-                validateToken.invoke(azureTREAuthenticationProviderService, credentials, jwtToken, authenticatedUser,
-                    jwkProvider);
+                validateToken.invoke(azureTREAuthenticationProviderService, jwtToken, jwkProvider);
                 fail("Exception not thrown");
             } catch (final InvocationTargetException e) {
                 assertEquals(GuacamoleInvalidCredentialsException.class, e.getTargetException().getClass());
@@ -314,14 +376,15 @@ public class AuthenticationProviderServiceTests {
 
             final AuthenticationProviderService azureTREAuthenticationProviderService =
                 new AuthenticationProviderService();
-            final Method validateToken =
-                AuthenticationProviderService.class.getDeclaredMethod("validateToken", Credentials.class,
-                    String.class, AzureTREAuthenticatedUser.class, UrlJwkProvider.class);
+            final Method validateToken =  AuthenticationProviderService.class.getDeclaredMethod(
+                                            "validateToken",
+                                            String.class,
+                                            UrlJwkProvider.class
+                                          );
             validateToken.setAccessible(true);
 
             try {
-                validateToken.invoke(azureTREAuthenticationProviderService, credentials, jwtToken, authenticatedUser,
-                    jwkProvider);
+                validateToken.invoke(azureTREAuthenticationProviderService, jwtToken, jwkProvider);
                 fail("Exception not thrown");
             } catch (final InvocationTargetException e) {
                 assertEquals(GuacamoleInvalidCredentialsException.class, e.getTargetException().getClass());
@@ -354,14 +417,15 @@ public class AuthenticationProviderServiceTests {
 
             final AuthenticationProviderService azureTREAuthenticationProviderService =
                 new AuthenticationProviderService();
-            final Method validateToken =
-                AuthenticationProviderService.class.getDeclaredMethod("validateToken", Credentials.class,
-                    String.class, AzureTREAuthenticatedUser.class, UrlJwkProvider.class);
+            final Method validateToken = AuthenticationProviderService.class.getDeclaredMethod(
+                                                                              "validateToken",
+                                                                              String.class,
+                                                                              UrlJwkProvider.class
+                                                                            );
             validateToken.setAccessible(true);
 
             try {
-                validateToken.invoke(azureTREAuthenticationProviderService, credentials, jwtToken, authenticatedUser,
-                    jwkProvider);
+                validateToken.invoke(azureTREAuthenticationProviderService, jwtToken, jwkProvider);
                 fail("Exception not thrown");
             } catch (final InvocationTargetException e) {
                 assertEquals(GuacamoleInvalidCredentialsException.class, e.getTargetException().getClass());

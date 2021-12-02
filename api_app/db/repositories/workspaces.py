@@ -11,7 +11,6 @@ from models.domain.resource import Deployment, Status, ResourceType
 from models.domain.workspace import Workspace
 from models.schemas.workspace import WorkspaceInCreate, WorkspacePatchEnabled
 from resources import strings
-from services.authentication import extract_auth_information
 from services.cidr_service import generate_new_cidr
 
 
@@ -43,12 +42,10 @@ class WorkspaceRepository(ResourceRepository):
             raise EntityDoesNotExist
         return parse_obj_as(Workspace, workspaces[0])
 
-    def create_workspace_item(self, workspace_input: WorkspaceInCreate) -> Workspace:
+    def create_workspace_item(self, workspace_input: WorkspaceInCreate, auth_info: dict) -> Workspace:
         full_workspace_id = str(uuid.uuid4())
 
         template_version = self.validate_input_against_template(workspace_input.templateName, workspace_input, ResourceType.Workspace)
-
-        auth_info = extract_auth_information(workspace_input.properties["app_id"])
 
         # if address_space isn't provided in the input, generate a new one.
         # TODO: #772 check that the provided address_space is available in the network.

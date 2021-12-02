@@ -17,10 +17,10 @@
     | `RESOURCE` | The application (client) ID of the [TRE API](../tre-admins/auth.md#tre-api) service principal. | |
     | `AUTH_TENANT_ID` | The tenant ID of the Azure AD. | |
     | `CLIENT_ID` | The application (client) ID of the [E2E Test app](../tre-admins/auth.md#tre-e2e-test) service principal. | |
-    | `SCOPE` | Scope(s) for the token. | `api://<TRE API app client ID>/Workspace.Read api://<TRE API app client ID>/Workspace.Write` |
+    | `SCOPE` | Scope(s) for the token. | `api://<TRE API app client ID>/user_impersonation` |
     | `USERNAME` | The username of the [E2E User](../tre-admins/auth.md#end-to-end-test-user). | |
     | `PASSWORD` | The password of the [E2E User](../tre-admins/auth.md#end-to-end-test-user). | |
-    | `AUTH_APP_CLIENT_ID` | The application (client) ID of the [workspaces app](../tre-admins/auth.md#workspaces). | |
+    | `TEST_WORKSPACE_APP_ID` | The application (client) ID of the [workspaces app](../tre-admins/auth.md#workspaces). | |
     | `ACR_NAME` | The name of the TRE container registry. | |
 
 1. Run the E2E tests:

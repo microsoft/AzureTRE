@@ -5,7 +5,7 @@ from mock import patch
 from pydantic import parse_obj_as
 from starlette import status
 
-from api.routes.workspaces import get_current_user
+from services.authentication import get_current_admin_user, get_current_tre_user_or_tre_admin
 from db.errors import DuplicateEntity, EntityDoesNotExist, EntityVersionExist, UnableToAccessDatabase
 from models.domain.resource import ResourceType
 from models.domain.resource_template import ResourceTemplate
@@ -58,7 +58,8 @@ def user_resource_template_without_enriching():
 class TestWorkspaceServiceTemplatesRequiringAdminRights:
     @pytest.fixture(autouse=True, scope='class')
     def _prepare(self, app, admin_user):
-        app.dependency_overrides[get_current_user] = admin_user
+        app.dependency_overrides[get_current_tre_user_or_tre_admin] = admin_user
+        app.dependency_overrides[get_current_admin_user] = admin_user
         yield
         app.dependency_overrides = {}
 
@@ -227,8 +228,8 @@ class TestWorkspaceServiceTemplatesRequiringAdminRights:
 
 class TestWorkspaceServiceTemplatesNotRequiringAdminRights:
     @pytest.fixture(autouse=True, scope='class')
-    def _prepare(self, app, non_admin_user):
-        app.dependency_overrides[get_current_user] = non_admin_user
+    def _prepare(self, app, researcher_user):
+        app.dependency_overrides[get_current_tre_user_or_tre_admin] = researcher_user
         yield
         app.dependency_overrides = {}
 
