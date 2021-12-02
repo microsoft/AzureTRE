@@ -12,8 +12,8 @@ resource "azurerm_storage_account_network_rules" "stgrules" {
   resource_group_name  = azurerm_resource_group.ws.name
   storage_account_name = azurerm_storage_account.stg.name
 
-  default_action             = "Deny"
-  bypass                     = ["AzureServices"]
+  default_action = "Deny"
+  bypass         = ["AzureServices"]
 }
 
 resource "azurerm_private_endpoint" "stgfilepe" {
