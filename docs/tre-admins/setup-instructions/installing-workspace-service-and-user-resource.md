@@ -48,7 +48,7 @@ Click `Try it out` on the `POST` `/api/user-resource-templates` operation.
 
 Now that we have published and registered both workspace service and user resource bundles we can use the workspace API to create a workspace service in our workspace.
 
-1. Navigate to the Swagger UI at `https://<azure_tre_fqdn>/api/<workspace_id>/docs` . Where `<workspace_id>` is the workspace ID of the workspace created in the previous step.
+1. Navigate to the Swagger UI at `https://<azure_tre_fqdn>/api/workspaces/<workspace_id>/docs` . Where `<workspace_id>` is the workspace ID of the workspace created in the previous step.
 
 !!! info
     All routes are auth protected. Click the green **Authorize** button to receive a token for Swagger client.
@@ -86,7 +86,7 @@ You can also follow the progress in Azure portal as various resources come up.
 
 Once the workspace service has been created, we can use the workspace API to create a user resource in our workspace.
 
-1. Navigate to the Swagger UI at `https://<azure_tre_fqdn>/api/<workspace_id>/docs` . Where `<workspace_id>` is the workspace ID of your workspace.
+1. Navigate to the Swagger UI at `https://<azure_tre_fqdn>/api/workspaces/<workspace_id>/docs` . Where `<workspace_id>` is the workspace ID of your workspace.
 
 1. Click `Try it out` on the `POST` `/api/workspaces/<workspace_id>/workspace-services/<service_id>/user_resources` operation. Where `<workspace_id>` and `<service_id>` are the workspace ID of your workspace and workspace service ID of your workspace service.
 
