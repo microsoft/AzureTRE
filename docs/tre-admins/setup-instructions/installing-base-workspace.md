@@ -32,7 +32,7 @@ Now that we have published and registered a base workspace bundle we can use the
 As explained in the [auth guide](../auth.md), every workspace has a corresponding app registration which can be created using the helper script `scripts/aad-app-reg.sh`. For example:
 
 ```bash
-    ./scripts/aad-app-reg.ssh -n 'Workspace One' -r https://mydre.region.cloudapp.azure.com/api/docs/oidc-redirect -w
+    ./scripts/aad-app-reg.sh -n 'Workspace One' -r https://mydre.region.cloudapp.azure.com/api/docs/oidc-redirect -w
 ```
 
 Running the script will report `WORKSPACE_API_CLIENT_ID` for the generated app which needs to be used in the POST body below.
