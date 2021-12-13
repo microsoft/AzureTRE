@@ -18,6 +18,7 @@
  */
 package org.apache.guacamole.auth.azuretre;
 
+import com.auth0.jwk.UrlJwkProvider;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.guacamole.GuacamoleException;
@@ -25,11 +26,22 @@ import org.apache.guacamole.auth.azuretre.user.AzureTREAuthenticatedUser;
 import org.apache.guacamole.auth.azuretre.user.UserContext;
 import org.apache.guacamole.net.auth.AbstractAuthenticationProvider;
 import org.apache.guacamole.net.auth.AuthenticatedUser;
-import org.apache.guacamole.net.auth.Credentials;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.net.URL;
 
 public class AzureTREAuthenticationProvider extends AbstractAuthenticationProvider {
 
     public static final String ROOT_CONNECTION_GROUP = "ROOT";
+
+    /**
+     * The standard HTTP parameter which will be included within the URL by all
+     * OpenID services upon successful authentication and redirect.
+     */
+    public static final String PARAMETER_NAME = "id_token";
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AzureTREAuthenticationProvider.class);
 
     private final Injector injector;
 
@@ -43,22 +55,38 @@ public class AzureTREAuthenticationProvider extends AbstractAuthenticationProvid
         return "azuretre";
     }
 
-    @Override
-    public AzureTREAuthenticatedUser authenticateUser(final Credentials credentials) throws GuacamoleException {
-        // Pass credentials to authentication service.
-        final AuthenticationProviderService authProviderService;
-        authProviderService = injector.getInstance(AuthenticationProviderService.class);
-
-        return authProviderService.authenticateUser(credentials);
-    }
 
     @Override
     public UserContext getUserContext(final AuthenticatedUser authenticatedUser) throws GuacamoleException {
         if (authenticatedUser != null) {
-            final UserContext userContext = injector.getInstance(UserContext.class);
-            if (authenticatedUser instanceof AzureTREAuthenticatedUser) {
-                userContext.init((AzureTREAuthenticatedUser) authenticatedUser);
+            LOGGER.debug("Got user identifier: " + authenticatedUser.getIdentifier());
+            String token = authenticatedUser.getCredentials().getRequest().getParameter(PARAMETER_NAME);
+
+            final AuthenticationProviderService authProviderService;
+            authProviderService = injector.getInstance(AuthenticationProviderService.class);
+
+            // Validate the token 'again', the OpenID extension verified it, but it didn't verify
+            // that we got the correct roles. The fact that a valid token was returned doesn't mean
+            // this user is an Owner or a Researcher. If its not, break, don't try to get any VMs.
+            // Note: At the moment there is NO apparent way to UN-Authorize a user that a previous
+            // extension authorized... (The user will see an empty list of VMs)
+            // Note2: The API app will also verify the token an in any case will not return any vms
+            // in this case.
+            try {
+                final UrlJwkProvider jwkProvider =
+                    new UrlJwkProvider(new URL(System.getenv("OPENID_JWKS_ENDPOINT")));
+                authProviderService.validateToken(token, jwkProvider);
             }
+            catch (final Exception ex) {
+                // Failed to validate the token
+                LOGGER.error("Failed to validate token. ex: " + ex);
+                return null;
+            }
+
+            AzureTREAuthenticatedUser treUser = new AzureTREAuthenticatedUser();
+            treUser.init(authenticatedUser.getCredentials(), token, authenticatedUser.getIdentifier(), null);
+            final UserContext userContext = injector.getInstance(UserContext.class);
+            userContext.init(treUser);
 
             return userContext;
         }

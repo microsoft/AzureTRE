@@ -225,9 +225,9 @@ api_app
 The bulk of the authentication and authorization (A&A) related code of the API is located in `/api_app/services/` folder. The A&A code has an abstract base for enabling the possibility to add additional A&A service providers. The Azure Active Directory (AAD) specific implementation is derived as follows:
 
 ```plaintext
-AccessService (access_service.py) <─── AADAccessService (aad_access_service.py)
+AccessService (access_service.py) <─── AADAccessService (api_app/services/aad_authentication.py)
 
-fastapi.security.OAuth2AuthorizationCodeBearer <─── AzureADAuthorization (aad_authentication.py)
+fastapi.security.OAuth2AuthorizationCodeBearer <─── AccessService (access_service.py)
 ```
 
 All the sensitive routes (API calls that can query sensitive data or modify resources) in the TRE API depend on having a "current user" authenticated. E.g., in `/api_app/api/routes/workspaces.py`:

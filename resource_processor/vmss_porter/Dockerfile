@@ -1,7 +1,8 @@
 FROM python:3.8-slim-buster
 
-# Specify the Porter version to install
+# Specify the package versions to install
 ENV PORTER_PERMALINK=v0.38.7
+ENV AZURE_CLI_VERSION=2.29.2-1~buster
 
 # Install Azure CLI
 RUN apt-get update \
@@ -9,7 +10,7 @@ RUN apt-get update \
     && curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null \
     && AZ_REPO=$(lsb_release -cs) \
     && echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | tee /etc/apt/sources.list.d/azure-cli.list \
-    && apt-get update && apt-get -y install azure-cli
+    && apt-get update && apt-get -y install azure-cli=${AZURE_CLI_VERSION}
 
 # Install Terraform
 RUN apt-get update && apt-get install -y gnupg software-properties-common curl \

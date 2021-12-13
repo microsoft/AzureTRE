@@ -12,7 +12,7 @@ pytestmark = pytest.mark.asyncio
 
 
 @pytest.mark.smoke
-async def test_create_workspace_service_templates(token, verify) -> None:
+async def test_create_workspace_service_templates(admin_token, verify) -> None:
     async with AsyncClient(verify=verify) as client:
         payload = {
             "name": f"{strings.TEST_WORKSPACE_SERVICE_TEMPLATE}",
@@ -29,15 +29,15 @@ async def test_create_workspace_service_templates(token, verify) -> None:
             }
         }
 
-        response = await client.post(f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACE_SERVICE_TEMPLATES}", headers=get_auth_header(token), json=payload)
+        response = await client.post(f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACE_SERVICE_TEMPLATES}", headers=get_auth_header(admin_token), json=payload)
 
         assert (response.status_code == status.HTTP_201_CREATED or response.status_code == status.HTTP_409_CONFLICT), "The workspace service template creation service returned unexpected response."
 
 
 @pytest.mark.smoke
-async def test_get_workspace_service_templates(token, verify) -> None:
+async def test_get_workspace_service_templates(admin_token, verify) -> None:
     async with AsyncClient(verify=verify) as client:
-        response = await client.get(f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACE_SERVICE_TEMPLATES}", headers=get_auth_header(token))
+        response = await client.get(f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACE_SERVICE_TEMPLATES}", headers=get_auth_header(admin_token))
 
         service_template_names = [service_templates["name"] for service_templates in response.json()["templates"]]
         assert (strings.TEST_WORKSPACE_SERVICE_TEMPLATE in service_template_names), f"No {strings.TEST_WORKSPACE_SERVICE_TEMPLATE} template found"

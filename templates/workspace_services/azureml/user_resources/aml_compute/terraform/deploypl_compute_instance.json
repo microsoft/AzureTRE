@@ -7,13 +7,6 @@
     },
     "location": {
       "type": "string",
-      "allowedValues": [
-        "eastus",
-        "southcentralus",
-        "westus2",
-        "eastus2",
-        "westeurope"
-      ],
       "metadata": {
         "description": "Specifies the location for all resources."
       }

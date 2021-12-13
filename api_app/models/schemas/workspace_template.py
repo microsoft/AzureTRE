@@ -1,5 +1,5 @@
 from models.domain.resource import ResourceType
-from models.domain.resource_template import ResourceTemplate, Property
+from models.domain.resource_template import CustomAction, ResourceTemplate, Property
 from models.schemas.resource_template import ResourceTemplateInCreate, ResourceTemplateInResponse
 
 
@@ -19,7 +19,10 @@ def get_sample_workspace_template_object(template_name: str = "tre-workspace-bas
             "description": Property(type="string"),
             "app_id": Property(type="string"),
             "address_space": Property(type="string", default="10.2.1.0/24", description="VNet address space for the workspace services")
-        }
+        },
+        actions=[
+            CustomAction()
+        ]
     )
 
 
@@ -52,27 +55,34 @@ class WorkspaceTemplateInCreate(ResourceTemplateInCreate):
                         "no_of_vms"
                     ],
                     "properties": {
-                        "vm_size": {
-                            "$id": "#/properties/vm_size",
+                        "display_name": {
                             "type": "string",
-                            "title": "VM size",
-                            "description": "Size of the VMs in my workspace",
-                            "default": "Standard_A1",
-                            "enum": [
-                                "Standard_A1",
-                                "Standard_A2",
-                                "Standard_A3"
-                            ]
+                            "title": "Name for the workspace",
+                            "description": "The name of the workspace to be displayed to users"
                         },
-                        "no_of_vms": {
-                            "$id": "#/properties/no_of_vms",
-                            "type": "integer",
-                            "title": "Number of VMs",
-                            "description": "Number of virtual machines to be deployed in the workspace",
-                            "default": 0
+                        "description": {
+                            "type": "string",
+                            "title": "Description of the workspace",
+                            "description": "Description of the workspace"
+                        },
+                        "address_space": {
+                            "type": "string",
+                            "title": "Address space",
+                            "description": "Network address space to be used by the workspace"
+                        },
+                        "enabled": {
+                            "type": "boolean",
+                            "title": "Is the workspace enabled",
+                            "description": "Is the workspace enabled"
                         }
                     }
-                }
+                },
+                "customActions": [
+                    {
+                        "name": "disable",
+                        "description": "Deallocates resources"
+                    }
+                ]
             }
         }
 
