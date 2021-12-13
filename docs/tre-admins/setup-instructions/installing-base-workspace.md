@@ -54,8 +54,7 @@ The API will report the ``workspace_id`` of the created workspace, which can be 
 
 You can also follow the progress in Azure portal as various resources come up.
 
-!!! info
-    To query the status using the API your user needs to have `TREResearcher` or `TREOwner` role assigned to the app.
+Workspace level operations can now be carried out using the workspace API, at `/api/workspaces/<workspace_id>/docs/`.
 
 ## Next steps
 
