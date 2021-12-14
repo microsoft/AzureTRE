@@ -210,3 +210,13 @@ register-bundle-payload:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& cd ${DIR} \
 	&& ${ROOTPATH}/devops/scripts/publish_register_bundle.sh --acr-name $${ACR_NAME} --bundle-type ${BUNDLE_TYPE} --current
+
+static-web-upload:
+	echo -e "\n\e[34m»»» 🧩 \e[96mUploading to static website\e[0m..." \
+	&& . ./devops/scripts/check_dependencies.sh nodocker \
+	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
+	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
+	&& cd ./templates/core/terraform/ && . ./outputs.sh \
+	&& cd ./scripts/ && ./upload_static_web.sh
