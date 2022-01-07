@@ -49,7 +49,7 @@ ENV PATH /home/vscode/.porter/:$PATH
 ARG POWERSHELL_VERSION="7.2.1"
 RUN apt-get update -y && apt-get install -y unzip wget \
     && ARCH=$(dpkg --print-architecture) \
-    && if [[ $ARCH == "amd64" ]]; then $ARCH="x64"; fi \
+    && if [ $ARCH = "amd64" ]; then ARCH="x64"; fi \
     && wget "https://github.com/PowerShell/PowerShell/releases/download/v${POWERSHELL_VERSION}/powershell-${POWERSHELL_VERSION}-linux-${ARCH}.tar.gz" -O /tmp/powershell.tar.gz \
     && mkdir -p /opt/microsoft/powershell/7 \
     && tar zxf /tmp/powershell.tar.gz -C /opt/microsoft/powershell/7 \
