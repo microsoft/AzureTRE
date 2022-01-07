@@ -2,7 +2,7 @@
 
 # [Choice] Python version: 3, 3.9, 3.8, 3.7, 3.6
 ARG VARIANT="3"
-FROM mcr.microsoft.com/vscode/devcontainers/python:dev-${VARIANT}-buster
+FROM mcr.microsoft.com/vscode/devcontainers/python:dev-${VARIANT}
 
 # [Option] Install Node.js
 ARG INSTALL_NODE="true"
@@ -11,10 +11,9 @@ RUN if [ "${INSTALL_NODE}" = "true" ]; then su vscode -c "umask 0002 && . /usr/l
 
 # Install terraform
 ARG TERRAFORM_VERSION
-RUN apt-get update && apt-get install -y gnupg software-properties-common curl \
-    && curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add - \
-    && apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
-    && apt-get update && apt-get install -y terraform "${TERRAFORM_VERSION}"
+RUN apt-get update -y && apt-get install -y unzip wget \
+    && wget "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_$(dpkg --print-architecture).zip" -O /tmp/terraform.zip \
+    && unzip /tmp/terraform.zip -d /usr/local/bin/
 
 # Install Azure CLI
 RUN curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
@@ -25,7 +24,7 @@ RUN groupadd --gid 1001 docker
 # Install Docker
 RUN apt-get update && sudo apt-get install -y  apt-transport-https ca-certificates curl gnupg  lsb-release \
     && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
-    && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" \
     | tee /etc/apt/sources.list.d/docker.list > /dev/null \
     && apt-get update && apt-get install -y docker-ce docker-ce-cli containerd.io
 
@@ -47,18 +46,24 @@ RUN export PORTER_HOME=/home/vscode/.porter \
 ENV PATH /home/vscode/.porter/:$PATH
 
 # Install PowerShell and Az module
-RUN apt-get update && apt-get install -y wget apt-transport-https software-properties-common && \
-    wget -q https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb && \
-    dpkg -i packages-microsoft-prod.deb && \
-    apt-get update && apt-get install -y powershell && \
-    pwsh -c Install-Module Az -Force
+ARG POWERSHELL_VERSION="7.2.1"
+RUN apt-get update -y && apt-get install -y unzip wget \
+    && ARCH=$(dpkg --print-architecture) \
+    && if [[ $ARCH == "amd64" ]]; then $ARCH="x64"; fi \
+    && wget "https://github.com/PowerShell/PowerShell/releases/download/v${POWERSHELL_VERSION}/powershell-${POWERSHELL_VERSION}-linux-${ARCH}.tar.gz" -O /tmp/powershell.tar.gz \
+    && mkdir -p /opt/microsoft/powershell/7 \
+    && tar zxf /tmp/powershell.tar.gz -C /opt/microsoft/powershell/7 \
+    && chmod +x /opt/microsoft/powershell/7/pwsh \
+    && ln -s /opt/microsoft/powershell/7/pwsh /usr/bin/pwsh \
+    && pwsh -c Install-Module Az -Force
 
 # Install requirements
 COPY ["requirements.txt", "/tmp/pip-tmp/" ]
 COPY ["api_app/requirements.txt", "api_app/requirements-dev.txt", "/tmp/pip-tmp/api_app/" ]
 COPY ["resource_processor/vmss_porter/requirements.txt", "/tmp/pip-tmp/resource_processor/vmss_porter/" ]
 COPY ["docs/requirements.txt", "/tmp/pip-tmp/docs/"]
-RUN pip3 --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requirements.txt && rm -rf /tmp/pip-tmp
+RUN apt-get update -y && apt-get install -y cmake \
+    && pip3 --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requirements.txt && rm -rf /tmp/pip-tmp
 
 RUN usermod -a -G docker vscode
 
