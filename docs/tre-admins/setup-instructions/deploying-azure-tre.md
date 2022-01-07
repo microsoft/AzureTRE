@@ -3,7 +3,7 @@
 You are now ready to deploy the Azure TRE instance. Execute the `all` action of the makefile using `make`:
 
 ```bash
-/workspaces/tre> make all
+make all
 ```
 
 Deploying a new Azure TRE instance takes approximately 30 minutes.
@@ -22,7 +22,7 @@ static_web_storage = "stwebmytre"
 The Azure TRE instance is initially deployed with an invalid self-signed SSL certificate. This certificate needs to be replaced with one valid for your configured domain name. To use a certificate from [Let's Encrypt](https://letsencrypt.org/), run the command:
 
 ```bash
-/workspaces/tre> make letsencrypt
+make letsencrypt
 ```
 
 !!! caution
@@ -35,7 +35,7 @@ The Azure TRE instance is initially deployed with an invalid self-signed SSL cer
 Use `curl` to make a simple request to the status endpoint of the API:
 
 ```bash
-/workspaces/tre> curl https://<azure_tre_fqdn>/api/status
+curl https://<azure_tre_fqdn>/api/status
 ```
 
 The expected response is:

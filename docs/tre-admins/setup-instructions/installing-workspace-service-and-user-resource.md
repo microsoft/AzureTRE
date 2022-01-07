@@ -7,7 +7,7 @@ We will use the [Guacamole workspace service bundle](./tre-templates/workspace-s
 1. Run:
 
     ```cmd
-    /workspaces/tre> make register-bundle DIR=./templates/workspace_services/guacamole BUNDLE_TYPE=workspace_service
+    make register-bundle DIR=./templates/workspace_services/guacamole BUNDLE_TYPE=workspace_service
     ```
 
     Copy the resulting JSON payload.
@@ -29,7 +29,7 @@ The Guacamole workspace service also has user resources, there are the VMs that 
 1. Run:
 
     ```cmd
-    /workspaces/tre> make register-bundle DIR=./templates/workspace_services/guacamole/user_resources/guacamole-azure-win10vm BUNDLE_TYPE=user_resource
+    make register-bundle DIR=./templates/workspace_services/guacamole/user_resources/guacamole-azure-win10vm BUNDLE_TYPE=user_resource
     ```
 
     Copy the resulting JSON payload.
