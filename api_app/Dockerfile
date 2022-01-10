@@ -1,6 +1,7 @@
-FROM python:3.8-slim-buster as base
+FROM python:3.8-slim-bullseye as base
 COPY requirements.txt .
-RUN pip3 install -r requirements.txt
+RUN apt-get update && apt-get install -y cmake libssl-dev build-essential \
+    && pip3 install -r requirements.txt
 
 FROM base as test
 COPY requirements-dev.txt .
