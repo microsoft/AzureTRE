@@ -81,6 +81,7 @@ jobs:
           export TF_VAR_arm_subscription_id=$ARM_SUBSCRIPTION_ID
 
           make all
+          make tre-stop
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
