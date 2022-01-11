@@ -15,13 +15,6 @@ RUN apt-get update -y && apt-get install -y unzip wget \
     && wget "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_$(dpkg --print-architecture).zip" -O /tmp/terraform.zip \
     && unzip /tmp/terraform.zip -d /usr/local/bin/
 
-# Install Azure CLI
-RUN apt-get update && sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release \
-    && curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null \
-    && echo "deb [arch=$(dpkg --print-architecture)] https://packages.microsoft.com/repos/azure-cli/ $(lsb_release -cs) main" \
-    | sudo tee /etc/apt/sources.list.d/azure-cli.list \
-    && apt-get update && sudo apt-get install -y azure-cli=2.18.0-2
-
 # Make sure docker group id matches that on WSL.
 RUN groupadd --gid 1001 docker
 

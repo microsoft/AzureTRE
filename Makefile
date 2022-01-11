@@ -32,7 +32,7 @@ build-api-image:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/set_docker_sock_permission.sh \
 	&& source <(grep = ./api_app/_version.py | sed 's/ *= */=/g') \
-	&& docker build -t "$${ACR_NAME}.azurecr.io/microsoft/azuretre/api:$${__version__}" ./api_app/
+	&& docker build --platform linux/amd64 -t "$${ACR_NAME}.azurecr.io/microsoft/azuretre/api:$${__version__}" ./api_app/
 
 build-resource-processor-vm-porter-image:
 	echo -e "\n\e[34m»»» 🧩 \e[96mBuilding Resource Processor Image\e[0m..." \
@@ -40,7 +40,7 @@ build-resource-processor-vm-porter-image:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/set_docker_sock_permission.sh \
 	&& source <(grep = ./resource_processor/version.txt | sed 's/ *= */=/g') \
-	&& docker build -t "$${ACR_NAME}.azurecr.io/microsoft/azuretre/resource-processor-vm-porter:$${__version__}" -f ./resource_processor/vmss_porter/Dockerfile ./resource_processor/
+	&& docker build --platform linux/amd64 -t "$${ACR_NAME}.azurecr.io/microsoft/azuretre/resource-processor-vm-porter:$${__version__}" -f ./resource_processor/vmss_porter/Dockerfile ./resource_processor/
 
 build-gitea-image:
 	echo -e "\n\e[34m»»» 🧩 \e[96mBuilding Gitea Image\e[0m..." \
@@ -48,7 +48,7 @@ build-gitea-image:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/set_docker_sock_permission.sh \
 	&& source <(grep = ./templates/shared_services/gitea/version.txt | sed 's/ *= */=/g') \
-	&& docker build -t "$${ACR_NAME}.azurecr.io/microsoft/azuretre/gitea:$${__version__}" -f ./templates/shared_services/gitea/Dockerfile .
+	&& docker build --platform linux/amd64 -t "$${ACR_NAME}.azurecr.io/microsoft/azuretre/gitea:$${__version__}" -f ./templates/shared_services/gitea/Dockerfile .
 
 build-guacamole-image:
 	echo -e "\n\e[34m»»» 🧩 \e[96mBuilding Guacamole Image\e[0m..." \
@@ -57,7 +57,7 @@ build-guacamole-image:
 	&& . ./devops/scripts/set_docker_sock_permission.sh \
 	&& source <(grep = ./templates/workspace_services/guacamole/version.txt | sed 's/ *= */=/g') \
 	&& cd ./templates/workspace_services/guacamole/guacamole-server/ \
-	&& docker build -t "$${ACR_NAME}.azurecr.io/microsoft/azuretre/guac-server:$${__version__}" -f ./docker/Dockerfile .
+	&& docker build --platform linux/amd64 -t "$${ACR_NAME}.azurecr.io/microsoft/azuretre/guac-server:$${__version__}" -f ./docker/Dockerfile .
 
 push-resource-processor-vm-porter-image:
 	echo -e "\n\e[34m»»» 🧩 \e[96mPushing Resource Processor Image\e[0m..." \
