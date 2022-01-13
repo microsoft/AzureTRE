@@ -22,7 +22,7 @@ def get_current_template_by_name(template_name: str, template_repo: ResourceTemp
         template = template_repo.get_current_template(template_name, resource_type, parent_service_template_name)
         return template_repo.enrich_template(template)
     except EntityDoesNotExist:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.TEMPLATE_DOES_NOT_EXIST)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.WORKSPACE_SERVICE_TEMPLATE_DOES_NOT_EXIST)
     except DuplicateEntity:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=strings.NO_UNIQUE_CURRENT_FOR_TEMPLATE)
     except Exception as e:
