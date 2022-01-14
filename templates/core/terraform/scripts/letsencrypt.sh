@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+echo $(env)
+
 script_dir=$(realpath $(dirname "${BASH_SOURCE[0]}"))
 
 if [[ -z ${STORAGE_ACCOUNT} ]]; then
