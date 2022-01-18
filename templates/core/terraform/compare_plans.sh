@@ -1,47 +1,14 @@
 #!/bin/bash
 set -e
 
-function usage() {
-    cat <<USAGE
-
-    Usage: $0 [--left <plan_file> ]  [ --right <plan_file> ]
-
-    Options:
-        --left   First tfplan file to compare
-        --right  Second tfplan file to compare
-USAGE
-    exit 1
-}
-
 # if no arguments are provided, return usage function
-if [ $# -eq 0 ]; then
-    usage # run usage function
+if [[ $# -ne 2 || -z $1 || -z $2 ]]; then
+    echo "Usage: $0 <left_plan_file> <right_plan_file>"
+    exit 1
 fi
 
-current="false"
-
-while [ "$1" != "" ]; do
-    case $1 in
-    --left)
-        shift
-        left_tfplan=$1
-        ;;
-    --right)
-        shift
-        right_tfplan=$1
-        ;;
-    *)
-        usage
-        ;;
-    esac
-    shift # remove the current value for `$1` and use the next
-done
-
-
-if [[ -z ${left_tfplan} || -z ${right_tfplan} ]]; then
-    echo -e "Not enough files provided to compare\n"
-    usage
-fi
+left_tfplan=$1
+right_tfplan=$2
 
 echo "Comparing ${left_tfplan} to ${right_tfplan}..."
 
