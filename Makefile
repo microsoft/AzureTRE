@@ -13,6 +13,10 @@ bootstrap:
 	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& cd ./devops/terraform && ./bootstrap.sh
 
+format:
+	echo -e "\n\e[34m»»» 🧩 \e[96mLinting Terraform\e[0m..." \
+	&& cd ./templates && terraform fmt -check -recursive -diff
+
 mgmt-deploy:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDeploying management infrastructure\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \

@@ -2,13 +2,13 @@ output "core_vnet_id" {
   value = azurerm_virtual_network.core.id
 }
 
-output subnet_ids {
+output "subnet_ids" {
   value = {
-    "bastion" = azurerm_subnet.bastion.id
-    "azure_firewall" = azurerm_subnet.azure_firewall.id
-    "app_gw" = azurerm_subnet.app_gw.id
-    "web_app" = azurerm_subnet.web_app.id
-    "shared" = azurerm_subnet.shared.id
+    "bastion"            = azurerm_subnet.bastion.id
+    "azure_firewall"     = azurerm_subnet.azure_firewall.id
+    "app_gw"             = azurerm_subnet.app_gw.id
+    "web_app"            = azurerm_subnet.web_app.id
+    "shared"             = azurerm_subnet.shared.id
     "resource_processor" = azurerm_subnet.resource_processor.id
   }
 }

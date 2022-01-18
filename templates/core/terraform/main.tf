@@ -188,12 +188,12 @@ module "firewall" {
 }
 
 module "routetable" {
-  source                       = "./routetable"
-  tre_id                       = var.tre_id
-  location                     = var.location
-  resource_group_name          = azurerm_resource_group.core.name
-  subnet_ids                   = module.network.subnet_ids
-  firewall_private_ip_address  = module.firewall.firewall_private_ip_address
+  source                      = "./routetable"
+  tre_id                      = var.tre_id
+  location                    = var.location
+  resource_group_name         = azurerm_resource_group.core.name
+  subnet_ids                  = module.network.subnet_ids
+  firewall_private_ip_address = module.firewall.firewall_private_ip_address
 }
 
 module "state-store" {
