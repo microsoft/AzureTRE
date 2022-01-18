@@ -7,11 +7,11 @@ from azure.servicebus.aio import ServiceBusClient
 from pydantic import ValidationError, parse_obj_as
 
 from api.dependencies.database import get_db_client
+from db.repositories.operations import OperationRepository
 from core import config
 from db.errors import EntityDoesNotExist
 from db.repositories.resources import ResourceRepository
-from models.domain.resource import Status
-from models.domain.workspace import DeploymentStatusUpdateMessage
+from models.domain.operation import DeploymentStatusUpdateMessage, Operation, Status
 from resources import strings
 
 
@@ -55,39 +55,46 @@ async def receive_message():
                         await receiver.complete_message(msg)
 
 
-def create_updated_deployment_document(resource: dict, message: DeploymentStatusUpdateMessage):
-    """Take a workspace and a deployment status update message and updates workspace with the message contents
+def create_updated_operation_document(operation: Operation, message: DeploymentStatusUpdateMessage) -> Operation:
+    """Take an operation document and update it with the message contents
 
     Args:
-        resource ([dict]): Dictionary representing a resource to update
+        operation ([Operation]): Operation representing a document to update
         message ([DeploymentStatusUpdateMessage]): Message which contains the updated information
 
     Returns:
-        [dict]: Dictionary representing a resource with the deployment sub doc updated
+        [Operation]: Updated Operation object to persist
     """
-    if resource["deployment"]["status"] in [Status.DeletingFailed, Status.Deleted]:
-        return resource  # cannot change terminal states
-    if resource["deployment"]["status"] in [Status.Failed, Status.Deployed, Status.Deleting]:
-        if message.status not in [Status.Deleted, Status.DeletingFailed]:
-            return resource  # can only transitions from deployed(deleting, failed) to deleted or failed to delete.
 
-    resource["deployment"]["status"] = message.status
-    resource["deployment"]["message"] = message.message
+    if operation.status in [Status.DeletingFailed, Status.Deleted]:
+        return operation  # cannot change terminal states
+    if operation.status in [Status.Failed, Status.Deployed, Status.Deleting]:
+        if message.status not in [Status.Deleted, Status.DeletingFailed]:
+            return operation  # can only transitions from deployed(deleting, failed) to deleted or failed to delete.
+
+    operation.status = message.status
+    operation.message = message.message
+
+    return operation
+
+def create_updated_resource_document(resource: dict, message: DeploymentStatusUpdateMessage):
+    """
+    Merge the outputs with the resource document to persist
+    """
 
     # although outputs are likely to be relevant when resources are moving to "deployed" status,
     # lets not limit when we update them and have the resource process make that decision.
     output_dict = {output.Name: output.Value.strip("'").strip('"') for output in message.outputs}
-
     resource["properties"].update(output_dict)
 
     return resource
 
 
-def update_status_in_database(resource_repo: ResourceRepository, message: DeploymentStatusUpdateMessage):
-    """Updates the deployment sub document with message content
+def update_status_in_database(resource_repo: ResourceRepository, operations_repo: OperationRepository, message: DeploymentStatusUpdateMessage):
+    """Updates the operation and resource documentd
 
     Args:
-        resource_repo ([ResourceRepository]): Handle to the resource repository
+        operations_repo ([OperationRepository]): Handle to the operations repository
         message ([DeploymentStatusUpdateMessage]): Message which contains the updated information
 
     Returns:
@@ -96,9 +103,18 @@ def update_status_in_database(resource_repo: ResourceRepository, message: Deploy
     result = False
 
     try:
+        # update the op
+        operation = operations_repo.get_operation_by_id(message.operationId)
+        operation_to_persist = create_updated_operation_document(operation, message)
+        operations_repo.update_operation_status(operation_to_persist.id, operation_to_persist.status, operation_to_persist.message)
+
+        # update the resource to persist any outputs
         resource = resource_repo.get_resource_dict_by_id(message.id)
-        resource_repo.update_item_dict(create_updated_deployment_document(resource, message))
+        resource_to_persist = create_updated_resource_document(resource, message)
+        resource_repo.update_item_dict(resource_to_persist)
+
         result = True
+
     except EntityDoesNotExist:
         # Marking as true as this message will never succeed anyways and should be removed from the queue.
         result = True
@@ -121,8 +137,9 @@ async def receive_message_and_update_deployment(app) -> None:
 
     try:
         async for message in receive_message_gen:
+            operations_repo = OperationRepository(get_db_client(app))
             resource_repo = ResourceRepository(get_db_client(app))
-            result = update_status_in_database(resource_repo, message)
+            result = update_status_in_database(resource_repo, operations_repo, message)
             await receive_message_gen.asend(result)
     except StopAsyncIteration:  # the async generator when finished signals end with this exception.
         pass

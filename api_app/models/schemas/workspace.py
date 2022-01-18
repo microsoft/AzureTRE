@@ -18,10 +18,6 @@ def get_sample_workspace(workspace_id: str, spec_workspace_id: str = "0001") -> 
             "tre_id": "mytre-dev-1234",
             "address_space": "10.2.1.0/24"
         },
-        "deployment": {
-            "status": "not_deployed",
-            "message": "This resource is not yet deployed"
-        },
         "resourceType": ResourceType.Workspace,
         "workspaceURL": "",
         "authInformation": {}

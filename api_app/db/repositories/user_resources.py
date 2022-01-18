@@ -6,7 +6,7 @@ from pydantic import parse_obj_as
 
 from db.errors import EntityDoesNotExist
 from db.repositories.resources import ResourceRepository
-from models.domain.resource import ResourceType, Status, Deployment
+from models.domain.resource import ResourceType
 from models.domain.user_resource import UserResource
 from models.schemas.user_resource import UserResourceInCreate, UserResourcePatchEnabled
 from resources import strings
@@ -18,7 +18,7 @@ class UserResourceRepository(ResourceRepository):
 
     @staticmethod
     def active_user_resources_query(workspace_id: str, service_id: str):
-        return f'SELECT * FROM c WHERE c.resourceType = "{ResourceType.UserResource}" AND c.deployment.status != "{Status.Deleted}" AND c.parentWorkspaceServiceId = "{service_id}" AND c.workspaceId = "{workspace_id}"'
+        return f'SELECT * FROM c WHERE c.resourceType = "{ResourceType.UserResource}" AND c.isActive != False AND c.parentWorkspaceServiceId = "{service_id}" AND c.workspaceId = "{workspace_id}"'
 
     def create_user_resource_item(self, user_resource_input: UserResourceInCreate, workspace_id: str, parent_workspace_service_id: str, parent_template_name: str, user_id: str) -> UserResource:
         full_user_resource_id = str(uuid.uuid4())
@@ -35,8 +35,7 @@ class UserResourceRepository(ResourceRepository):
             parentWorkspaceServiceId=parent_workspace_service_id,
             templateName=user_resource_input.templateName,
             templateVersion=template_version,
-            properties=resource_spec_parameters,
-            deployment=Deployment(status=Status.NotDeployed, message=strings.RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE)
+            properties=resource_spec_parameters
         )
 
         return user_resource

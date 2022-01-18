@@ -21,10 +21,6 @@ def get_sample_user_resource(user_resource_id: str) -> dict:
         "azureStatus": {
             "powerState": "Running",
         },
-        "deployment": {
-            "status": "not_deployed",
-            "message": "This resource is not yet deployed"
-        },
         "resourceType": ResourceType.UserResource
     }
 

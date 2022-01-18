@@ -7,11 +7,16 @@ from azure.servicebus.aio import ServiceBusClient
 from contextlib import asynccontextmanager
 
 from core import config
+from resources import strings
+
 from models.domain.request_action import RequestAction
 from models.domain.resource import Resource
+from models.domain.operation import Status, Operation
+
+from db.repositories.operations import OperationRepository
 
 
-async def send_resource_request_message(resource: Resource, action: RequestAction = RequestAction.Install):
+async def send_resource_request_message(resource: Resource, operations_repo: OperationRepository, action: RequestAction = RequestAction.Install):
     """
     Creates and sends a resource request message for the resource to the Service Bus.
     The resource ID is added to the message to serve as an correlation ID for the deployment process.
@@ -19,7 +24,11 @@ async def send_resource_request_message(resource: Resource, action: RequestActio
     :param resource: The resource to deploy.
     :param action: install, uninstall etc.
     """
-    content = json.dumps(resource.get_resource_request_message_payload(action))
+
+    # add the operation to the db
+    operation = operations_repo.create_operation_item(resource_id=resource.id, status=Status.NotDeployed, message=strings.RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE)
+
+    content = json.dumps(resource.get_resource_request_message_payload(operation.id, action))
 
     resource_request_message = ServiceBusMessage(body=content, correlation_id=resource.id)
     logging.info(f"Sending resource request message with correlation ID {resource_request_message.correlation_id}, action: {action}")

@@ -7,9 +7,8 @@ from pydantic import parse_obj_as
 from db.repositories.resources import ResourceRepository
 from models.domain.workspace_service import WorkspaceService
 from models.schemas.workspace_service import WorkspaceServiceInCreate, WorkspaceServicePatchEnabled
-from resources import strings
 from db.errors import ResourceIsNotDeployed, EntityDoesNotExist
-from models.domain.resource import Deployment, Status, ResourceType
+from models.domain.resource import ResourceType
 
 
 class WorkspaceServiceRepository(ResourceRepository):
@@ -18,7 +17,7 @@ class WorkspaceServiceRepository(ResourceRepository):
 
     @staticmethod
     def active_workspace_services_query(workspace_id: str):
-        return f'SELECT * FROM c WHERE c.resourceType = "{ResourceType.WorkspaceService}" AND c.deployment.status != "{Status.Deleted}" AND c.workspaceId = "{workspace_id}"'
+        return f'SELECT * FROM c WHERE c.resourceType = "{ResourceType.WorkspaceService}" AND c.isActive != False AND c.workspaceId = "{workspace_id}"'
 
     def get_active_workspace_services_for_workspace(self, workspace_id: str) -> List[WorkspaceService]:
         """
@@ -31,8 +30,8 @@ class WorkspaceServiceRepository(ResourceRepository):
     def get_deployed_workspace_service_by_id(self, workspace_id: str, service_id: str) -> WorkspaceService:
         workspace_service = self.get_workspace_service_by_id(workspace_id, service_id)
 
-        if workspace_service.deployment.status != Status.Deployed:
-            raise ResourceIsNotDeployed
+        #if OperationRepository.resource_has_deployed_operation() #TODO - check there's a deployed op
+        #    raise ResourceIsNotDeployed
 
         return workspace_service
 
@@ -59,8 +58,7 @@ class WorkspaceServiceRepository(ResourceRepository):
             workspaceId=workspace_id,
             templateName=workspace_service_input.templateName,
             templateVersion=template_version,
-            properties=resource_spec_parameters,
-            deployment=Deployment(status=Status.NotDeployed, message=strings.RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE)
+            properties=resource_spec_parameters
         )
 
         return workspace_service

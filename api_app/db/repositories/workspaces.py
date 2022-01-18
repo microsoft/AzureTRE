@@ -7,7 +7,7 @@ from pydantic import parse_obj_as
 from core import config
 from db.errors import ResourceIsNotDeployed, EntityDoesNotExist
 from db.repositories.resources import ResourceRepository
-from models.domain.resource import Deployment, Status, ResourceType
+from models.domain.resource import ResourceType
 from models.domain.workspace import Workspace
 from models.schemas.workspace import WorkspaceInCreate, WorkspacePatchEnabled
 from resources import strings
@@ -20,7 +20,7 @@ class WorkspaceRepository(ResourceRepository):
 
     @staticmethod
     def active_workspaces_query_string():
-        return f'SELECT * FROM c WHERE c.resourceType = "{ResourceType.Workspace}" AND c.deployment.status != "{Status.Deleted}"'
+        return f'SELECT * FROM c WHERE c.resourceType = "{ResourceType.Workspace}" AND c.isActive != False'
 
     def get_active_workspaces(self) -> List[Workspace]:
         query = WorkspaceRepository.active_workspaces_query_string()
@@ -30,8 +30,8 @@ class WorkspaceRepository(ResourceRepository):
     def get_deployed_workspace_by_id(self, workspace_id: str) -> Workspace:
         workspace = self.get_workspace_by_id(workspace_id)
 
-        if workspace.deployment.status != Status.Deployed:
-            raise ResourceIsNotDeployed
+       # if workspace.deployment.status != Status.Deployed:  #TODO - check there's a deployed op
+       #     raise ResourceIsNotDeployed
 
         return workspace
 
@@ -60,7 +60,6 @@ class WorkspaceRepository(ResourceRepository):
             templateName=workspace_input.templateName,
             templateVersion=template_version,
             properties=resource_spec_parameters,
-            deployment=Deployment(status=Status.NotDeployed, message=strings.RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE),
             authInformation=auth_info
         )
 
