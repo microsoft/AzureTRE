@@ -101,7 +101,7 @@ resource "azurerm_private_endpoint" "api_private_endpoint" {
   name                = "pe-api-${var.tre_id}"
   resource_group_name = var.resource_group_name
   location            = var.location
-  subnet_id           = var.shared_subnet
+  subnet_id           = var.subnet_ids["shared"]
 
   lifecycle { ignore_changes = [tags] }
 
@@ -120,7 +120,7 @@ resource "azurerm_private_endpoint" "api_private_endpoint" {
 
 resource "azurerm_app_service_virtual_network_swift_connection" "api-integrated-vnet" {
   app_service_id = azurerm_app_service.api.id
-  subnet_id      = var.web_app_subnet
+  subnet_id      = var.subnet_ids["web_app"]
 }
 
 resource "azurerm_monitor_diagnostic_setting" "webapp_api" {

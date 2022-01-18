@@ -7,7 +7,7 @@ resource "azurerm_network_interface" "jumpbox_nic" {
 
   ip_configuration {
     name                          = "internalIPConfig"
-    subnet_id                     = var.shared_subnet
+    subnet_id                     = var.subnet_id
     private_ip_address_allocation = "Dynamic"
   }
 }

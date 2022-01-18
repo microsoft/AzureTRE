@@ -2,7 +2,7 @@ variable "tre_id" {}
 variable "location" {}
 variable "acr_id" {}
 variable "resource_group_name" {}
-variable "resource_processor_subnet_id" {}
+variable "subnet_id" {}
 variable "resource_processor_vmss_porter_image_repository" {}
 variable "docker_registry_server" {}
 variable "service_bus_namespace_id" {}

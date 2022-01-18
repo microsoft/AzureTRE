@@ -37,7 +37,7 @@ resource "azurerm_application_gateway" "agw" {
   # Internal subnet for gateway backend.
   gateway_ip_configuration {
     name      = "gateway-ip-configuration"
-    subnet_id = var.app_gw_subnet
+    subnet_id = var.subnet_ids["app_gw"]
   }
 
   # HTTP Port

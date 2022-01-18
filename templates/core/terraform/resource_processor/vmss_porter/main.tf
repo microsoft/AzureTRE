@@ -101,7 +101,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "vm_linux" {
     ip_configuration {
       name      = "internal"
       primary   = true
-      subnet_id = var.resource_processor_subnet_id
+      subnet_id = var.subnet_id
     }
   }
 

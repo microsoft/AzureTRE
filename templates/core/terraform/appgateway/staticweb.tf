@@ -38,7 +38,7 @@ resource "azurerm_private_endpoint" "webpe" {
   name                = "pe-web-${local.staticweb_storage_name}"
   location            = var.location
   resource_group_name = var.resource_group_name
-  subnet_id           = var.shared_subnet
+  subnet_id           = var.subnet_ids["shared"]
 
   lifecycle { ignore_changes = [tags] }
 

@@ -1,7 +1,7 @@
 variable "tre_id" {}
 variable "location" {}
 variable "resource_group_name" {}
-variable "shared_subnet_id" {}
+variable "subnet_id" {}
 variable "azure_monitor_dns_zone_id" {}
 variable "azure_monitor_oms_opinsights_dns_zone_id" {}
 variable "azure_monitor_ods_opinsights_dns_zone_id" {}
