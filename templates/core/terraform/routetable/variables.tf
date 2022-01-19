@@ -5,4 +5,3 @@ variable "firewall_private_ip_address" {}
 variable "shared_subnet_id" {}
 variable "resource_processor_subnet_id" {}
 variable "web_app_subnet_id" {}
-variable "app_gw_subnet_id" {}

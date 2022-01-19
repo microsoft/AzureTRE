@@ -95,7 +95,6 @@ module "api-webapp" {
   resource_group_name                        = azurerm_resource_group.core.name
   web_app_subnet                             = module.network.web_app_subnet_id
   shared_subnet                              = module.network.shared_subnet_id
-  app_gw_subnet                              = module.network.app_gw_subnet_id
   core_vnet                                  = module.network.core_vnet_id
   app_insights_connection_string             = module.azure_monitor.app_insights_connection_string
   app_insights_instrumentation_key           = module.azure_monitor.app_insights_instrumentation_key
@@ -198,7 +197,6 @@ module "routetable" {
   shared_subnet_id             = module.network.shared_subnet_id
   resource_processor_subnet_id = module.network.resource_processor_subnet_id
   web_app_subnet_id            = module.network.web_app_subnet_id
-  app_gw_subnet_id             = module.network.app_gw_subnet_id
   firewall_private_ip_address  = module.firewall.firewall_private_ip_address
 }
 
