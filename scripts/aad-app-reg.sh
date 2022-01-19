@@ -459,7 +459,7 @@ if [[ $workspace -eq 0 ]]; then
 JSON
 )
 
-  redirectUris="\"http://localhost:8000/docs/oauth2-redirect\""
+  redirectUris="\"http://localhost:8000/api/docs/oauth2-redirect\""
 
   if [[ -n ${replyUrl} ]]; then
       echo "Adding reply/redirect URL \"${replyUrl}\" to ${appName} Swagger UI app"

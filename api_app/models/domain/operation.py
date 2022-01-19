@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Dict, Any, List, Optional
+from typing import List
 
 from pydantic import Field
 from pydantic.types import UUID4
@@ -22,16 +22,22 @@ class Status(str, Enum):
     DeletingFailed = strings.RESOURCE_STATUS_DELETING_FAILED
 
 class Operation(AzureTREModel):
+    """
+    Operation model
+    """
     id: str = Field(title="Id", description="GUID identifying the operation")
     resourceId: str = Field(title="resourceId", description="GUID identifying the resource")
     resourceVersion: int = Field(0, title="resourceVersion", description="Version if the resource this operation relates to")
     status: Status = Field(Status.NotDeployed, title="Operation status")
     message: str = Field("", title="Additional operation status information")
-    createdWhen: datetime = Field("", title="When the operation was submitted")
-    updatedWhen: datetime = Field("", title="When the operation was updated")
+    createdWhen: float = Field("", title="POSIX Timestamp for when the operation was submitted")
+    updatedWhen: float = Field("", title="POSIX Timestamp for When the operation was updated")
 
 class DeploymentStatusUpdateMessage(AzureTREModel):
-    operationId: str = Field(title="", description="")
+    """
+    Model for service bus message flowing back to API to update status in DB
+    """
+    operationId: UUID4 = Field(title="", description="")
     id: UUID4 = Field(title="", description="")
     status: Status = Field(title="", description="")
     message: str = Field(title="", description="")

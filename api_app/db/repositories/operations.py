@@ -23,13 +23,14 @@ class OperationRepository(BaseRepository):
     def create_operation_item(self, resource_id: str, status: Status, message: str) -> Operation:
         operation_id = str(uuid.uuid4())
 
+        timestamp = datetime.utcnow().timestamp()
         operation = Operation(
             id=operation_id,
             resourceId=resource_id,
             status=status,
             resourceVersion=0, # Resource versioning coming in future
-            createdWhen=datetime.utcnow(),
-            updatedWhen=datetime.utcnow(),
+            createdWhen=timestamp,
+            updatedWhen=timestamp,
             message=message
         )
 
@@ -41,7 +42,7 @@ class OperationRepository(BaseRepository):
 
         operation.status = status
         operation.message = message
-        operation.updatedWhen = datetime.utcnow()
+        operation.updatedWhen = datetime.utcnow().timestamp()
 
         self.update_item(operation)
         return operation
@@ -50,15 +51,15 @@ class OperationRepository(BaseRepository):
         """
         returns a single operation doc
         """
-        query = self.operations_query() + f' c.id = {operation_id}'
+        query = self.operations_query() + f' c.id = "{operation_id}"'
         operation = self.query(query=query)
-        return parse_obj_as(Operation, operation)
+        return parse_obj_as(Operation, operation[0])
 
     def get_operations_by_resource_id(self, resource_id: str) -> List[Operation]:
         """
         returns a list of operations for this resource
         """
-        query = self.operations_query() + f' c.resourceId = {resource_id}'
+        query = self.operations_query() + f' c.resourceId = "{resource_id}"'
         operations = self.query(query=query)
         return parse_obj_as(List[Operation], operations)
 
@@ -66,7 +67,7 @@ class OperationRepository(BaseRepository):
         """
         checks whether this resource has a successful "deployed" operation
         """
-        query = self.operations_query() + f' c.resourceId = {resource_id} AND c.status = {Status.Deployed}'
+        query = self.operations_query() + f' c.resourceId = "{resource_id}" AND c.status = "{Status.Deployed}"'
         operations = self.query(query=query)
         return len(operations) > 0
 

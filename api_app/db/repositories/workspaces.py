@@ -6,7 +6,7 @@ from pydantic import parse_obj_as
 
 from core import config
 from db.errors import ResourceIsNotDeployed, EntityDoesNotExist
-from db.repositories.resources import ResourceRepository
+from db.repositories.resources import ResourceRepository, IS_ACTIVE_CLAUSE
 from models.domain.resource import ResourceType
 from models.domain.workspace import Workspace
 from models.schemas.workspace import WorkspaceInCreate, WorkspacePatchEnabled
@@ -20,7 +20,7 @@ class WorkspaceRepository(ResourceRepository):
 
     @staticmethod
     def active_workspaces_query_string():
-        return f'SELECT * FROM c WHERE c.resourceType = "{ResourceType.Workspace}" AND c.isActive != False'
+        return f'SELECT * FROM c WHERE {IS_ACTIVE_CLAUSE} AND c.resourceType = "{ResourceType.Workspace}"'
 
     def get_active_workspaces(self) -> List[Workspace]:
         query = WorkspaceRepository.active_workspaces_query_string()

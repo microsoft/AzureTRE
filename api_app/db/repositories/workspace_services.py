@@ -4,7 +4,7 @@ from typing import List
 from azure.cosmos import CosmosClient
 from pydantic import parse_obj_as
 
-from db.repositories.resources import ResourceRepository
+from db.repositories.resources import ResourceRepository, IS_ACTIVE_CLAUSE
 from models.domain.workspace_service import WorkspaceService
 from models.schemas.workspace_service import WorkspaceServiceInCreate, WorkspaceServicePatchEnabled
 from db.errors import ResourceIsNotDeployed, EntityDoesNotExist
@@ -17,7 +17,7 @@ class WorkspaceServiceRepository(ResourceRepository):
 
     @staticmethod
     def active_workspace_services_query(workspace_id: str):
-        return f'SELECT * FROM c WHERE c.resourceType = "{ResourceType.WorkspaceService}" AND c.isActive != False AND c.workspaceId = "{workspace_id}"'
+        return f'SELECT * FROM c WHERE {IS_ACTIVE_CLAUSE} AND c.resourceType = "{ResourceType.WorkspaceService}" AND c.workspaceId = "{workspace_id}"'
 
     def get_active_workspace_services_for_workspace(self, workspace_id: str) -> List[WorkspaceService]:
         """

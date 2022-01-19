@@ -15,7 +15,8 @@ class ResourceRepository(BaseRepository):
 
     @staticmethod
     def _active_resources_query():
-        return f'SELECT * FROM c WHERE c.isActive != False'
+        # support older docs with the deployment block, and new ones with the isActive flag
+        return f'SELECT * FROM c WHERE {IS_ACTIVE_CLAUSE}'
 
     def _active_resources_by_type_query(self, resource_type: ResourceType):
         return self._active_resources_query() + f' AND c.resourceType = "{resource_type}"'
@@ -68,3 +69,6 @@ class ResourceRepository(BaseRepository):
     def restore_previous_deletion_state(self, resource: Resource, previous_deletion_status: bool):
         resource.isActive = previous_deletion_status
         self.update_item(resource)
+
+# Cosmos query consts
+IS_ACTIVE_CLAUSE = 'c.isActive != false'

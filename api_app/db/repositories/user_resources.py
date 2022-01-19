@@ -5,11 +5,10 @@ from azure.cosmos import CosmosClient
 from pydantic import parse_obj_as
 
 from db.errors import EntityDoesNotExist
-from db.repositories.resources import ResourceRepository
+from db.repositories.resources import ResourceRepository, IS_ACTIVE_CLAUSE
 from models.domain.resource import ResourceType
 from models.domain.user_resource import UserResource
 from models.schemas.user_resource import UserResourceInCreate, UserResourcePatchEnabled
-from resources import strings
 
 
 class UserResourceRepository(ResourceRepository):
@@ -18,7 +17,7 @@ class UserResourceRepository(ResourceRepository):
 
     @staticmethod
     def active_user_resources_query(workspace_id: str, service_id: str):
-        return f'SELECT * FROM c WHERE c.resourceType = "{ResourceType.UserResource}" AND c.isActive != False AND c.parentWorkspaceServiceId = "{service_id}" AND c.workspaceId = "{workspace_id}"'
+        return f'SELECT * FROM c WHERE {IS_ACTIVE_CLAUSE} AND c.resourceType = "{ResourceType.UserResource}" AND c.parentWorkspaceServiceId = "{service_id}" AND c.workspaceId = "{workspace_id}"'
 
     def create_user_resource_item(self, user_resource_input: UserResourceInCreate, workspace_id: str, parent_workspace_service_id: str, parent_template_name: str, user_id: str) -> UserResource:
         full_user_resource_id = str(uuid.uuid4())

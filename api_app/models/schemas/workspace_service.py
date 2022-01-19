@@ -9,6 +9,7 @@ from models.domain.workspace_service import WorkspaceService
 def get_sample_workspace_service(workspace_id: str, workspace_service_id: str) -> dict:
     return {
         "id": workspace_service_id,
+        "isActive": True,
         "workspaceId": workspace_id,
         "templateName": "guacamole",
         "templateVersion": "0.1.0",
