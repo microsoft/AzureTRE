@@ -68,7 +68,7 @@ resource "azurerm_private_endpoint" "nexus_private_endpoint" {
   name                = "pe-nexus-${var.tre_id}"
   resource_group_name = local.core_resource_group_name
   location            = var.location
-  subnet_id           = data.azurerm_subnet.shared.id
+  subnet_id           = var.shared_subnet
 
   private_service_connection {
     private_connection_resource_id = azurerm_app_service.nexus.id
@@ -79,7 +79,7 @@ resource "azurerm_private_endpoint" "nexus_private_endpoint" {
 
   private_dns_zone_group {
     name                 = "privatelink.azurewebsites.net"
-    private_dns_zone_ids = [data.azurerm_private_dns_zone.azurewebsites.id]
+    private_dns_zone_ids = [var.private_dns_zone_azurewebsites_id]
   }
 
   lifecycle { ignore_changes = [tags] }
@@ -87,7 +87,7 @@ resource "azurerm_private_endpoint" "nexus_private_endpoint" {
 
 resource "azurerm_app_service_virtual_network_swift_connection" "nexus-integrated-vnet" {
   app_service_id = azurerm_app_service.nexus.id
-  subnet_id      = data.azurerm_subnet.web_app.id
+  subnet_id      = var.web_app_subnet
 }
 
 resource "azurerm_monitor_diagnostic_setting" "nexus" {
