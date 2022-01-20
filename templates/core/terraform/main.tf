@@ -186,6 +186,22 @@ module "firewall" {
   deploy_gitea               = var.deploy_gitea
   deploy_nexus               = var.deploy_nexus
 
+  shared_subnet = {
+    id = module.network.shared_subnet_id
+    address_prefixes = module.network.shared_subnet_address_prefixes
+  }
+  firewall_subnet = {
+    id = module.network.azure_firewall_subnet_id
+    address_prefixes = module.network.shared_subnet_address_prefixes
+  }
+  resource_processor_subnet = {
+    id = module.network.resource_processor_subnet_id
+    address_prefixes = module.network.shared_subnet_address_prefixes
+  }
+  web_app_subnet = {
+    id = module.network.web_app_subnet_id
+    address_prefixes = module.network.shared_subnet_address_prefixes
+  }
   depends_on = [
     module.network
   ]
