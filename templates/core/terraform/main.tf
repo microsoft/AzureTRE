@@ -183,8 +183,6 @@ module "firewall" {
   location                   = var.location
   resource_group_name        = azurerm_resource_group.core.name
   log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
-  deploy_gitea               = var.deploy_gitea
-  deploy_nexus               = var.deploy_nexus
 
   depends_on = [
     module.network

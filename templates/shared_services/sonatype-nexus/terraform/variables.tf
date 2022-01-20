@@ -33,3 +33,9 @@ variable "private_dns_zone_azurewebsites_id" {
   type = string
   description = "The ID of the private DNS zone to use for the private endpoint"
 }
+
+variable "nexus_allowed_fqdns" {
+  type        = string
+  description = "comma seperated string of allowed FQDNs for Nexus"
+  default     = "*pypi.org"
+}
