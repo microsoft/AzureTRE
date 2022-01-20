@@ -6,8 +6,8 @@ resource "azurerm_app_service_plan" "inference" {
   reserved            = "true"
 
   sku {
-    tier = "PremiumV2"
-    size = "P1v2"
+    tier = "PremiumV3"
+    size = "P1v3"
   }
 }
 resource "random_uuid" "inference_auth_key" {

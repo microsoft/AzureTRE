@@ -26,6 +26,21 @@ variable "storage_account_name" {
   description = "The name of the storage account to use"
 }
 
+variable "shared_subnet_id" {
+  type        = string
+  description = "The ID of the shared subnet in which to create a private endpoint"
+}
+
+variable "private_dns_zone_azurewebsites_id" {
+  type = string
+  description = "The ID of the private DNS zone to use for the private endpoint"
+}
+
+variable "private_dns_zone_mysql_id" {
+  type = string
+  description = "The ID of the private DNS zone for MySQL"
+}
+
 variable "gitea_storage_limit" {
   type        = number
   description = "Space allocated in GB for the Gitea data in Azure Files Share"

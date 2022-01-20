@@ -10,9 +10,9 @@ resource "azurerm_app_service_plan" "core" {
   lifecycle { ignore_changes = [tags] }
 
   sku {
-    tier     = "PremiumV3"
+    tier     = var.app_service_plan_sku_tier
     capacity = 1
-    size     = "P1v3"
+    size     = var.app_service_plan_sku_size
   }
 }
 
