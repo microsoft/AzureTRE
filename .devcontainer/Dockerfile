@@ -18,9 +18,6 @@ RUN apt-get update && apt-get install -y gnupg software-properties-common curl \
     && apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
     && apt-get update && apt-get install -y terraform "${TERRAFORM_VERSION}"
 
-# Install Azure CLI
-RUN curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-
 ARG DOCKER_GROUP_ID
 COPY .devcontainer/scripts/docker-client.sh /tmp/
 RUN /tmp/docker-client.sh $USERNAME
@@ -49,18 +46,15 @@ RUN export PORTER_HOME=/home/$USERNAME/.porter \
 
 ENV PATH /home/$USERNAME/.porter/:$PATH
 
-# Install PowerShell and Az module
-RUN apt-get update && apt-get install -y wget apt-transport-https software-properties-common && \
-    wget -q https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb && \
-    dpkg -i packages-microsoft-prod.deb && \
-    apt-get update && apt-get install -y powershell && \
-    pwsh -c Install-Module Az -Force -Scope AllUsers
-
 # Install requirements
 COPY ["requirements.txt", "/tmp/pip-tmp/" ]
 COPY ["api_app/requirements.txt", "api_app/requirements-dev.txt", "/tmp/pip-tmp/api_app/" ]
 COPY ["resource_processor/vmss_porter/requirements.txt", "/tmp/pip-tmp/resource_processor/vmss_porter/" ]
 COPY ["docs/requirements.txt", "/tmp/pip-tmp/docs/"]
 RUN pip3 --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requirements.txt && rm -rf /tmp/pip-tmp
+
+# Install azure-cli
+COPY ./.devcontainer/scripts/azure-cli.sh /tmp/
+RUN /tmp/azure-cli.sh
 
 USER $USERNAME
