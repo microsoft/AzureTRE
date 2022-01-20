@@ -116,7 +116,7 @@ resource "azurerm_private_endpoint" "gitea_private_endpoint" {
   name                = "pe-${local.webapp_name}"
   resource_group_name = local.core_resource_group_name
   location            = var.location
-  subnet_id           = var.shared_subnet
+  subnet_id           = var.shared_subnet_id
 
   private_service_connection {
     private_connection_resource_id = azurerm_app_service.gitea.id

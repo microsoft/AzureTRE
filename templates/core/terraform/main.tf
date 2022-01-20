@@ -240,7 +240,7 @@ module "gitea" {
   acr_id                            = data.azurerm_container_registry.mgmt_acr.id
   keyvault_id                       = module.keyvault.keyvault_id
   storage_account_name              = module.storage.storage_account_name
-  shared_subnet                     = module.network.shared_subnet_id
+  shared_subnet_id                  = module.network.shared_subnet_id
   private_dns_zone_azurewebsites_id = module.network.private_dns_zone_azurewebsites_id
   private_dns_zone_mysql_id         = module.network.private_dns_zone_mysql_id
 
@@ -257,8 +257,8 @@ module "nexus" {
   tre_id                            = var.tre_id
   location                          = var.location
   storage_account_name              = module.storage.storage_account_name
-  shared_subnet                     = module.network.shared_subnet_id
-  web_app_subnet                    = module.network.web_app_subnet_id
+  shared_subnet_id                  = module.network.shared_subnet_id
+  web_app_subnet_id                 = module.network.web_app_subnet_id
   private_dns_zone_azurewebsites_id = module.network.private_dns_zone_azurewebsites_id
 
   depends_on = [

@@ -19,12 +19,12 @@ variable "nexus_storage_limit" {
   default     = 1024
 }
 
-variable "shared_subnet" {
+variable "shared_subnet_id" {
   type        = string
   description = "The ID of the shared subnet in which to create a private endpoint"
 }
 
-variable "web_app_subnet" {
+variable "web_app_subnet_id" {
   type        = string
   description = "The ID of the web app subnet to connect to"
 }

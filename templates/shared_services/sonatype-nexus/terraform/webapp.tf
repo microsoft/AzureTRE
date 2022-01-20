@@ -68,7 +68,7 @@ resource "azurerm_private_endpoint" "nexus_private_endpoint" {
   name                = "pe-nexus-${var.tre_id}"
   resource_group_name = local.core_resource_group_name
   location            = var.location
-  subnet_id           = var.shared_subnet
+  subnet_id           = var.shared_subnet_id
 
   private_service_connection {
     private_connection_resource_id = azurerm_app_service.nexus.id
@@ -87,7 +87,7 @@ resource "azurerm_private_endpoint" "nexus_private_endpoint" {
 
 resource "azurerm_app_service_virtual_network_swift_connection" "nexus-integrated-vnet" {
   app_service_id = azurerm_app_service.nexus.id
-  subnet_id      = var.web_app_subnet
+  subnet_id      = var.web_app_subnet_id
 }
 
 resource "azurerm_monitor_diagnostic_setting" "nexus" {

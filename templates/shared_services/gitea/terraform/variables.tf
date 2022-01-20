@@ -26,7 +26,7 @@ variable "storage_account_name" {
   description = "The name of the storage account to use"
 }
 
-variable "shared_subnet" {
+variable "shared_subnet_id" {
   type        = string
   description = "The ID of the shared subnet in which to create a private endpoint"
 }

@@ -38,7 +38,7 @@ resource "azurerm_private_endpoint" "private-endpoint" {
   name                = "pe-${azurerm_mysql_server.gitea.name}"
   location            = var.location
   resource_group_name = local.core_resource_group_name
-  subnet_id           = var.shared_subnet
+  subnet_id           = var.shared_subnet_id
 
   private_service_connection {
     private_connection_resource_id = azurerm_mysql_server.gitea.id
