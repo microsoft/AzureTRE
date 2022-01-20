@@ -32,12 +32,12 @@ variable "shared_subnet_id" {
 }
 
 variable "private_dns_zone_azurewebsites_id" {
-  type = string
+  type        = string
   description = "The ID of the private DNS zone to use for the private endpoint"
 }
 
 variable "private_dns_zone_mysql_id" {
-  type = string
+  type        = string
   description = "The ID of the private DNS zone for MySQL"
 }
 
