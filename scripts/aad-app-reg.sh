@@ -23,9 +23,9 @@ Options:
     -s      Optional, when -w and -a are specified the client ID of the swagger app must be provided.
 
 Examples:
-    $0 -n TRE -r https://mydre.region.cloudapp.azure.com/api/docs/oidc-redirect -a
+    $0 -n TRE -r https://mydre.region.cloudapp.azure.com/api/docs/oauth2-redirect -a
 
-    $0 -n 'Workspace One' -r https://mydre.region.cloudapp.azure.com/api/docs/oidc-redirect -w
+    $0 -n 'Workspace One' -r https://mydre.region.cloudapp.azure.com/api/docs/oauth2-redirect -w
 
 USAGE
     exit 1
