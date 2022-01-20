@@ -31,7 +31,7 @@ class WorkspaceServiceRepository(ResourceRepository):
     def get_deployed_workspace_service_by_id(self, workspace_id: str, service_id: str, operations_repo: OperationRepository) -> WorkspaceService:
         workspace_service = self.get_workspace_service_by_id(workspace_id, service_id)
 
-        if (operations_repo.resource_has_deployed_operation(resource_id=service_id)):
+        if (not operations_repo.resource_has_deployed_operation(resource_id=service_id)):
             raise ResourceIsNotDeployed
 
         return workspace_service

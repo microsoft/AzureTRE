@@ -7,6 +7,7 @@ from pydantic import parse_obj_as
 from core import config
 from db.errors import ResourceIsNotDeployed, EntityDoesNotExist
 from db.repositories.resources import ResourceRepository, IS_ACTIVE_CLAUSE
+from db.repositories.operations import OperationRepository
 from models.domain.resource import ResourceType
 from models.domain.workspace import Workspace
 from models.schemas.workspace import WorkspaceInCreate, WorkspacePatchEnabled
@@ -27,11 +28,11 @@ class WorkspaceRepository(ResourceRepository):
         workspaces = self.query(query=query)
         return parse_obj_as(List[Workspace], workspaces)
 
-    def get_deployed_workspace_by_id(self, workspace_id: str) -> Workspace:
+    def get_deployed_workspace_by_id(self, workspace_id: str, operations_repo: OperationRepository) -> Workspace:
         workspace = self.get_workspace_by_id(workspace_id)
 
-       # if workspace.deployment.status != Status.Deployed:  #TODO - check there's a deployed op
-       #     raise ResourceIsNotDeployed
+        if (not operations_repo.resource_has_deployed_operation(resource_id=workspace_id)):
+            raise ResourceIsNotDeployed
 
         return workspace
 

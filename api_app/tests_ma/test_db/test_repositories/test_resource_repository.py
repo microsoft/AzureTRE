@@ -5,7 +5,6 @@ from jsonschema.exceptions import ValidationError
 
 from db.errors import EntityDoesNotExist
 from db.repositories.resources import ResourceRepository
-from models.domain.resource import Deployment, Status
 from models.domain.resource_template import ResourceTemplate
 from models.domain.user_resource_template import UserResourceTemplate
 from models.domain.workspace import Workspace, ResourceType
@@ -31,10 +30,10 @@ def test_delete_workspace_marks_workspace_as_deleted(resource_repo):
         templateName="base-tre",
         templateVersion="0.1.0",
         properties={},
-        deployment=Deployment(status=Status.NotDeployed, message=""),
+        isActive=True
     )
     resource_repo.mark_resource_as_deleting(workspace)
-    workspace.deployment.status = Status.Deleting
+    workspace.isActive = False
     resource_repo.update_item.assert_called_once_with(workspace)
 
 
@@ -46,9 +45,9 @@ def test_restore_deletion_status_updates_db(resource_repo):
         templateName="base-tre",
         templateVersion="0.1.0",
         properties={},
-        deployment=Deployment(status=Status.Deleting, message=""),
+        isActive=False
     )
-    resource_repo.restore_previous_deletion_state(workspace, Status.Deployed)
+    resource_repo.restore_previous_deletion_state(workspace, True)
     resource_repo.update_item.assert_called_once_with(workspace)
 
 
@@ -132,7 +131,7 @@ def test_get_resource_dict_by_id_queries_db(resource_repo):
 
     resource_repo.get_resource_dict_by_id(item_id)
 
-    resource_repo.query.assert_called_once_with(query='SELECT * FROM c WHERE c.deployment.status != "deleted" AND c.id = "123"')
+    resource_repo.query.assert_called_once_with(query='SELECT * FROM c WHERE c.isActive != false AND c.id = "123"')
 
 
 def test_get_resource_dict_by_id_raises_entity_does_not_exist_if_no_resources_come_back(resource_repo):

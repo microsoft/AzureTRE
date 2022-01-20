@@ -59,12 +59,10 @@ class ResourceRepository(BaseRepository):
         return template_version
 
     def mark_resource_as_deleting(self, resource: Resource) -> bool:
-        current_deletion_status = resource.isActive
-
         resource.isActive = False
         self.update_item(resource)
 
-        return current_deletion_status
+        return resource.isActive
 
     def restore_previous_deletion_state(self, resource: Resource, previous_deletion_status: bool):
         resource.isActive = previous_deletion_status

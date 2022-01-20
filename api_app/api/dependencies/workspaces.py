@@ -26,9 +26,9 @@ async def get_workspace_by_id_from_path(workspace_id: UUID4 = Path(...), workspa
     return get_workspace_by_id(workspace_id, workspaces_repo)
 
 
-async def get_deployed_workspace_by_id_from_path(workspace_id: UUID4 = Path(...), workspaces_repo=Depends(get_repository(WorkspaceRepository))) -> Workspace:
+async def get_deployed_workspace_by_id_from_path(workspace_id: UUID4 = Path(...), workspaces_repo=Depends(get_repository(WorkspaceRepository)), operations_repo=Depends(get_repository(OperationRepository))) -> Workspace:
     try:
-        return workspaces_repo.get_deployed_workspace_by_id(workspace_id)
+        return workspaces_repo.get_deployed_workspace_by_id(workspace_id, operations_repo)
     except EntityDoesNotExist:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.WORKSPACE_DOES_NOT_EXIST)
     except ResourceIsNotDeployed:

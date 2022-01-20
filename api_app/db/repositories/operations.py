@@ -18,7 +18,7 @@ class OperationRepository(BaseRepository):
 
     @staticmethod
     def operations_query():
-        return 'SELECT * FROM c WHERE '
+        return 'SELECT * FROM c WHERE'
 
     def create_operation_item(self, resource_id: str, status: Status, message: str) -> Operation:
         operation_id = str(uuid.uuid4())
