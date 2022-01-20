@@ -13,6 +13,13 @@ if [ $? -ne 0 ]; then
   exit
 fi
 
+echo -e "\n\e[96mChecking for Azure CLI extension(s)\e[0m..."
+az extension show -n azure-firewall > /dev/null 2>&1
+if [ $? -ne 0 ]; then
+  echo -e "\e[31m»»» ⚠️ Azure CLI azure-firewall extension is not installed! 😥 Please go to http://aka.ms/cli to set it up"
+  exit
+fi
+
 if [[ "$1" != *"nodocker"* ]]; then
   echo -e "\n\e[96mChecking for Docker\e[0m..."
   sudo docker version > /dev/null 2>&1
