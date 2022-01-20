@@ -26,7 +26,7 @@ data "azurerm_storage_account" "nexus" {
 data "azurerm_subnet" "web_app" {
   name                 = "WebAppSubnet"
   virtual_network_name = "vnet-${var.tre_id}"
-  resource_group_name = local.core_resource_group_name
+  resource_group_name  = local.core_resource_group_name
 }
 
 data "azurerm_firewall" "fw" {
