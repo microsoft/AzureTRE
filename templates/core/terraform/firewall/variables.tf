@@ -17,7 +17,7 @@ variable "gitea_allowed_fqdns" {
 
 variable "shared_subnet" {
   type = object({
-    id = string
+    id               = string
     address_prefixes = list(string)
   })
   description = "The ID of the shared subnet"
@@ -25,7 +25,7 @@ variable "shared_subnet" {
 
 variable "firewall_subnet" {
   type = object({
-    id = string
+    id               = string
     address_prefixes = list(string)
   })
   description = "The ID of the firewall subnet"
@@ -33,7 +33,7 @@ variable "firewall_subnet" {
 
 variable "resource_processor_subnet" {
   type = object({
-    id = string
+    id               = string
     address_prefixes = list(string)
   })
   description = "The ID of the resource_processor subnet"
@@ -41,7 +41,7 @@ variable "resource_processor_subnet" {
 
 variable "web_app_subnet" {
   type = object({
-    id = string
+    id               = string
     address_prefixes = list(string)
   })
   description = "The ID of the web app subnet"

@@ -187,19 +187,19 @@ module "firewall" {
   deploy_nexus               = var.deploy_nexus
 
   shared_subnet = {
-    id = module.network.shared_subnet_id
+    id               = module.network.shared_subnet_id
     address_prefixes = module.network.shared_subnet_address_prefixes
   }
   firewall_subnet = {
-    id = module.network.azure_firewall_subnet_id
+    id               = module.network.azure_firewall_subnet_id
     address_prefixes = module.network.shared_subnet_address_prefixes
   }
   resource_processor_subnet = {
-    id = module.network.resource_processor_subnet_id
+    id               = module.network.resource_processor_subnet_id
     address_prefixes = module.network.shared_subnet_address_prefixes
   }
   web_app_subnet = {
-    id = module.network.web_app_subnet_id
+    id               = module.network.web_app_subnet_id
     address_prefixes = module.network.shared_subnet_address_prefixes
   }
   depends_on = [
@@ -248,21 +248,21 @@ module "jumpbox" {
 }
 
 module "gitea" {
-  count                             = var.deploy_gitea == true ? 1 : 0
-  source                            = "../../shared_services/gitea/terraform"
-  tre_id                            = var.tre_id
-  location                          = var.location
-  docker_registry_server            = data.azurerm_container_registry.mgmt_acr.login_server
-  acr_id                            = data.azurerm_container_registry.mgmt_acr.id
-  keyvault_id                       = module.keyvault.keyvault_id
-  storage_account_name              = module.storage.storage_account_name
-  storage_account_primary_access_key = module.storage.storage_account_access_key
-  shared_subnet_id                  = module.network.shared_subnet_id
-  web_app_subnet_id                 = module.network.web_app_subnet_id
-  private_dns_zone_azurewebsites_id = module.network.private_dns_zone_azurewebsites_id
-  private_dns_zone_mysql_id         = module.network.private_dns_zone_mysql_id
-  log_analytics_workspace_id =  module.azure_monitor.log_analytics_workspace_id
-  core_app_service_plan_id = "plan-${var.tre_id}"
+  count                                         = var.deploy_gitea == true ? 1 : 0
+  source                                        = "../../shared_services/gitea/terraform"
+  tre_id                                        = var.tre_id
+  location                                      = var.location
+  docker_registry_server                        = data.azurerm_container_registry.mgmt_acr.login_server
+  acr_id                                        = data.azurerm_container_registry.mgmt_acr.id
+  keyvault_id                                   = module.keyvault.keyvault_id
+  storage_account_name                          = module.storage.storage_account_name
+  storage_account_primary_access_key            = module.storage.storage_account_access_key
+  shared_subnet_id                              = module.network.shared_subnet_id
+  web_app_subnet_id                             = module.network.web_app_subnet_id
+  private_dns_zone_azurewebsites_id             = module.network.private_dns_zone_azurewebsites_id
+  private_dns_zone_mysql_id                     = module.network.private_dns_zone_mysql_id
+  log_analytics_workspace_id                    = module.azure_monitor.log_analytics_workspace_id
+  core_app_service_plan_id                      = "plan-${var.tre_id}"
   core_application_insights_instrumentation_key = module.azure_monitor.app_insights_instrumentation_key
 
   depends_on = [
@@ -273,17 +273,17 @@ module "gitea" {
 }
 
 module "nexus" {
-  count                              = var.deploy_nexus == true ? 1 : 0
-  source                             = "../../shared_services/sonatype-nexus/terraform"
-  tre_id                             = var.tre_id
-  location                           = var.location
-  storage_account_name               = module.storage.storage_account_name
-  storage_account_primary_access_key = module.storage.storage_account_access_key
-  shared_subnet_id                   = module.network.shared_subnet_id
-  web_app_subnet_id                  = module.network.web_app_subnet_id
-  private_dns_zone_azurewebsites_id  = module.network.private_dns_zone_azurewebsites_id
-  log_analytics_workspace_id =  module.azure_monitor.log_analytics_workspace_id
-  core_app_service_plan_id = "plan-${var.tre_id}"
+  count                                         = var.deploy_nexus == true ? 1 : 0
+  source                                        = "../../shared_services/sonatype-nexus/terraform"
+  tre_id                                        = var.tre_id
+  location                                      = var.location
+  storage_account_name                          = module.storage.storage_account_name
+  storage_account_primary_access_key            = module.storage.storage_account_access_key
+  shared_subnet_id                              = module.network.shared_subnet_id
+  web_app_subnet_id                             = module.network.web_app_subnet_id
+  private_dns_zone_azurewebsites_id             = module.network.private_dns_zone_azurewebsites_id
+  log_analytics_workspace_id                    = module.azure_monitor.log_analytics_workspace_id
+  core_app_service_plan_id                      = "plan-${var.tre_id}"
   core_application_insights_instrumentation_key = module.azure_monitor.app_insights_instrumentation_key
 
   depends_on = [
