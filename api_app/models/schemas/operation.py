@@ -13,8 +13,8 @@ def get_sample_operation(operation_id: str) -> dict:
         "resourceVersion": 0,
         "status": "not_deployed",
         "message": "",
-        "createdWhen": "2022-01-01 13:45:00:000",
-        "updatedWhen": "2022-01-01 13:45:00:000"
+        "createdWhen": 1642611942.423857,
+        "updatedWhen": 1642611942.423857
     }
 
 
@@ -30,7 +30,7 @@ class OperationInResponse(BaseModel):
 
 
 class OperationInList(BaseModel):
-    userResources: List[Operation] = Field([], title="User resources")
+    operations: List[Operation] = Field([], title="Operations")
 
     class Config:
         schema_extra = {

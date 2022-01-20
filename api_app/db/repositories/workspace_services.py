@@ -5,6 +5,7 @@ from azure.cosmos import CosmosClient
 from pydantic import parse_obj_as
 
 from db.repositories.resources import ResourceRepository, IS_ACTIVE_CLAUSE
+from db.repositories.operations import OperationRepository
 from models.domain.workspace_service import WorkspaceService
 from models.schemas.workspace_service import WorkspaceServiceInCreate, WorkspaceServicePatchEnabled
 from db.errors import ResourceIsNotDeployed, EntityDoesNotExist
@@ -27,11 +28,11 @@ class WorkspaceServiceRepository(ResourceRepository):
         workspace_services = self.query(query=query)
         return parse_obj_as(List[WorkspaceService], workspace_services)
 
-    def get_deployed_workspace_service_by_id(self, workspace_id: str, service_id: str) -> WorkspaceService:
+    def get_deployed_workspace_service_by_id(self, workspace_id: str, service_id: str, operations_repo: OperationRepository) -> WorkspaceService:
         workspace_service = self.get_workspace_service_by_id(workspace_id, service_id)
 
-        #if OperationRepository.resource_has_deployed_operation() #TODO - check there's a deployed op
-        #    raise ResourceIsNotDeployed
+        if (operations_repo.resource_has_deployed_operation(resource_id=service_id)):
+            raise ResourceIsNotDeployed
 
         return workspace_service
 

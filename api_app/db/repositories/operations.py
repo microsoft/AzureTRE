@@ -53,6 +53,8 @@ class OperationRepository(BaseRepository):
         """
         query = self.operations_query() + f' c.id = "{operation_id}"'
         operation = self.query(query=query)
+        if not operation:
+            raise EntityDoesNotExist
         return parse_obj_as(Operation, operation[0])
 
     def get_operations_by_resource_id(self, resource_id: str) -> List[Operation]:
@@ -70,7 +72,3 @@ class OperationRepository(BaseRepository):
         query = self.operations_query() + f' c.resourceId = "{resource_id}" AND c.status = "{Status.Deployed}"'
         operations = self.query(query=query)
         return len(operations) > 0
-
-
- #   def get_operation_spec_params(self): #TODO - what is this?
- #       return self.get_resource_base_spec_params()
