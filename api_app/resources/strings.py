@@ -75,6 +75,7 @@ WORKSPACE_SERVICE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION = "The workspace service 
 WORKSPACE_SERVICES_NEED_TO_BE_DELETED_BEFORE_WORKSPACE = "All workspace services need to be deleted before you can delete the workspace"
 WORKSPACE_TEMPLATE_VERSION_EXISTS = "A template with this version already exists"
 
+WORKSPACE_SERVICE_TEMPLATE_DOES_NOT_EXIST = "Could not retrieve the workspace service template specified"
 TEMPLATE_DOES_NOT_EXIST = "Could not retrieve the 'current' template with this name"
 NO_UNIQUE_CURRENT_FOR_TEMPLATE = "The template has multiple 'current' versions"
 
