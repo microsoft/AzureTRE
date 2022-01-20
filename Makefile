@@ -111,8 +111,9 @@ letsencrypt:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
-	&& cd ./templates/core/terraform/ && . ./outputs.sh \
-	&& cd ./scripts/ && ./letsencrypt.sh
+	&& pushd ./templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
+	&& . ./devops/scripts/load_env.sh ./templates/core/tre.env \
+	&& ./templates/core/terraform/scripts/letsencrypt.sh
 
 tre-stop:
 	echo -e "\n\e[34m»»» 🧩 \e[96mStopping TRE\e[0m..." \
@@ -156,6 +157,10 @@ terraform-destroy:
 	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ${DIR}/.env \
 	&& cd ${DIR}/terraform/ && ./destroy.sh
+
+terraform-format:
+	echo -e "\n\e[34m»»» 🧩 \e[96mLinting Terraform\e[0m..." \
+	&& cd ./templates && terraform fmt -check -recursive -diff
 
 porter-build:
 	echo -e "\n\e[34m»»» 🧩 \e[96mBuilding ${DIR} bundle\e[0m..." \
@@ -218,5 +223,6 @@ static-web-upload:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
-	&& cd ./templates/core/terraform/ && . ./outputs.sh \
-	&& cd ./scripts/ && ./upload_static_web.sh
+	&& pushd ./templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
+	&& . ./devops/scripts/load_env.sh ./templates/core/tre.env \
+	&& ./templates/core/terraform/scripts/upload_static_web.sh

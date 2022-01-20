@@ -64,6 +64,8 @@ jobs:
           TF_VAR_aad_tenant_id: "${{ secrets.AAD_TENANT_ID }}"
           TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
+          TF_VAR_api_app_service_plan_sku_tier: "PremiumV3"
+          TF_VAR_api_app_service_plan_sku_size: "P1v3"
           TF_VAR_debug: false
           TF_VAR_resource_processor_type: "vmss_porter"
           TF_VAR_deploy_gitea: true

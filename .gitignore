@@ -111,6 +111,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+templates/core/tre.env
 
 # Spyder project settings
 .spyderproject
@@ -154,6 +155,7 @@ override.tf
 override.tf.json
 *_override.tf
 *_override.tf.json
+templates/core/tre_output.json
 
 # generated backend files
 *_backend.tf
@@ -164,6 +166,7 @@ override.tf.json
 
 # Include tfplan files to ignore the plan output of command: terraform plan -out=tfplan
 # example: *tfplan*
+*tfplan*
 
 # Ignore CLI configuration files
 .terraformrc

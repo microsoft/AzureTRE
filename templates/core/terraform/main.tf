@@ -95,7 +95,6 @@ module "api-webapp" {
   resource_group_name                        = azurerm_resource_group.core.name
   web_app_subnet                             = module.network.web_app_subnet_id
   shared_subnet                              = module.network.shared_subnet_id
-  app_gw_subnet                              = module.network.app_gw_subnet_id
   core_vnet                                  = module.network.core_vnet_id
   app_insights_connection_string             = module.azure_monitor.app_insights_connection_string
   app_insights_instrumentation_key           = module.azure_monitor.app_insights_instrumentation_key
@@ -115,6 +114,8 @@ module "api-webapp" {
   acr_id                                     = data.azurerm_container_registry.mgmt_acr.id
   core_address_space                         = var.core_address_space
   tre_address_space                          = var.tre_address_space
+  app_service_plan_sku_tier                  = var.api_app_service_plan_sku_tier
+  app_service_plan_sku_size                  = var.api_app_service_plan_sku_size
 
   depends_on = [
     module.azure_monitor,
@@ -198,7 +199,6 @@ module "routetable" {
   shared_subnet_id             = module.network.shared_subnet_id
   resource_processor_subnet_id = module.network.resource_processor_subnet_id
   web_app_subnet_id            = module.network.web_app_subnet_id
-  app_gw_subnet_id             = module.network.app_gw_subnet_id
   firewall_private_ip_address  = module.firewall.firewall_private_ip_address
 }
 
@@ -232,14 +232,17 @@ module "jumpbox" {
 }
 
 module "gitea" {
-  count                  = var.deploy_gitea == true ? 1 : 0
-  source                 = "../../shared_services/gitea/terraform"
-  tre_id                 = var.tre_id
-  location               = var.location
-  docker_registry_server = data.azurerm_container_registry.mgmt_acr.login_server
-  acr_id                 = data.azurerm_container_registry.mgmt_acr.id
-  keyvault_id            = module.keyvault.keyvault_id
-  storage_account_name   = module.storage.storage_account_name
+  count                             = var.deploy_gitea == true ? 1 : 0
+  source                            = "../../shared_services/gitea/terraform"
+  tre_id                            = var.tre_id
+  location                          = var.location
+  docker_registry_server            = data.azurerm_container_registry.mgmt_acr.login_server
+  acr_id                            = data.azurerm_container_registry.mgmt_acr.id
+  keyvault_id                       = module.keyvault.keyvault_id
+  storage_account_name              = module.storage.storage_account_name
+  shared_subnet_id                  = module.network.shared_subnet_id
+  private_dns_zone_azurewebsites_id = module.network.private_dns_zone_azurewebsites_id
+  private_dns_zone_mysql_id         = module.network.private_dns_zone_mysql_id
 
   depends_on = [
     module.network,
@@ -249,11 +252,14 @@ module "gitea" {
 }
 
 module "nexus" {
-  count                = var.deploy_nexus == true ? 1 : 0
-  source               = "../../shared_services/sonatype-nexus/terraform"
-  tre_id               = var.tre_id
-  location             = var.location
-  storage_account_name = module.storage.storage_account_name
+  count                             = var.deploy_nexus == true ? 1 : 0
+  source                            = "../../shared_services/sonatype-nexus/terraform"
+  tre_id                            = var.tre_id
+  location                          = var.location
+  storage_account_name              = module.storage.storage_account_name
+  shared_subnet_id                  = module.network.shared_subnet_id
+  web_app_subnet_id                 = module.network.web_app_subnet_id
+  private_dns_zone_azurewebsites_id = module.network.private_dns_zone_azurewebsites_id
 
   depends_on = [
     module.network,
