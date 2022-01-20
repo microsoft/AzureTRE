@@ -22,3 +22,5 @@ variable "api_client_secret" {}
 variable "acr_id" {}
 variable "core_address_space" {}
 variable "tre_address_space" {}
+variable "app_service_plan_sku_tier" {}
+variable "app_service_plan_sku_size" {}

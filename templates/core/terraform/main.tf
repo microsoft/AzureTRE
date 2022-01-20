@@ -114,6 +114,8 @@ module "api-webapp" {
   acr_id                                     = data.azurerm_container_registry.mgmt_acr.id
   core_address_space                         = var.core_address_space
   tre_address_space                          = var.tre_address_space
+  app_service_plan_sku_tier                  = var.api_app_service_plan_sku_tier
+  app_service_plan_sku_size                  = var.api_app_service_plan_sku_size
 
   depends_on = [
     module.azure_monitor,
