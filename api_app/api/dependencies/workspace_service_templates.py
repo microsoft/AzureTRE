@@ -13,4 +13,4 @@ async def get_workspace_service_template_by_name_from_path(service_template_name
     try:
         return template_repo.get_current_template(service_template_name, ResourceType.WorkspaceService)
     except EntityDoesNotExist:
-        raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail=strings.TEMPLATE_DOES_NOT_EXIST)
+        raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail=strings.WORKSPACE_SERVICE_TEMPLATE_DOES_NOT_EXIST)
