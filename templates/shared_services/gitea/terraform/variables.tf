@@ -46,3 +46,9 @@ variable "gitea_storage_limit" {
   description = "Space allocated in GB for the Gitea data in Azure Files Share"
   default     = 1024
 }
+
+variable "gitea_allowed_fqdns" {
+  type        = string
+  description = "comma seperated string of allowed FQDNs for Gitea"
+  default     = "github.com, www.github.com, api.github.com, git-lfs.github.com, *githubusercontent.com"
+}

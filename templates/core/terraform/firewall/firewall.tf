@@ -281,42 +281,6 @@ resource "azurerm_firewall_application_rule_collection" "web_app_subnet" {
     source_addresses = data.azurerm_subnet.web_app.address_prefixes
   }
 
-  dynamic "rule" {
-    for_each = var.deploy_gitea && length(local.gitea_allowed_fqdns_list) > 0 ? [1] : []
-    content {
-      name = "gitea-sources"
-      protocol {
-        port = "443"
-        type = "Https"
-      }
-      protocol {
-        port = "80"
-        type = "Http"
-      }
-
-      target_fqdns     = local.gitea_allowed_fqdns_list
-      source_addresses = data.azurerm_subnet.web_app.address_prefixes
-    }
-  }
-
-  dynamic "rule" {
-    for_each = var.deploy_nexus && length(local.nexus_allowed_fqdns_list) > 0 ? [1] : []
-    content {
-      name = "nexus-package-sources"
-      protocol {
-        port = "443"
-        type = "Https"
-      }
-      protocol {
-        port = "80"
-        type = "Http"
-      }
-
-      target_fqdns     = local.nexus_allowed_fqdns_list
-      source_addresses = data.azurerm_subnet.web_app.address_prefixes
-    }
-  }
-
   depends_on = [
     azurerm_firewall_network_rule_collection.web_app_subnet
   ]

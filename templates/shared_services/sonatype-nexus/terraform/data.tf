@@ -22,3 +22,14 @@ data "azurerm_storage_account" "nexus" {
   name                = var.storage_account_name
   resource_group_name = local.core_resource_group_name
 }
+
+data "azurerm_subnet" "web_app" {
+  name                 = "WebAppSubnet"
+  virtual_network_name = "vnet-${var.tre_id}"
+  resource_group_name = local.core_resource_group_name
+}
+
+data "azurerm_firewall" "fw" {
+  name                = "fw-${var.tre_id}"
+  resource_group_name = local.core_resource_group_name
+}
