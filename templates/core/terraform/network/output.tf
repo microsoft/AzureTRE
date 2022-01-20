@@ -6,7 +6,6 @@ output "bastion_subnet_id" {
   value = azurerm_subnet.bastion.id
 }
 
-# TODO(tanya): Remove once refactoring is complete
 output "azure_firewall_subnet_id" {
   value = azurerm_subnet.azure_firewall.id
 }
