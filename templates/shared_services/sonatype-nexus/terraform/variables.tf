@@ -35,21 +35,21 @@ variable "web_app_subnet_id" {
 }
 
 variable "private_dns_zone_azurewebsites_id" {
-  type = string
+  type        = string
   description = "The ID of the private DNS zone to use for the private endpoint"
 }
 
 variable "log_analytics_workspace_id" {
-  type = string
+  type        = string
   description = "ID of the Log Analytics workspace for TRE"
 }
 
 variable "core_app_service_plan_id" {
-  type = string
+  type        = string
   description = "Name of the App Service plan"
 }
 
 variable "core_application_insights_instrumentation_key" {
-  type = string
+  type        = string
   description = "Instrumentation key for the Core Application Insights"
 }

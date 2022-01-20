@@ -7,8 +7,8 @@ resource "azurerm_key_vault" "kv" {
   tenant_id                = data.azurerm_client_config.current.tenant_id
 
   network_acls {
-    bypass                     = "None"
-    default_action             = "Deny"
+    bypass         = "None"
+    default_action = "Deny"
   }
 
   lifecycle { ignore_changes = [tags] }
