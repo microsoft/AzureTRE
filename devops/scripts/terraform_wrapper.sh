@@ -5,7 +5,7 @@ set -e
 function usage() {
     cat <<USAGE
 
-    Usage: $0 [-g | --mgmt-resource-group-name ]  [-s | --mgmt-storage-account-name] [-n | --state-container-name] [-k | --key] [-c | --cmd]
+    Usage: $0 [-g | --mgmt-resource-group-name ]  [-s | --mgmt-storage-account-name] [-n | --state-container-name] [-k | --key] [-c | --cmd] [-l | --logfile]
 
     Options:
         -g, --mgmt-resource-group-name      Management resource group name
@@ -13,6 +13,7 @@ function usage() {
         -n, --state-container-name          State container name
         -k, --key                           Key
         -c, --cmd                           Command to execute
+        -l, --logfile                       Log file to write output to
 USAGE
     exit 1
 }
@@ -45,6 +46,10 @@ while [ "$1" != "" ]; do
     -c | --cmd)
         shift
         tf_command=$1
+        ;;
+    -l | --logfile)
+        shift
+        tf_logfile=$1
         ;;
     *)
         usage
@@ -79,6 +84,11 @@ if [[ -z ${tf_command+x} ]]; then
     usage
 fi
 
+if [[ -z ${tf_logfile+x} ]]; then
+    tf_logfile="tmp$$.log"
+    echo -e "No logfile provided, using ${tf_logfile}\n"
+fi
+
 export TF_LOG=""
 terraform init -input=false -backend=true -reconfigure -upgrade \
     -backend-config="resource_group_name=${mgmt_resource_group_name}" \
@@ -87,16 +97,15 @@ terraform init -input=false -backend=true -reconfigure -upgrade \
     -backend-config="key=${key}"
 
 RUN_COMMAND=1
-LOG_FILE="tmp$$.log"
 while [ $RUN_COMMAND = 1 ]
 do
     RUN_COMMAND=0
     TF_CMD="$tf_command"
 
-    script -c "$TF_CMD" $LOG_FILE
+    script -c "$TF_CMD" "$tf_logfile"
 
-    LOCKED_STATE=$(cat tmp$$.log |  grep -c 'Error acquiring the state lock') || true;
-    TF_ERROR=$(cat tmp$$.log |  grep -c 'COMMAND_EXIT_CODE="1"') || true;
+    LOCKED_STATE=$(cat ${tf_logfile} |  grep -c 'Error acquiring the state lock') || true;
+    TF_ERROR=$(cat ${tf_logfile} |  grep -c 'COMMAND_EXIT_CODE="1"') || true;
     if [[ $LOCKED_STATE > 0  ]];
     then
         RUN_COMMAND=1
