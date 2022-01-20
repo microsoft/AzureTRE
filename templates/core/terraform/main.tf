@@ -232,14 +232,17 @@ module "jumpbox" {
 }
 
 module "gitea" {
-  count                  = var.deploy_gitea == true ? 1 : 0
-  source                 = "../../shared_services/gitea/terraform"
-  tre_id                 = var.tre_id
-  location               = var.location
-  docker_registry_server = data.azurerm_container_registry.mgmt_acr.login_server
-  acr_id                 = data.azurerm_container_registry.mgmt_acr.id
-  keyvault_id            = module.keyvault.keyvault_id
-  storage_account_name   = module.storage.storage_account_name
+  count                             = var.deploy_gitea == true ? 1 : 0
+  source                            = "../../shared_services/gitea/terraform"
+  tre_id                            = var.tre_id
+  location                          = var.location
+  docker_registry_server            = data.azurerm_container_registry.mgmt_acr.login_server
+  acr_id                            = data.azurerm_container_registry.mgmt_acr.id
+  keyvault_id                       = module.keyvault.keyvault_id
+  storage_account_name              = module.storage.storage_account_name
+  shared_subnet_id                  = module.network.shared_subnet_id
+  private_dns_zone_azurewebsites_id = module.network.private_dns_zone_azurewebsites_id
+  private_dns_zone_mysql_id         = module.network.private_dns_zone_mysql_id
 
   depends_on = [
     module.network,
@@ -249,11 +252,14 @@ module "gitea" {
 }
 
 module "nexus" {
-  count                = var.deploy_nexus == true ? 1 : 0
-  source               = "../../shared_services/sonatype-nexus/terraform"
-  tre_id               = var.tre_id
-  location             = var.location
-  storage_account_name = module.storage.storage_account_name
+  count                             = var.deploy_nexus == true ? 1 : 0
+  source                            = "../../shared_services/sonatype-nexus/terraform"
+  tre_id                            = var.tre_id
+  location                          = var.location
+  storage_account_name              = module.storage.storage_account_name
+  shared_subnet_id                  = module.network.shared_subnet_id
+  web_app_subnet_id                 = module.network.web_app_subnet_id
+  private_dns_zone_azurewebsites_id = module.network.private_dns_zone_azurewebsites_id
 
   depends_on = [
     module.network,
