@@ -82,8 +82,6 @@ jobs:
           export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
           export TF_VAR_arm_subscription_id=$ARM_SUBSCRIPTION_ID
 
-          pwsh -c Install-Module Az -Force -Scope CurrentUser
-
           make all
 
       - name: Notify dedicated teams channel
