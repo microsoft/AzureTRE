@@ -10,6 +10,10 @@ output "azure_firewall_subnet_id" {
   value = azurerm_subnet.azure_firewall.id
 }
 
+output "azure_firewall_subnet_address_prefixes" {
+  value = azurerm_subnet.azure_firewall.address_prefixes
+}
+
 output "app_gw_subnet_id" {
   value = azurerm_subnet.app_gw.id
 }
@@ -44,6 +48,10 @@ output "private_dns_zone_mysql_id" {
 
 output "resource_processor_subnet_id" {
   value = azurerm_subnet.resource_processor.id
+}
+
+output "resource_processor_subnet_address_prefixes" {
+  value = azurerm_subnet.resource_processor.address_prefixes
 }
 
 output "azure_monitor_dns_zone_id" {

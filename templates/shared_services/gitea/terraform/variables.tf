@@ -41,6 +41,11 @@ variable "web_app_subnet_id" {
   description = "The ID of the Web App subnet to connect to"
 }
 
+variable "web_app_subnet_address_prefixes" {
+  type = list(string)
+  description = "List of address prefixes for the Web App subnet"
+}
+
 variable "private_dns_zone_azurewebsites_id" {
   type        = string
   description = "The ID of the private DNS zone to use for the private endpoint"
@@ -70,9 +75,25 @@ variable "core_app_service_plan_id" {
 variable "core_application_insights_instrumentation_key" {
   type        = string
   description = "Instrumentation key for the Core Application Insights"
+}
 
 variable "gitea_allowed_fqdns" {
   type        = string
   description = "comma seperated string of allowed FQDNs for Gitea"
   default     = "github.com, www.github.com, api.github.com, git-lfs.github.com, *githubusercontent.com"
+}
+
+variable "firewall_name" {
+  type = string
+  description = "Name of the firewall to connect to"
+}
+
+variable "firewall_resource_group_name" {
+  type = string
+  description = "Name of the firewall to connect to"
+}
+
+variable "firewall_subnet_address_prefixes" {
+  type = list(string)
+  description = "List of address prefixes for the Firewall subnet"
 }

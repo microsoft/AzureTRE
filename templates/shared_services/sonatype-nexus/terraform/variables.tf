@@ -59,3 +59,18 @@ variable "nexus_allowed_fqdns" {
   description = "comma seperated string of allowed FQDNs for Nexus"
   default     = "*pypi.org"
 }
+
+variable "firewall_name" {
+  type = string
+  description = "Name of the firewall to connect to"
+}
+
+variable "firewall_resource_group_name" {
+  type = string
+  description = "Name of the firewall to connect to"
+}
+
+variable "firewall_subnet_address_prefixes" {
+  type = list(string)
+  description = "List of address prefixes for the Firewall subnet"
+}
