@@ -43,9 +43,9 @@ resource "azurerm_virtual_machine" "win10vm" {
   delete_data_disks_on_termination = false
 
   storage_image_reference {
-    publisher = "MicrosoftWindowsDesktop"
-    offer     = "windows-10"
-    sku       = "20h2-pro-g2"
+    publisher = "microsoft-dsvm"
+    offer     = "dsvm-windows"
+    sku       = "server-2019-g2"
     version   = "latest"
   }
 
