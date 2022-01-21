@@ -70,4 +70,9 @@ variable "core_app_service_plan_id" {
 variable "core_application_insights_instrumentation_key" {
   type        = string
   description = "Instrumentation key for the Core Application Insights"
+
+variable "gitea_allowed_fqdns" {
+  type        = string
+  description = "comma seperated string of allowed FQDNs for Gitea"
+  default     = "github.com, www.github.com, api.github.com, git-lfs.github.com, *githubusercontent.com"
 }

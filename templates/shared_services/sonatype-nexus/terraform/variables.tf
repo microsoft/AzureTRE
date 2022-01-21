@@ -53,3 +53,9 @@ variable "core_application_insights_instrumentation_key" {
   type        = string
   description = "Instrumentation key for the Core Application Insights"
 }
+
+variable "nexus_allowed_fqdns" {
+  type        = string
+  description = "comma seperated string of allowed FQDNs for Nexus"
+  default     = "*pypi.org"
+}
