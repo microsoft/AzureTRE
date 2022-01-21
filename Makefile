@@ -117,14 +117,14 @@ letsencrypt:
 
 tre-stop:
 	echo -e "\n\e[34m»»» 🧩 \e[96mStopping TRE\e[0m..." \
-	&& . ./devops/scripts/check_dependencies.sh \
+	&& . ./devops/scripts/check_dependencies.sh azfirewall \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& ./devops/scripts/control_tre.sh stop
 
 tre-start:
 	echo -e "\n\e[34m»»» 🧩 \e[96mStarting TRE\e[0m..." \
-	&& . ./devops/scripts/check_dependencies.sh \
+	&& . ./devops/scripts/check_dependencies.sh azfirewall \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& ./devops/scripts/control_tre.sh start
