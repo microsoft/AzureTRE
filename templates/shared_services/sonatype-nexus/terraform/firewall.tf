@@ -17,6 +17,6 @@ resource "azurerm_firewall_application_rule_collection" "web_app_subnet_nexus" {
     }
 
     target_fqdns     = local.nexus_allowed_fqdns_list
-    source_addresses = var.firewall_subnet_address_prefixes
+    source_addresses = var.web_app_subnet_address_prefixes
   }
 }
