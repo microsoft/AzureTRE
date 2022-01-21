@@ -262,10 +262,10 @@ module "gitea" {
   log_analytics_workspace_id                    = module.azure_monitor.log_analytics_workspace_id
   core_app_service_plan_id                      = "plan-${var.tre_id}"
   core_application_insights_instrumentation_key = module.azure_monitor.app_insights_instrumentation_key
-  firewall_name = module.firewall.firewall_name
-  firewall_resource_group_name = module.firewall.firewall_resource_group_name
-  firewall_subnet_address_prefixes = module.network.azure_firewall_subnet_address_prefixes
-  web_app_subnet_address_prefixes = module.network.web_app_subnet_address_prefixes
+  firewall_name                                 = module.firewall.firewall_name
+  firewall_resource_group_name                  = module.firewall.firewall_resource_group_name
+  firewall_subnet_address_prefixes              = module.network.azure_firewall_subnet_address_prefixes
+  web_app_subnet_address_prefixes               = module.network.web_app_subnet_address_prefixes
 
   depends_on = [
     module.network,
@@ -287,9 +287,9 @@ module "nexus" {
   log_analytics_workspace_id                    = module.azure_monitor.log_analytics_workspace_id
   core_app_service_plan_id                      = "plan-${var.tre_id}"
   core_application_insights_instrumentation_key = module.azure_monitor.app_insights_instrumentation_key
-  firewall_name = module.firewall.firewall_name
-  firewall_resource_group_name = module.firewall.firewall_resource_group_name
-  firewall_subnet_address_prefixes = module.network.azure_firewall_subnet_address_prefixes
+  firewall_name                                 = module.firewall.firewall_name
+  firewall_resource_group_name                  = module.firewall.firewall_resource_group_name
+  firewall_subnet_address_prefixes              = module.network.azure_firewall_subnet_address_prefixes
 
   depends_on = [
     module.network,

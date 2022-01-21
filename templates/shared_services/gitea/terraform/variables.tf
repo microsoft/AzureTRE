@@ -42,7 +42,7 @@ variable "web_app_subnet_id" {
 }
 
 variable "web_app_subnet_address_prefixes" {
-  type = list(string)
+  type        = list(string)
   description = "List of address prefixes for the Web App subnet"
 }
 
@@ -84,16 +84,16 @@ variable "gitea_allowed_fqdns" {
 }
 
 variable "firewall_name" {
-  type = string
+  type        = string
   description = "Name of the firewall to connect to"
 }
 
 variable "firewall_resource_group_name" {
-  type = string
+  type        = string
   description = "Name of the firewall to connect to"
 }
 
 variable "firewall_subnet_address_prefixes" {
-  type = list(string)
+  type        = list(string)
   description = "List of address prefixes for the Firewall subnet"
 }
