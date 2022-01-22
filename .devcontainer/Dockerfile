@@ -1,18 +1,18 @@
 # See here for image contents: https://github.com/microsoft/vscode-dev-containers/tree/v0.166.1/containers/python-3/.devcontainer/base.Dockerfile
 
 # [Choice] Python version: 3, 3.9, 3.8, 3.7, 3.6
-ARG VARIANT="3"
+ARG VARIANT="3.8"
 FROM mcr.microsoft.com/vscode/devcontainers/python:dev-${VARIANT}-buster
 
 ARG USERNAME=vscode
 
 # [Option] Install Node.js
-ARG INSTALL_NODE="true"
+ARG INSTALL_NODE="false"
 ARG NODE_VERSION="lts/*"
 RUN if [ "${INSTALL_NODE}" = "true" ]; then su $USERNAME -c "umask 0002 && . /usr/local/share/nvm/nvm.sh && nvm install ${NODE_VERSION} 2>&1"; fi
 
 # Install terraform
-ARG TERRAFORM_VERSION
+ARG TERRAFORM_VERSION="1.0.5"
 RUN apt-get update && apt-get install -y gnupg software-properties-common curl \
     && curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add - \
     && apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
