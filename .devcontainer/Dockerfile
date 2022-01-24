@@ -5,6 +5,15 @@ ARG VARIANT="3.8"
 FROM mcr.microsoft.com/vscode/devcontainers/python:dev-${VARIANT}-buster
 
 ARG USERNAME=vscode
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+
+# Set up non-root user
+COPY .devcontainer/scripts/non-root-user.sh /tmp/
+RUN bash /tmp/non-root-user.sh "${USERNAME}" "${USER_UID}" "${USER_GID}"
+
+# Set env for tracking that we're running in a devcontainer
+ENV DEVCONTAINER=true
 
 # [Option] Install Node.js
 ARG INSTALL_NODE="false"

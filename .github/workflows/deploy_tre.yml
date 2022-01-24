@@ -38,6 +38,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v1
         with:
@@ -46,7 +51,6 @@ jobs:
       - name: Deploy TRE
         shell: bash
         env:
-          TF_IN_AUTOMATION: 1
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
           TF_VAR_tre_id: ${{ secrets.TRE_ID }}
           TF_VAR_terraform_state_container_name: ${{ secrets.TF_STATE_CONTAINER }}
