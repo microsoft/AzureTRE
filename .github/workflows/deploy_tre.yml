@@ -52,7 +52,7 @@ jobs:
         uses: stuartleeks/devcontainer-build-run@v0.1
         with:
           # Change this to point to your image name
-          imageName: ghcr.io/AzureTRE/tredev
+          imageName: ghcr.io/azuretre/tredev
           # Change this to be your CI task/script
           runCmd: make bootstrap
 
