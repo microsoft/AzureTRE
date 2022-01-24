@@ -18,7 +18,7 @@ concurrency: deploy-e2e
 env:
   USE_ENV_VARS_NOT_FILES: true
   DOCKER_BUILDKIT: 1
-  TF_INPUT: 0 # interactive is off
+  TF_IN_AUTOMATION: 1 # No prompts
 
 jobs:
   deploy_tre:
@@ -38,10 +38,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Build DevContainer
+        run: |
+          docker build . \
+          -t 'tredev:${{ github.run_number }}' \
+          -f '.devcontainer/Dockerfile' \
+          --build-arg DOCKER_GROUP_ID=1001 \
+          --build-arg BUILDKIT_INLINE_CACHE=1 \
+          --build-arg USER_UID=$(id -u) \
+          --build-arg USER_GID=$(id -g)
 
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v1
