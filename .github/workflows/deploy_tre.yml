@@ -53,13 +53,16 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v2
         with:
-          context: ./
-          file: ./.devcontainer/Dockerfile
+          context: .
+          file: .devcontainer/Dockerfile
           builder: ${{ steps.buildx.outputs.name }}
           push: true
-          tags: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest
-          cache-from: type=registry,ref=${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:buildcache
-          cache-to: type=registry,ref=${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:buildcache,mode=max
+          tags: tredev:latest
+          cache-from: type=registry,ref=tredev:buildcache
+          cache-to: type=registry,ref=tredev:buildcache,mode=max
+          build-args: |
+            USER_UID=$(id -u)
+            USER_GID=$(id -g)
 
       - name: Make Bootstrap
         env:
