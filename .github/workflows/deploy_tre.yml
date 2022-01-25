@@ -54,7 +54,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: ./
-          file: ./devcontainer/Dockerfile
+          file: ./.devcontainer/Dockerfile
           builder: ${{ steps.buildx.outputs.name }}
           push: true
           tags: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest
