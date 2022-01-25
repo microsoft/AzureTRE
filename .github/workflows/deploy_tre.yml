@@ -118,16 +118,16 @@ jobs:
             -e ARM_SUBSCRIPTION_ID \
             -e BUILD_BUILDID \
             -e BUILD_BUILDNUMBER \
-            -e TF_VAR_mgmt_resource_group_name \
             -e TF_VAR_location \
             -e TF_VAR_arm_subscription_id \
             -e TF_VAR_terraform_state_container_name \
             -e TF_VAR_mgmt_storage_account_name \
+            -e TF_VAR_mgmt_resource_group_name \
+            -e TF_VAR_tre_id \
             -e ACR_NAME \
             -e TF_VAR_acr_name \
             '${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest' \
           bash -c "make all"
-
 
       # - name: Build and run dev container task
       #   uses: stuartleeks/devcontainer-build-run@v0.1
