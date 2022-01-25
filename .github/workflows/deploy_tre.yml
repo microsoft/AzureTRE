@@ -48,16 +48,27 @@ jobs:
           username: ${{ secrets.ACTIONS_ACR_NAME }}
           password: ${{ secrets.ACTIONS_ACR_PASSWORD }}
 
-      - name: Build and run dev container task
-        uses: stuartleeks/devcontainer-build-run@v0.1
+      - name: Build and push
+        uses: docker/build-push-action@v2
         with:
-          imageName: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/azuretre/tredev
-          runCmd: make bootstrap
-          env: |
-            ARM_SUBSCRIPTION_ID="${{ secrets.ARM_SUBSCRIPTION_ID }}"
-            ARM_TENANT_ID="${{ secrets.ARM_TENANT_ID }}"
-            ARM_CLIENT_ID="${{ secrets.ARM_CLIENT_ID }}"
-            ARM_CLIENT_SECRET="${{ secrets.ARM_CLIENT_SECRET }}"
+          context: ./
+          file: ./devcontainer/Dockerfile
+          builder: ${{ steps.buildx.outputs.name }}
+          push: true
+          tags: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest
+          cache-from: type=registry,ref=${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:buildcache
+          cache-to: type=registry,ref=${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:buildcache,mode=max
+
+      # - name: Build and run dev container task
+      #   uses: stuartleeks/devcontainer-build-run@v0.1
+      #   with:
+      #     imageName: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/azuretre/tredev
+      #     runCmd: make bootstrap
+      #     env: |
+      #       ARM_SUBSCRIPTION_ID="${{ secrets.ARM_SUBSCRIPTION_ID }}"
+      #       ARM_TENANT_ID="${{ secrets.ARM_TENANT_ID }}"
+      #       ARM_CLIENT_ID="${{ secrets.ARM_CLIENT_ID }}"
+      #       ARM_CLIENT_SECRET="${{ secrets.ARM_CLIENT_SECRET }}"
 
 
       # - name: Build DevContainer
