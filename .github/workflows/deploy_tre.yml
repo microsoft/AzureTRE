@@ -20,6 +20,7 @@ concurrency: deploy-e2e
 env:
   USE_ENV_VARS_NOT_FILES: true
   DOCKER_BUILDKIT: 1
+  TF_INPUT: 0 # No input supplied to Terraform
   TF_IN_AUTOMATION: 1 # No prompts
 
 jobs:
