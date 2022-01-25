@@ -81,7 +81,6 @@ jobs:
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          TF_VAR_arm_subscription_id: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
           TF_VAR_location: ${{ secrets.LOCATION }}
           TF_VAR_tre_id: ${{ secrets.TRE_ID }}
           TF_VAR_terraform_state_container_name: ${{ secrets.TF_STATE_CONTAINER }}
@@ -112,7 +111,6 @@ jobs:
             -e ARM_TENANT_ID \
             -e ARM_SUBSCRIPTION_ID \
             -e TF_VAR_location \
-            -e TF_VAR_arm_subscription_id \
             -e TF_VAR_terraform_state_container_name \
             -e TF_VAR_mgmt_storage_account_name \
             -e TF_VAR_mgmt_resource_group_name \
@@ -130,72 +128,6 @@ jobs:
             '${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest' \
           bash -c "make all"
 
-      # - name: Build and run dev container task
-      #   uses: stuartleeks/devcontainer-build-run@v0.1
-      #   with:
-      #     imageName: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/azuretre/tredev
-      #     runCmd: make bootstrap
-      #     env: |
-      #       ARM_SUBSCRIPTION_ID="${{ secrets.ARM_SUBSCRIPTION_ID }}"
-      #       ARM_TENANT_ID="${{ secrets.ARM_TENANT_ID }}"
-      #       ARM_CLIENT_ID="${{ secrets.ARM_CLIENT_ID }}"
-      #       ARM_CLIENT_SECRET="${{ secrets.ARM_CLIENT_SECRET }}"
-
-
-      # - name: Build DevContainer
-      #   run: |
-      #     docker build . \
-      #     -t 'tredev:${{ github.run_number }}' \
-      #     -f '.devcontainer/Dockerfile' \
-      #     --build-arg DOCKER_GROUP_ID=1001 \
-      #     --build-arg BUILDKIT_INLINE_CACHE=1 \
-      #     --build-arg USER_UID=$(id -u) \
-      #     --build-arg USER_GID=$(id -g)
-
-      # - name: Install Terraform
-      #   uses: hashicorp/setup-terraform@v1
-      #   with:
-      #     terraform_version: 1.0.5
-
-      # - name: Deploy TRE
-      #   shell: bash
-      #   env:
-      #     AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-      #     TF_VAR_tre_id: ${{ secrets.TRE_ID }}
-      #     TF_VAR_terraform_state_container_name: ${{ secrets.TF_STATE_CONTAINER }}
-      #     TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
-      #     TF_VAR_mgmt_storage_account_name: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
-      #     TF_VAR_location: ${{ secrets.LOCATION }}
-      #     TF_VAR_acr_name: ${{ secrets.ACR_NAME }}
-      #     TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
-      #     TF_VAR_tre_address_space: ${{ secrets.TRE_ADDRESS_SPACE }}
-      #     TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
-      #     TF_VAR_aad_tenant_id: "${{ secrets.AAD_TENANT_ID }}"
-      #     TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
-      #     TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
-      #     TF_VAR_api_app_service_plan_sku_tier: "PremiumV3"
-      #     TF_VAR_api_app_service_plan_sku_size: "P1v3"
-      #     TF_VAR_debug: false
-      #     TF_VAR_resource_processor_type: "vmss_porter"
-      #     TF_VAR_deploy_gitea: true
-      #     TF_VAR_deploy_nexus: true
-      #     DEPLOY_NEXUS: true
-      #     ACR_NAME: ${{ secrets.ACR_NAME }} # scripts are using this too
-      #     LOCATION: ${{ secrets.LOCATION }} # scripts are using this too
-      #     TRE_URL: "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
-      #     TRE_ID: "${{secrets.TRE_ID}}"
-      #   run: |
-      #     export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
-      #     export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
-      #     export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
-      #     export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
-      #     export TF_VAR_arm_subscription_id=$ARM_SUBSCRIPTION_ID
-
-      #     make all
-
-      #     az extension add --name azure-firewall
-      #     #make tre-start
-
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
         if: ${{ failure() && github.ref == 'refs/heads/main' }}
@@ -206,196 +138,196 @@ jobs:
           notification-color: dc3545
           timezone: Europe/Zurich
 
-  # publish_and_register_bundles:
-  #   name: Register Bundle
-  #   runs-on: ubuntu-latest
-  #   if: |
-  #     github.event.name == 'schedule'
-  #     || github.event_name == 'push'
-  #     || github.event_name == 'workflow_dispatch'
-  #     || contains(github.event.pull_request.labels.*.name, 'safe to test')
-  #   needs: [deploy_tre]
-  #   strategy:
-  #     matrix:
-  #       include:
-  #       # bundles type can be inferred from the bundle dir (but this is more explicit)
-  #         - { BUNDLE_TYPE: "workspace", BUNDLE_DIR: "./templates/workspaces/base"}
-  #         - { BUNDLE_TYPE: "workspace", BUNDLE_DIR: "./templates/workspaces/innereye"}
-  #         - { BUNDLE_TYPE: "workspace_service", BUNDLE_DIR: "./templates/workspace_services/guacamole"}
-  #         - { BUNDLE_TYPE: "workspace_service", BUNDLE_DIR: "./templates/workspace_services/azureml"}
-  #         - { BUNDLE_TYPE: "workspace_service", BUNDLE_DIR: "./templates/workspace_services/devtestlabs"}
-  #         - { BUNDLE_TYPE: "workspace_service", BUNDLE_DIR: "./templates/workspace_services/innereye"}
-  #   environment: Dev
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v2
+  publish_and_register_bundles:
+    name: Register Bundle
+    runs-on: ubuntu-latest
+    if: |
+      github.event.name == 'schedule'
+      || github.event_name == 'push'
+      || github.event_name == 'workflow_dispatch'
+      || contains(github.event.pull_request.labels.*.name, 'safe to test')
+    needs: [deploy_tre]
+    strategy:
+      matrix:
+        include:
+        # bundles type can be inferred from the bundle dir (but this is more explicit)
+          - { BUNDLE_TYPE: "workspace", BUNDLE_DIR: "./templates/workspaces/base"}
+          - { BUNDLE_TYPE: "workspace", BUNDLE_DIR: "./templates/workspaces/innereye"}
+          - { BUNDLE_TYPE: "workspace_service", BUNDLE_DIR: "./templates/workspace_services/guacamole"}
+          - { BUNDLE_TYPE: "workspace_service", BUNDLE_DIR: "./templates/workspace_services/azureml"}
+          - { BUNDLE_TYPE: "workspace_service", BUNDLE_DIR: "./templates/workspace_services/devtestlabs"}
+          - { BUNDLE_TYPE: "workspace_service", BUNDLE_DIR: "./templates/workspace_services/innereye"}
+    environment: Dev
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
 
-  #     - name: Azure Login
-  #       uses: azure/login@v1
-  #       with:
-  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-  #     - name: Install yq
-  #       run: |
-  #         sudo wget -O /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.13.0/yq_linux_amd64
-  #         sudo chmod +x /usr/local/bin/yq
+      - name: Install yq
+        run: |
+          sudo wget -O /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.13.0/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
 
-  #     - name: Install porter
-  #       run: |
-  #         curl -L https://cdn.porter.sh/v0.38.7/install-linux.sh | bash
-  #         ~/.porter/porter mixin install docker
-  #         echo "~/.porter/" >> $GITHUB_PATH
+      - name: Install porter
+        run: |
+          curl -L https://cdn.porter.sh/v0.38.7/install-linux.sh | bash
+          ~/.porter/porter mixin install docker
+          echo "~/.porter/" >> $GITHUB_PATH
 
-  #     - name: Publish and register bundles
-  #       shell: bash
-  #       env:
-  #         RESOURCE: "${{ secrets.API_CLIENT_ID }}"
-  #         AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
-  #         CLIENT_ID: "${{ secrets.TEST_APP_ID }}"
-  #         USERNAME: "${{ secrets.TEST_USER_NAME }}"
-  #         PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
-  #         ACR_NAME: ${{ secrets.ACR_NAME }}
-  #         TRE_URL: "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
-  #         BUNDLE_TYPE: ${{ matrix.BUNDLE_TYPE }}
-  #       run: |
-  #         set -o errexit
-  #         set -o pipefail
-  #         set -o nounset
+      - name: Publish and register bundles
+        shell: bash
+        env:
+          RESOURCE: "${{ secrets.API_CLIENT_ID }}"
+          AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
+          CLIENT_ID: "${{ secrets.TEST_APP_ID }}"
+          USERNAME: "${{ secrets.TEST_USER_NAME }}"
+          PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+          TRE_URL: "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
+          BUNDLE_TYPE: ${{ matrix.BUNDLE_TYPE }}
+        run: |
+          set -o errexit
+          set -o pipefail
+          set -o nounset
 
-  #         # test that porter is able to build the bundle
-  #         make porter-build DIR=${{ matrix.BUNDLE_DIR }}
+          # test that porter is able to build the bundle
+          make porter-build DIR=${{ matrix.BUNDLE_DIR }}
 
-  #         TEMPLATE_NAME=$(yq eval '.name' ${{ matrix.BUNDLE_DIR }}/porter.yaml)
+          TEMPLATE_NAME=$(yq eval '.name' ${{ matrix.BUNDLE_DIR }}/porter.yaml)
 
-  #         case "${BUNDLE_TYPE}" in
-  #           ("workspace") TRE_GET_PATH="api/workspace-templates" ;;
-  #           ("workspace_service") TRE_GET_PATH="api/workspace-service-templates" ;;
-  #         esac
+          case "${BUNDLE_TYPE}" in
+            ("workspace") TRE_GET_PATH="api/workspace-templates" ;;
+            ("workspace_service") TRE_GET_PATH="api/workspace-service-templates" ;;
+          esac
 
-  #         export TOKEN=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d "grant_type=password&resource=${RESOURCE}&client_id=${CLIENT_ID}&username=${USERNAME}&password=${PASSWORD}&scope=default)" https://login.microsoftonline.com/${AUTH_TENANT_ID}/oauth2/token | jq -r '.access_token')
+          export TOKEN=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d "grant_type=password&resource=${RESOURCE}&client_id=${CLIENT_ID}&username=${USERNAME}&password=${PASSWORD}&scope=default)" https://login.microsoftonline.com/${AUTH_TENANT_ID}/oauth2/token | jq -r '.access_token')
 
-  #         make register-bundle DIR=${{ matrix.BUNDLE_DIR }}
+          make register-bundle DIR=${{ matrix.BUNDLE_DIR }}
 
-  #         # Check that the template got registered
-  #         STATUS_CODE=$(curl -X "GET" "${TRE_URL}/${TRE_GET_PATH}/${TEMPLATE_NAME}" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
+          # Check that the template got registered
+          STATUS_CODE=$(curl -X "GET" "${TRE_URL}/${TRE_GET_PATH}/${TEMPLATE_NAME}" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
 
-  #         if [[ ${STATUS_CODE} != 200 ]]
-  #         then
-  #           echo "::warning ::Template API check for ${BUNDLE_TYPE} ${TEMPLATE_NAME} returned http status: ${STATUS_CODE}"
-  #           exit 1
-  #         fi
+          if [[ ${STATUS_CODE} != 200 ]]
+          then
+            echo "::warning ::Template API check for ${BUNDLE_TYPE} ${TEMPLATE_NAME} returned http status: ${STATUS_CODE}"
+            exit 1
+          fi
 
-  # e2e_tests:
-  #   name: "Run E2E Tests"
-  #   runs-on: ubuntu-latest
-  #   environment: Dev
-  #   if: |
-  #     github.event.name == 'schedule'
-  #     || github.event_name == 'push'
-  #     || github.event_name == 'workflow_dispatch'
-  #     || contains(github.event.pull_request.labels.*.name, 'safe to test')
-  #   # needs: [publish_and_register_user_resources]
-  #   needs: [publish_and_register_bundles]
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v2
+  e2e_tests:
+    name: "Run E2E Tests"
+    runs-on: ubuntu-latest
+    environment: Dev
+    if: |
+      github.event.name == 'schedule'
+      || github.event_name == 'push'
+      || github.event_name == 'workflow_dispatch'
+      || contains(github.event.pull_request.labels.*.name, 'safe to test')
+    # needs: [publish_and_register_user_resources]
+    needs: [publish_and_register_bundles]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-  #     - name: Set up Python 3.8
-  #       uses: actions/setup-python@v2
-  #       with:
-  #         python-version: 3.8
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
 
-  #     - name: Install dependencies
-  #       run: |
-  #         cd e2e_tests
-  #         python -m pip install --upgrade pip
-  #         pip install pytest
-  #         pip install -r requirements.txt
+      - name: Install dependencies
+        run: |
+          cd e2e_tests
+          python -m pip install --upgrade pip
+          pip install pytest
+          pip install -r requirements.txt
 
-  #     - name: Test with pytest
-  #       shell: bash
-  #       env:
-  #         RESOURCE_LOCATION: "${{ secrets.LOCATION }}"
-  #         TRE_ID: "${{ secrets.TRE_ID }}"
-  #         RESOURCE: "${{ secrets.API_CLIENT_ID }}"
-  #         AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
-  #         CLIENT_ID: "${{ secrets.TEST_APP_ID }}"
-  #         USERNAME: "${{ secrets.TEST_USER_NAME }}"
-  #         PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
-  #         TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
-  #       run: |
-  #         export SCOPE="api://${RESOURCE}/user_impersonation"
-  #         export WORKSPACE_SCOPE="api://${TEST_WORKSPACE_APP_ID}/user_impersonation"
-  #         cd e2e_tests
-  #         PYTHONPATH=. python -m pytest -m smoke --junit-xml pytest_e2e.xml
+      - name: Test with pytest
+        shell: bash
+        env:
+          RESOURCE_LOCATION: "${{ secrets.LOCATION }}"
+          TRE_ID: "${{ secrets.TRE_ID }}"
+          RESOURCE: "${{ secrets.API_CLIENT_ID }}"
+          AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
+          CLIENT_ID: "${{ secrets.TEST_APP_ID }}"
+          USERNAME: "${{ secrets.TEST_USER_NAME }}"
+          PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
+          TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
+        run: |
+          export SCOPE="api://${RESOURCE}/user_impersonation"
+          export WORKSPACE_SCOPE="api://${TEST_WORKSPACE_APP_ID}/user_impersonation"
+          cd e2e_tests
+          PYTHONPATH=. python -m pytest -m smoke --junit-xml pytest_e2e.xml
 
-  #     - name: Notify dedicated teams channel
-  #       uses: sachinkundu/ms-teams-notification@1.4
-  #       if: ${{ failure() && github.ref == 'refs/heads/main'}}
-  #       continue-on-error: true
-  #       with:
-  #         github-token: ${{ github.token }}
-  #         ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-  #         notification-summary: "E2E Tests failed"
-  #         notification-color: dc3545
-  #         timezone: Europe/Zurich
+      - name: Notify dedicated teams channel
+        uses: sachinkundu/ms-teams-notification@1.4
+        if: ${{ failure() && github.ref == 'refs/heads/main'}}
+        continue-on-error: true
+        with:
+          github-token: ${{ github.token }}
+          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+          notification-summary: "E2E Tests failed"
+          notification-color: dc3545
+          timezone: Europe/Zurich
 
-  #     - name: Expose workspace id
-  #       shell: bash
-  #       if: always()
-  #       run: |
-  #         cd e2e_tests
-  #         wkspc_id=`cat workspace_id.txt`
-  #         echo "WORKSPACE_ID=$wkspc_id" >> $GITHUB_ENV
+      - name: Expose workspace id
+        shell: bash
+        if: always()
+        run: |
+          cd e2e_tests
+          wkspc_id=`cat workspace_id.txt`
+          echo "WORKSPACE_ID=$wkspc_id" >> $GITHUB_ENV
 
-  #     - name: Notify dedicated teams channel
-  #       uses: sachinkundu/ms-teams-notification@1.4
-  #       if: ${{ success() && github.ref == 'refs/heads/main' }}
-  #       continue-on-error: true
-  #       with:
-  #         github-token: ${{ github.token }}
-  #         ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-  #         notification-summary: "Deployment and tests passed successfully"
-  #         notification-color: 28a745
-  #         timezone: Europe/Zurich
+      - name: Notify dedicated teams channel
+        uses: sachinkundu/ms-teams-notification@1.4
+        if: ${{ success() && github.ref == 'refs/heads/main' }}
+        continue-on-error: true
+        with:
+          github-token: ${{ github.token }}
+          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+          notification-summary: "Deployment and tests passed successfully"
+          notification-color: 28a745
+          timezone: Europe/Zurich
 
-  #     - name: Upload Test Results
-  #       if: always()
-  #       uses: actions/upload-artifact@v2
-  #       with:
-  #         name: E2E Test Results (Python ${{ matrix.python-version }})
-  #         path: "./e2e_tests/pytest_e2e.xml"
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: E2E Test Results (Python ${{ matrix.python-version }})
+          path: "./e2e_tests/pytest_e2e.xml"
 
-  #     - name: Publish Test Results
-  #       if: always()
-  #       uses: EnricoMi/publish-unit-test-result-action@v1
-  #       with:
-  #         files: "./e2e_tests/pytest_e2e.xml"
+      - name: Publish Test Results
+        if: always()
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        with:
+          files: "./e2e_tests/pytest_e2e.xml"
 
-  # tre_stop:
-  #     name: "Deallocate Resources"
-  #     runs-on: ubuntu-latest
-  #     environment: Dev
-  #     needs: [e2e_tests]
-  #     if: |
-  #       ${{
-  #       always() &&
-  #       github.event.name == 'schedule'
-  #       || github.event_name == 'push'
-  #       || github.event_name == 'workflow_dispatch'
-  #       || contains(github.event.pull_request.labels.*.name, 'safe to test')
-  #       }}
-  #     steps:
-  #       - name: Checkout code
-  #         uses: actions/checkout@v2
-  #       - name: Azure Login
-  #         uses: azure/login@v1
-  #         with:
-  #           creds: ${{ secrets.AZURE_CREDENTIALS }}
-  #       - name: Deallocate Resources
-  #         shell: bash
-  #         env:
-  #           TRE_ID: "${{secrets.TRE_ID}}"
-  #         run: |
-  #           az extension add --name azure-firewall
-  #           #make tre-stop
+  tre_stop:
+      name: "Deallocate Resources"
+      runs-on: ubuntu-latest
+      environment: Dev
+      needs: [e2e_tests]
+      if: |
+        ${{
+        always() &&
+        github.event.name == 'schedule'
+        || github.event_name == 'push'
+        || github.event_name == 'workflow_dispatch'
+        || contains(github.event.pull_request.labels.*.name, 'safe to test')
+        }}
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v2
+        - name: Azure Login
+          uses: azure/login@v1
+          with:
+            creds: ${{ secrets.AZURE_CREDENTIALS }}
+        - name: Deallocate Resources
+          shell: bash
+          env:
+            TRE_ID: "${{secrets.TRE_ID}}"
+          run: |
+            az extension add --name azure-firewall
+            #make tre-stop
