@@ -110,9 +110,8 @@ jobs:
             -e TF_VAR_arm_subscription_id \
             -e TF_VAR_terraform_state_container_name \
             -e TF_VAR_mgmt_storage_account_name \
-            -e TF_VAR_arm_subscription_id \
             -e TF_VAR_acr_name \
-            'tredev:latest' \
+            '${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest' \
           bash -c "make bootstrap"
 
 
