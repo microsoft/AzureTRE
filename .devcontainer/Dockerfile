@@ -21,11 +21,11 @@ ARG NODE_VERSION="lts/*"
 RUN if [ "${INSTALL_NODE}" = "true" ]; then su $USERNAME -c "umask 0002 && . /usr/local/share/nvm/nvm.sh && nvm install ${NODE_VERSION} 2>&1"; fi
 
 # Install terraform
-ARG TERRAFORM_VERSION="1.0.5"
-RUN apt-get update && apt-get install -y gnupg software-properties-common curl \
-    && curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add - \
-    && apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
-    && apt-get update && apt-get install -y terraform "${TERRAFORM_VERSION}"
+# ARG TERRAFORM_VERSION="1.0.5"
+# RUN apt-get update && apt-get install -y gnupg software-properties-common curl \
+#     && curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add - \
+#     && apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
+#     && apt-get update && apt-get install -y terraform "${TERRAFORM_VERSION}"
 
 ARG DOCKER_GROUP_ID
 COPY .devcontainer/scripts/docker-client.sh /tmp/
