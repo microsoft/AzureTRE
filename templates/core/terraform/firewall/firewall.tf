@@ -19,7 +19,9 @@ resource "azurerm_firewall" "fw" {
     public_ip_address_id = azurerm_public_ip.fwpip.id
   }
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle {
+    ignore_changes = [tags, ip_configuration.0]
+  }
 }
 
 resource "azurerm_management_lock" "fw" {
