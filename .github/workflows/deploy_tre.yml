@@ -57,16 +57,66 @@ jobs:
           file: ./.devcontainer/Dockerfile
           builder: ${{ steps.buildx.outputs.name }}
           push: true
-          tags: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest, tredev:latest
+          tags: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest
           cache-from: type=registry,ref=${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:buildcache
           cache-to: type=registry,ref=${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:buildcache,mode=max
 
-      - uses: addnab/docker-run-action@v3
-        with:
-          image: tredev:latest
-          run: make help
+      - name: Make Bootstrap
+        env:
+          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
+          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
+          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
+          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          TF_VAR_arm_subscription_id: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          TF_VAR_location: ${{ secrets.LOCATION }}
+          TF_VAR_tre_id: ${{ secrets.TRE_ID }}
+          TF_VAR_terraform_state_container_name: ${{ secrets.TF_STATE_CONTAINER }}
+          TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
+          TF_VAR_mgmt_storage_account_name: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+          TF_VAR_acr_name: ${{ secrets.ACR_NAME }}
+          TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
+          TF_VAR_tre_address_space: ${{ secrets.TRE_ADDRESS_SPACE }}
+          TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
+          TF_VAR_aad_tenant_id: "${{ secrets.AAD_TENANT_ID }}"
+          TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
+          TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
+          TF_VAR_api_app_service_plan_sku_tier: "PremiumV3"
+          TF_VAR_api_app_service_plan_sku_size: "P1v3"
+          TF_VAR_debug: false
+          TF_VAR_resource_processor_type: "vmss_porter"
+          TF_VAR_deploy_gitea: true
+          TF_VAR_deploy_nexus: true
+          DEPLOY_NEXUS: true
+          ACR_NAME: ${{ secrets.ACR_NAME }} # scripts are using this too
+          LOCATION: ${{ secrets.LOCATION }} # scripts are using this too
+          TRE_URL: "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
+          TRE_ID: "${{secrets.TRE_ID}}"
+        run: |
+          docker run --rm \
+            --mount "type=bind,src=.,dst=/workspaces/tre" \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            --workdir /workspaces/tre \
+            --user vscode \
+            -e ARM_USE_MSI \
+            -e TF_IN_AUTOMATION \
+            -e ARM_CLIENT_ID \
+            -e ARM_CLIENT_SECRET \
+            -e ARM_TENANT_ID \
+            -e ARM_SUBSCRIPTION_ID \
+            -e BUILD_BUILDID \
+            -e BUILD_BUILDNUMBER \
+            -e TF_VAR_mgmt_resource_group_name \
+            -e TF_VAR_location \
+            -e TF_VAR_arm_subscription_id \
+            -e TF_VAR_terraform_state_container_name \
+            -e TF_VAR_mgmt_storage_account_name \
+            -e TF_VAR_arm_subscription_id \
+            -e TF_VAR_acr_name \
+            'tredev:latest' \
+          bash -c "make bootstrap"
 
-          # - name: Build and run dev container task
+
+      # - name: Build and run dev container task
       #   uses: stuartleeks/devcontainer-build-run@v0.1
       #   with:
       #     imageName: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/azuretre/tredev
