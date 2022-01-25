@@ -126,7 +126,7 @@ jobs:
             -e ACR_NAME \
             -e TF_VAR_acr_name \
             '${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest' \
-          bash -c "make all && make tre-start"
+          bash -c "make all"
 
 
       # - name: Build and run dev container task
@@ -193,7 +193,7 @@ jobs:
       #     make all
 
       #     az extension add --name azure-firewall
-      #     make tre-start
+      #     #make tre-start
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
@@ -397,4 +397,4 @@ jobs:
   #           TRE_ID: "${{secrets.TRE_ID}}"
   #         run: |
   #           az extension add --name azure-firewall
-  #           make tre-stop
+  #           #make tre-stop
