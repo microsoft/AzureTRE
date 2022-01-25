@@ -48,6 +48,14 @@ if [[ "$1" == *"porter"* ]]; then
   fi
 fi
 
+# This is called if we are in a CI system and we will login
+# with a Service Principal.
+if [ -n "${TF_IN_AUTOMATION}" ]
+then
+    az login --service-principal -u "$ARM_CLIENT_ID" -p "$ARM_CLIENT_SECRET" --tenant "$ARM_TENANT_ID"
+    az account set -s "$ARM_SUBSCRIPTION_ID"
+fi
+
 export SUB_NAME=$(az account show --query name -o tsv)
 export SUB_ID=$(az account show --query id -o tsv)
 export TENANT_ID=$(az account show --query tenantId -o tsv)
