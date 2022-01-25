@@ -126,6 +126,11 @@ jobs:
             -e TF_VAR_tre_id \
             -e ACR_NAME \
             -e TF_VAR_acr_name \
+            -e TF_VAR_aad_tenant_id \
+            -e TF_VAR_api_client_id \
+            -e TF_VAR_api_client_secret \
+            -e TF_VAR_api_app_service_plan_sku_tier \
+            -e TF_VAR_api_app_service_plan_sku_size \
             '${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest' \
           bash -c "make all"
 
