@@ -74,7 +74,7 @@ jobs:
             USER_UID=${{ env.USER_UID }}
             USER_GID=${{ env.USER_GID }}
 
-      - name: Make Bootstrap
+      - name: Make All
         env:
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
@@ -86,7 +86,6 @@ jobs:
           TF_VAR_terraform_state_container_name: ${{ secrets.TF_STATE_CONTAINER }}
           TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
           TF_VAR_mgmt_storage_account_name: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
-          TF_VAR_acr_name: ${{ secrets.ACR_NAME }}
           TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
           TF_VAR_tre_address_space: ${{ secrets.TRE_ADDRESS_SPACE }}
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
@@ -100,6 +99,7 @@ jobs:
           TF_VAR_deploy_gitea: true
           TF_VAR_deploy_nexus: true
           DEPLOY_NEXUS: true
+          TF_VAR_acr_name: ${{ secrets.ACR_NAME }}
           ACR_NAME: ${{ secrets.ACR_NAME }} # scripts are using this too
           LOCATION: ${{ secrets.LOCATION }} # scripts are using this too
           TRE_URL: "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
@@ -123,9 +123,10 @@ jobs:
             -e TF_VAR_arm_subscription_id \
             -e TF_VAR_terraform_state_container_name \
             -e TF_VAR_mgmt_storage_account_name \
+            -e ACR_NAME \
             -e TF_VAR_acr_name \
             '${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest' \
-          bash -c "make all"
+          bash -c "make all && make tre-start"
 
 
       # - name: Build and run dev container task
@@ -194,15 +195,15 @@ jobs:
       #     az extension add --name azure-firewall
       #     make tre-start
 
-      # - name: Notify dedicated teams channel
-      #   uses: sachinkundu/ms-teams-notification@1.4
-      #   if: ${{ failure() && github.ref == 'refs/heads/main' }}
-      #   with:
-      #     github-token: ${{ github.token }}
-      #     ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-      #     notification-summary: "Deploy TRE Failed"
-      #     notification-color: dc3545
-      #     timezone: Europe/Zurich
+      - name: Notify dedicated teams channel
+        uses: sachinkundu/ms-teams-notification@1.4
+        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        with:
+          github-token: ${{ github.token }}
+          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+          notification-summary: "Deploy TRE Failed"
+          notification-color: dc3545
+          timezone: Europe/Zurich
 
   # publish_and_register_bundles:
   #   name: Register Bundle
