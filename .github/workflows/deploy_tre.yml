@@ -52,9 +52,13 @@ jobs:
 
       - name: Set Variables
         run: |
-          USER_UID=$(id -u)
-          USER_GID=$(id -g)
+          echo "USER_UID=$(id -u)" >> $GITHUB_ENV
+          echo "USER_GID=$(id -g)" >> $GITHUB_ENV
+
+      - name: Test Variables
+        run: |
           echo $USER_UID
+          echo $USER_GID
 
       - name: Build and push
         uses: docker/build-push-action@v2
@@ -64,11 +68,11 @@ jobs:
           builder: ${{ steps.buildx.outputs.name }}
           push: true
           tags: tredev:latest
-          cache-from: type=registry,ref=tredev:buildcache
-          cache-to: type=registry,ref=tredev:buildcache,mode=max
-          # build-args: |
-          #   USER_UID=$(id -u)
-          #   USER_GID=$(id -g)
+          cache-from: type=registry,ref=${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io\tredev:buildcache
+          cache-to: type=registry,ref=${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io\tredev:buildcache,mode=max
+          build-args: |
+            USER_UID=$USER_UID
+            USER_GID=$USER_GID
 
       - name: Make Bootstrap
         env:
