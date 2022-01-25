@@ -85,7 +85,8 @@ jobs:
           make all
 
           az extension add --name azure-firewall
-          make tre-start
+          # TODO: enable this once the bug https://github.com/microsoft/AzureTRE/issues/1165 is fixed
+          # make tre-start
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
@@ -289,4 +290,5 @@ jobs:
             TRE_ID: "${{secrets.TRE_ID}}"
           run: |
             az extension add --name azure-firewall
-            make tre-stop
+            # TODO: enable this once the bug https://github.com/microsoft/AzureTRE/issues/1165 is fixed
+            # make tre-stop
