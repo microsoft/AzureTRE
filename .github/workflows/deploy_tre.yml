@@ -61,7 +61,17 @@ jobs:
           cache-from: type=registry,ref=${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:buildcache
           cache-to: type=registry,ref=${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:buildcache,mode=max
 
-      # - name: Build and run dev container task
+      - uses: addnab/docker-run-action@v3
+        with:
+          image: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest
+          run: make help
+          env: |
+            ARM_SUBSCRIPTION_ID="${{ secrets.ARM_SUBSCRIPTION_ID }}"
+            ARM_TENANT_ID="${{ secrets.ARM_TENANT_ID }}"
+            ARM_CLIENT_ID="${{ secrets.ARM_CLIENT_ID }}"
+            ARM_CLIENT_SECRET="${{ secrets.ARM_CLIENT_SECRET }}"
+
+          # - name: Build and run dev container task
       #   uses: stuartleeks/devcontainer-build-run@v0.1
       #   with:
       #     imageName: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/azuretre/tredev
