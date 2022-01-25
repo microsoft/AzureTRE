@@ -38,17 +38,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Login to GitHub Container Registry
+      - name: Login to Container Registry
         uses: docker/login-action@v1
         with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io
+          username: ${{ secrets.ACTIONS_ACR_NAME }}
+          password: ${{ secrets.ACTIONS_ACR_PASSWORD }}
 
       - name: Build and run dev container task
         uses: stuartleeks/devcontainer-build-run@v0.1
         with:
-          imageName: ghcr.io/azuretre/tredev
+          imageName: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/azuretre/tredev
           runCmd: make bootstrap
           env: |
             ARM_SUBSCRIPTION_ID="${{ secrets.ARM_SUBSCRIPTION_ID }}"
