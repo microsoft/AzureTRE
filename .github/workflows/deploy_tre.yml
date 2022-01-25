@@ -93,7 +93,7 @@ jobs:
           TRE_ID: "${{secrets.TRE_ID}}"
         run: |
           docker run --rm \
-            --mount "type=bind,src=.,dst=/workspaces/tre" \
+            --mount "type=bind,src=${{ github.workspace }},dst=/workspaces/tre" \
             -v /var/run/docker.sock:/var/run/docker.sock \
             --workdir /workspaces/tre \
             --user vscode \
