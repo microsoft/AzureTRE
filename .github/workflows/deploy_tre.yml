@@ -67,12 +67,14 @@ jobs:
           file: .devcontainer/Dockerfile
           builder: ${{ steps.buildx.outputs.name }}
           push: true
-          tags: tredev:latest
-          cache-from: type=registry,ref=${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io\tredev:buildcache
-          cache-to: type=registry,ref=${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io\tredev:buildcache,mode=max
+          tags: |
+            tredev:latest
+            ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest
+          cache-from: type=registry,ref=${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:buildcache
+          cache-to: type=registry,ref=${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:buildcache,mode=max
           build-args: |
-            USER_UID=$USER_UID
-            USER_GID=$USER_GID
+            USER_UID=${{ env.USER_UID }}
+            USER_GID=${{ env.USER_GID }}
 
       - name: Make Bootstrap
         env:
@@ -125,7 +127,7 @@ jobs:
             -e TF_VAR_mgmt_storage_account_name \
             -e TF_VAR_acr_name \
             '${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest' \
-          bash -c "make bootstrap"
+          bash -c "make all"
 
 
       # - name: Build and run dev container task
