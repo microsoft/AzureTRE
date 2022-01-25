@@ -50,6 +50,12 @@ jobs:
           username: ${{ secrets.ACTIONS_ACR_NAME }}
           password: ${{ secrets.ACTIONS_ACR_PASSWORD }}
 
+      - name: Set Variables
+        run: |
+          USER_UID=$(id -u)
+          USER_GID=$(id -g)
+          echo $USER_UID
+
       - name: Build and push
         uses: docker/build-push-action@v2
         with:
@@ -60,9 +66,9 @@ jobs:
           tags: tredev:latest
           cache-from: type=registry,ref=tredev:buildcache
           cache-to: type=registry,ref=tredev:buildcache,mode=max
-          build-args: |
-            USER_UID=$(id -u)
-            USER_GID=$(id -g)
+          # build-args: |
+          #   USER_UID=$(id -u)
+          #   USER_GID=$(id -g)
 
       - name: Make Bootstrap
         env:
