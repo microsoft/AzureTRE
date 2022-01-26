@@ -4,7 +4,12 @@ SHELL:=/bin/bash
 ROOTPATH:=$(shell pwd)
 
 all: bootstrap mgmt-deploy images tre-deploy
-images: build-api-image push-api-image build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image build-gitea-image push-gitea-image build-guacamole-image push-guacamole-image
+images: build-and-push-api build-and-push-resource-processor build-and-push-gitea build-and-push-guacamole
+
+build-and-push-api: build-api-image push-api-image
+build-and-push-resource-processor: build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image
+build-and-push-gitea: build-gitea-image push-gitea-image
+build-and-push-guacamole: build-guacamole-image push-guacamole-image
 
 bootstrap:
 	echo -e "\n\e[34m»»» 🧩 \e[96mBootstrap Terraform\e[0m..." \
