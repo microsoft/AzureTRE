@@ -13,10 +13,11 @@ RUN apt-get update \
     && apt-get update && apt-get -y install azure-cli=${AZURE_CLI_VERSION}
 
 # Install Terraform
-RUN apt-get update && apt-get install -y gnupg software-properties-common curl \
-    && curl -fsSL https://apt.releases.hashicorp.com/gpg |  apt-key add - \
-    && apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
-    && apt-get update && apt-get install -y terraform
+ARG TERRAFORM_VERSION="1.0.5"
+COPY ./scripts/terraform.sh /tmp/
+RUN apt-get update \
+    && apt-get -y install unzip \
+    && bash /tmp/terraform.sh "${TERRAFORM_VERSION}" /usr/bin
 
 # Install Porter
 RUN export PORTER_HOME=/root/.porter && curl -L https://cdn.porter.sh/${PORTER_PERMALINK}/install-linux.sh | bash
