@@ -90,5 +90,5 @@ variable "firewall_name" {
 
 variable "firewall_resource_group_name" {
   type        = string
-  description = "Name of the firewall to connect to"
+  description = "Name of the resource group containing the firewall resource"
 }
