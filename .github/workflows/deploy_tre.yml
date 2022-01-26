@@ -75,7 +75,8 @@ jobs:
             USER_UID=${{ env.USER_UID }}
             USER_GID=${{ env.USER_GID }}
 
-      - name: Make All
+      - name: Make Infrastructure
+        shell: bash
         env:
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
@@ -126,7 +127,7 @@ jobs:
             -e TF_VAR_core_address_space \
             -e TF_VAR_tre_address_space \
             '${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest' \
-          bash -c "make all && make mgmt-deploy"
+          bash -c "make bootstrap && make mgmt-deploy"
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
