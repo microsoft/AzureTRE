@@ -24,8 +24,8 @@ env:
   TF_IN_AUTOMATION: 1 # No prompts
 
 jobs:
-  deploy_tre:
-    name: Deploy TRE
+  deploy_management:
+    name: Deploy Management
     runs-on: ubuntu-latest
     # The conditions below define the desired behaviour of the deployment workflow:
     #   1. The workflow must NOT be triggered automatically by an opened pull request
@@ -56,10 +56,10 @@ jobs:
           echo "USER_UID=$(id -u)" >> $GITHUB_ENV
           echo "USER_GID=$(id -g)" >> $GITHUB_ENV
 
-      - name: Test Variables
-        run: |
-          echo $USER_UID
-          echo $USER_GID
+      # - name: Test Variables
+      #   run: |
+      #     echo $USER_UID
+      #     echo $USER_GID
 
       - name: Build and push
         uses: docker/build-push-action@v2
@@ -151,7 +151,7 @@ jobs:
       || github.event_name == 'push'
       || github.event_name == 'workflow_dispatch'
       || contains(github.event.pull_request.labels.*.name, 'safe to test')
-    needs: [deploy_tre]
+    needs: [deploy_management]
     environment: Dev
     strategy:
         fail-fast: true
@@ -209,6 +209,103 @@ jobs:
           notification-color: dc3545
           timezone: Europe/Zurich
 
+  deploy_tre:
+    name: Deploy TRE
+    runs-on: ubuntu-latest
+    # The conditions below define the desired behaviour of the deployment workflow:
+    #   1. The workflow must NOT be triggered automatically by an opened pull request
+    #   2. It should be possible to manually trigger the workflow for PRs originating from forks (using "safe to test" label)
+    #   3. The workflow must run when scheduled, pushed (i.e., merge) or manually triggered
+    if: |
+      github.event.name == 'schedule'
+      || github.event_name == 'push'
+      || github.event_name == 'workflow_dispatch'
+      || contains(github.event.pull_request.labels.*.name, 'safe to test')
+    needs: [build_docker_images]
+    environment: Dev
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set up Docker BuildKit
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io
+          username: ${{ secrets.ACTIONS_ACR_NAME }}
+          password: ${{ secrets.ACTIONS_ACR_PASSWORD }}
+
+      - name: Set Variables
+        run: |
+          echo "USER_UID=$(id -u)" >> $GITHUB_ENV
+          echo "USER_GID=$(id -g)" >> $GITHUB_ENV
+
+      - name: Make tre-deploy
+        shell: bash
+        env:
+          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
+          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
+          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
+          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          TF_VAR_location: ${{ secrets.LOCATION }}
+          TF_VAR_tre_id: ${{ secrets.TRE_ID }}
+          TF_VAR_terraform_state_container_name: ${{ secrets.TF_STATE_CONTAINER }}
+          TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
+          TF_VAR_mgmt_storage_account_name: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+          TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
+          TF_VAR_tre_address_space: ${{ secrets.TRE_ADDRESS_SPACE }}
+          TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
+          TF_VAR_aad_tenant_id: "${{ secrets.AAD_TENANT_ID }}"
+          TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
+          TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
+          TF_VAR_api_app_service_plan_sku_tier: "PremiumV3"
+          TF_VAR_api_app_service_plan_sku_size: "P1v3"
+          TF_VAR_acr_name: ${{ secrets.ACR_NAME }}
+          ACR_NAME: ${{ secrets.ACR_NAME }} # scripts are using this too
+          LOCATION: ${{ secrets.LOCATION }} # scripts are using this too
+          TRE_URL: "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
+          TRE_ID: "${{secrets.TRE_ID}}"
+        run: |
+          docker run --rm \
+            --mount "type=bind,src=${{ github.workspace }},dst=/workspaces/tre" \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            --workdir /workspaces/tre \
+            --user vscode \
+            -e TF_IN_AUTOMATION \
+            -e ARM_CLIENT_ID \
+            -e ARM_CLIENT_SECRET \
+            -e ARM_TENANT_ID \
+            -e ARM_SUBSCRIPTION_ID \
+            -e TF_VAR_location \
+            -e TF_VAR_terraform_state_container_name \
+            -e TF_VAR_mgmt_storage_account_name \
+            -e TF_VAR_mgmt_resource_group_name \
+            -e TF_VAR_tre_id \
+            -e ACR_NAME \
+            -e TF_VAR_acr_name \
+            -e TF_VAR_aad_tenant_id \
+            -e TF_VAR_api_client_id \
+            -e TF_VAR_api_client_secret \
+            -e TF_VAR_api_app_service_plan_sku_tier \
+            -e TF_VAR_api_app_service_plan_sku_size \
+            -e TF_VAR_swagger_ui_client_id \
+            -e TF_VAR_core_address_space \
+            -e TF_VAR_tre_address_space \
+            '${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest' \
+          bash -c "make tre-deploy"
+
+      - name: Notify dedicated teams channel
+        uses: sachinkundu/ms-teams-notification@1.4
+        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        with:
+          github-token: ${{ github.token }}
+          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+          notification-summary: "Deploy TRE Failed"
+          notification-color: dc3545
+          timezone: Europe/Zurich
+
   publish_and_register_bundles:
     name: Register Bundle
     runs-on: ubuntu-latest
@@ -217,7 +314,7 @@ jobs:
       || github.event_name == 'push'
       || github.event_name == 'workflow_dispatch'
       || contains(github.event.pull_request.labels.*.name, 'safe to test')
-    needs: [build_docker_images]
+    needs: [deploy_tre]
     strategy:
       matrix:
         include:
