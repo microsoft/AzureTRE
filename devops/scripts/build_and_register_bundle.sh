@@ -47,7 +47,7 @@ while [ "$1" != "" ]; do
             echo "Bundle type must be workspace, workspace_service or user_resource, not $1"
             exit 1
         esac
-        bundle_type=$1
+        BUNDLE_TYPE=$1
         ;;
     -c| --current)
         current="true"
@@ -66,7 +66,7 @@ while [ "$1" != "" ]; do
     shift # remove the current value for `$1` and use the next
 done
 
-if [[ -z ${bundle_type+x} ]]; then
+if [[ -z ${BUNDLE_TYPE+x} ]]; then
     echo -e "No bundle type provided\n"
     usage
 fi
@@ -76,12 +76,25 @@ fi
 BUNDLE_DIR="$(pwd)"
 TEMPLATE_NAME=$(yq eval '.name' ${BUNDLE_DIR}/porter.yaml)
 
-case "${bundle_type}" in
+case "${BUNDLE_TYPE}" in
   ("workspace") TRE_GET_PATH="api/workspace-templates" ;;
   ("workspace_service") TRE_GET_PATH="api/workspace-service-templates" ;;
 esac
 
-curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d \
-  "grant_type=password&resource=${TF_VAR_api_client_id}&client_id=${CLIENT_ID}&username=${USERNAME}&password=${PASSWORD}&scope=default)" \
-  https://login.microsoftonline.com/${TF_VAR_aad_tenant_id}/oauth2/token | jq -r '.access_token'
+export TOKEN=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d \
+  "grant_type=password&resource=${RESOURCE}&client_id=${CLIENT_ID}&username=${USERNAME}&password=${PASSWORD}&scope=default)" \
+  https://login.microsoftonline.com/${AUTH_TENANT_ID}/oauth2/token | jq -r '.access_token')
 
+# We now need to traverse back to our scripts directory
+# TODO: Fix this traversing
+cd ../../../
+make register-bundle DIR=${BUNDLE_DIR}
+
+# Check that the template got registered
+STATUS_CODE=$(curl -X "GET" "${TRE_URL}/${TRE_GET_PATH}/${TEMPLATE_NAME}" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
+
+if [[ ${STATUS_CODE} != 200 ]]
+then
+  echo "::warning ::Template API check for ${BUNDLE_TYPE} ${TEMPLATE_NAME} returned http status: ${STATUS_CODE}"
+  exit 1
+fi
