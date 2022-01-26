@@ -56,14 +56,14 @@ Next, you will set the configuration variables for the specific Azure TRE instan
 
 1. Open the `/templates/core/.env.sample` file and then save it without the .sample extension. You should now have a file called `.env` located in the `/templates/core` folder.
 1. Set the first one of the variables, `TRE_ID`, which is the alphanumeric, with underscores and hyphens allowed, ID for the Azure TRE instance. The value will be used in various Azure resources, and **needs to be globally unique and less than 12 characters in length**. Use only lowercase letters. Choose wisely!
-1. Run the `/scripts/aad-app-reg.sh` script to create API and Swagger UI app registrations and their service principals. The details of the script are covered [app registration script](../auth.md#app-registration-script) section of the auth document. Below is a sample where `TRE_ID` has value `mytre` and the Azure location is `westeurope`:
+1. Run the `/scripts/aad-app-reg.sh` script to create API and Swagger UI app registrations and their service principals in Azure Active Directory. The details of the script are covered [app registration script](../auth.md#app-registration-script) section of the auth document. Below is a sample where `TRE_ID` has value `mytre` and the Azure location is `westeurope`:
 
   ```bash
   ./scripts/aad-app-reg.sh -n TRE -r https://mytre.westeurope.cloudapp.azure.com/api/docs/oauth2-redirect -a
   ```
 
   !!! note
-      The full functionality of the script requires directory admin privileges. You may need to contact your friendly AAD admin to complete this step. The app registrations can be created manually in Azure Portal too. For more information, see [Authentication and authorization](../auth.md).
+      The full functionality of the script requires directory admin privileges. You may need to contact your friendly Azure Active Directory admin to complete this step. The app registrations can be created manually in Azure Portal too. For more information, see [Authentication and authorization](../auth.md).<br/>If you don't have permissions and just want to create a development environment or explore TRE then you can create a separate Azure Active Directory tenant for this stage by [following the steps here](https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-create-new-tenant) (note that you won't be able to use certain Active Directory integrated services in this configuration, so it is not recommended for production).
 
   With the output of the script, you can now provide the required auth related values for the following variables in the `/templates/core/.env` configuration file:
 
