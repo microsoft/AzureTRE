@@ -74,8 +74,11 @@ jobs:
           builder: ${{ steps.buildx.outputs.name }}
           push: true
           tags: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest
-          cache-from: type=registry,ref=${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:buildcache
-          cache-to: type=registry,ref=${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:buildcache,mode=max
+          cache-from: type=registry,
+            ref=${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:buildcache
+          cache-to: type=registry,
+            ref=${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:buildcache,
+            mode=max
           build-args: |
             USER_UID=${{ env.USER_UID }}
             USER_GID=${{ env.USER_GID }}
@@ -110,7 +113,9 @@ jobs:
           TRE_ID: "${{secrets.TRE_ID}}"
         run: |
           docker run --rm \
-            --mount "type=bind,src=${{ github.workspace }},dst=/workspaces/tre" \
+            --mount "type=bind, \
+                src=${{ github.workspace }}, \
+                dst=/workspaces/tre" \
             -v /var/run/docker.sock:/var/run/docker.sock \
             --workdir /workspaces/tre \
             --user vscode \
@@ -150,21 +155,16 @@ jobs:
   build_docker_images:
     name: Build Docker Images
     runs-on: ubuntu-latest
-    # The conditions below define the desired behaviour of the deployment workflow:
-    #   1. The workflow must NOT be triggered automatically by an opened pull request
-    #   2. It should be possible to manually trigger the workflow for PRs originating from forks (using "safe to test" label)
-    #   3. The workflow must run when scheduled, pushed (i.e., merge) or manually triggered
-    if: |
-      github.event.name == 'schedule'
-      || github.event_name == 'push'
-      || github.event_name == 'workflow_dispatch'
-      || contains(github.event.pull_request.labels.*.name, 'safe to test')
     needs: [deploy_management]
     environment: Dev
     strategy:
-        fail-fast: true
-        matrix:
-          target: [build-and-push-api, build-and-push-resource-processor, build-and-push-gitea, build-and-push-guacamole]
+      fail-fast: true
+      matrix:
+        target: [
+          build-and-push-api,
+          build-and-push-resource-processor,
+          build-and-push-gitea,
+          build-and-push-guacamole]
 
     steps:
       - name: Checkout
@@ -194,7 +194,9 @@ jobs:
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
         run: |
           docker run --rm \
-            --mount "type=bind,src=${{ github.workspace }},dst=/workspaces/tre" \
+            --mount "type=bind, \
+                src=${{ github.workspace }}, \
+                dst=/workspaces/tre" \
             -v /var/run/docker.sock:/var/run/docker.sock \
             --workdir /workspaces/tre \
             --user vscode \
@@ -220,15 +222,6 @@ jobs:
   deploy_tre:
     name: Deploy TRE
     runs-on: ubuntu-latest
-    # The conditions below define the desired behaviour of the deployment workflow:
-    #   1. The workflow must NOT be triggered automatically by an opened pull request
-    #   2. It should be possible to manually trigger the workflow for PRs originating from forks (using "safe to test" label)
-    #   3. The workflow must run when scheduled, pushed (i.e., merge) or manually triggered
-    if: |
-      github.event.name == 'schedule'
-      || github.event_name == 'push'
-      || github.event_name == 'workflow_dispatch'
-      || contains(github.event.pull_request.labels.*.name, 'safe to test')
     needs: [build_docker_images]
     environment: Dev
     steps:
@@ -259,9 +252,11 @@ jobs:
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
           TF_VAR_location: ${{ secrets.LOCATION }}
           TF_VAR_tre_id: ${{ secrets.TRE_ID }}
-          TF_VAR_terraform_state_container_name: ${{ secrets.TF_STATE_CONTAINER }}
+          TF_VAR_terraform_state_container_name:
+            ${{ secrets.TF_STATE_CONTAINER }}
           TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
-          TF_VAR_mgmt_storage_account_name: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+          TF_VAR_mgmt_storage_account_name:
+            ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
           TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
           TF_VAR_tre_address_space: ${{ secrets.TRE_ADDRESS_SPACE }}
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
@@ -277,7 +272,9 @@ jobs:
           TRE_ID: "${{secrets.TRE_ID}}"
         run: |
           docker run --rm \
-            --mount "type=bind,src=${{ github.workspace }},dst=/workspaces/tre" \
+            --mount "type=bind, \
+                src=${{ github.workspace }}, \
+                dst=/workspaces/tre" \
             -v /var/run/docker.sock:/var/run/docker.sock \
             --workdir /workspaces/tre \
             --user vscode \
