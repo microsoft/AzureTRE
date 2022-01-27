@@ -1,3 +1,4 @@
+---
 name: Renew Lets Encrypt Certificates
 
 on:
@@ -5,7 +6,6 @@ on:
     # 3am each month https://crontab.guru/#0_3_1_*_*
     - cron: "0 3 1 * *"
   workflow_dispatch:
-
 
 # This will prevent multiple runs of this entire workflow.
 # We should NOT cancel in progress runs as that can destabilize the environment.
@@ -38,18 +38,21 @@ jobs:
       - name: Renew Certificates
         shell: bash
         env:
+          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
           TF_VAR_tre_id: ${{ secrets.TRE_ID }}
-          TF_VAR_terraform_state_container_name: ${{ secrets.TF_STATE_CONTAINER }}
-          TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
-          TF_VAR_mgmt_storage_account_name: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+          TF_VAR_terraform_state_container_name:
+            ${{ secrets.TF_STATE_CONTAINER }}
+          TF_VAR_mgmt_resource_group_name:
+            ${{ secrets.MGMT_RESOURCE_GROUP }}
+          TF_VAR_mgmt_storage_account_name:
+            ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
         run: |
-
-          export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
-          export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
-          export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
-          export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
-          export TF_VAR_arm_subscription_id=$ARM_SUBSCRIPTION_ID
-
-          sudo apt-get install -y python3 python3-venv libaugeas0  && python3 -m venv /opt/certbot/  && /opt/certbot/bin/pip install --upgrade pip && /opt/certbot/bin/pip install certbot
+          sudo apt-get install -y python3 python3-venv libaugeas0 \
+            && python3 -m venv /opt/certbot/ \
+            && /opt/certbot/bin/pip install --upgrade pip \
+            && /opt/certbot/bin/pip install certbot
           make letsencrypt
