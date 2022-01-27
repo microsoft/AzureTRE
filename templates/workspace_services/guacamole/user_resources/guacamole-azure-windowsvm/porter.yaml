@@ -65,7 +65,7 @@ mixins:
 
 install:
   - terraform:
-      description: "Deploy Guacamole User Resource Service (Windows 10)"
+      description: "Deploy Guacamole User Resource Service (Windows VM)"
       vars:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
@@ -75,6 +75,7 @@ install:
         arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
         arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
+        image: "{{ bundle.parameters.os_image }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"

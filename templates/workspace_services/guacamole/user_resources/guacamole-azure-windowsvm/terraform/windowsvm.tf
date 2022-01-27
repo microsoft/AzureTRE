@@ -43,10 +43,10 @@ resource "azurerm_virtual_machine" "windowsvm" {
   delete_data_disks_on_termination = false
 
   storage_image_reference {
-    publisher = "microsoft-dsvm"
-    offer     = "dsvm-win-2019"
-    sku       = "server-2019"
-    version   = "latest"
+    publisher = local.image_ref[var.image].publisher
+    offer     = local.image_ref[var.image].offer
+    sku       = local.image_ref[var.image].sku
+    version   = local.image_ref[var.image].version
   }
 
   storage_os_disk {
