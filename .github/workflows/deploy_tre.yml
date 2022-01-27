@@ -57,10 +57,17 @@ jobs:
         shell: bash
         env:
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
+          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
+          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
+          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
           TF_VAR_tre_id: ${{ secrets.TRE_ID }}
-          TF_VAR_terraform_state_container_name: ${{ secrets.TF_STATE_CONTAINER }}
-          TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
-          TF_VAR_mgmt_storage_account_name: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+          TF_VAR_terraform_state_container_name:
+            ${{ secrets.TF_STATE_CONTAINER }}
+          TF_VAR_mgmt_resource_group_name:
+            ${{ secrets.MGMT_RESOURCE_GROUP }}
+          TF_VAR_mgmt_storage_account_name:
+            ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
           TF_VAR_location: ${{ secrets.LOCATION }}
           TF_VAR_acr_name: ${{ secrets.ACR_NAME }}
           TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
@@ -81,10 +88,6 @@ jobs:
           TRE_URL: "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
           TRE_ID: "${{secrets.TRE_ID}}"
         run: |
-          export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
-          export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
-          export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
-          export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
           export TF_VAR_arm_subscription_id=$ARM_SUBSCRIPTION_ID
 
           make all
@@ -116,19 +119,20 @@ jobs:
     strategy:
       matrix:
         include:
-        # bundles type can be inferred from the bundle dir (but this is more explicit)
+        # bundles type can be inferred from the bundle
+        # dir (but this is more explicit)
           - {BUNDLE_TYPE: "workspace",
-            BUNDLE_DIR: "./templates/workspaces/base"}
+             BUNDLE_DIR: "./templates/workspaces/base"}
           - {BUNDLE_TYPE: "workspace",
-            BUNDLE_DIR: "./templates/workspaces/innereye"}
+             BUNDLE_DIR: "./templates/workspaces/innereye"}
           - {BUNDLE_TYPE: "workspace_service",
-            BUNDLE_DIR: "./templates/workspace_services/guacamole"}
+             BUNDLE_DIR: "./templates/workspace_services/guacamole"}
           - {BUNDLE_TYPE: "workspace_service",
-            BUNDLE_DIR: "./templates/workspace_services/azureml"}
+             BUNDLE_DIR: "./templates/workspace_services/azureml"}
           - {BUNDLE_TYPE: "workspace_service",
-            BUNDLE_DIR: "./templates/workspace_services/devtestlabs"}
+             BUNDLE_DIR: "./templates/workspace_services/devtestlabs"}
           - {BUNDLE_TYPE: "workspace_service",
-            BUNDLE_DIR: "./templates/workspace_services/innereye"}
+             BUNDLE_DIR: "./templates/workspace_services/innereye"}
     environment: Dev
     steps:
       - name: Checkout
@@ -179,9 +183,15 @@ jobs:
               TRE_GET_PATH="api/workspace-service-templates" ;;
           esac
 
+          AUTH_PAYLOAD="grant_type=password&resource=${RESOURCE}"
+          AUTH_PAYLOAD="${AUTH_PAYLOAD}&client_id=${CLIENT_ID}"
+          AUTH_PAYLOAD="${AUTH_PAYLOAD}&username=${USERNAME}"
+          AUTH_PAYLOAD="${AUTH_PAYLOAD}password=${PASSWORD}"
+          AUTH_PAYLOAD="${AUTH_PAYLOAD}&scope=default)"
+
           export TOKEN=$(curl -X POST \
             -H "Content-Type: application/x-www-form-urlencoded" -d \
-            "grant_type=password&resource=${RESOURCE}&client_id=${CLIENT_ID}&username=${USERNAME}&password=${PASSWORD}&scope=default)" \
+            "${AUTH_PAYLOAD}" \
             https://login.microsoftonline.com/${AUTH_TENANT_ID}/oauth2/token \
             | jq -r '.access_token')
 
@@ -189,8 +199,10 @@ jobs:
 
           # Check that the template got registered
           STATUS_CODE=$(curl -X "GET" \
-            "${TRE_URL}/${TRE_GET_PATH}/${TEMPLATE_NAME}" -H "accept: application/json" \
-            -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
+            "${TRE_URL}/${TRE_GET_PATH}/${TEMPLATE_NAME}" \
+            -H "accept: application/json" \
+            -H "Authorization: Bearer ${TOKEN}" \
+            -k -s -w "%{http_code}" -o /dev/null)
 
           if [[ ${STATUS_CODE} != 200 ]]
           then
@@ -237,8 +249,10 @@ jobs:
           PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
         run: |
-          export SCOPE="api://${RESOURCE}/user_impersonation"
-          export WORKSPACE_SCOPE="api://${TEST_WORKSPACE_APP_ID}/user_impersonation"
+          export \
+            SCOPE="api://${RESOURCE}/user_impersonation"
+          export \
+            WORKSPACE_SCOPE="api://${TEST_WORKSPACE_APP_ID}/user_impersonation"
           cd e2e_tests
           PYTHONPATH=. python -m pytest -m smoke --junit-xml pytest_e2e.xml
 
