@@ -1,3 +1,4 @@
+---
 name: tre-user-resource-aml-compute-instance
 version: 0.1.1
 description: "Azure Machine Learning Compute Instance"
@@ -79,7 +80,7 @@ install:
 
 
 uninstall:
-- exec:
+  - exec:
     description: "Delete AML Compute Instance"
     command: echo
     arguments:
