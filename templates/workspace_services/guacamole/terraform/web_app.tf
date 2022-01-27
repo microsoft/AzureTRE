@@ -1,21 +1,13 @@
-resource "azurerm_app_service_plan" "guacamole" {
-  name                = "plan-${local.webapp_name}"
-  location            = data.azurerm_resource_group.ws.location
+data "azurerm_app_service_plan" "workspace" {
+  name                = "plan-${var.workspace_id }"
   resource_group_name = data.azurerm_resource_group.ws.name
-  kind                = "Linux"
-  reserved            = "true"
-
-  sku {
-    tier = "PremiumV3"
-    size = "P1v3"
-  }
 }
 
 resource "azurerm_app_service" "guacamole" {
   name                = local.webapp_name
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
-  app_service_plan_id = azurerm_app_service_plan.guacamole.id
+  app_service_plan_id = azurerm_app_service_plan.workspace.id
   https_only          = true
 
   site_config {
