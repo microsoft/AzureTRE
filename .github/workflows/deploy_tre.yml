@@ -6,9 +6,9 @@ on:
     # 1am each night https://crontab.guru/#0_1_*_*_*
     - cron: "0 1 * * *"
   push:
-    branches:
-      - main
-      - 'ross/ActionsInDevContainer'
+    branches: [main]
+  pull_request:
+    branches: [main]
   pull_request_target:
     types: [labeled]
     branches: [main]
@@ -312,7 +312,7 @@ jobs:
           timezone: Europe/Zurich
 
   publish_and_register_bundles:
-    name: Register Bundle
+    name: Register Bundles
     runs-on: ubuntu-latest
     if: |
       github.event.name == 'schedule'
@@ -342,19 +342,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Install yq
-        run: |
-          sudo wget -O /usr/local/bin/yq \
-            https://github.com/mikefarah/yq/releases/download/v4.13.0/yq_linux_amd64
-          sudo chmod +x /usr/local/bin/yq
+      - name: Set up Docker BuildKit
+        uses: docker/setup-buildx-action@v1
 
-      - name: Install porter
-        run: |
-          curl -L https://cdn.porter.sh/v0.38.7/install-linux.sh | bash
-          ~/.porter/porter mixin install docker
-          echo "~/.porter/" >> $GITHUB_PATH
+      - name: Login to Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io
+          username: ${{ secrets.ACTIONS_ACR_NAME }}
+          password: ${{ secrets.ACTIONS_ACR_PASSWORD }}
 
-      - name: Publish and register bundles
+      - name: Set Variables
+        run: |
+          echo "USER_UID=$(id -u)" >> $GITHUB_ENV
+          echo "USER_GID=$(id -g)" >> $GITHUB_ENV
+
+      - name: Register bundles
         shell: bash
         env:
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
@@ -370,48 +373,28 @@ jobs:
           TRE_URL: "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
           BUNDLE_TYPE: ${{ matrix.BUNDLE_TYPE }}
         run: |
-          set -o errexit
-          set -o pipefail
-          set -o nounset
-
-          # test that porter is able to build the bundle
-          make porter-build DIR=${{ matrix.BUNDLE_DIR }}
-
-          TEMPLATE_NAME=$(yq eval '.name' ${{ matrix.BUNDLE_DIR }}/porter.yaml)
-
-          case "${BUNDLE_TYPE}" in
-            ("workspace") \
-              TRE_GET_PATH="api/workspace-templates" ;;
-            ("workspace_service") \
-              TRE_GET_PATH="api/workspace-service-templates" ;;
-          esac
-
-          AUTH_PAYLOAD="grant_type=password&resource=${RESOURCE}"
-          AUTH_PAYLOAD="${AUTH_PAYLOAD}&client_id=${CLIENT_ID}"
-          AUTH_PAYLOAD="${AUTH_PAYLOAD}&username=${USERNAME}"
-          AUTH_PAYLOAD="${AUTH_PAYLOAD}password=${PASSWORD}"
-          AUTH_PAYLOAD="${AUTH_PAYLOAD}&scope=default)"
-
-          export TOKEN=$(curl -X POST \
-            -H "Content-Type: application/x-www-form-urlencoded" -d \
-            "${AUTH_PAYLOAD}" \
-            https://login.microsoftonline.com/${AUTH_TENANT_ID}/oauth2/token \
-            | jq -r '.access_token')
-
-          make register-bundle DIR=${{ matrix.BUNDLE_DIR }}
-
-          # Check that the template got registered
-          STATUS_CODE=$(curl -X "GET" \
-            "${TRE_URL}/${TRE_GET_PATH}/${TEMPLATE_NAME}" \
-            -H "accept: application/json" \
-            -H "Authorization: Bearer ${TOKEN}" \
-            -k -s -w "%{http_code}" -o /dev/null)
-
-          if [[ ${STATUS_CODE} != 200 ]]
-          then
-            echo "::warning ::Template API check for ${BUNDLE_TYPE} ${TEMPLATE_NAME} returned http status: ${STATUS_CODE}"
-            exit 1
-          fi
+          docker run --rm \
+            --mount "type=bind, \
+                src=${{ github.workspace }}, \
+                dst=/workspaces/tre" \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            --workdir /workspaces/tre \
+            --user vscode \
+            -e TF_IN_AUTOMATION=1 \
+            -e ARM_CLIENT_ID \
+            -e ARM_CLIENT_SECRET \
+            -e ARM_TENANT_ID \
+            -e ARM_SUBSCRIPTION_ID \
+            -e RESOURCE \
+            -e AUTH_TENANT_ID \
+            -e CLIENT_ID \
+            -e USERNAME \
+            -e PASSWORD \
+            -e ACR_NAME \
+            -e TRE_URL \
+            -e BUNDLE_TYPE \
+            '${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest' \
+          bash -c "make build-and-register-bundle DIR=${{ matrix.BUNDLE_DIR }}"
 
   e2e_tests:
     name: "Run E2E Tests"
