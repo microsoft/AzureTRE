@@ -170,45 +170,7 @@ jobs:
           set -o errexit
           set -o pipefail
           set -o nounset
-
-          # test that porter is able to build the bundle
-          make porter-build DIR=${{ matrix.BUNDLE_DIR }}
-
-          TEMPLATE_NAME=$(yq eval '.name' ${{ matrix.BUNDLE_DIR }}/porter.yaml)
-
-          case "${BUNDLE_TYPE}" in
-            ("workspace") \
-              TRE_GET_PATH="api/workspace-templates" ;;
-            ("workspace_service") \
-              TRE_GET_PATH="api/workspace-service-templates" ;;
-          esac
-
-          AUTH_PAYLOAD="grant_type=password&resource=${RESOURCE}"
-          AUTH_PAYLOAD="${AUTH_PAYLOAD}&client_id=${CLIENT_ID}"
-          AUTH_PAYLOAD="${AUTH_PAYLOAD}&username=${USERNAME}"
-          AUTH_PAYLOAD="${AUTH_PAYLOAD}password=${PASSWORD}"
-          AUTH_PAYLOAD="${AUTH_PAYLOAD}&scope=default)"
-
-          export TOKEN=$(curl -X POST \
-            -H "Content-Type: application/x-www-form-urlencoded" -d \
-            "${AUTH_PAYLOAD}" \
-            https://login.microsoftonline.com/${AUTH_TENANT_ID}/oauth2/token \
-            | jq -r '.access_token')
-
-          make register-bundle DIR=${{ matrix.BUNDLE_DIR }}
-
-          # Check that the template got registered
-          STATUS_CODE=$(curl -X "GET" \
-            "${TRE_URL}/${TRE_GET_PATH}/${TEMPLATE_NAME}" \
-            -H "accept: application/json" \
-            -H "Authorization: Bearer ${TOKEN}" \
-            -k -s -w "%{http_code}" -o /dev/null)
-
-          if [[ ${STATUS_CODE} != 200 ]]
-          then
-            echo "::warning ::Template API check for ${BUNDLE_TYPE} ${TEMPLATE_NAME} returned http status: ${STATUS_CODE}"
-            exit 1
-          fi
+          make build-and-register-bundle DIR=${{ matrix.BUNDLE_DIR }}
 
   e2e_tests:
     name: "Run E2E Tests"

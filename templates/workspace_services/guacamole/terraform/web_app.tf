@@ -205,14 +205,6 @@ resource "azurerm_private_endpoint" "guacamole" {
   }
 }
 
-resource "azurerm_key_vault_access_policy" "current" {
-  key_vault_id = data.azurerm_key_vault.ws.id
-  tenant_id    = data.azurerm_user_assigned_identity.vmss_id.tenant_id
-  object_id    = data.azurerm_user_assigned_identity.vmss_id.principal_id
-
-  secret_permissions = ["Get", "List", "Set", "Delete"]
-}
-
 resource "azurerm_key_vault_access_policy" "guacamole" {
   key_vault_id = data.azurerm_key_vault.ws.id
   tenant_id    = azurerm_app_service.guacamole.identity.0.tenant_id
