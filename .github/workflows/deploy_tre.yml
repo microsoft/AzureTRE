@@ -114,10 +114,8 @@ jobs:
           TRE_URL: "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
           TRE_ID: "${{secrets.TRE_ID}}"
         run: |
-          docker run --rm \
-            --mount "type=bind, \
-                src=${{ github.workspace }}, \
-                dst=/workspaces/tre" \
+          docker run --rm --mount \
+            "type=bind,src=${{ github.workspace }},dst=/workspaces/tre" \
             -v /var/run/docker.sock:/var/run/docker.sock \
             --workdir /workspaces/tre \
             --user vscode \
@@ -195,10 +193,8 @@ jobs:
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
         run: |
-          docker run --rm \
-            --mount "type=bind, \
-                src=${{ github.workspace }}, \
-                dst=/workspaces/tre" \
+          docker run --rm --mount \
+            "type=bind,src=${{ github.workspace }},dst=/workspaces/tre" \
             -v /var/run/docker.sock:/var/run/docker.sock \
             --workdir /workspaces/tre \
             --user vscode \
@@ -273,10 +269,8 @@ jobs:
           TRE_URL: "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
           TRE_ID: "${{secrets.TRE_ID}}"
         run: |
-          docker run --rm \
-            --mount "type=bind, \
-                src=${{ github.workspace }}, \
-                dst=/workspaces/tre" \
+          docker run --rm --mount \
+            "type=bind,src=${{ github.workspace }},dst=/workspaces/tre" \
             -v /var/run/docker.sock:/var/run/docker.sock \
             --workdir /workspaces/tre \
             --user vscode \
@@ -375,10 +369,8 @@ jobs:
           TRE_URL: "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
           BUNDLE_TYPE: ${{ matrix.BUNDLE_TYPE }}
         run: |
-          docker run --rm \
-            --mount "type=bind, \
-                src=${{ github.workspace }}, \
-                dst=/workspaces/tre" \
+          docker run --rm --mount \
+            "type=bind,src=${{ github.workspace }},dst=/workspaces/tre" \
             -v /var/run/docker.sock:/var/run/docker.sock \
             --workdir /workspaces/tre \
             --user vscode \
