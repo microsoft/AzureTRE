@@ -1,4 +1,4 @@
-# Guacamole User Resource Service bundle (Windows 10)
+# Guacamole User Resource Service bundle (Windows)
 
 This is a User Resource Service template. It contains a Windows 10 to be used by TRE researchers and to be connected using a [Guacamole server](https://guacamole.apache.org/).
 It blocks all inbound and outbound traffic to the internet and allows only RDP connections from within the vnet.
