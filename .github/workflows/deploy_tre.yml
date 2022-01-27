@@ -6,9 +6,7 @@ on:
     # 1am each night https://crontab.guru/#0_1_*_*_*
     - cron: "0 1 * * *"
   push:
-    branches:
-      - main
-      - ross/ActionsInDevContainer
+    branches: [main]
   pull_request:
     branches: [main]
   pull_request_target:
