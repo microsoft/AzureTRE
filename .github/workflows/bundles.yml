@@ -2,9 +2,6 @@
 name: Publish Bundles
 
 on:
-  push:
-    branches:
-      - ross/ActionsInDevContainer
   workflow_dispatch:
 
 # This will prevent multiple runs of this entire workflow.
