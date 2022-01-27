@@ -48,7 +48,8 @@ jobs:
             ${{ secrets.TF_STATE_CONTAINER }}
           TF_VAR_mgmt_resource_group_name:
             ${{ secrets.MGMT_RESOURCE_GROUP }}
-          TF_VAR_mgmt_storage_account_name: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+          TF_VAR_mgmt_storage_account_name:
+            ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
         run: |
           sudo apt-get install -y python3 python3-venv libaugeas0 \
             && python3 -m venv /opt/certbot/ \
