@@ -6,6 +6,6 @@ locals {
   service_resource_name_suffix   = "${var.tre_id}-ws-${local.short_workspace_id}-svc-${local.short_service_id}"
   core_vnet                      = "vnet-${var.tre_id}"
   core_resource_group_name       = "rg-${var.tre_id}"
-  vm_name                        = "win10vm${local.short_service_id}"
+  vm_name                        = "windowsvm${local.short_service_id}"
   keyvault_name                  = lower("kv-${substr(local.workspace_resource_name_suffix, -20, -1)}")
 }

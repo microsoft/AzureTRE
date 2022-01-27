@@ -33,7 +33,7 @@ resource "random_password" "password" {
   override_special = "_%@"
 }
 
-resource "azurerm_virtual_machine" "win10vm" {
+resource "azurerm_virtual_machine" "windowsvm" {
   name                             = local.vm_name
   location                         = data.azurerm_resource_group.ws.location
   resource_group_name              = data.azurerm_resource_group.ws.name
@@ -74,7 +74,7 @@ resource "azurerm_virtual_machine" "win10vm" {
   }
 }
 
-resource "azurerm_key_vault_secret" "win10vm_password" {
+resource "azurerm_key_vault_secret" "windowsvm_password" {
   name         = "${local.vm_name}-admin-credentials"
   value        = "${random_string.username.result}\n${random_password.password.result}"
   key_vault_id = data.azurerm_key_vault.ws.id

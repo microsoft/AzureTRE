@@ -1,4 +1,4 @@
-name: tre-service-guacamole-win10vm
+name: tre-service-guacamole-windowsvm
 version: 0.1.0
 description: "An Azure TRE User Resource Template for Guacamole (Windows 10)"
 registry: azuretre
