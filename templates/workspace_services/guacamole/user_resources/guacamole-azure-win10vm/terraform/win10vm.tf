@@ -44,8 +44,8 @@ resource "azurerm_virtual_machine" "win10vm" {
 
   storage_image_reference {
     publisher = "microsoft-dsvm"
-    offer     = "dsvm-windows"
-    sku       = "server-2019-g2"
+    offer     = "dsvm-win-2019"
+    sku       = "server-2019"
     version   = "latest"
   }
 
