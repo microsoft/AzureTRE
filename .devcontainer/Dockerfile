@@ -64,4 +64,7 @@ RUN pip3 --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requ
 COPY ./.devcontainer/scripts/azure-cli.sh /tmp/
 RUN /tmp/azure-cli.sh
 
+RUN wget -O /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.13.0/yq_linux_amd64 \
+  && chmod +x /usr/local/bin/yq
+
 USER $USERNAME
