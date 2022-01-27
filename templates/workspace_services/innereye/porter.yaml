@@ -95,7 +95,7 @@ install:
         key:
           "tre-service-innereye-{{ bundle.parameters.id }}"
       outputs:
-      - name: azureml_compute_cluster_name
+        - name: azureml_compute_cluster_name
 
 upgrade:
   - exec:

@@ -1,3 +1,4 @@
+---
 name: tre-service-guacamole-win10vm
 version: 0.1.0
 description: "An Azure TRE User Resource Template for Guacamole (Windows 10)"
@@ -83,9 +84,9 @@ install:
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.id }}"
       outputs:
-      - name: ip
-      - name: hostname
-      - name: connection_uri
+        - name: ip
+        - name: hostname
+        - name: connection_uri
 
 upgrade:
   - exec:

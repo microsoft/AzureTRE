@@ -66,7 +66,7 @@ parameters:
     type: boolean
     default: true
     env: GUAC_DISABLE_DOWNLOAD
-    description:  "Guacamole disable download configuration"
+    description: "Guacamole disable download configuration"
   - name: is_exposed_externally
     type: boolean
     default: false
