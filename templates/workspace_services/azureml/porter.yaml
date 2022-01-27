@@ -1,3 +1,4 @@
+---
 name: tre-service-azureml
 version: 0.1.9
 description: "An Azure TRE service for Azure Machine Learning"
@@ -60,17 +61,19 @@ install:
         tre_resource_id: "{{ bundle.parameters.id }}"
         arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
         arm_client_id: "{{ bundle.credentials.azure_client_id }}"
-        arm_client_secret:  "{{ bundle.credentials.azure_client_secret }}"
+        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
         arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
       backendConfig:
-        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
+        resource_group_name:
+          "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name:
+          "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "tre-service-azureml-{{ bundle.parameters.id }}"
       outputs:
-      - name: azureml_workspace_name
-      - name: azureml_acr_id
-      - name: azureml_storage_account_id
+        - name: azureml_workspace_name
+        - name: azureml_acr_id
+        - name: azureml_storage_account_id
 
 upgrade:
   - exec:
@@ -89,9 +92,11 @@ uninstall:
         arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
         arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
         arm_client_id: "{{ bundle.credentials.azure_client_id }}"
-        arm_client_secret:  "{{ bundle.credentials.azure_client_secret }}"
+        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
       backendConfig:
-        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
+        resource_group_name:
+          "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name:
+          "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "tre-service-azureml-{{ bundle.parameters.id }}"
