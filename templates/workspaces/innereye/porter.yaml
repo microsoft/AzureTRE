@@ -1,7 +1,9 @@
+---
 name: tre-workspace-innereye
 
 version: 0.1.10
-description: "An Azure TRE workspace with Azure Machine Learning, Dev Test Labs and InnerEye deep learning"
+description: "An Azure TRE workspace with Azure Machine Learning,
+  Dev Test Labs and InnerEye deep learning"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
 
@@ -57,7 +59,7 @@ mixins:
   - exec
   - az:
       extensions:
-      - azure-firewall
+        - azure-firewall
   - docker
 
 install:
