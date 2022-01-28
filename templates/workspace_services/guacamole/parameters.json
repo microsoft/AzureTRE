@@ -22,7 +22,7 @@
       }
     },
     {
-      "name": "acr_name",
+      "name": "mgmt_acr_name",
       "source": {
         "env": "ACR_NAME"
       }
@@ -34,15 +34,9 @@
       }
     },
     {
-      "name": "api_client_id",
+      "name": "openid_client_id",
       "source": {
-        "env": "API_CLIENT_ID"
-      }
-    },
-    {
-      "name": "aad_tenant_id",
-      "source": {
-        "env": "AAD_TENANT_ID"
+        "env": "OPENID_CLIENT_ID"
       }
     },
     {

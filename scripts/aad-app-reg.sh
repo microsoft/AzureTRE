@@ -532,7 +532,7 @@ if [[ $workspace -eq 0 ]]; then
 
 Variables:
 
-AAD_TENANT_ID=$(az account show | jq -r '.tenantId')
+AAD_TENANT_ID=$(az account show --output json | jq -r '.tenantId')
 API_CLIENT_ID=${apiAppId}
 API_CLIENT_SECRET=${spPassword}
 SWAGGER_UI_CLIENT_ID=${swaggerAppId}
@@ -544,7 +544,7 @@ else
 
 Variables:
 
-AAD_TENANT_ID=$(az account show | jq -r '.tenantId')
+AAD_TENANT_ID=$(az account show --output json | jq -r '.tenantId')
 WORKSPACE_API_CLIENT_ID=${apiAppId}
 WORKSPACE_API_CLIENT_SECRET=${spPassword}
 
