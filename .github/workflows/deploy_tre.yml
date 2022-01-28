@@ -107,7 +107,9 @@ jobs:
             -v /var/run/docker.sock:/var/run/docker.sock \
             --workdir /workspaces/tre \
             --user vscode \
+            -e TF_INPUT \
             -e TF_IN_AUTOMATION \
+            -e USE_ENV_VARS_NOT_FILES \
             -e ARM_CLIENT_ID \
             -e ARM_CLIENT_SECRET \
             -e ARM_TENANT_ID \
@@ -194,7 +196,9 @@ jobs:
             -v /var/run/docker.sock:/var/run/docker.sock \
             --workdir /workspaces/tre \
             --user vscode \
+            -e TF_INPUT \
             -e TF_IN_AUTOMATION \
+            -e USE_ENV_VARS_NOT_FILES \
             -e ARM_CLIENT_ID \
             -e ARM_CLIENT_SECRET \
             -e ARM_TENANT_ID \
@@ -270,7 +274,9 @@ jobs:
             -v /var/run/docker.sock:/var/run/docker.sock \
             --workdir /workspaces/tre \
             --user vscode \
+            -e TF_INPUT \
             -e TF_IN_AUTOMATION \
+            -e USE_ENV_VARS_NOT_FILES \
             -e ARM_CLIENT_ID \
             -e ARM_CLIENT_SECRET \
             -e ARM_TENANT_ID \
@@ -370,7 +376,9 @@ jobs:
             -v /var/run/docker.sock:/var/run/docker.sock \
             --workdir /workspaces/tre \
             --user vscode \
-            -e TF_IN_AUTOMATION=1 \
+            -e TF_INPUT \
+            -e TF_IN_AUTOMATION \
+            -e USE_ENV_VARS_NOT_FILES \
             -e ARM_CLIENT_ID \
             -e ARM_CLIENT_SECRET \
             -e ARM_TENANT_ID \
