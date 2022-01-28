@@ -8,7 +8,7 @@ locals {
   core_resource_group_name       = "rg-${var.tre_id}"
   vm_name                        = "windowsvm${local.short_service_id}"
   keyvault_name                  = lower("kv-${substr(local.workspace_resource_name_suffix, -20, -1)}")
-  image_ref                      = {
+  image_ref = {
     "Windows 10" = {
       "publisher" = "MicrosoftWindowsDesktop"
       "offer"     = "windows-10"
