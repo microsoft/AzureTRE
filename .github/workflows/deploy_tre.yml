@@ -145,8 +145,8 @@ jobs:
         shell: bash
         run: |
           set -e
-          docker image tag tredev1:latest ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev1:latest
-          docker image push ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev1:latest
+          docker image tag tredev:latest ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest
+          docker image push ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest
 
   build_docker_images:
     name: Build Docker Images

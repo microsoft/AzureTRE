@@ -63,7 +63,10 @@ Next, you will set the configuration variables for the specific Azure TRE instan
   ```
 
   !!! note
-      The full functionality of the script requires directory admin privileges. You may need to contact your friendly Azure Active Directory admin to complete this step. The app registrations can be created manually in Azure Portal too. For more information, see [Authentication and authorization](../auth.md).<br/>If you don't have permissions and just want to create a development environment then skip this step and see the steps in the "Using a separate Azure Active Directory tenant) below.
+      The full functionality of the script requires directory admin privileges. You may need to contact your friendly Azure Active Directory admin to complete this step. The app registrations can be created manually in Azure Portal too. For more information, see [Authentication and authorization](../auth.md).
+  
+  !!! note
+      If you don't have permissions and just want to create a development environment then skip this step and see the steps in the "Using a separate Azure Active Directory tenant) below.
 
   With the output of the script, you can now provide the required auth related values for the following variables in the `/templates/core/.env` configuration file:
 
