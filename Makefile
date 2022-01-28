@@ -115,13 +115,6 @@ letsencrypt:
 	&& . ./devops/scripts/load_env.sh ./templates/core/tre.env \
 	&& ./templates/core/terraform/scripts/letsencrypt.sh
 
-tre-stop:
-	echo -e "\n\e[34m»»» 🧩 \e[96mStopping TRE\e[0m..." \
-	&& . ./devops/scripts/check_dependencies.sh azfirewall \
-	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
-	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& ./devops/scripts/control_tre.sh stop
-
 tre-start:
 	echo -e "\n\e[34m»»» 🧩 \e[96mStarting TRE\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh azfirewall \
@@ -129,12 +122,21 @@ tre-start:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& ./devops/scripts/control_tre.sh start
 
-temp-test-porter:
-	echo -e "TANYA DONT FORGET TO REMOVE THIS" \
-	&& cd /workspaces/AzureTRE/templates/shared_services/firewall/ \
-	&& porter bundles build \
-	&& cd - \
+tre-stop:
+	echo -e "\n\e[34m»»» 🧩 \e[96mStopping TRE\e[0m..." \
+	&& . ./devops/scripts/check_dependencies.sh azfirewall \
+	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& ./devops/scripts/control_tre.sh stop
+
+firewall-install:
+	echo -e "\n\e[34m»»» 🧩 \e[96mInstalling Firewall\e[0m..." \
+	&& make porter-build DIR=./templates/shared_services/firewall
 	&& make porter-install DIR=./templates/shared_services/firewall
+
+firewall-uninstall:
+	echo -e "\n\e[34m»»» 🧩 \e[96mUninstalling Firewall\e[0m..." \
+	&& make porter-uninstall DIR=./templates/shared_services/firewall
 
 tre-destroy:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDestroying TRE\e[0m..." \
