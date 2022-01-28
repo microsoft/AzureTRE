@@ -1,8 +1,6 @@
 #!/bin/bash
 set -e
 
-echo "Entered build_and_register_bundle.sh"
-
 function usage() {
     cat <<USAGE
 
