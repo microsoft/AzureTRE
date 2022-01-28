@@ -2,6 +2,8 @@
 name: Publish Bundles
 
 on:
+  push:
+    branches: [ross/ActionsInDevContainer]
   workflow_dispatch:
 
 env:
