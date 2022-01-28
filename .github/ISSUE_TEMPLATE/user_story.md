@@ -7,9 +7,13 @@ assignees: ''
 
 ---
 
+<!--
+Note: This is for raising smaller enhancements to existing code or functionality
+-->
+
 ## Description
 
-As a ...
+As a TRE Administrator/TRE Workspace Owner/Researcher/TRE Service Integrator/Azure TRE Developer/Data Engineer...
 I want to ...
 So that ...
 

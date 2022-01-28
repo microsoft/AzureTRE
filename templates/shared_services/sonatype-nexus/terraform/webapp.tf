@@ -196,12 +196,12 @@ resource "null_resource" "upload_nexus_props" {
   provisioner "local-exec" {
     command = <<EOT
       az storage directory create \
-      --name etc --share-name ${var.storage_account_name}
-      --account-name ${var.storage_account_name}
-      --account-key ${var.storage_account_primary_access_key} &&
-      az storage file upload --source ../../shared_services/sonatype-nexus/nexus.properties
-      --path etc --share-name ${var.storage_account_name}
-      --account-name ${var.storage_account_name}
+      --name etc --share-name  ${azurerm_storage_share.nexus.name} \
+      --account-name ${var.storage_account_name} \
+      --account-key ${var.storage_account_primary_access_key} && \
+      az storage file upload --source ../../shared_services/sonatype-nexus/nexus.properties \
+      --path etc --share-name  ${azurerm_storage_share.nexus.name} \
+      --account-name ${var.storage_account_name} \
       --account-key ${var.storage_account_primary_access_key}
       EOT
   }
