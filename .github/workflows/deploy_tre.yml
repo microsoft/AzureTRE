@@ -1,3 +1,4 @@
+---
 name: Deploy Azure TRE
 
 on:
@@ -24,10 +25,14 @@ jobs:
   deploy_tre:
     name: Deploy TRE
     runs-on: ubuntu-latest
-    # The conditions below define the desired behaviour of the deployment workflow:
-    #   1. The workflow must NOT be triggered automatically by an opened pull request
-    #   2. It should be possible to manually trigger the workflow for PRs originating from forks (using "safe to test" label)
-    #   3. The workflow must run when scheduled, pushed (i.e., merge) or manually triggered
+    # The conditions below define the desired behaviour of the deployment
+    # workflow:
+    #   1. The workflow must NOT be triggered automatically by an opened
+    #     pull request
+    #   2. It should be possible to manually trigger the workflow for PRs
+    #     originating from forks (using "safe to test" label)
+    #   3. The workflow must run when scheduled, pushed (i.e., merge) or
+    #     manually triggered
     if: |
       github.event.name == 'schedule'
       || github.event_name == 'push'
@@ -52,10 +57,17 @@ jobs:
         shell: bash
         env:
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
+          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
+          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
+          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
           TF_VAR_tre_id: ${{ secrets.TRE_ID }}
-          TF_VAR_terraform_state_container_name: ${{ secrets.TF_STATE_CONTAINER }}
-          TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
-          TF_VAR_mgmt_storage_account_name: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+          TF_VAR_terraform_state_container_name:
+            ${{ secrets.TF_STATE_CONTAINER }}
+          TF_VAR_mgmt_resource_group_name:
+            ${{ secrets.MGMT_RESOURCE_GROUP }}
+          TF_VAR_mgmt_storage_account_name:
+            ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
           TF_VAR_location: ${{ secrets.LOCATION }}
           TF_VAR_acr_name: ${{ secrets.ACR_NAME }}
           TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
@@ -76,16 +88,13 @@ jobs:
           TRE_URL: "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
           TRE_ID: "${{secrets.TRE_ID}}"
         run: |
-          export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
-          export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
-          export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
-          export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
           export TF_VAR_arm_subscription_id=$ARM_SUBSCRIPTION_ID
 
           make all
 
           az extension add --name azure-firewall
-          # TODO: enable this once the bug https://github.com/microsoft/AzureTRE/issues/1165 is fixed
+          # TODO: enable this once the bug
+          # https://github.com/microsoft/AzureTRE/issues/1165 is fixed
           # make tre-start
 
       - name: Notify dedicated teams channel
@@ -110,13 +119,20 @@ jobs:
     strategy:
       matrix:
         include:
-        # bundles type can be inferred from the bundle dir (but this is more explicit)
-          - { BUNDLE_TYPE: "workspace", BUNDLE_DIR: "./templates/workspaces/base"}
-          - { BUNDLE_TYPE: "workspace", BUNDLE_DIR: "./templates/workspaces/innereye"}
-          - { BUNDLE_TYPE: "workspace_service", BUNDLE_DIR: "./templates/workspace_services/guacamole"}
-          - { BUNDLE_TYPE: "workspace_service", BUNDLE_DIR: "./templates/workspace_services/azureml"}
-          - { BUNDLE_TYPE: "workspace_service", BUNDLE_DIR: "./templates/workspace_services/devtestlabs"}
-          - { BUNDLE_TYPE: "workspace_service", BUNDLE_DIR: "./templates/workspace_services/innereye"}
+        # bundles type can be inferred from the bundle
+        # dir (but this is more explicit)
+          - {BUNDLE_TYPE: "workspace",
+             BUNDLE_DIR: "./templates/workspaces/base"}
+          - {BUNDLE_TYPE: "workspace",
+             BUNDLE_DIR: "./templates/workspaces/innereye"}
+          - {BUNDLE_TYPE: "workspace_service",
+             BUNDLE_DIR: "./templates/workspace_services/guacamole"}
+          - {BUNDLE_TYPE: "workspace_service",
+             BUNDLE_DIR: "./templates/workspace_services/azureml"}
+          - {BUNDLE_TYPE: "workspace_service",
+             BUNDLE_DIR: "./templates/workspace_services/devtestlabs"}
+          - {BUNDLE_TYPE: "workspace_service",
+             BUNDLE_DIR: "./templates/workspace_services/innereye"}
     environment: Dev
     steps:
       - name: Checkout
@@ -129,7 +145,8 @@ jobs:
 
       - name: Install yq
         run: |
-          sudo wget -O /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.13.0/yq_linux_amd64
+          sudo wget -O /usr/local/bin/yq \
+            https://github.com/mikefarah/yq/releases/download/v4.13.0/yq_linux_amd64
           sudo chmod +x /usr/local/bin/yq
 
       - name: Install porter
@@ -153,29 +170,7 @@ jobs:
           set -o errexit
           set -o pipefail
           set -o nounset
-
-          # test that porter is able to build the bundle
-          make porter-build DIR=${{ matrix.BUNDLE_DIR }}
-
-          TEMPLATE_NAME=$(yq eval '.name' ${{ matrix.BUNDLE_DIR }}/porter.yaml)
-
-          case "${BUNDLE_TYPE}" in
-            ("workspace") TRE_GET_PATH="api/workspace-templates" ;;
-            ("workspace_service") TRE_GET_PATH="api/workspace-service-templates" ;;
-          esac
-
-          export TOKEN=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d "grant_type=password&resource=${RESOURCE}&client_id=${CLIENT_ID}&username=${USERNAME}&password=${PASSWORD}&scope=default)" https://login.microsoftonline.com/${AUTH_TENANT_ID}/oauth2/token | jq -r '.access_token')
-
-          make register-bundle DIR=${{ matrix.BUNDLE_DIR }}
-
-          # Check that the template got registered
-          STATUS_CODE=$(curl -X "GET" "${TRE_URL}/${TRE_GET_PATH}/${TEMPLATE_NAME}" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
-
-          if [[ ${STATUS_CODE} != 200 ]]
-          then
-            echo "::warning ::Template API check for ${BUNDLE_TYPE} ${TEMPLATE_NAME} returned http status: ${STATUS_CODE}"
-            exit 1
-          fi
+          make build-and-register-bundle DIR=${{ matrix.BUNDLE_DIR }}
 
   e2e_tests:
     name: "Run E2E Tests"
@@ -216,8 +211,10 @@ jobs:
           PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
         run: |
-          export SCOPE="api://${RESOURCE}/user_impersonation"
-          export WORKSPACE_SCOPE="api://${TEST_WORKSPACE_APP_ID}/user_impersonation"
+          export \
+            SCOPE="api://${RESOURCE}/user_impersonation"
+          export \
+            WORKSPACE_SCOPE="api://${TEST_WORKSPACE_APP_ID}/user_impersonation"
           cd e2e_tests
           PYTHONPATH=. python -m pytest -m smoke --junit-xml pytest_e2e.xml
 
@@ -265,30 +262,31 @@ jobs:
           files: "./e2e_tests/pytest_e2e.xml"
 
   tre_stop:
-      name: "Deallocate Resources"
-      runs-on: ubuntu-latest
-      environment: Dev
-      needs: [e2e_tests]
-      if: |
-        ${{
-        always() &&
-        github.event.name == 'schedule'
-        || github.event_name == 'push'
-        || github.event_name == 'workflow_dispatch'
-        || contains(github.event.pull_request.labels.*.name, 'safe to test')
-        }}
-      steps:
-        - name: Checkout code
-          uses: actions/checkout@v2
-        - name: Azure Login
-          uses: azure/login@v1
-          with:
-            creds: ${{ secrets.AZURE_CREDENTIALS }}
-        - name: Deallocate Resources
-          shell: bash
-          env:
-            TRE_ID: "${{secrets.TRE_ID}}"
-          run: |
-            az extension add --name azure-firewall
-            # TODO: enable this once the bug https://github.com/microsoft/AzureTRE/issues/1165 is fixed
-            # make tre-stop
+    name: "Deallocate Resources"
+    runs-on: ubuntu-latest
+    environment: Dev
+    needs: [e2e_tests]
+    if: |
+      ${{
+      always() &&
+      github.event.name == 'schedule'
+      || github.event_name == 'push'
+      || github.event_name == 'workflow_dispatch'
+      || contains(github.event.pull_request.labels.*.name, 'safe to test')
+      }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Deallocate Resources
+        shell: bash
+        env:
+          TRE_ID: "${{secrets.TRE_ID}}"
+        run: |
+          az extension add --name azure-firewall
+          # TODO: enable this once the bug
+          # https://github.com/microsoft/AzureTRE/issues/1165 is fixed
+          # make tre-stop
