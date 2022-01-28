@@ -33,7 +33,7 @@ resource "random_password" "password" {
   override_special = "_%@"
 }
 
-resource "azurerm_windows_virtual_machine" "windowsvm" {
+resource "azurerm_linux_virtual_machine" "linuxvm" {
   name                             = local.vm_name
   location                         = data.azurerm_resource_group.ws.location
   resource_group_name              = data.azurerm_resource_group.ws.name
@@ -41,6 +41,8 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
   vm_size                          = "Standard_DS1_v2"
   delete_os_disk_on_termination    = false
   delete_data_disks_on_termination = false
+
+  custom_data = data.cloudinit.config.rendered
 
   storage_image_reference {
     publisher = local.image_ref[var.image].publisher
@@ -62,7 +64,8 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
     admin_password = random_password.password.result
   }
 
-  os_profile_windows_config {
+  os_profile_linux_config {
+    disable_password_authentication = false
   }
 
   identity {
@@ -74,7 +77,17 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
   }
 }
 
-resource "azurerm_key_vault_secret" "windowsvm_password" {
+data "cloudinit" "config" {
+  gzip          = true
+  base64_encode = true
+
+  part {
+    content_type = "text/x-shellscript"
+    content      = "sudo apt-get update && sudo apt-get install xrdp -y && sudo adduser xrdp ssl-cert && sudo systemctl enable xrdp && sudo systemctl restart xrdp"
+  }
+}
+
+resource "azurerm_key_vault_secret" "linuxvm_password" {
   name         = "${local.vm_name}-admin-credentials"
   value        = "${random_string.username.result}\n${random_password.password.result}"
   key_vault_id = data.azurerm_key_vault.ws.id
