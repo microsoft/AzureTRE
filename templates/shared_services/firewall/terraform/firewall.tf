@@ -1,6 +1,6 @@
 resource "azurerm_public_ip" "fwpip" {
   name                = "pip-fw-${var.tre_id}"
-  resource_group_name = var.resource_group_name
+  resource_group_name = local.core_resource_group_name
   location            = var.location
   allocation_method   = "Static"
   sku                 = "Standard"
@@ -11,7 +11,7 @@ resource "azurerm_public_ip" "fwpip" {
 resource "azurerm_firewall" "fw" {
   depends_on          = [azurerm_public_ip.fwpip]
   name                = "fw-${var.tre_id}"
-  resource_group_name = var.resource_group_name
+  resource_group_name = local.core_resource_group_name
   location            = var.location
   ip_configuration {
     name                 = "fw-ip-configuration"
@@ -32,7 +32,7 @@ resource "azurerm_management_lock" "fw" {
 resource "azurerm_monitor_diagnostic_setting" "firewall" {
   name                       = "diagnostics-firewall-${var.tre_id}"
   target_resource_id         = azurerm_firewall.fw.id
-  log_analytics_workspace_id = var.log_analytics_workspace_id
+  log_analytics_workspace_id = data.azurerm_log_analytics_workspace.tre.id
   log {
     category = "AzureFirewallApplicationRule"
     enabled  = true

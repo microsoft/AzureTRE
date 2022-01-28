@@ -129,6 +129,14 @@ tre-start:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& ./devops/scripts/control_tre.sh start
 
+temp-test-porter:
+	echo -e "TANYA DONT FORGET TO REMOVE THIS" \
+	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& cd /workspaces/AzureTRE/templates/shared_services/firewall/ \
+	&& porter bundles build \
+	&& porter bundles install --cred ./azure.json -p ./parameters.json
+
 tre-destroy:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDestroying TRE\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \

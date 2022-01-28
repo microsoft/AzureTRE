@@ -147,7 +147,6 @@ module "resource_processor_vmss_porter" {
   depends_on = [
     module.azure_monitor,
     module.keyvault,
-    module.firewall
   ]
 }
 
@@ -175,45 +174,6 @@ module "keyvault" {
   depends_on = [
     module.identity
   ]
-}
-
-module "firewall" {
-  source                     = "./firewall"
-  tre_id                     = var.tre_id
-  location                   = var.location
-  resource_group_name        = azurerm_resource_group.core.name
-  log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
-
-  shared_subnet = {
-    id               = module.network.shared_subnet_id
-    address_prefixes = module.network.shared_subnet_address_prefixes
-  }
-  firewall_subnet = {
-    id               = module.network.azure_firewall_subnet_id
-    address_prefixes = module.network.azure_firewall_subnet_address_prefixes
-  }
-  resource_processor_subnet = {
-    id               = module.network.resource_processor_subnet_id
-    address_prefixes = module.network.resource_processor_subnet_address_prefixes
-  }
-  web_app_subnet = {
-    id               = module.network.web_app_subnet_id
-    address_prefixes = module.network.web_app_subnet_address_prefixes
-  }
-  depends_on = [
-    module.network
-  ]
-}
-
-module "routetable" {
-  source                       = "./routetable"
-  tre_id                       = var.tre_id
-  location                     = var.location
-  resource_group_name          = azurerm_resource_group.core.name
-  shared_subnet_id             = module.network.shared_subnet_id
-  resource_processor_subnet_id = module.network.resource_processor_subnet_id
-  web_app_subnet_id            = module.network.web_app_subnet_id
-  firewall_private_ip_address  = module.firewall.firewall_private_ip_address
 }
 
 module "state-store" {
