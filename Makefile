@@ -131,11 +131,10 @@ tre-start:
 
 temp-test-porter:
 	echo -e "TANYA DONT FORGET TO REMOVE THIS" \
-	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
-	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& cd /workspaces/AzureTRE/templates/shared_services/firewall/ \
 	&& porter bundles build \
-	&& porter bundles install --cred ./azure.json -p ./parameters.json
+	&& cd - \
+	&& make porter-install DIR=./templates/shared_services/firewall
 
 tre-destroy:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDestroying TRE\e[0m..." \
