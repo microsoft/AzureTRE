@@ -1,5 +1,5 @@
 data "azurerm_app_service_plan" "workspace" {
-  name                = "plan-${var.workspace_id }"
+  name                = "plan-${var.workspace_id}"
   resource_group_name = data.azurerm_resource_group.ws.name
 }
 
