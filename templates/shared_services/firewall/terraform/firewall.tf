@@ -15,19 +15,21 @@ resource "azurerm_firewall" "fw" {
   location            = var.location
   ip_configuration {
     name                 = "fw-ip-configuration"
-    subnet_id            = var.firewall_subnet.id
+    subnet_id            = data.azurerm_subnet.firewall.id
     public_ip_address_id = azurerm_public_ip.fwpip.id
   }
 
   lifecycle { ignore_changes = [tags] }
 }
 
+/*
 resource "azurerm_management_lock" "fw" {
   name       = azurerm_firewall.fw.name
   scope      = azurerm_firewall.fw.id
   lock_level = "CanNotDelete"
   notes      = "Locked to prevent accidental deletion"
 }
+*/
 
 resource "azurerm_monitor_diagnostic_setting" "firewall" {
   name                       = "diagnostics-firewall-${var.tre_id}"
@@ -122,7 +124,7 @@ resource "azurerm_firewall_application_rule_collection" "shared_subnet" {
       "graph.windows.net"
     ]
 
-    source_addresses = var.shared_subnet.address_prefixes
+    source_addresses = data.azurerm_subnet.shared.address_prefixes
   }
 }
 
@@ -158,7 +160,7 @@ resource "azurerm_firewall_application_rule_collection" "resource_processor_subn
       "registry.terraform.io",
       "releases.hashicorp.com"
     ]
-    source_addresses = var.resource_processor_subnet.address_prefixes
+    source_addresses = data.azurerm_subnet.resource_processor.address_prefixes
   }
 
   depends_on = [
@@ -222,7 +224,7 @@ resource "azurerm_firewall_network_rule_collection" "resource_processor_subnet" 
     destination_ports = [
       "443"
     ]
-    source_addresses = var.resource_processor_subnet.address_prefixes
+    source_addresses = data.azurerm_subnet.resource_processor.address_prefixes
   }
 
   depends_on = [
@@ -253,7 +255,7 @@ resource "azurerm_firewall_network_rule_collection" "web_app_subnet" {
     destination_ports = [
       "443"
     ]
-    source_addresses = var.web_app_subnet.address_prefixes
+    source_addresses = data.azurerm_subnet.web_app.address_prefixes
   }
 
   depends_on = [
@@ -278,6 +280,6 @@ resource "azurerm_firewall_application_rule_collection" "web_app_subnet" {
     target_fqdns = [
       "graph.microsoft.com"
     ]
-    source_addresses = var.web_app_subnet.address_prefixes
+    source_addresses = data.azurerm_subnet.web_app.address_prefixes
   }
 }
