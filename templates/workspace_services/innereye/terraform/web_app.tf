@@ -1,15 +1,9 @@
-resource "azurerm_app_service_plan" "inference" {
-  name                = "plan-inf-${local.service_resource_name_suffix}"
-  location            = data.azurerm_resource_group.ws.location
+data "azurerm_app_service_plan" "workspace" {
+  name                = "plan-${var.workspace_id}"
   resource_group_name = data.azurerm_resource_group.ws.name
-  kind                = "Linux"
-  reserved            = "true"
-
-  sku {
-    tier = "PremiumV3"
-    size = "P1v3"
-  }
 }
+
+
 resource "random_uuid" "inference_auth_key" {
 }
 
@@ -17,7 +11,7 @@ resource "azurerm_app_service" "inference" {
   name                = "app-inf-${local.service_resource_name_suffix}"
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
-  app_service_plan_id = azurerm_app_service_plan.inference.id
+  app_service_plan_id = data.azurerm_app_service_plan.workspace.id
   https_only          = true
 
   site_config {
