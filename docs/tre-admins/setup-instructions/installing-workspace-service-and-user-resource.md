@@ -29,7 +29,7 @@ The Guacamole workspace service also has user resources, there are the VMs that 
 1. Run:
 
     ```cmd
-    make register-bundle DIR=./templates/workspace_services/guacamole/user_resources/guacamole-azure-win10vm BUNDLE_TYPE=user_resource
+    make register-bundle DIR=./templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm BUNDLE_TYPE=user_resource
     ```
 
     Copy the resulting JSON payload.
@@ -96,13 +96,16 @@ Once the workspace service has been created, we can use the workspace API to cre
 
 ```json
 {
-  "templateName": "tre-service-guacamole-win10vm",
+  "templateName": "tre-service-guacamole-windowsvm",
   "properties": {
     "display_name": "My VM",
-    "description": "Will be using this VM for my research"
+    "description": "Will be using this VM for my research",
+    "os_image": "Server 2019 Data Science VM"
   }
 }
 ```
+
+> Note: You can also specify "Windows 10" for a standard Windows 10 image
 
 The API will report the ``resourceId`` of the created user resource, which can be used to query deployment status by using ``/api/workspaces/<workspace_id>/workspace-service/<workspace_service_id>/user_resources/<resource_id>``.
 
