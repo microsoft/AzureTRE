@@ -14,7 +14,7 @@ env:
 
 jobs:
   publish_and_register_bundles_container:
-    name: Register Bundles
+    name: DevContainer
     runs-on: ubuntu-latest
     if: |
       github.event.name == 'schedule'
@@ -96,7 +96,7 @@ jobs:
           bash -c "make build-and-register-bundle DIR=${{ matrix.BUNDLE_DIR }}"
 
   publish_and_register_bundles:
-    name: Register Bundle
+    name: Inline
     runs-on: ubuntu-latest
     if: |
       github.event.name == 'schedule'
@@ -143,6 +143,10 @@ jobs:
       - name: Publish and register bundles
         shell: bash
         env:
+          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
+          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
+          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
+          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
           RESOURCE: "${{ secrets.API_CLIENT_ID }}"
           AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           CLIENT_ID: "${{ secrets.TEST_APP_ID }}"
@@ -152,7 +156,5 @@ jobs:
           TRE_URL: "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
           BUNDLE_TYPE: ${{ matrix.BUNDLE_TYPE }}
         run: |
-          set -o errexit
-          set -o pipefail
-          set -o nounset
+          set -e
           make build-and-register-bundle DIR=${{ matrix.BUNDLE_DIR }}
