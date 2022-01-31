@@ -131,12 +131,21 @@ tre-stop:
 
 firewall-install:
 	echo -e "\n\e[34m»»» 🧩 \e[96mInstalling Firewall\e[0m..." \
-	&& make porter-build DIR=./templates/shared_services/firewall
+	&& make porter-build DIR=./templates/shared_services/firewall \
 	&& make porter-install DIR=./templates/shared_services/firewall
 
 firewall-uninstall:
 	echo -e "\n\e[34m»»» 🧩 \e[96mUninstalling Firewall\e[0m..." \
 	&& make porter-uninstall DIR=./templates/shared_services/firewall
+
+gitea-install:
+	echo -e "\n\e[34m»»» 🧩 \e[96mInstalling Gitea\e[0m..." \
+	&& make porter-build DIR=./templates/shared_services/gitea \
+	&& make porter-install DIR=./templates/shared_services/gitea
+
+gitea-uninstall:
+	echo -e "\n\e[34m»»» 🧩 \e[96mUninstalling Gitea\e[0m..." \
+	&& make porter-uninstall DIR=./templates/shared_services/gitea
 
 tre-destroy:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDestroying TRE\e[0m..." \
