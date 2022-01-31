@@ -30,13 +30,3 @@ variable "acr_name" {
   type = string
   description = "Name of Azure Container Registry"
 }
-
-variable "keyvault_name" {
-  type = string
-  description = "Name of the Keyvault"
-}
-
-variable "storage_account_name" {
-  type = string
-  description = "Name of the storage account to use"
-}

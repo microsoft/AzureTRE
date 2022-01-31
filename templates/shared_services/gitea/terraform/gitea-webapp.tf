@@ -127,7 +127,7 @@ resource "azurerm_private_endpoint" "gitea_private_endpoint" {
 
   private_dns_zone_group {
     name                 = "privatelink.azurewebsites.net"
-    private_dns_zone_ids = [var.private_dns_zone_azurewebsites_id]
+    private_dns_zone_ids = [data.azurerm_private_dns_zone.azurewebsites.id]
   }
 
   lifecycle { ignore_changes = [tags] }
@@ -234,7 +234,7 @@ resource "azurerm_monitor_diagnostic_setting" "webapp_gitea" {
 }
 
 resource "azurerm_key_vault_access_policy" "gitea_policy" {
-  key_vault_id = var.keyvault_id
+  key_vault_id = data.azurerm_key_vault.keyvault.id
   tenant_id    = azurerm_user_assigned_identity.gitea_id.tenant_id
   object_id    = azurerm_user_assigned_identity.gitea_id.principal_id
 
@@ -244,7 +244,7 @@ resource "azurerm_key_vault_access_policy" "gitea_policy" {
 resource "azurerm_key_vault_secret" "gitea_password" {
   name         = "${local.webapp_name}-admin-password"
   value        = random_password.gitea_passwd.result
-  key_vault_id = var.keyvault_id
+  key_vault_id = data.azurerm_key_vault.keyvault.id
 
   depends_on = [
     azurerm_key_vault_access_policy.gitea_policy

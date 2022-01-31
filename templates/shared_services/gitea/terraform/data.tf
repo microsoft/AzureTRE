@@ -46,7 +46,7 @@ data "azurerm_private_dns_zone" "azurewebsites" {
 }
 
 data "azurerm_storage_account" "gitea" {
-  name                = var.storage_account_name
+  name                = local.storage_account_name
   resource_group_name = local.core_resource_group_name
 }
 
@@ -60,6 +60,6 @@ data "azurerm_container_registry" "mgmt_acr" {
 }
 
 data "azurerm_key_vault" "keyvault" {
-  name = var.keyvault_name
+  name = local.keyvault_name
   resource_group_name = local.core_resource_group_name
 }
