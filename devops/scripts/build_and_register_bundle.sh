@@ -12,7 +12,6 @@ function usage() {
         -c, --current:        Make this the currently deployed version of this template
         -i, --insecure:       Bypass SSL certificate checks
         -u, --tre_url:        URL for the TRE (required for automatic registration)
-        -a, --access-token    Azure access token to automatically post to the API (required for automatic registration)
 USAGE
     exit 1
 }
@@ -54,10 +53,6 @@ while [ "$1" != "" ]; do
         ;;
     -i| --insecure)
         insecure=1
-        ;;
-    -a | --access-token)
-        shift
-        access_token=$1
         ;;
     *)
         usage

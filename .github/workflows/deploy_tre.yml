@@ -161,9 +161,7 @@ jobs:
           TRE_URL: "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
           BUNDLE_TYPE: ${{ matrix.BUNDLE_TYPE }}
         run: |
-          set -o errexit
-          set -o pipefail
-          set -o nounset
+          set -e
           make build-and-register-bundle DIR=${{ matrix.BUNDLE_DIR }}
 
   e2e_tests:
