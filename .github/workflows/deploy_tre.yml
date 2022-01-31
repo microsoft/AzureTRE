@@ -6,9 +6,7 @@ on:
     # 1am each night https://crontab.guru/#0_1_*_*_*
     - cron: "0 1 * * *"
   push:
-    branches:
-      - main
-      - ross/ActionsInDevContainer
+    branches: [main]
   pull_request_target:
     types: [labeled]
     branches: [main]
@@ -17,12 +15,6 @@ on:
 # This will prevent multiple runs of this entire workflow.
 # We should NOT cancel in progress runs as that can destabilize the environment.
 concurrency: deploy-e2e
-
-env:
-  USE_ENV_VARS_NOT_FILES: true
-  DOCKER_BUILDKIT: 1
-  TF_INPUT: 0 # interactive is off
-  TF_IN_AUTOMATION: 1 # Headless
 
 jobs:
   deploy_management:
@@ -78,20 +70,15 @@ jobs:
         with:
           DISPLAY_NAME: "Deploy management"
           COMMAND: "make bootstrap && make mgmt-deploy"
+          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
           RESOURCE_LOCATION: "${{ secrets.LOCATION }}"
           RESOURCE: "${{ secrets.API_CLIENT_ID }}"
-          AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
-          TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
-          TEST_USER_NAME: "${{ secrets.TEST_USER_NAME }}"
-          TEST_USER_PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
-          TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
-          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
-          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
           TRE_URL:
             "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
           TF_VAR_location: ${{ secrets.LOCATION }}
@@ -107,8 +94,6 @@ jobs:
           TF_VAR_aad_tenant_id: "${{ secrets.AAD_TENANT_ID }}"
           TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
-          TF_VAR_api_app_service_plan_sku_tier: "PremiumV3"
-          TF_VAR_api_app_service_plan_sku_size: "P1v3"
           TF_VAR_acr_name: ${{ secrets.ACR_NAME }}
 
       - name: Notify dedicated teams channel
@@ -152,12 +137,12 @@ jobs:
         with:
           DISPLAY_NAME: "Docker build"
           COMMAND: "make ${{ matrix.target }}"
+          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
-          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
           TF_VAR_acr_name: ${{ secrets.ACR_NAME }}
 
       - name: Notify dedicated teams channel
@@ -184,6 +169,8 @@ jobs:
         with:
           DISPLAY_NAME: "Deploy Trusted Research Environment"
           COMMAND: "make tre-deploy"
+          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
@@ -196,8 +183,6 @@ jobs:
           TEST_USER_PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
-          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
-          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
           TRE_URL:
             "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
           TF_VAR_location: ${{ secrets.LOCATION }}
@@ -256,54 +241,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Set up Docker BuildKit
-        uses: docker/setup-buildx-action@v1
-
-      - name: Login to Container Registry
-        uses: docker/login-action@v1
+      - name: Run in devcontainer
+        uses: ./.github/actions/devcontainer_run_command
         with:
-          registry: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io
-          username: ${{ secrets.ACTIONS_ACR_NAME }}
-          password: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-
-      - name: Register bundles
-        shell: bash
-        env:
+          DISPLAY_NAME: "Register bundles"
+          COMMAND: "make build-and-register-bundle DIR=${{ matrix.BUNDLE_DIR }}"
+          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          TF_VAR_acr_name: ${{ secrets.ACR_NAME }}
           RESOURCE: "${{ secrets.API_CLIENT_ID }}"
           AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
-          CLIENT_ID: "${{ secrets.TEST_APP_ID }}"
-          USERNAME: "${{ secrets.TEST_USER_NAME }}"
-          PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
-          ACR_NAME: ${{ secrets.ACR_NAME }}
+          TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
+          TEST_USER_NAME: "${{ secrets.TEST_USER_NAME }}"
+          TEST_USER_PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
           TRE_URL: "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
           BUNDLE_TYPE: ${{ matrix.BUNDLE_TYPE }}
-        run: |
-          docker run --rm --mount \
-            "type=bind,src=${{ github.workspace }},dst=/workspaces/tre" \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            --workdir /workspaces/tre \
-            --user vscode \
-            -e TF_INPUT \
-            -e TF_IN_AUTOMATION \
-            -e USE_ENV_VARS_NOT_FILES \
-            -e ARM_CLIENT_ID \
-            -e ARM_CLIENT_SECRET \
-            -e ARM_TENANT_ID \
-            -e ARM_SUBSCRIPTION_ID \
-            -e RESOURCE \
-            -e AUTH_TENANT_ID \
-            -e CLIENT_ID \
-            -e USERNAME \
-            -e PASSWORD \
-            -e ACR_NAME \
-            -e TRE_URL \
-            -e BUNDLE_TYPE \
-            '${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest' \
-          bash -c "make build-and-register-bundle DIR=${{ matrix.BUNDLE_DIR }}"
 
   e2e_tests:
     name: "Run E2E Tests"
@@ -319,19 +275,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Set up Docker BuildKit
-        uses: docker/setup-buildx-action@v1
-
-      - name: Login to Container Registry
-        uses: docker/login-action@v1
+      - name: Run in devcontainer
+        uses: ./.github/actions/devcontainer_run_command
         with:
-          registry: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io
-          username: ${{ secrets.ACTIONS_ACR_NAME }}
-          password: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-
-      - name: End 2 End Tests
-        shell: bash
-        env:
+          DISPLAY_NAME: "Run e2e Tests"
+          COMMAND: "make test-e2e"
+          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
@@ -339,34 +289,11 @@ jobs:
           RESOURCE_LOCATION: "${{ secrets.LOCATION }}"
           RESOURCE: "${{ secrets.API_CLIENT_ID }}"
           AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
-          CLIENT_ID: "${{ secrets.TEST_APP_ID }}"
-          USERNAME: "${{ secrets.TEST_USER_NAME }}"
-          PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
+          TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
+          TEST_USER_NAME: "${{ secrets.TEST_USER_NAME }}"
+          TEST_USER_PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
-        run: |
-          docker run --rm --mount \
-            "type=bind,src=${{ github.workspace }},dst=/workspaces/tre" \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            --workdir /workspaces/tre \
-            --user vscode \
-            -e TF_INPUT \
-            -e TF_IN_AUTOMATION \
-            -e USE_ENV_VARS_NOT_FILES \
-            -e ARM_CLIENT_ID \
-            -e ARM_CLIENT_SECRET \
-            -e ARM_TENANT_ID \
-            -e ARM_SUBSCRIPTION_ID \
-            -e RESOURCE_LOCATION \
-            -e RESOURCE \
-            -e AUTH_TENANT_ID \
-            -e CLIENT_ID \
-            -e USERNAME \
-            -e PASSWORD \
-            -e TRE_ID \
-            -e TEST_WORKSPACE_APP_ID \
-            '${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest' \
-          bash -c "make test-e2e"
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
