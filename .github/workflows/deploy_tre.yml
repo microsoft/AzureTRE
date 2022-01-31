@@ -20,6 +20,7 @@ env:
   USE_ENV_VARS_NOT_FILES: true
   DOCKER_BUILDKIT: 1
   TF_INPUT: 0 # interactive is off
+  TF_IN_AUTOMATION: 1 # Headless
 
 jobs:
   deploy_tre:
@@ -51,7 +52,6 @@ jobs:
       - name: Deploy TRE
         shell: bash
         env:
-          TF_IN_AUTOMATION: true
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
