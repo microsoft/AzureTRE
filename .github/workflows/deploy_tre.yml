@@ -20,6 +20,7 @@ env:
   USE_ENV_VARS_NOT_FILES: true
   DOCKER_BUILDKIT: 1
   TF_INPUT: 0 # interactive is off
+  TF_IN_AUTOMATION: 1 # Headless
 
 jobs:
   deploy_tre:
@@ -43,11 +44,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v1
         with:
@@ -56,7 +52,6 @@ jobs:
       - name: Deploy TRE
         shell: bash
         env:
-          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
@@ -137,11 +132,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Install yq
         run: |
@@ -279,10 +269,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
       - name: Deallocate Resources
         shell: bash
         env:
