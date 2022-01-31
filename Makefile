@@ -179,6 +179,7 @@ porter-build:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& . ./devops/scripts/load_env.sh ${DIR}/.env \
+	&& . ./devops/scripts/set_docker_sock_permission.sh \
 	&& cd ${DIR} && porter build --debug
 
 porter-install:
