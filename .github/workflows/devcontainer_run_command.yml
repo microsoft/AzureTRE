@@ -111,7 +111,7 @@ jobs:
           username: ${{ secrets.ACTIONS_ACR_NAME }}
           password: ${{ secrets.ACTIONS_ACR_PASSWORD }}
 
-      - name: inputs.DISPLAY_NAME
+      - name: Run command in DevContainer
         shell: bash
         run: |
           docker run --rm --mount \
