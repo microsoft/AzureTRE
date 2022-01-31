@@ -27,6 +27,7 @@ class Operation(AzureTREModel):
     """
     id: str = Field(title="Id", description="GUID identifying the operation")
     resourceId: str = Field(title="resourceId", description="GUID identifying the resource")
+    resourcePath: str = Field(title="resourcePath", description="Path of the resource undergoing change, ie '/workspaces/guid/workspace-services/guid/'")
     resourceVersion: int = Field(0, title="resourceVersion", description="Version if the resource this operation relates to")
     status: Status = Field(Status.NotDeployed, title="Operation status")
     message: str = Field("", title="Additional operation status information")

@@ -61,6 +61,7 @@ def create_sample_operation(resource_id):
     return Operation(
         id=OPERATION_ID,
         resourceId=resource_id,
+        resourcePath=f'/workspaces/{resource_id}',
         resourceVersion=0,
         message="test"
     )

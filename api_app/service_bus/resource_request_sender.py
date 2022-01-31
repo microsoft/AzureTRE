@@ -16,7 +16,7 @@ from models.domain.operation import Status, Operation
 from db.repositories.operations import OperationRepository
 
 
-async def send_resource_request_message(resource: Resource, operations_repo: OperationRepository, action: RequestAction = RequestAction.Install):
+async def send_resource_request_message(resource: Resource, operations_repo: OperationRepository, action: RequestAction = RequestAction.Install) -> Operation:
     """
     Creates and sends a resource request message for the resource to the Service Bus.
     The resource ID is added to the message to serve as an correlation ID for the deployment process.
@@ -33,6 +33,7 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
     resource_request_message = ServiceBusMessage(body=content, correlation_id=resource.id)
     logging.info(f"Sending resource request message with correlation ID {resource_request_message.correlation_id}, action: {action}")
     await _send_message(resource_request_message, config.SERVICE_BUS_RESOURCE_REQUEST_QUEUE)
+    return operation
 
 
 @asynccontextmanager

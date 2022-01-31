@@ -14,6 +14,7 @@ from db.repositories.user_resources import UserResourceRepository
 from db.repositories.workspaces import WorkspaceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
 from models.domain.resource import ResourceType, Resource
+from models.domain.operation import Operation
 from models.domain.workspace import WorkspaceRole
 from models.schemas.operation import OperationInList, OperationInResponse
 from models.schemas.user_resource import UserResourceInResponse, UserResourceIdInResponse, UserResourceInCreate, UserResourcesInList, UserResourcePatchEnabled
@@ -34,7 +35,7 @@ user_resources_workspace_router = APIRouter(dependencies=[Depends(get_current_wo
 
 
 # HELPER FUNCTIONS
-async def save_and_deploy_resource(resource, resource_repo, operations_repo):
+async def save_and_deploy_resource(resource, resource_repo, operations_repo) -> Operation:
     try:
         resource_repo.save_item(resource)
     except Exception as e:
@@ -42,7 +43,8 @@ async def save_and_deploy_resource(resource, resource_repo, operations_repo):
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
 
     try:
-        await send_resource_request_message(resource, operations_repo, RequestAction.Install)
+        operation = await send_resource_request_message(resource, operations_repo, RequestAction.Install)
+        return operation
     except Exception as e:
         resource_repo.delete_item(resource.id)
         logging.error(f"Failed send resource request message: {e}")
@@ -72,9 +74,10 @@ def mark_resource_as_deleting(resource: Resource, resource_repo: ResourceReposit
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
 
 
-async def send_uninstall_message(resource: Resource, resource_repo: ResourceRepository, previous_deletion_status: bool, resource_type: ResourceType):
+async def send_uninstall_message(resource: Resource, resource_repo: ResourceRepository, previous_deletion_status: bool, resource_type: ResourceType) -> Operation:
     try:
-        await send_resource_request_message(resource, RequestAction.UnInstall)
+        operation = await send_resource_request_message(resource, RequestAction.UnInstall)
+        return operation
     except Exception as e:
         resource_repo.restore_previous_deletion_state(resource, previous_deletion_status)
         logging.error(f"Failed send {resource_type} resource delete message: {e}")
@@ -103,8 +106,8 @@ async def retrieve_workspace_by_workspace_id(workspace=Depends(get_workspace_by_
     return WorkspaceInResponse(workspace=workspace)
 
 
-@workspaces_core_router.post("/workspaces", status_code=status.HTTP_202_ACCEPTED, response_model=WorkspaceIdInResponse, name=strings.API_CREATE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
-async def create_workspace(workspace_create: WorkspaceInCreate, workspace_repo=Depends(get_repository(WorkspaceRepository)), operations_repo=Depends(get_repository(OperationRepository))) -> WorkspaceIdInResponse:
+@workspaces_core_router.post("/workspaces", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_CREATE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
+async def create_workspace(workspace_create: WorkspaceInCreate, workspace_repo=Depends(get_repository(WorkspaceRepository)), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInResponse:
     try:
         # TODO: This requires Directory.ReadAll ( Application.Read.All ) to be enabled in the Azure AD application to enable a users workspaces to be listed. This should be made optional.
         auth_info = extract_auth_information(workspace_create.properties["app_id"])
@@ -113,9 +116,10 @@ async def create_workspace(workspace_create: WorkspaceInCreate, workspace_repo=D
         logging.error(f"Failed to create workspace model instance: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
-    await save_and_deploy_resource(workspace, workspace_repo, operations_repo)
+    op = await save_and_deploy_resource(workspace, workspace_repo, operations_repo)
+    operation = OperationInResponse(operation=op)
 
-    return WorkspaceIdInResponse(workspaceId=workspace.id)
+    return operation
 
 
 @workspaces_core_router.patch("/workspaces/{workspace_id}", response_model=WorkspaceInResponse, name=strings.API_UPDATE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])

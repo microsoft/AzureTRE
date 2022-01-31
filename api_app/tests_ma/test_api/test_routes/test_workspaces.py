@@ -7,6 +7,7 @@ from fastapi import HTTPException, status
 
 from api.routes.workspaces import save_and_deploy_resource, \
     mark_resource_as_deleting, send_uninstall_message
+from models.schemas.operation import OperationInResponse
 
 
 from db.repositories.operations import OperationRepository
@@ -31,6 +32,7 @@ WORKSPACE_ID = '933ad738-7265-4b5f-9eae-a1a62928772e'
 SERVICE_ID = 'abcad738-7265-4b5f-9eae-a1a62928772e'
 USER_RESOURCE_ID = 'a33ad738-7265-4b5f-9eae-a1a62928772a'
 APP_ID = 'f0acf127-a672-a672-a672-a15e5bf9f127'
+OPERATION_ID = '11111111-7265-4b5f-9eae-a1a62928772f'
 
 
 @pytest.fixture
@@ -98,6 +100,7 @@ def sample_resource_operation(resource_id: str, operation_id: str):
     operation = Operation(
         id=operation_id,
         resourceId=resource_id,
+        resourcePath=f'/workspaces/{resource_id}',
         resourceVersion=0,
         message="test",
         Status=Status.Deployed,
@@ -105,6 +108,10 @@ def sample_resource_operation(resource_id: str, operation_id: str):
         updatedWhen=1642611942.423857
     )
     return operation
+
+def sample_resource_operation_in_response(resource_id: str, operation_id: str):
+    op = sample_resource_operation(resource_id=resource_id, operation_id=operation_id)
+    return OperationInResponse(operation=op)
 
 def sample_deployed_workspace(workspace_id=WORKSPACE_ID, auth_info: dict = {}):
     workspace = Workspace(
@@ -328,7 +335,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         assert actual_resource["id"] == workspace.id
 
     # [POST] /workspaces/
-    @ patch("api.routes.workspaces.send_resource_request_message")
+    @ patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
     @ patch("api.routes.workspaces.WorkspaceRepository.save_item")
     @ patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item", return_value=sample_workspace())
     @ patch("api.routes.workspaces.extract_auth_information")
@@ -336,10 +343,10 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE), json=workspace_input)
 
         assert response.status_code == status.HTTP_202_ACCEPTED
-        assert response.json()["workspaceId"] == WORKSPACE_ID
+        assert response.json()["operation"]["resourceId"] == WORKSPACE_ID
 
     # [POST] /workspaces/
-    @ patch("api.routes.workspaces.send_resource_request_message")
+    @ patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
     @ patch("api.routes.workspaces.WorkspaceRepository.save_item")
     @ patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item", return_value=sample_workspace())
     @ patch("api.routes.workspaces.WorkspaceRepository._validate_resource_parameters")
@@ -351,7 +358,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         send_resource_request_message_mock.assert_called_once()
 
     # [POST] /workspaces/
-    @ patch("api.routes.workspaces.send_resource_request_message")
+    @ patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
     @ patch("api.routes.workspaces.WorkspaceRepository.save_item")
     @ patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item", return_value=sample_workspace())
     @ patch("api.routes.workspaces.WorkspaceRepository._validate_resource_parameters")
@@ -360,7 +367,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE), json=workspace_input)
 
         assert response.status_code == status.HTTP_202_ACCEPTED
-        assert response.json()["workspaceId"] == WORKSPACE_ID
+        assert response.json()["operation"]["resourceId"] == WORKSPACE_ID
 
     # [POST] /workspaces/
     @ patch("api.routes.workspaces.WorkspaceRepository.delete_item")
