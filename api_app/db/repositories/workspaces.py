@@ -61,7 +61,8 @@ class WorkspaceRepository(ResourceRepository):
             templateName=workspace_input.templateName,
             templateVersion=template_version,
             properties=resource_spec_parameters,
-            authInformation=auth_info
+            authInformation=auth_info,
+            resourcePath=f'/workspaces/{full_workspace_id}'
         )
 
         return workspace

@@ -25,6 +25,7 @@ class Resource(AzureTREModel):
     properties: dict = Field({}, title="Resource template parameters", description="Parameters for the deployment")
     isActive: bool = Field(True, title="Is Active", description="Is the resource active? Will be False when deleted.")
     resourceType: ResourceType
+    resourcePath: str = Field(title="Resource Path", description="Relative API path to this resource, ie /workspaces/guid/workspace-services/guid/")
 
     def is_enabled(self) -> bool:
         if "enabled" not in self.properties:

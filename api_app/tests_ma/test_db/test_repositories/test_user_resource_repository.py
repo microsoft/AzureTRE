@@ -32,6 +32,7 @@ def user_resource():
         templateVersion="0.1.0",
         properties={},
         templateName="my-workspace-service",
+        resourcePath="test"
     )
     return user_resource
 

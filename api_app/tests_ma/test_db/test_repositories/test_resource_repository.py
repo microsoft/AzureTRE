@@ -30,7 +30,8 @@ def test_delete_workspace_marks_workspace_as_deleted(resource_repo):
         templateName="base-tre",
         templateVersion="0.1.0",
         properties={},
-        isActive=True
+        isActive=True,
+        resourcePath="test"
     )
     resource_repo.mark_resource_as_deleting(workspace)
     workspace.isActive = False
@@ -45,7 +46,8 @@ def test_restore_deletion_status_updates_db(resource_repo):
         templateName="base-tre",
         templateVersion="0.1.0",
         properties={},
-        isActive=False
+        isActive=False,
+        resourcePath="test"
     )
     resource_repo.restore_previous_deletion_state(workspace, True)
     resource_repo.update_item.assert_called_once_with(workspace)

@@ -90,7 +90,8 @@ def sample_workspace(workspace_id=WORKSPACE_ID, auth_info: dict = {}):
         templateVersion="0.1.0",
         properties={
             "app_id": "12345"
-        }
+        },
+        resourcePath=f'/workspaces/{workspace_id}'
     )
     if auth_info:
         workspace.authInformation = auth_info
@@ -118,7 +119,8 @@ def sample_deployed_workspace(workspace_id=WORKSPACE_ID, auth_info: dict = {}):
         id=workspace_id,
         templateName="tre-workspace-base",
         templateVersion="0.1.0",
-        properties={}
+        properties={},
+        resourcePath="test"
     )
     if auth_info:
         workspace.authInformation = auth_info
@@ -131,7 +133,8 @@ def sample_workspace_service(workspace_service_id=SERVICE_ID, workspace_id=WORKS
         workspaceId=workspace_id,
         templateName="tre-workspace-base",
         templateVersion="0.1.0",
-        properties={}
+        properties={},
+        resourcePath=f'/workspaces/{workspace_id}/workspace-services/{workspace_service_id}'
     )
 
 
@@ -142,18 +145,19 @@ def sample_user_resource_object(user_resource_id=USER_RESOURCE_ID, workspace_id=
         parentWorkspaceServiceId=parent_workspace_service_id,
         templateName="tre-user-resource",
         templateVersion="0.1.0",
-        properties={}
+        properties={},
+        resourcePath=f'/workspaces/{workspace_id}/workspace-services/{parent_workspace_service_id}/user-resources/{user_resource_id}'
     )
 
     return user_resource
 
 
 def disabled_workspace_service():
-    return WorkspaceService(id=SERVICE_ID, templateName='template name', templateVersion='1.0', properties={"enabled": False})
+    return WorkspaceService(id=SERVICE_ID, templateName='template name', templateVersion='1.0', properties={"enabled": False}, resourcePath="test")
 
 
 def disabled_user_resource():
-    return UserResource(id=USER_RESOURCE_ID, templateName='template name', templateVersion='1.0', properties={"enabled": False})
+    return UserResource(id=USER_RESOURCE_ID, templateName='template name', templateVersion='1.0', properties={"enabled": False}, resourcePath="test")
 
 
 class TestWorkspaceHelpers:

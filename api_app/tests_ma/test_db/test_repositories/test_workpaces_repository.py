@@ -32,6 +32,7 @@ def workspace():
         templateVersion="0.1.0",
         properties={},
         templateName="my-workspace-service",
+        resourcePath="test"
     )
     return workspace
 
@@ -129,7 +130,8 @@ def test_patch_workspace_updates_item(workspace_repo):
         id="1234",
         templateName="base-tre",
         templateVersion="0.1.0",
-        properties={}
+        properties={},
+        resourcePath="test"
     )
     workspace_patch = WorkspacePatchEnabled(enabled=False)
 

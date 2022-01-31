@@ -54,7 +54,8 @@ def create_sample_workspace_object(workspace_id):
         id=workspace_id,
         templateName="tre-workspace-base",
         templateVersion="0.1.0",
-        properties={}
+        properties={},
+        resourcePath="test"
     )
 
 def create_sample_operation(resource_id):

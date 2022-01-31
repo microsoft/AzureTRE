@@ -19,7 +19,8 @@ def create_test_resource():
         resourceType=ResourceType.Workspace,
         templateName="Test resource template name",
         templateVersion="2.718",
-        properties={"testParameter": "testValue"}
+        properties={"testParameter": "testValue"},
+        resourcePath="test"
     )
 
 
