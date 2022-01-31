@@ -60,16 +60,6 @@ variable "nexus_allowed_fqdns" {
   default     = "*pypi.org"
 }
 
-variable "firewall_name" {
-  type        = string
-  description = "Name of the firewall to connect to"
-}
-
-variable "firewall_resource_group_name" {
-  type        = string
-  description = "Name of the firewall to connect to"
-}
-
 variable "web_app_subnet_address_prefixes" {
   type        = list(string)
   description = "List of address prefixes for the Web App subnet"

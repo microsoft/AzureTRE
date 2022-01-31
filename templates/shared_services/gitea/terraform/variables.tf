@@ -82,13 +82,3 @@ variable "gitea_allowed_fqdns" {
   description = "comma seperated string of allowed FQDNs for Gitea"
   default     = "github.com, www.github.com, api.github.com, git-lfs.github.com, *githubusercontent.com"
 }
-
-variable "firewall_name" {
-  type        = string
-  description = "Name of the firewall to connect to"
-}
-
-variable "firewall_resource_group_name" {
-  type        = string
-  description = "Name of the resource group containing the firewall resource"
-}

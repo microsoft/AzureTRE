@@ -1,7 +1,7 @@
 resource "azurerm_firewall_application_rule_collection" "web_app_subnet_gitea" {
   name                = "arc-web_app_subnet_gitea"
-  azure_firewall_name = var.firewall_name
-  resource_group_name = var.firewall_resource_group_name
+  azure_firewall_name = local.firewall_name
+  resource_group_name = local.core_resource_group_name
   priority            = 103
   action              = "Allow"
 
