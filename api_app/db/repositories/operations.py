@@ -20,13 +20,14 @@ class OperationRepository(BaseRepository):
     def operations_query():
         return 'SELECT * FROM c WHERE'
 
-    def create_operation_item(self, resource_id: str, status: Status, message: str) -> Operation:
+    def create_operation_item(self, resource_id: str, status: Status, message: str, resource_path: str) -> Operation:
         operation_id = str(uuid.uuid4())
 
         timestamp = datetime.utcnow().timestamp()
         operation = Operation(
             id=operation_id,
             resourceId=resource_id,
+            resourcePath=resource_path,
             status=status,
             resourceVersion=0, # Resource versioning coming in future
             createdWhen=timestamp,

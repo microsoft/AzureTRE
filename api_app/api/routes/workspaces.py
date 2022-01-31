@@ -1,6 +1,6 @@
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, status, Request, Path
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 
 from jsonschema.exceptions import ValidationError
 from pydantic.types import UUID4
@@ -118,6 +118,7 @@ async def create_workspace(workspace_create: WorkspaceInCreate, workspace_repo=D
 
     op = await save_and_deploy_resource(workspace, workspace_repo, operations_repo)
     operation = OperationInResponse(operation=op)
+    operation.href = f'/api{op.resourcePath}/operations/{op.id}' # give the caller a location to ask for the status
 
     return operation
 

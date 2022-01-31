@@ -26,7 +26,7 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
     """
 
     # add the operation to the db
-    operation = operations_repo.create_operation_item(resource_id=resource.id, status=Status.NotDeployed, message=strings.RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE)
+    operation = operations_repo.create_operation_item(resource_id=resource.id, status=Status.NotDeployed, message=strings.RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE, resource_path=resource.resourcePath)
 
     content = json.dumps(resource.get_resource_request_message_payload(operation.id, action))
 

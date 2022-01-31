@@ -10,6 +10,7 @@ def get_sample_operation(operation_id: str) -> dict:
     return {
         "id": operation_id,
         "resourceId": "933ad738-7265-4b5f-9eae-a1a62928772e",
+        "resourcePath": "/workspaces/933ad738-7265-4b5f-9eae-a1a62928772e",
         "resourceVersion": 0,
         "status": "not_deployed",
         "message": "",
@@ -20,6 +21,7 @@ def get_sample_operation(operation_id: str) -> dict:
 
 class OperationInResponse(BaseModel):
     operation: Operation
+    href: str = ""
 
     class Config:
         schema_extra = {
