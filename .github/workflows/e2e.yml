@@ -1,5 +1,5 @@
 ---
-name: Publish Bundles
+name: End to End Tests
 
 on:
   push:
@@ -36,11 +36,6 @@ jobs:
           username: ${{ secrets.ACTIONS_ACR_NAME }}
           password: ${{ secrets.ACTIONS_ACR_PASSWORD }}
 
-      - name: Set Variables
-        run: |
-          echo "USER_UID=$(id -u)" >> $GITHUB_ENV
-          echo "USER_GID=$(id -g)" >> $GITHUB_ENV
-
       - name: End 2 End Tests
         shell: bash
         env:
@@ -48,15 +43,14 @@ jobs:
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          RESOURCE_LOCATION: "${{ secrets.LOCATION }}"
           RESOURCE: "${{ secrets.API_CLIENT_ID }}"
           AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           CLIENT_ID: "${{ secrets.TEST_APP_ID }}"
           USERNAME: "${{ secrets.TEST_USER_NAME }}"
           PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
-          ACR_NAME: ${{ secrets.ACR_NAME }}
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
-          TRE_URL: "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
-          BUNDLE_TYPE: ${{ matrix.BUNDLE_TYPE }}
+          TRE_ID: "${{ secrets.TRE_ID }}"
         run: |
           docker run --rm --mount \
             "type=bind,src=${{ github.workspace }},dst=/workspaces/tre" \
@@ -70,14 +64,13 @@ jobs:
             -e ARM_CLIENT_SECRET \
             -e ARM_TENANT_ID \
             -e ARM_SUBSCRIPTION_ID \
+            -e RESOURCE_LOCATION \
             -e RESOURCE \
             -e AUTH_TENANT_ID \
             -e CLIENT_ID \
             -e USERNAME \
             -e PASSWORD \
-            -e ACR_NAME \
-            -e TRE_URL \
+            -e TRE_ID \
             -e TEST_WORKSPACE_APP_ID \
-            -e BUNDLE_TYPE \
             '${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest' \
           bash -c "make test-e2e"
