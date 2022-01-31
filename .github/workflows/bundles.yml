@@ -95,7 +95,7 @@ jobs:
             -e TRE_URL \
             -e BUNDLE_TYPE \
             '${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest' \
-          bash -c "make build-and-register-bundle DIR=${{ matrix.BUNDLE_DIR }}"
+          bash -c "sudo docker ps && docker ps && make build-and-register-bundle DIR=${{ matrix.BUNDLE_DIR }}"
 
   publish_and_register_bundles:
     name: Inline
