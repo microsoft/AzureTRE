@@ -43,81 +43,81 @@ inputs:
       description: "Azure Subscription Id."
       required: true
     RESOURCE_LOCATION:
-      description: "The friendly name of the command."
+      description: "The Azure Region (e.g. WestEurope)."
       required: true
     RESOURCE:
-      description: "The friendly name of the command."
+      description: "The API Client Id."
       required: true
     AUTH_TENANT_ID:
-      description: "The friendly name of the command."
+      description: "The Tenant Id where the App is registered."
       required: true
     TEST_APP_ID:
-      description: "The friendly name of the command."
+      description: "The Test Application Id used to interact with the API."
       required: true
     TEST_USER_NAME:
-      description: "The friendly name of the command."
+      description: "The Test User used to interact with the API."
       required: true
     TEST_USER_PASSWORD:
-      description: "The friendly name of the command."
+      description: "The Test User password Id used to interact with the API."
       required: true
     TEST_WORKSPACE_APP_ID:
-      description: "The friendly name of the command."
+      description: "The Test Workspace Id used to interact with the API."
       required: true
     TRE_ID:
-      description: "The friendly name of the command."
+      description: "The TRE Id."
       required: true
     TF_VAR_location:
-      description: "The friendly name of the command."
+      description: "The Azure Region (e.g. WestEurope)."
       required: true
     TF_VAR_tre_id:
-      description: "The friendly name of the command."
+      description: "The TRE Id."
       required: true
     TF_VAR_terraform_state_container_name:
-      description: "The friendly name of the command."
+      description: "The name of the container to store the Terraform state."
       required: true
     TF_VAR_mgmt_resource_group_name:
-      description: "The friendly name of the command."
+      description: "The resource group used to store the Terraform state."
       required: true
     TF_VAR_mgmt_storage_account_name:
-      description: "The friendly name of the command."
+      description: "The storage account used to store the Terraform state."
       required: true
     TF_VAR_core_address_space:
-      description: "The friendly name of the command."
+      description: "Core address space."
       required: true
     TF_VAR_tre_address_space:
-      description: "The friendly name of the command."
+      description: "TRE address apace."
       required: true
     TF_VAR_swagger_ui_client_id:
-      description: "The friendly name of the command."
+      description: "The Swagger UI Client ID."
       required: true
     TF_VAR_aad_tenant_id:
-      description: "The friendly name of the command."
+      description: "The Tenant Id where the App is registered. (Same as AUTH_TENANT_ID)"
       required: true
     TF_VAR_api_client_id:
-      description: "The friendly name of the command."
+      description: "The API Client Id. (Same as Resource)"
       required: true
     TF_VAR_api_client_secret:
-      description: "The friendly name of the command."
+      description: "The API Client Secret."
       required: true
     TF_VAR_api_app_service_plan_sku_tier:
-      description: "The friendly name of the command."
+      description: "The SKU tier of the App Service for the API."
       required: false
       default: "PremiumV3"
     TF_VAR_api_app_service_plan_sku_size:
-      description: "The friendly name of the command."
+      description: "The SKU size of the App Service for the API."
       required: false
       default: "P1v3"
     TF_VAR_acr_name:
-      description: "The friendly name of the command."
+      description: "The Container Registry that holds our Research images."
       required: true
     LOCATION:
-      description: "The friendly name of the command."
+      description: "The Azure Region (e.g. WestEurope). (Same as RESOURCE_LOCATION and TF_VAR_location)"
       required: true
     TRE_URL:
-      description: "The friendly name of the command."
+      description: "The URL of the API App."
       required: false
     BUNDLE_TYPE:
-      description: "The friendly name of the command."
+      description: "The Bundle type (workspace / Workspace-service / User Resource)."
       required: false
 runs:
   using: composite
