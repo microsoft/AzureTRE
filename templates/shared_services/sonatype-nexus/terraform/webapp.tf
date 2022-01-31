@@ -2,11 +2,11 @@ resource "azurerm_app_service" "nexus" {
   name                = "nexus-${var.tre_id}"
   resource_group_name = local.core_resource_group_name
   location            = var.location
-  app_service_plan_id = data.azurerm_app_service_plan.core.id
+  app_service_plan_id = var.core_app_service_plan_id
   https_only          = true
 
   app_settings = {
-    APPINSIGHTS_INSTRUMENTATIONKEY      = data.azurerm_application_insights.core.instrumentation_key
+    APPINSIGHTS_INSTRUMENTATIONKEY      = var.core_application_insights_instrumentation_key
     WEBSITES_PORT                       = "8081" # nexus web-ui listens here
     WEBSITES_CONTAINER_START_TIME_LIMIT = "900"  # nexus takes a while to start-up
     WEBSITE_VNET_ROUTE_ALL              = 1
@@ -38,9 +38,9 @@ resource "azurerm_app_service" "nexus" {
   storage_account {
     name         = "nexus-data"
     type         = "AzureFiles"
-    account_name = data.azurerm_storage_account.nexus.name
+    account_name = var.storage_account_name
 
-    access_key = data.azurerm_storage_account.nexus.primary_access_key
+    access_key = var.storage_account_primary_access_key
     share_name = azurerm_storage_share.nexus.name
     mount_path = "/nexus-data"
   }
@@ -68,7 +68,7 @@ resource "azurerm_private_endpoint" "nexus_private_endpoint" {
   name                = "pe-nexus-${var.tre_id}"
   resource_group_name = local.core_resource_group_name
   location            = var.location
-  subnet_id           = data.azurerm_subnet.shared.id
+  subnet_id           = var.shared_subnet_id
 
   private_service_connection {
     private_connection_resource_id = azurerm_app_service.nexus.id
@@ -79,7 +79,7 @@ resource "azurerm_private_endpoint" "nexus_private_endpoint" {
 
   private_dns_zone_group {
     name                 = "privatelink.azurewebsites.net"
-    private_dns_zone_ids = [data.azurerm_private_dns_zone.azurewebsites.id]
+    private_dns_zone_ids = [var.private_dns_zone_azurewebsites_id]
   }
 
   lifecycle { ignore_changes = [tags] }
@@ -87,13 +87,13 @@ resource "azurerm_private_endpoint" "nexus_private_endpoint" {
 
 resource "azurerm_app_service_virtual_network_swift_connection" "nexus-integrated-vnet" {
   app_service_id = azurerm_app_service.nexus.id
-  subnet_id      = data.azurerm_subnet.web_app.id
+  subnet_id      = var.web_app_subnet_id
 }
 
 resource "azurerm_monitor_diagnostic_setting" "nexus" {
   name                       = "diag-${var.tre_id}"
   target_resource_id         = azurerm_app_service.nexus.id
-  log_analytics_workspace_id = data.azurerm_log_analytics_workspace.tre.id
+  log_analytics_workspace_id = var.log_analytics_workspace_id
 
   log {
     category = "AppServiceHTTPLogs"
@@ -187,14 +187,23 @@ resource "azurerm_monitor_diagnostic_setting" "nexus" {
 
 resource "azurerm_storage_share" "nexus" {
   name                 = "nexus-data"
-  storage_account_name = data.azurerm_storage_account.nexus.name
+  storage_account_name = var.storage_account_name
   quota                = var.nexus_storage_limit
 }
 
 # Include a properties file in the nexus-data path will change its configuration. We need this to instruct it not to create default repositories.
 resource "null_resource" "upload_nexus_props" {
   provisioner "local-exec" {
-    command = "az storage directory create --name etc --share-name ${azurerm_storage_share.nexus.name} --account-name ${data.azurerm_storage_account.nexus.name} --account-key ${data.azurerm_storage_account.nexus.primary_access_key} && az storage file upload --source ../../shared_services/sonatype-nexus/nexus.properties --path etc --share-name ${azurerm_storage_share.nexus.name} --account-name ${data.azurerm_storage_account.nexus.name} --account-key ${data.azurerm_storage_account.nexus.primary_access_key}"
+    command = <<EOT
+      az storage directory create \
+      --name etc --share-name  ${azurerm_storage_share.nexus.name} \
+      --account-name ${var.storage_account_name} \
+      --account-key ${var.storage_account_primary_access_key} && \
+      az storage file upload --source ../../shared_services/sonatype-nexus/nexus.properties \
+      --path etc --share-name  ${azurerm_storage_share.nexus.name} \
+      --account-name ${var.storage_account_name} \
+      --account-key ${var.storage_account_primary_access_key}
+      EOT
   }
 
   # Make sure this only runs after the share is ready

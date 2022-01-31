@@ -1,5 +1,6 @@
+---
 name: tre-service-guacamole
-version: 0.1.8
+version: 0.1.9
 description: "An Azure TRE service for Guacamole"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -65,16 +66,22 @@ parameters:
     type: boolean
     default: true
     env: GUAC_DISABLE_DOWNLOAD
-    description:  "Guacamole disable download configuration"
+    description: "Guacamole disable download configuration"
   - name: is_exposed_externally
     type: boolean
     default: false
     env: IS_EXPOSED_EXTERNALLY
-    description: "Determines if the web app will be available over public/internet or private networks"
+    description:
+      "Determines if the web app will be available over public/internet
+      or private networks"
   - name: openid_client_id
     type: string
     env: OPENID_CLIENT_ID
-    description: "The OpenID client ID which should be submitted to the OpenID service when necessary. This value is typically provided to you by the OpenID service when OpenID credentials are generated for your application"
+    description:
+      "The OpenID client ID which should be submitted to the OpenID
+       service when necessary. This value is typically provided to you
+       by the OpenID service when OpenID credentials are generated for
+       your application"
   # the following are added automatically by the resource processor
   - name: id
     type: string
@@ -115,7 +122,8 @@ install:
         image_name: "{{ bundle.parameters.image_name }}"
         image_tag: "{{ bundle.parameters.image_tag }}"
         mgmt_acr_name: "{{ bundle.parameters.mgmt_acr_name }}"
-        mgmt_resource_group_name: "{{ bundle.parameters.mgmt_resource_group_name }}"
+        mgmt_resource_group_name:
+          "{{ bundle.parameters.mgmt_resource_group_name }}"
         arm_client_id: "{{ bundle.credentials.azure_client_id }}"
         arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
         arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
@@ -130,12 +138,14 @@ install:
         openid_client_id: "{{ bundle.parameters.openid_client_id }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
       backendConfig:
-        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
+        resource_group_name:
+          "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name:
+          "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "tre-service-guacamole-{{ bundle.parameters.id }}"
       outputs:
-      - name: connection_uri
+        - name: connection_uri
 
 upgrade:
   - exec:
@@ -153,7 +163,8 @@ uninstall:
         image_name: "{{ bundle.parameters.image_name }}"
         image_tag: "{{ bundle.parameters.image_tag }}"
         mgmt_acr_name: "{{ bundle.parameters.mgmt_acr_name }}"
-        mgmt_resource_group_name: "{{ bundle.parameters.mgmt_resource_group_name }}"
+        mgmt_resource_group_name:
+          "{{ bundle.parameters.mgmt_resource_group_name }}"
         arm_client_id: "{{ bundle.credentials.azure_client_id }}"
         arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
         arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
@@ -168,7 +179,9 @@ uninstall:
         openid_client_id: "{{ bundle.parameters.openid_client_id }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
       backendConfig:
-        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
+        resource_group_name:
+          "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name:
+          "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "tre-service-guacamole-{{ bundle.parameters.id }}"

@@ -1,5 +1,6 @@
+---
 name: tre-workspace-base
-version: 0.1.5
+version: 0.1.6
 description: "A base Azure TRE workspace"
 registry: azuretre
 
@@ -56,8 +57,10 @@ install:
         location: "{{ bundle.parameters.azure_location }}"
         address_space: "{{ bundle.parameters.address_space }}"
       backendConfig:
-        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
+        resource_group_name:
+          "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name:
+          "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "tre-workspace-base-{{ bundle.parameters.id }}"
 
@@ -78,7 +81,9 @@ uninstall:
         location: "{{ bundle.parameters.azure_location }}"
         address_space: "{{ bundle.parameters.address_space }}"
       backendConfig:
-        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
+        resource_group_name:
+          "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name:
+          "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "tre-workspace-base-{{ bundle.parameters.id }}"

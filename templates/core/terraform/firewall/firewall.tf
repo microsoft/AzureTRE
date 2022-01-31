@@ -15,7 +15,7 @@ resource "azurerm_firewall" "fw" {
   location            = var.location
   ip_configuration {
     name                 = "fw-ip-configuration"
-    subnet_id            = data.azurerm_subnet.firewall.id
+    subnet_id            = var.firewall_subnet.id
     public_ip_address_id = azurerm_public_ip.fwpip.id
   }
 
@@ -122,7 +122,7 @@ resource "azurerm_firewall_application_rule_collection" "shared_subnet" {
       "graph.windows.net"
     ]
 
-    source_addresses = data.azurerm_subnet.shared.address_prefixes
+    source_addresses = var.shared_subnet.address_prefixes
   }
 }
 
@@ -158,7 +158,7 @@ resource "azurerm_firewall_application_rule_collection" "resource_processor_subn
       "registry.terraform.io",
       "releases.hashicorp.com"
     ]
-    source_addresses = data.azurerm_subnet.resource_processor.address_prefixes
+    source_addresses = var.resource_processor_subnet.address_prefixes
   }
 
   depends_on = [
@@ -222,7 +222,7 @@ resource "azurerm_firewall_network_rule_collection" "resource_processor_subnet" 
     destination_ports = [
       "443"
     ]
-    source_addresses = data.azurerm_subnet.resource_processor.address_prefixes
+    source_addresses = var.resource_processor_subnet.address_prefixes
   }
 
   depends_on = [
@@ -253,7 +253,7 @@ resource "azurerm_firewall_network_rule_collection" "web_app_subnet" {
     destination_ports = [
       "443"
     ]
-    source_addresses = data.azurerm_subnet.web_app.address_prefixes
+    source_addresses = var.web_app_subnet.address_prefixes
   }
 
   depends_on = [
@@ -278,46 +278,6 @@ resource "azurerm_firewall_application_rule_collection" "web_app_subnet" {
     target_fqdns = [
       "graph.microsoft.com"
     ]
-    source_addresses = data.azurerm_subnet.web_app.address_prefixes
+    source_addresses = var.web_app_subnet.address_prefixes
   }
-
-  dynamic "rule" {
-    for_each = var.deploy_gitea && length(local.gitea_allowed_fqdns_list) > 0 ? [1] : []
-    content {
-      name = "gitea-sources"
-      protocol {
-        port = "443"
-        type = "Https"
-      }
-      protocol {
-        port = "80"
-        type = "Http"
-      }
-
-      target_fqdns     = local.gitea_allowed_fqdns_list
-      source_addresses = data.azurerm_subnet.web_app.address_prefixes
-    }
-  }
-
-  dynamic "rule" {
-    for_each = var.deploy_nexus && length(local.nexus_allowed_fqdns_list) > 0 ? [1] : []
-    content {
-      name = "nexus-package-sources"
-      protocol {
-        port = "443"
-        type = "Https"
-      }
-      protocol {
-        port = "80"
-        type = "Http"
-      }
-
-      target_fqdns     = local.nexus_allowed_fqdns_list
-      source_addresses = data.azurerm_subnet.web_app.address_prefixes
-    }
-  }
-
-  depends_on = [
-    azurerm_firewall_network_rule_collection.web_app_subnet
-  ]
 }

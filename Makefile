@@ -117,11 +117,17 @@ letsencrypt:
 
 tre-stop:
 	echo -e "\n\e[34m»»» 🧩 \e[96mStopping TRE\e[0m..." \
-	&& pwsh -c ./devops/scripts/Control-TRE.ps1 -Action "Stop"
+	&& . ./devops/scripts/check_dependencies.sh azfirewall \
+	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& ./devops/scripts/control_tre.sh stop
 
 tre-start:
 	echo -e "\n\e[34m»»» 🧩 \e[96mStarting TRE\e[0m..." \
-	&& pwsh -c ./devops/scripts/Control-TRE.ps1 -Action "Start"
+	&& . ./devops/scripts/check_dependencies.sh azfirewall \
+	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& ./devops/scripts/control_tre.sh start
 
 tre-destroy:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDestroying TRE\e[0m..." \
@@ -208,6 +214,13 @@ register-bundle:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& cd ${DIR} \
 	&& ${ROOTPATH}/devops/scripts/publish_register_bundle.sh --acr-name $${ACR_NAME} --bundle-type $${BUNDLE_TYPE} --current --insecure --tre_url $${TRE_URL} --access-token $${TOKEN}
+
+build-and-register-bundle: porter-build
+	echo -e "\n\e[34m»»» 🧩 \e[96mPublishing ${DIR} bundle\e[0m..." \
+	&& ./devops/scripts/check_dependencies.sh porter \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& cd ${DIR} \
+	&& ${ROOTPATH}/devops/scripts/build_and_register_bundle.sh --acr-name $${ACR_NAME} --bundle-type $${BUNDLE_TYPE} --current --insecure --tre_url $${TRE_URL} --access-token $${TOKEN}
 
 register-bundle-payload:
 	echo -e "\n\e[34m»»» 🧩 \e[96mPublishing ${DIR} bundle\e[0m..." \

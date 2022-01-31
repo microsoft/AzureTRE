@@ -1,3 +1,4 @@
+---
 name: Docker build
 
 on:
@@ -8,7 +9,8 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# for each ref (branch/pr) run just the most recent, cancel other pending/running ones
+# for each ref (branch/pr) run just the most recent, cancel
+# other pending/running ones
 concurrency:
   group: "${{ github.workflow }}-${{ github.head_ref }}"
   cancel-in-progress: true
@@ -44,8 +46,11 @@ jobs:
         uses: docker/setup-buildx-action@v1
 
       - name: "Test image: api"
-        # test should be before build since its docker target is prior to runtime
-        if: (steps.filter.outputs.api == 'true' || github.event_name == 'workflow_dispatch')
+        # test should be before build since its docker target
+        # is prior to runtime
+        if: |
+          (steps.filter.outputs.api == 'true'
+          || github.event_name == 'workflow_dispatch')
         uses: docker/build-push-action@v2
         with:
           context: ./api_app/
@@ -55,7 +60,9 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - name: "Build image: api"
-        if: (steps.filter.outputs.api == 'true' || github.event_name == 'workflow_dispatch')
+        if: |
+          (steps.filter.outputs.api == 'true'
+          || github.event_name == 'workflow_dispatch')
         uses: docker/build-push-action@v2
         with:
           context: ./api_app/
@@ -64,7 +71,9 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: "Build image: resource_processor"
-        if: (steps.filter.outputs.resource_processor == 'true' || github.event_name == 'workflow_dispatch')
+        if: |
+          (steps.filter.outputs.resource_processor == 'true'
+          || github.event_name == 'workflow_dispatch')
         uses: docker/build-push-action@v2
         with:
           context: ./resource_processor
@@ -73,7 +82,9 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: "Test image: guacamole_server"
-        if: (steps.filter.outputs.guacamole_server == 'true' || github.event_name == 'workflow_dispatch')
+        if: |
+          (steps.filter.outputs.guacamole_server == 'true'
+          || github.event_name == 'workflow_dispatch')
         uses: docker/build-push-action@v2
         with:
           context: ./templates/workspace_services/guacamole/guacamole-server
@@ -84,7 +95,9 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: "Build image: guacamole_server"
-        if: (steps.filter.outputs.guacamole_server == 'true' || github.event_name == 'workflow_dispatch')
+        if: |
+          (steps.filter.outputs.guacamole_server == 'true'
+          || github.event_name == 'workflow_dispatch')
         uses: docker/build-push-action@v2
         with:
           context: ./templates/workspace_services/guacamole/guacamole-server
@@ -93,7 +106,9 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: "Build image: gitea"
-        if: (steps.filter.outputs.gitea == 'true' || github.event_name == 'workflow_dispatch')
+        if: |
+          (steps.filter.outputs.gitea == 'true'
+          || github.event_name == 'workflow_dispatch')
         uses: docker/build-push-action@v2
         with:
           context: ./templates/shared_services/gitea

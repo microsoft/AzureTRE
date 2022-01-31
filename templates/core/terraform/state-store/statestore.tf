@@ -30,7 +30,7 @@ resource "azurerm_cosmosdb_sql_database" "tre-db" {
 
 resource "azurerm_management_lock" "tre-db" {
   name       = "tre-db-lock"
-  scope      = resource.azurerm_cosmosdb_sql_database.tre-db.id
+  scope      = azurerm_cosmosdb_sql_database.tre-db.id
   lock_level = "CanNotDelete"
   notes      = "Locked to prevent accidental deletion"
 }

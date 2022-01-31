@@ -1,4 +1,4 @@
-name: tre-service-guacamole-win10vm
+name: tre-service-guacamole-windowsvm
 version: 0.1.0
 description: "An Azure TRE User Resource Template for Guacamole (Windows 10)"
 registry: azuretre
@@ -43,6 +43,9 @@ parameters:
   - name: arm_use_msi
     env: ARM_USE_MSI
     default: false
+  - name: os_image
+    type: string
+    default: "Windows 10"
 
 outputs:
   - name: ip
@@ -65,7 +68,7 @@ mixins:
 
 install:
   - terraform:
-      description: "Deploy Guacamole User Resource Service (Windows 10)"
+      description: "Deploy Guacamole User Resource Service (Windows VM)"
       vars:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
@@ -75,19 +78,23 @@ install:
         arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
         arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
+        image: "{{ bundle.parameters.os_image }}"
       backendConfig:
-        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
+        resource_group_name:
+          "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name:
+          "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.id }}"
       outputs:
-      - name: ip
-      - name: hostname
-      - name: connection_uri
+        - name: ip
+        - name: hostname
+        - name: connection_uri
 
 upgrade:
   - exec:
-      description: "Upgrade Guacamole User Resource Service (Windows 10)"
+      description:
+        "Upgrade Guacamole User Resource Service (Windows 10)"
       command: echo
       arguments:
         - "This workspace service does not implement upgrade action"
@@ -104,8 +111,11 @@ uninstall:
         arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
         arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
+        image: "{{ bundle.parameters.os_image }}"
       backendConfig:
-        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
+        resource_group_name:
+          "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name:
+          "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.id }}"
