@@ -57,7 +57,7 @@ resource "azurerm_app_service" "gitea" {
   }
 
   site_config {
-    linux_fx_version                     = "DOCKER|${var.docker_registry_server}/microsoft/azuretre/gitea:${local.version}"
+    linux_fx_version                     = "DOCKER|${data.azurerm_container_registry.mgmt_acr.login_server}/microsoft/azuretre/gitea:${local.version}"
     remote_debugging_enabled             = false
     scm_use_main_ip_restriction          = true
     acr_use_managed_identity_credentials = true
@@ -116,7 +116,7 @@ resource "azurerm_private_endpoint" "gitea_private_endpoint" {
   name                = "pe-${local.webapp_name}"
   resource_group_name = local.core_resource_group_name
   location            = var.location
-  subnet_id           = var.shared_subnet_id
+  subnet_id           = data.azurerm_subnet.shared.id
 
   private_service_connection {
     private_connection_resource_id = azurerm_app_service.gitea.id
@@ -258,7 +258,7 @@ resource "azurerm_storage_share" "gitea" {
 }
 
 resource "azurerm_role_assignment" "gitea_acrpull_role" {
-  scope                = var.acr_id
+  scope                = data.azurerm_container_registry.mgmt_acr.id
   role_definition_name = "AcrPull"
   principal_id         = azurerm_user_assigned_identity.gitea_id.principal_id
 }
