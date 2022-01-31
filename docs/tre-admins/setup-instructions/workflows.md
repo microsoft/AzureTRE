@@ -48,13 +48,16 @@ Before you can run the `deploy_tre.yml` pipeline there are some one-time configu
   ```
 
   !!! caution
-      Save the JSON output locally - as you will need it later for the `AZURE_CREDENTIALS` secret
+      Save the JSON output locally - as you will need it later for setting secrets in the build
 
-1. Configure the AZURE_CREDENTIALS repository secret
+1. Configure the repository secrets. These values will be in the JSON file from the previous step.
 
   | <div style="width: 230px">Secret name</div> | Description |
   | ----------- | ----------- |
-  | `AZURE_CREDENTIALS` | The JSON output from the previous step |
+  | `ARM_SUBSCRIPTION_ID` | The Azure subscription to deploy to  |
+  | `ARM_TENANT_ID` | The Azure tenant to deploy to  |
+  | `ARM_CLIENT_ID` | The Azure Client Id (user)  |
+  | `ARM_CLIENT_SECRET` | The Azure Client Secret (password)  |
 
 ### Decide on a TRE ID and Azure resources location
 

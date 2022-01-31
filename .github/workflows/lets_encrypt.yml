@@ -14,6 +14,7 @@ concurrency: letsencrypt
 env:
   USE_ENV_VARS_NOT_FILES: true
   TF_INPUT: 0 # interactive is off
+  TF_IN_AUTOMATION: 1 # Run in headless mode
 
 jobs:
   renew_letsencrypt_certs:
@@ -23,11 +24,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v1

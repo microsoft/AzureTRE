@@ -21,8 +21,8 @@ concurrency: deploy-e2e
 env:
   USE_ENV_VARS_NOT_FILES: true
   DOCKER_BUILDKIT: 1
-  TF_INPUT: 0 # No input supplied to Terraform
-  TF_IN_AUTOMATION: 1 # No prompts
+  TF_INPUT: 0 # interactive is off
+  TF_IN_AUTOMATION: 1 # Headless
 
 jobs:
   deploy_management:
@@ -499,10 +499,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
       - name: Deallocate Resources
         shell: bash
         env:
