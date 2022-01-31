@@ -6,7 +6,9 @@ on:
     # 1am each night https://crontab.guru/#0_1_*_*_*
     - cron: "0 1 * * *"
   push:
-    branches: [main]
+    branches:
+      - main
+      - ross/ActionsInDevContainer
   pull_request_target:
     types: [labeled]
     branches: [main]
@@ -145,39 +147,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Set up Docker BuildKit
-        uses: docker/setup-buildx-action@v1
-
-      - name: Login to Container Registry
-        uses: docker/login-action@v1
+      - name: Run in devcontainer
+        uses: ./.github/actions/devcontainer_run_command
         with:
-          registry: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io
-          username: ${{ secrets.ACTIONS_ACR_NAME }}
-          password: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-
-      - name: Make image
-        shell: bash
-        env:
+          DISPLAY_NAME: "Docker build"
+          COMMAND: "make ${{ matrix.target }}"
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-        run: |
-          docker run --rm --mount \
-            "type=bind,src=${{ github.workspace }},dst=/workspaces/tre" \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            --workdir /workspaces/tre \
-            --user vscode \
-            -e TF_INPUT \
-            -e TF_IN_AUTOMATION \
-            -e USE_ENV_VARS_NOT_FILES \
-            -e ARM_CLIENT_ID \
-            -e ARM_CLIENT_SECRET \
-            -e ARM_TENANT_ID \
-            -e ARM_SUBSCRIPTION_ID \
-            -e ACR_NAME=${{ secrets.ACR_NAME }} \
-            '${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest' \
-          bash -c "make ${{ matrix.target }}"
+          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
+          TF_VAR_acr_name: ${{ secrets.ACR_NAME }}
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
@@ -198,23 +179,27 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Set up Docker BuildKit
-        uses: docker/setup-buildx-action@v1
-
-      - name: Login to Container Registry
-        uses: docker/login-action@v1
+      - name: Run in devcontainer
+        uses: ./.github/actions/devcontainer_run_command
         with:
-          registry: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io
-          username: ${{ secrets.ACTIONS_ACR_NAME }}
-          password: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-
-      - name: Make tre-deploy
-        shell: bash
-        env:
+          DISPLAY_NAME: "Deploy Trusted Research Environment"
+          COMMAND: "make tre-deploy"
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          RESOURCE_LOCATION: "${{ secrets.LOCATION }}"
+          RESOURCE: "${{ secrets.API_CLIENT_ID }}"
+          AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
+          TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
+          TEST_USER_NAME: "${{ secrets.TEST_USER_NAME }}"
+          TEST_USER_PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
+          TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
+          TRE_ID: "${{ secrets.TRE_ID }}"
+          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
+          TRE_URL:
+            "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
           TF_VAR_location: ${{ secrets.LOCATION }}
           TF_VAR_tre_id: ${{ secrets.TRE_ID }}
           TF_VAR_terraform_state_container_name:
@@ -228,43 +213,7 @@ jobs:
           TF_VAR_aad_tenant_id: "${{ secrets.AAD_TENANT_ID }}"
           TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
-          TF_VAR_api_app_service_plan_sku_tier: "PremiumV3"
-          TF_VAR_api_app_service_plan_sku_size: "P1v3"
           TF_VAR_acr_name: ${{ secrets.ACR_NAME }}
-          ACR_NAME: ${{ secrets.ACR_NAME }} # scripts are using this too
-          LOCATION: ${{ secrets.LOCATION }} # scripts are using this too
-          TRE_URL: "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
-          TRE_ID: "${{secrets.TRE_ID}}"
-        run: |
-          docker run --rm --mount \
-            "type=bind,src=${{ github.workspace }},dst=/workspaces/tre" \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            --workdir /workspaces/tre \
-            --user vscode \
-            -e TF_INPUT \
-            -e TF_IN_AUTOMATION \
-            -e USE_ENV_VARS_NOT_FILES \
-            -e ARM_CLIENT_ID \
-            -e ARM_CLIENT_SECRET \
-            -e ARM_TENANT_ID \
-            -e ARM_SUBSCRIPTION_ID \
-            -e TF_VAR_location \
-            -e TF_VAR_terraform_state_container_name \
-            -e TF_VAR_mgmt_storage_account_name \
-            -e TF_VAR_mgmt_resource_group_name \
-            -e TF_VAR_tre_id \
-            -e ACR_NAME \
-            -e TF_VAR_acr_name \
-            -e TF_VAR_aad_tenant_id \
-            -e TF_VAR_api_client_id \
-            -e TF_VAR_api_client_secret \
-            -e TF_VAR_api_app_service_plan_sku_tier \
-            -e TF_VAR_api_app_service_plan_sku_size \
-            -e TF_VAR_swagger_ui_client_id \
-            -e TF_VAR_core_address_space \
-            -e TF_VAR_tre_address_space \
-            '${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest' \
-          bash -c "make tre-deploy"
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
