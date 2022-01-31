@@ -2,11 +2,11 @@ resource "azurerm_app_service" "nexus" {
   name                = "nexus-${var.tre_id}"
   resource_group_name = local.core_resource_group_name
   location            = var.location
-  app_service_plan_id = var.core_app_service_plan_id
+  app_service_plan_id = data.azurerm_app_service_plan.core.id
   https_only          = true
 
   app_settings = {
-    APPINSIGHTS_INSTRUMENTATIONKEY      = var.core_application_insights_instrumentation_key
+    APPINSIGHTS_INSTRUMENTATIONKEY      = data.azurerm_application_insights.core.instrumentation_key
     WEBSITES_PORT                       = "8081" # nexus web-ui listens here
     WEBSITES_CONTAINER_START_TIME_LIMIT = "900"  # nexus takes a while to start-up
     WEBSITE_VNET_ROUTE_ALL              = 1
@@ -38,9 +38,9 @@ resource "azurerm_app_service" "nexus" {
   storage_account {
     name         = "nexus-data"
     type         = "AzureFiles"
-    account_name = var.storage_account_name
+    account_name = data.azurerm_storage_account.nexus.name
 
-    access_key = var.storage_account_primary_access_key
+    access_key = data.azurerm_storage_account.nexus.primary_access_key
     share_name = azurerm_storage_share.nexus.name
     mount_path = "/nexus-data"
   }
@@ -93,7 +93,7 @@ resource "azurerm_app_service_virtual_network_swift_connection" "nexus-integrate
 resource "azurerm_monitor_diagnostic_setting" "nexus" {
   name                       = "diag-${var.tre_id}"
   target_resource_id         = azurerm_app_service.nexus.id
-  log_analytics_workspace_id = var.log_analytics_workspace_id
+  log_analytics_workspace_id = data.azurerm_log_analytics_workspace.tre.id
 
   log {
     category = "AppServiceHTTPLogs"
@@ -187,7 +187,7 @@ resource "azurerm_monitor_diagnostic_setting" "nexus" {
 
 resource "azurerm_storage_share" "nexus" {
   name                 = "nexus-data"
-  storage_account_name = var.storage_account_name
+  storage_account_name = data.azurerm_storage_account.nexus.name
   quota                = var.nexus_storage_limit
 }
 

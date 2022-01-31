@@ -282,4 +282,8 @@ resource "azurerm_firewall_application_rule_collection" "web_app_subnet" {
     ]
     source_addresses = data.azurerm_subnet.web_app.address_prefixes
   }
+
+  depends_on = [
+    azurerm_firewall_network_rule_collection.web_app_subnet
+  ]
 }

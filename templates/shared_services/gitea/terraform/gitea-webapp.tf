@@ -20,11 +20,11 @@ resource "azurerm_app_service" "gitea" {
   name                = local.webapp_name
   resource_group_name = local.core_resource_group_name
   location            = var.location
-  app_service_plan_id = var.core_app_service_plan_id
+  app_service_plan_id = data.azurerm_app_service_plan.core.id
   https_only          = true
 
   app_settings = {
-    APPINSIGHTS_INSTRUMENTATIONKEY      = var.core_application_insights_instrumentation_key
+    APPINSIGHTS_INSTRUMENTATIONKEY      = data.azurerm_application_insights.core.instrumentation_key
     WEBSITES_PORT                       = "3000"
     WEBSITES_ENABLE_APP_SERVICE_STORAGE = false
 
@@ -86,9 +86,9 @@ resource "azurerm_app_service" "gitea" {
   storage_account {
     name         = "gitea-data"
     type         = "AzureFiles"
-    account_name = var.storage_account_name
+    account_name = data.azurerm_storage_account.gitea.name
 
-    access_key = var.storage_account_primary_access_key
+    access_key = data.azurerm_storage_account.gitea.primary_access_key
     share_name = azurerm_storage_share.gitea.name
 
     mount_path = "/data"
@@ -135,13 +135,13 @@ resource "azurerm_private_endpoint" "gitea_private_endpoint" {
 
 resource "azurerm_app_service_virtual_network_swift_connection" "gitea-integrated-vnet" {
   app_service_id = azurerm_app_service.gitea.id
-  subnet_id      = var.web_app_subnet_id
+  subnet_id      = data.azurerm_subnet.web_app.id
 }
 
 resource "azurerm_monitor_diagnostic_setting" "webapp_gitea" {
   name                       = "diag-${var.tre_id}"
   target_resource_id         = azurerm_app_service.gitea.id
-  log_analytics_workspace_id = var.log_analytics_workspace_id
+  log_analytics_workspace_id = data.azurerm_log_analytics_workspace.tre.id
 
   log {
     category = "AppServiceHTTPLogs"
@@ -253,7 +253,7 @@ resource "azurerm_key_vault_secret" "gitea_password" {
 
 resource "azurerm_storage_share" "gitea" {
   name                 = "gitea-data"
-  storage_account_name = var.storage_account_name
+  storage_account_name = data.azurerm_storage_account.gitea.name
   quota                = var.gitea_storage_limit
 }
 
