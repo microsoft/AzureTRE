@@ -403,42 +403,66 @@ jobs:
       || github.event_name == 'push'
       || github.event_name == 'workflow_dispatch'
       || contains(github.event.pull_request.labels.*.name, 'safe to test')
-    # needs: [publish_and_register_user_resources]
     needs: [publish_and_register_bundles]
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v2
+      - name: Set up Docker BuildKit
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v1
         with:
-          python-version: 3.8
+          registry: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io
+          username: ${{ secrets.ACTIONS_ACR_NAME }}
+          password: ${{ secrets.ACTIONS_ACR_PASSWORD }}
 
-      - name: Install dependencies
+      - name: Set Variables
         run: |
-          cd e2e_tests
-          python -m pip install --upgrade pip
-          pip install pytest
-          pip install -r requirements.txt
+          echo "USER_UID=$(id -u)" >> $GITHUB_ENV
+          echo "USER_GID=$(id -g)" >> $GITHUB_ENV
 
-      - name: Test with pytest
+      - name: End 2 End Tests
         shell: bash
         env:
-          RESOURCE_LOCATION: "${{ secrets.LOCATION }}"
-          TRE_ID: "${{ secrets.TRE_ID }}"
+          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
+          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
+          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
+          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
           RESOURCE: "${{ secrets.API_CLIENT_ID }}"
           AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           CLIENT_ID: "${{ secrets.TEST_APP_ID }}"
           USERNAME: "${{ secrets.TEST_USER_NAME }}"
           PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
+          ACR_NAME: ${{ secrets.ACR_NAME }}
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
+          TRE_URL: "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
+          BUNDLE_TYPE: ${{ matrix.BUNDLE_TYPE }}
         run: |
-          export \
-            SCOPE="api://${RESOURCE}/user_impersonation"
-          export \
-            WORKSPACE_SCOPE="api://${TEST_WORKSPACE_APP_ID}/user_impersonation"
-          cd e2e_tests
-          PYTHONPATH=. python -m pytest -m smoke --junit-xml pytest_e2e.xml
+          docker run --rm --mount \
+            "type=bind,src=${{ github.workspace }},dst=/workspaces/tre" \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            --workdir /workspaces/tre \
+            --user vscode \
+            -e TF_INPUT \
+            -e TF_IN_AUTOMATION \
+            -e USE_ENV_VARS_NOT_FILES \
+            -e ARM_CLIENT_ID \
+            -e ARM_CLIENT_SECRET \
+            -e ARM_TENANT_ID \
+            -e ARM_SUBSCRIPTION_ID \
+            -e RESOURCE \
+            -e AUTH_TENANT_ID \
+            -e CLIENT_ID \
+            -e USERNAME \
+            -e PASSWORD \
+            -e ACR_NAME \
+            -e TRE_URL \
+            -e TEST_WORKSPACE_APP_ID \
+            -e BUNDLE_TYPE \
+            '${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest' \
+          bash -c "make test-e2e"
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4

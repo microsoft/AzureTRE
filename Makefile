@@ -245,3 +245,9 @@ static-web-upload:
 	&& pushd ./templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ./devops/scripts/load_env.sh ./templates/core/tre.env \
 	&& ./templates/core/terraform/scripts/upload_static_web.sh
+
+test-e2e:
+	export SCOPE="api://${RESOURCE}/user_impersonation" && \
+	export WORKSPACE_SCOPE="api://${TEST_WORKSPACE_APP_ID}/user_impersonation" && \
+	cd e2e_tests && \
+	python -m pytest -m smoke --junit-xml pytest_e2e.xml
