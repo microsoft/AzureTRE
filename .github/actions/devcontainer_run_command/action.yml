@@ -25,22 +25,22 @@ inputs:
       description: "The friendly name of the command."
       required: true
     ACTIONS_ACR_NAME:
-      description: "The friendly name of the command."
+      description: "The Azure Container registry name that the devcontainer is stored in."
       required: true
     ACTIONS_ACR_PASSWORD:
-      description: "The friendly name of the command."
+      description: "The Azure Container registry password for the devcontainer."
       required: true
     ARM_TENANT_ID:
-      description: "The friendly name of the command."
+      description: "Azure Tenant Id."
       required: true
     ARM_CLIENT_ID:
-      description: "The friendly name of the command."
+      description: "Azure user Id. This user needs User Access Administrator permission as minimum."
       required: true
     ARM_CLIENT_SECRET:
-      description: "The friendly name of the command."
+      description: "Azure user password."
       required: true
     ARM_SUBSCRIPTION_ID:
-      description: "The friendly name of the command."
+      description: "Azure Subscription Id."
       required: true
     RESOURCE_LOCATION:
       description: "The friendly name of the command."
@@ -101,10 +101,12 @@ inputs:
       required: true
     TF_VAR_api_app_service_plan_sku_tier:
       description: "The friendly name of the command."
-      required: true
+      required: false
+      default: "PremiumV3"
     TF_VAR_api_app_service_plan_sku_size:
       description: "The friendly name of the command."
-      required: true
+      required: false
+      default: "P1v3"
     TF_VAR_acr_name:
       description: "The friendly name of the command."
       required: true
@@ -116,7 +118,7 @@ inputs:
       required: true
     TRE_URL:
       description: "The friendly name of the command."
-      required: true
+      required: false
     BUNDLE_TYPE:
       description: "The friendly name of the command."
       required: false
@@ -169,8 +171,8 @@ runs:
         TF_VAR_aad_tenant_id: "${{ inputs.AAD_TENANT_ID }}"
         TF_VAR_api_client_id: "${{ inputs.API_CLIENT_ID }}"
         TF_VAR_api_client_secret: "${{ inputs.API_CLIENT_SECRET }}"
-        TF_VAR_api_app_service_plan_sku_tier: "PremiumV3"
-        TF_VAR_api_app_service_plan_sku_size: "P1v3"
+        TF_VAR_api_app_service_plan_sku_tier: "${{ inputs.TF_VAR_api_app_service_plan_sku_tier }}"
+        TF_VAR_api_app_service_plan_sku_size: "${{ inputs.TF_VAR_api_app_service_plan_sku_size }}"
         TF_VAR_acr_name: ${{ inputs.ACR_NAME }}
         LOCATION: ${{ inputs.LOCATION }} # scripts are using this too
       run: |
