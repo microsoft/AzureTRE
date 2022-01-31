@@ -137,11 +137,11 @@ async def delete_workspace(workspace=Depends(get_workspace_by_id_from_path), wor
     return WorkspaceIdInResponse(workspaceId=workspace.id)
 
 # workspace operations
-@workspaces_shared_router.get("/workspaces/{workspace_id}/operations", response_model=OperationInList, name=strings.API_GET_RESOURCE_OPERATIONS, dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_tre_admin)])
+@workspaces_shared_router.get("/workspaces/{workspace_id}/operations", response_model=OperationInList, name=strings.API_GET_RESOURCE_OPERATIONS, dependencies=[Depends(get_current_admin_user)])
 async def retrieve_workspace_operations_by_workspace_id(workspace=Depends(get_workspace_by_id_from_path), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInList:
     return OperationInList(operations=operations_repo.get_operations_by_resource_id(resource_id=workspace.id))
 
-@workspaces_shared_router.get("/workspaces/{workspace_id}/operations/{operation_id}", response_model=OperationInResponse, name=strings.API_GET_RESOURCE_OPERATION_BY_ID, dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_tre_admin)])
+@workspaces_shared_router.get("/workspaces/{workspace_id}/operations/{operation_id}", response_model=OperationInResponse, name=strings.API_GET_RESOURCE_OPERATION_BY_ID, dependencies=[Depends(get_current_admin_user)])
 async def retrieve_workspace_operation_by_workspace_id_and_operation_id(workspace=Depends(get_workspace_by_id_from_path), operation=Depends(get_operation_by_id_from_path)) -> OperationInList:
     return OperationInResponse(operation=operation)
 
@@ -264,8 +264,10 @@ async def patch_user_resource(user_resource_patch: UserResourcePatchEnabled, use
 # user resource operations
 @workspace_services_workspace_router.get("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}/operations", response_model=OperationInList, name=strings.API_GET_RESOURCE_OPERATIONS, dependencies=[Depends(get_workspace_by_id_from_path)])
 async def retrieve_workspace_service_operations_by_workspace_service_id(user_resource=Depends(get_user_resource_by_id_from_path), user=Depends(get_current_workspace_owner_or_researcher_user), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInList:
+    validate_user_is_workspace_owner_or_resource_owner(user, user_resource)
     return OperationInList(operations_repo.get_operations_by_resource_id(resource_id=user_resource.id))
 
 @workspace_services_workspace_router.get("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}/operations/{operation_id}", response_model=OperationInResponse, name=strings.API_GET_RESOURCE_OPERATION_BY_ID, dependencies=[Depends(get_workspace_by_id_from_path)])
 async def retrieve_workspace_service_operation_by_workspace_service_id_and_operation_id(user_resource=Depends(get_user_resource_by_id_from_path), user=Depends(get_current_workspace_owner_or_researcher_user), operation=Depends(get_operation_by_id_from_path)) -> OperationInList:
+    validate_user_is_workspace_owner_or_resource_owner(user, user_resource)
     return OperationInResponse(operation=operation)
