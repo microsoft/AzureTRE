@@ -83,14 +83,13 @@ jobs:
           RESOURCE_LOCATION: "${{ secrets.LOCATION }}"
           RESOURCE: "${{ secrets.API_CLIENT_ID }}"
           AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
-          CLIENT_ID: "${{ secrets.TEST_APP_ID }}"
-          USERNAME: "${{ secrets.TEST_USER_NAME }}"
-          PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
+          TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
+          TEST_USER_NAME: "${{ secrets.TEST_USER_NAME }}"
+          TEST_USER_PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACR_NAME: ${{ secrets.ACR_NAME }}
           TRE_URL:
             "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
           TF_VAR_location: ${{ secrets.LOCATION }}
@@ -109,7 +108,6 @@ jobs:
           TF_VAR_api_app_service_plan_sku_tier: "PremiumV3"
           TF_VAR_api_app_service_plan_sku_size: "P1v3"
           TF_VAR_acr_name: ${{ secrets.ACR_NAME }}
-          LOCATION: ${{ secrets.LOCATION }} # scripts are using this too
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4

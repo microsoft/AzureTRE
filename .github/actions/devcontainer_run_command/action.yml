@@ -51,13 +51,13 @@ inputs:
     AUTH_TENANT_ID:
       description: "The friendly name of the command."
       required: true
-    CLIENT_ID:
+    TEST_APP_ID:
       description: "The friendly name of the command."
       required: true
-    USERNAME:
+    TEST_USER_NAME:
       description: "The friendly name of the command."
       required: true
-    PASSWORD:
+    TEST_USER_PASSWORD:
       description: "The friendly name of the command."
       required: true
     TEST_WORKSPACE_APP_ID:
@@ -110,9 +110,6 @@ inputs:
     TF_VAR_acr_name:
       description: "The friendly name of the command."
       required: true
-    ACR_NAME:
-      description: "The friendly name of the command."
-      required: true
     LOCATION:
       description: "The friendly name of the command."
       required: true
@@ -147,34 +144,34 @@ runs:
         ARM_CLIENT_ID: "${{ inputs.ARM_CLIENT_ID }}"
         ARM_CLIENT_SECRET: "${{ inputs.ARM_CLIENT_SECRET }}"
         ARM_SUBSCRIPTION_ID: "${{ inputs.ARM_SUBSCRIPTION_ID }}"
-        RESOURCE_LOCATION: "${{ inputs.LOCATION }}"
-        RESOURCE: "${{ inputs.API_CLIENT_ID }}"
-        AUTH_TENANT_ID: "${{ inputs.AAD_TENANT_ID }}"
+        RESOURCE_LOCATION: "${{ inputs.RESOURCE_LOCATION }}"
+        RESOURCE: "${{ inputs.RESOURCE }}"
+        AUTH_TENANT_ID: "${{ inputs.AUTH_TENANT_ID }}"
         CLIENT_ID: "${{ inputs.TEST_APP_ID }}"
         USERNAME: "${{ inputs.TEST_USER_NAME }}"
         PASSWORD: "${{ inputs.TEST_USER_PASSWORD }}"
-        ACR_NAME: ${{ inputs.ACR_NAME }}
+        ACR_NAME: ${{ inputs.TF_VAR_acr_name }}
         TRE_URL:
           "https://${{inputs.TRE_ID}}.${{inputs.LOCATION}}.cloudapp.azure.com"
-        TRE_ID: "${{ inputs.TRE_ID }}"
         TEST_WORKSPACE_APP_ID: "${{ inputs.TEST_WORKSPACE_APP_ID }}"
-        TF_VAR_location: ${{ inputs.LOCATION }}
-        TF_VAR_tre_id: ${{ inputs.TRE_ID }}
+        TRE_ID: "${{ inputs.TF_VAR_tre_id }}"
+        TF_VAR_tre_id: "${{ inputs.TF_VAR_tre_id }}"
+        TF_VAR_location: ${{ inputs.TF_VAR_location }}
         TF_VAR_terraform_state_container_name:
-          ${{ inputs.TF_STATE_CONTAINER }}
-        TF_VAR_mgmt_resource_group_name: ${{ inputs.MGMT_RESOURCE_GROUP }}
+          ${{ inputs.TF_VAR_terraform_state_container_name }}
+        TF_VAR_mgmt_resource_group_name: ${{ inputs.TF_VAR_mgmt_resource_group_name }}
         TF_VAR_mgmt_storage_account_name:
-          ${{ inputs.STATE_STORAGE_ACCOUNT_NAME }}
-        TF_VAR_core_address_space: ${{ inputs.CORE_ADDRESS_SPACE }}
-        TF_VAR_tre_address_space: ${{ inputs.TRE_ADDRESS_SPACE }}
-        TF_VAR_swagger_ui_client_id: "${{ inputs.SWAGGER_UI_CLIENT_ID }}"
-        TF_VAR_aad_tenant_id: "${{ inputs.AAD_TENANT_ID }}"
-        TF_VAR_api_client_id: "${{ inputs.API_CLIENT_ID }}"
-        TF_VAR_api_client_secret: "${{ inputs.API_CLIENT_SECRET }}"
+          ${{ inputs.TF_VAR_mgmt_storage_account_name }}
+        TF_VAR_core_address_space: ${{ inputs.TF_VAR_core_address_space }}
+        TF_VAR_tre_address_space: ${{ inputs.TF_VAR_tre_address_space }}
+        TF_VAR_swagger_ui_client_id: "${{ inputs.TF_VAR_swagger_ui_client_id }}"
+        TF_VAR_aad_tenant_id: "${{ inputs.TF_VAR_aad_tenant_id }}"
+        TF_VAR_api_client_id: "${{ inputs.TF_VAR_api_client_id }}"
+        TF_VAR_api_client_secret: "${{ inputs.TF_VAR_api_client_secret }}"
         TF_VAR_api_app_service_plan_sku_tier: "${{ inputs.TF_VAR_api_app_service_plan_sku_tier }}"
         TF_VAR_api_app_service_plan_sku_size: "${{ inputs.TF_VAR_api_app_service_plan_sku_size }}"
-        TF_VAR_acr_name: ${{ inputs.ACR_NAME }}
-        LOCATION: ${{ inputs.LOCATION }} # scripts are using this too
+        TF_VAR_acr_name: ${{ inputs.TF_VAR_acr_name }}
+        LOCATION: ${{ inputs.TF_VAR_location }} # scripts are using this too
       run: |
         docker run --rm --mount \
           "type=bind,src=${{ github.workspace }},dst=/workspaces/tre" \
