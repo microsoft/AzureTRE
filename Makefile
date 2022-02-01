@@ -147,6 +147,15 @@ gitea-uninstall:
 	echo -e "\n\e[34m»»» 🧩 \e[96mUninstalling Gitea\e[0m..." \
 	&& make porter-uninstall DIR=./templates/shared_services/gitea
 
+nexus-install:
+	echo -e "\n\e[34m»»» 🧩 \e[96mInstalling Gitea\e[0m..." \
+	&& make porter-build DIR=./templates/shared_services/sonatype-nexus \
+	&& make porter-install DIR=./templates/shared_services/sonatype-nexus
+
+nexus-uninstall:
+	echo -e "\n\e[34m»»» 🧩 \e[96mUninstalling Gitea\e[0m..." \
+	&& make porter-uninstall DIR=./templates/shared_services/sonatype-nexus
+
 tre-destroy:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDestroying TRE\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
