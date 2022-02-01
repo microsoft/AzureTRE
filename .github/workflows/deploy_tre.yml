@@ -55,6 +55,8 @@ jobs:
 
       - name: Build new devcontainer
         shell: bash
+        env:
+            DOCKER_BUILDKIT: 1
         run: |
           set -e
           docker build . \
