@@ -65,10 +65,9 @@ jobs:
             --build-arg USER_GID="${USER_GID}"
           docker image tag tredev:latest ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest
 
-      - name: Run in devcontainer
+      - name: Deploy management
         uses: ./.github/actions/devcontainer_run_command
         with:
-          DISPLAY_NAME: "Deploy management"
           COMMAND: "make bootstrap && make mgmt-deploy"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
@@ -127,10 +126,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Run in devcontainer
+      - name: Docker build
         uses: ./.github/actions/devcontainer_run_command
         with:
-          DISPLAY_NAME: "Docker build"
           COMMAND: "make ${{ matrix.target }}"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
@@ -159,10 +157,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Run in devcontainer
+      - name: Deploy Trusted Research Environment
         uses: ./.github/actions/devcontainer_run_command
         with:
-          DISPLAY_NAME: "Deploy Trusted Research Environment"
           COMMAND: "make tre-deploy"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
@@ -231,10 +228,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Run in devcontainer
+      - name: Register bundles
         uses: ./.github/actions/devcontainer_run_command
         with:
-          DISPLAY_NAME: "Register bundles"
           COMMAND: "make build-and-register-bundle DIR=${{ matrix.BUNDLE_DIR }}"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
@@ -266,10 +262,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Run in devcontainer
+      - name: Run e2e Tests
         uses: ./.github/actions/devcontainer_run_command
         with:
-          DISPLAY_NAME: "Run e2e Tests"
           COMMAND: "make test-e2e"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
