@@ -12,7 +12,7 @@ locals {
     "Ubuntu 20.04" = {
       "publisher" = "Canonical"
       "offer"     = "UbuntuServer"
-      "sku"       = "20_04-lts-gen2"
+      "sku"       = "2004-lts-gen2"
       "version"   = "latest"
     },
     "Ubuntu 18.04 Data Science VM" = {
