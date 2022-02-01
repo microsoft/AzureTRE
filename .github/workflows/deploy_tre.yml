@@ -48,24 +48,21 @@ jobs:
           username: ${{ secrets.ACTIONS_ACR_NAME }}
           password: ${{ secrets.ACTIONS_ACR_PASSWORD }}
 
-      - name: Set Variables
-        run: |
-          echo "USER_UID=$(id -u)" >> $GITHUB_ENV
-          echo "USER_GID=$(id -g)" >> $GITHUB_ENV
-
       - name: Build new devcontainer
         shell: bash
         env:
             DOCKER_BUILDKIT: 1
         run: |
           set -e
+          USER_UID=$(id -u)
+          USER_GID=$(id -g)
           docker build . \
             -t 'tredev:latest' \
             -f '.devcontainer/Dockerfile' \
             --cache-from ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
-            --build-arg USER_UID=${{ env.USER_UID }} \
-            --build-arg USER_GID=${{ env.USER_GID }}
+            --build-arg USER_UID \
+            --build-arg USER_GID
           docker image tag tredev:latest ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest
 
       - name: Run in devcontainer
