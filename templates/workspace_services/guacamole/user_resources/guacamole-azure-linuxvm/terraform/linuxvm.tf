@@ -42,7 +42,7 @@ resource "azurerm_linux_virtual_machine" "linuxvm" {
   delete_os_disk_on_termination    = false
   delete_data_disks_on_termination = false
 
-  custom_data = data.cloudinit.config.rendered
+  custom_data = data.cloudinit_config.config.rendered
 
   storage_image_reference {
     publisher = local.image_ref[var.image].publisher
@@ -77,7 +77,7 @@ resource "azurerm_linux_virtual_machine" "linuxvm" {
   }
 }
 
-data "cloudinit" "config" {
+data "cloudinit_config" "config" {
   gzip          = true
   base64_encode = true
 
