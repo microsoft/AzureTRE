@@ -1,6 +1,6 @@
-name: tre-shared-service-firewall
+name: tre-shared-service-gitea
 version: 0.0.1
-description: "A Azure TRE Firewall shared service"
+description: "A Gitea shared service"
 registry: azuretre
 credentials:
   - name: azure_tenant_id
@@ -33,6 +33,7 @@ parameters:
     description: "The name of the Terraform state storage container"
 mixins:
   - exec
+  - az
   - terraform:
       clientVersion: 1.0.4
 install:
@@ -44,11 +45,14 @@ install:
         location: "{{ bundle.parameters.azure_location }}"
         mgmt_resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         acr_name: "{{ bundle.parameters.acr_name }}"
+        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
+        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
+        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "tre-shared-service-firewall"
+        key: "tre-shared-service-gitea"
 upgrade:
   - exec:
       description: "Upgrade shared service"
@@ -64,8 +68,11 @@ uninstall:
         location: "{{ bundle.parameters.azure_location }}"
         mgmt_resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         acr_name: "{{ bundle.parameters.acr_name }}"
+        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
+        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
+        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "tre-shared-service-firewall"
+        key: "tre-shared-service-gitea"

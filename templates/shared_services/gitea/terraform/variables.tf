@@ -30,3 +30,8 @@ variable "acr_name" {
   type = string
   description = "Name of Azure Container Registry"
 }
+
+// TODO: descriptions
+variable "arm_tenant_id" {}
+variable "arm_client_id" {}
+variable "arm_client_secret" {}
