@@ -85,6 +85,7 @@ jobs:
             "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
           LOCATION: ${{ secrets.LOCATION }}
           AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
+          ACR_NAME: ${{ secrets.ACR_NAME }}
           TF_VAR_terraform_state_container_name:
             ${{ secrets.TF_STATE_CONTAINER }}
           TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
@@ -95,7 +96,6 @@ jobs:
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
           TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
-          TF_VAR_acr_name: ${{ secrets.ACR_NAME }}
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
@@ -143,7 +143,7 @@ jobs:
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          TF_VAR_acr_name: ${{ secrets.ACR_NAME }}
+          ACR_NAME: ${{ secrets.ACR_NAME }}
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
@@ -185,6 +185,7 @@ jobs:
           TRE_URL:
             "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
           LOCATION: ${{ secrets.LOCATION }}
+          ACR_NAME: ${{ secrets.ACR_NAME }}
           TF_VAR_terraform_state_container_name:
             ${{ secrets.TF_STATE_CONTAINER }}
           TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
@@ -195,7 +196,6 @@ jobs:
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
           TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
-          TF_VAR_acr_name: ${{ secrets.ACR_NAME }}
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
@@ -249,7 +249,7 @@ jobs:
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          TF_VAR_acr_name: ${{ secrets.ACR_NAME }}
+          ACR_NAME: ${{ secrets.ACR_NAME }}
           RESOURCE: "${{ secrets.API_CLIENT_ID }}"
           AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"

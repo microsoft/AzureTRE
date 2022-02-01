@@ -87,7 +87,7 @@ inputs:
     TF_VAR_api_client_secret:
       description: "The API Client Secret."
       required: true
-    TF_VAR_acr_name:
+    ACR_NAME:
       description: "The Container Registry that holds our Research images."
       required: true
     LOCATION:
@@ -115,8 +115,6 @@ runs:
     - name: Run command in DevContainer
       shell: bash
       env:
-        ACTIONS_ACR_NAME: ${{ inputs.ACTIONS_ACR_NAME }}
-        ACTIONS_ACR_PASSWORD: ${{ inputs.ACTIONS_ACR_PASSWORD }}
         ARM_TENANT_ID: "${{ inputs.ARM_TENANT_ID }}"
         ARM_CLIENT_ID: "${{ inputs.ARM_CLIENT_ID }}"
         ARM_CLIENT_SECRET: "${{ inputs.ARM_CLIENT_SECRET }}"
@@ -126,7 +124,7 @@ runs:
         CLIENT_ID: "${{ inputs.TEST_APP_ID }}"
         USERNAME: "${{ inputs.TEST_USER_NAME }}"
         PASSWORD: "${{ inputs.TEST_USER_PASSWORD }}"
-        ACR_NAME: ${{ inputs.TF_VAR_acr_name }}
+        ACR_NAME: ${{ inputs.ACR_NAME }}
         TRE_URL:
           "https://${{inputs.TRE_ID}}.${{inputs.LOCATION}}.cloudapp.azure.com"
         TEST_WORKSPACE_APP_ID: "${{ inputs.TEST_WORKSPACE_APP_ID }}"
@@ -143,7 +141,7 @@ runs:
         TF_VAR_aad_tenant_id: "${{ inputs.AUTH_TENANT_ID }}"
         TF_VAR_api_client_id: "${{ inputs.TF_VAR_api_client_id }}"
         TF_VAR_api_client_secret: "${{ inputs.TF_VAR_api_client_secret }}"
-        TF_VAR_acr_name: ${{ inputs.TF_VAR_acr_name }}
+        TF_VAR_acr_name: ${{ inputs.ACR_NAME }}
       run: |
         docker run --rm --mount \
           "type=bind,src=${{ github.workspace }},dst=/workspaces/tre" \
