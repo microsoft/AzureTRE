@@ -255,7 +255,8 @@ jobs:
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
           TEST_USER_NAME: "${{ secrets.TEST_USER_NAME }}"
           TEST_USER_PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
-          TRE_URL: "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
+          TRE_ID: "${{ secrets.TRE_ID }}"
+          LOCATION: "${{ secrets.LOCATION }}"
           BUNDLE_TYPE: ${{ matrix.BUNDLE_TYPE }}
 
   e2e_tests:

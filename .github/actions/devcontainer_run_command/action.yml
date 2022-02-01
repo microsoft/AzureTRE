@@ -93,9 +93,6 @@ inputs:
     LOCATION:
       description: "The Azure Region (e.g. WestEurope)."
       required: true
-    TRE_URL:
-      description: "The URL of the API App."
-      required: false
     BUNDLE_TYPE:
       description: "The Bundle type (workspace / Workspace-service / User Resource)."
       required: false
