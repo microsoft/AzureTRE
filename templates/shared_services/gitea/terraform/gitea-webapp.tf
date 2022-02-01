@@ -267,7 +267,6 @@ resource "azurerm_role_assignment" "gitea_acrpull_role" {
 resource "null_resource" "webapp_vault_access_identity" {
   provisioner "local-exec" {
     command = <<EOT
-      az login --service-principal --username ${var.arm_client_id} --password ${var.arm_client_secret} --tenant ${var.arm_tenant_id}
       az rest --method PATCH --uri "${azurerm_app_service.gitea.id}?api-version=2021-01-01" --body "{'properties':{'keyVaultReferenceIdentity':'${azurerm_user_assigned_identity.gitea_id.id}'}}"
     EOT
   }
