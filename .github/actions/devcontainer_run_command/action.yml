@@ -177,6 +177,7 @@ runs:
           -e USERNAME \
           -e PASSWORD \
           -e TRE_ID \
+          -e TRE_URL \
           -e TEST_WORKSPACE_APP_ID \
           '${{ inputs.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest' \
         bash -c "${{ inputs.COMMAND }}"
