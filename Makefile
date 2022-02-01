@@ -115,6 +115,13 @@ letsencrypt:
 	&& . ./devops/scripts/load_env.sh ./templates/core/tre.env \
 	&& ./templates/core/terraform/scripts/letsencrypt.sh
 
+tre-start:
+	echo -e "\n\e[34m»»» 🧩 \e[96mStarting TRE\e[0m..." \
+	&& . ./devops/scripts/check_dependencies.sh azfirewall \
+	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& ./devops/scripts/control_tre.sh start
+
 tre-stop:
 	echo -e "\n\e[34m»»» 🧩 \e[96mStopping TRE\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh azfirewall \
@@ -122,12 +129,32 @@ tre-stop:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& ./devops/scripts/control_tre.sh stop
 
-tre-start:
-	echo -e "\n\e[34m»»» 🧩 \e[96mStarting TRE\e[0m..." \
-	&& . ./devops/scripts/check_dependencies.sh azfirewall \
-	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
-	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& ./devops/scripts/control_tre.sh start
+firewall-install:
+	echo -e "\n\e[34m»»» 🧩 \e[96mInstalling Firewall\e[0m..." \
+	&& make porter-build DIR=./templates/shared_services/firewall \
+	&& make porter-install DIR=./templates/shared_services/firewall
+
+firewall-uninstall:
+	echo -e "\n\e[34m»»» 🧩 \e[96mUninstalling Firewall\e[0m..." \
+	&& make porter-uninstall DIR=./templates/shared_services/firewall
+
+gitea-install:
+	echo -e "\n\e[34m»»» 🧩 \e[96mInstalling Gitea\e[0m..." \
+	&& make porter-build DIR=./templates/shared_services/gitea \
+	&& make porter-install DIR=./templates/shared_services/gitea
+
+gitea-uninstall:
+	echo -e "\n\e[34m»»» 🧩 \e[96mUninstalling Gitea\e[0m..." \
+	&& make porter-uninstall DIR=./templates/shared_services/gitea
+
+nexus-install:
+	echo -e "\n\e[34m»»» 🧩 \e[96mInstalling Gitea\e[0m..." \
+	&& make porter-build DIR=./templates/shared_services/sonatype-nexus \
+	&& make porter-install DIR=./templates/shared_services/sonatype-nexus
+
+nexus-uninstall:
+	echo -e "\n\e[34m»»» 🧩 \e[96mUninstalling Gitea\e[0m..." \
+	&& make porter-uninstall DIR=./templates/shared_services/sonatype-nexus
 
 tre-destroy:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDestroying TRE\e[0m..." \

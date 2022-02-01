@@ -29,3 +29,18 @@ variable "acr_name" {
   type        = string
   description = "Name of Azure Container Registry"
 }
+
+variable "arm_tenant_id" {
+  type        = string
+  description = "ARM_TENANT_ID for the user / service principal that is installing Gitea"
+}
+
+variable "arm_client_id" {
+  type        = string
+  description = "ARM_CLIENT_ID for the user / service principal that is installing Gitea"
+}
+
+variable "arm_client_secret" {
+  type        = string
+  description = "ARM_CLIENT_SECRET for the user / service principal that is installing Gitea"
+}
