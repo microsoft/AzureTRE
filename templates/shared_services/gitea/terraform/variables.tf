@@ -21,26 +21,26 @@ variable "gitea_storage_limit" {
 }
 
 variable "mgmt_resource_group_name" {
-  type = string
+  type        = string
   description = "Resource group name for TRE management"
 }
 
 variable "acr_name" {
-  type = string
+  type        = string
   description = "Name of Azure Container Registry"
 }
 
 variable "arm_tenant_id" {
-  type = string
+  type        = string
   description = "ARM_TENANT_ID for the user / service principal that is installing Gitea"
 }
 
 variable "arm_client_id" {
-  type = string
+  type        = string
   description = "ARM_CLIENT_ID for the user / service principal that is installing Gitea"
 }
 
 variable "arm_client_secret" {
-  type = string
+  type        = string
   description = "ARM_CLIENT_SECRET for the user / service principal that is installing Gitea"
 }
