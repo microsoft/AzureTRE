@@ -81,9 +81,6 @@ inputs:
     TF_VAR_swagger_ui_client_id:
       description: "The Swagger UI Client ID."
       required: true
-    TF_VAR_aad_tenant_id:
-      description: "The Tenant Id where the App is registered. (Same as AUTH_TENANT_ID)"
-      required: true
     TF_VAR_api_client_id:
       description: "The API Client Id. (Same as Resource)"
       required: true
@@ -146,7 +143,7 @@ runs:
         TF_VAR_core_address_space: ${{ inputs.TF_VAR_core_address_space }}
         TF_VAR_tre_address_space: ${{ inputs.TF_VAR_tre_address_space }}
         TF_VAR_swagger_ui_client_id: "${{ inputs.TF_VAR_swagger_ui_client_id }}"
-        TF_VAR_aad_tenant_id: "${{ inputs.TF_VAR_aad_tenant_id }}"
+        TF_VAR_aad_tenant_id: "${{ inputs.AUTH_TENANT_ID }}"
         TF_VAR_api_client_id: "${{ inputs.TF_VAR_api_client_id }}"
         TF_VAR_api_client_secret: "${{ inputs.TF_VAR_api_client_secret }}"
         TF_VAR_acr_name: ${{ inputs.TF_VAR_acr_name }}
@@ -156,9 +153,10 @@ runs:
           -v /var/run/docker.sock:/var/run/docker.sock \
           --workdir /workspaces/tre \
           --user vscode \
-          -e TF_INPUT \
-          -e TF_IN_AUTOMATION \
-          -e USE_ENV_VARS_NOT_FILES \
+          -e TF_INPUT="${{ inputs.TF_INPUT }}" \
+          -e TF_IN_AUTOMATION="${{ inputs.TF_IN_AUTOMATION }}" \
+          -e USE_ENV_VARS_NOT_FILES="${{ inputs.USE_ENV_VARS_NOT_FILES }}" \
+          -e BUNDLE_TYPE="${{ inputs.BUNDLE_TYPE }}" \
           -e ARM_CLIENT_ID \
           -e ARM_CLIENT_SECRET \
           -e ARM_TENANT_ID \
@@ -177,7 +175,6 @@ runs:
           -e TF_VAR_swagger_ui_client_id \
           -e TF_VAR_core_address_space \
           -e TF_VAR_tre_address_space \
-          -e BUNDLE_TYPE \
           -e RESOURCE_LOCATION \
           -e RESOURCE \
           -e AUTH_TENANT_ID \
