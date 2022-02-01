@@ -81,8 +81,6 @@ jobs:
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
           RESOURCE: "${{ secrets.API_CLIENT_ID }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
-          TRE_URL:
-            "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
           LOCATION: ${{ secrets.LOCATION }}
           AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           ACR_NAME: ${{ secrets.ACR_NAME }}
@@ -182,8 +180,6 @@ jobs:
           TEST_USER_PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
-          TRE_URL:
-            "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
           LOCATION: ${{ secrets.LOCATION }}
           ACR_NAME: ${{ secrets.ACR_NAME }}
           TF_VAR_terraform_state_container_name:
@@ -304,13 +300,13 @@ jobs:
           notification-color: dc3545
           timezone: Europe/Zurich
 
-      - name: Expose workspace id
-        shell: bash
-        if: always()
-        run: |
-          cd e2e_tests
-          wkspc_id=`cat workspace_id.txt`
-          echo "WORKSPACE_ID=$wkspc_id" >> $GITHUB_ENV
+      # - name: Expose workspace id
+      #   shell: bash
+      #   if: always()
+      #   run: |
+      #     cd ${{ github.workspace }}/e2e_tests
+      #     wkspc_id=`cat workspace_id.txt`
+      #     echo "WORKSPACE_ID=$wkspc_id" >> $GITHUB_ENV
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
