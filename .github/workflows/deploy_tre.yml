@@ -61,8 +61,8 @@ jobs:
             -f '.devcontainer/Dockerfile' \
             --cache-from ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
-            --build-arg USER_UID \
-            --build-arg USER_GID
+            --build-arg USER_UID="${USER_UID}" \
+            --build-arg USER_GID="${USER_GID}"
           docker image tag tredev:latest ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest
 
       - name: Run in devcontainer
