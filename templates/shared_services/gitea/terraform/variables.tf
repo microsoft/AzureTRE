@@ -20,7 +20,6 @@ variable "gitea_storage_limit" {
   default     = 1024
 }
 
-// TODO: better descriptions
 variable "mgmt_resource_group_name" {
   type = string
   description = "Resource group name for TRE management"
@@ -31,7 +30,17 @@ variable "acr_name" {
   description = "Name of Azure Container Registry"
 }
 
-// TODO: descriptions
-variable "arm_tenant_id" {}
-variable "arm_client_id" {}
-variable "arm_client_secret" {}
+variable "arm_tenant_id" {
+  type = string
+  description = "ARM_TENANT_ID for the user / service principal that is installing Gitea"
+}
+
+variable "arm_client_id" {
+  type = string
+  description = "ARM_CLIENT_ID for the user / service principal that is installing Gitea"
+}
+
+variable "arm_client_secret" {
+  type = string
+  description = "ARM_CLIENT_SECRET for the user / service principal that is installing Gitea"
+}
