@@ -9,8 +9,6 @@ from api.routes.workspaces import save_and_deploy_resource, \
     mark_resource_as_deleting, send_uninstall_message
 from models.schemas.operation import OperationInResponse
 
-
-from db.repositories.operations import OperationRepository
 from db.errors import EntityDoesNotExist
 from db.repositories.operations import OperationRepository
 from db.repositories.resources import ResourceRepository
@@ -231,29 +229,32 @@ class TestWorkspaceHelpers:
         assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
     @patch("api.routes.workspaces.send_resource_request_message", return_value=None)
-    async def test_send_uninstall_message_sends_uninstall_message(self, send_request_mock, resource_repo):
+    @patch("api.routes.workspaces.OperationRepository")
+    async def test_send_uninstall_message_sends_uninstall_message(self, operations_repo, send_request_mock, resource_repo):
         workspace = sample_workspace()
-        await send_uninstall_message(workspace, resource_repo, True, ResourceType.Workspace)
+        await send_uninstall_message(workspace, operations_repo, resource_repo, True, ResourceType.Workspace)
 
-        send_request_mock.assert_called_once_with(workspace, RequestAction.UnInstall)
+        send_request_mock.assert_called_once_with(workspace, operations_repo, RequestAction.UnInstall)
 
     @patch("api.routes.workspaces.send_resource_request_message", side_effect=Exception)
-    async def test_send_uninstall_message_restores_status_on_service_bus_exception(self, _, resource_repo):
+    @patch("api.routes.workspaces.OperationRepository")
+    async def test_send_uninstall_message_restores_status_on_service_bus_exception(self, operations_repo, _, resource_repo):
         resource_repo.restore_previous_deletion_state = MagicMock(return_value=None)
         workspace = sample_workspace()
         prev_status = True
 
         with pytest.raises(HTTPException):
-            await send_uninstall_message(workspace, resource_repo, prev_status, ResourceType.Workspace)
+            await send_uninstall_message(workspace, operations_repo, resource_repo, prev_status, ResourceType.Workspace)
 
         resource_repo.restore_previous_deletion_state.assert_called_once_with(workspace, prev_status)
 
     @patch("api.routes.workspaces.send_resource_request_message", side_effect=Exception)
-    async def test_send_uninstall_message_raises_503_on_service_bus_exception(self, _, resource_repo):
+    @patch("api.routes.workspaces.OperationRepository")
+    async def test_send_uninstall_message_raises_503_on_service_bus_exception(self, operations_repo, _, resource_repo):
         resource_repo.restore_previous_deletion_state = MagicMock(return_value=None)
 
         with pytest.raises(HTTPException) as ex:
-            await send_uninstall_message(sample_workspace(), resource_repo, True, ResourceType.Workspace)
+            await send_uninstall_message(sample_workspace(), operations_repo, resource_repo, True, ResourceType.Workspace)
         assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
 
@@ -438,7 +439,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.get_active_workspace_services_for_workspace", return_value=[])
     @ patch('azure.cosmos.CosmosClient')
     @ patch('api.routes.workspaces.WorkspaceRepository.mark_resource_as_deleting')
-    @ patch('api.routes.workspaces.send_resource_request_message')
+    @ patch('api.routes.workspaces.send_resource_request_message', return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
     async def test_delete_workspace_deletes_workspace(self, _, delete_workspace_mock, cosmos_client_mock, __, get_workspace_mock, get_repository_mock, disabled_workspace, app, client):
         get_workspace_mock.return_value = disabled_workspace
         get_repository_mock.side_effects = [WorkspaceRepository(cosmos_client_mock), WorkspaceServiceRepository(cosmos_client_mock)]
@@ -453,7 +454,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.get_active_workspace_services_for_workspace", return_value=[])
     @ patch('azure.cosmos.CosmosClient')
     @ patch('api.routes.workspaces.WorkspaceRepository.mark_resource_as_deleting')
-    @ patch('api.routes.workspaces.send_resource_request_message')
+    @ patch('api.routes.workspaces.send_resource_request_message', return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
     async def test_delete_workspace_sends_a_request_message_to_uninstall_the_workspace(self, send_request_message_mock, _, cosmos_client_mock, __, get_workspace_mock, get_repository_mock, disabled_workspace, app, client):
         get_workspace_mock.return_value = disabled_workspace
         get_repository_mock.side_effects = [WorkspaceRepository(cosmos_client_mock), WorkspaceServiceRepository(cosmos_client_mock)]
@@ -504,7 +505,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
 
     # [POST] /workspaces/{workspace_id}/workspace-services
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
-    @ patch("api.routes.workspaces.send_resource_request_message")
+    @ patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=SERVICE_ID, operation_id=OPERATION_ID))
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.save_item")
     @ patch("api.routes.workspaces.OperationRepository.resource_has_deployed_operation", return_value=True)
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.create_workspace_service_item", return_value=sample_workspace_service())
@@ -516,7 +517,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID), json=workspace_service_input)
 
         assert response.status_code == status.HTTP_202_ACCEPTED
-        assert response.json()["workspaceServiceId"] == SERVICE_ID
+        assert response.json()["operation"]["resourceId"] == SERVICE_ID
 
     # [POST] /workspaces/{workspace_id}/workspace-services
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
@@ -570,7 +571,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @patch("api.routes.workspaces.UserResourceRepository.get_user_resources_for_workspace_service", return_value=[])
     @patch("api.routes.workspaces.mark_resource_as_deleting", return_value=None)
-    @patch("api.routes.workspaces.send_uninstall_message")
+    @patch("api.routes.workspaces.send_uninstall_message", return_value=sample_resource_operation(resource_id=SERVICE_ID, operation_id=OPERATION_ID))
     async def test_delete_workspace_service_marks_the_resource_as_deleting(self, _, mark_resource_mock, __, ___,
                                                                            ____, app, client):
         await client.delete(app.url_path_for(strings.API_DELETE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID,
@@ -582,7 +583,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @patch("api.routes.workspaces.UserResourceRepository.get_user_resources_for_workspace_service", return_value=[])
     @patch("api.routes.workspaces.mark_resource_as_deleting")
-    @patch("api.routes.workspaces.send_uninstall_message")
+    @patch("api.routes.workspaces.send_uninstall_message", return_value=sample_resource_operation(resource_id=SERVICE_ID, operation_id=OPERATION_ID))
     async def test_delete_workspace_service_sends_uninstall_message(self, send_uninstall_mock, _, __, ___, ____,
                                                                     app, client):
         await client.delete(app.url_path_for(strings.API_DELETE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID,
@@ -593,7 +594,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @patch("api.routes.workspaces.UserResourceRepository.get_user_resources_for_workspace_service", return_value=[])
     @patch("api.routes.workspaces.mark_resource_as_deleting")
-    @patch("api.routes.workspaces.send_uninstall_message")
+    @patch("api.routes.workspaces.send_uninstall_message", return_value=sample_resource_operation(resource_id=SERVICE_ID, operation_id=OPERATION_ID))
     async def test_delete_workspace_service_returns_the_deleted_workspace_service_id(self, _, __, ___, ____,
                                                                                      workspace_service_mock, app,
                                                                                      client):
@@ -604,7 +605,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
                              service_id=SERVICE_ID))
 
         assert response.status_code == status.HTTP_200_OK
-        assert response.json()["workspaceServiceId"] == workspace_service.id
+        assert response.json()["operation"]["resourceId"] == workspace_service.id
 
     # GET /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
@@ -853,7 +854,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
     # [POST] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_deployed_workspace_by_id")
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_deployed_workspace_service_by_id")
-    @patch("api.routes.workspaces.send_resource_request_message")
+    @patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=USER_RESOURCE_ID, operation_id=OPERATION_ID))
     @patch("api.routes.workspaces.UserResourceRepository.save_item")
     @patch("api.routes.workspaces.UserResourceRepository.create_user_resource_item")
     async def test_post_user_resources_creates_user_resource(self, create_user_resource_item_mock, _, __, ___, get_workspace_mock, app, client, sample_user_resource_input_data):
@@ -865,7 +866,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
         response = await client.post(app.url_path_for(strings.API_CREATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID), json=sample_user_resource_input_data)
 
         assert response.status_code == status.HTTP_202_ACCEPTED
-        assert response.json()["resourceId"] == USER_RESOURCE_ID
+        assert response.json()["operation"]["resourceId"] == USER_RESOURCE_ID
 
     # [POST] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_deployed_workspace_by_id", side_effect=EntityDoesNotExist)
@@ -973,7 +974,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
     @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id", return_value=disabled_user_resource())
     @patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")
     @patch("api.routes.workspaces.mark_resource_as_deleting", return_value=None)
-    @patch("api.routes.workspaces.send_uninstall_message")
+    @patch("api.routes.workspaces.send_uninstall_message", return_value=sample_resource_operation(resource_id=USER_RESOURCE_ID, operation_id=OPERATION_ID))
     async def test_delete_user_resource_marks_resource_as_deleting(self, _, mark_resource_mock, __, ___, ____, app, client):
         await client.delete(app.url_path_for(strings.API_DELETE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID))
         mark_resource_mock.assert_called_once()
@@ -982,7 +983,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
     @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id", return_value=disabled_user_resource())
     @patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")
     @patch("api.routes.workspaces.mark_resource_as_deleting")
-    @patch("api.routes.workspaces.send_uninstall_message", return_value=None)
+    @patch("api.routes.workspaces.send_uninstall_message", return_value=sample_resource_operation(resource_id=USER_RESOURCE_ID, operation_id=OPERATION_ID))
     async def test_delete_user_resource_sends_uninstall_message(self, send_uninstall_mock, _, __, ___, ____, app, client):
         await client.delete(app.url_path_for(strings.API_DELETE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID))
         send_uninstall_mock.assert_called_once()
@@ -991,7 +992,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
     @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id")
     @patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")
     @patch("api.routes.workspaces.mark_resource_as_deleting")
-    @patch("api.routes.workspaces.send_uninstall_message")
+    @patch("api.routes.workspaces.send_uninstall_message", return_value=sample_resource_operation(resource_id=USER_RESOURCE_ID, operation_id=OPERATION_ID))
     async def test_delete_user_resource_returns_resource_id(self, _, __, ___, get_user_resource_mock, ____, app, client):
         user_resource = disabled_user_resource()
         get_user_resource_mock.return_value = user_resource
@@ -999,4 +1000,4 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
         response = await client.delete(app.url_path_for(strings.API_DELETE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID))
 
         assert response.status_code == status.HTTP_200_OK
-        assert response.json()["resourceId"] == user_resource.id
+        assert response.json()["operation"]["resourceId"] == user_resource.id

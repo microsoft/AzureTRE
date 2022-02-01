@@ -67,17 +67,6 @@ class UserResourceInCreate(BaseModel):
         }
 
 
-class UserResourceIdInResponse(BaseModel):
-    resourceId: str
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "resourceId": "49a7445c-aae6-41ec-a539-30dfa90ab1ae",
-            }
-        }
-
-
 class UserResourcePatchEnabled(BaseModel):
     enabled: bool
 

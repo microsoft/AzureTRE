@@ -79,17 +79,6 @@ class WorkspaceInCreate(BaseModel):
         }
 
 
-class WorkspaceIdInResponse(BaseModel):
-    workspaceId: str
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "workspaceId": "49a7445c-aae6-41ec-a539-30dfa90ab1ae",
-            }
-        }
-
-
 class WorkspacePatchEnabled(BaseModel):
     enabled: bool
 

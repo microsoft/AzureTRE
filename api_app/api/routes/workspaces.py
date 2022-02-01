@@ -1,6 +1,6 @@
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
 
 from jsonschema.exceptions import ValidationError
 from pydantic.types import UUID4
@@ -17,13 +17,13 @@ from models.domain.resource import ResourceType, Resource
 from models.domain.operation import Operation
 from models.domain.workspace import WorkspaceRole
 from models.schemas.operation import OperationInList, OperationInResponse
-from models.schemas.user_resource import UserResourceInResponse, UserResourceIdInResponse, UserResourceInCreate, UserResourcesInList, UserResourcePatchEnabled
-from models.schemas.workspace import WorkspaceInCreate, WorkspaceIdInResponse, WorkspacesInList, WorkspaceInResponse, WorkspacePatchEnabled
-from models.schemas.workspace_service import WorkspaceServiceIdInResponse, WorkspaceServiceInCreate, WorkspaceServicesInList, WorkspaceServiceInResponse, WorkspaceServicePatchEnabled
+from models.schemas.user_resource import UserResourceInResponse, UserResourceInCreate, UserResourcesInList, UserResourcePatchEnabled
+from models.schemas.workspace import WorkspaceInCreate, WorkspacesInList, WorkspaceInResponse, WorkspacePatchEnabled
+from models.schemas.workspace_service import WorkspaceServiceInCreate, WorkspaceServicesInList, WorkspaceServiceInResponse, WorkspaceServicePatchEnabled
 from resources import strings
 from service_bus.resource_request_sender import send_resource_request_message, RequestAction
 from services.authentication import get_current_admin_user, \
-    get_access_service, get_current_workspace_owner_user, get_current_workspace_owner_or_researcher_user, get_current_tre_user_or_tre_admin, get_current_workspace_owner_or_researcher_user_or_tre_admin
+    get_access_service, get_current_workspace_owner_user, get_current_workspace_owner_or_researcher_user, get_current_tre_user_or_tre_admin, get_current_workspace_owner_or_researcher_user_or_tre_admin, get_current_workspace_owner_or_tre_admin
 from services.authentication import extract_auth_information
 from services.azure_resource_status import get_azure_resource_status
 
@@ -60,6 +60,8 @@ def validate_user_is_workspace_owner_or_resource_owner(user, user_resource):
 
     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.ACCESS_USER_IS_NOT_OWNER_OR_RESEARCHER)
 
+def construct_location_header(operation: Operation) -> str:
+    return f'/api/{operation.resourcePath}/operations/{operation.id}'
 
 def get_user_role_assignments(user):
     access_service = get_access_service()
@@ -74,9 +76,9 @@ def mark_resource_as_deleting(resource: Resource, resource_repo: ResourceReposit
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
 
 
-async def send_uninstall_message(resource: Resource, resource_repo: ResourceRepository, previous_deletion_status: bool, resource_type: ResourceType) -> Operation:
+async def send_uninstall_message(resource: Resource, operations_repo: OperationRepository, resource_repo: ResourceRepository, previous_deletion_status: bool, resource_type: ResourceType) -> Operation:
     try:
-        operation = await send_resource_request_message(resource, RequestAction.UnInstall)
+        operation = await send_resource_request_message(resource, operations_repo, RequestAction.UnInstall)
         return operation
     except Exception as e:
         resource_repo.restore_previous_deletion_state(resource, previous_deletion_status)
@@ -107,7 +109,7 @@ async def retrieve_workspace_by_workspace_id(workspace=Depends(get_workspace_by_
 
 
 @workspaces_core_router.post("/workspaces", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_CREATE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
-async def create_workspace(workspace_create: WorkspaceInCreate, workspace_repo=Depends(get_repository(WorkspaceRepository)), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInResponse:
+async def create_workspace(workspace_create: WorkspaceInCreate, response: Response, workspace_repo=Depends(get_repository(WorkspaceRepository)), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInResponse:
     try:
         # TODO: This requires Directory.ReadAll ( Application.Read.All ) to be enabled in the Azure AD application to enable a users workspaces to be listed. This should be made optional.
         auth_info = extract_auth_information(workspace_create.properties["app_id"])
@@ -116,11 +118,10 @@ async def create_workspace(workspace_create: WorkspaceInCreate, workspace_repo=D
         logging.error(f"Failed to create workspace model instance: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
-    op = await save_and_deploy_resource(workspace, workspace_repo, operations_repo)
-    operation = OperationInResponse(operation=op)
-    operation.href = f'/api{op.resourcePath}/operations/{op.id}' # give the caller a location to ask for the status
+    operation = await save_and_deploy_resource(workspace, workspace_repo, operations_repo)
+    response.headers["Location"] = construct_location_header(operation)
 
-    return operation
+    return OperationInResponse(operation=operation)
 
 
 @workspaces_core_router.patch("/workspaces/{workspace_id}", response_model=WorkspaceInResponse, name=strings.API_UPDATE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
@@ -129,24 +130,25 @@ async def patch_workspace(workspace_patch: WorkspacePatchEnabled, workspace=Depe
     return WorkspaceInResponse(workspace=workspace)
 
 
-@workspaces_core_router.delete("/workspaces/{workspace_id}", response_model=WorkspaceIdInResponse, name=strings.API_DELETE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
-async def delete_workspace(workspace=Depends(get_workspace_by_id_from_path), workspace_repo=Depends(get_repository(WorkspaceRepository)), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository))) -> WorkspaceIdInResponse:
+@workspaces_core_router.delete("/workspaces/{workspace_id}", response_model=OperationInResponse, name=strings.API_DELETE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
+async def delete_workspace(response: Response, workspace=Depends(get_workspace_by_id_from_path), operations_repo=Depends(get_repository(OperationRepository)), workspace_repo=Depends(get_repository(WorkspaceRepository)), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository))) -> OperationInResponse:
     if workspace.is_enabled():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION)
     if len(workspace_service_repo.get_active_workspace_services_for_workspace(workspace.id)) > 0:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_SERVICES_NEED_TO_BE_DELETED_BEFORE_WORKSPACE)
 
     previous_deletion_status = mark_resource_as_deleting(workspace, workspace_repo, ResourceType.Workspace)
-    await send_uninstall_message(workspace, workspace_repo, previous_deletion_status, ResourceType.Workspace)
+    operation = await send_uninstall_message(workspace, operations_repo, workspace_repo, previous_deletion_status, ResourceType.Workspace)
 
-    return WorkspaceIdInResponse(workspaceId=workspace.id)
+    response.headers["Location"] = construct_location_header(operation)
+    return OperationInResponse(operation=operation)
 
 # workspace operations
-@workspaces_shared_router.get("/workspaces/{workspace_id}/operations", response_model=OperationInList, name=strings.API_GET_RESOURCE_OPERATIONS, dependencies=[Depends(get_current_admin_user)])
+@workspaces_shared_router.get("/workspaces/{workspace_id}/operations", response_model=OperationInList, name=strings.API_GET_RESOURCE_OPERATIONS, dependencies=[Depends(get_current_workspace_owner_or_tre_admin)])
 async def retrieve_workspace_operations_by_workspace_id(workspace=Depends(get_workspace_by_id_from_path), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInList:
     return OperationInList(operations=operations_repo.get_operations_by_resource_id(resource_id=workspace.id))
 
-@workspaces_shared_router.get("/workspaces/{workspace_id}/operations/{operation_id}", response_model=OperationInResponse, name=strings.API_GET_RESOURCE_OPERATION_BY_ID, dependencies=[Depends(get_current_admin_user)])
+@workspaces_shared_router.get("/workspaces/{workspace_id}/operations/{operation_id}", response_model=OperationInResponse, name=strings.API_GET_RESOURCE_OPERATION_BY_ID, dependencies=[Depends(get_current_workspace_owner_or_tre_admin)])
 async def retrieve_workspace_operation_by_workspace_id_and_operation_id(workspace=Depends(get_workspace_by_id_from_path), operation=Depends(get_operation_by_id_from_path)) -> OperationInList:
     return OperationInResponse(operation=operation)
 
@@ -163,8 +165,8 @@ async def retrieve_workspace_service_by_id(workspace_service=Depends(get_workspa
     return WorkspaceServiceInResponse(workspaceService=workspace_service)
 
 
-@workspace_services_workspace_router.post("/workspaces/{workspace_id}/workspace-services", status_code=status.HTTP_202_ACCEPTED, response_model=WorkspaceServiceIdInResponse, name=strings.API_CREATE_WORKSPACE_SERVICE, dependencies=[Depends(get_current_workspace_owner_user)])
-async def create_workspace_service(workspace_service_input: WorkspaceServiceInCreate, workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), operations_repo=Depends(get_repository(OperationRepository)), workspace=Depends(get_deployed_workspace_by_id_from_path)) -> WorkspaceServiceIdInResponse:
+@workspace_services_workspace_router.post("/workspaces/{workspace_id}/workspace-services", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_CREATE_WORKSPACE_SERVICE, dependencies=[Depends(get_current_workspace_owner_user)])
+async def create_workspace_service(response: Response, workspace_service_input: WorkspaceServiceInCreate, workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), operations_repo=Depends(get_repository(OperationRepository)), workspace=Depends(get_deployed_workspace_by_id_from_path)) -> OperationInResponse:
 
     try:
         workspace_service = workspace_service_repo.create_workspace_service_item(workspace_service_input, workspace.id)
@@ -172,9 +174,10 @@ async def create_workspace_service(workspace_service_input: WorkspaceServiceInCr
         logging.error(f"Failed create workspace service model instance: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
-    await save_and_deploy_resource(workspace_service, workspace_service_repo, operations_repo)
+    operation = await save_and_deploy_resource(workspace_service, workspace_service_repo, operations_repo)
+    response.headers["Location"] = construct_location_header(operation)
 
-    return WorkspaceServiceIdInResponse(workspaceServiceId=workspace_service.id)
+    return OperationInResponse(operation=operation)
 
 
 @workspace_services_workspace_router.patch("/workspaces/{workspace_id}/workspace-services/{service_id}", response_model=WorkspaceServiceInResponse, name=strings.API_UPDATE_WORKSPACE_SERVICE, dependencies=[Depends(get_current_workspace_owner_or_researcher_user), Depends(get_workspace_by_id_from_path)])
@@ -183,8 +186,8 @@ async def patch_workspace_service(workspace_service_patch: WorkspaceServicePatch
     return WorkspaceServiceInResponse(workspaceService=workspace_service)
 
 
-@workspace_services_workspace_router.delete("/workspaces/{workspace_id}/workspace-services/{service_id}", response_model=WorkspaceServiceIdInResponse, name=strings.API_DELETE_WORKSPACE_SERVICE, dependencies=[Depends(get_current_workspace_owner_user)])
-async def delete_workspace_service(workspace=Depends(get_workspace_by_id_from_path), workspace_service=Depends(get_workspace_service_by_id_from_path), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), user_resource_repo=Depends(get_repository(UserResourceRepository))) -> WorkspaceServiceIdInResponse:
+@workspace_services_workspace_router.delete("/workspaces/{workspace_id}/workspace-services/{service_id}", response_model=OperationInResponse, name=strings.API_DELETE_WORKSPACE_SERVICE, dependencies=[Depends(get_current_workspace_owner_user)])
+async def delete_workspace_service(response: Response, workspace=Depends(get_workspace_by_id_from_path), workspace_service=Depends(get_workspace_service_by_id_from_path), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), user_resource_repo=Depends(get_repository(UserResourceRepository)), operations_repo=Depends(get_repository(OperationRepository)),) -> OperationInResponse:
 
     if workspace_service.is_enabled():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_SERVICE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION)
@@ -193,14 +196,15 @@ async def delete_workspace_service(workspace=Depends(get_workspace_by_id_from_pa
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.USER_RESOURCES_NEED_TO_BE_DELETED_BEFORE_WORKSPACE)
 
     previous_deletion_status = mark_resource_as_deleting(workspace_service, workspace_service_repo, ResourceType.WorkspaceService)
-    await send_uninstall_message(workspace_service, workspace_service_repo, previous_deletion_status, ResourceType.WorkspaceService)
+    operation = await send_uninstall_message(workspace_service, operations_repo, workspace_service_repo, previous_deletion_status, ResourceType.WorkspaceService)
+    response.headers["Location"] = construct_location_header(operation)
 
-    return WorkspaceServiceIdInResponse(workspaceServiceId=workspace_service.id)
+    return OperationInResponse(operation=operation)
 
 # workspace service operations
 @workspace_services_workspace_router.get("/workspaces/{workspace_id}/workspace-services/{service_id}/operations", response_model=OperationInList, name=strings.API_GET_RESOURCE_OPERATIONS, dependencies=[Depends(get_current_workspace_owner_or_researcher_user), Depends(get_workspace_by_id_from_path)])
 async def retrieve_workspace_service_operations_by_workspace_service_id(workspace_service=Depends(get_workspace_service_by_id_from_path), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInList:
-    return OperationInList(operations_repo.get_operations_by_resource_id(resource_id=workspace_service.id))
+    return OperationInList(operations=operations_repo.get_operations_by_resource_id(resource_id=workspace_service.id))
 
 @workspace_services_workspace_router.get("/workspaces/{workspace_id}/workspace-services/{service_id}/operations/{operation_id}", response_model=OperationInResponse, name=strings.API_GET_RESOURCE_OPERATION_BY_ID, dependencies=[Depends(get_current_workspace_owner_or_researcher_user), Depends(get_workspace_by_id_from_path)])
 async def retrieve_workspace_service_operation_by_workspace_service_id_and_operation_id(workspace_service=Depends(get_workspace_service_by_id_from_path), operation=Depends(get_operation_by_id_from_path)) -> OperationInList:
@@ -233,8 +237,8 @@ async def retrieve_user_resource_by_id(user_resource=Depends(get_user_resource_b
     return UserResourceInResponse(userResource=user_resource)
 
 
-@user_resources_workspace_router.post("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources", status_code=status.HTTP_202_ACCEPTED, response_model=UserResourceIdInResponse, name=strings.API_CREATE_USER_RESOURCE)
-async def create_user_resource(user_resource_create: UserResourceInCreate, user_resource_repo=Depends(get_repository(UserResourceRepository)), operations_repo=Depends(get_repository(OperationRepository)), user=Depends(get_current_workspace_owner_or_researcher_user), workspace=Depends(get_deployed_workspace_by_id_from_path), workspace_service=Depends(get_deployed_workspace_service_by_id_from_path)) -> UserResourceIdInResponse:
+@user_resources_workspace_router.post("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_CREATE_USER_RESOURCE)
+async def create_user_resource(response: Response, user_resource_create: UserResourceInCreate, user_resource_repo=Depends(get_repository(UserResourceRepository)), operations_repo=Depends(get_repository(OperationRepository)), user=Depends(get_current_workspace_owner_or_researcher_user), workspace=Depends(get_deployed_workspace_by_id_from_path), workspace_service=Depends(get_deployed_workspace_service_by_id_from_path)) -> OperationInResponse:
 
     try:
         user_resource = user_resource_repo.create_user_resource_item(user_resource_create, workspace.id, workspace_service.id, workspace_service.templateName, user.id)
@@ -242,22 +246,24 @@ async def create_user_resource(user_resource_create: UserResourceInCreate, user_
         logging.error(f"Failed create user resource model instance: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
-    await save_and_deploy_resource(user_resource, user_resource_repo, operations_repo)
+    operation = await save_and_deploy_resource(user_resource, user_resource_repo, operations_repo)
+    response.headers["Location"] = construct_location_header(operation)
 
-    return UserResourceIdInResponse(resourceId=user_resource.id)
+    return OperationInResponse(operation=operation)
 
 
-@user_resources_workspace_router.delete("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}", response_model=UserResourceIdInResponse, name=strings.API_DELETE_USER_RESOURCE)
-async def delete_user_resource(user=Depends(get_current_workspace_owner_or_researcher_user), user_resource=Depends(get_user_resource_by_id_from_path), user_resource_repo=Depends(get_repository(UserResourceRepository))) -> UserResourceIdInResponse:
+@user_resources_workspace_router.delete("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}", response_model=OperationInResponse, name=strings.API_DELETE_USER_RESOURCE)
+async def delete_user_resource(response: Response, user=Depends(get_current_workspace_owner_or_researcher_user), user_resource=Depends(get_user_resource_by_id_from_path), user_resource_repo=Depends(get_repository(UserResourceRepository)), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInResponse:
     validate_user_is_workspace_owner_or_resource_owner(user, user_resource)
 
     if user_resource.is_enabled():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.USER_RESOURCE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION)
 
     previous_deletion_status = mark_resource_as_deleting(user_resource, user_resource_repo, ResourceType.UserResource)
-    await send_uninstall_message(user_resource, user_resource_repo, previous_deletion_status, ResourceType.UserResource)
+    operation = await send_uninstall_message(user_resource, operations_repo, user_resource_repo, previous_deletion_status, ResourceType.UserResource)
+    response.headers["Location"] = construct_location_header(operation)
 
-    return UserResourceIdInResponse(resourceId=user_resource.id)
+    return OperationInResponse(operation=operation)
 
 
 @user_resources_workspace_router.patch("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}", response_model=UserResourceInResponse, name=strings.API_UPDATE_USER_RESOURCE, dependencies=[Depends(get_workspace_by_id_from_path), Depends(get_workspace_service_by_id_from_path)])
@@ -267,12 +273,12 @@ async def patch_user_resource(user_resource_patch: UserResourcePatchEnabled, use
     return UserResourceInResponse(userResource=user_resource)
 
 # user resource operations
-@workspace_services_workspace_router.get("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}/operations", response_model=OperationInList, name=strings.API_GET_RESOURCE_OPERATIONS, dependencies=[Depends(get_workspace_by_id_from_path)])
+@user_resources_workspace_router.get("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}/operations", response_model=OperationInList, name=strings.API_GET_RESOURCE_OPERATIONS, dependencies=[Depends(get_workspace_by_id_from_path)])
 async def retrieve_workspace_service_operations_by_workspace_service_id(user_resource=Depends(get_user_resource_by_id_from_path), user=Depends(get_current_workspace_owner_or_researcher_user), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInList:
     validate_user_is_workspace_owner_or_resource_owner(user, user_resource)
-    return OperationInList(operations_repo.get_operations_by_resource_id(resource_id=user_resource.id))
+    return OperationInList(operations=operations_repo.get_operations_by_resource_id(resource_id=user_resource.id))
 
-@workspace_services_workspace_router.get("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}/operations/{operation_id}", response_model=OperationInResponse, name=strings.API_GET_RESOURCE_OPERATION_BY_ID, dependencies=[Depends(get_workspace_by_id_from_path)])
+@user_resources_workspace_router.get("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}/operations/{operation_id}", response_model=OperationInResponse, name=strings.API_GET_RESOURCE_OPERATION_BY_ID, dependencies=[Depends(get_workspace_by_id_from_path)])
 async def retrieve_workspace_service_operation_by_workspace_service_id_and_operation_id(user_resource=Depends(get_user_resource_by_id_from_path), user=Depends(get_current_workspace_owner_or_researcher_user), operation=Depends(get_operation_by_id_from_path)) -> OperationInList:
     validate_user_is_workspace_owner_or_resource_owner(user, user_resource)
     return OperationInResponse(operation=operation)

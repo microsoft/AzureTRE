@@ -23,7 +23,7 @@ class Resource(AzureTREModel):
     templateName: str = Field(title="Resource template name", description="The resource template (bundle) to deploy")
     templateVersion: str = Field(title="Resource template version", description="The version of the resource template (bundle) to deploy")
     properties: dict = Field({}, title="Resource template parameters", description="Parameters for the deployment")
-    isActive: bool = Field(True, title="Is Active", description="Is the resource active? Will be False when deleted.")
+    isActive: bool = True
     resourceType: ResourceType
     resourcePath: str = ""
 

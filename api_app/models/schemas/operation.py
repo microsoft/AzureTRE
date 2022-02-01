@@ -21,7 +21,6 @@ def get_sample_operation(operation_id: str) -> dict:
 
 class OperationInResponse(BaseModel):
     operation: Operation
-    href: str = ""
 
     class Config:
         schema_extra = {
