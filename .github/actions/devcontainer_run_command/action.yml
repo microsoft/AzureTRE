@@ -42,9 +42,6 @@ inputs:
     ARM_SUBSCRIPTION_ID:
       description: "Azure Subscription Id."
       required: true
-    RESOURCE_LOCATION:
-      description: "The Azure Region (e.g. WestEurope)."
-      required: true
     RESOURCE:
       description: "The API Client Id."
       required: true
@@ -64,12 +61,6 @@ inputs:
       description: "The Test Workspace Id used to interact with the API."
       required: true
     TRE_ID:
-      description: "The TRE Id."
-      required: true
-    TF_VAR_location:
-      description: "The Azure Region (e.g. WestEurope)."
-      required: true
-    TF_VAR_tre_id:
       description: "The TRE Id."
       required: true
     TF_VAR_terraform_state_container_name:
@@ -111,7 +102,7 @@ inputs:
       description: "The Container Registry that holds our Research images."
       required: true
     LOCATION:
-      description: "The Azure Region (e.g. WestEurope). (Same as RESOURCE_LOCATION and TF_VAR_location)"
+      description: "The Azure Region (e.g. WestEurope)."
       required: true
     TRE_URL:
       description: "The URL of the API App."
@@ -144,7 +135,7 @@ runs:
         ARM_CLIENT_ID: "${{ inputs.ARM_CLIENT_ID }}"
         ARM_CLIENT_SECRET: "${{ inputs.ARM_CLIENT_SECRET }}"
         ARM_SUBSCRIPTION_ID: "${{ inputs.ARM_SUBSCRIPTION_ID }}"
-        RESOURCE_LOCATION: "${{ inputs.RESOURCE_LOCATION }}"
+        RESOURCE_LOCATION: "${{ inputs.LOCATION }}"
         RESOURCE: "${{ inputs.RESOURCE }}"
         AUTH_TENANT_ID: "${{ inputs.AUTH_TENANT_ID }}"
         CLIENT_ID: "${{ inputs.TEST_APP_ID }}"
@@ -154,9 +145,9 @@ runs:
         TRE_URL:
           "https://${{inputs.TRE_ID}}.${{inputs.LOCATION}}.cloudapp.azure.com"
         TEST_WORKSPACE_APP_ID: "${{ inputs.TEST_WORKSPACE_APP_ID }}"
-        TRE_ID: "${{ inputs.TF_VAR_tre_id }}"
-        TF_VAR_tre_id: "${{ inputs.TF_VAR_tre_id }}"
-        TF_VAR_location: ${{ inputs.TF_VAR_location }}
+        TRE_ID: "${{ inputs.TRE_ID }}"
+        LOCATION: ${{ inputs.LOCATION }}
+        TF_VAR_tre_id: "${{ inputs.TRE_ID }}"
         TF_VAR_terraform_state_container_name:
           ${{ inputs.TF_VAR_terraform_state_container_name }}
         TF_VAR_mgmt_resource_group_name: ${{ inputs.TF_VAR_mgmt_resource_group_name }}
@@ -171,7 +162,6 @@ runs:
         TF_VAR_api_app_service_plan_sku_tier: "${{ inputs.TF_VAR_api_app_service_plan_sku_tier }}"
         TF_VAR_api_app_service_plan_sku_size: "${{ inputs.TF_VAR_api_app_service_plan_sku_size }}"
         TF_VAR_acr_name: ${{ inputs.TF_VAR_acr_name }}
-        LOCATION: ${{ inputs.TF_VAR_location }} # scripts are using this too
       run: |
         docker run --rm --mount \
           "type=bind,src=${{ github.workspace }},dst=/workspaces/tre" \
@@ -185,7 +175,7 @@ runs:
           -e ARM_CLIENT_SECRET \
           -e ARM_TENANT_ID \
           -e ARM_SUBSCRIPTION_ID \
-          -e TF_VAR_location \
+          -e LOCATION \
           -e TF_VAR_terraform_state_container_name \
           -e TF_VAR_mgmt_storage_account_name \
           -e TF_VAR_mgmt_resource_group_name \

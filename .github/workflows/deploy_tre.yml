@@ -76,13 +76,11 @@ jobs:
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          RESOURCE_LOCATION: "${{ secrets.LOCATION }}"
           RESOURCE: "${{ secrets.API_CLIENT_ID }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
           TRE_URL:
             "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
-          TF_VAR_location: ${{ secrets.LOCATION }}
-          TF_VAR_tre_id: ${{ secrets.TRE_ID }}
+          LOCATION: ${{ secrets.LOCATION }}
           TF_VAR_terraform_state_container_name:
             ${{ secrets.TF_STATE_CONTAINER }}
           TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
@@ -175,7 +173,6 @@ jobs:
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          RESOURCE_LOCATION: "${{ secrets.LOCATION }}"
           RESOURCE: "${{ secrets.API_CLIENT_ID }}"
           AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
@@ -185,8 +182,7 @@ jobs:
           TRE_ID: "${{ secrets.TRE_ID }}"
           TRE_URL:
             "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
-          TF_VAR_location: ${{ secrets.LOCATION }}
-          TF_VAR_tre_id: ${{ secrets.TRE_ID }}
+          LOCATION: ${{ secrets.LOCATION }}
           TF_VAR_terraform_state_container_name:
             ${{ secrets.TF_STATE_CONTAINER }}
           TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
@@ -286,7 +282,7 @@ jobs:
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          RESOURCE_LOCATION: "${{ secrets.LOCATION }}"
+          LOCATION: "${{ secrets.LOCATION }}"
           RESOURCE: "${{ secrets.API_CLIENT_ID }}"
           AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
