@@ -22,14 +22,12 @@ resource "azurerm_firewall" "fw" {
   lifecycle { ignore_changes = [tags] }
 }
 
-/*
 resource "azurerm_management_lock" "fw" {
   name       = azurerm_firewall.fw.name
   scope      = azurerm_firewall.fw.id
   lock_level = "CanNotDelete"
   notes      = "Locked to prevent accidental deletion"
 }
-*/
 
 resource "azurerm_monitor_diagnostic_setting" "firewall" {
   name                       = "diagnostics-firewall-${var.tre_id}"
