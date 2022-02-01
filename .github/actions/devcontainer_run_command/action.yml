@@ -90,14 +90,6 @@ inputs:
     TF_VAR_api_client_secret:
       description: "The API Client Secret."
       required: true
-    TF_VAR_api_app_service_plan_sku_tier:
-      description: "The SKU tier of the App Service for the API."
-      required: false
-      default: "PremiumV3"
-    TF_VAR_api_app_service_plan_sku_size:
-      description: "The SKU size of the App Service for the API."
-      required: false
-      default: "P1v3"
     TF_VAR_acr_name:
       description: "The Container Registry that holds our Research images."
       required: true
@@ -159,8 +151,6 @@ runs:
         TF_VAR_aad_tenant_id: "${{ inputs.TF_VAR_aad_tenant_id }}"
         TF_VAR_api_client_id: "${{ inputs.TF_VAR_api_client_id }}"
         TF_VAR_api_client_secret: "${{ inputs.TF_VAR_api_client_secret }}"
-        TF_VAR_api_app_service_plan_sku_tier: "${{ inputs.TF_VAR_api_app_service_plan_sku_tier }}"
-        TF_VAR_api_app_service_plan_sku_size: "${{ inputs.TF_VAR_api_app_service_plan_sku_size }}"
         TF_VAR_acr_name: ${{ inputs.TF_VAR_acr_name }}
       run: |
         docker run --rm --mount \
@@ -185,8 +175,6 @@ runs:
           -e TF_VAR_aad_tenant_id \
           -e TF_VAR_api_client_id \
           -e TF_VAR_api_client_secret \
-          -e TF_VAR_api_app_service_plan_sku_tier \
-          -e TF_VAR_api_app_service_plan_sku_size \
           -e TF_VAR_swagger_ui_client_id \
           -e TF_VAR_core_address_space \
           -e TF_VAR_tre_address_space \
