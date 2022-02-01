@@ -2,8 +2,7 @@
 name: End to End Tests
 
 on:
-  push:
-    branches: [ross/ActionsInDevContainer]
+  workflow_call:
   workflow_dispatch:
 
 jobs:
