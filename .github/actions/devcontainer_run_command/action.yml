@@ -109,7 +109,7 @@ runs:
         username: ${{ inputs.ACTIONS_ACR_NAME }}
         password: ${{ inputs.ACTIONS_ACR_PASSWORD }}
 
-    - name: Run command in DevContainer
+    - name: ${{ inputs.DISPLAY_NAME }}
       shell: bash
       env:
         ARM_TENANT_ID: "${{ inputs.ARM_TENANT_ID }}"
