@@ -38,9 +38,7 @@ resource "azurerm_linux_virtual_machine" "linuxvm" {
   location                         = data.azurerm_resource_group.ws.location
   resource_group_name              = data.azurerm_resource_group.ws.name
   network_interface_ids            = [azurerm_network_interface.internal.id]
-  vm_size                          = "Standard_DS1_v2"
-  delete_os_disk_on_termination    = false
-  delete_data_disks_on_termination = false
+  size                             = "Standard_DS1_v2"
   disable_password_authentication  = false
   admin_username                   = random_string.username.result
   admin_password                   = random_password.password.result
