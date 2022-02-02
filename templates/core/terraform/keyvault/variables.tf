@@ -6,4 +6,9 @@ variable "shared_subnet" {}
 variable "tenant_id" {}
 variable "managed_identity_tenant_id" {}
 variable "managed_identity_object_id" {}
-variable "debug" {}
+
+variable "debug" {
+  type        = bool
+  default     = false
+  description = "Whether to turn off Purge Protection"
+}
