@@ -123,7 +123,6 @@ runs:
           "https://${{inputs.TRE_ID}}.${{inputs.LOCATION}}.cloudapp.azure.com"
         TEST_WORKSPACE_APP_ID: "${{ inputs.TEST_WORKSPACE_APP_ID }}"
         TRE_ID: "${{ inputs.TRE_ID }}"
-        TF_VAR_tre_id: "${{ inputs.TRE_ID }}"
         TF_VAR_terraform_state_container_name:
           "${{ inputs.TF_VAR_terraform_state_container_name }}"
         TF_VAR_mgmt_resource_group_name: "${{ inputs.TF_VAR_mgmt_resource_group_name }}"
@@ -155,7 +154,6 @@ runs:
           -e TF_VAR_terraform_state_container_name \
           -e TF_VAR_mgmt_storage_account_name \
           -e TF_VAR_mgmt_resource_group_name \
-          -e TF_VAR_tre_id \
           -e ACR_NAME \
           -e TF_VAR_acr_name \
           -e TF_VAR_aad_tenant_id \
