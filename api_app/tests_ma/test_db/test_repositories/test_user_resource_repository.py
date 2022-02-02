@@ -82,7 +82,7 @@ def test_get_user_resource_returns_resource_if_found(query_mock, user_resource_r
 @patch('db.repositories.user_resources.UserResourceRepository.query')
 def test_get_user_resource_by_id_queries_db(query_mock, user_resource_repo, user_resource):
     query_mock.return_value = [user_resource.dict()]
-    expected_query = f'SELECT * FROM c WHERE c.isActive != false AND c.resourceType = "user-resource" AND c.parentWorkspaceServiceId = "{SERVICE_ID}" AND c.workspaceId = "{WORKSPACE_ID}" AND c.id = "{RESOURCE_ID}"'
+    expected_query = f'SELECT * FROM c WHERE c.resourceType = "user-resource" AND c.parentWorkspaceServiceId = "{SERVICE_ID}" AND c.workspaceId = "{WORKSPACE_ID}" AND c.id = "{RESOURCE_ID}"'
 
     user_resource_repo.get_user_resource_by_id(WORKSPACE_ID, SERVICE_ID, RESOURCE_ID)
 

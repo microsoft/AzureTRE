@@ -20,8 +20,12 @@ class WorkspaceRepository(ResourceRepository):
         super().__init__(client)
 
     @staticmethod
+    def workspaces_query_string():
+        return f'SELECT * FROM c WHERE c.resourceType = "{ResourceType.Workspace}"'
+
+    @staticmethod
     def active_workspaces_query_string():
-        return f'SELECT * FROM c WHERE {IS_ACTIVE_CLAUSE} AND c.resourceType = "{ResourceType.Workspace}"'
+        return f'SELECT * FROM c WHERE c.resourceType = "{ResourceType.Workspace}" AND {IS_ACTIVE_CLAUSE}'
 
     def get_active_workspaces(self) -> List[Workspace]:
         query = WorkspaceRepository.active_workspaces_query_string()
@@ -37,7 +41,7 @@ class WorkspaceRepository(ResourceRepository):
         return workspace
 
     def get_workspace_by_id(self, workspace_id: str) -> Workspace:
-        query = self.active_workspaces_query_string() + f' AND c.id = "{workspace_id}"'
+        query = self.workspaces_query_string() + f' AND c.id = "{workspace_id}"'
         workspaces = self.query(query=query)
         if not workspaces:
             raise EntityDoesNotExist

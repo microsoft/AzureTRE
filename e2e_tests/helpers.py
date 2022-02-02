@@ -195,8 +195,6 @@ async def disable_and_delete_workspace_service(workspace_id, workspace_service_i
         await disable_workspace_service(workspace_id, workspace_service_id, token, verify)
         operation_dict = await delete_workspace_service(workspace_id, workspace_service_id, token, verify)
 
-        print("OP DICT", operation_dict)
-
         operation_id = operation_dict["operation"]["id"]
         resource_path = operation_dict["operation"]["resourcePath"]
 

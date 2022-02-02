@@ -16,6 +16,10 @@ class UserResourceRepository(ResourceRepository):
         super().__init__(client)
 
     @staticmethod
+    def user_resources_query(workspace_id: str, service_id: str):
+        return f'SELECT * FROM c WHERE c.resourceType = "{ResourceType.UserResource}" AND c.parentWorkspaceServiceId = "{service_id}" AND c.workspaceId = "{workspace_id}"'
+
+    @staticmethod
     def active_user_resources_query(workspace_id: str, service_id: str):
         return f'SELECT * FROM c WHERE {IS_ACTIVE_CLAUSE} AND c.resourceType = "{ResourceType.UserResource}" AND c.parentWorkspaceServiceId = "{service_id}" AND c.workspaceId = "{workspace_id}"'
 
@@ -49,7 +53,7 @@ class UserResourceRepository(ResourceRepository):
         return parse_obj_as(List[UserResource], user_resources)
 
     def get_user_resource_by_id(self, workspace_id: str, service_id: str, resource_id: str) -> UserResource:
-        query = self.active_user_resources_query(workspace_id, service_id) + f' AND c.id = "{resource_id}"'
+        query = self.user_resources_query(workspace_id, service_id) + f' AND c.id = "{resource_id}"'
         user_resources = self.query(query=query)
         if not user_resources:
             raise EntityDoesNotExist

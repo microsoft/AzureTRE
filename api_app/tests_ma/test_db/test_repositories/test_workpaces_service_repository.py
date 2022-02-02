@@ -81,7 +81,7 @@ def test_get_workspace_service_by_id_raises_entity_does_not_exist_if_no_availabl
 def test_get_workspace_service_by_id_queries_db(workspace_service_repo, workspace_service):
     workspace_service_repo.query = MagicMock()
     workspace_service_repo.query.return_value = [workspace_service]
-    expected_query = f'SELECT * FROM c WHERE c.isActive != false AND c.resourceType = "workspace-service" AND c.workspaceId = "{WORKSPACE_ID}" AND c.id = "{SERVICE_ID}"'
+    expected_query = f'SELECT * FROM c WHERE c.resourceType = "workspace-service" AND c.workspaceId = "{WORKSPACE_ID}" AND c.id = "{SERVICE_ID}"'
 
     workspace_service_repo.get_workspace_service_by_id(WORKSPACE_ID, SERVICE_ID)
 
