@@ -246,12 +246,12 @@ module "jumpbox" {
 }
 
 module "gitea" {
-  count                                         = var.deploy_gitea == true ? 1 : 0
-  source                                        = "../../shared_services/gitea/terraform"
-  tre_id                                        = var.tre_id
-  location                                      = var.location
-  acr_name                                      = data.azurerm_container_registry.mgmt_acr.name
-  mgmt_resource_group_name                      = var.mgmt_resource_group_name
+  count                    = var.deploy_gitea == true ? 1 : 0
+  source                   = "../../shared_services/gitea/terraform"
+  tre_id                   = var.tre_id
+  location                 = var.location
+  acr_name                 = data.azurerm_container_registry.mgmt_acr.name
+  mgmt_resource_group_name = var.mgmt_resource_group_name
 
   depends_on = [
     module.network,
@@ -262,10 +262,10 @@ module "gitea" {
 }
 
 module "nexus" {
-  count                                         = var.deploy_nexus == true ? 1 : 0
-  source                                        = "../../shared_services/sonatype-nexus/terraform"
-  tre_id                                        = var.tre_id
-  location                                      = var.location
+  count    = var.deploy_nexus == true ? 1 : 0
+  source   = "../../shared_services/sonatype-nexus/terraform"
+  tre_id   = var.tre_id
+  location = var.location
 
   depends_on = [
     module.network,
