@@ -15,7 +15,7 @@ class ResourceRepository(BaseRepository):
 
     @staticmethod
     def _active_resources_query():
-        # support older docs with the deployment block, and new ones with the isActive flag
+        # get active docs (not deleted)
         return f'SELECT * FROM c WHERE {IS_ACTIVE_CLAUSE}'
 
     def _active_resources_by_type_query(self, resource_type: ResourceType):
@@ -57,16 +57,6 @@ class ResourceRepository(BaseRepository):
         self._validate_resource_parameters(resource_input.dict(), template)
 
         return template_version
-
-    def mark_resource_as_deleting(self, resource: Resource) -> bool:
-        resource.isActive = False
-        self.update_item(resource)
-
-        return resource.isActive
-
-    def restore_previous_deletion_state(self, resource: Resource, previous_deletion_status: bool):
-        resource.isActive = previous_deletion_status
-        self.update_item(resource)
 
 # Cosmos query consts
 IS_ACTIVE_CLAUSE = 'c.isActive != false'

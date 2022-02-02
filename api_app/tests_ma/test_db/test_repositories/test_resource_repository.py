@@ -22,36 +22,6 @@ def workspace_input():
     return WorkspaceInCreate(templateName="base-tre", properties={"display_name": "test", "description": "test", "app_id": "123"})
 
 
-def test_delete_workspace_marks_workspace_as_deleted(resource_repo):
-    resource_repo.update_item = MagicMock(return_value=None)
-
-    workspace = Workspace(
-        id="1234",
-        templateName="base-tre",
-        templateVersion="0.1.0",
-        properties={},
-        isActive=True,
-        resourcePath="test"
-    )
-    resource_repo.mark_resource_as_deleting(workspace)
-    workspace.isActive = False
-    resource_repo.update_item.assert_called_once_with(workspace)
-
-
-def test_restore_deletion_status_updates_db(resource_repo):
-    resource_repo.update_item = MagicMock(return_value=None)
-
-    workspace = Workspace(
-        id="1234",
-        templateName="base-tre",
-        templateVersion="0.1.0",
-        properties={},
-        isActive=False,
-        resourcePath="test"
-    )
-    resource_repo.restore_previous_deletion_state(workspace, True)
-    resource_repo.update_item.assert_called_once_with(workspace)
-
 
 @patch("db.repositories.resources.ResourceRepository._get_enriched_template")
 @patch("db.repositories.resources.ResourceRepository._validate_resource_parameters", return_value=None)

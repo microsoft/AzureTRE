@@ -78,7 +78,7 @@ Now that we have published and registered both workspace service and user resour
 }
 ```
 
-The API will report the ``workspaceServiceId`` of the created workspace service, which can be used to query deployment status by using ``/api/workspaces/<workspace_id>/workspace-service/<workspace_service_id>``. Record this ID for later use.
+The API will return an `operation` object with a `Location` header to query the operation status, as well as the `resourceId` and `resourcePath` properties to query the resource under creation. Record this ID for later use.
 
 You can also follow the progress in Azure portal as various resources come up.
 
@@ -107,6 +107,6 @@ Once the workspace service has been created, we can use the workspace API to cre
 
 > Note: You can also specify "Windows 10" for a standard Windows 10 image
 
-The API will report the ``resourceId`` of the created user resource, which can be used to query deployment status by using ``/api/workspaces/<workspace_id>/workspace-service/<workspace_service_id>/user_resources/<resource_id>``.
+The API will return an `operation` object with a `Location` header to query the operation status, as well as the `resourceId` and `resourcePath` properties to query the resource under creation.
 
 You can also follow the progress in Azure portal as various resources come up. Once deployment has completed you can connect to the user resource using the `connection_uri` property returned by the API.

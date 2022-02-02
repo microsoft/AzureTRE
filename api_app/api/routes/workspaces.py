@@ -68,20 +68,11 @@ def get_user_role_assignments(user):
     return access_service.get_user_role_assignments(user.id)
 
 
-def mark_resource_as_deleting(resource: Resource, resource_repo: ResourceRepository, resource_type: ResourceType) -> bool:
-    try:
-        return resource_repo.mark_resource_as_deleting(resource)
-    except Exception as e:
-        logging.error(f"Failed to delete {resource_type} instance in DB: {e}")
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
-
-
-async def send_uninstall_message(resource: Resource, operations_repo: OperationRepository, resource_repo: ResourceRepository, previous_deletion_status: bool, resource_type: ResourceType) -> Operation:
+async def send_uninstall_message(resource: Resource, operations_repo: OperationRepository, resource_type: ResourceType) -> Operation:
     try:
         operation = await send_resource_request_message(resource, operations_repo, RequestAction.UnInstall)
         return operation
     except Exception as e:
-        resource_repo.restore_previous_deletion_state(resource, previous_deletion_status)
         logging.error(f"Failed send {resource_type} resource delete message: {e}")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
 
@@ -137,8 +128,7 @@ async def delete_workspace(response: Response, workspace=Depends(get_workspace_b
     if len(workspace_service_repo.get_active_workspace_services_for_workspace(workspace.id)) > 0:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_SERVICES_NEED_TO_BE_DELETED_BEFORE_WORKSPACE)
 
-    previous_deletion_status = mark_resource_as_deleting(workspace, workspace_repo, ResourceType.Workspace)
-    operation = await send_uninstall_message(workspace, operations_repo, workspace_repo, previous_deletion_status, ResourceType.Workspace)
+    operation = await send_uninstall_message(workspace, operations_repo, ResourceType.Workspace)
 
     response.headers["Location"] = construct_location_header(operation)
     return OperationInResponse(operation=operation)
@@ -195,8 +185,7 @@ async def delete_workspace_service(response: Response, workspace=Depends(get_wor
     if len(user_resource_repo.get_user_resources_for_workspace_service(workspace.id, workspace_service.id)) > 0:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.USER_RESOURCES_NEED_TO_BE_DELETED_BEFORE_WORKSPACE)
 
-    previous_deletion_status = mark_resource_as_deleting(workspace_service, workspace_service_repo, ResourceType.WorkspaceService)
-    operation = await send_uninstall_message(workspace_service, operations_repo, workspace_service_repo, previous_deletion_status, ResourceType.WorkspaceService)
+    operation = await send_uninstall_message(workspace_service, operations_repo, ResourceType.WorkspaceService)
     response.headers["Location"] = construct_location_header(operation)
 
     return OperationInResponse(operation=operation)
@@ -259,8 +248,7 @@ async def delete_user_resource(response: Response, user=Depends(get_current_work
     if user_resource.is_enabled():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.USER_RESOURCE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION)
 
-    previous_deletion_status = mark_resource_as_deleting(user_resource, user_resource_repo, ResourceType.UserResource)
-    operation = await send_uninstall_message(user_resource, operations_repo, user_resource_repo, previous_deletion_status, ResourceType.UserResource)
+    operation = await send_uninstall_message(user_resource, operations_repo, ResourceType.UserResource)
     response.headers["Location"] = construct_location_header(operation)
 
     return OperationInResponse(operation=operation)
