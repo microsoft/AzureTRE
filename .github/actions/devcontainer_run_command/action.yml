@@ -135,7 +135,7 @@ runs:
         TF_VAR_aad_tenant_id: "${{ inputs.AUTH_TENANT_ID }}"
         TF_VAR_api_client_id: "${{ inputs.TF_VAR_api_client_id }}"
         TF_VAR_api_client_secret: "${{ inputs.TF_VAR_api_client_secret }}"
-        TF_VAR_acr_name: ${{ inputs.ACR_NAME }}
+        TF_VAR_acr_name: "${{ inputs.ACR_NAME }}"
       run: |
         docker run --rm --mount \
           "type=bind,src=${{ github.workspace }},dst=/workspaces/tre" \
@@ -147,7 +147,6 @@ runs:
           -e USE_ENV_VARS_NOT_FILES="${{ inputs.USE_ENV_VARS_NOT_FILES }}" \
           -e BUNDLE_TYPE="${{ inputs.BUNDLE_TYPE }}" \
           -e LOCATION="${{ inputs.LOCATION }}" \
-          -e TF_VAR_location="${{ inputs.LOCATION }}" \
           -e RESOURCE_LOCATION="${{ inputs.LOCATION }}" \
           -e ARM_CLIENT_ID \
           -e ARM_CLIENT_SECRET \
@@ -156,7 +155,6 @@ runs:
           -e TF_VAR_terraform_state_container_name \
           -e TF_VAR_mgmt_storage_account_name \
           -e TF_VAR_mgmt_resource_group_name \
-          -e TF_VAR_tre_id \
           -e ACR_NAME \
           -e TF_VAR_acr_name \
           -e TF_VAR_aad_tenant_id \
@@ -171,6 +169,7 @@ runs:
           -e USERNAME \
           -e PASSWORD \
           -e TRE_ID \
+          -e TF_VAR_tre_id \
           -e TRE_URL \
           -e TEST_WORKSPACE_APP_ID \
           '${{ inputs.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest' \
