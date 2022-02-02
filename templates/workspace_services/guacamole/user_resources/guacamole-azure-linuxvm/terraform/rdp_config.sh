@@ -2,12 +2,12 @@
 NEXUS_URL="https://nexus-${tre_id}.azurewebsites.net"
  sudo rm -r /var/lib/apt/lists/*
  sudo rm /etc/apt/sources.list
- echo "deb $NEXUS_URL/service/rest/v1/repositories/apt/proxy/ubuntu_proxy_repo bionic main restricted" >> /etc/apt/sources.list
- echo "deb $NEXUS_URL/service/rest/v1/repositories/apt/proxy/ubuntu_proxy_repo bionic universe" >> /etc/apt/sources.list
- echo "deb $NEXUS_URL/service/rest/v1/repositories/apt/proxy/ubuntu_proxy_repo bionic multiverse" >> /etc/apt/sources.list
- echo "deb $NEXUS_URL/service/rest/v1/repositories/apt/proxy/ubuntu_security_proxy_repo bionic main restricted" >> /etc/apt/sources.list
- echo "deb $NEXUS_URL/service/rest/v1/repositories/apt/proxy/ubuntu_security_proxy_repo bionic universe" >> /etc/apt/sources.list
- echo "deb $NEXUS_URL/service/rest/v1/repositories/apt/proxy/ubuntu_security_proxy_repo bionic multiverse" >> /etc/apt/sources.list
+ echo "deb $NEXUS_URL/service/rest/v1/repositories/apt/proxy/ubuntu-proxy-repo bionic main restricted" >> /etc/apt/sources.list
+ echo "deb $NEXUS_URL/service/rest/v1/repositories/apt/proxy/ubuntu-proxy-repo bionic universe" >> /etc/apt/sources.list
+ echo "deb $NEXUS_URL/service/rest/v1/repositories/apt/proxy/ubuntu-proxy-repo bionic multiverse" >> /etc/apt/sources.list
+ echo "deb $NEXUS_URL/service/rest/v1/repositories/apt/proxy/ubuntu-security-proxy-repo bionic main restricted" >> /etc/apt/sources.list
+ echo "deb $NEXUS_URL/service/rest/v1/repositories/apt/proxy/ubuntu-security-proxy-repo bionic universe" >> /etc/apt/sources.list
+ echo "deb $NEXUS_URL/service/rest/v1/repositories/apt/proxy/ubuntu-security-proxy-repo bionic multiverse" >> /etc/apt/sources.list
  echo "deb $NEXUS_URL/service/rest/v1/repositories/apt/proxy/pypi-proxy-repo bionic main restricted" >> /etc/apt/sources.list
  echo "deb $NEXUS_URL/service/rest/v1/repositories/apt/proxy/pypi-proxy-repo bionic universe" >> /etc/apt/sources.list
  echo "deb $NEXUS_URL/service/rest/v1/repositories/apt/proxy/pypi-proxy-repo bionic multiverse" >> /etc/apt/sources.list
