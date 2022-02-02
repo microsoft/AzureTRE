@@ -26,6 +26,7 @@ resource "azurerm_resource_group" "core" {
     project = "Azure Trusted Research Environment"
     tre_id  = var.tre_id
     source  = "https://github.com/microsoft/AzureTRE/"
+    ci_git_ref = var.ci_git_ref # TODO: not include if empty
   }
 
   lifecycle { ignore_changes = [tags] }

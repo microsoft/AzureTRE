@@ -6,7 +6,8 @@ on:
     # 1am each night https://crontab.guru/#0_1_*_*_*
     - cron: "0 1 * * *"
   push:
-    branches: [main]
+    # TODO BEFORE MERGE: uncomment
+    # branches: [main]
   pull_request_target:
     types: [labeled]
     branches: [main]
@@ -14,11 +15,11 @@ on:
 
 # This will prevent multiple runs of this entire workflow.
 # We should NOT cancel in progress runs as that can destabilize the environment.
-concurrency: deploy-e2e
+concurrency: "${{ github.workflow }}-${{ github.head_ref }}"
 
 jobs:
-  deploy_management:
-    name: Deploy Management
+  prepare:
+    name: Preparation
     runs-on: ubuntu-latest
     # The conditions below define the desired behaviour of the deployment
     # workflow:
@@ -33,6 +34,27 @@ jobs:
       || github.event_name == 'push'
       || github.event_name == 'workflow_dispatch'
       || contains(github.event.pull_request.labels.*.name, 'safe to test')
+    outputs:
+      # TODO BEFORE MERGE: replace the "t" with "tre"
+      RUN_TRE_ID: ${{ github.ref == 'refs/heads/main' && secrets.TRE_ID || format('tr{0}', steps.run-id.outputs.refid) }}
+      RUN_ACR_NAME: ${{ github.ref == 'refs/heads/main' && secrets.ACR_NAME || format('tr{0}', steps.run-id.outputs.refid) }}
+      RUN_STATE_STORAGE_ACCOUNT_NAME: ${{ github.ref == 'refs/heads/main' && secrets.STATE_STORAGE_ACCOUNT_NAME || format('tr{0}mgmt', steps.run-id.outputs.refid) }}
+      RUN_MGMT_RESOURCE_GROUP: ${{ github.ref == 'refs/heads/main' && secrets.STATE_STORAGE_ACCOUNT_NAME || format('rg-tr{0}-mgmt', steps.run-id.outputs.refid) }}
+    steps:
+      - id: run-id
+        run: |
+          set -o errexit
+          set -o pipefail
+          set -o nounset
+
+          REFID=$(echo ${GITHUB_REF} | shasum | cut -c1-8)
+          echo "using id of: ${REFID} for GitHub Ref: ${GITHUB_REF}"
+          echo "::set-output name=refid::${REFID}"
+
+  deploy_management:
+    name: Deploy Management
+    runs-on: ubuntu-latest
+    needs: [prepare]
     environment: Dev
     steps:
       - name: Checkout
@@ -76,15 +98,15 @@ jobs:
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
           RESOURCE: "${{ secrets.API_CLIENT_ID }}"
-          TRE_ID: "${{ secrets.TRE_ID }}"
+          TRE_ID: "${{ needs.prepare.outputs.RUN_TRE_ID }}"
           LOCATION: ${{ secrets.LOCATION }}
           AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
-          ACR_NAME: ${{ secrets.ACR_NAME }}
+          ACR_NAME: ${{ needs.prepare.outputs.RUN_ACR_NAME }}
           TF_VAR_terraform_state_container_name:
             ${{ secrets.TF_STATE_CONTAINER }}
-          TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
+          TF_VAR_mgmt_resource_group_name: "${{ needs.prepare.outputs.RUN_MGMT_RESOURCE_GROUP }}"
           TF_VAR_mgmt_storage_account_name:
-            ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+            ${{ needs.prepare.outputs.RUN_STATE_STORAGE_ACCOUNT_NAME }}
           TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
           TF_VAR_tre_address_space: ${{ secrets.TRE_ADDRESS_SPACE }}
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
@@ -111,7 +133,7 @@ jobs:
   build_docker_images:
     name: Build Docker Images
     runs-on: ubuntu-latest
-    needs: [deploy_management]
+    needs: [prepare, deploy_management]
     environment: Dev
     strategy:
       fail-fast: true
@@ -136,7 +158,7 @@ jobs:
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          ACR_NAME: ${{ secrets.ACR_NAME }}
+          ACR_NAME: ${{ needs.prepare.outputs.RUN_ACR_NAME }}
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
@@ -151,7 +173,7 @@ jobs:
   deploy_tre:
     name: Deploy TRE
     runs-on: ubuntu-latest
-    needs: [build_docker_images]
+    needs: [prepare, build_docker_images]
     environment: Dev
     steps:
       - name: Checkout
@@ -173,14 +195,14 @@ jobs:
           TEST_USER_NAME: "${{ secrets.TEST_USER_NAME }}"
           TEST_USER_PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
-          TRE_ID: "${{ secrets.TRE_ID }}"
+          TRE_ID: "${{ needs.prepare.outputs.RUN_TRE_ID }}"
           LOCATION: ${{ secrets.LOCATION }}
-          ACR_NAME: ${{ secrets.ACR_NAME }}
+          ACR_NAME: ${{ needs.prepare.outputs.RUN_ACR_NAME }}
           TF_VAR_terraform_state_container_name:
             ${{ secrets.TF_STATE_CONTAINER }}
-          TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
+          TF_VAR_mgmt_resource_group_name: ${{ needs.prepare.outputs.RUN_MGMT_RESOURCE_GROUP }}
           TF_VAR_mgmt_storage_account_name:
-            ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+            ${{ needs.prepare.outputs.RUN_STATE_STORAGE_ACCOUNT_NAME }}
           TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
           TF_VAR_tre_address_space: ${{ secrets.TRE_ADDRESS_SPACE }}
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
@@ -200,12 +222,7 @@ jobs:
   publish_and_register_bundles:
     name: Register Bundles
     runs-on: ubuntu-latest
-    if: |
-      github.event.name == 'schedule'
-      || github.event_name == 'push'
-      || github.event_name == 'workflow_dispatch'
-      || contains(github.event.pull_request.labels.*.name, 'safe to test')
-    needs: [deploy_tre]
+    needs: [prepare, deploy_tre]
     strategy:
       matrix:
         include:
@@ -238,13 +255,13 @@ jobs:
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          ACR_NAME: ${{ secrets.ACR_NAME }}
+          ACR_NAME: ${{ needs.prepare.outputs.RUN_ACR_NAME }}
           RESOURCE: "${{ secrets.API_CLIENT_ID }}"
           AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
           TEST_USER_NAME: "${{ secrets.TEST_USER_NAME }}"
           TEST_USER_PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
-          TRE_ID: "${{ secrets.TRE_ID }}"
+          TRE_ID: "${{ needs.prepare.outputs.RUN_TRE_ID }}"
           LOCATION: "${{ secrets.LOCATION }}"
           BUNDLE_TYPE: ${{ matrix.BUNDLE_TYPE }}
 
@@ -257,7 +274,7 @@ jobs:
       || github.event_name == 'push'
       || github.event_name == 'workflow_dispatch'
       || contains(github.event.pull_request.labels.*.name, 'safe to test')
-    needs: [publish_and_register_bundles]
+    needs: [prepare, publish_and_register_bundles]
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -279,7 +296,8 @@ jobs:
           TEST_USER_NAME: "${{ secrets.TEST_USER_NAME }}"
           TEST_USER_PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
-          TRE_ID: "${{ secrets.TRE_ID }}"
+          TRE_ID: "${{ needs.prepare.outputs.RUN_TRE_ID }}"
+          IS_API_SECURED: ${{ github.ref == 'refs/heads/main' }} # only the "main" env has valid TLS
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
@@ -328,7 +346,7 @@ jobs:
     name: "Deallocate Resources"
     runs-on: ubuntu-latest
     environment: Dev
-    needs: [e2e_tests]
+    needs: [prepare, e2e_tests]
     if: |
       ${{
       always() &&
