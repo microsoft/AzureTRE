@@ -73,7 +73,7 @@ data "template_cloudinit_config" "config" {
 
   part {
     content_type = "text/x-shellscript"
-    content = "${template_file.rdp_config.rendered}"
+    content = "${data.template_file.rdp_config.rendered}"
   }
 }
 
