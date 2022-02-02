@@ -146,7 +146,6 @@ runs:
           -e USE_ENV_VARS_NOT_FILES="${{ inputs.USE_ENV_VARS_NOT_FILES }}" \
           -e BUNDLE_TYPE="${{ inputs.BUNDLE_TYPE }}" \
           -e LOCATION="${{ inputs.LOCATION }}" \
-          -e TF_VAR_location="${{ inputs.LOCATION }}" \
           -e RESOURCE_LOCATION="${{ inputs.LOCATION }}" \
           -e ARM_CLIENT_ID \
           -e ARM_CLIENT_SECRET \

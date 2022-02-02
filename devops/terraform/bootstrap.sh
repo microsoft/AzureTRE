@@ -3,9 +3,9 @@ set -e
 
 # Baseline Azure resources
 echo -e "\n\e[34m»»» 🤖 \e[96mCreating resource group and storage account\e[0m..."
-az group create --resource-group $TF_VAR_mgmt_resource_group_name --location $TF_VAR_location -o table
+az group create --resource-group $TF_VAR_mgmt_resource_group_name --location $LOCATION -o table
 az storage account create --resource-group $TF_VAR_mgmt_resource_group_name \
---name $TF_VAR_mgmt_storage_account_name --location $TF_VAR_location \
+--name $TF_VAR_mgmt_storage_account_name --location $LOCATION \
 --kind StorageV2 --sku Standard_LRS -o table
 
 # Blob container
