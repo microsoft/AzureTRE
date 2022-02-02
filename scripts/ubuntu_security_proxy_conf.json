@@ -1,5 +1,5 @@
 {
-  "name": "ubuntu-security-repo",
+  "name": "ubuntu-security-proxy-repo",
   "online": true,
   "storage": {
       "blobStoreName": "default",

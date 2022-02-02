@@ -1,5 +1,5 @@
 {
-  "name": "ubuntu-repo",
+  "name": "ubuntu-proxy-repo",
   "online": true,
   "storage": {
       "blobStoreName": "default",
