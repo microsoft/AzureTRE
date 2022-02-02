@@ -9,10 +9,10 @@ locals {
   vm_name                        = "linuxvm${local.short_service_id}"
   keyvault_name                  = lower("kv-${substr(local.workspace_resource_name_suffix, -20, -1)}")
   image_ref = {
-    "Ubuntu 20.04" = {
+    "Ubuntu 18.04" = {
       "publisher" = "canonical"
-      "offer"     = "0001-com-ubuntu-server-focal"
-      "sku"       = "20_04-lts-gen2"
+      "offer"     = "ubuntuserver"
+      "sku"       = "18_04-lts-gen2"
       "version"   = "latest"
     },
     "Ubuntu 18.04 Data Science VM" = {

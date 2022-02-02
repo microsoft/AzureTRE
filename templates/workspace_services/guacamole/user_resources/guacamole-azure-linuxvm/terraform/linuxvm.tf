@@ -43,7 +43,7 @@ resource "azurerm_linux_virtual_machine" "linuxvm" {
   admin_username                   = random_string.username.result
   admin_password                   = random_password.password.result
 
-  custom_data = data.cloudinit_config.config.rendered
+  custom_data = data.template_cloudinit_config.config.rendered
 
   source_image_reference {
     publisher = local.image_ref[var.image].publisher
@@ -67,13 +67,20 @@ resource "azurerm_linux_virtual_machine" "linuxvm" {
   }
 }
 
-data "cloudinit_config" "config" {
+data "template_cloudinit_config" "config" {
   gzip          = true
   base64_encode = true
 
   part {
     content_type = "text/x-shellscript"
-    content      = "sudo apt-get update && sudo apt-get install xrdp -y && sudo adduser xrdp ssl-cert && sudo systemctl enable xrdp && sudo systemctl restart xrdp"
+    content = "${template_file.rdp_config.rendered}"
+  }
+}
+
+data "template_file" "rdp_config" {
+  template = "${file("${path.module}/rdp_config.sh")}"
+  vars = {
+    tre_id = "${var.tre_id}"
   }
 }
 
