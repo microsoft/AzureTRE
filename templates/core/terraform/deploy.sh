@@ -9,7 +9,7 @@ LOG_FILE="tmp$$.log"
   -g $TF_VAR_mgmt_resource_group_name \
   -s $TF_VAR_mgmt_storage_account_name \
   -n $TF_VAR_terraform_state_container_name \
-  -k ${TF_VAR_tre_id} \
+  -k ${TRE_ID} \
   -l ${LOG_FILE} \
   -c "terraform plan -out ${PLAN_FILE} && \
   terraform apply -input=false -auto-approve ${PLAN_FILE} && \
