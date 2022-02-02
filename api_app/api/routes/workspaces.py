@@ -61,7 +61,7 @@ def validate_user_is_workspace_owner_or_resource_owner(user, user_resource):
     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.ACCESS_USER_IS_NOT_OWNER_OR_RESEARCHER)
 
 def construct_location_header(operation: Operation) -> str:
-    return f'/api/{operation.resourcePath}/operations/{operation.id}'
+    return f'/api{operation.resourcePath}/operations/{operation.id}'
 
 def get_user_role_assignments(user):
     access_service = get_access_service()

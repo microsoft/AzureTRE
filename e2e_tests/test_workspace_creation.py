@@ -4,7 +4,7 @@ from httpx import AsyncClient
 from starlette import status
 
 import config
-from helpers import get_auth_header, post_workspace, get_template
+from helpers import get_auth_header, get_template
 from resources import strings
 
 
