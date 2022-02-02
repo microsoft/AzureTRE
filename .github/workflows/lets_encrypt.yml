@@ -14,6 +14,7 @@ concurrency: letsencrypt
 env:
   USE_ENV_VARS_NOT_FILES: true
   TF_INPUT: 0 # interactive is off
+  TF_IN_AUTOMATION: 1 # Run in headless mode
 
 jobs:
   renew_letsencrypt_certs:
@@ -23,11 +24,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v1
@@ -42,8 +38,7 @@ jobs:
           ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
           ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
-          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-          TF_VAR_tre_id: ${{ secrets.TRE_ID }}
+          TRE_ID: ${{ secrets.TRE_ID }}
           TF_VAR_terraform_state_container_name:
             ${{ secrets.TF_STATE_CONTAINER }}
           TF_VAR_mgmt_resource_group_name:

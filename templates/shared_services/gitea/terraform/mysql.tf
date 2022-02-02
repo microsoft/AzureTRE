@@ -38,7 +38,7 @@ resource "azurerm_private_endpoint" "private-endpoint" {
   name                = "pe-${azurerm_mysql_server.gitea.name}"
   location            = var.location
   resource_group_name = local.core_resource_group_name
-  subnet_id           = var.shared_subnet_id
+  subnet_id           = data.azurerm_subnet.shared.id
 
   private_service_connection {
     private_connection_resource_id = azurerm_mysql_server.gitea.id
@@ -49,7 +49,7 @@ resource "azurerm_private_endpoint" "private-endpoint" {
 
   private_dns_zone_group {
     name                 = "privatelink.mysql.database.azure.com"
-    private_dns_zone_ids = [var.private_dns_zone_mysql_id]
+    private_dns_zone_ids = [data.azurerm_private_dns_zone.mysql.id]
   }
 
   lifecycle { ignore_changes = [tags] }
@@ -58,7 +58,7 @@ resource "azurerm_private_endpoint" "private-endpoint" {
 resource "azurerm_key_vault_secret" "db_password" {
   name         = "${azurerm_mysql_server.gitea.name}-password"
   value        = random_password.password.result
-  key_vault_id = var.keyvault_id
+  key_vault_id = data.azurerm_key_vault.keyvault.id
 
   depends_on = [
     azurerm_key_vault_access_policy.gitea_policy

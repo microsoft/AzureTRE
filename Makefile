@@ -4,7 +4,12 @@ SHELL:=/bin/bash
 ROOTPATH:=$(shell pwd)
 
 all: bootstrap mgmt-deploy images tre-deploy
-images: build-api-image push-api-image build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image build-gitea-image push-gitea-image build-guacamole-image push-guacamole-image
+images: build-and-push-api build-and-push-resource-processor build-and-push-gitea build-and-push-guacamole
+
+build-and-push-api: build-api-image push-api-image
+build-and-push-resource-processor: build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image
+build-and-push-gitea: build-gitea-image push-gitea-image
+build-and-push-guacamole: build-guacamole-image push-guacamole-image
 
 bootstrap:
 	echo -e "\n\e[34m»»» 🧩 \e[96mBootstrap Terraform\e[0m..." \
@@ -174,6 +179,7 @@ porter-build:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& . ./devops/scripts/load_env.sh ${DIR}/.env \
+	&& . ./devops/scripts/set_docker_sock_permission.sh \
 	&& cd ${DIR} && porter build --debug
 
 porter-install:
@@ -216,11 +222,11 @@ register-bundle:
 	&& ${ROOTPATH}/devops/scripts/publish_register_bundle.sh --acr-name $${ACR_NAME} --bundle-type $${BUNDLE_TYPE} --current --insecure --tre_url $${TRE_URL} --access-token $${TOKEN}
 
 build-and-register-bundle: porter-build
-	echo -e "\n\e[34m»»» 🧩 \e[96mPublishing ${DIR} bundle\e[0m..." \
+	echo -e "\n\e[34m»»» 🧩 \e[96mBuilding and Publishing ${DIR} bundle\e[0m..." \
 	&& ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& cd ${DIR} \
-	&& ${ROOTPATH}/devops/scripts/build_and_register_bundle.sh --acr-name $${ACR_NAME} --bundle-type $${BUNDLE_TYPE} --current --insecure --tre_url $${TRE_URL} --access-token $${TOKEN}
+	&& ${ROOTPATH}/devops/scripts/build_and_register_bundle.sh --acr-name $${ACR_NAME} --bundle-type $${BUNDLE_TYPE} --current --insecure --tre_url $${TRE_URL}
 
 register-bundle-payload:
 	echo -e "\n\e[34m»»» 🧩 \e[96mPublishing ${DIR} bundle\e[0m..." \
@@ -239,3 +245,9 @@ static-web-upload:
 	&& pushd ./templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ./devops/scripts/load_env.sh ./templates/core/tre.env \
 	&& ./templates/core/terraform/scripts/upload_static_web.sh
+
+test-e2e:
+	export SCOPE="api://${RESOURCE}/user_impersonation" && \
+	export WORKSPACE_SCOPE="api://${TEST_WORKSPACE_APP_ID}/user_impersonation" && \
+	cd e2e_tests && \
+	python -m pytest -m smoke --junit-xml pytest_e2e.xml

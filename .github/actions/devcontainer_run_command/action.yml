@@ -1,0 +1,177 @@
+---
+name: "run_command"
+description: "Run a command in a devcontainer"
+inputs:
+    USE_ENV_VARS_NOT_FILES:
+      description: "Use ENV variables rather than a file."
+      required: false
+      default: "true"
+    DOCKER_BUILDKIT:
+      description: "Use Moby Buildkit."
+      required: false
+      default: "1"
+    TF_INPUT:
+      description: "Make Terraform fail if missing variables."
+      required: false
+      default: "0"
+    TF_IN_AUTOMATION:
+      description: "Terraform should not provide hints in the console."
+      required: false
+      default: "1"
+    COMMAND:
+      description: "The command you want to run in the Devcontainer."
+      required: true
+    ACTIONS_ACR_NAME:
+      description: "The Azure Container registry name that the devcontainer is stored in."
+      required: true
+    ACTIONS_ACR_PASSWORD:
+      description: "The Azure Container registry password for the devcontainer."
+      required: true
+    ARM_TENANT_ID:
+      description: "Azure Tenant Id."
+      required: true
+    ARM_CLIENT_ID:
+      description: "Azure user Id. This user needs User Access Administrator permission as minimum."
+      required: true
+    ARM_CLIENT_SECRET:
+      description: "Azure user password."
+      required: true
+    ARM_SUBSCRIPTION_ID:
+      description: "Azure Subscription Id."
+      required: true
+    RESOURCE:
+      description: "The API Client Id."
+      required: true
+    AUTH_TENANT_ID:
+      description: "The Tenant Id where the App is registered."
+      required: true
+    TEST_APP_ID:
+      description: "The Test Application Id used to interact with the API."
+      required: true
+    TEST_USER_NAME:
+      description: "The Test User used to interact with the API."
+      required: true
+    TEST_USER_PASSWORD:
+      description: "The Test User password Id used to interact with the API."
+      required: true
+    TEST_WORKSPACE_APP_ID:
+      description: "The Test Workspace Id used to interact with the API."
+      required: true
+    TRE_ID:
+      description: "The TRE Id."
+      required: true
+    TF_VAR_terraform_state_container_name:
+      description: "The name of the container to store the Terraform state."
+      required: true
+    TF_VAR_mgmt_resource_group_name:
+      description: "The resource group used to store the Terraform state."
+      required: true
+    TF_VAR_mgmt_storage_account_name:
+      description: "The storage account used to store the Terraform state."
+      required: true
+    TF_VAR_core_address_space:
+      description: "Core address space."
+      required: true
+    TF_VAR_tre_address_space:
+      description: "TRE address apace."
+      required: true
+    TF_VAR_swagger_ui_client_id:
+      description: "The Swagger UI Client ID."
+      required: true
+    TF_VAR_api_client_id:
+      description: "The API Client Id. (Same as Resource)"
+      required: true
+    TF_VAR_api_client_secret:
+      description: "The API Client Secret."
+      required: true
+    ACR_NAME:
+      description: "The Container Registry that holds our Research images."
+      required: true
+    LOCATION:
+      description: "The Azure Region (e.g. WestEurope)."
+      required: true
+    BUNDLE_TYPE:
+      description: "The Bundle type (workspace / Workspace-service / User Resource)."
+      required: false
+runs:
+  using: composite
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Login to Container Registry
+      uses: docker/login-action@v1
+      with:
+        registry: ${{ inputs.ACTIONS_ACR_NAME }}.azurecr.io
+        username: ${{ inputs.ACTIONS_ACR_NAME }}
+        password: ${{ inputs.ACTIONS_ACR_PASSWORD }}
+
+    - name: Run command in DevContainer
+      shell: bash
+      env:
+        ARM_TENANT_ID: "${{ inputs.ARM_TENANT_ID }}"
+        ARM_CLIENT_ID: "${{ inputs.ARM_CLIENT_ID }}"
+        ARM_CLIENT_SECRET: "${{ inputs.ARM_CLIENT_SECRET }}"
+        ARM_SUBSCRIPTION_ID: "${{ inputs.ARM_SUBSCRIPTION_ID }}"
+        RESOURCE: "${{ inputs.RESOURCE }}"
+        AUTH_TENANT_ID: "${{ inputs.AUTH_TENANT_ID }}"
+        CLIENT_ID: "${{ inputs.TEST_APP_ID }}"
+        USERNAME: "${{ inputs.TEST_USER_NAME }}"
+        PASSWORD: "${{ inputs.TEST_USER_PASSWORD }}"
+        ACR_NAME: ${{ inputs.ACR_NAME }}
+        TRE_URL:
+          "https://${{inputs.TRE_ID}}.${{inputs.LOCATION}}.cloudapp.azure.com"
+        TEST_WORKSPACE_APP_ID: "${{ inputs.TEST_WORKSPACE_APP_ID }}"
+        TRE_ID: "${{ inputs.TRE_ID }}"
+        TF_VAR_tre_id: "${{ inputs.TRE_ID }}"
+        TF_VAR_terraform_state_container_name:
+          "${{ inputs.TF_VAR_terraform_state_container_name }}"
+        TF_VAR_mgmt_resource_group_name: "${{ inputs.TF_VAR_mgmt_resource_group_name }}"
+        TF_VAR_mgmt_storage_account_name:
+          "${{ inputs.TF_VAR_mgmt_storage_account_name }}"
+        TF_VAR_core_address_space: "${{ inputs.TF_VAR_core_address_space }}"
+        TF_VAR_tre_address_space: "${{ inputs.TF_VAR_tre_address_space }}"
+        TF_VAR_swagger_ui_client_id: "${{ inputs.TF_VAR_swagger_ui_client_id }}"
+        TF_VAR_aad_tenant_id: "${{ inputs.AUTH_TENANT_ID }}"
+        TF_VAR_api_client_id: "${{ inputs.TF_VAR_api_client_id }}"
+        TF_VAR_api_client_secret: "${{ inputs.TF_VAR_api_client_secret }}"
+        TF_VAR_acr_name: "${{ inputs.ACR_NAME }}"
+      run: |
+        docker run --rm --mount \
+          "type=bind,src=${{ github.workspace }},dst=/workspaces/tre" \
+          -v /var/run/docker.sock:/var/run/docker.sock \
+          --workdir /workspaces/tre \
+          --user vscode \
+          -e TF_INPUT="${{ inputs.TF_INPUT }}" \
+          -e TF_IN_AUTOMATION="${{ inputs.TF_IN_AUTOMATION }}" \
+          -e USE_ENV_VARS_NOT_FILES="${{ inputs.USE_ENV_VARS_NOT_FILES }}" \
+          -e BUNDLE_TYPE="${{ inputs.BUNDLE_TYPE }}" \
+          -e LOCATION="${{ inputs.LOCATION }}" \
+          -e TF_VAR_location="${{ inputs.LOCATION }}" \
+          -e RESOURCE_LOCATION="${{ inputs.LOCATION }}" \
+          -e ARM_CLIENT_ID \
+          -e ARM_CLIENT_SECRET \
+          -e ARM_TENANT_ID \
+          -e ARM_SUBSCRIPTION_ID \
+          -e TF_VAR_terraform_state_container_name \
+          -e TF_VAR_mgmt_storage_account_name \
+          -e TF_VAR_mgmt_resource_group_name \
+          -e ACR_NAME \
+          -e TF_VAR_acr_name \
+          -e TF_VAR_aad_tenant_id \
+          -e TF_VAR_api_client_id \
+          -e TF_VAR_api_client_secret \
+          -e TF_VAR_swagger_ui_client_id \
+          -e TF_VAR_core_address_space \
+          -e TF_VAR_tre_address_space \
+          -e RESOURCE \
+          -e AUTH_TENANT_ID \
+          -e CLIENT_ID \
+          -e USERNAME \
+          -e PASSWORD \
+          -e TRE_ID \
+          -e TF_VAR_tre_id \
+          -e TRE_URL \
+          -e TEST_WORKSPACE_APP_ID \
+          '${{ inputs.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest' \
+        bash -c "${{ inputs.COMMAND }}"

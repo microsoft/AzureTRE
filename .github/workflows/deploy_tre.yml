@@ -16,14 +16,9 @@ on:
 # We should NOT cancel in progress runs as that can destabilize the environment.
 concurrency: deploy-e2e
 
-env:
-  USE_ENV_VARS_NOT_FILES: true
-  DOCKER_BUILDKIT: 1
-  TF_INPUT: 0 # interactive is off
-
 jobs:
-  deploy_tre:
-    name: Deploy TRE
+  deploy_management:
+    name: Deploy Management
     runs-on: ubuntu-latest
     # The conditions below define the desired behaviour of the deployment
     # workflow:
@@ -43,59 +38,154 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Set up Docker BuildKit
+        uses: docker/setup-buildx-action@v1
 
-      - name: Install Terraform
-        uses: hashicorp/setup-terraform@v1
+      - name: Login to Container Registry
+        uses: docker/login-action@v1
         with:
-          terraform_version: 1.0.5
+          registry: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io
+          username: ${{ secrets.ACTIONS_ACR_NAME }}
+          password: ${{ secrets.ACTIONS_ACR_PASSWORD }}
 
-      - name: Deploy TRE
+      - name: Build new devcontainer
         shell: bash
         env:
-          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+            DOCKER_BUILDKIT: 1
+        run: |
+          set -e
+          USER_UID=$(id -u)
+          USER_GID=$(id -g)
+          docker build . \
+            -t 'tredev:latest' \
+            -f '.devcontainer/Dockerfile' \
+            --cache-from ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            --build-arg USER_UID="${USER_UID}" \
+            --build-arg USER_GID="${USER_GID}"
+          docker image tag tredev:latest ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest
+
+      - name: Deploy management
+        uses: ./.github/actions/devcontainer_run_command
+        with:
+          COMMAND: "make bootstrap && make mgmt-deploy"
+          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          TF_VAR_tre_id: ${{ secrets.TRE_ID }}
+          RESOURCE: "${{ secrets.API_CLIENT_ID }}"
+          TRE_ID: "${{ secrets.TRE_ID }}"
+          LOCATION: ${{ secrets.LOCATION }}
+          AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
+          ACR_NAME: ${{ secrets.ACR_NAME }}
           TF_VAR_terraform_state_container_name:
             ${{ secrets.TF_STATE_CONTAINER }}
-          TF_VAR_mgmt_resource_group_name:
-            ${{ secrets.MGMT_RESOURCE_GROUP }}
+          TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
           TF_VAR_mgmt_storage_account_name:
             ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
-          TF_VAR_location: ${{ secrets.LOCATION }}
-          TF_VAR_acr_name: ${{ secrets.ACR_NAME }}
           TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
           TF_VAR_tre_address_space: ${{ secrets.TRE_ADDRESS_SPACE }}
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
-          TF_VAR_aad_tenant_id: "${{ secrets.AAD_TENANT_ID }}"
           TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
-          TF_VAR_api_app_service_plan_sku_tier: "PremiumV3"
-          TF_VAR_api_app_service_plan_sku_size: "P1v3"
-          TF_VAR_debug: false
-          TF_VAR_resource_processor_type: "vmss_porter"
-          TF_VAR_deploy_gitea: true
-          TF_VAR_deploy_nexus: true
-          DEPLOY_NEXUS: true
-          ACR_NAME: ${{ secrets.ACR_NAME }} # scripts are using this too
-          LOCATION: ${{ secrets.LOCATION }} # scripts are using this too
-          TRE_URL: "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
-          TRE_ID: "${{secrets.TRE_ID}}"
+
+      - name: Notify dedicated teams channel
+        uses: sachinkundu/ms-teams-notification@1.4
+        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        with:
+          github-token: ${{ github.token }}
+          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+          notification-summary: "Deploy TRE Failed"
+          notification-color: dc3545
+          timezone: Europe/Zurich
+
+      - name: Push cached devcontainer
+        if: ${{ success() }}
+        shell: bash
         run: |
-          export TF_VAR_arm_subscription_id=$ARM_SUBSCRIPTION_ID
+          set -e
+          docker image push ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest
 
-          make all
+  build_docker_images:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: [deploy_management]
+    environment: Dev
+    strategy:
+      fail-fast: true
+      matrix:
+        target: [
+          build-and-push-api,
+          build-and-push-resource-processor,
+          build-and-push-gitea,
+          build-and-push-guacamole]
 
-          az extension add --name azure-firewall
-          # TODO: enable this once the bug
-          # https://github.com/microsoft/AzureTRE/issues/1165 is fixed
-          # make tre-start
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Docker build
+        uses: ./.github/actions/devcontainer_run_command
+        with:
+          COMMAND: "make ${{ matrix.target }}"
+          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
+          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
+          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
+          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
+          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+
+      - name: Notify dedicated teams channel
+        uses: sachinkundu/ms-teams-notification@1.4
+        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        with:
+          github-token: ${{ github.token }}
+          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+          notification-summary: "Make Images Failed"
+          notification-color: dc3545
+          timezone: Europe/Zurich
+
+  deploy_tre:
+    name: Deploy TRE
+    runs-on: ubuntu-latest
+    needs: [build_docker_images]
+    environment: Dev
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Deploy Trusted Research Environment
+        uses: ./.github/actions/devcontainer_run_command
+        with:
+          COMMAND: "make tre-deploy"
+          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
+          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
+          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
+          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
+          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          RESOURCE: "${{ secrets.API_CLIENT_ID }}"
+          AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
+          TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
+          TEST_USER_NAME: "${{ secrets.TEST_USER_NAME }}"
+          TEST_USER_PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
+          TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
+          TRE_ID: "${{ secrets.TRE_ID }}"
+          LOCATION: ${{ secrets.LOCATION }}
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+          TF_VAR_terraform_state_container_name:
+            ${{ secrets.TF_STATE_CONTAINER }}
+          TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
+          TF_VAR_mgmt_storage_account_name:
+            ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+          TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
+          TF_VAR_tre_address_space: ${{ secrets.TRE_ADDRESS_SPACE }}
+          TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
+          TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
+          TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
@@ -108,7 +198,7 @@ jobs:
           timezone: Europe/Zurich
 
   publish_and_register_bundles:
-    name: Register Bundle
+    name: Register Bundles
     runs-on: ubuntu-latest
     if: |
       github.event.name == 'schedule'
@@ -138,41 +228,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Azure Login
-        uses: azure/login@v1
+      - name: Register bundles
+        uses: ./.github/actions/devcontainer_run_command
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Install yq
-        run: |
-          sudo wget -O /usr/local/bin/yq \
-            https://github.com/mikefarah/yq/releases/download/v4.13.0/yq_linux_amd64
-          sudo chmod +x /usr/local/bin/yq
-
-      - name: Install porter
-        run: |
-          curl -L https://cdn.porter.sh/v0.38.7/install-linux.sh | bash
-          ~/.porter/porter mixin install docker
-          echo "~/.porter/" >> $GITHUB_PATH
-
-      - name: Publish and register bundles
-        shell: bash
-        env:
+          COMMAND: "make build-and-register-bundle DIR=${{ matrix.BUNDLE_DIR }}"
+          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          ACR_NAME: ${{ secrets.ACR_NAME }}
           RESOURCE: "${{ secrets.API_CLIENT_ID }}"
           AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
-          CLIENT_ID: "${{ secrets.TEST_APP_ID }}"
-          USERNAME: "${{ secrets.TEST_USER_NAME }}"
-          PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
-          ACR_NAME: ${{ secrets.ACR_NAME }}
-          TRE_URL: "https://${{secrets.TRE_ID}}.${{secrets.LOCATION}}.cloudapp.azure.com"
+          TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
+          TEST_USER_NAME: "${{ secrets.TEST_USER_NAME }}"
+          TEST_USER_PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
+          TRE_ID: "${{ secrets.TRE_ID }}"
+          LOCATION: "${{ secrets.LOCATION }}"
           BUNDLE_TYPE: ${{ matrix.BUNDLE_TYPE }}
-        run: |
-          set -e
-          make build-and-register-bundle DIR=${{ matrix.BUNDLE_DIR }}
 
   e2e_tests:
     name: "Run E2E Tests"
@@ -183,42 +257,29 @@ jobs:
       || github.event_name == 'push'
       || github.event_name == 'workflow_dispatch'
       || contains(github.event.pull_request.labels.*.name, 'safe to test')
-    # needs: [publish_and_register_user_resources]
     needs: [publish_and_register_bundles]
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v2
+      - name: Run e2e Tests
+        uses: ./.github/actions/devcontainer_run_command
         with:
-          python-version: 3.8
-
-      - name: Install dependencies
-        run: |
-          cd e2e_tests
-          python -m pip install --upgrade pip
-          pip install pytest
-          pip install -r requirements.txt
-
-      - name: Test with pytest
-        shell: bash
-        env:
-          RESOURCE_LOCATION: "${{ secrets.LOCATION }}"
-          TRE_ID: "${{ secrets.TRE_ID }}"
+          COMMAND: "make test-e2e"
+          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
+          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
+          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
+          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
+          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          LOCATION: "${{ secrets.LOCATION }}"
           RESOURCE: "${{ secrets.API_CLIENT_ID }}"
           AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
-          CLIENT_ID: "${{ secrets.TEST_APP_ID }}"
-          USERNAME: "${{ secrets.TEST_USER_NAME }}"
-          PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
+          TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
+          TEST_USER_NAME: "${{ secrets.TEST_USER_NAME }}"
+          TEST_USER_PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
-        run: |
-          export \
-            SCOPE="api://${RESOURCE}/user_impersonation"
-          export \
-            WORKSPACE_SCOPE="api://${TEST_WORKSPACE_APP_ID}/user_impersonation"
-          cd e2e_tests
-          PYTHONPATH=. python -m pytest -m smoke --junit-xml pytest_e2e.xml
+          TRE_ID: "${{ secrets.TRE_ID }}"
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
@@ -231,13 +292,13 @@ jobs:
           notification-color: dc3545
           timezone: Europe/Zurich
 
-      - name: Expose workspace id
-        shell: bash
-        if: always()
-        run: |
-          cd e2e_tests
-          wkspc_id=`cat workspace_id.txt`
-          echo "WORKSPACE_ID=$wkspc_id" >> $GITHUB_ENV
+      # - name: Expose workspace id
+      #   shell: bash
+      #   if: always()
+      #   run: |
+      #     cd ${{ github.workspace }}/e2e_tests
+      #     wkspc_id=`cat workspace_id.txt`
+      #     echo "WORKSPACE_ID=$wkspc_id" >> $GITHUB_ENV
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
@@ -279,10 +340,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
       - name: Deallocate Resources
         shell: bash
         env:

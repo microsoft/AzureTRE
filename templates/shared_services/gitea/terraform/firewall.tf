@@ -1,7 +1,7 @@
 resource "azurerm_firewall_application_rule_collection" "web_app_subnet_gitea" {
   name                = "arc-web_app_subnet_gitea"
-  azure_firewall_name = var.firewall_name
-  resource_group_name = var.firewall_resource_group_name
+  azure_firewall_name = data.azurerm_firewall.fw.name
+  resource_group_name = data.azurerm_firewall.fw.resource_group_name
   priority            = 103
   action              = "Allow"
 
@@ -17,6 +17,6 @@ resource "azurerm_firewall_application_rule_collection" "web_app_subnet_gitea" {
     }
 
     target_fqdns     = local.gitea_allowed_fqdns_list
-    source_addresses = var.web_app_subnet_address_prefixes
+    source_addresses = data.azurerm_subnet.web_app.address_prefixes
   }
 }
