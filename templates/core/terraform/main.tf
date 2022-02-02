@@ -246,25 +246,12 @@ module "jumpbox" {
 }
 
 module "gitea" {
-  count                                         = var.deploy_gitea == true ? 1 : 0
-  source                                        = "../../shared_services/gitea/terraform"
-  tre_id                                        = var.tre_id
-  location                                      = var.location
-  docker_registry_server                        = data.azurerm_container_registry.mgmt_acr.login_server
-  acr_id                                        = data.azurerm_container_registry.mgmt_acr.id
-  keyvault_id                                   = module.keyvault.keyvault_id
-  storage_account_name                          = module.storage.storage_account_name
-  storage_account_primary_access_key            = module.storage.storage_account_access_key
-  shared_subnet_id                              = module.network.shared_subnet_id
-  web_app_subnet_id                             = module.network.web_app_subnet_id
-  private_dns_zone_azurewebsites_id             = module.network.private_dns_zone_azurewebsites_id
-  private_dns_zone_mysql_id                     = module.network.private_dns_zone_mysql_id
-  log_analytics_workspace_id                    = module.azure_monitor.log_analytics_workspace_id
-  core_app_service_plan_id                      = module.api-webapp.core_app_service_plan_id
-  core_application_insights_instrumentation_key = module.azure_monitor.app_insights_instrumentation_key
-  firewall_name                                 = module.firewall.firewall_name
-  firewall_resource_group_name                  = module.firewall.firewall_resource_group_name
-  web_app_subnet_address_prefixes               = module.network.web_app_subnet_address_prefixes
+  count                    = var.deploy_gitea == true ? 1 : 0
+  source                   = "../../shared_services/gitea/terraform"
+  tre_id                   = var.tre_id
+  location                 = var.location
+  acr_name                 = data.azurerm_container_registry.mgmt_acr.name
+  mgmt_resource_group_name = var.mgmt_resource_group_name
 
   depends_on = [
     module.network,
@@ -275,21 +262,10 @@ module "gitea" {
 }
 
 module "nexus" {
-  count                                         = var.deploy_nexus == true ? 1 : 0
-  source                                        = "../../shared_services/sonatype-nexus/terraform"
-  tre_id                                        = var.tre_id
-  location                                      = var.location
-  storage_account_name                          = module.storage.storage_account_name
-  storage_account_primary_access_key            = module.storage.storage_account_access_key
-  shared_subnet_id                              = module.network.shared_subnet_id
-  web_app_subnet_id                             = module.network.web_app_subnet_id
-  private_dns_zone_azurewebsites_id             = module.network.private_dns_zone_azurewebsites_id
-  log_analytics_workspace_id                    = module.azure_monitor.log_analytics_workspace_id
-  core_app_service_plan_id                      = module.api-webapp.core_app_service_plan_id
-  core_application_insights_instrumentation_key = module.azure_monitor.app_insights_instrumentation_key
-  firewall_name                                 = module.firewall.firewall_name
-  firewall_resource_group_name                  = module.firewall.firewall_resource_group_name
-  web_app_subnet_address_prefixes               = module.network.web_app_subnet_address_prefixes
+  count    = var.deploy_nexus == true ? 1 : 0
+  source   = "../../shared_services/sonatype-nexus/terraform"
+  tre_id   = var.tre_id
+  location = var.location
 
   depends_on = [
     module.network,
