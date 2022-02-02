@@ -34,35 +34,25 @@ resource "random_password" "password" {
 }
 
 resource "azurerm_windows_virtual_machine" "windowsvm" {
-  name                             = local.vm_name
-  location                         = data.azurerm_resource_group.ws.location
-  resource_group_name              = data.azurerm_resource_group.ws.name
-  network_interface_ids            = [azurerm_network_interface.internal.id]
-  vm_size                          = "Standard_DS1_v2"
-  delete_os_disk_on_termination    = false
-  delete_data_disks_on_termination = false
+  name                  = local.vm_name
+  location              = data.azurerm_resource_group.ws.location
+  resource_group_name   = data.azurerm_resource_group.ws.name
+  network_interface_ids = [azurerm_network_interface.internal.id]
+  size                  = "Standard_DS1_v2"
+  admin_username        = random_string.username.result
+  admin_password        = random_password.password.result
 
-  storage_image_reference {
+  source_image_reference {
     publisher = local.image_ref[var.image].publisher
     offer     = local.image_ref[var.image].offer
     sku       = local.image_ref[var.image].sku
     version   = local.image_ref[var.image].version
   }
 
-  storage_os_disk {
+  os_disk {
     name              = "osdisk-${local.vm_name}"
     caching           = "ReadWrite"
-    create_option     = "FromImage"
     managed_disk_type = "Standard_LRS"
-  }
-
-  os_profile {
-    computer_name  = local.vm_name
-    admin_username = random_string.username.result
-    admin_password = random_password.password.result
-  }
-
-  os_profile_windows_config {
   }
 
   identity {
