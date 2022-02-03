@@ -1,8 +1,5 @@
 from typing import List
-
 from pydantic import BaseModel, Field
-
-from models.domain.resource import ResourceType
 from models.domain.operation import Operation
 
 
@@ -42,4 +39,3 @@ class OperationInList(BaseModel):
                 ]
             }
         }
-

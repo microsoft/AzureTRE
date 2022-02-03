@@ -46,7 +46,7 @@ async def test_create_guacamole_service_into_base_workspace(admin_token, workspa
         }
     }
 
-    workspace_path = await post_resource(payload, strings.API_WORKSPACES, 'workspace', workspace_owner_token, admin_token, verify)
+    workspace_path, workspace_id = await post_resource(payload, strings.API_WORKSPACES, 'workspace', workspace_owner_token, admin_token, verify)
 
     service_payload = {
         "templateName": "tre-service-guacamole",
@@ -57,9 +57,9 @@ async def test_create_guacamole_service_into_base_workspace(admin_token, workspa
         }
     }
 
-    workspace_service_path = await post_resource(service_payload, f'/api{workspace_path}/{strings.API_WORKSPACE_SERVICES}', 'workspace_service', workspace_owner_token, None, verify)
+    workspace_service_path, workspace_service_id = await post_resource(service_payload, f'/api{workspace_path}/{strings.API_WORKSPACE_SERVICES}', 'workspace_service', workspace_owner_token, None, verify)
 
-    #await ping_guacamole_workspace_service(workspace_id, workspace_service_id, workspace_owner_token, verify)
+    await ping_guacamole_workspace_service(workspace_id, workspace_service_id, workspace_owner_token, verify)
 
     await disable_and_delete_resource(f'/api{workspace_service_path}', 'workspace_service', workspace_owner_token, None, verify)
 

@@ -57,6 +57,7 @@ async def get_user_resource_by_id_from_path(workspace_id: UUID4 = Path(...), ser
     except EntityDoesNotExist:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.USER_RESOURCE_DOES_NOT_EXIST)
 
+
 async def get_operation_by_id_from_path(operation_id: UUID4 = Path(...), operations_repo=Depends(get_repository(OperationRepository))) -> Operation:
     try:
         return operations_repo.get_operation_by_id(operation_id=operation_id)

@@ -11,7 +11,6 @@ from db.repositories.operations import OperationRepository
 from models.domain.resource import ResourceType
 from models.domain.workspace import Workspace
 from models.schemas.workspace import WorkspaceInCreate, WorkspacePatchEnabled
-from resources import strings
 from services.cidr_service import generate_new_cidr
 
 

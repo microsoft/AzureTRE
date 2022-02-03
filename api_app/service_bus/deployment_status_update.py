@@ -77,6 +77,7 @@ def create_updated_operation_document(operation: Operation, message: DeploymentS
 
     return operation
 
+
 def create_updated_resource_document(resource: dict, message: DeploymentStatusUpdateMessage):
     """
     Merge the outputs with the resource document to persist

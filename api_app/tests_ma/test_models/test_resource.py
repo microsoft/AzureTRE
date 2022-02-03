@@ -1,4 +1,3 @@
-import resource
 import pytest
 
 from models.domain.request_action import RequestAction
@@ -6,6 +5,8 @@ from models.domain.resource import Resource, ResourceType
 from models.domain.user_resource import UserResource
 from models.domain.workspace_service import WorkspaceService
 
+
+OPERATION_ID="0000c8e7-5c42-4fcb-a7fd-294cfc27aa76"
 
 @pytest.mark.parametrize('resource, expected', [
     # enabled = True
@@ -18,7 +19,6 @@ from models.domain.workspace_service import WorkspaceService
 def test_resource_is_enabled_returns_correct_value(resource, expected):
     assert resource.is_enabled() == expected
 
-OPERATION_ID="0000c8e7-5c42-4fcb-a7fd-294cfc27aa76"
 
 def test_user_resource_get_resource_request_message_payload_augments_payload_with_extra_params():
     owner_id = "abc"

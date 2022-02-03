@@ -35,6 +35,7 @@ async def get_template(template_name, admin_token, verify):
         response = await client.get(f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACE_TEMPLATES}/{template_name}", headers=headers)
         yield response
 
+
 @asynccontextmanager
 async def get_service_template(template_name, token, verify):
     async with AsyncClient(verify=verify) as client:
@@ -44,8 +45,7 @@ async def get_service_template(template_name, token, verify):
         yield response
 
 
-
-async def post_resource(payload, endpoint, resource_type, token, admin_token, verify) -> str:
+async def post_resource(payload, endpoint, resource_type, token, admin_token, verify):
     async with AsyncClient(verify=verify) as client:
 
         if resource_type == 'workspace':
@@ -61,10 +61,11 @@ async def post_resource(payload, endpoint, resource_type, token, admin_token, ve
         assert (response.status_code == status.HTTP_202_ACCEPTED), f"Request for resource {payload['templateName']} creation failed"
 
         resource_path = response.json()["operation"]["resourcePath"]
+        resource_id = response.json()["operation"]["resourceId"]
         operation_endpoint = response.headers["Location"]
 
         await wait_for(install_done, client, operation_endpoint, get_auth_header(token), strings.RESOURCE_STATUS_FAILED)
-        return resource_path
+        return resource_path, resource_id
 
 
 async def disable_and_delete_resource(endpoint, resource_type, token, admin_token, verify):
@@ -99,6 +100,7 @@ async def ping_guacamole_workspace_service(workspace_id, workspace_service_id, t
         short_workspace_id = workspace_id[-4:]
         short_workspace_service_id = workspace_service_id[-4:]
         response = await client.get(f"https://guacamole-{config.TRE_ID}-ws-{short_workspace_id}-svc-{short_workspace_service_id}.azurewebsites.net/guacamole", headers={'x-access-token': f'{token}'}, timeout=300)
+        print("GUAC RESPONSE", response)
         assert (response.status_code == status.HTTP_200_OK), "Guacamole cannot be reached"
 
 
@@ -106,7 +108,7 @@ async def wait_for(func, client, operation_endoint, headers, failure_state):
     done, done_state, message = await func(client, operation_endoint, headers)
     while not done:
         print(f'WAITING FOR OP: {operation_endoint}')
-        await asyncio.sleep(60)
+        await asyncio.sleep(30)
 
         done, done_state, message = await func(client, operation_endoint, headers)
         print(done, done_state, message)
@@ -124,13 +126,13 @@ async def delete_done(client, operation_endpoint, headers):
     return (True, deployment_status, message) if deployment_status in delete_terminal_states else (False, deployment_status, message)
 
 
-async def install_done(client, operation_endpoint, headers) -> (bool, str, str):
+async def install_done(client, operation_endpoint, headers):
     install_terminal_states = [strings.RESOURCE_STATUS_DEPLOYED, strings.RESOURCE_STATUS_FAILED]
     deployment_status, message = await check_deployment(client, operation_endpoint, headers)
     return (True, deployment_status, message) if deployment_status in install_terminal_states else (False, deployment_status, message)
 
 
-async def check_deployment(client, operation_endpoint, headers) -> (str, str):
+async def check_deployment(client, operation_endpoint, headers):
     response = await client.get(
         f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{operation_endpoint}", headers=headers)
     if response.status_code == 200:

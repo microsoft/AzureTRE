@@ -7,7 +7,7 @@ from db.errors import EntityDoesNotExist
 from db.repositories.resources import ResourceRepository
 from models.domain.resource_template import ResourceTemplate
 from models.domain.user_resource_template import UserResourceTemplate
-from models.domain.workspace import Workspace, ResourceType
+from models.domain.workspace import ResourceType
 from models.schemas.workspace import WorkspaceInCreate
 
 
@@ -20,7 +20,6 @@ def resource_repo():
 @pytest.fixture
 def workspace_input():
     return WorkspaceInCreate(templateName="base-tre", properties={"display_name": "test", "description": "test", "app_id": "123"})
-
 
 
 @patch("db.repositories.resources.ResourceRepository._get_enriched_template")

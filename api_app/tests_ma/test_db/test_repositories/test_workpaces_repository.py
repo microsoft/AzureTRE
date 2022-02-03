@@ -20,10 +20,12 @@ def workspace_repo():
     with patch('azure.cosmos.CosmosClient') as cosmos_client_mock:
         yield WorkspaceRepository(cosmos_client_mock)
 
+
 @pytest.fixture
 def operations_repo():
     with patch('azure.cosmos.CosmosClient') as cosmos_client_mock:
         yield OperationRepository(cosmos_client_mock)
+
 
 @pytest.fixture
 def workspace():

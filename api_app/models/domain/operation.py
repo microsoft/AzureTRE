@@ -1,4 +1,3 @@
-from datetime import datetime
 from enum import Enum
 from typing import List
 
@@ -8,6 +7,7 @@ from pydantic.types import UUID4
 from models.domain.azuretremodel import AzureTREModel
 from models.domain.resource import Output
 from resources import strings
+
 
 class Status(str, Enum):
     """
@@ -21,6 +21,7 @@ class Status(str, Enum):
     NotDeployed = strings.RESOURCE_STATUS_NOT_DEPLOYED
     DeletingFailed = strings.RESOURCE_STATUS_DELETING_FAILED
 
+
 class Operation(AzureTREModel):
     """
     Operation model
@@ -33,6 +34,7 @@ class Operation(AzureTREModel):
     message: str = Field("", title="Additional operation status information")
     createdWhen: float = Field("", title="POSIX Timestamp for when the operation was submitted")
     updatedWhen: float = Field("", title="POSIX Timestamp for When the operation was updated")
+
 
 class DeploymentStatusUpdateMessage(AzureTREModel):
     """

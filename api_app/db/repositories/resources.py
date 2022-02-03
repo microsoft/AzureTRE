@@ -6,12 +6,13 @@ from core import config
 from db.errors import EntityDoesNotExist
 from db.repositories.base import BaseRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
-from models.domain.resource import ResourceType, Resource
+from models.domain.resource import ResourceType
 
 
 class ResourceRepository(BaseRepository):
     def __init__(self, client: CosmosClient):
         super().__init__(client, config.STATE_STORE_RESOURCES_CONTAINER)
+
 
     @staticmethod
     def _active_resources_query():
@@ -24,14 +25,17 @@ class ResourceRepository(BaseRepository):
     def _active_resources_by_id_query(self, resource_id: str):
         return self._active_resources_query() + f' AND c.id = "{resource_id}"'
 
+
     @staticmethod
     def _validate_resource_parameters(resource_input, resource_template):
         validate(instance=resource_input["properties"], schema=resource_template)
+
 
     def _get_enriched_template(self, template_name: str, resource_type: ResourceType, parent_template_name: str = ""):
         template_repo = ResourceTemplateRepository(self._client)
         template = template_repo.get_current_template(template_name, resource_type, parent_template_name)
         return template_repo.enrich_template(template)
+
 
     @staticmethod
     def get_resource_base_spec_params():
@@ -43,6 +47,7 @@ class ResourceRepository(BaseRepository):
         if not resources:
             raise EntityDoesNotExist
         return resources[0]
+
 
     def validate_input_against_template(self, template_name: str, resource_input, resource_type: ResourceType, parent_template_name: str = "") -> str:
         try:
@@ -57,6 +62,7 @@ class ResourceRepository(BaseRepository):
         self._validate_resource_parameters(resource_input.dict(), template)
 
         return template_version
+
 
 # Cosmos query consts
 IS_ACTIVE_CLAUSE = 'c.isActive != false'
