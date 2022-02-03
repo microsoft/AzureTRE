@@ -72,6 +72,11 @@ data "template_cloudinit_config" "config" {
   base64_encode = true
 
   part {
+    content_type = "text/cloud-config"
+    content = "${data.template_file.sources_config.rendered}"
+  }
+
+  part {
     content_type = "text/x-shellscript"
     content = "${data.template_file.rdp_config.rendered}"
   }
@@ -79,8 +84,12 @@ data "template_cloudinit_config" "config" {
 
 data "template_file" "rdp_config" {
   template = "${file("${path.module}/rdp_config.sh")}"
+}
+
+data "template_file" "sources_config" {
+  template = "${file("${path.module}/sources_config.yml")}"
   vars = {
-    tre_id = "${var.tre_id}"
+    nexus_proxy_url = "https://nexus-${var.tre_id}.azurewebsites.net/repository"
   }
 }
 
