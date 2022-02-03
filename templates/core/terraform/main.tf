@@ -52,18 +52,18 @@ module "network" {
   core_address_space  = var.core_address_space
 }
 
-module "storage" {
-  source              = "./storage"
-  tre_id              = var.tre_id
-  location            = var.location
-  resource_group_name = azurerm_resource_group.core.name
-  shared_subnet       = module.network.shared_subnet_id
-  core_vnet           = module.network.core_vnet_id
-
-  depends_on = [
-    module.network
-  ]
-}
+# module "storage" {
+#   source              = "./storage"
+#   tre_id              = var.tre_id
+#   location            = var.location
+#   resource_group_name = azurerm_resource_group.core.name
+#   shared_subnet       = module.network.shared_subnet_id
+#   core_vnet           = module.network.core_vnet_id
+# 
+#   depends_on = [
+#     module.network
+#   ]
+# }
 
 module "appgateway" {
   source                 = "./appgateway"
@@ -75,7 +75,7 @@ module "appgateway" {
   api_fqdn               = azurerm_app_service.api.default_site_hostname
   keyvault_id            = azurerm_key_vault.kv.id
   static_web_dns_zone_id = module.network.static_web_dns_zone_id
-  depends_on             = [ azurerm_key_vault ]
+  depends_on             = [azurerm_key_vault.kv]
 }
 
 # module "identity" {
@@ -146,7 +146,7 @@ module "resource_processor_vmss_porter" {
 
   depends_on = [
     module.azure_monitor,
-    azurerm_key_vault,
+    azurerm_key_vault.kv,
   ]
 }
 
@@ -212,7 +212,7 @@ module "resource_processor_vmss_porter" {
 #   shared_subnet_id             = module.network.shared_subnet_id
 #   resource_processor_subnet_id = module.network.resource_processor_subnet_id
 #   web_app_subnet_id            = module.network.web_app_subnet_id
-#   firewall_private_ip_address  = azurerm_firewall.fw.ip_configuration.0.private_ip_addresss
+#   firewall_private_ip_address  = azurerm_firewall.fw.ip_configuration.0.private_ip_address
 # }
 
 # module "state-store" {
@@ -224,13 +224,13 @@ module "resource_processor_vmss_porter" {
 #   core_vnet           = module.network.core_vnet_id
 # }
 
-module "bastion" {
-  source              = "./bastion"
-  tre_id              = var.tre_id
-  location            = var.location
-  resource_group_name = azurerm_resource_group.core.name
-  bastion_subnet      = module.network.bastion_subnet_id
-}
+# module "bastion" {
+#   source              = "./bastion"
+#   tre_id              = var.tre_id
+#   location            = var.location
+#   resource_group_name = azurerm_resource_group.core.name
+#   bastion_subnet      = module.network.bastion_subnet_id
+# }
 
 # module "jumpbox" {
 #   source              = "./admin-jumpbox"
@@ -255,8 +255,8 @@ module "gitea" {
   depends_on = [
     module.network,
     azurerm_app_service_plan.core,
-    azurerm_key_vault,
-    module.storage
+    azurerm_key_vault.kv,
+    azurerm_storage_account.stg
   ]
 }
 
@@ -269,7 +269,7 @@ module "nexus" {
   depends_on = [
     module.network,
     azurerm_app_service_plan.core,
-    azurerm_key_vault,
-    module.storage
+    azurerm_key_vault.kv,
+    azurerm_storage_account.stg
   ]
 }

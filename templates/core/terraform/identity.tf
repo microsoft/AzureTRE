@@ -7,8 +7,6 @@ resource "azurerm_user_assigned_identity" "id" {
   lifecycle { ignore_changes = [tags] }
 }
 
-data "azurerm_subscription" "current" {}
-
 resource "azurerm_role_assignment" "vm_contributor" {
   scope                = data.azurerm_subscription.current.id
   role_definition_name = "Virtual Machine Contributor"

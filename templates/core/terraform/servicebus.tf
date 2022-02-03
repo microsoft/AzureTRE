@@ -69,7 +69,3 @@ resource "azurerm_servicebus_namespace_network_rule_set" "servicebus_network_rul
   default_action      = "Deny"
   ip_rules            = ["0.0.0.0/32"]
 }
-
-output "servicebus_namespace" {
-  value = azurerm_servicebus_namespace.sb
-}
