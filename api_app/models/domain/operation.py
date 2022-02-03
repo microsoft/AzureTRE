@@ -18,7 +18,7 @@ class Status(str, Enum):
     Deployed = strings.RESOURCE_STATUS_DEPLOYED
     Deleting = strings.RESOURCE_STATUS_DELETING
     Deploying = strings.RESOURCE_STATUS_DEPLOYING
-    NotDeployed = strings.RESOURCE_STATUS_NOT_DEPLOYED
+    NotDeployed = strings.RESOURCE_STATUS_NOT_DEPLOYED  # Initial status of a resource
     DeletingFailed = strings.RESOURCE_STATUS_DELETING_FAILED
 
 
