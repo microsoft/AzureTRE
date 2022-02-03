@@ -819,9 +819,9 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
         assert response.text == strings.WORKSPACE_IS_NOT_DEPLOYED
 
     # [POST] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources
-    @patch("api.dependencies.workspaces.WorkspaceRepository.get_deployed_workspace_by_id") # skip the deployment check on this one and return a happy workspace (mock)
-    @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id") # mock the workspace_service item, but still call the resource_has_deployed_operation
-    @ patch("api.routes.workspaces.OperationRepository.resource_has_deployed_operation", return_value=False) # only called for the service, not the workspace
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_deployed_workspace_by_id")  # skip the deployment check on this one and return a happy workspace (mock)
+    @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")  # mock the workspace_service item, but still call the resource_has_deployed_operation
+    @ patch("api.routes.workspaces.OperationRepository.resource_has_deployed_operation", return_value=False)  # only called for the service, not the workspace
     async def test_post_user_resources_with_non_deployed_service_id_returns_404(self, _, get_workspace_service_mock, get_deployed_workspace_mock, app, client, sample_user_resource_input_data):
         workspace = sample_workspace()
         get_deployed_workspace_mock.return_value = workspace

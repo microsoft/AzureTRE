@@ -122,6 +122,7 @@ def test_create_workspace_item_raises_value_error_if_template_is_invalid(validat
     with pytest.raises(ValueError):
         workspace_repo.create_workspace_item(workspace_input, {})
 
+
 def test_patch_workspace_updates_item(workspace_repo):
     workspace_repo.update_item = MagicMock(return_value=None)
     workspace_to_patch = Workspace(
