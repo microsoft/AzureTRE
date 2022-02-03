@@ -15,11 +15,9 @@ class OperationRepository(BaseRepository):
     def __init__(self, client: CosmosClient):
         super().__init__(client, config.STATE_STORE_OPERATIONS_CONTAINER)
 
-
     @staticmethod
     def operations_query():
         return 'SELECT * FROM c WHERE'
-
 
     def create_operation_item(self, resource_id: str, status: Status, message: str, resource_path: str) -> Operation:
         operation_id = str(uuid.uuid4())
@@ -39,7 +37,6 @@ class OperationRepository(BaseRepository):
         self.save_item(operation)
         return operation
 
-
     def update_operation_status(self, operation_id: str, status: Status, message: str) -> Operation:
         operation = self.get_operation_by_id(operation_id)
 
@@ -49,7 +46,6 @@ class OperationRepository(BaseRepository):
 
         self.update_item(operation)
         return operation
-
 
     def get_operation_by_id(self, operation_id: str) -> Operation:
         """
@@ -61,7 +57,6 @@ class OperationRepository(BaseRepository):
             raise EntityDoesNotExist
         return parse_obj_as(Operation, operation[0])
 
-
     def get_operations_by_resource_id(self, resource_id: str) -> List[Operation]:
         """
         returns a list of operations for this resource
@@ -69,7 +64,6 @@ class OperationRepository(BaseRepository):
         query = self.operations_query() + f' c.resourceId = "{resource_id}"'
         operations = self.query(query=query)
         return parse_obj_as(List[Operation], operations)
-
 
     def resource_has_deployed_operation(self, resource_id: str) -> bool:
         """

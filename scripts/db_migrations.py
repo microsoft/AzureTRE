@@ -1,11 +1,12 @@
 #!/usr/local/bin/python3
 
-from datetime import date, datetime
+from datetime import datetime
 import os
 from azure.cosmos.cosmos_client import CosmosClient
 from azure.cosmos import PartitionKey
 import json
 import uuid
+
 
 class TRECosmosDBMigrations:
 
@@ -55,6 +56,7 @@ class TRECosmosDBMigrations:
                 item["isActive"] = isActive
                 resources_container.upsert_item(item)
                 print(f'Moved deployment from resource id {item["id"]} to operations')
+
 
 def main():
     migrations = TRECosmosDBMigrations()

@@ -44,14 +44,12 @@ def test_get_active_workspaces_queries_db(workspace_repo):
     expected_query = workspace_repo.active_workspaces_query_string()
 
     workspace_repo.get_active_workspaces()
-
     workspace_repo.container.query_items.assert_called_once_with(query=expected_query, enable_cross_partition_query=True)
 
 
 def test_get_deployed_workspace_by_id_raises_resource_is_not_deployed_if_not_deployed(workspace_repo, workspace, operations_repo):
     workspace_id = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
     sample_workspace = workspace
-
 
     workspace_repo.get_workspace_by_id = MagicMock(return_value=sample_workspace)
     operations_repo.resource_has_deployed_operation = MagicMock(return_value=False)
@@ -73,7 +71,6 @@ def test_get_workspace_by_id_queries_db(workspace_repo, workspace):
     expected_query = f'SELECT * FROM c WHERE c.resourceType = "workspace" AND c.id = "{workspace.id}"'
 
     workspace_repo.get_workspace_by_id(workspace.id)
-
     workspace_repo.container.query_items.assert_called_once_with(query=expected_query, enable_cross_partition_query=True)
 
 
@@ -124,7 +121,6 @@ def test_create_workspace_item_raises_value_error_if_template_is_invalid(validat
 
     with pytest.raises(ValueError):
         workspace_repo.create_workspace_item(workspace_input, {})
-
 
 def test_patch_workspace_updates_item(workspace_repo):
     workspace_repo.update_item = MagicMock(return_value=None)

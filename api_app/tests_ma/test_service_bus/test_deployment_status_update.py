@@ -18,7 +18,7 @@ test_data = [
     '{"good": "json", "bad": "message"}'
 ]
 
-OPERATION_ID="0000c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+OPERATION_ID = "0000c8e7-5c42-4fcb-a7fd-294cfc27aa76"
 
 test_sb_message = {
     "operationId": OPERATION_ID,

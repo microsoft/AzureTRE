@@ -6,7 +6,8 @@ from models.domain.user_resource import UserResource
 from models.domain.workspace_service import WorkspaceService
 
 
-OPERATION_ID="0000c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+OPERATION_ID = "0000c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+
 
 @pytest.mark.parametrize('resource, expected', [
     # enabled = True
