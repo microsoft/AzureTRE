@@ -57,7 +57,7 @@ variable "core_application_insights_instrumentation_key" {
 variable "nexus_allowed_fqdns" {
   type        = string
   description = "comma seperated string of allowed FQDNs for Nexus"
-  default     = "*pypi.org,security.ubuntu.com,azure.archive.ubuntu.com"
+  default     = "*pypi.org,security.ubuntu.com,archive.ubuntu.com"
 }
 
 variable "firewall_name" {
