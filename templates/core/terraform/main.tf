@@ -204,16 +204,16 @@ module "resource_processor_vmss_porter" {
 #   ]
 # }
 
-module "routetable" {
-  source                       = "./routetable"
-  tre_id                       = var.tre_id
-  location                     = var.location
-  resource_group_name          = azurerm_resource_group.core.name
-  shared_subnet_id             = module.network.shared_subnet_id
-  resource_processor_subnet_id = module.network.resource_processor_subnet_id
-  web_app_subnet_id            = module.network.web_app_subnet_id
-  firewall_private_ip_address  = azurerm_firewall.fw.ip_configuration.0.private_ip_addresss
-}
+# module "routetable" {
+#   source                       = "./routetable"
+#   tre_id                       = var.tre_id
+#   location                     = var.location
+#   resource_group_name          = azurerm_resource_group.core.name
+#   shared_subnet_id             = module.network.shared_subnet_id
+#   resource_processor_subnet_id = module.network.resource_processor_subnet_id
+#   web_app_subnet_id            = module.network.web_app_subnet_id
+#   firewall_private_ip_address  = azurerm_firewall.fw.ip_configuration.0.private_ip_addresss
+# }
 
 module "state-store" {
   source              = "./state-store"
