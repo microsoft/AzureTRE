@@ -1,13 +1,11 @@
-data "azurerm_subscription" "current" {}
-
 resource "azurerm_network_interface" "jumpbox_nic" {
   name                = "nic-vm-${var.tre_id}"
-  resource_group_name = var.resource_group_name
+  resource_group_name = azurerm_resource_group.core.name
   location            = var.location
 
   ip_configuration {
     name                          = "internalIPConfig"
-    subnet_id                     = var.shared_subnet
+    subnet_id                     = module.network.shared_subnet_id
     private_ip_address_allocation = "Dynamic"
   }
 }
@@ -37,7 +35,7 @@ resource "random_password" "password" {
 
 resource "azurerm_virtual_machine" "jumpbox" {
   name                  = "vm-${var.tre_id}"
-  resource_group_name   = var.resource_group_name
+  resource_group_name   = azurerm_resource_group.core.name
   location              = var.location
   network_interface_ids = [azurerm_network_interface.jumpbox_nic.id]
   vm_size               = "Standard_DS1_v2"
@@ -75,5 +73,5 @@ resource "azurerm_virtual_machine" "jumpbox" {
 resource "azurerm_key_vault_secret" "jumpbox_credentials" {
   name         = "${azurerm_virtual_machine.jumpbox.name}-jumpbox-admin-credentials"
   value        = "${random_string.username.result}\n${random_password.password.result}"
-  key_vault_id = var.keyvault_id
+  key_vault_id = module.keyvault.keyvault_id
 }
