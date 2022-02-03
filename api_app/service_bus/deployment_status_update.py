@@ -68,8 +68,7 @@ def create_updated_operation_document(operation: Operation, message: DeploymentS
 
     if operation.status in [Status.DeletingFailed, Status.Deleted]:
         return operation  # cannot change terminal states
-    if operation.status in [Status.Failed, Status.Deployed, Status.Deleting] \
-        and message.status not in [Status.Deleted, Status.DeletingFailed]:
+    if operation.status in [Status.Failed, Status.Deployed, Status.Deleting] and message.status not in [Status.Deleted, Status.DeletingFailed]:
         if message.status not in [Status.Deleted, Status.DeletingFailed]:
             return operation  # can only transitions from deployed(deleting, failed) to deleted or failed to delete.
 
