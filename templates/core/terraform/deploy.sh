@@ -11,9 +11,7 @@ LOG_FILE="tmp$$.log"
   -n $TF_VAR_terraform_state_container_name \
   -k ${TRE_ID} \
   -l ${LOG_FILE} \
-  -c "terraform import module.appgateway.azurerm_key_vault_certificate.tlscert https://kv-tregithub.vault.azure.net/secrets/letsencrypt/6e5a17562a464283804cc9795479cfb7 && \
-  terraform import module.gitea[0].azurerm_key_vault_secret.gitea_password https://kv-tregithub.vault.azure.net/secrets/gitea-tregithub-admin-password/666122b4526447fda428b2bc3f1fff23 && \
-  terraform plan -out ${PLAN_FILE} && \
+  -c "terraform plan -out ${PLAN_FILE} && \
   terraform apply -input=false -auto-approve ${PLAN_FILE} && \
   terraform output -json > ../tre_output.json"
 

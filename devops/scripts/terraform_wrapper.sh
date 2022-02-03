@@ -96,6 +96,12 @@ terraform init -input=false -backend=true -reconfigure -upgrade \
     -backend-config="container_name=${container_name}" \
     -backend-config="key=${key}"
 
+echo "Importing keys"
+terraform import module.appgateway.azurerm_key_vault_certificate.tlscert "/subscriptions/1e836626-b8c0-49a5-b4aa-9e9f93e31abf/resourceGroups/rg-tregithub/providers/Microsoft.KeyVault/vaults/kv-tregithub/secrets/letsencrypt"
+terraform import module.gitea[0].azurerm_key_vault_secret.gitea_password "/subscriptions/1e836626-b8c0-49a5-b4aa-9e9f93e31abf/resourceGroups/rg-tregithub/providers/Microsoft.KeyVault/vaults/kv-tregithub/secrets/gitea-tregithub-admin-password"
+terraform import module.gitea[0].azurerm_key_vault_secret.db_password "/subscriptions/1e836626-b8c0-49a5-b4aa-9e9f93e31abf/resourceGroups/rg-tregithub/providers/Microsoft.KeyVault/vaults/kv-tregithub/secrets/mysql-tregithub-password"
+echo "Finsihed importing keys"
+
 RUN_COMMAND=1
 while [ $RUN_COMMAND = 1 ]
 do
