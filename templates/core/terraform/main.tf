@@ -23,9 +23,9 @@ resource "azurerm_resource_group" "core" {
   location = var.location
   name     = "rg-${var.tre_id}"
   tags = {
-    project = "Azure Trusted Research Environment"
-    tre_id  = var.tre_id
-    source  = "https://github.com/microsoft/AzureTRE/"
+    project    = "Azure Trusted Research Environment"
+    tre_id     = var.tre_id
+    source     = "https://github.com/microsoft/AzureTRE/"
     ci_git_ref = var.ci_git_ref # TODO: not include if empty
   }
 

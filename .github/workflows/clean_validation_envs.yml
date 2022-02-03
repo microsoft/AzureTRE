@@ -1,0 +1,55 @@
+---
+name: Clean Validation Environments
+
+on:
+  schedule:
+    # 2am each night https://crontab.guru/#0_2_*_*_*
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+  push:
+
+jobs:
+  clean:
+    name: Clean
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          # This is CRITICAL since we're making decisions based on branch existence
+          fetch-depth: 0
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: clean
+        run: |
+          set -o errexit
+          set -o pipefail
+          set -o nounset
+          set -o xtrace
+
+          open_prs=$(gh pr list --state open --json number,title)
+
+          # Resource groups that start with a specific string and have the ci_git_ref tag whose value starts with "ref"
+          az group list --query "[?starts_with(name, 'rg-tr') && tags.ci_git_ref != null && starts_with(tags.ci_git_ref, 'refs')].[name, tags.ci_git_ref]" -o tsv) |
+          while read -r rg_name ref_name; do
+            if [[ ${ref_name} == refs\/pull* ]]
+              # this rg originated from an external PR (i.e. a fork)
+              pr_num=${GITHUB_REF//[!0-9]/}
+              if [ $(echo ${open_prs} | jq -c "[ .[] | select( .number | contains(${pr_num})) ] | length") == 0]
+              then
+                echo "PR ${pr_num} (derived from ref ${GITHUB_REF}) is not open, and environment ${rg_name} can be deleted."
+                # az group delete --resource-group ${rg_name} --yes --no-wait
+              fi
+            else
+              # this rg originated from an internal branch on this repo
+              ref_in_remote="${ref_name/heads/remotes\/origin}"
+              if ! $(git show-ref -q $ref_in_remote)
+              then
+                echo "Ref ${GITHUB_REF} does not exists, and environment ${rg_name} can be deleted."
+                # az group delete --resource-group ${rg_name} --yes --no-wait
+              fi
+            fi
+          done
