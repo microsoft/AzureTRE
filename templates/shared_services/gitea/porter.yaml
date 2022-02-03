@@ -45,9 +45,6 @@ install:
         location: "{{ bundle.parameters.azure_location }}"
         mgmt_resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         acr_name: "{{ bundle.parameters.acr_name }}"
-        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
-        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
-        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
@@ -68,9 +65,6 @@ uninstall:
         location: "{{ bundle.parameters.azure_location }}"
         mgmt_resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         acr_name: "{{ bundle.parameters.acr_name }}"
-        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
-        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
-        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
