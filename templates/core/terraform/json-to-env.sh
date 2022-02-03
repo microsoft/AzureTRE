@@ -10,6 +10,10 @@ jq -r '
             "env_var": "RESOURCE_GROUP_NAME"
         },
         {
+            "path": "core_resource_group_location",
+            "env_var": "RESOURCE_LOCATION"
+        },
+        {
             "path": "app_gateway_name",
             "env_var": "APPLICATION_GATEWAY"
         },
@@ -30,6 +34,14 @@ jq -r '
             "env_var": "SERVICE_BUS_RESOURCE_ID"
         },
         {
+            "path": "service_bus_workspace_queue",
+            "env_var": "SERVICE_BUS_RESOURCE_REQUEST_QUEUE"
+        },
+        {
+            "path": "service_bus_deployment_status_queue",
+            "env_var": "SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE"
+        },
+        {
             "path": "state_store_resource_id",
             "env_var": "STATE_STORE_RESOURCE_ID"
         },
@@ -40,6 +52,14 @@ jq -r '
         {
             "path": "state_store_endpoint",
             "env_var": "STATE_STORE_ENDPOINT"
+        },
+        {
+            "path": "app_insights_instrumentation_key",
+            "env_var": "APPINSIGHTS_INSTRUMENTATIONKEY"
+        },
+        {
+            "path": "app_insights_connection_string",
+            "env_var": "APPLICATIONINSIGHTS_CONNECTION_STRING"
         }
     ]
         as $env_vars_to_extract
