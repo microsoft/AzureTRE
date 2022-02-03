@@ -14,7 +14,7 @@ on:
 
 # This will prevent multiple runs of this entire workflow.
 # We should NOT cancel in progress runs as that can destabilize the environment.
-concurrency: "${{ github.workflow }}-${{ github.head_ref }}"
+concurrency: "${{ github.workflow }}-${{ github.ref }}"
 
 jobs:
   prepare:
