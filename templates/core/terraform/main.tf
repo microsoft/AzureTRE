@@ -78,15 +78,15 @@ module "appgateway" {
   depends_on             = [ azurerm_key_vault ]
 }
 
-module "identity" {
-  source               = "./user-assigned-identity"
-  tre_id               = var.tre_id
-  location             = var.location
-  resource_group_name  = azurerm_resource_group.core.name
-  servicebus_namespace = azurerm_servicebus_namespace.sb
-  cosmos_id            = azurerm_cosmosdb_account.tre-db-account.id
-  acr_id               = data.azurerm_container_registry.mgmt_acr.id
-}
+# module "identity" {
+#   source               = "./user-assigned-identity"
+#   tre_id               = var.tre_id
+#   location             = var.location
+#   resource_group_name  = azurerm_resource_group.core.name
+#   servicebus_namespace = azurerm_servicebus_namespace.sb
+#   cosmos_id            = azurerm_cosmosdb_account.tre-db-account.id
+#   acr_id               = data.azurerm_container_registry.mgmt_acr.id
+# }
 
 #module "api-webapp" {
 #  source                                     = "./api-webapp"

@@ -24,8 +24,8 @@ resource "azurerm_key_vault_access_policy" "deployer" {
 
 resource "azurerm_key_vault_access_policy" "managed_identity" {
   key_vault_id = azurerm_key_vault.kv.id
-  tenant_id    = module.identity.managed_identity.tenant_id
-  object_id    = module.identity.managed_identity.principal_id
+  tenant_id    = azurerm_user_assigned_identity.id.tenant_id
+  object_id    = azurerm_user_assigned_identity.id.principal_id
 
   key_permissions         = ["Get", "List", ]
   secret_permissions      = ["Get", "List", ]

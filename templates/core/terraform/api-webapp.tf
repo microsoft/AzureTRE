@@ -43,7 +43,7 @@ resource "azurerm_app_service" "api" {
     "SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE"      = "sb-${var.tre_id}.servicebus.windows.net"
     "SERVICE_BUS_RESOURCE_REQUEST_QUEUE"         = azurerm_servicebus_queue.workspacequeue.name
     "SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE" = azurerm_servicebus_queue.service_bus_deployment_status_update_queue.name
-    "MANAGED_IDENTITY_CLIENT_ID"                 = module.identity.managed_identity.client_id
+    "MANAGED_IDENTITY_CLIENT_ID"                 = azurerm_user_assigned_identity.id.client_id
     "TRE_ID"                                     = var.tre_id
     "RESOURCE_LOCATION"                          = var.location
     "SWAGGER_UI_CLIENT_ID"                       = var.swagger_ui_client_id
@@ -58,7 +58,7 @@ resource "azurerm_app_service" "api" {
 
   identity {
     type         = "UserAssigned"
-    identity_ids = [module.identity.managed_identity.id]
+    identity_ids = [azurerm_user_assigned_identity.id.id]
   }
 
   lifecycle { ignore_changes = [tags] }
@@ -68,7 +68,7 @@ resource "azurerm_app_service" "api" {
     remote_debugging_enabled             = false
     scm_use_main_ip_restriction          = true
     acr_use_managed_identity_credentials = true
-    acr_user_managed_identity_client_id  = module.identity.managed_identity.client_id
+    acr_user_managed_identity_client_id  = azurerm_user_assigned_identity.id.client_id
 
     cors {
       allowed_origins     = []
