@@ -83,7 +83,7 @@ module "identity" {
   tre_id               = var.tre_id
   location             = var.location
   resource_group_name  = azurerm_resource_group.core.name
-  servicebus_namespace = module.servicebus.servicebus_namespace
+  servicebus_namespace = azurerm_servicebus_namespace.sb
   cosmos_id            = module.state-store.id
   acr_id               = data.azurerm_container_registry.mgmt_acr.id
 }
@@ -136,9 +136,9 @@ module "resource_processor_vmss_porter" {
   resource_processor_subnet_id                    = module.network.resource_processor_subnet_id
   docker_registry_server                          = var.docker_registry_server
   resource_processor_vmss_porter_image_repository = var.resource_processor_vmss_porter_image_repository
-  service_bus_namespace_id                        = module.servicebus.id
-  service_bus_resource_request_queue              = module.servicebus.workspacequeue
-  service_bus_deployment_status_update_queue      = module.servicebus.service_bus_deployment_status_update_queue
+  service_bus_namespace_id                        = azurerm_servicebus_namespace.sb.id
+  service_bus_resource_request_queue              = azurerm_servicebus_queue.workspacequeue.name
+  service_bus_deployment_status_update_queue      = azurerm_servicebus_queue.service_bus_deployment_status_update_queue.name
   mgmt_storage_account_name                       = var.mgmt_storage_account_name
   mgmt_resource_group_name                        = var.mgmt_resource_group_name
   terraform_state_container_name                  = var.terraform_state_container_name
@@ -150,14 +150,14 @@ module "resource_processor_vmss_porter" {
   ]
 }
 
-module "servicebus" {
-  source                       = "./servicebus"
-  tre_id                       = var.tre_id
-  location                     = var.location
-  resource_group_name          = azurerm_resource_group.core.name
-  core_vnet                    = module.network.core_vnet_id
-  resource_processor_subnet_id = module.network.resource_processor_subnet_id
-}
+# module "servicebus" {
+#   source                       = "./servicebus"
+#   tre_id                       = var.tre_id
+#   location                     = var.location
+#   resource_group_name          = azurerm_resource_group.core.name
+#   core_vnet                    = module.network.core_vnet_id
+#   resource_processor_subnet_id = module.network.resource_processor_subnet_id
+# }
 
 # module "keyvault" {
 #   source                     = "./keyvault"

@@ -41,8 +41,8 @@ resource "azurerm_app_service" "api" {
     "STATE_STORE_ENDPOINT"                       = module.state-store.endpoint
     "COSMOSDB_ACCOUNT_NAME"                      = module.state-store.cosmosdb_account_name
     "SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE"      = "sb-${var.tre_id}.servicebus.windows.net"
-    "SERVICE_BUS_RESOURCE_REQUEST_QUEUE"         = module.servicebus.workspacequeue
-    "SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE" = module.servicebus.service_bus_deployment_status_update_queue
+    "SERVICE_BUS_RESOURCE_REQUEST_QUEUE"         = azurerm_servicebus_queue.workspacequeue.name
+    "SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE" = azurerm_servicebus_queue.service_bus_deployment_status_update_queue.name
     "MANAGED_IDENTITY_CLIENT_ID"                 = module.identity.managed_identity.client_id
     "TRE_ID"                                     = var.tre_id
     "RESOURCE_LOCATION"                          = var.location
