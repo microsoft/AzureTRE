@@ -21,3 +21,19 @@ output "static_web_storage" {
 output "keyvault_name" {
   value = module.keyvault.keyvault_name
 }
+
+output "service_bus_resource_id" {
+  value = module.servicebus.id
+}
+
+output "state_store_resource_id" {
+  value = module.state-store.id
+}
+
+output "state_store_endpoint" {
+  value = module.state-store.endpoint
+}
+
+output "state_store_account_name" {
+  value = module.state-store.cosmosdb_account_name
+}
