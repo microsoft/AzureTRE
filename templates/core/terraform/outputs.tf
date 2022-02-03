@@ -19,5 +19,5 @@ output "static_web_storage" {
 }
 
 output "keyvault_name" {
-  value = module.keyvault.keyvault_name
+  value = azurerm_key_vault.kv.name
 }

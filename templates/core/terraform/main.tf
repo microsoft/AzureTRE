@@ -73,9 +73,9 @@ module "appgateway" {
   app_gw_subnet          = module.network.app_gw_subnet_id
   shared_subnet          = module.network.shared_subnet_id
   api_fqdn               = azurerm_app_service.api.default_site_hostname
-  keyvault_id            = module.keyvault.keyvault_id
+  keyvault_id            = azurerm_key_vault.kv.id
   static_web_dns_zone_id = module.network.static_web_dns_zone_id
-  depends_on             = [module.keyvault]
+  depends_on             = [ azurerm_key_vault ]
 }
 
 module "identity" {
@@ -142,11 +142,11 @@ module "resource_processor_vmss_porter" {
   mgmt_storage_account_name                       = var.mgmt_storage_account_name
   mgmt_resource_group_name                        = var.mgmt_resource_group_name
   terraform_state_container_name                  = var.terraform_state_container_name
-  keyvault_id                                     = module.keyvault.keyvault_id
+  keyvault_id                                     = azurerm_key_vault.kv.id
 
   depends_on = [
     module.azure_monitor,
-    module.keyvault,
+    azurerm_key_vault,
   ]
 }
 
@@ -159,22 +159,22 @@ module "servicebus" {
   resource_processor_subnet_id = module.network.resource_processor_subnet_id
 }
 
-module "keyvault" {
-  source                     = "./keyvault"
-  tre_id                     = var.tre_id
-  location                   = var.location
-  resource_group_name        = azurerm_resource_group.core.name
-  shared_subnet              = module.network.shared_subnet_id
-  core_vnet                  = module.network.core_vnet_id
-  tenant_id                  = data.azurerm_client_config.current.tenant_id
-  managed_identity_tenant_id = module.identity.managed_identity.tenant_id
-  managed_identity_object_id = module.identity.managed_identity.principal_id
-  debug                      = var.debug
-
-  depends_on = [
-    module.identity
-  ]
-}
+# module "keyvault" {
+#   source                     = "./keyvault"
+#   tre_id                     = var.tre_id
+#   location                   = var.location
+#   resource_group_name        = azurerm_resource_group.core.name
+#   shared_subnet              = module.network.shared_subnet_id
+#   core_vnet                  = module.network.core_vnet_id
+#   tenant_id                  = data.azurerm_client_config.current.tenant_id
+#   managed_identity_tenant_id = module.identity.managed_identity.tenant_id
+#   managed_identity_object_id = module.identity.managed_identity.principal_id
+#   debug                      = var.debug
+# 
+#   depends_on = [
+#     module.identity
+#   ]
+# }
 
 # module "firewall" {
 #   source                     = "./firewall"
@@ -212,7 +212,7 @@ module "routetable" {
   shared_subnet_id             = module.network.shared_subnet_id
   resource_processor_subnet_id = module.network.resource_processor_subnet_id
   web_app_subnet_id            = module.network.web_app_subnet_id
-  firewall_private_ip_address  = module.firewall.firewall_private_ip_address
+  firewall_private_ip_address  = azurerm_firewall.fw.ip_configuration.0.private_ip_addresss
 }
 
 module "state-store" {
@@ -255,7 +255,7 @@ module "gitea" {
   depends_on = [
     module.network,
     azurerm_app_service_plan.core,
-    module.keyvault,
+    azurerm_key_vault,
     module.storage
   ]
 }
@@ -269,7 +269,7 @@ module "nexus" {
   depends_on = [
     module.network,
     azurerm_app_service_plan.core,
-    module.keyvault,
+    azurerm_key_vault,
     module.storage
   ]
 }
