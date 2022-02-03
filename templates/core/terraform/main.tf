@@ -72,7 +72,7 @@ module "appgateway" {
   resource_group_name    = azurerm_resource_group.core.name
   app_gw_subnet          = module.network.app_gw_subnet_id
   shared_subnet          = module.network.shared_subnet_id
-  api_fqdn               = module.api-webapp.api_fqdn
+  api_fqdn               = azurerm_app_service.api.default_site_hostname
   keyvault_id            = module.keyvault.keyvault_id
   static_web_dns_zone_id = module.network.static_web_dns_zone_id
   depends_on             = [module.keyvault]
@@ -88,42 +88,42 @@ module "identity" {
   acr_id               = data.azurerm_container_registry.mgmt_acr.id
 }
 
-module "api-webapp" {
-  source                                     = "./api-webapp"
-  tre_id                                     = var.tre_id
-  location                                   = var.location
-  resource_group_name                        = azurerm_resource_group.core.name
-  web_app_subnet                             = module.network.web_app_subnet_id
-  shared_subnet                              = module.network.shared_subnet_id
-  core_vnet                                  = module.network.core_vnet_id
-  app_insights_connection_string             = module.azure_monitor.app_insights_connection_string
-  app_insights_instrumentation_key           = module.azure_monitor.app_insights_instrumentation_key
-  log_analytics_workspace_id                 = module.azure_monitor.log_analytics_workspace_id
-  api_image_repository                       = var.api_image_repository
-  docker_registry_server                     = var.docker_registry_server
-  state_store_endpoint                       = module.state-store.endpoint
-  cosmosdb_account_name                      = module.state-store.cosmosdb_account_name
-  service_bus_resource_request_queue         = module.servicebus.workspacequeue
-  service_bus_deployment_status_update_queue = module.servicebus.service_bus_deployment_status_update_queue
-  managed_identity                           = module.identity.managed_identity
-  azurewebsites_dns_zone_id                  = module.network.azurewebsites_dns_zone_id
-  swagger_ui_client_id                       = var.swagger_ui_client_id
-  aad_tenant_id                              = var.aad_tenant_id
-  api_client_id                              = var.api_client_id
-  api_client_secret                          = var.api_client_secret
-  acr_id                                     = data.azurerm_container_registry.mgmt_acr.id
-  core_address_space                         = var.core_address_space
-  tre_address_space                          = var.tre_address_space
-  app_service_plan_sku_tier                  = var.api_app_service_plan_sku_tier
-  app_service_plan_sku_size                  = var.api_app_service_plan_sku_size
-
-  depends_on = [
-    module.azure_monitor,
-    module.identity,
-    module.servicebus,
-    module.state-store
-  ]
-}
+#module "api-webapp" {
+#  source                                     = "./api-webapp"
+#  tre_id                                     = var.tre_id
+#  location                                   = var.location
+#  resource_group_name                        = azurerm_resource_group.core.name
+#  web_app_subnet                             = module.network.web_app_subnet_id
+#  shared_subnet                              = module.network.shared_subnet_id
+#  core_vnet                                  = module.network.core_vnet_id
+#  app_insights_connection_string             = module.azure_monitor.app_insights_connection_string
+#  app_insights_instrumentation_key           = module.azure_monitor.app_insights_instrumentation_key
+#  log_analytics_workspace_id                 = module.azure_monitor.log_analytics_workspace_id
+#  api_image_repository                       = var.api_image_repository
+#  docker_registry_server                     = var.docker_registry_server
+#  state_store_endpoint                       = module.state-store.endpoint
+#  cosmosdb_account_name                      = module.state-store.cosmosdb_account_name
+#  service_bus_resource_request_queue         = module.servicebus.workspacequeue
+#  service_bus_deployment_status_update_queue = module.servicebus.service_bus_deployment_status_update_queue
+#  managed_identity                           = module.identity.managed_identity
+#  azurewebsites_dns_zone_id                  = module.network.azurewebsites_dns_zone_id
+#  swagger_ui_client_id                       = var.swagger_ui_client_id
+#  aad_tenant_id                              = var.aad_tenant_id
+#  api_client_id                              = var.api_client_id
+#  api_client_secret                          = var.api_client_secret
+#  acr_id                                     = data.azurerm_container_registry.mgmt_acr.id
+#  core_address_space                         = var.core_address_space
+#  tre_address_space                          = var.tre_address_space
+#  app_service_plan_sku_tier                  = var.api_app_service_plan_sku_tier
+#  app_service_plan_sku_size                  = var.api_app_service_plan_sku_size
+#
+#  depends_on = [
+#    module.azure_monitor,
+#    module.identity,
+#    module.servicebus,
+#    module.state-store
+#  ]
+#}
 
 module "resource_processor_vmss_porter" {
   count                                           = var.resource_processor_type == "vmss_porter" ? 1 : 0
@@ -255,7 +255,7 @@ module "gitea" {
 
   depends_on = [
     module.network,
-    module.api-webapp, # it would have been better to depend on the plan itself and not the whole module
+    azurerm_app_service_plan.core,
     module.keyvault,
     module.storage
   ]
@@ -269,7 +269,7 @@ module "nexus" {
 
   depends_on = [
     module.network,
-    module.api-webapp, # it would have been better to depend on the plan itself and not the whole module
+    azurerm_app_service_plan.core,
     module.keyvault,
     module.storage
   ]
