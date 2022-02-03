@@ -38,8 +38,8 @@ resource "azurerm_app_service" "api" {
     "WEBSITES_PORT"                              = "8000"
     "WEBSITE_VNET_ROUTE_ALL"                     = 1
     "DOCKER_REGISTRY_SERVER_URL"                 = "https://${var.docker_registry_server}"
-    "STATE_STORE_ENDPOINT"                       = module.state-store.endpoint
-    "COSMOSDB_ACCOUNT_NAME"                      = module.state-store.cosmosdb_account_name
+    "STATE_STORE_ENDPOINT"                       = azurerm_cosmosdb_account.tre-db-account.endpoint
+    "COSMOSDB_ACCOUNT_NAME"                      = azurerm_cosmosdb_account.tre-db-account.name
     "SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE"      = "sb-${var.tre_id}.servicebus.windows.net"
     "SERVICE_BUS_RESOURCE_REQUEST_QUEUE"         = azurerm_servicebus_queue.workspacequeue.name
     "SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE" = azurerm_servicebus_queue.service_bus_deployment_status_update_queue.name

@@ -84,7 +84,7 @@ module "identity" {
   location             = var.location
   resource_group_name  = azurerm_resource_group.core.name
   servicebus_namespace = azurerm_servicebus_namespace.sb
-  cosmos_id            = module.state-store.id
+  cosmos_id            = azurerm_cosmosdb_account.tre-db-account.id
   acr_id               = data.azurerm_container_registry.mgmt_acr.id
 }
 
@@ -215,14 +215,14 @@ module "resource_processor_vmss_porter" {
 #   firewall_private_ip_address  = azurerm_firewall.fw.ip_configuration.0.private_ip_addresss
 # }
 
-module "state-store" {
-  source              = "./state-store"
-  tre_id              = var.tre_id
-  location            = var.location
-  resource_group_name = azurerm_resource_group.core.name
-  shared_subnet       = module.network.shared_subnet_id
-  core_vnet           = module.network.core_vnet_id
-}
+# module "state-store" {
+#   source              = "./state-store"
+#   tre_id              = var.tre_id
+#   location            = var.location
+#   resource_group_name = azurerm_resource_group.core.name
+#   shared_subnet       = module.network.shared_subnet_id
+#   core_vnet           = module.network.core_vnet_id
+# }
 
 module "bastion" {
   source              = "./bastion"

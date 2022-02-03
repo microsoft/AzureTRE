@@ -1,7 +1,7 @@
 resource "azurerm_cosmosdb_account" "tre-db-account" {
   name                = "cosmos-${var.tre_id}"
   location            = var.location
-  resource_group_name = var.resource_group_name
+  resource_group_name = azurerm_resource_group.core.name
   offer_type          = "Standard"
   kind                = "GlobalDocumentDB"
 
@@ -23,7 +23,7 @@ resource "azurerm_cosmosdb_account" "tre-db-account" {
 
 resource "azurerm_cosmosdb_sql_database" "tre-db" {
   name                = "AzureTRE"
-  resource_group_name = var.resource_group_name
+  resource_group_name = azurerm_resource_group.core.name
   account_name        = azurerm_cosmosdb_account.tre-db-account.name
   throughput          = 400
 }
@@ -37,16 +37,16 @@ resource "azurerm_management_lock" "tre-db" {
 
 resource "azurerm_private_dns_zone" "cosmos" {
   name                = "privatelink.documents.azure.com"
-  resource_group_name = var.resource_group_name
+  resource_group_name = azurerm_resource_group.core.name
 
   lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "cosmos_documents_dns_link" {
   name                  = "cosmos_documents_dns_link"
-  resource_group_name   = var.resource_group_name
+  resource_group_name   = azurerm_resource_group.core.name
   private_dns_zone_name = azurerm_private_dns_zone.cosmos.name
-  virtual_network_id    = var.core_vnet
+  virtual_network_id    = module.network.core_vnet_id
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -54,8 +54,8 @@ resource "azurerm_private_dns_zone_virtual_network_link" "cosmos_documents_dns_l
 resource "azurerm_private_endpoint" "sspe" {
   name                = "pe-ss-${var.tre_id}"
   location            = var.location
-  resource_group_name = var.resource_group_name
-  subnet_id           = var.shared_subnet
+  resource_group_name = azurerm_resource_group.core.name
+  subnet_id           = module.network.shared_subnet_id
 
   lifecycle { ignore_changes = [tags] }
 
