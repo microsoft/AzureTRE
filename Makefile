@@ -251,3 +251,11 @@ test-e2e:
 	export WORKSPACE_SCOPE="api://${TEST_WORKSPACE_APP_ID}/user_impersonation" && \
 	cd e2e_tests && \
 	python -m pytest -m smoke --junit-xml pytest_e2e.xml
+
+setup-local-debugging:
+	echo -e "\n\e[34m»»» 🧩 \e[96mSetting up the ability to debug the API\e[0m..." \
+	&& . ./devops/scripts/check_dependencies.sh nodocker \
+	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
+	&& pushd ./templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
+	&& . ./devops/scripts/load_env.sh ./templates/core/tre.env \
+	&& . ./devops/scripts/setup_local_api_debugging.sh
