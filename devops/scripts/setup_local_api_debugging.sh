@@ -23,25 +23,21 @@ az servicebus namespace network-rule add \
   --ip-address ${IPADDR} \
   --action Allow
 
-SERVICE_PRINCIPAL_SECRET=$(az ad sp create-for-rbac --name "${TRE_ID}_debug_spn" -o json)
-export SERVICE_PRINCIPAL_ID=$(echo "$SERVICE_PRINCIPAL_SECRET" | jq -r '.appId')
-export SERVICE_PRINCIPAL_SECRET=$(echo "$SERVICE_PRINCIPAL_SECRET" | jq -r '.password')
+# Get the object id of the currently logged in user
+LOGGED_IN_OBJECT_ID=$(az ad signed-in-user show --query objectId -o tsv)
 
+# Assign Role Permissions.
 az role assignment create \
     --role "Azure Service Bus Data Sender" \
-    --assignee ${SERVICE_PRINCIPAL_ID} \
+    --assignee ${LOGGED_IN_OBJECT_ID} \
     --scope ${SERVICE_BUS_RESOURCE_ID}
 
 az role assignment create \
     --role "Azure Service Bus Data Receiver" \
-    --assignee ${SERVICE_PRINCIPAL_ID} \
+    --assignee ${LOGGED_IN_OBJECT_ID} \
     --scope ${SERVICE_BUS_RESOURCE_ID}
 
 az role assignment create \
     --role "Contributor" \
-    --assignee ${SERVICE_PRINCIPAL_ID} \
+    --assignee ${LOGGED_IN_OBJECT_ID} \
     --scope ${STATE_STORE_RESOURCE_ID}
-
-echo "Adding secrets to /workspaces/AzureTRE/templates/core/tre.env"
-echo "AZURE_CLIENT_ID=${SERVICE_PRINCIPAL_ID}" >> ./templates/core/tre.env
-echo "AZURE_CLIENT_SECRET=${SERVICE_PRINCIPAL_SECRET}" >> ./templates/core/tre.env
