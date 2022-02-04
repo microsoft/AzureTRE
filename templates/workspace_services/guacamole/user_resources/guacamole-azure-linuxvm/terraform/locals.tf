@@ -10,16 +10,18 @@ locals {
   keyvault_name                  = lower("kv-${substr(local.workspace_resource_name_suffix, -20, -1)}")
   image_ref = {
     "Ubuntu 18.04" = {
-      "publisher" = "canonical"
-      "offer"     = "ubuntuserver"
-      "sku"       = "18_04-lts-gen2"
-      "version"   = "latest"
+      "publisher"  = "canonical"
+      "offer"      = "ubuntuserver"
+      "sku"        = "18_04-lts-gen2"
+      "version"    = "latest"
+      "install_ui" = true
     },
     "Ubuntu 18.04 Data Science VM" = {
       "publisher" = "microsoft-dsvm"
       "offer"     = "ubuntu-1804"
       "sku"       = "1804-gen2"
       "version"   = "latest"
+      "install_ui" = false
     }
   }
 }

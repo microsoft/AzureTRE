@@ -84,6 +84,9 @@ data "template_cloudinit_config" "config" {
 
 data "template_file" "rdp_config" {
   template = "${file("${path.module}/rdp_config.sh")}"
+  vars = {
+    install_ui = local.image_ref[var.image].install_ui ? 1 : 0
+  }
 }
 
 data "template_file" "sources_config" {
