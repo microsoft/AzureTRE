@@ -3,13 +3,14 @@
 SHELL:=/bin/bash
 ROOTPATH:=$(shell pwd)
 
-all: bootstrap mgmt-deploy images tre-deploy
+all: bootstrap mgmt-deploy images tre-deploy deploy-shared-services
 images: build-and-push-api build-and-push-resource-processor build-and-push-gitea build-and-push-guacamole
 
 build-and-push-api: build-api-image push-api-image
 build-and-push-resource-processor: build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image
 build-and-push-gitea: build-gitea-image push-gitea-image
 build-and-push-guacamole: build-guacamole-image push-guacamole-image
+deploy-shared-services: firewall-install gitea-install nexus-install
 
 bootstrap:
 	echo -e "\n\e[34m»»» 🧩 \e[96mBootstrap Terraform\e[0m..." \
@@ -136,30 +137,24 @@ tre-stop:
 
 firewall-install:
 	echo -e "\n\e[34m»»» 🧩 \e[96mInstalling Firewall\e[0m..." \
+	&& . ./devops/scripts/load_env.sh ./templates/shared_services/firewall/.env \
+	&& . ./templates/shared_services/check_sp.sh \
 	&& make porter-build DIR=./templates/shared_services/firewall \
 	&& make porter-install DIR=./templates/shared_services/firewall
 
-firewall-uninstall:
-	echo -e "\n\e[34m»»» 🧩 \e[96mUninstalling Firewall\e[0m..." \
-	&& make porter-uninstall DIR=./templates/shared_services/firewall
-
 gitea-install:
 	echo -e "\n\e[34m»»» 🧩 \e[96mInstalling Gitea\e[0m..." \
+	&& . ./devops/scripts/load_env.sh ./templates/shared_services/gitea/.env \
+	&& . ./templates/shared_services/check_sp.sh \
 	&& make porter-build DIR=./templates/shared_services/gitea \
 	&& make porter-install DIR=./templates/shared_services/gitea
 
-gitea-uninstall:
-	echo -e "\n\e[34m»»» 🧩 \e[96mUninstalling Gitea\e[0m..." \
-	&& make porter-uninstall DIR=./templates/shared_services/gitea
-
 nexus-install:
-	echo -e "\n\e[34m»»» 🧩 \e[96mInstalling Gitea\e[0m..." \
+	echo -e "\n\e[34m»»» 🧩 \e[96mInstalling Nexus\e[0m..." \
+	&& . ./devops/scripts/load_env.sh ./templates/shared_services/sonatype-nexus/.env \
+	&& . ./templates/shared_services/check_sp.sh \
 	&& make porter-build DIR=./templates/shared_services/sonatype-nexus \
 	&& make porter-install DIR=./templates/shared_services/sonatype-nexus
-
-nexus-uninstall:
-	echo -e "\n\e[34m»»» 🧩 \e[96mUninstalling Gitea\e[0m..." \
-	&& make porter-uninstall DIR=./templates/shared_services/sonatype-nexus
 
 tre-destroy:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDestroying TRE\e[0m..." \
