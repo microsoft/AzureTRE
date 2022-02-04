@@ -8,7 +8,7 @@ jobs:
   deploy_management:
     name: Import TF Resources
     runs-on: ubuntu-latest
-
+    environment: Dev
     steps:
       - name: Checkout
         uses: actions/checkout@v2
