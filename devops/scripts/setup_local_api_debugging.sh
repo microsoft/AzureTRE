@@ -7,7 +7,7 @@ set -e
 : ${STATE_STORE_RESOURCE_ID?"Check STATE_STORE_RESOURCE_ID is defined in ./templates/core/tre.env"}
 : ${COSMOSDB_ACCOUNT_NAME?"Check COSMOSDB_ACCOUNT_NAME is defined in ./templates/core/tre.env"}
 
-export SERVICE_BUS_NAMESPACE="sb-${TRE_ID}"
+SERVICE_BUS_NAMESPACE="sb-${TRE_ID}"
 IPADDR=$(curl ipecho.net/plain; echo)
 
 echo "Adding local IP Address to ${COSMOSDB_ACCOUNT_NAME}. This may take a while . . . "
