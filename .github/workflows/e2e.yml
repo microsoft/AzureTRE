@@ -1,0 +1,35 @@
+---
+name: End to End Tests
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  e2e_tests:
+    name: "Run E2E Tests"
+    runs-on: ubuntu-latest
+    environment: Dev
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Run e2e Tests
+        uses: ./.github/actions/devcontainer_run_command
+        with:
+          DISPLAY_NAME: "Run e2e Tests"
+          COMMAND: "make test-e2e"
+          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
+          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
+          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
+          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
+          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          LOCATION: "${{ secrets.LOCATION }}"
+          RESOURCE: "${{ secrets.API_CLIENT_ID }}"
+          AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
+          TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
+          TEST_USER_NAME: "${{ secrets.TEST_USER_NAME }}"
+          TEST_USER_PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
+          TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
+          TRE_ID: "${{ secrets.TRE_ID }}"

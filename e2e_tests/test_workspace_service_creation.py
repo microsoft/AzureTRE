@@ -36,7 +36,7 @@ async def test_getting_templates(template_name, admin_token, verify) -> None:
         assert (response.status_code == status.HTTP_200_OK), f"GET Request for {template_name} failed"
 
 
-@pytest.mark.smoke
+@pytest.mark.extended
 @pytest.mark.timeout(3000)
 async def test_create_guacamole_service_into_base_workspace(admin_token, workspace_owner_token, verify) -> None:
     payload = {

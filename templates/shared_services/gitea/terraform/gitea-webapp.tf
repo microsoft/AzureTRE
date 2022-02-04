@@ -20,11 +20,11 @@ resource "azurerm_app_service" "gitea" {
   name                = local.webapp_name
   resource_group_name = local.core_resource_group_name
   location            = var.location
-  app_service_plan_id = var.core_app_service_plan_id
+  app_service_plan_id = data.azurerm_app_service_plan.core.id
   https_only          = true
 
   app_settings = {
-    APPINSIGHTS_INSTRUMENTATIONKEY      = var.core_application_insights_instrumentation_key
+    APPINSIGHTS_INSTRUMENTATIONKEY      = data.azurerm_application_insights.core.instrumentation_key
     WEBSITES_PORT                       = "3000"
     WEBSITES_ENABLE_APP_SERVICE_STORAGE = false
 
@@ -57,7 +57,7 @@ resource "azurerm_app_service" "gitea" {
   }
 
   site_config {
-    linux_fx_version                     = "DOCKER|${var.docker_registry_server}/microsoft/azuretre/gitea:${local.version}"
+    linux_fx_version                     = "DOCKER|${data.azurerm_container_registry.mgmt_acr.login_server}/microsoft/azuretre/gitea:${local.version}"
     remote_debugging_enabled             = false
     scm_use_main_ip_restriction          = true
     acr_use_managed_identity_credentials = true
@@ -86,9 +86,9 @@ resource "azurerm_app_service" "gitea" {
   storage_account {
     name         = "gitea-data"
     type         = "AzureFiles"
-    account_name = var.storage_account_name
+    account_name = data.azurerm_storage_account.gitea.name
 
-    access_key = var.storage_account_primary_access_key
+    access_key = data.azurerm_storage_account.gitea.primary_access_key
     share_name = azurerm_storage_share.gitea.name
 
     mount_path = "/data"
@@ -116,7 +116,7 @@ resource "azurerm_private_endpoint" "gitea_private_endpoint" {
   name                = "pe-${local.webapp_name}"
   resource_group_name = local.core_resource_group_name
   location            = var.location
-  subnet_id           = var.shared_subnet_id
+  subnet_id           = data.azurerm_subnet.shared.id
 
   private_service_connection {
     private_connection_resource_id = azurerm_app_service.gitea.id
@@ -127,7 +127,7 @@ resource "azurerm_private_endpoint" "gitea_private_endpoint" {
 
   private_dns_zone_group {
     name                 = "privatelink.azurewebsites.net"
-    private_dns_zone_ids = [var.private_dns_zone_azurewebsites_id]
+    private_dns_zone_ids = [data.azurerm_private_dns_zone.azurewebsites.id]
   }
 
   lifecycle { ignore_changes = [tags] }
@@ -135,13 +135,13 @@ resource "azurerm_private_endpoint" "gitea_private_endpoint" {
 
 resource "azurerm_app_service_virtual_network_swift_connection" "gitea-integrated-vnet" {
   app_service_id = azurerm_app_service.gitea.id
-  subnet_id      = var.web_app_subnet_id
+  subnet_id      = data.azurerm_subnet.web_app.id
 }
 
 resource "azurerm_monitor_diagnostic_setting" "webapp_gitea" {
   name                       = "diag-${var.tre_id}"
   target_resource_id         = azurerm_app_service.gitea.id
-  log_analytics_workspace_id = var.log_analytics_workspace_id
+  log_analytics_workspace_id = data.azurerm_log_analytics_workspace.tre.id
 
   log {
     category = "AppServiceHTTPLogs"
@@ -234,7 +234,7 @@ resource "azurerm_monitor_diagnostic_setting" "webapp_gitea" {
 }
 
 resource "azurerm_key_vault_access_policy" "gitea_policy" {
-  key_vault_id = var.keyvault_id
+  key_vault_id = data.azurerm_key_vault.keyvault.id
   tenant_id    = azurerm_user_assigned_identity.gitea_id.tenant_id
   object_id    = azurerm_user_assigned_identity.gitea_id.principal_id
 
@@ -244,7 +244,7 @@ resource "azurerm_key_vault_access_policy" "gitea_policy" {
 resource "azurerm_key_vault_secret" "gitea_password" {
   name         = "${local.webapp_name}-admin-password"
   value        = random_password.gitea_passwd.result
-  key_vault_id = var.keyvault_id
+  key_vault_id = data.azurerm_key_vault.keyvault.id
 
   depends_on = [
     azurerm_key_vault_access_policy.gitea_policy
@@ -253,12 +253,12 @@ resource "azurerm_key_vault_secret" "gitea_password" {
 
 resource "azurerm_storage_share" "gitea" {
   name                 = "gitea-data"
-  storage_account_name = var.storage_account_name
+  storage_account_name = data.azurerm_storage_account.gitea.name
   quota                = var.gitea_storage_limit
 }
 
 resource "azurerm_role_assignment" "gitea_acrpull_role" {
-  scope                = var.acr_id
+  scope                = data.azurerm_container_registry.mgmt_acr.id
   role_definition_name = "AcrPull"
   principal_id         = azurerm_user_assigned_identity.gitea_id.principal_id
 }
@@ -266,6 +266,8 @@ resource "azurerm_role_assignment" "gitea_acrpull_role" {
 # unfortunately we have to tell the webapp to use the user-assigned identity when accessing key-vault, no direct tf way.
 resource "null_resource" "webapp_vault_access_identity" {
   provisioner "local-exec" {
-    command = "az rest --method PATCH --uri \"${azurerm_app_service.gitea.id}?api-version=2021-01-01\" --body \"{'properties':{'keyVaultReferenceIdentity':'${azurerm_user_assigned_identity.gitea_id.id}'}}\""
+    command = <<EOT
+      az rest --method PATCH --uri "${azurerm_app_service.gitea.id}?api-version=2021-01-01" --body "{'properties':{'keyVaultReferenceIdentity':'${azurerm_user_assigned_identity.gitea_id.id}'}}"
+    EOT
   }
 }

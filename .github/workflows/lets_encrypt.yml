@@ -38,7 +38,7 @@ jobs:
           ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
           ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
-          TF_VAR_tre_id: ${{ secrets.TRE_ID }}
+          TRE_ID: ${{ secrets.TRE_ID }}
           TF_VAR_terraform_state_container_name:
             ${{ secrets.TF_STATE_CONTAINER }}
           TF_VAR_mgmt_resource_group_name:

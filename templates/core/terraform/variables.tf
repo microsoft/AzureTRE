@@ -123,4 +123,8 @@ variable "resource_processor_type" {
   type        = string
 }
 
-variable "debug" {}
+variable "debug" {
+  type        = bool
+  default     = false
+  description = "Used to turn debug on within Azure Resources"
+}
