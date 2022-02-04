@@ -3,13 +3,14 @@
 SHELL:=/bin/bash
 ROOTPATH:=$(shell pwd)
 
-all: bootstrap mgmt-deploy images tre-deploy deploy-shared-services
+all: bootstrap mgmt-deploy images tre-deploy
 images: build-and-push-api build-and-push-resource-processor build-and-push-gitea build-and-push-guacamole
 
 build-and-push-api: build-api-image push-api-image
 build-and-push-resource-processor: build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image
 build-and-push-gitea: build-gitea-image push-gitea-image
 build-and-push-guacamole: build-guacamole-image push-guacamole-image
+tre-deploy: deploy-core deploy-shared-services
 deploy-shared-services: firewall-install gitea-install nexus-install
 
 bootstrap:
@@ -101,7 +102,7 @@ push-guacamole-image:
 	&& az acr login -n $${ACR_NAME} \
 	&& docker push "$${ACR_NAME}.azurecr.io/microsoft/azuretre/guac-server:$${__version__}"
 
-tre-deploy:
+deploy-core:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDeploying TRE\e[0m..." \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
