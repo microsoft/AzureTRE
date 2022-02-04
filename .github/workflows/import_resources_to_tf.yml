@@ -8,27 +8,10 @@ jobs:
   deploy_management:
     name: Import TF Resources
     runs-on: ubuntu-latest
-
+    environment: Dev
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-
-      - name: Build new devcontainer
-        shell: bash
-        env:
-            DOCKER_BUILDKIT: 1
-        run: |
-          set -e
-          USER_UID=$(id -u)
-          USER_GID=$(id -g)
-          docker build . \
-            -t 'tredev:latest' \
-            -f '.devcontainer/Dockerfile' \
-            --cache-from ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest \
-            --build-arg BUILDKIT_INLINE_CACHE=1 \
-            --build-arg USER_UID="${USER_UID}" \
-            --build-arg USER_GID="${USER_GID}"
-          docker image tag tredev:latest ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest
 
       - name: Import Resources
         uses: ./.github/actions/devcontainer_run_command
@@ -40,6 +23,12 @@ jobs:
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          RESOURCE: "${{ secrets.API_CLIENT_ID }}"
+          AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
+          TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
+          TEST_USER_NAME: "${{ secrets.TEST_USER_NAME }}"
+          TEST_USER_PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
+          TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
           LOCATION: ${{ secrets.LOCATION }}
           ACR_NAME: ${{ secrets.ACR_NAME }}
@@ -48,3 +37,8 @@ jobs:
           TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
           TF_VAR_mgmt_storage_account_name:
             ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+          TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
+          TF_VAR_tre_address_space: ${{ secrets.TRE_ADDRESS_SPACE }}
+          TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
+          TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
+          TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
