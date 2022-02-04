@@ -4,6 +4,11 @@ name: Import TF Resources
 on:
   workflow_dispatch:
 
+env:
+  USE_ENV_VARS_NOT_FILES: true
+  TF_INPUT: 0 # interactive is off
+  TF_IN_AUTOMATION: 1 # Run in headless mode
+
 jobs:
   deploy_management:
     name: Import TF Resources
