@@ -143,6 +143,12 @@ firewall-install:
 	&& make porter-build DIR=./templates/shared_services/firewall \
 	&& make porter-install DIR=./templates/shared_services/firewall
 
+firewall-install:
+	echo -e "\n\e[34m»»» 🧩 \e[96mUninstalling Firewall\e[0m..." \
+	&& . ./devops/scripts/load_env.sh ./templates/shared_services/firewall/.env \
+	&& . ./templates/shared_services/check_sp.sh \
+	&& make porter-uninstall DIR=./templates/shared_services/firewall \
+
 gitea-install:
 	echo -e "\n\e[34m»»» 🧩 \e[96mInstalling Gitea\e[0m..." \
 	&& . ./devops/scripts/load_env.sh ./templates/shared_services/gitea/.env \
@@ -150,12 +156,24 @@ gitea-install:
 	&& make porter-build DIR=./templates/shared_services/gitea \
 	&& make porter-install DIR=./templates/shared_services/gitea
 
+gitea-uninstall:
+	echo -e "\n\e[34m»»» 🧩 \e[96mUninstalling Gitea\e[0m..." \
+	&& . ./devops/scripts/load_env.sh ./templates/shared_services/gitea/.env \
+	&& . ./templates/shared_services/check_sp.sh \
+	&& make porter-uninstall DIR=./templates/shared_services/gitea
+
 nexus-install:
 	echo -e "\n\e[34m»»» 🧩 \e[96mInstalling Nexus\e[0m..." \
 	&& . ./devops/scripts/load_env.sh ./templates/shared_services/sonatype-nexus/.env \
 	&& . ./templates/shared_services/check_sp.sh \
 	&& make porter-build DIR=./templates/shared_services/sonatype-nexus \
 	&& make porter-install DIR=./templates/shared_services/sonatype-nexus
+
+nexus-install:
+	echo -e "\n\e[34m»»» 🧩 \e[96mUninstalling Nexus\e[0m..." \
+	&& . ./devops/scripts/load_env.sh ./templates/shared_services/sonatype-nexus/.env \
+	&& . ./templates/shared_services/check_sp.sh \
+	&& make porter-uninstall DIR=./templates/shared_services/sonatype-nexus
 
 tre-destroy:
 	echo -e "\n\e[34m»»» 🧩 \e[96mDestroying TRE\e[0m..." \
