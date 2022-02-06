@@ -52,19 +52,6 @@ module "network" {
   core_address_space  = var.core_address_space
 }
 
-# module "storage" {
-#   source              = "./storage"
-#   tre_id              = var.tre_id
-#   location            = var.location
-#   resource_group_name = azurerm_resource_group.core.name
-#   shared_subnet       = module.network.shared_subnet_id
-#   core_vnet           = module.network.core_vnet_id
-# 
-#   depends_on = [
-#     module.network
-#   ]
-# }
-
 module "appgateway" {
   source                 = "./appgateway"
   tre_id                 = var.tre_id
@@ -77,53 +64,6 @@ module "appgateway" {
   static_web_dns_zone_id = module.network.static_web_dns_zone_id
   depends_on             = [azurerm_key_vault.kv]
 }
-
-# module "identity" {
-#   source               = "./user-assigned-identity"
-#   tre_id               = var.tre_id
-#   location             = var.location
-#   resource_group_name  = azurerm_resource_group.core.name
-#   servicebus_namespace = azurerm_servicebus_namespace.sb
-#   cosmos_id            = azurerm_cosmosdb_account.tre-db-account.id
-#   acr_id               = data.azurerm_container_registry.mgmt_acr.id
-# }
-
-#module "api-webapp" {
-#  source                                     = "./api-webapp"
-#  tre_id                                     = var.tre_id
-#  location                                   = var.location
-#  resource_group_name                        = azurerm_resource_group.core.name
-#  web_app_subnet                             = module.network.web_app_subnet_id
-#  shared_subnet                              = module.network.shared_subnet_id
-#  core_vnet                                  = module.network.core_vnet_id
-#  app_insights_connection_string             = module.azure_monitor.app_insights_connection_string
-#  app_insights_instrumentation_key           = module.azure_monitor.app_insights_instrumentation_key
-#  log_analytics_workspace_id                 = module.azure_monitor.log_analytics_workspace_id
-#  api_image_repository                       = var.api_image_repository
-#  docker_registry_server                     = var.docker_registry_server
-#  state_store_endpoint                       = module.state-store.endpoint
-#  cosmosdb_account_name                      = module.state-store.cosmosdb_account_name
-#  service_bus_resource_request_queue         = module.servicebus.workspacequeue
-#  service_bus_deployment_status_update_queue = module.servicebus.service_bus_deployment_status_update_queue
-#  managed_identity                           = module.identity.managed_identity
-#  azurewebsites_dns_zone_id                  = module.network.azurewebsites_dns_zone_id
-#  swagger_ui_client_id                       = var.swagger_ui_client_id
-#  aad_tenant_id                              = var.aad_tenant_id
-#  api_client_id                              = var.api_client_id
-#  api_client_secret                          = var.api_client_secret
-#  acr_id                                     = data.azurerm_container_registry.mgmt_acr.id
-#  core_address_space                         = var.core_address_space
-#  tre_address_space                          = var.tre_address_space
-#  app_service_plan_sku_tier                  = var.api_app_service_plan_sku_tier
-#  app_service_plan_sku_size                  = var.api_app_service_plan_sku_size
-#
-#  depends_on = [
-#    module.azure_monitor,
-#    module.identity,
-#    module.servicebus,
-#    module.state-store
-#  ]
-#}
 
 module "resource_processor_vmss_porter" {
   count                                           = var.resource_processor_type == "vmss_porter" ? 1 : 0
@@ -150,32 +90,6 @@ module "resource_processor_vmss_porter" {
     module.firewall
   ]
 }
-
-# module "servicebus" {
-#   source                       = "./servicebus"
-#   tre_id                       = var.tre_id
-#   location                     = var.location
-#   resource_group_name          = azurerm_resource_group.core.name
-#   core_vnet                    = module.network.core_vnet_id
-#   resource_processor_subnet_id = module.network.resource_processor_subnet_id
-# }
-
-# module "keyvault" {
-#   source                     = "./keyvault"
-#   tre_id                     = var.tre_id
-#   location                   = var.location
-#   resource_group_name        = azurerm_resource_group.core.name
-#   shared_subnet              = module.network.shared_subnet_id
-#   core_vnet                  = module.network.core_vnet_id
-#   tenant_id                  = data.azurerm_client_config.current.tenant_id
-#   managed_identity_tenant_id = module.identity.managed_identity.tenant_id
-#   managed_identity_object_id = module.identity.managed_identity.principal_id
-#   debug                      = var.debug
-# 
-#   depends_on = [
-#     module.identity
-#   ]
-# }
 
 module "firewall" {
   source                     = "./firewall"
@@ -204,46 +118,6 @@ module "firewall" {
     module.network
   ]
 }
-
-# module "routetable" {
-#   source                       = "./routetable"
-#   tre_id                       = var.tre_id
-#   location                     = var.location
-#   resource_group_name          = azurerm_resource_group.core.name
-#   shared_subnet_id             = module.network.shared_subnet_id
-#   resource_processor_subnet_id = module.network.resource_processor_subnet_id
-#   web_app_subnet_id            = module.network.web_app_subnet_id
-#   firewall_private_ip_address  = module.firewall.firewall_private_ip_address
-# }
-
-# module "state-store" {
-#   source              = "./state-store"
-#   tre_id              = var.tre_id
-#   location            = var.location
-#   resource_group_name = azurerm_resource_group.core.name
-#   shared_subnet       = module.network.shared_subnet_id
-#   core_vnet           = module.network.core_vnet_id
-# }
-
-# module "bastion" {
-#   source              = "./bastion"
-#   tre_id              = var.tre_id
-#   location            = var.location
-#   resource_group_name = azurerm_resource_group.core.name
-#   bastion_subnet      = module.network.bastion_subnet_id
-# }
-
-# module "jumpbox" {
-#   source              = "./admin-jumpbox"
-#   tre_id              = var.tre_id
-#   location            = var.location
-#   resource_group_name = azurerm_resource_group.core.name
-#   shared_subnet       = module.network.shared_subnet_id
-#   keyvault_id         = module.keyvault.keyvault_id
-#   depends_on = [
-#     module.keyvault
-#   ]
-# }
 
 module "gitea" {
   count                    = var.deploy_gitea == true ? 1 : 0
