@@ -163,48 +163,6 @@ moved {
   to   = azurerm_private_endpoint.kvpe
 }
 
-# Firewall
-moved {
-  from = module.firewall.azurerm_public_ip.fwpip
-  to   = azurerm_public_ip.fwpip
-}
-moved {
-  from = module.firewall.azurerm_firewall.fw
-  to   = azurerm_firewall.fw
-}
-moved {
-  from = module.firewall.azurerm_management_lock.fw
-  to   = azurerm_management_lock.fw
-}
-moved {
-  from = module.firewall.azurerm_monitor_diagnostic_setting.firewall
-  to   = azurerm_monitor_diagnostic_setting.firewall
-}
-moved {
-  from = module.firewall.azurerm_firewall_application_rule_collection.shared_subnet
-  to   = azurerm_firewall_application_rule_collection.shared_subnet
-}
-moved {
-  from = module.firewall.azurerm_firewall_application_rule_collection.resource_processor_subnet
-  to   = azurerm_firewall_application_rule_collection.resource_processor_subnet
-}
-moved {
-  from = module.firewall.azurerm_firewall_network_rule_collection.general
-  to   = azurerm_firewall_network_rule_collection.general
-}
-moved {
-  from = module.firewall.azurerm_firewall_network_rule_collection.resource_processor_subnet
-  to   = azurerm_firewall_network_rule_collection.resource_processor_subnet
-}
-moved {
-  from = module.firewall.azurerm_firewall_network_rule_collection.web_app_subnet
-  to   = azurerm_firewall_network_rule_collection.web_app_subnet
-}
-moved {
-  from = module.firewall.azurerm_firewall_application_rule_collection.web_app_subnet
-  to   = azurerm_firewall_application_rule_collection.web_app_subnet
-}
-
 # Routetable
 moved {
   from = module.routetable.azurerm_route_table.rt
@@ -236,18 +194,22 @@ moved {
   from = module.state-store.azurerm_cosmosdb_sql_database.tre-db
   to   = azurerm_cosmosdb_sql_database.tre-db
 }
+
 moved {
   from = module.state-store.azurerm_management_lock.tre-db
   to   = azurerm_management_lock.tre-db
 }
+
 moved {
   from = module.state-store.azurerm_private_dns_zone.cosmos
   to   = azurerm_private_dns_zone.cosmos
 }
+
 moved {
   from = module.state-store.azurerm_private_dns_zone_virtual_network_link.cosmos_documents_dns_link
   to   = azurerm_private_dns_zone_virtual_network_link.cosmos_documents_dns_link
 }
+
 moved {
   from = module.state-store.azurerm_private_endpoint.sspe
   to   = azurerm_private_endpoint.sspe
