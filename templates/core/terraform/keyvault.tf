@@ -8,7 +8,7 @@ resource "azurerm_key_vault" "kv" {
   sku_name                 = "standard"
   purge_protection_enabled = var.debug == "true" ? false : true
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [access_policy, tags] }
 }
 
 resource "azurerm_key_vault_access_policy" "deployer" {
@@ -16,9 +16,9 @@ resource "azurerm_key_vault_access_policy" "deployer" {
   tenant_id    = data.azurerm_client_config.deployer.tenant_id
   object_id    = data.azurerm_client_config.deployer.object_id
 
-  key_permissions         = ["Get", "List", "Update", "Create", "Import", "Delete"]
-  secret_permissions      = ["Get", "List", "Set", "Delete", "Purge"]
-  certificate_permissions = ["Get", "List", "Update", "Create", "Import", "Delete", "Purge"]
+  key_permissions         = ["Get", "List", "Update", "Create", "Import", "Delete", "Recover"]
+  secret_permissions      = ["Get", "List", "Set", "Delete", "Purge", "Recover"]
+  certificate_permissions = ["Get", "List", "Update", "Create", "Import", "Delete", "Purge", "Recover"]
   storage_permissions     = ["Get", "List", "Update", "Delete"]
 }
 
