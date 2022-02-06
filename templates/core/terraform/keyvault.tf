@@ -35,6 +35,10 @@ resource "azurerm_key_vault_access_policy" "managed_identity" {
 data "azurerm_private_dns_zone" "vaultcore" {
   name                = "privatelink.vaultcore.azure.net"
   resource_group_name = azurerm_resource_group.core.name
+
+  depends_on = [
+    module.network,
+  ]
 }
 
 resource "azurerm_private_endpoint" "kvpe" {
