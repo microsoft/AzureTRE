@@ -25,7 +25,7 @@ class Resource(AzureTREModel):
     properties: dict = Field({}, title="Resource template parameters", description="Parameters for the deployment")
     isActive: bool = True
     resourceType: ResourceType
-    etag: str = ""
+    etag: str = Field(title="_etag", description="eTag of the document", alias="_etag")
     resourcePath: str = ""
 
     def is_enabled(self) -> bool:
