@@ -39,7 +39,8 @@ class UserResourceRepository(ResourceRepository):
             templateName=user_resource_input.templateName,
             templateVersion=template_version,
             properties=resource_spec_parameters,
-            resourcePath=f'/workspaces/{workspace_id}/workspace-services/{parent_workspace_service_id}/user-resources/{full_user_resource_id}'
+            resourcePath=f'/workspaces/{workspace_id}/workspace-services/{parent_workspace_service_id}/user-resources/{full_user_resource_id}',
+            etag=''
         )
 
         return user_resource
@@ -63,5 +64,5 @@ class UserResourceRepository(ResourceRepository):
         return self.get_resource_base_spec_params()
 
     def patch_user_resource(self, user_resource: UserResource, user_resource_patch: UserResourcePatchEnabled):
-        user_resource.properties["enabled"] = user_resource_patch.enabled
+        user_resource.isEnabled = user_resource_patch.enabled
         self.update_item(user_resource)

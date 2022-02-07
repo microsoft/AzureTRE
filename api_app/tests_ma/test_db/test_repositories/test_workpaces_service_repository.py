@@ -35,6 +35,7 @@ def workspace_service():
     workspace_service = WorkspaceService(
         id=SERVICE_ID,
         templateVersion="0.1.0",
+        etag='',
         properties={},
         templateName="my-workspace-service",
         resourcePath="test"
@@ -125,5 +126,5 @@ def test_patch_workspace_service_updates_item(workspace_service, workspace_servi
     )
 
     workspace_service_repo.patch_workspace_service(workspace_service, workspace_service_patch)
-    workspace_service.properties["enabled"] = False
+    workspace_service.isEnabled = False
     workspace_service_repo.update_item.assert_called_once_with(workspace_service)

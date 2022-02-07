@@ -65,7 +65,8 @@ class WorkspaceRepository(ResourceRepository):
             templateVersion=template_version,
             properties=resource_spec_parameters,
             authInformation=auth_info,
-            resourcePath=f'/workspaces/{full_workspace_id}'
+            resourcePath=f'/workspaces/{full_workspace_id}',
+            etag=''  # need to validate the model
         )
 
         return workspace
@@ -77,7 +78,7 @@ class WorkspaceRepository(ResourceRepository):
         return new_address_space
 
     def patch_workspace(self, workspace: Workspace, workspace_patch: WorkspacePatchEnabled):
-        workspace.properties["enabled"] = workspace_patch.enabled
+        workspace.isEnabled = workspace_patch.enabled
         self.update_item(workspace)
 
     def get_workspace_spec_params(self, full_workspace_id: str):

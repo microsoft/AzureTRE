@@ -64,11 +64,12 @@ class WorkspaceServiceRepository(ResourceRepository):
             templateName=workspace_service_input.templateName,
             templateVersion=template_version,
             properties=resource_spec_parameters,
-            resourcePath=f'/workspaces/{workspace_id}/workspace-services/{full_workspace_service_id}'
+            resourcePath=f'/workspaces/{workspace_id}/workspace-services/{full_workspace_service_id}',
+            etag=''
         )
 
         return workspace_service
 
     def patch_workspace_service(self, workspace_service: WorkspaceService, workspace_service_patch: WorkspaceServicePatchEnabled):
-        workspace_service.properties["enabled"] = workspace_service_patch.enabled
+        workspace_service.isEnabled = workspace_service_patch.enabled
         self.update_item(workspace_service)

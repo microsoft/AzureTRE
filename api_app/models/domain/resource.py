@@ -23,15 +23,11 @@ class Resource(AzureTREModel):
     templateName: str = Field(title="Resource template name", description="The resource template (bundle) to deploy")
     templateVersion: str = Field(title="Resource template version", description="The version of the resource template (bundle) to deploy")
     properties: dict = Field({}, title="Resource template parameters", description="Parameters for the deployment")
-    isActive: bool = True
+    isActive: bool = True  # When False, hides resource document from list views
+    isEnabled: bool = True  # Must be set before a resource can be deleted
     resourceType: ResourceType
     etag: str = Field(title="_etag", description="eTag of the document", alias="_etag")
     resourcePath: str = ""
-
-    def is_enabled(self) -> bool:
-        if "enabled" not in self.properties:
-            return True     # default behavior is enabled = True
-        return self.properties["enabled"] is True
 
     def get_resource_request_message_payload(self, operation_id: str, action: RequestAction) -> dict:
         return {
