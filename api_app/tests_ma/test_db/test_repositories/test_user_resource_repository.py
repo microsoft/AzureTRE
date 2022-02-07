@@ -3,7 +3,7 @@ import pytest
 
 from db.errors import EntityDoesNotExist
 from db.repositories.user_resources import UserResourceRepository
-from models.domain.resource import Status, ResourceType
+from models.domain.resource import ResourceType
 from models.domain.user_resource import UserResource
 from models.schemas.user_resource import UserResourceInCreate, UserResourcePatchEnabled
 
@@ -32,6 +32,7 @@ def user_resource():
         templateVersion="0.1.0",
         properties={},
         templateName="my-workspace-service",
+        resourcePath="test"
     )
     return user_resource
 
@@ -46,7 +47,6 @@ def test_create_user_resource_item_creates_a_user_resource_with_the_right_values
 
     assert user_resource.templateName == basic_user_resource_request.templateName
     assert user_resource.resourceType == ResourceType.UserResource
-    assert user_resource.deployment.status == Status.NotDeployed
     assert user_resource.workspaceId == WORKSPACE_ID
     assert user_resource.parentWorkspaceServiceId == SERVICE_ID
     assert user_resource.ownerId == USER_ID
@@ -63,7 +63,7 @@ def test_create_user_resource_item_raises_value_error_if_template_is_invalid(_, 
 
 @patch('db.repositories.user_resources.UserResourceRepository.query', return_value=[])
 def test_get_user_resources_for_workspace_queries_db(query_mock, user_resource_repo):
-    expected_query = f'SELECT * FROM c WHERE c.resourceType = "user-resource" AND c.deployment.status != "deleted" AND c.parentWorkspaceServiceId = "{SERVICE_ID}" AND c.workspaceId = "{WORKSPACE_ID}"'
+    expected_query = f'SELECT * FROM c WHERE c.isActive != false AND c.resourceType = "user-resource" AND c.parentWorkspaceServiceId = "{SERVICE_ID}" AND c.workspaceId = "{WORKSPACE_ID}"'
 
     user_resource_repo.get_user_resources_for_workspace_service(WORKSPACE_ID, SERVICE_ID)
 
@@ -82,7 +82,7 @@ def test_get_user_resource_returns_resource_if_found(query_mock, user_resource_r
 @patch('db.repositories.user_resources.UserResourceRepository.query')
 def test_get_user_resource_by_id_queries_db(query_mock, user_resource_repo, user_resource):
     query_mock.return_value = [user_resource.dict()]
-    expected_query = f'SELECT * FROM c WHERE c.resourceType = "user-resource" AND c.deployment.status != "deleted" AND c.parentWorkspaceServiceId = "{SERVICE_ID}" AND c.workspaceId = "{WORKSPACE_ID}" AND c.id = "{RESOURCE_ID}"'
+    expected_query = f'SELECT * FROM c WHERE c.resourceType = "user-resource" AND c.parentWorkspaceServiceId = "{SERVICE_ID}" AND c.workspaceId = "{WORKSPACE_ID}" AND c.id = "{RESOURCE_ID}"'
 
     user_resource_repo.get_user_resource_by_id(WORKSPACE_ID, SERVICE_ID, RESOURCE_ID)
 
