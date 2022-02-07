@@ -9,7 +9,7 @@ CHANGED_TENANT=0
 if [ "${LOGGED_IN_TENANT_ID}" != "${AAD_TENANT_ID}" ]; then
   echo "Attempting to sign you onto ${AAD_TENANT_ID} to add an App Registration."
 
-  # First we need to login to the AAD tenant (as it could be different to the subscription tenant)
+  # First we need to login to the AAD tenant (as it is different to the subscription tenant)
   az login --tenant ${AAD_TENANT_ID} --allow-no-subscriptions
   CHANGED_TENANT=1
 fi
@@ -23,6 +23,6 @@ fi
 if [ "${CHANGED_TENANT}" -ne 0 ]; then
   echo "Attempting to sign you back into ${LOGGED_IN_TENANT_ID}."
 
-  # First we need to login to the AAD tenant (as it could be different to the subscription tenant)
+  # Log back into the tenant the user started on.
   az login --tenant ${LOGGED_IN_TENANT_ID} --allow-no-subscriptions
 fi

@@ -5,7 +5,7 @@
   "tasks": [
     {
       "label": "Copy_env_file_for_debug",
-      "command": "cp --force /workspaces/AzureTRE/templates/core/.env /workspaces/AzureTRE/api_app/.env",
+      "command": "cp --force ${workspaceFolder}/templates/core/.env ${workspaceFolder}/api_app/.env",
       "type": "shell"
     }
   ]
