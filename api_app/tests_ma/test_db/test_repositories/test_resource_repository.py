@@ -5,10 +5,9 @@ from jsonschema.exceptions import ValidationError
 
 from db.errors import EntityDoesNotExist
 from db.repositories.resources import ResourceRepository
-from models.domain.resource import Deployment, Status
 from models.domain.resource_template import ResourceTemplate
 from models.domain.user_resource_template import UserResourceTemplate
-from models.domain.workspace import Workspace, ResourceType
+from models.domain.workspace import ResourceType
 from models.schemas.workspace import WorkspaceInCreate
 
 
@@ -21,35 +20,6 @@ def resource_repo():
 @pytest.fixture
 def workspace_input():
     return WorkspaceInCreate(templateName="base-tre", properties={"display_name": "test", "description": "test", "app_id": "123"})
-
-
-def test_delete_workspace_marks_workspace_as_deleted(resource_repo):
-    resource_repo.update_item = MagicMock(return_value=None)
-
-    workspace = Workspace(
-        id="1234",
-        templateName="base-tre",
-        templateVersion="0.1.0",
-        properties={},
-        deployment=Deployment(status=Status.NotDeployed, message=""),
-    )
-    resource_repo.mark_resource_as_deleting(workspace)
-    workspace.deployment.status = Status.Deleting
-    resource_repo.update_item.assert_called_once_with(workspace)
-
-
-def test_restore_deletion_status_updates_db(resource_repo):
-    resource_repo.update_item = MagicMock(return_value=None)
-
-    workspace = Workspace(
-        id="1234",
-        templateName="base-tre",
-        templateVersion="0.1.0",
-        properties={},
-        deployment=Deployment(status=Status.Deleting, message=""),
-    )
-    resource_repo.restore_previous_deletion_state(workspace, Status.Deployed)
-    resource_repo.update_item.assert_called_once_with(workspace)
 
 
 @patch("db.repositories.resources.ResourceRepository._get_enriched_template")
@@ -132,7 +102,7 @@ def test_get_resource_dict_by_id_queries_db(resource_repo):
 
     resource_repo.get_resource_dict_by_id(item_id)
 
-    resource_repo.query.assert_called_once_with(query='SELECT * FROM c WHERE c.deployment.status != "deleted" AND c.id = "123"')
+    resource_repo.query.assert_called_once_with(query='SELECT * FROM c WHERE c.isActive != false AND c.id = "123"')
 
 
 def test_get_resource_dict_by_id_raises_entity_does_not_exist_if_no_resources_come_back(resource_repo):

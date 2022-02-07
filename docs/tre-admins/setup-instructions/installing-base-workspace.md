@@ -50,7 +50,7 @@ Go to ``azure_tre_fqdn/docs`` and use POST /api/workspaces with the sample body 
 }
 ```
 
-The API will report the ``workspace_id`` of the created workspace, which can be used to query deployment status by using ``/api/workspaces/<workspace_id>``. Record the workspace id as you will need it in the next step.
+The API will return an `operation` object with a `Location` header to query the operation status, as well as the `resourceId` and `resourcePath` properties to query the resource under creation.
 
 You can also follow the progress in Azure portal as various resources come up.
 

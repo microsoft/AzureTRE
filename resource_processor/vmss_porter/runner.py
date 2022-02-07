@@ -200,6 +200,7 @@ async def run_porter(command, env_vars):
 def service_bus_message_generator(sb_message, status, deployment_message, outputs=None):
     installation_id = get_installation_id(sb_message)
     message_dict = {
+        "operationId": sb_message["operationId"],
         "id": sb_message["id"],
         "status": status,
         "message": f"{installation_id}: {deployment_message}"}

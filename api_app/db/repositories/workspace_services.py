@@ -4,12 +4,12 @@ from typing import List
 from azure.cosmos import CosmosClient
 from pydantic import parse_obj_as
 
-from db.repositories.resources import ResourceRepository
+from db.repositories.resources import ResourceRepository, IS_ACTIVE_CLAUSE
+from db.repositories.operations import OperationRepository
 from models.domain.workspace_service import WorkspaceService
 from models.schemas.workspace_service import WorkspaceServiceInCreate, WorkspaceServicePatchEnabled
-from resources import strings
 from db.errors import ResourceIsNotDeployed, EntityDoesNotExist
-from models.domain.resource import Deployment, Status, ResourceType
+from models.domain.resource import ResourceType
 
 
 class WorkspaceServiceRepository(ResourceRepository):
@@ -17,8 +17,12 @@ class WorkspaceServiceRepository(ResourceRepository):
         super().__init__(client)
 
     @staticmethod
+    def workspace_services_query(workspace_id: str):
+        return f'SELECT * FROM c WHERE c.resourceType = "{ResourceType.WorkspaceService}" AND c.workspaceId = "{workspace_id}"'
+
+    @staticmethod
     def active_workspace_services_query(workspace_id: str):
-        return f'SELECT * FROM c WHERE c.resourceType = "{ResourceType.WorkspaceService}" AND c.deployment.status != "{Status.Deleted}" AND c.workspaceId = "{workspace_id}"'
+        return f'SELECT * FROM c WHERE {IS_ACTIVE_CLAUSE} AND c.resourceType = "{ResourceType.WorkspaceService}" AND c.workspaceId = "{workspace_id}"'
 
     def get_active_workspace_services_for_workspace(self, workspace_id: str) -> List[WorkspaceService]:
         """
@@ -28,16 +32,16 @@ class WorkspaceServiceRepository(ResourceRepository):
         workspace_services = self.query(query=query)
         return parse_obj_as(List[WorkspaceService], workspace_services)
 
-    def get_deployed_workspace_service_by_id(self, workspace_id: str, service_id: str) -> WorkspaceService:
+    def get_deployed_workspace_service_by_id(self, workspace_id: str, service_id: str, operations_repo: OperationRepository) -> WorkspaceService:
         workspace_service = self.get_workspace_service_by_id(workspace_id, service_id)
 
-        if workspace_service.deployment.status != Status.Deployed:
+        if (not operations_repo.resource_has_deployed_operation(resource_id=service_id)):
             raise ResourceIsNotDeployed
 
         return workspace_service
 
     def get_workspace_service_by_id(self, workspace_id: str, service_id: str) -> WorkspaceService:
-        query = self.active_workspace_services_query(workspace_id) + f' AND c.id = "{service_id}"'
+        query = self.workspace_services_query(workspace_id) + f' AND c.id = "{service_id}"'
         workspace_services = self.query(query=query)
         if not workspace_services:
             raise EntityDoesNotExist
@@ -60,7 +64,7 @@ class WorkspaceServiceRepository(ResourceRepository):
             templateName=workspace_service_input.templateName,
             templateVersion=template_version,
             properties=resource_spec_parameters,
-            deployment=Deployment(status=Status.NotDeployed, message=strings.RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE)
+            resourcePath=f'/workspaces/{workspace_id}/workspace-services/{full_workspace_service_id}'
         )
 
         return workspace_service

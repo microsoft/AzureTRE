@@ -6,7 +6,7 @@ from core import config
 from db.errors import EntityDoesNotExist
 from db.repositories.base import BaseRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
-from models.domain.resource import ResourceType, Resource, Status
+from models.domain.resource import ResourceType
 
 
 class ResourceRepository(BaseRepository):
@@ -15,7 +15,8 @@ class ResourceRepository(BaseRepository):
 
     @staticmethod
     def _active_resources_query():
-        return f'SELECT * FROM c WHERE c.deployment.status != "{Status.Deleted}"'
+        # get active docs (not deleted)
+        return f'SELECT * FROM c WHERE {IS_ACTIVE_CLAUSE}'
 
     def _active_resources_by_type_query(self, resource_type: ResourceType):
         return self._active_resources_query() + f' AND c.resourceType = "{resource_type}"'
@@ -57,14 +58,6 @@ class ResourceRepository(BaseRepository):
 
         return template_version
 
-    def mark_resource_as_deleting(self, resource: Resource) -> Status:
-        current_deletion_status = resource.deployment.status
 
-        resource.deployment.status = Status.Deleting
-        self.update_item(resource)
-
-        return current_deletion_status
-
-    def restore_previous_deletion_state(self, resource: Resource, previous_deletion_status: Status):
-        resource.deployment.status = previous_deletion_status
-        self.update_item(resource)
+# Cosmos query consts
+IS_ACTIVE_CLAUSE = 'c.isActive != false'
