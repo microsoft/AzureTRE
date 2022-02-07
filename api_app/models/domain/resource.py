@@ -43,6 +43,7 @@ class Resource(AzureTREModel):
     properties: dict = Field({}, title="Resource template parameters", description="Parameters for the deployment")
     deployment: Deployment = Field(Deployment(status=Status.NotDeployed, message=""), title="Deployment", description="Fields related to deployment of this resource")
     resourceType: ResourceType
+    etag: str
 
     def is_enabled(self) -> bool:
         if "enabled" not in self.properties:
