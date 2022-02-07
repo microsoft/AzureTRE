@@ -19,15 +19,15 @@ USER_RESOURCE_ID = 'abcad738-7265-4b5f-9eae-a1a62928772e'
 
 
 def sample_workspace():
-    return Workspace(id=WORKSPACE_ID, templateName='template name', templateVersion='1.0', properties={"app_id": "12345"})
+    return Workspace(id=WORKSPACE_ID, templateName='template name', templateVersion='1.0', properties={"app_id": "12345"}, resourcePath="test")
 
 
 def sample_workspace_service():
-    return WorkspaceService(id=SERVICE_ID, templateName='template name', templateVersion='1.0')
+    return WorkspaceService(id=SERVICE_ID, templateName='template name', templateVersion='1.0', resourcePath="test")
 
 
 def sample_user_resource():
-    return UserResource(id=USER_RESOURCE_ID, templateName='template name', templateVersion='1.0')
+    return UserResource(id=USER_RESOURCE_ID, templateName='template name', templateVersion='1.0', resourcePath="test")
 
 
 # TEMPLATES

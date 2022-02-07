@@ -9,6 +9,7 @@ from models.domain.user_resource import UserResource
 def get_sample_user_resource(user_resource_id: str) -> dict:
     return {
         "id": user_resource_id,
+        "isActive": True,
         "ownerId": "abc9ru33-7265-4b5f-9eae-a1a62928772e",
         "workspaceId": "7289ru33-7265-4b5f-9eae-a1a62928772e",
         "parentWorkspaceServiceId": "e75f1ee1-9f55-414c-83da-aff677669249",
@@ -20,10 +21,6 @@ def get_sample_user_resource(user_resource_id: str) -> dict:
         },
         "azureStatus": {
             "powerState": "Running",
-        },
-        "deployment": {
-            "status": "not_deployed",
-            "message": "This resource is not yet deployed"
         },
         "resourceType": ResourceType.UserResource
     }
@@ -66,17 +63,6 @@ class UserResourceInCreate(BaseModel):
                     "display_name": "my user resource",
                     "description": "some description",
                 }
-            }
-        }
-
-
-class UserResourceIdInResponse(BaseModel):
-    resourceId: str
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "resourceId": "49a7445c-aae6-41ec-a539-30dfa90ab1ae",
             }
         }
 
