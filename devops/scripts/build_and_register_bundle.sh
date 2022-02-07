@@ -66,6 +66,12 @@ if [[ -z ${BUNDLE_TYPE+x} ]]; then
     usage
 fi
 
+
+if [[ -z $AUTH_TENANT_ID ]]; then
+    echo "The AUTH_TENANT_ID environment variable is not set"
+    exit 1
+fi
+
 # This script assumes that it is being run in the BUNDLE_DIR so we can take the
 # current working directory
 BUNDLE_DIR="$(pwd)"
@@ -76,14 +82,30 @@ case "${BUNDLE_TYPE}" in
   ("workspace_service") TRE_GET_PATH="api/workspace-service-templates" ;;
 esac
 
-export TOKEN=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d \
-  "grant_type=password&resource=${RESOURCE}&client_id=${CLIENT_ID}&username=${USERNAME}&password=${PASSWORD}&scope=default)" \
-  https://login.microsoftonline.com/${AUTH_TENANT_ID}/oauth2/token | jq -r '.access_token')
+
+if [[ -n $AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID && -n $AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET ]]; then
+  # Use client credentials flow with AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID/SECRET
+  echo "Using AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID to get token via client credential flow"
+  token_response=$(curl -X POST -H 'Content-Type: application/x-www-form-urlencoded'   https://login.microsoftonline.com/$AUTH_TENANT_ID/oauth2/v2.0/token   -d "client_id=$AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID"   -d 'grant_type=client_credentials'   -d "scope=api://$API_CLIENT_ID/.default"   -d "client_secret=$AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET")
+else
+  # Use resource owner password credentials flow with USERNAME/PASSWORD
+  echo "Using USERNAME to get token via resource owner password credential flow"
+  token_response=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d \   
+    "grant_type=password&resource=${RESOURCE}&client_id=${CLIENT_ID}&username=${USERNAME}&password=${PASSWORD}&scope=default)" \
+    https://login.microsoftonline.com/${AUTH_TENANT_ID}/oauth2/token)
+fi
+
+TOKEN=$(echo $token_response | jq -r .access_token)
+if [[ $TOKEN == "null" ]]; then
+    echo "Failed to obtain auth token for API:"
+    echo $token_response
+    exit 2
+fi
 
 # We now need to traverse back to our scripts directory
 # TODO: Fix this traversing
 cd ../../../
-make register-bundle DIR=${BUNDLE_DIR}
+TOKEN=$TOKEN make register-bundle DIR=${BUNDLE_DIR}
 
 # Check that the template got registered
 STATUS_CODE=$(curl -X "GET" "${TRE_URL}/${TRE_GET_PATH}/${TEMPLATE_NAME}" -H "accept: application/json" -H "Authorization: Bearer ${TOKEN}" -k -s -w "%{http_code}" -o /dev/null)
