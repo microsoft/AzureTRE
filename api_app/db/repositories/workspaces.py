@@ -51,7 +51,7 @@ class WorkspaceRepository(ResourceRepository):
 
         template_version = self.validate_input_against_template(workspace_input.templateName, workspace_input, ResourceType.Workspace)
 
-        address_space_param = {"address_space": self.get_address_space_based_on_size(workspace_input)}
+        address_space_param = {"address_space": self.get_address_space_based_on_size(workspace_input.properties)}
 
         # we don't want something in the input to overwrite the system parameters, so dict.update can't work. Priorities from right to left.
         resource_spec_parameters = {**workspace_input.properties, **address_space_param, **self.get_workspace_spec_params(full_workspace_id)}
@@ -67,23 +67,22 @@ class WorkspaceRepository(ResourceRepository):
 
         return workspace
 
-    def get_address_space_based_on_size(self, workspace_input):
-        address_space_size = workspace_input.properties.get("address_space_size")
+    def get_address_space_based_on_size(self, workspace_properties):
 
-        if (address_space_size == "small"):
-            return self.get_new_address_space(24)
-        if (address_space_size == "medium"):
-            return self.get_new_address_space(22)
-        if (address_space_size == "large"):
-            return self.get_new_address_space(16)
+        # Default the address space to 'small'.
+        address_space_size = workspace_properties.get("address_space_size", "small")
+
         if (address_space_size == "custom"):
             # if address_space isn't provided in the input, generate a new one.
             # TODO: #772 check that the provided address_space is available in the network.
-            # TODO: #773 allow custom sized networks to be requested
-            return workspace_input.properties.get("address_space") or self.get_new_address_space()
+            return workspace_properties.get("address_space") or self.get_new_address_space()
 
-        # The default T-Shirt size network is small.
-        return self.get_new_address_space(24)
+        #773 allow custom sized networks to be requested
+        predefined_address_spaces = { "small": 24, "medium: 22": 22, "large": 16}
+
+        # Default mask is 24 (small)
+        cidr_netmask = predefined_address_spaces.get(address_space_size, 24)
+        return self.get_new_address_space(cidr_netmask)
 
     def get_new_address_space(self, cidr_netmask: int = 24):
         networks = [x.properties["address_space"] for x in self.get_active_workspaces()]
