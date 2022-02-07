@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-: ${AAD_TENANT_ID?"You have not set you AAD_TENANT_ID in ./templates/core/.env"}
+: ${AAD_TENANT_ID?"You have not set your AAD_TENANT_ID in ./templates/core/.env"}
 
 LOGGED_IN_TENANT_ID=$(az account show --query tenantId -o tsv)
 CHANGED_TENANT=0
