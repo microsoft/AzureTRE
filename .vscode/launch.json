@@ -16,6 +16,7 @@
       "justMyCode": false,
       "console": "integratedTerminal",
       "envFile": "${workspaceFolder}/templates/core/tre.env",
+      "preLaunchTask": "Copy_env_file_for_debug",
       "cwd": "${workspaceFolder}/api_app"
     }
   ]
