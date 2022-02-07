@@ -50,9 +50,9 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
   }
 
   os_disk {
-    name              = "osdisk-${local.vm_name}"
-    caching           = "ReadWrite"
-    managed_disk_type = "Standard_LRS"
+    name                 = "osdisk-${local.vm_name}"
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
   }
 
   identity {
