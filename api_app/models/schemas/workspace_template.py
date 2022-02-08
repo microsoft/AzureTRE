@@ -18,7 +18,9 @@ def get_sample_workspace_template_object(template_name: str = "tre-workspace-bas
             "display_name": Property(type="string"),
             "description": Property(type="string"),
             "app_id": Property(type="string"),
-            "address_space": Property(type="string", default="10.2.1.0/24", description="VNet address space for the workspace services")
+            "address_space_size": Property(type="string",
+                default="small",
+                description="This can have a value of small, medium, large or custom. If you specify custom, then you need to specify a VNet address space in 'address_space' (e.g. 10.2.1.0/24)")
         },
         actions=[
             CustomAction()
@@ -65,10 +67,15 @@ class WorkspaceTemplateInCreate(ResourceTemplateInCreate):
                             "title": "Description of the workspace",
                             "description": "Description of the workspace"
                         },
+                        "address_space_size": {
+                            "type": "string",
+                            "title": "Address space size",
+                            "description": "Network address size (small, medium, large or custom) to be used by the workspace"
+                        },
                         "address_space": {
                             "type": "string",
                             "title": "Address space",
-                            "description": "Network address space to be used by the workspace"
+                            "description": "Network address space to be used by the workspace if address_space_size is custom"
                         },
                         "enabled": {
                             "type": "boolean",
