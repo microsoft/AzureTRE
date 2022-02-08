@@ -3,7 +3,7 @@ data "azurerm_client_config" "deployer" {}
 resource "azurerm_key_vault" "kv" {
   name                     = "kv-${var.tre_id}"
   tenant_id                = data.azurerm_client_config.current.tenant_id
-  location                 = var.location
+  location                 = azurerm_resource_group.core.location
   resource_group_name      = azurerm_resource_group.core.name
   sku_name                 = "standard"
   purge_protection_enabled = var.debug == "true" ? false : true
@@ -43,7 +43,7 @@ data "azurerm_private_dns_zone" "vaultcore" {
 
 resource "azurerm_private_endpoint" "kvpe" {
   name                = "pe-kv-${var.tre_id}"
-  location            = var.location
+  location            = azurerm_resource_group.core.location
   resource_group_name = azurerm_resource_group.core.name
   subnet_id           = module.network.shared_subnet_id
 

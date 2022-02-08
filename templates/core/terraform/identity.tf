@@ -1,6 +1,6 @@
 resource "azurerm_user_assigned_identity" "id" {
   resource_group_name = azurerm_resource_group.core.name
-  location            = var.location
+  location            = azurerm_resource_group.core.location
 
   name = "id-api-${var.tre_id}"
 

@@ -9,7 +9,7 @@ locals {
 resource "azurerm_app_service_plan" "core" {
   name                = "plan-${var.tre_id}"
   resource_group_name = azurerm_resource_group.core.name
-  location            = var.location
+  location            = azurerm_resource_group.core.location
   reserved            = true
   kind                = "linux"
 
@@ -25,7 +25,7 @@ resource "azurerm_app_service_plan" "core" {
 resource "azurerm_app_service" "api" {
   name                = "api-${var.tre_id}"
   resource_group_name = azurerm_resource_group.core.name
-  location            = var.location
+  location            = azurerm_resource_group.core.location
   app_service_plan_id = azurerm_app_service_plan.core.id
   https_only          = true
 
@@ -45,7 +45,7 @@ resource "azurerm_app_service" "api" {
     "SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE" = azurerm_servicebus_queue.service_bus_deployment_status_update_queue.name
     "MANAGED_IDENTITY_CLIENT_ID"                 = azurerm_user_assigned_identity.id.client_id
     "TRE_ID"                                     = var.tre_id
-    "RESOURCE_LOCATION"                          = var.location
+    "RESOURCE_LOCATION"                          = azurerm_resource_group.core.location
     "SWAGGER_UI_CLIENT_ID"                       = var.swagger_ui_client_id
     "AAD_TENANT_ID"                              = var.aad_tenant_id
     "API_CLIENT_ID"                              = var.api_client_id
@@ -106,7 +106,7 @@ resource "azurerm_app_service" "api" {
 resource "azurerm_private_endpoint" "api_private_endpoint" {
   name                = "pe-api-${var.tre_id}"
   resource_group_name = azurerm_resource_group.core.name
-  location            = var.location
+  location            = azurerm_resource_group.core.location
   subnet_id           = module.network.shared_subnet_id
 
   lifecycle { ignore_changes = [tags] }

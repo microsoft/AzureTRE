@@ -1,7 +1,7 @@
 resource "azurerm_route_table" "rt" {
   name                          = "rt-${var.tre_id}"
   resource_group_name           = azurerm_resource_group.core.name
-  location                      = var.location
+  location                      = azurerm_resource_group.core.location
   disable_bgp_route_propagation = false
 
   lifecycle { ignore_changes = [tags] }

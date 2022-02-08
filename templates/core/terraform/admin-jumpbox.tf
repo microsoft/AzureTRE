@@ -1,7 +1,7 @@
 resource "azurerm_network_interface" "jumpbox_nic" {
   name                = "nic-vm-${var.tre_id}"
   resource_group_name = azurerm_resource_group.core.name
-  location            = var.location
+  location            = azurerm_resource_group.core.location
 
   ip_configuration {
     name                          = "internalIPConfig"
@@ -36,7 +36,7 @@ resource "random_password" "password" {
 resource "azurerm_virtual_machine" "jumpbox" {
   name                  = "vm-${var.tre_id}"
   resource_group_name   = azurerm_resource_group.core.name
-  location              = var.location
+  location              = azurerm_resource_group.core.location
   network_interface_ids = [azurerm_network_interface.jumpbox_nic.id]
   vm_size               = "Standard_DS1_v2"
 

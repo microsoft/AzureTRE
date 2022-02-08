@@ -1,6 +1,6 @@
 resource "azurerm_servicebus_namespace" "sb" {
   name                = "sb-${var.tre_id}"
-  location            = var.location
+  location            = azurerm_resource_group.core.location
   resource_group_name = azurerm_resource_group.core.name
   sku                 = "Premium"
   capacity            = "1"
@@ -42,7 +42,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "servicebuslink" {
 
 resource "azurerm_private_endpoint" "sbpe" {
   name                = "pe-sb-${var.tre_id}"
-  location            = var.location
+  location            = azurerm_resource_group.core.location
   resource_group_name = azurerm_resource_group.core.name
   subnet_id           = module.network.resource_processor_subnet_id
 

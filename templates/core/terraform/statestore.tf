@@ -1,6 +1,6 @@
 resource "azurerm_cosmosdb_account" "tre-db-account" {
   name                = "cosmos-${var.tre_id}"
-  location            = var.location
+  location            = azurerm_resource_group.core.location
   resource_group_name = azurerm_resource_group.core.name
   offer_type          = "Standard"
   kind                = "GlobalDocumentDB"
@@ -14,7 +14,7 @@ resource "azurerm_cosmosdb_account" "tre-db-account" {
   }
 
   geo_location {
-    location          = var.location
+    location          = azurerm_resource_group.core.location
     failover_priority = 0
   }
 
@@ -53,7 +53,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "cosmos_documents_dns_l
 
 resource "azurerm_private_endpoint" "sspe" {
   name                = "pe-ss-${var.tre_id}"
-  location            = var.location
+  location            = azurerm_resource_group.core.location
   resource_group_name = azurerm_resource_group.core.name
   subnet_id           = module.network.shared_subnet_id
 

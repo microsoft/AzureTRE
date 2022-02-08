@@ -1,7 +1,7 @@
 resource "azurerm_storage_account" "stg" {
   name                     = lower(replace("stg-${var.tre_id}", "-", ""))
   resource_group_name      = azurerm_resource_group.core.name
-  location                 = var.location
+  location                 = azurerm_resource_group.core.location
   account_tier             = "Standard"
   account_replication_type = "LRS"
 
@@ -21,7 +21,7 @@ data "azurerm_private_dns_zone" "blobcore" {
 
 resource "azurerm_private_endpoint" "blobpe" {
   name                = "pe-blob-${var.tre_id}"
-  location            = var.location
+  location            = azurerm_resource_group.core.location
   resource_group_name = azurerm_resource_group.core.name
   subnet_id           = module.network.shared_subnet_id
 
@@ -47,7 +47,7 @@ data "azurerm_private_dns_zone" "filecore" {
 
 resource "azurerm_private_endpoint" "filepe" {
   name                = "pe-file-${var.tre_id}"
-  location            = var.location
+  location            = azurerm_resource_group.core.location
   resource_group_name = azurerm_resource_group.core.name
   subnet_id           = module.network.shared_subnet_id
 
