@@ -102,11 +102,46 @@ def test_create_workspace_item_creates_a_workspace_with_the_right_values(validat
     assert workspace.properties["address_space"] == "1.2.3.4/24"
 
 
+@patch('core.config.RESOURCE_LOCATION', "useast2")
+@patch('core.config.TRE_ID', "9876")
+@patch('core.config.CORE_ADDRESS_SPACE', "10.1.0.0/22")
+@patch('core.config.TRE_ADDRESS_SPACE', "10.0.0.0/12")
+def test_get_address_space_based_on_size_with_small_address_space(workspace_repo, basic_workspace_request):
+    workspace_to_create = basic_workspace_request
+    workspace_to_create.properties["address_space_size"] = "small"
+    assert "10.1.4.0/24" == workspace_repo.get_address_space_based_on_size(workspace_to_create.properties)
+
+
+@patch('core.config.RESOURCE_LOCATION', "useast2")
+@patch('core.config.TRE_ID', "9876")
+@patch('core.config.CORE_ADDRESS_SPACE', "10.1.0.0/22")
+@patch('core.config.TRE_ADDRESS_SPACE', "10.0.0.0/12")
+def test_get_address_space_based_on_size_with_medium_address_space(workspace_repo, basic_workspace_request):
+    workspace_to_create = basic_workspace_request
+    workspace_to_create.properties["address_space_size"] = "medium"
+    address_space = workspace_repo.get_address_space_based_on_size(workspace_to_create.properties)
+    assert "10.1.4.0/22" == address_space
+
+
+@patch('core.config.RESOURCE_LOCATION', "useast2")
+@patch('core.config.TRE_ID', "9876")
+@patch('core.config.CORE_ADDRESS_SPACE', "10.1.0.0/22")
+@patch('core.config.TRE_ADDRESS_SPACE', "10.0.0.0/12")
+def test_get_address_space_based_on_size_with_large_address_space(workspace_repo, basic_workspace_request):
+    workspace_to_create = basic_workspace_request
+    workspace_to_create.properties["address_space_size"] = "large"
+    address_space = workspace_repo.get_address_space_based_on_size(workspace_to_create.properties)
+    assert "10.0.0.0/16" == address_space
+
+
 @patch('db.repositories.workspaces.WorkspaceRepository.validate_input_against_template')
 @patch('core.config.RESOURCE_LOCATION', "useast2")
 @patch('core.config.TRE_ID', "9876")
+@patch('core.config.CORE_ADDRESS_SPACE', "10.1.0.0/22")
+@patch('core.config.TRE_ADDRESS_SPACE', "10.0.0.0/12")
 def test_create_workspace_item_creates_a_workspace_with_custom_address_space(validate_input_mock, workspace_repo, basic_workspace_request):
     workspace_to_create = basic_workspace_request
+    workspace_to_create.properties["address_space_size"] = "custom"
     workspace_to_create.properties["address_space"] = "192.168.0.0/24"
     validate_input_mock.return_value = workspace_to_create.templateName
 

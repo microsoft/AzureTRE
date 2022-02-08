@@ -1,4 +1,5 @@
 {
+  "version": "0.2.0",
   "configurations": [
     {
       "name": "TRE API",
@@ -18,6 +19,14 @@
       "envFile": "${workspaceFolder}/templates/core/tre.env",
       "preLaunchTask": "Copy_env_file_for_debug",
       "cwd": "${workspaceFolder}/api_app"
+    },
+    {
+      "name": "Python: Debug Tests",
+      "type": "python",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "purpose": ["debug-test"]
     }
   ]
 }
