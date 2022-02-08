@@ -100,6 +100,7 @@ def test_create_workspace_item_creates_a_workspace_with_the_right_values(validat
     # a new CIDR was allocated
     assert workspace.properties["address_space"] == "1.2.3.4/24"
 
+
 @patch('core.config.RESOURCE_LOCATION', "useast2")
 @patch('core.config.TRE_ID', "9876")
 @patch('core.config.CORE_ADDRESS_SPACE', "10.1.0.0/22")
@@ -120,6 +121,7 @@ def test_get_address_space_based_on_size_with_medium_address_space(workspace_rep
     address_space = workspace_repo.get_address_space_based_on_size(workspace_to_create.properties)
     assert "10.1.4.0/22" == address_space
 
+
 @patch('core.config.RESOURCE_LOCATION', "useast2")
 @patch('core.config.TRE_ID', "9876")
 @patch('core.config.CORE_ADDRESS_SPACE', "10.1.0.0/22")
@@ -129,6 +131,7 @@ def test_get_address_space_based_on_size_with_large_address_space(workspace_repo
     workspace_to_create.properties["address_space_size"] = "large"
     address_space = workspace_repo.get_address_space_based_on_size(workspace_to_create.properties)
     assert "10.0.0.0/16" == address_space
+
 
 @patch('db.repositories.workspaces.WorkspaceRepository.validate_input_against_template')
 @patch('core.config.RESOURCE_LOCATION', "useast2")
