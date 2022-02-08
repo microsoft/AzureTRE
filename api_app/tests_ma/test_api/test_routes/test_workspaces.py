@@ -161,11 +161,11 @@ def sample_user_resource_object(user_resource_id=USER_RESOURCE_ID, workspace_id=
 
 
 def disabled_workspace_service():
-    return WorkspaceService(id=SERVICE_ID, templateName='template name', templateVersion='1.0', etag="", isEnabled = False, properties={}, resourcePath="test")
+    return WorkspaceService(id=SERVICE_ID, templateName='template name', templateVersion='1.0', etag="", isEnabled=False, properties={}, resourcePath="test")
 
 
 def disabled_user_resource():
-    return UserResource(id=USER_RESOURCE_ID, templateName='template name', templateVersion='1.0', etag="", isEnabled = False, properties={}, resourcePath="test")
+    return UserResource(id=USER_RESOURCE_ID, templateName='template name', templateVersion='1.0', etag="", isEnabled=False, properties={}, resourcePath="test")
 
 
 class TestWorkspaceHelpers:

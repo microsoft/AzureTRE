@@ -78,6 +78,7 @@ async def send_uninstall_message(resource: Resource, operations_repo: OperationR
         logging.error(f"Failed send {resource_type} resource delete message: {e}")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
 
+
 def check_for_etag(etag: str):
     if etag is None or len(etag) == 0:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.ETAG_REQUIRED)

@@ -11,11 +11,11 @@ OPERATION_ID = "0000c8e7-5c42-4fcb-a7fd-294cfc27aa76"
 
 @pytest.mark.parametrize('resource, expected', [
     # enabled = True
-    (Resource(templateName="", templateVersion="", isEnabled = True, etag = "", properties={}, id="1234", resourceType=ResourceType.Workspace, resourcePath="test"), True),
+    (Resource(templateName="", templateVersion="", isEnabled=True, etag="", properties={}, id="1234", resourceType=ResourceType.Workspace, resourcePath="test"), True),
     # enabled = False
-    (Resource(templateName="", templateVersion="", isEnabled = False, etag = "", properties={}, id="1234", resourceType=ResourceType.Workspace, resourcePath="test"), False),
+    (Resource(templateName="", templateVersion="", isEnabled=False, etag="", properties={}, id="1234", resourceType=ResourceType.Workspace, resourcePath="test"), False),
     # enabled not set - defaults to True
-    (Resource(templateName="", templateVersion="", properties={}, id="1234", etag = "", resourceType=ResourceType.Workspace, resourcePath="test"), True),
+    (Resource(templateName="", templateVersion="", properties={}, id="1234", etag="", resourceType=ResourceType.Workspace, resourcePath="test"), True),
 ])
 def test_resource_is_enabled_returns_correct_value(resource, expected):
     assert resource.isEnabled == expected

@@ -5,7 +5,9 @@ from pydantic import BaseModel
 from core import config
 from db.errors import UnableToAccessDatabase
 
+
 PARTITION_KEY = PartitionKey(path="/id")
+
 
 class BaseRepository:
     def __init__(self, client: CosmosClient, container_name: str = None) -> None:
