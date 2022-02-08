@@ -633,11 +633,6 @@ if [[ $createAutomationAccount -ne 0 ]]; then
 
   # Grant admin consent for the delegated workspace scopes
   if [[ $grantAdminConsent -eq 1 ]]; then
-      echo "Granting admin consent for ${appName} API app (service principal ID ${spId}) - NOTE: Directory admin privileges required for this step"
-      echo "SP: $automationSpId"
-      echo "App: $apiAppId"
-      echo "Role: $adminRoleId"
-
       echo "Granting admin consent for ${appName} Automation Admin App (service principal ID ${automationSpId})"
       az ad app permission admin-consent --id $automationAppId
   fi

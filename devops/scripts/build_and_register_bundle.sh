@@ -86,7 +86,12 @@ esac
 if [[ -n $AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID && -n $AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET ]]; then
   # Use client credentials flow with AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID/SECRET
   echo "Using AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID to get token via client credential flow"
-  token_response=$(curl -X POST -H 'Content-Type: application/x-www-form-urlencoded'   https://login.microsoftonline.com/$AUTH_TENANT_ID/oauth2/v2.0/token   -d "client_id=$AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID"   -d 'grant_type=client_credentials'   -d "scope=api://$API_CLIENT_ID/.default"   -d "client_secret=$AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET")
+  token_response=$(curl -X POST -H 'Content-Type: application/x-www-form-urlencoded' \
+    https://login.microsoftonline.com/$AUTH_TENANT_ID/oauth2/v2.0/token \
+    -d "client_id=$AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID"   \
+    -d 'grant_type=client_credentials'   \
+    -d "scope=api://$API_CLIENT_ID/.default"   \
+    -d "client_secret=$AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET")
 else
   # Use resource owner password credentials flow with USERNAME/PASSWORD
   echo "Using USERNAME to get token via resource owner password credential flow"
