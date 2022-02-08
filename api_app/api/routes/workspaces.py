@@ -15,9 +15,9 @@ from models.domain.resource import ResourceType, Resource
 from models.domain.operation import Operation
 from models.domain.workspace import WorkspaceRole
 from models.schemas.operation import OperationInList, OperationInResponse
-from models.schemas.user_resource import UserResourceInResponse, UserResourceInCreate, UserResourcesInList, UserResourcePatchEnabled
+from models.schemas.user_resource import UserResourceInResponse, UserResourceInCreate, UserResourcesInList, UserResourcePatch
 from models.schemas.workspace import WorkspaceInCreate, WorkspacesInList, WorkspaceInResponse, WorkspacePatch
-from models.schemas.workspace_service import WorkspaceServiceInCreate, WorkspaceServicesInList, WorkspaceServiceInResponse, WorkspaceServicePatchEnabled
+from models.schemas.workspace_service import WorkspaceServiceInCreate, WorkspaceServicesInList, WorkspaceServiceInResponse, WorkspaceServicePatch
 from resources import strings
 from service_bus.resource_request_sender import send_resource_request_message, RequestAction
 from services.authentication import get_current_admin_user, \
@@ -183,9 +183,13 @@ async def create_workspace_service(response: Response, workspace_service_input: 
 
 
 @workspace_services_workspace_router.patch("/workspaces/{workspace_id}/workspace-services/{service_id}", response_model=WorkspaceServiceInResponse, name=strings.API_UPDATE_WORKSPACE_SERVICE, dependencies=[Depends(get_current_workspace_owner_or_researcher_user), Depends(get_workspace_by_id_from_path)])
-async def patch_workspace_service(workspace_service_patch: WorkspaceServicePatchEnabled, workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), workspace_service=Depends(get_workspace_service_by_id_from_path)) -> WorkspaceServiceInResponse:
-    workspace_service_repo.patch_workspace_service(workspace_service, workspace_service_patch)
-    return WorkspaceServiceInResponse(workspaceService=workspace_service)
+async def patch_workspace_service(workspace_service_patch: WorkspaceServicePatch, workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), workspace_service=Depends(get_workspace_service_by_id_from_path), etag: str = Header(None)) -> WorkspaceServiceInResponse:
+    check_for_etag(etag)
+    try:
+        patched_workspace_service = workspace_service_repo.patch_workspace_service(workspace_service, workspace_service_patch, etag)
+        return WorkspaceServiceInResponse(workspaceService=patched_workspace_service)
+    except (CosmosAccessConditionFailedError):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
 
 
 @workspace_services_workspace_router.delete("/workspaces/{workspace_id}/workspace-services/{service_id}", response_model=OperationInResponse, name=strings.API_DELETE_WORKSPACE_SERVICE, dependencies=[Depends(get_current_workspace_owner_user)])
@@ -269,10 +273,15 @@ async def delete_user_resource(response: Response, user=Depends(get_current_work
 
 
 @user_resources_workspace_router.patch("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}", response_model=UserResourceInResponse, name=strings.API_UPDATE_USER_RESOURCE, dependencies=[Depends(get_workspace_by_id_from_path), Depends(get_workspace_service_by_id_from_path)])
-async def patch_user_resource(user_resource_patch: UserResourcePatchEnabled, user=Depends(get_current_workspace_owner_or_researcher_user), user_resource=Depends(get_user_resource_by_id_from_path), user_resource_repo=Depends(get_repository(UserResourceRepository))) -> UserResourceInResponse:
+async def patch_user_resource(user_resource_patch: UserResourcePatch, user=Depends(get_current_workspace_owner_or_researcher_user), user_resource=Depends(get_user_resource_by_id_from_path), user_resource_repo=Depends(get_repository(UserResourceRepository)), etag: str = Header(None)) -> UserResourceInResponse:
+    check_for_etag(etag)
     validate_user_is_workspace_owner_or_resource_owner(user, user_resource)
-    user_resource_repo.patch_user_resource(user_resource, user_resource_patch)
-    return UserResourceInResponse(userResource=user_resource)
+
+    try:
+        patched_user_resource = user_resource_repo.patch_user_resource(user_resource, user_resource_patch, etag)
+        return UserResourceInResponse(userResource=patched_user_resource)
+    except (CosmosAccessConditionFailedError):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
 
 
 # user resource operations

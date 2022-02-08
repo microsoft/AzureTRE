@@ -69,11 +69,6 @@ class WorkspaceTemplateInCreate(ResourceTemplateInCreate):
                             "type": "string",
                             "title": "Address space",
                             "description": "Network address space to be used by the workspace"
-                        },
-                        "enabled": {
-                            "type": "boolean",
-                            "title": "Is the workspace enabled",
-                            "description": "Is the workspace enabled"
                         }
                     }
                 },

@@ -76,10 +76,12 @@ async def disable_and_delete_resource(endpoint, resource_type, token, admin_toke
         else:
             auth_headers = get_auth_header(token)
 
+        auth_headers["etag"] = "*"  # for now, send in the wildcard to skip around etag checking
+
         full_endpoint = f'https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{endpoint}'
 
         # disable
-        payload = {"enabled": "false"}
+        payload = {"isEnabled": False}
         response = await client.patch(full_endpoint, headers=auth_headers, json=payload)
         assert (response.status_code == status.HTTP_200_OK), "Disable resource failed"
 

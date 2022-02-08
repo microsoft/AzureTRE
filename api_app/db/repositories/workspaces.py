@@ -1,4 +1,3 @@
-from tkinter.messagebox import NO
 import uuid
 from typing import List
 
@@ -83,9 +82,8 @@ class WorkspaceRepository(ResourceRepository):
         return new_address_space
 
     def patch_workspace(self, workspace: Workspace, workspace_patch: WorkspacePatch, etag: str) -> Workspace:
-        # clear out the _etag prop in the document to avoid confusion - we'll let cosmos check the etag
-        workspace.etag = None
         workspace.isEnabled = workspace_patch.isEnabled
+
         # TODO - validate update workspace props here
 
         return self.update_item_with_etag(workspace, etag)

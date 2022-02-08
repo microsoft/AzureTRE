@@ -1,3 +1,4 @@
+from gc import isenabled
 from typing import List
 
 from pydantic import BaseModel, Field
@@ -62,12 +63,12 @@ class WorkspaceServiceInCreate(BaseModel):
         }
 
 
-class WorkspaceServicePatchEnabled(BaseModel):
-    enabled: bool
+class WorkspaceServicePatch(BaseModel):
+    isEnabled: bool
 
     class Config:
         schema_extra = {
             "example": {
-                "enabled": False
+                "isEnabled": False
             }
         }

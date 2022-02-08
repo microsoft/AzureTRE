@@ -22,6 +22,8 @@ from resources import strings
 from services.authentication import get_current_admin_user, get_current_tre_user_or_tre_admin, get_current_workspace_owner_user, get_current_workspace_owner_or_researcher_user, get_current_workspace_owner_or_researcher_user_or_tre_admin
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 
+from tests_ma.test_api.test_routes.test_api_access import sample_user_resource
+
 pytestmark = pytest.mark.asyncio
 
 
@@ -627,15 +629,16 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=sample_workspace_service())
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
     @ patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id")
-    @ patch("api.routes.workspaces.UserResourceRepository.patch_user_resource", return_value=None)
+    @ patch("api.routes.workspaces.UserResourceRepository.patch_user_resource", return_value=sample_user_resource())
     async def test_patch_user_resources_patches_user_resource(self, patch_user_resource_mock, get_user_resource_mock, _, __, app, client):
         user_resource_to_patch = sample_user_resource_object()
         get_user_resource_mock.return_value = user_resource_to_patch
-        user_resource_service_patch = {"enabled": True}
+        user_resource_service_patch = {"isEnabled": True}
+        etag = "some-etag-value"
 
-        response = await client.patch(app.url_path_for(strings.API_UPDATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID), json=user_resource_service_patch)
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID), json=user_resource_service_patch, headers={"etag": etag})
 
-        patch_user_resource_mock.assert_called_once_with(user_resource_to_patch, user_resource_service_patch)
+        patch_user_resource_mock.assert_called_once_with(user_resource_to_patch, user_resource_service_patch, etag)
         assert response.status_code == status.HTTP_200_OK
 
 
@@ -754,18 +757,18 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
     # [PATCH] /workspaces/{workspace_id}/services/{service_id}
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
-    @ patch("api.routes.workspaces.WorkspaceServiceRepository.patch_workspace_service", return_value=None)
+    @ patch("api.routes.workspaces.WorkspaceServiceRepository.patch_workspace_service", return_value=sample_workspace_service())
     async def test_patch_workspace_service_patches_workspace_service(self, patch_workspace_service_mock, get_workspace_mock, get_workspace_service_mock, app, client):
         auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'roles': {'WorkspaceOwner': 'ab124', 'WorkspaceResearcher': 'ab125'}}
 
         workspace_service_to_patch = sample_workspace_service()
         get_workspace_service_mock.return_value = workspace_service_to_patch
         get_workspace_mock.return_value = sample_deployed_workspace(WORKSPACE_ID, auth_info_user_in_workspace_owner_role)
+        etag = "some-etag-value"
+        workspace_service_patch = {"isEnabled": True}
 
-        workspace_service_patch = {"enabled": True}
-
-        response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID), json=workspace_service_patch)
-        patch_workspace_service_mock.assert_called_once_with(workspace_service_to_patch, workspace_service_patch)
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID), json=workspace_service_patch, headers={"etag": etag})
+        patch_workspace_service_mock.assert_called_once_with(workspace_service_to_patch, workspace_service_patch, etag)
 
         assert response.status_code == status.HTTP_200_OK
 
@@ -904,15 +907,16 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=sample_workspace_service())
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
     @ patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id")
-    @ patch("api.routes.workspaces.UserResourceRepository.patch_user_resource", return_value=None)
+    @ patch("api.routes.workspaces.UserResourceRepository.patch_user_resource", return_value=sample_workspace())
     async def test_patch_user_resources_patches_user_resource(self, patch_user_resource_mock, get_user_resource_mock, _, __, ___, app, client):
         user_resource_to_patch = sample_user_resource_object()
         get_user_resource_mock.return_value = user_resource_to_patch
-        user_resource_service_patch = {"enabled": True}
+        user_resource_service_patch = {"isEnabled": True}
+        etag = "some-etag-value"
 
-        response = await client.patch(app.url_path_for(strings.API_UPDATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID), json=user_resource_service_patch)
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID), json=user_resource_service_patch, headers={"etag": etag})
 
-        patch_user_resource_mock.assert_called_once_with(user_resource_to_patch, user_resource_service_patch)
+        patch_user_resource_mock.assert_called_once_with(user_resource_to_patch, user_resource_service_patch, etag)
         assert response.status_code == status.HTTP_200_OK
 
     # [DELETE] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources

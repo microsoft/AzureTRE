@@ -212,6 +212,6 @@ class TestUserResourcesRoutesOwnerOrResourceOwnerAccess:
         user_resource.ownerId = "11111"  # not users id
         get_user_resource_mock.return_value = user_resource
 
-        response = await client.patch(app.url_path_for(strings.API_UPDATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID), json={"enabled": False})
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID), json={"isEnabled": False}, headers={"etag": "some-etag"})
 
         assert response.status_code == status.HTTP_403_FORBIDDEN

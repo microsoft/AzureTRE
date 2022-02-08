@@ -5,7 +5,7 @@ from db.errors import EntityDoesNotExist
 from db.repositories.user_resources import UserResourceRepository
 from models.domain.resource import ResourceType
 from models.domain.user_resource import UserResource
-from models.schemas.user_resource import UserResourceInCreate, UserResourcePatchEnabled
+from models.schemas.user_resource import UserResourceInCreate, UserResourcePatch
 
 
 WORKSPACE_ID = "def000d3-82da-4bfc-b6e9-9a7853ef753e"
@@ -97,9 +97,10 @@ def test_get_user_resource_by_id_raises_entity_does_not_exist_if_not_found(_, us
 
 
 def test_patch_user_resource_updates_item(user_resource, user_resource_repo):
-    user_resource_repo.update_item = MagicMock(return_value=None)
-    user_resource_patch = UserResourcePatchEnabled(enabled=True)
+    user_resource_repo.update_item_with_etag = MagicMock(return_value=None)
+    user_resource_patch = UserResourcePatch(isEnabled=True)
 
-    user_resource_repo.patch_user_resource(user_resource, user_resource_patch)
-    user_resource.properties["enabled"] = False
-    user_resource_repo.update_item.assert_called_once_with(user_resource)
+    etag = "some-etag-value"
+    user_resource_repo.patch_user_resource(user_resource, user_resource_patch, etag)
+    user_resource.properties["isEnabled"] = False
+    user_resource_repo.update_item_with_etag.assert_called_once_with(user_resource, etag)
