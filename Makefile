@@ -225,14 +225,14 @@ register-bundle:
 	&& ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& cd ${DIR} \
-	&& ${ROOTPATH}/devops/scripts/publish_register_bundle.sh --acr-name $${ACR_NAME} --bundle-type $${BUNDLE_TYPE} --current --insecure --tre_url $${TRE_URL} --access-token $${TOKEN}
+	&& ${ROOTPATH}/devops/scripts/publish_register_bundle.sh --acr-name ${ACR_NAME} --bundle-type ${BUNDLE_TYPE} --current --insecure --tre_url ${TRE_URL} --access-token ${TOKEN}
 
 build-and-register-bundle: porter-build
 	$(call target_title, "Building and Publishing ${DIR} bundle") \
 	&& ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& cd ${DIR} \
-	&& ${ROOTPATH}/devops/scripts/build_and_register_bundle.sh --acr-name $${ACR_NAME} --bundle-type $${BUNDLE_TYPE} --current --insecure --tre_url $${TRE_URL}
+	&& ${ROOTPATH}/devops/scripts/build_and_register_bundle.sh --acr-name ${ACR_NAME} --bundle-type ${BUNDLE_TYPE} --current --insecure --tre_url ${TRE_URL}
 
 register-bundle-payload:
 	$(call target_title, "Publishing ${DIR} bundle") \
