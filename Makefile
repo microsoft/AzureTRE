@@ -215,18 +215,18 @@ porter-publish:
 	&& porter publish --registry "$${ACR_NAME}.azurecr.io" --debug
 
 register-bundle:
-	echo -e "\n\e[34m»»» 🧩 \e[96mPublishing ${DIR} bundle\e[0m..." \
+	@echo -e "\n\e[34m»»» 🧩 \e[96mPublishing ${DIR} bundle\e[0m..." \
 	&& ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& cd ${DIR} \
-	&& ${ROOTPATH}/devops/scripts/publish_register_bundle.sh --acr-name $${ACR_NAME} --bundle-type $${BUNDLE_TYPE} --current --insecure --tre_url $${TRE_URL} --access-token $${TOKEN}
+	&& ${ROOTPATH}/devops/scripts/publish_register_bundle.sh --acr-name ${ACR_NAME} --bundle-type ${BUNDLE_TYPE} --current --insecure --tre_url ${TRE_URL} --access-token ${TOKEN}
 
 build-and-register-bundle: porter-build
 	echo -e "\n\e[34m»»» 🧩 \e[96mBuilding and Publishing ${DIR} bundle\e[0m..." \
 	&& ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& cd ${DIR} \
-	&& ${ROOTPATH}/devops/scripts/build_and_register_bundle.sh --acr-name $${ACR_NAME} --bundle-type $${BUNDLE_TYPE} --current --insecure --tre_url $${TRE_URL}
+	&& ${ROOTPATH}/devops/scripts/build_and_register_bundle.sh --acr-name ${ACR_NAME} --bundle-type ${BUNDLE_TYPE} --current --insecure --tre_url ${TRE_URL}
 
 register-bundle-payload:
 	echo -e "\n\e[34m»»» 🧩 \e[96mPublishing ${DIR} bundle\e[0m..." \

@@ -59,7 +59,7 @@ Next, you will set the configuration variables for the specific Azure TRE instan
 1. Run the `/scripts/aad-app-reg.sh` script to create API and Swagger UI app registrations and their service principals in Azure Active Directory. The details of the script are covered [app registration script](../auth.md#app-registration-script) section of the auth document. Below is a sample where `TRE_ID` has value `mytre` and the Azure location is `westeurope`:
 
   ```bash
-  ./scripts/aad-app-reg.sh -n TRE -r https://mytre.westeurope.cloudapp.azure.com/api/docs/oauth2-redirect -a
+  ./scripts/aad-app-reg.sh --name TRE --swaggerui-redirecturl https://mytre.westeurope.cloudapp.azure.com/api/docs/oauth2-redirect --admin-consent
   ```
 
   !!! note
@@ -115,7 +115,7 @@ SWAGGER_UI_CLIENT_ID=d87...12
 1. Run the `/scripts/aad-app-reg.sh` script to create API and Swagger UI app registrations and their service principals in Azure Active Directory. The details of the script are covered [app registration script](../auth.md#app-registration-script) section of the auth document. Below is a sample where `TRE_ID` has value `mytre` and the Azure location is `westeurope`:
 
     ```bash
-    ./scripts/aad-app-reg.sh -n TRE -r https://mytre.westeurope.cloudapp.azure.com/api/docs/oauth2-redirect -a
+    ./scripts/aad-app-reg.sh --namen TRE --swaggerui-redirecturl https://mytre.westeurope.cloudapp.azure.com/api/docs/oauth2-redirect --admin-consent
     ```
 
   With the output of the script, you can now provide the required auth related values for the following variables in the `/templates/core/.env` configuration file as described above in the "Set environment configuration variables of the Azure TRE instance" section.
