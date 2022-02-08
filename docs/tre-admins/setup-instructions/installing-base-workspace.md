@@ -37,7 +37,7 @@ As explained in the [auth guide](../auth.md), every workspace has a correspondin
 
 Running the script will report `WORKSPACE_API_CLIENT_ID` for the generated app which needs to be used in the POST body below.
 
-Go to ``azure_tre_fqdn/docs`` and use POST /api/workspaces with the sample body to create a base workspace.
+Go to `https://<azure_tre_fqdn>/api/docs` and use POST /api/workspaces with the sample body to create a base workspace.
 
 ```json
 {
@@ -45,7 +45,7 @@ Go to ``azure_tre_fqdn/docs`` and use POST /api/workspaces with the sample body 
   "properties": {
     "display_name": "manual-from-swagger",
     "description": "workspace for team X",
-    "app_id": "workspace app id created above"
+    "app_id": "WORKSPACE_API_CLIENT_ID"
   }
 }
 ```

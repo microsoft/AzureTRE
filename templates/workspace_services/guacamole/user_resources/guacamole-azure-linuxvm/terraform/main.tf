@@ -52,11 +52,11 @@ output "ip" {
 }
 
 output "hostname" {
-  value = azurerm_windows_virtual_machine.windowsvm.name
+  value = azurerm_linux_virtual_machine.linuxvm.name
 }
 
 output "azure_resource_id" {
-  value = azurerm_windows_virtual_machine.windowsvm.id
+  value = azurerm_linux_virtual_machine.linuxvm.id
 }
 
 output "connection_uri" {
