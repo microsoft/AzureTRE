@@ -37,7 +37,7 @@ As explained in the [auth guide](../auth.md), every workspace has a correspondin
 
 Running the script will report `WORKSPACE_API_CLIENT_ID` for the generated app which needs to be used in the POST body below.
 
-Go to ``azure_tre_fqdn/docs`` and use POST /api/workspaces with the sample body to create a base workspace.
+Go to `https://<azure_tre_fqdn>/api/docs` and use POST /api/workspaces with the sample body to create a base workspace.
 
 ```json
 {
@@ -45,12 +45,12 @@ Go to ``azure_tre_fqdn/docs`` and use POST /api/workspaces with the sample body 
   "properties": {
     "display_name": "manual-from-swagger",
     "description": "workspace for team X",
-    "app_id": "workspace app id created above"
+    "app_id": "WORKSPACE_API_CLIENT_ID"
   }
 }
 ```
 
-The API will report the ``workspace_id`` of the created workspace, which can be used to query deployment status by using ``/api/workspaces/<workspace_id>``. Record the workspace id as you will need it in the next step.
+The API will return an `operation` object with a `Location` header to query the operation status, as well as the `resourceId` and `resourcePath` properties to query the resource under creation.
 
 You can also follow the progress in Azure portal as various resources come up.
 

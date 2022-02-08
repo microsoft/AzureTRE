@@ -259,3 +259,12 @@ setup-local-debugging:
 	&& pushd ./templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ./devops/scripts/load_env.sh ./templates/core/tre.env \
 	&& . ./devops/scripts/setup_local_api_debugging.sh
+
+register-aad-workspace:
+	echo -e "\n\e[34m»»» 🧩 \e[96mSetting up the ability to debug the API\e[0m..." \
+	&& . ./devops/scripts/check_dependencies.sh nodocker \
+	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
+	&& pushd ./templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
+	&& . ./devops/scripts/load_env.sh ./templates/core/tre.env \
+	&& . ./devops/scripts/register-aad-workspace.sh
+

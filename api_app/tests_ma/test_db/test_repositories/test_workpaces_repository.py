@@ -3,8 +3,9 @@ from mock import patch, MagicMock
 import uuid
 
 from db.errors import EntityDoesNotExist, ResourceIsNotDeployed
+from db.repositories.operations import OperationRepository
 from db.repositories.workspaces import WorkspaceRepository
-from models.domain.resource import Deployment, Status, ResourceType
+from models.domain.resource import ResourceType
 from models.domain.workspace import Workspace
 from models.schemas.workspace import WorkspaceInCreate, WorkspacePatchEnabled
 
@@ -21,12 +22,19 @@ def workspace_repo():
 
 
 @pytest.fixture
+def operations_repo():
+    with patch('azure.cosmos.CosmosClient') as cosmos_client_mock:
+        yield OperationRepository(cosmos_client_mock)
+
+
+@pytest.fixture
 def workspace():
     workspace = Workspace(
         id="000000d3-82da-4bfc-b6e9-9a7853ef753e",
         templateVersion="0.1.0",
         properties={},
         templateName="my-workspace-service",
+        resourcePath="test"
     )
     return workspace
 
@@ -36,19 +44,18 @@ def test_get_active_workspaces_queries_db(workspace_repo):
     expected_query = workspace_repo.active_workspaces_query_string()
 
     workspace_repo.get_active_workspaces()
-
     workspace_repo.container.query_items.assert_called_once_with(query=expected_query, enable_cross_partition_query=True)
 
 
-def test_get_deployed_workspace_by_id_raises_resource_is_not_deployed_if_not_deployed(workspace_repo, workspace):
+def test_get_deployed_workspace_by_id_raises_resource_is_not_deployed_if_not_deployed(workspace_repo, workspace, operations_repo):
     workspace_id = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
     sample_workspace = workspace
-    sample_workspace.deployment = Deployment(status=Status.NotDeployed)
 
     workspace_repo.get_workspace_by_id = MagicMock(return_value=sample_workspace)
+    operations_repo.resource_has_deployed_operation = MagicMock(return_value=False)
 
     with pytest.raises(ResourceIsNotDeployed):
-        workspace_repo.get_deployed_workspace_by_id(workspace_id)
+        workspace_repo.get_deployed_workspace_by_id(workspace_id, operations_repo)
 
 
 def test_get_workspace_by_id_raises_entity_does_not_exist_if_item_does_not_exist(workspace_repo):
@@ -61,10 +68,9 @@ def test_get_workspace_by_id_raises_entity_does_not_exist_if_item_does_not_exist
 
 def test_get_workspace_by_id_queries_db(workspace_repo, workspace):
     workspace_repo.container.query_items = MagicMock(return_value=[workspace.dict()])
-    expected_query = f'SELECT * FROM c WHERE c.resourceType = "workspace" AND c.deployment.status != "deleted" AND c.id = "{workspace.id}"'
+    expected_query = f'SELECT * FROM c WHERE c.resourceType = "workspace" AND c.id = "{workspace.id}"'
 
     workspace_repo.get_workspace_by_id(workspace.id)
-
     workspace_repo.container.query_items.assert_called_once_with(query=expected_query, enable_cross_partition_query=True)
 
 
@@ -84,7 +90,6 @@ def test_create_workspace_item_creates_a_workspace_with_the_right_values(validat
 
     assert workspace.templateName == workspace_to_create.templateName
     assert workspace.resourceType == ResourceType.Workspace
-    assert workspace.deployment.status == Status.NotDeployed
 
     for key in ["display_name", "description", "azure_location", "workspace_id", "tre_id", "address_space"]:
         assert key in workspace.properties
@@ -125,7 +130,7 @@ def test_patch_workspace_updates_item(workspace_repo):
         templateName="base-tre",
         templateVersion="0.1.0",
         properties={},
-        deployment=Deployment(status=Status.NotDeployed, message=""),
+        resourcePath="test"
     )
     workspace_patch = WorkspacePatchEnabled(enabled=False)
 
