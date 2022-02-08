@@ -30,7 +30,7 @@ class BaseRepository:
         return list(self.container.query_items(query=query, enable_cross_partition_query=True))
 
     def read_item_by_id(self, item_id: str) -> dict:
-        return self.container.read_item(item=item_id, PartitionKey=PARTITION_KEY)
+        return self.container.read_item(item=item_id, partition_key=item_id)
 
     def save_item(self, item: BaseModel):
         self.container.create_item(body=item.dict())
@@ -38,8 +38,9 @@ class BaseRepository:
     def update_item(self, item: BaseModel):
         self.container.upsert_item(body=item.dict())
 
-    def update_item_with_etag(self, item: BaseModel, etag: str):
+    def update_item_with_etag(self, item: BaseModel, etag: str) -> BaseModel:
         self.container.replace_item(item=item.id, body=item.dict(), etag=etag, match_condition=MatchConditions.IfNotModified)
+        return self.read_item_by_id(item.id)
 
     def update_item_dict(self, item_dict: dict):
         self.container.upsert_item(body=item_dict)

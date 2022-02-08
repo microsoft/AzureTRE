@@ -1,6 +1,6 @@
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Header, status, Request, Response
 
 from jsonschema.exceptions import ValidationError
 
@@ -16,7 +16,7 @@ from models.domain.operation import Operation
 from models.domain.workspace import WorkspaceRole
 from models.schemas.operation import OperationInList, OperationInResponse
 from models.schemas.user_resource import UserResourceInResponse, UserResourceInCreate, UserResourcesInList, UserResourcePatchEnabled
-from models.schemas.workspace import WorkspaceInCreate, WorkspacesInList, WorkspaceInResponse, WorkspacePatchEnabled
+from models.schemas.workspace import WorkspaceInCreate, WorkspacesInList, WorkspaceInResponse, WorkspacePatch
 from models.schemas.workspace_service import WorkspaceServiceInCreate, WorkspaceServicesInList, WorkspaceServiceInResponse, WorkspaceServicePatchEnabled
 from resources import strings
 from service_bus.resource_request_sender import send_resource_request_message, RequestAction
@@ -24,6 +24,8 @@ from services.authentication import get_current_admin_user, \
     get_access_service, get_current_workspace_owner_user, get_current_workspace_owner_or_researcher_user, get_current_tre_user_or_tre_admin, get_current_workspace_owner_or_researcher_user_or_tre_admin, get_current_workspace_owner_or_tre_admin
 from services.authentication import extract_auth_information
 from services.azure_resource_status import get_azure_resource_status
+
+from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 
 workspaces_core_router = APIRouter(dependencies=[Depends(get_current_tre_user_or_tre_admin)])
 workspaces_shared_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_tre_admin)])
@@ -76,6 +78,10 @@ async def send_uninstall_message(resource: Resource, operations_repo: OperationR
         logging.error(f"Failed send {resource_type} resource delete message: {e}")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
 
+def check_for_etag(etag: str):
+    if etag is None or len(etag) == 0:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.ETAG_REQUIRED)
+
 
 # WORKSPACE ROUTES
 @workspaces_core_router.get("/workspaces", response_model=WorkspacesInList, name=strings.API_GET_ALL_WORKSPACES)
@@ -116,9 +122,13 @@ async def create_workspace(workspace_create: WorkspaceInCreate, response: Respon
 
 
 @workspaces_core_router.patch("/workspaces/{workspace_id}", response_model=WorkspaceInResponse, name=strings.API_UPDATE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
-async def patch_workspace(workspace_patch: WorkspacePatchEnabled, workspace=Depends(get_workspace_by_id_from_path), workspace_repo=Depends(get_repository(WorkspaceRepository))) -> WorkspaceInResponse:
-    workspace_repo.patch_workspace(workspace, workspace_patch)
-    return WorkspaceInResponse(workspace=workspace)
+async def patch_workspace(workspace_patch: WorkspacePatch, workspace=Depends(get_workspace_by_id_from_path), workspace_repo=Depends(get_repository(WorkspaceRepository)), etag: str = Header(None)) -> WorkspaceInResponse:
+    check_for_etag(etag)
+    try:
+        patched_workspace = workspace_repo.patch_workspace(workspace, workspace_patch, etag)
+        return WorkspaceInResponse(workspace=patched_workspace)
+    except (CosmosAccessConditionFailedError):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
 
 
 @workspaces_core_router.delete("/workspaces/{workspace_id}", response_model=OperationInResponse, name=strings.API_DELETE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])

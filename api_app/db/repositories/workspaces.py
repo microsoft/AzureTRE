@@ -1,3 +1,4 @@
+from tkinter.messagebox import NO
 import uuid
 from typing import List
 
@@ -10,11 +11,15 @@ from db.repositories.resources import ResourceRepository, IS_ACTIVE_CLAUSE
 from db.repositories.operations import OperationRepository
 from models.domain.resource import ResourceType
 from models.domain.workspace import Workspace
-from models.schemas.workspace import WorkspaceInCreate, WorkspacePatchEnabled
+from models.schemas.workspace import WorkspaceInCreate, WorkspacePatch
 from services.cidr_service import generate_new_cidr
 
 
 class WorkspaceRepository(ResourceRepository):
+    """
+    Repository class representing data storage for Workspaces
+    """
+
     def __init__(self, client: CosmosClient):
         super().__init__(client)
 
@@ -77,9 +82,13 @@ class WorkspaceRepository(ResourceRepository):
         new_address_space = generate_new_cidr(networks, cidr_netmask)
         return new_address_space
 
-    def patch_workspace(self, workspace: Workspace, workspace_patch: WorkspacePatchEnabled):
-        workspace.isEnabled = workspace_patch.enabled
-        self.update_item(workspace)
+    def patch_workspace(self, workspace: Workspace, workspace_patch: WorkspacePatch, etag: str) -> Workspace:
+        # clear out the _etag prop in the document to avoid confusion - we'll let cosmos check the etag
+        workspace.etag = None
+        workspace.isEnabled = workspace_patch.isEnabled
+        # TODO - validate update workspace props here
+
+        return self.update_item_with_etag(workspace, etag)
 
     def get_workspace_spec_params(self, full_workspace_id: str):
         params = self.get_resource_base_spec_params()

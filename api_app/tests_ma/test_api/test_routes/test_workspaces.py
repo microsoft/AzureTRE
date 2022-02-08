@@ -20,6 +20,7 @@ from models.domain.workspace import Workspace, WorkspaceRole
 from models.domain.workspace_service import WorkspaceService
 from resources import strings
 from services.authentication import get_current_admin_user, get_current_tre_user_or_tre_admin, get_current_workspace_owner_user, get_current_workspace_owner_or_researcher_user, get_current_workspace_owner_or_researcher_user_or_tre_admin
+from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 
 pytestmark = pytest.mark.asyncio
 
@@ -373,23 +374,51 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     # [PATCH] /workspaces/{workspace_id}
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    @ patch("api.routes.workspaces.WorkspaceRepository.patch_workspace", return_value=None)
+    async def test_patch_workspaces_400_when_etag_not_present(self, patch_workspace_mock, get_workspace_mock, app, client):
+        workspace_to_patch = sample_workspace()
+        get_workspace_mock.return_value = workspace_to_patch
+        workspace_patch = {"isEnabled": True}
+
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=workspace_to_patch.id), json=workspace_patch)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.text == strings.ETAG_REQUIRED
+
+    # [PATCH] /workspaces/{workspace_id}
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", side_effect=EntityDoesNotExist)
     async def test_patch_workspaces_returns_404_if_workspace_does_not_exist(self, _, app, client):
-        response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=WORKSPACE_ID), json='{"enabled": true}')
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=WORKSPACE_ID), json='{"isEnabled": true}', headers={"etag": "some-etag-value"})
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     # [PATCH] /workspaces/{workspace_id}
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
-    @ patch("api.routes.workspaces.WorkspaceRepository.patch_workspace", return_value=None)
+    @ patch("api.routes.workspaces.WorkspaceRepository.patch_workspace", return_value=sample_workspace())
     async def test_patch_workspaces_patches_workspace(self, patch_workspace_mock, get_workspace_mock, app, client):
         workspace_to_patch = sample_workspace()
         get_workspace_mock.return_value = workspace_to_patch
-        workspace_patch = {"enabled": True}
+        workspace_patch = {"isEnabled": True}
+        etag = "some-etag-value"
 
-        response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=workspace_to_patch.id), json=workspace_patch)
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=workspace_to_patch.id), json=workspace_patch, headers={"etag": etag})
 
-        patch_workspace_mock.assert_called_once_with(workspace_to_patch, workspace_patch)
+        patch_workspace_mock.assert_called_once_with(workspace_to_patch, workspace_patch, etag)
         assert response.status_code == status.HTTP_200_OK
+
+    # [PATCH] /workspaces/{workspace_id}
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    @ patch("api.routes.workspaces.WorkspaceRepository.patch_workspace", side_effect=CosmosAccessConditionFailedError)
+    async def test_patch_workspace_returns_409_if_bad_etag(self, patch_workspace_mock, get_workspace_mock, app, client):
+        workspace_to_patch = sample_workspace()
+        get_workspace_mock.return_value = workspace_to_patch
+        workspace_patch = {"isEnabled": True}
+        etag = "some-etag-value"
+
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=workspace_to_patch.id), json=workspace_patch, headers={"etag": etag})
+
+        patch_workspace_mock.assert_called_once_with(workspace_to_patch, workspace_patch, etag)
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.text == strings.ETAG_CONFLICT
 
     # [DELETE] /workspaces/{workspace_id}
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")

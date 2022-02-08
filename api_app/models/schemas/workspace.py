@@ -79,12 +79,16 @@ class WorkspaceInCreate(BaseModel):
         }
 
 
-class WorkspacePatchEnabled(BaseModel):
-    enabled: bool
+class WorkspacePatch(BaseModel):
+    isEnabled: bool
 
     class Config:
         schema_extra = {
             "example": {
-                "enabled": False
+                "isEnabled": False,
+                "properties": {
+                    "display_name": "the workspace display name",
+                    "description": "workspace description"
+                }
             }
         }
