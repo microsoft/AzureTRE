@@ -90,7 +90,7 @@ if [[ -n $AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID && -n $AUTOMATION_ADMIN_ACCOUNT_CLI
 else
   # Use resource owner password credentials flow with USERNAME/PASSWORD
   echo "Using USERNAME to get token via resource owner password credential flow"
-  token_response=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d \   
+  token_response=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d \
     "grant_type=password&resource=${RESOURCE}&client_id=${CLIENT_ID}&username=${USERNAME}&password=${PASSWORD}&scope=default)" \
     https://login.microsoftonline.com/${AUTH_TENANT_ID}/oauth2/token)
 fi
