@@ -7,6 +7,17 @@
       "label": "Copy_env_file_for_debug",
       "command": "cp --force ${workspaceFolder}/templates/core/.env ${workspaceFolder}/api_app/.env",
       "type": "shell"
+    },
+    {
+      "label": "Unit_tests",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "command": "pytest",
+      "args": [
+        "--ignore=e2e_tests",
+      ]
     }
   ]
 }
