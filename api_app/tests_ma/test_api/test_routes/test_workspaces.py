@@ -379,11 +379,9 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @ patch("api.routes.workspaces.WorkspaceRepository.patch_workspace", return_value=None)
     async def test_patch_workspaces_400_when_etag_not_present(self, patch_workspace_mock, get_workspace_mock, app, client):
-        workspace_to_patch = sample_workspace()
-        get_workspace_mock.return_value = workspace_to_patch
         workspace_patch = {"isEnabled": True}
 
-        response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=workspace_to_patch.id), json=workspace_patch)
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=WORKSPACE_ID), json=workspace_patch)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert response.text == strings.ETAG_REQUIRED
 
@@ -743,6 +741,18 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     # [PATCH] /workspaces/{workspace_id}/services/{service_id}
+    @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=sample_workspace_service())
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
+    @ patch("api.routes.workspaces.WorkspaceServiceRepository.patch_workspace_service", side_effect=CosmosAccessConditionFailedError)
+    async def test_patch_workspace_service_returns_409_if_bad_etag(self, _, __, ___, app, client):
+        workspace_service_patch = {"isEnabled": True}
+        etag = "some-bad-etag-value"
+
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID), json=workspace_service_patch, headers={"etag": etag})
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.text == strings.ETAG_CONFLICT
+
+    # [PATCH] /workspaces/{workspace_id}/services/{service_id}
     @pytest.mark.parametrize('workspace_id, workspace_service_id', [("933ad738-7265-4b5f-9eae-a1a62928772e", "IAmNotEvenAGUID!"), ("IAmNotEvenAGUID!", "933ad738-7265-4b5f-9eae-a1a62928772e")])
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
@@ -870,6 +880,20 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
 
         assert response.status_code == status.HTTP_409_CONFLICT
         assert response.text == strings.WORKSPACE_SERVICE_IS_NOT_DEPLOYED
+
+    # [PATCH] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
+    @ patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")
+    @ patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id", return_value=sample_user_resource_object())
+    @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=sample_workspace_service())
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
+    @ patch("api.dependencies.workspaces.UserResourceRepository.patch_user_resource", side_effect=CosmosAccessConditionFailedError)
+    async def test_patch_user_resource_returns_409_if_bad_etag(self, _, __, ___, ____, _____, app, client):
+        user_resource_patch = {"isEnabled": True}
+        etag = "some-bad-etag-value"
+
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID), json=user_resource_patch, headers={"etag": etag})
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.text == strings.ETAG_CONFLICT
 
     # [PATCH] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
     @ patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id", side_effect=EntityDoesNotExist)
