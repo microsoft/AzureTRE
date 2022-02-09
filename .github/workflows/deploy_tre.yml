@@ -53,7 +53,7 @@ jobs:
           echo "::set-output name=refid::${REFID}"
 
           if [ ${GITHUB_REF} == 'refs/heads/main' ]; then
-            echo "::set-output name=dev_container_label::main"
+            echo "::set-output name=dev_container_label::latest"
           else
             echo "::set-output name=dev_container_label::${REFID}"
           fi
@@ -88,7 +88,8 @@ jobs:
           docker build . \
             -t 'tredev:${{ needs.prepare.outputs.DEVCONTAINER_LABEL }}' \
             -f '.devcontainer/Dockerfile' \
-            --cache-from ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:main \
+            --cache-from ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:${{ needs.prepare.outputs.DEVCONTAINER_LABEL }} \
+            --cache-from ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
             --build-arg USER_UID="${USER_UID}" \
             --build-arg USER_GID="${USER_GID}"
