@@ -39,7 +39,7 @@ jobs:
       RUN_ACR_NAME: ${{ github.ref == 'refs/heads/main' && secrets.ACR_NAME || format('tre{0}', steps.run-id.outputs.refid) }}
       RUN_STATE_STORAGE_ACCOUNT_NAME: ${{ github.ref == 'refs/heads/main' && secrets.STATE_STORAGE_ACCOUNT_NAME || format('tre{0}mgmt', steps.run-id.outputs.refid) }}
       RUN_MGMT_RESOURCE_GROUP: ${{ github.ref == 'refs/heads/main' && secrets.MGMT_RESOURCE_GROUP || format('rg-tre{0}-mgmt', steps.run-id.outputs.refid) }}
-      DEVCONTAINER_LABEL: ${{ github.ref == 'refs/heads/main' && "latest" || steps.run-id.outputs.refid }}
+      DEVCONTAINER_LABEL: ${{ github.ref == 'refs/heads/main' && ${GITHUB_REF_NAME} || steps.run-id.outputs.refid }}
     steps:
       - id: run-id
         name: Get run id
@@ -82,7 +82,7 @@ jobs:
           docker build . \
             -t 'tredev:${{ needs.prepare.outputs.DEVCONTAINER_LABEL }}' \
             -f '.devcontainer/Dockerfile' \
-            --cache-from ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest \
+            --cache-from ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:main \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
             --build-arg USER_UID="${USER_UID}" \
             --build-arg USER_GID="${USER_GID}"
