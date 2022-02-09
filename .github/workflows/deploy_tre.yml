@@ -39,7 +39,7 @@ jobs:
       RUN_ACR_NAME: ${{ github.ref == 'refs/heads/main' && secrets.ACR_NAME || format('tre{0}', steps.run-id.outputs.refid) }}
       RUN_STATE_STORAGE_ACCOUNT_NAME: ${{ github.ref == 'refs/heads/main' && secrets.STATE_STORAGE_ACCOUNT_NAME || format('tre{0}mgmt', steps.run-id.outputs.refid) }}
       RUN_MGMT_RESOURCE_GROUP: ${{ github.ref == 'refs/heads/main' && secrets.MGMT_RESOURCE_GROUP || format('rg-tre{0}-mgmt', steps.run-id.outputs.refid) }}
-      DEVCONTAINER_LABEL: ${{ github.ref == 'refs/heads/main' && ${GITHUB_REF_NAME} || steps.run-id.outputs.refid }}
+      DEVCONTAINER_LABEL: ${{ github.ref == 'refs/heads/main' && github.ref.name || steps.run-id.outputs.refid }}
     steps:
       - id: run-id
         name: Get run id
