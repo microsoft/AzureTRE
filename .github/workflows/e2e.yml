@@ -33,4 +33,4 @@ jobs:
           TEST_USER_PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
-          IS_API_SECURED: ${{ github.ref == 'refs/heads/main' }} # only the "main" env has valid TLS
+          IS_API_SECURED: "false"
