@@ -15,9 +15,10 @@ from models.domain.resource import ResourceType, Resource
 from models.domain.operation import Operation
 from models.domain.workspace import WorkspaceRole
 from models.schemas.operation import OperationInList, OperationInResponse
-from models.schemas.user_resource import UserResourceInResponse, UserResourceInCreate, UserResourcesInList, UserResourcePatch
-from models.schemas.workspace import WorkspaceInCreate, WorkspacesInList, WorkspaceInResponse, WorkspacePatch
-from models.schemas.workspace_service import WorkspaceServiceInCreate, WorkspaceServicesInList, WorkspaceServiceInResponse, WorkspaceServicePatch
+from models.schemas.user_resource import UserResourceInResponse, UserResourceInCreate, UserResourcesInList
+from models.schemas.workspace import WorkspaceInCreate, WorkspacesInList, WorkspaceInResponse
+from models.schemas.workspace_service import WorkspaceServiceInCreate, WorkspaceServicesInList, WorkspaceServiceInResponse
+from models.schemas.resource import ResourcePatch
 from resources import strings
 from service_bus.resource_request_sender import send_resource_request_message, RequestAction
 from services.authentication import get_current_admin_user, \
@@ -123,7 +124,7 @@ async def create_workspace(workspace_create: WorkspaceInCreate, response: Respon
 
 
 @workspaces_core_router.patch("/workspaces/{workspace_id}", response_model=WorkspaceInResponse, name=strings.API_UPDATE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
-async def patch_workspace(workspace_patch: WorkspacePatch, workspace=Depends(get_workspace_by_id_from_path), workspace_repo=Depends(get_repository(WorkspaceRepository)), etag: str = Header(None)) -> WorkspaceInResponse:
+async def patch_workspace(workspace_patch: ResourcePatch, workspace=Depends(get_workspace_by_id_from_path), workspace_repo=Depends(get_repository(WorkspaceRepository)), etag: str = Header(None)) -> WorkspaceInResponse:
     check_for_etag(etag)
     try:
         patched_workspace = workspace_repo.patch_workspace(workspace, workspace_patch, etag)
@@ -184,7 +185,7 @@ async def create_workspace_service(response: Response, workspace_service_input: 
 
 
 @workspace_services_workspace_router.patch("/workspaces/{workspace_id}/workspace-services/{service_id}", response_model=WorkspaceServiceInResponse, name=strings.API_UPDATE_WORKSPACE_SERVICE, dependencies=[Depends(get_current_workspace_owner_or_researcher_user), Depends(get_workspace_by_id_from_path)])
-async def patch_workspace_service(workspace_service_patch: WorkspaceServicePatch, workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), workspace_service=Depends(get_workspace_service_by_id_from_path), etag: str = Header(None)) -> WorkspaceServiceInResponse:
+async def patch_workspace_service(workspace_service_patch: ResourcePatch, workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), workspace_service=Depends(get_workspace_service_by_id_from_path), etag: str = Header(None)) -> WorkspaceServiceInResponse:
     check_for_etag(etag)
     try:
         patched_workspace_service = workspace_service_repo.patch_workspace_service(workspace_service, workspace_service_patch, etag)
@@ -274,7 +275,7 @@ async def delete_user_resource(response: Response, user=Depends(get_current_work
 
 
 @user_resources_workspace_router.patch("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}", response_model=UserResourceInResponse, name=strings.API_UPDATE_USER_RESOURCE, dependencies=[Depends(get_workspace_by_id_from_path), Depends(get_workspace_service_by_id_from_path)])
-async def patch_user_resource(user_resource_patch: UserResourcePatch, user=Depends(get_current_workspace_owner_or_researcher_user), user_resource=Depends(get_user_resource_by_id_from_path), user_resource_repo=Depends(get_repository(UserResourceRepository)), etag: str = Header(None)) -> UserResourceInResponse:
+async def patch_user_resource(user_resource_patch: ResourcePatch, user=Depends(get_current_workspace_owner_or_researcher_user), user_resource=Depends(get_user_resource_by_id_from_path), user_resource_repo=Depends(get_repository(UserResourceRepository)), etag: str = Header(None)) -> UserResourceInResponse:
     check_for_etag(etag)
     validate_user_is_workspace_owner_or_resource_owner(user, user_resource)
 

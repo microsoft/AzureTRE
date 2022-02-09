@@ -6,7 +6,8 @@ from db.repositories.workspace_services import WorkspaceServiceRepository
 from db.repositories.operations import OperationRepository
 from models.domain.resource import ResourceType
 from models.domain.workspace_service import WorkspaceService
-from models.schemas.workspace_service import WorkspaceServiceInCreate, WorkspaceServicePatch
+from models.schemas.resource import ResourcePatch
+from models.schemas.workspace_service import WorkspaceServiceInCreate
 
 
 WORKSPACE_ID = "abc000d3-82da-4bfc-b6e9-9a7853ef753e"
@@ -121,7 +122,7 @@ def test_create_workspace_item_raises_value_error_if_template_is_invalid(_, work
 
 def test_patch_workspace_service_updates_item(workspace_service, workspace_service_repo):
     workspace_service_repo.update_item_with_etag = MagicMock(return_value=None)
-    workspace_service_patch = WorkspaceServicePatch(
+    workspace_service_patch = ResourcePatch(
         isEnabled=True,
     )
     etag = "some-etag-value"

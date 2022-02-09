@@ -10,7 +10,8 @@ from db.repositories.resources import ResourceRepository, IS_ACTIVE_CLAUSE
 from db.repositories.operations import OperationRepository
 from models.domain.resource import ResourceType
 from models.domain.workspace import Workspace
-from models.schemas.workspace import WorkspaceInCreate, WorkspacePatch
+from models.schemas.resource import ResourcePatch
+from models.schemas.workspace import WorkspaceInCreate
 from services.cidr_service import generate_new_cidr
 
 
@@ -96,7 +97,7 @@ class WorkspaceRepository(ResourceRepository):
         new_address_space = generate_new_cidr(networks, cidr_netmask)
         return new_address_space
 
-    def patch_workspace(self, workspace: Workspace, workspace_patch: WorkspacePatch, etag: str) -> Workspace:
+    def patch_workspace(self, workspace: Workspace, workspace_patch: ResourcePatch, etag: str) -> Workspace:
         workspace.isEnabled = workspace_patch.isEnabled
 
         # TODO - validate update workspace props here

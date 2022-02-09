@@ -1,3 +1,4 @@
+from importlib.resources import Resource
 from azure.cosmos import CosmosClient
 from jsonschema import validate
 from pydantic import UUID4
@@ -7,6 +8,8 @@ from db.errors import EntityDoesNotExist
 from db.repositories.base import BaseRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
 from models.domain.resource import ResourceType
+from models.domain.resource_template import ResourceTemplate
+from models.schemas.resource import ResourcePatch
 
 
 class ResourceRepository(BaseRepository):
@@ -57,6 +60,13 @@ class ResourceRepository(BaseRepository):
         self._validate_resource_parameters(resource_input.dict(), template)
 
         return template_version
+
+    def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str) -> Resource:
+        resource.isEnabled = resource_patch.isEnabled
+
+        # TODO - validate updated resource props here
+
+        return self.update_item_with_etag(resource, etag)
 
 
 # Cosmos query consts

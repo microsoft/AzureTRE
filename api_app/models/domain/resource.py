@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import List
 from pydantic import Field
 
 from models.domain.azuretremodel import AzureTREModel
@@ -28,6 +29,8 @@ class Resource(AzureTREModel):
     resourceType: ResourceType
     etag: str = Field(title="_etag", description="eTag of the document", alias="_etag")
     resourcePath: str = ""
+    resourceVersion: int = 0
+    history: List[dict] = []
 
     def get_resource_request_message_payload(self, operation_id: str, action: RequestAction) -> dict:
         return {

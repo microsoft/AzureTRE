@@ -7,7 +7,8 @@ from pydantic import parse_obj_as
 from db.repositories.resources import ResourceRepository, IS_ACTIVE_CLAUSE
 from db.repositories.operations import OperationRepository
 from models.domain.workspace_service import WorkspaceService
-from models.schemas.workspace_service import WorkspaceServiceInCreate, WorkspaceServicePatch
+from models.schemas.resource import ResourcePatch
+from models.schemas.workspace_service import WorkspaceServiceInCreate
 from db.errors import ResourceIsNotDeployed, EntityDoesNotExist
 from models.domain.resource import ResourceType
 
@@ -70,7 +71,7 @@ class WorkspaceServiceRepository(ResourceRepository):
 
         return workspace_service
 
-    def patch_workspace_service(self, workspace_service: WorkspaceService, workspace_service_patch: WorkspaceServicePatch, etag: str) -> WorkspaceService:
+    def patch_workspace_service(self, workspace_service: WorkspaceService, workspace_service_patch: ResourcePatch, etag: str) -> WorkspaceService:
         workspace_service.isEnabled = workspace_service_patch.isEnabled
 
         # TODO - validate update workspace props here

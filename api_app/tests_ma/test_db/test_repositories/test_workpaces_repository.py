@@ -7,7 +7,8 @@ from db.repositories.operations import OperationRepository
 from db.repositories.workspaces import WorkspaceRepository
 from models.domain.resource import ResourceType
 from models.domain.workspace import Workspace
-from models.schemas.workspace import WorkspaceInCreate, WorkspacePatch
+from models.schemas.resource import ResourcePatch
+from models.schemas.workspace import WorkspaceInCreate
 
 
 @pytest.fixture
@@ -169,7 +170,7 @@ def test_patch_workspace_updates_item(workspace_repo):
         properties={},
         resourcePath="test"
     )
-    workspace_patch = WorkspacePatch(isEnabled=False)
+    workspace_patch = ResourcePatch(isEnabled=False)
     etag = "some-etag-value"
 
     workspace_repo.patch_workspace(workspace_to_patch, workspace_patch, etag)

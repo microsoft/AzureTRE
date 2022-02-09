@@ -65,14 +65,3 @@ class UserResourceInCreate(BaseModel):
                 }
             }
         }
-
-
-class UserResourcePatch(BaseModel):
-    isEnabled: bool
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "isEnabled": False
-            }
-        }

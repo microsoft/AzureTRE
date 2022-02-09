@@ -8,7 +8,8 @@ from db.errors import EntityDoesNotExist
 from db.repositories.resources import ResourceRepository, IS_ACTIVE_CLAUSE
 from models.domain.resource import ResourceType
 from models.domain.user_resource import UserResource
-from models.schemas.user_resource import UserResourceInCreate, UserResourcePatch
+from models.schemas.resource import ResourcePatch
+from models.schemas.user_resource import UserResourceInCreate
 
 
 class UserResourceRepository(ResourceRepository):
@@ -63,7 +64,7 @@ class UserResourceRepository(ResourceRepository):
     def get_user_resource_spec_params(self):
         return self.get_resource_base_spec_params()
 
-    def patch_user_resource(self, user_resource: UserResource, user_resource_patch: UserResourcePatch, etag: str):
+    def patch_user_resource(self, user_resource: UserResource, user_resource_patch: ResourcePatch, etag: str):
         user_resource.isEnabled = user_resource.isEnabled
 
         # TODO - validate update workspace props here
