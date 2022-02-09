@@ -1,0 +1,140 @@
+---
+name: Publish Bundles
+
+on:
+  schedule:
+    # 1am each night https://crontab.guru/#0_1_*_*_*
+    - cron: "0 1 * * *"
+  push:
+    branches: [main]
+  pull_request_target:
+    types: [labeled]
+    branches: [main]
+  workflow_dispatch:
+
+# This will prevent multiple runs of this entire workflow.
+# We should NOT cancel in progress runs as that can destabilize the environment.
+concurrency: deploy-e2e
+
+jobs:
+  deploy_management:
+    name: Deploy Management
+    runs-on: ubuntu-latest
+    # The conditions below define the desired behaviour of the deployment
+    # workflow:
+    #   1. The workflow must NOT be triggered automatically by an opened
+    #     pull request
+    #   2. It should be possible to manually trigger the workflow for PRs
+    #     originating from forks (using "safe to test" label)
+    #   3. The workflow must run when scheduled, pushed (i.e., merge) or
+    #     manually triggered
+    if: |
+      github.event.name == 'schedule'
+      || github.event_name == 'push'
+      || github.event_name == 'workflow_dispatch'
+      || contains(github.event.pull_request.labels.*.name, 'safe to test')
+    environment: Dev
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set up Docker BuildKit
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io
+          username: ${{ secrets.ACTIONS_ACR_NAME }}
+          password: ${{ secrets.ACTIONS_ACR_PASSWORD }}
+
+      - name: Build new devcontainer
+        shell: bash
+        env:
+            DOCKER_BUILDKIT: 1
+        run: |
+          set -e
+          USER_UID=$(id -u)
+          USER_GID=$(id -g)
+          docker build . \
+            -t 'tredev:${{ github.event.pull_request.number }}' \
+            -t 'tredev:latest' \
+            -f '.devcontainer/Dockerfile' \
+            --cache-from ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            --build-arg USER_UID="${USER_UID}" \
+            --build-arg USER_GID="${USER_GID}"
+          docker image tag tredev:${{ github.event.pull_request.number }} ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest
+
+      - name: Deploy management
+        uses: ./.github/actions/devcontainer_run_command
+        with:
+          COMMAND: "echo 'Hello job 1'"
+          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
+          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
+          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
+          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
+          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          RESOURCE: "${{ secrets.API_CLIENT_ID }}"
+          TRE_ID: "${{ secrets.TRE_ID }}"
+          LOCATION: ${{ secrets.LOCATION }}
+          AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+          TF_VAR_terraform_state_container_name:
+            ${{ secrets.TF_STATE_CONTAINER }}
+          TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
+          TF_VAR_mgmt_storage_account_name:
+            ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+          TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
+          TF_VAR_tre_address_space: ${{ secrets.TRE_ADDRESS_SPACE }}
+          TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
+          TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
+          TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
+
+      - name: Push cached devcontainer
+        if: ${{ success() }} && github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          set -e
+          docker image push ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest
+
+  build_docker_images:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: [deploy_management]
+    environment: Dev
+    strategy:
+      fail-fast: true
+      matrix:
+        target: [
+          build-and-push-api,
+          build-and-push-resource-processor,
+          build-and-push-gitea,
+          build-and-push-guacamole]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Docker build
+        uses: ./.github/actions/devcontainer_run_command
+        with:
+          COMMAND: "echo '${{ matrix.target }}'"
+          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
+          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
+          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
+          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
+          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+
+      - name: Notify dedicated teams channel
+        uses: sachinkundu/ms-teams-notification@1.4
+        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        with:
+          github-token: ${{ github.token }}
+          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+          notification-summary: "Make Images Failed"
+          notification-color: dc3545
+          timezone: Europe/Zurich
