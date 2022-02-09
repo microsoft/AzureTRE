@@ -39,8 +39,7 @@ jobs:
       RUN_ACR_NAME: ${{ github.ref == 'refs/heads/main' && secrets.ACR_NAME || format('tre{0}', steps.run-id.outputs.refid) }}
       RUN_STATE_STORAGE_ACCOUNT_NAME: ${{ github.ref == 'refs/heads/main' && secrets.STATE_STORAGE_ACCOUNT_NAME || format('tre{0}mgmt', steps.run-id.outputs.refid) }}
       RUN_MGMT_RESOURCE_GROUP: ${{ github.ref == 'refs/heads/main' && secrets.MGMT_RESOURCE_GROUP || format('rg-tre{0}-mgmt', steps.run-id.outputs.refid) }}
-      DEVCONTAINER_LABEL: ${{ github.ref == 'refs/heads/main' && github.ref.name || steps.run-id.outputs.refid }}
-      DEVCONTAINER_LABEL_MAIN: ${{ github.ref.name }}
+      DEVCONTAINER_LABEL: ${{ steps.run-id.outputs.dev_container_label }}
     steps:
       - id: run-id
         name: Get run id
@@ -49,10 +48,15 @@ jobs:
           set -o pipefail
           set -o nounset
 
-          echo "GITHUB_REF_NAME is ${GITHUB_REF_NAME}"
           REFID=$(echo ${GITHUB_REF} | shasum | cut -c1-8)
           echo "using id of: ${REFID} for GitHub Ref: ${GITHUB_REF}"
           echo "::set-output name=refid::${REFID}"
+
+          if [ ${GITHUB_REF} == 'refs/heads/main' ]; then
+            echo "::set-output name=dev_container_label::main"
+          else
+            echo "::set-output name=dev_container_label::${REFID}"
+          fi
 
   deploy_management:
     name: Deploy Management
@@ -79,7 +83,6 @@ jobs:
             DOCKER_BUILDKIT: 1
         run: |
           set -e
-          echo "Ross: ${{ needs.prepare.outputs.DEVCONTAINER_LABEL_MAIN }}""
           USER_UID=$(id -u)
           USER_GID=$(id -g)
           docker build . \
@@ -156,7 +159,7 @@ jobs:
       - name: Docker build
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: "echo 'Job 2'"
+          COMMAND: "echo '${{ matrix.target }}'"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
           DEVCONTAINER_LABEL: ${{ needs.prepare.outputs.DEVCONTAINER_LABEL }}
