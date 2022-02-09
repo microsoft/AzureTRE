@@ -3,6 +3,7 @@ from pydantic import BaseModel
 
 class ResourcePatch(BaseModel):
     isEnabled: bool
+    properties: dict
 
     class Config:
         schema_extra = {

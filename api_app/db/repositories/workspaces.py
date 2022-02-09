@@ -6,6 +6,7 @@ from pydantic import parse_obj_as
 
 from core import config
 from db.errors import ResourceIsNotDeployed, EntityDoesNotExist
+from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.resources import ResourceRepository, IS_ACTIVE_CLAUSE
 from db.repositories.operations import OperationRepository
 from models.domain.resource import ResourceType
@@ -97,12 +98,10 @@ class WorkspaceRepository(ResourceRepository):
         new_address_space = generate_new_cidr(networks, cidr_netmask)
         return new_address_space
 
-    def patch_workspace(self, workspace: Workspace, workspace_patch: ResourcePatch, etag: str) -> Workspace:
-        workspace.isEnabled = workspace_patch.isEnabled
-
-        # TODO - validate update workspace props here
-
-        return self.update_item_with_etag(workspace, etag)
+    def patch_workspace(self, workspace: Workspace, workspace_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository) -> Workspace:
+        # get the workspace template
+        workspace_template = resource_template_repo.get_template_by_name_and_version(workspace.templateName, workspace.templateVersion, ResourceType.Workspace)
+        return self.patch_resource(workspace, workspace_patch, workspace_template, etag)
 
     def get_workspace_spec_params(self, full_workspace_id: str):
         params = self.get_resource_base_spec_params()

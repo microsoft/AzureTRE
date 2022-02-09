@@ -5,6 +5,7 @@ from azure.cosmos import CosmosClient
 from pydantic import parse_obj_as
 
 from db.errors import EntityDoesNotExist
+from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.resources import ResourceRepository, IS_ACTIVE_CLAUSE
 from models.domain.resource import ResourceType
 from models.domain.user_resource import UserResource
@@ -64,9 +65,7 @@ class UserResourceRepository(ResourceRepository):
     def get_user_resource_spec_params(self):
         return self.get_resource_base_spec_params()
 
-    def patch_user_resource(self, user_resource: UserResource, user_resource_patch: ResourcePatch, etag: str):
-        user_resource.isEnabled = user_resource.isEnabled
-
-        # TODO - validate update workspace props here
-
-        return self.update_item_with_etag(user_resource, etag)
+    def patch_user_resource(self, user_resource: UserResource, user_resource_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository):
+        # get user resource template
+        user_resource_template = resource_template_repo.get_template_by_name_and_version(user_resource.templateName, user_resource.templateVersion, ResourceType.UserResource, parent_service_name=user_resource.parentWorkspaceServiceId)
+        return self.patch_resource(user_resource, user_resource_patch, user_resource_template, etag)

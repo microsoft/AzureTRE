@@ -16,6 +16,16 @@ class ResourceType(str, Enum):
     UserResource = strings.USER_RESOURCE
 
 
+class ResourceHistoryItem(AzureTREModel):
+    """
+    Resource History Item - to preserve history of resource properties
+    """
+    properties: dict = {}
+    isEnabled: bool
+    resourceVersion: int
+    updatedWhen: float
+
+
 class Resource(AzureTREModel):
     """
     Resource request
@@ -30,7 +40,7 @@ class Resource(AzureTREModel):
     etag: str = Field(title="_etag", description="eTag of the document", alias="_etag")
     resourcePath: str = ""
     resourceVersion: int = 0
-    history: List[dict] = []
+    history: List[ResourceHistoryItem] = []
 
     def get_resource_request_message_payload(self, operation_id: str, action: RequestAction) -> dict:
         return {
@@ -46,3 +56,4 @@ class Resource(AzureTREModel):
 class Output(AzureTREModel):
     Name: str = Field(title="", description="")
     Value: str = Field(title="", description="")
+
