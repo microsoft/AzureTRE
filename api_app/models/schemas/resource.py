@@ -1,9 +1,10 @@
+from typing import Optional
 from pydantic import BaseModel
 
 
 class ResourcePatch(BaseModel):
-    isEnabled: bool
-    properties: dict
+    isEnabled: Optional[bool]
+    properties: Optional[dict]
 
     class Config:
         schema_extra = {

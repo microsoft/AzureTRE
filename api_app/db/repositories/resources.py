@@ -70,19 +70,25 @@ class ResourceRepository(BaseRepository):
             isEnabled=resource_copy.isEnabled,
             properties=resource_copy.properties,
             resourceVersion=resource_copy.resourceVersion,
-            updatedWhen=datetime.utcnow().timestamp()
+            updatedWhen=get_timestamp()
         )
         resource.history.append(history_item)
 
         # now update the resource props
         resource.resourceVersion = resource.resourceVersion + 1
-        resource.isEnabled = resource_patch.isEnabled
+
+        if resource_patch.isEnabled is not None:
+            resource.isEnabled = resource_patch.isEnabled
 
         # TODO -> (https://github.com/microsoft/AzureTRE/issues/1240) -> validate updated resource props here. For now - just union the 2 property dicts
-        if len(resource_patch.properties) > 0:
+        if resource_patch.properties is not None and len(resource_patch.properties) > 0:
             resource.properties.update(resource_patch.properties)
 
         return self.update_item_with_etag(resource, etag)
+
+
+def get_timestamp() -> float:
+    return datetime.utcnow().timestamp()
 
 
 # Cosmos query consts
