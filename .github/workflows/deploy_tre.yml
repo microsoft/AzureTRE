@@ -297,7 +297,8 @@ jobs:
           TEST_USER_PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
           TRE_ID: "${{ needs.prepare.outputs.RUN_TRE_ID }}"
-          IS_API_SECURED: false # ${{ github.ref == 'refs/heads/main' }} # only the "main" env has valid TLS
+          IS_API_SECURED: "false"
+          # ${{ github.ref == 'refs/heads/main' }} # only the "main" env has valid TLS
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
