@@ -72,14 +72,14 @@ class WorkspaceRepository(ResourceRepository):
         # Default the address space to 'small'. This was the pre-existing default
         address_space_size = workspace_properties.get("address_space_size", "small")
 
-        #773 allow custom sized networks to be requested
+        # 773 allow custom sized networks to be requested
         if (address_space_size == "custom"):
             # if address_space isn't provided in the input, generate a new one.
             # TODO: #772 check that the provided address_space is available in the network.
             return workspace_properties.get("address_space") or self.get_new_address_space()
 
         # We allow the users some predefined TShirt sizes
-        predefined_address_spaces = { "small": 24, "medium": 22, "large": 16 }
+        predefined_address_spaces = {"small": 24, "medium": 22, "large": 16}
 
         # Default mask is 24 (small)
         cidr_netmask = predefined_address_spaces.get(address_space_size, 24)
