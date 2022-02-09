@@ -7,7 +7,8 @@ on:
     - cron: "0 1 * * *"
   push:
     branches: [main]
-  pull_request_target:
+  # TODO: #478 fix for external contributions (forks)
+  pull_request:
     types: [labeled]
     branches: [main]
   workflow_dispatch:
@@ -37,9 +38,10 @@ jobs:
       RUN_TRE_ID: ${{ github.ref == 'refs/heads/main' && secrets.TRE_ID || format('tre{0}', steps.run-id.outputs.refid) }}
       RUN_ACR_NAME: ${{ github.ref == 'refs/heads/main' && secrets.ACR_NAME || format('tre{0}', steps.run-id.outputs.refid) }}
       RUN_STATE_STORAGE_ACCOUNT_NAME: ${{ github.ref == 'refs/heads/main' && secrets.STATE_STORAGE_ACCOUNT_NAME || format('tre{0}mgmt', steps.run-id.outputs.refid) }}
-      RUN_MGMT_RESOURCE_GROUP: ${{ github.ref == 'refs/heads/main' && secrets.STATE_STORAGE_ACCOUNT_NAME || format('rg-tre{0}-mgmt', steps.run-id.outputs.refid) }}
+      RUN_MGMT_RESOURCE_GROUP: ${{ github.ref == 'refs/heads/main' && secrets.MGMT_RESOURCE_GROUP || format('rg-tre{0}-mgmt', steps.run-id.outputs.refid) }}
     steps:
       - id: run-id
+        name: Get run id
         run: |
           set -o errexit
           set -o pipefail
@@ -295,7 +297,7 @@ jobs:
           TEST_USER_PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
           TRE_ID: "${{ needs.prepare.outputs.RUN_TRE_ID }}"
-          IS_API_SECURED: ${{ github.ref == 'refs/heads/main' }} # only the "main" env has valid TLS
+          IS_API_SECURED: false # ${{ github.ref == 'refs/heads/main' }} # only the "main" env has valid TLS
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
