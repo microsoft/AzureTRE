@@ -16,7 +16,6 @@ function usage() {
 USAGE
     exit 1
 }
-echo "Hello 1"
 
 # if no arguments are provided, return usage function
 if [ $# -eq 0 ]; then
@@ -62,7 +61,6 @@ while [ "$1" != "" ]; do
         access_token=$1
         ;;
     *)
-      echo "Hello 2: $1"
         usage
         ;;
     esac
