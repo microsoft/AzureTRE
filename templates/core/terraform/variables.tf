@@ -128,3 +128,9 @@ variable "debug" {
   default     = false
   description = "Used to turn debug on within Azure Resources"
 }
+
+variable "ci_git_ref" {
+  default     = ""
+  description = "The git ref used by the ci to deploy this TRE"
+  type        = string
+}
