@@ -1,3 +1,6 @@
+import copy
+import datetime
+import uuid
 import pytest
 from mock import patch, MagicMock
 
@@ -5,10 +8,17 @@ from jsonschema.exceptions import ValidationError
 
 from db.errors import EntityDoesNotExist
 from db.repositories.resources import ResourceRepository
+from models.domain.resource import Resource, ResourceHistoryItem
 from models.domain.resource_template import ResourceTemplate
 from models.domain.user_resource_template import UserResourceTemplate
 from models.domain.workspace import ResourceType
+from models.schemas.resource import ResourcePatch
 from models.schemas.workspace import WorkspaceInCreate
+
+
+FAKE_UPDATE_TIME = datetime.datetime(2022, 1, 1, 17, 5, 55)
+FAKE_UPDATE_TIMESTAMP: float = FAKE_UPDATE_TIME.timestamp()
+RESOURCE_ID = str(uuid.uuid4())
 
 
 @pytest.fixture
@@ -20,6 +30,25 @@ def resource_repo():
 @pytest.fixture
 def workspace_input():
     return WorkspaceInCreate(templateName="base-tre", properties={"display_name": "test", "description": "test", "app_id": "123"})
+
+
+def sample_resource() -> Resource:
+    return Resource(
+        id=RESOURCE_ID,
+        isActive=True,
+        isEnabled=True,
+        resourcePath="/resource/path",
+        templateName="template_name",
+        templateVersion="template_version",
+        properties={
+            'display_name': 'initial display name',
+            'description': 'initial description',
+            'computed_prop': 'computed_val'
+        },
+        resourceType=ResourceType.Workspace,
+        etag="some-etag-value",
+        resourceVersion=0
+    )
 
 
 @patch("db.repositories.resources.ResourceRepository._get_enriched_template")
@@ -111,3 +140,43 @@ def test_get_resource_dict_by_id_raises_entity_does_not_exist_if_no_resources_co
 
     with pytest.raises(EntityDoesNotExist):
         resource_repo.get_resource_dict_by_id(item_id)
+
+
+@patch('db.repositories.resources.get_timestamp', return_value=FAKE_UPDATE_TIMESTAMP)
+def test_patch_resource_preserves_property_history(_, resource_repo):
+    """
+    Tests that properties are copied into a history array and only certain values in the root are updated
+    """
+
+    resource_repo.update_item_with_etag = MagicMock(return_value=None)
+    resource_patch = ResourcePatch(isEnabled=True, properties={'display_name': 'updated name'})
+
+    etag = "some-etag-value"
+
+    resource = sample_resource()
+    expected_resource = sample_resource()
+    expected_resource.history = [ResourceHistoryItem(isEnabled=True, resourceVersion=0, updatedWhen=FAKE_UPDATE_TIMESTAMP, properties={'display_name': 'initial display name', 'description': 'initial description', 'computed_prop': 'computed_val'})]
+    expected_resource.properties['display_name'] = 'updated name'
+    expected_resource.resourceVersion = 1
+
+    resource_repo.patch_resource(resource, resource_patch, None, etag)
+    resource_repo.update_item_with_etag.assert_called_once_with(expected_resource, etag)
+
+    # now patch again
+    new_resource = copy.deepcopy(expected_resource)  # new_resource is after the first patch
+    new_patch = ResourcePatch(isEnabled=False, properties={'display_name': 'updated name 2'})
+    expected_resource.history.append(
+        ResourceHistoryItem(
+            isEnabled=True,
+            resourceVersion=1,
+            updatedWhen=FAKE_UPDATE_TIMESTAMP,
+            properties={'display_name': 'updated name', 'description': 'initial description', 'computed_prop': 'computed_val'}
+        )
+    )
+
+    expected_resource.resourceVersion = 2
+    expected_resource.properties['display_name'] = "updated name 2"
+    expected_resource.isEnabled = False
+
+    resource_repo.patch_resource(new_resource, new_patch, None, etag)
+    resource_repo.update_item_with_etag.assert_called_with(expected_resource, etag)

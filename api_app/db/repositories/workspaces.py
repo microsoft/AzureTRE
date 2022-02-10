@@ -5,16 +5,25 @@ from azure.cosmos import CosmosClient
 from pydantic import parse_obj_as
 
 from core import config
-from db.errors import ResourceIsNotDeployed, EntityDoesNotExist
+from db.errors import EntityDoesNotExist, InvalidInput, ResourceIsNotDeployed
+from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.resources import ResourceRepository, IS_ACTIVE_CLAUSE
 from db.repositories.operations import OperationRepository
 from models.domain.resource import ResourceType
 from models.domain.workspace import Workspace
-from models.schemas.workspace import WorkspaceInCreate, WorkspacePatchEnabled
-from services.cidr_service import generate_new_cidr
+from models.schemas.resource import ResourcePatch
+from models.schemas.workspace import WorkspaceInCreate
+from services.cidr_service import generate_new_cidr, is_network_available
 
 
 class WorkspaceRepository(ResourceRepository):
+    """
+    Repository class representing data storage for Workspaces
+    """
+
+    # We allow the users some predefined TShirt sizes for the address space
+    predefined_address_spaces = {"small": 24, "medium": 22, "large": 16}
+
     def __init__(self, client: CosmosClient):
         super().__init__(client)
 
@@ -62,28 +71,34 @@ class WorkspaceRepository(ResourceRepository):
             templateVersion=template_version,
             properties=resource_spec_parameters,
             authInformation=auth_info,
-            resourcePath=f'/workspaces/{full_workspace_id}'
+            resourcePath=f'/workspaces/{full_workspace_id}',
+            etag=''  # need to validate the model
         )
 
         return workspace
 
     def get_address_space_based_on_size(self, workspace_properties: dict):
-
-        # Default the address space to 'small'. This was the pre-existing default
-        address_space_size = workspace_properties.get("address_space_size", "small")
+        # Default the address space to 'small' if not supplied.
+        address_space_size = workspace_properties.get("address_space_size", "small").lower()
 
         # 773 allow custom sized networks to be requested
         if (address_space_size == "custom"):
-            # if address_space isn't provided in the input, generate a new one.
-            # TODO: #772 check that the provided address_space is available in the network.
-            return workspace_properties.get("address_space") or self.get_new_address_space()
-
-        # We allow the users some predefined TShirt sizes
-        predefined_address_spaces = {"small": 24, "medium": 22, "large": 16}
+            if (self.validate_address_space(workspace_properties.get("address_space"))):
+                return workspace_properties.get("address_space")
+            else:
+                raise InvalidInput("The custom 'address_space' you requested does not fit in the current network.")
 
         # Default mask is 24 (small)
-        cidr_netmask = predefined_address_spaces.get(address_space_size, 24)
+        cidr_netmask = WorkspaceRepository.predefined_address_spaces.get(address_space_size, 24)
         return self.get_new_address_space(cidr_netmask)
+
+    # 772 check that the provided address_space is available in the network.
+    def validate_address_space(self, address_space):
+        if (address_space is None):
+            raise InvalidInput("Missing 'address_space' from properties.")
+
+        allocated_networks = [x.properties["address_space"] for x in self.get_active_workspaces()]
+        return is_network_available(allocated_networks, address_space)
 
     def get_new_address_space(self, cidr_netmask: int = 24):
         networks = [x.properties["address_space"] for x in self.get_active_workspaces()]
@@ -91,9 +106,10 @@ class WorkspaceRepository(ResourceRepository):
         new_address_space = generate_new_cidr(networks, cidr_netmask)
         return new_address_space
 
-    def patch_workspace(self, workspace: Workspace, workspace_patch: WorkspacePatchEnabled):
-        workspace.properties["enabled"] = workspace_patch.enabled
-        self.update_item(workspace)
+    def patch_workspace(self, workspace: Workspace, workspace_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository) -> Workspace:
+        # get the workspace template
+        workspace_template = resource_template_repo.get_template_by_name_and_version(workspace.templateName, workspace.templateVersion, ResourceType.Workspace)
+        return self.patch_resource(workspace, workspace_patch, workspace_template, etag)
 
     def get_workspace_spec_params(self, full_workspace_id: str):
         params = self.get_resource_base_spec_params()

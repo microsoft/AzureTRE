@@ -2,12 +2,12 @@ import pytest
 from mock import patch, MagicMock
 import uuid
 
-from db.errors import EntityDoesNotExist, ResourceIsNotDeployed
+from db.errors import EntityDoesNotExist, InvalidInput, ResourceIsNotDeployed
 from db.repositories.operations import OperationRepository
 from db.repositories.workspaces import WorkspaceRepository
 from models.domain.resource import ResourceType
 from models.domain.workspace import Workspace
-from models.schemas.workspace import WorkspaceInCreate, WorkspacePatchEnabled
+from models.schemas.workspace import WorkspaceInCreate
 
 
 @pytest.fixture
@@ -32,6 +32,7 @@ def workspace():
     workspace = Workspace(
         id="000000d3-82da-4bfc-b6e9-9a7853ef753e",
         templateVersion="0.1.0",
+        etag="",
         properties={},
         templateName="my-workspace-service",
         resourcePath="test"
@@ -141,12 +142,36 @@ def test_get_address_space_based_on_size_with_large_address_space(workspace_repo
 def test_create_workspace_item_creates_a_workspace_with_custom_address_space(validate_input_mock, workspace_repo, basic_workspace_request):
     workspace_to_create = basic_workspace_request
     workspace_to_create.properties["address_space_size"] = "custom"
-    workspace_to_create.properties["address_space"] = "192.168.0.0/24"
+    workspace_to_create.properties["address_space"] = "10.2.4.0/24"
     validate_input_mock.return_value = workspace_to_create.templateName
 
     workspace = workspace_repo.create_workspace_item(workspace_to_create, {})
 
     assert workspace.properties["address_space"] == workspace_to_create.properties["address_space"]
+
+
+@patch('db.repositories.workspaces.WorkspaceRepository.validate_input_against_template')
+@patch('core.config.RESOURCE_LOCATION', "useast2")
+@patch('core.config.TRE_ID', "9876")
+@patch('core.config.CORE_ADDRESS_SPACE', "10.1.0.0/22")
+@patch('core.config.TRE_ADDRESS_SPACE', "10.0.0.0/12")
+def test_create_workspace_item_throws_exception_with_bad_custom_address_space(validate_input_mock, workspace_repo, basic_workspace_request):
+    workspace_to_create = basic_workspace_request
+    workspace_to_create.properties["address_space_size"] = "custom"
+    workspace_to_create.properties["address_space"] = "192.168.0.0/24"
+    validate_input_mock.return_value = workspace_to_create.templateName
+
+    with pytest.raises(InvalidInput):
+        workspace_repo.create_workspace_item(workspace_to_create, {})
+
+
+def test_get_address_space_based_on_size_with_custom_address_space_and_missing_address(workspace_repo, basic_workspace_request):
+    workspace_to_create = basic_workspace_request
+    workspace_to_create.properties["address_space_size"] = "custom"
+    workspace_to_create.properties.pop("address_space", None)
+
+    with pytest.raises(InvalidInput):
+        workspace_repo.get_address_space_based_on_size(workspace_to_create.properties)
 
 
 @patch('db.repositories.workspaces.WorkspaceRepository.validate_input_against_template')
@@ -156,20 +181,3 @@ def test_create_workspace_item_raises_value_error_if_template_is_invalid(validat
 
     with pytest.raises(ValueError):
         workspace_repo.create_workspace_item(workspace_input, {})
-
-
-def test_patch_workspace_updates_item(workspace_repo):
-    workspace_repo.update_item = MagicMock(return_value=None)
-    workspace_to_patch = Workspace(
-        id="1234",
-        templateName="base-tre",
-        templateVersion="0.1.0",
-        properties={},
-        resourcePath="test"
-    )
-    workspace_patch = WorkspacePatchEnabled(enabled=False)
-
-    workspace_repo.patch_workspace(workspace_to_patch, workspace_patch)
-
-    workspace_to_patch.properties["enabled"] = False
-    workspace_repo.update_item.assert_called_once_with(workspace_to_patch)
