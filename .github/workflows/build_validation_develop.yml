@@ -4,9 +4,6 @@ name: Build Validation
 on:
   pull_request:
     branches: [main]
-  pull_request:
-    types: [labeled]
-    branches: [main]
 
 # for each ref (branch/pr) run just the most recent,
 # cancel other pending/running ones
