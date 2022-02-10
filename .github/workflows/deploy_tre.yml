@@ -86,7 +86,7 @@ jobs:
       ACR_NAME: ${{ format('tre{0}', needs.prepare-not-main.outputs.refid) }}
       ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
       ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-      DEVCONTAINER_TAG: ${{ needs.prepare-not-main.outputs.devcontainer_tag }}
+      ACTIONS_DEVCONTAINER_TAG: ${{ needs.prepare-not-main.outputs.devcontainer_tag }}
       API_CLIENT_ID: ${{ secrets.API_CLIENT_ID }}
       API_CLIENT_SECRET: ${{ secrets.API_CLIENT_SECRET }}
       ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
