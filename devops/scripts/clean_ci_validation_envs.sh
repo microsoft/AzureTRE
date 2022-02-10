@@ -34,7 +34,7 @@ while read -r rg_name rg_ref_name; do
   then
     # this rg originated from an external PR (i.e. a fork)
     pr_num=${rg_ref_name//[!0-9]/}
-    if [ $(echo ${open_prs} | jq -c "[ .[] | select( .number | contains(${pr_num})) ] | length") == 0]
+    if [ $(echo ${open_prs} | jq -c "[ .[] | select( .number | contains(${pr_num})) ] | length") == 0 ]
     then
       echo "PR ${pr_num} (derived from ref ${rg_ref_name}) is not open, and environment ${rg_name} can be deleted."
       deleteEnv ${rg_name}
