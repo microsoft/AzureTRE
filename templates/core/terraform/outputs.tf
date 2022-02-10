@@ -23,31 +23,31 @@ output "static_web_storage" {
 }
 
 output "keyvault_name" {
-  value = module.keyvault.keyvault_name
+  value = azurerm_key_vault.kv.name
 }
 
 output "service_bus_resource_id" {
-  value = module.servicebus.id
+  value = azurerm_servicebus_namespace.sb.id
 }
 
 output "service_bus_workspace_queue" {
-  value = module.servicebus.workspacequeue
+  value = azurerm_servicebus_queue.workspacequeue.name
 }
 
 output "service_bus_deployment_status_queue" {
-  value = module.servicebus.service_bus_deployment_status_update_queue
+  value = azurerm_servicebus_queue.service_bus_deployment_status_update_queue.name
 }
 
 output "state_store_resource_id" {
-  value = module.state-store.id
+  value = azurerm_cosmosdb_account.tre-db-account.id
 }
 
 output "state_store_endpoint" {
-  value = module.state-store.endpoint
+  value = azurerm_cosmosdb_account.tre-db-account.endpoint
 }
 
 output "state_store_account_name" {
-  value = module.state-store.cosmosdb_account_name
+  value = azurerm_cosmosdb_account.tre-db-account.name
 }
 
 output "app_insights_instrumentation_key" {

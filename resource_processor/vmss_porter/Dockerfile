@@ -13,7 +13,7 @@ RUN apt-get update \
     && apt-get update && apt-get -y install azure-cli=${AZURE_CLI_VERSION}
 
 # Install Terraform
-ARG TERRAFORM_VERSION="1.0.5"
+ARG TERRAFORM_VERSION="1.1.5"
 COPY ./scripts/terraform.sh /tmp/
 RUN apt-get update \
     && apt-get -y install unzip \
