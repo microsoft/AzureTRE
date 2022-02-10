@@ -175,9 +175,10 @@ terraform-destroy:
 	&& . ./devops/scripts/load_terraform_env.sh ${DIR}/.env \
 	&& cd ${DIR}/terraform/ && ./destroy.sh
 
-terraform-format:
-	$(call target_title, "Linting Terraform") \
-	&& cd ./templates && terraform fmt -check -recursive -diff
+lint:
+	$(call target_title, "Linting Python and Terraform") && \
+	flake8 && \
+	cd ./templates && terraform fmt -check -recursive -diff
 
 porter-build:
 	$(call target_title, "Building ${DIR} bundle") \
@@ -239,7 +240,7 @@ register-bundle-payload:
 	&& ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& cd ${DIR} \
-	&& ${ROOTPATH}/devops/scripts/publish_register_bundle.sh --acr-name $${ACR_NAME} --bundle-type ${BUNDLE_TYPE} --current
+	&& ${ROOTPATH}/devops/scripts/publish_register_bundle.sh --acr-name ${ACR_NAME} --bundle-type ${BUNDLE_TYPE} --current
 
 static-web-upload:
 	$(call target_title, "Uploading to static website") \
