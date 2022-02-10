@@ -240,7 +240,7 @@ register-bundle-payload:
 	&& ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& cd ${DIR} \
-	&& ${ROOTPATH}/devops/scripts/publish_register_bundle.sh --acr-name $${ACR_NAME} --bundle-type ${BUNDLE_TYPE} --current
+	&& ${ROOTPATH}/devops/scripts/publish_register_bundle.sh --acr-name ${ACR_NAME} --bundle-type ${BUNDLE_TYPE} --current
 
 static-web-upload:
 	$(call target_title, "Uploading to static website") \

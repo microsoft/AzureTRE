@@ -47,10 +47,14 @@ while [ "$1" != "" ]; do
         usage
         ;;
     esac
+    if [[ -z "$2" ]]; then
+      # if no more args then stop processing
+      break
+    fi
     shift # remove the current value for `$1` and use the next
 done
 
-if [[ -z ${lab_name+x} ]]; then 
+if [[ -z ${lab_name+x} ]]; then
     echo "Lab name is required"
     usage
 fi
@@ -70,7 +74,7 @@ if [[ -z ${vm_name+x} ]]; then
     usage
 fi
 
-if [[ -z ${image_name+x} ]]; then  
+if [[ -z ${image_name+x} ]]; then
     echo "Image name is required"
     usage
 fi
