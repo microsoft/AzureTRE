@@ -13,7 +13,7 @@ The base workspace template contains the following resources:
 ## Manual Deployment
 
 !!! caution
-    Resources should be deployed using the API (i.e. through the Swagger UI as described in the [setup instructions](../../tre-admins/setup-instructions/installing-base-workspace.md)). Only deploy menually for development/testing purposes.
+    Resources should be deployed using the API (i.e. through the Swagger UI as described in the [setup instructions](../../tre-admins/setup-instructions/installing-base-workspace.md)). Only deploy manually for development/testing purposes.
 
 1. Create a copy of `/templates/workspaces/base/.env.sample` with the name `.env` and update the variables with the appropriate values.
 
