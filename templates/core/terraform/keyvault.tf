@@ -2,9 +2,9 @@ data "azurerm_client_config" "deployer" {}
 
 resource "azurerm_key_vault" "kv" {
   name                     = "kv-${var.tre_id}"
-  tenant_id                = var.tenant_id
-  location                 = var.location
-  resource_group_name      = var.resource_group_name
+  tenant_id                = data.azurerm_client_config.current.tenant_id
+  location                 = azurerm_resource_group.core.location
+  resource_group_name      = azurerm_resource_group.core.name
   sku_name                 = "standard"
   purge_protection_enabled = var.debug == "true" ? false : true
 
@@ -24,8 +24,8 @@ resource "azurerm_key_vault_access_policy" "deployer" {
 
 resource "azurerm_key_vault_access_policy" "managed_identity" {
   key_vault_id = azurerm_key_vault.kv.id
-  tenant_id    = var.managed_identity_tenant_id
-  object_id    = var.managed_identity_object_id
+  tenant_id    = azurerm_user_assigned_identity.id.tenant_id
+  object_id    = azurerm_user_assigned_identity.id.principal_id
 
   key_permissions         = ["Get", "List", ]
   secret_permissions      = ["Get", "List", ]
@@ -34,14 +34,18 @@ resource "azurerm_key_vault_access_policy" "managed_identity" {
 
 data "azurerm_private_dns_zone" "vaultcore" {
   name                = "privatelink.vaultcore.azure.net"
-  resource_group_name = var.resource_group_name
+  resource_group_name = azurerm_resource_group.core.name
+
+  depends_on = [
+    module.network,
+  ]
 }
 
 resource "azurerm_private_endpoint" "kvpe" {
   name                = "pe-kv-${var.tre_id}"
-  location            = var.location
-  resource_group_name = var.resource_group_name
-  subnet_id           = var.shared_subnet
+  location            = azurerm_resource_group.core.location
+  resource_group_name = azurerm_resource_group.core.name
+  subnet_id           = module.network.shared_subnet_id
 
   lifecycle { ignore_changes = [tags] }
 
