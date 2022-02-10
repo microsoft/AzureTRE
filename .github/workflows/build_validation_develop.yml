@@ -4,7 +4,6 @@ name: Build Validation
 on:
   pull_request:
     branches: [main]
-  workflow_dispatch:
 
 # for each ref (branch/pr) run just the most recent,
 # cancel other pending/running ones
@@ -78,7 +77,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Run unit tests
-        shell: bash
-        run: |
-          pytest --ignore=e2e_tests
+      - name: Run e2e Tests
+        uses: ./.github/actions/devcontainer_run_command
+        with:
+          COMMAND: "pytest --ignore=e2e_tests"
+          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
