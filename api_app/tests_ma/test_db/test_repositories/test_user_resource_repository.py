@@ -1,11 +1,10 @@
-from mock import patch, MagicMock
+from mock import patch
 import pytest
 
 from db.errors import EntityDoesNotExist
 from db.repositories.user_resources import UserResourceRepository
 from models.domain.resource import ResourceType
 from models.domain.user_resource import UserResource
-from models.schemas.resource import ResourcePatch
 from models.schemas.user_resource import UserResourceInCreate
 
 
@@ -95,13 +94,3 @@ def test_get_user_resource_by_id_queries_db(query_mock, user_resource_repo, user
 def test_get_user_resource_by_id_raises_entity_does_not_exist_if_not_found(_, user_resource_repo):
     with pytest.raises(EntityDoesNotExist):
         user_resource_repo.get_user_resource_by_id(WORKSPACE_ID, SERVICE_ID, RESOURCE_ID)
-
-
-def test_patch_user_resource_updates_item(user_resource, user_resource_repo):
-    user_resource_repo.update_item_with_etag = MagicMock(return_value=None)
-    user_resource_patch = ResourcePatch(isEnabled=True)
-
-    etag = "some-etag-value"
-    user_resource_repo.patch_user_resource(user_resource, user_resource_patch, etag)
-    user_resource.properties["isEnabled"] = False
-    user_resource_repo.update_item_with_etag.assert_called_once_with(user_resource, etag)

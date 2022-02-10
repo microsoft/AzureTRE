@@ -7,7 +7,6 @@ from db.repositories.operations import OperationRepository
 from db.repositories.workspaces import WorkspaceRepository
 from models.domain.resource import ResourceType
 from models.domain.workspace import Workspace
-from models.schemas.resource import ResourcePatch
 from models.schemas.workspace import WorkspaceInCreate
 
 
@@ -158,22 +157,3 @@ def test_create_workspace_item_raises_value_error_if_template_is_invalid(validat
 
     with pytest.raises(ValueError):
         workspace_repo.create_workspace_item(workspace_input, {})
-
-
-def test_patch_workspace_updates_item(workspace_repo):
-    workspace_repo.update_item_with_etag = MagicMock(return_value=None)
-    workspace_to_patch = Workspace(
-        id="1234",
-        etag="",
-        templateName="base-tre",
-        templateVersion="0.1.0",
-        properties={},
-        resourcePath="test"
-    )
-    workspace_patch = ResourcePatch(isEnabled=False)
-    etag = "some-etag-value"
-
-    workspace_repo.patch_workspace(workspace_to_patch, workspace_patch, etag)
-
-    workspace_to_patch.isEnabled = False
-    workspace_repo.update_item_with_etag.assert_called_once_with(workspace_to_patch, etag)

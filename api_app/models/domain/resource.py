@@ -56,4 +56,3 @@ class Resource(AzureTREModel):
 class Output(AzureTREModel):
     Name: str = Field(title="", description="")
     Value: str = Field(title="", description="")
-
