@@ -12,6 +12,8 @@ on:
         required: true
       ACTIONS_ACR_PASSWORD:
         required: true
+      ACTIONS_DEVCONTAINER_TAG:
+        required: true
       API_CLIENT_ID:
         required: true
       API_CLIENT_SECRET:
@@ -83,13 +85,15 @@ jobs:
           USER_UID=$(id -u)
           USER_GID=$(id -g)
           docker build . \
-            -t 'tredev:latest' \
+            -t 'tredev:${{ secrets.ACTIONS_DEVCONTAINER_TAG }}' \
             -f '.devcontainer/Dockerfile' \
+            --cache-from ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:${{ secrets.ACTIONS_DEVCONTAINER_TAG }} \
             --cache-from ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
             --build-arg USER_UID="${USER_UID}" \
             --build-arg USER_GID="${USER_GID}"
-          docker image tag tredev:latest ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest
+          docker image tag tredev:${{ secrets.ACTIONS_DEVCONTAINER_TAG }} \
+            ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
 
       - name: Deploy management
         uses: ./.github/actions/devcontainer_run_command
@@ -97,6 +101,7 @@ jobs:
           COMMAND: "make bootstrap && make mgmt-deploy"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
@@ -132,7 +137,8 @@ jobs:
         shell: bash
         run: |
           set -e
-          docker image push ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest
+          docker image push \
+            ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
 
   build_docker_images:
     name: Build Docker Images
@@ -158,6 +164,7 @@ jobs:
           COMMAND: "make ${{ matrix.target }}"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
@@ -189,6 +196,7 @@ jobs:
           COMMAND: "make tre-deploy"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
@@ -255,6 +263,7 @@ jobs:
           COMMAND: "make build-and-register-bundle DIR=${{ matrix.BUNDLE_DIR }}"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
@@ -284,6 +293,7 @@ jobs:
           COMMAND: "make test-e2e"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"

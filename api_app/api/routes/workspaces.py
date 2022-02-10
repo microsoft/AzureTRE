@@ -1,6 +1,6 @@
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Header, status, Request, Response
 
 from jsonschema.exceptions import ValidationError
 
@@ -8,6 +8,7 @@ from api.dependencies.database import get_repository
 from api.dependencies.workspaces import get_operation_by_id_from_path, get_workspace_by_id_from_path, get_deployed_workspace_by_id_from_path, get_deployed_workspace_service_by_id_from_path, get_workspace_service_by_id_from_path, get_user_resource_by_id_from_path
 
 from db.repositories.operations import OperationRepository
+from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.user_resources import UserResourceRepository
 from db.repositories.workspaces import WorkspaceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
@@ -15,15 +16,18 @@ from models.domain.resource import ResourceType, Resource
 from models.domain.operation import Operation
 from models.domain.workspace import WorkspaceRole
 from models.schemas.operation import OperationInList, OperationInResponse
-from models.schemas.user_resource import UserResourceInResponse, UserResourceInCreate, UserResourcesInList, UserResourcePatchEnabled
-from models.schemas.workspace import WorkspaceInCreate, WorkspacesInList, WorkspaceInResponse, WorkspacePatchEnabled
-from models.schemas.workspace_service import WorkspaceServiceInCreate, WorkspaceServicesInList, WorkspaceServiceInResponse, WorkspaceServicePatchEnabled
+from models.schemas.user_resource import UserResourceInResponse, UserResourceInCreate, UserResourcesInList
+from models.schemas.workspace import WorkspaceInCreate, WorkspacesInList, WorkspaceInResponse
+from models.schemas.workspace_service import WorkspaceServiceInCreate, WorkspaceServicesInList, WorkspaceServiceInResponse
+from models.schemas.resource import ResourcePatch
 from resources import strings
 from service_bus.resource_request_sender import send_resource_request_message, RequestAction
 from services.authentication import get_current_admin_user, \
     get_access_service, get_current_workspace_owner_user, get_current_workspace_owner_or_researcher_user, get_current_tre_user_or_tre_admin, get_current_workspace_owner_or_researcher_user_or_tre_admin, get_current_workspace_owner_or_tre_admin
 from services.authentication import extract_auth_information
 from services.azure_resource_status import get_azure_resource_status
+
+from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 
 workspaces_core_router = APIRouter(dependencies=[Depends(get_current_tre_user_or_tre_admin)])
 workspaces_shared_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_tre_admin)])
@@ -77,6 +81,11 @@ async def send_uninstall_message(resource: Resource, operations_repo: OperationR
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
 
 
+def check_for_etag(etag: str):
+    if etag is None or len(etag) == 0:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.ETAG_REQUIRED)
+
+
 # WORKSPACE ROUTES
 @workspaces_core_router.get("/workspaces", response_model=WorkspacesInList, name=strings.API_GET_ALL_WORKSPACES)
 async def retrieve_users_active_workspaces(request: Request, user=Depends(get_current_tre_user_or_tre_admin), workspace_repo=Depends(get_repository(WorkspaceRepository))) -> WorkspacesInList:
@@ -116,14 +125,18 @@ async def create_workspace(workspace_create: WorkspaceInCreate, response: Respon
 
 
 @workspaces_core_router.patch("/workspaces/{workspace_id}", response_model=WorkspaceInResponse, name=strings.API_UPDATE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
-async def patch_workspace(workspace_patch: WorkspacePatchEnabled, workspace=Depends(get_workspace_by_id_from_path), workspace_repo=Depends(get_repository(WorkspaceRepository))) -> WorkspaceInResponse:
-    workspace_repo.patch_workspace(workspace, workspace_patch)
-    return WorkspaceInResponse(workspace=workspace)
+async def patch_workspace(workspace_patch: ResourcePatch, workspace=Depends(get_workspace_by_id_from_path), workspace_repo=Depends(get_repository(WorkspaceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), etag: str = Header(None)) -> WorkspaceInResponse:
+    check_for_etag(etag)
+    try:
+        patched_workspace = workspace_repo.patch_workspace(workspace, workspace_patch, etag, resource_template_repo)
+        return WorkspaceInResponse(workspace=patched_workspace)
+    except (CosmosAccessConditionFailedError):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
 
 
 @workspaces_core_router.delete("/workspaces/{workspace_id}", response_model=OperationInResponse, name=strings.API_DELETE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
 async def delete_workspace(response: Response, workspace=Depends(get_workspace_by_id_from_path), operations_repo=Depends(get_repository(OperationRepository)), workspace_repo=Depends(get_repository(WorkspaceRepository)), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository))) -> OperationInResponse:
-    if workspace.is_enabled():
+    if workspace.isEnabled:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION)
     if len(workspace_service_repo.get_active_workspace_services_for_workspace(workspace.id)) > 0:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_SERVICES_NEED_TO_BE_DELETED_BEFORE_WORKSPACE)
@@ -173,15 +186,19 @@ async def create_workspace_service(response: Response, workspace_service_input: 
 
 
 @workspace_services_workspace_router.patch("/workspaces/{workspace_id}/workspace-services/{service_id}", response_model=WorkspaceServiceInResponse, name=strings.API_UPDATE_WORKSPACE_SERVICE, dependencies=[Depends(get_current_workspace_owner_or_researcher_user), Depends(get_workspace_by_id_from_path)])
-async def patch_workspace_service(workspace_service_patch: WorkspaceServicePatchEnabled, workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), workspace_service=Depends(get_workspace_service_by_id_from_path)) -> WorkspaceServiceInResponse:
-    workspace_service_repo.patch_workspace_service(workspace_service, workspace_service_patch)
-    return WorkspaceServiceInResponse(workspaceService=workspace_service)
+async def patch_workspace_service(workspace_service_patch: ResourcePatch, workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), workspace_service=Depends(get_workspace_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), etag: str = Header(None)) -> WorkspaceServiceInResponse:
+    check_for_etag(etag)
+    try:
+        patched_workspace_service = workspace_service_repo.patch_workspace_service(workspace_service, workspace_service_patch, etag, resource_template_repo)
+        return WorkspaceServiceInResponse(workspaceService=patched_workspace_service)
+    except (CosmosAccessConditionFailedError):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
 
 
 @workspace_services_workspace_router.delete("/workspaces/{workspace_id}/workspace-services/{service_id}", response_model=OperationInResponse, name=strings.API_DELETE_WORKSPACE_SERVICE, dependencies=[Depends(get_current_workspace_owner_user)])
 async def delete_workspace_service(response: Response, workspace=Depends(get_workspace_by_id_from_path), workspace_service=Depends(get_workspace_service_by_id_from_path), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), user_resource_repo=Depends(get_repository(UserResourceRepository)), operations_repo=Depends(get_repository(OperationRepository)),) -> OperationInResponse:
 
-    if workspace_service.is_enabled():
+    if workspace_service.isEnabled:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_SERVICE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION)
 
     if len(user_resource_repo.get_user_resources_for_workspace_service(workspace.id, workspace_service.id)) > 0:
@@ -249,7 +266,7 @@ async def create_user_resource(response: Response, user_resource_create: UserRes
 async def delete_user_resource(response: Response, user=Depends(get_current_workspace_owner_or_researcher_user), user_resource=Depends(get_user_resource_by_id_from_path), user_resource_repo=Depends(get_repository(UserResourceRepository)), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInResponse:
     validate_user_is_workspace_owner_or_resource_owner(user, user_resource)
 
-    if user_resource.is_enabled():
+    if user_resource.isEnabled:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.USER_RESOURCE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION)
 
     operation = await send_uninstall_message(user_resource, operations_repo, ResourceType.UserResource)
@@ -259,10 +276,15 @@ async def delete_user_resource(response: Response, user=Depends(get_current_work
 
 
 @user_resources_workspace_router.patch("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}", response_model=UserResourceInResponse, name=strings.API_UPDATE_USER_RESOURCE, dependencies=[Depends(get_workspace_by_id_from_path), Depends(get_workspace_service_by_id_from_path)])
-async def patch_user_resource(user_resource_patch: UserResourcePatchEnabled, user=Depends(get_current_workspace_owner_or_researcher_user), user_resource=Depends(get_user_resource_by_id_from_path), user_resource_repo=Depends(get_repository(UserResourceRepository))) -> UserResourceInResponse:
+async def patch_user_resource(user_resource_patch: ResourcePatch, user=Depends(get_current_workspace_owner_or_researcher_user), user_resource=Depends(get_user_resource_by_id_from_path), user_resource_repo=Depends(get_repository(UserResourceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), etag: str = Header(None)) -> UserResourceInResponse:
+    check_for_etag(etag)
     validate_user_is_workspace_owner_or_resource_owner(user, user_resource)
-    user_resource_repo.patch_user_resource(user_resource, user_resource_patch)
-    return UserResourceInResponse(userResource=user_resource)
+
+    try:
+        patched_user_resource = user_resource_repo.patch_user_resource(user_resource, user_resource_patch, etag, resource_template_repo)
+        return UserResourceInResponse(userResource=patched_user_resource)
+    except (CosmosAccessConditionFailedError):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
 
 
 # user resource operations

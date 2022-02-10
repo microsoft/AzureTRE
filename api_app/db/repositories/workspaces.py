@@ -6,15 +6,21 @@ from pydantic import parse_obj_as
 
 from core import config
 from db.errors import ResourceIsNotDeployed, EntityDoesNotExist
+from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.resources import ResourceRepository, IS_ACTIVE_CLAUSE
 from db.repositories.operations import OperationRepository
 from models.domain.resource import ResourceType
 from models.domain.workspace import Workspace
-from models.schemas.workspace import WorkspaceInCreate, WorkspacePatchEnabled
+from models.schemas.resource import ResourcePatch
+from models.schemas.workspace import WorkspaceInCreate
 from services.cidr_service import generate_new_cidr
 
 
 class WorkspaceRepository(ResourceRepository):
+    """
+    Repository class representing data storage for Workspaces
+    """
+
     def __init__(self, client: CosmosClient):
         super().__init__(client)
 
@@ -62,7 +68,8 @@ class WorkspaceRepository(ResourceRepository):
             templateVersion=template_version,
             properties=resource_spec_parameters,
             authInformation=auth_info,
-            resourcePath=f'/workspaces/{full_workspace_id}'
+            resourcePath=f'/workspaces/{full_workspace_id}',
+            etag=''  # need to validate the model
         )
 
         return workspace
@@ -91,9 +98,10 @@ class WorkspaceRepository(ResourceRepository):
         new_address_space = generate_new_cidr(networks, cidr_netmask)
         return new_address_space
 
-    def patch_workspace(self, workspace: Workspace, workspace_patch: WorkspacePatchEnabled):
-        workspace.properties["enabled"] = workspace_patch.enabled
-        self.update_item(workspace)
+    def patch_workspace(self, workspace: Workspace, workspace_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository) -> Workspace:
+        # get the workspace template
+        workspace_template = resource_template_repo.get_template_by_name_and_version(workspace.templateName, workspace.templateVersion, ResourceType.Workspace)
+        return self.patch_resource(workspace, workspace_patch, workspace_template, etag)
 
     def get_workspace_spec_params(self, full_workspace_id: str):
         params = self.get_resource_base_spec_params()

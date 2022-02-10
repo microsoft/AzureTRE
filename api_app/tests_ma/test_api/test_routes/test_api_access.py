@@ -19,15 +19,15 @@ USER_RESOURCE_ID = 'abcad738-7265-4b5f-9eae-a1a62928772e'
 
 
 def sample_workspace():
-    return Workspace(id=WORKSPACE_ID, templateName='template name', templateVersion='1.0', properties={"app_id": "12345"}, resourcePath="test")
+    return Workspace(id=WORKSPACE_ID, templateName='template name', templateVersion='1.0', etag='', properties={"app_id": "12345"}, resourcePath="test")
 
 
 def sample_workspace_service():
-    return WorkspaceService(id=SERVICE_ID, templateName='template name', templateVersion='1.0', resourcePath="test")
+    return WorkspaceService(id=SERVICE_ID, templateName='template name', templateVersion='1.0', etag='', resourcePath="test", properties={})
 
 
 def sample_user_resource():
-    return UserResource(id=USER_RESOURCE_ID, templateName='template name', templateVersion='1.0', resourcePath="test")
+    return UserResource(id=USER_RESOURCE_ID, templateName='template name', templateVersion='1.0', etag='', resourcePath="test", properties={})
 
 
 # TEMPLATES
@@ -212,6 +212,6 @@ class TestUserResourcesRoutesOwnerOrResourceOwnerAccess:
         user_resource.ownerId = "11111"  # not users id
         get_user_resource_mock.return_value = user_resource
 
-        response = await client.patch(app.url_path_for(strings.API_UPDATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID), json={"enabled": False})
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID), json={"isEnabled": False}, headers={"etag": "some-etag"})
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
