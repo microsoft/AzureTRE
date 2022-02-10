@@ -9,6 +9,9 @@ Follow the links to learn more about how to access the services and any firewall
 
 ## Manual deployment for development and testing
 
+!!! caution
+    Resources should be deployed using the API (i.e. through the Swagger UI as described in the [setup instructions](../../tre-admins/setup-instructions/installing-workspace-service-and-user-resource.md)). Only deploy menually for development/testing purposes.
+
 1. Publish the bundles required for this workspace:
 
   Base Workspace:

@@ -66,25 +66,22 @@ while [ "$1" != "" ]; do
     shift # remove the current value for `$1` and use the next
 done
 
-if [[ -n ${tre_url+x} ]]; then
-    if [[ -z ${access_token+x} ]]; then
-        echo -e "WARNING!!! No Azure access token provided. Automatic bundle registration not possible. Use the script output to self-register. See documentation for more details.\n"
-    fi
+if [[ -z ${access_token} ]]; then
+    echo -e "WARNING!!! No Azure access token provided. Automatic bundle registration not possible. Use the script output to self-register. See documentation for more details.\n"
+    usage
 fi
 
-if [[ -n ${access_token+x} ]]; then
-    if [[ -z ${tre_url+x} ]]; then
-        echo -e "No TRE URL provided\n"
-        usage
-    fi
+if [[ -z ${tre_url} ]]; then
+    echo -e "No TRE URL provided\n"
+    usage
 fi
 
-if [[ -z ${acr_name+x} ]]; then
+if [[ -z ${acr_name} ]]; then
     echo -e "No Azure Container Registry name provided\n"
     usage
 fi
 
-if [[ -z ${bundle_type+x} ]]; then
+if [[ -z ${bundle_type} ]]; then
     echo -e "No bundle type provided\n"
     usage
 fi
@@ -106,9 +103,9 @@ if [[ -n  ${access_token+x} ]]; then
 
     if [[ $bundle_type == workspace ]]
     then
-      eval "curl -X 'POST'  $tre_url/api/workspace-templates -H 'accept: application/json'  -H 'Content-Type: application/json'  -H 'Authorization: Bearer $access_token' -d '$payload'  $options"
+      curl -X 'POST'  $tre_url/api/workspace-templates -H 'accept: application/json'  -H 'Content-Type: application/json'  -H "Authorization: Bearer $access_token" -d "$payload"  $options
     else
-      eval "curl -X 'POST'  $tre_url/api/workspace-service-templates -H 'accept: application/json'  -H 'Content-Type: application/json'  -H 'Authorization: Bearer $access_token' -d '$payload'  $options"
+      curl -X 'POST'  $tre_url/api/workspace-service-templates -H 'accept: application/json'  -H 'Content-Type: application/json'  -H "Authorization: Bearer $access_token" -d "$payload"  $options
     fi
     echo -e "\n"
 else

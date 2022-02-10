@@ -13,7 +13,10 @@ IPADDR=$(curl ipecho.net/plain; echo)
 # The storage account is protected by network rules
 # The rules need to be temporarily lifted so that the index.html file, if required, and certificate can be uploaded
 echo "Creating network rule on storage account ${STORAGE_ACCOUNT} for $IPADDR"
-az storage account network-rule add --account-name "${STORAGE_ACCOUNT}" --ip-address $IPADDR
+az storage account network-rule add \
+  --account-name "${STORAGE_ACCOUNT}" \
+  --resource-group "${RESOURCE_GROUP_NAME}" \
+  --ip-address $IPADDR
 echo "Waiting for network rule to take effect"
 sleep 30s
 echo "Created network rule on storage account"
@@ -89,13 +92,13 @@ if [[ -n ${KEYVAULT} ]]; then
         | jq -r '.sid')
 
     az network application-gateway ssl-cert update \
-        --resource-group "${RESOURCE_GROUP}" \
+        --resource-group "${RESOURCE_GROUP_NAME}" \
         --gateway-name "${APPLICATION_GATEWAY}" \
         --name 'cert-primary' \
         --key-vault-secret-id "${sid}"
 else
     az network application-gateway ssl-cert update \
-        --resource-group "${RESOURCE_GROUP}" \
+        --resource-group "${RESOURCE_GROUP_NAME}" \
         --gateway-name "${APPLICATION_GATEWAY}" \
         --name 'letsencrypt' \
         --cert-file "${CERT_DIR}/aci.pfx" \
@@ -103,5 +106,8 @@ else
 fi
 
 echo "Removing network rule on storage account"
-az storage account network-rule remove --account-name ${STORAGE_ACCOUNT} --ip-address ${IPADDR}
+az storage account network-rule remove \
+  --account-name ${STORAGE_ACCOUNT} \
+  --resource-group "${RESOURCE_GROUP_NAME}" \
+  --ip-address ${IPADDR}
 echo "Removed network rule on storage account"

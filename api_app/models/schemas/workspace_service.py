@@ -9,16 +9,13 @@ from models.domain.workspace_service import WorkspaceService
 def get_sample_workspace_service(workspace_id: str, workspace_service_id: str) -> dict:
     return {
         "id": workspace_service_id,
+        "isActive": True,
         "workspaceId": workspace_id,
         "templateName": "guacamole",
         "templateVersion": "0.1.0",
         "properties": {
             "display_name": "my workspace service",
             "description": "some description",
-        },
-        "deployment": {
-            "status": "not_deployed",
-            "message": "This resource is not yet deployed"
         },
         "resourceType": ResourceType.WorkspaceService
     }
@@ -61,17 +58,6 @@ class WorkspaceServiceInCreate(BaseModel):
                     "display_name": "my workspace service",
                     "description": "some description",
                 }
-            }
-        }
-
-
-class WorkspaceServiceIdInResponse(BaseModel):
-    workspaceServiceId: str
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "workspaceServiceId": "49a7445c-aae6-41ec-a539-30dfa90ab1ae",
             }
         }
 

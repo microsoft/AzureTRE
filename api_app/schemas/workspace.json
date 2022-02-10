@@ -6,7 +6,8 @@
   "description": "These parameters are required for all workspaces",
   "required": [
       "display_name",
-      "description"
+      "description",
+      "address_space_size"
   ],
   "properties": {
       "display_name": {
@@ -19,10 +20,21 @@
           "title": "Description of the workspace",
           "description": "Description of the workspace"
       },
+      "address_space_size": {
+        "type": "string",
+        "title": "Address space size",
+        "description": "Network address size (small, medium, large or custom) to be used by the workspace",
+        "enum": [
+          "small",
+          "medium",
+          "large",
+          "custom"
+        ]
+      },
       "address_space": {
           "type": "string",
           "title": "Address space",
-          "description": "Network address space to be used by the workspace"
+          "description": "Network address space to be used by the workspace if address_space_size is custom"
       },
       "enabled": {
           "type": "boolean",

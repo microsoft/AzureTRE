@@ -27,6 +27,9 @@ inputs:
     ACTIONS_ACR_PASSWORD:
       description: "The Azure Container registry password for the devcontainer."
       required: true
+    ACTIONS_DEVCONTAINER_TAG:
+      description: "The container label to use when running the command."
+      required: true
     ARM_TENANT_ID:
       description: "Azure Tenant Id."
       required: true
@@ -93,6 +96,11 @@ inputs:
     BUNDLE_TYPE:
       description: "The Bundle type (workspace / Workspace-service / User Resource)."
       required: false
+    IS_API_SECURED:
+      description: "Indicates if the API endpoint has valid TLS certificate and if we validate it during E2E."
+      required: false
+      default: "true"
+
 runs:
   using: composite
   steps:
@@ -135,7 +143,8 @@ runs:
         TF_VAR_aad_tenant_id: "${{ inputs.AUTH_TENANT_ID }}"
         TF_VAR_api_client_id: "${{ inputs.TF_VAR_api_client_id }}"
         TF_VAR_api_client_secret: "${{ inputs.TF_VAR_api_client_secret }}"
-        TF_VAR_acr_name: "${{ inputs.ACR_NAME }}"
+        TF_VAR_acr_name: ${{ inputs.ACR_NAME }}
+        IS_API_SECURED: ${{ inputs.IS_API_SECURED }}
       run: |
         docker run --rm --mount \
           "type=bind,src=${{ github.workspace }},dst=/workspaces/tre" \
@@ -173,5 +182,7 @@ runs:
           -e TF_VAR_tre_id \
           -e TRE_URL \
           -e TEST_WORKSPACE_APP_ID \
-          '${{ inputs.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest' \
+          -e IS_API_SECURED \
+          -e TF_VAR_ci_git_ref="${{ github.ref }}" \
+          '${{ inputs.ACTIONS_ACR_NAME }}.azurecr.io/tredev:${{ inputs.ACTIONS_DEVCONTAINER_TAG }}' \
         bash -c "${{ inputs.COMMAND }}"

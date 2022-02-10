@@ -177,7 +177,7 @@ terraform.rc
 **/http-client.private.env.json
 
 # vscode
-.vscode/
+.vscode/settings.json
 
 # node
 node_modules
@@ -200,3 +200,4 @@ templates/core/terraform/scripts/validation.txt
 templates/core/terraform/plan
 e2e_tests/pytest_e2e.xml
 e2e_tests/workspace_id.txt
+validation.txt

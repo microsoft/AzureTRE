@@ -1,0 +1,32 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "TRE API",
+      "type": "python",
+      "module": "uvicorn",
+      "request": "launch",
+      "args": [
+        "main:app",
+        "--reload",
+        "--host",
+        "::",
+        "--port",
+        "8000"
+      ],
+      "justMyCode": false,
+      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/templates/core/tre.env",
+      "preLaunchTask": "Copy_env_file_for_debug",
+      "cwd": "${workspaceFolder}/api_app"
+    },
+    {
+      "name": "Python: Debug Tests",
+      "type": "python",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "purpose": ["debug-test"]
+    }
+  ]
+}
