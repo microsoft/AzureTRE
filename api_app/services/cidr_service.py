@@ -1,6 +1,5 @@
 from typing import List
 from ipaddress import IPv4Network, NetmaskValueError, collapse_addresses
-from xmlrpc.client import boolean
 
 from core import config
 
@@ -36,7 +35,7 @@ def get_free_subnets(allocated_subnets: List[str]) -> List[IPv4Network]:
     return free_subnets
 
 
-def is_network_available(allocated_subnets: List[str], requested_CIDR) -> boolean:
+def is_network_available(allocated_subnets: List[str], requested_CIDR) -> bool:
     requested_network = IPv4Network(requested_CIDR)
     for subnet in get_free_subnets(allocated_subnets):
         if requested_network.subnet_of(subnet):
