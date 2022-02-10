@@ -1,13 +1,11 @@
 resource "azurerm_user_assigned_identity" "id" {
-  resource_group_name = var.resource_group_name
-  location            = var.location
+  resource_group_name = azurerm_resource_group.core.name
+  location            = azurerm_resource_group.core.location
 
   name = "id-api-${var.tre_id}"
 
   lifecycle { ignore_changes = [tags] }
 }
-
-data "azurerm_subscription" "current" {}
 
 resource "azurerm_role_assignment" "vm_contributor" {
   scope                = data.azurerm_subscription.current.id
@@ -16,25 +14,25 @@ resource "azurerm_role_assignment" "vm_contributor" {
 }
 
 resource "azurerm_role_assignment" "acrpull_role" {
-  scope                = var.acr_id
+  scope                = data.azurerm_container_registry.mgmt_acr.id
   role_definition_name = "AcrPull"
   principal_id         = azurerm_user_assigned_identity.id.principal_id
 }
 
 resource "azurerm_role_assignment" "servicebus_sender" {
-  scope                = var.servicebus_namespace.id
+  scope                = azurerm_servicebus_namespace.sb.id
   role_definition_name = "Azure Service Bus Data Sender"
   principal_id         = azurerm_user_assigned_identity.id.principal_id
 }
 
 resource "azurerm_role_assignment" "servicebus_receiver" {
-  scope                = var.servicebus_namespace.id
+  scope                = azurerm_servicebus_namespace.sb.id
   role_definition_name = "Azure Service Bus Data Receiver"
   principal_id         = azurerm_user_assigned_identity.id.principal_id
 }
 
 resource "azurerm_role_assignment" "cosmos_contributor" {
-  scope                = var.cosmos_id
+  scope                = azurerm_cosmosdb_account.tre-db-account.id
   role_definition_name = "Contributor"
   principal_id         = azurerm_user_assigned_identity.id.principal_id
 }

@@ -1,7 +1,7 @@
 resource "azurerm_servicebus_namespace" "sb" {
   name                = "sb-${var.tre_id}"
-  location            = var.location
-  resource_group_name = var.resource_group_name
+  location            = azurerm_resource_group.core.location
+  resource_group_name = azurerm_resource_group.core.name
   sku                 = "Premium"
   capacity            = "1"
 
@@ -10,7 +10,7 @@ resource "azurerm_servicebus_namespace" "sb" {
 
 resource "azurerm_servicebus_queue" "workspacequeue" {
   name                = "workspacequeue"
-  resource_group_name = var.resource_group_name
+  resource_group_name = azurerm_resource_group.core.name
   namespace_name      = azurerm_servicebus_namespace.sb.name
 
   enable_partitioning = false
@@ -18,7 +18,7 @@ resource "azurerm_servicebus_queue" "workspacequeue" {
 
 resource "azurerm_servicebus_queue" "service_bus_deployment_status_update_queue" {
   name                = "deploymentstatus"
-  resource_group_name = var.resource_group_name
+  resource_group_name = azurerm_resource_group.core.name
   namespace_name      = azurerm_servicebus_namespace.sb.name
 
   enable_partitioning = false
@@ -26,25 +26,25 @@ resource "azurerm_servicebus_queue" "service_bus_deployment_status_update_queue"
 
 resource "azurerm_private_dns_zone" "servicebus" {
   name                = "privatelink.servicebus.windows.net"
-  resource_group_name = var.resource_group_name
+  resource_group_name = azurerm_resource_group.core.name
 
   lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "servicebuslink" {
   name                  = "servicebuslink"
-  resource_group_name   = var.resource_group_name
+  resource_group_name   = azurerm_resource_group.core.name
   private_dns_zone_name = azurerm_private_dns_zone.servicebus.name
-  virtual_network_id    = var.core_vnet
+  virtual_network_id    = module.network.core_vnet_id
 
   lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_endpoint" "sbpe" {
   name                = "pe-sb-${var.tre_id}"
-  location            = var.location
-  resource_group_name = var.resource_group_name
-  subnet_id           = var.resource_processor_subnet_id
+  location            = azurerm_resource_group.core.location
+  resource_group_name = azurerm_resource_group.core.name
+  subnet_id           = module.network.resource_processor_subnet_id
 
   lifecycle { ignore_changes = [tags] }
 
@@ -65,11 +65,7 @@ resource "azurerm_private_endpoint" "sbpe" {
 # See https://docs.microsoft.com/azure/service-bus-messaging/service-bus-service-endpoints
 resource "azurerm_servicebus_namespace_network_rule_set" "servicebus_network_rule_set" {
   namespace_name      = azurerm_servicebus_namespace.sb.name
-  resource_group_name = var.resource_group_name
+  resource_group_name = azurerm_resource_group.core.name
   default_action      = "Deny"
   ip_rules            = ["0.0.0.0/32"]
-}
-
-output "servicebus_namespace" {
-  value = azurerm_servicebus_namespace.sb
 }
