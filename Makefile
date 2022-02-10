@@ -41,7 +41,7 @@ mgmt-destroy:
 # 1. Image name suffix
 # 2. Version file path
 # 3. Docker file path
-# 4. Docoer context path
+# 4. Docker context path
 # Example: $(call build_image,"api","./api_app/_version.py","api_app/Dockerfile","./api_app/")
 define build_image
 $(call target_title, "Building $(1) Image") \
