@@ -39,7 +39,7 @@ jobs:
       RUN_ACR_NAME: ${{ github.ref == 'refs/heads/main' && secrets.ACR_NAME || format('tre{0}', steps.run-id.outputs.refid) }}
       RUN_STATE_STORAGE_ACCOUNT_NAME: ${{ github.ref == 'refs/heads/main' && secrets.STATE_STORAGE_ACCOUNT_NAME || format('tre{0}mgmt', steps.run-id.outputs.refid) }}
       RUN_MGMT_RESOURCE_GROUP: ${{ github.ref == 'refs/heads/main' && secrets.MGMT_RESOURCE_GROUP || format('rg-tre{0}-mgmt', steps.run-id.outputs.refid) }}
-      DEVCONTAINER_LABEL: ${{ steps.run-id.outputs.dev_container_label }}
+      DEVCONTAINER_TAG: ${{ github.ref == 'refs/heads/main' && 'latest' || steps.run-id.outputs.refid }}
     steps:
       - id: run-id
         name: Get run id
@@ -51,12 +51,6 @@ jobs:
           REFID=$(echo ${GITHUB_REF} | shasum | cut -c1-8)
           echo "using id of: ${REFID} for GitHub Ref: ${GITHUB_REF}"
           echo "::set-output name=refid::${REFID}"
-
-          if [ ${GITHUB_REF} == 'refs/heads/main' ]; then
-            echo "::set-output name=dev_container_label::latest"
-          else
-            echo "::set-output name=dev_container_label::${REFID}"
-          fi
 
   deploy_management:
     name: Deploy Management
@@ -86,14 +80,14 @@ jobs:
           USER_UID=$(id -u)
           USER_GID=$(id -g)
           docker build . \
-            -t 'tredev:${{ needs.prepare.outputs.DEVCONTAINER_LABEL }}' \
+            -t 'tredev:${{ needs.prepare.outputs.DEVCONTAINER_TAG }}' \
             -f '.devcontainer/Dockerfile' \
-            --cache-from ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:${{ needs.prepare.outputs.DEVCONTAINER_LABEL }} \
+            --cache-from ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:${{ needs.prepare.outputs.DEVCONTAINER_TAG }} \
             --cache-from ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
             --build-arg USER_UID="${USER_UID}" \
             --build-arg USER_GID="${USER_GID}"
-          docker image tag tredev:${{ needs.prepare.outputs.DEVCONTAINER_LABEL }} ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:${{ needs.prepare.outputs.DEVCONTAINER_LABEL }}
+          docker image tag tredev:${{ needs.prepare.outputs.DEVCONTAINER_TAG }} ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:${{ needs.prepare.outputs.DEVCONTAINER_TAG }}
 
       - name: Deploy management
         uses: ./.github/actions/devcontainer_run_command
@@ -101,7 +95,7 @@ jobs:
           COMMAND: "make bootstrap && make mgmt-deploy"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          DEVCONTAINER_LABEL: ${{ needs.prepare.outputs.DEVCONTAINER_LABEL }}
+          DEVCONTAINER_TAG: ${{ needs.prepare.outputs.DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
@@ -137,7 +131,7 @@ jobs:
         shell: bash
         run: |
           set -e
-          docker image push ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:${{ needs.prepare.outputs.DEVCONTAINER_LABEL }}
+          docker image push ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:${{ needs.prepare.outputs.DEVCONTAINER_TAG }}
 
   build_docker_images:
     name: Build Docker Images
@@ -163,7 +157,7 @@ jobs:
           COMMAND: "make ${{ matrix.target }}"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          DEVCONTAINER_LABEL: ${{ needs.prepare.outputs.DEVCONTAINER_LABEL }}
+          DEVCONTAINER_TAG: ${{ needs.prepare.outputs.DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
@@ -195,7 +189,7 @@ jobs:
           COMMAND: "make tre-deploy"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          DEVCONTAINER_LABEL: ${{ needs.prepare.outputs.DEVCONTAINER_LABEL }}
+          DEVCONTAINER_TAG: ${{ needs.prepare.outputs.DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
@@ -262,7 +256,7 @@ jobs:
           COMMAND: "make build-and-register-bundle DIR=${{ matrix.BUNDLE_DIR }}"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          DEVCONTAINER_LABEL: ${{ needs.prepare.outputs.DEVCONTAINER_LABEL }}
+          DEVCONTAINER_TAG: ${{ needs.prepare.outputs.DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
@@ -297,7 +291,7 @@ jobs:
           COMMAND: "make test-e2e"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          DEVCONTAINER_LABEL: ${{ needs.prepare.outputs.DEVCONTAINER_LABEL }}
+          DEVCONTAINER_TAG: ${{ needs.prepare.outputs.DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
