@@ -4,6 +4,7 @@ name: Build Validation
 on:
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 # for each ref (branch/pr) run just the most recent,
 # cancel other pending/running ones
