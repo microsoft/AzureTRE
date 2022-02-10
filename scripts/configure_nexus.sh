@@ -24,6 +24,10 @@ while [ "$1" != "" ]; do
         tre_id=$1
         ;;
     esac
+    if [[ -z "$2" ]]; then
+      # if no more args then stop processing
+      break
+    fi
     shift # remove the current value for `$1` and use the next
 done
 
