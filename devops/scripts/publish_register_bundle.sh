@@ -73,9 +73,8 @@ done
 
 if [[ -z ${access_token} ]]; then
     echo -e "WARNING!!! No Azure access token provided. Automatic bundle registration not possible. Use the script output to self-register. See documentation for more details.\n"
-fi
-
-if [[ -z ${tre_url} ]]; then
+elif [[ -z ${tre_url} ]]; then
+    # access_token specified but no URL
     echo -e "No TRE URL provided\n"
     usage
 fi
