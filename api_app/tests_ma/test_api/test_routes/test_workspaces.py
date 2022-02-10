@@ -18,8 +18,11 @@ from models.domain.resource import RequestAction, ResourceType
 from models.domain.user_resource import UserResource
 from models.domain.workspace import Workspace, WorkspaceRole
 from models.domain.workspace_service import WorkspaceService
+from models.schemas.resource import ResourcePatch
 from resources import strings
 from services.authentication import get_current_admin_user, get_current_tre_user_or_tre_admin, get_current_workspace_owner_user, get_current_workspace_owner_or_researcher_user, get_current_workspace_owner_or_researcher_user_or_tre_admin
+from azure.cosmos.exceptions import CosmosAccessConditionFailedError
+
 
 pytestmark = pytest.mark.asyncio
 
@@ -77,7 +80,7 @@ def sample_user_resource_input_data():
 @pytest.fixture
 def disabled_workspace() -> Workspace:
     workspace = sample_workspace(WORKSPACE_ID)
-    workspace.properties["enabled"] = False
+    workspace.isEnabled = False
     return workspace
 
 
@@ -86,6 +89,7 @@ def sample_workspace(workspace_id=WORKSPACE_ID, auth_info: dict = {}):
         id=workspace_id,
         templateName="tre-workspace-base",
         templateVersion="0.1.0",
+        etag="",
         properties={
             "app_id": "12345"
         },
@@ -120,6 +124,7 @@ def sample_deployed_workspace(workspace_id=WORKSPACE_ID, auth_info: dict = {}):
         id=workspace_id,
         templateName="tre-workspace-base",
         templateVersion="0.1.0",
+        etag="",
         properties={},
         resourcePath="test"
     )
@@ -134,6 +139,7 @@ def sample_workspace_service(workspace_service_id=SERVICE_ID, workspace_id=WORKS
         workspaceId=workspace_id,
         templateName="tre-workspace-base",
         templateVersion="0.1.0",
+        etag="",
         properties={},
         resourcePath=f'/workspaces/{workspace_id}/workspace-services/{workspace_service_id}'
     )
@@ -146,6 +152,7 @@ def sample_user_resource_object(user_resource_id=USER_RESOURCE_ID, workspace_id=
         parentWorkspaceServiceId=parent_workspace_service_id,
         templateName="tre-user-resource",
         templateVersion="0.1.0",
+        etag="",
         properties={},
         resourcePath=f'/workspaces/{workspace_id}/workspace-services/{parent_workspace_service_id}/user-resources/{user_resource_id}'
     )
@@ -154,11 +161,11 @@ def sample_user_resource_object(user_resource_id=USER_RESOURCE_ID, workspace_id=
 
 
 def disabled_workspace_service():
-    return WorkspaceService(id=SERVICE_ID, templateName='template name', templateVersion='1.0', properties={"enabled": False}, resourcePath="test")
+    return WorkspaceService(id=SERVICE_ID, templateName='template name', templateVersion='1.0', etag="", isEnabled=False, properties={}, resourcePath="test")
 
 
 def disabled_user_resource():
-    return UserResource(id=USER_RESOURCE_ID, templateName='template name', templateVersion='1.0', properties={"enabled": False}, resourcePath="test")
+    return UserResource(id=USER_RESOURCE_ID, templateName='template name', templateVersion='1.0', etag="", isEnabled=False, properties={}, resourcePath="test")
 
 
 class TestWorkspaceHelpers:
@@ -259,9 +266,9 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
         auth_info_user_in_workspace_researcher_role = {'sp_id': 'ab123', 'roles': {'WorkspaceOwner': 'ab127', 'WorkspaceResearcher': 'ab126'}}
         auth_info_user_not_in_workspace_role = {'sp_id': 'ab127', 'roles': {'WorkspaceOwner': 'ab128', 'WorkspaceResearcher': 'ab129'}}
 
-        valid_ws_1 = sample_workspace(auth_info=auth_info_user_in_workspace_owner_role)
-        valid_ws_2 = sample_workspace(auth_info=auth_info_user_in_workspace_researcher_role)
-        invalid_ws = sample_workspace(auth_info=auth_info_user_not_in_workspace_role)
+        valid_ws_1 = sample_workspace(workspace_id=str(uuid.uuid4()), auth_info=auth_info_user_in_workspace_owner_role)
+        valid_ws_2 = sample_workspace(workspace_id=str(uuid.uuid4()), auth_info=auth_info_user_in_workspace_researcher_role)
+        invalid_ws = sample_workspace(workspace_id=str(uuid.uuid4()), auth_info=auth_info_user_not_in_workspace_role)
 
         get_workspaces_mock.return_value = [valid_ws_1, valid_ws_2, invalid_ws]
         access_service_mock.return_value = [RoleAssignment('ab123', 'ab124'), RoleAssignment('ab123', 'ab126')]
@@ -270,8 +277,8 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
         workspaces_from_response = response.json()["workspaces"]
 
         assert len(workspaces_from_response) == 2
-        assert valid_ws_1 in workspaces_from_response
-        assert valid_ws_2 in workspaces_from_response
+        assert workspaces_from_response[0]["id"] == valid_ws_1.id
+        assert workspaces_from_response[1]["id"] == valid_ws_2.id
 
 
 class TestWorkspaceRoutesThatRequireAdminRights:
@@ -290,9 +297,9 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         auth_info_user_in_workspace_researcher_role = {'sp_id': 'ab123', 'roles': {'WorkspaceOwner': 'ab127', 'WorkspaceResearcher': 'ab126'}}
         auth_info_user_not_in_workspace_role = {'sp_id': 'ab127', 'roles': {'WorkspaceOwner': 'ab128', 'WorkspaceResearcher': 'ab129'}}
 
-        valid_ws_1 = sample_workspace(auth_info=auth_info_user_in_workspace_owner_role)
-        valid_ws_2 = sample_workspace(auth_info=auth_info_user_in_workspace_researcher_role)
-        valid_ws_3 = sample_workspace(auth_info=auth_info_user_not_in_workspace_role)
+        valid_ws_1 = sample_workspace(workspace_id=str(uuid.uuid4()), auth_info=auth_info_user_in_workspace_owner_role)
+        valid_ws_2 = sample_workspace(workspace_id=str(uuid.uuid4()), auth_info=auth_info_user_in_workspace_researcher_role)
+        valid_ws_3 = sample_workspace(workspace_id=str(uuid.uuid4()), auth_info=auth_info_user_not_in_workspace_role)
 
         get_workspaces_mock.return_value = [valid_ws_1, valid_ws_2, valid_ws_3]
 
@@ -300,9 +307,9 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         workspaces_from_response = response.json()["workspaces"]
 
         assert len(workspaces_from_response) == 3
-        assert valid_ws_1 in workspaces_from_response
-        assert valid_ws_2 in workspaces_from_response
-        assert valid_ws_3 in workspaces_from_response
+        assert workspaces_from_response[0]["id"] == valid_ws_1.id
+        assert workspaces_from_response[1]["id"] == valid_ws_2.id
+        assert workspaces_from_response[2]["id"] == valid_ws_3.id
 
     # [GET] /workspaces/{workspace_id}
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
@@ -369,29 +376,55 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     # [PATCH] /workspaces/{workspace_id}
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    @ patch("api.routes.workspaces.WorkspaceRepository.patch_workspace", return_value=None)
+    async def test_patch_workspaces_400_when_etag_not_present(self, patch_workspace_mock, get_workspace_mock, app, client):
+        workspace_patch = {"isEnabled": True}
+
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=WORKSPACE_ID), json=workspace_patch)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.text == strings.ETAG_REQUIRED
+
+    # [PATCH] /workspaces/{workspace_id}
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", side_effect=EntityDoesNotExist)
     async def test_patch_workspaces_returns_404_if_workspace_does_not_exist(self, _, app, client):
-        response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=WORKSPACE_ID), json='{"enabled": true}')
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=WORKSPACE_ID), json='{"isEnabled": true}', headers={"etag": "some-etag-value"})
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     # [PATCH] /workspaces/{workspace_id}
-    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
-    @ patch("api.routes.workspaces.WorkspaceRepository.patch_workspace", return_value=None)
-    async def test_patch_workspaces_patches_workspace(self, patch_workspace_mock, get_workspace_mock, app, client):
-        workspace_to_patch = sample_workspace()
-        get_workspace_mock.return_value = workspace_to_patch
-        workspace_patch = {"enabled": True}
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
+    @ patch("api.routes.workspaces.WorkspaceRepository.patch_resource", return_value=sample_workspace())
+    @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
+    async def test_patch_workspaces_patches_workspace(self, _, patch_resource_mock, __, app, client):
+        workspace_to_modify = sample_workspace()
+        workspace_patch = {"isEnabled": False}
+        etag = "some-etag-value"
 
-        response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=workspace_to_patch.id), json=workspace_patch)
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=WORKSPACE_ID), json=workspace_patch, headers={"etag": etag})
 
-        patch_workspace_mock.assert_called_once_with(workspace_to_patch, workspace_patch)
+        patch_resource_mock.assert_called_once_with(workspace_to_modify, ResourcePatch(isEnabled=False, properties=None), None, etag)
         assert response.status_code == status.HTTP_200_OK
+
+    # [PATCH] /workspaces/{workspace_id}
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
+    @ patch("api.routes.workspaces.WorkspaceRepository.patch_resource", side_effect=CosmosAccessConditionFailedError)
+    @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
+    async def test_patch_workspace_returns_409_if_bad_etag(self, _, patch_workspace_mock, __, app, client):
+        workspace_to_modify = sample_workspace()
+        workspace_patch = {"isEnabled": True}
+        etag = "some-etag-value"
+
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=WORKSPACE_ID), json=workspace_patch, headers={"etag": etag})
+
+        patch_workspace_mock.assert_called_once_with(workspace_to_modify, ResourcePatch(isEnabled=True, properties=None), None, etag)
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.text == strings.ETAG_CONFLICT
 
     # [DELETE] /workspaces/{workspace_id}
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     async def test_delete_workspace_returns_400_if_workspace_is_enabled(self, get_workspace_mock, app, client):
         workspace = sample_workspace()
-        workspace.properties["enabled"] = True
+        workspace.isEnabled = True
         get_workspace_mock.return_value = workspace
 
         response = await client.delete(app.url_path_for(strings.API_DELETE_WORKSPACE, workspace_id=WORKSPACE_ID))
@@ -544,19 +577,20 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         response = await client.get(app.url_path_for(strings.API_GET_MY_USER_RESOURCES, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID))
 
         assert response.status_code == status.HTTP_200_OK
-        assert response.json()["userResources"] == user_resources
+        assert response.json()["userResources"][0]["id"] == user_resources[0].id
+        assert response.json()["userResources"][1]["id"] == user_resources[1].id
 
     # GET /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @ patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id")
     async def test_get_user_resource_returns_a_user_resource_if_found(self, get_user_resource_mock, _, app, client):
-        user_resource = sample_user_resource_object()
+        user_resource = sample_user_resource_object(user_resource_id=str(uuid.uuid4()))
         get_user_resource_mock.return_value = user_resource
 
         response = await client.get(app.url_path_for(strings.API_GET_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID))
 
         assert response.status_code == status.HTTP_200_OK
-        assert response.json()["userResource"] == user_resource
+        assert response.json()["userResource"]["id"] == user_resource.id
 
     # [PATCH] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
     @ patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id", side_effect=EntityDoesNotExist)
@@ -590,18 +624,19 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     # [PATCH] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
+    @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=sample_workspace_service())
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
-    @ patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id")
-    @ patch("api.routes.workspaces.UserResourceRepository.patch_user_resource", return_value=None)
-    async def test_patch_user_resources_patches_user_resource(self, patch_user_resource_mock, get_user_resource_mock, _, __, app, client):
+    @ patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id", return_value=sample_user_resource_object())
+    @ patch("api.routes.workspaces.UserResourceRepository.patch_resource", return_value=sample_user_resource_object())
+    async def test_patch_user_resources_patches_user_resource(self, patch_resource_mock, _, __, ___, ____, app, client):
         user_resource_to_patch = sample_user_resource_object()
-        get_user_resource_mock.return_value = user_resource_to_patch
-        user_resource_service_patch = {"enabled": True}
+        user_resource_service_patch = {"isEnabled": False}
+        etag = "some-etag-value"
 
-        response = await client.patch(app.url_path_for(strings.API_UPDATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID), json=user_resource_service_patch)
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID), json=user_resource_service_patch, headers={"etag": etag})
 
-        patch_user_resource_mock.assert_called_once_with(user_resource_to_patch, user_resource_service_patch)
+        patch_resource_mock.assert_called_once_with(user_resource_to_patch, ResourcePatch(isEnabled=False, properties=None), None, etag)
         assert response.status_code == status.HTTP_200_OK
 
 
@@ -650,7 +685,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
             app.url_path_for(strings.API_GET_ALL_WORKSPACE_SERVICES, workspace_id=WORKSPACE_ID))
 
         assert response.status_code == status.HTTP_200_OK
-        assert response.json()["workspaceServices"] == workspace_services
+        assert response.json()["workspaceServices"][0]["id"] == sample_workspace_service().id
 
     # [GET] /workspaces/{workspace_id}/workspace-services/{service_id}
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
@@ -671,7 +706,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
     async def test_get_workspace_service_returns_workspace_service_result(self, _, get_workspace_service_mock,
                                                                           app, client):
-        workspace_service = sample_workspace_service()
+        workspace_service = sample_workspace_service(workspace_service_id=str(uuid.uuid4()))
         get_workspace_service_mock.return_value = workspace_service
 
         response = await client.get(
@@ -679,7 +714,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
                              service_id=SERVICE_ID))
 
         assert response.status_code == status.HTTP_200_OK
-        assert response.json()["workspaceService"] == workspace_service
+        assert response.json()["workspaceService"]["id"] == workspace_service.id
 
     # [GET] /workspaces/{workspace_id}/workspace-services/{service_id}
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id",
@@ -706,6 +741,18 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     # [PATCH] /workspaces/{workspace_id}/services/{service_id}
+    @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=sample_workspace_service())
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
+    @ patch("api.routes.workspaces.WorkspaceServiceRepository.patch_workspace_service", side_effect=CosmosAccessConditionFailedError)
+    async def test_patch_workspace_service_returns_409_if_bad_etag(self, _, __, ___, app, client):
+        workspace_service_patch = {"isEnabled": True}
+        etag = "some-bad-etag-value"
+
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID), json=workspace_service_patch, headers={"etag": etag})
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.text == strings.ETAG_CONFLICT
+
+    # [PATCH] /workspaces/{workspace_id}/services/{service_id}
     @pytest.mark.parametrize('workspace_id, workspace_service_id', [("933ad738-7265-4b5f-9eae-a1a62928772e", "IAmNotEvenAGUID!"), ("IAmNotEvenAGUID!", "933ad738-7265-4b5f-9eae-a1a62928772e")])
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
@@ -718,20 +765,19 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     # [PATCH] /workspaces/{workspace_id}/services/{service_id}
-    @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
+    @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
+    @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=sample_workspace_service())
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
-    @ patch("api.routes.workspaces.WorkspaceServiceRepository.patch_workspace_service", return_value=None)
-    async def test_patch_workspace_service_patches_workspace_service(self, patch_workspace_service_mock, get_workspace_mock, get_workspace_service_mock, app, client):
+    @ patch("api.routes.workspaces.WorkspaceServiceRepository.patch_resource", return_value=sample_workspace_service())
+    async def test_patch_workspace_service_patches_workspace_service(self, patch_resource_mock, get_workspace_mock, __, ___, app, client):
         auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'roles': {'WorkspaceOwner': 'ab124', 'WorkspaceResearcher': 'ab125'}}
-
         workspace_service_to_patch = sample_workspace_service()
-        get_workspace_service_mock.return_value = workspace_service_to_patch
         get_workspace_mock.return_value = sample_deployed_workspace(WORKSPACE_ID, auth_info_user_in_workspace_owner_role)
+        etag = "some-etag-value"
+        workspace_service_patch = {"isEnabled": False}
 
-        workspace_service_patch = {"enabled": True}
-
-        response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID), json=workspace_service_patch)
-        patch_workspace_service_mock.assert_called_once_with(workspace_service_to_patch, workspace_service_patch)
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID), json=workspace_service_patch, headers={"etag": etag})
+        patch_resource_mock.assert_called_once_with(workspace_service_to_patch, ResourcePatch(isEnabled=False, properties=None), None, etag)
 
         assert response.status_code == status.HTTP_200_OK
 
@@ -753,9 +799,9 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
         response = await client.get(app.url_path_for(strings.API_GET_MY_USER_RESOURCES, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID))
         assert response.status_code == status.HTTP_200_OK
         actual_returned_resources = response.json()["userResources"]
-        assert my_user_resource1 in actual_returned_resources
-        assert my_user_resource2 in actual_returned_resources
-        assert not_my_user_resource not in actual_returned_resources
+        assert len(actual_returned_resources) == 2
+        assert actual_returned_resources[0]["id"] == my_user_resource1.id
+        assert actual_returned_resources[1]["id"] == my_user_resource2.id
 
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @ patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id", side_effect=EntityDoesNotExist)
@@ -835,6 +881,20 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
         assert response.text == strings.WORKSPACE_SERVICE_IS_NOT_DEPLOYED
 
     # [PATCH] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
+    @ patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")
+    @ patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id", return_value=sample_user_resource_object())
+    @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=sample_workspace_service())
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
+    @ patch("api.dependencies.workspaces.UserResourceRepository.patch_user_resource", side_effect=CosmosAccessConditionFailedError)
+    async def test_patch_user_resource_returns_409_if_bad_etag(self, _, __, ___, ____, _____, app, client):
+        user_resource_patch = {"isEnabled": True}
+        etag = "some-bad-etag-value"
+
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID), json=user_resource_patch, headers={"etag": etag})
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.text == strings.ETAG_CONFLICT
+
+    # [PATCH] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
     @ patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id", side_effect=EntityDoesNotExist)
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=sample_workspace_service())
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
@@ -866,19 +926,20 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     # [PATCH] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
+    @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
     @ patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=sample_workspace_service())
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
-    @ patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id")
-    @ patch("api.routes.workspaces.UserResourceRepository.patch_user_resource", return_value=None)
-    async def test_patch_user_resources_patches_user_resource(self, patch_user_resource_mock, get_user_resource_mock, _, __, ___, app, client):
+    @ patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id", return_value=sample_user_resource_object())
+    @ patch("api.routes.workspaces.UserResourceRepository.patch_resource", return_value=sample_user_resource_object())
+    async def test_patch_user_resources_patches_user_resource(self, patch_resource_mock, _, __, ___, ____, _____, app, client):
         user_resource_to_patch = sample_user_resource_object()
-        get_user_resource_mock.return_value = user_resource_to_patch
-        user_resource_service_patch = {"enabled": True}
+        user_resource_service_patch = {"isEnabled": False}
+        etag = "some-etag-value"
 
-        response = await client.patch(app.url_path_for(strings.API_UPDATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID), json=user_resource_service_patch)
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID), json=user_resource_service_patch, headers={"etag": etag})
 
-        patch_user_resource_mock.assert_called_once_with(user_resource_to_patch, user_resource_service_patch)
+        patch_resource_mock.assert_called_once_with(user_resource_to_patch, ResourcePatch(isEnabled=False, properties=None), None, etag)
         assert response.status_code == status.HTTP_200_OK
 
     # [DELETE] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources
