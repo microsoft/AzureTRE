@@ -175,9 +175,10 @@ terraform-destroy:
 	&& . ./devops/scripts/load_terraform_env.sh ${DIR}/.env \
 	&& cd ${DIR}/terraform/ && ./destroy.sh
 
-terraform-format:
-	$(call target_title, "Linting Terraform") \
-	&& cd ./templates && terraform fmt -check -recursive -diff
+lint:
+	$(call target_title, "Linting Python and Terraform") && \
+	flake8 && \
+	cd ./templates && terraform fmt -check -recursive -diff
 
 porter-build:
 	$(call target_title, "Building ${DIR} bundle") \

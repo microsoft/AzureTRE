@@ -69,8 +69,12 @@ RUN wget -O /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/
 
 USER $USERNAME
 
-# Save command line history 
+# Save command line history
 RUN echo "export HISTFILE=$HOME/commandhistory/.bash_history" >> "$HOME/.bashrc" \
     && echo "export PROMPT_COMMAND='history -a'" >> "$HOME/.bashrc" \
     && mkdir -p $HOME/commandhistory \
     && touch $HOME/commandhistory/.bash_history
+
+# Install github-cli
+COPY ./.devcontainer/scripts/gh.sh /tmp/
+RUN /tmp/gh.sh
