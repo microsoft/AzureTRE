@@ -96,7 +96,7 @@ def create_updated_resource_document(resource: dict, message: DeploymentStatusUp
 
 
 def update_status_in_database(resource_repo: ResourceRepository, operations_repo: OperationRepository, message: DeploymentStatusUpdateMessage):
-    """Updates the operation and resource documentd
+    """Updates the operation and resource document id
 
     Args:
         operations_repo ([OperationRepository]): Handle to the operations repository
