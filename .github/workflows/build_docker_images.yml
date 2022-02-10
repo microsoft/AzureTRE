@@ -4,9 +4,6 @@ name: Docker build
 on:
   pull_request:
     branches: [main]
-  pull_request_target:
-    types: [labeled]
-    branches: [main]
   workflow_dispatch:
 
 # for each ref (branch/pr) run just the most recent, cancel
