@@ -83,4 +83,4 @@ jobs:
           COMMAND: "pytest --ignore=e2e_tests"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
+          ACTIONS_DEVCONTAINER_TAG: 'latest'
