@@ -58,6 +58,8 @@ async def post_resource(payload, endpoint, resource_type, token, admin_token, ve
 
         response = await client.post(full_endpoint, headers=auth_headers, json=payload)
 
+        print(f'RESPONSE: {response}')
+        print(f'RESPONSE status code: {response.status_code}')
         assert (response.status_code == status.HTTP_202_ACCEPTED), f"Request for resource {payload['templateName']} creation failed"
 
         resource_path = response.json()["operation"]["resourcePath"]
