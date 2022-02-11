@@ -85,15 +85,16 @@ jobs:
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
           ACTIONS_DEVCONTAINER_TAG: 'latest'
 
-      - name: Publish Unit Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v1
-        if: always()
-        with:
-          files: test-results/**/*.xml
-
       - name: Upload Unit Test Results
         if: always()
         uses: actions/upload-artifact@v2
         with:
-          name: test-results
-          path: test-results
+          name: Unit Test results
+          path: ./pytest_unit.xml
+
+      - name: Publish Unit Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        if: always()
+        with:
+          files: ./pytest_unit.xml
+
