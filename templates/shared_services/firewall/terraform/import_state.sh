@@ -2,9 +2,15 @@
 
 set -x
 
-# TODO: showUsage
-function usage() {
+function showUsage() {
     cat <<USAGE
+
+    ATTENTION:
+    The purpose of this script is to achieve backwards compatibility for deployment of TRE,
+    as some of the resources that were originally part of templates/core/terraform are now moved into their own Porter bundles.
+    (See https://github.com/microsoft/AzureTRE/issues/1177)
+    The intent is to remove the script once the clients have migrated.
+    General use of Terraform state manipulation is not recommended.
 
     Usage: $0 [-g | --mgmt-resource-group-name ]  [-s | --mgmt-storage-account-name] [-n | --state-container-name] [-k | --key]
 
@@ -12,62 +18,60 @@ function usage() {
         -g, --mgmt-resource-group-name      Management resource group name
         -s, --mgmt-storage-account-name     Management storage account name
         -n, --state-container-name          State container name
-        -k, --key                           Key
+        -k, --key                           Terraform State Key
 USAGE
     exit 1
 }
 
-# if no arguments are provided, return usage function
+# if no arguments are provided, return showUsage function
 if [ $# -eq 0 ]; then
-    usage # run usage function
+    showUsage # run showUsage function
 fi
-
-current="false"
 
 while [ "$1" != "" ]; do
     case $1 in
     -g | --mgmt-resource-group-name)
         shift
-        mgmt_resource_group_name=$1
+        MGMT_RESOURCE_GROUP_NAME=$1
         ;;
     -s | --mgmt-storage-account-name)
         shift
-        mgmt_storage_account_name=$1
+        MGMT_STORAGE_ACCOUNT_NAME=$1
         ;;
     -n | --state-container-name)
         shift
-        container_name=$1
+        CONTAINER_NAME=$1
         ;;
     -k | --key)
         shift
-        key=$1
+        KEY=$1
         ;;
     *)
-        usage
+       showUsage
         ;;
     esac
     shift # remove the current value for `$1` and use the next
 done
 
 
-if [[ -z ${mgmt_resource_group_name+x} ]]; then
+if [[ -z ${MGMT_RESOURCE_GROUP_NAME+x} ]]; then
     echo -e "No terraform state resource group name provided\n"
-    usage
+   showUsage
 fi
 
-if [[ -z ${mgmt_storage_account_name+x} ]]; then
+if [[ -z ${MGMT_STORAGE_ACCOUNT_NAME+x} ]]; then
     echo -e "No terraform state storage account name provided\n"
-    usage
+   showUsage
 fi
 
-if [[ -z ${container_name+x} ]]; then
+if [[ -z ${CONTAINER_NAME+x} ]]; then
     echo -e "No terraform state container name provided\n"
-    usage
+   showUsage
 fi
 
-if [[ -z ${key+x} ]]; then
-    echo -e "No key provided\n"
-    usage
+if [[ -z ${KEY+x} ]]; then
+    echo -e "No KEY provided\n"
+   showUsage
 fi
 
 RESOURCE_GROUP_ID="rg-${TRE_ID}"
@@ -75,10 +79,10 @@ RESOURCE_GROUP_ID="rg-${TRE_ID}"
 # Initialsie state for Terraform, login to az to look up resources
 pushd /cnab/app/terraform
 terraform init -input=false -backend=true -reconfigure -upgrade \
-    -backend-config="resource_group_name=${mgmt_resource_group_name}" \
-    -backend-config="storage_account_name=${mgmt_storage_account_name}" \
-    -backend-config="container_name=${container_name}" \
-    -backend-config="key=${key}"
+    -backend-config="resource_group_name=${MGMT_RESOURCE_GROUP_NAME}" \
+    -backend-config="storage_account_name=${MGMT_STORAGE_ACCOUNT_NAME}" \
+    -backend-config="container_name=${CONTAINER_NAME}" \
+    -backend-config="key=${KEY}"
 az login --service-principal --username ${ARM_CLIENT_ID} --password ${ARM_CLIENT_SECRET} --tenant ${ARM_TENANT_ID}
 
 # Import a resource if it exists in Azure but doesn't exist in Terraform

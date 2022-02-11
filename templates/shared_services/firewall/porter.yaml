@@ -41,8 +41,11 @@ install:
   - exec:
       description: "Import resources first if they exist to achieve backwards compatibility"
       command: ./terraform/import_state.sh
-      arguments:  # TODO: use long form
-        - "-g {{ bundle.parameters.tfstate_resource_group_name }} -s {{ bundle.parameters.tfstate_storage_account_name }} -n {{ bundle.parameters.tfstate_container_name }} -k tre-shared-service-firewall"
+      arguments:
+        - "--mgmt-resource-group-name {{ bundle.parameters.tfstate_resource_group_name }}"
+        - "--mgmt-storage-account-name {{ bundle.parameters.tfstate_storage_account_name }}"
+        - "--state-container-name {{ bundle.parameters.tfstate_container_name }}"
+        - "--key tre-shared-service-firewall"
   - terraform:
       description: "Deploy shared service"
       input: false
