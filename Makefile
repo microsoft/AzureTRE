@@ -16,7 +16,8 @@ build-and-push-api: build-api-image push-api-image
 build-and-push-resource-processor: build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image
 build-and-push-gitea: build-gitea-image push-gitea-image
 build-and-push-guacamole: build-guacamole-image push-guacamole-image
-tre-deploy: deploy-core deploy-shared-services
+tre-deploy: prepare-tf-state deploy-core deploy-shared-services
+# tre-deploy: deploy-core deploy-shared-services
 deploy-shared-services: firewall-install gitea-install nexus-install
 
 bootstrap:
@@ -108,6 +109,17 @@ push-guacamole-image:
 	&& az acr login -n $${ACR_NAME} \
 	&& docker push "${FULL_IMAGE_NAME_PREFIX}/guac-server:$${__version__}"
 
+# # This target is for a graceful migration of Firewall
+# # from terraform state in Core to Shared Services.
+# # See https://github.com/microsoft/AzureTRE/issues/1177
+prepare-tf-state:
+	$(call target_title, "Preparing terraform state") \
+	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
+	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
+	&& cd ./templates/shared_services/firewall/terraform/ && ./remove_state.sh
+
 deploy-core:
 	$(call target_title, "Deploying TRE") \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
@@ -149,7 +161,7 @@ firewall-install:
 	&& make porter-build DIR=./templates/shared_services/firewall \
 	&& make porter-install DIR=./templates/shared_services/firewall
 
-firewall-install:
+firewall-uninstall:
 	echo -e "\n\e[34m»»» 🧩 \e[96mUninstalling Firewall\e[0m..." \
 	&& . ./devops/scripts/load_env.sh ./templates/shared_services/firewall/.env \
 	&& . ./templates/shared_services/check_sp.sh \
@@ -175,7 +187,7 @@ nexus-install:
 	&& make porter-build DIR=./templates/shared_services/sonatype-nexus \
 	&& make porter-install DIR=./templates/shared_services/sonatype-nexus
 
-nexus-install:
+nexus-uninstall:
 	echo -e "\n\e[34m»»» 🧩 \e[96mUninstalling Nexus\e[0m..." \
 	&& . ./devops/scripts/load_env.sh ./templates/shared_services/sonatype-nexus/.env \
 	&& . ./templates/shared_services/check_sp.sh \
