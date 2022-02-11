@@ -8,13 +8,7 @@ def generate_new_cidr(allocated_subnets: List[str], required_cidr_block_type: in
     if required_cidr_block_type >= 32 or required_cidr_block_type < 8:
         raise NetmaskValueError("Invalid netmask for this operation.")
 
-    core_network = IPv4Network(config.CORE_ADDRESS_SPACE)
-    allocation_network = IPv4Network(config.TRE_ADDRESS_SPACE)
-
-    free_subnets = remove_subnet([allocation_network], core_network)
-
-    for subnet_string in allocated_subnets:
-        free_subnets = remove_subnet(free_subnets, IPv4Network(subnet_string))
+    free_subnets = get_free_subnets(allocated_subnets)
 
     # compare to the required subnet size and work with what is large enough
     free_subnets = [x for x in free_subnets if x.prefixlen <= required_cidr_block_type]
@@ -27,6 +21,28 @@ def generate_new_cidr(allocated_subnets: List[str], required_cidr_block_type: in
     allocation_subnet = free_subnets[0]
     new_subnet = list(allocation_subnet.subnets(new_prefix=required_cidr_block_type))
     return str(new_subnet[0])
+
+
+def get_free_subnets(allocated_subnets: List[str]) -> List[IPv4Network]:
+    core_network = IPv4Network(config.CORE_ADDRESS_SPACE)
+    allocation_network = IPv4Network(config.TRE_ADDRESS_SPACE)
+
+    free_subnets = remove_subnet([allocation_network], core_network)
+
+    for subnet_string in allocated_subnets:
+        free_subnets = remove_subnet(free_subnets, IPv4Network(subnet_string))
+
+    return free_subnets
+
+
+def is_network_available(allocated_subnets: List[str], requested_CIDR) -> bool:
+    requested_network = IPv4Network(requested_CIDR)
+    for subnet in get_free_subnets(allocated_subnets):
+        if requested_network.subnet_of(subnet):
+            return True
+
+    # The requested network does not fit in the network
+    return False
 
 
 def remove_subnet(subnets: List[IPv4Network], exclude: IPv4Network) -> List[IPv4Network]:
