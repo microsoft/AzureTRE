@@ -80,7 +80,20 @@ jobs:
       - name: Run Unit Tests
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: "pytest --ignore=e2e_tests"
+          COMMAND: "pytest --ignore=e2e_tests --junit-xml pytest_unit.xml"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
           ACTIONS_DEVCONTAINER_TAG: 'latest'
+
+      - name: Publish Unit Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        if: always()
+        with:
+          files: test-results/**/*.xml
+
+      - name: Upload Unit Test Results
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: test-results
+          path: test-results
