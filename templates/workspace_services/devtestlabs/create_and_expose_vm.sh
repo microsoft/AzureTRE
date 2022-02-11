@@ -44,6 +44,7 @@ while [ "$1" != "" ]; do
         image_name=$1
         ;;
     *)
+        echo "Unexpected argument: '$1'"
         usage
         ;;
     esac
