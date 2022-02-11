@@ -55,6 +55,7 @@ while [ "$1" != "" ]; do
         insecure=1
         ;;
     *)
+        echo "Unexpected argument: '$1'"
         usage
         ;;
     esac
