@@ -62,15 +62,15 @@ Now that we have published and registered both workspace service and user resour
 
 1. Enter the workspace_id in the `workspace_id` field.
 
-1. Paste the following payload json into the `Request body` field, update `<your_workspace_app_reg_client_id>`, then click `Execute`. Review the server response.
+1. Paste the following payload json into the `Request body` field, update `<WORKSPACE_API_CLIENT_ID>` with the client ID of the app registration for the base workspace you created previously, then click `Execute`. Review the server response.
 
 ```json
 {
   "templateName":"tre-service-guacamole",
   "properties": {
     "display_name":"Virtual Desktop",
-    "description":"Create virtual desktops for runnign research workloads",
-    "openid_client_id":"<your_workspace_app_reg_client_id>",
+    "description":"Create virtual desktops for running research workloads",
+    "openid_client_id":"<WORKSPACE_API_CLIENT_ID>",
     "is_exposed_externally":true,
     "guac_disable_copy":true,
     "guac_disable_paste":true
