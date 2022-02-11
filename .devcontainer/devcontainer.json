@@ -22,7 +22,6 @@
 		// Mount docker socket for docker builds
 		"type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock"
 	],
-	"workspaceFolder": "/workspaces/AzureTRE",
 	"remoteUser": "vscode",
 	// Set *default* container specific settings.json values on container create.
 	"settings": {

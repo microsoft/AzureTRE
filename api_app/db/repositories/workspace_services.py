@@ -3,11 +3,13 @@ from typing import List
 
 from azure.cosmos import CosmosClient
 from pydantic import parse_obj_as
+from db.repositories.resource_templates import ResourceTemplateRepository
 
 from db.repositories.resources import ResourceRepository, IS_ACTIVE_CLAUSE
 from db.repositories.operations import OperationRepository
 from models.domain.workspace_service import WorkspaceService
-from models.schemas.workspace_service import WorkspaceServiceInCreate, WorkspaceServicePatchEnabled
+from models.schemas.resource import ResourcePatch
+from models.schemas.workspace_service import WorkspaceServiceInCreate
 from db.errors import ResourceIsNotDeployed, EntityDoesNotExist
 from models.domain.resource import ResourceType
 
@@ -64,11 +66,13 @@ class WorkspaceServiceRepository(ResourceRepository):
             templateName=workspace_service_input.templateName,
             templateVersion=template_version,
             properties=resource_spec_parameters,
-            resourcePath=f'/workspaces/{workspace_id}/workspace-services/{full_workspace_service_id}'
+            resourcePath=f'/workspaces/{workspace_id}/workspace-services/{full_workspace_service_id}',
+            etag=''
         )
 
         return workspace_service
 
-    def patch_workspace_service(self, workspace_service: WorkspaceService, workspace_service_patch: WorkspaceServicePatchEnabled):
-        workspace_service.properties["enabled"] = workspace_service_patch.enabled
-        self.update_item(workspace_service)
+    def patch_workspace_service(self, workspace_service: WorkspaceService, workspace_service_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository) -> WorkspaceService:
+        # get workspace service template
+        workspace_service_template = resource_template_repo.get_template_by_name_and_version(workspace_service.templateName, workspace_service.templateVersion, ResourceType.WorkspaceService)
+        return self.patch_resource(workspace_service, workspace_service_patch, workspace_service_template, etag)

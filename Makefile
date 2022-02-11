@@ -175,9 +175,10 @@ terraform-destroy:
 	&& . ./devops/scripts/load_terraform_env.sh ${DIR}/.env \
 	&& cd ${DIR}/terraform/ && ./destroy.sh
 
-terraform-format:
-	$(call target_title, "Linting Terraform") \
-	&& cd ./templates && terraform fmt -check -recursive -diff
+lint:
+	$(call target_title, "Linting Python and Terraform") && \
+	flake8 && \
+	cd ./templates && terraform fmt -check -recursive -diff
 
 porter-build:
 	$(call target_title, "Building ${DIR} bundle") \
@@ -221,25 +222,28 @@ porter-publish:
 	&& porter publish --registry "$${ACR_NAME}.azurecr.io" --debug
 
 register-bundle:
+	@# NOTE: ACR_NAME below comes from the env files, so needs the double '$$'. Others are set on command execution and don't
 	$(call target_title, "Publishing ${DIR} bundle") \
 	&& ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& cd ${DIR} \
-	&& ${ROOTPATH}/devops/scripts/publish_register_bundle.sh --acr-name ${ACR_NAME} --bundle-type ${BUNDLE_TYPE} --current --insecure --tre_url ${TRE_URL} --access-token ${TOKEN}
+	&& ${ROOTPATH}/devops/scripts/publish_register_bundle.sh --acr-name "$${ACR_NAME}" --bundle-type "${BUNDLE_TYPE}" --current --insecure --tre_url "${TRE_URL}" --access-token "${TOKEN}"
 
 build-and-register-bundle: porter-build
+	@# NOTE: ACR_NAME below comes from the env files, so needs the double '$$'. Others are set on command execution and don't
 	$(call target_title, "Building and Publishing ${DIR} bundle") \
 	&& ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& cd ${DIR} \
-	&& ${ROOTPATH}/devops/scripts/build_and_register_bundle.sh --acr-name ${ACR_NAME} --bundle-type ${BUNDLE_TYPE} --current --insecure --tre_url ${TRE_URL}
+	&& ${ROOTPATH}/devops/scripts/build_and_register_bundle.sh --acr-name "$${ACR_NAME}" --bundle-type "${BUNDLE_TYPE}" --current --insecure --tre_url "${TRE_URL}"
 
 register-bundle-payload:
+	@# NOTE: ACR_NAME below comes from the env files, so needs the double '$$'. Others are set on command execution and don't
 	$(call target_title, "Publishing ${DIR} bundle") \
 	&& ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& cd ${DIR} \
-	&& ${ROOTPATH}/devops/scripts/publish_register_bundle.sh --acr-name $${ACR_NAME} --bundle-type ${BUNDLE_TYPE} --current
+	&& ${ROOTPATH}/devops/scripts/publish_register_bundle.sh --acr-name "$${ACR_NAME}" --bundle-type "${BUNDLE_TYPE}" --current
 
 static-web-upload:
 	$(call target_title, "Uploading to static website") \
@@ -274,4 +278,3 @@ register-aad-workspace:
 	&& pushd ./templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ./devops/scripts/load_env.sh ./templates/core/tre.env \
 	&& . ./devops/scripts/register-aad-workspace.sh
-

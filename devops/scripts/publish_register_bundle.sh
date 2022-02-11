@@ -23,6 +23,7 @@ if [ $# -eq 0 ]; then
 fi
 
 current="false"
+access_token=
 
 while [ "$1" != "" ]; do
     case $1 in
@@ -60,20 +61,25 @@ while [ "$1" != "" ]; do
         access_token=$1
         ;;
     *)
+        echo "Unexpected argument: '$1'"
         usage
         ;;
     esac
+    if [[ -z "$2" ]]; then
+      # if no more args then stop processing
+      break
+    fi
     shift # remove the current value for `$1` and use the next
 done
 
 if [[ -z ${access_token} ]]; then
     echo -e "WARNING!!! No Azure access token provided. Automatic bundle registration not possible. Use the script output to self-register. See documentation for more details.\n"
-    usage
-fi
-
-if [[ -z ${tre_url} ]]; then
+else
+  if [[ -z ${tre_url} ]]; then
+    # access_token specified but no URL
     echo -e "No TRE URL provided\n"
     usage
+  fi
 fi
 
 if [[ -z ${acr_name} ]]; then
@@ -94,7 +100,7 @@ explain_json=$(porter explain -o json)
 
 payload=$(echo $explain_json | jq --argfile json_schema template_schema.json --arg current "$current" --arg bundle_type "$bundle_type" '. + {"json_schema": $json_schema, "resourceType": $bundle_type, "current": $current}')
 
-if [[ -n  ${access_token+x} ]]; then
+if [[ -n  ${access_token} ]]; then
     if [[ -n ${insecure+x} ]]; then
         options=" -k"
     fi

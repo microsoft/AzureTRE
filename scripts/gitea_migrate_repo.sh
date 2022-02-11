@@ -4,7 +4,7 @@ set -e
 function usage() {
     cat <<USAGE
 
-    Usage: $0  [-t --tre-id] 
+    Usage: $0  [-t --tre-id]
 
     Options:
         -t, --tre-id               ID of the TRE
@@ -30,6 +30,10 @@ while [ "$1" != "" ]; do
         ;;
 
     esac
+    if [[ -z "$2" ]]; then
+      # if no more args then stop processing
+      break
+    fi
     shift # remove the current value for `$1` and use the next
 done
 
@@ -58,12 +62,12 @@ then
 fi
 
 
-if [ -z $token ] || [ "$token" = "null" ] 
+if [ -z $token ] || [ "$token" = "null" ]
 then
   # Get admin password from keyvault
   response=$(az keyvault secret show --vault-name $keyVaultName --name $pwdSecretName)
   password=$(jq -r '.value' <<< "$response")
-  
+
   credentials=$username:$password
   data='{"name": "'${username}'"}'
   url=${giteaUrl}/api/v1/users/${username}/tokens

@@ -21,7 +21,7 @@ ARG NODE_VERSION="lts/*"
 RUN if [ "${INSTALL_NODE}" = "true" ]; then su $USERNAME -c "umask 0002 && . /usr/local/share/nvm/nvm.sh && nvm install ${NODE_VERSION} 2>&1"; fi
 
 # Install terraform
-ARG TERRAFORM_VERSION="1.0.5"
+ARG TERRAFORM_VERSION="1.1.5"
 COPY .devcontainer/scripts/terraform.sh /tmp/
 RUN bash /tmp/terraform.sh "${TERRAFORM_VERSION}" /usr/bin
 
@@ -69,8 +69,12 @@ RUN wget -O /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/
 
 USER $USERNAME
 
-# Save command line history 
+# Save command line history
 RUN echo "export HISTFILE=$HOME/commandhistory/.bash_history" >> "$HOME/.bashrc" \
     && echo "export PROMPT_COMMAND='history -a'" >> "$HOME/.bashrc" \
     && mkdir -p $HOME/commandhistory \
     && touch $HOME/commandhistory/.bash_history
+
+# Install github-cli
+COPY ./.devcontainer/scripts/gh.sh /tmp/
+RUN /tmp/gh.sh

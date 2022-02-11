@@ -27,6 +27,9 @@ inputs:
     ACTIONS_ACR_PASSWORD:
       description: "The Azure Container registry password for the devcontainer."
       required: true
+    ACTIONS_DEVCONTAINER_TAG:
+      description: "The container label to use when running the command."
+      required: true
     ARM_TENANT_ID:
       description: "Azure Tenant Id."
       required: true
@@ -181,5 +184,5 @@ runs:
           -e TEST_WORKSPACE_APP_ID \
           -e IS_API_SECURED \
           -e TF_VAR_ci_git_ref="${{ github.ref }}" \
-          '${{ inputs.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest' \
+          '${{ inputs.ACTIONS_ACR_NAME }}.azurecr.io/tredev:${{ inputs.ACTIONS_DEVCONTAINER_TAG }}' \
         bash -c "${{ inputs.COMMAND }}"

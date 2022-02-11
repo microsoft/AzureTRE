@@ -82,6 +82,9 @@ WORKSPACE_SERVICE_TEMPLATE_DOES_NOT_EXIST = "Could not retrieve the workspace se
 TEMPLATE_DOES_NOT_EXIST = "Could not retrieve the 'current' template with this name"
 NO_UNIQUE_CURRENT_FOR_TEMPLATE = "The template has multiple 'current' versions"
 
+ETAG_REQUIRED = "A valid etag must be supplied in the header of this request"
+ETAG_CONFLICT = "This document has been modified by another user or process since you last retrieved it. Please get the document again and retry."
+
 # Resource Status
 RESOURCE_STATUS_NOT_DEPLOYED = "not_deployed"
 RESOURCE_STATUS_DEPLOYING = "deploying"
