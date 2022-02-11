@@ -1,5 +1,5 @@
 name: tre-service-guacamole-linuxvm
-version: 0.1.0
+version: 0.1.8
 description: "An Azure TRE User Resource Template for Guacamole (Linux)"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -46,6 +46,9 @@ parameters:
   - name: os_image
     type: string
     default: "Ubuntu Data Science VM"
+  - name: shared_storage_access
+    type: boolean
+    default: true
 
 outputs:
   - name: ip
@@ -79,6 +82,7 @@ install:
         arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
         image: "{{ bundle.parameters.os_image }}"
+        shared_storage_access: "{{ bundle.parameters.shared_storage_access }}"
       backendConfig:
         resource_group_name:
           "{{ bundle.parameters.tfstate_resource_group_name }}"
@@ -112,6 +116,7 @@ uninstall:
         arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
         image: "{{ bundle.parameters.os_image }}"
+        shared_storage_access: "{{ bundle.parameters.shared_storage_access }}"
       backendConfig:
         resource_group_name:
           "{{ bundle.parameters.tfstate_resource_group_name }}"

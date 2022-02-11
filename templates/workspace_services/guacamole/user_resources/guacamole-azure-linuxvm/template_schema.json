@@ -16,6 +16,16 @@
           "Ubuntu 18.04",
           "Ubuntu 18.04 Data Science VM"
         ]
+      },
+      "shared_storage_access": {
+        "$id": "#/properties/shared_storage_access",
+        "type": "boolean",
+        "title": "Shared Storage Access",
+        "description": "true/false on whether to set-up shared storage access",
+        "enum": [
+          true,
+          false
+        ]
       }
     }
 }
