@@ -82,6 +82,9 @@ The API will return an `operation` object with a `Location` header to query the 
 
 You can also follow the progress in Azure portal as various resources come up.
 
+!!! info
+    There is currently a bug where the redirect URI isn't automatically set up correctly in the Workspace API app registration. Until this is fixed, you need to head to the app registration in the Azure portal, click on **Add a redirect URI** > **Add a platform** > **Web** > then paste in the Guacamole URI in the redirect URI box (find it in the Guacamole app service properties and append `/guacamole/` to the end - it should look like this: `https://guacamole-{TRE_ID}-ws-XXXX-svc-XXXX.azurewebsites.net/guacamole/`). Finally, make sure you check the **ID tokens** checkbox and click **Configure**.
+
 ## Creating a user resource
 
 Once the workspace service has been created, we can use the workspace API to create a user resource in our workspace.
