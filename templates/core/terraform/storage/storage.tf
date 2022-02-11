@@ -14,6 +14,12 @@ resource "azurerm_storage_share" "storage_state_path" {
   quota                = 50
 }
 
+resource "azurerm_storage_share" "shared_storage" {
+  name                 = "vm-shared-storage"
+  storage_account_name = azurerm_storage_account.stg.name
+  quota                = 50
+}
+
 data "azurerm_private_dns_zone" "blobcore" {
   name                = "privatelink.blob.core.windows.net"
   resource_group_name = var.resource_group_name
