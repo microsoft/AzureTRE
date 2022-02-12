@@ -16,7 +16,7 @@ build-and-push-api: build-api-image push-api-image
 build-and-push-resource-processor: build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image
 build-and-push-gitea: build-gitea-image push-gitea-image
 build-and-push-guacamole: build-guacamole-image push-guacamole-image
-tre-deploy: prepare-tf-state deploy-core deploy-shared-services
+tre-deploy: prepare-tf-state deploy-core # deploy-shared-services
 # tre-deploy: deploy-core deploy-shared-services
 deploy-shared-services: firewall-install gitea-install nexus-install
 
@@ -118,9 +118,9 @@ prepare-tf-state:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
-	&& cd ./templates/shared_services/firewall/terraform/ && ./remove_state.sh && cd -
-	&& cd ./templates/shared_services/gitea/terraform/ && ./remove_state.sh && cd -
-	&& cd ./templates/shared_services/sonatype-nexus/terraform/ && ./remove_state.sh && cd -
+	&& pushd ./templates/shared_services/firewall/terraform/ && ./remove_state.sh && popd \
+	&& pushd ./templates/shared_services/gitea/terraform/ && ./remove_state.sh && popd \
+	&& pushd ./templates/shared_services/sonatype-nexus/terraform/ && ./remove_state.sh && popd
 
 deploy-core:
 	$(call target_title, "Deploying TRE") \
