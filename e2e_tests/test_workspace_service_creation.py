@@ -33,7 +33,7 @@ async def test_getting_templates(template_name, admin_token, verify) -> None:
         assert (response.status_code == status.HTTP_200_OK), f"GET Request for {template_name} failed"
 
 
-@pytest.mark.extended
+@pytest.mark.smoke
 @pytest.mark.timeout(3000)
 async def test_create_guacamole_service_into_base_workspace(admin_token, workspace_owner_token, verify) -> None:
 
@@ -42,6 +42,7 @@ async def test_create_guacamole_service_into_base_workspace(admin_token, workspa
         "properties": {
             "display_name": "E2E test guacamole service",
             "description": "workspace for E2E",
+            "address_space_size": "small",
             "app_id": f"{config.TEST_WORKSPACE_APP_ID}"
         }
     }
