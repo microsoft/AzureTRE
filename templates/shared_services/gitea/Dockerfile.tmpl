@@ -4,6 +4,14 @@ ARG BUNDLE_DIR
 
 RUN apt-get update && apt-get install -y ca-certificates
 
+# Install Azure CLI (neeeded for import_state.sh)
+RUN apt-get update \
+    && apt-get install -y ca-certificates jq curl apt-transport-https lsb-release gnupg \
+    && curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null \
+    && AZ_REPO=$(lsb_release -cs) \
+    && echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | tee /etc/apt/sources.list.d/azure-cli.list \
+    && apt-get update && apt-get -y install azure-cli
+
 # This is a template Dockerfile for the bundle's invocation image
 # You can customize it to use different base images, install tools and copy configuration files.
 #

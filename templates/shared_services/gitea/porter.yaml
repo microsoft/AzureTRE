@@ -2,6 +2,8 @@ name: tre-shared-service-gitea
 version: 0.0.1
 description: "A Gitea shared service"
 registry: azuretre
+dockerfile: Dockerfile.tmpl
+
 credentials:
   - name: azure_tenant_id
     env: ARM_TENANT_ID
@@ -33,10 +35,18 @@ parameters:
     description: "The name of the Terraform state storage container"
 mixins:
   - exec
-  - az
   - terraform:
       clientVersion: 1.0.4
+
 install:
+  - exec:
+      description: "Import resources first if they exist to achieve backwards compatibility"
+      command: ./terraform/import_state.sh
+      arguments:
+        - "--mgmt-resource-group-name {{ bundle.parameters.tfstate_resource_group_name }}"
+        - "--mgmt-storage-account-name {{ bundle.parameters.tfstate_storage_account_name }}"
+        - "--state-container-name {{ bundle.parameters.tfstate_container_name }}"
+        - "--key tre-shared-service-firewall"
   - terraform:
       description: "Deploy shared service"
       input: false
