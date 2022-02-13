@@ -213,24 +213,9 @@ register-bundle:
 	$(call target_title, "Registering ${DIR} bundle") \
 	&& ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& az acr login --name $${ACR_NAME}	\
 	&& cd ${DIR} \
-	&& ${ROOTPATH}/devops/scripts/publish_register_bundle.sh --acr-name "$${ACR_NAME}" --bundle-type "${BUNDLE_TYPE}" --current --insecure --tre_url "${TRE_URL}" --access-token "${TOKEN}"
-
-build-and-register-bundle: porter-build
-	@# NOTE: ACR_NAME below comes from the env files, so needs the double '$$'. Others are set on command execution and don't
-	$(call target_title, "Building and Publishing ${DIR} bundle") \
-	&& ./devops/scripts/check_dependencies.sh porter \
-	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& cd ${DIR} \
-	&& ${ROOTPATH}/devops/scripts/build_and_register_bundle.sh --acr-name "$${ACR_NAME}" --bundle-type "${BUNDLE_TYPE}" --current --insecure --tre_url "${TRE_URL}"
-
-register-bundle-payload:
-	@# NOTE: ACR_NAME below comes from the env files, so needs the double '$$'. Others are set on command execution and don't
-	$(call target_title, "Registering payload ${DIR} bundle") \
-	&& ./devops/scripts/check_dependencies.sh porter \
-	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& cd ${DIR} \
-	&& ${ROOTPATH}/devops/scripts/publish_register_bundle.sh --acr-name "$${ACR_NAME}" --bundle-type "${BUNDLE_TYPE}" --current
+	&& ${ROOTPATH}/devops/scripts/register_bundle_with_api.sh --acr-name $${ACR_NAME} --bundle-type $${BUNDLE_TYPE} --current --insecure --tre_url $${TRE_URL} --verify
 
 static-web-upload:
 	$(call target_title, "Uploading to static website") \
