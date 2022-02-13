@@ -134,3 +134,10 @@ variable "ci_git_ref" {
   description = "The git ref used by the ci to deploy this TRE"
   type        = string
 }
+
+# this var is optional and used to avoid assigning a role on every run.
+variable "arm_subscription_id" {
+  description = "The subscription id to create the resource processor permission/role. If not supplied will use the TF context."
+  type        = string
+  default     = ""
+}
