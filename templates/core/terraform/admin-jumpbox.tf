@@ -38,7 +38,7 @@ resource "azurerm_virtual_machine" "jumpbox" {
   resource_group_name   = azurerm_resource_group.core.name
   location              = azurerm_resource_group.core.location
   network_interface_ids = [azurerm_network_interface.jumpbox_nic.id]
-  vm_size               = "Standard_DS1_v2"
+  vm_size               = "Standard_B2s"
 
   delete_os_disk_on_termination = true
 
