@@ -1,5 +1,5 @@
 {
-    "name": "apt-pypi",
+    "name": "pypi",
     "online": true,
     "storage": {
         "blobStoreName": "default",
@@ -26,5 +26,9 @@
             "enableCookies": false,
             "useTrustStore": false
         }
+    },
+    "apt": {
+        "distribution": "bionic",
+        "flat": false
     }
 }
