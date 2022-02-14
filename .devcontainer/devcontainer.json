@@ -30,7 +30,7 @@
 		"python.linting.enabled": true,
 		"python.linting.pylintEnabled": false,
 		"python.linting.flake8Enabled": true,
-    "python.formatting.provider": "black",
+		"python.formatting.provider": "black",
 		"python.formatting.autopep8Path": "/usr/local/py-utils/bin/autopep8",
 		"python.formatting.blackPath": "/usr/local/py-utils/bin/black",
 		"python.formatting.yapfPath": "/usr/local/py-utils/bin/yapf",
@@ -41,11 +41,11 @@
 		"python.linting.pydocstylePath": "/usr/local/py-utils/bin/pydocstyle",
 		"python.linting.pylintPath": "/usr/local/py-utils/bin/pylint",
 
-    "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true,
-    "python.testing.pytestArgs": [
-      "api_app"
-    ],
+		"python.testing.unittestEnabled": false,
+		"python.testing.pytestEnabled": true,
+		"python.testing.pytestArgs": [
+			"api_app"
+		],
 
 
 		"launch": {
@@ -71,15 +71,15 @@
 	},
 	// Add the IDs of extensions you want installed when the container is created.
 	"extensions": [
-    "ms-python.python",
-    "hashicorp.terraform",
-    "github.vscode-pull-request-github",
-    "ms-kubernetes-tools.porter-vscode",
-    "davidanson.vscode-markdownlint",
-    "editorconfig.editorconfig",
+		"ms-python.python",
+		"hashicorp.terraform",
 		"github.vscode-pull-request-github",
-    "mikestead.dotenv",
-    "humao.rest-client"
+		"ms-kubernetes-tools.porter-vscode",
+		"davidanson.vscode-markdownlint",
+		"editorconfig.editorconfig",
+		"github.vscode-pull-request-github",
+		"mikestead.dotenv",
+		"humao.rest-client"
 	],
 	"forwardPorts": [8000]
 }
