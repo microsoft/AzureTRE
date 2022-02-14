@@ -18,6 +18,20 @@
       "args": [
         "--ignore=e2e_tests",
       ]
+    },
+    {
+      "label": "e2e_tests",
+      "group": "test",
+      "command": "python",
+      "options": {
+        "cwd": "${workspaceFolder}/e2e_tests/"
+      },
+      "args": [
+        "-m",
+        "pytest",
+        "-m",
+        "smoke",
+      ]
     }
   ]
 }
