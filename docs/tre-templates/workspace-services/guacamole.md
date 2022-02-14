@@ -30,6 +30,6 @@ Service Tags:
 1. Build and install the Guacamole Service bundle
 
   ```cmd
-  make porter-build DIR=./templates/workspace_services/guacamole
-  make porter-install DIR=./templates/workspace_services/guacamole
+  make bundle-build DIR=./templates/workspace_services/guacamole
+  make bundle-install DIR=./templates/workspace_services/guacamole
   ```
