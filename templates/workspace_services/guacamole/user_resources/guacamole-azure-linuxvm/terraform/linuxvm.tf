@@ -92,7 +92,7 @@ data "template_file" "rdp_config" {
 data "template_file" "sources_config" {
   template = file("${path.module}/sources_config.yml")
   vars = {
-    nexus_proxy_url = "https://nexus-${var.tre_id}.azurewebsites.net/repository"
+    nexus_proxy_url = "https://nexus-${var.tre_id}.azurewebsites.net"
   }
 }
 
