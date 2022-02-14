@@ -43,6 +43,10 @@ jobs:
         id: buildx
         uses: docker/setup-buildx-action@v1
 
+      # Unit Tests are executed by calling the 'test-results' target in the
+      # docker file. If the pytest finds any errors, it will exit 1 and the
+      # build will stop. The test results are only published if we have a
+      # successful run.
       - name: "Test image: api"
         # test should be before build since its docker target
         # is prior to runtime

@@ -9,7 +9,7 @@ COPY requirements-dev.txt .
 RUN pip3 install -r requirements-dev.txt
 COPY . /api
 WORKDIR /api
-RUN pytest --junit-xml /test-results/api-pytest.xml --ignore e2e_tests || :
+RUN pytest --junit-xml /test-results/api-pytest.xml --ignore e2e_tests
 
 
 FROM scratch as test-results
