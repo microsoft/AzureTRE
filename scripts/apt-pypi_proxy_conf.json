@@ -1,5 +1,5 @@
 {
-    "name": "pypi",
+    "name": "apt-pypi",
     "online": true,
     "storage": {
         "blobStoreName": "default",
