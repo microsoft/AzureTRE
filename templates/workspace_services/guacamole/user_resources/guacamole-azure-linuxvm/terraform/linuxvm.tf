@@ -86,13 +86,13 @@ data "template_file" "vm_config" {
   template = file("${path.module}/vm_config.sh")
   vars = {
     install_ui = local.image_ref[var.image].install_ui ? 1 : 0
-    shared_storage_access = var.shared_storage_access ? 1 : 0
+    shared_storage_access = tobool(var.shared_storage_access) ? 1 : 0
     resource_group_name = data.azurerm_resource_group.base_tre.name
     storage_account_name = data.azurerm_storage_account.stg.name
     storage_account_key = data.azurerm_storage_account.stg.primary_access_key
     http_endpoint = data.azurerm_storage_account.stg.primary_file_endpoint
     fileshare_name = data.azurerm_storage_share.shared_storage.name
-    username = azurerm_linux_virtual_machine.linuxvm.admin_username
+    username = random_string.username.result
   }
 }
 
@@ -119,6 +119,6 @@ data "azurerm_storage_account" "stg" {
 }
 
 data "azurerm_storage_share" "shared_storage" {
-  name                 = "vm-shared-storage"
+  name                 = var.shared_storage_name
   storage_account_name = data.azurerm_storage_account.stg.name
 }

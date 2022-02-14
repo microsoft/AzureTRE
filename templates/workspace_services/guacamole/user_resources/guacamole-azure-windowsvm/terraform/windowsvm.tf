@@ -69,3 +69,35 @@ resource "azurerm_key_vault_secret" "windowsvm_password" {
   value        = "${random_string.username.result}\n${random_password.password.result}"
   key_vault_id = data.azurerm_key_vault.ws.id
 }
+
+resource "azurerm_virtual_machine_extension" "config_script" {
+  name                 = "hostname"
+  virtual_machine_id   = azurerm_windows_virtual_machine.windowsvm.id
+  publisher            = "Microsoft.Azure.Extensions"
+  type                 = "CustomScript"
+  type_handler_version = "2.0"
+
+  settings = <<SETTINGS
+    {
+        "script": "${base64encode(templatefile("config_script.ps1", {
+          storageAccountName="${azurerm_virtual_machine.windowsvm.name}",
+          fileShareName = "${data.azurerm_storage_share.shared_storage.name}",
+          storageAccountKeys = "${data.azurerm_storage_account.stg.primary_access_key}"
+        }))}"
+    }
+SETTINGS
+}
+
+data "azurerm_resource_group" "base_tre" {
+  name = "rg-${var.tre_id}"
+}
+
+data "azurerm_storage_account" "stg" {
+  name = lower(replace("stg-${var.tre_id}", "-", ""))
+  resource_group_name = data.azurerm_resource_group.base_tre.name
+}
+
+data "azurerm_storage_share" "shared_storage" {
+  name                 = var.shared_storage_name
+  storage_account_name = data.azurerm_storage_account.stg.name
+}

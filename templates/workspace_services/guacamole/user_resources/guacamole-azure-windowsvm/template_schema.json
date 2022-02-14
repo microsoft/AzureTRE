@@ -16,6 +16,22 @@
           "Windows 10",
           "Server 2019 Data Science VM"
         ]
+      },
+      "shared_storage_access": {
+        "$id": "#/properties/shared_storage_access",
+        "type": "string",
+        "title": "Shared Storage Access",
+        "description": "true/false on whether to set-up shared storage access",
+        "enum": [
+          "true",
+          "false"
+        ]
+      },
+      "shared_storage_name": {
+        "$id": "#/properties/shared_storage_name",
+        "type": "string",
+        "title": "Shared Storage Name",
+        "description": "Name of shared storage to attatch.  'vm-shared-storage' is created by default.  Any other shared storage must be created before being provided here."
       }
     }
 }

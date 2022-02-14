@@ -1,13 +1,13 @@
 #!/bin/bash
-sudo apt update
+sudo apt-get update
 
 # Install xrdp so Guacamole can connect via RDP
-sudo apt install xrdp -y
+sudo apt-get install xrdp -y
 sudo adduser xrdp ssl-cert
 
 # Install desktop environment if image doesn't have one already
 if [ ${install_ui} -eq 1 ]; then
-  sudo apt install xorg xfce4 xfce4-goodies dbus-x11 x11-xserver-utils -y
+  sudo apt-get install xorg xfce4 xfce4-goodies dbus-x11 x11-xserver-utils -y
   echo xfce4-session > ~/.xsession
 fi
 
@@ -20,7 +20,6 @@ sudo systemctl enable xrdp
 
 if [ ${shared_storage_access} -eq 1 ]; then
   # Install required packages
-  sudo apt-get install cifs-utils
   sudo apt-get install autofs
 
   # Pass in required variables
