@@ -9,7 +9,7 @@ See: [https://azure.microsoft.com/services/devtest-lab/](https://azure.microsoft
 ## Manual Deployment
 
 !!! caution
-    Resources should be deployed using the API (i.e. through the Swagger UI as described in the [setup instructions](../../tre-admins/setup-instructions/installing-workspace-service-and-user-resource.md)). Only deploy menually for development/testing purposes.
+    Resources should be deployed using the API (i.e. through the Swagger UI as described in the [setup instructions](../../tre-admins/setup-instructions/installing-workspace-service-and-user-resource.md)). Only deploy manually for development/testing purposes.
 
 1. Create a copy of `templates/workspace_services/devtestlabs/.env.sample` with the name `.env` and update with the Workspace ID used when deploying the base workspace.
 
