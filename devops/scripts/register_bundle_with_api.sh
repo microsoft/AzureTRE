@@ -101,7 +101,7 @@ then
       -d 'grant_type=client_credentials'   \
       -d "scope=api://${API_CLIENT_ID}/.default"   \
       -d "client_secret=${AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET}")
-  elif [ -z "${RESOURCE}" ] && [ ! -z "${CLIENT_ID}" ] && [ ! -z "${USERNAME}" ] && [ ! -z "${PASSWORD}" ] && [ ! -z "${AUTH_TENANT_ID}" ]
+  elif [ ! -z "${RESOURCE}" ] && [ ! -z "${CLIENT_ID}" ] && [ ! -z "${USERNAME}" ] && [ ! -z "${PASSWORD}" ] && [ ! -z "${AUTH_TENANT_ID}" ]
   then
     # Use resource owner password credentials flow with USERNAME/PASSWORD
     echo "Using USERNAME to get token via resource owner password credential flow"
@@ -110,7 +110,7 @@ then
       https://login.microsoftonline.com/${AUTH_TENANT_ID}/oauth2/token)
   fi
 
-  if [ -z "${token_response}"]
+  if [ ! -z "${token_response}" ]
   then
     access_token=$(echo ${token_response} | jq -r .access_token)
     if [[ ${access_token} == "null" ]]; then
@@ -118,6 +118,7 @@ then
         echo ${token_response}
         exit 2
     fi
+  fi
 fi
 
 if [ -z "${access_token}" ]
