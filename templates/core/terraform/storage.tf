@@ -17,6 +17,10 @@ resource "azurerm_storage_share" "storage_state_path" {
 data "azurerm_private_dns_zone" "blobcore" {
   name                = "privatelink.blob.core.windows.net"
   resource_group_name = azurerm_resource_group.core.name
+
+  depends_on = [
+    module.network,
+  ]
 }
 
 resource "azurerm_private_endpoint" "blobpe" {
@@ -43,6 +47,10 @@ resource "azurerm_private_endpoint" "blobpe" {
 data "azurerm_private_dns_zone" "filecore" {
   name                = "privatelink.file.core.windows.net"
   resource_group_name = azurerm_resource_group.core.name
+
+  depends_on = [
+    module.network,
+  ]
 }
 
 resource "azurerm_private_endpoint" "filepe" {

@@ -145,6 +145,7 @@ runs:
         TF_VAR_api_client_secret: "${{ inputs.TF_VAR_api_client_secret }}"
         TF_VAR_acr_name: ${{ inputs.ACR_NAME }}
         IS_API_SECURED: ${{ inputs.IS_API_SECURED }}
+        DOCKER_BUILDKIT: ${{ inputs.DOCKER_BUILDKIT }}
       run: |
         docker run --rm --mount \
           "type=bind,src=${{ github.workspace }},dst=/workspaces/tre" \
@@ -170,6 +171,7 @@ runs:
           -e TF_VAR_aad_tenant_id \
           -e TF_VAR_api_client_id \
           -e TF_VAR_api_client_secret \
+          -e TF_VAR_arm_subscription_id="${{ inputs.ARM_SUBSCRIPTION_ID }}" \
           -e TF_VAR_swagger_ui_client_id \
           -e TF_VAR_core_address_space \
           -e TF_VAR_tre_address_space \
@@ -184,5 +186,6 @@ runs:
           -e TEST_WORKSPACE_APP_ID \
           -e IS_API_SECURED \
           -e TF_VAR_ci_git_ref="${{ github.ref }}" \
+          -e DOCKER_BUILDKIT \
           '${{ inputs.ACTIONS_ACR_NAME }}.azurecr.io/tredev:${{ inputs.ACTIONS_DEVCONTAINER_TAG }}' \
         bash -c "${{ inputs.COMMAND }}"
