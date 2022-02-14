@@ -4,7 +4,7 @@
 
 ## Project Status
 
-***This project's code base is still under development and breaking changes will happen. Whilst the maintainers will do our best to minimise disruption to existing deployments, this may not always be possible. As the project becomes more mature we will start creating stable releases as and when appropriate***
+***This project's code base is still under development and breaking changes will happen. Whilst the maintainers will do our best to minimise disruption to existing deployments, this may not always be possible. Stable releases will be published when the project is more mature.***
 
 The aim is to bring together learnings from past customer engagements where TREs have been built into a single reference solution. This is a solution accelerator aiming to be a great starting point for a customized TRE solution. You're encouraged to download and customize the solution to meet your requirements
 
