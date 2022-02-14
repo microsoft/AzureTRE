@@ -140,8 +140,9 @@ jobs:
           docker image push \
             ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
 
-  build_docker_images:
-    name: Build Docker Images
+  build_core_images:
+    # used to build images used by core infrastructure
+    name: Build Core Docker Images
     runs-on: ubuntu-latest
     needs: [deploy_management]
     environment: Dev
@@ -151,8 +152,7 @@ jobs:
         target: [
           build-and-push-api,
           build-and-push-resource-processor,
-          build-and-push-gitea,
-          build-and-push-guacamole]
+          build-and-push-gitea]
 
     steps:
       - name: Checkout
@@ -177,14 +177,14 @@ jobs:
         with:
           github-token: ${{ github.token }}
           ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-          notification-summary: "Make Images Failed"
+          notification-summary: "Make Core Images Failed"
           notification-color: dc3545
           timezone: Europe/Zurich
 
   deploy_tre:
     name: Deploy TRE
     runs-on: ubuntu-latest
-    needs: [build_docker_images]
+    needs: [build_core_images]
     environment: Dev
     steps:
       - name: Checkout
@@ -278,11 +278,50 @@ jobs:
           LOCATION: "${{ secrets.LOCATION }}"
           BUNDLE_TYPE: ${{ matrix.BUNDLE_TYPE }}
 
+  build_additional_images:
+    # used to build images NOT used by core infrastructure
+    name: Build Additional Docker Images
+    runs-on: ubuntu-latest
+    needs: [deploy_management]
+    environment: Dev
+    strategy:
+      fail-fast: true
+      matrix:
+        target: [build-and-push-guacamole]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Docker build
+        uses: ./.github/actions/devcontainer_run_command
+        with:
+          COMMAND: "make ${{ matrix.target }}"
+          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
+          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
+          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
+          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
+          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+
+      - name: Notify dedicated teams channel
+        uses: sachinkundu/ms-teams-notification@1.4
+        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        with:
+          github-token: ${{ github.token }}
+          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+          notification-summary: "Make Additional Images Failed"
+          notification-color: dc3545
+          timezone: Europe/Zurich
+
+
   e2e_tests:
     name: "Run E2E Tests"
     runs-on: ubuntu-latest
     environment: Dev
-    needs: [publish_and_register_bundles]
+    needs: [publish_and_register_bundles, build_additional_images]
     steps:
       - name: Checkout
         uses: actions/checkout@v2

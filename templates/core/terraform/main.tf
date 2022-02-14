@@ -13,7 +13,7 @@ terraform {
 provider "azurerm" {
   features {
     key_vault {
-      purge_soft_delete_on_destroy    = var.debug == "true" ? true : false
+      purge_soft_delete_on_destroy    = var.debug == true ? true : false
       recover_soft_deleted_key_vaults = true
     }
   }
@@ -84,6 +84,7 @@ module "resource_processor_vmss_porter" {
   mgmt_resource_group_name                        = var.mgmt_resource_group_name
   terraform_state_container_name                  = var.terraform_state_container_name
   keyvault_id                                     = azurerm_key_vault.kv.id
+  subscription_id                                 = var.arm_subscription_id
 
   depends_on = [
     module.azure_monitor,
