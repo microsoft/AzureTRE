@@ -18,6 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     if: |
       github.event.pull_request.head.repo.full_name == github.repository
+      || github.event_name == 'workflow_dispatch'
       || contains(github.event.pull_request.labels.*.name, 'safe to test')
 
     steps:
