@@ -130,6 +130,7 @@ module "gitea" {
   mgmt_resource_group_name = var.mgmt_resource_group_name
 
   depends_on = [
+    module.firewall,
     module.network,
     azurerm_app_service_plan.core,
     azurerm_key_vault.kv,
@@ -144,6 +145,7 @@ module "nexus" {
   location = var.location
 
   depends_on = [
+    module.firewall,
     module.network,
     azurerm_app_service_plan.core,
     azurerm_key_vault.kv,
