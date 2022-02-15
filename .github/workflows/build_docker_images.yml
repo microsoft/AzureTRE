@@ -68,14 +68,15 @@ jobs:
         with:
           files: "test-results/pytest_api_unit_failed"
 
-      - name: API app unit test failure
-        if: steps.check_api_test_result.outputs.files_exists == 'true'
-        run: exit 1
+      # - name: API app unit test failure
+      #   if: steps.check_api_test_result.outputs.files_exists == 'true'
+      #   run: exit 1
 
       - name: "Build image: api"
         if: |
           (steps.filter.outputs.api == 'true'
           || github.event_name == 'workflow_dispatch')
+          && steps.check_api_test_result.outputs.files_exists == 'false'
         uses: docker/build-push-action@v2
         with:
           context: ./api_app/
@@ -113,14 +114,15 @@ jobs:
         with:
           files: "test-results/guacamole_package_failed"
 
-      - name: Guacamole Unit Tests failed
-        if: steps.check_maven_test_result.outputs.files_exists == 'true'
-        run: exit 1
+      # - name: Guacamole Unit Tests failed
+      #   if: steps.check_maven_test_result.outputs.files_exists == 'true'
+      #   run: exit 1
 
       - name: "Build image: guacamole_server"
         if: |
           (steps.filter.outputs.guacamole_server == 'true'
           || github.event_name == 'workflow_dispatch')
+          && steps.check_maven_test_result.outputs.files_exists == 'false'
         uses: docker/build-push-action@v2
         with:
           context: ./templates/workspace_services/guacamole/guacamole-server
