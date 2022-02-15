@@ -34,13 +34,14 @@ resource "random_password" "password" {
 }
 
 resource "azurerm_windows_virtual_machine" "windowsvm" {
-  name                  = local.vm_name
-  location              = data.azurerm_resource_group.ws.location
-  resource_group_name   = data.azurerm_resource_group.ws.name
-  network_interface_ids = [azurerm_network_interface.internal.id]
-  size                  = "Standard_DS1_v2"
-  admin_username        = random_string.username.result
-  admin_password        = random_password.password.result
+  name                       = local.vm_name
+  location                   = data.azurerm_resource_group.ws.location
+  resource_group_name        = data.azurerm_resource_group.ws.name
+  network_interface_ids      = [azurerm_network_interface.internal.id]
+  size                       = "Standard_DS1_v2"
+  allow_extension_operations = true
+  admin_username             = random_string.username.result
+  admin_password             = random_password.password.result
 
   source_image_reference {
     publisher = local.image_ref[var.image].publisher
@@ -61,6 +62,31 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
 
   tags = {
     parent_service_id = var.parent_service_id
+  }
+}
+
+resource "azurerm_virtual_machine_extension" "example" {
+  name                 = "configure_pypi_proxy"
+  virtual_machine_id   = azurerm_windows_virtual_machine.windowsvm.id
+  publisher            = "Microsoft.Azure.Extensions"
+  type                 = "CustomScript"
+  type_handler_version = "2.0"
+
+  settings = <<SETTINGS
+    {
+        "commandToExecute": "powershell -encodedCommand ${textencodebase64(data.template_file.pypi_sources_config.rendered, "UTF-16LE")}"
+    }
+SETTINGS
+
+  tags = {
+    parent_service_id = var.parent_service_id
+  }
+}
+
+data "template_file" "pypi_sources_config" {
+  template = file("${path.module}/pypi_sources_config.ps1")
+  vars = {
+    nexus_proxy_url = local.nexus_proxy_url
   }
 }
 
