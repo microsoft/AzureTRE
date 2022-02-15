@@ -62,10 +62,15 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: "Check file existence"
+        id: check_api_test_result
+        uses: andstor/file-existence-action@v1
+        with:
+          files: "test-results/pytest_unit_failed"
+
       - name: API Unit Tests have failed
-        # if: hashFiles('test-results/**/pytest_unit_failed') != ''
+        if: steps.check_api_test_result.outputs.files_exists == 'true'
         run: |
-          ls test-results
           exit 1
 
       - name: "Build image: api"
