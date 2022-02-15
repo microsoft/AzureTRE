@@ -190,5 +190,5 @@ runs:
           -e IS_API_SECURED \
           -e TF_VAR_ci_git_ref="${{ github.ref }}" \
           -e DOCKER_BUILDKIT \
-          '${{ inputs.ACTIONS_ACR_URI }}tredev:${{ inputs.ACTIONS_DEVCONTAINER_TAG }}' \
+          '${{ inputs.ACTIONS_ACR_URI }}/tredev:${{ inputs.ACTIONS_DEVCONTAINER_TAG }}' \
         bash -c "${{ inputs.COMMAND }}"

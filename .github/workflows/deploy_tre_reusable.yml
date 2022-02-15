@@ -89,13 +89,13 @@ jobs:
           docker build . \
             -t 'tredev:${{ secrets.ACTIONS_DEVCONTAINER_TAG }}' \
             -f '.devcontainer/Dockerfile' \
-            --cache-from ${{ secrets.ACTIONS_ACR_URI }}tredev:${{ secrets.ACTIONS_DEVCONTAINER_TAG }} \
-            --cache-from ${{ secrets.ACTIONS_ACR_URI }}tredev:latest \
+            --cache-from ${{ secrets.ACTIONS_ACR_URI }}/tredev:${{ secrets.ACTIONS_DEVCONTAINER_TAG }} \
+            --cache-from ${{ secrets.ACTIONS_ACR_URI }}/tredev:latest \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
             --build-arg USER_UID="${USER_UID}" \
             --build-arg USER_GID="${USER_GID}"
           docker image tag tredev:${{ secrets.ACTIONS_DEVCONTAINER_TAG }} \
-            ${{ secrets.ACTIONS_ACR_URI }}tredev:${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
+            ${{ secrets.ACTIONS_ACR_URI }}/tredev:${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
 
       - name: Deploy management
         uses: ./.github/actions/devcontainer_run_command
@@ -140,7 +140,7 @@ jobs:
         run: |
           set -e
           docker image push \
-            ${{ secrets.ACTIONS_ACR_URI }}tredev:${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
+            ${{ secrets.ACTIONS_ACR_URI }}/tredev:${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
 
   build_core_images:
     # used to build images used by core infrastructure
