@@ -84,14 +84,27 @@ while [ "$1" != "" ]; do
     shift # remove the current value for `$1` and use the next
 done
 
+# done with processing args and can set this
+set -o nounset
+
+if [[ -z ${acr_name:-} ]]; then
+    echo -e "No Azure Container Registry name provided\n"
+    usage
+fi
+
+if [[ -z ${BUNDLE_TYPE:-} ]]; then
+    echo -e "No bundle type provided\n"
+    usage
+fi
+
 explain_json=$(porter explain --reference ${acr_name}.azurecr.io/$(yq eval '.name' porter.yaml):v$(yq eval '.version' porter.yaml) -o json)
 
-payload=$(echo ${explain_json} | jq --argfile json_schema template_schema.json --arg current "${current}" --arg bundle_type "${bundle_type}" '. + {"json_schema": $json_schema, "resourceType": $bundle_type, "current": $current}')
+payload=$(echo ${explain_json} | jq --argfile json_schema template_schema.json --arg current "${current}" --arg bundle_type "${BUNDLE_TYPE}" '. + {"json_schema": $json_schema, "resourceType": $bundle_type, "current": $current}')
 
-if [ -z "${access_token}" ]
+if [ -z "${access_token:-}" ]
 then
   # We didn't get an access token but we can try to generate one.
-  if [[ -n $AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID && -n $AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET ]]
+  if [ ! -z "${AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID:-}" ] && [ ! -z ${AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET:-} ] && [ ! -z "${AUTH_TENANT_ID:-}" ] && [ ! -z "${API_CLIENT_ID:-}" ]
   then
     # Use client credentials flow with AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID/SECRET
     echo "Using AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID to get token via client credential flow"
@@ -101,7 +114,7 @@ then
       -d 'grant_type=client_credentials'   \
       -d "scope=api://${API_CLIENT_ID}/.default"   \
       -d "client_secret=${AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET}")
-  elif [ ! -z "${RESOURCE}" ] && [ ! -z "${CLIENT_ID}" ] && [ ! -z "${USERNAME}" ] && [ ! -z "${PASSWORD}" ] && [ ! -z "${AUTH_TENANT_ID}" ]
+  elif [ ! -z "${RESOURCE:-}" ] && [ ! -z "${CLIENT_ID:-}" ] && [ ! -z "${USERNAME:-}" ] && [ ! -z "${PASSWORD:-}" ] && [ ! -z "${AUTH_TENANT_ID:-}" ]
   then
     # Use resource owner password credentials flow with USERNAME/PASSWORD
     echo "Using USERNAME to get token via resource owner password credential flow"
@@ -110,7 +123,7 @@ then
       https://login.microsoftonline.com/${AUTH_TENANT_ID}/oauth2/token)
   fi
 
-  if [ ! -z "${token_response}" ]
+  if [ ! -z "${token_response:-}" ]
   then
     access_token=$(echo ${token_response} | jq -r .access_token)
     if [[ ${access_token} == "null" ]]; then
@@ -121,13 +134,19 @@ then
   fi
 fi
 
-if [ -z "${access_token}" ]
+if [ -z "${access_token:-}" ]
 then
-  echo "Use the following payload to register the template:"
+  echo "API access token isn't available - automatic bundle registration not possible. Use the script output to self-register. See documentation for more details."
   echo $(echo ${payload} | jq --color-output .)
 else
   if [[ -n ${insecure+x} ]]; then
       options=" -k"
+  fi
+
+  if [[ -z ${tre_url} ]]; then
+    # access_token specified but no URL
+    echo -e "No TRE URL provided\n"
+    usage
   fi
 
   case "${BUNDLE_TYPE}" in
