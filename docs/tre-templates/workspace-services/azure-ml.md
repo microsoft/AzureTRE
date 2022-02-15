@@ -44,6 +44,6 @@ Service Tags:
 1. Build and install the Azure ML Service bundle
 
   ```cmd
-  make porter-build DIR=./templates/workspace_services/azureml
-  make porter-install DIR=./templates/workspace_services/azureml
+  make bundle-build DIR=./templates/workspace_services/azureml
+  make bundle-install DIR=./templates/workspace_services/azureml
   ```

@@ -64,7 +64,7 @@ This will provision Base Workspace, with AML service and InnerEye service, inclu
     sudo apt-get install git-lfs
     git lfs install
     git lfs pull
-    export PIP_INDEX_URL=https://nexus-<TRE_ID>.azurewebsites.net/repository/pypi-proxy-repo/simple
+    export PIP_INDEX_URL=https://nexus-<TRE_ID>.azurewebsites.net/repository/apt-pypi/simple
     conda init
     conda env create --file environment.yml
     conda activate InnerEye

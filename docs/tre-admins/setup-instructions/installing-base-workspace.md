@@ -5,7 +5,8 @@
 1. Run:
 
     ```cmd
-    make register-bundle DIR=./templates/workspaces/base BUNDLE_TYPE=workspace
+    make bundle-publish DIR=./templates/workspaces/base BUNDLE_TYPE=workspace
+    make bundle-register DIR=./templates/workspaces/base BUNDLE_TYPE=workspace
     ```
 
     Copy the resulting JSON payload.
