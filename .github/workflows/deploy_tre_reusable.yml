@@ -52,6 +52,8 @@ on:
         required: true
       TRE_ID:
         required: true
+      GH_ACTIONS_DEBUG_PRIVATE_KEY:
+        required: false
 
 # This will prevent multiple runs of this entire workflow.
 # We should NOT cancel in progress runs as that can destabilize the environment.
