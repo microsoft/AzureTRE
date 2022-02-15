@@ -8,9 +8,9 @@ $PipConfigFilePath = $PipConfigFolderPath + "pip.ini"
 
 $ConfigBody = @"
 [global]
-index = url/repository/pypi/pypi
-index-url = url/repository/pypi/simple
-trusted-host = url
+index = ${nexus_proxy_url}/repository/pypi/pypi
+index-url = ${nexus_proxy_url}/repository/pypi/simple
+trusted-host = ${nexus_proxy_url}
 "@
 
-Out-File -FilePath $PipConfigFilePath -InputObject $ConfigBody
+Out-File -FilePath $PipConfigFilePath -InputObject $ConfigBody -Encoding utf8

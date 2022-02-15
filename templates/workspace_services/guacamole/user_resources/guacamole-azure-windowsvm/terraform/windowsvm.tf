@@ -43,6 +43,8 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
   admin_username             = random_string.username.result
   admin_password             = random_password.password.result
 
+  custom_data = base64encode(data.template_file.pypi_sources_config.rendered)
+
   source_image_reference {
     publisher = local.image_ref[var.image].publisher
     offer     = local.image_ref[var.image].offer
@@ -65,18 +67,18 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
   }
 }
 
-resource "azurerm_virtual_machine_extension" "example" {
+resource "azurerm_virtual_machine_extension" "configure_pypi_proxy" {
   name                 = "configure_pypi_proxy"
   virtual_machine_id   = azurerm_windows_virtual_machine.windowsvm.id
-  publisher            = "Microsoft.Azure.Extensions"
-  type                 = "CustomScript"
-  type_handler_version = "2.0"
+  publisher            = "Microsoft.Compute"
+  type                 = "CustomScriptExtension"
+  type_handler_version = "1.10"
 
-  settings = <<SETTINGS
+  protected_settings = <<PROTECTED_SETTINGS
     {
-        "commandToExecute": "powershell -encodedCommand ${textencodebase64(data.template_file.pypi_sources_config.rendered, "UTF-16LE")}"
+        "commandToExecute": "powershell -ExecutionPolicy Unrestricted -NoProfile -NonInteractive -command \"cp c:/azuredata/customdata.bin c:/azuredata/configure.ps1; c:/azuredata/configure.ps1\""
     }
-SETTINGS
+PROTECTED_SETTINGS
 
   tags = {
     parent_service_id = var.parent_service_id
