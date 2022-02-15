@@ -59,6 +59,6 @@ if [ ${shared_storage_access} -eq 1 ]; then
   sudo systemctl restart autofs
 
   # read/write/execute to admin user and current group (current group will be root)
-  sudo chmod ${username} $mntPath
-  sudo chown g+twx $mntPath
+  sudo chown ${username} $mntPath
+  sudo chmod g+twx $mntPath
 fi

@@ -42,6 +42,8 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
   admin_username        = random_string.username.result
   admin_password        = random_password.password.result
 
+  custom_data = data.template_file.vm_config.rendered
+
   source_image_reference {
     publisher = local.image_ref[var.image].publisher
     offer     = local.image_ref[var.image].offer
@@ -71,21 +73,26 @@ resource "azurerm_key_vault_secret" "windowsvm_password" {
 }
 
 resource "azurerm_virtual_machine_extension" "config_script" {
-  name                 = "hostname"
+  name                 = "${azurerm_windows_virtual_machine.windowsvm.name}-vmextention"
   virtual_machine_id   = azurerm_windows_virtual_machine.windowsvm.id
-  publisher            = "Microsoft.Azure.Extensions"
-  type                 = "CustomScript"
-  type_handler_version = "2.0"
+  publisher            = "Microsoft.Compute"
+  type                 = "CustomScriptExtension"
+  type_handler_version = "1.1"
 
-  settings = <<SETTINGS
+  protected_settings = <<PROT
     {
-        "script": "${base64encode(templatefile("config_script.ps1", {
-          storageAccountName="${azurerm_virtual_machine.windowsvm.name}",
-          fileShareName = "${data.azurerm_storage_share.shared_storage.name}",
-          storageAccountKeys = "${data.azurerm_storage_account.stg.primary_access_key}"
-        }))}"
+      "commandToExecute": "commandToExecute": "powershell -ExecutionPolicy unrestricted -NoProfile -NonInteractive -command \"cp c:/azuredata/customdata.bin c:/azuredata/install.ps1; c:/azuredata/install.ps1\""
     }
-SETTINGS
+PROT
+}
+data "template_file" "vm_config" {
+    template = "${file("${path.module}/vm_config.ps1")}"
+    vars = {
+      SharedStorageAccess = var.shared_storage_access
+      StorageAccountName = data.azurerm_storage_account.stg.name
+      FileShareName = data.azurerm_storage_share.shared_storage.name
+      StorageAccountKey = data.azurerm_storage_account.stg.primary_access_key
+    }
 }
 
 data "azurerm_resource_group" "base_tre" {
