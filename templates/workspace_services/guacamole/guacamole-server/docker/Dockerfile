@@ -2,10 +2,11 @@ FROM maven:3-jdk-11-openj9 AS client_build
 
 COPY ./guacamole-auth-azure/pom.xml pom.xml
 COPY ./guacamole-auth-azure/src src
-RUN mvn package
+COPY ./docker/maven_package_and_exit_succesfully.sh /tmp/
+RUN bash /tmp/maven_package_and_exit_succesfully.sh
 
 FROM scratch as test-results
-COPY --from=client_build /target/surefire-reports/*.xml ./
+COPY --from=client_build /target/surefire-reports/* ./
 
 FROM guacamole/guacd:1.3.0
 

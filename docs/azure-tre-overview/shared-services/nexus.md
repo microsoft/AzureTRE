@@ -22,7 +22,7 @@ Nexus will be deployed as part of the main TRE terraform deployment. A configura
 3. To fetch Python packages from the PyPI proxy, a researcher can use pip install while specifying the proxy server:
 
     ```bash
-    pip install packagename --index-url https://nexus-<TRE_ID>.azurewebsites.net/repository/pypi-proxy-repo/simple
+    pip install packagename --index-url https://nexus-<TRE_ID>.azurewebsites.net/repository/apt-pypi/simple
     ```
 
 ## Network requirements
