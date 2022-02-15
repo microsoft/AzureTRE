@@ -231,10 +231,10 @@ jobs:
           notification-color: dc3545
           timezone: Europe/Zurich
 
-  publish_and_register_bundles:
-    name: Register Bundles
+  publish_bundles:
+    name: Publish Bundles
     runs-on: ubuntu-latest
-    needs: [deploy_tre]
+    needs: [deploy_management]
     strategy:
       matrix:
         include:
@@ -257,10 +257,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Register bundles
+      - name: Publish bundle
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: "make build-and-register-bundle DIR=${{ matrix.BUNDLE_DIR }}"
+          COMMAND: "make bundle-publish DIR=${{ matrix.BUNDLE_DIR }}"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
           ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
@@ -269,14 +269,6 @@ jobs:
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
           ACR_NAME: ${{ secrets.ACR_NAME }}
-          RESOURCE: "${{ secrets.API_CLIENT_ID }}"
-          AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
-          TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
-          TEST_USER_NAME: "${{ secrets.TEST_USER_NAME }}"
-          TEST_USER_PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
-          TRE_ID: "${{ secrets.TRE_ID }}"
-          LOCATION: "${{ secrets.LOCATION }}"
-          BUNDLE_TYPE: ${{ matrix.BUNDLE_TYPE }}
 
   build_additional_images:
     # used to build images NOT used by core infrastructure
@@ -316,12 +308,58 @@ jobs:
           notification-color: dc3545
           timezone: Europe/Zurich
 
+  register_bundles:
+    name: Register Bundles
+    runs-on: ubuntu-latest
+    needs: [deploy_tre, publish_bundles]
+    strategy:
+      matrix:
+        include:
+        # bundles type can be inferred from the bundle
+        # dir (but this is more explicit)
+          - {BUNDLE_TYPE: "workspace",
+             BUNDLE_DIR: "./templates/workspaces/base"}
+          - {BUNDLE_TYPE: "workspace",
+             BUNDLE_DIR: "./templates/workspaces/innereye"}
+          - {BUNDLE_TYPE: "workspace_service",
+             BUNDLE_DIR: "./templates/workspace_services/guacamole"}
+          - {BUNDLE_TYPE: "workspace_service",
+             BUNDLE_DIR: "./templates/workspace_services/azureml"}
+          - {BUNDLE_TYPE: "workspace_service",
+             BUNDLE_DIR: "./templates/workspace_services/devtestlabs"}
+          - {BUNDLE_TYPE: "workspace_service",
+             BUNDLE_DIR: "./templates/workspace_services/innereye"}
+    environment: Dev
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Register bundle
+        uses: ./.github/actions/devcontainer_run_command
+        with:
+          COMMAND: "make bundle-register DIR=${{ matrix.BUNDLE_DIR }}"
+          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
+          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
+          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
+          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
+          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+          RESOURCE: "${{ secrets.API_CLIENT_ID }}"
+          AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
+          TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
+          TEST_USER_NAME: "${{ secrets.TEST_USER_NAME }}"
+          TEST_USER_PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
+          TRE_ID: "${{ secrets.TRE_ID }}"
+          LOCATION: "${{ secrets.LOCATION }}"
+          BUNDLE_TYPE: ${{ matrix.BUNDLE_TYPE }}
 
   e2e_tests:
     name: "Run E2E Tests"
     runs-on: ubuntu-latest
     environment: Dev
-    needs: [publish_and_register_bundles, build_additional_images]
+    needs: [register_bundles, build_additional_images]
     steps:
       - name: Checkout
         uses: actions/checkout@v2

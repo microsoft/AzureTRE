@@ -25,6 +25,6 @@ The base workspace template contains the following resources:
 1. Build and deploy the base workspace
 
   ```cmd
-  make porter-build DIR=./templates/workspaces/base
-  make porter-install DIR=./templates/workspaces/base
+  make bundle-build DIR=./templates/workspaces/base
+  make bundle-install DIR=./templates/workspaces/base
   ```

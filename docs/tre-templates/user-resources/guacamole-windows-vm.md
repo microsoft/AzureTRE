@@ -25,6 +25,6 @@ It blocks all inbound and outbound traffic to the internet and allows only RDP c
 1. Build and install the Guacamole Service bundle
 
   ```cmd
-  make porter-build DIR=./templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm
-  make porter-install DIR=./templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm
+  make bundle-build DIR=./templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm
+  make bundle-install DIR=./templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm
   ```

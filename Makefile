@@ -167,8 +167,8 @@ lint:
 	flake8 && \
 	cd ./templates && terraform fmt -check -recursive -diff
 
-porter-build:
-	$(call target_title, "Building ${DIR} bundle") \
+bundle-build:
+	$(call target_title, "Building ${DIR} bundle with Porter") \
 	&& . ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
@@ -176,7 +176,7 @@ porter-build:
 	&& . ./devops/scripts/set_docker_sock_permission.sh \
 	&& cd ${DIR} && porter build --debug
 
-porter-install:
+bundle-install:
 	$(call target_title, "Deploying ${DIR} with Porter") \
 	&& . ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
@@ -184,7 +184,7 @@ porter-install:
 	&& . ./devops/scripts/load_env.sh ${DIR}/.env \
 	&& cd ${DIR} && porter install -p ./parameters.json --cred ./azure.json --allow-docker-host-access --debug
 
-porter-uninstall:
+bundle-uninstall:
 	$(call target_title, "Uninstalling ${DIR} with Porter") \
 	&& ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
@@ -192,7 +192,7 @@ porter-uninstall:
 	&& . ./devops/scripts/load_env.sh ${DIR}/.env \
 	&& cd ${DIR} && porter uninstall -p ./parameters.json --cred ./azure.json --debug
 
-porter-custom-action:
+bundle-custom-action:
 	$(call target_title, "Performing:${ACTION} ${DIR} with Porter") \
 	&& . ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
@@ -200,7 +200,7 @@ porter-custom-action:
 	&& . ./devops/scripts/load_env.sh ${DIR}/.env \
 	&& cd ${DIR} && porter invoke --action ${ACTION} -p ./parameters.json --cred ./azure.json --debug
 
-porter-publish:
+bundle-publish:
 	$(call target_title, "Publishing ${DIR} bundle with Porter") \
 	&& ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
@@ -208,29 +208,14 @@ porter-publish:
 	&& cd ${DIR} \
 	&& porter publish --registry "$${ACR_NAME}.azurecr.io" --debug
 
-register-bundle:
+bundle-register:
 	@# NOTE: ACR_NAME below comes from the env files, so needs the double '$$'. Others are set on command execution and don't
 	$(call target_title, "Registering ${DIR} bundle") \
 	&& ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& az acr login --name $${ACR_NAME}	\
 	&& cd ${DIR} \
-	&& ${ROOTPATH}/devops/scripts/publish_register_bundle.sh --acr-name "$${ACR_NAME}" --bundle-type "${BUNDLE_TYPE}" --current --insecure --tre_url "${TRE_URL}" --access-token "${TOKEN}"
-
-build-and-register-bundle: porter-build
-	@# NOTE: ACR_NAME below comes from the env files, so needs the double '$$'. Others are set on command execution and don't
-	$(call target_title, "Building and Publishing ${DIR} bundle") \
-	&& ./devops/scripts/check_dependencies.sh porter \
-	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& cd ${DIR} \
-	&& ${ROOTPATH}/devops/scripts/build_and_register_bundle.sh --acr-name "$${ACR_NAME}" --bundle-type "${BUNDLE_TYPE}" --current --insecure --tre_url "${TRE_URL}"
-
-register-bundle-payload:
-	@# NOTE: ACR_NAME below comes from the env files, so needs the double '$$'. Others are set on command execution and don't
-	$(call target_title, "Registering payload ${DIR} bundle") \
-	&& ./devops/scripts/check_dependencies.sh porter \
-	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& cd ${DIR} \
-	&& ${ROOTPATH}/devops/scripts/publish_register_bundle.sh --acr-name "$${ACR_NAME}" --bundle-type "${BUNDLE_TYPE}" --current
+	&& ${ROOTPATH}/devops/scripts/register_bundle_with_api.sh --acr-name $${ACR_NAME} --bundle-type $${BUNDLE_TYPE} --current --insecure --tre_url $${TRE_URL} --verify
 
 static-web-upload:
 	$(call target_title, "Uploading to static website") \
