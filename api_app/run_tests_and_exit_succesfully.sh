@@ -7,5 +7,5 @@ rm -f ../test-results/pytest_unit_failed
 pytest_result=$(pytest --junit-xml ../test-results/pytest_api_unit.xml --ignore e2e_tests)
 
 if [ $? != 0 ]; then
-  touch ../test-results/pytest_unit_failed
+  touch ../test-results/pytest_api_unit_failed
 fi
