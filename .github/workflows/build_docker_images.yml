@@ -63,7 +63,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: API Unit Tests have failed
-        if: hashFiles('test-results/**/pytest_unit_failed') != ''
+        # if: hashFiles('test-results/**/pytest_unit_failed') != ''
         run: |
           exit 1
 
