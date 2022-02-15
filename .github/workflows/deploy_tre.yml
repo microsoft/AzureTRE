@@ -26,7 +26,7 @@ jobs:
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
       ACR_NAME: ${{ secrets.ACR_NAME }}
       ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
-      ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io
+      ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/
       ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
       ACTIONS_DEVCONTAINER_TAG: 'latest'
       API_CLIENT_ID: ${{ secrets.API_CLIENT_ID }}
@@ -86,7 +86,7 @@ jobs:
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
       ACR_NAME: ${{ format('tre{0}', needs.prepare-not-main.outputs.refid) }}
       ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
-      ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io
+      ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/
       ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
       ACTIONS_DEVCONTAINER_TAG: ${{ needs.prepare-not-main.outputs.refid }}
       API_CLIENT_ID: ${{ secrets.API_CLIENT_ID }}
