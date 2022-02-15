@@ -21,8 +21,8 @@ See: [https://azure.microsoft.com/services/devtest-lab/](https://azure.microsoft
 1. Build and install the Azure DevTest Labs Service bundle
 
   ```cmd
-  make porter-build DIR=./templates/workspace_services/devtestlabs
-  make porter-install DIR=./templates/workspace_services/devtestlabs
+  make bundle-build DIR=./templates/workspace_services/devtestlabs
+  make bundle-install DIR=./templates/workspace_services/devtestlabs
   ```
 
 ## Create and expose a VM via the Firewall
