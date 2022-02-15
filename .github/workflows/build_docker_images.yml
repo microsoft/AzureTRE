@@ -62,21 +62,20 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: "Check file existence"
+      - name: "Check pytest failure file existence"
         id: check_api_test_result
         uses: andstor/file-existence-action@v1
         with:
           files: "test-results/pytest_unit_failed"
 
-      - name: API Unit Tests have failed
+      - name: PyTest failure
         if: steps.check_api_test_result.outputs.files_exists == 'true'
-        run: |
-          exit 1
+        run: exit 1
 
       - name: "Build image: api"
         if: |
-          (steps.filter.outputs.api == 'true' &&
-          success())
+          (steps.filter.outputs.api == 'true'
+          || github.event_name == 'workflow_dispatch')
         uses: docker/build-push-action@v2
         with:
           context: ./api_app/
