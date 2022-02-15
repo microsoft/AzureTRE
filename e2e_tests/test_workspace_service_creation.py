@@ -42,6 +42,7 @@ async def test_create_guacamole_service_into_base_workspace(admin_token, workspa
         "properties": {
             "display_name": "E2E test guacamole service",
             "description": "workspace for E2E",
+            "address_space_size": "small",
             "app_id": f"{config.TEST_WORKSPACE_APP_ID}"
         }
     }
