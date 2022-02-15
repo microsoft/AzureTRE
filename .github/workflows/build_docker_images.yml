@@ -61,10 +61,16 @@ jobs:
           target: test-results
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: API Unit Tests have failed
+        if: hashFiles('test-results/**/pytest_unit_failed') != ''
+        run: |
+          exit 1
+
       - name: "Build image: api"
         if: |
-          (steps.filter.outputs.api == 'true'
-          || github.event_name == 'workflow_dispatch')
+          (steps.filter.outputs.api == 'true' &&
+          success())
         uses: docker/build-push-action@v2
         with:
           context: ./api_app/

@@ -200,4 +200,5 @@ templates/core/terraform/plan
 e2e_tests/pytest_e2e.xml
 e2e_tests/workspace_id.txt
 pytest_unit.xml
+pytest_unit_failed
 validation.txt
