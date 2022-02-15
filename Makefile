@@ -129,14 +129,14 @@ letsencrypt:
 	&& . ./devops/scripts/load_env.sh ./templates/core/tre.env \
 	&& ./templates/core/terraform/scripts/letsencrypt.sh
 
-tre-stop:
+tre-start:
 	$(call target_title, "Starting TRE") \
 	&& . ./devops/scripts/check_dependencies.sh azfirewall \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& ./devops/scripts/control_tre.sh start
 
-tre-start:
+tre-stop:
 	$(call target_title, "Stopping TRE") \
 	&& . ./devops/scripts/check_dependencies.sh azfirewall \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
