@@ -58,9 +58,4 @@ public class AzureTreAuthenticatedUserTests {
         Assert.assertEquals("dummy_username", authenticatedUser.getIdentifier());
 
     }
-
-    @Test
-    public void Fail() {
-      Assert.assertEquals("true", "false");
-    }
 }

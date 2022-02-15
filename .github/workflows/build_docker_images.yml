@@ -68,10 +68,6 @@ jobs:
         with:
           files: "test-results/pytest_api_unit_failed"
 
-      # - name: API app unit test failure
-      #   if: steps.check_api_test_result.outputs.files_exists == 'true'
-      #   run: exit 1
-
       - name: "Build image: api"
         if: |
           (steps.filter.outputs.api == 'true'
@@ -113,10 +109,6 @@ jobs:
         uses: andstor/file-existence-action@v1
         with:
           files: "test-results/guacamole_package_failed"
-
-      # - name: Guacamole Unit Tests failed
-      #   if: steps.check_maven_test_result.outputs.files_exists == 'true'
-      #   run: exit 1
 
       - name: "Build image: guacamole_server"
         if: |
