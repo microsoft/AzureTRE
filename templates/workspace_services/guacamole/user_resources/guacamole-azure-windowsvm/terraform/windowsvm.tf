@@ -81,7 +81,7 @@ resource "azurerm_virtual_machine_extension" "config_script" {
 
   protected_settings = <<PROT
     {
-      "commandToExecute": "commandToExecute": "powershell -ExecutionPolicy unrestricted -NoProfile -NonInteractive -command \"cp c:/azuredata/customdata.bin c:/azuredata/install.ps1; c:/azuredata/install.ps1\""
+      "commandToExecute": "powershell -ExecutionPolicy unrestricted -NoProfile -NonInteractive -command \"cp c:/azuredata/customdata.bin c:/azuredata/install.ps1; c:/azuredata/install.ps1\""
     }
 PROT
 }
