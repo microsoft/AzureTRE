@@ -27,7 +27,7 @@ parameters:
   - name: image_tag
     type: string
     # TODO: replace with an image tag from resource proccessor (#848)
-    default: "0.1.8"
+    default: "0.1.9"
     description: "The tag of the guacamole image"
   - name: mgmt_acr_name
     type: string
