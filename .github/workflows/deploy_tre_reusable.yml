@@ -66,14 +66,22 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
 
-    - name: Setup tmate session
-      uses: mxschmitt/action-tmate@v3
-      timeout-minutes: 60
-      env:
-          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
-          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
+    # - name: Setup tmate session
+    #   uses: mxschmitt/action-tmate@v3
+    #   timeout-minutes: 60
+    #   env:
+    #       ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+    #       ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
 
-    - run: exit 1
+    - name: ssh agent
+      uses: webfactory/ssh-agent@v0.5.4
+      with:
+        ssh-private-key: ${{ secrets.GH_ACTIONS_DEBUG_PRIVATE_KEY }}
+
+    - run: |
+        env
+        sleep 30m
+        exit 1
 
 
   deploy_management:
