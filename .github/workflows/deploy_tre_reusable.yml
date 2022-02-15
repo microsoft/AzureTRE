@@ -10,6 +10,8 @@ on:
         required: true
       ACTIONS_ACR_NAME:
         required: true
+      ACTIONS_ACR_URI:
+        required: true
       ACTIONS_ACR_PASSWORD:
         required: true
       ACTIONS_DEVCONTAINER_TAG:
@@ -101,7 +103,7 @@ jobs:
       - name: Login to Container Registry
         uses: docker/login-action@v1
         with:
-          registry: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io
+          registry: ${{ secrets.ACTIONS_ACR_URI }}
           username: ${{ secrets.ACTIONS_ACR_NAME }}
           password: ${{ secrets.ACTIONS_ACR_PASSWORD }}
 
@@ -116,19 +118,20 @@ jobs:
           docker build . \
             -t 'tredev:${{ secrets.ACTIONS_DEVCONTAINER_TAG }}' \
             -f '.devcontainer/Dockerfile' \
-            --cache-from ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:${{ secrets.ACTIONS_DEVCONTAINER_TAG }} \
-            --cache-from ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest \
+            --cache-from ${{ secrets.ACTIONS_ACR_URI }}tredev:${{ secrets.ACTIONS_DEVCONTAINER_TAG }} \
+            --cache-from ${{ secrets.ACTIONS_ACR_URI }}tredev:latest \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
             --build-arg USER_UID="${USER_UID}" \
             --build-arg USER_GID="${USER_GID}"
           docker image tag tredev:${{ secrets.ACTIONS_DEVCONTAINER_TAG }} \
-            ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
+            ${{ secrets.ACTIONS_ACR_URI }}tredev:${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
 
       - name: Deploy management
         uses: ./.github/actions/devcontainer_run_command
         with:
           COMMAND: "make bootstrap && make mgmt-deploy"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
           ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
@@ -167,7 +170,7 @@ jobs:
         run: |
           set -e
           docker image push \
-            ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
+            ${{ secrets.ACTIONS_ACR_URI }}tredev:${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
 
   build_core_images:
     # used to build images used by core infrastructure
@@ -192,6 +195,7 @@ jobs:
         with:
           COMMAND: "make ${{ matrix.target }}"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
           ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
@@ -224,6 +228,7 @@ jobs:
         with:
           COMMAND: "make tre-deploy"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
           ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
@@ -291,6 +296,7 @@ jobs:
         with:
           COMMAND: "make bundle-publish DIR=${{ matrix.BUNDLE_DIR }}"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
           ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
@@ -319,6 +325,7 @@ jobs:
         with:
           COMMAND: "make ${{ matrix.target }}"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
           ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
@@ -368,6 +375,7 @@ jobs:
         with:
           COMMAND: "make bundle-register DIR=${{ matrix.BUNDLE_DIR }}"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
           ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
@@ -398,6 +406,7 @@ jobs:
         with:
           COMMAND: "make test-e2e"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
           ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
@@ -412,7 +421,7 @@ jobs:
           TEST_USER_PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
-          IS_API_SECURED: false # ${{ github.ref == 'refs/heads/main' }} # only the "main" env has valid TLS
+          IS_API_SECURED: false
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
@@ -424,14 +433,6 @@ jobs:
           notification-summary: "E2E Tests failed"
           notification-color: dc3545
           timezone: Europe/Zurich
-
-      # - name: Expose workspace id
-      #   shell: bash
-      #   if: always()
-      #   run: |
-      #     cd ${{ github.workspace }}/e2e_tests
-      #     wkspc_id=`cat workspace_id.txt`
-      #     echo "WORKSPACE_ID=$wkspc_id" >> $GITHUB_ENV
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
