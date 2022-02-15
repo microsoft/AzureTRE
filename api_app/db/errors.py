@@ -16,3 +16,7 @@ class UnableToAccessDatabase(Exception):
 
 class ResourceIsNotDeployed(Exception):
     """Raised when trying to install resource under entity which haven't finalized its deployment."""
+
+
+class InvalidInput(Exception):
+    """Raised when invalid input is received when creating an entity."""

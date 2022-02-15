@@ -22,14 +22,15 @@
 		// Mount docker socket for docker builds
 		"type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock"
 	],
-	"workspaceFolder": "/workspaces/AzureTRE",
 	"remoteUser": "vscode",
 	// Set *default* container specific settings.json values on container create.
 	"settings": {
 		"terminal.integrated.defaultProfile.linux": "bash",
 		"python.pythonPath": "/usr/local/bin/python",
 		"python.linting.enabled": true,
-		"python.linting.pylintEnabled": true,
+		"python.linting.pylintEnabled": false,
+		"python.linting.flake8Enabled": true,
+		"python.formatting.provider": "black",
 		"python.formatting.autopep8Path": "/usr/local/py-utils/bin/autopep8",
 		"python.formatting.blackPath": "/usr/local/py-utils/bin/black",
 		"python.formatting.yapfPath": "/usr/local/py-utils/bin/yapf",
@@ -39,6 +40,14 @@
 		"python.linting.pycodestylePath": "/usr/local/py-utils/bin/pycodestyle",
 		"python.linting.pydocstylePath": "/usr/local/py-utils/bin/pydocstyle",
 		"python.linting.pylintPath": "/usr/local/py-utils/bin/pylint",
+
+		"python.testing.unittestEnabled": false,
+		"python.testing.pytestEnabled": true,
+		"python.testing.pytestArgs": [
+			"api_app"
+		],
+
+
 		"launch": {
 			"configurations": [
 				{
@@ -62,15 +71,15 @@
 	},
 	// Add the IDs of extensions you want installed when the container is created.
 	"extensions": [
-    "ms-python.python",
-    "hashicorp.terraform",
-    "github.vscode-pull-request-github",
-    "ms-kubernetes-tools.porter-vscode",
-    "davidanson.vscode-markdownlint",
-    "editorconfig.editorconfig",
+		"ms-python.python",
+		"hashicorp.terraform",
 		"github.vscode-pull-request-github",
-    "mikestead.dotenv",
-    "humao.rest-client"
+		"ms-kubernetes-tools.porter-vscode",
+		"davidanson.vscode-markdownlint",
+		"editorconfig.editorconfig",
+		"github.vscode-pull-request-github",
+		"mikestead.dotenv",
+		"humao.rest-client"
 	],
 	"forwardPorts": [8000]
 }

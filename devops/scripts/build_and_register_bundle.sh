@@ -55,9 +55,14 @@ while [ "$1" != "" ]; do
         insecure=1
         ;;
     *)
+        echo "Unexpected argument: '$1'"
         usage
         ;;
     esac
+    if [[ -z "$2" ]]; then
+      # if no more args then stop processing
+      break
+    fi
     shift # remove the current value for `$1` and use the next
 done
 

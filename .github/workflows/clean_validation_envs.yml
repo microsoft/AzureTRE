@@ -3,8 +3,8 @@ name: Clean Validation Environments
 
 on:
   schedule:
-    # 2am each night https://crontab.guru/#0_2_*_*_*
-    - cron: "0 2 * * *"
+    # Every 2 hours
+    - cron: "0 */2 * * *"
   workflow_dispatch:
 
 jobs:

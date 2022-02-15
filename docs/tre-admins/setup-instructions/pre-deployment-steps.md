@@ -96,11 +96,11 @@ SWAGGER_UI_CLIENT_ID=d87...12
 
 ### Using a separate Azure Active Directory tenant
 
-  !!! caution
-      This section is only relevant it you are setting up a separate Azure Active Directory tenant for use.
-      This is only recommended for development environments when you don't have the required permissions to create the necessary Azure Active Directory registrations.
-      Using a separate Azure Active Directory tenant will prevent you from using certain Azure Active Directory integrated services.
-      For production deployments, work with your Azure Active Directory administrator to perform the required registration
+!!! caution
+    This section is only relevant it you are setting up a separate Azure Active Directory tenant for use.
+    This is only recommended for development environments when you don't have the required permissions to create the necessary Azure Active Directory registrations.
+    Using a separate Azure Active Directory tenant will prevent you from using certain Azure Active Directory integrated services.
+    For production deployments, work with your Azure Active Directory administrator to perform the required registration
 
 1. Create an Azure Active Directory tenant
     To create a new Azure Active Directory tenant, [follow the steps here](https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-create-new-tenant)
@@ -115,7 +115,7 @@ SWAGGER_UI_CLIENT_ID=d87...12
 1. Run the `/scripts/aad-app-reg.sh` script to create API and Swagger UI app registrations and their service principals in Azure Active Directory. The details of the script are covered [app registration script](../auth.md#app-registration-script) section of the auth document. Below is a sample where `TRE_ID` has value `mytre` and the Azure location is `westeurope`:
 
     ```bash
-    ./scripts/aad-app-reg.sh --namen TRE --swaggerui-redirecturl https://mytre.westeurope.cloudapp.azure.com/api/docs/oauth2-redirect --admin-consent
+    ./scripts/aad-app-reg.sh --name TRE --swaggerui-redirecturl https://mytre.westeurope.cloudapp.azure.com/api/docs/oauth2-redirect --admin-consent
     ```
 
   With the output of the script, you can now provide the required auth related values for the following variables in the `/templates/core/.env` configuration file as described above in the "Set environment configuration variables of the Azure TRE instance" section.

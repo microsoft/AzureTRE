@@ -25,9 +25,9 @@ Options:
                                Not valid with -w. Can be used with -a to apply admin consent
 
 Examples:
-    $0 -n TRE -r https://mydre.region.cloudapp.azure.com/api/docs/oauth2-redirect -a
+    $0 -n TRE -r https://mytre.region.cloudapp.azure.com/api/docs/oauth2-redirect -a
 
-    $0 --name 'Workspace One' --swaggerui-redirecturl https://mydre.region.cloudapp.azure.com/api/docs/oauth2-redirect --workspace
+    $0 --name 'Workspace One' --swaggerui-redirecturl https://mytre.region.cloudapp.azure.com/api/docs/oauth2-redirect --workspace
 
 USAGE
     exit 1
@@ -91,15 +91,15 @@ if [[ -z "$appName" ]]; then
     show_usage
 fi
 
-# if admin consent and not one of swagger or create automation account, show error
-if [[ $grantAdminConsent -eq 1 && !(-n "$swaggerSpId" || $createAutomationAccount -eq 1) ]]; then
-    echo "When specifying admin consent, please specify the swagger application client ID or automation account creation option" 1>&2
-    show_usage
-fi
-
 if [[ $workspace -ne 0 && $createAutomationAccount -ne 0 ]]; then
   echo "--automation-account cannot be used with --workspace"
   show_usage
+fi
+
+# if admin consent & workspace, but not swagger client id, show error
+if [[ $workspace -ne 0 && $grantAdminConsent -eq 1 && ! -n "$swaggerSpId" ]]; then
+    echo "When specifying --admin-consent and --workspace, please specify the swagger application client ID option" 1>&2
+    show_usage
 fi
 
 if [[ $(az account list --only-show-errors -o json | jq 'length') -eq 0 ]]; then

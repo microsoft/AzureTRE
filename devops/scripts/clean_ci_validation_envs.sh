@@ -16,10 +16,10 @@ function deleteEnv ()
 {
   local tre_rg="$1"
   locks=$(az group lock list -g $tre_rg --query [].id -o tsv)
-  # az lock delete --ids ${locks}
-  # az group delete --resource-group "${tre_rg}" --yes --no-wait
+  az resource lock delete --ids ${locks}
+  az group delete --resource-group "${tre_rg}" --yes --no-wait
   # each mgmt is per tre so we should delete that too.
-  # az group delete --resource-group "${tre_rg}-mgmt" --yes --no-wait
+  az group delete --resource-group "${tre_rg}-mgmt" --yes --no-wait
 }
 
 echo "Refs:"

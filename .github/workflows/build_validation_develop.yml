@@ -4,9 +4,6 @@ name: Build Validation
 on:
   pull_request:
     branches: [main]
-  pull_request_target:
-    types: [labeled]
-    branches: [main]
 
 # for each ref (branch/pr) run just the most recent,
 # cancel other pending/running ones
@@ -61,3 +58,43 @@ jobs:
           find . -type d -name 'terraform' -not -path '*cnab*' -print0 \
           | xargs -0 -I{} sh -c 'echo "***** Validating: {} *****"; \
           terraform -chdir={} init -backend=false; terraform -chdir={} validate'
+
+  unit-test:
+    name: Unit Test
+    runs-on: ubuntu-latest
+    # The conditions below define the desired behaviour of the deployment
+    # workflow:
+    #   1. The workflow must NOT be triggered automatically by an opened
+    #     pull request
+    #   2. It should be possible to manually trigger the workflow for PRs
+    #     originating from forks (using "safe to test" label)
+    #   3. The workflow must run when scheduled, pushed (i.e., merge) or
+    #     manually triggered
+    if: |
+      github.event.pull_request.head.repo.full_name == github.repository
+      || contains(github.event.pull_request.labels.*.name, 'safe to test')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Run Unit Tests
+        uses: ./.github/actions/devcontainer_run_command
+        with:
+          COMMAND: "pytest --ignore=e2e_tests --junit-xml pytest_unit.xml"
+          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
+          ACTIONS_DEVCONTAINER_TAG: 'latest'
+
+      - name: Upload Unit Test Results
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: Unit Test results
+          path: ./pytest_unit.xml
+
+      - name: Publish Unit Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        if: always()
+        with:
+          files: ./pytest_unit.xml
+

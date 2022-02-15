@@ -4,9 +4,6 @@ name: Docker build
 on:
   pull_request:
     branches: [main]
-  pull_request_target:
-    types: [labeled]
-    branches: [main]
   workflow_dispatch:
 
 # for each ref (branch/pr) run just the most recent, cancel
@@ -115,16 +112,3 @@ jobs:
           file: ./templates/shared_services/gitea/Dockerfile
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Publish Unit Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v1
-        if: always()
-        with:
-          files: test-results/**/*.xml
-
-      - name: Upload Unit Test Results
-        if: always()
-        uses: actions/upload-artifact@v2
-        with:
-          name: test-results
-          path: test-results

@@ -53,11 +53,11 @@
   "outputs": {
     "instrumentationKey": {
       "value": "[reference(resourceId('microsoft.insights/components', parameters('app_insights_name')), '2020-02-02').InstrumentationKey]",
-      "type": "string"
+      "type": "String"
     },
     "connectionString": {
       "value": "[reference(resourceId('microsoft.insights/components', parameters('app_insights_name')), '2020-02-02').ConnectionString]",
-      "type": "string"
+      "type": "String"
     }
   }
 }

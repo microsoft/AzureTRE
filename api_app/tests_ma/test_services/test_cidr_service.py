@@ -33,3 +33,15 @@ def test_generate_new_cidr__invalid_netmask_raises_exception():
 def test_generate_new_cidr__invalid_network_raises_exception():
     with pytest.raises(ipaddress.AddressValueError):
         services.cidr_service.generate_new_cidr(["10.1.0.300/16"], 24)
+
+
+@patch('core.config.CORE_ADDRESS_SPACE', "10.0.0.0/16")
+@patch('core.config.TRE_ADDRESS_SPACE', "10.0.0.0/12")
+def test_is_network_available__returns_false():
+    assert False is services.cidr_service.is_network_available([], "10.0.0.0/16")
+
+
+@patch('core.config.CORE_ADDRESS_SPACE', "10.0.0.0/16")
+@patch('core.config.TRE_ADDRESS_SPACE', "10.0.0.0/12")
+def test_is_network_available__returns_true():
+    assert True is services.cidr_service.is_network_available(["10.2.4.0/24", "10.1.0.0/16", "10.2.1.0/24", "10.2.3.0/24", "10.2.0.0/24", "10.2.2.0/24"], "10.2.5.0/24")
