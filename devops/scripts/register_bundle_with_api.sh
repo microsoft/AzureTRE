@@ -158,7 +158,7 @@ else
   eval "curl -X 'POST' ${tre_url}/${tre_get_path} -H 'accept: application/json' -H 'Content-Type: application/json' -H 'Authorization: Bearer ${access_token}' -d '${payload}' ${options}"
   echo -e "\n"
 
-  if ((verify))
+  if ${verify}
   then
     # Check that the template got registered
     template_name=$(yq eval '.name' porter.yaml)
