@@ -58,7 +58,26 @@ on:
 concurrency: "deploy-${{ github.ref }}"
 
 jobs:
+  debug:
+    name: debug
+    runs-on: ubuntu-latest
+    environment: Dev
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
+      timeout-minutes: 60
+      env:
+          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
+
+    - run: exit 1
+
+
   deploy_management:
+    needs: [debug]
     name: Deploy Management
     runs-on: ubuntu-latest
     environment: Dev
