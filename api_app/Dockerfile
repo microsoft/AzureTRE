@@ -7,11 +7,11 @@ COPY requirements-dev.txt .
 RUN pip3 install -r requirements-dev.txt
 COPY . /api
 WORKDIR /api
-RUN pytest --junit-xml /test-results/api-pytest.xml --ignore e2e_tests
+RUN ./run_tests_and_exit_succesfully.sh
 
 
 FROM scratch as test-results
-COPY --from=test /test-results/*.xml .
+COPY --from=test /test-results/* .
 
 
 FROM base as runtime
