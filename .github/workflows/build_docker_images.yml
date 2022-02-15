@@ -65,6 +65,7 @@ jobs:
       - name: API Unit Tests have failed
         # if: hashFiles('test-results/**/pytest_unit_failed') != ''
         run: |
+          ls test-results
           exit 1
 
       - name: "Build image: api"
