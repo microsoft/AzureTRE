@@ -93,6 +93,7 @@ data "template_file" "vm_config" {
       StorageAccountName = data.azurerm_storage_account.stg.name
       StorageAccountKey = data.azurerm_storage_account.stg.primary_access_key
       FileShareName = data.azurerm_storage_share.shared_storage.name
+      AdminUser = random_string.username.result
     }
 }
 
