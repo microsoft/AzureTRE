@@ -42,7 +42,7 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
   admin_username        = random_string.username.result
   admin_password        = random_password.password.result
 
-  custom_data = data.template_file.vm_config.rendered
+  custom_data = base64encode(data.template_file.vm_config.rendered)
 
   source_image_reference {
     publisher = local.image_ref[var.image].publisher
@@ -81,17 +81,18 @@ resource "azurerm_virtual_machine_extension" "config_script" {
 
   protected_settings = <<PROT
     {
-      "commandToExecute": "powershell -ExecutionPolicy unrestricted -NoProfile -NonInteractive -command \"cp c:/azuredata/customdata.bin c:/azuredata/install.ps1; c:/azuredata/install.ps1\""
+      "commandToExecute": "powershell -ExecutionPolicy Unrestricted -NoProfile -NonInteractive -command \"cp c:/azuredata/customdata.bin c:/azuredata/configure.ps1; c:/azuredata/configure.ps1\""
     }
 PROT
 }
+
 data "template_file" "vm_config" {
     template = "${file("${path.module}/vm_config.ps1")}"
     vars = {
-      SharedStorageAccess = var.shared_storage_access
+      SharedStorageAccess = tobool(var.shared_storage_access) ? 1 : 0
       StorageAccountName = data.azurerm_storage_account.stg.name
-      FileShareName = data.azurerm_storage_share.shared_storage.name
       StorageAccountKey = data.azurerm_storage_account.stg.primary_access_key
+      FileShareName = data.azurerm_storage_share.shared_storage.name
     }
 }
 

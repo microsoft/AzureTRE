@@ -1,4 +1,4 @@
-if( ${SharedStorageAccess} -eq "true" )
+if( ${SharedStorageAccess} -eq 1 )
 {
   $password = ConvertTo-SecureString -String ${StorageAccountKey} -AsPlainText -Force
   $credential = New-Object System.Management.Automation.PSCredential -ArgumentList "AZURE\${StorageAccountName}", $password

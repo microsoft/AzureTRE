@@ -1,5 +1,5 @@
 name: tre-service-guacamole-windowsvm
-version: 0.1.33
+version: 0.1.40
 description: "An Azure TRE User Resource Template for Guacamole (Windows 10)"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
