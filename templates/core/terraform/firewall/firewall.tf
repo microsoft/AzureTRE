@@ -23,6 +23,7 @@ resource "azurerm_firewall" "fw" {
 }
 
 resource "azurerm_management_lock" "fw" {
+  count      = var.debug ? 0 : 1
   name       = azurerm_firewall.fw.name
   scope      = azurerm_firewall.fw.id
   lock_level = "CanNotDelete"
@@ -30,9 +31,11 @@ resource "azurerm_management_lock" "fw" {
 }
 
 resource "azurerm_monitor_diagnostic_setting" "firewall" {
-  name                       = "diagnostics-firewall-${var.tre_id}"
-  target_resource_id         = azurerm_firewall.fw.id
-  log_analytics_workspace_id = var.log_analytics_workspace_id
+  name                           = "diagnostics-firewall-${var.tre_id}"
+  target_resource_id             = azurerm_firewall.fw.id
+  log_analytics_workspace_id     = var.log_analytics_workspace_id
+  log_analytics_destination_type = "Dedicated"
+
   log {
     category = "AzureFirewallApplicationRule"
     enabled  = true

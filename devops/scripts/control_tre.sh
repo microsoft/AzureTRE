@@ -1,5 +1,20 @@
 #!/bin/bash
-set -e
+set -o errexit
+set -o pipefail
+set -o nounset
+# set -o xtrace
+
+if [[ -z ${TRE_ID:-} ]]; then
+    echo "TRE_ID environment variable must be set."
+    exit 1
+fi
+
+# if we don't have a firewall, no need to continue this script.
+# most likely this is an automated execution before calling make tre-deploy
+if [[ $(az network firewall list --query "[?resourceGroup=='rg-${TRE_ID}'&&name=='fw-${TRE_ID}'] | length(@)") == 0 ]]; then
+  echo "TRE resource group or firewall don't exits. Exiting..."
+  exit 0
+fi
 
 if [[ "$1" == *"start"* ]]; then
   CURRENT_PUBLIC_IP=$(az network firewall ip-config list -f "fw-$TRE_ID" -g "rg-$TRE_ID" --query "[0].publicIpAddress" -o tsv)

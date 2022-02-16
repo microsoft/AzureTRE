@@ -33,3 +33,8 @@ variable "web_app_subnet" {
   })
   description = "The ID of the web app subnet"
 }
+
+variable "debug" {
+  type    = bool
+  default = false
+}

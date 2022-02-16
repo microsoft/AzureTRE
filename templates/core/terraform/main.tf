@@ -99,6 +99,7 @@ module "firewall" {
   location                   = var.location
   resource_group_name        = azurerm_resource_group.core.name
   log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
+  debug                      = var.debug
 
   shared_subnet = {
     id               = module.network.shared_subnet_id

@@ -103,7 +103,10 @@ inputs:
     description: "Indicates if the API endpoint has valid TLS certificate and if we validate it during E2E."
     required: false
     default: "true"
-
+  TF_VAR_debug:
+    description: "A value indicating if the system should be deployed in debug mode."
+    required: false
+    default: "false"
 runs:
   using: composite
   steps:
@@ -190,5 +193,6 @@ runs:
           -e IS_API_SECURED \
           -e TF_VAR_ci_git_ref="${{ github.ref }}" \
           -e DOCKER_BUILDKIT \
+          -e TF_VAR_debug=${{ inputs.TF_VAR_debug }} \
           '${{ inputs.ACTIONS_ACR_URI }}tredev:${{ inputs.ACTIONS_DEVCONTAINER_TAG }}' \
         bash -c "${{ inputs.COMMAND }}"
