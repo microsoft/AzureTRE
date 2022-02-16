@@ -25,7 +25,7 @@ function deleteEnv ()
 echo "Refs:"
 git show-ref
 
-open_prs=$(gh pr list --state open --json number,title)
+open_prs=$(gh pr list --state open --json number,title,headRefName)
 
 # Resource groups that start with a specific string and have the ci_git_ref tag whose value starts with "ref"
 az group list --query "[?starts_with(name, 'rg-tre') && tags.ci_git_ref != null && starts_with(tags.ci_git_ref, 'refs')].[name, tags.ci_git_ref]" -o tsv |
@@ -38,6 +38,25 @@ while read -r rg_name rg_ref_name; do
     then
       echo "PR ${pr_num} (derived from ref ${rg_ref_name}) is not open, and environment ${rg_name} can be deleted."
       deleteEnv ${rg_name}
+    fi
+
+    # The pr is still open...
+
+    # The ci_git_ref might not contain the actual ref, but the "pull" ref. We need the actual head branch name.
+    head_ref=$(echo ${open_prs} | jq -r ".[] | select (.number == ${pr_num}) | .headRefName")
+    echo "head_ref: ${head_ref}"
+
+    # Checking when was the last commit on the branch.
+    last_commit_date_string=$(git for-each-ref --sort='-committerdate:iso8601' --format=' %(committerdate:iso8601)%09%(refname)' refs/remotes/origin/${head_ref} | cut -f1)
+    echo "last_commit_date_string: ${last_commit_date_string}"
+
+    diff_in_hours=$(( ($(date +%s) - $(date -d "${last_commit_date_string}" +%s) )/(60*60) ))
+    echo "diff_in_hours: ${diff_in_hours}"
+
+    if (( diff_in_hours > 4 )); then
+      echo "No recent activity on source branch"
+    else
+      echo "Source branch is active"
     fi
   else
     # this rg originated from an internal branch on this repo
