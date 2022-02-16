@@ -28,7 +28,7 @@ if [ ${shared_storage_access} -eq 1 ]; then
   storageAccountKey="${storage_account_key}"
   httpEndpoint="${http_endpoint}"
   fileShareName="${fileshare_name}"
-  mntRoot="/mount"
+  mntRoot="/fileshares"
   credentialRoot="/etc/smbcredentials"
 
   mntPath="$mntRoot/$storageAccountName/$fileShareName"
@@ -39,9 +39,7 @@ if [ ${shared_storage_access} -eq 1 ]; then
   sudo mkdir -p $mntPath
   sudo mkdir -p "/etc/smbcredentials"
   sudo mkdir -p $mntRoot
-
-  # Initial Mount
-  sudo mount -t cifs $smbPath $mntPath -o username=$storageAccountName,password=$storageAccountKey,serverino
+  sudo mkdir -p "/$fileShareName"
   
   ### Auto FS to persist storage
   # Create credential file
@@ -56,13 +54,12 @@ if [ ${shared_storage_access} -eq 1 ]; then
   sudo chmod 600 $smbCredentialFile
 
   # Configure autofs
-  sudo echo "$fileShareName -fstype=cifs,credentials=$smbCredentialFile :$smbPath" > /etc/auto.fileshares
+  sudo echo "$fileShareName -fstype=cifs,rw,credentials=$smbCredentialFile :$smbPath" > /etc/auto.fileshares
   sudo echo "/fileshares /etc/auto.fileshares --timeout=60" > /etc/auto.master
 
   # Restart service to register changes
   sudo systemctl restart autofs
 
-  # read/write/execute to admin user and current group (current group will be root)
-  sudo chown ${username} $mntPath
-  sudo chmod g+twx $mntPath
+  # Autofs mounts when accessed for 60 seconds.  Folder created for constant visible mount
+  sudo ln -s $mntPath "/$fileShareName"
 fi
