@@ -50,8 +50,11 @@ $(call target_title, "Building $(1) Image") \
 && . ./devops/scripts/set_docker_sock_permission.sh \
 && source <(grep = $(2) | sed 's/ *= */=/g') \
 && az acr login -n $${ACR_NAME} \
+&& if [ ! -z "$${SECONDARY_CACHE_ACR_NAME}" ]; then \
+	az acr login -n $${SECONDARY_CACHE_ACR_NAME}; \
+	sec_cache="--cache-from $${SECONDARY_CACHE_ACR_NAME}.azurecr.io/$${image_name_suffix}:$${__version__}"; fi \
 && docker build -t ${FULL_IMAGE_NAME_PREFIX}/$(1):$${__version__} --build-arg BUILDKIT_INLINE_CACHE=1 \
-	--cache-from ${FULL_IMAGE_NAME_PREFIX}/$(1):$${__version__} -f $(3) $(4)
+	--cache-from ${FULL_IMAGE_NAME_PREFIX}/$(1):$${__version__} $${sec_cache} -f $(3) $(4)
 endef
 
 build-api-image:
