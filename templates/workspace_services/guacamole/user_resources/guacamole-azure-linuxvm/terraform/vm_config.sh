@@ -31,7 +31,7 @@ if [ ${shared_storage_access} -eq 1 ]; then
   mntRoot="/fileshares"
   credentialRoot="/etc/smbcredentials"
 
-  mntPath="$mntRoot/$storageAccountName/$fileShareName"
+  mntPath="$mntRoot/$fileShareName"
   smbPath=$(echo $httpEndpoint | cut -c7-$(expr length $httpEndpoint))$fileShareName
   smbCredentialFile="$credentialRoot/$storageAccountName.cred"
 
@@ -39,7 +39,6 @@ if [ ${shared_storage_access} -eq 1 ]; then
   sudo mkdir -p $mntPath
   sudo mkdir -p "/etc/smbcredentials"
   sudo mkdir -p $mntRoot
-  sudo mkdir -p "/$fileShareName"
   
   ### Auto FS to persist storage
   # Create credential file
@@ -55,7 +54,7 @@ if [ ${shared_storage_access} -eq 1 ]; then
 
   # Configure autofs
   sudo echo "$fileShareName -fstype=cifs,rw,credentials=$smbCredentialFile :$smbPath" > /etc/auto.fileshares
-  sudo echo "/fileshares /etc/auto.fileshares --timeout=60" > /etc/auto.master
+  sudo echo "$mntRoot /etc/auto.fileshares --timeout=60" > /etc/auto.master
 
   # Restart service to register changes
   sudo systemctl restart autofs
