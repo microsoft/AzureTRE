@@ -225,6 +225,7 @@ jobs:
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
           TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
+          TF_VAR_debug: "${{ github.ref == 'refs/heads/main' && false || true }}"
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
