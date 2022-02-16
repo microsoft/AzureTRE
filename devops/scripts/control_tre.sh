@@ -10,7 +10,7 @@ if [[ -z ${TRE_ID:-} ]]; then
 fi
 
 # if we don't have a firewall, no need to continue this script.
-# most likely this is an automated execution before calling make tre-deploy
+# most likely this is an automated execution before calling make tre-deploy.
 if [[ $(az network firewall list --query "[?resourceGroup=='rg-${TRE_ID}'&&name=='fw-${TRE_ID}'] | length(@)") == 0 ]]; then
   echo "TRE resource group or firewall don't exits. Exiting..."
   exit 0
