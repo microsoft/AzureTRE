@@ -1,6 +1,6 @@
 # TRE API
 
-The TRE API is a service that users can interact with to request changes to workspaces e.g., to create, update, delete workspaces and workspace services inside each workspace.
+The TRE API is a service that users can interact with to request changes to workspaces e.g. to create, update, delete workspaces and workspace services inside each workspace.
 
 ## Prerequisites
 
