@@ -40,6 +40,10 @@ if [ ${shared_storage_access} -eq 1 ]; then
   sudo mkdir -p "/etc/smbcredentials"
   sudo mkdir -p $mntRoot
 
+  # Initial Mount
+  sudo mount -t cifs $smbPath $mntPath -o username=$storageAccountName,password=$storageAccountKey,serverino
+  
+  ### Auto FS to persist storage
   # Create credential file
   if [ ! -f $smbCredentialFile ]; then
       echo "username=$storageAccountName" | sudo tee $smbCredentialFile > /dev/null
