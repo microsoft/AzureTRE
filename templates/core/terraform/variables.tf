@@ -123,11 +123,18 @@ variable "resource_processor_type" {
   type        = string
 }
 
-variable "debug" {
+variable "keyvault_purge_protection_enabled" {
   type        = bool
-  default     = false
-  description = "Used to turn debug on within Azure Resources"
+  default     = true
+  description = "Used to turn Keyvault purge protection"
 }
+
+variable "stateful_resources_locked" {
+  type        = bool
+  default     = true
+  description = "Used to add locks on resources with state"
+}
+
 
 variable "ci_git_ref" {
   default     = ""

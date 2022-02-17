@@ -93,7 +93,7 @@ push-gitea-image:
 push-guacamole-image:
 	$(call push_image,"guac-server","./templates/workspace_services/guacamole/version.txt")
 
-tre-deploy:
+tre-deploy: tre-start
 	$(call target_title, "Deploying TRE") \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
