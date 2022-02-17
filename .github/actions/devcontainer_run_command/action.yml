@@ -103,6 +103,14 @@ inputs:
     description: "Indicates if the API endpoint has valid TLS certificate and if we validate it during E2E."
     required: false
     default: "true"
+  TF_VAR_keyvault_purge_protection_enabled:
+    description: "A value indicating if keyvaults will have purge protection."
+    required: false
+    default: "true"
+  TF_VAR_stateful_resources_locked:
+    description: "A value indicating if resources with state will be protected with locks."
+    required: false
+    default: "true"
 
 runs:
   using: composite
@@ -190,5 +198,7 @@ runs:
           -e IS_API_SECURED \
           -e TF_VAR_ci_git_ref="${{ github.ref }}" \
           -e DOCKER_BUILDKIT \
+          -e TF_VAR_keyvault_purge_protection_enabled=${{ inputs.TF_VAR_keyvault_purge_protection_enabled }} \
+          -e TF_VAR_stateful_resources_locked=${{ inputs.TF_VAR_stateful_resources_locked }} \
           '${{ inputs.ACTIONS_ACR_URI }}tredev:${{ inputs.ACTIONS_DEVCONTAINER_TAG }}' \
         bash -c "${{ inputs.COMMAND }}"
