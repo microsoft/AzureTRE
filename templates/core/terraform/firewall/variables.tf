@@ -34,7 +34,7 @@ variable "web_app_subnet" {
   description = "The ID of the web app subnet"
 }
 
-variable "debug" {
+variable "stateful_resources_locked" {
   type    = bool
-  default = false
+  default = true
 }
