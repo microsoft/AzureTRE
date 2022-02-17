@@ -49,7 +49,7 @@ while read -r rg_name rg_ref_name; do
     ref_in_remote="${rg_ref_name/heads/remotes\/origin}"
     if ! $(git show-ref -q $ref_in_remote)
     then
-      echo "Ref ${rg_ref_name} does not exists, and environment ${rg_name} can be deleted."
+      echo "Ref ${rg_ref_name} does not exist, and environment ${rg_name} can be deleted."
       deleteEnv ${rg_name}
     fi
   fi
