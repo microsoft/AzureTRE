@@ -29,7 +29,7 @@ resource "azurerm_cosmosdb_sql_database" "tre-db" {
 }
 
 resource "azurerm_management_lock" "tre-db" {
-  count      = var.debug == true ? 0 : 1
+  count      = var.stateful_resources_locked ? 1 : 0
   name       = "tre-db-lock"
   scope      = azurerm_cosmosdb_sql_database.tre-db.id
   lock_level = "CanNotDelete"
