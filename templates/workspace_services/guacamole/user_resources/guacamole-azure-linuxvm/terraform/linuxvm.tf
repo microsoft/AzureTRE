@@ -87,7 +87,7 @@ data "template_file" "vm_config" {
   vars = {
     install_ui = local.image_ref[var.image].install_ui ? 1 : 0
     shared_storage_access = tobool(var.shared_storage_access) ? 1 : 0
-    resource_group_name = data.azurerm_resource_group.base_tre.name
+    resource_group_name = data.azurerm_storage_account.stg.resource_group_name
     storage_account_name = data.azurerm_storage_account.stg.name
     storage_account_key = data.azurerm_storage_account.stg.primary_access_key
     http_endpoint = data.azurerm_storage_account.stg.primary_file_endpoint
@@ -108,14 +108,9 @@ resource "azurerm_key_vault_secret" "linuxvm_password" {
   value        = "${random_string.username.result}\n${random_password.password.result}"
   key_vault_id = data.azurerm_key_vault.ws.id
 }
-
-data "azurerm_resource_group" "base_tre" {
-  name = "rg-${var.tre_id}"
-}
-
 data "azurerm_storage_account" "stg" {
-  name = lower(replace("stg-${var.tre_id}", "-", ""))
-  resource_group_name = data.azurerm_resource_group.base_tre.name
+  name = local.storage_name
+  resource_group_name = data.azurerm_resource_group.ws.name
 }
 
 data "azurerm_storage_share" "shared_storage" {

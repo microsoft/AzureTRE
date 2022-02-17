@@ -96,13 +96,9 @@ data "template_file" "vm_config" {
     }
 }
 
-data "azurerm_resource_group" "base_tre" {
-  name = "rg-${var.tre_id}"
-}
-
 data "azurerm_storage_account" "stg" {
-  name = lower(replace("stg-${var.tre_id}", "-", ""))
-  resource_group_name = data.azurerm_resource_group.base_tre.name
+  name = local.storage_name
+  resource_group_name = data.azurerm_resource_group.ws.name
 }
 
 data "azurerm_storage_share" "shared_storage" {
