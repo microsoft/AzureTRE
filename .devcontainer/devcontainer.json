@@ -50,24 +50,72 @@
 
 		"launch": {
 			"configurations": [
-				{
-					"name": "API",
-					"type": "python",
-					"request": "launch",
-					"module": "uvicorn",
-					"cwd": "${workspaceFolder}/api_app",
-					"args": [
-						"main:app",
-						"--reload"
-					],
+        {
+          "name": "TRE API",
+          "type": "python",
+          "module": "uvicorn",
+          "request": "launch",
+          "args": [
+            "main:app",
+            "--reload",
+            "--host",
+            "::",
+            "--port",
+            "8000"
+          ],
 					"jinja": true,
-					"env": {
-						"STATE_STORE_ENDPOINT": "https://host.docker.internal:8081"
-					}
-				},
+          "justMyCode": false,
+          "console": "integratedTerminal",
+          "envFile": "${workspaceFolder}/templates/core/tre.env",
+          "preLaunchTask": "Copy_env_file_for_debug",
+          "cwd": "${workspaceFolder}/api_app"
+        },
+        {
+          "name": "Python: Debug Tests",
+          "type": "python",
+          "request": "launch",
+          "program": "${file}",
+          "console": "integratedTerminal",
+          "purpose": ["debug-test"]
+        }
 			],
 			"compounds": []
-		}
+		},
+    "tasks": {
+      "version": "2.0.0",
+      "tasks": [
+        {
+          "label": "Copy_env_file_for_debug",
+          "command": "cp --force ${workspaceFolder}/templates/core/.env ${workspaceFolder}/api_app/.env",
+          "type": "shell"
+        },
+        {
+          "label": "Unit_tests",
+          "group": {
+            "kind": "test",
+            "isDefault": true
+          },
+          "command": "pytest",
+          "args": [
+            "--ignore=e2e_tests",
+          ]
+        },
+        {
+          "label": "e2e_tests",
+          "group": "test",
+          "command": "python",
+          "options": {
+            "cwd": "${workspaceFolder}/e2e_tests/"
+          },
+          "args": [
+            "-m",
+            "pytest",
+            "-m",
+            "smoke",
+          ]
+        }
+      ]
+    }
 	},
 	// Add the IDs of extensions you want installed when the container is created.
 	"extensions": [
