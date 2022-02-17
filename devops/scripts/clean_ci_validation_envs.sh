@@ -15,8 +15,13 @@ set -o nounset
 function deleteEnv ()
 {
   local tre_rg="$1"
+
   locks=$(az group lock list -g $tre_rg --query [].id -o tsv)
-  az resource lock delete --ids ${locks}
+  if [ ! -z "${locks:-}" ]
+  then
+    az resource lock delete --ids ${locks}
+  fi
+
   az group delete --resource-group "${tre_rg}" --yes --no-wait
   # each mgmt is per tre so we should delete that too.
   az group delete --resource-group "${tre_rg}-mgmt" --yes --no-wait
