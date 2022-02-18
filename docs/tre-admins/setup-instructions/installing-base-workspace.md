@@ -36,7 +36,7 @@ Now that we have published and registered a base workspace bundle we can use the
 As explained in the [auth guide](../auth.md), every workspace has a corresponding app registration which can be created using the helper script `scripts/aad-app-reg.sh`. For example:
 
 ```bash
-    ./scripts/aad-app-reg.sh --name 'Workspace One' --swaggerui-redirecturl https://mytre.region.cloudapp.azure.com/api/docs/oauth2-redirect --workspace
+./scripts/aad-app-reg.sh --name 'Workspace One' --swaggerui-redirecturl https://mytre.region.cloudapp.azure.com/api/docs/oauth2-redirect --workspace
 ```
 
 !!! caution
