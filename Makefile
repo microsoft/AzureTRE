@@ -43,6 +43,7 @@ mgmt-destroy:
 # 3. Docker file path
 # 4. Docker context path
 # Example: $(call build_image,"api","./api_app/_version.py","api_app/Dockerfile","./api_app/")
+# The CI_CACHE_ACR_NAME is an optional container registry used for caching in addition to what's in ACR_NAME
 define build_image
 $(call target_title, "Building $(1) Image") \
 && . ./devops/scripts/check_dependencies.sh \
@@ -50,8 +51,11 @@ $(call target_title, "Building $(1) Image") \
 && . ./devops/scripts/set_docker_sock_permission.sh \
 && source <(grep = $(2) | sed 's/ *= */=/g') \
 && az acr login -n $${ACR_NAME} \
+&& if [ ! -z "$${CI_CACHE_ACR_NAME}" ]; then \
+	az acr login -n $${CI_CACHE_ACR_NAME}; \
+	ci_cache="--cache-from $${CI_CACHE_ACR_NAME}.azurecr.io/$${image_name_suffix}:$${__version__}"; fi \
 && docker build -t ${FULL_IMAGE_NAME_PREFIX}/$(1):$${__version__} --build-arg BUILDKIT_INLINE_CACHE=1 \
-	--cache-from ${FULL_IMAGE_NAME_PREFIX}/$(1):$${__version__} -f $(3) $(4)
+	--cache-from ${FULL_IMAGE_NAME_PREFIX}/$(1):$${__version__} $${ci_cache} -f $(3) $(4)
 endef
 
 build-api-image:
