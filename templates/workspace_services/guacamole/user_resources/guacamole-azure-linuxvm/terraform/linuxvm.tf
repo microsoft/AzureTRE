@@ -73,7 +73,12 @@ data "template_cloudinit_config" "config" {
 
   part {
     content_type = "text/cloud-config"
-    content      = data.template_file.sources_config.rendered
+    content      = data.template_file.apt_sources_config.rendered
+  }
+
+  part {
+    content_type = "text/x-shellscript"
+    content      = data.template_file.pypi_sources_config.rendered
   }
 
   part {
@@ -96,10 +101,17 @@ data "template_file" "vm_config" {
   }
 }
 
-data "template_file" "sources_config" {
-  template = file("${path.module}/sources_config.yml")
+data "template_file" "pypi_sources_config" {
+  template = file("${path.module}/pypi_sources_config.sh")
   vars = {
-    nexus_proxy_url = "https://nexus-${var.tre_id}.azurewebsites.net/repository"
+    nexus_proxy_url = local.nexus_proxy_url
+  }
+}
+
+data "template_file" "apt_sources_config" {
+  template = file("${path.module}/apt_sources_config.yml")
+  vars = {
+    nexus_proxy_url = local.nexus_proxy_url
   }
 }
 

@@ -10,6 +10,8 @@ on:
         required: true
       ACTIONS_ACR_NAME:
         required: true
+      ACTIONS_ACR_URI:
+        required: true
       ACTIONS_ACR_PASSWORD:
         required: true
       ACTIONS_DEVCONTAINER_TAG:
@@ -72,7 +74,7 @@ jobs:
       - name: Login to Container Registry
         uses: docker/login-action@v1
         with:
-          registry: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io
+          registry: ${{ secrets.ACTIONS_ACR_URI }}
           username: ${{ secrets.ACTIONS_ACR_NAME }}
           password: ${{ secrets.ACTIONS_ACR_PASSWORD }}
 
@@ -87,19 +89,20 @@ jobs:
           docker build . \
             -t 'tredev:${{ secrets.ACTIONS_DEVCONTAINER_TAG }}' \
             -f '.devcontainer/Dockerfile' \
-            --cache-from ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:${{ secrets.ACTIONS_DEVCONTAINER_TAG }} \
-            --cache-from ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:latest \
+            --cache-from ${{ secrets.ACTIONS_ACR_URI }}tredev:${{ secrets.ACTIONS_DEVCONTAINER_TAG }} \
+            --cache-from ${{ secrets.ACTIONS_ACR_URI }}tredev:latest \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
             --build-arg USER_UID="${USER_UID}" \
             --build-arg USER_GID="${USER_GID}"
           docker image tag tredev:${{ secrets.ACTIONS_DEVCONTAINER_TAG }} \
-            ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
+            ${{ secrets.ACTIONS_ACR_URI }}tredev:${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
 
       - name: Deploy management
         uses: ./.github/actions/devcontainer_run_command
         with:
           COMMAND: "make bootstrap && make mgmt-deploy"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
           ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
@@ -138,10 +141,11 @@ jobs:
         run: |
           set -e
           docker image push \
-            ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/tredev:${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
+            ${{ secrets.ACTIONS_ACR_URI }}tredev:${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
 
-  build_docker_images:
-    name: Build Docker Images
+  build_core_images:
+    # used to build images used by core infrastructure
+    name: Build Core Docker Images
     runs-on: ubuntu-latest
     needs: [deploy_management]
     environment: Dev
@@ -151,8 +155,7 @@ jobs:
         target: [
           build-and-push-api,
           build-and-push-resource-processor,
-          build-and-push-gitea,
-          build-and-push-guacamole]
+          build-and-push-gitea]
 
     steps:
       - name: Checkout
@@ -163,6 +166,7 @@ jobs:
         with:
           COMMAND: "make ${{ matrix.target }}"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
           ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
@@ -177,14 +181,14 @@ jobs:
         with:
           github-token: ${{ github.token }}
           ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-          notification-summary: "Make Images Failed"
+          notification-summary: "Make Core Images Failed"
           notification-color: dc3545
           timezone: Europe/Zurich
 
   deploy_tre:
     name: Deploy TRE
     runs-on: ubuntu-latest
-    needs: [build_docker_images]
+    needs: [build_core_images]
     environment: Dev
     steps:
       - name: Checkout
@@ -195,6 +199,7 @@ jobs:
         with:
           COMMAND: "make tre-deploy"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
           ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
@@ -220,6 +225,8 @@ jobs:
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
           TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
+          TF_VAR_keyvault_purge_protection_enabled: "${{ github.ref == 'refs/heads/main' && true || false }}"
+          TF_VAR_stateful_resources_locked: "${{ github.ref == 'refs/heads/main' && true || false }}"
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
@@ -231,10 +238,10 @@ jobs:
           notification-color: dc3545
           timezone: Europe/Zurich
 
-  publish_and_register_bundles:
-    name: Register Bundles
+  publish_bundles:
+    name: Publish Bundles
     runs-on: ubuntu-latest
-    needs: [deploy_tre]
+    needs: [deploy_management]
     strategy:
       matrix:
         include:
@@ -257,11 +264,91 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Register bundles
+      - name: Publish bundle
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: "make build-and-register-bundle DIR=${{ matrix.BUNDLE_DIR }}"
+          COMMAND: "make bundle-publish DIR=${{ matrix.BUNDLE_DIR }}"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
+          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
+          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
+          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
+          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
+          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+
+  build_additional_images:
+    # used to build images NOT used by core infrastructure
+    name: Build Additional Docker Images
+    runs-on: ubuntu-latest
+    needs: [deploy_management]
+    environment: Dev
+    strategy:
+      fail-fast: true
+      matrix:
+        target: [build-and-push-guacamole]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Docker build
+        uses: ./.github/actions/devcontainer_run_command
+        with:
+          COMMAND: "make ${{ matrix.target }}"
+          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
+          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
+          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
+          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
+          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
+          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+
+      - name: Notify dedicated teams channel
+        uses: sachinkundu/ms-teams-notification@1.4
+        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        with:
+          github-token: ${{ github.token }}
+          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+          notification-summary: "Make Additional Images Failed"
+          notification-color: dc3545
+          timezone: Europe/Zurich
+
+  register_bundles:
+    name: Register Bundles
+    runs-on: ubuntu-latest
+    needs: [deploy_tre, publish_bundles]
+    strategy:
+      matrix:
+        include:
+        # bundles type can be inferred from the bundle
+        # dir (but this is more explicit)
+          - {BUNDLE_TYPE: "workspace",
+             BUNDLE_DIR: "./templates/workspaces/base"}
+          - {BUNDLE_TYPE: "workspace",
+             BUNDLE_DIR: "./templates/workspaces/innereye"}
+          - {BUNDLE_TYPE: "workspace_service",
+             BUNDLE_DIR: "./templates/workspace_services/guacamole"}
+          - {BUNDLE_TYPE: "workspace_service",
+             BUNDLE_DIR: "./templates/workspace_services/azureml"}
+          - {BUNDLE_TYPE: "workspace_service",
+             BUNDLE_DIR: "./templates/workspace_services/devtestlabs"}
+          - {BUNDLE_TYPE: "workspace_service",
+             BUNDLE_DIR: "./templates/workspace_services/innereye"}
+    environment: Dev
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Register bundle
+        uses: ./.github/actions/devcontainer_run_command
+        with:
+          COMMAND: "make bundle-register DIR=${{ matrix.BUNDLE_DIR }}"
+          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
           ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
@@ -282,7 +369,7 @@ jobs:
     name: "Run E2E Tests"
     runs-on: ubuntu-latest
     environment: Dev
-    needs: [publish_and_register_bundles]
+    needs: [register_bundles, build_additional_images]
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -292,6 +379,7 @@ jobs:
         with:
           COMMAND: "make test-e2e"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
           ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
@@ -306,7 +394,7 @@ jobs:
           TEST_USER_PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
-          IS_API_SECURED: false # ${{ github.ref == 'refs/heads/main' }} # only the "main" env has valid TLS
+          IS_API_SECURED: false
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
@@ -318,14 +406,6 @@ jobs:
           notification-summary: "E2E Tests failed"
           notification-color: dc3545
           timezone: Europe/Zurich
-
-      # - name: Expose workspace id
-      #   shell: bash
-      #   if: always()
-      #   run: |
-      #     cd ${{ github.workspace }}/e2e_tests
-      #     wkspc_id=`cat workspace_id.txt`
-      #     echo "WORKSPACE_ID=$wkspc_id" >> $GITHUB_ENV
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4

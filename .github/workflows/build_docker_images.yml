@@ -18,6 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     if: |
       github.event.pull_request.head.repo.full_name == github.repository
+      || github.event_name == 'workflow_dispatch'
       || contains(github.event.pull_request.labels.*.name, 'safe to test')
 
     steps:
@@ -42,6 +43,10 @@ jobs:
         id: buildx
         uses: docker/setup-buildx-action@v1
 
+      # Unit Tests are executed by calling the 'test-results' target in the
+      # Dockerfile's. Test runner exit codes must be swallowed (and kept) so we
+      # can output the test results. This means we have to check for failure
+      # trigger files in later steps.
       - name: "Test image: api"
         # test should be before build since its docker target
         # is prior to runtime
@@ -56,10 +61,18 @@ jobs:
           target: test-results
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: "Check pytest failure file existence"
+        id: check_api_test_result
+        uses: andstor/file-existence-action@v1
+        with:
+          files: "test-results/pytest_api_unit_failed"
+
       - name: "Build image: api"
         if: |
           (steps.filter.outputs.api == 'true'
           || github.event_name == 'workflow_dispatch')
+          && steps.check_api_test_result.outputs.files_exists == 'false'
         uses: docker/build-push-action@v2
         with:
           context: ./api_app/
@@ -91,10 +104,17 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: "Check maven failure file existence"
+        id: check_maven_test_result
+        uses: andstor/file-existence-action@v1
+        with:
+          files: "test-results/guacamole_package_failed"
+
       - name: "Build image: guacamole_server"
         if: |
           (steps.filter.outputs.guacamole_server == 'true'
           || github.event_name == 'workflow_dispatch')
+          && steps.check_maven_test_result.outputs.files_exists == 'false'
         uses: docker/build-push-action@v2
         with:
           context: ./templates/workspace_services/guacamole/guacamole-server
@@ -112,3 +132,16 @@ jobs:
           file: ./templates/shared_services/gitea/Dockerfile
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Upload Unit Test Results
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: test-results
+          path: test-results
+
+      - name: Publish Unit Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        if: always()
+        with:
+          files: test-results/**/*.xml

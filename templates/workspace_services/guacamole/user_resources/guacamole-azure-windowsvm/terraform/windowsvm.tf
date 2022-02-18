@@ -34,13 +34,16 @@ resource "random_password" "password" {
 }
 
 resource "azurerm_windows_virtual_machine" "windowsvm" {
-  name                  = local.vm_name
-  location              = data.azurerm_resource_group.ws.location
-  resource_group_name   = data.azurerm_resource_group.ws.name
-  network_interface_ids = [azurerm_network_interface.internal.id]
-  size                  = "Standard_DS1_v2"
-  admin_username        = random_string.username.result
-  admin_password        = random_password.password.result
+  name                       = local.vm_name
+  location                   = data.azurerm_resource_group.ws.location
+  resource_group_name        = data.azurerm_resource_group.ws.name
+  network_interface_ids      = [azurerm_network_interface.internal.id]
+  size                       = "Standard_DS1_v2"
+  allow_extension_operations = true
+  admin_username             = random_string.username.result
+  admin_password             = random_password.password.result
+
+  custom_data = base64encode(data.template_file.pypi_sources_config.rendered)
 
   custom_data = base64encode(data.template_file.vm_config.rendered)
 
@@ -63,6 +66,31 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
 
   tags = {
     parent_service_id = var.parent_service_id
+  }
+}
+
+resource "azurerm_virtual_machine_extension" "configure_pypi_proxy" {
+  name                 = "configure_pypi_proxy"
+  virtual_machine_id   = azurerm_windows_virtual_machine.windowsvm.id
+  publisher            = "Microsoft.Compute"
+  type                 = "CustomScriptExtension"
+  type_handler_version = "1.10"
+
+  protected_settings = <<PROTECTED_SETTINGS
+    {
+        "commandToExecute": "powershell -ExecutionPolicy Unrestricted -NoProfile -NonInteractive -command \"cp c:/azuredata/customdata.bin c:/azuredata/configure.ps1; c:/azuredata/configure.ps1\""
+    }
+PROTECTED_SETTINGS
+
+  tags = {
+    parent_service_id = var.parent_service_id
+  }
+}
+
+data "template_file" "pypi_sources_config" {
+  template = file("${path.module}/pypi_sources_config.ps1")
+  vars = {
+    nexus_proxy_url = local.nexus_proxy_url
   }
 }
 

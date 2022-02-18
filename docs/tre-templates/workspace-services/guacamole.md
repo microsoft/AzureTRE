@@ -17,7 +17,7 @@ Service Tags:
 ## Manual Deployment
 
 !!! caution
-    Resources should be deployed using the API (i.e. through the Swagger UI as described in the [setup instructions](../../tre-admins/setup-instructions/installing-workspace-service-and-user-resource.md)). Only deploy menually for development/testing purposes.
+    Resources should be deployed using the API (i.e. through the Swagger UI as described in the [setup instructions](../../tre-admins/setup-instructions/installing-workspace-service-and-user-resource.md)). Only deploy manually for development/testing purposes.
 
 1. Create a copy of `templates/workspace_services/guacamole/.env.sample` with the name `.env` and update the variables with the appropriate values.
 
@@ -30,6 +30,6 @@ Service Tags:
 1. Build and install the Guacamole Service bundle
 
   ```cmd
-  make porter-build DIR=./templates/workspace_services/guacamole
-  make porter-install DIR=./templates/workspace_services/guacamole
+  make bundle-build DIR=./templates/workspace_services/guacamole
+  make bundle-install DIR=./templates/workspace_services/guacamole
   ```
