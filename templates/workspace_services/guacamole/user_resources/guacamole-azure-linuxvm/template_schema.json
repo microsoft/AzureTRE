@@ -26,12 +26,6 @@
           "true",
           "false"
         ]
-      },
-      "shared_storage_name": {
-        "$id": "#/properties/shared_storage_name",
-        "type": "string",
-        "title": "Shared Storage Name",
-        "description": "Name of shared storage to attatch.  'vm-shared-storage' is created by default.  Any other shared storage must be created before being provided here."
       }
     }
 }
