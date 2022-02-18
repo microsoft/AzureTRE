@@ -1,85 +1,134 @@
 {
-	"name": "AzureTRE",
-	"build": {
-		"context": "..",
-		"dockerfile": "Dockerfile",
-		"args": {
-			// To ensure that the group ID for the docker group in the container
-			// matches the group ID on the host, add this to your .bash_profile on the host
-			// 		export DOCKER_GROUP_ID=$(getent group docker | awk -F ":" '{ print $3 }')
-			"DOCKER_GROUP_ID": "${localEnv:DOCKER_GROUP_ID}"
-		}
-	},
-	"runArgs": [
-		"--network", "host"
-	],
-
-	"mounts": [
-		// Keep command history
-		"type=volume,source=tre-bashhistory,target=/home/vscode/commandhistory",
-		// Mounts the login details from the host machine to azcli works in the container
-		"type=bind,source=${env:HOME}${env:USERPROFILE}/.azure,target=/home/vscode/.azure",
-		// Mount docker socket for docker builds
-		"type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock"
-	],
-	"remoteUser": "vscode",
-	// Set *default* container specific settings.json values on container create.
-	"settings": {
-		"terminal.integrated.defaultProfile.linux": "bash",
-		"python.pythonPath": "/usr/local/bin/python",
-		"python.linting.enabled": true,
-		"python.linting.pylintEnabled": false,
-		"python.linting.flake8Enabled": true,
-		"python.formatting.provider": "black",
-		"python.formatting.autopep8Path": "/usr/local/py-utils/bin/autopep8",
-		"python.formatting.blackPath": "/usr/local/py-utils/bin/black",
-		"python.formatting.yapfPath": "/usr/local/py-utils/bin/yapf",
-		"python.linting.banditPath": "/usr/local/py-utils/bin/bandit",
-		"python.linting.flake8Path": "/usr/local/py-utils/bin/flake8",
-		"python.linting.mypyPath": "/usr/local/py-utils/bin/mypy",
-		"python.linting.pycodestylePath": "/usr/local/py-utils/bin/pycodestyle",
-		"python.linting.pydocstylePath": "/usr/local/py-utils/bin/pydocstyle",
-		"python.linting.pylintPath": "/usr/local/py-utils/bin/pylint",
-
-		"python.testing.unittestEnabled": false,
-		"python.testing.pytestEnabled": true,
-		"python.testing.pytestArgs": [
-			"api_app"
-		],
-
-
-		"launch": {
-			"configurations": [
-				{
-					"name": "API",
-					"type": "python",
-					"request": "launch",
-					"module": "uvicorn",
-					"cwd": "${workspaceFolder}/api_app",
-					"args": [
-						"main:app",
-						"--reload"
-					],
-					"jinja": true,
-					"env": {
-						"STATE_STORE_ENDPOINT": "https://host.docker.internal:8081"
-					}
-				},
-			],
-			"compounds": []
-		}
-	},
-	// Add the IDs of extensions you want installed when the container is created.
-	"extensions": [
-		"ms-python.python",
-		"hashicorp.terraform",
-		"github.vscode-pull-request-github",
-		"ms-kubernetes-tools.porter-vscode",
-		"davidanson.vscode-markdownlint",
-		"editorconfig.editorconfig",
-		"github.vscode-pull-request-github",
-		"mikestead.dotenv",
-		"humao.rest-client"
-	],
-	"forwardPorts": [8000]
+  "name": "AzureTRE",
+  "build": {
+    "context": "..",
+    "dockerfile": "Dockerfile",
+    "args": {
+      // To ensure that the group ID for the docker group in the container
+      // matches the group ID on the host, add this to your .bash_profile on the host
+      // 		export DOCKER_GROUP_ID=$(getent group docker | awk -F ":" '{ print $3 }')
+      "DOCKER_GROUP_ID": "${localEnv:DOCKER_GROUP_ID}"
+    }
+  },
+  "runArgs": [
+    "--network",
+    "host"
+  ],
+  "mounts": [
+    // Keep command history
+    "type=volume,source=tre-bashhistory,target=/home/vscode/commandhistory",
+    // Mounts the login details from the host machine to azcli works in the container
+    "type=bind,source=${env:HOME}${env:USERPROFILE}/.azure,target=/home/vscode/.azure",
+    // Mount docker socket for docker builds
+    "type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock"
+  ],
+  "remoteUser": "vscode",
+  // Set *default* container specific settings.json values on container create.
+  "settings": {
+    "terminal.integrated.defaultProfile.linux": "bash",
+    "python.pythonPath": "/usr/local/bin/python",
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": false,
+    "python.linting.flake8Enabled": true,
+    "python.formatting.provider": "black",
+    "python.formatting.autopep8Path": "/usr/local/py-utils/bin/autopep8",
+    "python.formatting.blackPath": "/usr/local/py-utils/bin/black",
+    "python.formatting.yapfPath": "/usr/local/py-utils/bin/yapf",
+    "python.linting.banditPath": "/usr/local/py-utils/bin/bandit",
+    "python.linting.flake8Path": "/usr/local/py-utils/bin/flake8",
+    "python.linting.mypyPath": "/usr/local/py-utils/bin/mypy",
+    "python.linting.pycodestylePath": "/usr/local/py-utils/bin/pycodestyle",
+    "python.linting.pydocstylePath": "/usr/local/py-utils/bin/pydocstyle",
+    "python.linting.pylintPath": "/usr/local/py-utils/bin/pylint",
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "python.testing.pytestArgs": [
+      "api_app"
+    ],
+    "launch": {
+      "configurations": [
+        {
+          "name": "TRE API",
+          "type": "python",
+          "module": "uvicorn",
+          "request": "launch",
+          "args": [
+            "main:app",
+            "--reload",
+            "--host",
+            "::",
+            "--port",
+            "8000"
+          ],
+          "jinja": true,
+          "justMyCode": false,
+          "console": "integratedTerminal",
+          "envFile": "${workspaceFolder}/templates/core/tre.env",
+          "preLaunchTask": "Copy_env_file_for_debug",
+          "cwd": "${workspaceFolder}/api_app"
+        },
+        {
+          "name": "Python: Debug Tests",
+          "type": "python",
+          "request": "launch",
+          "program": "${file}",
+          "console": "integratedTerminal",
+          "purpose": [
+            "debug-test"
+          ]
+        }
+      ],
+      "compounds": []
+    },
+    "tasks": {
+      "version": "2.0.0",
+      "tasks": [
+        {
+          "label": "Copy_env_file_for_debug",
+          "command": "cp --force ${workspaceFolder}/templates/core/.env ${workspaceFolder}/api_app/.env",
+          "type": "shell"
+        },
+        {
+          "label": "Unit_tests",
+          "group": {
+            "kind": "test",
+            "isDefault": true
+          },
+          "command": "pytest",
+          "args": [
+            "--ignore=e2e_tests",
+          ]
+        },
+        {
+          "label": "e2e_tests",
+          "group": "test",
+          "command": "python",
+          "options": {
+            "cwd": "${workspaceFolder}/e2e_tests/"
+          },
+          "args": [
+            "-m",
+            "pytest",
+            "-m",
+            "smoke",
+          ]
+        }
+      ]
+    }
+  },
+  // Add the IDs of extensions you want installed when the container is created.
+  "extensions": [
+    "ms-python.python",
+    "hashicorp.terraform",
+    "github.vscode-pull-request-github",
+    "ms-kubernetes-tools.porter-vscode",
+    "davidanson.vscode-markdownlint",
+    "editorconfig.editorconfig",
+    "github.vscode-pull-request-github",
+    "mikestead.dotenv",
+    "humao.rest-client"
+  ],
+  "forwardPorts": [
+    8000
+  ]
 }
