@@ -43,8 +43,6 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
   admin_username             = random_string.username.result
   admin_password             = random_password.password.result
 
-  custom_data = base64encode(data.template_file.pypi_sources_config.rendered)
-
   custom_data = base64encode(data.template_file.vm_config.rendered)
 
   source_image_reference {
@@ -69,43 +67,12 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
   }
 }
 
-resource "azurerm_virtual_machine_extension" "configure_pypi_proxy" {
-  name                 = "configure_pypi_proxy"
-  virtual_machine_id   = azurerm_windows_virtual_machine.windowsvm.id
-  publisher            = "Microsoft.Compute"
-  type                 = "CustomScriptExtension"
-  type_handler_version = "1.10"
-
-  protected_settings = <<PROTECTED_SETTINGS
-    {
-        "commandToExecute": "powershell -ExecutionPolicy Unrestricted -NoProfile -NonInteractive -command \"cp c:/azuredata/customdata.bin c:/azuredata/configure.ps1; c:/azuredata/configure.ps1\""
-    }
-PROTECTED_SETTINGS
-
-  tags = {
-    parent_service_id = var.parent_service_id
-  }
-}
-
-data "template_file" "pypi_sources_config" {
-  template = file("${path.module}/pypi_sources_config.ps1")
-  vars = {
-    nexus_proxy_url = local.nexus_proxy_url
-  }
-}
-
-resource "azurerm_key_vault_secret" "windowsvm_password" {
-  name         = "${local.vm_name}-admin-credentials"
-  value        = "${random_string.username.result}\n${random_password.password.result}"
-  key_vault_id = data.azurerm_key_vault.ws.id
-}
-
 resource "azurerm_virtual_machine_extension" "config_script" {
   name                 = "${azurerm_windows_virtual_machine.windowsvm.name}-vmextention"
   virtual_machine_id   = azurerm_windows_virtual_machine.windowsvm.id
   publisher            = "Microsoft.Compute"
   type                 = "CustomScriptExtension"
-  type_handler_version = "1.1"
+  type_handler_version = "1.10"
 
   protected_settings = <<PROT
     {
@@ -114,9 +81,16 @@ resource "azurerm_virtual_machine_extension" "config_script" {
 PROT
 }
 
+resource "azurerm_key_vault_secret" "windowsvm_password" {
+  name         = "${local.vm_name}-admin-credentials"
+  value        = "${random_string.username.result}\n${random_password.password.result}"
+  key_vault_id = data.azurerm_key_vault.ws.id
+}
+
 data "template_file" "vm_config" {
     template = "${file("${path.module}/vm_config.ps1")}"
     vars = {
+      nexus_proxy_url = local.nexus_proxy_url
       SharedStorageAccess = tobool(var.shared_storage_access) ? 1 : 0
       StorageAccountName = data.azurerm_storage_account.stg.name
       StorageAccountKey = data.azurerm_storage_account.stg.primary_access_key
