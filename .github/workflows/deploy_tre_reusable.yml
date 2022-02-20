@@ -54,6 +54,8 @@ on:
         required: true
       TRE_ID:
         required: true
+      CI_CACHE_ACR_NAME:
+        required: false
 
 # This will prevent multiple runs of this entire workflow.
 # We should NOT cancel in progress runs as that can destabilize the environment.
@@ -174,6 +176,7 @@ jobs:
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
           ACR_NAME: ${{ secrets.ACR_NAME }}
+          CI_CACHE_ACR_NAME: $${{ secrets.CI_CACHE_ACR_NAME}}
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
@@ -306,6 +309,7 @@ jobs:
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
           ACR_NAME: ${{ secrets.ACR_NAME }}
+          CI_CACHE_ACR_NAME: $${{ secrets.CI_CACHE_ACR_NAME}}
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
@@ -365,8 +369,8 @@ jobs:
           LOCATION: "${{ secrets.LOCATION }}"
           BUNDLE_TYPE: ${{ matrix.BUNDLE_TYPE }}
 
-  e2e_tests:
-    name: "Run E2E Tests"
+  e2e_tests_smoke:
+    name: "Run E2E Tests (Smoke)"
     runs-on: ubuntu-latest
     environment: Dev
     needs: [register_bundles, build_additional_images]
@@ -374,10 +378,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Run e2e Tests
+      - name: Run E2E Tests (Smoke)
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: "make test-e2e"
+          COMMAND: "make test-e2e-smoke"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
@@ -403,7 +407,7 @@ jobs:
         with:
           github-token: ${{ github.token }}
           ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-          notification-summary: "E2E Tests failed"
+          notification-summary: "E2E Tests (Smoke) failed"
           notification-color: dc3545
           timezone: Europe/Zurich
 
@@ -423,13 +427,80 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: E2E Test Results (Python ${{ matrix.python-version }})
-          path: "./e2e_tests/pytest_e2e.xml"
+          path: "./e2e_tests/pytest_e2e_smoke.xml"
 
       - name: Publish Test Results
         if: always()
         uses: EnricoMi/publish-unit-test-result-action@v1
         with:
-          files: "./e2e_tests/pytest_e2e.xml"
+          files: "./e2e_tests/pytest_e2e_smoke.xml"
+
+  e2e_tests_extended:
+    name: "Run E2E Tests (Extended)"
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    environment: Dev
+    needs: [register_bundles, build_additional_images]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Run E2E Tests (Extended)
+        uses: ./.github/actions/devcontainer_run_command
+        with:
+          COMMAND: "make test-e2e-extended"
+          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
+          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
+          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
+          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
+          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
+          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          LOCATION: "${{ secrets.LOCATION }}"
+          RESOURCE: "${{ secrets.API_CLIENT_ID }}"
+          AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
+          TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
+          TEST_USER_NAME: "${{ secrets.TEST_USER_NAME }}"
+          TEST_USER_PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
+          TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
+          TRE_ID: "${{ secrets.TRE_ID }}"
+          IS_API_SECURED: false
+
+      - name: Notify dedicated teams channel
+        uses: sachinkundu/ms-teams-notification@1.4
+        if: ${{ failure() && github.ref == 'refs/heads/main'}}
+        continue-on-error: true
+        with:
+          github-token: ${{ github.token }}
+          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+          notification-summary: "E2E Tests (Extended) failed"
+          notification-color: dc3545
+          timezone: Europe/Zurich
+
+      - name: Notify dedicated teams channel
+        uses: sachinkundu/ms-teams-notification@1.4
+        if: ${{ success() && github.ref == 'refs/heads/main' }}
+        continue-on-error: true
+        with:
+          github-token: ${{ github.token }}
+          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+          notification-summary: "Deployment and tests passed successfully"
+          notification-color: 28a745
+          timezone: Europe/Zurich
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: E2E Test (Extended) Results (Python ${{ matrix.python-version }})
+          path: "./e2e_tests/pytest_e2e_extended.xml"
+
+      - name: Publish Test Results
+        if: always()
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        with:
+          files: "./e2e_tests/pytest_e2e_extended.xml"
 
   # Waiting for: https://github.com/microsoft/AzureTRE/issues/1165
   # tre_stop:
