@@ -176,7 +176,7 @@ jobs:
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
           ACR_NAME: ${{ secrets.ACR_NAME }}
-          CI_CACHE_ACR_NAME: $${{ secrets.CI_CACHE_ACR_NAME}}
+          CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
@@ -309,7 +309,7 @@ jobs:
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
           ACR_NAME: ${{ secrets.ACR_NAME }}
-          CI_CACHE_ACR_NAME: $${{ secrets.CI_CACHE_ACR_NAME}}
+          CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4

@@ -50,8 +50,9 @@ while read -r rg_name rg_ref_name; do
     pr_num=${rg_ref_name//[!0-9]/}
     if [ $(echo ${open_prs} | jq -c "[ .[] | select( .number | contains(${pr_num})) ] | length") == 0 ]
     then
-      echo "PR ${pr_num} (derived from ref ${rg_ref_name}) is not open, and environment ${rg_name} can be deleted."
+      echo "PR ${pr_num} (derived from ref ${rg_ref_name}) is not open. Environment in ${rg_name} will be deleted."
       deleteEnv ${rg_name}
+      continue
     fi
 
     # The pr is still open...
@@ -65,7 +66,7 @@ while read -r rg_name rg_ref_name; do
     diff_in_hours=$(( ($(date +%s) - $(date -d "${last_commit_date_string}" +%s) )/(60*60) ))
 
     if (( diff_in_hours > BRANCH_LAST_ACTIVITY_IN_HOURS )); then
-      echo "No recent activity on ${head_ref}, environment ${rg_name} should be stopped."
+      echo "No recent activity on ${head_ref}. Environment in ${rg_name} will be stopped."
       stopEnv ${rg_name}
     fi
   else
