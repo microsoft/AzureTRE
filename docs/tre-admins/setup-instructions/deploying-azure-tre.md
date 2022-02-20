@@ -55,7 +55,7 @@ curl https://<azure_tre_fqdn>/api/health
 
 ### Using the API docs
 
-Open your browser and navigate to the `/api/docs` route of the API:  `https://<azure_tre_fqdn>/api/docs` and click *Try it out* on the operation of choice.
+Open your browser and navigate to the `/api/docs` route of the API:  `https://<azure_tre_fqdn>/api/docs` and click `Try it out` on the operation of choice.
 
 ![Swagger UI](../../assets/quickstart_swaggerui.png)
 
