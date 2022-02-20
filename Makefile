@@ -43,6 +43,7 @@ mgmt-destroy:
 # 3. Docker file path
 # 4. Docker context path
 # Example: $(call build_image,"api","./api_app/_version.py","api_app/Dockerfile","./api_app/")
+# The CI_CACHE_ACR_NAME is an optional container registry used for caching in addition to what's in ACR_NAME
 define build_image
 $(call target_title, "Building $(1) Image") \
 && . ./devops/scripts/check_dependencies.sh \
@@ -50,8 +51,11 @@ $(call target_title, "Building $(1) Image") \
 && . ./devops/scripts/set_docker_sock_permission.sh \
 && source <(grep = $(2) | sed 's/ *= */=/g') \
 && az acr login -n $${ACR_NAME} \
+&& if [ ! -z "$${CI_CACHE_ACR_NAME}" ]; then \
+	az acr login -n $${CI_CACHE_ACR_NAME}; \
+	ci_cache="--cache-from $${CI_CACHE_ACR_NAME}.azurecr.io/$${image_name_suffix}:$${__version__}"; fi \
 && docker build -t ${FULL_IMAGE_NAME_PREFIX}/$(1):$${__version__} --build-arg BUILDKIT_INLINE_CACHE=1 \
-	--cache-from ${FULL_IMAGE_NAME_PREFIX}/$(1):$${__version__} -f $(3) $(4)
+	--cache-from ${FULL_IMAGE_NAME_PREFIX}/$(1):$${__version__} $${ci_cache} -f $(3) $(4)
 endef
 
 build-api-image:
@@ -229,12 +233,19 @@ static-web-upload:
 	&& . ./devops/scripts/load_env.sh ./templates/core/tre.env \
 	&& ./templates/core/terraform/scripts/upload_static_web.sh
 
-test-e2e:
+test-e2e-smoke:
 	$(call target_title, "Running E2E smoke tests") && \
 	export SCOPE="api://${RESOURCE}/user_impersonation" && \
 	export WORKSPACE_SCOPE="api://${TEST_WORKSPACE_APP_ID}/user_impersonation" && \
 	cd e2e_tests && \
 	python -m pytest -m smoke --verify $${IS_API_SECURED:-true} --junit-xml pytest_e2e.xml
+
+test-e2e-extended:
+	$(call target_title, "Running E2E smoke tests") && \
+	export SCOPE="api://${RESOURCE}/user_impersonation" && \
+	export WORKSPACE_SCOPE="api://${TEST_WORKSPACE_APP_ID}/user_impersonation" && \
+	cd e2e_tests && \
+	python -m pytest -m extended --verify $${IS_API_SECURED:-true} --junit-xml pytest_e2e.xml
 
 setup-local-debugging-api:
 	$(call target_title,"Setting up the ability to debug the API") \
