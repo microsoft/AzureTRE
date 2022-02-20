@@ -9,6 +9,8 @@ if [[ -z ${TRE_ID:-} ]]; then
     exit 1
 fi
 
+az config set extension.use_dynamic_install=yes_without_prompt
+
 # if we don't have a firewall, no need to continue this script.
 # most likely this is an automated execution before calling make tre-deploy.
 if [[ $(az network firewall list --query "[?resourceGroup=='rg-${TRE_ID}'&&name=='fw-${TRE_ID}'] | length(@)") == 0 ]]; then
