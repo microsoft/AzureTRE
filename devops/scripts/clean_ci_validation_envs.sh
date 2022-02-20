@@ -15,8 +15,13 @@ set -o nounset
 function deleteEnv ()
 {
   local tre_rg="$1"
+
   locks=$(az group lock list -g $tre_rg --query [].id -o tsv)
-  az resource lock delete --ids ${locks}
+  if [ ! -z "${locks:-}" ]
+  then
+    az resource lock delete --ids ${locks}
+  fi
+
   az group delete --resource-group "${tre_rg}" --yes --no-wait
   # each mgmt is per tre so we should delete that too.
   az group delete --resource-group "${tre_rg}-mgmt" --yes --no-wait
@@ -68,7 +73,7 @@ while read -r rg_name rg_ref_name; do
     ref_in_remote="${rg_ref_name/heads/remotes\/origin}"
     if ! $(git show-ref -q $ref_in_remote)
     then
-      echo "Ref ${rg_ref_name} does not exists, and environment ${rg_name} can be deleted."
+      echo "Ref ${rg_ref_name} does not exist, and environment ${rg_name} can be deleted."
       deleteEnv ${rg_name}
     fi
   fi

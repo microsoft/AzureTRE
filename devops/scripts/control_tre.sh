@@ -25,8 +25,7 @@ if [[ "$1" == *"start"* ]]; then
     echo -e "Firewall ip-config already exists"
   fi
 
-  CURRENT_AGW_STATE=$(az network application-gateway show -g "rg-$TRE_ID" -n "agw-$TRE_ID" --query "operationalState" -o tsv)
-  if [[ "$CURRENT_AGW_STATE" != "Running" ]]; then
+  if [[ $(az network application-gateway list --query "[?resourceGroup=='rg-${TRE_ID}'&&name=='agw-${TRE_ID}'&&operationalState=='Stopped'] | length(@)") != 0 ]]; then
     echo -e "Starting Application Gateway\n"
     az network application-gateway start -g "rg-$TRE_ID" -n "agw-$TRE_ID"
   else
@@ -42,8 +41,7 @@ elif [[ "$1" == *"stop"* ]]; then
     echo -e "No Firewall ip-config found"
   fi
 
-  CURRENT_AGW_STATE=$(az network application-gateway show -g "rg-$TRE_ID" -n "agw-$TRE_ID" --query "operationalState" -o tsv)
-  if [[ "$CURRENT_AGW_STATE" != "Stopped" ]]; then
+  if [[ $(az network application-gateway list --query "[?resourceGroup=='rg-${TRE_ID}'&&name=='agw-${TRE_ID}'&&operationalState=='Running'] | length(@)") != 0 ]]; then
     az network application-gateway stop -g "rg-$TRE_ID" -n "agw-$TRE_ID"
   else
     echo -e "Application Gateway already stopped"
@@ -59,7 +57,7 @@ else
 fi
 
 # Report final AGW status
-AGW_STATE=$(az network application-gateway show -g "rg-$TRE_ID" -n "agw-$TRE_ID" --query "operationalState" -o tsv)
+AGW_STATE=$(az network application-gateway list --query "[?resourceGroup=='rg-${TRE_ID}'&&name=='agw-${TRE_ID}'].operationalState | [0]" -o tsv)
 
 echo -e "\n\e[34m»»» 🔨 \e[96mTRE Status for $TRE_ID\e[0m"
 echo -e "\e[34m»»»   • \e[96mFirewall:              \e[33m$FW_STATE\e[0m"
