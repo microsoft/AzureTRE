@@ -23,7 +23,7 @@ resource "azurerm_firewall" "fw" {
 }
 
 resource "azurerm_management_lock" "fw" {
-  count      = var.debug ? 0 : 1
+  count      = var.stateful_resources_locked ? 1 : 0
   name       = azurerm_firewall.fw.name
   scope      = azurerm_firewall.fw.id
   lock_level = "CanNotDelete"
