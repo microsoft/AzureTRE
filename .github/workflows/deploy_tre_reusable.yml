@@ -434,7 +434,7 @@ jobs:
         uses: EnricoMi/publish-unit-test-result-action@v1
         with:
           files: "./e2e_tests/pytest_e2e_smoke.xml"
-  
+
   e2e_tests_extended:
     name: "Run E2E Tests (Extended)"
     if: ${{ github.ref == 'refs/heads/main' }}
