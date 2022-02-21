@@ -390,7 +390,13 @@ else
         "oauth2PermissionScopes": ${workspaceOauth2PermissionScopes}
     },
     "appRoles": ${workspaceAppRoles},
-    "signInAudience": "AzureADMyOrg"
+    "signInAudience": "AzureADMyOrg",
+        "web":{
+            "implicitGrantSettings":{
+                "enableIdTokenIssuance":true,
+                "enableAccessTokenIssuance":true
+            }
+        }
 }
 JSON
 )
@@ -404,15 +410,25 @@ if [[ -n ${apiAppObjectId} ]]; then
     apiAppId=$(az ad app show --id ${apiAppObjectId} --query "appId" --output tsv)
     echo "API app registration with ID ${apiAppId} updated"
 else
+    echo "Creating a new API app registration, ${appName} API"
     apiAppId=$(az rest --method POST --uri "${msGraphUri}/applications" --headers Content-Type=application/json --body "${apiApp}" --output tsv --query "appId")
-    echo "Creating a new API app registration, ${appName} API, with ID ${apiAppId}"
+    echo "AppId: ${apiAppId}"
 
     # Poll until the app registration is found in the listing.
+    echo "Waiting for the new app registration"
     wait_for_new_app_registration $apiAppId
 
     # Update to set the identifier URI.
+    echo "Updating identifier URI"
     az ad app update --id ${apiAppId} --identifier-uris "api://${apiAppId}"
 fi
+
+# todo: [Issue 1352](https://github.com/microsoft/AzureTRE/issues/1352)
+# echo "Updating redirect uri"
+# Update app registration with redirect urls (SPA)
+# az rest --method PATCH --uri "${msGraphUri}/applications/${apiAppObjectId}" \
+#     --headers 'Content-Type=application/json' \
+#     --body '{"spa":{"redirectUris":["https://localhost:8080"]}}'
 
 # Make the current user an owner of the application.
 az ad app owner add --id ${apiAppId} --owner-object-id $currentUserId
