@@ -16,6 +16,9 @@ build-and-push-api: build-api-image push-api-image
 build-and-push-resource-processor: build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image
 build-and-push-gitea: build-gitea-image push-gitea-image
 build-and-push-guacamole: build-guacamole-image push-guacamole-image
+tre-deploy: prepare-tf-state deploy-core # deploy-shared-services
+# tre-deploy: deploy-core deploy-shared-services
+deploy-shared-services: firewall-install gitea-install nexus-install
 
 bootstrap:
 	$(call target_title, "Bootstrap Terraform") \
@@ -98,6 +101,21 @@ push-guacamole-image:
 	$(call push_image,"guac-server","./templates/workspace_services/guacamole/version.txt")
 
 tre-deploy: tre-start
+
+# # This target is for a graceful migration of Firewall
+# # from terraform state in Core to Shared Services.
+# # See https://github.com/microsoft/AzureTRE/issues/1177
+prepare-tf-state:
+	$(call target_title, "Preparing terraform state") \
+	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
+	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
+	&& pushd ./templates/shared_services/firewall/terraform/ && ./remove_state.sh && popd \
+	&& pushd ./templates/shared_services/gitea/terraform/ && ./remove_state.sh && popd \
+	&& pushd ./templates/shared_services/sonatype-nexus/terraform/ && ./remove_state.sh && popd
+
+deploy-core:
 	$(call target_title, "Deploying TRE") \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
@@ -117,6 +135,13 @@ letsencrypt:
 	&& . ./devops/scripts/load_env.sh ./templates/core/tre.env \
 	&& ./templates/core/terraform/scripts/letsencrypt.sh
 
+tre-start:
+	$(call target_title, "Starting TRE") \
+	&& . ./devops/scripts/check_dependencies.sh azfirewall \
+	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& ./devops/scripts/control_tre.sh start
+
 tre-stop:
 	$(call target_title, "Stopping TRE") \
 	&& . ./devops/scripts/check_dependencies.sh azfirewall \
@@ -124,12 +149,44 @@ tre-stop:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& ./devops/scripts/control_tre.sh stop
 
-tre-start:
-	$(call target_title, "Starting TRE") \
-	&& . ./devops/scripts/check_dependencies.sh azfirewall \
-	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
-	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& ./devops/scripts/control_tre.sh start
+firewall-install:
+	$(call target_title, "Installing Firewall") \
+	&& . ./devops/scripts/load_env.sh ./templates/shared_services/firewall/.env \
+	&& . ./templates/shared_services/check_sp.sh \
+	&& make porter-build DIR=./templates/shared_services/firewall \
+	&& make porter-install DIR=./templates/shared_services/firewall
+
+firewall-uninstall:
+	$(call target_title, "Uninstalling Firewall") \
+	&& . ./devops/scripts/load_env.sh ./templates/shared_services/firewall/.env \
+	&& . ./templates/shared_services/check_sp.sh \
+	&& make porter-uninstall DIR=./templates/shared_services/firewall \
+
+gitea-install:
+	$(call target_title, "Installing Gitea") \
+	&& . ./devops/scripts/load_env.sh ./templates/shared_services/gitea/.env \
+	&& . ./templates/shared_services/check_sp.sh \
+	&& make porter-build DIR=./templates/shared_services/gitea \
+	&& make porter-install DIR=./templates/shared_services/gitea
+
+gitea-uninstall:
+	$(call target_title, "Uninstalling Gitea") \
+	&& . ./devops/scripts/load_env.sh ./templates/shared_services/gitea/.env \
+	&& . ./templates/shared_services/check_sp.sh \
+	&& make porter-uninstall DIR=./templates/shared_services/gitea
+
+nexus-install:
+	$(call target_title, "Installing Nexus") \
+	&& . ./devops/scripts/load_env.sh ./templates/shared_services/sonatype-nexus/.env \
+	&& . ./templates/shared_services/check_sp.sh \
+	&& make porter-build DIR=./templates/shared_services/sonatype-nexus \
+	&& make porter-install DIR=./templates/shared_services/sonatype-nexus
+
+nexus-uninstall:
+	$(call target_title, "Uninstalling Nexus") \
+	&& . ./devops/scripts/load_env.sh ./templates/shared_services/sonatype-nexus/.env \
+	&& . ./templates/shared_services/check_sp.sh \
+	&& make porter-uninstall DIR=./templates/shared_services/sonatype-nexus
 
 tre-destroy:
 	$(call target_title, "Destroying TRE") \

@@ -18,7 +18,7 @@ LOG_FILE="tmp$$.log"
   -n $TF_VAR_terraform_state_container_name \
   -k ${TRE_ID} \
   -l ${LOG_FILE} \
-  -c "terraform plan -out ${PLAN_FILE} && \
-  terraform apply -input=false -auto-approve ${PLAN_FILE} && \
-  terraform output -json > ../tre_output.json"
+  -c "terraform plan -out ${PLAN_FILE} && terraform state list"
+ # terraform apply -input=false -auto-approve ${PLAN_FILE} && \  # TODO(tanya): don't forget to remove!!!
+ #  terraform output -json > ../tre_output.json
 
