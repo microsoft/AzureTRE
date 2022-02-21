@@ -17,11 +17,12 @@ resource "azurerm_user_assigned_identity" "gitea_id" {
 }
 
 resource "azurerm_app_service" "gitea" {
-  name                = local.webapp_name
-  resource_group_name = local.core_resource_group_name
-  location            = var.location
-  app_service_plan_id = data.azurerm_app_service_plan.core.id
-  https_only          = true
+  name                            = local.webapp_name
+  resource_group_name             = local.core_resource_group_name
+  location                        = var.location
+  app_service_plan_id             = data.azurerm_app_service_plan.core.id
+  https_only                      = true
+  key_vault_reference_identity_id = azurerm_user_assigned_identity.gitea_id.id
 
   app_settings = {
     APPINSIGHTS_INSTRUMENTATIONKEY      = data.azurerm_application_insights.core.instrumentation_key
@@ -261,13 +262,4 @@ resource "azurerm_role_assignment" "gitea_acrpull_role" {
   scope                = data.azurerm_container_registry.mgmt_acr.id
   role_definition_name = "AcrPull"
   principal_id         = azurerm_user_assigned_identity.gitea_id.principal_id
-}
-
-# unfortunately we have to tell the webapp to use the user-assigned identity when accessing key-vault, no direct tf way.
-resource "null_resource" "webapp_vault_access_identity" {
-  provisioner "local-exec" {
-    command = <<EOT
-      az rest --method PATCH --uri "${azurerm_app_service.gitea.id}?api-version=2021-01-01" --body "{'properties':{'keyVaultReferenceIdentity':'${azurerm_user_assigned_identity.gitea_id.id}'}}"
-    EOT
-  }
 }
