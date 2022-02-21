@@ -111,7 +111,8 @@ prepare-tf-state:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
-	&& pushd ./templates/shared_services/firewall/terraform/ && ./remove_state.sh && popd
+	&& pushd ./templates/core/terraform && ../../shared_services/firewall/terraform/remove_state.sh && popd\
+	&& pushd ./templates/shared_services/firewall/terraform && ./import_state.sh
 
 deploy-core:
 	$(call target_title, "Deploying TRE") \

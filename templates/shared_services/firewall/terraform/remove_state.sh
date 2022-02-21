@@ -12,7 +12,7 @@ tf_state_list="$(terraform state list)"
 function remove_if_present() {
   echo -n "Checking $1 ..."
   found=$(echo "$tf_state_list" | grep -q ^$1$; echo $?)
-  # terraform state show $1
+
   if [[ $found -eq 0 ]]; then
     echo " removing"
     terraform state rm $1
@@ -36,6 +36,3 @@ remove_if_present module.firewall.azurerm_firewall_application_rule_collection.w
 remove_if_present module.firewall.azurerm_firewall_application_rule_collection.shared_subnet
 remove_if_present module.firewall.azurerm_firewall_application_rule_collection.resource_processor_subnet
 remove_if_present module.firewall.azurerm_firewall.fw
-remove_if_present azurerm_subnet_route_table_association.rt_web_app_subnet_association
-remove_if_present azurerm_subnet_route_table_association.rt_shared_subnet_association
-remove_if_present azurerm_subnet_route_table_association.rt_resource_processor_subnet_association
