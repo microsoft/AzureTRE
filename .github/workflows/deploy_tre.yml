@@ -79,12 +79,12 @@ jobs:
           echo "::set-output name=refid::${REFID}"
 
       - name: Checkout
+        # Code is used by orny/paths-filter action but not required for pull requests
         if: ${{ github.event_name != 'pull_request' }}
         uses: actions/checkout@v2
         with:
           persist-credentials: false
 
-      # For pull requests it's not necessary to checkout the code
       - uses: dorny/paths-filter@v2
         id: filter
         with:
