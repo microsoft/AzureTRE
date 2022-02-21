@@ -3,6 +3,13 @@ name: Deploy Azure TRE Resuable
 
 on:
   workflow_call:
+    inputs:
+      prRepo:
+        description: Name of the repo GitHub repo containing the ref (as org/repo )
+        type: string
+      prRef:
+        description: The git ref to checkout
+        type: string
     secrets:
       AAD_TENANT_ID:
         required: true
@@ -67,8 +74,27 @@ jobs:
     runs-on: ubuntu-latest
     environment: Dev
     steps:
-      - name: Checkout
+      - name: Checkout main
+        if: ${{ inputs.prRepo == "" }} # if not running for a PR, checkout main
         uses: actions/checkout@v2
+
+      - name: Checkout PR
+        if: ${{ inputs.prRepo != "" }} # if running for a PR, checkout the PR commit
+        run: |
+          set -e
+          echo
+          echo "PR_REPO: ${PR_REPO}"
+          echo "PR_REF: ${PR_REF}"
+          echo
+
+          echo "Checkout PR code..."
+          git config advice.detachedHead false
+          git remote add fork https://github.com/${PR_REPO}
+          git remote update
+          git checkout ${PR_REF}
+        env:
+          PR_REPO: ${{ inputs.prRepo }}
+          PR_REF: ${{ inputs.prRef }}
 
       - name: Set up Docker BuildKit
         uses: docker/setup-buildx-action@v1
