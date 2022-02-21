@@ -9,15 +9,15 @@ resource "azurerm_servicebus_namespace" "sb" {
 }
 
 resource "azurerm_servicebus_queue" "workspacequeue" {
-  name                = "workspacequeue"
-  namespace_id      = azurerm_servicebus_namespace.sb.id
+  name         = "workspacequeue"
+  namespace_id = azurerm_servicebus_namespace.sb.id
 
   enable_partitioning = false
 }
 
 resource "azurerm_servicebus_queue" "service_bus_deployment_status_update_queue" {
-  name                = "deploymentstatus"
-  namespace_id      = azurerm_servicebus_namespace.sb.id
+  name         = "deploymentstatus"
+  namespace_id = azurerm_servicebus_namespace.sb.id
 
   enable_partitioning = false
 }
@@ -62,6 +62,6 @@ resource "azurerm_private_endpoint" "sbpe" {
 # Block public access
 # See https://docs.microsoft.com/azure/service-bus-messaging/service-bus-service-endpoints
 resource "azurerm_servicebus_namespace_network_rule_set" "servicebus_network_rule_set" {
-  namespace_id      = azurerm_servicebus_namespace.sb.id
+  namespace_id                  = azurerm_servicebus_namespace.sb.id
   public_network_access_enabled = false
 }
