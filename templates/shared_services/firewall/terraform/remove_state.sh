@@ -8,10 +8,16 @@ terraform init -input=false -backend=true -reconfigure -upgrade \
     -backend-config="container_name=${TERRAFORM_STATE_CONTAINER_NAME}" \
     -backend-config="key=${TRE_ID}"
 
+tf_state_list="$(terraform state list)"
 function remove_if_present() {
-  terraform state show $1
-  if [[ $? -eq 0 ]]; then
+  echo -n "Checking $1 ..."
+  found=$(echo "$tf_state_list" | grep -q ^$1$; echo $?)
+  # terraform state show $1
+  if [[ $found -eq 0 ]]; then
+    echo " removing"
     terraform state rm $1
+  else
+    echo " not present"
   fi
 }
 
