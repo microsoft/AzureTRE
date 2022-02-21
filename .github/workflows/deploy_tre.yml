@@ -19,7 +19,7 @@ concurrency: "${{ github.workflow }}-${{ github.ref }}"
 
 jobs:
   run-deploy-tre-main:
-    name: "Run deploy main"
+    name: "Deploy main"
     if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/deploy_tre_reusable.yml
     secrets:
@@ -78,7 +78,7 @@ jobs:
           echo "::set-output name=refid::${REFID}"
 
   run-deploy-tre-not-main:
-    name: "Run deploy NOT main"
+    name: "Deploy PR"
     if: github.ref != 'refs/heads/main'
     needs: [prepare-not-main]
     uses: ./.github/workflows/deploy_tre_reusable.yml
@@ -108,4 +108,4 @@ jobs:
       TF_STATE_CONTAINER: ${{ secrets.TF_STATE_CONTAINER }}
       TRE_ADDRESS_SPACE: ${{ secrets.TRE_ADDRESS_SPACE }}
       TRE_ID: ${{ format('tre{0}', needs.prepare-not-main.outputs.refid) }}
-      CI_CACHE_ACR_NAME: $${{ secrets.ACR_NAME }}
+      CI_CACHE_ACR_NAME: ${{ secrets.ACR_NAME }}

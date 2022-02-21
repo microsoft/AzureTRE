@@ -12,6 +12,7 @@ jobs:
     name: Clean
     runs-on: ubuntu-latest
     environment: Dev
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v2
         with:
@@ -26,4 +27,5 @@ jobs:
       - name: Run clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH_LAST_ACTIVITY_IN_HOURS: 4
         run: devops/scripts/clean_ci_validation_envs.sh
