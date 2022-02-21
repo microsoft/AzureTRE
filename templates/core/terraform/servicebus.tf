@@ -10,16 +10,14 @@ resource "azurerm_servicebus_namespace" "sb" {
 
 resource "azurerm_servicebus_queue" "workspacequeue" {
   name                = "workspacequeue"
-  resource_group_name = azurerm_resource_group.core.name
-  namespace_name      = azurerm_servicebus_namespace.sb.name
+  namespace_id      = azurerm_servicebus_namespace.sb.id
 
   enable_partitioning = false
 }
 
 resource "azurerm_servicebus_queue" "service_bus_deployment_status_update_queue" {
   name                = "deploymentstatus"
-  resource_group_name = azurerm_resource_group.core.name
-  namespace_name      = azurerm_servicebus_namespace.sb.name
+  namespace_id      = azurerm_servicebus_namespace.sb.id
 
   enable_partitioning = false
 }
@@ -61,11 +59,9 @@ resource "azurerm_private_endpoint" "sbpe" {
   }
 }
 
-# Dummy network rule set to block public endpoints
+# Block public access
 # See https://docs.microsoft.com/azure/service-bus-messaging/service-bus-service-endpoints
 resource "azurerm_servicebus_namespace_network_rule_set" "servicebus_network_rule_set" {
-  namespace_name      = azurerm_servicebus_namespace.sb.name
-  resource_group_name = azurerm_resource_group.core.name
-  default_action      = "Deny"
-  ip_rules            = ["0.0.0.0/32"]
+  namespace_id      = azurerm_servicebus_namespace.sb.id
+  public_network_access_enabled = false
 }
