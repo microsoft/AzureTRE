@@ -398,23 +398,23 @@ else
         }
     },
     "optionalClaims": {
-		"idToken": [
-			{
-				"name": "ipaddr",
-				"source": null,
-				"essential": false,
-				"additionalProperties": []
-			},
+        "idToken": [
             {
-				"name": "email",
-				"source": null,
-				"essential": false,
-				"additionalProperties": []
-			}
-		],
-		"accessToken": [],
-		"saml2Token": []
-	}
+                "name": "ipaddr",
+                "source": null,
+                "essential": false,
+                "additionalProperties": []
+            },
+            {
+                "name": "email",
+                "source": null,
+                "essential": false,
+                "additionalProperties": []
+            }
+        ],
+        "accessToken": [],
+        "saml2Token": []
+    }
 }
 JSON
 )
