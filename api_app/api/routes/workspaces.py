@@ -77,7 +77,16 @@ async def send_uninstall_message(resource: Resource, operations_repo: OperationR
         operation = await send_resource_request_message(resource, operations_repo, RequestAction.UnInstall)
         return operation
     except Exception as e:
-        logging.error(f"Failed send {resource_type} resource delete message: {e}")
+        logging.error(f"Failed to send {resource_type} resource delete message: {e}")
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
+
+
+async def send_custom_action_message(resource: Resource, operations_repo: OperationRepository, resource_type: ResourceType, custom_action: str) -> Operation:
+    try:
+        operation = await send_resource_request_message(resource, operations_repo, custom_action)
+        return operation
+    except Exception as e:
+        logging.error(f"Failed to send {resource_type} resource custom action message: {e}")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
 
 
@@ -285,6 +294,17 @@ async def patch_user_resource(user_resource_patch: ResourcePatch, user=Depends(g
         return UserResourceInResponse(userResource=patched_user_resource)
     except (CosmosAccessConditionFailedError):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
+
+
+# user resource actions
+@user_resources_workspace_router.post("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_INVOKE_ACTION_ON_USER_RESOURCE, dependencies=[Depends(get_workspace_by_id_from_path)])
+async def invoke_action_on_user_resource(response: Response, user_resource_action: str, user_resource=Depends(get_user_resource_by_id_from_path), operations_repo=Depends(get_repository(OperationRepository)), user=Depends(get_current_workspace_owner_or_researcher_user)) -> OperationInResponse:
+    validate_user_is_workspace_owner_or_resource_owner(user, user_resource)
+
+    operation = await send_custom_action_message(user_resource, operations_repo, ResourceType.UserResource, user_resource_action)
+    response.headers["Location"] = construct_location_header(operation)
+
+    return OperationInResponse(operation=operation)
 
 
 # user resource operations
