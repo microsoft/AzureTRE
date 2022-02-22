@@ -57,8 +57,6 @@ resource "azurerm_app_service" "gitea" {
     identity_ids = [azurerm_user_assigned_identity.gitea_id.id]
   }
 
-  key_vault_reference_identity_id = azurerm_user_assigned_identity.gitea_id.id
-
   site_config {
     linux_fx_version                     = "DOCKER|${data.azurerm_container_registry.mgmt_acr.login_server}/microsoft/azuretre/gitea:${local.version}"
     remote_debugging_enabled             = false
