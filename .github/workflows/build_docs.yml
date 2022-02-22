@@ -4,6 +4,8 @@ name: Publish docs via Github Pages
 on:
   push:
     branches: [main]
+    paths:
+      - 'docs/**'
 
 jobs:
   build:
