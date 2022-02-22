@@ -391,12 +391,30 @@ else
     },
     "appRoles": ${workspaceAppRoles},
     "signInAudience": "AzureADMyOrg",
-        "web":{
-            "implicitGrantSettings":{
-                "enableIdTokenIssuance":true,
-                "enableAccessTokenIssuance":true
-            }
+    "web":{
+        "implicitGrantSettings":{
+            "enableIdTokenIssuance":true,
+            "enableAccessTokenIssuance":true
         }
+    },
+    "optionalClaims": {
+		"idToken": [
+			{
+				"name": "ipaddr",
+				"source": null,
+				"essential": false,
+				"additionalProperties": []
+			},
+            {
+				"name": "email",
+				"source": null,
+				"essential": false,
+				"additionalProperties": []
+			}
+		],
+		"accessToken": [],
+		"saml2Token": []
+	}
 }
 JSON
 )
@@ -422,6 +440,10 @@ else
     echo "Updating identifier URI"
     az ad app update --id ${apiAppId} --identifier-uris "api://${apiAppId}"
 fi
+
+echo "Setting API permissions (email / profile / ipaddr)"
+# unfortunatly we need to assign these permissions using the non descriptive guids...(taken from the manifest)
+az ad app permission add --id ${apiAppId} --api 00000003-0000-0000-c000-000000000000 --api-permissions 64a6cdd6-aab1-4aaf-94b8-3cc8405e90d0=Scope 37f7f235-527c-4136-accd-4a02d197296e=Scope 14dad69e-099b-42c9-810b-d002981feec1=Scope
 
 # todo: [Issue 1352](https://github.com/microsoft/AzureTRE/issues/1352)
 # echo "Updating redirect uri"
@@ -465,6 +487,10 @@ fi
 
 # This tag ensures the app is listed in "Enterprise applications"
 az ad sp update --id $spId --set tags="['WindowsAzureActiveDirectoryIntegratedApp']"
+
+# needed to make the API permissions change effective, this must be done after SP creation...
+echo "running 'az ad app permission grant' to make changes effective"
+az ad app permission grant --id ${apiAppId} --api 00000003-0000-0000-c000-000000000000
 
 # If a TRE core app reg
 if [[ $workspace -ne 0 ]]; then
