@@ -199,7 +199,7 @@ resource "null_resource" "upload_nexus_props" {
       --name etc --share-name  ${azurerm_storage_share.nexus.name} \
       --account-name ${data.azurerm_storage_account.nexus.name} \
       --account-key ${data.azurerm_storage_account.nexus.primary_access_key} && \
-      az storage file upload --source /cnab/app/nexus.properties \
+      az storage file upload --source ${var.nexus_properties_path} \
       --path etc --share-name  ${azurerm_storage_share.nexus.name} \
       --account-name ${data.azurerm_storage_account.nexus.name} \
       --account-key ${data.azurerm_storage_account.nexus.primary_access_key}

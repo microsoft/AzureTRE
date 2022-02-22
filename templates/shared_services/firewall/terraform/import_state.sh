@@ -7,7 +7,7 @@ terraform init -input=false -backend=true -reconfigure -upgrade \
     -backend-config="resource_group_name=${MGMT_RESOURCE_GROUP_NAME}" \
     -backend-config="storage_account_name=${MGMT_STORAGE_ACCOUNT_NAME}" \
     -backend-config="container_name=${TERRAFORM_STATE_CONTAINER_NAME}" \
-    -backend-config="key=tre-shared-service-firewall"
+    -backend-config="key=${TRE_ID}-shared-service-firewall"
 
 # Import a resource if it exists in Azure but doesn't exist in Terraform
 tf_state_list="$(terraform state list)"

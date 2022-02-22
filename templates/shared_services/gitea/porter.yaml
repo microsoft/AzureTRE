@@ -39,14 +39,6 @@ mixins:
       clientVersion: 1.0.4
 
 install:
-  - exec:
-      description: "Import resources first if they exist to achieve backwards compatibility"
-      command: ./terraform/import_state.sh
-      arguments:
-        - "--mgmt-resource-group-name {{ bundle.parameters.tfstate_resource_group_name }}"
-        - "--mgmt-storage-account-name {{ bundle.parameters.tfstate_storage_account_name }}"
-        - "--state-container-name {{ bundle.parameters.tfstate_container_name }}"
-        - "--key tre-shared-service-firewall"
   - terraform:
       description: "Deploy shared service"
       input: false
