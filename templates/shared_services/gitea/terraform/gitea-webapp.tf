@@ -17,11 +17,12 @@ resource "azurerm_user_assigned_identity" "gitea_id" {
 }
 
 resource "azurerm_app_service" "gitea" {
-  name                = local.webapp_name
-  resource_group_name = local.core_resource_group_name
-  location            = var.location
-  app_service_plan_id = data.azurerm_app_service_plan.core.id
-  https_only          = true
+  name                            = local.webapp_name
+  resource_group_name             = local.core_resource_group_name
+  location                        = var.location
+  app_service_plan_id             = data.azurerm_app_service_plan.core.id
+  https_only                      = true
+  key_vault_reference_identity_id = azurerm_user_assigned_identity.gitea_id.id
 
   app_settings = {
     APPINSIGHTS_INSTRUMENTATIONKEY      = data.azurerm_application_insights.core.instrumentation_key
