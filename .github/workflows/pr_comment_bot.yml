@@ -23,6 +23,7 @@ jobs:
       prRepo: ${{ steps.get_pr_details.outputs.prRepo }}
       prRef: ${{ steps.get_pr_details.outputs.prRef }}
       refid: ${{ steps.get_pr_details.outputs.refid }}
+      not-md: ${{ steps.filter.outputs.not-md }}
     steps:
       # Determine whether the comment is a command
       - id: check_command
@@ -55,10 +56,37 @@ jobs:
           echo "Showing help on PR ${PR_NUMBER}"
           gh pr comment ${PR_NUMBER} --repo $REPO --body "Hello<br/><br/>You can use the following commands:<br/>    /test - run tests on a PR<br/>    /help - show this help"
 
+      # Check if the PR build/test needs to run
+      - name: Checkout
+        if: ${{ steps.check_command.outputs.result == 'run-tests' }}
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+      - uses: dorny/paths-filter@v2
+        id: filter
+        if: ${{ steps.check_command.outputs.result == 'run-tests' }}
+        with:
+          filters: |
+            not-md:
+              # we need to check for changes in files other than *.md
+              - '**/!(*.md)'
+
+      # If we don't run the actual deploy (below) we won't receive a check-run status,
+      # and will have to send it "manually"
+      - name: Bypass E2E check-runs status
+        if: ${{ steps.check_command.outputs.result == 'run-tests' && steps.filter.outputs.not-md == 'false' }}
+        uses: LouisBrunner/checks-action@v1.1.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # the name must be identical to the one received by the real job
+          name: "Deploy PR / Run E2E Tests (Smoke)"
+          status: "completed"
+          conclusion: "success"
+
       # Get PR commit details for running tests
       - id: get_pr_details
         name: Get PR details
-        if: ${{ steps.check_command.outputs.result == 'run-tests' }}
+        if: ${{ steps.check_command.outputs.result == 'run-tests' && steps.filter.outputs.not-md == 'true' }}
         env:
           PR_NUMBER: ${{ github.event.issue.number }}
           REPO: ${{ github.event.repository.full_name }}
@@ -88,7 +116,7 @@ jobs:
   run_test:
     # Run the tests with the re-usable workflow
     needs: [pr_comment]
-    if: ${{ needs.pr_comment.outputs.command }} == "run-tests"
+    if: ${{ needs.pr_comment.outputs.command == 'run-tests' && steps.filter.outputs.not-md == 'true' }}
     name: Run tests
     uses: ./.github/workflows/deploy_tre_reusable.yml
     with:
