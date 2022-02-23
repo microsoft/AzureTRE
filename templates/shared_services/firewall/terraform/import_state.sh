@@ -79,10 +79,6 @@ import_if_exists azurerm_firewall_network_rule_collection.web_app_subnet \
   "az network firewall show --ids /subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Network/azureFirewalls/fw-${TRE_ID}/networkRuleCollections/nrc-web_app_subnet"
 
 
-
-import_if_exists azurerm_management_lock.fw "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Network/azureFirewalls/fw-${TRE_ID}/providers/Microsoft.Authorization/locks/fw-${TRE_ID}"
-
-
 # Diagnostic settings
 import_if_exists azurerm_monitor_diagnostic_setting.firewall \
   "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Network/azureFirewalls/fw-${TRE_ID}|diagnostics-firewall-${TRE_ID}" \
