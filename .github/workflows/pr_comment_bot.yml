@@ -65,7 +65,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Could look at moving this to GitHub Script action as well
-          
+
           echo "Getting PR repo..."
           pr_owner=$(gh pr view $PR_NUMBER --repo $REPO --json headRepositoryOwner | jq -r .headRepositoryOwner.login)
           pr_repo=$(gh pr view $PR_NUMBER --repo $REPO --json headRepository | jq -r .headRepository.name)
@@ -81,9 +81,7 @@ jobs:
           echo "::set-output name=prRepo::${pr_owner}/${pr_repo}"
           echo "Done"
 
-          # Generate stable ID for a PR to use in the TRE_IR
-          # Using the PR number rather than PR git ref enables a new PR to be created to have a new ID (rather than also requiring the branch name to be changed)
-          REFID=$(echo "PR${PR_NUMBER}"" | shasum | cut -c1-8)
+          REFID=$(echo ${GITHUB_REF} | shasum | cut -c1-8)
           echo "using id of: ${REFID} for GitHub Ref: ${GITHUB_REF}"
           echo "::set-output name=refid::${REFID}"
 
