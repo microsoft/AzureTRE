@@ -18,50 +18,56 @@ Resource Processor is the Azure TRE component automating [Porter](https://porter
 
 ## Local development
 
-To work locally checkout the source code and run:
+To work locally, checkout the source code and run:
 
 ```cmd
-pip install -r ./vmss_porter/requirements.txt
+pip install -r ./resource_processor/vmss_porter/requirements.txt
 ```
 
-If you use visual studio code you can set up your launch.json to include the following block which will enable launching and debugging.
+If you use Visual Studio Code you can use the `VMSS Processor` debug profile to run the app. Before using this, you'll need to create a `.env` file in the `./resource_processor` directory with the below contents:
 
-```json
-{
-      "name": "VMSS Processor",
-      "type": "python",
-      "request": "launch",
-      "program": "vmss_porter/runner.py",
-      "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}/resource_processor",
-      "env": {
-        "PYTHONPATH": ".",
-        "AZURE_CLIENT_ID": "",
-        "AZURE_CLIENT_SECRET": "",
-        "AZURE_TENANT_ID": "",
-        "REGISTRY_SERVER": "",
-        "TERRAFORM_STATE_CONTAINER_NAME": "",
-        "MGMT_RESOURCE_GROUP_NAME": "",
-        "MGMT_STORAGE_ACCOUNT_NAME": "",
-        "SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE": "deploymentstatus",
-        "SERVICE_BUS_RESOURCE_REQUEST_QUEUE": "workspacequeue",
-        "SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE": "",
-        "ARM_CLIENT_ID": "",
-        "ARM_CLIENT_SECRET": "",
-        "ARM_TENANT_ID": "",
-        "ARM_SUBSCRIPTION_ID": "",
-        "ARM_USE_MSI": "false"
-      }
-}
+```env
+PYTHONPATH="."
+AZURE_CLIENT_ID="__CHANGE_ME__"
+AZURE_CLIENT_SECRET="__CHANGE_ME__"
+AZURE_TENANT_ID="__CHANGE_ME__"
+REGISTRY_SERVER="__CHANGE_ME__"
+TERRAFORM_STATE_CONTAINER_NAME="tfstate"
+MGMT_RESOURCE_GROUP_NAME="__CHANGE_ME__"
+MGMT_STORAGE_ACCOUNT_NAME="__CHANGE_ME__"
+SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE="deploymentstatus"
+SERVICE_BUS_RESOURCE_REQUEST_QUEUE="workspacequeue"
+SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE="__CHANGE_ME__"
+ARM_CLIENT_ID="__CHANGE_ME__"
+ARM_CLIENT_SECRET="__CHANGE_ME__"
+ARM_TENANT_ID="__CHANGE_ME__"
+ARM_SUBSCRIPTION_ID="__CHANGE_ME__"
+ARM_USE_MSI="false"
 ```
 
-When working locally, we use a service principal (SP).
+You'll then need to replace `__CHANGE_ME__` with your environment configuration. For the Client Id and Secret variables, you'll first need to create a Service Principal.
 
-This SP needs enough permissions to be able to talk to service bus and to deploy resources into the subscription.
+When working locally, we use a Service Principal (SP) instead of MSI. This SP needs enough permissions to be able to talk to Service Bus and to deploy resources into the subscription.
 
-That means the service principal needs Owner access to subscription (`ARM_SUBSCRIPTION_ID`) and also needs **Azure Service Bus Data Sender** and **Azure Service Bus Data Receiver** on the service bus namespace defined above (`SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE`).
+That means the service principal needs Owner access to subscription (`ARM_SUBSCRIPTION_ID`) and also needs **Azure Service Bus Data Sender** and **Azure Service Bus Data Receiver** on the Service Bus namespace defined above (`SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE`).
 
-Once the above is set up you can simulate receiving messages from service bus by going to service bus explorer on the portal and using a message payload for SERVICE_BUS_RESOURCE_REQUEST_QUEUE as follows
+You can set this up with the following az CLI commands:
+
+```cli
+az ad sp create-for-rbac --name ResourceProcessorTesting --role Owner --scopes /subscriptions/{subscriptionId}
+```
+
+Add the `appId` (Client Id) and `password` (Client secret) outputs to your `.env` file then run the following to assign the required Service Bus permissions:
+
+```cli
+az role assignment create --assignee {appId} --role "Azure Service Bus Data Sender"
+```
+
+```cli
+az role assignment create --assignee {appId} --role "Azure Service Bus Data Receiver"
+```
+
+Once the above is set up you can simulate receiving messages from service bus by going to service bus explorer on the portal and using a message payload for SERVICE_BUS_RESOURCE_REQUEST_QUEUE as follows:
 
 ```json
 {"action": "install", "id": "a8911125-50b4-491b-9e7c-ed8ff42220f9", "name": "tre-workspace-base", "version": "0.1.0", "parameters": {"azure_location": "westeurope", "workspace_id": "20f9", "tre_id": "myfavtre", "address_space": "192.168.3.0/24"}}
