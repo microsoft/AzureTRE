@@ -297,7 +297,7 @@ async def patch_user_resource(user_resource_patch: ResourcePatch, user=Depends(g
 
 
 # user resource actions
-@user_resources_workspace_router.post("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_INVOKE_ACTION_ON_USER_RESOURCE, dependencies=[Depends(get_workspace_by_id_from_path)])
+@user_resources_workspace_router.post("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_INVOKE_ACTION_ON_USER_RESOURCE)
 async def invoke_action_on_user_resource(response: Response, user_resource_action: str, user_resource=Depends(get_user_resource_by_id_from_path), operations_repo=Depends(get_repository(OperationRepository)), user=Depends(get_current_workspace_owner_or_researcher_user)) -> OperationInResponse:
     validate_user_is_workspace_owner_or_resource_owner(user, user_resource)
 

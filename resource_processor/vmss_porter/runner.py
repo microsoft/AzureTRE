@@ -15,15 +15,29 @@ from azure.identity.aio import DefaultAzureCredential
 logger_adapter = initialize_logging(logging.INFO, socket.gethostname())
 disable_unwanted_loggers()
 
-failed_status_string_for = {
-    "install": strings.RESOURCE_STATUS_FAILED,
-    "uninstall": strings.RESOURCE_STATUS_DELETING_FAILED
-}
 
-pass_status_string_for = {
-    "install": strings.RESOURCE_STATUS_DEPLOYED,
-    "uninstall": strings.RESOURCE_STATUS_DELETED
-}
+def failed_status_string_for(action: str) -> str:
+    """
+    Return failed status string for specified action
+    """
+    if action == "install":
+        return strings.RESOURCE_STATUS_FAILED
+    elif action == "uninstall":
+        return strings.RESOURCE_STATUS_DELETING_FAILED
+    else:
+        return strings.RESOURCE_ACTION_STATUS_FAILED
+
+
+def pass_status_string_for(action: str) -> str:
+    """
+    Return pass status string for specified action
+    """
+    if action == "install":
+        return strings.RESOURCE_STATUS_DEPLOYED
+    elif action == "uninstall":
+        return strings.RESOURCE_STATUS_DELETED
+    else:
+        return strings.RESOURCE_ACTION_STATUS_SUCCEEDED
 
 
 @asynccontextmanager
@@ -102,7 +116,7 @@ async def get_porter_parameter_keys(msg_body, env_vars):
         shell_output_logger(result_stderr, '[stderr]', logger_adapter, logging.WARN)
 
 
-def get_installation_id(msg_body):
+def get_action_id(msg_body):
     # this will be used to identify each bundle install within the porter state store.
     return msg_body['id']
 
@@ -112,7 +126,7 @@ async def build_porter_command(msg_body, env_vars):
     porter_parameters = ""
 
     if porter_parameter_keys is None:
-        logger_adapter.warning("Unknown proter parameters - explain probably failed.")
+        logger_adapter.warning("Unknown porter parameters - explain probably failed.")
     else:
         for parameter_name in porter_parameter_keys:
             # try to find the param in order of priorities:
@@ -134,7 +148,7 @@ async def build_porter_command(msg_body, env_vars):
             if parameter_value is not None:
                 porter_parameters = porter_parameters + f" --param {parameter_name}=\"{parameter_value}\""
 
-    installation_id = get_installation_id(msg_body)
+    installation_id = get_action_id(msg_body)
 
     command_line = [f"{azure_login_command(env_vars)} && {azure_acr_login_command(env_vars)} && porter "
                     f"{msg_body['action']} \"{installation_id}\" "
@@ -157,7 +171,7 @@ def get_special_porter_param_value(parameter_name: str, msg_body, env_vars):
 
 
 async def build_porter_command_for_outputs(msg_body):
-    installation_id = get_installation_id(msg_body)
+    installation_id = get_action_id(msg_body)
     # we only need "real" outputs and use jq to remove the logs which are big
     command_line = [f"porter show {installation_id} --output json | jq -c '. | select(.Outputs!=null) | .Outputs | del (.[] | select(.Name==\"io.cnab.outputs.invocationImageLogs\"))'"]
     return command_line
@@ -198,7 +212,7 @@ async def run_porter(command, env_vars):
 
 
 def service_bus_message_generator(sb_message, status, deployment_message, outputs=None):
-    installation_id = get_installation_id(sb_message)
+    installation_id = get_action_id(sb_message)
     message_dict = {
         "operationId": sb_message["operationId"],
         "id": sb_message["id"],
@@ -212,40 +226,55 @@ def service_bus_message_generator(sb_message, status, deployment_message, output
     return resource_request_message
 
 
-async def deploy_porter_bundle(msg_body, sb_client, env_vars, message_logger_adapter):
-    installation_id = get_installation_id(msg_body)
-    job_type = "Deployment" if msg_body['action'] == "install" else "Deleting"
-    message_logger_adapter.info(f"{installation_id}: {job_type} job configuration starting")
+async def invoke_porter_action(msg_body, sb_client, env_vars, message_logger_adapter) -> bool:
+    """
+    Handle resource message by invoking specified porter action (i.e. install, uninstall)
+    """
+    action_id = get_action_id(msg_body)
+    action = msg_body["action"]
+    message_logger_adapter.info(f"{action_id}: {action} action configuration starting")
     sb_sender = sb_client.get_queue_sender(queue_name=env_vars["deployment_status_queue"])
-    if job_type == "Deployment":
+
+    # If the action is install, post message on sb queue to start a deployment job
+    if action == "install":
         resource_request_message = service_bus_message_generator(msg_body, strings.RESOURCE_STATUS_DEPLOYING, "Deployment job starting")
         await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"]))
+
+    # Build and run porter command
     porter_command = await build_porter_command(msg_body, env_vars)
     returncode, _, err = await run_porter(porter_command, env_vars)
+
+    # Handle command output
     if returncode != 0:
         error_message = "Error context message = " + " ".join(err.split('\n')) + " ; Command executed: ".join(porter_command)
-        resource_request_message = service_bus_message_generator(msg_body, failed_status_string_for[msg_body['action']], error_message)
+        resource_request_message = service_bus_message_generator(msg_body, failed_status_string_for(action), error_message)
+
+        # Post message on sb queue to notify receivers of action failure
+        # TODO: handle if specified action does not exist
         await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"]))
-        message_logger_adapter.info(f"{installation_id}: Deployment job configuration failed error = {error_message}")
+        message_logger_adapter.info(f"{action_id}: Porter action failed with error = {error_message}")
         return False
+
     else:
         # Get the outputs
         # TODO: decide if this should "fail" the deployment
         _, outputs = await get_porter_outputs(msg_body, env_vars, message_logger_adapter)
 
-        success_message = f"{job_type} completed successfully."
-        resource_request_message = service_bus_message_generator(msg_body, pass_status_string_for[msg_body['action']], success_message, outputs)
+        success_message = f"{action} action completed successfully."
+        resource_request_message = service_bus_message_generator(msg_body, pass_status_string_for(action), success_message, outputs)
+
         await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"]))
-        message_logger_adapter.info(f"{installation_id}: {success_message}")
+        message_logger_adapter.info(f"{action_id}: {success_message}")
         return True
 
 
 async def get_porter_outputs(msg_body, env_vars, message_logger_adapter):
     porter_command = await build_porter_command_for_outputs(msg_body)
     returncode, stdout, err = await run_porter(porter_command, env_vars)
+
     if returncode != 0:
         error_message = "Error context message = " + " ".join(err.split('\n'))
-        message_logger_adapter.info(f"{get_installation_id(msg_body)}: Failed to get outputs with error = {error_message}")
+        message_logger_adapter.info(f"{get_action_id(msg_body)}: Failed to get outputs with error = {error_message}")
         return False, ""
     else:
         outputs_json = {}
@@ -261,20 +290,24 @@ async def get_porter_outputs(msg_body, env_vars, message_logger_adapter):
 async def runner(env_vars):
     msi_id = env_vars["vmss_msi_id"]
     service_bus_namespace = env_vars["service_bus_namespace"]
+
     async with default_credentials(msi_id) as credential:
         service_bus_client = ServiceBusClient(service_bus_namespace, credential)
         logger_adapter.info("Starting message receiving loop...")
+
         while True:
             logger_adapter.info("Checking for new messages...")
             receive_message_gen = receive_message(env_vars, service_bus_client)
+
             try:
                 async for message in receive_message_gen:
                     logger_adapter.info(f"Message received for id={message['id']}")
                     message_logger_adapter = get_message_id_logger(message['id'])  # logger includes message id in every entry.
-                    result = await deploy_porter_bundle(message, service_bus_client, env_vars, message_logger_adapter)
+                    result = await invoke_porter_action(message, service_bus_client, env_vars, message_logger_adapter)
                     await receive_message_gen.asend(result)
             except StopAsyncIteration:  # the async generator when finished signals end with this exception.
                 pass
+
             logger_adapter.info("All messages done sleeping...")
             await asyncio.sleep(60)
 

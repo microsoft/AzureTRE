@@ -20,6 +20,9 @@ class Status(str, Enum):
     Deploying = strings.RESOURCE_STATUS_DEPLOYING
     NotDeployed = strings.RESOURCE_STATUS_NOT_DEPLOYED  # Initial status of a resource
     DeletingFailed = strings.RESOURCE_STATUS_DELETING_FAILED
+    InvokingAction = strings.RESOURCE_ACTION_STATUS_INVOKING
+    ActionSucceeded = strings.RESOURCE_ACTION_STATUS_SUCCEEDED
+    ActionFailed = strings.RESOURCE_ACTION_STATUS_FAILED
 
 
 class Operation(AzureTREModel):
