@@ -2,6 +2,7 @@
 # This script works together with the import_state.sh script to manually remove the gitea state from the core deployment
 # and import it into the gitea deployment. It's used for migration purposes only and will be removed when clients are all
 # using the shared services model
+echo "REMOVING STATE FOR GITEA..."
 
 set -e
 
@@ -29,9 +30,8 @@ remove_if_present module.gitea.azurerm_private_endpoint.private-endpoint
 remove_if_present module.gitea.azurerm_mysql_database.gitea
 remove_if_present module.gitea.azurerm_mysql_server.gitea
 remove_if_present module.gitea.random_password.password
-remove_if_present module.gitea.azurerm_storage_share.gitea
+#remove_if_present module.gitea.azurerm_storage_share.gitea
 remove_if_present module.gitea.azurerm_key_vault_secret.gitea_password
-remove_if_present module.gitea.azurerm_monitor_diagnostic_setting.webapp_gitea
 remove_if_present module.gitea.azurerm_app_service_virtual_network_swift_connection.gitea-integrated-vnet
 remove_if_present module.gitea.azurerm_private_endpoint.gitea_private_endpoint
 remove_if_present module.gitea.azurerm_app_service.gitea

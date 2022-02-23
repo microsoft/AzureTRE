@@ -2,6 +2,7 @@
 # This script works together with the import_state.sh script to manually remove the nexus state from the core deployment
 # and import it into the nexus deployment. It's used for migration purposes only and will be removed when clients are all
 # using the shared services model
+echo "REMOVING STATE FOR NEXUS..."
 
 set -e
 
@@ -24,9 +25,8 @@ function remove_if_present() {
   fi
 }
 
-remove_if_present module.nexus.azurerm_monitor_diagnostic_setting.nexus
 remove_if_present module.nexus.azurerm_firewall_application_rule_collection.web_app_subnet_nexus
 remove_if_present module.nexus.azurerm_private_endpoint.nexus_private_endpoint
 remove_if_present module.nexus.azurerm_app_service_virtual_network_swift_connection.nexus-integrated-vnet
 remove_if_present module.nexus.azurerm_app_service.nexus
-remove_if_present module.nexus.azurerm_storage_share.nexus
+#remove_if_present module.nexus.azurerm_storage_share.nexus

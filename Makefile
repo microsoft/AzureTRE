@@ -109,12 +109,12 @@ prepare-tf-state:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
-	&& pushd ./templates/core/terraform && ../../shared_services/firewall/terraform/remove_state.sh && popd \
-	&& pushd ./templates/shared_services/firewall/terraform && ./import_state.sh \
-	&& pushd ./templates/core/terraform && ../../shared_services/gitea/terraform/remove_state.sh && popd \
-	&& pushd ./templates/shared_services/gitea/terraform && ./import_state.sh \
-	&& pushd ./templates/core/terraform && ../../shared_services/sonatype-nexus/terraform/remove_state.sh && popd \
-	&& pushd ./templates/shared_services/sonatype-nexus/terraform && ./import_state.sh
+	&& pushd ./templates/core/terraform > /dev/null && ../../shared_services/firewall/terraform/remove_state.sh && popd > /dev/null \
+	&& pushd ./templates/shared_services/firewall/terraform > /dev/null && ./import_state.sh && popd > /dev/null \
+	&& pushd ./templates/core/terraform > /dev/null && ../../shared_services/gitea/terraform/remove_state.sh && popd > /dev/null \
+	&& pushd ./templates/shared_services/gitea/terraform > /dev/null && ./import_state.sh && popd > /dev/null \
+	&& pushd ./templates/core/terraform > /dev/null && ../../shared_services/sonatype-nexus/terraform/remove_state.sh && popd > /dev/null \
+	&& pushd ./templates/shared_services/sonatype-nexus/terraform > /dev/null && ./import_state.sh && popd > /dev/null
 
 
 terraform-shared-service-deploy:

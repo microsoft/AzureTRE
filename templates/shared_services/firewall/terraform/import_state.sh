@@ -1,5 +1,6 @@
 #!/bin/bash
 # See remove_state.sh for the purpose of these scripts
+echo "IMPORTING STATE FOR FIREWALL..."
 
 # check for the existence of the RG. If it's not there it's because we're in CI and building from scratch - we can skip this script
 set +e

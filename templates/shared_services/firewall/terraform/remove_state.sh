@@ -2,6 +2,7 @@
 # This script works together with the import_state.sh script to manually remove the firewall state from the core deployment
 # and import it into the firewall deployment. It's used for migration purposes only and will be removed when clients are all
 # using the shared services model
+echo "REMOVING STATE FOR FIREWALL..."
 
 set -e
 
