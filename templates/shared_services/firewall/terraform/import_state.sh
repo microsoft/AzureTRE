@@ -7,9 +7,9 @@ RESOURCE_GROUP_ID="rg-${TRE_ID}"
 
 # Initialsie state for Terraform
 terraform init -input=false -backend=true -reconfigure -upgrade \
-    -backend-config="resource_group_name=${MGMT_RESOURCE_GROUP_NAME}" \
-    -backend-config="storage_account_name=${MGMT_STORAGE_ACCOUNT_NAME}" \
-    -backend-config="container_name=${TERRAFORM_STATE_CONTAINER_NAME}" \
+    -backend-config="resource_group_name=${TF_VAR_mgmt_resource_group_name}" \
+    -backend-config="storage_account_name=${TF_VAR_mgmt_storage_account_name}" \
+    -backend-config="container_name=${TF_VAR_terraform_state_container_name}" \
     -backend-config="key=${TRE_ID}-shared-service-firewall"
 
 # Import a resource if it exists in Azure but doesn't exist in Terraform
