@@ -23,6 +23,7 @@ jobs:
       prRepo: ${{ steps.get_pr_details.outputs.prRepo }}
       prRef: ${{ steps.get_pr_details.outputs.prRef }}
       refid: ${{ steps.get_pr_details.outputs.refid }}
+      ciGitRef: ${{ steps.get_pr_details.outputs.ciGitRef }}
       not-md: ${{ steps.filter.outputs.not-md }}
     steps:
       # Determine whether the comment is a command
@@ -109,8 +110,11 @@ jobs:
           echo "::set-output name=prRepo::${pr_owner}/${pr_repo}"
           echo "Done"
 
-          REFID=$(echo ${GITHUB_REF} | shasum | cut -c1-8)
-          echo "using id of: ${REFID} for GitHub Ref: ${GITHUB_REF}"
+          github_pr_ref="refs/pull/${PR_NUMBER}/merge"
+          echo "::set-output name=ciGitRef::${github_pr_ref}"
+
+          REFID=$(echo ${github_pr_ref} | shasum | cut -c1-8)
+          echo "using id of: ${REFID} for GitHub Ref: ${github_pr_ref}"
           echo "::set-output name=refid::${REFID}"
 
   run_test:
@@ -122,6 +126,7 @@ jobs:
     with:
       prRef: ${{ needs.pr_comment.outputs.prRef }}
       prRepo: ${{ needs.pr_comment.outputs.prRepo }}
+      ciGitRef: ${{ needs.pr_comment.outputs.ciGitRef }}
     secrets:
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
       ACR_NAME: ${{ format('tre{0}', needs.pr_comment.outputs.refid) }}

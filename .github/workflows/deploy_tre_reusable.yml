@@ -12,6 +12,10 @@ on:
         description: The git ref to checkout
         type: string
         required: false
+      ciGitRef:
+        description: The git ref to use in annotations to associate a deployment with the code that triggered it
+        type: string
+        required: true
     secrets:
       AAD_TENANT_ID:
         required: true
@@ -68,7 +72,7 @@ on:
 
 # This will prevent multiple runs of this entire workflow.
 # We should NOT cancel in progress runs as that can destabilize the environment.
-concurrency: "deploy-${{ github.ref }}"
+concurrency: "deploy-${{ inputs.ciGitRef }}"
 
 jobs:
   deploy_management:
@@ -217,7 +221,7 @@ jobs:
       - name: Deploy Trusted Research Environment
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: "make tre-deploy"
+          COMMAND: "TF_VAR_ci_git_ref=${{ inputs.ciGitRef }} make tre-deploy"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
