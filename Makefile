@@ -16,7 +16,7 @@ build-and-push-api: build-api-image push-api-image
 build-and-push-resource-processor: build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image
 build-and-push-gitea: build-gitea-image push-gitea-image
 build-and-push-guacamole: build-guacamole-image push-guacamole-image
-tre-deploy: prepare-tf-state deploy-core deploy-shared-services
+tre-deploy: prepare-tf-state deploy-core deploy-shared-services tre-start
 deploy-shared-services: firewall-install gitea-install nexus-install
 
 bootstrap:
@@ -98,8 +98,6 @@ push-gitea-image:
 
 push-guacamole-image:
 	$(call push_image,"guac-server","./templates/workspace_services/guacamole/version.txt")
-
-tre-deploy: tre-start
 
 # # These targets are for a graceful migration of Firewall / Gitea / Nexus
 # # from terraform state in Core to Shared Services.

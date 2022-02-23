@@ -32,7 +32,7 @@ mixins:
   - exec
   - az
   - terraform:
-      clientVersion: 1.0.4
+      clientVersion: 1.1.5
 install:
   - terraform:
       description: "Deploy shared service"
@@ -44,7 +44,7 @@ install:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "tre-shared-service-nexus"
+        key: "{{ bundle.parameters.tre_id }}-shared-service-sonatype-nexus"
 upgrade:
   - exec:
       description: "Upgrade shared service"
@@ -62,4 +62,4 @@ uninstall:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "tre-shared-service-nexus"
+        key: "{{ bundle.parameters.tre_id }}-shared-service-sonatype-nexus"

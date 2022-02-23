@@ -1,6 +1,9 @@
 #!/bin/bash
-# TODO: maybe rename script
-# TODO: add a comment explaining wtf is going on
+# This script works together with the import_state.sh script to manually remove the firewall state from the core deployment
+# and import it into the firewall deployment. It's used for migration purposes only and will be removed when clients are all
+# using the shared services model
+
+set -e
 
 terraform init -input=false -backend=true -reconfigure -upgrade \
     -backend-config="resource_group_name=${MGMT_RESOURCE_GROUP_NAME}" \

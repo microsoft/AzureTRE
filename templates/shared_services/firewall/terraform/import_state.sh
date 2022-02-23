@@ -1,4 +1,7 @@
 #!/bin/bash
+# See remove_state.sh for the purpose of these scripts
+
+set -e
 
 RESOURCE_GROUP_ID="rg-${TRE_ID}"
 

@@ -2,9 +2,7 @@
 
 # This script exists to support the migration from the firewall into a shared service bundle, that can be deployed from a dev workstation.
 
-set -o errexit
-set -o pipefail
-set -o nounset
+set -e
 
 PLAN_FILE="tfplan$$"
 LOG_FILE="tmp$$.log"
@@ -17,7 +15,7 @@ ${LOC}/../../devops/scripts/terraform_wrapper.sh \
   -n $TF_VAR_terraform_state_container_name \
   -k ${TRE_ID}-${SHARED_SERVICE_KEY} \
   -l ${LOG_FILE} \
-  -c "terraform plan -out ${PLAN_FILE} && terraform state list"
+  -c "terraform plan -out ${PLAN_FILE} && \
   terraform apply -input=false -auto-approve ${PLAN_FILE} && \
-  terraform output -json > ../tre_output.json
+  terraform output -json > ../tre_output.json"
 
