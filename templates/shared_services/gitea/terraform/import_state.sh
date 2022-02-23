@@ -52,41 +52,41 @@ function import_if_exists() {
 }
 
 
-import_if_exists module.gitea.azurerm_firewall_application_rule_collection.web_app_subnet_gitea \
+import_if_exists azurerm_firewall_application_rule_collection.web_app_subnet_gitea \
 "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Network/azureFirewalls/fw-${TRE_ID}/applicationRuleCollections/arc-web_app_subnet_gitea" \
 "az network firewall show --ids /subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Network/azureFirewalls/fw-${TRE_ID}/applicationRuleCollections/arc-web_app_subnet_gitea"
 
-import_if_exists module.gitea.azurerm_user_assigned_identity.gitea_id \
+import_if_exists azurerm_user_assigned_identity.gitea_id \
 "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-gitea-${TRE_ID}"
 
-import_if_exists module.gitea.azurerm_app_service.gitea \
+import_if_exists azurerm_app_service.gitea \
 "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Web/sites/gitea-${TRE_ID}"
 
-import_if_exists module.gitea.azurerm_private_endpoint.gitea_private_endpoint \
+import_if_exists azurerm_private_endpoint.gitea_private_endpoint \
 "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Network/privateEndpoints/pe-gitea-${TRE_ID}"
 
-import_if_exists module.gitea.azurerm_app_service_virtual_network_swift_connection.gitea-integrated-vnet \
+import_if_exists azurerm_app_service_virtual_network_swift_connection.gitea-integrated-vnet \
 "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Web/sites/gitea-${TRE_ID}/config/virtualNetwork"
 
-import_if_exists module.gitea.azurerm_monitor_diagnostic_setting.webapp_gitea \
+import_if_exists azurerm_monitor_diagnostic_setting.webapp_gitea \
 "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Web/sites/gitea-${TRE_ID}|diag-${TRE_ID}"
 
 GITEA_PW_ID="$(az keyvault secret show --vault-name kv-${TRE_ID} -n gitea-${TRE_ID}-admin-password -o tsv --query id)"
-import_if_exists module.gitea.azurerm_key_vault_secret.gitea_password $GITEA_PW_ID \
+import_if_exists azurerm_key_vault_secret.gitea_password $GITEA_PW_ID \
 "az keyvault secret show --id ${GITEA_PW_ID}"
 
-import_if_exists module.gitea.azurerm_storage_share.gitea \
+import_if_exists azurerm_storage_share.gitea \
 "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Storage/storageAccounts/stg${TRE_ID}/fileServices/default/fileshares/gitea-data"
 
-import_if_exists module.gitea.azurerm_mysql_server.gitea \
+import_if_exists azurerm_mysql_server.gitea \
 "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/providers/Microsoft.DBforMySQL/servers/mysql-${TRE_ID}"
 
-import_if_exists module.gitea.azurerm_mysql_database.gitea \
+import_if_exists azurerm_mysql_database.gitea \
 "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GRUP_ID}/providers/Microsoft.DBforMySQL/servers/mysql-${TRE_ID}/databases/gitea"
 
-import_if_exists module.gitea.azurerm_private_endpoint.private-endpoint \
+import_if_exists azurerm_private_endpoint.private-endpoint \
 "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Network/privateEndpoints/pe-mysql-${TRE_ID}"
 
 DB_PW_ID="$(az keyvault secret show --vault-name kv-${TRE_ID} -n mysql-${TRE_ID}-password -o tsv --query id)"
-import_if_exists module.gitea.azurerm_key_vault_secret.db_password $DB_PW_ID \
+import_if_exists azurerm_key_vault_secret.db_password $DB_PW_ID \
 "az keyvault secret show --id ${DB_PW_ID}"
