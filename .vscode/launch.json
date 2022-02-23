@@ -27,6 +27,15 @@
       "program": "${file}",
       "console": "integratedTerminal",
       "purpose": ["debug-test"]
+    },
+    {
+      "name": "VMSS Processor",
+      "type": "python",
+      "request": "launch",
+      "program": "vmss_porter/runner.py",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/resource_processor",
+      "envFile": "${workspaceFolder}/resource_processor/.env",
     }
   ]
 }

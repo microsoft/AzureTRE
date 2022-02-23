@@ -250,7 +250,6 @@ async def invoke_porter_action(msg_body, sb_client, env_vars, message_logger_ada
         resource_request_message = service_bus_message_generator(msg_body, failed_status_string_for(action), error_message)
 
         # Post message on sb queue to notify receivers of action failure
-        # TODO: handle if specified action does not exist
         await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"]))
         message_logger_adapter.info(f"{action_id}: Porter action failed with error = {error_message}")
         return False
