@@ -104,12 +104,14 @@ push-guacamole-image:
 # # See https://github.com/microsoft/AzureTRE/issues/1177
 prepare-tf-state:
 	$(call target_title, "Preparing terraform state") \
+	&& . ./devops/scripts/check_dependencies.sh nodocker \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
 	&& pushd ./templates/core/terraform && ../../shared_services/firewall/terraform/remove_state.sh && popd\
 	&& pushd ./templates/shared_services/firewall/terraform && ./import_state.sh
+
 
 terraform-shared-service-deploy:
 	$(call target_title, "Deploying ${DIR} with Terraform") \
