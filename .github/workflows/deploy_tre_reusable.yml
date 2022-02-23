@@ -81,11 +81,11 @@ jobs:
     environment: Dev
     steps:
       - name: Checkout main
-        if: ${{ inputs.prRepo == "" }} # if not running for a PR, checkout main
+        if: ${{ inputs.prRepo == '' }} # if not running for a PR, checkout main
         uses: actions/checkout@v2
 
       - name: Checkout PR
-        if: ${{ inputs.prRepo != "" }} # if running for a PR, checkout the PR commit
+        if: ${{ inputs.prRepo != '' }} # if running for a PR, checkout the PR commit
         uses: actions/checkout@v2
         with:
           repository: ${{ inputs.prRepo }}
