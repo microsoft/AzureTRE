@@ -66,11 +66,13 @@ def create_updated_operation_document(operation: Operation, message: DeploymentS
         [Operation]: Updated Operation object to persist
     """
 
-    if operation.status in [Status.DeletingFailed, Status.Deleted]:
+    if operation.status in [Status.DeletingFailed, Status.Deleted, Status.ActionSucceeded, Status.ActionFailed]:
         return operation  # cannot change terminal states
     if operation.status in [Status.Failed, Status.Deployed, Status.Deleting] and message.status not in [Status.Deleted, Status.DeletingFailed]:
         if message.status not in [Status.Deleted, Status.DeletingFailed]:
-            return operation  # can only transitions from deployed(deleting, failed) to deleted or failed to delete.
+            return operation  # can only transition from deployed(deleting, failed) to deleted or failed to delete.
+    if operation.status == Status.InvokingAction and message.status not in [Status.ActionSucceeded, Status.ActionFailed]:
+        return operation  # can only transition from invoking_action to action_succeeded or action_failed
 
     operation.status = message.status
     operation.message = message.message
