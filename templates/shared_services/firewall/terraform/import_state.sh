@@ -1,9 +1,16 @@
 #!/bin/bash
 # See remove_state.sh for the purpose of these scripts
 
-set -e
-
+# check for the existence of the RG. If it's not there it's because we're in CI and building from scratch - we can skip this script
+set +e
 RESOURCE_GROUP_ID="rg-${TRE_ID}"
+az group show -n $RESOURCE_GROUP_ID
+if [ $? -ne 0 ]; then
+  echo "RG not found, skipping import_state"
+  exit 0
+fi
+
+set -e
 
 # Initialsie state for Terraform
 terraform init -input=false -backend=true -reconfigure -upgrade \
