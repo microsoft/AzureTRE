@@ -28,7 +28,7 @@ function remove_if_present() {
 echo "WORKING DIR IS..."
 pwd
 
-tf state list
+terraform state list
 
 
 
