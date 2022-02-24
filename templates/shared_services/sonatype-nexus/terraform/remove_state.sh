@@ -25,8 +25,8 @@ function remove_if_present() {
   fi
 }
 
-remove_if_present module.nexus.azurerm_firewall_application_rule_collection.web_app_subnet_nexus
-remove_if_present module.nexus.azurerm_private_endpoint.nexus_private_endpoint
-remove_if_present module.nexus.azurerm_app_service_virtual_network_swift_connection.nexus-integrated-vnet
-remove_if_present module.nexus.azurerm_app_service.nexus
-#remove_if_present module.nexus.azurerm_storage_share.nexus
+remove_if_present module.nexus[0].azurerm_firewall_application_rule_collection.web_app_subnet_nexus
+remove_if_present module.nexus[0].azurerm_private_endpoint.nexus_private_endpoint
+remove_if_present module.nexus[0].azurerm_app_service_virtual_network_swift_connection.nexus-integrated-vnet
+remove_if_present module.nexus[0].azurerm_app_service.nexus
+remove_if_present module.nexus[0].azurerm_storage_share.nexus

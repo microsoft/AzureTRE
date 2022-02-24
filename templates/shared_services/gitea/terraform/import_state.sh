@@ -73,9 +73,9 @@ GITEA_PW_ID="$(az keyvault secret show --vault-name kv-${TRE_ID} -n gitea-${TRE_
 import_if_exists azurerm_key_vault_secret.gitea_password $GITEA_PW_ID \
 "az keyvault secret show --id ${GITEA_PW_ID}"
 
-# issue importing storage share
-#import_if_exists azurerm_storage_share.gitea \
-#"/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Storage/storageAccounts/stg${TRE_ID}/fileServices/default/shares/gitea-data"
+import_if_exists azurerm_storage_share.gitea \
+"https://stg${TRE_ID}.file.core.windows.net/gitea-data" \
+"az resource show --ids /subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Storage/storageAccounts/stg${TRE_ID}/fileServices/default/shares/gitea-data"
 
 import_if_exists azurerm_mysql_server.gitea \
 "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.DBforMySQL/servers/mysql-${TRE_ID}"
