@@ -40,7 +40,7 @@ function import_if_exists() {
   if [[ -z ${CMD} ]]; then
     CMD="az resource show --ids ${ID}"
   fi
-  ${CMD}
+  ${CMD} > /dev/null
   AZ_RESOURCE_EXISTS=$?
 
   # If resource exists in Terraform, it's already managed -- don't do anything
@@ -70,7 +70,7 @@ import_if_exists azurerm_app_service_virtual_network_swift_connection.gitea-inte
 "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Web/sites/gitea-${TRE_ID}/config/virtualNetwork"
 
 GITEA_PW_VALUE="$(az keyvault secret show --vault-name kv-${TRE_ID} -n gitea-${TRE_ID}-admin-password -o tsv --query value)"
-terraform import random_password.gitea_password $GITEA_PW_VALUE
+import_if_exists random_password.gitea_passwd "${GITEA_PW_VALUE}" "echo not azure resource"
 
 GITEA_PW_ID="$(az keyvault secret show --vault-name kv-${TRE_ID} -n gitea-${TRE_ID}-admin-password -o tsv --query id)"
 import_if_exists azurerm_key_vault_secret.gitea_password \
@@ -91,7 +91,7 @@ import_if_exists azurerm_private_endpoint.private-endpoint \
 "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Network/privateEndpoints/pe-mysql-${TRE_ID}"
 
 DB_PW_VALUE="$(az keyvault secret show --vault-name kv-${TRE_ID} -n mysql-${TRE_ID}-password -o tsv --query value)"
-terraform import random_password.password $DB_PW_VALUE
+import_if_exists random_password.password "${DB_PW_VALUE}" "echo not azure resource"
 
 DB_PW_ID="$(az keyvault secret show --vault-name kv-${TRE_ID} -n mysql-${TRE_ID}-password -o tsv --query id)"
 import_if_exists azurerm_key_vault_secret.db_password "${DB_PW_ID}" \

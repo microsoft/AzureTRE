@@ -40,7 +40,7 @@ function import_if_exists() {
   if [[ -z ${CMD} ]]; then
     CMD="az resource show --ids ${ID}"
   fi
-  ${CMD}
+  ${CMD} > /dev/null
   AZ_RESOURCE_EXISTS=$?
 
   # If resource exists in Terraform, it's already managed -- don't do anything
