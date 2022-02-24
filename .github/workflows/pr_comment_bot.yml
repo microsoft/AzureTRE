@@ -1,0 +1,206 @@
+name: pr_comment_bot
+
+on:
+  issue_comment:
+    types: [created] # only run on new comments
+    # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#issue_comment
+    # https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#issue_comment
+
+jobs:
+
+  debug:
+    name: temp - debug
+    runs-on: ubuntu-latest
+    steps:
+      # Determine whether the comment is a command
+      - id: check_command
+        name: Check for a command using GitHub script
+        run: |
+          echo "Debug...."
+          echo "github.event.issue.pull_request: ${{ github.event.issue.pull_request }}"
+          echo "github.event.comment.author_association: ${{ github.event.comment.author_association }}"
+
+  pr_comment:
+    name: PR comment
+    # https://docs.github.com/en/graphql/reference/enums#commentauthorassociation
+    # (and https://docs.github.com/en/rest/reference/issues#comments)
+
+    # only allow commands where:
+    # - the comment is on a PR
+    # - the commenting user has write permissions (i.e. is OWNER or COLLABORATOR)
+    if: ${{ github.event.issue.pull_request }}
+    runs-on: ubuntu-latest
+    outputs:
+      command: ${{ steps.check_command.outputs.result }}
+      prRepo: ${{ steps.get_pr_details.outputs.prRepo }}
+      prRef: ${{ steps.get_pr_details.outputs.prRef }}
+      refid: ${{ steps.get_pr_details.outputs.refid }}
+      ciGitRef: ${{ steps.get_pr_details.outputs.ciGitRef }}
+      not-md: ${{ steps.filter.outputs.not-md }}
+    steps:
+      # Determine whether the comment is a command
+      - id: check_command
+        name: Check for a command using GitHub script
+        uses: actions/github-script@v6
+        with:
+          result-encoding: string
+          script: |
+            //
+            // Check whether the user has write access to the repo
+            //
+
+            // https://docs.github.com/en/rest/reference/collaborators#check-if-a-user-is-a-repository-collaborator
+            const commentUsername = context.payload.comment.user.login;
+            const repoFullName = context.payload.repository.full_name;
+            const repoParts = repoFullName.split("/");
+            const repoOwner = repoParts[0];
+            const repoName = repoParts[1];
+
+            let userHasWriteAccess = false;
+            try {
+              console.log(`Checking if user "${commentUsername}" has write access to ${repoOwner}/${repoName} ...`)
+              const result = await github.request('GET /repos/{owner}/{repo}/collaborators/{username}', {
+                owner: repoOwner,
+                repo: repoName,
+                username: commentUsername
+              });
+              const userHasWriteAccess = result.status === 204;
+              console.log(result);
+            } catch (err) {
+              console.log(err);
+              if (err.status === 404){
+                console.log("User not found in collaborators");
+              } else {
+                console.log(`Error checking if user has write access: ${err.status} (${err.response.data.message}) `)
+              }
+            }
+            console.log("User has write access: " + userHasWriteAccess);
+
+            if (!userHasWriteAccess){
+              // only allow users with write access to run commands
+              return "none";
+            }
+
+            //
+            // Determine what action to take
+            //
+            const commentBody = context.payload.comment.body;
+            switch (commentBody.trim()){
+              case "/test":
+                return "run-tests";
+              case "/force-approve":
+                return "force-approve";
+              case "/help":
+                return "show-help";
+              default:
+                return "none";
+            }
+
+      # Add comment with help text in response to help command
+      - name: Show Help
+        if: ${{ steps.check_command.outputs.result == 'show-help' }}
+        env:
+          PR_NUMBER: ${{ github.event.issue.number }}
+          REPO: ${{ github.event.repository.full_name }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Showing help on PR ${PR_NUMBER}"
+          gh pr comment ${PR_NUMBER} --repo $REPO --body "Hello<br/><br/>You can use the following commands:<br/>    /test - run tests on a PR<br/>    /force-approve - force approval of the PR (i.e. skip the deployment checks)<br/>    /help - show this help"
+
+      # Check if the PR build/test needs to run
+      - name: Checkout
+        if: ${{ steps.check_command.outputs.result == 'run-tests' || steps.check_command.outputs.result == 'force-approve' }}
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+      - uses: dorny/paths-filter@v2
+        id: filter
+        if: ${{ steps.check_command.outputs.result == 'run-tests' }}
+        with:
+          filters: |
+            not-md:
+              # we need to check for changes in files other than *.md
+              - '**/!(*.md)'
+
+      # If we don't run the actual deploy (below) we won't receive a check-run status,
+      # and will have to send it "manually"
+      - name: Bypass E2E check-runs status
+        if: ${{ (steps.check_command.outputs.result == 'run-tests' && steps.filter.outputs.not-md == 'false') || steps.check_command.outputs.result == 'force-approve' }}
+        uses: LouisBrunner/checks-action@v1.1.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # the name must be identical to the one received by the real job
+          name: "Deploy PR / Run E2E Tests (Smoke)"
+          status: "completed"
+          conclusion: "success"
+
+      # Get PR commit details for running tests
+      - id: get_pr_details
+        name: Get PR details
+        if: ${{ steps.check_command.outputs.result == 'run-tests' && steps.filter.outputs.not-md == 'true' }}
+        env:
+          PR_NUMBER: ${{ github.event.issue.number }}
+          REPO: ${{ github.event.repository.full_name }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Could look at moving this to GitHub Script action as well
+
+          echo "Getting PR repo..."
+          pr_owner=$(gh pr view $PR_NUMBER --repo $REPO --json headRepositoryOwner | jq -r .headRepositoryOwner.login)
+          pr_repo=$(gh pr view $PR_NUMBER --repo $REPO --json headRepository | jq -r .headRepository.name)
+          echo -e "\tPR from $pr_owner/$pr_repo"
+
+          echo "Getting PR ref..."
+          ref=$(gh pr view $PR_NUMBER --repo $REPO --json commits | jq -r ".[] | last | .oid")
+          echo -e "\tLatest commit ref: $ref"
+          echo
+
+          echo "Setting outputs"
+          echo "::set-output name=prRef::${ref}"
+          echo "::set-output name=prRepo::${pr_owner}/${pr_repo}"
+          echo "Done"
+
+          github_pr_ref="refs/pull/${PR_NUMBER}/merge"
+          echo "::set-output name=ciGitRef::${github_pr_ref}"
+
+          REFID=$(echo ${github_pr_ref} | shasum | cut -c1-8)
+          echo "using id of: ${REFID} for GitHub Ref: ${github_pr_ref}"
+          echo "::set-output name=refid::${REFID}"
+
+  run_test:
+    # Run the tests with the re-usable workflow
+    needs: [pr_comment]
+    if: ${{ needs.pr_comment.outputs.command == 'run-tests' && needs.pr_comment.outputs.not-md == 'true' }}
+    name: Deploy PR
+    uses: ./.github/workflows/deploy_tre_reusable.yml
+    with:
+      prRef: ${{ needs.pr_comment.outputs.prRef }}
+      prRepo: ${{ needs.pr_comment.outputs.prRepo }}
+      ciGitRef: ${{ needs.pr_comment.outputs.ciGitRef }}
+    secrets:
+      AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
+      ACR_NAME: ${{ format('tre{0}', needs.pr_comment.outputs.refid) }}
+      ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+      ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/
+      ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
+      ACTIONS_DEVCONTAINER_TAG: ${{ needs.pr_comment.outputs.refid }}
+      API_CLIENT_ID: ${{ secrets.API_CLIENT_ID }}
+      API_CLIENT_SECRET: ${{ secrets.API_CLIENT_SECRET }}
+      ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+      ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+      ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+      CORE_ADDRESS_SPACE: ${{ secrets.CORE_ADDRESS_SPACE }}
+      LOCATION: ${{ secrets.LOCATION }}
+      MGMT_RESOURCE_GROUP: ${{ format('rg-tre{0}-mgmt', needs.pr_comment.outputs.refid) }}
+      MS_TEAMS_WEBHOOK_URI: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+      STATE_STORAGE_ACCOUNT_NAME: ${{ format('tre{0}mgmt', needs.pr_comment.outputs.refid) }}
+      SWAGGER_UI_CLIENT_ID: ${{ secrets.SWAGGER_UI_CLIENT_ID }}
+      TEST_APP_ID: ${{ secrets.TEST_APP_ID }}
+      TEST_USER_NAME: ${{ secrets.TEST_USER_NAME }}
+      TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+      TEST_WORKSPACE_APP_ID: ${{ secrets.TEST_WORKSPACE_APP_ID }}
+      TF_STATE_CONTAINER: ${{ secrets.TF_STATE_CONTAINER }}
+      TRE_ADDRESS_SPACE: ${{ secrets.TRE_ADDRESS_SPACE }}
+      TRE_ID: ${{ format('tre{0}', needs.pr_comment.outputs.refid) }}
+      CI_CACHE_ACR_NAME: ${{ secrets.ACR_NAME }}

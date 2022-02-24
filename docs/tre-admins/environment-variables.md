@@ -16,7 +16,6 @@
 | `ARM_CLIENT_ID` | *Optional for manual deployment without logged-in credentials.* The client whose azure identity will be used to deploy the solution. |
 | `ARM_CLIENT_SECRET` | *Optional for manual deployment without logged-in credentials.* The password of the client defined in `ARM_CLIENT_ID`. |
 | `ARM_TENANT_ID` | *Optional for manual deployment. If not specified the `az cli` selected subscription will be used.* The AAD tenant of the client defined in `ARM_CLIENT_ID`. |
-| `DEBUG` | If set to "true" disables purge protection of keyvault. |
 
 ## For Azure TRE instance in `/templates/core/.env`
 
@@ -31,3 +30,5 @@
 | `API_CLIENT_SECRET` | Generated when following [pre-deployment steps](./setup-instructions/pre-deployment-steps.md) guide. Client secret of the "TRE API". |
 | `DEPLOY_GITEA` | If set to `false` disables deployment of the [Gitea shared service](../azure-tre-overview/shared-services/gitea.md). |
 | `DEPLOY_NEXUS` | If set to `false` disables deployment of the [Nexus shared service](../azure-tre-overview/shared-services/nexus.md). |
+| `KEYVAULT_PURGE_PROTECTION_ENABLED` | If set to `false` disables purge protection of keyvault. A Recommanded setting for developers. |
+| `STATEFUL_RESOURCES_LOCKED` | If set to `false` locks on stateful resources won't be created. A Recommanded setting for developers. |
