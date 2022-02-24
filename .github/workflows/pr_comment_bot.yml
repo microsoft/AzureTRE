@@ -121,7 +121,7 @@ jobs:
     # Run the tests with the re-usable workflow
     needs: [pr_comment]
     if: ${{ needs.pr_comment.outputs.command == 'run-tests' && steps.filter.outputs.not-md == 'true' }}
-    name: Run tests
+    name: Deploy PR
     uses: ./.github/workflows/deploy_tre_reusable.yml
     with:
       prRef: ${{ needs.pr_comment.outputs.prRef }}
