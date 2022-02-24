@@ -72,7 +72,7 @@ import_if_exists azurerm_app_service_virtual_network_swift_connection.gitea-inte
 GITEA_PW_ID="$(az keyvault secret show --vault-name kv-${TRE_ID} -n gitea-${TRE_ID}-admin-password -o tsv --query id)"
 import_if_exists azurerm_key_vault_secret.gitea_password \
 "${GITEA_PW_ID}" \
-"az resource show --ids /subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.KeyVault/vaults/kv-${TRE_ID}/secrets/gitea-${TRE_ID}-admin-password"
+"az keyvault secret show --id ${GITEA_PW_ID}"
 
 import_if_exists azurerm_storage_share.gitea \
 "https://stg${TRE_ID}.file.core.windows.net/gitea-data" \
@@ -84,10 +84,9 @@ import_if_exists azurerm_mysql_server.gitea \
 import_if_exists azurerm_mysql_database.gitea \
 "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.DBforMySQL/servers/mysql-${TRE_ID}/databases/gitea"
 
-
 import_if_exists azurerm_private_endpoint.private-endpoint \
 "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Network/privateEndpoints/pe-mysql-${TRE_ID}"
 
 DB_PW_ID="$(az keyvault secret show --vault-name kv-${TRE_ID} -n mysql-${TRE_ID}-password -o tsv --query id)"
-import_if_exists azurerm_key_vault_secret.db_password $DB_PW_ID \
+import_if_exists azurerm_key_vault_secret.db_password "${DB_PW_ID}" \
 "az keyvault secret show --id ${DB_PW_ID}"

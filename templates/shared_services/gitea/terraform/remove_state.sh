@@ -28,6 +28,9 @@ function remove_if_present() {
 echo "WORKING DIR IS..."
 pwd
 
+tf state list
+
+
 
 remove_if_present module.gitea.azurerm_key_vault_secret.db_password
 remove_if_present module.gitea.azurerm_private_endpoint.private-endpoint
