@@ -19,6 +19,9 @@ build-and-push-guacamole: build-guacamole-image push-guacamole-image
 tre-deploy: deploy-core deploy-shared-services tre-start
 deploy-shared-services: firewall-install gitea-install nexus-install
 
+# to move your environment from the single 'core' deployment (which includes the firewall / gitea / nexus)
+# toward the shared services model, where they are split out - run the following make target before a tre-deploy
+# This will remove + import the resource state into the shared services
 migrate-to-shared-services: prepare-tf-state
 
 bootstrap:
