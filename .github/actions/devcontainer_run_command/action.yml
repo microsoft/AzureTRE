@@ -200,7 +200,6 @@ runs:
           -e TRE_URL \
           -e TEST_WORKSPACE_APP_ID \
           -e IS_API_SECURED \
-          -e TF_VAR_ci_git_ref="${{ github.ref }}" \
           -e DOCKER_BUILDKIT \
           -e TF_VAR_keyvault_purge_protection_enabled=${{ inputs.TF_VAR_keyvault_purge_protection_enabled }} \
           -e TF_VAR_stateful_resources_locked=${{ inputs.TF_VAR_stateful_resources_locked }} \
