@@ -22,7 +22,7 @@ def get_sample_user_resource_template_object(template_name: str = "guacamole-vm"
             "display_name": Property(type="string"),
             "description": Property(type="string")
         },
-        actions=[CustomAction()]
+        custom_actions=[CustomAction()]
     )
 
 
@@ -53,10 +53,14 @@ class UserResourceTemplateInCreate(ResourceTemplateInCreate):
                     "properties": {},
 
                 },
-                "customActions": [
+                "custom_actions": [
                     {
                         "name": "start",
                         "description": "Starts a VM"
+                    },
+                    {
+                        "name": "stop",
+                        "description": "Stops a VM"
                     }
                 ]
             }

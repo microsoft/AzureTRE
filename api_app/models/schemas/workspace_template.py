@@ -23,7 +23,7 @@ def get_sample_workspace_template_object(template_name: str = "tre-workspace-bas
                 default="small",
                 description="This can have a value of small, medium, large or custom. If you specify custom, then you need to specify a VNet address space in 'address_space' (e.g. 10.2.1.0/24)")
         },
-        actions=[
+        custom_actions=[
             CustomAction()
         ]
     )
@@ -80,7 +80,7 @@ class WorkspaceTemplateInCreate(ResourceTemplateInCreate):
                         }
                     }
                 },
-                "customActions": [
+                "custom_actions": [
                     {
                         "name": "disable",
                         "description": "Deallocates resources"

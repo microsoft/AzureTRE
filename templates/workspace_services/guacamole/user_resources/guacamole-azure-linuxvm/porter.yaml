@@ -97,7 +97,15 @@ upgrade:
         "Upgrade Guacamole User Resource Service (Windows 10)"
       command: echo
       arguments:
-        - "This workspace service does not implement upgrade action"
+        - "This user resource does not implement upgrade action"
+
+start:
+  - exec:
+      description:
+        "Start the VM"
+      command: echo
+      arguments:
+        - "Unimplemented"
 
 uninstall:
   - terraform:

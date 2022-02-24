@@ -22,7 +22,7 @@ def input_workspace_template():
             "required": [],
             "properties": {}
         },
-        customActions=[
+        custom_actions=[
             {
                 "name": "my-custom-action",
                 "description": "This is a test custom action"
@@ -45,7 +45,7 @@ def input_workspace_service_template():
             "required": [],
             "properties": {}
         },
-        customActions=[
+        custom_actions=[
             {
                 "name": "my-custom-action",
                 "description": "This is a test custom action"
@@ -68,7 +68,7 @@ def input_user_resource_template():
             "required": [],
             "properties": {}
         },
-        customActions=[
+        custom_actions=[
             {
                 "name": "my-custom-action",
                 "description": "This is a test custom action"
@@ -87,7 +87,7 @@ def basic_resource_template(input_workspace_template):
         current=True,
         required=input_workspace_template.json_schema["required"],
         properties=input_workspace_template.json_schema["properties"],
-        actions=input_workspace_template.customActions
+        custom_actions=input_workspace_template.custom_actions
     )
 
 
@@ -102,7 +102,7 @@ def basic_workspace_service_template(input_workspace_template):
         current=True,
         required=input_workspace_template.json_schema["required"],
         properties=input_workspace_template.json_schema["properties"],
-        actions=input_workspace_template.customActions
+        custom_actions=input_workspace_template.custom_actions
 
     )
 
@@ -119,7 +119,7 @@ def basic_user_resource_template(input_user_resource_template):
         current=True,
         required=input_user_resource_template.json_schema["required"],
         properties=input_user_resource_template.json_schema["properties"],
-        actions=input_user_resource_template.customActions
+        custom_actions=input_user_resource_template.custom_actions
     )
 
 
@@ -135,6 +135,6 @@ def user_resource_template_in_response(input_user_resource_template):
         current=True,
         required=input_user_resource_template.json_schema["required"],
         properties=input_user_resource_template.json_schema["properties"],
-        actions=input_user_resource_template.customActions,
+        custom_actions=input_user_resource_template.custom_actions,
         system_properties={}
     )
