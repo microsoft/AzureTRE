@@ -19,14 +19,14 @@ function remove_if_present() {
 
   if [[ $found -eq 0 ]]; then
     echo " removing"
-    terraform state rm $1
+    terraform state rm $2
   else
     echo " not present"
   fi
 }
 
-remove_if_present module.nexus[0].azurerm_firewall_application_rule_collection.web_app_subnet_nexus
-remove_if_present module.nexus[0].azurerm_private_endpoint.nexus_private_endpoint
-remove_if_present module.nexus[0].azurerm_app_service_virtual_network_swift_connection.nexus-integrated-vnet
-remove_if_present module.nexus[0].azurerm_app_service.nexus
-remove_if_present module.nexus[0].azurerm_storage_share.nexus
+remove_if_present "module.nexus\[0\].azurerm_firewall_application_rule_collection.web_app_subnet_nexus" module.nexus[0].azurerm_firewall_application_rule_collection.web_app_subnet_nexus
+remove_if_present "module.nexus\[0\].azurerm_private_endpoint.nexus_private_endpoint" module.nexus[0].azurerm_private_endpoint.nexus_private_endpoint
+remove_if_present "module.nexus\[0\].azurerm_app_service_virtual_network_swift_connection.nexus-integrated-vnet" module.nexus[0].azurerm_app_service_virtual_network_swift_connection.nexus-integrated-vnet
+remove_if_present "module.nexus\[0\].azurerm_app_service.nexus" module.nexus[0].azurerm_app_service.nexus
+remove_if_present "module.nexus\[0\].azurerm_storage_share.nexus" module.nexus[0].azurerm_storage_share.nexus
