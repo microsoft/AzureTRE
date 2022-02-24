@@ -58,7 +58,7 @@ jobs:
 
             let userHasWriteAccess = false;
             try {
-              console.log(`Checking if user "${commentUsername}" has write access...`)
+              console.log(`Checking if user "${commentUsername}" has write access to ${repoOwner}/${repoName} ...`)
               const result = await github.request('GET /repos/{owner}/{repo}/collaborators/{username}', {
                 owner: repoOwner,
                 repo: repoName,
