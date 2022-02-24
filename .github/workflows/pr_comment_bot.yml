@@ -58,7 +58,7 @@ jobs:
 
             let userHasWriteAccess = false;
             try {
-              console.log(`Checking if user "${commentUsername}" has write access...`)
+              console.log(`Checking if user "${commentUsername}" has write access to ${repoOwner}/${repoName} ...`)
               const result = await github.request('GET /repos/{owner}/{repo}/collaborators/{username}', {
                 owner: repoOwner,
                 repo: repoName,
@@ -69,6 +69,8 @@ jobs:
             } catch (err) {
               if (err.status !== 404){
                 console.log(`Error checking if user has write access: ${err.status} (${err.response.data.message}) `)
+              } else {
+                console.log("User not found in collaborators");
               }
             }
             console.log("User has write access: " + userHasWriteAccess);
@@ -85,6 +87,8 @@ jobs:
             switch (commentBody.trim()){
               case "/test":
                 return "run-tests";
+              case "/force-approve":
+                return "force-approve";
               case "/help":
                 return "show-help";
               default:
@@ -100,11 +104,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Showing help on PR ${PR_NUMBER}"
-          gh pr comment ${PR_NUMBER} --repo $REPO --body "Hello<br/><br/>You can use the following commands:<br/>    /test - run tests on a PR<br/>    /help - show this help"
+          gh pr comment ${PR_NUMBER} --repo $REPO --body "Hello<br/><br/>You can use the following commands:<br/>    /test - run tests on a PR<br/>    /force-approve - force approval of the PR (i.e. skip the deployment checks)<br/>    /help - show this help"
 
       # Check if the PR build/test needs to run
       - name: Checkout
-        if: ${{ steps.check_command.outputs.result == 'run-tests' }}
+        if: ${{ steps.check_command.outputs.result == 'run-tests' || steps.check_command.outputs.result == 'force-approve' }}
         uses: actions/checkout@v2
         with:
           persist-credentials: false
@@ -120,7 +124,7 @@ jobs:
       # If we don't run the actual deploy (below) we won't receive a check-run status,
       # and will have to send it "manually"
       - name: Bypass E2E check-runs status
-        if: ${{ steps.check_command.outputs.result == 'run-tests' && steps.filter.outputs.not-md == 'false' }}
+        if: ${{ (steps.check_command.outputs.result == 'run-tests' && steps.filter.outputs.not-md == 'false') || steps.check_command.outputs.result == 'force-approve' }}
         uses: LouisBrunner/checks-action@v1.1.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
