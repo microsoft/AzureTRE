@@ -80,11 +80,11 @@ jobs:
     runs-on: ubuntu-latest
     environment: Dev
     steps:
-      - name: Checkout main
-        if: ${{ inputs.prRepo == '' }} # if not running for a PR, checkout main
+      - name: Checkout (default)
+        if: ${{ inputs.prRepo == '' }} # if not running for a PR, checkout the default ref for the workflow run
         uses: actions/checkout@v2
 
-      - name: Checkout PR
+      - name: Checkout (PR)
         if: ${{ inputs.prRepo != '' }} # if running for a PR, checkout the PR commit
         uses: actions/checkout@v2
         with:
