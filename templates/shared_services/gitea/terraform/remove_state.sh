@@ -25,6 +25,16 @@ function remove_if_present() {
   fi
 }
 
+echo "WORKING DIR IS..."
+pwd
+
+
+remove_if_present module.gitea.azurerm_key_vault_secret.db_password
+remove_if_present module.gitea.azurerm_private_endpoint.private-endpoint
+
+
+
+
 remove_if_present module.gitea[0].azurerm_key_vault_secret.db_password
 remove_if_present module.gitea[0].azurerm_private_endpoint.private-endpoint
 remove_if_present module.gitea[0].azurerm_mysql_database.gitea
