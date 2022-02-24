@@ -16,8 +16,10 @@ build-and-push-api: build-api-image push-api-image
 build-and-push-resource-processor: build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image
 build-and-push-gitea: build-gitea-image push-gitea-image
 build-and-push-guacamole: build-guacamole-image push-guacamole-image
-tre-deploy: prepare-tf-state deploy-core deploy-shared-services tre-start
+tre-deploy: deploy-core deploy-shared-services tre-start
 deploy-shared-services: firewall-install gitea-install nexus-install
+
+migrate-to-shared-services: prepare-tf-state
 
 bootstrap:
 	$(call target_title, "Bootstrap Terraform") \
