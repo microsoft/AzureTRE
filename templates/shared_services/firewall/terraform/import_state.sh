@@ -13,7 +13,7 @@ fi
 
 set -e
 
-# Initialsie state for Terraform
+# Initialise state for Terraform
 terraform init -input=false -backend=true -reconfigure -upgrade \
     -backend-config="resource_group_name=${TF_VAR_mgmt_resource_group_name}" \
     -backend-config="storage_account_name=${TF_VAR_mgmt_storage_account_name}" \

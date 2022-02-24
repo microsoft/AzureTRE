@@ -54,7 +54,7 @@ function import_if_exists() {
 
 import_if_exists azurerm_storage_share.nexus \
 "https://stg${TRE_ID}.file.core.windows.net/nexus-data" \
-"as resource show --ids /subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Storage/storageAccounts/stg${TRE_ID}/fileServices/default/fileshares/nexus-data"
+"az resource show --ids /subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Storage/storageAccounts/stg${TRE_ID}/fileServices/default/fileshares/nexus-data"
 
 import_if_exists azurerm_app_service.nexus \
 "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.Web/sites/nexus-${TRE_ID}"
