@@ -25,29 +25,16 @@ function remove_if_present() {
   fi
 }
 
-echo "WORKING DIR IS..."
-pwd
-
-terraform state list
-
-
-
-remove_if_present module.gitea.azurerm_key_vault_secret.db_password
-remove_if_present module.gitea.azurerm_private_endpoint.private-endpoint
-
-
-
-
-remove_if_present module.gitea[0].azurerm_key_vault_secret.db_password
-remove_if_present module.gitea[0].azurerm_private_endpoint.private-endpoint
-remove_if_present module.gitea[0].azurerm_mysql_database.gitea
-remove_if_present module.gitea[0].azurerm_mysql_server.gitea
-remove_if_present module.gitea[0].random_password.password
-remove_if_present module.gitea[0].azurerm_storage_share.gitea
-remove_if_present module.gitea[0].azurerm_key_vault_secret.gitea_password
-remove_if_present module.gitea[0].azurerm_app_service_virtual_network_swift_connection.gitea-integrated-vnet
-remove_if_present module.gitea[0].azurerm_private_endpoint.gitea_private_endpoint
-remove_if_present module.gitea[0].azurerm_app_service.gitea
-remove_if_present module.gitea[0].azurerm_user_assigned_identity.gitea_id
-remove_if_present module.gitea[0].random_password.gitea_passwd
-remove_if_present module.gitea[0].azurerm_firewall_application_rule_collection.web_app_subnet_gitea
+remove_if_present "module.gitea\[0\].azurerm_key_vault_secret.db_password"
+remove_if_present "module.gitea\[0\].azurerm_private_endpoint.private-endpoint"
+remove_if_present "module.gitea\[0\].azurerm_mysql_database.gitea"
+remove_if_present "module.gitea\[0\].azurerm_mysql_server.gitea"
+remove_if_present "module.gitea\[0\].random_password.password"
+remove_if_present "module.gitea\[0\].azurerm_storage_share.gitea"
+remove_if_present "module.gitea\[0\].azurerm_key_vault_secret.gitea_password"
+remove_if_present "module.gitea\[0\].azurerm_app_service_virtual_network_swift_connection.gitea-integrated-vnet"
+remove_if_present "module.gitea\[0\].azurerm_private_endpoint.gitea_private_endpoint"
+remove_if_present "module.gitea\[0\].azurerm_app_service.gitea"
+remove_if_present "module.gitea\[0\].azurerm_user_assigned_identity.gitea_id"
+remove_if_present "module.gitea\[0\].random_password.gitea_passwd"
+remove_if_present "module.gitea\[0\].azurerm_firewall_application_rule_collection.web_app_subnet_gitea"
