@@ -72,7 +72,7 @@ import_if_exists azurerm_app_service_virtual_network_swift_connection.gitea-inte
 #GITEA_PW_ID="$(az keyvault secret show --vault-name kv-${TRE_ID} -n gitea-${TRE_ID}-admin-password -o tsv --query id)"
 import_if_exists azurerm_key_vault_secret.gitea_password \
 "https://kv-${TRE_ID}.vault.azure.net/secrets/gitea-${TRE_ID}-admin-password" \
-"/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.KeyVault/vaults/kv-${TRE_ID}/secrets/gitea-${TRE_ID}-admin-password"
+"az resource show --ids /subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP_ID}/providers/Microsoft.KeyVault/vaults/kv-${TRE_ID}/secrets/gitea-${TRE_ID}-admin-password"
 
 import_if_exists azurerm_storage_share.gitea \
 "https://stg${TRE_ID}.file.core.windows.net/gitea-data" \
