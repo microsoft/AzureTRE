@@ -8,6 +8,18 @@ on:
 
 jobs:
 
+  debug:
+    name: temp - debug
+    runs-on: ubuntu-latest
+    steps:
+      # Determine whether the comment is a command
+      - id: check_command
+        name: Check for a command using GitHub script
+        run: |
+          echo "Debug...."
+          echo "github.event.issue.pull_request: ${{ github.event.issue.pull_request }}"
+          echo "github.event.comment.author_association: ${{ github.event.comment.author_association }}"
+
   pr_comment:
     name: PR comment
     # https://docs.github.com/en/graphql/reference/enums#commentauthorassociation
@@ -30,8 +42,6 @@ jobs:
       - id: check_command
         name: Check for a command using GitHub script
         uses: actions/github-script@v6
-        env:
-          SOMETHING_SECRET: ${{ secrets.SOMETHING_SECRET }}
         with:
           result-encoding: string
           script: |
