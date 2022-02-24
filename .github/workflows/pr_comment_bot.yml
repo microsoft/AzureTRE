@@ -8,6 +8,18 @@ on:
 
 jobs:
 
+  debug:
+    name: temp - debug
+    runs-on: ubuntu-latest
+    steps:
+      # Determine whether the comment is a command
+      - id: check_command
+        name: Check for a command using GitHub script
+        run: |
+          echo "Debug...."
+          echo "github.event.issue.pull_request: ${{ github.event.issue.pull_request }}"
+          echo "github.event.comment.author_association: ${{ github.event.comment.author_association }}"
+
   pr_comment:
     name: PR comment
     # https://docs.github.com/en/graphql/reference/enums#commentauthorassociation
@@ -16,7 +28,7 @@ jobs:
     # only allow commands where:
     # - the comment is on a PR
     # - the commenting user has write permissions (i.e. is OWNER or COLLABORATOR)
-    if: ${{ github.event.issue.pull_request && (github.event.comment.author_association == 'OWNER' || github.event.comment.author_association == 'COLLABORATOR') }}
+    if: ${{ github.event.issue.pull_request }}
     runs-on: ubuntu-latest
     outputs:
       command: ${{ steps.check_command.outputs.result }}
@@ -30,16 +42,54 @@ jobs:
       - id: check_command
         name: Check for a command using GitHub script
         uses: actions/github-script@v6
-        env:
-          SOMETHING_SECRET: ${{ secrets.SOMETHING_SECRET }}
         with:
           result-encoding: string
           script: |
-            const commentBody = context.payload.comment.body;
+            //
+            // Check whether the user has write access to the repo
+            //
 
+            // https://docs.github.com/en/rest/reference/collaborators#check-if-a-user-is-a-repository-collaborator
+            const commentUsername = context.payload.comment.user.login;
+            const repoFullName = context.payload.repository.full_name;
+            const repoParts = repoFullName.split("/");
+            const repoOwner = repoParts[0];
+            const repoName = repoParts[1];
+
+            let userHasWriteAccess = false;
+            try {
+              console.log(`Checking if user "${commentUsername}" has write access to ${repoOwner}/${repoName} ...`)
+              const result = await github.request('GET /repos/{owner}/{repo}/collaborators/{username}', {
+                owner: repoOwner,
+                repo: repoName,
+                username: commentUsername
+              });
+              const userHasWriteAccess = result.status === 204;
+              console.log(result);
+            } catch (err) {
+              console.log(err);
+              if (err.status === 404){
+                console.log("User not found in collaborators");
+              } else {
+                console.log(`Error checking if user has write access: ${err.status} (${err.response.data.message}) `)
+              }
+            }
+            console.log("User has write access: " + userHasWriteAccess);
+
+            if (!userHasWriteAccess){
+              // only allow users with write access to run commands
+              return "none";
+            }
+
+            //
+            // Determine what action to take
+            //
+            const commentBody = context.payload.comment.body;
             switch (commentBody.trim()){
               case "/test":
                 return "run-tests";
+              case "/force-approve":
+                return "force-approve";
               case "/help":
                 return "show-help";
               default:
@@ -55,11 +105,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Showing help on PR ${PR_NUMBER}"
-          gh pr comment ${PR_NUMBER} --repo $REPO --body "Hello<br/><br/>You can use the following commands:<br/>    /test - run tests on a PR<br/>    /help - show this help"
+          gh pr comment ${PR_NUMBER} --repo $REPO --body "Hello<br/><br/>You can use the following commands:<br/>    /test - run tests on a PR<br/>    /force-approve - force approval of the PR (i.e. skip the deployment checks)<br/>    /help - show this help"
 
       # Check if the PR build/test needs to run
       - name: Checkout
-        if: ${{ steps.check_command.outputs.result == 'run-tests' }}
+        if: ${{ steps.check_command.outputs.result == 'run-tests' || steps.check_command.outputs.result == 'force-approve' }}
         uses: actions/checkout@v2
         with:
           persist-credentials: false
@@ -75,7 +125,7 @@ jobs:
       # If we don't run the actual deploy (below) we won't receive a check-run status,
       # and will have to send it "manually"
       - name: Bypass E2E check-runs status
-        if: ${{ steps.check_command.outputs.result == 'run-tests' && steps.filter.outputs.not-md == 'false' }}
+        if: ${{ (steps.check_command.outputs.result == 'run-tests' && steps.filter.outputs.not-md == 'false') || steps.check_command.outputs.result == 'force-approve' }}
         uses: LouisBrunner/checks-action@v1.1.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
