@@ -82,6 +82,13 @@ async def send_uninstall_message(resource: Resource, operations_repo: OperationR
 
 
 async def send_custom_action_message(resource: Resource, operations_repo: OperationRepository, resource_type: ResourceType, custom_action: str) -> Operation:
+
+    # Validate that the custom_action specified is present in the bundle definition
+    if not resource["customActions"]:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.CUSTOM_ACTIONS_DO_NOT_EXIST)
+    elif not any(action.name == custom_action for action in resource["customActions"]):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.CUSTOM_ACTION_NOT_DEFINED)
+
     try:
         operation = await send_resource_request_message(resource, operations_repo, custom_action)
         return operation

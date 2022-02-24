@@ -78,6 +78,8 @@ WORKSPACE_SERVICE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION = "The workspace service 
 WORKSPACE_SERVICES_NEED_TO_BE_DELETED_BEFORE_WORKSPACE = "All workspace services need to be deleted before you can delete the workspace"
 WORKSPACE_TEMPLATE_VERSION_EXISTS = "A template with this version already exists"
 OPERATION_DOES_NOT_EXIST = "Operation does not exist"
+CUSTOM_ACTION_NOT_DEFINED = "The specified custom action isn't defined in the Porter bundle."
+CUSTOM_ACTIONS_DO_NOT_EXIST = "The Porter bundle being targeted does not implement any custom actions."
 
 WORKSPACE_SERVICE_TEMPLATE_DOES_NOT_EXIST = "Could not retrieve the workspace service template specified"
 TEMPLATE_DOES_NOT_EXIST = "Could not retrieve the 'current' template with this name"

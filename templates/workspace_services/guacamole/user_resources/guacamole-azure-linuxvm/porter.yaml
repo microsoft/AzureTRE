@@ -99,14 +99,6 @@ upgrade:
       arguments:
         - "This user resource does not implement upgrade action"
 
-start:
-  - exec:
-      description:
-        "Start the VM"
-      command: echo
-      arguments:
-        - "Unimplemented"
-
 uninstall:
   - terraform:
       description: "Delete the Guacamole User Resource Service"
@@ -127,3 +119,19 @@ uninstall:
           "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.id }}"
+
+start:
+  - exec:
+      description:
+        "Start the VM"
+      command: echo
+      arguments:
+        - "Unimplemented"
+
+stop:
+  - exec:
+      description:
+        "Stop the VM"
+      command: echo
+      arguments:
+        - "Unimplemented"

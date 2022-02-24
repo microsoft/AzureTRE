@@ -51,7 +51,6 @@ class UserResourceTemplateInCreate(ResourceTemplateInCreate):
                     "description": "These is a test user resource template schema",
                     "required": [],
                     "properties": {},
-
                 },
                 "customActions": [
                     {
