@@ -116,12 +116,12 @@ async def get_porter_parameter_keys(msg_body, env_vars):
         shell_output_logger(result_stderr, '[stderr]', logger_adapter, logging.WARN)
 
 
-def get_action_id(msg_body):
+def get_installation_id(msg_body):
     # this will be used to identify each bundle install within the porter state store.
     return msg_body['id']
 
 
-async def build_porter_command(msg_body, env_vars):
+async def build_porter_command(msg_body, env_vars, custom_action=False):
     porter_parameter_keys = await get_porter_parameter_keys(msg_body, env_vars)
     porter_parameters = ""
 
@@ -148,9 +148,11 @@ async def build_porter_command(msg_body, env_vars):
             if parameter_value is not None:
                 porter_parameters = porter_parameters + f" --param {parameter_name}=\"{parameter_value}\""
 
-    installation_id = get_action_id(msg_body)
+    installation_id = get_installation_id(msg_body)
 
     command_line = [f"{azure_login_command(env_vars)} && {azure_acr_login_command(env_vars)} && porter "
+                    # If a custom action (i.e. not install, uninstall, upgrade) we need to use 'invoke'
+                    f"{'invoke --action ' if custom_action else ''}"
                     f"{msg_body['action']} \"{installation_id}\" "
                     f" --reference {env_vars['registry_server']}/{msg_body['name']}:v{msg_body['version']}"
                     f" {porter_parameters} --cred ./vmss_porter/azure.json --allow-docker-host-access --force"
@@ -171,7 +173,7 @@ def get_special_porter_param_value(parameter_name: str, msg_body, env_vars):
 
 
 async def build_porter_command_for_outputs(msg_body):
-    installation_id = get_action_id(msg_body)
+    installation_id = get_installation_id(msg_body)
     # we only need "real" outputs and use jq to remove the logs which are big
     command_line = [f"porter show {installation_id} --output json | jq -c '. | select(.Outputs!=null) | .Outputs | del (.[] | select(.Name==\"io.cnab.outputs.invocationImageLogs\"))'"]
     return command_line
@@ -212,7 +214,7 @@ async def run_porter(command, env_vars):
 
 
 def service_bus_message_generator(sb_message, status, deployment_message, outputs=None):
-    installation_id = get_action_id(sb_message)
+    installation_id = get_installation_id(sb_message)
     message_dict = {
         "operationId": sb_message["operationId"],
         "id": sb_message["id"],
@@ -230,9 +232,9 @@ async def invoke_porter_action(msg_body, sb_client, env_vars, message_logger_ada
     """
     Handle resource message by invoking specified porter action (i.e. install, uninstall)
     """
-    action_id = get_action_id(msg_body)
+    installation_id = get_installation_id(msg_body)
     action = msg_body["action"]
-    message_logger_adapter.info(f"{action_id}: {action} action configuration starting")
+    message_logger_adapter.info(f"{installation_id}: {action} action configuration starting")
     sb_sender = sb_client.get_queue_sender(queue_name=env_vars["deployment_status_queue"])
 
     # If the action is install, post message on sb queue to start a deployment job
@@ -240,8 +242,9 @@ async def invoke_porter_action(msg_body, sb_client, env_vars, message_logger_ada
         resource_request_message = service_bus_message_generator(msg_body, strings.RESOURCE_STATUS_DEPLOYING, "Deployment job starting")
         await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"]))
 
-    # Build and run porter command
-    porter_command = await build_porter_command(msg_body, env_vars)
+    # Build and run porter command (flagging if its a built-in action or custom so we can adapt porter command appropriately)
+    is_custom_action = False if action in ["install", "upgrade", "uninstall"] else True
+    porter_command = await build_porter_command(msg_body, env_vars, is_custom_action)
     returncode, _, err = await run_porter(porter_command, env_vars)
 
     # Handle command output
@@ -251,7 +254,7 @@ async def invoke_porter_action(msg_body, sb_client, env_vars, message_logger_ada
 
         # Post message on sb queue to notify receivers of action failure
         await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"]))
-        message_logger_adapter.info(f"{action_id}: Porter action failed with error = {error_message}")
+        message_logger_adapter.info(f"{installation_id}: Porter action failed with error = {error_message}")
         return False
 
     else:
@@ -263,7 +266,7 @@ async def invoke_porter_action(msg_body, sb_client, env_vars, message_logger_ada
         resource_request_message = service_bus_message_generator(msg_body, pass_status_string_for(action), success_message, outputs)
 
         await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"]))
-        message_logger_adapter.info(f"{action_id}: {success_message}")
+        message_logger_adapter.info(f"{installation_id}: {success_message}")
         return True
 
 
@@ -273,7 +276,7 @@ async def get_porter_outputs(msg_body, env_vars, message_logger_adapter):
 
     if returncode != 0:
         error_message = "Error context message = " + " ".join(err.split('\n'))
-        message_logger_adapter.info(f"{get_action_id(msg_body)}: Failed to get outputs with error = {error_message}")
+        message_logger_adapter.info(f"{get_installation_id(msg_body)}: Failed to get outputs with error = {error_message}")
         return False, ""
     else:
         outputs_json = {}
