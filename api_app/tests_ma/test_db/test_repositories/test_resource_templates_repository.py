@@ -23,7 +23,7 @@ def sample_resource_template(name: str, version: str = "1.0", resource_type: Res
         resourceType=resource_type,
         current=False,
         properties={},
-        custom_actions=[],
+        customActions=[],
         required=[]
     )
 
@@ -33,7 +33,7 @@ def sample_resource_template_as_dict(name: str, version: str = "1.0", resource_t
 
 
 def sample_user_resource_template_as_dict(name: str, version: str = "1.0") -> dict:
-    template = UserResourceTemplate(id="123", name=name, description="", version=version, current=True, required=[], properties={}, custom_actions=[], parentWorkspaceService="parent_service")
+    template = UserResourceTemplate(id="123", name=name, description="", version=version, current=True, required=[], properties={}, customActions=[], parentWorkspaceService="parent_service")
     return template.dict()
 
 
@@ -178,7 +178,7 @@ def test_create_workspace_template_item_calls_create_item_with_the_correct_param
         version=input_workspace_template.version,
         resourceType=ResourceType.Workspace,
         properties=input_workspace_template.json_schema["properties"],
-        custom_actions=input_workspace_template.custom_actions,
+        customActions=input_workspace_template.customActions,
         required=input_workspace_template.json_schema["required"],
         current=input_workspace_template.current
     )
@@ -201,7 +201,7 @@ def test_create_user_resource_template_item_calls_create_item_with_the_correct_p
         version=input_user_resource_template.version,
         resourceType=ResourceType.UserResource,
         properties=input_user_resource_template.json_schema["properties"],
-        custom_actions=input_user_resource_template.custom_actions,
+        customActions=input_user_resource_template.customActions,
         required=input_user_resource_template.json_schema["required"],
         current=input_user_resource_template.current,
         parentWorkspaceService="parent_service_template_name"
@@ -224,7 +224,7 @@ def test_create_item_created_with_the_expected_type(uuid_mock, save_item_mock, r
         version=input_workspace_template.version,
         resourceType=expected_type,
         properties=input_workspace_template.json_schema["properties"],
-        custom_actions=input_workspace_template.custom_actions,
+        customActions=input_workspace_template.customActions,
         required=input_workspace_template.json_schema["required"],
         current=input_workspace_template.current
     )

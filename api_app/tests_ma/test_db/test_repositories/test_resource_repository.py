@@ -62,7 +62,7 @@ def test_validate_input_against_template_returns_template_version_if_template_is
                                                            current=True,
                                                            required=[],
                                                            properties={},
-                                                           custom_actions=[]).dict()
+                                                           customActions=[]).dict()
 
     template_version = resource_repo.validate_input_against_template("template1", workspace_input, ResourceType.Workspace)
 
@@ -95,7 +95,7 @@ def test_validate_input_against_template_raises_value_error_if_payload_is_invali
                                                            current=True,
                                                            required=["display_name"],
                                                            properties={},
-                                                           custom_actions=[]).dict()
+                                                           customActions=[]).dict()
     # missing display name
     workspace_input = WorkspaceInCreate(templateName="template1")
 
@@ -105,7 +105,7 @@ def test_validate_input_against_template_raises_value_error_if_payload_is_invali
 
 @patch("db.repositories.resources.ResourceTemplateRepository.get_current_template")
 def test_get_enriched_template_returns_the_enriched_template(get_current_mock, resource_repo):
-    workspace_template = ResourceTemplate(id="abc", name="template1", description="", version="", resourceType=ResourceType.Workspace, current=True, required=[], properties={}, custom_actions=[])
+    workspace_template = ResourceTemplate(id="abc", name="template1", description="", version="", resourceType=ResourceType.Workspace, current=True, required=[], properties={}, customActions=[])
     get_current_mock.return_value = workspace_template
 
     template = resource_repo._get_enriched_template("template1", ResourceType.Workspace)
@@ -116,7 +116,7 @@ def test_get_enriched_template_returns_the_enriched_template(get_current_mock, r
 
 @patch("db.repositories.resources.ResourceTemplateRepository.get_current_template")
 def test_get_enriched_template_returns_the_enriched_template_for_user_resources(get_current_mock, resource_repo):
-    user_resource_template = UserResourceTemplate(id="abc", name="template1", description="", version="", resourceType=ResourceType.Workspace, current=True, required=[], properties={}, custom_actions=[], parentWorkspaceService="parent-template1")
+    user_resource_template = UserResourceTemplate(id="abc", name="template1", description="", version="", resourceType=ResourceType.Workspace, current=True, required=[], properties={}, customActions=[], parentWorkspaceService="parent-template1")
     get_current_mock.return_value = user_resource_template
 
     template = resource_repo._get_enriched_template("template1", ResourceType.UserResource, "parent-template1")

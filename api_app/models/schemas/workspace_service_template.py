@@ -18,7 +18,7 @@ def get_sample_workspace_service_template_object(template_name: str = "tre-works
             "display_name": Property(type="string"),
             "description": Property(type="string")
         },
-        custom_actions=[CustomAction()]
+        customActions=[CustomAction()]
     )
 
 
@@ -53,7 +53,7 @@ class WorkspaceServiceTemplateInCreate(ResourceTemplateInCreate):
                     "required": [],
                     "properties": {}
                 },
-                "custom_actions": [
+                "customActions": [
                     {
                         "name": "disable",
                         "description": "Deallocates resources"

@@ -87,7 +87,7 @@ class ResourceTemplateRepository(BaseRepository):
             "current": template_input.current,
             "required": template_input.json_schema["required"],
             "properties": template_input.json_schema["properties"],
-            "custom_actions": template_input.custom_actions
+            "customActions": template_input.customActions
         }
 
         if resource_type == ResourceType.UserResource:

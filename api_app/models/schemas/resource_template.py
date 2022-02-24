@@ -10,7 +10,7 @@ class ResourceTemplateInCreate(BaseModel):
     version: str = Field(title="Template version")
     current: bool = Field(title="Mark this version as current")
     json_schema: Dict = Field(title="JSON Schema compliant template")
-    custom_actions: List[CustomAction] = Field(default=[], title="Custom actions")
+    customActions: List[CustomAction] = Field(default=[], title="Custom actions")
 
 
 class ResourceTemplateInResponse(ResourceTemplate):
