@@ -64,13 +64,14 @@ jobs:
                 repo: repoName,
                 username: commentUsername
               });
-              const userHasWriteAccess = result.status == 204;
+              const userHasWriteAccess = result.status === 204;
               console.log(result);
             } catch (err) {
-              if (err.status !== 404){
-                console.log(`Error checking if user has write access: ${err.status} (${err.response.data.message}) `)
-              } else {
+              console.log(err);
+              if (err.status === 404){
                 console.log("User not found in collaborators");
+              } else {
+                console.log(`Error checking if user has write access: ${err.status} (${err.response.data.message}) `)
               }
             }
             console.log("User has write access: " + userHasWriteAccess);
