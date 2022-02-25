@@ -76,7 +76,10 @@ jobs:
         if: ${{ steps.check_command.outputs.result == 'run-tests' || steps.check_command.outputs.result == 'force-approve' }}
         uses: actions/checkout@v2
         with:
+          repository: ${{ inputs.prRepo }}
+          ref: ${{ inputs.prRef }}
           persist-credentials: false
+
       - uses: dorny/paths-filter@v2
         id: filter
         if: ${{ steps.check_command.outputs.result == 'run-tests' }}
