@@ -81,10 +81,10 @@ async def send_uninstall_message(resource: Resource, operations_repo: OperationR
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
 
 
-async def send_custom_action_message(resource: Resource, custom_action: str, resource_type: ResourceType, operations_repo: OperationRepository, resource_template_repo: ResourceTemplateRepository) -> Operation:
+async def send_custom_action_message(resource: Resource, custom_action: str, resource_type: ResourceType, operations_repo: OperationRepository, resource_template_repo: ResourceTemplateRepository, parent_service_name: str = None) -> Operation:
 
     # Validate that the custom_action specified is present in the resource template
-    resource_template = resource_template_repo.get_template_by_name_and_version(resource.templateName, resource.templateVersion, resource_type, parent_service_name=resource.parentWorkspaceServiceId)
+    resource_template = resource_template_repo.get_template_by_name_and_version(resource.templateName, resource.templateVersion, resource_type, parent_service_name=parent_service_name)
     if not resource_template.customActions:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.CUSTOM_ACTIONS_DO_NOT_EXIST)
     elif not any(action.name == custom_action for action in resource_template.customActions):
@@ -293,12 +293,12 @@ async def delete_user_resource(response: Response, user=Depends(get_current_work
 
 
 @user_resources_workspace_router.patch("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}", response_model=UserResourceInResponse, name=strings.API_UPDATE_USER_RESOURCE, dependencies=[Depends(get_workspace_by_id_from_path), Depends(get_workspace_service_by_id_from_path)])
-async def patch_user_resource(user_resource_patch: ResourcePatch, user=Depends(get_current_workspace_owner_or_researcher_user), user_resource=Depends(get_user_resource_by_id_from_path), user_resource_repo=Depends(get_repository(UserResourceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), etag: str = Header(None)) -> UserResourceInResponse:
+async def patch_user_resource(user_resource_patch: ResourcePatch, user=Depends(get_current_workspace_owner_or_researcher_user), user_resource=Depends(get_user_resource_by_id_from_path), workspace_service=Depends(get_workspace_service_by_id_from_path), user_resource_repo=Depends(get_repository(UserResourceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), etag: str = Header(None)) -> UserResourceInResponse:
     check_for_etag(etag)
     validate_user_is_workspace_owner_or_resource_owner(user, user_resource)
 
     try:
-        patched_user_resource = user_resource_repo.patch_user_resource(user_resource, user_resource_patch, etag, resource_template_repo)
+        patched_user_resource = user_resource_repo.patch_user_resource(user_resource, user_resource_patch, etag, resource_template_repo, workspace_service.templateName)
         return UserResourceInResponse(userResource=patched_user_resource)
     except (CosmosAccessConditionFailedError):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
@@ -306,10 +306,10 @@ async def patch_user_resource(user_resource_patch: ResourcePatch, user=Depends(g
 
 # user resource actions
 @user_resources_workspace_router.post("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}/invoke-action", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_INVOKE_ACTION_ON_USER_RESOURCE)
-async def invoke_action_on_user_resource(response: Response, action: str, user_resource=Depends(get_user_resource_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), user=Depends(get_current_workspace_owner_or_researcher_user)) -> OperationInResponse:
+async def invoke_action_on_user_resource(response: Response, action: str, user_resource=Depends(get_user_resource_by_id_from_path), workspace_service=Depends(get_workspace_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), user=Depends(get_current_workspace_owner_or_researcher_user)) -> OperationInResponse:
     validate_user_is_workspace_owner_or_resource_owner(user, user_resource)
 
-    operation = await send_custom_action_message(user_resource, action, ResourceType.UserResource, operations_repo, resource_template_repo)
+    operation = await send_custom_action_message(user_resource, action, ResourceType.UserResource, operations_repo, resource_template_repo, workspace_service.templateName)
     response.headers["Location"] = construct_location_header(operation)
 
     return OperationInResponse(operation=operation)
