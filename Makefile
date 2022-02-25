@@ -19,10 +19,10 @@ build-and-push-guacamole: build-guacamole-image push-guacamole-image
 tre-deploy: deploy-core deploy-shared-services tre-start
 deploy-shared-services: firewall-install gitea-install nexus-install
 
-# to move your environment from the single 'core' deployment (which includes the firewall / gitea / nexus)
-# toward the shared services model, where they are split out - run the following make target before a tre-deploy
-# This will remove + import the resource state into the shared services
-migrate-to-shared-services: prepare-tf-state
+# to move your environment from the single 'core' deployment (which includes the firewall)
+# toward the shared services model, where it is split out - run the following make target before a tre-deploy
+# This will remove + import the resource state into a shared service
+migrate-firewall-state: prepare-tf-state
 
 bootstrap:
 	$(call target_title, "Bootstrap Terraform") \
@@ -104,8 +104,8 @@ push-gitea-image:
 push-guacamole-image:
 	$(call push_image,"guac-server","./templates/workspace_services/guacamole/version.txt")
 
-# # These targets are for a graceful migration of Firewall / Gitea / Nexus
-# # from terraform state in Core to Shared Services.
+# # These targets are for a graceful migration of Firewall
+# # from terraform state in Core to a Shared Service.
 # # See https://github.com/microsoft/AzureTRE/issues/1177
 prepare-tf-state:
 	$(call target_title, "Preparing terraform state") \
@@ -115,11 +115,7 @@ prepare-tf-state:
 	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
 	&& pushd ./templates/core/terraform > /dev/null && ../../shared_services/firewall/terraform/remove_state.sh && popd > /dev/null \
-	&& pushd ./templates/shared_services/firewall/terraform > /dev/null && ./import_state.sh && popd > /dev/null \
-	&& pushd ./templates/core/terraform > /dev/null && ../../shared_services/gitea/terraform/remove_state.sh && popd > /dev/null \
-	&& pushd ./templates/shared_services/gitea/terraform > /dev/null && ./import_state.sh && popd > /dev/null \
-	&& pushd ./templates/core/terraform > /dev/null && ../../shared_services/sonatype-nexus/terraform/remove_state.sh && popd > /dev/null \
-	&& pushd ./templates/shared_services/sonatype-nexus/terraform > /dev/null && ./import_state.sh && popd > /dev/null
+	&& pushd ./templates/shared_services/firewall/terraform > /dev/null && ./import_state.sh && popd > /dev/null
 
 
 terraform-shared-service-deploy:
