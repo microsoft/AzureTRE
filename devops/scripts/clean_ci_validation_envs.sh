@@ -12,21 +12,6 @@ set -o pipefail
 set -o nounset
 # set -o xtrace
 
-function deleteEnv ()
-{
-  local tre_rg="$1"
-
-  locks=$(az group lock list -g $tre_rg --query [].id -o tsv)
-  if [ ! -z "${locks:-}" ]
-  then
-    az resource lock delete --ids ${locks}
-  fi
-
-  az group delete --resource-group "${tre_rg}" --yes --no-wait
-  # each mgmt is per tre so we should delete that too.
-  az group delete --resource-group "${tre_rg}-mgmt" --yes --no-wait
-}
-
 function stopEnv ()
 {
   local tre_rg="$1"
@@ -51,7 +36,7 @@ while read -r rg_name rg_ref_name; do
     if [ $(echo ${open_prs} | jq -c "[ .[] | select( .number | contains(${pr_num})) ] | length") == 0 ]
     then
       echo "PR ${pr_num} (derived from ref ${rg_ref_name}) is not open. Environment in ${rg_name} will be deleted."
-      deleteEnv ${rg_name}
+      devops/scripts/destroy_env_no_terraform.sh --core-tre-rg ${rg_name} --no-wait
       continue
     fi
 
@@ -75,7 +60,7 @@ while read -r rg_name rg_ref_name; do
     if ! $(git show-ref -q $ref_in_remote)
     then
       echo "Ref ${rg_ref_name} does not exist, and environment ${rg_name} can be deleted."
-      deleteEnv ${rg_name}
+      devops/scripts/destroy_env_no_terraform.sh --core-tre-rg ${rg_name} --no-wait
     fi
   fi
 done

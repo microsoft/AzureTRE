@@ -22,6 +22,8 @@ jobs:
     name: "Deploy main"
     if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/deploy_tre_reusable.yml
+    with:
+      ciGitRef: ${{ github.ref }}
     secrets:
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
       ACR_NAME: ${{ secrets.ACR_NAME }}
@@ -110,6 +112,8 @@ jobs:
     if: ${{ github.ref != 'refs/heads/main' && needs.prepare-not-main.outputs.not-md == 'true' }}
     needs: [prepare-not-main]
     uses: ./.github/workflows/deploy_tre_reusable.yml
+    with:
+      ciGitRef: ${{ github.ref }}
     secrets:
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
       ACR_NAME: ${{ format('tre{0}', needs.prepare-not-main.outputs.refid) }}
