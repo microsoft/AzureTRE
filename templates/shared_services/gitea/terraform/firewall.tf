@@ -20,3 +20,4 @@ resource "azurerm_firewall_application_rule_collection" "web_app_subnet_gitea" {
     source_addresses = data.azurerm_subnet.web_app.address_prefixes
   }
 }
+
