@@ -81,12 +81,13 @@ async def send_uninstall_message(resource: Resource, operations_repo: OperationR
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
 
 
-async def send_custom_action_message(resource: Resource, operations_repo: OperationRepository, resource_type: ResourceType, custom_action: str) -> Operation:
+async def send_custom_action_message(resource: Resource, custom_action: str, resource_type: ResourceType, operations_repo: OperationRepository, resource_template_repo: ResourceTemplateRepository) -> Operation:
 
-    # Validate that the custom_action specified is present in the bundle definition
-    if not resource["customActions"]:
+    # Validate that the custom_action specified is present in the resource template
+    resource_template = resource_template_repo.get_template_by_name_and_version(resource.templateName, resource.templateVersion, resource_type, parent_service_name=resource.parentWorkspaceServiceId)
+    if not resource_template.customActions:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.CUSTOM_ACTIONS_DO_NOT_EXIST)
-    elif not any(action.name == custom_action for action in resource["customActions"]):
+    elif not any(action.name == custom_action for action in resource_template.customActions):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.CUSTOM_ACTION_NOT_DEFINED)
 
     try:
@@ -304,11 +305,11 @@ async def patch_user_resource(user_resource_patch: ResourcePatch, user=Depends(g
 
 
 # user resource actions
-@user_resources_workspace_router.post("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_INVOKE_ACTION_ON_USER_RESOURCE)
-async def invoke_action_on_user_resource(response: Response, user_resource_action: str, user_resource=Depends(get_user_resource_by_id_from_path), operations_repo=Depends(get_repository(OperationRepository)), user=Depends(get_current_workspace_owner_or_researcher_user)) -> OperationInResponse:
+@user_resources_workspace_router.post("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}/invoke-action", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_INVOKE_ACTION_ON_USER_RESOURCE)
+async def invoke_action_on_user_resource(response: Response, action: str, user_resource=Depends(get_user_resource_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), user=Depends(get_current_workspace_owner_or_researcher_user)) -> OperationInResponse:
     validate_user_is_workspace_owner_or_resource_owner(user, user_resource)
 
-    operation = await send_custom_action_message(user_resource, operations_repo, ResourceType.UserResource, user_resource_action)
+    operation = await send_custom_action_message(user_resource, action, ResourceType.UserResource, operations_repo, resource_template_repo)
     response.headers["Location"] = construct_location_header(operation)
 
     return OperationInResponse(operation=operation)
