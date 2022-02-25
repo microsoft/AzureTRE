@@ -155,7 +155,7 @@ override.tf
 override.tf.json
 *_override.tf
 *_override.tf.json
-templates/core/tre_output.json
+tre_output.json
 
 # generated backend files
 *_backend.tf

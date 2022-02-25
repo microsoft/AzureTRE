@@ -1,6 +1,6 @@
 resource "azurerm_public_ip" "fwpip" {
   name                = "pip-fw-${var.tre_id}"
-  resource_group_name = var.resource_group_name
+  resource_group_name = local.core_resource_group_name
   location            = var.location
   allocation_method   = "Static"
   sku                 = "Standard"
@@ -11,11 +11,11 @@ resource "azurerm_public_ip" "fwpip" {
 resource "azurerm_firewall" "fw" {
   depends_on          = [azurerm_public_ip.fwpip]
   name                = "fw-${var.tre_id}"
-  resource_group_name = var.resource_group_name
+  resource_group_name = local.core_resource_group_name
   location            = var.location
   ip_configuration {
     name                 = "fw-ip-configuration"
-    subnet_id            = var.firewall_subnet.id
+    subnet_id            = data.azurerm_subnet.firewall.id
     public_ip_address_id = azurerm_public_ip.fwpip.id
   }
 
@@ -33,7 +33,7 @@ resource "azurerm_management_lock" "fw" {
 resource "azurerm_monitor_diagnostic_setting" "firewall" {
   name                           = "diagnostics-firewall-${var.tre_id}"
   target_resource_id             = azurerm_firewall.fw.id
-  log_analytics_workspace_id     = var.log_analytics_workspace_id
+  log_analytics_workspace_id     = data.azurerm_log_analytics_workspace.tre.id
   log_analytics_destination_type = "Dedicated"
 
   log {
@@ -125,7 +125,7 @@ resource "azurerm_firewall_application_rule_collection" "shared_subnet" {
       "graph.windows.net"
     ]
 
-    source_addresses = var.shared_subnet.address_prefixes
+    source_addresses = data.azurerm_subnet.shared.address_prefixes
   }
 }
 
@@ -161,7 +161,7 @@ resource "azurerm_firewall_application_rule_collection" "resource_processor_subn
       "registry.terraform.io",
       "releases.hashicorp.com"
     ]
-    source_addresses = var.resource_processor_subnet.address_prefixes
+    source_addresses = data.azurerm_subnet.resource_processor.address_prefixes
   }
 
   depends_on = [
@@ -225,7 +225,7 @@ resource "azurerm_firewall_network_rule_collection" "resource_processor_subnet" 
     destination_ports = [
       "443"
     ]
-    source_addresses = var.resource_processor_subnet.address_prefixes
+    source_addresses = data.azurerm_subnet.resource_processor.address_prefixes
   }
 
   depends_on = [
@@ -256,7 +256,7 @@ resource "azurerm_firewall_network_rule_collection" "web_app_subnet" {
     destination_ports = [
       "443"
     ]
-    source_addresses = var.web_app_subnet.address_prefixes
+    source_addresses = data.azurerm_subnet.web_app.address_prefixes
   }
 
   depends_on = [
@@ -281,6 +281,10 @@ resource "azurerm_firewall_application_rule_collection" "web_app_subnet" {
     target_fqdns = [
       "graph.microsoft.com"
     ]
-    source_addresses = var.web_app_subnet.address_prefixes
+    source_addresses = data.azurerm_subnet.web_app.address_prefixes
   }
+
+  depends_on = [
+    azurerm_firewall_network_rule_collection.web_app_subnet
+  ]
 }

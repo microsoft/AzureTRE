@@ -19,3 +19,9 @@ variable "nexus_allowed_fqdns" {
   description = "comma seperated string of allowed FQDNs for Nexus"
   default     = "*pypi.org,files.pythonhosted.org,security.ubuntu.com,archive.ubuntu.com"
 }
+
+variable "nexus_properties_path" {
+  type        = string
+  description = "relative path of nexus properties file"
+  default     = "/cnab/app/nexus.properties"
+}
