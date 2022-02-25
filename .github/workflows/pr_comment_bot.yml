@@ -8,6 +8,18 @@ on:
 
 jobs:
 
+  debug:
+    name: temp - debug
+    runs-on: ubuntu-latest
+    steps:
+      # Determine whether the comment is a command
+      - id: check_command
+        name: Check for a command using GitHub script
+        run: |
+          echo "Debug...."
+          echo "github.event.issue.pull_request: ${{ github.event.issue.pull_request }}"
+          echo "github.event.comment.author_association: ${{ github.event.comment.author_association }}"
+
   pr_comment:
     name: PR comment
     # https://docs.github.com/en/graphql/reference/enums#commentauthorassociation
@@ -30,16 +42,18 @@ jobs:
       - id: check_command
         name: Check for a command using GitHub script
         uses: actions/github-script@v6
-        env:
-          SOMETHING_SECRET: ${{ secrets.SOMETHING_SECRET }}
         with:
           result-encoding: string
           script: |
+            //
+            // Determine what action to take
+            //
             const commentBody = context.payload.comment.body;
-
             switch (commentBody.trim()){
               case "/test":
                 return "run-tests";
+              case "/force-approve":
+                return "force-approve";
               case "/help":
                 return "show-help";
               default:
@@ -55,14 +69,17 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Showing help on PR ${PR_NUMBER}"
-          gh pr comment ${PR_NUMBER} --repo $REPO --body "Hello<br/><br/>You can use the following commands:<br/>    /test - run tests on a PR<br/>    /help - show this help"
+          gh pr comment ${PR_NUMBER} --repo $REPO --body "Hello<br/><br/>You can use the following commands:<br/>    /test - run tests on a PR<br/>    /force-approve - force approval of the PR (i.e. skip the deployment checks)<br/>    /help - show this help"
 
       # Check if the PR build/test needs to run
       - name: Checkout
-        if: ${{ steps.check_command.outputs.result == 'run-tests' }}
+        if: ${{ steps.check_command.outputs.result == 'run-tests' || steps.check_command.outputs.result == 'force-approve' }}
         uses: actions/checkout@v2
         with:
+          repository: ${{ inputs.prRepo }}
+          ref: ${{ inputs.prRef }}
           persist-credentials: false
+
       - uses: dorny/paths-filter@v2
         id: filter
         if: ${{ steps.check_command.outputs.result == 'run-tests' }}
@@ -75,7 +92,7 @@ jobs:
       # If we don't run the actual deploy (below) we won't receive a check-run status,
       # and will have to send it "manually"
       - name: Bypass E2E check-runs status
-        if: ${{ steps.check_command.outputs.result == 'run-tests' && steps.filter.outputs.not-md == 'false' }}
+        if: ${{ (steps.check_command.outputs.result == 'run-tests' && steps.filter.outputs.not-md == 'false') || steps.check_command.outputs.result == 'force-approve' }}
         uses: LouisBrunner/checks-action@v1.1.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
