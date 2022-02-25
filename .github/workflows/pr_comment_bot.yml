@@ -71,19 +71,58 @@ jobs:
           echo "Showing help on PR ${PR_NUMBER}"
           gh pr comment ${PR_NUMBER} --repo $REPO --body "Hello<br/><br/>You can use the following commands:<br/>    /test - run tests on a PR<br/>    /force-approve - force approval of the PR (i.e. skip the deployment checks)<br/>    /help - show this help"
 
+      # Get PR commit details for running tests
+      - id: get_pr_details
+        name: Get PR details
+        if: ${{ steps.check_command.outputs.result == 'run-tests' }}
+        env:
+          PR_NUMBER: ${{ github.event.issue.number }}
+          REPO: ${{ github.event.repository.full_name }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Could look at moving this to GitHub Script action as well
+
+          echo "Getting PR repo..."
+          pr_owner=$(gh pr view $PR_NUMBER --repo $REPO --json headRepositoryOwner | jq -r .headRepositoryOwner.login)
+          pr_repo=$(gh pr view $PR_NUMBER --repo $REPO --json headRepository | jq -r .headRepository.name)
+          echo -e "\tPR from $pr_owner/$pr_repo"
+
+          echo "Getting PR ref..."
+          ref=$(gh pr view $PR_NUMBER --repo $REPO --json commits | jq -r ".[] | last | .oid")
+          echo -e "\tLatest commit ref: $ref"
+          # Get the prMergeCommit as this is what the pull_request trigger would build
+          prMergeRef=$(gh pr view $PR_NUMBER --repo $REPO --json potentialMergeCommit | jq -r .potentialMergeCommit.oid)
+          echo -e "\tprMergeRef: $prMergeRef"
+          echo
+
+          echo "Setting outputs"
+          echo "::set-output name=prRef::${prMergeRef}"
+          echo "::set-output name=prRepo::${pr_owner}/${pr_repo}"
+          echo "Done"
+
+          github_pr_ref="refs/pull/${PR_NUMBER}/merge"
+          echo "::set-output name=ciGitRef::${github_pr_ref}"
+
+          REFID=$(echo ${github_pr_ref} | shasum | cut -c1-8)
+          echo "using id of: ${REFID} for GitHub Ref: ${github_pr_ref}"
+          echo "::set-output name=refid::${REFID}"
+
+
       # Check if the PR build/test needs to run
       - name: Checkout
         if: ${{ steps.check_command.outputs.result == 'run-tests' || steps.check_command.outputs.result == 'force-approve' }}
         uses: actions/checkout@v2
         with:
-          repository: ${{ inputs.prRepo }}
-          ref: ${{ inputs.prRef }}
+          # repository: ${{ steps.get_pr_details.outputs.prRepo }}
+          ref: ${{ steps.get_pr_details.outputs.prRef }}
           persist-credentials: false
 
       - uses: dorny/paths-filter@v2
         id: filter
         if: ${{ steps.check_command.outputs.result == 'run-tests' }}
         with:
+          base: main
+          ref: ${{ steps.get_pr_details.outputs.prRef }}
           filters: |
             not-md:
               # we need to check for changes in files other than *.md
@@ -101,39 +140,6 @@ jobs:
           status: "completed"
           conclusion: "success"
 
-      # Get PR commit details for running tests
-      - id: get_pr_details
-        name: Get PR details
-        if: ${{ steps.check_command.outputs.result == 'run-tests' && steps.filter.outputs.not-md == 'true' }}
-        env:
-          PR_NUMBER: ${{ github.event.issue.number }}
-          REPO: ${{ github.event.repository.full_name }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Could look at moving this to GitHub Script action as well
-
-          echo "Getting PR repo..."
-          pr_owner=$(gh pr view $PR_NUMBER --repo $REPO --json headRepositoryOwner | jq -r .headRepositoryOwner.login)
-          pr_repo=$(gh pr view $PR_NUMBER --repo $REPO --json headRepository | jq -r .headRepository.name)
-          echo -e "\tPR from $pr_owner/$pr_repo"
-
-          echo "Getting PR ref..."
-          ref=$(gh pr view $PR_NUMBER --repo $REPO --json commits | jq -r ".[] | last | .oid")
-          echo -e "\tLatest commit ref: $ref"
-          echo
-
-          echo "Setting outputs"
-          echo "::set-output name=prRef::${ref}"
-          echo "::set-output name=prRepo::${pr_owner}/${pr_repo}"
-          echo "Done"
-
-          github_pr_ref="refs/pull/${PR_NUMBER}/merge"
-          echo "::set-output name=ciGitRef::${github_pr_ref}"
-
-          REFID=$(echo ${github_pr_ref} | shasum | cut -c1-8)
-          echo "using id of: ${REFID} for GitHub Ref: ${github_pr_ref}"
-          echo "::set-output name=refid::${REFID}"
-
   run_test:
     # Run the tests with the re-usable workflow
     needs: [pr_comment]
@@ -142,7 +148,7 @@ jobs:
     uses: ./.github/workflows/deploy_tre_reusable.yml
     with:
       prRef: ${{ needs.pr_comment.outputs.prRef }}
-      prRepo: ${{ needs.pr_comment.outputs.prRepo }}
+      # prRepo: ${{ needs.pr_comment.outputs.prRepo }}
       ciGitRef: ${{ needs.pr_comment.outputs.ciGitRef }}
     secrets:
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
