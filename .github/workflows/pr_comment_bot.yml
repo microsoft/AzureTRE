@@ -28,7 +28,7 @@ jobs:
     # only allow commands where:
     # - the comment is on a PR
     # - the commenting user has write permissions (i.e. is OWNER or COLLABORATOR)
-    if: ${{ github.event.issue.pull_request }}
+    if: ${{ github.event.issue.pull_request && (github.event.comment.author_association == 'OWNER' || github.event.comment.author_association == 'COLLABORATOR') }}
     runs-on: ubuntu-latest
     outputs:
       command: ${{ steps.check_command.outputs.result }}
@@ -45,42 +45,6 @@ jobs:
         with:
           result-encoding: string
           script: |
-            //
-            // Check whether the user has write access to the repo
-            //
-
-            // https://docs.github.com/en/rest/reference/collaborators#check-if-a-user-is-a-repository-collaborator
-            const commentUsername = context.payload.comment.user.login;
-            const repoFullName = context.payload.repository.full_name;
-            const repoParts = repoFullName.split("/");
-            const repoOwner = repoParts[0];
-            const repoName = repoParts[1];
-
-            let userHasWriteAccess = false;
-            try {
-              console.log(`Checking if user "${commentUsername}" has write access to ${repoOwner}/${repoName} ...`)
-              const result = await github.request('GET /repos/{owner}/{repo}/collaborators/{username}', {
-                owner: repoOwner,
-                repo: repoName,
-                username: commentUsername
-              });
-              const userHasWriteAccess = result.status === 204;
-              console.log(result);
-            } catch (err) {
-              console.log(err);
-              if (err.status === 404){
-                console.log("User not found in collaborators");
-              } else {
-                console.log(`Error checking if user has write access: ${err.status} (${err.response.data.message}) `)
-              }
-            }
-            console.log("User has write access: " + userHasWriteAccess);
-
-            if (!userHasWriteAccess){
-              // only allow users with write access to run commands
-              return "none";
-            }
-
             //
             // Determine what action to take
             //
@@ -112,7 +76,10 @@ jobs:
         if: ${{ steps.check_command.outputs.result == 'run-tests' || steps.check_command.outputs.result == 'force-approve' }}
         uses: actions/checkout@v2
         with:
+          repository: ${{ inputs.prRepo }}
+          ref: ${{ inputs.prRef }}
           persist-credentials: false
+
       - uses: dorny/paths-filter@v2
         id: filter
         if: ${{ steps.check_command.outputs.result == 'run-tests' }}
