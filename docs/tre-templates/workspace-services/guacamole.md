@@ -36,7 +36,7 @@ Service Tags:
 
 ## Guacamole Workspace Service Configuration
 
-On deploying a Guacamole service into a workspace the following properties are exposed.
+When deploying a Guacamole service into a workspace the following properties need to be configured.
 
 | Property | Options | Description |
 | -------- | ------- | ----------- |
