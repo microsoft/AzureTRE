@@ -84,7 +84,7 @@ while read -r resource_id; do
       az monitor diagnostic-settings list --resource ${resource_id} --query "value[].name" -o tsv 2> /dev/null |
       while read -r diag_name; do
         echo "Deleting ${diag_name} on ${resource_id}"
-        az monitor diagnostic-settings delete --resource ${resource_id} --name ${diag_name} ${no_wait_option}
+        az monitor diagnostic-settings delete --resource ${resource_id} --name ${diag_name}
       done
   fi
 done
