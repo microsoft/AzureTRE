@@ -326,6 +326,9 @@ JSON
 )
 
 declare msGraphAppId="00000003-0000-0000-c000-000000000000"
+declare msGraphEmailScopeId="64a6cdd6-aab1-4aaf-94b8-3cc8405e90d0"
+declare msGraphOpenIdScopeId="37f7f235-527c-4136-accd-4a02d197296e"
+declare msGraphProfileScopeId="14dad69e-099b-42c9-810b-d002981feec1"
 declare msGraphObjectId=$(az ad sp show --id ${msGraphAppId} --query "objectId" --output tsv)
 declare directoryReadAllId=$(az ad sp show --id ${msGraphAppId} --query "appRoles[?value=='Directory.Read.All'].id" --output tsv)
 declare userReadAllId=$(az ad sp show --id ${msGraphAppId} --query "appRoles[?value=='User.Read.All'].id" --output tsv)
@@ -442,8 +445,7 @@ else
 fi
 
 echo "Setting API permissions (email / profile / ipaddr)"
-# unfortunatly we need to assign these permissions using the non descriptive guids...(taken from the manifest)
-az ad app permission add --id ${apiAppId} --api 00000003-0000-0000-c000-000000000000 --api-permissions 64a6cdd6-aab1-4aaf-94b8-3cc8405e90d0=Scope 37f7f235-527c-4136-accd-4a02d197296e=Scope 14dad69e-099b-42c9-810b-d002981feec1=Scope
+az ad app permission add --id ${apiAppId} --api ${msGraphAppId} --api-permissions ${msGraphEmailScopeId}=Scope ${msGraphOpenIdScopeId}=Scope ${msGraphProfileScopeId}=Scope
 
 # todo: [Issue 1352](https://github.com/microsoft/AzureTRE/issues/1352)
 # echo "Updating redirect uri"
@@ -490,7 +492,7 @@ az ad sp update --id $spId --set tags="['WindowsAzureActiveDirectoryIntegratedAp
 
 # needed to make the API permissions change effective, this must be done after SP creation...
 echo "running 'az ad app permission grant' to make changes effective"
-az ad app permission grant --id ${apiAppId} --api 00000003-0000-0000-c000-000000000000
+az ad app permission grant --id ${apiAppId} --api ${msGraphAppId}
 
 # If a TRE core app reg
 if [[ $workspace -ne 0 ]]; then
