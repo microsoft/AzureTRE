@@ -48,6 +48,7 @@ elif [[ "$1" == *"stop"* ]]; then
   fi
 
   if [[ $(az network application-gateway list --query "[?resourceGroup=='rg-${TRE_ID}'&&name=='agw-${TRE_ID}'&&operationalState=='Running'] | length(@)") != 0 ]]; then
+    echo "Stopping Application Gateway"
     az network application-gateway stop -g "rg-$TRE_ID" -n "agw-$TRE_ID"
   else
     echo "Application Gateway already stopped"
