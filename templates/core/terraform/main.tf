@@ -3,7 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=2.86.0"
+      version = "=2.97.0"
     }
   }
 
@@ -88,68 +88,6 @@ module "resource_processor_vmss_porter" {
 
   depends_on = [
     module.azure_monitor,
-    azurerm_key_vault.kv,
-    module.firewall
-  ]
-}
-
-module "firewall" {
-  source                     = "./firewall"
-  tre_id                     = var.tre_id
-  location                   = var.location
-  resource_group_name        = azurerm_resource_group.core.name
-  log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
-  stateful_resources_locked  = var.stateful_resources_locked
-
-  shared_subnet = {
-    id               = module.network.shared_subnet_id
-    address_prefixes = module.network.shared_subnet_address_prefixes
-  }
-  firewall_subnet = {
-    id               = module.network.azure_firewall_subnet_id
-    address_prefixes = module.network.azure_firewall_subnet_address_prefixes
-  }
-  resource_processor_subnet = {
-    id               = module.network.resource_processor_subnet_id
-    address_prefixes = module.network.resource_processor_subnet_address_prefixes
-  }
-  web_app_subnet = {
-    id               = module.network.web_app_subnet_id
-    address_prefixes = module.network.web_app_subnet_address_prefixes
-  }
-  depends_on = [
-    module.network
-  ]
-}
-
-module "gitea" {
-  count                    = var.deploy_gitea == true ? 1 : 0
-  source                   = "../../shared_services/gitea/terraform"
-  tre_id                   = var.tre_id
-  location                 = var.location
-  acr_name                 = data.azurerm_container_registry.mgmt_acr.name
-  mgmt_resource_group_name = var.mgmt_resource_group_name
-
-  depends_on = [
-    module.firewall,
-    module.network,
-    azurerm_app_service_plan.core,
-    azurerm_key_vault.kv,
-    azurerm_storage_account.stg
-  ]
-}
-
-module "nexus" {
-  count    = var.deploy_nexus == true ? 1 : 0
-  source   = "../../shared_services/sonatype-nexus/terraform"
-  tre_id   = var.tre_id
-  location = var.location
-
-  depends_on = [
-    module.firewall,
-    module.network,
-    azurerm_app_service_plan.core,
-    azurerm_key_vault.kv,
-    azurerm_storage_account.stg
+    azurerm_key_vault.kv
   ]
 }

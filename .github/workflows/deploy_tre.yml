@@ -22,6 +22,8 @@ jobs:
     name: "Deploy main"
     if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/deploy_tre_reusable.yml
+    with:
+      ciGitRef: ${{ github.ref }}
     secrets:
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
       ACR_NAME: ${{ secrets.ACR_NAME }}
@@ -65,6 +67,7 @@ jobs:
       || contains(github.event.pull_request.labels.*.name, 'safe to test'))
     outputs:
       refid: ${{ steps.run-id.outputs.refid }}
+      not-md: ${{ steps.filter.outputs.not-md }}
     steps:
       - id: run-id
         name: Get run id
@@ -77,11 +80,40 @@ jobs:
           echo "using id of: ${REFID} for GitHub Ref: ${GITHUB_REF}"
           echo "::set-output name=refid::${REFID}"
 
+      - name: Checkout
+        # Code is used by orny/paths-filter action but not required for pull requests
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            not-md:
+              # we need to check for changes in files other than *.md
+              - '**/!(*.md)'
+
+      # If we don't run the actual deploy (below) we won't receive a check-run status,
+      # and will have to send it "manually"
+      - name: Bypass E2E check-runs status
+        if: ${{ steps.filter.outputs.not-md == 'false' }}
+        uses: LouisBrunner/checks-action@v1.1.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # the name must be identical to the one received by the real job
+          name: "Deploy PR / Run E2E Tests (Smoke)"
+          status: "completed"
+          conclusion: "success"
+
   run-deploy-tre-not-main:
     name: "Deploy PR"
-    if: github.ref != 'refs/heads/main'
+    if: ${{ github.ref != 'refs/heads/main' && needs.prepare-not-main.outputs.not-md == 'true' }}
     needs: [prepare-not-main]
     uses: ./.github/workflows/deploy_tre_reusable.yml
+    with:
+      ciGitRef: ${{ github.ref }}
     secrets:
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
       ACR_NAME: ${{ format('tre{0}', needs.prepare-not-main.outputs.refid) }}

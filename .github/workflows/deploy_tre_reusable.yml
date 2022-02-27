@@ -3,6 +3,19 @@ name: Deploy Azure TRE Resuable
 
 on:
   workflow_call:
+    inputs:
+      prRepo:
+        description: Name of the repo GitHub repo containing the ref (as org/repo )
+        type: string
+        required: false
+      prRef:
+        description: The git ref to checkout
+        type: string
+        required: false
+      ciGitRef:
+        description: The git ref to use in annotations to associate a deployment with the code that triggered it
+        type: string
+        required: true
     secrets:
       AAD_TENANT_ID:
         required: true
@@ -59,7 +72,7 @@ on:
 
 # This will prevent multiple runs of this entire workflow.
 # We should NOT cancel in progress runs as that can destabilize the environment.
-concurrency: "deploy-${{ github.ref }}"
+concurrency: "deploy-${{ inputs.ciGitRef }}"
 
 jobs:
   deploy_management:
@@ -67,8 +80,19 @@ jobs:
     runs-on: ubuntu-latest
     environment: Dev
     steps:
-      - name: Checkout
+      - name: Checkout (default)
+        if: ${{ inputs.prRepo == '' }} # if not running for a PR, checkout the default ref for the workflow run
         uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
+      - name: Checkout (PR)
+        if: ${{ inputs.prRepo != '' }} # if running for a PR, checkout the PR commit
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+          repository: ${{ inputs.prRepo }}
+          ref: ${{ inputs.prRef }}
 
       - name: Set up Docker BuildKit
         uses: docker/setup-buildx-action@v1
@@ -160,8 +184,19 @@ jobs:
           build-and-push-gitea]
 
     steps:
-      - name: Checkout
+      - name: Checkout (default)
+        if: ${{ inputs.prRepo == '' }} # if not running for a PR, checkout the default ref for the workflow run
         uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
+      - name: Checkout (PR)
+        if: ${{ inputs.prRepo != '' }} # if running for a PR, checkout the PR commit
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+          repository: ${{ inputs.prRepo }}
+          ref: ${{ inputs.prRef }}
 
       - name: Docker build
         uses: ./.github/actions/devcontainer_run_command
@@ -194,13 +229,24 @@ jobs:
     needs: [build_core_images]
     environment: Dev
     steps:
-      - name: Checkout
+      - name: Checkout (default)
+        if: ${{ inputs.prRepo == '' }} # if not running for a PR, checkout the default ref for the workflow run
         uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
+      - name: Checkout (PR)
+        if: ${{ inputs.prRepo != '' }} # if running for a PR, checkout the PR commit
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+          repository: ${{ inputs.prRepo }}
+          ref: ${{ inputs.prRef }}
 
       - name: Deploy Trusted Research Environment
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: "make tre-deploy"
+          COMMAND: "TF_VAR_ci_git_ref=${{ inputs.ciGitRef }} make tre-deploy"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
@@ -264,8 +310,18 @@ jobs:
              BUNDLE_DIR: "./templates/workspace_services/innereye"}
     environment: Dev
     steps:
-      - name: Checkout
+      - name: Checkout (default)
+        if: ${{ inputs.prRepo == '' }} # if not running for a PR, checkout the default ref for the workflow run
         uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
+      - name: Checkout (PR)
+        if: ${{ inputs.prRepo != '' }} # if running for a PR, checkout the PR commit
+        uses: actions/checkout@v2
+        with:
+          repository: ${{ inputs.prRepo }}
+          ref: ${{ inputs.prRef }}
 
       - name: Publish bundle
         uses: ./.github/actions/devcontainer_run_command
@@ -293,8 +349,19 @@ jobs:
         target: [build-and-push-guacamole]
 
     steps:
-      - name: Checkout
+      - name: Checkout (default)
+        if: ${{ inputs.prRepo == '' }} # if not running for a PR, checkout the default ref for the workflow run
         uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
+      - name: Checkout (PR)
+        if: ${{ inputs.prRepo != '' }} # if running for a PR, checkout the PR commit
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+          repository: ${{ inputs.prRepo }}
+          ref: ${{ inputs.prRef }}
 
       - name: Docker build
         uses: ./.github/actions/devcontainer_run_command
@@ -344,8 +411,19 @@ jobs:
              BUNDLE_DIR: "./templates/workspace_services/innereye"}
     environment: Dev
     steps:
-      - name: Checkout
+      - name: Checkout (default)
+        if: ${{ inputs.prRepo == '' }} # if not running for a PR, checkout the default ref for the workflow run
         uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
+      - name: Checkout (PR)
+        if: ${{ inputs.prRepo != '' }} # if running for a PR, checkout the PR commit
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+          repository: ${{ inputs.prRepo }}
+          ref: ${{ inputs.prRef }}
 
       - name: Register bundle
         uses: ./.github/actions/devcontainer_run_command
@@ -375,8 +453,19 @@ jobs:
     environment: Dev
     needs: [register_bundles, build_additional_images]
     steps:
-      - name: Checkout
+      - name: Checkout (default)
+        if: ${{ inputs.prRepo == '' }} # if not running for a PR, checkout the default ref for the workflow run
         uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
+      - name: Checkout (PR)
+        if: ${{ inputs.prRepo != '' }} # if running for a PR, checkout the PR commit
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+          repository: ${{ inputs.prRepo }}
+          ref: ${{ inputs.prRef }}
 
       - name: Run E2E Tests (Smoke)
         uses: ./.github/actions/devcontainer_run_command
@@ -442,8 +531,19 @@ jobs:
     environment: Dev
     needs: [register_bundles, build_additional_images]
     steps:
-      - name: Checkout
+      - name: Checkout (default)
+        if: ${{ inputs.prRepo == '' }} # if not running for a PR, checkout the default ref for the workflow run
         uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
+      - name: Checkout (PR)
+        if: ${{ inputs.prRepo != '' }} # if running for a PR, checkout the PR commit
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+          repository: ${{ inputs.prRepo }}
+          ref: ${{ inputs.prRef }}
 
       - name: Run E2E Tests (Extended)
         uses: ./.github/actions/devcontainer_run_command

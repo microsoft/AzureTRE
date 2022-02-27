@@ -12,12 +12,13 @@ jobs:
     name: Clean
     runs-on: ubuntu-latest
     environment: Dev
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v2
         with:
           # This is CRITICAL since we're making decisions based on branch existence
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Azure Login
         uses: azure/login@v1

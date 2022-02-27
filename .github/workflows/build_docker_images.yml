@@ -16,14 +16,11 @@ jobs:
   docker_build:
     name: Build images
     runs-on: ubuntu-latest
-    if: |
-      github.event.pull_request.head.repo.full_name == github.repository
-      || github.event_name == 'workflow_dispatch'
-      || contains(github.event.pull_request.labels.*.name, 'safe to test')
-
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+        with:
+          persist-credentials: false
 
       - name: Filter changes
         uses: dorny/paths-filter@v2
@@ -32,12 +29,36 @@ jobs:
           filters: |
             api:
               - 'api_app/**/*'
+            api_version:
+              - 'api_app/_version.py'
             resource_processor:
               - 'resource_processor/**/*'
+            resource_processor_version:
+              - 'resource_processor/version.txt'
             guacamole_server:
               - 'templates/workspace_services/guacamole/guacamole-server/**/*'
+            guacamole_server_version:
+              - 'templates/workspace_services/guacamole/version.txt'
             gitea:
               - 'templates/shared_services/gitea/**/*'
+            gitea_version:
+              - 'templates/shared_services/gitea/version.txt'
+
+      - name: "Stale version: api"
+        if: ${{ steps.filter.outputs.api == 'true' && steps.filter.outputs.api_version == 'false' }}
+        run: echo "::error::Code update without version change" && exit 1
+
+      - name: "Stale version: resource_processor"
+        if: ${{ steps.filter.outputs.resource_processor == 'true' && steps.filter.outputs.resource_processor_version == 'false' }}
+        run: echo "::error::Code update without version change" && exit 1
+
+      - name: "Stale version: guacamole_server"
+        if: ${{ steps.filter.outputs.guacamole_server == 'true' && steps.filter.outputs.guacamole_server_version == 'false' }}
+        run: echo "::error::Code update without version change" && exit 1
+
+      - name: "Stale version: gitea"
+        if: ${{ steps.filter.outputs.gitea == 'true' && steps.filter.outputs.gitea_version == 'false' }}
+        run: echo "::error::Code update without version change" && exit 1
 
       - name: Set up Docker Buildx
         id: buildx
