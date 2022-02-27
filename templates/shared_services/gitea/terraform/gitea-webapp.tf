@@ -243,7 +243,7 @@ resource "azurerm_key_vault_access_policy" "gitea_policy" {
 }
 
 resource "azurerm_key_vault_secret" "gitea_password" {
-  name         = "${local.webapp_name}-admin-password"
+  name         = "${local.webapp_name}-administrator-password"
   value        = random_password.gitea_passwd.result
   key_vault_id = data.azurerm_key_vault.keyvault.id
 
