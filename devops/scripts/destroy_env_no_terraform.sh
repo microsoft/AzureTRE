@@ -57,8 +57,12 @@ done
 set -o nounset
 
 if [[ -z ${core_tre_rg:-} ]]; then
+  if [[ ! -z ${TRE_ID:-} ]]; then
+    core_tre_rg="rg-${TRE_ID}"
+  else
     echo "Core TRE resource group name wasn't provided"
     usage
+  fi
 fi
 
 no_wait_option=""
@@ -70,8 +74,25 @@ fi
 locks=$(az group lock list -g ${core_tre_rg} --query [].id -o tsv)
 if [ ! -z "${locks:-}" ]
 then
+  echo "Deleting locks..."
   az resource lock delete --ids ${locks}
 fi
+
+delete_resource_diagnostic() {
+  # the command will return an error if the resource doesn't support this setting, so need to suppress it.
+  az monitor diagnostic-settings list --resource $1 --query "value[].name" -o tsv 2> /dev/null |
+  while read -r diag_name; do
+    echo "Deleting ${diag_name} on $1"
+    az monitor diagnostic-settings delete --resource $1 --name ${diag_name}
+  done
+}
+export -f delete_resource_diagnostic
+
+echo "Looking for diagnostic settings..."
+# sometimes, diagnostic settings aren't deleted with the resource group. we need to manually do that,
+# and unfortuanlly, there's no easy way to list all that are present.
+# using xargs to run in parallel.
+az resource list --resource-group ${core_tre_rg} --query '[].[id]' -o tsv | xargs -P 10 -I {} bash -c 'delete_resource_diagnostic "{}"'
 
 # purge keyvault if possible (makes it possible to reuse the same tre_id later)
 # this has to be done before we delete the resource group since we don't wait for it to complete
@@ -83,7 +104,7 @@ if [[ $(az keyvault list --resource-group ${core_tre_rg} --query '[?proterties.e
   az keyvault delete --name ${keyvault_name} --resource-group ${core_tre_rg}
 
   echo "Purging keyvault: ${keyvault_name}"
-  az keyvault purge --name ${keyvault_name}
+  az keyvault purge --name ${keyvault_name} ${no_wait_option}
 fi
 
 # this will find the mgmt, core resource groups as well as any workspace ones

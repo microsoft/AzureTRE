@@ -16,6 +16,13 @@ build-and-push-api: build-api-image push-api-image
 build-and-push-resource-processor: build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image
 build-and-push-gitea: build-gitea-image push-gitea-image
 build-and-push-guacamole: build-guacamole-image push-guacamole-image
+tre-deploy: deploy-core deploy-shared-services
+deploy-shared-services: firewall-install gitea-install nexus-install
+
+# to move your environment from the single 'core' deployment (which includes the firewall)
+# toward the shared services model, where it is split out - run the following make target before a tre-deploy
+# This will remove + import the resource state into a shared service
+migrate-firewall-state: prepare-tf-state
 
 bootstrap:
 	$(call target_title, "Bootstrap Terraform") \
@@ -70,7 +77,6 @@ build-gitea-image:
 build-guacamole-image:
 	$(call build_image,"guac-server","templates/workspace_services/guacamole/version.txt","templates/workspace_services/guacamole/guacamole-server/docker/Dockerfile","templates/workspace_services/guacamole/guacamole-server")
 
-
 # A recipe for pushing images. Parameters:
 # 1. Image name suffix
 # 2. Version file path
@@ -97,7 +103,43 @@ push-gitea-image:
 push-guacamole-image:
 	$(call push_image,"guac-server","./templates/workspace_services/guacamole/version.txt")
 
-tre-deploy: tre-start
+# # These targets are for a graceful migration of Firewall
+# # from terraform state in Core to a Shared Service.
+# # See https://github.com/microsoft/AzureTRE/issues/1177
+prepare-tf-state:
+	$(call target_title, "Preparing terraform state") \
+	&& . ./devops/scripts/check_dependencies.sh nodocker \
+	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
+	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
+	&& pushd ./templates/core/terraform > /dev/null && ../../shared_services/firewall/terraform/remove_state.sh && popd > /dev/null \
+	&& pushd ./templates/shared_services/firewall/terraform > /dev/null && ./import_state.sh && popd > /dev/null
+
+terraform-shared-service-deploy:
+	$(call target_title, "Deploying ${DIR} with Terraform") \
+	&& . ./devops/scripts/check_dependencies.sh \
+	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
+	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
+	&& cd ${DIR} && ../../deploy_from_local.sh
+
+firewall-install:
+	$(call target_title, "Installing Firewall") \
+  && make SHARED_SERVICE_KEY=shared-service-firewall terraform-shared-service-deploy DIR=./templates/shared_services/firewall/terraform
+
+gitea-install:
+	$(call target_title, "Installing Gitea") \
+	&& make SHARED_SERVICE_KEY=shared-service-gitea terraform-shared-service-deploy DIR=./templates/shared_services/gitea/terraform
+
+nexus-install:
+	$(call target_title, "Installing Nexus") \
+	&& make SHARED_SERVICE_KEY=shared-service-sonatype-nexus TF_VAR_nexus_properties_path=../nexus.properties terraform-shared-service-deploy DIR=./templates/shared_services/sonatype-nexus/terraform
+
+# / End migration targets
+
+deploy-core: tre-start
 	$(call target_title, "Deploying TRE") \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
@@ -117,19 +159,19 @@ letsencrypt:
 	&& . ./devops/scripts/load_env.sh ./templates/core/tre.env \
 	&& ./templates/core/terraform/scripts/letsencrypt.sh
 
-tre-stop:
-	$(call target_title, "Stopping TRE") \
-	&& . ./devops/scripts/check_dependencies.sh azfirewall \
-	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
-	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& ./devops/scripts/control_tre.sh stop
-
 tre-start:
 	$(call target_title, "Starting TRE") \
 	&& . ./devops/scripts/check_dependencies.sh azfirewall \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& ./devops/scripts/control_tre.sh start
+
+tre-stop:
+	$(call target_title, "Stopping TRE") \
+	&& . ./devops/scripts/check_dependencies.sh azfirewall \
+	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& ./devops/scripts/control_tre.sh stop
 
 tre-destroy:
 	$(call target_title, "Destroying TRE") \
