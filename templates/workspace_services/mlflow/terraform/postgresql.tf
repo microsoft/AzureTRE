@@ -35,9 +35,9 @@ resource "azurerm_postgresql_server" "mlflow" {
   administrator_login          = random_string.username.result
   administrator_login_password = random_password.password.result
 
-  sku_name   = "GP_Gen5_4"
+  sku_name   = "B_Gen5_1"
   version    = "9.6"
-  storage_mb = 524288
+  storage_mb = 5120
 
   backup_retention_days        = 7
   geo_redundant_backup_enabled = false
