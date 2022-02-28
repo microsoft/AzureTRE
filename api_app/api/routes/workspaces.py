@@ -50,7 +50,7 @@ async def save_and_deploy_resource(resource, resource_repo, operations_repo) -> 
     except Exception as e:
         resource_repo.delete_item(resource.id)
         logging.error(f"Failed send resource request message: {e}")
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
 
 
 def validate_user_is_workspace_owner_or_resource_owner(user, user_resource):

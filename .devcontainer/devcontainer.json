@@ -74,10 +74,7 @@
           "program": "vmss_porter/runner.py",
           "console": "integratedTerminal",
           "cwd": "${workspaceFolder}/resource_processor",
-          "envFile": "${workspaceFolder}/templates/core/tre.env",
-          "env": {
-            "PYTHONPATH": "."
-          }
+          "envFile": "${workspaceFolder}/templates/core/tre.env"
         },
         {
           "name": "Python: Debug Tests",
