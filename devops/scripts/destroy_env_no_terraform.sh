@@ -23,11 +23,6 @@ USAGE
     exit 1
 }
 
-# if no arguments are provided, return usage function
-if [ $# -eq 0 ]; then
-    usage # run usage function
-fi
-
 no_wait=false
 
 while [ "$1" != "" ]; do
