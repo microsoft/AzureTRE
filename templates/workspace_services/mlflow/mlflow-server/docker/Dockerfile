@@ -13,8 +13,8 @@ ENV MLFLOW_SERVER_HOST 0.0.0.0
 ENV MLFLOW_SERVER_PORT 5000
 ENV MLFLOW_SERVER_WORKERS 1
 
-COPY sshd_config /etc/ssh/
-COPY startup.sh /usr/local/bin/
+COPY ./docker/sshd_config /etc/ssh/
+COPY ./docker/startup.sh /usr/local/bin/
 
 RUN ["chmod", "u+x", "/usr/local/bin/startup.sh"]
 
