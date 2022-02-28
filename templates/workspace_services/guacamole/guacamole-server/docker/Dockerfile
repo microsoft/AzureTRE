@@ -2,13 +2,12 @@ FROM maven:3-jdk-11-openj9 AS client_build
 
 COPY ./guacamole-auth-azure/pom.xml pom.xml
 COPY ./guacamole-auth-azure/src src
-COPY ./docker/maven_package_and_exit_succesfully.sh /tmp/
-RUN bash /tmp/maven_package_and_exit_succesfully.sh
+RUN mvn package
 
 FROM scratch as test-results
-COPY --from=client_build /target/surefire-reports/* ./
+COPY --from=client_build /target/surefire-reports/*.xml ./
 
-FROM guacamole/guacd:1.3.0
+FROM guacamole/guacd:1.4.0
 
 ARG GUACAMOLE_AZURE_VERSION=0.1.1
 
@@ -53,14 +52,7 @@ COPY ./docker/services /etc/services.d/
 COPY --from=client_build /target/lib/* ${GUACAMOLE_LIB}
 COPY --from=client_build /target/guacamole-auth-tre-${GUACAMOLE_AZURE_VERSION}.jar "${GUACAMOLE_HOME}/extensions/"
 
-RUN wget https://apache.org/dyn/closer.lua/guacamole/1.3.0/binary/guacamole-auth-openid-1.3.0.tar.gz?action=download -O guacamole-auth-openid-1.3.0.tar.gz \
-&& tar zxvpf guacamole-auth-openid-1.3.0.tar.gz && rm guacamole-auth-openid-1.3.0.tar.gz
-
-RUN cp ./guacamole-auth-openid-1.3.0/guacamole-auth-openid-1.3.0.jar "${GUACAMOLE_HOME}/extensions/"
-
-RUN rm -rf ./guacamole-auth-openid-1.3.0
-
-RUN wget -O ${GUACAMOLE_HOME}/guacamole.war 'http://apache.org/dyn/closer.cgi?action=download&filename=guacamole/1.3.0/binary/guacamole-1.3.0.war'
+RUN wget -O ${GUACAMOLE_HOME}/guacamole.war 'http://apache.org/dyn/closer.cgi?action=download&filename=guacamole/1.4.0/binary/guacamole-1.4.0.war'
 
 ENTRYPOINT [ "/init" ]
 EXPOSE 80 2222

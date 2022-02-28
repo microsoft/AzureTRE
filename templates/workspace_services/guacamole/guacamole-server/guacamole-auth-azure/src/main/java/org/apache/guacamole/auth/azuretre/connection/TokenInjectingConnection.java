@@ -37,10 +37,11 @@ import java.util.Map;
 public class TokenInjectingConnection extends SimpleConnection {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TokenInjectingConnection.class);
-
     public TokenInjectingConnection(final String name, final String identifier, final GuacamoleConfiguration config,
                                     final boolean interpretTokens) {
-        super(name, identifier, config, interpretTokens);
+        super.setName(name);
+        super.setIdentifier(identifier);
+        super.setConfiguration(config);
     }
 
     @Override

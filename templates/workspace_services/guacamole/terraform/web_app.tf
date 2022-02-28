@@ -38,13 +38,12 @@ resource "azurerm_app_service" "guacamole" {
     AUDIENCE              = "${var.openid_client_id}"
     ISSUER                = local.issuer
 
-    OPENID_AUTHORIZATION_ENDPOINT = "https://login.microsoftonline.com/${local.aad_tenant_id}/oauth2/v2.0/authorize"
-    OPENID_JWKS_ENDPOINT          = "https://login.microsoftonline.com/${local.aad_tenant_id}/discovery/v2.0/keys"
-    OPENID_ISSUER                 = "https://login.microsoftonline.com/${local.aad_tenant_id}/v2.0"
-    OPENID_CLIENT_ID              = "${var.openid_client_id}"
-    OPENID_REDIRECT_URI           = "https://${local.webapp_name}.azurewebsites.net/guacamole/"
-    OPENID_USERNAME_CLAIM_TYPE    = "email"
-
+    AZUREAD_CLIENT_ID = "${var.azuread_client_id}"
+    AZUREAD_CLIENT_SECRET = "${var.azuread_client_secret}"
+    AZUREAD_SCOPE = "${var.azuread_scope}"
+    AZUREAD_AUTHORITY = "https://login.microsoftonline.com/${local.aad_tenant_id}/"
+    AZUREAD_REDIRECT_URL = "https://${local.webapp_name}.azurewebsites.net/guacamole/"
+    
     # Solving the pulling from acr problem
     DOCKER_REGISTRY_SERVER_URL      = "${data.azurerm_container_registry.mgmt_acr.login_server}"
     DOCKER_REGISTRY_SERVER_USERNAME = "${data.azurerm_container_registry.mgmt_acr.admin_username}"
