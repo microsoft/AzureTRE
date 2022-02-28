@@ -6,6 +6,7 @@ locals {
   service_resource_name_suffix   = "${var.tre_id}-ws-${local.short_workspace_id}-svc-${local.short_service_id}"
   core_vnet                      = "vnet-${var.tre_id}"
   webapp_name                    = "mlflow-${local.service_resource_name_suffix}"
+  postgresql_server_name         = "mlflow-${local.service_resource_name_suffix}"
   keyvault_name                  = lower("kv-${substr(local.workspace_resource_name_suffix, -20, -1)}")
   storage_name                   = lower(replace("stg${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
 }
