@@ -178,9 +178,7 @@ tre-destroy:
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
-	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
-	&& cd ./templates/core/terraform/ && ./destroy.sh
+	&& . ./devops/scripts/destroy_env_no_terraform.sh
 
 terraform-deploy:
 	$(call target_title, "Deploying ${DIR} with Terraform") \
