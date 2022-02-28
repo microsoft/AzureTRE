@@ -16,7 +16,7 @@ build-and-push-api: build-api-image push-api-image
 build-and-push-resource-processor: build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image
 build-and-push-gitea: build-gitea-image push-gitea-image
 build-and-push-guacamole: build-guacamole-image push-guacamole-image
-tre-deploy: deploy-core deploy-shared-services tre-start
+tre-deploy: deploy-core deploy-shared-services
 deploy-shared-services: firewall-install gitea-install nexus-install
 
 # to move your environment from the single 'core' deployment (which includes the firewall)
@@ -77,7 +77,6 @@ build-gitea-image:
 build-guacamole-image:
 	$(call build_image,"guac-server","templates/workspace_services/guacamole/version.txt","templates/workspace_services/guacamole/guacamole-server/docker/Dockerfile","templates/workspace_services/guacamole/guacamole-server")
 
-
 # A recipe for pushing images. Parameters:
 # 1. Image name suffix
 # 2. Version file path
@@ -117,7 +116,6 @@ prepare-tf-state:
 	&& pushd ./templates/core/terraform > /dev/null && ../../shared_services/firewall/terraform/remove_state.sh && popd > /dev/null \
 	&& pushd ./templates/shared_services/firewall/terraform > /dev/null && ./import_state.sh && popd > /dev/null
 
-
 terraform-shared-service-deploy:
 	$(call target_title, "Deploying ${DIR} with Terraform") \
 	&& . ./devops/scripts/check_dependencies.sh \
@@ -141,7 +139,7 @@ nexus-install:
 
 # / End migration targets
 
-deploy-core:
+deploy-core: tre-start
 	$(call target_title, "Deploying TRE") \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
