@@ -1,3 +1,4 @@
+from collections import defaultdict
 import os
 import sys
 import json
@@ -16,16 +17,16 @@ logger_adapter = initialize_logging(logging.INFO, socket.gethostname())
 disable_unwanted_loggers()
 
 
-def failed_status_string_for(action: str) -> str:
-    """
-    Return failed status string for specified action
-    """
-    if action == "install":
-        return strings.RESOURCE_STATUS_FAILED
-    elif action == "uninstall":
-        return strings.RESOURCE_STATUS_DELETING_FAILED
-    else:
-        return strings.RESOURCE_ACTION_STATUS_FAILED
+# Specify pass and fail status strings so we can return the right statuses to the api depending on the action type (with a default of custom action)
+failed_status_string_for = defaultdict(lambda: strings.RESOURCE_ACTION_STATUS_FAILED, {
+    "install": strings.RESOURCE_STATUS_FAILED,
+    "uninstall": strings.RESOURCE_STATUS_DELETING_FAILED
+})
+
+pass_status_string_for = defaultdict(lambda: strings.RESOURCE_ACTION_STATUS_SUCCEEDED, {
+    "install": strings.RESOURCE_STATUS_DEPLOYED,
+    "uninstall": strings.RESOURCE_STATUS_DELETED
+})
 
 
 def pass_status_string_for(action: str) -> str:
@@ -82,7 +83,16 @@ async def receive_message(env_vars, service_bus_client):
 
 
 def azure_login_command(env_vars):
-    local_login = f"az login --service-principal --username {env_vars['arm_client_id']} --password {env_vars['arm_client_secret']} --tenant {env_vars['arm_tenant_id']}"
+    local_login = None
+    # If running locally and Service Principal env vars are present, use them
+    if env_vars['arm_client_id'] and env_vars['arm_client_secret']:
+        local_login = f"az login --service-principal --username {env_vars['arm_client_id']} --password {env_vars['arm_client_secret']} --tenant {env_vars['arm_tenant_id']}"
+
+    # If running locally without SP defined, use the signed-in user's identity
+    else:
+        local_login = f"az account set --subscription {env_vars['arm_subscription_id']}"
+
+    # Otherwise use the VMSS Managed Identity
     vmss_login = f"az login --identity -u {env_vars['vmss_msi_id']}"
     command = vmss_login if env_vars['vmss_msi_id'] else local_login
     return command
@@ -243,14 +253,14 @@ async def invoke_porter_action(msg_body, sb_client, env_vars, message_logger_ada
         await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"]))
 
     # Build and run porter command (flagging if its a built-in action or custom so we can adapt porter command appropriately)
-    is_custom_action = False if action in ["install", "upgrade", "uninstall"] else True
+    is_custom_action = action not in ["install", "upgrade", "uninstall"]
     porter_command = await build_porter_command(msg_body, env_vars, is_custom_action)
     returncode, _, err = await run_porter(porter_command, env_vars)
 
     # Handle command output
     if returncode != 0:
         error_message = "Error context message = " + " ".join(err.split('\n')) + " ; Command executed: ".join(porter_command)
-        resource_request_message = service_bus_message_generator(msg_body, failed_status_string_for(action), error_message)
+        resource_request_message = service_bus_message_generator(msg_body, failed_status_string_for[action], error_message)
 
         # Post message on sb queue to notify receivers of action failure
         await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"]))
@@ -263,7 +273,7 @@ async def invoke_porter_action(msg_body, sb_client, env_vars, message_logger_ada
         _, outputs = await get_porter_outputs(msg_body, env_vars, message_logger_adapter)
 
         success_message = f"{action} action completed successfully."
-        resource_request_message = service_bus_message_generator(msg_body, pass_status_string_for(action), success_message, outputs)
+        resource_request_message = service_bus_message_generator(msg_body, pass_status_string_for[action], success_message, outputs)
 
         await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"]))
         message_logger_adapter.info(f"{installation_id}: {success_message}")
@@ -316,27 +326,23 @@ async def runner(env_vars):
 
 def read_env_vars():
     env_vars = {
-        # Needed for local dev
-        "app_id": os.environ.get("AZURE_CLIENT_ID", None),
-        "app_password": os.environ.get("AZURE_CLIENT_SECRET", None),
-
         "registry_server": os.environ["REGISTRY_SERVER"],
-        "tfstate_container_name": os.environ['TERRAFORM_STATE_CONTAINER_NAME'],
-        "tfstate_resource_group_name": os.environ['MGMT_RESOURCE_GROUP_NAME'],
-        "tfstate_storage_account_name": os.environ['MGMT_STORAGE_ACCOUNT_NAME'],
-        "deployment_status_queue": os.environ['SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE'],
-        "resource_request_queue": os.environ['SERVICE_BUS_RESOURCE_REQUEST_QUEUE'],
-        "service_bus_namespace": os.environ['SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE'],
-        "vmss_msi_id": os.environ.get('VMSS_MSI_ID', None),
+        "tfstate_container_name": os.environ["TERRAFORM_STATE_CONTAINER_NAME"],
+        "tfstate_resource_group_name": os.environ["MGMT_RESOURCE_GROUP_NAME"],
+        "tfstate_storage_account_name": os.environ["MGMT_STORAGE_ACCOUNT_NAME"],
+        "deployment_status_queue": os.environ["SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE"],
+        "resource_request_queue": os.environ["SERVICE_BUS_RESOURCE_REQUEST_QUEUE"],
+        "service_bus_namespace": os.environ["SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE"],
+        "vmss_msi_id": os.environ.get("VMSS_MSI_ID", None),
 
         # Needed for running porter
-        "arm_use_msi": os.environ["ARM_USE_MSI"],
-        "arm_subscription_id": os.environ['ARM_SUBSCRIPTION_ID'],
-        "arm_client_id": os.environ["ARM_CLIENT_ID"],
-        "arm_tenant_id": os.environ["ARM_TENANT_ID"]
+        "arm_use_msi": os.environ.get("ARM_USE_MSI", "false"),
+        "arm_subscription_id": os.environ["AZURE_SUBSCRIPTION_ID"],
+        "arm_client_id": os.environ.get("ARM_CLIENT_ID", ""),
+        "arm_tenant_id": os.environ["AZURE_TENANT_ID"]
     }
 
-    env_vars["arm_client_secret"] = os.environ["ARM_CLIENT_SECRET"] if env_vars["arm_use_msi"] == "false" else ""
+    env_vars["arm_client_secret"] = os.environ.get("ARM_CLIENT_SECRET", "") if env_vars["arm_use_msi"] == "false" else ""
 
     return env_vars
 

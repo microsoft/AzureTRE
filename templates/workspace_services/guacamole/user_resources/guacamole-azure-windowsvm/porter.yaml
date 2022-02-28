@@ -126,7 +126,7 @@ start:
         "Start the VM"
       command: echo
       arguments:
-        - "Unimplemented"
+        - "NotImplemented"
 
 stop:
   - exec:
@@ -134,4 +134,4 @@ stop:
         "Stop the VM"
       command: echo
       arguments:
-        - "Unimplemented"
+        - "NotImplemented"

@@ -289,13 +289,13 @@ test-e2e-extended:
 	cd e2e_tests && \
 	python -m pytest -m extended --verify $${IS_API_SECURED:-true} --junit-xml pytest_e2e_extended.xml
 
-setup-local-debugging-api:
-	$(call target_title,"Setting up the ability to debug the API") \
+setup-local-debugging:
+	$(call target_title,"Setting up the ability to debug the API and Resource Processor") \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& pushd ./templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ./devops/scripts/load_env.sh ./templates/core/tre.env \
-	&& . ./devops/scripts/setup_local_api_debugging.sh
+	&& . ./devops/scripts/setup_local_debugging.sh
 
 register-aad-workspace:
 	$(call target_title,"Registering AAD Workspace") \

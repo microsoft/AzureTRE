@@ -78,7 +78,7 @@ async def send_uninstall_message(resource: Resource, operations_repo: OperationR
         return operation
     except Exception as e:
         logging.error(f"Failed to send {resource_type} resource delete message: {e}")
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
 
 
 async def send_custom_action_message(resource: Resource, custom_action: str, resource_type: ResourceType, operations_repo: OperationRepository, resource_template_repo: ResourceTemplateRepository, parent_service_name: str = None) -> Operation:
@@ -95,7 +95,7 @@ async def send_custom_action_message(resource: Resource, custom_action: str, res
         return operation
     except Exception as e:
         logging.error(f"Failed to send {resource_type} resource custom action message: {e}")
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
 
 
 def check_for_etag(etag: str):
