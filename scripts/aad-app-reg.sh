@@ -326,6 +326,9 @@ JSON
 )
 
 declare msGraphAppId="00000003-0000-0000-c000-000000000000"
+declare msGraphEmailScopeId="64a6cdd6-aab1-4aaf-94b8-3cc8405e90d0"
+declare msGraphOpenIdScopeId="37f7f235-527c-4136-accd-4a02d197296e"
+declare msGraphProfileScopeId="14dad69e-099b-42c9-810b-d002981feec1"
 declare msGraphObjectId=$(az ad sp show --id ${msGraphAppId} --query "objectId" --output tsv)
 declare directoryReadAllId=$(az ad sp show --id ${msGraphAppId} --query "appRoles[?value=='Directory.Read.All'].id" --output tsv)
 declare userReadAllId=$(az ad sp show --id ${msGraphAppId} --query "appRoles[?value=='User.Read.All'].id" --output tsv)
@@ -390,7 +393,31 @@ else
         "oauth2PermissionScopes": ${workspaceOauth2PermissionScopes}
     },
     "appRoles": ${workspaceAppRoles},
-    "signInAudience": "AzureADMyOrg"
+    "signInAudience": "AzureADMyOrg",
+    "web":{
+        "implicitGrantSettings":{
+            "enableIdTokenIssuance":true,
+            "enableAccessTokenIssuance":true
+        }
+    },
+    "optionalClaims": {
+        "idToken": [
+            {
+                "name": "ipaddr",
+                "source": null,
+                "essential": false,
+                "additionalProperties": []
+            },
+            {
+                "name": "email",
+                "source": null,
+                "essential": false,
+                "additionalProperties": []
+            }
+        ],
+        "accessToken": [],
+        "saml2Token": []
+    }
 }
 JSON
 )
@@ -404,15 +431,28 @@ if [[ -n ${apiAppObjectId} ]]; then
     apiAppId=$(az ad app show --id ${apiAppObjectId} --query "appId" --output tsv)
     echo "API app registration with ID ${apiAppId} updated"
 else
+    echo "Creating a new API app registration, ${appName} API"
     apiAppId=$(az rest --method POST --uri "${msGraphUri}/applications" --headers Content-Type=application/json --body "${apiApp}" --output tsv --query "appId")
-    echo "Creating a new API app registration, ${appName} API, with ID ${apiAppId}"
+    echo "AppId: ${apiAppId}"
 
     # Poll until the app registration is found in the listing.
+    echo "Waiting for the new app registration"
     wait_for_new_app_registration $apiAppId
 
     # Update to set the identifier URI.
+    echo "Updating identifier URI"
     az ad app update --id ${apiAppId} --identifier-uris "api://${apiAppId}"
 fi
+
+echo "Setting API permissions (email / profile / ipaddr)"
+az ad app permission add --id ${apiAppId} --api ${msGraphAppId} --api-permissions ${msGraphEmailScopeId}=Scope ${msGraphOpenIdScopeId}=Scope ${msGraphProfileScopeId}=Scope
+
+# todo: [Issue 1352](https://github.com/microsoft/AzureTRE/issues/1352)
+# echo "Updating redirect uri"
+# Update app registration with redirect urls (SPA)
+# az rest --method PATCH --uri "${msGraphUri}/applications/${apiAppObjectId}" \
+#     --headers 'Content-Type=application/json' \
+#     --body '{"spa":{"redirectUris":["https://localhost:8080"]}}'
 
 # Make the current user an owner of the application.
 az ad app owner add --id ${apiAppId} --owner-object-id $currentUserId
@@ -449,6 +489,10 @@ fi
 
 # This tag ensures the app is listed in "Enterprise applications"
 az ad sp update --id $spId --set tags="['WindowsAzureActiveDirectoryIntegratedApp']"
+
+# needed to make the API permissions change effective, this must be done after SP creation...
+echo "running 'az ad app permission grant' to make changes effective"
+az ad app permission grant --id ${apiAppId} --api ${msGraphAppId}
 
 # If a TRE core app reg
 if [[ $workspace -ne 0 ]]; then
