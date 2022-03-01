@@ -22,7 +22,7 @@ resource "random_password" "password" {
 }
 
 resource "azurerm_key_vault_secret" "postgresql_admin_password" {
-  name         = "${local.webapp_name}-admin-credentials"
+  name         = "${local.postgresql_server_name}-admin-credentials"
   value        = "${random_string.username.result}\n${random_password.password.result}"
   key_vault_id = data.azurerm_key_vault.ws.id
 }
