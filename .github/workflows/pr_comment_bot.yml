@@ -53,8 +53,8 @@ jobs:
             switch (commentBody.trim()){
               case "/test":
                 return "run-tests";
-              case "/force-approve":
-                return "force-approve";
+              case "/test-force-approve":
+                return "test-force-approve";
               case "/help":
                 return "show-help";
               default:
@@ -70,12 +70,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Showing help on PR ${PR_NUMBER}"
-          gh pr comment ${PR_NUMBER} --repo $REPO --body "Hello<br/><br/>You can use the following commands:<br/>    /test - run tests on a PR<br/>    /force-approve - force approval of the PR (i.e. skip the deployment checks)<br/>    /help - show this help"
+          gh pr comment ${PR_NUMBER} --repo $REPO --body "Hello<br/><br/>You can use the following commands:<br/>    /test - run tests on a PR<br/>    /test-force-approve - force approval of the PR tests (i.e. skip the deployment checks)<br/>    /help - show this help"
 
       # Get PR commit details for running tests
       - id: get_pr_details
         name: Get PR details
-        if: ${{ steps.check_command.outputs.result == 'run-tests' }}
+        if: ${{ steps.check_command.outputs.result == 'run-tests' || steps.check_command.outputs.result == 'test-force-approve' }}
         env:
           PR_NUMBER: ${{ github.event.issue.number }}
           REPO: ${{ github.event.repository.full_name }}
@@ -116,7 +116,7 @@ jobs:
 
       # Check if the PR build/test needs to run
       - name: Checkout
-        if: ${{ steps.check_command.outputs.result == 'run-tests' || steps.check_command.outputs.result == 'force-approve' }}
+        if: ${{ steps.check_command.outputs.result == 'run-tests' || steps.check_command.outputs.result == 'test-force-approve' }}
         uses: actions/checkout@v2
         with:
           # repository: ${{ steps.get_pr_details.outputs.prRepo }}
@@ -137,7 +137,7 @@ jobs:
       # If we don't run the actual deploy (below) we won't receive a check-run status,
       # and will have to send it "manually"
       - name: Bypass E2E check-runs status
-        if: ${{ (steps.check_command.outputs.result == 'run-tests' && steps.filter.outputs.not-md == 'false') || steps.check_command.outputs.result == 'force-approve' }}
+        if: ${{ (steps.check_command.outputs.result == 'run-tests' && steps.filter.outputs.not-md == 'false') || steps.check_command.outputs.result == 'test-force-approve' }}
         uses: LouisBrunner/checks-action@v1.1.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
