@@ -18,35 +18,18 @@ Resource Processor is the Azure TRE component automating [Porter](https://porter
 
 ## Local development
 
-To work locally, checkout the source code and run:
+To work locally in Visual Studio Code within the Dev Container you can use the `Resource Processor` debug profile to run the app. Before using this, you'll need to perform the below steps:
 
-```cmd
-pip install -r ./resource_processor/vmss_porter/requirements.txt
+1. First, run `make setup-local-debugging` to whitelist your local IP against your resources and create the neccesary roles for your signed-in credential to access and create Service Bus messages
+2. Copy the `tre.env` file from `./templates/core/tre.env` to `./resource_processor/.env`
+3. When running locally, Porter will need a Service Principal instead of Managed Service Identity to be able to authenticate with Azure to deploy resources. You can set this up by running:
+
+```bash
+az ad sp create-for-rbac --name ResourceProcessorTesting --role Owner --scopes /subscriptions/{YOUR_SUBSCRIPTION_ID}
 ```
 
-If you use Visual Studio Code you can use the `VMSS Processor` debug profile to run the app. Before using this, you'll need to create a `.env` file in the `./resource_processor` directory by copying from the `.env.sample` file in the same directory.
-
-You'll then need to replace the `__CHANGE_ME__` tokens with your environment configuration. For the Client Id and Secret variables, you'll first need to create a Service Principal.
-
-When working locally, we use a Service Principal (SP) instead of MSI. This SP needs enough permissions to be able to talk to Service Bus and to deploy resources into the subscription.
-
-That means the service principal needs Owner access to subscription (`ARM_SUBSCRIPTION_ID`) and also needs **Azure Service Bus Data Sender** and **Azure Service Bus Data Receiver** on the Service Bus namespace defined in the `.env` file (`SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE`).
-
-You can set this up with the following az CLI commands:
-
-```cli
-az ad sp create-for-rbac --name ResourceProcessorTesting --role Owner --scopes /subscriptions/{subscriptionId}
-```
-
-Add the `appId` (Client Id) and `password` (Client secret) outputs to your `.env` file then run the following to assign the required Service Bus permissions:
-
-```cli
-az role assignment create --assignee {appId} --role "Azure Service Bus Data Sender"
-```
-
-```cli
-az role assignment create --assignee {appId} --role "Azure Service Bus Data Receiver"
-```
+4. Using the `appId` and `password` values from the above output, create new environment variables called `ARM_CLIENT_ID` and `ARM_CLIENT_SECRET` in the `.env` file you just created in the `./resource_processor` directory.
+5. Navigate to the Debug panel then select the `Resource Processor` profile, then hit *Start Debugging*.
 
 Once the above is set up you can simulate receiving messages from Service Bus by going to Service Bus explorer on the portal and using a message payload for `SERVICE_BUS_RESOURCE_REQUEST_QUEUE` as follows:
 

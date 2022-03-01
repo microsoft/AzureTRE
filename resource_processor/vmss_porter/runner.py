@@ -29,18 +29,6 @@ pass_status_string_for = defaultdict(lambda: strings.RESOURCE_ACTION_STATUS_SUCC
 })
 
 
-def pass_status_string_for(action: str) -> str:
-    """
-    Return pass status string for specified action
-    """
-    if action == "install":
-        return strings.RESOURCE_STATUS_DEPLOYED
-    elif action == "uninstall":
-        return strings.RESOURCE_STATUS_DELETED
-    else:
-        return strings.RESOURCE_ACTION_STATUS_SUCCEEDED
-
-
 @asynccontextmanager
 async def default_credentials(msi_id):
     """
@@ -338,11 +326,11 @@ def read_env_vars():
         # Needed for running porter
         "arm_use_msi": os.environ.get("ARM_USE_MSI", "false"),
         "arm_subscription_id": os.environ["AZURE_SUBSCRIPTION_ID"],
-        "arm_client_id": os.environ.get("ARM_CLIENT_ID", ""),
+        "arm_client_id": os.environ["ARM_CLIENT_ID"],
         "arm_tenant_id": os.environ["AZURE_TENANT_ID"]
     }
 
-    env_vars["arm_client_secret"] = os.environ.get("ARM_CLIENT_SECRET", "") if env_vars["arm_use_msi"] == "false" else ""
+    env_vars["arm_client_secret"] = os.environ["ARM_CLIENT_SECRET"] if env_vars["arm_use_msi"] == "false" else ""
 
     return env_vars
 
