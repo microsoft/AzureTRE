@@ -235,10 +235,10 @@ class TestWorkspaceHelpers:
 
     @patch("api.routes.workspaces.send_resource_request_message", side_effect=Exception)
     @patch("api.routes.workspaces.OperationRepository")
-    async def test_send_uninstall_message_raises_500_on_service_bus_exception(self, operations_repo, _):
+    async def test_send_uninstall_message_raises_503_on_service_bus_exception(self, operations_repo, _):
         with pytest.raises(HTTPException) as ex:
             await send_uninstall_message(sample_workspace(), operations_repo, ResourceType.Workspace)
-        assert ex.value.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+        assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
 
 class TestWorkspaceRoutesThatDontRequireAdminRights:
@@ -364,10 +364,10 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     @ patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item", return_value=sample_workspace())
     @ patch("api.routes.workspaces.WorkspaceRepository._validate_resource_parameters")
     @ patch("api.routes.workspaces.extract_auth_information")
-    async def test_post_workspaces_returns_500_if_service_bus_call_fails(self, _, __, ___, ____, _____, delete_item_mock, app, client, workspace_input):
+    async def test_post_workspaces_returns_503_if_service_bus_call_fails(self, _, __, ___, ____, _____, delete_item_mock, app, client, workspace_input):
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE), json=workspace_input)
 
-        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+        assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
         delete_item_mock.assert_called_once_with(WORKSPACE_ID)
 
     # [POST] /workspaces/
