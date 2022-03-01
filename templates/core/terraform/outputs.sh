@@ -17,8 +17,7 @@ fi
 # Now create an .env file
 ./json-to-env.sh < ../tre_output.json > ../tre.env
 
-# Add a few extra values to the file to help us
-# These are mainly ENV_VARS that have been named differently
+# Add a few extra values to the file to help us (i.e. for local debugging api_app and resource processor)
 echo "SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE=sb-${TRE_ID}.servicebus.windows.net" >> ../tre.env
 # These next ones from Check Dependencies
 echo "SUBSCRIPTION_ID=${SUB_ID}" >> ../tre.env

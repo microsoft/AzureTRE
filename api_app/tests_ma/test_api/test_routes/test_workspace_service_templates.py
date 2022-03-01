@@ -49,7 +49,7 @@ def user_resource_template_without_enriching():
             type="object",
             required=[],
             properties={},
-            actions=[],
+            customActions=[],
             parentWorkspaceService=parent_service
         )
     return create_user_resource_template
