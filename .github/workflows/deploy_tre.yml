@@ -78,7 +78,7 @@ jobs:
 
           # Debug output for checking SHA used in checks-action
           echo "git SHA:    $(git rev-parse --abbrev-ref HEAD)"
-          echo "git ref:    $(git rev-parse --abbrev-ref HEAD)"
+          echo "git ref:    $(git rev-parse HEAD)"
           echo "github ref: ${GITHUB_REF}"
 
           REFID=$(echo ${GITHUB_REF} | shasum | cut -c1-8)
