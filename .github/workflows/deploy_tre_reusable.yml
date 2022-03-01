@@ -5,11 +5,15 @@ on:
   workflow_call:
     inputs:
       prRepo:
-        description: Name of the repo GitHub repo containing the ref (as org/repo )
+        description: Name of the repo GitHub repo containing the ref (as org/repo)
         type: string
         required: false
       prRef:
         description: The git ref to checkout
+        type: string
+        required: false
+      prHeadSha:
+        description: For PR builds where GITHUB_REF isn't set to the PR (e.g. comment trigger), pass the PR's head SHA commit here
         type: string
         required: false
       ciGitRef:
@@ -590,6 +594,20 @@ jobs:
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
           IS_API_SECURED: false
+
+      # For PR builds triggered from comment builds, the GITHUB_REF is set to main
+      # so the checks aren't automatically associated with the PR
+      # If prHeadSha is specified then explicity mark the checks for that SHA
+      - name: Report check status
+        if: ${{ inputs.prHeadSha }}
+        uses: LouisBrunner/checks-action@v1.1.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # the name must be identical to the one received by the real job
+          sha: ${{ inputs.prHeadSha }}
+          name: "Deploy PR / Run E2E Tests (Smoke)"
+          status: "completed"
+          conclusion: "success"
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
