@@ -50,7 +50,7 @@ parameters:
 mixins:
   - exec
   - terraform:
-      clientVersion: 1.0.5
+      clientVersion: 1.1.5
 
 install:
   - terraform:
