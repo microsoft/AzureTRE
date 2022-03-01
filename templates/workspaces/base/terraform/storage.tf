@@ -8,6 +8,12 @@ resource "azurerm_storage_account" "stg" {
   lifecycle { ignore_changes = [tags] }
 }
 
+resource "azurerm_storage_share" "shared_storage" {
+  name                 = "vm-shared-storage"
+  storage_account_name = azurerm_storage_account.stg.name
+  quota                = 50
+}
+
 resource "azurerm_storage_account_network_rules" "stgrules" {
   resource_group_name  = azurerm_resource_group.ws.name
   storage_account_name = azurerm_storage_account.stg.name
