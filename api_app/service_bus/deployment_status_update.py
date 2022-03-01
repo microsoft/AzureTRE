@@ -69,18 +69,18 @@ def create_updated_operation_document(operation: Operation, message: DeploymentS
     new_state = message.status
 
     # Cannot change terminal states
-    terminal_states = set(Status.DeletingFailed, Status.Deleted, Status.ActionSucceeded, Status.ActionFailed)
+    terminal_states = set([Status.DeletingFailed, Status.Deleted, Status.ActionSucceeded, Status.ActionFailed])
     if previous_state in terminal_states:
         return operation
 
     # Can only transition from deployed(deleting, failed) to deleted or failed to delete.
-    states_that_can_only_transition_to_deleted = set(Status.Failed, Status.Deployed, Status.Deleting)
-    deletion_states = set(Status.Deleted, Status.DeletingFailed)
+    states_that_can_only_transition_to_deleted = set([Status.Failed, Status.Deployed, Status.Deleting])
+    deletion_states = set([Status.Deleted, Status.DeletingFailed])
     if previous_state in states_that_can_only_transition_to_deleted and new_state not in deletion_states:
         return operation
 
     # can only transition from invoking_action to action_succeeded or action_failed
-    action_end_states = set(Status.ActionSucceeded, Status.ActionFailed)
+    action_end_states = set([Status.ActionSucceeded, Status.ActionFailed])
     if previous_state == Status.InvokingAction and new_state not in action_end_states:
         return operation
 
