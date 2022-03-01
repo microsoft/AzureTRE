@@ -77,7 +77,8 @@
           "cwd": "${workspaceFolder}/resource_processor",
           "envFile": "${workspaceFolder}/resource_processor/.env",
           "env": {
-            "PYTHONPATH": "."
+            "PYTHONPATH": ".",
+            "USE_LOCAL_CREDS": "true"
           }
         },
         {

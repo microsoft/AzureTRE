@@ -72,15 +72,15 @@ async def receive_message(env_vars, service_bus_client):
 
 def azure_login_command(env_vars):
     local_login = None
-    # If running locally and Service Principal env vars are present, use them
-    if env_vars['arm_client_id'] and env_vars['arm_client_secret']:
-        local_login = f"az login --service-principal --username {env_vars['arm_client_id']} --password {env_vars['arm_client_secret']} --tenant {env_vars['arm_tenant_id']}"
-
-    # If running locally without SP defined, use the signed-in user's identity
-    else:
+    # If running locally with use_local_creds enabled, use signed-in identity for authenticating with Service Bus
+    if env_vars['use_local_creds'] == "true":
         local_login = f"az account set --subscription {env_vars['arm_subscription_id']}"
 
-    # Otherwise use the VMSS Managed Identity
+    # If running locally with use_local_creds disabled, use the Service Principal credentials
+    else:
+        local_login = f"az login --service-principal --username {env_vars['arm_client_id']} --password {env_vars['arm_client_secret']} --tenant {env_vars['arm_tenant_id']}"
+
+    # Use the Managed Identity when in VMSS identity
     vmss_login = f"az login --identity -u {env_vars['vmss_msi_id']}"
     command = vmss_login if env_vars['vmss_msi_id'] else local_login
     return command
@@ -327,7 +327,10 @@ def read_env_vars():
         "arm_use_msi": os.environ.get("ARM_USE_MSI", "false"),
         "arm_subscription_id": os.environ["AZURE_SUBSCRIPTION_ID"],
         "arm_client_id": os.environ["ARM_CLIENT_ID"],
-        "arm_tenant_id": os.environ["AZURE_TENANT_ID"]
+        "arm_tenant_id": os.environ["AZURE_TENANT_ID"],
+
+        # Whether to use local az credentials for connecting to Service Bus (for local debugging)
+        "use_local_creds": os.environ.get("USE_LOCAL_CREDS", "false"),
     }
 
     env_vars["arm_client_secret"] = os.environ["ARM_CLIENT_SECRET"] if env_vars["arm_use_msi"] == "false" else ""
