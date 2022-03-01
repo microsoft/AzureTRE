@@ -75,7 +75,7 @@ jobs:
       # Get PR commit details for running tests
       - id: get_pr_details
         name: Get PR details
-        if: ${{ steps.check_command.outputs.result == 'run-tests' }}
+        if: ${{ steps.check_command.outputs.result == 'run-tests' || steps.check_command.outputs.result == 'force-approve' }}
         env:
           PR_NUMBER: ${{ github.event.issue.number }}
           REPO: ${{ github.event.repository.full_name }}
