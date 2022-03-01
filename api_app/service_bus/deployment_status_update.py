@@ -65,12 +65,24 @@ def create_updated_operation_document(operation: Operation, message: DeploymentS
     Returns:
         [Operation]: Updated Operation object to persist
     """
+    previous_state = operation.status
+    new_state = message.status
 
-    if operation.status in [Status.DeletingFailed, Status.Deleted]:
-        return operation  # cannot change terminal states
-    if operation.status in [Status.Failed, Status.Deployed, Status.Deleting] and message.status not in [Status.Deleted, Status.DeletingFailed]:
-        if message.status not in [Status.Deleted, Status.DeletingFailed]:
-            return operation  # can only transitions from deployed(deleting, failed) to deleted or failed to delete.
+    # Cannot change terminal states
+    terminal_states = set([Status.DeletingFailed, Status.Deleted, Status.ActionSucceeded, Status.ActionFailed])
+    if previous_state in terminal_states:
+        return operation
+
+    # Can only transition from deployed(deleting, failed) to deleted or failed to delete.
+    states_that_can_only_transition_to_deleted = set([Status.Failed, Status.Deployed, Status.Deleting])
+    deletion_states = set([Status.Deleted, Status.DeletingFailed])
+    if previous_state in states_that_can_only_transition_to_deleted and new_state not in deletion_states:
+        return operation
+
+    # can only transition from invoking_action to action_succeeded or action_failed
+    action_end_states = set([Status.ActionSucceeded, Status.ActionFailed])
+    if previous_state == Status.InvokingAction and new_state not in action_end_states:
+        return operation
 
     operation.status = message.status
     operation.message = message.message
