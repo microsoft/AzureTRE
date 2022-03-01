@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema",
-  "$id": "https://github.com/microsoft/AzureTRE/schema/workspace_service.json",
+  "$id": "https://github.com/microsoft/AzureTRE/schema/user_resource.json",
   "type": "object",
   "title": "User Resource Default Parameters",
   "description": "These parameters are required for all user resources",
