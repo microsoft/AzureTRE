@@ -34,6 +34,7 @@ jobs:
       command: ${{ steps.check_command.outputs.result }}
       prRepo: ${{ steps.get_pr_details.outputs.prRepo }}
       prRef: ${{ steps.get_pr_details.outputs.prRef }}
+      prHeadSha: ${{ steps.get_pr_details.outputs.prHeadSha }}
       refid: ${{ steps.get_pr_details.outputs.refid }}
       ciGitRef: ${{ steps.get_pr_details.outputs.ciGitRef }}
       not-md: ${{ steps.filter.outputs.not-md }}
@@ -107,6 +108,11 @@ jobs:
           echo "using id of: ${REFID} for GitHub Ref: ${github_pr_ref}"
           echo "::set-output name=refid::${REFID}"
 
+          # Get PR HEAD SHA for checks status
+          echo "Getting PR head SHA"
+          PR_HEAD_SHA=$(gh api /repos/$REPO/pulls/$PR_NUMBER --jq .head.sha)
+          echo "PR_HEAD_SHA: ${PR_HEAD_SHA}"
+          echo "::set-output name=prHeadSha::${PR_HEAD_SHA}"
 
       # Check if the PR build/test needs to run
       - name: Checkout
@@ -136,7 +142,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           # the name must be identical to the one received by the real job
-          sha: ${{ steps.get_pr_details.outputs.prRef }}
+          sha: ${{ steps.get_pr_details.outputs.prHeadSha }}
           name: "Deploy PR / Run E2E Tests (Smoke)"
           status: "completed"
           conclusion: "success"
