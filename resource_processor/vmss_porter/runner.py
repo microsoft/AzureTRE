@@ -89,7 +89,7 @@ async def get_porter_parameter_keys(msg_body, env_vars):
         env=porter_envs(env_vars))
 
     stdout, stderr = await proc.communicate()
-    logging.info(f'[{command!r} exited with {proc.returncode}]')
+    logging.info(f'get_porter_parameter_keys exited with {proc.returncode}]')
     result_stdout = None
     result_stderr = None
     if stdout:
@@ -183,7 +183,7 @@ async def run_porter(command, env_vars):
         env=porter_envs(env_vars))
 
     stdout, stderr = await proc.communicate()
-    logging.info(f'[{command!r} exited with {proc.returncode}]')
+    logging.info(f'run porter exited with {proc.returncode}]')
     result_stdout = None
     result_stderr = None
     if stdout:
@@ -200,6 +200,7 @@ async def run_porter(command, env_vars):
 def service_bus_message_generator(sb_message, status, deployment_message, outputs=None):
     installation_id = get_installation_id(sb_message)
     message_dict = {
+        "operationId": sb_message["operationId"],
         "id": sb_message["id"],
         "status": status,
         "message": f"{installation_id}: {deployment_message}"}

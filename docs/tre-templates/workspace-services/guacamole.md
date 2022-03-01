@@ -16,6 +16,9 @@ Service Tags:
 
 ## Manual Deployment
 
+!!! caution
+    Resources should be deployed using the API (i.e. through the Swagger UI as described in the [setup instructions](../../tre-admins/setup-instructions/installing-workspace-service-and-user-resource.md)). Only deploy manually for development/testing purposes.
+
 1. Create a copy of `templates/workspace_services/guacamole/.env.sample` with the name `.env` and update the variables with the appropriate values.
 
   | Environment variable name | Description |
@@ -27,6 +30,26 @@ Service Tags:
 1. Build and install the Guacamole Service bundle
 
   ```cmd
-  make porter-build DIR=./templates/workspace_services/guacamole
-  make porter-install DIR=./templates/workspace_services/guacamole
+  make bundle-build DIR=./templates/workspace_services/guacamole
+  make bundle-install DIR=./templates/workspace_services/guacamole
   ```
+
+## Guacamole Workspace Service Configuration
+
+When deploying a Guacamole service into a workspace the following properties need to be configured.
+
+### Required Properties
+
+| Property | Options | Description |
+| -------- | ------- | ----------- |
+| `openid_client_id` | Valid client ID of the Workspace App Registration. | The OpenID client ID which should be submitted to the OpenID service when necessary. This value is typically provided to you by the OpenID service when OpenID credentials are generated for your application. |
+
+### Optional Properties
+
+| Property | Options | Description |
+| -------- | ------- | ----------- |
+| `guac_disable_copy` | `true`/`false` (Default: `true`) | Disable Copy functionality |
+| `guac_disable_paste` | `true`/`false` (Default: `false`) | Disable Paste functionality" |
+| `guac_enable_drive` | `true`/`false` (Default: `true`) | Enable mounted drive |
+| `guac_disable_download` | `true`/`false` (Default: `true`) | Disable files download |
+| `is_exposed_externally` | `true`/`false` (Default: `true`) | Is the Guacamole service exposed outside of the vnet |

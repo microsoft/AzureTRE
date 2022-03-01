@@ -2,7 +2,7 @@
 set -e
 
 if [ -z "$DOCKER_GROUP_ID" ]; then
-    groupadd g docker
+    groupadd docker
 else
     groupadd -g $DOCKER_GROUP_ID docker
 fi

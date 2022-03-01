@@ -1,14 +1,13 @@
+---
 name: Docker build
 
 on:
   pull_request:
     branches: [main]
-  pull_request_target:
-    types: [labeled]
-    branches: [main]
   workflow_dispatch:
 
-# for each ref (branch/pr) run just the most recent, cancel other pending/running ones
+# for each ref (branch/pr) run just the most recent, cancel
+# other pending/running ones
 concurrency:
   group: "${{ github.workflow }}-${{ github.head_ref }}"
   cancel-in-progress: true
@@ -17,13 +16,11 @@ jobs:
   docker_build:
     name: Build images
     runs-on: ubuntu-latest
-    if: |
-      github.event.pull_request.head.repo.full_name == github.repository
-      || contains(github.event.pull_request.labels.*.name, 'safe to test')
-
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+        with:
+          persist-credentials: false
 
       - name: Filter changes
         uses: dorny/paths-filter@v2
@@ -32,20 +29,51 @@ jobs:
           filters: |
             api:
               - 'api_app/**/*'
+            api_version:
+              - 'api_app/_version.py'
             resource_processor:
               - 'resource_processor/**/*'
+            resource_processor_version:
+              - 'resource_processor/version.txt'
             guacamole_server:
               - 'templates/workspace_services/guacamole/guacamole-server/**/*'
+            guacamole_server_version:
+              - 'templates/workspace_services/guacamole/version.txt'
             gitea:
               - 'templates/shared_services/gitea/**/*'
+            gitea_version:
+              - 'templates/shared_services/gitea/version.txt'
+
+      - name: "Stale version: api"
+        if: ${{ steps.filter.outputs.api == 'true' && steps.filter.outputs.api_version == 'false' }}
+        run: echo "::error::Code update without version change" && exit 1
+
+      - name: "Stale version: resource_processor"
+        if: ${{ steps.filter.outputs.resource_processor == 'true' && steps.filter.outputs.resource_processor_version == 'false' }}
+        run: echo "::error::Code update without version change" && exit 1
+
+      - name: "Stale version: guacamole_server"
+        if: ${{ steps.filter.outputs.guacamole_server == 'true' && steps.filter.outputs.guacamole_server_version == 'false' }}
+        run: echo "::error::Code update without version change" && exit 1
+
+      - name: "Stale version: gitea"
+        if: ${{ steps.filter.outputs.gitea == 'true' && steps.filter.outputs.gitea_version == 'false' }}
+        run: echo "::error::Code update without version change" && exit 1
 
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@v1
 
+      # Unit Tests are executed by calling the 'test-results' target in the
+      # Dockerfile's. Test runner exit codes must be swallowed (and kept) so we
+      # can output the test results. This means we have to check for failure
+      # trigger files in later steps.
       - name: "Test image: api"
-        # test should be before build since its docker target is prior to runtime
-        if: (steps.filter.outputs.api == 'true' || github.event_name == 'workflow_dispatch')
+        # test should be before build since its docker target
+        # is prior to runtime
+        if: |
+          (steps.filter.outputs.api == 'true'
+          || github.event_name == 'workflow_dispatch')
         uses: docker/build-push-action@v2
         with:
           context: ./api_app/
@@ -54,8 +82,18 @@ jobs:
           target: test-results
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: "Check pytest failure file existence"
+        id: check_api_test_result
+        uses: andstor/file-existence-action@v1
+        with:
+          files: "test-results/pytest_api_unit_failed"
+
       - name: "Build image: api"
-        if: (steps.filter.outputs.api == 'true' || github.event_name == 'workflow_dispatch')
+        if: |
+          (steps.filter.outputs.api == 'true'
+          || github.event_name == 'workflow_dispatch')
+          && steps.check_api_test_result.outputs.files_exists == 'false'
         uses: docker/build-push-action@v2
         with:
           context: ./api_app/
@@ -64,7 +102,9 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: "Build image: resource_processor"
-        if: (steps.filter.outputs.resource_processor == 'true' || github.event_name == 'workflow_dispatch')
+        if: |
+          (steps.filter.outputs.resource_processor == 'true'
+          || github.event_name == 'workflow_dispatch')
         uses: docker/build-push-action@v2
         with:
           context: ./resource_processor
@@ -73,7 +113,9 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: "Test image: guacamole_server"
-        if: (steps.filter.outputs.guacamole_server == 'true' || github.event_name == 'workflow_dispatch')
+        if: |
+          (steps.filter.outputs.guacamole_server == 'true'
+          || github.event_name == 'workflow_dispatch')
         uses: docker/build-push-action@v2
         with:
           context: ./templates/workspace_services/guacamole/guacamole-server
@@ -83,8 +125,17 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: "Check maven failure file existence"
+        id: check_maven_test_result
+        uses: andstor/file-existence-action@v1
+        with:
+          files: "test-results/guacamole_package_failed"
+
       - name: "Build image: guacamole_server"
-        if: (steps.filter.outputs.guacamole_server == 'true' || github.event_name == 'workflow_dispatch')
+        if: |
+          (steps.filter.outputs.guacamole_server == 'true'
+          || github.event_name == 'workflow_dispatch')
+          && steps.check_maven_test_result.outputs.files_exists == 'false'
         uses: docker/build-push-action@v2
         with:
           context: ./templates/workspace_services/guacamole/guacamole-server
@@ -93,7 +144,9 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: "Build image: gitea"
-        if: (steps.filter.outputs.gitea == 'true' || github.event_name == 'workflow_dispatch')
+        if: |
+          (steps.filter.outputs.gitea == 'true'
+          || github.event_name == 'workflow_dispatch')
         uses: docker/build-push-action@v2
         with:
           context: ./templates/shared_services/gitea
@@ -101,15 +154,15 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Publish Unit Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v1
-        if: always()
-        with:
-          files: test-results/**/*.xml
-
       - name: Upload Unit Test Results
         if: always()
         uses: actions/upload-artifact@v2
         with:
           name: test-results
           path: test-results
+
+      - name: Publish Unit Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        if: always()
+        with:
+          files: test-results/**/*.xml

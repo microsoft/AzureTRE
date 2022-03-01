@@ -4,8 +4,9 @@ import uuid
 
 from azure.servicebus import ServiceBusMessage
 from mock import AsyncMock, patch
+from tests_ma.test_service_bus.test_deployment_status_update import create_sample_operation
 
-from models.domain.resource import Deployment, Resource, Status, ResourceType
+from models.domain.resource import Resource, ResourceType
 from service_bus.resource_request_sender import send_resource_request_message, RequestAction
 
 
@@ -18,21 +19,22 @@ def create_test_resource():
         resourceType=ResourceType.Workspace,
         templateName="Test resource template name",
         templateVersion="2.718",
+        etag='',
         properties={"testParameter": "testValue"},
-        deployment=Deployment(
-            status=Status.NotDeployed,
-            message="Deployment test message"
-        )
+        resourcePath="test"
     )
 
 
 @pytest.mark.parametrize('request_action', [RequestAction.Install, RequestAction.UnInstall])
+@patch('service_bus.resource_request_sender.OperationRepository')
 @patch('service_bus.resource_request_sender.ServiceBusClient')
-async def test_resource_request_message_generated_correctly(service_bus_client_mock, request_action):
+async def test_resource_request_message_generated_correctly(service_bus_client_mock, operations_repo_mock, request_action):
     service_bus_client_mock().get_queue_sender().send_messages = AsyncMock()
     resource = create_test_resource()
 
-    await send_resource_request_message(resource, request_action)
+    operations_repo_mock.create_operation_item.return_value = create_sample_operation(resource.id)
+
+    await send_resource_request_message(resource, operations_repo_mock, request_action)
 
     args = service_bus_client_mock().get_queue_sender().send_messages.call_args.args
     assert len(args) == 1

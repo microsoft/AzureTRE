@@ -1,12 +1,16 @@
 from azure.cosmos import CosmosClient
+from datetime import datetime
 from jsonschema import validate
 from pydantic import UUID4
+import copy
 
 from core import config
 from db.errors import EntityDoesNotExist
 from db.repositories.base import BaseRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
-from models.domain.resource import ResourceType, Resource, Status
+from models.domain.resource import Resource, ResourceHistoryItem, ResourceType
+from models.domain.resource_template import ResourceTemplate
+from models.schemas.resource import ResourcePatch
 
 
 class ResourceRepository(BaseRepository):
@@ -15,7 +19,8 @@ class ResourceRepository(BaseRepository):
 
     @staticmethod
     def _active_resources_query():
-        return f'SELECT * FROM c WHERE c.deployment.status != "{Status.Deleted}"'
+        # get active docs (not deleted)
+        return f'SELECT * FROM c WHERE {IS_ACTIVE_CLAUSE}'
 
     def _active_resources_by_type_query(self, resource_type: ResourceType):
         return self._active_resources_query() + f' AND c.resourceType = "{resource_type}"'
@@ -57,14 +62,34 @@ class ResourceRepository(BaseRepository):
 
         return template_version
 
-    def mark_resource_as_deleting(self, resource: Resource) -> Status:
-        current_deletion_status = resource.deployment.status
+    def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str) -> Resource:
 
-        resource.deployment.status = Status.Deleting
-        self.update_item(resource)
+        # create a deep copy of the resource to use for history, create the history item + add to history list
+        resource_copy = copy.deepcopy(resource)
+        history_item = ResourceHistoryItem(
+            isEnabled=resource_copy.isEnabled,
+            properties=resource_copy.properties,
+            resourceVersion=resource_copy.resourceVersion,
+            updatedWhen=get_timestamp()
+        )
+        resource.history.append(history_item)
 
-        return current_deletion_status
+        # now update the resource props
+        resource.resourceVersion = resource.resourceVersion + 1
 
-    def restore_previous_deletion_state(self, resource: Resource, previous_deletion_status: Status):
-        resource.deployment.status = previous_deletion_status
-        self.update_item(resource)
+        if resource_patch.isEnabled is not None:
+            resource.isEnabled = resource_patch.isEnabled
+
+        # TODO -> (https://github.com/microsoft/AzureTRE/issues/1240) -> validate updated resource props here. For now - just union the 2 property dicts
+        if resource_patch.properties is not None and len(resource_patch.properties) > 0:
+            resource.properties.update(resource_patch.properties)
+
+        return self.update_item_with_etag(resource, etag)
+
+
+def get_timestamp() -> float:
+    return datetime.utcnow().timestamp()
+
+
+# Cosmos query consts
+IS_ACTIVE_CLAUSE = 'c.isActive != false'

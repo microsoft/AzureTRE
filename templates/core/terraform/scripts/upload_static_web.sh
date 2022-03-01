@@ -13,7 +13,10 @@ IPADDR=$(curl ipecho.net/plain; echo)
 # The storage account is protected by network rules
 # The rules need to be temporarily lifted so that the index.html file, if required, and certificate can be uploaded
 echo "Creating network rule on storage account ${STORAGE_ACCOUNT} for $IPADDR"
-az storage account network-rule add --account-name "${STORAGE_ACCOUNT}" --ip-address $IPADDR
+az storage account network-rule add \
+  --account-name "${STORAGE_ACCOUNT}" \
+  --resource-group "${RESOURCE_GROUP_NAME}" \
+  --ip-address $IPADDR
 echo "Waiting for network rule to take effect"
 sleep 30s
 echo "Created network rule on storage account"
@@ -29,5 +32,8 @@ az storage blob upload-batch \
     --only-show-errors
 
 echo "Removing network rule on storage account"
-az storage account network-rule remove --account-name ${STORAGE_ACCOUNT} --ip-address ${IPADDR}
+az storage account network-rule remove \
+  --account-name ${STORAGE_ACCOUNT} \
+  --resource-group "${RESOURCE_GROUP_NAME}" \
+  --ip-address ${IPADDR}
 echo "Removed network rule on storage account"

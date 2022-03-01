@@ -17,3 +17,15 @@ variable "address_space" {
   type        = string
   description = "VNet address space for the workspace services"
 }
+
+variable "deploy_app_service_plan" {
+  type        = bool
+  default     = true
+  description = "Deploy app service plan"
+}
+
+variable "app_service_plan_sku" {
+  type        = string
+  default     = "P1v3"
+  description = "App Service Plan SKU"
+}

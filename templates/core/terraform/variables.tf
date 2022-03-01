@@ -123,4 +123,28 @@ variable "resource_processor_type" {
   type        = string
 }
 
-variable "debug" {}
+variable "keyvault_purge_protection_enabled" {
+  type        = bool
+  default     = true
+  description = "Used to turn Keyvault purge protection"
+}
+
+variable "stateful_resources_locked" {
+  type        = bool
+  default     = true
+  description = "Used to add locks on resources with state"
+}
+
+
+variable "ci_git_ref" {
+  default     = ""
+  description = "The git ref used by the ci to deploy this TRE"
+  type        = string
+}
+
+# this var is optional and used to avoid assigning a role on every run.
+variable "arm_subscription_id" {
+  description = "The subscription id to create the resource processor permission/role. If not supplied will use the TF context."
+  type        = string
+  default     = ""
+}

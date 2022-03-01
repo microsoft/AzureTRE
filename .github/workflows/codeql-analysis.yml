@@ -1,3 +1,4 @@
+---
 # For most projects, this workflow file will not need changing; you simply need
 # to commit it to your repository.
 #
@@ -16,13 +17,11 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
-  pull_request_target:
-    types: [labeled]
-    branches: [main]
   schedule:
     - cron: '41 3 * * 5'
 
-# for each ref (branch/pr) run just the most recent, cancel other pending/running ones
+# for each ref (branch/pr) run just the most recent,
+# cancel other pending/running ones
 concurrency:
   group: "${{ github.workflow }}-${{ github.head_ref }}"
   cancel-in-progress: true
@@ -39,16 +38,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'python' ]
+        language: ['python']
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
 
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v1
-      with:
-        languages: ${{ matrix.language }}
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v1
+        with:
+          languages: ${{ matrix.language }}
 
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v1
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v1

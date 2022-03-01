@@ -1,5 +1,5 @@
 {
-    "name": "pypi-proxy-repo",
+    "name": "pypi",
     "online": true,
     "storage": {
         "blobStoreName": "default",
@@ -26,9 +26,5 @@
             "enableCookies": false,
             "useTrustStore": false
         }
-    },
-    "apt": {
-        "distribution": "bionic",
-        "flat": false
     }
 }

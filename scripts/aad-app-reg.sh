@@ -3,7 +3,7 @@
 # Setup Script
 set -euo pipefail
 
-function usage()
+function show_usage()
 {
     cat << USAGE
 
@@ -12,20 +12,22 @@ By default script will create and configure two app registrations, one for the A
 Alternatively using the -w flag will create an app registration for a TRE workspace
 You must be logged in using Azure CLI with sufficient privileges to modify Azure Active Directory to run this script.
 
-Usage: $0 -n <app-name> [-r <reply-url>] [-w] [-a] [-s]
+Usage: $0 -n <app-name> [-r <reply-url>] [-w] [-a] [-s] [--automation-account]
 
 Options:
-    -n      Required. The prefix for the app (registration) names e.g., "TRE", or "Workspace One".
-    -r      Reply/redirect URL, for the Swagger UI app, where the auth server sends the user after authorization.
-    -w      Create an app registration for a TRE workspace rather than the core TRE API and UI.
-    -a      Optional, but recommended. Grants admin consent for the app registrations, when this flag is set.
-            Requires directory admin privileges to the Azure AD in question.
-    -s      Optional, when -w and -a are specified the client ID of the swagger app must be provided.
+    -n,--name                  Required. The prefix for the app (registration) names e.g., "TRE", or "Workspace One".
+    -w,--workspace             Create an app registration for a TRE workspace rather than the core TRE API and UI.
+    -a,--admin-consent         Optional, but recommended. Grants admin consent for the app registrations, when this flag is set.
+                               Requires directory admin privileges to the Azure AD in question.
+    -s,--swaggerui-clientid    Optional, when -w and -a are specified the client ID of the swagger app must be provided.
+    -r,--swaggerui-redirecturl Reply/redirect URL, for the Swagger UI app, where the auth server sends the user after authorization.
+    --automation-account       Create an app registration for automation (e.g. CI/CD) to use for registering bundles etc
+                               Not valid with -w. Can be used with -a to apply admin consent
 
 Examples:
-    $0 -n TRE -r https://mydre.region.cloudapp.azure.com/api/docs/oauth2-redirect -a
+    $0 -n TRE -r https://mytre.region.cloudapp.azure.com/api/docs/oauth2-redirect -a
 
-    $0 -n 'Workspace One' -r https://mydre.region.cloudapp.azure.com/api/docs/oauth2-redirect -w
+    $0 --name 'Workspace One' --swaggerui-redirecturl https://mytre.region.cloudapp.azure.com/api/docs/oauth2-redirect --workspace
 
 USAGE
     exit 1
@@ -36,6 +38,8 @@ if ! command -v az &> /dev/null; then
     exit 1
 fi
 
+
+
 declare grantAdminConsent=0
 declare swaggerSpId=""
 declare workspace=0
@@ -43,47 +47,66 @@ declare appName=""
 declare replyUrl=""
 declare currentUserId=""
 declare spId=""
+declare createAutomationAccount=0
 declare msGraphUri="https://graph.microsoft.com/v1.0"
 
 # Initialize parameters specified from command line
-while getopts ":n:r:aws:" arg; do
-    case "${arg}" in
-        n)
-            appName=${OPTARG}
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -n|--name)
+            appName=$2
+            shift 2
         ;;
-        r)
-            replyUrl=${OPTARG}
-        ;;
-        a)
+        -a|--admin-consent)
             grantAdminConsent=1
+            shift 1
         ;;
-        w)
+        -w|--workspace)
             workspace=1
+            shift 1
         ;;
-        s)
-            swaggerSpId=${OPTARG}
+        -s|--swaggerui-clientid)
+            swaggerSpId=$2
+            shift 2
         ;;
-        ?)
-            echo "Invalid option: -${OPTARG}."
+        -r|--swaggerui-redirecturl)
+            replyUrl=$2
+            shift 2
+        ;;
+        --automation-account)
+            createAutomationAccount=1
+            shift 1
+        ;;
+        *)
+            echo "Invalid option: $1."
+            show_usage
             exit 2
         ;;
     esac
 done
 
+
 if [[ -z "$appName" ]]; then
     echo "Please specify the application name" 1>&2
-    usage
+    show_usage
 fi
 
-if [[ -z "$swaggerSpId"] && [$grantAdminConsent -eq 1 ]]; then
-    echo "Please specify the swagger application client ID so that admin consent can be granted" 1>&2
-    usage
+if [[ $workspace -ne 0 && $createAutomationAccount -ne 0 ]]; then
+  echo "--automation-account cannot be used with --workspace"
+  show_usage
+fi
+
+# if admin consent & workspace, but not swagger client id, show error
+if [[ $workspace -ne 0 && $grantAdminConsent -eq 1 && ! -n "$swaggerSpId" ]]; then
+    echo "When specifying --admin-consent and --workspace, please specify the swagger application client ID option" 1>&2
+    show_usage
 fi
 
 if [[ $(az account list --only-show-errors -o json | jq 'length') -eq 0 ]]; then
     echo "Please run az login -t <tenant> --allow-no-subscriptions"
     exit 1
 fi
+
 
 # This function polls looking for an app registration with the given ID.
 # If after the number of retries no app registration is found, the function exits.
@@ -145,16 +168,20 @@ function grant_admin_consent()
     resourceId=$2
     appRoleId=$3
 
-    data=$(jq -c . << JSON
-    {
-        "principalId": "${principalId}",
-        "resourceId": "${resourceId}",
-        "appRoleId": "${appRoleId}"
-    }
+    # test if enabled to avoid "Permission being assigned already exists on the object" error
+    is_enabled=$(az rest --method GET --uri ${msGraphUri}/servicePrincipals/${principalId}/appRoleAssignments -o json | jq -r ".value | map( select(.appRoleId==\"${appRoleId}\") ) | length")
+
+    if [[ "$is_enabled" != "1" ]]; then
+        data=$(jq -c . << JSON
+        {
+            "principalId": "${principalId}",
+            "resourceId": "${resourceId}",
+            "appRoleId": "${appRoleId}"
+        }
 JSON
     )
-
-    az rest --method POST --uri ${msGraphUri}/servicePrincipals/${principalId}/appRoleAssignments --body ${data}
+        az rest --method POST --uri ${msGraphUri}/servicePrincipals/${principalId}/appRoleAssignments --body ${data}
+    fi
 }
 
 declare tenant=$(az rest -m get -u ${msGraphUri}/domains -o json | jq -r '.value[] | select(.isDefault == true) | .id')
@@ -222,7 +249,7 @@ declare appRoles=$(jq -c . << JSON
 [
     {
         "id": "${userRoleId}",
-        "allowedMemberTypes": [ "User" ],
+        "allowedMemberTypes": [ "User", "Application" ],
         "description": "Provides access to the ${appName} application.",
         "displayName": "TRE Users",
         "isEnabled": true,
@@ -231,7 +258,7 @@ declare appRoles=$(jq -c . << JSON
     },
     {
         "id": "${adminRoleId}",
-        "allowedMemberTypes": [ "User" ],
+        "allowedMemberTypes": [ "User", "Application" ],
         "description": "Provides resource administrator access to the ${appName}.",
         "displayName": "TRE Administrators",
         "isEnabled": true,
@@ -299,6 +326,9 @@ JSON
 )
 
 declare msGraphAppId="00000003-0000-0000-c000-000000000000"
+declare msGraphEmailScopeId="64a6cdd6-aab1-4aaf-94b8-3cc8405e90d0"
+declare msGraphOpenIdScopeId="37f7f235-527c-4136-accd-4a02d197296e"
+declare msGraphProfileScopeId="14dad69e-099b-42c9-810b-d002981feec1"
 declare msGraphObjectId=$(az ad sp show --id ${msGraphAppId} --query "objectId" --output tsv)
 declare directoryReadAllId=$(az ad sp show --id ${msGraphAppId} --query "appRoles[?value=='Directory.Read.All'].id" --output tsv)
 declare userReadAllId=$(az ad sp show --id ${msGraphAppId} --query "appRoles[?value=='User.Read.All'].id" --output tsv)
@@ -363,7 +393,31 @@ else
         "oauth2PermissionScopes": ${workspaceOauth2PermissionScopes}
     },
     "appRoles": ${workspaceAppRoles},
-    "signInAudience": "AzureADMyOrg"
+    "signInAudience": "AzureADMyOrg",
+    "web":{
+        "implicitGrantSettings":{
+            "enableIdTokenIssuance":true,
+            "enableAccessTokenIssuance":true
+        }
+    },
+    "optionalClaims": {
+        "idToken": [
+            {
+                "name": "ipaddr",
+                "source": null,
+                "essential": false,
+                "additionalProperties": []
+            },
+            {
+                "name": "email",
+                "source": null,
+                "essential": false,
+                "additionalProperties": []
+            }
+        ],
+        "accessToken": [],
+        "saml2Token": []
+    }
 }
 JSON
 )
@@ -377,15 +431,28 @@ if [[ -n ${apiAppObjectId} ]]; then
     apiAppId=$(az ad app show --id ${apiAppObjectId} --query "appId" --output tsv)
     echo "API app registration with ID ${apiAppId} updated"
 else
+    echo "Creating a new API app registration, ${appName} API"
     apiAppId=$(az rest --method POST --uri "${msGraphUri}/applications" --headers Content-Type=application/json --body "${apiApp}" --output tsv --query "appId")
-    echo "Creating a new API app registration, ${appName} API, with ID ${apiAppId}"
+    echo "AppId: ${apiAppId}"
 
     # Poll until the app registration is found in the listing.
+    echo "Waiting for the new app registration"
     wait_for_new_app_registration $apiAppId
 
     # Update to set the identifier URI.
+    echo "Updating identifier URI"
     az ad app update --id ${apiAppId} --identifier-uris "api://${apiAppId}"
 fi
+
+echo "Setting API permissions (email / profile / ipaddr)"
+az ad app permission add --id ${apiAppId} --api ${msGraphAppId} --api-permissions ${msGraphEmailScopeId}=Scope ${msGraphOpenIdScopeId}=Scope ${msGraphProfileScopeId}=Scope
+
+# todo: [Issue 1352](https://github.com/microsoft/AzureTRE/issues/1352)
+# echo "Updating redirect uri"
+# Update app registration with redirect urls (SPA)
+# az rest --method PATCH --uri "${msGraphUri}/applications/${apiAppObjectId}" \
+#     --headers 'Content-Type=application/json' \
+#     --body '{"spa":{"redirectUris":["https://localhost:8080"]}}'
 
 # Make the current user an owner of the application.
 az ad app owner add --id ${apiAppId} --owner-object-id $currentUserId
@@ -423,9 +490,18 @@ fi
 # This tag ensures the app is listed in "Enterprise applications"
 az ad sp update --id $spId --set tags="['WindowsAzureActiveDirectoryIntegratedApp']"
 
-# If a TRE core app reg
-if [[ $workspace -eq 0 ]]; then
+# needed to make the API permissions change effective, this must be done after SP creation...
+echo "running 'az ad app permission grant' to make changes effective"
+az ad app permission grant --id ${apiAppId} --api ${msGraphAppId}
 
+# If a TRE core app reg
+if [[ $workspace -ne 0 ]]; then
+  # Grant admin consent for the delegated workspace scopes
+  if [[ $grantAdminConsent -eq 1 ]]; then
+      echo "Granting admin consent for ${appName} Swagger UI app (service principal ID ${swaggerSpId})"
+      az ad app permission grant --id $swaggerSpId --api $apiAppId --scope "user_impersonation"
+  fi
+else
   # Grant admin consent on the required resource accesses (Graph API)
   if [[ $grantAdminConsent -eq 1 ]]; then
       echo "Granting admin consent for ${appName} API app (service principal ID ${spId}) - NOTE: Directory admin privileges required for this step"
@@ -459,7 +535,7 @@ if [[ $workspace -eq 0 ]]; then
 JSON
 )
 
-  redirectUris="\"http://localhost:8000/docs/oauth2-redirect\""
+  redirectUris="\"http://localhost:8000/api/docs/oauth2-redirect\""
 
   if [[ -n ${replyUrl} ]]; then
       echo "Adding reply/redirect URL \"${replyUrl}\" to ${appName} Swagger UI app"
@@ -516,13 +592,96 @@ JSON
       az ad app permission grant --id $swaggerSpId --api $msGraphObjectId --scope "offline_access openid"
       az ad app permission grant --id $swaggerSpId --api $apiAppId --scope "user_impersonation"
   fi
-else
+fi
+
+declare automationApp=$(jq -c . << JSON
+{
+    "displayName": "${appName} Automation Admin App",
+    "api": {
+        "requestedAccessTokenVersion": 2
+    },
+    "signInAudience": "AzureADMyOrg",
+    "requiredResourceAccess": [
+        {
+            "resourceAppId": "${apiAppId}",
+            "resourceAccess": [
+                {
+                    "id": "${apiUserImpersonationScopeID}",
+                    "type": "Scope"
+                },
+                {
+                    "id": "${adminRoleId}",
+                    "type": "Role"
+                }
+            ]
+        }
+    ]
+}
+JSON
+)
+if [[ $createAutomationAccount -ne 0 ]]; then
+    # Create an App Registration to allow automation to authenticate to the API
+    # E.g. to register bundles
+
+    declare existingAutomationApp=$(get_existing_app "${appName} Automation Admin App")
+
+    if [[ -n ${existingAutomationApp} ]]; then
+        echo "Automation app exists - updating..."
+        automationAppObjectId=$(echo ${existingAutomationApp} | jq -r .objectId)
+        automationAppId=$(echo ${existingAutomationApp} | jq -r .appId)
+        az rest --method PATCH --uri "${msGraphUri}/applications/${automationAppObjectId}" --headers Content-Type=application/json --body "${automationApp}"
+    else
+        echo "Automation app doesn't exist - creating..."
+
+        automationAppId=$(az rest --method POST --uri "${msGraphUri}/applications" --headers Content-Type=application/json --body "${automationApp}" --output tsv --query "appId")
+        echo "Creating a new automation admin app registration, '${appName} Automation Admin App', with ID ${automationAppId}"
+
+        # Poll until the app registration is found in the listing.
+        wait_for_new_app_registration $automationAppId
+
+        # Make the current user an owner of the application.
+        az ad app owner add --id ${automationAppId} --owner-object-id $currentUserId
+    fi
+
+    # See if a service principal already exists
+    automationSpId=$(az ad sp list --filter "appId eq '${automationAppId}'" --query '[0].objectId' --output tsv)
+
+    resetPassword=0
+    # If not, create a new service principal
+    if [[ -z "$automationSpId" ]]; then
+        automationSpId=$(az ad sp create --id ${automationAppId} --query 'objectId' --output tsv)
+        echo "Creating a new service principal, for ${appName} Automation Admin App, with ID $automationSpId"
+        wait_for_new_service_principal $automationSpId
+        resetPassword=1
+    else
+        echo "Service principal for the app already exists."
+        echo "Existing passwords (client secrets) cannot be queried. To view the password it needs to be reset."
+        read -p "Do you wish to reset the ${appName} Automation Admin App password (y/N)? " -n 1 -r
+        echo
+
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            resetPassword=1
+        fi
+    fi
+
+    automationSpPassword=""
+
+    if [[ "$resetPassword" == 1 ]]; then
+        # Reset the app password (client secret) and display it
+        automationSpPassword=$(az ad sp credential reset --name ${automationAppId} --query 'password' --output tsv)
+        echo "${appName} Automation Admin App password (client secret): ${automationSpPassword}"
+    fi
+
+    # This tag ensures the app is listed in "Enterprise applications"
+    az ad sp update --id $automationSpId --set tags="['WindowsAzureActiveDirectoryIntegratedApp']"
+
   # Grant admin consent for the delegated workspace scopes
   if [[ $grantAdminConsent -eq 1 ]]; then
-      echo "Granting admin consent for ${appName} Swagger UI app (service principal ID ${swaggerSpId})"
-      az ad app permission grant --id $swaggerSpId --api $apiAppId --scope "user_impersonation"
+      echo "Granting admin consent for ${appName} Automation Admin App (service principal ID ${automationSpId})"
+      az ad app permission admin-consent --id $automationAppId
   fi
 fi
+
 
 echo "Done"
 
@@ -532,7 +691,7 @@ if [[ $workspace -eq 0 ]]; then
 
 Variables:
 
-AAD_TENANT_ID=$(az account show | jq -r '.tenantId')
+AAD_TENANT_ID=$(az account show --output json | jq -r '.tenantId')
 API_CLIENT_ID=${apiAppId}
 API_CLIENT_SECRET=${spPassword}
 SWAGGER_UI_CLIENT_ID=${swaggerAppId}
@@ -544,12 +703,23 @@ else
 
 Variables:
 
-AAD_TENANT_ID=$(az account show | jq -r '.tenantId')
+AAD_TENANT_ID=$(az account show --output json | jq -r '.tenantId')
 WORKSPACE_API_CLIENT_ID=${apiAppId}
 WORKSPACE_API_CLIENT_SECRET=${spPassword}
 
 ENV_VARS
 fi
+
+if [[ $createAutomationAccount -eq 1 ]]; then
+  cat << ENV_VARS
+
+AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID=${automationAppId}
+AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET=${automationSpPassword}
+
+ENV_VARS
+
+fi
+
 
 if [[ $grantAdminConsent -eq 0 ]]; then
     echo "NOTE: Make sure the API permissions of the app registrations have admin consent granted."

@@ -33,7 +33,14 @@ data "template_cloudinit_config" "config" {
 
 resource "random_password" "password" {
   length           = 16
+  lower            = true
+  min_lower        = 1
+  upper            = true
+  min_upper        = 1
+  number           = true
+  min_numeric      = 1
   special          = true
+  min_special      = 1
   override_special = "_%@"
 }
 
@@ -128,7 +135,8 @@ resource "azurerm_role_assignment" "vmss_sb_receiver" {
 
 # add issue to look at reduced scope - needs to create and add resources to rgs
 resource "azurerm_role_assignment" "subscription_owner" {
-  scope                = data.azurerm_subscription.current.id
+  # Below is a workaround TF replacing this resource when using the data object.
+  scope                = var.subscription_id != "" ? "/subscriptions/${var.subscription_id}" : data.azurerm_subscription.current.id
   role_definition_name = "Owner"
   principal_id         = azurerm_user_assigned_identity.vmss_msi.principal_id
 }

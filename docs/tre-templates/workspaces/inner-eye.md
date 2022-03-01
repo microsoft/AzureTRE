@@ -2,27 +2,30 @@
 
 This deploys a [Base workspace](./base.md) with the following services inside:
 
-- [Azure ML](../../../templates/workspace_services/azureml)
-- [InnerEye](../../../templates/workspace_services/innereye)
+- [Azure ML](../../../tre-templates/workspace-services/azure-ml)
+- [InnerEye](../../../tre-templates/workspace-services/inner-eye)
 
 Follow the links to learn more about how to access the services and any firewall rules that they will open in the workspace.
 
 ## Manual deployment for development and testing
+
+!!! caution
+    Resources should be deployed using the API (i.e. through the Swagger UI as described in the [setup instructions](../../tre-admins/setup-instructions/installing-workspace-service-and-user-resource.md)). Only deploy manually for development/testing purposes.
 
 1. Publish the bundles required for this workspace:
 
   Base Workspace:
 
   ```cmd
-  make porter-build DIR=./templates/workspaces/base
-  make porter-publish DIR=./templates/workspaces/base
+  make bundle-build DIR=./templates/workspaces/base
+  make bundle-publish DIR=./templates/workspaces/base
   ```
 
   Azure ML Service:
 
   ```cmd
-  make porter-build DIR=./templates/workspace_services/azureml
-  make porter-publish DIR=./templates/workspace_services/azureml
+  make bundle-build DIR=./templates/workspace_services/azureml
+  make bundle-publish DIR=./templates/workspace_services/azureml
   ```
 
 1. Create a copy of `workspaces/innereye/.env.sample` with the name `.env` and update the variables with the appropriate values.
@@ -37,6 +40,6 @@ Follow the links to learn more about how to access the services and any firewall
 1. Build and install the workspace:
 
   ```cmd
-  make porter-build DIR=./templates/workspaces/innereye
-  make porter-install DIR=./templates/workspaces/innereye
+  make bundle-build DIR=./templates/workspaces/innereye
+  make bundle-install DIR=./templates/workspaces/innereye
   ```

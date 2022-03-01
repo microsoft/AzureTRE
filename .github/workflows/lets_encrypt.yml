@@ -1,3 +1,4 @@
+---
 name: Renew Lets Encrypt Certificates
 
 on:
@@ -6,7 +7,6 @@ on:
     - cron: "0 3 1 * *"
   workflow_dispatch:
 
-
 # This will prevent multiple runs of this entire workflow.
 # We should NOT cancel in progress runs as that can destabilize the environment.
 concurrency: letsencrypt
@@ -14,6 +14,7 @@ concurrency: letsencrypt
 env:
   USE_ENV_VARS_NOT_FILES: true
   TF_INPUT: 0 # interactive is off
+  TF_IN_AUTOMATION: 1 # Run in headless mode
 
 jobs:
   renew_letsencrypt_certs:
@@ -23,33 +24,32 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-
-      - name: Azure Login
-        uses: azure/login@v1
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          persist-credentials: false
 
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v1
         with:
-          terraform_version: 1.0.5
+          terraform_version: 1.1.5
           terraform_wrapper: false
 
       - name: Renew Certificates
         shell: bash
         env:
-          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-          TF_VAR_tre_id: ${{ secrets.TRE_ID }}
-          TF_VAR_terraform_state_container_name: ${{ secrets.TF_STATE_CONTAINER }}
-          TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
-          TF_VAR_mgmt_storage_account_name: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+          TRE_ID: ${{ secrets.TRE_ID }}
+          TF_VAR_terraform_state_container_name:
+            ${{ secrets.TF_STATE_CONTAINER }}
+          TF_VAR_mgmt_resource_group_name:
+            ${{ secrets.MGMT_RESOURCE_GROUP }}
+          TF_VAR_mgmt_storage_account_name:
+            ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
         run: |
-
-          export ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
-          export ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
-          export ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
-          export ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
-          export TF_VAR_arm_subscription_id=$ARM_SUBSCRIPTION_ID
-
-          sudo apt-get install -y python3 python3-venv libaugeas0  && python3 -m venv /opt/certbot/  && /opt/certbot/bin/pip install --upgrade pip && /opt/certbot/bin/pip install certbot
+          sudo apt-get install -y python3 python3-venv libaugeas0 \
+            && python3 -m venv /opt/certbot/ \
+            && /opt/certbot/bin/pip install --upgrade pip \
+            && /opt/certbot/bin/pip install certbot
           make letsencrypt

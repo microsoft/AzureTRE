@@ -1,21 +1,13 @@
-resource "azurerm_app_service_plan" "guacamole" {
-  name                = "plan-${local.webapp_name}"
-  location            = data.azurerm_resource_group.ws.location
+data "azurerm_app_service_plan" "workspace" {
+  name                = "plan-${var.workspace_id}"
   resource_group_name = data.azurerm_resource_group.ws.name
-  kind                = "Linux"
-  reserved            = "true"
-
-  sku {
-    tier = "PremiumV3"
-    size = "P1v3"
-  }
 }
 
 resource "azurerm_app_service" "guacamole" {
   name                = local.webapp_name
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
-  app_service_plan_id = azurerm_app_service_plan.guacamole.id
+  app_service_plan_id = data.azurerm_app_service_plan.workspace.id
   https_only          = true
 
   site_config {
@@ -203,14 +195,6 @@ resource "azurerm_private_endpoint" "guacamole" {
     name                 = "privatelink.azurewebsites.net"
     private_dns_zone_ids = [data.azurerm_private_dns_zone.azurewebsites.id]
   }
-}
-
-resource "azurerm_key_vault_access_policy" "current" {
-  key_vault_id = data.azurerm_key_vault.ws.id
-  tenant_id    = data.azurerm_user_assigned_identity.vmss_id.tenant_id
-  object_id    = data.azurerm_user_assigned_identity.vmss_id.principal_id
-
-  secret_permissions = ["Get", "List", "Set", "Delete"]
 }
 
 resource "azurerm_key_vault_access_policy" "guacamole" {

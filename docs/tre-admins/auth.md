@@ -25,19 +25,30 @@ Example on how to run the script:
 
 ```bash
 ./aad-app-reg.sh \
-    -n <Prefix of the app registration names e.g., TRE> \
-    -r https://<TRE ID>.<Azure location>.cloudapp.azure.com/api/docs/oauth2-redirect \
-    -a
+    --name <Prefix of the app registration names e.g., TRE> \
+    --swaggerui-redirecturl https://<TRE ID>.<Azure location>.cloudapp.azure.com/api/docs/oauth2-redirect \
+    --admin-consent
 ```
 
 | Argument | Description |
 | -------- | ----------- |
-| `-n` | The prefix of the name of the app registrations. `TRE` will give you `TRE API` and `TRE Swagger UI`. |
-| `-r` | The reply URL for the Swagger UI app. Use the values of the [environment variables](./environment-variables.md) `TRE_ID` and `LOCATION` in the URL. Reply URL for the localhost, `http://localhost:8000/api/docs/oauth2-redirect`, will be added by default. |
-| `-a` | Grants admin consent for the app registrations. This is required for them to function properly, but requires AAD admin privileges. |
+| `--name` | The prefix of the name of the app registrations. `TRE` will give you `TRE API` and `TRE Swagger UI`. |
+| `--swaggerui-redirecturl` | The reply URL for the Swagger UI app. Use the values of the [environment variables](./environment-variables.md) `TRE_ID` and `LOCATION` in the URL. Reply URL for the localhost, `http://localhost:8000/api/docs/oauth2-redirect`, will be added by default. |
+| `--admin-consent` | Grants admin consent for the app registrations. This is required for them to function properly, but requires AAD admin privileges. |
 
 !!! caution
     The script will create an app password (client secret) for the **TRE API** app; make sure to take note of it in the script output as it is only shown once. In case the secret is lost, the script, when run again, can reset it and display the new one.
+
+
+In addition to the `TRE API` and `TRE Swagger UI` app registrations, the `aad-app-reg.sh` script can also be used to create an app registration that can be used for authenticating against the API from automation (for example, for registering bundles via CI/CD). To do this, add the `--automation-account` switch as shown in the following command:
+
+```bash
+./aad-app-reg.sh \
+    --name <Prefix of the app registration names e.g., TRE> \
+    --swaggerui-redirecturl https://<TRE ID>.<Azure location>.cloudapp.azure.com/api/docs/oauth2-redirect \
+    --automation-account \
+    --admin-consent
+```
 
 ### TRE API
 

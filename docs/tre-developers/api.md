@@ -53,7 +53,7 @@ az cosmosdb create -n $COSMOS_NAME -g $RESOURCE_GROUP --locations regionName=$LO
 az cosmosdb sql database create -a $COSMOS_NAME -g $RESOURCE_GROUP -n $COSMOS_DB_NAME
 ```
 
-[Create a service principal](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli) and assign it permissions to access Service Bus:
+[Create a service principal](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli) and assign it permissions to access Service Bus and Cosmos:
 
 ```bash
 az ad sp create-for-rbac --name <service principal name>
@@ -70,6 +70,11 @@ az role assignment create \
     --role "Azure Service Bus Data Receiver" \
     --assignee $SERVICE_PRINCIPAL_ID \
     --scope /subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.ServiceBus/namespaces/$SERVICE_BUS_NAMESPACE
+
+az role assignment create \
+    --role "Contributor" \
+    --assignee $SERVICE_PRINCIPAL_ID \
+    --scope /subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.DocumentDB/databaseAccounts/$COSMOS_NAME
 ```
 
 !!! caution

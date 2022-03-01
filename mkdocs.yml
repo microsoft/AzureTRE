@@ -1,3 +1,4 @@
+---
 site_name: Azure TRE
 site_url: https://github.com/microsoft/AzureTRE
 site_description: Azure TRE
@@ -75,4 +76,4 @@ nav:
           - Guacamole: 'tre-templates/workspace-services/guacamole.md'
           - InnerEye: 'tre-templates/workspace-services/inner-eye.md'
       - User Resources:
-          - Guacamole Win10 VM: 'tre-templates/user-resources/guacamole-win10-vm.md'
+          - Guacamole Windows VM: 'tre-templates/user-resources/guacamole-windows-vm.md'

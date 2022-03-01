@@ -7,7 +7,11 @@ jq -r '
     [
         {
             "path": "core_resource_group_name",
-            "env_var": "RESOURCE_GROUP"
+            "env_var": "RESOURCE_GROUP_NAME"
+        },
+        {
+            "path": "core_resource_group_location",
+            "env_var": "RESOURCE_LOCATION"
         },
         {
             "path": "app_gateway_name",
@@ -24,6 +28,38 @@ jq -r '
         {
             "path": "azure_tre_fqdn",
             "env_var": "FQDN"
+        },
+        {
+            "path": "service_bus_resource_id",
+            "env_var": "SERVICE_BUS_RESOURCE_ID"
+        },
+        {
+            "path": "service_bus_workspace_queue",
+            "env_var": "SERVICE_BUS_RESOURCE_REQUEST_QUEUE"
+        },
+        {
+            "path": "service_bus_deployment_status_queue",
+            "env_var": "SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE"
+        },
+        {
+            "path": "state_store_resource_id",
+            "env_var": "STATE_STORE_RESOURCE_ID"
+        },
+        {
+            "path": "state_store_account_name",
+            "env_var": "COSMOSDB_ACCOUNT_NAME"
+        },
+        {
+            "path": "state_store_endpoint",
+            "env_var": "STATE_STORE_ENDPOINT"
+        },
+        {
+            "path": "app_insights_instrumentation_key",
+            "env_var": "APPINSIGHTS_INSTRUMENTATIONKEY"
+        },
+        {
+            "path": "app_insights_connection_string",
+            "env_var": "APPLICATIONINSIGHTS_CONNECTION_STRING"
         }
     ]
         as $env_vars_to_extract

@@ -10,14 +10,14 @@ echo -e "\n\e[34m»»» ✅ \e[96mChecking pre-reqs\e[0m..."
 echo -e "\n\e[96mChecking for Azure CLI\e[0m..."
 if [ $? -ne 0 ]; then
   echo -e "\e[31m»»» ⚠️ Azure CLI is not installed! 😥 Please go to http://aka.ms/cli to set it up or rebuild your devcontainer"
-  exit
+  exit 1
 fi
 if [[ "$1" == *"azfirewall"* ]]; then
   echo -e "\n\e[96mChecking for Azure CLI extension(s)\e[0m..."
   az extension show -n azure-firewall > /dev/null 2>&1
   if [ $? -ne 0 ]; then
     echo -e "\e[31m»»» ⚠️ Azure CLI azure-firewall extension is not installed! 😥 Please go to http://aka.ms/cli to set it up or rebuild your devcontainer"
-    exit
+    exit 1
   fi
 fi
 
@@ -26,7 +26,7 @@ if [[ "$1" != *"nodocker"* ]]; then
   sudo docker version > /dev/null 2>&1
   if [ $? -ne 0 ]; then
     echo -e "\e[31m»»» ⚠️ Docker is not installed! 😥 Please go to https://docs.docker.com/engine/install/ to set it up or rebuild your devcontainer"
-    exit
+    exit 1
   fi
 fi
 
@@ -35,7 +35,7 @@ if  [[ "$1" == *"certbot"* ]]; then
   /opt/certbot/bin/certbot --version > /dev/null 2>&1
   if [ $? -ne 0 ]; then
     echo -e "\e[31m»»» ⚠️ Certbot is not installed! 😥 Please go to https://certbot.eff.org/lets-encrypt/pip-other to set it up or rebuild your devcontainer"
-    exit
+    exit 1
   fi
 fi
 
@@ -44,8 +44,16 @@ if [[ "$1" == *"porter"* ]]; then
   porter --version > /dev/null 2>&1
   if [ $? -ne 0 ]; then
     echo -e "\e[31m»»» ⚠️ Porter is not installed! 😥 Please go to https://porter.sh/install/ to set it up or rebuild your devcontainer"
-    exit
+    exit 1
   fi
+fi
+
+# This is called if we are in a CI system and we will login
+# with a Service Principal.
+if [ -n "${TF_IN_AUTOMATION}" ]
+then
+    az login --service-principal -u "$ARM_CLIENT_ID" -p "$ARM_CLIENT_SECRET" --tenant "$ARM_TENANT_ID"
+    az account set -s "$ARM_SUBSCRIPTION_ID"
 fi
 
 export SUB_NAME=$(az account show --query name -o tsv)
@@ -53,7 +61,7 @@ export SUB_ID=$(az account show --query id -o tsv)
 export TENANT_ID=$(az account show --query tenantId -o tsv)
 if [ -z "$SUB_NAME" ]; then
   echo -e "\n\e[31m»»» ⚠️ You are not logged in to Azure!"
-  exit
+  exit 1
 fi
 
 echo -e "\e[34m»»» 🔨 \e[96mAzure details from logged on user \e[0m"

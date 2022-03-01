@@ -10,17 +10,14 @@ from models.domain.workspace import Workspace
 def get_sample_workspace(workspace_id: str, spec_workspace_id: str = "0001") -> dict:
     return {
         "id": workspace_id,
+        "isActive": True,
         "templateName": "tre-workspace-base",
         "templateVersion": "0.1.0",
         "properties": {
             "azure_location": "westeurope",
             "workspace_id": spec_workspace_id,
             "tre_id": "mytre-dev-1234",
-            "address_space": "10.2.1.0/24"
-        },
-        "deployment": {
-            "status": "not_deployed",
-            "message": "This resource is not yet deployed"
+            "address_space_size": "small",
         },
         "resourceType": ResourceType.Workspace,
         "workspaceURL": "",
@@ -76,29 +73,8 @@ class WorkspaceInCreate(BaseModel):
                 "properties": {
                     "display_name": "the workspace display name",
                     "description": "workspace description",
-                    "app_id": "9d52b04f-89cf-47b4-868a-e12be7133b36"
+                    "app_id": "9d52b04f-89cf-47b4-868a-e12be7133b36",
+                    "address_space_size": "small"
                 }
-            }
-        }
-
-
-class WorkspaceIdInResponse(BaseModel):
-    workspaceId: str
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "workspaceId": "49a7445c-aae6-41ec-a539-30dfa90ab1ae",
-            }
-        }
-
-
-class WorkspacePatchEnabled(BaseModel):
-    enabled: bool
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "enabled": False
             }
         }

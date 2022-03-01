@@ -155,7 +155,7 @@ override.tf
 override.tf.json
 *_override.tf
 *_override.tf.json
-templates/core/tre_output.json
+tre_output.json
 
 # generated backend files
 *_backend.tf
@@ -176,9 +176,6 @@ terraform.rc
 .idea/
 **/http-client.private.env.json
 
-# vscode
-.vscode/
-
 # node
 node_modules
 
@@ -198,5 +195,11 @@ sample.dat
 templates/core/terraform/scripts/index.html
 templates/core/terraform/scripts/validation.txt
 templates/core/terraform/plan
-e2e_tests/pytest_e2e.xml
+
+# Test results
+e2e_tests/pytest_e2e_smoke.xml
+e2e_tests/pytest_e2e_extended.xml
 e2e_tests/workspace_id.txt
+pytest_api_unit.xml
+pytest_api_unit_failed
+validation.txt

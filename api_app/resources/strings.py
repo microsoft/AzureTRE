@@ -14,6 +14,8 @@ API_GET_WORKSPACE_SERVICE_BY_ID = "Get workspace service by Id"
 API_CREATE_WORKSPACE_SERVICE = "Create a workspace service"
 API_UPDATE_WORKSPACE_SERVICE = "Update an existing workspace service"
 API_DELETE_WORKSPACE_SERVICE = "Delete workspace service"
+API_GET_RESOURCE_OPERATIONS = "Get all operations for a resource"
+API_GET_RESOURCE_OPERATION_BY_ID = "Get a single resource operation by id"
 
 API_CREATE_USER_RESOURCE = "Create a user resource"
 API_GET_MY_USER_RESOURCES = "Get my user resources in the workspace service"
@@ -74,10 +76,14 @@ WORKSPACE_SERVICE_IS_NOT_DEPLOYED = "Workspace service is not deployed."
 WORKSPACE_SERVICE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION = "The workspace service needs to be disabled before you can delete it"
 WORKSPACE_SERVICES_NEED_TO_BE_DELETED_BEFORE_WORKSPACE = "All workspace services need to be deleted before you can delete the workspace"
 WORKSPACE_TEMPLATE_VERSION_EXISTS = "A template with this version already exists"
+OPERATION_DOES_NOT_EXIST = "Operation does not exist"
 
 WORKSPACE_SERVICE_TEMPLATE_DOES_NOT_EXIST = "Could not retrieve the workspace service template specified"
 TEMPLATE_DOES_NOT_EXIST = "Could not retrieve the 'current' template with this name"
 NO_UNIQUE_CURRENT_FOR_TEMPLATE = "The template has multiple 'current' versions"
+
+ETAG_REQUIRED = "A valid etag must be supplied in the header of this request"
+ETAG_CONFLICT = "This document has been modified by another user or process since you last retrieved it. Please get the document again and retry."
 
 # Resource Status
 RESOURCE_STATUS_NOT_DEPLOYED = "not_deployed"

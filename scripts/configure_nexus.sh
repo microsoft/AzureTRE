@@ -24,6 +24,10 @@ while [ "$1" != "" ]; do
         tre_id=$1
         ;;
     esac
+    if [[ -z "$2" ]]; then
+      # if no more args then stop processing
+      break
+    fi
     shift # remove the current value for `$1` and use the next
 done
 
@@ -59,13 +63,52 @@ if [ -z "$NEXUS_PASS" ]; then
 fi
 
 #Check if the repo already exists
-export STATUS_CODE=$(curl -iu admin:$NEXUS_PASS -X "GET" "${NEXUS_URL}/service/rest/v1/repositories/apt/proxy/pypi-proxy-repo" -H "accept: application/json" -k -s -w "%{http_code}" -o /dev/null)
+ export STATUS_CODE=$(curl -iu admin:$NEXUS_PASS -X "GET" "${NEXUS_URL}/service/rest/v1/repositories/apt/proxy/ubuntu" -H "accept: application/json" -k -s -w "%{http_code}" -o /dev/null)
+
+ if [[ ${STATUS_CODE} == 404 ]]
+  then
+     # Let's create ubuntu library proxy
+     curl -iu admin:$NEXUS_PASS -XPOST \
+     $NEXUS_URL/service/rest/v1/repositories/apt/proxy \
+     -H 'accept: application/json' \
+     -H 'Content-Type: application/json' \
+     -d '@./scripts/ubuntu_proxy_conf.json'
+ fi
+
+ #Check if the repo already exists
+ export STATUS_CODE=$(curl -iu admin:$NEXUS_PASS -X "GET" "${NEXUS_URL}/service/rest/v1/repositories/apt/proxy/ubuntu-security" -H "accept: application/json" -k -s -w "%{http_code}" -o /dev/null)
+
+ if [[ ${STATUS_CODE} == 404 ]]
+  then
+     # Let's create ubuntu security library proxy
+     curl -iu admin:$NEXUS_PASS -XPOST \
+     $NEXUS_URL/service/rest/v1/repositories/apt/proxy \
+     -H 'accept: application/json' \
+     -H 'Content-Type: application/json' \
+     -d '@./scripts/ubuntu_security_proxy_conf.json'
+ fi
+
+#Check if the repo already exists
+export STATUS_CODE=$(curl -iu admin:$NEXUS_PASS -X "GET" "${NEXUS_URL}/service/rest/v1/repositories/apt/proxy/apt-pypi" -H "accept: application/json" -k -s -w "%{http_code}" -o /dev/null)
 
 if [[ ${STATUS_CODE} == 404 ]]
  then
     # Let's create pypi proxy
     curl -iu admin:$NEXUS_PASS -XPOST \
     $NEXUS_URL/service/rest/v1/repositories/apt/proxy \
+    -H 'accept: application/json' \
+    -H 'Content-Type: application/json' \
+    -d '@./scripts/apt-pypi_proxy_conf.json'
+fi
+
+#Check if the repo already exists
+export STATUS_CODE=$(curl -iu admin:$NEXUS_PASS -X "GET" "${NEXUS_URL}/service/rest/v1/repositories/apt/proxy/pypi" -H "accept: application/json" -k -s -w "%{http_code}" -o /dev/null)
+
+if [[ ${STATUS_CODE} == 404 ]]
+ then
+    # Let's create pypi proxy
+    curl -iu admin:$NEXUS_PASS -XPOST \
+    $NEXUS_URL/service/rest/v1/repositories/pypi/proxy \
     -H 'accept: application/json' \
     -H 'Content-Type: application/json' \
     -d '@./scripts/pypi_proxy_conf.json'

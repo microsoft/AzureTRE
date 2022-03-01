@@ -1,3 +1,4 @@
+---
 name: tre-user-resource-aml-compute-instance
 version: 0.1.1
 description: "Azure Machine Learning Compute Instance"
@@ -55,7 +56,7 @@ mixins:
 
 
 install:
-   - terraform:
+  - terraform:
       description: "Deploy service"
       vars:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
@@ -67,17 +68,19 @@ install:
         user_object_id: "{{ bundle.parameters.user_object_id }}"
         arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
         arm_client_id: "{{ bundle.credentials.azure_client_id }}"
-        arm_client_secret:  "{{ bundle.credentials.azure_client_secret }}"
+        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
         arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
       backendConfig:
-        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
+        resource_group_name:
+          "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name:
+          "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "tre-user-resource-aml-compute-instance-{{ bundle.parameters.id }}"
 
 
 uninstall:
-- exec:
+  - exec:
       description: "Delete AML Compute Instance"
       command: echo
       arguments:

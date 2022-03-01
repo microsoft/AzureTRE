@@ -28,6 +28,9 @@ make letsencrypt
 !!! caution
     There are rate limits with Let's Encrypt, so this should not be run when not needed.
 
+!!! info
+    If you're using Codespaces, you'll encounter a bug when trying to run `make letsencrypt` where the incorrect IP will be whitelisted on the storage account and Codespaces won't be able to upload the test file due to a 403 error. The workaround until this is fixed is to temporarily disable the firewall on your `stweb{TRE_ID}` storage account before running the script, then re-enable afterwards.
+
 ## Validate the deployment
 
 ### Using curl
@@ -52,7 +55,7 @@ curl https://<azure_tre_fqdn>/api/health
 
 ### Using the API docs
 
-Open your browser and navigate to the `/api/docs` route of the API:  `https://<azure_tre_fqdn>/api/docs` and click *Try it out* on the operation of choice.
+Open your browser and navigate to the `/api/docs` route of the API:  `https://<azure_tre_fqdn>/api/docs` and click `Try it out` on the operation of choice.
 
 ![Swagger UI](../../assets/quickstart_swaggerui.png)
 
