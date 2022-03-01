@@ -73,8 +73,12 @@
           "request": "launch",
           "program": "vmss_porter/runner.py",
           "console": "integratedTerminal",
+          "preLaunchTask": "Install_resource_processor_dependencies",
           "cwd": "${workspaceFolder}/resource_processor",
-          "envFile": "${workspaceFolder}/templates/core/tre.env"
+          "envFile": "${workspaceFolder}/templates/core/tre.env",
+          "env": {
+            "PYTHONPATH": "."
+          }
         },
         {
           "name": "Python: Debug Tests",
@@ -95,6 +99,11 @@
         {
           "label": "Copy_env_file_for_api_debug",
           "command": "cp --force ${workspaceFolder}/templates/core/.env ${workspaceFolder}/api_app/.env",
+          "type": "shell"
+        },
+        {
+          "label": "Install_resource_processor_dependencies",
+          "command": "pip install -r ./resource_processor/vmss_porter/requirements.txt",
           "type": "shell"
         },
         {
