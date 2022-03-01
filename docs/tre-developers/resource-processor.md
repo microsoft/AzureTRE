@@ -39,6 +39,8 @@ Once the above is set up you can simulate receiving messages from Service Bus by
 
 This will trigger receiving of messages, and you can freely debug the code by setting breakpoints as desired.
 
+> If you get a credential error when trying to connect to Service Bus, make sure you've authenticated in the AZ CLI first as it uses your local credentials.
+
 ## Porter Azure plugin
 
 Resource Processor uses [Porter Azure plugin](https://github.com/getporter/azure-plugins) to store Porter data in TRE management storage account. The storage container, named `porter`, is created during the bootstrapping phase of TRE deployment. The `/resource_processor/run.sh` script generates a `config.toml` file in Porter home folder to enable the Azure plugin when the image is started.
