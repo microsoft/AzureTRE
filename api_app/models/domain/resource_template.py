@@ -21,6 +21,7 @@ class Property(AzureTREModel):
     maxLength: Optional[int] = Field(None, title="Maximum length")
     minLength: Optional[int] = Field(None, title="Minimum length")
     pattern: Optional[str] = Field(None, title="Pattern")
+    updateable: Optional[bool] = Field(None, title="Can this field be updated?")
 
 
 class CustomAction(AzureTREModel):
@@ -40,3 +41,6 @@ class ResourceTemplate(AzureTREModel):
     required: List[str] = Field(title="List of properties which must be provided")
     properties: Dict[str, Property] = Field(title="Template properties")
     actions: List[CustomAction] = Field(default=[], title="Template custom actions")
+
+    # setting this to false means if extra, unexpected fields are supplied, the request is invalidated
+    additionalProperties: bool = Field(default=False, title="Prevent unspecified properties being applied")

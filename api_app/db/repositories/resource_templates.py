@@ -23,13 +23,13 @@ class ResourceTemplateRepository(BaseRepository):
         return f'SELECT * FROM c WHERE c.resourceType = "{resource_type}" AND c.name = "{name}"'
 
     @staticmethod
-    def enrich_template(template: ResourceTemplate) -> dict:
+    def enrich_template(template: ResourceTemplate, is_update: bool = False) -> dict:
         if template.resourceType == ResourceType.Workspace:
-            return enrich_workspace_template(template)
+            return enrich_workspace_template(template, is_update=is_update)
         elif template.resourceType == ResourceType.WorkspaceService:
-            return enrich_workspace_service_template(template)
+            return enrich_workspace_service_template(template, is_update=is_update)
         else:
-            return enrich_user_resource_template(template)
+            return enrich_user_resource_template(template, is_update=is_update)
 
     def get_templates_information(self, resource_type: ResourceType, parent_service_name: str = "") -> List[ResourceTemplateInformation]:
         """

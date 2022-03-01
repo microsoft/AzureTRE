@@ -1,3 +1,4 @@
+import datetime
 import uuid
 import pytest
 from mock import patch, MagicMock
@@ -5,6 +6,7 @@ from mock import patch, MagicMock
 from fastapi import HTTPException, status
 
 from api.routes.workspaces import save_and_deploy_resource, send_uninstall_message
+from models.domain.resource_template import ResourceTemplate
 from models.schemas.operation import OperationInResponse
 
 from db.errors import EntityDoesNotExist
@@ -14,11 +16,10 @@ from db.repositories.workspaces import WorkspaceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
 from models.domain.authentication import RoleAssignment
 from models.domain.operation import Operation, Status
-from models.domain.resource import RequestAction, ResourceType
+from models.domain.resource import RequestAction, ResourceHistoryItem, ResourceType
 from models.domain.user_resource import UserResource
 from models.domain.workspace import Workspace, WorkspaceRole
 from models.domain.workspace_service import WorkspaceService
-from models.schemas.resource import ResourcePatch
 from resources import strings
 from services.authentication import get_current_admin_user, get_current_tre_user_or_tre_admin, get_current_workspace_owner_user, get_current_workspace_owner_or_researcher_user, get_current_workspace_owner_or_researcher_user_or_tre_admin
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
@@ -32,6 +33,8 @@ SERVICE_ID = 'abcad738-7265-4b5f-9eae-a1a62928772e'
 USER_RESOURCE_ID = 'a33ad738-7265-4b5f-9eae-a1a62928772a'
 APP_ID = 'f0acf127-a672-a672-a672-a15e5bf9f127'
 OPERATION_ID = '11111111-7265-4b5f-9eae-a1a62928772f'
+FAKE_UPDATE_TIME = datetime.datetime(2022, 1, 1, 17, 5, 55)
+FAKE_UPDATE_TIMESTAMP: float = FAKE_UPDATE_TIME.timestamp()
 
 
 @pytest.fixture
@@ -158,6 +161,43 @@ def sample_user_resource_object(user_resource_id=USER_RESOURCE_ID, workspace_id=
     )
 
     return user_resource
+
+
+def sample_resource_template() -> ResourceTemplate:
+    return ResourceTemplate(id="123",
+                            name="tre-user-resource",
+                            description="description",
+                            version="0.1.0",
+                            resourceType=ResourceType.UserResource,
+                            current=True,
+                            required=['os_image', 'title'],
+                            properties={
+                                'title': {
+                                    'type': 'string',
+                                    'title': 'Title of the resource'
+                                },
+                                'os_image': {
+                                    'type': 'string',
+                                    'title': 'Windows image',
+                                    'description': 'Select Windows image to use for VM',
+                                    'enum': [
+                                        'Windows 10',
+                                        'Server 2019 Data Science VM'
+                                    ],
+                                    'updateable': False
+                                },
+                                'vm_size': {
+                                    'type': 'string',
+                                    'title': 'Windows image',
+                                    'description': 'Select Windows image to use for VM',
+                                    'enum': [
+                                        'small',
+                                        'large'
+                                    ],
+                                    'updateable': True
+                                }
+                            },
+                            actions=[])
 
 
 def disabled_workspace_service():
@@ -393,30 +433,40 @@ class TestWorkspaceRoutesThatRequireAdminRights:
 
     # [PATCH] /workspaces/{workspace_id}
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
-    @ patch("api.routes.workspaces.WorkspaceRepository.patch_resource", return_value=sample_workspace())
+    @ patch("api.routes.workspaces.WorkspaceRepository.update_item_with_etag", return_value=sample_workspace())
     @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
-    async def test_patch_workspaces_patches_workspace(self, _, patch_resource_mock, __, app, client):
-        workspace_to_modify = sample_workspace()
+    @ patch("api.routes.workspaces.WorkspaceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
+    async def test_patch_workspaces_patches_workspace(self, _, __, update_item_mock, ___, app, client):
         workspace_patch = {"isEnabled": False}
         etag = "some-etag-value"
 
+        modified_workspace = sample_workspace()
+        modified_workspace.isEnabled = False
+        modified_workspace.history = [ResourceHistoryItem(properties={'app_id': '12345'}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_UPDATE_TIMESTAMP)]
+        modified_workspace.resourceVersion = 1
+
         response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=WORKSPACE_ID), json=workspace_patch, headers={"etag": etag})
 
-        patch_resource_mock.assert_called_once_with(workspace_to_modify, ResourcePatch(isEnabled=False, properties=None), None, etag)
+        update_item_mock.assert_called_once_with(modified_workspace, etag)
         assert response.status_code == status.HTTP_200_OK
 
     # [PATCH] /workspaces/{workspace_id}
+
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
-    @ patch("api.routes.workspaces.WorkspaceRepository.patch_resource", side_effect=CosmosAccessConditionFailedError)
+    @ patch("api.routes.workspaces.WorkspaceRepository.update_item_with_etag", side_effect=CosmosAccessConditionFailedError)
     @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
-    async def test_patch_workspace_returns_409_if_bad_etag(self, _, patch_workspace_mock, __, app, client):
-        workspace_to_modify = sample_workspace()
-        workspace_patch = {"isEnabled": True}
+    @ patch("api.routes.workspaces.WorkspaceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
+    async def test_patch_workspace_returns_409_if_bad_etag(self, _, __, update_item_mock, ___, app, client):
+        workspace_patch = {"isEnabled": False}
         etag = "some-etag-value"
+        modified_workspace = sample_workspace()
+        modified_workspace.isEnabled = False
+        modified_workspace.history = [ResourceHistoryItem(properties={'app_id': '12345'}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_UPDATE_TIMESTAMP)]
+        modified_workspace.resourceVersion = 1
 
         response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=WORKSPACE_ID), json=workspace_patch, headers={"etag": etag})
 
-        patch_workspace_mock.assert_called_once_with(workspace_to_modify, ResourcePatch(isEnabled=True, properties=None), None, etag)
+        update_item_mock.assert_called_once_with(modified_workspace, etag)
         assert response.status_code == status.HTTP_409_CONFLICT
         assert response.text == strings.ETAG_CONFLICT
 
@@ -625,19 +675,60 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
 
     # [PATCH] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
     @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
+    @ patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=sample_workspace_service())
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
     @ patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id", return_value=sample_user_resource_object())
-    @ patch("api.routes.workspaces.UserResourceRepository.patch_resource", return_value=sample_user_resource_object())
-    async def test_patch_user_resources_patches_user_resource(self, patch_resource_mock, _, __, ___, ____, app, client):
-        user_resource_to_patch = sample_user_resource_object()
+    @ patch("api.routes.workspaces.UserResourceRepository.update_item_with_etag", return_value=sample_user_resource_object())
+    @ patch("api.routes.workspaces.UserResourceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
+    async def test_patch_user_resources_patches_user_resource(self, _, update_item_mock, __, ___, ____, _____, ______, app, client):
         user_resource_service_patch = {"isEnabled": False}
         etag = "some-etag-value"
 
+        modified_user_resource = sample_user_resource_object()
+        modified_user_resource.isEnabled = False
+        modified_user_resource.history = [ResourceHistoryItem(properties={}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_UPDATE_TIMESTAMP)]
+        modified_user_resource.resourceVersion = 1
+
         response = await client.patch(app.url_path_for(strings.API_UPDATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID), json=user_resource_service_patch, headers={"etag": etag})
 
-        patch_resource_mock.assert_called_once_with(user_resource_to_patch, ResourcePatch(isEnabled=False, properties=None), None, etag)
+        update_item_mock.assert_called_once_with(modified_user_resource, etag)
         assert response.status_code == status.HTTP_200_OK
+
+    # [PATCH] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
+    @ patch("api.routes.workspaces.UserResourceRepository.update_item_with_etag", return_value=sample_user_resource_object())
+    @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=sample_resource_template())
+    @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=sample_workspace_service())
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
+    @ patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id", return_value=sample_user_resource_object())
+    @ patch("api.routes.workspaces.UserResourceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
+    async def test_patch_user_resource_validates_against_template(self, _, __, ___, ____, _____, update_item_mock, app, client):
+        user_resource_service_patch = {'isEnabled': False, 'properties': {'vm_size': 'large'}}
+        etag = "some-etag-value"
+
+        modified_resource = sample_user_resource_object()
+        modified_resource.isEnabled = False
+        modified_resource.history = [ResourceHistoryItem(properties={}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_UPDATE_TIMESTAMP)]
+        modified_resource.resourceVersion = 1
+        modified_resource.properties["vm_size"] = "large"
+
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID), json=user_resource_service_patch, headers={"etag": etag})
+
+        update_item_mock.assert_called_once_with(modified_resource, etag)
+        assert response.status_code == status.HTTP_200_OK
+
+    # [PATCH] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
+    @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=sample_resource_template())
+    @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=sample_workspace_service())
+    @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
+    @ patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id", return_value=sample_user_resource_object())
+    @ patch("api.routes.workspaces.UserResourceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
+    async def test_patch_user_resource_400_when_invalid(self, _, __, ___, ____, _____, app, client):
+        user_resource_service_patch = {'isEnabled': False, 'properties': {'vm_size': 'INVALID-DATA'}}
+        etag = "some-etag-value"
+
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID), json=user_resource_service_patch, headers={"etag": etag})
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
 
 class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
@@ -768,16 +859,22 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
     @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=sample_workspace_service())
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
-    @ patch("api.routes.workspaces.WorkspaceServiceRepository.patch_resource", return_value=sample_workspace_service())
-    async def test_patch_workspace_service_patches_workspace_service(self, patch_resource_mock, get_workspace_mock, __, ___, app, client):
+    @ patch("api.routes.workspaces.WorkspaceServiceRepository.update_item_with_etag", return_value=sample_workspace_service())
+    @ patch("api.routes.workspaces.WorkspaceServiceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
+    async def test_patch_workspace_service_patches_workspace_service(self, _, update_item_mock, get_workspace_mock, __, ___, app, client):
         auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'roles': {'WorkspaceOwner': 'ab124', 'WorkspaceResearcher': 'ab125'}}
-        workspace_service_to_patch = sample_workspace_service()
+
         get_workspace_mock.return_value = sample_deployed_workspace(WORKSPACE_ID, auth_info_user_in_workspace_owner_role)
         etag = "some-etag-value"
         workspace_service_patch = {"isEnabled": False}
 
+        modified_workspace_service = sample_workspace_service()
+        modified_workspace_service.isEnabled = False
+        modified_workspace_service.history = [ResourceHistoryItem(properties={}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_UPDATE_TIMESTAMP)]
+        modified_workspace_service.resourceVersion = 1
+
         response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID), json=workspace_service_patch, headers={"etag": etag})
-        patch_resource_mock.assert_called_once_with(workspace_service_to_patch, ResourcePatch(isEnabled=False, properties=None), None, etag)
+        update_item_mock.assert_called_once_with(modified_workspace_service, etag)
 
         assert response.status_code == status.HTTP_200_OK
 
@@ -931,15 +1028,20 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=sample_workspace_service())
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
     @ patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id", return_value=sample_user_resource_object())
-    @ patch("api.routes.workspaces.UserResourceRepository.patch_resource", return_value=sample_user_resource_object())
-    async def test_patch_user_resources_patches_user_resource(self, patch_resource_mock, _, __, ___, ____, _____, app, client):
-        user_resource_to_patch = sample_user_resource_object()
+    @ patch("api.routes.workspaces.UserResourceRepository.update_item_with_etag", return_value=sample_user_resource_object())
+    @ patch("api.routes.workspaces.UserResourceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
+    async def test_patch_user_resources_patches_user_resource(self, _, update_item_mock, __, ___, ____, _____, ______, app, client):
         user_resource_service_patch = {"isEnabled": False}
         etag = "some-etag-value"
 
+        modified_user_resource = sample_user_resource_object()
+        modified_user_resource.isEnabled = False
+        modified_user_resource.history = [ResourceHistoryItem(properties={}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_UPDATE_TIMESTAMP)]
+        modified_user_resource.resourceVersion = 1
+
         response = await client.patch(app.url_path_for(strings.API_UPDATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID), json=user_resource_service_patch, headers={"etag": etag})
 
-        patch_resource_mock.assert_called_once_with(user_resource_to_patch, ResourcePatch(isEnabled=False, properties=None), None, etag)
+        update_item_mock.assert_called_once_with(modified_user_resource, etag)
         assert response.status_code == status.HTTP_200_OK
 
     # [DELETE] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources
