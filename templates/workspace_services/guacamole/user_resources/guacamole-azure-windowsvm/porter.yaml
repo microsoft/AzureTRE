@@ -1,5 +1,5 @@
 name: tre-service-guacamole-windowsvm
-version: 0.1.2
+version: 0.1.3
 description: "An Azure TRE User Resource Template for Guacamole (Windows 10)"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -46,6 +46,12 @@ parameters:
   - name: os_image
     type: string
     default: "Windows 10"
+  - name: shared_storage_access
+    type: string
+    default: "true"
+  - name: shared_storage_name
+    type: string
+    default: "vm-shared-storage"
 
 outputs:
   - name: ip
@@ -79,6 +85,8 @@ install:
         arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
         image: "{{ bundle.parameters.os_image }}"
+        shared_storage_access: "{{ bundle.parameters.shared_storage_access }}"
+        shared_storage_name: "{{ bundle.parameters.shared_storage_name }}"
       backendConfig:
         resource_group_name:
           "{{ bundle.parameters.tfstate_resource_group_name }}"
@@ -112,6 +120,8 @@ uninstall:
         arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
         image: "{{ bundle.parameters.os_image }}"
+        shared_storage_access: "{{ bundle.parameters.shared_storage_access }}"
+        shared_storage_name: "{{ bundle.parameters.shared_storage_name }}"
       backendConfig:
         resource_group_name:
           "{{ bundle.parameters.tfstate_resource_group_name }}"
