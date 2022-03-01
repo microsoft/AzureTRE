@@ -65,6 +65,7 @@ def create_sample_operation(resource_id):
         resourceId=resource_id,
         resourcePath=f'/workspaces/{resource_id}',
         resourceVersion=0,
+        action="install",
         message="test"
     )
 

@@ -60,6 +60,22 @@ jq -r '
         {
             "path": "app_insights_connection_string",
             "env_var": "APPLICATIONINSIGHTS_CONNECTION_STRING"
+        },
+        {
+            "path": "mgmt_storage_account_name",
+            "env_var": "MGMT_STORAGE_ACCOUNT_NAME"
+        },
+        {
+            "path": "mgmt_resource_group_name",
+            "env_var": "MGMT_RESOURCE_GROUP_NAME"
+        },
+        {
+            "path": "terraform_state_container_name",
+            "env_var": "TERRAFORM_STATE_CONTAINER_NAME"
+        },
+        {
+            "path": "registry_server",
+            "env_var": "REGISTRY_SERVER"
         }
     ]
         as $env_vars_to_extract

@@ -27,9 +27,11 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
 
     # add the operation to the db
     if action == RequestAction.Install:
-        operation = operations_repo.create_operation_item(resource_id=resource.id, status=Status.NotDeployed, message=strings.RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE, resource_path=resource.resourcePath)
+        operation = operations_repo.create_operation_item(resource_id=resource.id, status=Status.NotDeployed, action=action, message=strings.RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE, resource_path=resource.resourcePath)
+    elif action == RequestAction.UnInstall:
+        operation = operations_repo.create_operation_item(resource_id=resource.id, status=Status.Deleting, action=action, message=strings.RESOURCE_STATUS_DELETING, resource_path=resource.resourcePath)
     else:
-        operation = operations_repo.create_operation_item(resource_id=resource.id, status=Status.Deleting, message=strings.RESOURCE_STATUS_DELETING, resource_path=resource.resourcePath)
+        operation = operations_repo.create_operation_item(resource_id=resource.id, status=Status.InvokingAction, action=action, message=strings.RESOURCE_ACTION_STATUS_INVOKING, resource_path=resource.resourcePath)
 
     content = json.dumps(resource.get_resource_request_message_payload(operation.id, action))
 

@@ -23,11 +23,6 @@ USAGE
     exit 1
 }
 
-# if no arguments are provided, return usage function
-if [ $# -eq 0 ]; then
-    usage # run usage function
-fi
-
 no_wait=false
 
 while [ "$1" != "" ]; do
@@ -96,7 +91,7 @@ az resource list --resource-group ${core_tre_rg} --query '[].[id]' -o tsv | xarg
 
 # purge keyvault if possible (makes it possible to reuse the same tre_id later)
 # this has to be done before we delete the resource group since we don't wait for it to complete
-if [[ $(az keyvault list --resource-group ${core_tre_rg} --query '[?proterties.enablePurgeProtection==null] | length (@)') != 0 ]]; then
+if [[ $(az keyvault list --resource-group ${core_tre_rg} --query '[?properties.enablePurgeProtection==null] | length (@)') != 0 ]]; then
   tre_id=${core_tre_rg#"rg-"}
   keyvault_name="kv-${tre_id}"
 
