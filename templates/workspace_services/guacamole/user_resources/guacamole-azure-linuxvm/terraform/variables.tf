@@ -9,3 +9,5 @@ variable "arm_use_msi" {}
 variable "tre_resource_id" {}
 
 variable "image" {}
+variable "shared_storage_access" {}
+variable "shared_storage_name" {}

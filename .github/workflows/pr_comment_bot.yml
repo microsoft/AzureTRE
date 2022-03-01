@@ -34,6 +34,7 @@ jobs:
       command: ${{ steps.check_command.outputs.result }}
       prRepo: ${{ steps.get_pr_details.outputs.prRepo }}
       prRef: ${{ steps.get_pr_details.outputs.prRef }}
+      prHeadSha: ${{ steps.get_pr_details.outputs.prHeadSha }}
       refid: ${{ steps.get_pr_details.outputs.refid }}
       ciGitRef: ${{ steps.get_pr_details.outputs.ciGitRef }}
       not-md: ${{ steps.filter.outputs.not-md }}
@@ -52,8 +53,10 @@ jobs:
             switch (commentBody.trim()){
               case "/test":
                 return "run-tests";
-              case "/force-approve":
-                return "force-approve";
+              case "/test-force-approve":
+                return "test-force-approve";
+              case "/test-destroy-env":
+                return "test-destroy-env";
               case "/help":
                 return "show-help";
               default:
@@ -69,12 +72,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Showing help on PR ${PR_NUMBER}"
-          gh pr comment ${PR_NUMBER} --repo $REPO --body "Hello<br/><br/>You can use the following commands:<br/>    /test - run tests on a PR<br/>    /force-approve - force approval of the PR (i.e. skip the deployment checks)<br/>    /help - show this help"
+          gh pr comment ${PR_NUMBER} --repo $REPO --body "Hello<br/><br/>You can use the following commands:<br/>    /test - run tests on a PR<br/>    /test-force-approve - force approval of the PR tests (i.e. skip the deployment checks)<br/>    /test-destroy-env - delete the validation environment for a PR (e.g. to enable testing a deployment from a clean start after previous tests)    /help - show this help"
 
       # Get PR commit details for running tests
       - id: get_pr_details
         name: Get PR details
-        if: ${{ steps.check_command.outputs.result == 'run-tests' }}
+        if: ${{ steps.check_command.outputs.result == 'run-tests' || steps.check_command.outputs.result == 'test-force-approve' || steps.check_command.outputs.result == 'test-destroy-env' }}
         env:
           PR_NUMBER: ${{ github.event.issue.number }}
           REPO: ${{ github.event.repository.full_name }}
@@ -107,10 +110,15 @@ jobs:
           echo "using id of: ${REFID} for GitHub Ref: ${github_pr_ref}"
           echo "::set-output name=refid::${REFID}"
 
+          # Get PR HEAD SHA for checks status
+          echo "Getting PR head SHA"
+          PR_HEAD_SHA=$(gh api /repos/$REPO/pulls/$PR_NUMBER --jq .head.sha)
+          echo "PR_HEAD_SHA: ${PR_HEAD_SHA}"
+          echo "::set-output name=prHeadSha::${PR_HEAD_SHA}"
 
       # Check if the PR build/test needs to run
       - name: Checkout
-        if: ${{ steps.check_command.outputs.result == 'run-tests' || steps.check_command.outputs.result == 'force-approve' }}
+        if: ${{ steps.check_command.outputs.result == 'run-tests' || steps.check_command.outputs.result == 'test-force-approve' }}
         uses: actions/checkout@v2
         with:
           # repository: ${{ steps.get_pr_details.outputs.prRepo }}
@@ -131,12 +139,12 @@ jobs:
       # If we don't run the actual deploy (below) we won't receive a check-run status,
       # and will have to send it "manually"
       - name: Bypass E2E check-runs status
-        if: ${{ (steps.check_command.outputs.result == 'run-tests' && steps.filter.outputs.not-md == 'false') || steps.check_command.outputs.result == 'force-approve' }}
+        if: ${{ (steps.check_command.outputs.result == 'run-tests' && steps.filter.outputs.not-md == 'false') || steps.check_command.outputs.result == 'test-force-approve' }}
         uses: LouisBrunner/checks-action@v1.1.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           # the name must be identical to the one received by the real job
-          sha: ${{ steps.get_pr_details.outputs.prRef }}
+          sha: ${{ steps.get_pr_details.outputs.prHeadSha }}
           name: "Deploy PR / Run E2E Tests (Smoke)"
           status: "completed"
           conclusion: "success"
@@ -152,6 +160,24 @@ jobs:
           echo "Showing help on PR ${PR_NUMBER}"
           gh pr comment ${PR_NUMBER} --repo $REPO --body "Running tests: https://github.com/${REPO}/actions/runs/${RUN_ID}"
 
+      # Perform az login for destroy env script to be able to run
+      - name: Azure Login
+        if: ${{ steps.check_command.outputs.result == 'test-destroy-env' }}
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # Destroy validation deployment
+      - name: Run deployment cleanup
+        if: ${{ steps.check_command.outputs.result == 'test-destroy-env' }}
+        env:
+          RG_NAME: ${{ format('rg-tre{0}-mgmt', steps.get_pr_details.outputs.refid) }}
+        run: |
+          set -e
+          gh pr comment ${PR_NUMBER} --repo $REPO --body "Destroying test environment... (run: https://github.com/${REPO}/actions/runs/${RUN_ID})"
+          devops/scripts/destroy_env_no_terraform.sh --core-tre-rg ${RG_NAME}
+          gh pr comment ${PR_NUMBER} --repo $REPO --body "Test environment destroy complete"
+
 
   run_test:
     # Run the tests with the re-usable workflow
@@ -161,6 +187,7 @@ jobs:
     uses: ./.github/workflows/deploy_tre_reusable.yml
     with:
       prRef: ${{ needs.pr_comment.outputs.prRef }}
+      prHeadSha: ${{ needs.pr_comment.outputs.prHeadSha }}
       # prRepo: ${{ needs.pr_comment.outputs.prRepo }}
       ciGitRef: ${{ needs.pr_comment.outputs.ciGitRef }}
     secrets:
@@ -190,3 +217,4 @@ jobs:
       TRE_ADDRESS_SPACE: ${{ secrets.TRE_ADDRESS_SPACE }}
       TRE_ID: ${{ format('tre{0}', needs.pr_comment.outputs.refid) }}
       CI_CACHE_ACR_NAME: ${{ secrets.ACR_NAME }}
+

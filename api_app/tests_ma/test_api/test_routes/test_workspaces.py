@@ -109,6 +109,7 @@ def sample_resource_operation(resource_id: str, operation_id: str):
         resourceId=resource_id,
         resourcePath=f'/workspaces/{resource_id}',
         resourceVersion=0,
+        action="install",
         message="test",
         Status=Status.Deployed,
         createdWhen=1642611942.423857,

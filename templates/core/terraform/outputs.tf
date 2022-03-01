@@ -59,3 +59,20 @@ output "app_insights_connection_string" {
   value     = module.azure_monitor.app_insights_connection_string
   sensitive = true
 }
+
+# Make admin deployment values available in tre.env output for easier local debugging
+output "mgmt_storage_account_name" {
+  value = var.mgmt_storage_account_name
+}
+
+output "mgmt_resource_group_name" {
+  value = var.mgmt_resource_group_name
+}
+
+output "terraform_state_container_name" {
+  value = var.terraform_state_container_name
+}
+
+output "registry_server" {
+  value = var.docker_registry_server
+}

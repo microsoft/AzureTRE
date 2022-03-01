@@ -87,7 +87,7 @@ def basic_resource_template(input_workspace_template):
         current=True,
         required=input_workspace_template.json_schema["required"],
         properties=input_workspace_template.json_schema["properties"],
-        actions=input_workspace_template.customActions
+        customActions=input_workspace_template.customActions
     )
 
 
@@ -102,7 +102,7 @@ def basic_workspace_service_template(input_workspace_template):
         current=True,
         required=input_workspace_template.json_schema["required"],
         properties=input_workspace_template.json_schema["properties"],
-        actions=input_workspace_template.customActions
+        customActions=input_workspace_template.customActions
 
     )
 
@@ -119,7 +119,7 @@ def basic_user_resource_template(input_user_resource_template):
         current=True,
         required=input_user_resource_template.json_schema["required"],
         properties=input_user_resource_template.json_schema["properties"],
-        actions=input_user_resource_template.customActions
+        customActions=input_user_resource_template.customActions
     )
 
 
@@ -135,6 +135,6 @@ def user_resource_template_in_response(input_user_resource_template):
         current=True,
         required=input_user_resource_template.json_schema["required"],
         properties=input_user_resource_template.json_schema["properties"],
-        actions=input_user_resource_template.customActions,
+        customActions=input_user_resource_template.customActions,
         system_properties={}
     )
