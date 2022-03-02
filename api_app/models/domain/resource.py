@@ -18,7 +18,7 @@ class ResourceType(str, Enum):
 
 class ResourceHistoryItem(AzureTREModel):
     """
-    Resource History Item - to preserve history of resource properties
+    Resource History Item - to preserve history of resource properties - changing comment here
     """
     properties: dict = {}
     isEnabled: bool
