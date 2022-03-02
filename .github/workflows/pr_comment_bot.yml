@@ -13,15 +13,49 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Determine whether the comment is a command
-      - id: check_command
-        name: Check for a command using GitHub script
+      - name: Echo payload info
         run: |
           echo "Debug...."
           echo "github.event.issue.pull_request: ${{ github.event.issue.pull_request }}"
           echo "github.event.comment.author_association: ${{ github.event.comment.author_association }}"
 
+      - name: Check for user permissions
+        uses: actions/github-script@v6
+        with:
+          result-encoding: string
+          script: |
+            // https://docs.github.com/en/rest/reference/collaborators#check-if-a-user-is-a-repository-collaborator
+            const commentUsername = context.payload.comment.user.login;
+            const repoFullName = context.payload.repository.full_name;
+            const repoParts = repoFullName.split("/");
+            const repoOwner = repoParts[0];
+            const repoName = repoParts[1];
+
+            let userHasWriteAccess = false;
+            try {
+              console.log(`Checking if user "${commentUsername}" has write access to ${repoOwner}/${repoName} ...`)
+              const result = await github.request('GET /repos/{owner}/{repo}/collaborators/{username}', {
+                owner: repoOwner,
+                repo: repoName,
+                username: commentUsername
+              });
+              userHasWriteAccess = result.status === 204;
+              console.log("success")
+              console.log(result);
+            } catch (err) {
+              console.log("error")
+              console.log(err);
+              if (err.status === 404){
+                console.log("User not found in collaborators");
+              } else {
+                console.log(`Error checking if user has write access: ${err.status} (${err.response.data.message}) `)
+              }
+            }
+            console.log("User has write access: " + userHasWriteAccess);
+
   pr_comment:
     name: PR comment
+    environment: Dev
     # https://docs.github.com/en/graphql/reference/enums#commentauthorassociation
     # (and https://docs.github.com/en/rest/reference/issues#comments)
 
@@ -115,6 +149,16 @@ jobs:
           PR_HEAD_SHA=$(gh api /repos/$REPO/pulls/$PR_NUMBER --jq .head.sha)
           echo "PR_HEAD_SHA: ${PR_HEAD_SHA}"
           echo "::set-output name=prHeadSha::${PR_HEAD_SHA}"
+
+      - name: Output PR details
+        run: |
+          echo "PR Details"
+          echo "=========="
+          echo "prRef    : ${{ steps.get_pr_details.outputs.prRef }}"
+          echo "prRepo   : ${{ steps.get_pr_details.outputs.prRepo }}"
+          echo "prHeadSha: ${{ steps.get_pr_details.outputs.prHeadSha }}"
+          echo "refid    : ${{ steps.get_pr_details.outputs.refid }}"
+          echo "ciGitRef : ${{ steps.get_pr_details.outputs.ciGitRef }}"
 
       # Check if the PR build/test needs to run
       - name: Checkout

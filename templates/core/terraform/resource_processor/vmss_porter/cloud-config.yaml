@@ -41,7 +41,10 @@ write_files:
       APPLICATIONINSIGHTS_CONNECTION_STRING=${app_insights_connection_string}
   # a weekly cron job to have docker free disk space
   - path: /etc/cron.weekly/docker-prune
-    content: docker system prune -f
+    content: |
+      #!/bin/bash
+      set -o errexit
+      docker system prune -f
     permissions: '0755'
 
 runcmd:
