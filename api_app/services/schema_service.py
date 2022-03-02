@@ -48,9 +48,9 @@ def enrich_template(original_template, extra_properties, is_update: bool = False
 
     # if this is an update, mark the non-updateable properties as readOnly
     # this will help the UI render fields appropriately and know what it can send in a PATCH
-    if (is_update is True):
-        for _, prop in template["properties"].items():
-            if("updateable" not in prop.keys() or prop["updateable"] is not True):
+    if is_update:
+        for prop in template["properties"].values():
+            if "updateable" not in prop.keys() or prop["updateable"] is not True:
                 prop["readOnly"] = True
 
     template["system_properties"] = get_system_properties()
@@ -61,6 +61,7 @@ def enrich_workspace_template(template, is_update: bool = False) -> dict:
     """Adds to the provided template all UI and system properties
     Args:
         template: [Template to which UI and system properties are added].
+        is_update: [Indicates that the schema is to be used in an update (PATCH) operation]
     Returns:
         [Dict]: [Enriched template with all required and system properties added]
     """
@@ -73,6 +74,7 @@ def enrich_workspace_service_template(template, is_update: bool = False) -> dict
     """Adds to the provided template all UI and system properties
     Args:
         template: [Template to which UI and system properties are added].
+        is_update: [Indicates that the schema is to be used in an update (PATCH) operation]
     Returns:
         [Dict]: [Enriched template with all required and system properties added]
     """
@@ -84,6 +86,7 @@ def enrich_user_resource_template(template, is_update: bool = False):
     """Adds to the provided template all UI and system properties
     Args:
         template: [Template to which UI and system properties are added].
+        is_update: [Indicates that the schema is to be used in an update (PATCH) operation]
     Returns:
         [Dict]: [Enriched template with all required and system properties added]
     """

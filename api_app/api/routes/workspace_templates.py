@@ -38,8 +38,8 @@ async def get_workspace_templates(template_repo=Depends(get_repository(ResourceT
 
 
 @workspace_templates_admin_router.get("/workspace-templates/{workspace_template_name}", response_model=WorkspaceTemplateInResponse, name=strings.API_GET_WORKSPACE_TEMPLATE_BY_NAME, response_model_exclude_none=True)
-async def get_current_workspace_template_by_name(workspace_template_name: str, isUpdate: bool = False, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> WorkspaceTemplateInResponse:
-    template = get_current_template_by_name(workspace_template_name, template_repo, ResourceType.Workspace, is_update=isUpdate)
+async def get_current_workspace_template_by_name(workspace_template_name: str, is_update: bool = False, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> WorkspaceTemplateInResponse:
+    template = get_current_template_by_name(workspace_template_name, template_repo, ResourceType.Workspace, is_update=is_update)
     return parse_obj_as(WorkspaceTemplateInResponse, template)
 
 
