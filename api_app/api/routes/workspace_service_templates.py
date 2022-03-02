@@ -28,8 +28,8 @@ async def get_workspace_service_templates(template_repo=Depends(get_repository(R
 
 
 @workspace_service_templates_core_router.get("/workspace-service-templates/{service_template_name}", response_model=WorkspaceServiceTemplateInResponse, response_model_exclude_none=True, name=strings.API_GET_WORKSPACE_SERVICE_TEMPLATE_BY_NAME, dependencies=[Depends(get_current_tre_user_or_tre_admin)])
-async def get_current_workspace_service_template_by_name(service_template_name: str, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> WorkspaceServiceTemplateInResponse:
-    template = get_current_template_by_name(service_template_name, template_repo, ResourceType.WorkspaceService)
+async def get_current_workspace_service_template_by_name(service_template_name: str, isUpdate: bool = False, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> WorkspaceServiceTemplateInResponse:
+    template = get_current_template_by_name(service_template_name, template_repo, ResourceType.WorkspaceService, is_update=isUpdate)
     return parse_obj_as(WorkspaceServiceTemplateInResponse, template)
 
 
@@ -49,8 +49,8 @@ async def get_user_resource_templates_for_service_template(service_template_name
 
 
 @user_resource_templates_core_router.get("/workspace-service-templates/{service_template_name}/user-resource-templates/{user_resource_template_name}", response_model=UserResourceTemplateInResponse, response_model_exclude_none=True, name=strings.API_GET_USER_RESOURCE_TEMPLATE_BY_NAME, dependencies=[Depends(get_current_tre_user_or_tre_admin)])
-async def get_current_user_resource_template_by_name(service_template_name: str, user_resource_template_name: str, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> UserResourceTemplateInResponse:
-    template = get_current_template_by_name(user_resource_template_name, template_repo, ResourceType.UserResource, service_template_name)
+async def get_current_user_resource_template_by_name(service_template_name: str, user_resource_template_name: str, isUpdate: bool = False, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> UserResourceTemplateInResponse:
+    template = get_current_template_by_name(user_resource_template_name, template_repo, ResourceType.UserResource, service_template_name, is_update=isUpdate)
     return parse_obj_as(UserResourceTemplateInResponse, template)
 
 

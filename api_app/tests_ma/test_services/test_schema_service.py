@@ -124,3 +124,12 @@ def test_enrich_template_adds_system_properties(basic_resource_template):
     template = services.schema_service.enrich_template(original_template, [])
 
     assert 'tre_id' in template['system_properties']
+
+
+def test_enrich_template_adds_read_only_on_update(basic_resource_template):
+    original_template = basic_resource_template
+
+    template = services.schema_service.enrich_template(original_template, [], is_update=True)
+
+    assert "readOnly" not in template["properties"]["updateable_property"].keys()
+    assert template["properties"]["fixed_property"]["readOnly"] is True

@@ -22,6 +22,7 @@ class Property(AzureTREModel):
     minLength: Optional[int] = Field(None, title="Minimum length")
     pattern: Optional[str] = Field(None, title="Pattern")
     updateable: Optional[bool] = Field(None, title="Can this field be updated?")
+    readOnly: Optional[bool] = Field(None, title="Is this field read only?")
 
 
 class CustomAction(AzureTREModel):
