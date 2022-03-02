@@ -1,5 +1,5 @@
 resource "azurerm_storage_share" "mlflow" {
-  name                 = "mlflow-data"
+  name                 = local.fileshare_name
   storage_account_name = data.azurerm_storage_account.mlflow.name
   quota                = var.mlflow_storage_limit
 }
@@ -10,6 +10,7 @@ resource "azurerm_app_service" "mlflow" {
   resource_group_name = data.azurerm_resource_group.ws.name
   app_service_plan_id = data.azurerm_app_service_plan.workspace.id
   https_only          = true
+  #vnet_route_all_enabled = true
 
   site_config {
     linux_fx_version                     = "DOCKER|${data.azurerm_container_registry.mgmt_acr.login_server}/microsoft/azuretre/${var.image_name}:${var.image_tag}"
@@ -19,13 +20,13 @@ resource "azurerm_app_service" "mlflow" {
 
   app_settings = {
     WEBSITES_PORT          = "5000"
-    WEBSITE_VNET_ROUTE_ALL = "1"
     WEBSITE_DNS_SERVER     = "168.63.129.16"
+    WEBSITE_VNET_ROUTE_ALL = "1"
 
     MLFLOW_SERVER_WORKERS               = "1"
     MLFLOW_SERVER_PORT                  = "5000"
     MLFLOW_SERVER_HOST                  = "0.0.0.0"
-    MLFLOW_SERVER_FILE_STORE            = "/mlruns/mlruns"
+    MLFLOW_SERVER_FILE_STORE            = format("%s%s%s%s%s%s%s%s%s", "postgresql://", local.postgresql_server_name, ".postgres.database.azure.com:5432/mlflowdb?user=", random_password.password.result, "@", local.postgresql_server_name, "&password=", random_password.password.result, "&sslmode=require")
     MLFLOW_SERVER_DEFAULT_ARTIFACT_ROOT = format("%s%s%s%s%s", "wasbs://", azurerm_storage_share.mlflow.name, "@", data.azurerm_storage_account.mlflow.name, ".blob.core.windows.net/mlartefacts")
     AZURE_STORAGE_CONNECTION_STRING     = data.azurerm_storage_account.mlflow.primary_connection_string
   }
@@ -188,8 +189,8 @@ resource "azurerm_private_endpoint" "mlflow" {
 
 resource "azurerm_key_vault_access_policy" "mlflow" {
   key_vault_id = data.azurerm_key_vault.ws.id
-  tenant_id    = azurerm_app_service.mlflow.identity.0.tenant_id
-  object_id    = azurerm_app_service.mlflow.identity.0.principal_id
+  tenant_id    = azurerm_app_service.mlflow.identity[0].tenant_id
+  object_id    = azurerm_app_service.mlflow.identity[0].principal_id
 
   secret_permissions = ["Get", "List", ]
 }
