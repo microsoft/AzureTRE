@@ -31,6 +31,11 @@ parameters:
     type: string
     description: "Resource group containing the devops ACR"
     env: MGMT_RESOURCE_GROUP_NAME
+  - name: is_exposed_externally
+    type: boolean
+    default: false
+    env: IS_EXPOSED_EXTERNALLY
+    description: "Determines if the web app will be available over public/internet or private networks"
   - name: tfstate_resource_group_name
     type: string
     description: "Resource group containing the Terraform state storage account"
@@ -61,6 +66,7 @@ install:
         resource_id: "{{ bundle.parameters.id }}"
         mgmt_acr_name: "{{ bundle.parameters.mgmt_acr_name }}"
         mgmt_resource_group_name: "{{ bundle.parameters.mgmt_resource_group_name }}"
+        is_exposed_externally: "{{ bundle.parameters.is_exposed_externally }}"
         arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
         arm_client_id: "{{ bundle.credentials.azure_client_id }}"
         arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
@@ -87,6 +93,7 @@ uninstall:
         resource_id: "{{ bundle.parameters.id }}"
         mgmt_acr_name: "{{ bundle.parameters.mgmt_acr_name }}"
         mgmt_resource_group_name: "{{ bundle.parameters.mgmt_resource_group_name }}"
+        is_exposed_externally: "{{ bundle.parameters.is_exposed_externally }}"
         arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
         arm_client_id: "{{ bundle.credentials.azure_client_id }}"
         arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
