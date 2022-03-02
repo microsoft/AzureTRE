@@ -63,7 +63,7 @@
           "jinja": true,
           "justMyCode": false,
           "console": "integratedTerminal",
-          "envFile": "${workspaceFolder}/templates/core/tre.env",
+          "envFile": "${workspaceFolder}/templates/core/private.env",
           "preLaunchTask": "Copy_env_file_for_api_debug",
           "cwd": "${workspaceFolder}/api_app"
         },
@@ -75,7 +75,7 @@
           "justMyCode": true,
           "cwd": "${workspaceFolder}/e2e_tests/",
           "preLaunchTask": "Copy_env_file_for_e2e_debug",
-          "envFile": "${workspaceFolder}/templates/core/tre.env",
+          "envFile": "${workspaceFolder}/templates/core/private.env",
           "args": [
             "-m",
             "extended",

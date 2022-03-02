@@ -9,7 +9,7 @@
 
 Use the 'Run and Debug' icon within Visual Studio Code and chose "E2E Extended" in the drop down box and click play.
   - This will copy /workspaces/AzureTRE/templates/core/.env to /workspaces/AzureTRE/e2e_tests/.env for you which supplies your authentciation details
-  - This will also use /workspaces/AzureTRE/templates/core/tre.env file for other values.
+  - This will also use /workspaces/AzureTRE/templates/core/private.env file for other values.
 ## Running the End-to-End tests locally
 
 1. Navigate to the `e2e_tests` folder: `cd e2e_tests`
