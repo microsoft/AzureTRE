@@ -62,3 +62,7 @@ if [ ${shared_storage_access} -eq 1 ]; then
   # Autofs mounts when accessed for 60 seconds.  Folder created for constant visible mount
   sudo ln -s $mntPath "/$fileShareName"
 fi
+
+### Anaconda Config
+conda config --add channels ${nexus_proxy_url}/repository/conda/main
+conda config --remove channels defaults
