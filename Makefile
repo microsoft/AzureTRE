@@ -280,7 +280,6 @@ test-e2e-smoke:
 
 test-e2e-extended:
 	$(call target_title, "Running E2E extended tests") && \
-	export TEST_WORKSPACE_APP_ID=${WORKSPACE_API_CLIENT_ID} && \
 	cd e2e_tests && \
 	python -m pytest -m extended --verify $${IS_API_SECURED:-true} --junit-xml pytest_e2e_extended.xml
 

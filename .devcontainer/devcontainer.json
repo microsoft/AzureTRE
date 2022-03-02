@@ -98,7 +98,7 @@
           }
         },
         {
-          "name": "Python: Debug Python file",
+          "name": "Debug Python file",
           "type": "python",
           "request": "launch",
           "program": "${file}",
