@@ -253,6 +253,7 @@ jobs:
         if: ${{ steps.check_command.outputs.result == 'test-destroy-env' }}
         env:
           RG_NAME: ${{ format('rg-tre{0}-mgmt', steps.get_pr_details.outputs.refid) }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
           gh pr comment ${PR_NUMBER} --repo $REPO --body "Destroying test environment... (run: https://github.com/${REPO}/actions/runs/${RUN_ID})"
