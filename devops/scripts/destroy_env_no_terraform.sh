@@ -90,8 +90,12 @@ echo "Looking for diagnostic settings..."
 az resource list --resource-group ${core_tre_rg} --query '[].[id]' -o tsv | xargs -P 10 -I {} bash -c 'delete_resource_diagnostic "{}"'
 
 # purge keyvault if possible (makes it possible to reuse the same tre_id later)
-# this has to be done before we delete the resource group since we don't wait for it to complete
-if [[ $(az keyvault list --resource-group ${core_tre_rg} --query '[?properties.enablePurgeProtection==null] | length (@)') != 0 ]]; then
+# this has to be done before we delete the resource group since we might not wait for it to complete
+echo "keyvault properties:"
+az keyvault list --resource-group ${core_tre_rg} --query "[].properties"
+echo "keyvault purge protection evaluation result:"
+az keyvault list --resource-group ${core_tre_rg} --query "[?properties.enablePurgeProtection==``null``] | length (@)"
+if [[ $(az keyvault list --resource-group ${core_tre_rg} --query "[?properties.enablePurgeProtection==``null``] | length (@)") != 0 ]]; then
   tre_id=${core_tre_rg#"rg-"}
   keyvault_name="kv-${tre_id}"
 
@@ -100,6 +104,8 @@ if [[ $(az keyvault list --resource-group ${core_tre_rg} --query '[?properties.e
 
   echo "Purging keyvault: ${keyvault_name}"
   az keyvault purge --name ${keyvault_name} ${no_wait_option}
+else
+  echo "Resource group ${core_tre_rg} doesn't have a keyvault without pruge protection."
 fi
 
 # this will find the mgmt, core resource groups as well as any workspace ones
