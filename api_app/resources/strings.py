@@ -44,6 +44,10 @@ COSMOS_DB = "Cosmos DB"
 STATE_STORE_ENDPOINT_NOT_RESPONDING = "State Store endpoint is not responding"
 UNSPECIFIED_ERROR = "Unspecified error"
 
+# Service bus status
+SERVICE_BUS = "Service Bus"
+SERVICE_BUS_NOT_RESPONDING = "Service Bus is not responding"
+
 # Error strings
 ACCESS_APP_IS_MISSING_ROLE = "The App is missing role"
 ACCESS_PLEASE_SUPPLY_APP_ID = "Please supply the app_id for the AAD application"
