@@ -13,15 +13,49 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Determine whether the comment is a command
-      - id: check_command
-        name: Check for a command using GitHub script
+      - name: Echo payload info
         run: |
           echo "Debug...."
           echo "github.event.issue.pull_request: ${{ github.event.issue.pull_request }}"
           echo "github.event.comment.author_association: ${{ github.event.comment.author_association }}"
 
+      - name: Check for a command using GitHub script
+        uses: actions/github-script@v6
+        with:
+          result-encoding: string
+          script: |
+            // https://docs.github.com/en/rest/reference/collaborators#check-if-a-user-is-a-repository-collaborator
+            const commentUsername = context.payload.comment.user.login;
+            const repoFullName = context.payload.repository.full_name;
+            const repoParts = repoFullName.split("/");
+            const repoOwner = repoParts[0];
+            const repoName = repoParts[1];
+
+            let userHasWriteAccess = false;
+            try {
+              console.log(`Checking if user "${commentUsername}" has write access to ${repoOwner}/${repoName} ...`)
+              const result = await github.request('GET /repos/{owner}/{repo}/collaborators/{username}', {
+                owner: repoOwner,
+                repo: repoName,
+                username: commentUsername
+              });
+              const userHasWriteAccess = result.status === 204;
+              console.log("success")
+              console.log(result);
+            } catch (err) {
+              console.log("error")
+              console.log(err);
+              if (err.status === 404){
+                console.log("User not found in collaborators");
+              } else {
+                console.log(`Error checking if user has write access: ${err.status} (${err.response.data.message}) `)
+              }
+            }
+            console.log("User has write access: " + userHasWriteAccess);
+
   pr_comment:
     name: PR comment
+    environment: Dev
     # https://docs.github.com/en/graphql/reference/enums#commentauthorassociation
     # (and https://docs.github.com/en/rest/reference/issues#comments)
 
