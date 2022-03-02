@@ -191,6 +191,17 @@ jobs:
           echo "PR_HEAD_SHA: ${PR_HEAD_SHA}"
           echo "::set-output name=prHeadSha::${PR_HEAD_SHA}"
 
+
+      - name: Output PR details
+        run: |
+          echo "PR Details"
+          echo "=========="
+          echo "prRef    : ${{ steps.get_pr_details.outputs.prRef }}"
+          echo "prRepo   : ${{ steps.get_pr_details.outputs.prRepo }}"
+          echo "prHeadSha: ${{ steps.get_pr_details.outputs.prHeadSha }}"
+          echo "refid    : ${{ steps.get_pr_details.outputs.refid }}"
+          echo "ciGitRef : ${{ steps.get_pr_details.outputs.ciGitRef }}"
+
       # Check if the PR build/test needs to run
       - name: Checkout
         if: ${{ steps.check_command.outputs.result == 'run-tests' || steps.check_command.outputs.result == 'test-force-approve' }}
