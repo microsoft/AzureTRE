@@ -84,6 +84,15 @@ jobs:
     runs-on: ubuntu-latest
     environment: Dev
     steps:
+      - name: Show inputs
+        run: |
+          echo "Inputs"
+          echo "======"
+          echo "prRepo    : ${{ inputs.prRepo }}"
+          echo "prRef     : ${{ inputs.prRef }}"
+          echo "prRHeadSha: ${{ inputs.prHeadSha }}"
+          echo "ciGitRef  : ${{ inputs.ciGitRef }}"
+
       - name: Checkout (default)
         if: ${{ inputs.prRepo == '' }} # if not running for a PR, checkout the default ref for the workflow run
         uses: actions/checkout@v2
