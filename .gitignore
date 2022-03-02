@@ -176,6 +176,9 @@ terraform.rc
 .idea/
 **/http-client.private.env.json
 
+# vscode
+.vscode
+
 # node
 node_modules
 
