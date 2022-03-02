@@ -92,10 +92,10 @@ az resource list --resource-group ${core_tre_rg} --query '[].[id]' -o tsv | xarg
 # purge keyvault if possible (makes it possible to reuse the same tre_id later)
 # this has to be done before we delete the resource group since we might not wait for it to complete
 echo "keyvault properties:"
-az keyvault list --resource-group ${core_tre_rg} --query '[].properties'
+az keyvault list --resource-group ${core_tre_rg} --query "[].properties"
 echo "keyvault purge protection evaluation result:"
-az keyvault list --resource-group ${core_tre_rg} --query '[?properties.enablePurgeProtection==null] | length (@)'
-if [[ $(az keyvault list --resource-group ${core_tre_rg} --query '[?properties.enablePurgeProtection==null] | length (@)') != 0 ]]; then
+az keyvault list --resource-group ${core_tre_rg} --query "[?properties.enablePurgeProtection==``null``] | length (@)"
+if [[ $(az keyvault list --resource-group ${core_tre_rg} --query "[?properties.enablePurgeProtection==``null``] | length (@)") != 0 ]]; then
   tre_id=${core_tre_rg#"rg-"}
   keyvault_name="kv-${tre_id}"
 
