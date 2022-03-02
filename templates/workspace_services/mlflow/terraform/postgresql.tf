@@ -1,11 +1,10 @@
 resource "random_string" "username" {
-  length      = 10
-  upper       = true
-  lower       = true
-  number      = true
-  min_numeric = 1
-  min_lower   = 1
-  special     = false
+  length    = 10
+  upper     = true
+  lower     = true
+  number    = false
+  min_lower = 1
+  special   = false
 }
 
 resource "random_password" "password" {
@@ -35,15 +34,15 @@ resource "azurerm_postgresql_server" "mlflow" {
   administrator_login          = random_string.username.result
   administrator_login_password = random_password.password.result
 
-  sku_name   = "B_Gen5_1"
-  version    = "9.6"
+  sku_name   = "GP_Gen5_2"
+  version    = "11"
   storage_mb = 5120
 
   backup_retention_days        = 7
   geo_redundant_backup_enabled = false
   auto_grow_enabled            = true
 
-  public_network_access_enabled    = false
+  public_network_access_enabled    = true
   ssl_enforcement_enabled          = true
   ssl_minimal_tls_version_enforced = "TLS1_2"
 }
@@ -51,7 +50,15 @@ resource "azurerm_postgresql_server" "mlflow" {
 resource "azurerm_postgresql_database" "mlflow" {
   name                = "mlflowdb"
   resource_group_name = data.azurerm_resource_group.ws.name
-  server_name         = local.postgresql_server_name
+  server_name         = azurerm_postgresql_server.mlflow.name
   charset             = "UTF8"
   collation           = "English_United States.1252"
+}
+
+resource "azurerm_postgresql_virtual_network_rule" "mlflow" {
+  name                                 = "mlflow-postgresql-vnet-rule"
+  resource_group_name                  = data.azurerm_resource_group.ws.name
+  server_name                          = azurerm_postgresql_server.mlflow.name
+  subnet_id                            = data.azurerm_subnet.services.id
+  ignore_missing_vnet_service_endpoint = false
 }
