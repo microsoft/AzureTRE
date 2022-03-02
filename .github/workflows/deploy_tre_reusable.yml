@@ -84,6 +84,15 @@ jobs:
     runs-on: ubuntu-latest
     environment: Dev
     steps:
+      - name: Show inputs
+        run: |
+          echo "Inputs"
+          echo "======"
+          echo "prRepo    : ${{ inputs.prRepo }}"
+          echo "prRef     : ${{ inputs.prRef }}"
+          echo "prRHeadSha: ${{ inputs.prHeadSha }}"
+          echo "ciGitRef  : ${{ inputs.ciGitRef }}"
+
       - name: Checkout (default)
         if: ${{ inputs.prRepo == '' }} # if not running for a PR, checkout the default ref for the workflow run
         uses: actions/checkout@v2
@@ -157,7 +166,7 @@ jobs:
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
-        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        if: ${{ failure() && (github.ref == 'refs/heads/main' && inputs.prRef == '') }}
         with:
           github-token: ${{ github.token }}
           ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
@@ -219,7 +228,7 @@ jobs:
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
-        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        if: ${{ failure() && (github.ref == 'refs/heads/main' && inputs.prRef == '') }}
         with:
           github-token: ${{ github.token }}
           ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
@@ -278,8 +287,8 @@ jobs:
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
           TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
-          TF_VAR_keyvault_purge_protection_enabled: "${{ github.ref == 'refs/heads/main' && true || false }}"
-          TF_VAR_stateful_resources_locked: "${{ github.ref == 'refs/heads/main' && true || false }}"
+          TF_VAR_keyvault_purge_protection_enabled: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
+          TF_VAR_stateful_resources_locked: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
 
       - name: Install Firewall
         uses: ./.github/actions/devcontainer_run_command
@@ -312,8 +321,8 @@ jobs:
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
           TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
-          TF_VAR_keyvault_purge_protection_enabled: "${{ github.ref == 'refs/heads/main' && true || false }}"
-          TF_VAR_stateful_resources_locked: "${{ github.ref == 'refs/heads/main' && true || false }}"
+          TF_VAR_keyvault_purge_protection_enabled: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
+          TF_VAR_stateful_resources_locked: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
 
       - name: Install Nexus
         uses: ./.github/actions/devcontainer_run_command
@@ -346,8 +355,8 @@ jobs:
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
           TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
-          TF_VAR_keyvault_purge_protection_enabled: "${{ github.ref == 'refs/heads/main' && true || false }}"
-          TF_VAR_stateful_resources_locked: "${{ github.ref == 'refs/heads/main' && true || false }}"
+          TF_VAR_keyvault_purge_protection_enabled: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
+          TF_VAR_stateful_resources_locked: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
 
       - name: Install Gitea
         uses: ./.github/actions/devcontainer_run_command
@@ -380,12 +389,12 @@ jobs:
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
           TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
-          TF_VAR_keyvault_purge_protection_enabled: "${{ github.ref == 'refs/heads/main' && true || false }}"
-          TF_VAR_stateful_resources_locked: "${{ github.ref == 'refs/heads/main' && true || false }}"
+          TF_VAR_keyvault_purge_protection_enabled: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
+          TF_VAR_stateful_resources_locked: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
-        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        if: ${{ failure() && (github.ref == 'refs/heads/main' && inputs.prRef == '') }}
         with:
           github-token: ${{ github.token }}
           ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
@@ -486,7 +495,7 @@ jobs:
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
-        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        if: ${{ failure() && (github.ref == 'refs/heads/main' && inputs.prRef == '') }}
         with:
           github-token: ${{ github.token }}
           ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
@@ -611,7 +620,7 @@ jobs:
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
-        if: ${{ failure() && github.ref == 'refs/heads/main'}}
+        if: ${{ failure() && (github.ref == 'refs/heads/main' && inputs.prRef == '') }}
         continue-on-error: true
         with:
           github-token: ${{ github.token }}
@@ -622,7 +631,7 @@ jobs:
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
-        if: ${{ success() && github.ref == 'refs/heads/main' }}
+        if: ${{ success() && (github.ref == 'refs/heads/main' && inputs.prRef == '') }}
         continue-on-error: true
         with:
           github-token: ${{ github.token }}
@@ -646,7 +655,7 @@ jobs:
 
   e2e_tests_extended:
     name: "Run E2E Tests (Extended)"
-    if: ${{ github.ref == 'refs/heads/main' }}
+    if: ${{ github.ref == 'refs/heads/main' && inputs.prRef == '' }}
     runs-on: ubuntu-latest
     environment: Dev
     needs: [register_bundles, build_additional_images]
@@ -689,7 +698,7 @@ jobs:
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
-        if: ${{ failure() && github.ref == 'refs/heads/main'}}
+        if: ${{ failure() && (github.ref == 'refs/heads/main' && inputs.prRef == '') }}
         continue-on-error: true
         with:
           github-token: ${{ github.token }}
@@ -700,7 +709,7 @@ jobs:
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
-        if: ${{ success() && github.ref == 'refs/heads/main' }}
+        if: ${{ success() && (github.ref == 'refs/heads/main' && inputs.prRef == '') }}
         continue-on-error: true
         with:
           github-token: ${{ github.token }}

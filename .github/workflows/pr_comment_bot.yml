@@ -13,15 +13,49 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Determine whether the comment is a command
-      - id: check_command
-        name: Check for a command using GitHub script
+      - name: Echo payload info
         run: |
           echo "Debug...."
           echo "github.event.issue.pull_request: ${{ github.event.issue.pull_request }}"
           echo "github.event.comment.author_association: ${{ github.event.comment.author_association }}"
 
+      - name: Check for user permissions
+        uses: actions/github-script@v6
+        with:
+          result-encoding: string
+          script: |
+            // https://docs.github.com/en/rest/reference/collaborators#check-if-a-user-is-a-repository-collaborator
+            const commentUsername = context.payload.comment.user.login;
+            const repoFullName = context.payload.repository.full_name;
+            const repoParts = repoFullName.split("/");
+            const repoOwner = repoParts[0];
+            const repoName = repoParts[1];
+
+            let userHasWriteAccess = false;
+            try {
+              console.log(`Checking if user "${commentUsername}" has write access to ${repoOwner}/${repoName} ...`)
+              const result = await github.request('GET /repos/{owner}/{repo}/collaborators/{username}', {
+                owner: repoOwner,
+                repo: repoName,
+                username: commentUsername
+              });
+              userHasWriteAccess = result.status === 204;
+              console.log("success")
+              console.log(result);
+            } catch (err) {
+              console.log("error")
+              console.log(err);
+              if (err.status === 404){
+                console.log("User not found in collaborators");
+              } else {
+                console.log(`Error checking if user has write access: ${err.status} (${err.response.data.message}) `)
+              }
+            }
+            console.log("User has write access: " + userHasWriteAccess);
+
   pr_comment:
     name: PR comment
+    environment: Dev
     # https://docs.github.com/en/graphql/reference/enums#commentauthorassociation
     # (and https://docs.github.com/en/rest/reference/issues#comments)
 
@@ -115,6 +149,58 @@ jobs:
           PR_HEAD_SHA=$(gh api /repos/$REPO/pulls/$PR_NUMBER --jq .head.sha)
           echo "PR_HEAD_SHA: ${PR_HEAD_SHA}"
           echo "::set-output name=prHeadSha::${PR_HEAD_SHA}"
+
+      - id: get_pr_details
+        name: Get PR details
+        if: ${{ steps.check_command.outputs.result == 'run-tests' || steps.check_command.outputs.result == 'test-force-approve' || steps.check_command.outputs.result == 'test-destroy-env' }}
+        env:
+          PR_NUMBER: ${{ github.event.issue.number }}
+          REPO: ${{ github.event.repository.full_name }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Could look at moving this to GitHub Script action as well
+
+          echo "Getting PR repo..."
+          pr_owner=$(gh pr view $PR_NUMBER --repo $REPO --json headRepositoryOwner | jq -r .headRepositoryOwner.login)
+          pr_repo=$(gh pr view $PR_NUMBER --repo $REPO --json headRepository | jq -r .headRepository.name)
+          echo -e "\tPR from $pr_owner/$pr_repo"
+
+          echo "Getting PR ref..."
+          ref=$(gh pr view $PR_NUMBER --repo $REPO --json commits | jq -r ".[] | last | .oid")
+          echo -e "\tLatest commit ref: $ref"
+          # Get the prMergeCommit as this is what the pull_request trigger would build
+          prMergeRef=$(gh pr view $PR_NUMBER --repo $REPO --json potentialMergeCommit | jq -r .potentialMergeCommit.oid)
+          echo -e "\tprMergeRef: $prMergeRef"
+          echo
+
+          echo "Setting outputs"
+          echo "::set-output name=prRef::${prMergeRef}"
+          echo "::set-output name=prRepo::${pr_owner}/${pr_repo}"
+          echo "Done"
+
+          github_pr_ref="refs/pull/${PR_NUMBER}/merge"
+          echo "::set-output name=ciGitRef::${github_pr_ref}"
+
+          REFID=$(echo ${github_pr_ref} | shasum | cut -c1-8)
+          echo "using id of: ${REFID} for GitHub Ref: ${github_pr_ref}"
+          echo "::set-output name=refid::${REFID}"
+
+          # Get PR HEAD SHA for checks status
+          echo "Getting PR head SHA"
+          PR_HEAD_SHA=$(gh api /repos/$REPO/pulls/$PR_NUMBER --jq .head.sha)
+          echo "PR_HEAD_SHA: ${PR_HEAD_SHA}"
+          echo "::set-output name=prHeadSha::${PR_HEAD_SHA}"
+
+
+      - name: Output PR details
+        run: |
+          echo "PR Details"
+          echo "=========="
+          echo "prRef    : ${{ steps.get_pr_details.outputs.prRef }}"
+          echo "prRepo   : ${{ steps.get_pr_details.outputs.prRepo }}"
+          echo "prHeadSha: ${{ steps.get_pr_details.outputs.prHeadSha }}"
+          echo "refid    : ${{ steps.get_pr_details.outputs.refid }}"
+          echo "ciGitRef : ${{ steps.get_pr_details.outputs.ciGitRef }}"
 
       # Check if the PR build/test needs to run
       - name: Checkout
