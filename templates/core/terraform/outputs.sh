@@ -22,7 +22,6 @@ source ../.env
 # Add a few extra values to the file to help us (i.e. for local debugging api_app and resource processor)
 echo "SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE='sb-${TRE_ID}.servicebus.windows.net'" >> ../private.env
 echo "TEST_WORKSPACE_APP_ID='${WORKSPACE_API_CLIENT_ID}'" >> ../private.env
-echo "AUTH_TENANT_ID='${AAD_TENANT_ID}'" >> ../private.env
 
 # These next ones from Check Dependencies
 echo "SUBSCRIPTION_ID='${SUB_ID}'" >> ../private.env

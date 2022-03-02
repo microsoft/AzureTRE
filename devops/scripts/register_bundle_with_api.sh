@@ -104,23 +104,23 @@ payload=$(echo ${explain_json} | jq --argfile json_schema template_schema.json -
 if [ -z "${access_token:-}" ]
 then
   # We didn't get an access token but we can try to generate one.
-  if [ ! -z "${AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID:-}" ] && [ ! -z ${AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET:-} ] && [ ! -z "${AUTH_TENANT_ID:-}" ] && [ ! -z "${API_CLIENT_ID:-}" ]
+  if [ ! -z "${AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID:-}" ] && [ ! -z ${AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET:-} ] && [ ! -z "${AAD_TENANT_ID:-}" ] && [ ! -z "${API_CLIENT_ID:-}" ]
   then
     # Use client credentials flow with AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID/SECRET
     echo "Using AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID to get token via client credential flow"
     token_response=$(curl -X POST -H 'Content-Type: application/x-www-form-urlencoded' \
-      https://login.microsoftonline.com/${AUTH_TENANT_ID}/oauth2/v2.0/token \
+      https://login.microsoftonline.com/${AAD_TENANT_ID}/oauth2/v2.0/token \
       -d "client_id=${AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID}"   \
       -d 'grant_type=client_credentials'   \
       -d "scope=api://${API_CLIENT_ID}/.default"   \
       -d "client_secret=${AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET}")
-  elif [ ! -z "${API_CLIENT_ID:-}" ] && [ ! -z "${CLIENT_ID:-}" ] && [ ! -z "${USERNAME:-}" ] && [ ! -z "${PASSWORD:-}" ] && [ ! -z "${AUTH_TENANT_ID:-}" ]
+  elif [ ! -z "${API_CLIENT_ID:-}" ] && [ ! -z "${CLIENT_ID:-}" ] && [ ! -z "${USERNAME:-}" ] && [ ! -z "${PASSWORD:-}" ] && [ ! -z "${AAD_TENANT_ID:-}" ]
   then
     # Use resource owner password credentials flow with USERNAME/PASSWORD
     echo "Using USERNAME to get token via resource owner password credential flow"
     token_response=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d \
       "grant_type=password&resource=${API_CLIENT_ID}&client_id=${CLIENT_ID}&username=${USERNAME}&password=${PASSWORD}&scope=default)" \
-      https://login.microsoftonline.com/${AUTH_TENANT_ID}/oauth2/token)
+      https://login.microsoftonline.com/${AAD_TENANT_ID}/oauth2/token)
   fi
 
   if [ ! -z "${token_response:-}" ]

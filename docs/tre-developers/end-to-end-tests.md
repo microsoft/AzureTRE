@@ -20,12 +20,11 @@ Use the 'Run and Debug' icon within Visual Studio Code and chose "E2E Extended" 
     | `RESOURCE_LOCATION` | The Azure Tre deployed environment `LOCATION`. | `eastus` |
     | `TRE_ID` | The Azure TRE instance name - used for deployment of resources (can be set to anything when debugging locally). | `mytre-dev-3142` |
     | `API_CLIENT_ID` | The application (client) ID of the [TRE API](../tre-admins/auth.md#tre-api) service principal. | |
-    | `AUTH_TENANT_ID` | The tenant ID of the Azure AD. | |
+    | `AAD_TENANT_ID` | The tenant ID of the Azure AD. (This could be different to the tenant the subscription is linked to)| |
     | `CLIENT_ID` | The application (client) ID of the [E2E Test app](../tre-admins/auth.md#tre-e2e-test) service principal. | |
     | `USERNAME` | The username of the [E2E User](../tre-admins/auth.md#end-to-end-test-user). | |
     | `PASSWORD` | The password of the [E2E User](../tre-admins/auth.md#end-to-end-test-user). | |
     | `TEST_WORKSPACE_APP_ID` | The application (client) ID of the [workspaces app](../tre-admins/auth.md#workspaces). | |
-    | `ACR_NAME` | The name of the TRE container registry. | |
 
 1. Run the E2E tests:
 
