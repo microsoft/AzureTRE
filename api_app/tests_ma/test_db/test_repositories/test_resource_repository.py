@@ -85,7 +85,7 @@ def sample_resource_template() -> ResourceTemplate:
                                     'updateable': True
                                 }
                             },
-                            actions=[]).dict()
+                            actions=[]).dict(exclude_none=True)
 
 
 @patch("db.repositories.resources.ResourceRepository._get_enriched_template")
@@ -225,7 +225,6 @@ def test_validate_patch_with_good_fields_passes(template_repo, resource_repo):
     """
     Make sure that patch is NOT valid when non-updateable fields are included
     """
-    resource_repo._validate_resource_parameters = MagicMock(return_value=None)
 
     template_repo.enrich_template = MagicMock(return_value=sample_resource_template())
     template = sample_resource_template()
@@ -233,29 +232,28 @@ def test_validate_patch_with_good_fields_passes(template_repo, resource_repo):
     # check it's valid when updating a single updateable prop
     patch = ResourcePatch(isEnabled=True, properties={'vm_size': 'large'})
     resource_repo.validate_patch(patch, template_repo, template)
-    resource_repo._validate_resource_parameters.assert_called_once()
 
 
-# @patch('db.repositories.resources.ResourceTemplateRepository.enrich_template')
-# def test_validate_patch_with_bad_fields_fails(template_repo, resource_repo):
-#     """
-#     Make sure that patch is NOT valid when non-updateable fields are included
-#     """
+@patch('db.repositories.resources.ResourceTemplateRepository.enrich_template')
+def test_validate_patch_with_bad_fields_fails(template_repo, resource_repo):
+    """
+    Make sure that patch is NOT valid when non-updateable fields are included
+    """
 
-#     template_repo.enrich_template = MagicMock(return_value=sample_resource_template())
-#     template = sample_resource_template()
+    template_repo.enrich_template = MagicMock(return_value=sample_resource_template())
+    template = sample_resource_template()
 
-#     # check it's invalid when sending an unexpected field
-#     patch = ResourcePatch(isEnabled=True, properties={'vm_size': 'large', 'unexpected_field': 'surprise!'})
-#     with pytest.raises(ValidationError):
-#         resource_repo.validate_patch(patch, template_repo, template)
+    # check it's invalid when sending an unexpected field
+    patch = ResourcePatch(isEnabled=True, properties={'vm_size': 'large', 'unexpected_field': 'surprise!'})
+    with pytest.raises(ValidationError):
+        resource_repo.validate_patch(patch, template_repo, template)
 
-#     # check it's invalid when sending a bad value
-#     patch = ResourcePatch(isEnabled=True, properties={'vm_size': 'huge'})
-#     with pytest.raises(ValidationError):
-#         resource_repo.validate_patch(patch, template_repo, template)
+    # check it's invalid when sending a bad value
+    patch = ResourcePatch(isEnabled=True, properties={'vm_size': 'huge'})
+    with pytest.raises(ValidationError):
+        resource_repo.validate_patch(patch, template_repo, template)
 
-#     # check it's invalid when trying to update a non-updateable field
-#     patch = ResourcePatch(isEnabled=True, properties={'vm_size': 'large', 'os_image': 'linux'})
-#     with pytest.raises(ValidationError):
-#         resource_repo.validate_patch(patch, template_repo, template)
+    # check it's invalid when trying to update a non-updateable field
+    patch = ResourcePatch(isEnabled=True, properties={'vm_size': 'large', 'os_image': 'linux'})
+    with pytest.raises(ValidationError):
+        resource_repo.validate_patch(patch, template_repo, template)
