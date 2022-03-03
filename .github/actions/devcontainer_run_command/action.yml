@@ -49,7 +49,7 @@ inputs:
     description: "The API Client Id."
     required: true
   AAD_TENANT_ID:
-    description: "The Tenant Id where the App is registered."
+    description: "The Tenant Id where the App is registered and the Test User is registered for the E2E Tests."
     required: true
   TEST_APP_ID:
     description: "The Test Application Id used to interact with the API."
