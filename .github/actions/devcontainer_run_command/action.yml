@@ -115,10 +115,6 @@ inputs:
     description: "A secondary ACR used for caching in CI environments"
     required: false
     default: ""
-  TF_LOG:
-    description: "Log level of Terraform"
-    required: false
-    default: ""
 
 runs:
   using: composite
