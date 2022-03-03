@@ -10,25 +10,29 @@
       "$id": "#/properties/guac_disable_copy",
       "type": "boolean",
       "title": "Disable 'Copy'",
-      "description": "Disable Copy functionality"
+      "description": "Disable Copy functionality",
+      "updateable": true
     },
     "guac_disable_paste": {
       "$id": "#/properties/guac_disable_paste",
       "type": "boolean",
       "title": "Disable 'Paste'",
-      "description": "Disable Paste functionality"
+      "description": "Disable Paste functionality",
+      "updateable": true
     },
     "guac_enable_drive": {
       "$id": "#/properties/guac_enable_drive",
       "type": "boolean",
       "title": "Enable Drive",
-      "description": "Enable mounted drive"
+      "description": "Enable mounted drive",
+      "updateable": true
     },
     "guac_disable_download": {
       "$id": "#/properties/guac_disable_download",
       "type": "boolean",
       "title": "Disable files download",
-      "description": "Disable files download"
+      "description": "Disable files download",
+      "updateable": true
     },
     "is_exposed_externally": {
       "$id": "#/properties/is_exposed_externally",

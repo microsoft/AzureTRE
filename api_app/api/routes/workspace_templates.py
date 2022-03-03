@@ -17,10 +17,10 @@ from services.authentication import get_current_admin_user
 workspace_templates_admin_router = APIRouter(dependencies=[Depends(get_current_admin_user)])
 
 
-def get_current_template_by_name(template_name: str, template_repo: ResourceTemplateRepository, resource_type: ResourceType, parent_service_template_name: str = "") -> dict:
+def get_current_template_by_name(template_name: str, template_repo: ResourceTemplateRepository, resource_type: ResourceType, parent_service_template_name: str = "", is_update: bool = False) -> dict:
     try:
         template = template_repo.get_current_template(template_name, resource_type, parent_service_template_name)
-        return template_repo.enrich_template(template)
+        return template_repo.enrich_template(template, is_update=is_update)
     except EntityDoesNotExist:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.TEMPLATE_DOES_NOT_EXIST)
     except DuplicateEntity:
@@ -38,8 +38,8 @@ async def get_workspace_templates(template_repo=Depends(get_repository(ResourceT
 
 
 @workspace_templates_admin_router.get("/workspace-templates/{workspace_template_name}", response_model=WorkspaceTemplateInResponse, name=strings.API_GET_WORKSPACE_TEMPLATE_BY_NAME, response_model_exclude_none=True)
-async def get_current_workspace_template_by_name(workspace_template_name: str, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> WorkspaceTemplateInResponse:
-    template = get_current_template_by_name(workspace_template_name, template_repo, ResourceType.Workspace)
+async def get_current_workspace_template_by_name(workspace_template_name: str, is_update: bool = False, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> WorkspaceTemplateInResponse:
+    template = get_current_template_by_name(workspace_template_name, template_repo, ResourceType.Workspace, is_update=is_update)
     return parse_obj_as(WorkspaceTemplateInResponse, template)
 
 
