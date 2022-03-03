@@ -75,4 +75,4 @@ class WorkspaceServiceRepository(ResourceRepository):
     def patch_workspace_service(self, workspace_service: WorkspaceService, workspace_service_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository) -> WorkspaceService:
         # get workspace service template
         workspace_service_template = resource_template_repo.get_template_by_name_and_version(workspace_service.templateName, workspace_service.templateVersion, ResourceType.WorkspaceService)
-        return self.patch_resource(workspace_service, workspace_service_patch, workspace_service_template, etag)
+        return self.patch_resource(workspace_service, workspace_service_patch, workspace_service_template, etag, resource_template_repo)
