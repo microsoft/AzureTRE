@@ -93,17 +93,12 @@ jobs:
           echo "prRHeadSha: ${{ inputs.prHeadSha }}"
           echo "ciGitRef  : ${{ inputs.ciGitRef }}"
 
-      - name: Checkout (default)
-        if: ${{ inputs.prRepo == '' }} # if not running for a PR, checkout the default ref for the workflow run
+      - name: Checkout
         uses: actions/checkout@v2
         with:
           persist-credentials: false
-
-      - name: Checkout (PR)
-        if: ${{ inputs.prRepo != '' }} # if running for a PR, checkout the PR commit
-        uses: actions/checkout@v2
-        with:
-          persist-credentials: false
+          # if the following values are missing (i.e. not triggered via comment workflow)
+          # then the default checkout will apply
           repository: ${{ inputs.prRepo }}
           ref: ${{ inputs.prRef }}
 
@@ -197,17 +192,12 @@ jobs:
           build-and-push-gitea]
 
     steps:
-      - name: Checkout (default)
-        if: ${{ inputs.prRepo == '' }} # if not running for a PR, checkout the default ref for the workflow run
+      - name: Checkout
         uses: actions/checkout@v2
         with:
           persist-credentials: false
-
-      - name: Checkout (PR)
-        if: ${{ inputs.prRepo != '' }} # if running for a PR, checkout the PR commit
-        uses: actions/checkout@v2
-        with:
-          persist-credentials: false
+          # if the following values are missing (i.e. not triggered via comment workflow)
+          # then the default checkout will apply
           repository: ${{ inputs.prRepo }}
           ref: ${{ inputs.prRef }}
 
@@ -242,17 +232,12 @@ jobs:
     needs: [build_core_images]
     environment: Dev
     steps:
-      - name: Checkout (default)
-        if: ${{ inputs.prRepo == '' }} # if not running for a PR, checkout the default ref for the workflow run
+      - name: Checkout
         uses: actions/checkout@v2
         with:
           persist-credentials: false
-
-      - name: Checkout (PR)
-        if: ${{ inputs.prRepo != '' }} # if running for a PR, checkout the PR commit
-        uses: actions/checkout@v2
-        with:
-          persist-credentials: false
+          # if the following values are missing (i.e. not triggered via comment workflow)
+          # then the default checkout will apply
           repository: ${{ inputs.prRepo }}
           ref: ${{ inputs.prRef }}
 
@@ -425,16 +410,12 @@ jobs:
              BUNDLE_DIR: "./templates/workspace_services/innereye"}
     environment: Dev
     steps:
-      - name: Checkout (default)
-        if: ${{ inputs.prRepo == '' }} # if not running for a PR, checkout the default ref for the workflow run
+      - name: Checkout
         uses: actions/checkout@v2
         with:
           persist-credentials: false
-
-      - name: Checkout (PR)
-        if: ${{ inputs.prRepo != '' }} # if running for a PR, checkout the PR commit
-        uses: actions/checkout@v2
-        with:
+          # if the following values are missing (i.e. not triggered via comment workflow)
+          # then the default checkout will apply
           repository: ${{ inputs.prRepo }}
           ref: ${{ inputs.prRef }}
 
@@ -464,17 +445,12 @@ jobs:
         target: [build-and-push-guacamole]
 
     steps:
-      - name: Checkout (default)
-        if: ${{ inputs.prRepo == '' }} # if not running for a PR, checkout the default ref for the workflow run
+      - name: Checkout
         uses: actions/checkout@v2
         with:
           persist-credentials: false
-
-      - name: Checkout (PR)
-        if: ${{ inputs.prRepo != '' }} # if running for a PR, checkout the PR commit
-        uses: actions/checkout@v2
-        with:
-          persist-credentials: false
+          # if the following values are missing (i.e. not triggered via comment workflow)
+          # then the default checkout will apply
           repository: ${{ inputs.prRepo }}
           ref: ${{ inputs.prRef }}
 
@@ -526,20 +502,14 @@ jobs:
              BUNDLE_DIR: "./templates/workspace_services/innereye"}
     environment: Dev
     steps:
-      - name: Checkout (default)
-        if: ${{ inputs.prRepo == '' }} # if not running for a PR, checkout the default ref for the workflow run
+      - name: Checkout
         uses: actions/checkout@v2
         with:
           persist-credentials: false
-
-      - name: Checkout (PR)
-        if: ${{ inputs.prRepo != '' }} # if running for a PR, checkout the PR commit
-        uses: actions/checkout@v2
-        with:
-          persist-credentials: false
+          # if the following values are missing (i.e. not triggered via comment workflow)
+          # then the default checkout will apply
           repository: ${{ inputs.prRepo }}
           ref: ${{ inputs.prRef }}
-
       - name: Register bundle
         uses: ./.github/actions/devcontainer_run_command
         with:
@@ -568,17 +538,12 @@ jobs:
     environment: Dev
     needs: [register_bundles, build_additional_images]
     steps:
-      - name: Checkout (default)
-        if: ${{ inputs.prRepo == '' }} # if not running for a PR, checkout the default ref for the workflow run
+      - name: Checkout
         uses: actions/checkout@v2
         with:
           persist-credentials: false
-
-      - name: Checkout (PR)
-        if: ${{ inputs.prRepo != '' }} # if running for a PR, checkout the PR commit
-        uses: actions/checkout@v2
-        with:
-          persist-credentials: false
+          # if the following values are missing (i.e. not triggered via comment workflow)
+          # then the default checkout will apply
           repository: ${{ inputs.prRepo }}
           ref: ${{ inputs.prRef }}
 
@@ -660,17 +625,12 @@ jobs:
     environment: Dev
     needs: [register_bundles, build_additional_images]
     steps:
-      - name: Checkout (default)
-        if: ${{ inputs.prRepo == '' }} # if not running for a PR, checkout the default ref for the workflow run
+      - name: Checkout
         uses: actions/checkout@v2
         with:
           persist-credentials: false
-
-      - name: Checkout (PR)
-        if: ${{ inputs.prRepo != '' }} # if running for a PR, checkout the PR commit
-        uses: actions/checkout@v2
-        with:
-          persist-credentials: false
+          # if the following values are missing (i.e. not triggered via comment workflow)
+          # then the default checkout will apply
           repository: ${{ inputs.prRepo }}
           ref: ${{ inputs.prRef }}
 
