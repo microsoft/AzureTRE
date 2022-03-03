@@ -17,6 +17,13 @@ build-and-push-resource-processor: build-resource-processor-vm-porter-image push
 build-and-push-gitea: build-gitea-image push-gitea-image
 build-and-push-guacamole: build-guacamole-image push-guacamole-image
 build-and-push-mlflow: build-mlflow-image push-mlflow-image
+tre-deploy: deploy-core deploy-shared-services
+deploy-shared-services: firewall-install gitea-install nexus-install
+
+# to move your environment from the single 'core' deployment (which includes the firewall)
+# toward the shared services model, where it is split out - run the following make target before a tre-deploy
+# This will remove + import the resource state into a shared service
+migrate-firewall-state: prepare-tf-state
 
 bootstrap:
 	$(call target_title, "Bootstrap Terraform") \
@@ -44,6 +51,7 @@ mgmt-destroy:
 # 3. Docker file path
 # 4. Docker context path
 # Example: $(call build_image,"api","./api_app/_version.py","api_app/Dockerfile","./api_app/")
+# The CI_CACHE_ACR_NAME is an optional container registry used for caching in addition to what's in ACR_NAME
 define build_image
 $(call target_title, "Building $(1) Image") \
 && . ./devops/scripts/check_dependencies.sh \
@@ -51,8 +59,11 @@ $(call target_title, "Building $(1) Image") \
 && . ./devops/scripts/set_docker_sock_permission.sh \
 && source <(grep = $(2) | sed 's/ *= */=/g') \
 && az acr login -n $${ACR_NAME} \
+&& if [ ! -z "$${CI_CACHE_ACR_NAME}" ]; then \
+	az acr login -n $${CI_CACHE_ACR_NAME}; \
+	ci_cache="--cache-from $${CI_CACHE_ACR_NAME}.azurecr.io/$${image_name_suffix}:$${__version__}"; fi \
 && docker build -t ${FULL_IMAGE_NAME_PREFIX}/$(1):$${__version__} --build-arg BUILDKIT_INLINE_CACHE=1 \
-	--cache-from ${FULL_IMAGE_NAME_PREFIX}/$(1):$${__version__} -f $(3) $(4)
+	--cache-from ${FULL_IMAGE_NAME_PREFIX}/$(1):$${__version__} $${ci_cache} -f $(3) $(4)
 endef
 
 build-api-image:
@@ -69,7 +80,6 @@ build-guacamole-image:
 
 build-mlflow-image:
 	$(call build_image,"mlflow-server","templates/workspace_services/mlflow/mlflow-server/version.txt","templates/workspace_services/mlflow/mlflow-server/docker/Dockerfile","templates/workspace_services/mlflow/mlflow-server")
-
 
 # A recipe for pushing images. Parameters:
 # 1. Image name suffix
@@ -100,7 +110,43 @@ push-guacamole-image:
 push-mlflow-image:
 	$(call push_image,"mlflow-server","./templates/workspace_services/mlflow/mlflow-server/version.txt")
 
-tre-deploy: tre-start
+# # These targets are for a graceful migration of Firewall
+# # from terraform state in Core to a Shared Service.
+# # See https://github.com/microsoft/AzureTRE/issues/1177
+prepare-tf-state:
+	$(call target_title, "Preparing terraform state") \
+	&& . ./devops/scripts/check_dependencies.sh nodocker \
+	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
+	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
+	&& pushd ./templates/core/terraform > /dev/null && ../../shared_services/firewall/terraform/remove_state.sh && popd > /dev/null \
+	&& pushd ./templates/shared_services/firewall/terraform > /dev/null && ./import_state.sh && popd > /dev/null
+
+terraform-shared-service-deploy:
+	$(call target_title, "Deploying ${DIR} with Terraform") \
+	&& . ./devops/scripts/check_dependencies.sh \
+	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
+	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
+	&& cd ${DIR} && ../../deploy_from_local.sh
+
+firewall-install:
+	$(call target_title, "Installing Firewall") \
+  && make SHARED_SERVICE_KEY=shared-service-firewall terraform-shared-service-deploy DIR=./templates/shared_services/firewall/terraform
+
+gitea-install:
+	$(call target_title, "Installing Gitea") \
+	&& make SHARED_SERVICE_KEY=shared-service-gitea terraform-shared-service-deploy DIR=./templates/shared_services/gitea/terraform
+
+nexus-install:
+	$(call target_title, "Installing Nexus") \
+	&& make SHARED_SERVICE_KEY=shared-service-sonatype-nexus TF_VAR_nexus_properties_path=../nexus.properties terraform-shared-service-deploy DIR=./templates/shared_services/sonatype-nexus/terraform
+
+# / End migration targets
+
+deploy-core: tre-start
 	$(call target_title, "Deploying TRE") \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
@@ -120,13 +166,6 @@ letsencrypt:
 	&& . ./devops/scripts/load_env.sh ./templates/core/tre.env \
 	&& ./templates/core/terraform/scripts/letsencrypt.sh
 
-tre-stop:
-	$(call target_title, "Stopping TRE") \
-	&& . ./devops/scripts/check_dependencies.sh azfirewall \
-	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
-	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& ./devops/scripts/control_tre.sh stop
-
 tre-start:
 	$(call target_title, "Starting TRE") \
 	&& . ./devops/scripts/check_dependencies.sh azfirewall \
@@ -134,13 +173,19 @@ tre-start:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& ./devops/scripts/control_tre.sh start
 
+tre-stop:
+	$(call target_title, "Stopping TRE") \
+	&& . ./devops/scripts/check_dependencies.sh azfirewall \
+	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& ./devops/scripts/control_tre.sh stop
+
 tre-destroy:
 	$(call target_title, "Destroying TRE") \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
+	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
-	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
-	&& cd ./templates/core/terraform/ && ./destroy.sh
+	&& . ./devops/scripts/destroy_env_no_terraform.sh
 
 terraform-deploy:
 	$(call target_title, "Deploying ${DIR} with Terraform") \
@@ -235,20 +280,27 @@ static-web-upload:
 	&& . ./devops/scripts/load_env.sh ./templates/core/tre.env \
 	&& ./templates/core/terraform/scripts/upload_static_web.sh
 
-test-e2e:
+test-e2e-smoke:
 	$(call target_title, "Running E2E smoke tests") && \
 	export SCOPE="api://${RESOURCE}/user_impersonation" && \
 	export WORKSPACE_SCOPE="api://${TEST_WORKSPACE_APP_ID}/user_impersonation" && \
 	cd e2e_tests && \
-	python -m pytest -m smoke --verify $${IS_API_SECURED:-true} --junit-xml pytest_e2e.xml
+	python -m pytest -m smoke --verify $${IS_API_SECURED:-true} --junit-xml pytest_e2e_smoke.xml
 
-setup-local-debugging-api:
-	$(call target_title,"Setting up the ability to debug the API") \
+test-e2e-extended:
+	$(call target_title, "Running E2E extended tests") && \
+	export SCOPE="api://${RESOURCE}/user_impersonation" && \
+	export WORKSPACE_SCOPE="api://${TEST_WORKSPACE_APP_ID}/user_impersonation" && \
+	cd e2e_tests && \
+	python -m pytest -m extended --verify $${IS_API_SECURED:-true} --junit-xml pytest_e2e_extended.xml
+
+setup-local-debugging:
+	$(call target_title,"Setting up the ability to debug the API and Resource Processor") \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& pushd ./templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ./devops/scripts/load_env.sh ./templates/core/tre.env \
-	&& . ./devops/scripts/setup_local_api_debugging.sh
+	&& . ./devops/scripts/setup_local_debugging.sh
 
 register-aad-workspace:
 	$(call target_title,"Registering AAD Workspace") \

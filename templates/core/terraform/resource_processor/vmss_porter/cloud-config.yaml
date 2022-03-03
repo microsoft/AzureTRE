@@ -34,11 +34,18 @@ write_files:
       SERVICE_BUS_RESOURCE_REQUEST_QUEUE=${service_bus_resource_request_queue}
       SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE=${service_bus_namespace}
       VMSS_MSI_ID=${vmss_msi_id}
-      ARM_SUBSCRIPTION_ID=${arm_subscription_id}
+      AZURE_SUBSCRIPTION_ID=${arm_subscription_id}
       ARM_CLIENT_ID=${vmss_msi_id}
-      ARM_TENANT_ID=${arm_tenant_id}
+      AZURE_TENANT_ID=${arm_tenant_id}
       ARM_USE_MSI=true
       APPLICATIONINSIGHTS_CONNECTION_STRING=${app_insights_connection_string}
+  # a weekly cron job to have docker free disk space
+  - path: /etc/cron.weekly/docker-prune
+    content: |
+      #!/bin/bash
+      set -o errexit
+      docker system prune -f
+    permissions: '0755'
 
 runcmd:
   - export DEBIAN_FRONTEND=noninteractive
@@ -47,4 +54,5 @@ runcmd:
   - docker run -d -v /var/run/docker.sock:/var/run/docker.sock
     --restart always --env-file .env
     --name resource_processor_vmss_porter1
+    --log-driver local
     ${docker_registry_server}/${resource_processor_vmss_porter_image_repository}:${resource_processor_vmss_porter_image_tag}

@@ -111,12 +111,18 @@ inputs:
     description: "A value indicating if resources with state will be protected with locks."
     required: false
     default: "true"
+  CI_CACHE_ACR_NAME:
+    description: "A secondary ACR used for caching in CI environments"
+    required: false
+    default: ""
 
 runs:
   using: composite
   steps:
     - name: Checkout
       uses: actions/checkout@v2
+      with:
+        persist-credentials: false
 
     - name: Login to Container Registry
       uses: docker/login-action@v1
@@ -196,9 +202,9 @@ runs:
           -e TRE_URL \
           -e TEST_WORKSPACE_APP_ID \
           -e IS_API_SECURED \
-          -e TF_VAR_ci_git_ref="${{ github.ref }}" \
           -e DOCKER_BUILDKIT \
           -e TF_VAR_keyvault_purge_protection_enabled=${{ inputs.TF_VAR_keyvault_purge_protection_enabled }} \
           -e TF_VAR_stateful_resources_locked=${{ inputs.TF_VAR_stateful_resources_locked }} \
+          -e CI_CACHE_ACR_NAME="${{ inputs.CI_CACHE_ACR_NAME }}" \
           '${{ inputs.ACTIONS_ACR_URI }}tredev:${{ inputs.ACTIONS_DEVCONTAINER_TAG }}' \
         bash -c "${{ inputs.COMMAND }}"
