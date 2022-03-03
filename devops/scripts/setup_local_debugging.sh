@@ -2,10 +2,10 @@
 set -e
 
 : ${TRE_ID?"You have not set you TRE_ID in ./templates/core/.env"}
-: ${RESOURCE_GROUP_NAME?"Check RESOURCE_GROUP_NAME is defined in ./templates/core/tre.env"}
-: ${SERVICE_BUS_RESOURCE_ID?"Check SERVICE_BUS_RESOURCE_ID is defined in ./templates/core/tre.env"}
-: ${STATE_STORE_RESOURCE_ID?"Check STATE_STORE_RESOURCE_ID is defined in ./templates/core/tre.env"}
-: ${COSMOSDB_ACCOUNT_NAME?"Check COSMOSDB_ACCOUNT_NAME is defined in ./templates/core/tre.env"}
+: ${RESOURCE_GROUP_NAME?"Check RESOURCE_GROUP_NAME is defined in ./templates/core/private.env"}
+: ${SERVICE_BUS_RESOURCE_ID?"Check SERVICE_BUS_RESOURCE_ID is defined in ./templates/core/private.env"}
+: ${STATE_STORE_RESOURCE_ID?"Check STATE_STORE_RESOURCE_ID is defined in ./templates/core/private.env"}
+: ${COSMOSDB_ACCOUNT_NAME?"Check COSMOSDB_ACCOUNT_NAME is defined in ./templates/core/private.env"}
 
 SERVICE_BUS_NAMESPACE="sb-${TRE_ID}"
 IPADDR=$(curl ipecho.net/plain; echo)
