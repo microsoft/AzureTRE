@@ -45,19 +45,23 @@ jobs:
               - 'templates/shared_services/gitea/version.txt'
 
       - name: "Stale version: api"
-        if: ${{ steps.filter.outputs.api == 'true' && steps.filter.outputs.api_version == 'false' }}
+        if: ${{ steps.filter.outputs.api == 'true' &&
+          steps.filter.outputs.api_version == 'false' }}
         run: echo "::error::Code update without version change" && exit 1
 
       - name: "Stale version: resource_processor"
-        if: ${{ steps.filter.outputs.resource_processor == 'true' && steps.filter.outputs.resource_processor_version == 'false' }}
+        if: ${{ steps.filter.outputs.resource_processor == 'true' &&
+          steps.filter.outputs.resource_processor_version == 'false' }}
         run: echo "::error::Code update without version change" && exit 1
 
       - name: "Stale version: guacamole_server"
-        if: ${{ steps.filter.outputs.guacamole_server == 'true' && steps.filter.outputs.guacamole_server_version == 'false' }}
+        if: ${{ steps.filter.outputs.guacamole_server == 'true' &&
+          steps.filter.outputs.guacamole_server_version == 'false' }}
         run: echo "::error::Code update without version change" && exit 1
 
       - name: "Stale version: gitea"
-        if: ${{ steps.filter.outputs.gitea == 'true' && steps.filter.outputs.gitea_version == 'false' }}
+        if: ${{ steps.filter.outputs.gitea == 'true' &&
+          steps.filter.outputs.gitea_version == 'false' }}
         run: echo "::error::Code update without version change" && exit 1
 
       - name: Set up Docker Buildx
