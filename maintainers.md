@@ -14,13 +14,13 @@ This command will cause the pr-comment-bot to respond with a comment listing the
 
 ### `/test`
 
-This command runs the build, deploy and test cycle for a PR. 
+This command runs the build, deploy and test cycle for a PR.
 
 **IMPORTANT**
 
-This command works on PRs from forks, and makes the deployment secrets available. Before running tests on a PR, ensure that there are no changes in the PR that could have unintended consequences (e.g. leak secrets or perform undesirable operations in the testing subscription). 
+This command works on PRs from forks, and makes the deployment secrets available. Before running tests on a PR, ensure that there are no changes in the PR that could have unintended consequences (e.g. leak secrets or perform undesirable operations in the testing subscription).
 
-Check for changes to anything that is run during the build/deploy/test cycle, including: 
+Check for changes to anything that is run during the build/deploy/test cycle, including:
 - modifications to workflows (including adding new actions or changing versions of existing actions)
 - modifications to the Makefile
 - modifications to scripts
