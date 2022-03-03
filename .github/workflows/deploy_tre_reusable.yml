@@ -159,16 +159,6 @@ jobs:
           TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
 
-      - name: Notify dedicated teams channel
-        uses: sachinkundu/ms-teams-notification@1.4
-        if: ${{ failure() && (github.ref == 'refs/heads/main' && inputs.prRef == '') }}
-        with:
-          github-token: ${{ github.token }}
-          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-          notification-summary: "Deploy TRE Failed"
-          notification-color: dc3545
-          timezone: Europe/Zurich
-
       - name: Push cached devcontainer
         if: ${{ success() }}
         shell: bash
@@ -215,16 +205,6 @@ jobs:
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
           ACR_NAME: ${{ secrets.ACR_NAME }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
-
-      - name: Notify dedicated teams channel
-        uses: sachinkundu/ms-teams-notification@1.4
-        if: ${{ failure() && (github.ref == 'refs/heads/main' && inputs.prRef == '') }}
-        with:
-          github-token: ${{ github.token }}
-          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-          notification-summary: "Make Core Images Failed"
-          notification-color: dc3545
-          timezone: Europe/Zurich
 
   deploy_tre:
     name: Deploy TRE
@@ -377,16 +357,6 @@ jobs:
           TF_VAR_keyvault_purge_protection_enabled: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
           TF_VAR_stateful_resources_locked: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
 
-      - name: Notify dedicated teams channel
-        uses: sachinkundu/ms-teams-notification@1.4
-        if: ${{ failure() && (github.ref == 'refs/heads/main' && inputs.prRef == '') }}
-        with:
-          github-token: ${{ github.token }}
-          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-          notification-summary: "Deploy TRE Failed"
-          notification-color: dc3545
-          timezone: Europe/Zurich
-
   publish_bundles:
     name: Publish Bundles
     runs-on: ubuntu-latest
@@ -468,16 +438,6 @@ jobs:
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
           ACR_NAME: ${{ secrets.ACR_NAME }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
-
-      - name: Notify dedicated teams channel
-        uses: sachinkundu/ms-teams-notification@1.4
-        if: ${{ failure() && (github.ref == 'refs/heads/main' && inputs.prRef == '') }}
-        with:
-          github-token: ${{ github.token }}
-          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-          notification-summary: "Make Additional Images Failed"
-          notification-color: dc3545
-          timezone: Europe/Zurich
 
   register_bundles:
     name: Register Bundles
@@ -583,28 +543,6 @@ jobs:
           status: "completed"
           conclusion: "success"
 
-      - name: Notify dedicated teams channel
-        uses: sachinkundu/ms-teams-notification@1.4
-        if: ${{ failure() && (github.ref == 'refs/heads/main' && inputs.prRef == '') }}
-        continue-on-error: true
-        with:
-          github-token: ${{ github.token }}
-          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-          notification-summary: "E2E Tests (Smoke) failed"
-          notification-color: dc3545
-          timezone: Europe/Zurich
-
-      - name: Notify dedicated teams channel
-        uses: sachinkundu/ms-teams-notification@1.4
-        if: ${{ success() && (github.ref == 'refs/heads/main' && inputs.prRef == '') }}
-        continue-on-error: true
-        with:
-          github-token: ${{ github.token }}
-          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-          notification-summary: "Deployment and tests passed successfully"
-          notification-color: 28a745
-          timezone: Europe/Zurich
-
       - name: Upload Test Results
         if: always()
         uses: actions/upload-artifact@v2
@@ -656,28 +594,6 @@ jobs:
           TRE_ID: "${{ secrets.TRE_ID }}"
           IS_API_SECURED: false
 
-      - name: Notify dedicated teams channel
-        uses: sachinkundu/ms-teams-notification@1.4
-        if: ${{ failure() && (github.ref == 'refs/heads/main' && inputs.prRef == '') }}
-        continue-on-error: true
-        with:
-          github-token: ${{ github.token }}
-          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-          notification-summary: "E2E Tests (Extended) failed"
-          notification-color: dc3545
-          timezone: Europe/Zurich
-
-      - name: Notify dedicated teams channel
-        uses: sachinkundu/ms-teams-notification@1.4
-        if: ${{ success() && (github.ref == 'refs/heads/main' && inputs.prRef == '') }}
-        continue-on-error: true
-        with:
-          github-token: ${{ github.token }}
-          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-          notification-summary: "Deployment and tests passed successfully"
-          notification-color: 28a745
-          timezone: Europe/Zurich
-
       - name: Upload Test Results
         if: always()
         uses: actions/upload-artifact@v2
@@ -691,30 +607,21 @@ jobs:
         with:
           files: "./e2e_tests/pytest_e2e_extended.xml"
 
-  # Waiting for: https://github.com/microsoft/AzureTRE/issues/1165
-  # tre_stop:
-  #   name: "Deallocate Resources"
-  #   runs-on: ubuntu-latest
-  #   environment: Dev
-  #   needs: [e2e_tests]
-  #   if: |
-  #     ${{
-  #     always() &&
-  #     github.event.name == 'schedule'
-  #     || github.event_name == 'push'
-  #     || github.event_name == 'workflow_dispatch'
-  #     || contains(github.event.pull_request.labels.*.name, 'safe to test')
-  #     }}
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v2
+  summary:
+    name: Summary Notification
+    needs: [e2e_tests_smoke, e2e_tests_extended]
+    runs-on: ubuntu-latest
+    if: ${{ always() && (github.ref == 'refs/heads/main' && inputs.prRef == '') }}
+    environment: Dev
+    steps:
+      - uses: technote-space/workflow-conclusion-action@v2
 
-  #     - name: Deallocate Resources
-  #       shell: bash
-  #       env:
-  #         TRE_ID: "${{secrets.TRE_ID}}"
-  #       run: |
-  #         az extension add --name azure-firewall
-  #         # TODO: enable this once the bug
-  #         # https://github.com/microsoft/AzureTRE/issues/1165 is fixed
-  #         # make tre-stop
+      - name: Notify teams channel
+        if: env.WORKFLOW_CONCLUSION == 'failure' # notify only if failure
+        uses: sachinkundu/ms-teams-notification@1.4
+        with:
+          github-token: ${{ github.token }}
+          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+          notification-summary: "Failed to deploy from main"
+          notification-color: dc3545
+          timezone: Europe/Zurich
