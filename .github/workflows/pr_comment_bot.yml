@@ -199,7 +199,7 @@ jobs:
 
       # Check if the PR build/test needs to run
       - name: Checkout
-        if: ${{ steps.check_command.outputs.result == 'run-tests' || steps.check_command.outputs.result == 'test-force-approve' }}
+        if: ${{ steps.check_command.outputs.result == 'run-tests' || steps.check_command.outputs.result == 'test-force-approve' || steps.check_command.outputs.result == 'test-destroy-env' }}
         uses: actions/checkout@v2
         with:
           # repository: ${{ steps.get_pr_details.outputs.prRepo }}
