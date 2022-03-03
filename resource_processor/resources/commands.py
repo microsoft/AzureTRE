@@ -27,7 +27,7 @@ def azure_acr_login_command(config: ProcessorConfig):
 
 
 async def build_porter_command(config: ProcessorConfig, logger, msg_body, custom_action=False):
-    porter_parameter_keys = await get_porter_parameter_keys(msg_body)
+    porter_parameter_keys = await get_porter_parameter_keys(config, logger, msg_body)
     porter_parameters = ""
 
     if porter_parameter_keys is None:
@@ -45,7 +45,7 @@ async def build_porter_command(config: ProcessorConfig, logger, msg_body, custom
             # if still not found, might be a special case
             # (we give a chance to the method above to allow override of the special handeling done below)
             if parameter_value is None:
-                parameter_value = get_special_porter_param_value(parameter_name, msg_body)
+                parameter_value = get_special_porter_param_value(config, logger, parameter_name, msg_body)
 
             # only append if we have a value, porter will complain anyway about missing parameters
             if parameter_value is not None:
