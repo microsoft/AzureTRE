@@ -62,7 +62,7 @@ jobs:
     # only allow commands where:
     # - the comment is on a PR
     # - the commenting user has write permissions (i.e. is OWNER or COLLABORATOR)
-    if: ${{ github.event.issue.pull_request && (github.event.comment.author_association == 'OWNER' || github.event.comment.author_association == 'COLLABORATOR') }}
+    if: ${{ github.event.issue.pull_request }}
     runs-on: ubuntu-latest
     outputs:
       command: ${{ steps.check_command.outputs.result }}
@@ -80,6 +80,43 @@ jobs:
         with:
           result-encoding: string
           script: |
+            // Previously, we attempted to use github.event.comment.author_association to check for OWNER or COLLABORATOR
+            // Unfortunately, that always shows MEMBER if you are in the microsoft org and have that set to publicly visible
+            // (Can check via https://github.com/orgs/microsoft/people?query=<username>)
+
+            // https://docs.github.com/en/rest/reference/collaborators#check-if-a-user-is-a-repository-collaborator
+            const commentUsername = context.payload.comment.user.login;
+            const repoFullName = context.payload.repository.full_name;
+            const repoParts = repoFullName.split("/");
+            const repoOwner = repoParts[0];
+            const repoName = repoParts[1];
+
+            let userHasWriteAccess = false;
+            try {
+              console.log(`Checking if user "${commentUsername}" has write access to ${repoOwner}/${repoName} ...`)
+              const result = await github.request('GET /repos/{owner}/{repo}/collaborators/{username}', {
+                owner: repoOwner,
+                repo: repoName,
+                username: commentUsername
+              });
+              userHasWriteAccess = result.status === 204;
+              console.log("success")
+              console.log(result);
+            } catch (err) {
+              console.log("error")
+              console.log(err);
+              if (err.status === 404){
+                console.log("User not found in collaborators");
+              } else {
+                console.log(`Error checking if user has write access: ${err.status} (${err.response.data.message}) `)
+              }
+            }
+            console.log("User has write access: " + userHasWriteAccess);
+
+            if (!userHasWriteAccess) {
+              return "none"; // only allow actions for users with write access
+            }
+
             //
             // Determine what action to take
             //
@@ -215,7 +252,10 @@ jobs:
       - name: Run deployment cleanup
         if: ${{ steps.check_command.outputs.result == 'test-destroy-env' }}
         env:
+          PR_NUMBER: ${{ github.event.issue.number }}
+          REPO: ${{ github.event.repository.full_name }}
           RG_NAME: ${{ format('rg-tre{0}-mgmt', steps.get_pr_details.outputs.refid) }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
           gh pr comment ${PR_NUMBER} --repo $REPO --body "Destroying test environment... (run: https://github.com/${REPO}/actions/runs/${RUN_ID})"
