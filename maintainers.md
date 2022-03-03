@@ -6,6 +6,8 @@ This document is targetted at Microsoft maintainers of the AzureTRE project. For
 
 **Note** that these commands are not immediate - you need to wait for the GitHub action that performs the task to start up.
 
+These commands can only be run when commented by a user who is identified as a repo collaborator (see [granting access to run commands](#granting-access-to-run-commands))
+
 ### `/help`
 
 This command will cause the pr-comment-bot to respond with a comment listing the available commands.
@@ -32,3 +34,8 @@ When running `/test` multiple times on a PR, the same TRE ID and environment are
 ### `/test-force-approve`
 
 This command skips running tests for a build and marks the checks as completed. This is intended to be used in scenarios where running the tests for a PR doesn't add value (for example, changing a workflow file that is always pulled from the default branch).
+
+
+## Granting access to run commands
+
+Currently, the GitHub API to determine whether a user is a collaborator doesn't seem to respect permissions that a user is granted via a group. As a result, users need to be directly granted `write` permission in the repo to be able to run the comment bot commands.
