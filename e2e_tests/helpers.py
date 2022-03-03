@@ -101,6 +101,9 @@ async def disable_and_delete_resource(endpoint, resource_type, token, admin_toke
 
 
 async def ping_guacamole_workspace_service(workspace_id, workspace_service_id, token, verify) -> None:
+    # it might take some time to be ready after deployment
+    await asyncio.sleep(20)
+
     async with AsyncClient(verify=verify) as client:
         short_workspace_id = workspace_id[-4:]
         short_workspace_service_id = workspace_service_id[-4:]
