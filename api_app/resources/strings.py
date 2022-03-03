@@ -33,6 +33,10 @@ API_CREATE_WORKSPACE_SERVICE_TEMPLATES = "Register workspace service template"
 API_GET_WORKSPACE_SERVICE_TEMPLATES = "Get workspace service templates"
 API_GET_WORKSPACE_SERVICE_TEMPLATE_BY_NAME = "Get workspace service template by name"
 
+API_CREATE_SHARED_SERVICE_TEMPLATES = "Register shared service template"
+API_GET_SHARED_SERVICE_TEMPLATES = "Get shared service templates"
+API_GET_SHARED_SERVICE_TEMPLATE_BY_NAME = "Get shared service template by name"
+
 API_CREATE_USER_RESOURCE_TEMPLATES = "Register user resource template"
 API_GET_USER_RESOURCE_TEMPLATES = "Get user resource templates applicable to the workspace service template"
 API_GET_USER_RESOURCE_TEMPLATE_BY_NAME = "Get user resource template by name and workspace service"
@@ -98,6 +102,7 @@ RESOURCE_STATUS_DELETING_FAILED = "deleting_failed"
 RESOURCE_TYPE_WORKSPACE = "workspace"
 RESOURCE_TYPE_WORKSPACE_SERVICE = "workspace-service"
 USER_RESOURCE = "user-resource"
+RESOURCE_TYPE_SHARED_SERVICE = "shared-service"
 
 # Deployments
 RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE = "This resource has not yet been deployed"

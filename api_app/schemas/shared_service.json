@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://github.com/microsoft/AzureTRE/schema/workspace_service.json",
+  "type": "object",
+  "title": "Shared Service Default Parameters",
+  "description": "These parameters are required for all shared services",
+  "required": [
+      "display_name",
+      "description"
+  ],
+  "properties": {
+      "display_name": {
+          "type": "string",
+          "title": "Name for the shared service",
+          "description": "The name of the shared service to be displayed to users"
+      },
+      "description": {
+          "type": "string",
+          "title": "Description of the shared service",
+          "description": "Description of the shared service"
+      }
+  }
+}
