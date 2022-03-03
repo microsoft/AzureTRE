@@ -215,6 +215,8 @@ jobs:
       - name: Run deployment cleanup
         if: ${{ steps.check_command.outputs.result == 'test-destroy-env' }}
         env:
+          PR_NUMBER: ${{ github.event.issue.number }}
+          REPO: ${{ github.event.repository.full_name }}
           RG_NAME: ${{ format('rg-tre{0}-mgmt', steps.get_pr_details.outputs.refid) }}
         run: |
           set -e
