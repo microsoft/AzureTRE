@@ -274,6 +274,7 @@ jobs:
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
           TF_VAR_keyvault_purge_protection_enabled: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
           TF_VAR_stateful_resources_locked: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
+          TF_LOG: "TRACE"
 
       - name: Install Firewall
         uses: ./.github/actions/devcontainer_run_command
@@ -308,6 +309,7 @@ jobs:
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
           TF_VAR_keyvault_purge_protection_enabled: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
           TF_VAR_stateful_resources_locked: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
+          TF_LOG: "TRACE"
 
       - name: Install Nexus
         uses: ./.github/actions/devcontainer_run_command
@@ -342,6 +344,7 @@ jobs:
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
           TF_VAR_keyvault_purge_protection_enabled: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
           TF_VAR_stateful_resources_locked: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
+          TF_LOG: "TRACE"
 
       - name: Install Gitea
         uses: ./.github/actions/devcontainer_run_command
@@ -376,6 +379,7 @@ jobs:
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
           TF_VAR_keyvault_purge_protection_enabled: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
           TF_VAR_stateful_resources_locked: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
+          TF_LOG: "TRACE"
 
       - name: Notify dedicated teams channel
         uses: sachinkundu/ms-teams-notification@1.4
