@@ -689,7 +689,7 @@ echo "Done"
 if [[ $workspace -eq 0 ]]; then
   cat << ENV_VARS
 
-Variables:
+** Please copy the following variables to /templates/core/.env **
 
 AAD_TENANT_ID=$(az account show --output json | jq -r '.tenantId')
 API_CLIENT_ID=${apiAppId}
@@ -701,7 +701,7 @@ ENV_VARS
 else
   cat << ENV_VARS
 
-Variables:
+** Please copy the following variables to /templates/core/.env **
 
 AAD_TENANT_ID=$(az account show --output json | jq -r '.tenantId')
 WORKSPACE_API_CLIENT_ID=${apiAppId}
