@@ -4,7 +4,7 @@ This document is targetted at Microsoft maintainers of the AzureTRE project. For
 
 ## PR Comment bot commands
 
-Note that these commands are not immediate - you need to wait for the GitHub action that performs the task to start up.
+**Note** that these commands are not immediate - you need to wait for the GitHub action that performs the task to start up.
 
 ### `/help`
 
@@ -16,7 +16,14 @@ This command runs the build, deploy and test cycle for a PR.
 
 **IMPORTANT**
 
-This command works on PRs from forks, and makes the deployment secrets available. Before running tests on a PR, ensure that there are no changes in the PR that could have unintended consequences (e.g. leak secrets or perform undesirable operations in the testing subscription). Check for changes to anything that is run during the build/deploy/test cycle, including: modifications to workflows (including adding new actions or changing versions of existing actions), modifications to the Makefile or scripts.
+This command works on PRs from forks, and makes the deployment secrets available. Before running tests on a PR, ensure that there are no changes in the PR that could have unintended consequences (e.g. leak secrets or perform undesirable operations in the testing subscription). 
+
+Check for changes to anything that is run during the build/deploy/test cycle, including: 
+- modifications to workflows (including adding new actions or changing versions of existing actions)
+- modifications to the Makefile
+- modifications to scripts
+- new python packages being installed
+
 
 ### `/test-destroy-env`
 
@@ -24,5 +31,4 @@ When running `/test` multiple times on a PR, the same TRE ID and environment are
 
 ### `/test-force-approve`
 
-This command skips running tests for a build and marks the checks as completed. If you run this on a PR and merging it causes issues 
-
+This command skips running tests for a build and marks the checks as completed. This is intended to be used in scenarios where running the tests for a PR doesn't add value (for example, changing a workflow file that is always pulled from the default branch).
