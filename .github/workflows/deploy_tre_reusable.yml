@@ -244,7 +244,7 @@ jobs:
       - name: Deploy TRE Core
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: "TF_VAR_ci_git_ref=${{ inputs.ciGitRef }} make deploy-core"
+          COMMAND: "TF_LOG=TRACE TF_VAR_ci_git_ref=${{ inputs.ciGitRef }} make deploy-core"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
@@ -279,7 +279,7 @@ jobs:
       - name: Install Firewall
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: "make firewall-install"
+          COMMAND: "TF_LOG=TRACE make firewall-install"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
@@ -314,7 +314,7 @@ jobs:
       - name: Install Nexus
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: "make nexus-install"
+          COMMAND: "TF_LOG=TRACE make nexus-install"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
@@ -349,7 +349,7 @@ jobs:
       - name: Install Gitea
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: "make gitea-install"
+          COMMAND: "TF_LOG=TRACE make gitea-install"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
