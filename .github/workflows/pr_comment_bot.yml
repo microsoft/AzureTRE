@@ -255,6 +255,7 @@ jobs:
           PR_NUMBER: ${{ github.event.issue.number }}
           REPO: ${{ github.event.repository.full_name }}
           RG_NAME: ${{ format('rg-tre{0}-mgmt', steps.get_pr_details.outputs.refid) }}
+          RUN_ID: ${{ github.run_id }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
