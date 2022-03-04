@@ -20,7 +20,18 @@ def input_workspace_template():
             "title": "My Workspace Template",
             "description": "This is a test workspace template schema.",
             "required": [],
-            "properties": {}
+            "properties": {
+                "updateable_property": {
+                    "type": "string",
+                    "title": "Test updateable property",
+                    "updateable": True
+                },
+                "fixed_property": {
+                    "type": "string",
+                    "title": "Test fixed property",
+                    "updateable": False
+                }
+            }
         },
         customActions=[
             {

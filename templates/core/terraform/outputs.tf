@@ -60,7 +60,7 @@ output "app_insights_connection_string" {
   sensitive = true
 }
 
-# Make admin deployment values available in tre.env output for easier local debugging
+# Make admin deployment values available in private.env output for easier local debugging
 output "mgmt_storage_account_name" {
   value = var.mgmt_storage_account_name
 }

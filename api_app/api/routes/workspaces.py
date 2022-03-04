@@ -147,8 +147,10 @@ async def patch_workspace(workspace_patch: ResourcePatch, workspace=Depends(get_
     try:
         patched_workspace = workspace_repo.patch_workspace(workspace, workspace_patch, etag, resource_template_repo)
         return WorkspaceInResponse(workspace=patched_workspace)
-    except (CosmosAccessConditionFailedError):
+    except CosmosAccessConditionFailedError:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
+    except ValidationError as v:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=v.message)
 
 
 @workspaces_core_router.delete("/workspaces/{workspace_id}", response_model=OperationInResponse, name=strings.API_DELETE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
@@ -216,8 +218,10 @@ async def patch_workspace_service(workspace_service_patch: ResourcePatch, worksp
     try:
         patched_workspace_service = workspace_service_repo.patch_workspace_service(workspace_service, workspace_service_patch, etag, resource_template_repo)
         return WorkspaceServiceInResponse(workspaceService=patched_workspace_service)
-    except (CosmosAccessConditionFailedError):
+    except CosmosAccessConditionFailedError:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
+    except ValidationError as v:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=v.message)
 
 
 @workspace_services_workspace_router.delete("/workspaces/{workspace_id}/workspace-services/{service_id}", response_model=OperationInResponse, name=strings.API_DELETE_WORKSPACE_SERVICE, dependencies=[Depends(get_current_workspace_owner_user)])
@@ -316,8 +320,10 @@ async def patch_user_resource(user_resource_patch: ResourcePatch, user=Depends(g
     try:
         patched_user_resource = user_resource_repo.patch_user_resource(user_resource, user_resource_patch, etag, resource_template_repo, workspace_service.templateName)
         return UserResourceInResponse(userResource=patched_user_resource)
-    except (CosmosAccessConditionFailedError):
+    except CosmosAccessConditionFailedError:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
+    except ValidationError as v:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=v.message)
 
 
 # user resource actions

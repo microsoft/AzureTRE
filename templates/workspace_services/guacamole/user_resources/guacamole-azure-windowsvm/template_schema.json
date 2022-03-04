@@ -15,7 +15,8 @@
         "enum": [
           "Windows 10",
           "Server 2019 Data Science VM"
-        ]
+        ],
+        "updateable": true
       }
     }
 }

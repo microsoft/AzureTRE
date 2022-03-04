@@ -45,11 +45,11 @@ inputs:
   ARM_SUBSCRIPTION_ID:
     description: "Azure Subscription Id."
     required: true
-  RESOURCE:
+  API_CLIENT_ID:
     description: "The API Client Id."
     required: true
-  AUTH_TENANT_ID:
-    description: "The Tenant Id where the App is registered."
+  AAD_TENANT_ID:
+    description: "The Tenant Id where the App is registered and the Test User is registered for the E2E Tests."
     required: true
   TEST_APP_ID:
     description: "The Test Application Id used to interact with the API."
@@ -138,8 +138,8 @@ runs:
         ARM_CLIENT_ID: "${{ inputs.ARM_CLIENT_ID }}"
         ARM_CLIENT_SECRET: "${{ inputs.ARM_CLIENT_SECRET }}"
         ARM_SUBSCRIPTION_ID: "${{ inputs.ARM_SUBSCRIPTION_ID }}"
-        RESOURCE: "${{ inputs.RESOURCE }}"
-        AUTH_TENANT_ID: "${{ inputs.AUTH_TENANT_ID }}"
+        API_CLIENT_ID: "${{ inputs.API_CLIENT_ID }}"
+        AAD_TENANT_ID: "${{ inputs.AAD_TENANT_ID }}"
         CLIENT_ID: "${{ inputs.TEST_APP_ID }}"
         USERNAME: "${{ inputs.TEST_USER_NAME }}"
         PASSWORD: "${{ inputs.TEST_USER_PASSWORD }}"
@@ -157,7 +157,7 @@ runs:
         TF_VAR_core_address_space: "${{ inputs.TF_VAR_core_address_space }}"
         TF_VAR_tre_address_space: "${{ inputs.TF_VAR_tre_address_space }}"
         TF_VAR_swagger_ui_client_id: "${{ inputs.TF_VAR_swagger_ui_client_id }}"
-        TF_VAR_aad_tenant_id: "${{ inputs.AUTH_TENANT_ID }}"
+        TF_VAR_aad_tenant_id: "${{ inputs.AAD_TENANT_ID }}"
         TF_VAR_api_client_id: "${{ inputs.TF_VAR_api_client_id }}"
         TF_VAR_api_client_secret: "${{ inputs.TF_VAR_api_client_secret }}"
         TF_VAR_acr_name: ${{ inputs.ACR_NAME }}
@@ -192,8 +192,8 @@ runs:
           -e TF_VAR_swagger_ui_client_id \
           -e TF_VAR_core_address_space \
           -e TF_VAR_tre_address_space \
-          -e RESOURCE \
-          -e AUTH_TENANT_ID \
+          -e API_CLIENT_ID \
+          -e AAD_TENANT_ID \
           -e CLIENT_ID \
           -e USERNAME \
           -e PASSWORD \
