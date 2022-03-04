@@ -37,7 +37,7 @@
     {
       "name": "auth_tenant_id",
       "source": {
-        "env": "AUTH_TENANT_ID"
+        "env": "AAD_TENANT_ID"
       }
     },
     {
