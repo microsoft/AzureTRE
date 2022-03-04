@@ -59,4 +59,4 @@ A TRE Workspace will be provisioned in a separate Resource Group along with its 
 
 ## Running costs
 
-The exact running costs will depend on the number of workspaces you have deployed, the workspace services you have enabled within them and the Azure Data center region.  As a rough guide, the TRE instance and workspace deployment in West Europe, as shown in the screenshots above costs ~$1k per month.
+The exact running costs will depend on the number of workspaces you have deployed, the workspace services you have enabled within them and the Azure Data center region.  You can use the [Azure Pricing Calculator](https://azure.microsoft.com/en-gb/pricing/calculator/) on the above services to get an indicative idea of running costs, or contact your Microsoft representative for further guidance.
