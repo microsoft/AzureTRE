@@ -148,5 +148,7 @@
   ],
   "forwardPorts": [
     8000
-  ]
+  ],
+  // Give permission to access docker socket
+  "postCreateCommand": "sudo bash ./devops/scripts/set_docker_sock_permission.sh"
 }
