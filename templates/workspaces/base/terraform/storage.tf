@@ -11,7 +11,7 @@ resource "azurerm_storage_account" "stg" {
 resource "azurerm_storage_share" "shared_storage" {
   name                 = "vm-shared-storage"
   storage_account_name = azurerm_storage_account.stg.name
-  quota                = 50
+  quota                = var.shared_storage_quota
 }
 
 resource "azurerm_storage_account_network_rules" "stgrules" {
