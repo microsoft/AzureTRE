@@ -109,7 +109,9 @@ else
 fi
 
 # this will find the mgmt, core resource groups as well as any workspace ones
-az group list --query "[?starts_with(name, '${core_tre_rg}')].[name]" -o tsv |
+# we are reverse-sorting to first delete the workspace groups (might not be
+# good enough because we use no-wait sometimes)
+az group list --query "[?starts_with(name, '${core_tre_rg}')].[name]" -o tsv | sort -r |
 while read -r rg_item; do
   echo "Deleting resource group: ${rg_item}"
   az group delete --resource-group "${rg_item}" --yes ${no_wait_option}

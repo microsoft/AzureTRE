@@ -199,7 +199,7 @@ jobs:
 
       # Check if the PR build/test needs to run
       - name: Checkout
-        if: ${{ steps.check_command.outputs.result == 'run-tests' || steps.check_command.outputs.result == 'test-force-approve' }}
+        if: ${{ steps.check_command.outputs.result == 'run-tests' || steps.check_command.outputs.result == 'test-force-approve' || steps.check_command.outputs.result == 'test-destroy-env' }}
         uses: actions/checkout@v2
         with:
           # repository: ${{ steps.get_pr_details.outputs.prRepo }}
@@ -254,7 +254,8 @@ jobs:
         env:
           PR_NUMBER: ${{ github.event.issue.number }}
           REPO: ${{ github.event.repository.full_name }}
-          RG_NAME: ${{ format('rg-tre{0}-mgmt', steps.get_pr_details.outputs.refid) }}
+          RG_NAME: ${{ format('rg-tre{0}', steps.get_pr_details.outputs.refid) }}
+          RUN_ID: ${{ github.run_id }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e

@@ -112,6 +112,7 @@ ENV/
 env.bak/
 venv.bak/
 templates/core/tre.env
+private.env
 
 # Spyder project settings
 .spyderproject
@@ -175,6 +176,9 @@ terraform.rc
 # pycharm
 .idea/
 **/http-client.private.env.json
+
+# vscode
+.vscode
 
 # node
 node_modules

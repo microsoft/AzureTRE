@@ -78,3 +78,4 @@ nav:
           - InnerEye: 'tre-templates/workspace-services/inner-eye.md'
       - User Resources:
           - Guacamole Windows VM: 'tre-templates/user-resources/guacamole-windows-vm.md'
+          - Guacamole Linux VM: 'tre-templates/user-resources/guacamole-linux-vm.md'

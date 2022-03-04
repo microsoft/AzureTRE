@@ -109,7 +109,7 @@ class WorkspaceRepository(ResourceRepository):
     def patch_workspace(self, workspace: Workspace, workspace_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository) -> Workspace:
         # get the workspace template
         workspace_template = resource_template_repo.get_template_by_name_and_version(workspace.templateName, workspace.templateVersion, ResourceType.Workspace)
-        return self.patch_resource(workspace, workspace_patch, workspace_template, etag)
+        return self.patch_resource(workspace, workspace_patch, workspace_template, etag, resource_template_repo)
 
     def get_workspace_spec_params(self, full_workspace_id: str):
         params = self.get_resource_base_spec_params()
