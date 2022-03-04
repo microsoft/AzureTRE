@@ -64,5 +64,8 @@ if [ ${shared_storage_access} -eq 1 ]; then
 fi
 
 ### Anaconda Config
+export PATH="/anaconda/condabin":$PATH
+export PATH="/anaconda/bin":$PATH
+export PATH="/anaconda/envs/py38_default/bin":$PATH
 conda config --add channels ${nexus_proxy_url}/repository/conda/main
 conda config --remove channels defaults
