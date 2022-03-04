@@ -1,3 +1,4 @@
+---
 name: tre-shared-service-firewall
 version: 0.0.3
 description: "An Azure TRE Firewall shared service"
@@ -45,10 +46,14 @@ install:
         tre_id: "{{ bundle.parameters.tre_id }}"
         location: "{{ bundle.parameters.azure_location }}"
       backendConfig:
-        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
-        container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.tre_id }}-shared-service-firewall"
+        resource_group_name:
+          "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name:
+          "{{ bundle.parameters.tfstate_storage_account_name }}"
+        container_name:
+          "{{ bundle.parameters.tfstate_container_name }}"
+        key:
+          "{{ bundle.parameters.tre_id }}-shared-service-firewall"
 
 upgrade:
   - exec:
@@ -65,7 +70,11 @@ uninstall:
         tre_id: "{{ bundle.parameters.tre_id }}"
         location: "{{ bundle.parameters.azure_location }}"
       backendConfig:
-        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
-        container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.tre_id }}-shared-service-firewall"
+        resource_group_name:
+          "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name:
+          "{{ bundle.parameters.tfstate_storage_account_name }}"
+        container_name:
+          "{{ bundle.parameters.tfstate_container_name }}"
+        key:
+          "{{ bundle.parameters.tre_id }}-shared-service-firewall"

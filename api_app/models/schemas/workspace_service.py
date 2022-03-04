@@ -53,7 +53,7 @@ class WorkspaceServiceInCreate(BaseModel):
     class Config:
         schema_extra = {
             "example": {
-                "templateName": "guacamole",
+                "templateName": "tre-service-guacamole",
                 "properties": {
                     "display_name": "my workspace service",
                     "description": "some description",
