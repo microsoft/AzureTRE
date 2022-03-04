@@ -1,8 +1,8 @@
-# Azure TRE Deployment Breakdown
+# Azure TRE Resource Breakdown
 
 ## Azure TRE
 
-Once an Azure TRE has been provisioned in an Azure Subscription, you will have a Resource Group named rg-{TRE_ID}.  An example TRE is shown and described here.
+Once an Azure TRE has been provisioned in an Azure Subscription, you will have a Resource Group named `rg-{TRE_ID}`.  An example TRE deployment is shown and described here.
 
 [![Azure TRE Deployment Example](../assets/tre-example.png)](../assets/tre-resources-example.png)
 
@@ -59,4 +59,4 @@ A TRE Workspace will be provisioned in a separate Resource Group along with its 
 
 ## Running costs
 
-The exact running costs will depend on the number of workspaces you have deployed, the workspace services you have enabled within them and the Azure Datacenter region.  As a rough guide, the TRE instance and workspace deployment in West Europe, as shown in the screenshots above costs ~$1k per month.
+The exact running costs will depend on the number of workspaces you have deployed, the workspace services you have enabled within them and the Azure Data center region.  As a rough guide, the TRE instance and workspace deployment in West Europe, as shown in the screenshots above costs ~$1k per month.

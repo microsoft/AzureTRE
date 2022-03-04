@@ -42,6 +42,7 @@ nav:
       - User Roles: 'azure-tre-overview/user-roles.md'
       - Architecture: 'azure-tre-overview/architecture.md'
       - Network Architecture: 'azure-tre-overview/networking.md'
+      - Azure Resource Breakdown: 'azure-tre-overview/tre-resources-breakdown.md'
       - Shared Services:
           - Gitea (Source Mirror): 'azure-tre-overview/shared-services/gitea.md'
           - Nexus (Package Mirror): 'azure-tre-overview/shared-services/nexus.md'
