@@ -74,6 +74,9 @@ build-resource-processor-vm-porter-image:
 build-gitea-image:
 	$(call build_image,"gitea","templates/shared_services/gitea/version.txt","templates/shared_services/gitea/Dockerfile","templates/shared_services/gitea/")
 
+build-gitea-workspace-service-image:
+	$(call build_image,"gitea-workspace-service","templates/workspace_services/gitea/version.txt","templates/workspace_services/gitea/Dockerfile","templates/workspace_services/gitea/")
+
 build-guacamole-image:
 	$(call build_image,"guac-server","templates/workspace_services/guacamole/version.txt","templates/workspace_services/guacamole/guacamole-server/docker/Dockerfile","templates/workspace_services/guacamole/guacamole-server")
 
@@ -99,6 +102,9 @@ push-resource-processor-vm-porter-image:
 
 push-gitea-image:
 	$(call push_image,"gitea","./templates/shared_services/gitea/version.txt")
+
+push-gitea-workspace-service-image:
+	$(call push_image,"gitea-workspace-service","./templates/workspace_services/gitea/version.txt")
 
 push-guacamole-image:
 	$(call push_image,"guac-server","./templates/workspace_services/guacamole/version.txt")

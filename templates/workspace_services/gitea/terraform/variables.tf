@@ -6,5 +6,5 @@ variable "mgmt_acr_name" {}
 variable "gitea_storage_limit" {
   type        = number
   description = "Space allocated in GB for the Gitea data in Azure Files Share"
-  default     = 1024
+  default     = 100
 }

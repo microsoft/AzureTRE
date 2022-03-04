@@ -22,17 +22,17 @@ data "azurerm_app_service_plan" "workspace" {
 }
 
 resource "azurerm_app_service" "gitea" {
-  name                = local.webapp_name
-  location            = data.azurerm_resource_group.ws.location
-  resource_group_name = data.azurerm_resource_group.ws.name
-  app_service_plan_id = data.azurerm_app_service_plan.workspace.id
-  https_only          = true
+  name                            = local.webapp_name
+  location                        = data.azurerm_resource_group.ws.location
+  resource_group_name             = data.azurerm_resource_group.ws.name
+  app_service_plan_id             = data.azurerm_app_service_plan.workspace.id
+  https_only                      = true
   key_vault_reference_identity_id = azurerm_user_assigned_identity.gitea_id.id
 
   app_settings = {
-    # APPINSIGHTS_INSTRUMENTATIONKEY      = data.azurerm_application_insights.ws.instrumentation_key
     WEBSITES_PORT                       = "3000"
-    WEBSITES_ENABLE_APP_SERVICE_STORAGE = false
+    WEBSITES_ENABLE_APP_SERVICE_STORAGE = true
+    WEBSITE_DNS_SERVER                  = "168.63.129.16"
 
     GITEA_USERNAME = "giteaadmin"
     GITEA_PASSWD   = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.gitea_password.id})"
@@ -40,7 +40,7 @@ resource "azurerm_app_service" "gitea" {
 
     GITEA__server__ROOT_URL              = "https://${local.webapp_name}.azurewebsites.net/"
     GITEA__server__LFS_START_SERVER      = "true"
-    GITEA__lfs__PATH                     = "/data/lfs"
+    GITEA__lfs__PATH                     = "/data/gitea/lfs"
     GITEA__lfs__STORAGE_TYPE             = "local"
     GITEA__log_0x2E_console__COLORIZE    = "false" # Azure monitor doens't show colors, so this is easier to read.
     GITEA__picture__DISABLE_GRAVATAR     = "true"  # external avaters are not available due to network restrictions
@@ -53,6 +53,7 @@ resource "azurerm_app_service" "gitea" {
     GITEA__database__NAME     = azurerm_mysql_database.gitea.name
     GITEA__database__USER     = "${azurerm_mysql_server.gitea.administrator_login}@${azurerm_mysql_server.gitea.fqdn}"
     GITEA__database__PASSWD   = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.db_password.id})"
+
   }
 
   lifecycle { ignore_changes = [tags] }
@@ -63,28 +64,13 @@ resource "azurerm_app_service" "gitea" {
   }
 
   site_config {
-    linux_fx_version                     = "DOCKER|${data.azurerm_container_registry.mgmt_acr.login_server}/microsoft/azuretre/gitea:${local.version}"
-    remote_debugging_enabled             = false
-    scm_use_main_ip_restriction          = true
+    linux_fx_version                     = "DOCKER|${data.azurerm_container_registry.mgmt_acr.login_server}/microsoft/azuretre/gitea-workspace-service:${local.version}"
     acr_use_managed_identity_credentials = true
     acr_user_managed_identity_client_id  = azurerm_user_assigned_identity.gitea_id.client_id
-
-
-    cors {
-      allowed_origins     = []
-      support_credentials = false
-    }
 
     always_on              = true
     min_tls_version        = "1.2"
     vnet_route_all_enabled = true
-
-    ip_restriction {
-      action     = "Deny"
-      ip_address = "0.0.0.0/0"
-      name       = "Deny all"
-      priority   = 2147483647
-    }
 
     websockets_enabled = false
   }
@@ -97,7 +83,7 @@ resource "azurerm_app_service" "gitea" {
     access_key = azurerm_storage_account.gitea.primary_access_key
     share_name = azurerm_storage_share.gitea.name
 
-    mount_path = "/data"
+    mount_path = "/data/gitea/"
   }
 
   logs {
@@ -255,12 +241,6 @@ resource "azurerm_key_vault_secret" "gitea_password" {
   depends_on = [
     azurerm_key_vault_access_policy.gitea_policy
   ]
-}
-
-resource "azurerm_storage_share" "gitea" {
-  name                 = "gitea-data"
-  storage_account_name = azurerm_storage_account.gitea.name
-  quota                = var.gitea_storage_limit
 }
 
 resource "azurerm_role_assignment" "gitea_acrpull_role" {
