@@ -2,8 +2,9 @@ import json
 import socket
 import asyncio
 import logging
+import sys
 from resources.commands import build_porter_command, build_porter_command_for_outputs
-from shared.config import ProcessorConfig
+from shared.config import get_config
 from resources.helpers import get_installation_id
 
 from shared.logging import disable_unwanted_loggers, initialize_logging, get_message_id_logger, shell_output_logger  # pylint: disable=import-error # noqa
@@ -19,7 +20,11 @@ logger_adapter = initialize_logging(logging.INFO, socket.gethostname())
 disable_unwanted_loggers()
 
 # Initialise config
-config = ProcessorConfig(logger_adapter)
+try:
+    config = get_config()
+except KeyError as e:
+    logger_adapter.error(f"Environment variable {e} is not set correctly...Exiting")
+    sys.exit(1)
 
 
 @asynccontextmanager
@@ -39,7 +44,7 @@ async def receive_message(service_bus_client):
     marked complete.
     """
     async with service_bus_client:
-        q_name = config.resource_request_queue
+        q_name = config["resource_request_queue"]
         renewer = AutoLockRenewer(max_lock_renewal_duration=1800)
         receiver = service_bus_client.get_queue_receiver(queue_name=q_name, auto_lock_renewer=renewer)
 
@@ -73,7 +78,7 @@ async def run_porter(command):
         ''.join(command),
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
-        env=config.porter_env)
+        env=config["porter_env"])
 
     stdout, stderr = await proc.communicate()
     logging.info(f'run porter exited with {proc.returncode}]')
@@ -116,7 +121,7 @@ async def invoke_porter_action(msg_body, sb_client, message_logger_adapter) -> b
     installation_id = get_installation_id(msg_body)
     action = msg_body["action"]
     message_logger_adapter.info(f"{installation_id}: {action} action configuration starting")
-    sb_sender = sb_client.get_queue_sender(queue_name=config.deployment_status_queue)
+    sb_sender = sb_client.get_queue_sender(queue_name=config["deployment_status_queue"])
 
     # If the action is install, post message on sb queue to start a deployment job
     if action == "install":
@@ -174,8 +179,8 @@ async def get_porter_outputs(msg_body, message_logger_adapter):
 
 
 async def runner():
-    async with default_credentials(config.vmss_msi_id) as credential:
-        service_bus_client = ServiceBusClient(config.service_bus_namespace, credential)
+    async with default_credentials(config["vmss_msi_id"]) as credential:
+        service_bus_client = ServiceBusClient(config["service_bus_namespace"], credential)
         logger_adapter.info("Starting message receiving loop...")
 
         while True:

@@ -2,31 +2,25 @@ import asyncio
 import json
 import logging
 from resources.helpers import get_installation_id
-from shared.config import ProcessorConfig
 from shared.logging import shell_output_logger
 
 
-def azure_login_command(config: ProcessorConfig):
-    local_login = None
-    # If running locally with use_local_creds enabled, use signed-in identity for authenticating with Service Bus
-    if config.use_local_creds == "true":
-        local_login = f"az account set --subscription {config.arm_subscription_id}"
+def azure_login_command(config):
+    # Use a Service Principal when running locally
+    local_login = f"az login --service-principal --username {config['arm_client_id']} --password {config['arm_client_secret']} --tenant {config['arm_tenant_id']}"
 
-    # If running locally with use_local_creds disabled, use the Service Principal credentials
-    else:
-        local_login = f"az login --service-principal --username {config.arm_client_id} --password {config.arm_client_secret} --tenant {config.arm_tenant_id}"
+    # Use the Managed Identity when in VMSS context
+    vmss_login = f"az login --identity -u {config['vmss_msi_id']}"
 
-    # Use the Managed Identity when in VMSS identity
-    vmss_login = f"az login --identity -u {config.vmss_msi_id}"
-    command = vmss_login if config.vmss_msi_id else local_login
+    command = vmss_login if config["vmss_msi_id"] else local_login
     return command
 
 
-def azure_acr_login_command(config: ProcessorConfig):
-    return f"az acr login --name {config.registry_server.replace('.azurecr.io','')}"
+def azure_acr_login_command(config):
+    return f"az acr login --name {config['registry_server'].replace('.azurecr.io','')}"
 
 
-async def build_porter_command(config: ProcessorConfig, logger, msg_body, custom_action=False):
+async def build_porter_command(config, logger, msg_body, custom_action=False):
     porter_parameter_keys = await get_porter_parameter_keys(config, logger, msg_body)
     porter_parameters = ""
 
@@ -35,17 +29,24 @@ async def build_porter_command(config: ProcessorConfig, logger, msg_body, custom
     else:
         for parameter_name in porter_parameter_keys:
             # try to find the param in order of priorities:
+            parameter_value = None
+
             # 1. msg parameters collection
+            if parameter_name in msg_body["parameters"]:
+                parameter_value = msg_body["parameters"][parameter_name]
+
             # 2. config (e.g. terraform state env vars)
+            elif parameter_name in config:
+                parameter_value = config[parameter_name]
+
             # 3. msg body root (e.g. id of the resource)
-            parameter_value = msg_body['parameters'].get(
-                parameter_name,
-                config[parameter_name] if hasattr(config, parameter_name) else msg_body.get(parameter_name))
+            elif parameter_name in msg_body:
+                parameter_value = msg_body[parameter_name]
 
             # if still not found, might be a special case
             # (we give a chance to the method above to allow override of the special handeling done below)
-            if parameter_value is None:
-                parameter_value = get_special_porter_param_value(config, logger, parameter_name, msg_body)
+            else:
+                parameter_value = get_special_porter_param_value(config, parameter_name, msg_body)
 
             # only append if we have a value, porter will complain anyway about missing parameters
             if parameter_value is not None:
@@ -57,7 +58,7 @@ async def build_porter_command(config: ProcessorConfig, logger, msg_body, custom
                     # If a custom action (i.e. not install, uninstall, upgrade) we need to use 'invoke'
                     f"{'invoke --action ' if custom_action else ''}"
                     f"{msg_body['action']} \"{installation_id}\" "
-                    f" --reference {config.registry_server}/{msg_body['name']}:v{msg_body['version']}"
+                    f" --reference {config['registry_server']}/{msg_body['name']}:v{msg_body['version']}"
                     f" {porter_parameters} --cred ./vmss_porter/azure.json --allow-docker-host-access --force"
                     f" && porter show {installation_id}"]
     return command_line
@@ -70,16 +71,16 @@ async def build_porter_command_for_outputs(msg_body):
     return command_line
 
 
-async def get_porter_parameter_keys(config: ProcessorConfig, logger, msg_body):
+async def get_porter_parameter_keys(config, logger, msg_body):
     command = [f"{azure_login_command(config)} >/dev/null && \
         {azure_acr_login_command(config)} >/dev/null && \
-        porter explain --reference {config.registry_server}/{msg_body['name']}:v{msg_body['version']} -ojson"]
+        porter explain --reference {config['registry_server']}/{msg_body['name']}:v{msg_body['version']} -ojson"]
 
     proc = await asyncio.create_subprocess_shell(
         ''.join(command),
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
-        env=config.porter_env)
+        env=config["porter_env"])
 
     stdout, stderr = await proc.communicate()
     logging.info(f'get_porter_parameter_keys exited with {proc.returncode}]')
@@ -96,12 +97,12 @@ async def get_porter_parameter_keys(config: ProcessorConfig, logger, msg_body):
         shell_output_logger(result_stderr, '[stderr]', logger, logging.WARN)
 
 
-def get_special_porter_param_value(config: ProcessorConfig, parameter_name: str, msg_body):
+def get_special_porter_param_value(config, parameter_name: str, msg_body):
     # some parameters might not have identical names and this comes to handle that
     if parameter_name == "mgmt_acr_name":
-        return config.registry_server.replace('.azurecr.io', '')
+        return config["registry_server"].replace('.azurecr.io', '')
     if parameter_name == "mgmt_resource_group_name":
-        return config.tfstate_resource_group_name
+        return config["tfstate_resource_group_name"]
     if parameter_name == "workspace_id":
         return msg_body.get("workspaceId")  # not included in all messages
     if parameter_name == "parent_service_id":

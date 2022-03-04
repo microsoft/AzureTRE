@@ -75,10 +75,9 @@
           "console": "integratedTerminal",
           "preLaunchTask": "Install_resource_processor_dependencies",
           "cwd": "${workspaceFolder}/resource_processor",
-          "envFile": "${workspaceFolder}/resource_processor/.env",
+          "envFile": "${workspaceFolder}/templates/core/tre.env",
           "env": {
-            "PYTHONPATH": ".",
-            "USE_LOCAL_CREDS": "true"
+            "PYTHONPATH": "."
           }
         },
         {
