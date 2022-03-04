@@ -1,8 +1,22 @@
 # Azure TRE Resource Breakdown
 
-## Azure TRE
+The Azure services deployed within an Azure TRE are described below.
 
-Once an Azure TRE has been provisioned in an Azure Subscription, you will have a Resource Group named `rg-{TRE_ID}`.  An example TRE deployment is shown and described here.
+Once an Azure TRE has been [provisioned](../tre-admins/setup-instructions/pre-deployment-steps.md) in an Azure Subscription, you will have two Resource Groups:
+
+1. Azure TRE Management Resource Group - Pre-requisiste for deploying an Azure TRE instance
+1. Azure TRE Resource Group - Core Azure TRE instance
+
+## Azure TRE Management Resource Group
+
+[![Azure TRE Deployment Example](../assets/tre-mgmt-example.png)](../assets/tre-mgmt-example.png)
+
+| Name | Azure Service | Description | Additional links
+|---|---|---|---|
+| {MGMT_STORAGE_ACCOUNT_NAME} | Storage Account | Terraform and Porter state | https://microsoft.github.io/AzureTRE/tre-admins/setup-instructions/pre-deployment-steps/
+| {ACR_NAME} | Container Registry | TRE container images (Porter bundles) | https://microsoft.github.io/AzureTRE/azure-tre-overview/architecture/#composition-service
+
+## Azure TRE Resource Group
 
 [![Azure TRE Deployment Example](../assets/tre-example.png)](../assets/tre-resources-example.png)
 
@@ -38,7 +52,7 @@ Once an Azure TRE has been provisioned in an Azure Subscription, you will have a
 !!! note
     Network resources such as Network Interfaces, Network Security Groups, Private Endpoints, Private DNS zones and Public IP addresses are not listed above.
 
-## Azure TRE Workspace
+## Azure TRE Workspace Resource Group
 
 A TRE Workspace will be provisioned in a separate Resource Group along with its own resources.  An example TRE Workspace is shown and described here.
 
