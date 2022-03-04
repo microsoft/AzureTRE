@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import parse_obj_as
 
 from api.dependencies.database import get_repository
-from api.routes.shared_service_templates import get_current_template_by_name
 from db.errors import EntityVersionExist
 from db.repositories.resource_templates import ResourceTemplateRepository
 from models.domain.resource import ResourceType
@@ -10,6 +9,7 @@ from models.schemas.resource_template import ResourceTemplateInResponse, Resourc
 from models.schemas.shared_service_template import SharedServiceTemplateInCreate, SharedServiceTemplateInResponse
 from resources import strings
 from services.authentication import get_current_admin_user, get_current_tre_user_or_tre_admin
+from .templates import get_current_template_by_name
 
 
 shared_service_templates_core_router = APIRouter(dependencies=[Depends(get_current_tre_user_or_tre_admin)])
