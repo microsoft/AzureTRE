@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema",
-  "$id": "https://github.com/microsoft/AzureTRE/schema/workspace_service.json",
+  "$id": "https://github.com/microsoft/AzureTRE/schema/shared_service.json",
   "type": "object",
   "title": "Shared Service Default Parameters",
   "description": "These parameters are required for all shared services",

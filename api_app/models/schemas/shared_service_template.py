@@ -7,8 +7,8 @@ def get_sample_shared_service_template_object(template_name: str = "tre-shared-s
     return ResourceTemplate(
         id="a7a7a7bd-7f4e-4a4e-b970-dc86a6b31dfb",
         name=template_name,
-        title="shared Service",
-        description="shared service bundle",
+        title="Shared Service",
+        description="Shared service bundle",
         version="0.1.0",
         resourceType=ResourceType.SharedService,
         current=True,
