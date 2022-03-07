@@ -289,7 +289,7 @@ setup-local-debugging:
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& pushd ./templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ./devops/scripts/load_env.sh ./templates/core/private.env \
-	&& . ./devops/scripts/setup_local_debugging.sh
+	&& . ./scripts/setup_local_debugging.sh
 
 register-aad-workspace:
 	$(call target_title,"Registering AAD Workspace") \
