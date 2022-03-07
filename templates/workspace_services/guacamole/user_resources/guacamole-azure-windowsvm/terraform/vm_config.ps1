@@ -5,6 +5,13 @@ if( ${SharedStorageAccess} -eq 1 )
   Remove-Item -LiteralPath "C:\AzureData" -Force -Recurse
 }
 
+if( ${conda_config} -eq 1 )
+{
+  conda config --add channels ${nexus_proxy_url}/repository/conda/  --system
+  conda config --remove channels defaults --system
+  conda config --set channel_alias ${nexus_proxy_url}/repository/conda/  --system
+}
+
 $PipConfigFolderPath = "C:\ProgramData\pip\"
 If(!(Test-Path $PipConfigFolderPath))
 {
