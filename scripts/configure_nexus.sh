@@ -102,7 +102,7 @@ if [[ ${STATUS_CODE} == 404 ]]
 fi
 
 #Check if the repo already exists
-export STATUS_CODE=$(curl -iu admin:$NEXUS_PASS -X "GET" "${NEXUS_URL}/service/rest/v1/repositories/apt/proxy/pypi" -H "accept: application/json" -k -s -w "%{http_code}" -o /dev/null)
+export STATUS_CODE=$(curl -iu admin:$NEXUS_PASS -X "GET" "${NEXUS_URL}/service/rest/v1/repositories/proxy/pypi" -H "accept: application/json" -k -s -w "%{http_code}" -o /dev/null)
 
 if [[ ${STATUS_CODE} == 404 ]]
  then
@@ -112,4 +112,17 @@ if [[ ${STATUS_CODE} == 404 ]]
     -H 'accept: application/json' \
     -H 'Content-Type: application/json' \
     -d '@./scripts/pypi_proxy_conf.json'
+fi
+
+#Check if the repo already exists
+export STATUS_CODE=$(curl -iu admin:$NEXUS_PASS -X "GET" "${NEXUS_URL}/service/rest/v1/repositories/proxy/conda" -H "accept: application/json" -k -s -w "%{http_code}" -o /dev/null)
+
+if [[ ${STATUS_CODE} == 404 ]]
+ then
+    # Let's create pypi proxy
+    curl -iu admin:$NEXUS_PASS -XPOST \
+    $NEXUS_URL/service/rest/v1/repositories/conda/proxy \
+    -H 'accept: application/json' \
+    -H 'Content-Type: application/json' \
+    -d '@./scripts/conda_proxy_conf.json'
 fi
