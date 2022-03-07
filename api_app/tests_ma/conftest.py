@@ -85,7 +85,7 @@ def input_shared_service_template():
         current=True,
         json_schema={
             "$schema": "http://json-schema.org/draft-07/schema",
-            "$id": "https://github.com/microsoft/AzureTRE/templates/shared-services/shared-service.json",
+            "$id": "https://github.com/microsoft/AzureTRE/templates/shared_services/mysharedservice/shared_service.json",
             "type": "object",
             "title": "My Shared Service Template",
             "description": "This is a test shared service template schema.",
@@ -138,6 +138,21 @@ def basic_user_resource_template(input_user_resource_template):
         required=input_user_resource_template.json_schema["required"],
         properties=input_user_resource_template.json_schema["properties"],
         actions=input_user_resource_template.customActions
+    )
+
+
+@pytest.fixture
+def basic_shared_service_template(input_shared_service_template):
+    return ResourceTemplate(
+        id="1234-5678",
+        name=input_shared_service_template.name,
+        description=input_shared_service_template.json_schema["description"],
+        version=input_shared_service_template.name,
+        resourceType=ResourceType.SharedService,
+        current=True,
+        required=input_shared_service_template.json_schema["required"],
+        properties=input_shared_service_template.json_schema["properties"],
+        actions=input_shared_service_template.customActions
     )
 
 

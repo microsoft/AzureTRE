@@ -72,6 +72,17 @@ def enrich_workspace_service_template(template) -> dict:
     return enrich_template(template, [workspace_service_default_properties])
 
 
+def enrich_shared_service_template(template) -> dict:
+    """Adds to the provided template all UI and system properties
+    Args:
+        template: [Template to which UI and system properties are added].
+    Returns:
+        [Dict]: [Enriched template with all required and system properties added]
+    """
+    shared_service_default_properties = read_schema('shared_service.json')
+    return enrich_template(template, [shared_service_default_properties])
+
+
 def enrich_user_resource_template(template):
     """Adds to the provided template all UI and system properties
     Args:
