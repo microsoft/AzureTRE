@@ -85,7 +85,7 @@ export -f delete_resource_diagnostic
 
 echo "Looking for diagnostic settings..."
 # sometimes, diagnostic settings aren't deleted with the resource group. we need to manually do that,
-# and unfortuanlly, there's no easy way to list all that are present.
+# and unfortunately, there's no easy way to list all that are present.
 # using xargs to run in parallel.
 az resource list --resource-group ${core_tre_rg} --query '[].[id]' -o tsv | xargs -P 10 -I {} bash -c 'delete_resource_diagnostic "{}"'
 
@@ -105,7 +105,7 @@ if [[ $(az keyvault list --resource-group ${core_tre_rg} --query "[?properties.e
   echo "Purging keyvault: ${keyvault_name}"
   az keyvault purge --name ${keyvault_name} ${no_wait_option}
 else
-  echo "Resource group ${core_tre_rg} doesn't have a keyvault without pruge protection."
+  echo "Resource group ${core_tre_rg} doesn't have a keyvault without purge protection."
 fi
 
 # this will find the mgmt, core resource groups as well as any workspace ones
