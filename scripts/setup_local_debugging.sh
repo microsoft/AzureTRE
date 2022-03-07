@@ -62,11 +62,11 @@ az role assignment create \
 
 # Write the appId and secret to the private.env file which is used for RP debugging
 # First check if the env vars are there already and delete them
-sudo sed -i '/ARM_CLIENT_ID/d' ./templates/core/private.env
-sudo sed -i '/ARM_CLIENT_SECRET/d' ./templates/core/private.env
+sed -i '/ARM_CLIENT_ID/d' ./templates/core/private.env
+sed -i '/ARM_CLIENT_SECRET/d' ./templates/core/private.env
 
 # Append them to the TRE file so that the Resource Processor can use them
-sudo tee -a ./templates/core/private.env <<EOF
+tee -a ./templates/core/private.env <<EOF
 ARM_CLIENT_ID=${RP_TESTING_SP_APP_ID}
 ARM_CLIENT_SECRET=${RP_TESTING_SP_PASSWORD}
 EOF
