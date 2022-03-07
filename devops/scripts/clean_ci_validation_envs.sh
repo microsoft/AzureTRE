@@ -64,3 +64,14 @@ while read -r rg_name rg_ref_name; do
     fi
   fi
 done
+
+# check if any workflows run on the main branch
+if [ $(gh api "https://api.github.com/repos/microsoft/AzureTRE/actions/runs?branch=main&status=in_progress" --jq ".total_count") == 0 ]
+then
+  # if not, we can delete old workspace resource groups that were left due to errors.
+  az group list --query "[?starts_with(name, 'rg-${MAIN_TRE_ID}-')].name" -o tsv |
+  while read -r rg_name; do
+    echo "Deleting resource gorup: ${rg_name}"
+    # az group delete --yes --no-wait --name ${rg_name}
+  done
+fi
