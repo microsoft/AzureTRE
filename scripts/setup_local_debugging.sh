@@ -46,8 +46,8 @@ az role assignment create \
 # Configure SP for local resource processor debugging (Porter can't use local creds)
 echo "Configuring Service Principal for Resource Processor debugging..."
 RP_TESTING_SP=$(az ad sp create-for-rbac --name ResourceProcessorTesting --role Owner --scopes /subscriptions/${AZURE_SUBSCRIPTION_ID} -o json)
-RP_TESTING_SP_APP_ID=$(echo ${RP_TESTING_SP} | jq .appId | tr -d '"')
-RP_TESTING_SP_PASSWORD=$(echo ${RP_TESTING_SP} | jq .password | tr -d '"')
+RP_TESTING_SP_APP_ID=$(echo ${RP_TESTING_SP} | jq -r .appId)
+RP_TESTING_SP_PASSWORD=$(echo ${RP_TESTING_SP} | jq -r .password)
 
 # Assign Service Bus permissions to the Resource Processor SP
 az role assignment create \
