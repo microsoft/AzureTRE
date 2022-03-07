@@ -99,6 +99,7 @@ data "template_file" "vm_config" {
     fileshare_name        = data.azurerm_storage_share.shared_storage.name
     username              = random_string.username.result
     nexus_proxy_url       = local.nexus_proxy_url
+    conda_config          = local.image_ref[var.image].version.conda_config
   }
 }
 
