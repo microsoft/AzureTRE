@@ -11,7 +11,7 @@
         "$id": "#/properties/shared_storage_quota",
         "type": "integer",
         "title": "Shared Storage Quota'",
-        "description": "Quote (in GB) to set for the VM Shared Storage."
+        "description": "Quota (in GB) to set for the VM Shared Storage."
       }
     }
 }
