@@ -66,6 +66,33 @@ then
   no_wait_option="--no-wait"
 fi
 
+
+#####################################################################################
+# DEBUG: START
+#####################################################################################
+echo "az version:"
+az --version
+
+echo "Resource group ($core_tre_rg):"
+az group show --resource-group $core_tre_rg
+
+echo "Key vaults:"
+az keyvault list --resource-group ${core_tre_rg}
+
+echo "keyvault properties:"
+az keyvault list --resource-group ${core_tre_rg} --query "[].properties"
+echo "keyvault purge protection evaluation result:"
+az keyvault list --resource-group ${core_tre_rg} --query "[?properties.enablePurgeProtection==``null``] | length (@)"
+if [[ $(az keyvault list --resource-group ${core_tre_rg} --query "[?properties.enablePurgeProtection==``null``] | length (@)") != 0 ]]; then
+  echo "Key vault found"
+else
+  echo "Key vault not found"
+fi
+
+#####################################################################################
+# DEBUG: END
+#####################################################################################
+
 locks=$(az group lock list -g ${core_tre_rg} --query [].id -o tsv)
 if [ ! -z "${locks:-}" ]
 then
