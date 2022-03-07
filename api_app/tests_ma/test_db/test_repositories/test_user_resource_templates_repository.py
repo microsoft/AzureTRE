@@ -57,7 +57,7 @@ def test_get_current_user_resource_template_raises_entity_does_not_exist_if_no_t
 def test_get_current_user_resource_template_raises_duplicate_entity_if_multiple_current_found(query_mock, resource_template_repo):
     template_name = "template1"
     parent_template_name = "parent_template1"
-    query_mock.return_value = [sample_user_resource_template_as_dict(name=template_name)]
+    query_mock.return_value = [sample_user_resource_template_as_dict(name=template_name), sample_user_resource_template_as_dict(name=template_name)]
 
     with pytest.raises(DuplicateEntity):
         resource_template_repo.get_current_template(template_name, ResourceType.UserResource, parent_template_name)
