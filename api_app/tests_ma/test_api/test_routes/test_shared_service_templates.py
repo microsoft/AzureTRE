@@ -36,6 +36,7 @@ def shared_service_template():
 
 
 class TestSharedServiceTemplates:
+    # TODO: do I need this?
     @pytest.fixture(autouse=True, scope='class')
     def _prepare(self, app, admin_user):
         app.dependency_overrides[get_current_tre_user_or_tre_admin] = admin_user
@@ -60,6 +61,27 @@ class TestSharedServiceTemplates:
         for template_info in expected_template_infos:
             assert template_info in actual_template_infos
 
+    # GET /shared-service-templates/{service_template_name}
+    @patch("api.routes.shared_service_templates.ResourceTemplateRepository.get_current_template")
+    async def test_get_shared_service_template_by_name_returns_enriched_template(self, get_current_template_mock, app, client, shared_service_template):
+        template_name = "template1"
+        get_current_template_mock.return_value = shared_service_template(template_name)
+
+        response = await client.get(app.url_path_for(strings.API_GET_SHARED_SERVICE_TEMPLATE_BY_NAME, shared_service_template_name=template_name))
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["name"] == template_name
+        assert "description" in response.json()["required"]
+
+    # GET /shared-service-templates/{service_template_name}
+    @patch("api.routes.shared_service_templates.ResourceTemplateRepository.get_current_template")
+    async def test_get_shared_service_template_by_name_returns_not_found_if_does_not_exist(self, get_current_template_mock, app, client, shared_service_template):
+        get_current_template_mock.side_effect = EntityDoesNotExist
+
+        response = await client.get(app.url_path_for(strings.API_GET_SHARED_SERVICE_TEMPLATE_BY_NAME, shared_service_template_name="non-existent"))
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
     # POST /shared-service-templates/
     @patch("api.routes.shared_service_templates.ResourceTemplateRepository.create_template")
     @patch("api.routes.shared_service_templates.ResourceTemplateRepository.get_current_template")
@@ -70,9 +92,17 @@ class TestSharedServiceTemplates:
         create_template_mock.return_value = basic_shared_service_template
 
         response = await client.post(app.url_path_for(strings.API_CREATE_SHARED_SERVICE_TEMPLATES), json=input_shared_service_template.dict())
-        print(response.text)
 
         expected_template = parse_obj_as(SharedServiceTemplateInResponse, enrich_shared_service_template(basic_shared_service_template))
-        print(expected_template)
         assert json.loads(response.text)["required"] == expected_template.dict(exclude_unset=True)["required"]
         assert json.loads(response.text)["properties"] == expected_template.dict(exclude_unset=True)["properties"]
+
+    # POST /workspace-templates
+    @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_template_by_name_and_version")
+    async def test_version_exists_not_allowed(self, get_template_by_name_and_version_mock, app, client, input_shared_service_template):
+        get_template_by_name_and_version_mock.return_value = ["exists"]
+
+        response = await client.post(app.url_path_for(strings.API_CREATE_SHARED_SERVICE_TEMPLATES), json=input_shared_service_template.dict())
+
+        assert response.status_code == status.HTTP_409_CONFLICT
+
