@@ -8,7 +8,7 @@ from .test_resource_templates_repository import resource_template_repo
 
 
 def sample_user_resource_template_as_dict(name: str, version: str = "1.0") -> dict:
-    template = UserResourceTemplate(id="123", name=name, description="", version=version, current=True, required=[], properties={}, actions=[], parentWorkspaceService="parent_service")
+    template = UserResourceTemplate(id="123", name=name, description="", version=version, current=True, required=[], properties={}, customActions=[], parentWorkspaceService="parent_service")
     return template.dict()
 
 
@@ -57,11 +57,10 @@ def test_get_current_user_resource_template_raises_entity_does_not_exist_if_no_t
 def test_get_current_user_resource_template_raises_duplicate_entity_if_multiple_current_found(query_mock, resource_template_repo):
     template_name = "template1"
     parent_template_name = "parent_template1"
-    query_mock.return_value = [sample_user_resource_template_as_dict(name=template_name), sample_user_resource_template_as_dict(name=template_name)]
+    query_mock.return_value = [sample_user_resource_template_as_dict(name=template_name)]
 
     with pytest.raises(DuplicateEntity):
         resource_template_repo.get_current_template(template_name, ResourceType.UserResource, parent_template_name)
-
 
 @patch('db.repositories.resource_templates.ResourceTemplateRepository.save_item')
 @patch('uuid.uuid4')
@@ -78,7 +77,7 @@ def test_create_user_resource_template_item_calls_create_item_with_the_correct_p
         version=input_user_resource_template.version,
         resourceType=ResourceType.UserResource,
         properties=input_user_resource_template.json_schema["properties"],
-        actions=input_user_resource_template.customActions,
+        customActions=input_user_resource_template.customActions,
         required=input_user_resource_template.json_schema["required"],
         current=input_user_resource_template.current,
         parentWorkspaceService="parent_service_template_name"

@@ -82,7 +82,7 @@ def enrich_workspace_service_template(template, is_update: bool = False) -> dict
     return enrich_template(template, [workspace_service_default_properties], is_update=is_update)
 
 
-def enrich_shared_service_template(template) -> dict:
+def enrich_shared_service_template(template, is_update: bool = False) -> dict:
     """Adds to the provided template all UI and system properties
     Args:
         template: [Template to which UI and system properties are added].
