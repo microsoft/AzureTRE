@@ -21,7 +21,18 @@ def input_workspace_template():
             "title": "My Workspace Template",
             "description": "This is a test workspace template schema.",
             "required": [],
-            "properties": {}
+            "properties": {
+                "updateable_property": {
+                    "type": "string",
+                    "title": "Test updateable property",
+                    "updateable": True
+                },
+                "fixed_property": {
+                    "type": "string",
+                    "title": "Test fixed property",
+                    "updateable": False
+                }
+            }
         },
         customActions=[
             {
@@ -105,7 +116,7 @@ def basic_resource_template(input_workspace_template):
         current=True,
         required=input_workspace_template.json_schema["required"],
         properties=input_workspace_template.json_schema["properties"],
-        actions=input_workspace_template.customActions
+        customActions=input_workspace_template.customActions
     )
 
 
@@ -120,7 +131,7 @@ def basic_workspace_service_template(input_workspace_template):
         current=True,
         required=input_workspace_template.json_schema["required"],
         properties=input_workspace_template.json_schema["properties"],
-        actions=input_workspace_template.customActions
+        customActions=input_workspace_template.customActions
 
     )
 
@@ -137,7 +148,7 @@ def basic_user_resource_template(input_user_resource_template):
         current=True,
         required=input_user_resource_template.json_schema["required"],
         properties=input_user_resource_template.json_schema["properties"],
-        actions=input_user_resource_template.customActions
+        customActions=input_user_resource_template.customActions
     )
 
 
@@ -168,6 +179,6 @@ def user_resource_template_in_response(input_user_resource_template):
         current=True,
         required=input_user_resource_template.json_schema["required"],
         properties=input_user_resource_template.json_schema["properties"],
-        actions=input_user_resource_template.customActions,
+        customActions=input_user_resource_template.customActions,
         system_properties={}
     )

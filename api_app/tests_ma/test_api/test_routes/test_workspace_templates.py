@@ -30,7 +30,7 @@ def workspace_template_without_enriching():
             type="object",
             required=[],
             properties={},
-            actions=[]
+            customActions=[]
         )
     return create_workspace_template
 
@@ -169,14 +169,14 @@ class TestWorkspaceTemplate:
     async def test_when_creating_workspace_service_template_custom_actions_is_set(self, get_template_by_name_and_version_mock, get_current_template_mock, create_template_mock, app, client, input_workspace_template, basic_resource_template):
         get_template_by_name_and_version_mock.side_effect = EntityDoesNotExist
         get_current_template_mock.side_effect = EntityDoesNotExist
-        basic_resource_template.actions = [CustomAction(name='my-custom-action', description='This is a test custom action')]
+        basic_resource_template.customActions = [CustomAction(name='my-custom-action', description='This is a test custom action')]
         create_template_mock.return_value = basic_resource_template
 
         expected_template = parse_obj_as(WorkspaceTemplateInResponse, enrich_workspace_template(basic_resource_template))
 
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_workspace_template.dict())
 
-        assert json.loads(response.text)["actions"] == expected_template.dict(exclude_unset=True)["actions"]
+        assert json.loads(response.text)["customActions"] == expected_template.dict(exclude_unset=True)["customActions"]
 
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.create_template")
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_template")
@@ -184,14 +184,14 @@ class TestWorkspaceTemplate:
     async def test_when_creating_workspace_service_template_custom_actions_is_not_set(self, get_template_by_name_and_version_mock, get_current_template_mock, create_template_mock, app, client, input_workspace_template, basic_resource_template):
         get_template_by_name_and_version_mock.side_effect = EntityDoesNotExist
         get_current_template_mock.side_effect = EntityDoesNotExist
-        basic_resource_template.actions = []
+        basic_resource_template.customActions = []
         create_template_mock.return_value = basic_resource_template
         input_workspace_template_dict = input_workspace_template.dict()
         input_workspace_template_dict.pop("customActions")
 
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json=input_workspace_template_dict)
 
-        assert json.loads(response.text)["actions"] == []
+        assert json.loads(response.text)["customActions"] == []
 
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.create_template")
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_template")

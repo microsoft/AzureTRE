@@ -43,7 +43,7 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
   admin_username             = random_string.username.result
   admin_password             = random_password.password.result
 
-  custom_data = base64encode(data.template_file.pypi_sources_config.rendered)
+  custom_data = base64encode(data.template_file.vm_config.rendered)
 
   source_image_reference {
     publisher = local.image_ref[var.image].publisher
@@ -67,33 +67,43 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
   }
 }
 
-resource "azurerm_virtual_machine_extension" "configure_pypi_proxy" {
-  name                 = "configure_pypi_proxy"
+resource "azurerm_virtual_machine_extension" "config_script" {
+  name                 = "${azurerm_windows_virtual_machine.windowsvm.name}-vmextention"
   virtual_machine_id   = azurerm_windows_virtual_machine.windowsvm.id
   publisher            = "Microsoft.Compute"
   type                 = "CustomScriptExtension"
   type_handler_version = "1.10"
 
-  protected_settings = <<PROTECTED_SETTINGS
+  protected_settings = <<PROT
     {
-        "commandToExecute": "powershell -ExecutionPolicy Unrestricted -NoProfile -NonInteractive -command \"cp c:/azuredata/customdata.bin c:/azuredata/configure.ps1; c:/azuredata/configure.ps1\""
+      "commandToExecute": "powershell -ExecutionPolicy Unrestricted -NoProfile -NonInteractive -command \"cp c:/azuredata/customdata.bin c:/azuredata/configure.ps1; c:/azuredata/configure.ps1 \""
     }
-PROTECTED_SETTINGS
-
-  tags = {
-    parent_service_id = var.parent_service_id
-  }
-}
-
-data "template_file" "pypi_sources_config" {
-  template = file("${path.module}/pypi_sources_config.ps1")
-  vars = {
-    nexus_proxy_url = local.nexus_proxy_url
-  }
+PROT
 }
 
 resource "azurerm_key_vault_secret" "windowsvm_password" {
   name         = "${local.vm_name}-admin-credentials"
   value        = "${random_string.username.result}\n${random_password.password.result}"
   key_vault_id = data.azurerm_key_vault.ws.id
+}
+
+data "template_file" "vm_config" {
+  template = file("${path.module}/vm_config.ps1")
+  vars = {
+    nexus_proxy_url     = local.nexus_proxy_url
+    SharedStorageAccess = tobool(var.shared_storage_access) ? 1 : 0
+    StorageAccountName  = data.azurerm_storage_account.stg.name
+    StorageAccountKey   = data.azurerm_storage_account.stg.primary_access_key
+    FileShareName       = data.azurerm_storage_share.shared_storage.name
+  }
+}
+
+data "azurerm_storage_account" "stg" {
+  name                = local.storage_name
+  resource_group_name = data.azurerm_resource_group.ws.name
+}
+
+data "azurerm_storage_share" "shared_storage" {
+  name                 = var.shared_storage_name
+  storage_account_name = data.azurerm_storage_account.stg.name
 }

@@ -51,6 +51,43 @@ def sample_resource() -> Resource:
     )
 
 
+def sample_resource_template() -> ResourceTemplate:
+    return ResourceTemplate(id="123",
+                            name="tre-user-resource",
+                            description="description",
+                            version="0.1.0",
+                            resourceType=ResourceType.UserResource,
+                            current=True,
+                            required=['os_image', 'title'],
+                            properties={
+                                'title': {
+                                    'type': 'string',
+                                    'title': 'Title of the resource'
+                                },
+                                'os_image': {
+                                    'type': 'string',
+                                    'title': 'Windows image',
+                                    'description': 'Select Windows image to use for VM',
+                                    'enum': [
+                                        'Windows 10',
+                                        'Server 2019 Data Science VM'
+                                    ],
+                                    'updateable': False
+                                },
+                                'vm_size': {
+                                    'type': 'string',
+                                    'title': 'Windows image',
+                                    'description': 'Select Windows image to use for VM',
+                                    'enum': [
+                                        'small',
+                                        'large'
+                                    ],
+                                    'updateable': True
+                                }
+                            },
+                            actions=[]).dict(exclude_none=True)
+
+
 @patch("db.repositories.resources.ResourceRepository._get_enriched_template")
 @patch("db.repositories.resources.ResourceRepository._validate_resource_parameters", return_value=None)
 def test_validate_input_against_template_returns_template_version_if_template_is_valid(_, enriched_template_mock, resource_repo, workspace_input):
@@ -62,7 +99,7 @@ def test_validate_input_against_template_returns_template_version_if_template_is
                                                            current=True,
                                                            required=[],
                                                            properties={},
-                                                           actions=[]).dict()
+                                                           customActions=[]).dict()
 
     template_version = resource_repo.validate_input_against_template("template1", workspace_input, ResourceType.Workspace)
 
@@ -95,7 +132,7 @@ def test_validate_input_against_template_raises_value_error_if_payload_is_invali
                                                            current=True,
                                                            required=["display_name"],
                                                            properties={},
-                                                           actions=[]).dict()
+                                                           customActions=[]).dict()
     # missing display name
     workspace_input = WorkspaceInCreate(templateName="template1")
 
@@ -105,7 +142,7 @@ def test_validate_input_against_template_raises_value_error_if_payload_is_invali
 
 @patch("db.repositories.resources.ResourceTemplateRepository.get_current_template")
 def test_get_enriched_template_returns_the_enriched_template(get_current_mock, resource_repo):
-    workspace_template = ResourceTemplate(id="abc", name="template1", description="", version="", resourceType=ResourceType.Workspace, current=True, required=[], properties={}, actions=[])
+    workspace_template = ResourceTemplate(id="abc", name="template1", description="", version="", resourceType=ResourceType.Workspace, current=True, required=[], properties={}, customActions=[])
     get_current_mock.return_value = workspace_template
 
     template = resource_repo._get_enriched_template("template1", ResourceType.Workspace)
@@ -116,7 +153,7 @@ def test_get_enriched_template_returns_the_enriched_template(get_current_mock, r
 
 @patch("db.repositories.resources.ResourceTemplateRepository.get_current_template")
 def test_get_enriched_template_returns_the_enriched_template_for_user_resources(get_current_mock, resource_repo):
-    user_resource_template = UserResourceTemplate(id="abc", name="template1", description="", version="", resourceType=ResourceType.Workspace, current=True, required=[], properties={}, actions=[], parentWorkspaceService="parent-template1")
+    user_resource_template = UserResourceTemplate(id="abc", name="template1", description="", version="", resourceType=ResourceType.Workspace, current=True, required=[], properties={}, customActions=[], parentWorkspaceService="parent-template1")
     get_current_mock.return_value = user_resource_template
 
     template = resource_repo._get_enriched_template("template1", ResourceType.UserResource, "parent-template1")
@@ -142,8 +179,9 @@ def test_get_resource_dict_by_id_raises_entity_does_not_exist_if_no_resources_co
         resource_repo.get_resource_dict_by_id(item_id)
 
 
-@patch('db.repositories.resources.get_timestamp', return_value=FAKE_UPDATE_TIMESTAMP)
-def test_patch_resource_preserves_property_history(_, resource_repo):
+@patch('db.repositories.resources.ResourceRepository.validate_patch')
+@patch('db.repositories.resources.ResourceRepository.get_timestamp', return_value=FAKE_UPDATE_TIMESTAMP)
+def test_patch_resource_preserves_property_history(_, __, resource_repo):
     """
     Tests that properties are copied into a history array and only certain values in the root are updated
     """
@@ -159,7 +197,7 @@ def test_patch_resource_preserves_property_history(_, resource_repo):
     expected_resource.properties['display_name'] = 'updated name'
     expected_resource.resourceVersion = 1
 
-    resource_repo.patch_resource(resource, resource_patch, None, etag)
+    resource_repo.patch_resource(resource, resource_patch, None, etag, None)
     resource_repo.update_item_with_etag.assert_called_once_with(expected_resource, etag)
 
     # now patch again
@@ -178,5 +216,44 @@ def test_patch_resource_preserves_property_history(_, resource_repo):
     expected_resource.properties['display_name'] = "updated name 2"
     expected_resource.isEnabled = False
 
-    resource_repo.patch_resource(new_resource, new_patch, None, etag)
+    resource_repo.patch_resource(new_resource, new_patch, None, etag, None)
     resource_repo.update_item_with_etag.assert_called_with(expected_resource, etag)
+
+
+@patch('db.repositories.resources.ResourceTemplateRepository.enrich_template')
+def test_validate_patch_with_good_fields_passes(template_repo, resource_repo):
+    """
+    Make sure that patch is NOT valid when non-updateable fields are included
+    """
+
+    template_repo.enrich_template = MagicMock(return_value=sample_resource_template())
+    template = sample_resource_template()
+
+    # check it's valid when updating a single updateable prop
+    patch = ResourcePatch(isEnabled=True, properties={'vm_size': 'large'})
+    resource_repo.validate_patch(patch, template_repo, template)
+
+
+@patch('db.repositories.resources.ResourceTemplateRepository.enrich_template')
+def test_validate_patch_with_bad_fields_fails(template_repo, resource_repo):
+    """
+    Make sure that patch is NOT valid when non-updateable fields are included
+    """
+
+    template_repo.enrich_template = MagicMock(return_value=sample_resource_template())
+    template = sample_resource_template()
+
+    # check it's invalid when sending an unexpected field
+    patch = ResourcePatch(isEnabled=True, properties={'vm_size': 'large', 'unexpected_field': 'surprise!'})
+    with pytest.raises(ValidationError):
+        resource_repo.validate_patch(patch, template_repo, template)
+
+    # check it's invalid when sending a bad value
+    patch = ResourcePatch(isEnabled=True, properties={'vm_size': 'huge'})
+    with pytest.raises(ValidationError):
+        resource_repo.validate_patch(patch, template_repo, template)
+
+    # check it's invalid when trying to update a non-updateable field
+    patch = ResourcePatch(isEnabled=True, properties={'vm_size': 'large', 'os_image': 'linux'})
+    with pytest.raises(ValidationError):
+        resource_repo.validate_patch(patch, template_repo, template)

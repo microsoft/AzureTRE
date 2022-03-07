@@ -76,6 +76,11 @@ jobs:
           set -o pipefail
           set -o nounset
 
+          # Debug output for checking SHA used in checks-action
+          echo "git SHA:    $(git rev-parse --abbrev-ref HEAD)"
+          echo "git ref:    $(git rev-parse HEAD)"
+          echo "github ref: ${GITHUB_REF}"
+
           REFID=$(echo ${GITHUB_REF} | shasum | cut -c1-8)
           echo "using id of: ${REFID} for GitHub Ref: ${GITHUB_REF}"
           echo "::set-output name=refid::${REFID}"

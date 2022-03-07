@@ -56,11 +56,12 @@ elif [[ "$1" == *"stop"* ]]; then
 fi
 
 # Report final FW status
-PUBLIC_IP=$(az network firewall ip-config list -f "fw-$TRE_ID" -g "rg-$TRE_ID" --query "[0].publicIpAddress" -o tsv)
-if [ -n "$PUBLIC_IP" ]; then
-  FW_STATE="Running"
-else
-  FW_STATE="Stopped"
+FW_STATE="Stopped"
+if [[ $(az network firewall list --query "[?resourceGroup=='rg-${TRE_ID}'&&name=='fw-${TRE_ID}'] | length(@)") != 0 ]]; then
+  PUBLIC_IP=$(az network firewall ip-config list -f "fw-$TRE_ID" -g "rg-$TRE_ID" --query "[0].publicIpAddress" -o tsv)
+  if [ -n "$PUBLIC_IP" ]; then
+    FW_STATE="Running"
+  fi
 fi
 
 # Report final AGW status

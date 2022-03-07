@@ -63,12 +63,42 @@
           "jinja": true,
           "justMyCode": false,
           "console": "integratedTerminal",
-          "envFile": "${workspaceFolder}/templates/core/tre.env",
-          "preLaunchTask": "Copy_env_file_for_debug",
+          "envFile": "${workspaceFolder}/templates/core/private.env",
+          "preLaunchTask": "Copy_env_file_for_api_debug",
           "cwd": "${workspaceFolder}/api_app"
         },
         {
-          "name": "Python: Debug Tests",
+          "name": "E2E Extended",
+          "type": "python",
+          "request": "launch",
+          "module": "pytest",
+          "justMyCode": true,
+          "cwd": "${workspaceFolder}/e2e_tests/",
+          "preLaunchTask": "Copy_env_file_for_e2e_debug",
+          "envFile": "${workspaceFolder}/templates/core/private.env",
+          "args": [
+            "-m",
+            "extended",
+            "--verify",
+            "false"
+          ]
+        },
+        {
+          "name": "Resource Processor",
+          "type": "python",
+          "request": "launch",
+          "program": "vmss_porter/runner.py",
+          "console": "integratedTerminal",
+          "preLaunchTask": "Install_resource_processor_dependencies",
+          "cwd": "${workspaceFolder}/resource_processor",
+          "envFile": "${workspaceFolder}/resource_processor/.env",
+          "env": {
+            "PYTHONPATH": ".",
+            "USE_LOCAL_CREDS": "true"
+          }
+        },
+        {
+          "name": "Debug Python file",
           "type": "python",
           "request": "launch",
           "program": "${file}",
@@ -84,8 +114,18 @@
       "version": "2.0.0",
       "tasks": [
         {
-          "label": "Copy_env_file_for_debug",
+          "label": "Copy_env_file_for_api_debug",
           "command": "cp --force ${workspaceFolder}/templates/core/.env ${workspaceFolder}/api_app/.env",
+          "type": "shell"
+        },
+        {
+          "label": "Copy_env_file_for_e2e_debug",
+          "command": "cp --force ${workspaceFolder}/templates/core/.env ${workspaceFolder}/e2e_tests/.env",
+          "type": "shell"
+        },
+        {
+          "label": "Install_resource_processor_dependencies",
+          "command": "pip install -r ./resource_processor/vmss_porter/requirements.txt",
           "type": "shell"
         },
         {
@@ -100,7 +140,7 @@
           ]
         },
         {
-          "label": "e2e_tests",
+          "label": "Smoke_tests",
           "group": "test",
           "command": "python",
           "options": {

@@ -22,7 +22,7 @@ def sample_resource_template_as_dict(name: str, version: str = "1.0", resource_t
         resourceType=resource_type,
         current=False,
         properties={},
-        actions=[],
+        customActions=[],
         required=[]
     ).dict()
 
@@ -104,7 +104,58 @@ def test_get_templates_information_returns_unique_template_names(query_mock, res
 
 @patch('db.repositories.resource_templates.ResourceTemplateRepository.save_item')
 @patch('uuid.uuid4')
+<<<<<<< HEAD
 def test_create_item_created_with_the_correct_parameters_and_type(uuid_mock, save_item_mock, resource_template_repo, input_workspace_template):
+=======
+def test_create_workspace_template_item_calls_create_item_with_the_correct_parameters(uuid_mock, save_item_mock, resource_template_repo, input_workspace_template):
+    uuid_mock.return_value = "1234"
+
+    returned_template = resource_template_repo.create_template(input_workspace_template, ResourceType.Workspace)
+
+    expected_resource_template = ResourceTemplate(
+        id="1234",
+        name=input_workspace_template.name,
+        title=input_workspace_template.json_schema["title"],
+        description=input_workspace_template.json_schema["description"],
+        version=input_workspace_template.version,
+        resourceType=ResourceType.Workspace,
+        properties=input_workspace_template.json_schema["properties"],
+        customActions=input_workspace_template.customActions,
+        required=input_workspace_template.json_schema["required"],
+        current=input_workspace_template.current
+    )
+    save_item_mock.assert_called_once_with(expected_resource_template)
+    assert expected_resource_template == returned_template
+
+
+@patch('db.repositories.resource_templates.ResourceTemplateRepository.save_item')
+@patch('uuid.uuid4')
+def test_create_user_resource_template_item_calls_create_item_with_the_correct_parameters(uuid_mock, save_item_mock, resource_template_repo, input_user_resource_template):
+    uuid_mock.return_value = "1234"
+
+    returned_template = resource_template_repo.create_template(input_user_resource_template, ResourceType.UserResource, "parent_service_template_name")
+
+    expected_resource_template = UserResourceTemplate(
+        id="1234",
+        name=input_user_resource_template.name,
+        title=input_user_resource_template.json_schema["title"],
+        description=input_user_resource_template.json_schema["description"],
+        version=input_user_resource_template.version,
+        resourceType=ResourceType.UserResource,
+        properties=input_user_resource_template.json_schema["properties"],
+        customActions=input_user_resource_template.customActions,
+        required=input_user_resource_template.json_schema["required"],
+        current=input_user_resource_template.current,
+        parentWorkspaceService="parent_service_template_name"
+    )
+    save_item_mock.assert_called_once_with(expected_resource_template)
+    assert expected_resource_template == returned_template
+
+
+@patch('db.repositories.resource_templates.ResourceTemplateRepository.save_item')
+@patch('uuid.uuid4')
+def test_create_item_created_with_the_expected_type(uuid_mock, save_item_mock, resource_template_repo, input_workspace_template):
+>>>>>>> main
     uuid_mock.return_value = "1234"
     expected_type = ResourceType.WorkspaceService
     returned_template = resource_template_repo.create_template(input_workspace_template, expected_type)
@@ -116,7 +167,7 @@ def test_create_item_created_with_the_correct_parameters_and_type(uuid_mock, sav
         version=input_workspace_template.version,
         resourceType=expected_type,
         properties=input_workspace_template.json_schema["properties"],
-        actions=input_workspace_template.customActions,
+        customActions=input_workspace_template.customActions,
         required=input_workspace_template.json_schema["required"],
         current=input_workspace_template.current
     )

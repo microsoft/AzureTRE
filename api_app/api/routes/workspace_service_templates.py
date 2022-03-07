@@ -22,8 +22,8 @@ async def get_workspace_service_templates(template_repo=Depends(get_repository(R
 
 
 @workspace_service_templates_core_router.get("/workspace-service-templates/{service_template_name}", response_model=WorkspaceServiceTemplateInResponse, response_model_exclude_none=True, name=strings.API_GET_WORKSPACE_SERVICE_TEMPLATE_BY_NAME, dependencies=[Depends(get_current_tre_user_or_tre_admin)])
-async def get_current_workspace_service_template_by_name(service_template_name: str, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> WorkspaceServiceTemplateInResponse:
-    template = get_current_template_by_name(service_template_name, template_repo, ResourceType.WorkspaceService)
+async def get_current_workspace_service_template_by_name(service_template_name: str, is_update: bool = False, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> WorkspaceServiceTemplateInResponse:
+    template = get_current_template_by_name(service_template_name, template_repo, ResourceType.WorkspaceService, is_update=is_update)
     return parse_obj_as(WorkspaceServiceTemplateInResponse, template)
 
 

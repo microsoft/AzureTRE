@@ -35,6 +35,25 @@ def workspace_service_template_without_enriching():
     return create_workspace_service_template
 
 
+@pytest.fixture
+def user_resource_template_without_enriching():
+    def create_user_resource_template(template_name: str = "vm-resource-template", parent_service: str = "guacamole-service"):
+        return UserResourceTemplate(
+            id="a7a7a7bd-7f4e-4a4e-b970-dc86a6b31dfb",
+            name=template_name,
+            description="vm-bundle",
+            version="0.1.0",
+            resourceType=ResourceType.UserResource,
+            current=True,
+            type="object",
+            required=[],
+            properties={},
+            customActions=[],
+            parentWorkspaceService=parent_service
+        )
+    return create_user_resource_template
+
+
 class TestWorkspaceServiceTemplatesRequiringAdminRights:
     @pytest.fixture(autouse=True, scope='class')
     def _prepare(self, app, admin_user):

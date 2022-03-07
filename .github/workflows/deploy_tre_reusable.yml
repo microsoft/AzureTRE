@@ -5,11 +5,15 @@ on:
   workflow_call:
     inputs:
       prRepo:
-        description: Name of the repo GitHub repo containing the ref (as org/repo )
+        description: Name of the repo GitHub repo containing the ref (as org/repo)
         type: string
         required: false
       prRef:
         description: The git ref to checkout
+        type: string
+        required: false
+      prHeadSha:
+        description: For PR builds where GITHUB_REF isn't set to the PR (e.g. comment trigger), pass the PR's head SHA commit here
         type: string
         required: false
       ciGitRef:
@@ -80,17 +84,21 @@ jobs:
     runs-on: ubuntu-latest
     environment: Dev
     steps:
-      - name: Checkout (default)
-        if: ${{ inputs.prRepo == '' }} # if not running for a PR, checkout the default ref for the workflow run
-        uses: actions/checkout@v2
-        with:
-          persist-credentials: false
+      - name: Show inputs
+        run: |
+          echo "Inputs"
+          echo "======"
+          echo "prRepo    : ${{ inputs.prRepo }}"
+          echo "prRef     : ${{ inputs.prRef }}"
+          echo "prRHeadSha: ${{ inputs.prHeadSha }}"
+          echo "ciGitRef  : ${{ inputs.ciGitRef }}"
 
-      - name: Checkout (PR)
-        if: ${{ inputs.prRepo != '' }} # if running for a PR, checkout the PR commit
+      - name: Checkout
         uses: actions/checkout@v2
         with:
           persist-credentials: false
+          # if the following values are missing (i.e. not triggered via comment workflow)
+          # then the default checkout will apply
           repository: ${{ inputs.prRepo }}
           ref: ${{ inputs.prRef }}
 
@@ -135,10 +143,10 @@ jobs:
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          RESOURCE: "${{ secrets.API_CLIENT_ID }}"
+          API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
           LOCATION: ${{ secrets.LOCATION }}
-          AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
+          AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           ACR_NAME: ${{ secrets.ACR_NAME }}
           TF_VAR_terraform_state_container_name:
             ${{ secrets.TF_STATE_CONTAINER }}
@@ -150,16 +158,6 @@ jobs:
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
           TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
-
-      - name: Notify dedicated teams channel
-        uses: sachinkundu/ms-teams-notification@1.4
-        if: ${{ failure() && github.ref == 'refs/heads/main' }}
-        with:
-          github-token: ${{ github.token }}
-          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-          notification-summary: "Deploy TRE Failed"
-          notification-color: dc3545
-          timezone: Europe/Zurich
 
       - name: Push cached devcontainer
         if: ${{ success() }}
@@ -184,17 +182,12 @@ jobs:
           build-and-push-gitea]
 
     steps:
-      - name: Checkout (default)
-        if: ${{ inputs.prRepo == '' }} # if not running for a PR, checkout the default ref for the workflow run
+      - name: Checkout
         uses: actions/checkout@v2
         with:
           persist-credentials: false
-
-      - name: Checkout (PR)
-        if: ${{ inputs.prRepo != '' }} # if running for a PR, checkout the PR commit
-        uses: actions/checkout@v2
-        with:
-          persist-credentials: false
+          # if the following values are missing (i.e. not triggered via comment workflow)
+          # then the default checkout will apply
           repository: ${{ inputs.prRepo }}
           ref: ${{ inputs.prRef }}
 
@@ -213,40 +206,25 @@ jobs:
           ACR_NAME: ${{ secrets.ACR_NAME }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
 
-      - name: Notify dedicated teams channel
-        uses: sachinkundu/ms-teams-notification@1.4
-        if: ${{ failure() && github.ref == 'refs/heads/main' }}
-        with:
-          github-token: ${{ github.token }}
-          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-          notification-summary: "Make Core Images Failed"
-          notification-color: dc3545
-          timezone: Europe/Zurich
-
   deploy_tre:
     name: Deploy TRE
     runs-on: ubuntu-latest
     needs: [build_core_images]
     environment: Dev
     steps:
-      - name: Checkout (default)
-        if: ${{ inputs.prRepo == '' }} # if not running for a PR, checkout the default ref for the workflow run
+      - name: Checkout
         uses: actions/checkout@v2
         with:
           persist-credentials: false
-
-      - name: Checkout (PR)
-        if: ${{ inputs.prRepo != '' }} # if running for a PR, checkout the PR commit
-        uses: actions/checkout@v2
-        with:
-          persist-credentials: false
+          # if the following values are missing (i.e. not triggered via comment workflow)
+          # then the default checkout will apply
           repository: ${{ inputs.prRepo }}
           ref: ${{ inputs.prRef }}
 
-      - name: Deploy Trusted Research Environment
+      - name: Deploy TRE Core
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: "TF_VAR_ci_git_ref=${{ inputs.ciGitRef }} make tre-deploy"
+          COMMAND: "TF_VAR_ci_git_ref=${{ inputs.ciGitRef }} make deploy-core"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
@@ -255,8 +233,8 @@ jobs:
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          RESOURCE: "${{ secrets.API_CLIENT_ID }}"
-          AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
+          API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
+          AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
           TEST_USER_NAME: "${{ secrets.TEST_USER_NAME }}"
           TEST_USER_PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
@@ -274,18 +252,110 @@ jobs:
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
           TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
-          TF_VAR_keyvault_purge_protection_enabled: "${{ github.ref == 'refs/heads/main' && true || false }}"
-          TF_VAR_stateful_resources_locked: "${{ github.ref == 'refs/heads/main' && true || false }}"
+          TF_VAR_keyvault_purge_protection_enabled: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
+          TF_VAR_stateful_resources_locked: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
 
-      - name: Notify dedicated teams channel
-        uses: sachinkundu/ms-teams-notification@1.4
-        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+      - name: Install Firewall
+        uses: ./.github/actions/devcontainer_run_command
         with:
-          github-token: ${{ github.token }}
-          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-          notification-summary: "Deploy TRE Failed"
-          notification-color: dc3545
-          timezone: Europe/Zurich
+          COMMAND: "make firewall-install"
+          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
+          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
+          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
+          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
+          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
+          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
+          AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
+          TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
+          TEST_USER_NAME: "${{ secrets.TEST_USER_NAME }}"
+          TEST_USER_PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
+          TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
+          TRE_ID: "${{ secrets.TRE_ID }}"
+          LOCATION: ${{ secrets.LOCATION }}
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+          TF_VAR_terraform_state_container_name:
+            ${{ secrets.TF_STATE_CONTAINER }}
+          TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
+          TF_VAR_mgmt_storage_account_name:
+            ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+          TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
+          TF_VAR_tre_address_space: ${{ secrets.TRE_ADDRESS_SPACE }}
+          TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
+          TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
+          TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
+          TF_VAR_keyvault_purge_protection_enabled: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
+          TF_VAR_stateful_resources_locked: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
+
+      - name: Install Nexus
+        uses: ./.github/actions/devcontainer_run_command
+        with:
+          COMMAND: "make nexus-install"
+          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
+          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
+          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
+          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
+          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
+          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
+          AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
+          TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
+          TEST_USER_NAME: "${{ secrets.TEST_USER_NAME }}"
+          TEST_USER_PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
+          TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
+          TRE_ID: "${{ secrets.TRE_ID }}"
+          LOCATION: ${{ secrets.LOCATION }}
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+          TF_VAR_terraform_state_container_name:
+            ${{ secrets.TF_STATE_CONTAINER }}
+          TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
+          TF_VAR_mgmt_storage_account_name:
+            ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+          TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
+          TF_VAR_tre_address_space: ${{ secrets.TRE_ADDRESS_SPACE }}
+          TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
+          TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
+          TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
+          TF_VAR_keyvault_purge_protection_enabled: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
+          TF_VAR_stateful_resources_locked: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
+
+      - name: Install Gitea
+        uses: ./.github/actions/devcontainer_run_command
+        with:
+          COMMAND: "make gitea-install"
+          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
+          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
+          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
+          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
+          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
+          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
+          AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
+          TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
+          TEST_USER_NAME: "${{ secrets.TEST_USER_NAME }}"
+          TEST_USER_PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
+          TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
+          TRE_ID: "${{ secrets.TRE_ID }}"
+          LOCATION: ${{ secrets.LOCATION }}
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+          TF_VAR_terraform_state_container_name:
+            ${{ secrets.TF_STATE_CONTAINER }}
+          TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
+          TF_VAR_mgmt_storage_account_name:
+            ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+          TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
+          TF_VAR_tre_address_space: ${{ secrets.TRE_ADDRESS_SPACE }}
+          TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
+          TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
+          TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
+          TF_VAR_keyvault_purge_protection_enabled: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
+          TF_VAR_stateful_resources_locked: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
 
   publish_bundles:
     name: Publish Bundles
@@ -310,16 +380,12 @@ jobs:
              BUNDLE_DIR: "./templates/workspace_services/innereye"}
     environment: Dev
     steps:
-      - name: Checkout (default)
-        if: ${{ inputs.prRepo == '' }} # if not running for a PR, checkout the default ref for the workflow run
+      - name: Checkout
         uses: actions/checkout@v2
         with:
           persist-credentials: false
-
-      - name: Checkout (PR)
-        if: ${{ inputs.prRepo != '' }} # if running for a PR, checkout the PR commit
-        uses: actions/checkout@v2
-        with:
+          # if the following values are missing (i.e. not triggered via comment workflow)
+          # then the default checkout will apply
           repository: ${{ inputs.prRepo }}
           ref: ${{ inputs.prRef }}
 
@@ -349,17 +415,12 @@ jobs:
         target: [build-and-push-guacamole]
 
     steps:
-      - name: Checkout (default)
-        if: ${{ inputs.prRepo == '' }} # if not running for a PR, checkout the default ref for the workflow run
+      - name: Checkout
         uses: actions/checkout@v2
         with:
           persist-credentials: false
-
-      - name: Checkout (PR)
-        if: ${{ inputs.prRepo != '' }} # if running for a PR, checkout the PR commit
-        uses: actions/checkout@v2
-        with:
-          persist-credentials: false
+          # if the following values are missing (i.e. not triggered via comment workflow)
+          # then the default checkout will apply
           repository: ${{ inputs.prRepo }}
           ref: ${{ inputs.prRef }}
 
@@ -377,16 +438,6 @@ jobs:
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
           ACR_NAME: ${{ secrets.ACR_NAME }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
-
-      - name: Notify dedicated teams channel
-        uses: sachinkundu/ms-teams-notification@1.4
-        if: ${{ failure() && github.ref == 'refs/heads/main' }}
-        with:
-          github-token: ${{ github.token }}
-          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-          notification-summary: "Make Additional Images Failed"
-          notification-color: dc3545
-          timezone: Europe/Zurich
 
   register_bundles:
     name: Register Bundles
@@ -411,20 +462,14 @@ jobs:
              BUNDLE_DIR: "./templates/workspace_services/innereye"}
     environment: Dev
     steps:
-      - name: Checkout (default)
-        if: ${{ inputs.prRepo == '' }} # if not running for a PR, checkout the default ref for the workflow run
+      - name: Checkout
         uses: actions/checkout@v2
         with:
           persist-credentials: false
-
-      - name: Checkout (PR)
-        if: ${{ inputs.prRepo != '' }} # if running for a PR, checkout the PR commit
-        uses: actions/checkout@v2
-        with:
-          persist-credentials: false
+          # if the following values are missing (i.e. not triggered via comment workflow)
+          # then the default checkout will apply
           repository: ${{ inputs.prRepo }}
           ref: ${{ inputs.prRef }}
-
       - name: Register bundle
         uses: ./.github/actions/devcontainer_run_command
         with:
@@ -438,8 +483,8 @@ jobs:
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
           ACR_NAME: ${{ secrets.ACR_NAME }}
-          RESOURCE: "${{ secrets.API_CLIENT_ID }}"
-          AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
+          API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
+          AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
           TEST_USER_NAME: "${{ secrets.TEST_USER_NAME }}"
           TEST_USER_PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
@@ -453,17 +498,12 @@ jobs:
     environment: Dev
     needs: [register_bundles, build_additional_images]
     steps:
-      - name: Checkout (default)
-        if: ${{ inputs.prRepo == '' }} # if not running for a PR, checkout the default ref for the workflow run
+      - name: Checkout
         uses: actions/checkout@v2
         with:
           persist-credentials: false
-
-      - name: Checkout (PR)
-        if: ${{ inputs.prRepo != '' }} # if running for a PR, checkout the PR commit
-        uses: actions/checkout@v2
-        with:
-          persist-credentials: false
+          # if the following values are missing (i.e. not triggered via comment workflow)
+          # then the default checkout will apply
           repository: ${{ inputs.prRepo }}
           ref: ${{ inputs.prRef }}
 
@@ -480,8 +520,8 @@ jobs:
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
           LOCATION: "${{ secrets.LOCATION }}"
-          RESOURCE: "${{ secrets.API_CLIENT_ID }}"
-          AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
+          API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
+          AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
           TEST_USER_NAME: "${{ secrets.TEST_USER_NAME }}"
           TEST_USER_PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
@@ -489,27 +529,19 @@ jobs:
           TRE_ID: "${{ secrets.TRE_ID }}"
           IS_API_SECURED: false
 
-      - name: Notify dedicated teams channel
-        uses: sachinkundu/ms-teams-notification@1.4
-        if: ${{ failure() && github.ref == 'refs/heads/main'}}
-        continue-on-error: true
+      # For PR builds triggered from comment builds, the GITHUB_REF is set to main
+      # so the checks aren't automatically associated with the PR
+      # If prHeadSha is specified then explicity mark the checks for that SHA
+      - name: Report check status
+        if: ${{ inputs.prHeadSha }}
+        uses: LouisBrunner/checks-action@v1.1.1
         with:
-          github-token: ${{ github.token }}
-          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-          notification-summary: "E2E Tests (Smoke) failed"
-          notification-color: dc3545
-          timezone: Europe/Zurich
-
-      - name: Notify dedicated teams channel
-        uses: sachinkundu/ms-teams-notification@1.4
-        if: ${{ success() && github.ref == 'refs/heads/main' }}
-        continue-on-error: true
-        with:
-          github-token: ${{ github.token }}
-          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-          notification-summary: "Deployment and tests passed successfully"
-          notification-color: 28a745
-          timezone: Europe/Zurich
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # the name must be identical to the one received by the real job
+          sha: ${{ inputs.prHeadSha }}
+          name: "Deploy PR / Run E2E Tests (Smoke)"
+          status: "completed"
+          conclusion: "success"
 
       - name: Upload Test Results
         if: always()
@@ -526,22 +558,17 @@ jobs:
 
   e2e_tests_extended:
     name: "Run E2E Tests (Extended)"
-    if: ${{ github.ref == 'refs/heads/main' }}
+    if: ${{ github.ref == 'refs/heads/main' && inputs.prRef == '' }}
     runs-on: ubuntu-latest
     environment: Dev
     needs: [register_bundles, build_additional_images]
     steps:
-      - name: Checkout (default)
-        if: ${{ inputs.prRepo == '' }} # if not running for a PR, checkout the default ref for the workflow run
+      - name: Checkout
         uses: actions/checkout@v2
         with:
           persist-credentials: false
-
-      - name: Checkout (PR)
-        if: ${{ inputs.prRepo != '' }} # if running for a PR, checkout the PR commit
-        uses: actions/checkout@v2
-        with:
-          persist-credentials: false
+          # if the following values are missing (i.e. not triggered via comment workflow)
+          # then the default checkout will apply
           repository: ${{ inputs.prRepo }}
           ref: ${{ inputs.prRef }}
 
@@ -558,36 +585,14 @@ jobs:
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
           LOCATION: "${{ secrets.LOCATION }}"
-          RESOURCE: "${{ secrets.API_CLIENT_ID }}"
-          AUTH_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
+          API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
+          AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
           TEST_USER_NAME: "${{ secrets.TEST_USER_NAME }}"
           TEST_USER_PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
           IS_API_SECURED: false
-
-      - name: Notify dedicated teams channel
-        uses: sachinkundu/ms-teams-notification@1.4
-        if: ${{ failure() && github.ref == 'refs/heads/main'}}
-        continue-on-error: true
-        with:
-          github-token: ${{ github.token }}
-          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-          notification-summary: "E2E Tests (Extended) failed"
-          notification-color: dc3545
-          timezone: Europe/Zurich
-
-      - name: Notify dedicated teams channel
-        uses: sachinkundu/ms-teams-notification@1.4
-        if: ${{ success() && github.ref == 'refs/heads/main' }}
-        continue-on-error: true
-        with:
-          github-token: ${{ github.token }}
-          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-          notification-summary: "Deployment and tests passed successfully"
-          notification-color: 28a745
-          timezone: Europe/Zurich
 
       - name: Upload Test Results
         if: always()
@@ -602,30 +607,21 @@ jobs:
         with:
           files: "./e2e_tests/pytest_e2e_extended.xml"
 
-  # Waiting for: https://github.com/microsoft/AzureTRE/issues/1165
-  # tre_stop:
-  #   name: "Deallocate Resources"
-  #   runs-on: ubuntu-latest
-  #   environment: Dev
-  #   needs: [e2e_tests]
-  #   if: |
-  #     ${{
-  #     always() &&
-  #     github.event.name == 'schedule'
-  #     || github.event_name == 'push'
-  #     || github.event_name == 'workflow_dispatch'
-  #     || contains(github.event.pull_request.labels.*.name, 'safe to test')
-  #     }}
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v2
+  summary:
+    name: Summary Notification
+    needs: [e2e_tests_smoke, e2e_tests_extended]
+    runs-on: ubuntu-latest
+    if: ${{ always() && (github.ref == 'refs/heads/main' && inputs.prRef == '') }}
+    environment: Dev
+    steps:
+      - uses: technote-space/workflow-conclusion-action@v2
 
-  #     - name: Deallocate Resources
-  #       shell: bash
-  #       env:
-  #         TRE_ID: "${{secrets.TRE_ID}}"
-  #       run: |
-  #         az extension add --name azure-firewall
-  #         # TODO: enable this once the bug
-  #         # https://github.com/microsoft/AzureTRE/issues/1165 is fixed
-  #         # make tre-stop
+      - name: Notify teams channel
+        if: env.WORKFLOW_CONCLUSION == 'failure' # notify only if failure
+        uses: sachinkundu/ms-teams-notification@1.4
+        with:
+          github-token: ${{ github.token }}
+          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
+          notification-summary: "Failed to deploy from main"
+          notification-color: dc3545
+          timezone: Europe/Zurich
