@@ -9,8 +9,8 @@ variable "tre_resource_id" {
 }
 
 variable "shared_storage_quota" {
-  type    = number
-  default = 50
+  type        = number
+  default     = 50
   description = "Quota (in GB) to set for the VM Shared Storage."
 }
 
