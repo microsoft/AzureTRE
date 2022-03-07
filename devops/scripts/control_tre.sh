@@ -19,7 +19,7 @@ fi
 az config set extension.use_dynamic_install=yes_without_prompt
 
 if [[ "$1" == *"start"* ]]; then
-  if [[ $(az network firewall list --query "[?resourceGroup=='rg-${TRE_ID}'&&name=='fw-${TRE_ID}'] | length(@)") != 0 ]]; then
+  if [[ $(az network firewall list --output json --query "[?resourceGroup=='rg-${TRE_ID}'&&name=='fw-${TRE_ID}'] | length(@)") != 0 ]]; then
     CURRENT_PUBLIC_IP=$(az network firewall ip-config list -f "fw-$TRE_ID" -g "rg-$TRE_ID" --query "[0].publicIpAddress" -o tsv)
     if [ -z "$CURRENT_PUBLIC_IP" ]; then
       echo "Starting Firewall - creating ip-config"
@@ -29,14 +29,14 @@ if [[ "$1" == *"start"* ]]; then
     fi
   fi
 
-  if [[ $(az network application-gateway list --query "[?resourceGroup=='rg-${TRE_ID}'&&name=='agw-${TRE_ID}'&&operationalState=='Stopped'] | length(@)") != 0 ]]; then
+  if [[ $(az network application-gateway list --output json --query "[?resourceGroup=='rg-${TRE_ID}'&&name=='agw-${TRE_ID}'&&operationalState=='Stopped'] | length(@)") != 0 ]]; then
     echo "Starting Application Gateway"
     az network application-gateway start -g "rg-$TRE_ID" -n "agw-$TRE_ID"
   else
     echo "Application Gateway already running"
   fi
 elif [[ "$1" == *"stop"* ]]; then
-  if [[ $(az network firewall list --query "[?resourceGroup=='rg-${TRE_ID}'&&name=='fw-${TRE_ID}'] | length(@)") != 0 ]]; then
+  if [[ $(az network firewall list --output json --query "[?resourceGroup=='rg-${TRE_ID}'&&name=='fw-${TRE_ID}'] | length(@)") != 0 ]]; then
     IPCONFIG_NAME=$(az network firewall ip-config list -f "fw-$TRE_ID" -g "rg-$TRE_ID" --query "[0].name" -o tsv)
 
     if [ -n "$IPCONFIG_NAME" ]; then
@@ -47,7 +47,7 @@ elif [[ "$1" == *"stop"* ]]; then
     fi
   fi
 
-  if [[ $(az network application-gateway list --query "[?resourceGroup=='rg-${TRE_ID}'&&name=='agw-${TRE_ID}'&&operationalState=='Running'] | length(@)") != 0 ]]; then
+  if [[ $(az network application-gateway list --output json --query "[?resourceGroup=='rg-${TRE_ID}'&&name=='agw-${TRE_ID}'&&operationalState=='Running'] | length(@)") != 0 ]]; then
     echo "Stopping Application Gateway"
     az network application-gateway stop -g "rg-$TRE_ID" -n "agw-$TRE_ID"
   else
@@ -57,7 +57,7 @@ fi
 
 # Report final FW status
 FW_STATE="Stopped"
-if [[ $(az network firewall list --query "[?resourceGroup=='rg-${TRE_ID}'&&name=='fw-${TRE_ID}'] | length(@)") != 0 ]]; then
+if [[ $(az network firewall list --output json --query "[?resourceGroup=='rg-${TRE_ID}'&&name=='fw-${TRE_ID}'] | length(@)") != 0 ]]; then
   PUBLIC_IP=$(az network firewall ip-config list -f "fw-$TRE_ID" -g "rg-$TRE_ID" --query "[0].publicIpAddress" -o tsv)
   if [ -n "$PUBLIC_IP" ]; then
     FW_STATE="Running"
