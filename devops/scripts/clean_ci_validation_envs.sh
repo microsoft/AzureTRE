@@ -72,7 +72,7 @@ then
   # if not, we can delete old workspace resource groups that were left due to errors.
   az group list --query "[?starts_with(name, 'rg-${MAIN_TRE_ID}-')].name" -o tsv |
   while read -r rg_name; do
-    echo "Deleting resource gorup: ${rg_name}"
+    echo "Deleting resource group: ${rg_name}"
     az group delete --yes --no-wait --name ${rg_name}
   done
 fi
