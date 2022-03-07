@@ -48,6 +48,9 @@ resource "azurerm_key_vault_secret" "resource_processor_vmss_password" {
   name         = "resource-processor-vmss-password"
   value        = random_password.password.result
   key_vault_id = var.keyvault_id
+  depends_on = [
+    azurerm_key_vault_access_policy.deployer
+  ]
 }
 
 resource "azurerm_user_assigned_identity" "vmss_msi" {

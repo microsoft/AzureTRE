@@ -37,6 +37,10 @@ resource "azurerm_key_vault_certificate" "tlscert" {
     }
   }
 
+  depends_on = [
+    azurerm_key_vault_access_policy.deployer
+  ]
+
   # The certificate will get replaced with a real one, so we don't want Terrafomr to try and revert it.
   lifecycle {
     ignore_changes = all
