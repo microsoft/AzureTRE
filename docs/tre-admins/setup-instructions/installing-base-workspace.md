@@ -11,9 +11,6 @@
 
     Copy the resulting JSON payload.
 
-    !!! info
-        If you're using Codespaces, you may encounter a `Permission denied` issue with the Docker daemon. To fix this, run `sudo bash ./devops/scripts/set_docker_sock_permission.sh` from the root of the repository, then retry the make command.
-
 1. Navigate to the Swagger UI at `https://<azure_tre_fqdn>/api/docs`
 
 1. Log into the Swagger UI by clicking `Authorize`, then `Authorize` again. You will be redirected to the login page.
