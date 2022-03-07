@@ -11,8 +11,8 @@ fi
 
 # if the resource group doesn't exist, no need to continue this script.
 # most likely this is an automated execution before calling make tre-deploy.
-if [[ $(az group list --query "[?name=='rg-${TRE_ID}'] | length(@)") == 0 ]]; then
-  echo "TRE resource group doesn't exits. Exiting..."
+if [[ $(az group list --output json --query "[?name=='rg-${TRE_ID}'] | length(@)") == 0 ]]; then
+  echo "TRE resource group doesn't exist. Exiting..."
   exit 0
 fi
 
