@@ -64,8 +64,6 @@ fi
 
 # Create proxy for each .json file 
 for filename in ./scripts/nexus_config/*.json; do  
-    json_content=$( jq . $filename)
-    
     # Check if apt proxy    
     base_type=$( jq .baseType $filename | sed 's/"//g')
     proxy_type=$( jq .proxyType $filename | sed 's/"//g')
