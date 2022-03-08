@@ -91,10 +91,9 @@
           "console": "integratedTerminal",
           "preLaunchTask": "Install_resource_processor_dependencies",
           "cwd": "${workspaceFolder}/resource_processor",
-          "envFile": "${workspaceFolder}/resource_processor/.env",
+          "envFile": "${workspaceFolder}/templates/core/private.env",
           "env": {
-            "PYTHONPATH": ".",
-            "USE_LOCAL_CREDS": "true"
+            "PYTHONPATH": "."
           }
         },
         {
@@ -170,5 +169,7 @@
   ],
   "forwardPorts": [
     8000
-  ]
+  ],
+  // Give permission to access docker socket
+  "postCreateCommand": "sudo bash ./devops/scripts/set_docker_sock_permission.sh"
 }
