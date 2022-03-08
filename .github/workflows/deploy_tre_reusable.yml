@@ -226,7 +226,7 @@ jobs:
       - name: Deploy TRE Core
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: "TF_VAR_ci_git_ref=${{ inputs.ciGitRef }} make deploy-core"
+          COMMAND: "TF_VAR_ci_git_ref=${{ inputs.ciGitRef }} TF_LOG=${{ secrets.TF_LOG}} make deploy-core"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
@@ -256,12 +256,11 @@ jobs:
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
           TF_VAR_keyvault_purge_protection_enabled: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
           TF_VAR_stateful_resources_locked: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
-          TF_LOG: "${{ secrets.TF_LOG }}"
 
       - name: Install Firewall
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: "make firewall-install"
+          COMMAND: "TF_LOG=${{ secrets.TF_LOG}} make firewall-install"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
@@ -291,12 +290,11 @@ jobs:
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
           TF_VAR_keyvault_purge_protection_enabled: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
           TF_VAR_stateful_resources_locked: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
-          TF_LOG: "${{ secrets.TF_LOG }}"
 
       - name: Install Nexus
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: "make nexus-install"
+          COMMAND: "TF_LOG=${{ secrets.TF_LOG}} make nexus-install"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
@@ -326,12 +324,11 @@ jobs:
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
           TF_VAR_keyvault_purge_protection_enabled: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
           TF_VAR_stateful_resources_locked: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
-          TF_LOG: "${{ secrets.TF_LOG }}"
 
       - name: Install Gitea
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: "make gitea-install"
+          COMMAND: "TF_LOG=${{ secrets.TF_LOG}} make gitea-install"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
@@ -361,7 +358,6 @@ jobs:
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
           TF_VAR_keyvault_purge_protection_enabled: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
           TF_VAR_stateful_resources_locked: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
-          TF_LOG: "${{ secrets.TF_LOG }}"
 
   publish_bundles:
     name: Publish Bundles

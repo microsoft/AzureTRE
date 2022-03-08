@@ -16,12 +16,7 @@ build-and-push-api: build-api-image push-api-image
 build-and-push-resource-processor: build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image
 build-and-push-gitea: build-gitea-image push-gitea-image
 build-and-push-guacamole: build-guacamole-image push-guacamole-image
-
-# If TF_LOG == DEBUG, suppress the output - the build will copy a log file to blob storage for inspection
-tre-deploy:
-	$(call target_title, "Deploying TRE") \
-	&& if [ "$${TF_LOG}" == "DEBUG" ]; then make deploy-core deploy-shared-services > /dev/null; else deploy-core deploy-shared-services; fi;
-
+tre-deploy: deploy-core deploy-shared-services
 deploy-shared-services: firewall-install gitea-install nexus-install
 
 # to move your environment from the single 'core' deployment (which includes the firewall)
@@ -128,7 +123,7 @@ terraform-shared-service-deploy:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
-	&& cd ${DIR} && ../../deploy_from_local.sh
+	&& if [ "$${TF_LOG}" == "DEBUG" ]; then cd ${DIR} && ../../deploy_from_local.sh > /dev/null; else cd ${DIR} && ../../deploy_from_local.sh; fi;
 
 firewall-install:
 	$(call target_title, "Installing Firewall") \
@@ -151,7 +146,7 @@ deploy-core: tre-start
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
-	&& cd ./templates/core/terraform/ && ./deploy.sh
+	&& if [ "$${TF_LOG}" == "DEBUG" ]; then cd ./templates/core/terraform/ && ./deploy.sh > /dev/null; else cd ./templates/core/terraform/ && ./deploy.sh; fi;
 
 letsencrypt:
 	$(call target_title, "Requesting LetsEncrypt SSL certificate") \
