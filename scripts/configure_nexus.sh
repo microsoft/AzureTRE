@@ -67,8 +67,8 @@ for filename in ./scripts/nexus_config/*.json; do
     json_content=$( jq . $filename)
     
     # Check if apt proxy    
-    base_type = $( jq .baseType $filename)
-    proxy_type = $( jq .proxyType $filename)
+    base_type=$( jq .baseType $filename | sed 's/"//g')
+    proxy_type=$( jq .proxyType $filename | sed 's/"//g')
     proxy_name=$(jq .name $filename | sed 's/"//g')
 
     base_url=$NEXUS_URL/service/rest/v1/repositories/$base_type/$proxy_type
