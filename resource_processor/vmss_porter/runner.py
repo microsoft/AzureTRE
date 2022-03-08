@@ -1,32 +1,30 @@
-from collections import defaultdict
-import os
-import sys
 import json
 import socket
 import asyncio
 import logging
+import sys
+from resources.commands import build_porter_command, build_porter_command_for_outputs
+from shared.config import get_config
+from resources.helpers import get_installation_id
 
 from shared.logging import disable_unwanted_loggers, initialize_logging, get_message_id_logger, shell_output_logger  # pylint: disable=import-error # noqa
-from resources import strings  # pylint: disable=import-error # noqa
+from resources import strings, statuses  # pylint: disable=import-error # noqa
 from contextlib import asynccontextmanager
 from azure.servicebus import ServiceBusMessage
 from azure.servicebus.aio import ServiceBusClient, AutoLockRenewer
 from azure.identity.aio import DefaultAzureCredential
 
+
+# Initialise logging
 logger_adapter = initialize_logging(logging.INFO, socket.gethostname())
 disable_unwanted_loggers()
 
-
-# Specify pass and fail status strings so we can return the right statuses to the api depending on the action type (with a default of custom action)
-failed_status_string_for = defaultdict(lambda: strings.RESOURCE_ACTION_STATUS_FAILED, {
-    "install": strings.RESOURCE_STATUS_FAILED,
-    "uninstall": strings.RESOURCE_STATUS_DELETING_FAILED
-})
-
-pass_status_string_for = defaultdict(lambda: strings.RESOURCE_ACTION_STATUS_SUCCEEDED, {
-    "install": strings.RESOURCE_STATUS_DEPLOYED,
-    "uninstall": strings.RESOURCE_STATUS_DELETED
-})
+# Initialise config
+try:
+    config = get_config()
+except KeyError as e:
+    logger_adapter.error(f"Environment variable {e} is not set correctly...Exiting")
+    sys.exit(1)
 
 
 @asynccontextmanager
@@ -39,14 +37,14 @@ async def default_credentials(msi_id):
     await credential.close()
 
 
-async def receive_message(env_vars, service_bus_client):
+async def receive_message(service_bus_client):
     """
     This method is an async generator which receives messages from service bus
     and yields those messages. If the yielded function return True the message is
     marked complete.
     """
     async with service_bus_client:
-        q_name = env_vars["resource_request_queue"]
+        q_name = config["resource_request_queue"]
         renewer = AutoLockRenewer(max_lock_renewal_duration=1800)
         receiver = service_bus_client.get_queue_receiver(queue_name=q_name, auto_lock_renewer=renewer)
 
@@ -62,144 +60,31 @@ async def receive_message(env_vars, service_bus_client):
                     result = (yield message)
                 except (json.JSONDecodeError) as e:
                     logging.error(f"Received bad service bus resource request message: {e}")
+
                 if result:
                     logging.info(f"Resource request for {message} is complete")
                 else:
                     logging.error('Message processing failed!')
+
                 logger_adapter.info(f"Message with id = {message['id']} processed as {result} and marked complete.")
                 await receiver.complete_message(msg)
 
 
-def azure_login_command(env_vars):
-    local_login = None
-    # If running locally with use_local_creds enabled, use signed-in identity for authenticating with Service Bus
-    if env_vars['use_local_creds'] == "true":
-        local_login = f"az account set --subscription {env_vars['arm_subscription_id']}"
-
-    # If running locally with use_local_creds disabled, use the Service Principal credentials
-    else:
-        local_login = f"az login --service-principal --username {env_vars['arm_client_id']} --password {env_vars['arm_client_secret']} --tenant {env_vars['arm_tenant_id']}"
-
-    # Use the Managed Identity when in VMSS identity
-    vmss_login = f"az login --identity -u {env_vars['vmss_msi_id']}"
-    command = vmss_login if env_vars['vmss_msi_id'] else local_login
-    return command
-
-
-def azure_acr_login_command(env_vars):
-    return f"az acr login --name {env_vars['registry_server'].replace('.azurecr.io','')}"
-
-
-async def get_porter_parameter_keys(msg_body, env_vars):
-    command = [f"{azure_login_command(env_vars)} >/dev/null && \
-        {azure_acr_login_command(env_vars)} >/dev/null && \
-        porter explain --reference {env_vars['registry_server']}/{msg_body['name']}:v{msg_body['version']} -ojson"]
+async def run_porter(command):
+    """
+    Run a Porter command
+    """
     proc = await asyncio.create_subprocess_shell(
         ''.join(command),
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
-        env=porter_envs(env_vars))
-
-    stdout, stderr = await proc.communicate()
-    logging.info(f'get_porter_parameter_keys exited with {proc.returncode}]')
-    result_stdout = None
-    result_stderr = None
-    if stdout:
-        result_stdout = stdout.decode()
-        porter_explain_parameters = json.loads(result_stdout)["parameters"]
-        porter_parameter_keys = [item["name"] for item in porter_explain_parameters]
-        return porter_parameter_keys
-    if stderr:
-        result_stderr = stderr.decode()
-        shell_output_logger(result_stderr, '[stderr]', logger_adapter, logging.WARN)
-
-
-def get_installation_id(msg_body):
-    # this will be used to identify each bundle install within the porter state store.
-    return msg_body['id']
-
-
-async def build_porter_command(msg_body, env_vars, custom_action=False):
-    porter_parameter_keys = await get_porter_parameter_keys(msg_body, env_vars)
-    porter_parameters = ""
-
-    if porter_parameter_keys is None:
-        logger_adapter.warning("Unknown porter parameters - explain probably failed.")
-    else:
-        for parameter_name in porter_parameter_keys:
-            # try to find the param in order of priorities:
-            # 1. msg parameters collection
-            # 2. env_vars (e.g. terraform state ones)
-            # 3. msg body root (e.g. id of the resource)
-            parameter_value = msg_body['parameters'].get(
-                parameter_name,
-                env_vars.get(
-                    parameter_name,
-                    msg_body.get(parameter_name)))
-
-            # if still not found, might be a special case
-            # (we give a chance to the method above to allow override of the special handeling done below)
-            if parameter_value is None:
-                parameter_value = get_special_porter_param_value(parameter_name, msg_body, env_vars)
-
-            # only append if we have a value, porter will complain anyway about missing parameters
-            if parameter_value is not None:
-                porter_parameters = porter_parameters + f" --param {parameter_name}=\"{parameter_value}\""
-
-    installation_id = get_installation_id(msg_body)
-
-    command_line = [f"{azure_login_command(env_vars)} && {azure_acr_login_command(env_vars)} && porter "
-                    # If a custom action (i.e. not install, uninstall, upgrade) we need to use 'invoke'
-                    f"{'invoke --action ' if custom_action else ''}"
-                    f"{msg_body['action']} \"{installation_id}\" "
-                    f" --reference {env_vars['registry_server']}/{msg_body['name']}:v{msg_body['version']}"
-                    f" {porter_parameters} --cred ./vmss_porter/azure.json --allow-docker-host-access --force"
-                    f" && porter show {installation_id}"]
-    return command_line
-
-
-def get_special_porter_param_value(parameter_name: str, msg_body, env_vars):
-    # some parameters might not have identical names and this comes to handle that
-    if parameter_name == "mgmt_acr_name":
-        return env_vars['registry_server'].replace('.azurecr.io', '')
-    if parameter_name == "mgmt_resource_group_name":
-        return env_vars['tfstate_resource_group_name']
-    if parameter_name == "workspace_id":
-        return msg_body.get("workspaceId")  # not included in all messgaes
-    if parameter_name == "parent_service_id":
-        return msg_body.get("parentWorkspaceServiceId")  # not included in all messgaes
-
-
-async def build_porter_command_for_outputs(msg_body):
-    installation_id = get_installation_id(msg_body)
-    # we only need "real" outputs and use jq to remove the logs which are big
-    command_line = [f"porter show {installation_id} --output json | jq -c '. | select(.Outputs!=null) | .Outputs | del (.[] | select(.Name==\"io.cnab.outputs.invocationImageLogs\"))'"]
-    return command_line
-
-
-def porter_envs(env_var):
-    porter_env_vars = {}
-    porter_env_vars["HOME"] = os.environ['HOME']
-    porter_env_vars["PATH"] = os.environ['PATH']
-    porter_env_vars["ARM_CLIENT_ID"] = env_var["arm_client_id"]
-    porter_env_vars["ARM_CLIENT_SECRET"] = env_var["arm_client_secret"]
-    porter_env_vars["ARM_SUBSCRIPTION_ID"] = env_var["arm_subscription_id"]
-    porter_env_vars["ARM_TENANT_ID"] = env_var["arm_tenant_id"]
-
-    return porter_env_vars
-
-
-async def run_porter(command, env_vars):
-    proc = await asyncio.create_subprocess_shell(
-        ''.join(command),
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-        env=porter_envs(env_vars))
+        env=config["porter_env"])
 
     stdout, stderr = await proc.communicate()
     logging.info(f'run porter exited with {proc.returncode}]')
     result_stdout = None
     result_stderr = None
+
     if stdout:
         result_stdout = stdout.decode()
         shell_output_logger(result_stderr, '[stdout]', logger_adapter, logging.INFO)
@@ -212,6 +97,9 @@ async def run_porter(command, env_vars):
 
 
 def service_bus_message_generator(sb_message, status, deployment_message, outputs=None):
+    """
+    Generate a resource request message
+    """
     installation_id = get_installation_id(sb_message)
     message_dict = {
         "operationId": sb_message["operationId"],
@@ -226,14 +114,14 @@ def service_bus_message_generator(sb_message, status, deployment_message, output
     return resource_request_message
 
 
-async def invoke_porter_action(msg_body, sb_client, env_vars, message_logger_adapter) -> bool:
+async def invoke_porter_action(msg_body, sb_client, message_logger_adapter) -> bool:
     """
     Handle resource message by invoking specified porter action (i.e. install, uninstall)
     """
     installation_id = get_installation_id(msg_body)
     action = msg_body["action"]
     message_logger_adapter.info(f"{installation_id}: {action} action configuration starting")
-    sb_sender = sb_client.get_queue_sender(queue_name=env_vars["deployment_status_queue"])
+    sb_sender = sb_client.get_queue_sender(queue_name=config["deployment_status_queue"])
 
     # If the action is install, post message on sb queue to start a deployment job
     if action == "install":
@@ -242,13 +130,13 @@ async def invoke_porter_action(msg_body, sb_client, env_vars, message_logger_ada
 
     # Build and run porter command (flagging if its a built-in action or custom so we can adapt porter command appropriately)
     is_custom_action = action not in ["install", "upgrade", "uninstall"]
-    porter_command = await build_porter_command(msg_body, env_vars, is_custom_action)
-    returncode, _, err = await run_porter(porter_command, env_vars)
+    porter_command = await build_porter_command(config, logger_adapter, msg_body, is_custom_action)
+    returncode, _, err = await run_porter(porter_command)
 
     # Handle command output
     if returncode != 0:
         error_message = "Error context message = " + " ".join(err.split('\n')) + " ; Command executed: ".join(porter_command)
-        resource_request_message = service_bus_message_generator(msg_body, failed_status_string_for[action], error_message)
+        resource_request_message = service_bus_message_generator(msg_body, statuses.failed_status_string_for[action], error_message)
 
         # Post message on sb queue to notify receivers of action failure
         await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"]))
@@ -258,19 +146,22 @@ async def invoke_porter_action(msg_body, sb_client, env_vars, message_logger_ada
     else:
         # Get the outputs
         # TODO: decide if this should "fail" the deployment
-        _, outputs = await get_porter_outputs(msg_body, env_vars, message_logger_adapter)
+        _, outputs = await get_porter_outputs(msg_body, message_logger_adapter)
 
         success_message = f"{action} action completed successfully."
-        resource_request_message = service_bus_message_generator(msg_body, pass_status_string_for[action], success_message, outputs)
+        resource_request_message = service_bus_message_generator(msg_body, statuses.pass_status_string_for[action], success_message, outputs)
 
         await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"]))
         message_logger_adapter.info(f"{installation_id}: {success_message}")
         return True
 
 
-async def get_porter_outputs(msg_body, env_vars, message_logger_adapter):
-    porter_command = await build_porter_command_for_outputs(msg_body)
-    returncode, stdout, err = await run_porter(porter_command, env_vars)
+async def get_porter_outputs(msg_body, message_logger_adapter):
+    """
+    Get outputs JSON from a Porter command
+    """
+    porter_command = await build_porter_command_for_outputs(config, logger_adapter, msg_body)
+    returncode, stdout, err = await run_porter(porter_command)
 
     if returncode != 0:
         error_message = "Error context message = " + " ".join(err.split('\n'))
@@ -287,62 +178,29 @@ async def get_porter_outputs(msg_body, env_vars, message_logger_adapter):
         return True, outputs_json
 
 
-async def runner(env_vars):
-    msi_id = env_vars["vmss_msi_id"]
-    service_bus_namespace = env_vars["service_bus_namespace"]
-
-    async with default_credentials(msi_id) as credential:
-        service_bus_client = ServiceBusClient(service_bus_namespace, credential)
+async def runner():
+    async with default_credentials(config["vmss_msi_id"]) as credential:
+        service_bus_client = ServiceBusClient(config["service_bus_namespace"], credential)
         logger_adapter.info("Starting message receiving loop...")
 
         while True:
             logger_adapter.info("Checking for new messages...")
-            receive_message_gen = receive_message(env_vars, service_bus_client)
+            receive_message_gen = receive_message(service_bus_client)
 
             try:
                 async for message in receive_message_gen:
-                    logger_adapter.info(f"Message received for id={message['id']}")
+                    logger_adapter.info(f"Message received with id={message['id']}")
                     message_logger_adapter = get_message_id_logger(message['id'])  # logger includes message id in every entry.
-                    result = await invoke_porter_action(message, service_bus_client, env_vars, message_logger_adapter)
+                    result = await invoke_porter_action(message, service_bus_client, message_logger_adapter)
                     await receive_message_gen.asend(result)
+
             except StopAsyncIteration:  # the async generator when finished signals end with this exception.
                 pass
 
-            logger_adapter.info("All messages done sleeping...")
+            logger_adapter.info("All messages processed. Sleeping...")
             await asyncio.sleep(60)
 
 
-def read_env_vars():
-    env_vars = {
-        "registry_server": os.environ["REGISTRY_SERVER"],
-        "tfstate_container_name": os.environ["TERRAFORM_STATE_CONTAINER_NAME"],
-        "tfstate_resource_group_name": os.environ["MGMT_RESOURCE_GROUP_NAME"],
-        "tfstate_storage_account_name": os.environ["MGMT_STORAGE_ACCOUNT_NAME"],
-        "deployment_status_queue": os.environ["SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE"],
-        "resource_request_queue": os.environ["SERVICE_BUS_RESOURCE_REQUEST_QUEUE"],
-        "service_bus_namespace": os.environ["SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE"],
-        "vmss_msi_id": os.environ.get("VMSS_MSI_ID", None),
-
-        # Needed for running porter
-        "arm_use_msi": os.environ.get("ARM_USE_MSI", "false"),
-        "arm_subscription_id": os.environ["AZURE_SUBSCRIPTION_ID"],
-        "arm_client_id": os.environ["ARM_CLIENT_ID"],
-        "arm_tenant_id": os.environ["AZURE_TENANT_ID"],
-
-        # Whether to use local az credentials for connecting to Service Bus (for local debugging)
-        "use_local_creds": os.environ.get("USE_LOCAL_CREDS", "false"),
-    }
-
-    env_vars["arm_client_secret"] = os.environ["ARM_CLIENT_SECRET"] if env_vars["arm_use_msi"] == "false" else ""
-
-    return env_vars
-
-
 if __name__ == "__main__":
-    try:
-        env_vars = read_env_vars()
-    except KeyError as e:
-        logger_adapter.error(f"Environment variable {e} is not set correctly...Exiting")
-        sys.exit(1)
-    logger_adapter.info("Started processor")
-    asyncio.run(runner(env_vars))
+    logger_adapter.info("Started resource processor")
+    asyncio.run(runner())

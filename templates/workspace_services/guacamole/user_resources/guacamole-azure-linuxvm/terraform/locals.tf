@@ -12,18 +12,20 @@ locals {
   nexus_proxy_url                = "https://nexus-${var.tre_id}.azurewebsites.net"
   image_ref = {
     "Ubuntu 18.04" = {
-      "publisher"  = "canonical"
-      "offer"      = "ubuntuserver"
-      "sku"        = "18_04-lts-gen2"
-      "version"    = "latest"
-      "install_ui" = true
+      "publisher"    = "canonical"
+      "offer"        = "ubuntuserver"
+      "sku"          = "18_04-lts-gen2"
+      "version"      = "latest"
+      "install_ui"   = true
+      "conda_config" = false
     },
     "Ubuntu 18.04 Data Science VM" = {
-      "publisher"  = "microsoft-dsvm"
-      "offer"      = "ubuntu-1804"
-      "sku"        = "1804-gen2"
-      "version"    = "latest"
-      "install_ui" = false
+      "publisher"    = "microsoft-dsvm"
+      "offer"        = "ubuntu-1804"
+      "sku"          = "1804-gen2"
+      "version"      = "latest"
+      "install_ui"   = false
+      "conda_config" = true
     }
   }
 }
