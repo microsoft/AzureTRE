@@ -10,6 +10,11 @@ sudo apt-get update
 sudo apt-get install xrdp -y
 sudo adduser xrdp ssl-cert
 
+# Required packages for Docker installation
+sudo apt-get install ca-certificates curl gnupg lsb-release
+# Get Docker Public key from Nexus
+curl -fsSL ${nexus_proxy_url}/repository/docker-public-key/gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/docker-archive-keyring.gpg
+
 # Install desktop environment if image doesn't have one already
 if [ ${install_ui} -eq 1 ]; then
   sudo apt-get install xorg xfce4 xfce4-goodies dbus-x11 x11-xserver-utils -y
