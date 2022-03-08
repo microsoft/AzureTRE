@@ -23,3 +23,11 @@ trusted-host = ${nexus_proxy_url}
 # We need to write the ini file in UTF8 (No BOM) as pip won't understand Powershell's default encoding (unicode)
 $Utf8NoBomEncoding = New-Object System.Text.UTF8Encoding $False
 [System.IO.File]::WriteAllLines($PipConfigFilePath, $ConfigBody, $Utf8NoBomEncoding)
+
+### Anaconda Config
+if( ${CondaConfig} -eq 1 )
+{
+  conda config --add channels ${nexus_proxy_url}/repository/conda/  --system
+  conda config --remove channels defaults --system
+  conda config --set channel_alias ${nexus_proxy_url}/repository/conda/  --system
+}
