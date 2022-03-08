@@ -11,6 +11,7 @@ from services import health_checker
 
 pytestmark = pytest.mark.asyncio
 
+
 @patch("services.health_checker.get_store_key")
 @patch("services.health_checker.CosmosClient")
 def test_get_state_store_status_responding(cosmos_client_mock, get_store_key_mock) -> None:
