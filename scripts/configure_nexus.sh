@@ -72,7 +72,7 @@ for filename in ./scripts/nexus_config/*.json; do
     proxy_name=$(jq .name $filename | sed 's/"//g')
 
     base_url=$NEXUS_URL/service/rest/v1/repositories/$base_type/$proxy_type
-    full_url=$base_url$proxy_name
+    full_url=$base_url/$proxy_name
 
     export STATUS_CODE=$(curl -iu admin:$NEXUS_PASS -X "GET" $full_url -H "accept: application/json" -k -s -w "%{http_code}" -o /dev/null)
 
@@ -82,7 +82,7 @@ for filename in ./scripts/nexus_config/*.json; do
         $base_url \
         -H 'accept: application/json' \
         -H 'Content-Type: application/json' \
-        -d $filename
+        -d @$filename
     else
         echo "$proxy_type proxy for $proxy_name already exists."
     fi
