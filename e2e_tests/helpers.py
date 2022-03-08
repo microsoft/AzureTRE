@@ -101,14 +101,26 @@ async def disable_and_delete_resource(endpoint, resource_type, token, admin_toke
 
 
 async def ping_guacamole_workspace_service(workspace_id, workspace_service_id, token, verify) -> None:
-    # it might take some time to be ready after deployment
-    await asyncio.sleep(20)
+    short_workspace_id = workspace_id[-4:]
+    short_workspace_service_id = workspace_service_id[-4:]
+    endpoint = f"https://guacamole-{config.TRE_ID}-ws-{short_workspace_id}-svc-{short_workspace_service_id}.azurewebsites.net/guacamole"
+    headers = {'x-access-token': f'{token}'}
+    terminal_http_status = [status.HTTP_200_OK, status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
 
     async with AsyncClient(verify=verify) as client:
-        short_workspace_id = workspace_id[-4:]
-        short_workspace_service_id = workspace_service_id[-4:]
-        response = await client.get(f"https://guacamole-{config.TRE_ID}-ws-{short_workspace_id}-svc-{short_workspace_service_id}.azurewebsites.net/guacamole", headers={'x-access-token': f'{token}'}, timeout=300)
-        print("GUAC RESPONSE", response)
+        while (True):
+            try:
+                response = await client.get(url=endpoint, headers=headers, timeout=10)
+                print("GUAC RESPONSE", response)
+
+                if response.status_code in terminal_http_status:
+                    break
+
+                await asyncio.sleep(30)
+
+            except Exception as e:
+                print(e)
+
         assert (response.status_code == status.HTTP_200_OK), "Guacamole cannot be reached"
 
 
