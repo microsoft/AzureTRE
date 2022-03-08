@@ -249,6 +249,7 @@ bundle-publish:
 	$(call target_title, "Publishing ${DIR} bundle with Porter") \
 	&& ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& . ./devops/scripts/set_docker_sock_permission.sh \
 	&& az acr login --name $${ACR_NAME}	\
 	&& cd ${DIR} \
 	&& porter publish --registry "$${ACR_NAME}.azurecr.io" --debug
@@ -289,7 +290,7 @@ setup-local-debugging:
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& pushd ./templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ./devops/scripts/load_env.sh ./templates/core/private.env \
-	&& . ./devops/scripts/setup_local_debugging.sh
+	&& . ./scripts/setup_local_debugging.sh
 
 register-aad-workspace:
 	$(call target_title,"Registering AAD Workspace") \
