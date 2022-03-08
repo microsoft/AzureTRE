@@ -14,7 +14,7 @@
   "dockerProxy": {
       "indexType": "HUB"
   },
-  "DockerAttributes": {
+  "docker": {
     "v1Enabled": true
   },
   "negativeCache": {
