@@ -67,19 +67,18 @@ for filename in ./scripts/nexus_config/*.json; do
     json_content=$( jq . $filename)
     
     # Check if apt proxy    
-    if [[ $(jq .apt $filename) ]]; then
-        url_end=apt/proxy/$(jq .name $filename | sed 's/"//g')
-    else
-        url_end=proxy/$(jq .name $filename | sed 's/"//g')
-    fi
+    proxy_type = $( jq .type $filename)
+    proxy_name=$(jq .name $filename | sed 's/"//g')
+
+    base_url=$NEXUS_URL/service/rest/v1/repositories/$proxy_type
+    full_url=$NEXUS_URL/service/rest/v1/repositories/$proxy_type$proxy_name
     
-    full_url=${NEXUS_URL}/service/rest/v1/repositories/$url_end
     export STATUS_CODE=$(curl -iu admin:$NEXUS_PASS -X "GET" $full_url -H "accept: application/json" -k -s -w "%{http_code}" -o /dev/null)
 
     if [[ ${STATUS_CODE} == 404 ]]
     then
         curl -iu admin:$NEXUS_PASS -XPOST \
-        $full_url \
+        $base_url \
         -H 'accept: application/json' \
         -H 'Content-Type: application/json' \
         -d $filename

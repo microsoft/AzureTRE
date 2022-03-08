@@ -30,5 +30,6 @@
     "apt": {
         "distribution": "bionic",
         "flat": false
-    }
+    },
+    "type": "apt"
 }

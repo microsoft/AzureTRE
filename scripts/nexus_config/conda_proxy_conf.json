@@ -26,5 +26,6 @@
       "enableCookies": false,
       "useTrustStore": false
     }
-  }
+  },
+  "type": "conda"
 }
