@@ -4,8 +4,9 @@ from typing import List
 from azure.cosmos import CosmosClient
 from pydantic import parse_obj_as
 from db.repositories.resource_templates import ResourceTemplateRepository
-
 from db.repositories.resources import ResourceRepository, IS_ACTIVE_CLAUSE
+from db.repositories.operations import OperationRepository
+from db.errors import ResourceIsNotDeployed, EntityDoesNotExist
 from models.domain.shared_service import SharedService
 from models.schemas.resource import ResourcePatch
 from models.schemas.shared_service_template import SharedServiceTemplateInCreate
@@ -32,22 +33,34 @@ class SharedServiceRepository(ResourceRepository):
         shared_services = self.query(query=query)
         return parse_obj_as(List[SharedService], shared_services)
 
+    def get_deployed_shared_service_by_id(self, shared_service_id: str, operations_repo: OperationRepository):
+        shared_service = self.get_shared_service_by_id(shared_service_id)
+
+        if (not operations_repo.resource_has_deployed_operation(resource_id=shared_service_id)):
+            raise ResourceIsNotDeployed
+
+        return shared_service
+
+    def get_shared_service_by_id(self, shared_service_id: str):
+        shared_services = self.query(self.shared_services_query(shared_service_id))
+        if not shared_services:
+            raise EntityDoesNotExist
+        return parse_obj_as(SharedService, shared_services[0])
+
     def get_shared_service_spec_params(self):
         return self.get_resource_base_spec_params()
 
     def create_shared_service_item(self, shared_service_input: SharedServiceTemplateInCreate, shared_service_id: str) -> SharedService:
-        full_shared_service_id = str(uuid.uuid4())
-
         template_version = self.validate_input_against_template(shared_service_input.templateName, shared_service_input, ResourceType.SharedService)
 
         resource_spec_parameters = {**shared_service_input.properties, **self.get_shared_service_spec_params()}
 
         shared_service = SharedService(
-            id=full_shared_service_id,
+            id=shared_service_id,
             templateName=shared_service_input.templateName,
             templateVersion=template_version,
             properties=resource_spec_parameters,
-            resourcePath=f'/shareds/{shared_service_id}/shared-services/{full_shared_service_id}',
+            resourcePath=f'/shared-services/{shared_service_id}',
             etag=''
         )
 
