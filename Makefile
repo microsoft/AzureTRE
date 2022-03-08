@@ -25,6 +25,7 @@ deploy-shared-services: firewall-install gitea-install nexus-install
 migrate-firewall-state: prepare-tf-state
 
 bootstrap:
+	echo "**** SL TEST - check that this is output ****"
 	$(call target_title, "Bootstrap Terraform") \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
