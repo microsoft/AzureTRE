@@ -18,18 +18,9 @@ Resource Processor is the Azure TRE component automating [Porter](https://porter
 
 ## Local development
 
-To work locally in Visual Studio Code within the Dev Container you can use the `Resource Processor` debug profile to run the app. Before using this, you'll need to perform the below steps:
+To work locally in Visual Studio Code within the Dev Container you can use the `Resource Processor` debug profile to run the app.
 
-1. First, run `make setup-local-debugging` to whitelist your local IP against your resources and create the neccesary roles for your signed-in credential to access and create Service Bus messages
-2. Copy the `private.env` file from `./templates/core/private.env` to `./resource_processor/.env`
-3. When running locally, Porter will need a Service Principal instead of Managed Service Identity to be able to authenticate with Azure to deploy resources. You can set this up by running:
-
-```bash
-az ad sp create-for-rbac --name ResourceProcessorTesting --role Owner --scopes /subscriptions/{YOUR_SUBSCRIPTION_ID}
-```
-
-4. Using the `appId` and `password` values from the above output, create new environment variables called `ARM_CLIENT_ID` and `ARM_CLIENT_SECRET` in the `.env` file you just created in the `./resource_processor` directory.
-5. Navigate to the Debug panel then select the `Resource Processor` profile, then hit *Start Debugging*.
+Before using this, you'll need to run `make setup-local-debugging` to whitelist your local IP against your resources and create a Service Principal for the Resource Processor to access and create Service Bus messages and deploy resources.
 
 Once the above is set up you can simulate receiving messages from Service Bus by going to Service Bus explorer on the portal and using a message payload for `SERVICE_BUS_RESOURCE_REQUEST_QUEUE` as follows:
 
