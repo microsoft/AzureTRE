@@ -38,14 +38,21 @@ resource "azurerm_app_service" "gitea" {
     GITEA_PASSWD   = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.gitea_password.id})"
     GITEA_EMAIL    = "giteaadmin@azuretre.com"
 
-    GITEA__server__ROOT_URL              = "https://${local.webapp_name}.azurewebsites.net/"
-    GITEA__server__LFS_START_SERVER      = "true"
-    GITEA__lfs__PATH                     = "/data/gitea/lfs"
-    GITEA__lfs__STORAGE_TYPE             = "local"
-    GITEA__log_0x2E_console__COLORIZE    = "false" # Azure monitor doens't show colors, so this is easier to read.
-    GITEA__picture__DISABLE_GRAVATAR     = "true"  # external avaters are not available due to network restrictions
-    GITEA__security__INSTALL_LOCK        = true
-    GITEA__service__DISABLE_REGISTRATION = false
+    GITEA__server__ROOT_URL                          = "https://${local.webapp_name}.azurewebsites.net/"
+    GITEA__server__LFS_START_SERVER                  = "true"
+    GITEA__lfs__PATH                                 = "/data/gitea/lfs"
+    GITEA__lfs__STORAGE_TYPE                         = "local"
+    GITEA__log_0x2E_console__COLORIZE                = "false" # Azure monitor doens't show colors, so this is easier to read.
+    GITEA__openid__ENALBLE_OPENID_SIGNIN             = "false"
+    GITEA__openid__ENABLE_OPENID_SIGNUP              = "true"
+    GITEA__openid__WHITELISTED_URIS                  = "login.microsoftonline.com"
+    GITEA__picture__DISABLE_GRAVATAR                 = "true" # external avaters are not available due to network restrictions
+    GITEA__security__INSTALL_LOCK                    = true
+    GITEA__service__DISABLE_REGISTRATION             = false
+    GITEA__service__ALLOW_ONLY_EXTERNAL_REGISTRATION = true
+    GITEA__service__SHOW_REGISTRATION_BUTTON         = false
+
+
 
     GITEA__database__SSL_MODE = "true"
     GITEA__database__DB_TYPE  = "mysql"

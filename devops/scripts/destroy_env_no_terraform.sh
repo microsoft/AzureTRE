@@ -95,18 +95,18 @@ echo "keyvault properties:"
 az keyvault list --resource-group ${core_tre_rg} --query "[].properties"
 echo "keyvault purge protection evaluation result:"
 az keyvault list --resource-group ${core_tre_rg} --query "[?properties.enablePurgeProtection==``null``] | length (@)"
-if [[ $(az keyvault list --resource-group ${core_tre_rg} --query "[?properties.enablePurgeProtection==``null``] | length (@)") != 0 ]]; then
-  tre_id=${core_tre_rg#"rg-"}
-  keyvault_name="kv-${tre_id}"
+# if [[ $(az keyvault list --resource-group ${core_tre_rg} --query "[?properties.enablePurgeProtection==``null``] | length (@)") != 0 ]]; then
+#   tre_id=${core_tre_rg#"rg-"}
+#   keyvault_name="kv-${tre_id}"
 
-  echo "Deleting keyvault: ${keyvault_name}"
-  az keyvault delete --name ${keyvault_name} --resource-group ${core_tre_rg}
+#   echo "Deleting keyvault: ${keyvault_name}"
+#   az keyvault delete --name ${keyvault_name} --resource-group ${core_tre_rg}
 
-  echo "Purging keyvault: ${keyvault_name}"
-  az keyvault purge --name ${keyvault_name} ${no_wait_option}
-else
-  echo "Resource group ${core_tre_rg} doesn't have a keyvault without pruge protection."
-fi
+#   echo "Purging keyvault: ${keyvault_name}"
+#   az keyvault purge --name ${keyvault_name} ${no_wait_option}
+# else
+#   echo "Resource group ${core_tre_rg} doesn't have a keyvault without pruge protection."
+# fi
 
 # this will find the mgmt, core resource groups as well as any workspace ones
 # we are reverse-sorting to first delete the workspace groups (might not be

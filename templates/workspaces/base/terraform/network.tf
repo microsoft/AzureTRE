@@ -202,8 +202,10 @@ resource "azurerm_network_security_rule" "allow-outbound-from-webapp-to-core-web
 resource "azurerm_network_security_rule" "allow-outbound-webapps-to-services" {
   access = "Allow"
   destination_port_ranges = [
+    "80",
     "443",
     "445",
+    "3306",
     "3389",
   ]
   destination_address_prefix  = azurerm_subnet.services.address_prefix
@@ -255,8 +257,10 @@ resource "azurerm_network_security_rule" "allow-inbound-from-resourceprocessor" 
 resource "azurerm_network_security_rule" "allow-inbound-from-webapp-to-services" {
   access = "Allow"
   destination_port_ranges = [
+    "80",
     "443",
     "445",
+    "3306",
     "3389",
   ]
   destination_address_prefix  = azurerm_subnet.services.address_prefix
