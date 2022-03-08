@@ -31,5 +31,6 @@
       "distribution": "bionic",
       "flat": false
   },
-  "type": "apt"
+  "baseType": "apt",
+  "proxyType": "proxy"
 }

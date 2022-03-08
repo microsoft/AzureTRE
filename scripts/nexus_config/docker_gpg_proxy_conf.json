@@ -27,5 +27,6 @@
           "useTrustStore": false
       }
   },
-  "type": "raw"
+  "baseType": "raw",
+  "proxyType": "proxy"
 }

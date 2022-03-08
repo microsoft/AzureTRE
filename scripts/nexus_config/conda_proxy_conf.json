@@ -27,5 +27,6 @@
       "useTrustStore": false
     }
   },
-  "type": "conda"
+  "baseType": "conda",
+  "proxyType": "proxy"
 }

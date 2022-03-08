@@ -31,5 +31,6 @@
       "distribution": "bionic-security",
       "flat": false
   },
-  "type": "apt"
+  "baseType": "apt",
+  "proxyType": "proxy"
 }

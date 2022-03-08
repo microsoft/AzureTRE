@@ -27,5 +27,6 @@
             "useTrustStore": false
         }
     },
-    "type": "pypi"
+    "baseType": "pypi",
+    "proxyType": "proxy"
 }
