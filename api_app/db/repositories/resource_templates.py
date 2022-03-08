@@ -23,13 +23,13 @@ class ResourceTemplateRepository(BaseRepository):
         return f'SELECT * FROM c WHERE c.resourceType = "{resource_type}" AND c.name = "{name}"'
 
     @staticmethod
-    def enrich_template(template: ResourceTemplate) -> dict:
+    def enrich_template(template: ResourceTemplate, is_update: bool = False) -> dict:
         if template.resourceType == ResourceType.Workspace:
-            return enrich_workspace_template(template)
+            return enrich_workspace_template(template, is_update=is_update)
         elif template.resourceType == ResourceType.WorkspaceService:
-            return enrich_workspace_service_template(template)
+            return enrich_workspace_service_template(template, is_update=is_update)
         else:
-            return enrich_user_resource_template(template)
+            return enrich_user_resource_template(template, is_update=is_update)
 
     def get_templates_information(self, resource_type: ResourceType, parent_service_name: str = "") -> List[ResourceTemplateInformation]:
         """
@@ -58,13 +58,22 @@ class ResourceTemplateRepository(BaseRepository):
         else:
             return parse_obj_as(ResourceTemplate, templates[0])
 
-    def get_template_by_name_and_version(self, name: str, version: str, resource_type: ResourceType, parent_service_name: str = "") -> Union[ResourceTemplate, UserResourceTemplate]:
+    def get_template_by_name_and_version(self, name: str, version: str, resource_type: ResourceType, parent_service_name: str = None) -> Union[ResourceTemplate, UserResourceTemplate]:
         """
         Returns full template for the 'resource_type' template defined by 'template_name' and 'version'
+
+        For UserResource templates, you also need to pass in 'parent_service_name' as a parameter
         """
         query = self._template_by_name_query(name, resource_type) + f' AND c.version = "{version}"'
+
+        # If querying for a user resource, we also need to add the parentWorkspaceService (name) to the query
         if resource_type == ResourceType.UserResource:
-            query += f' AND c.parentWorkspaceService = "{parent_service_name}"'
+            if parent_service_name:
+                query += f' AND c.parentWorkspaceService = "{parent_service_name}"'
+            else:
+                raise Exception("When getting a UserResource template, you must pass in a 'parent_service_name'")
+
+        # Execute the query and handle results
         templates = self.query(query=query)
         if len(templates) != 1:
             raise EntityDoesNotExist
@@ -87,7 +96,7 @@ class ResourceTemplateRepository(BaseRepository):
             "current": template_input.current,
             "required": template_input.json_schema["required"],
             "properties": template_input.json_schema["properties"],
-            "actions": template_input.customActions
+            "customActions": template_input.customActions
         }
 
         if resource_type == ResourceType.UserResource:

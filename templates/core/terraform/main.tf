@@ -63,7 +63,11 @@ module "appgateway" {
   api_fqdn               = azurerm_app_service.api.default_site_hostname
   keyvault_id            = azurerm_key_vault.kv.id
   static_web_dns_zone_id = module.network.static_web_dns_zone_id
-  depends_on             = [azurerm_key_vault.kv]
+
+  depends_on = [
+    azurerm_key_vault.kv,
+    azurerm_key_vault_access_policy.deployer
+  ]
 }
 
 module "resource_processor_vmss_porter" {
@@ -88,6 +92,7 @@ module "resource_processor_vmss_porter" {
 
   depends_on = [
     module.azure_monitor,
-    azurerm_key_vault.kv
+    azurerm_key_vault.kv,
+    azurerm_key_vault_access_policy.deployer
   ]
 }

@@ -1,5 +1,6 @@
+---
 name: tre-service-guacamole-linuxvm
-version: 0.1.2
+version: 0.1.4
 description: "An Azure TRE User Resource Template for Guacamole (Linux)"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -45,7 +46,13 @@ parameters:
     default: false
   - name: os_image
     type: string
-    default: "Ubuntu Data Science VM"
+    default: "Ubuntu 18.04 Data Science VM"
+  - name: shared_storage_access
+    type: string
+    default: "true"
+  - name: shared_storage_name
+    type: string
+    default: "vm-shared-storage"
 
 outputs:
   - name: ip
@@ -68,7 +75,7 @@ mixins:
 
 install:
   - terraform:
-      description: "Deploy Guacamole User Resource Service (Ubuntu VM)"
+      description: "Deploy Guacamole User Resource Service (Linux VM)"
       vars:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
@@ -79,6 +86,8 @@ install:
         arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
         image: "{{ bundle.parameters.os_image }}"
+        shared_storage_access: "{{ bundle.parameters.shared_storage_access }}"
+        shared_storage_name: "{{ bundle.parameters.shared_storage_name }}"
       backendConfig:
         resource_group_name:
           "{{ bundle.parameters.tfstate_resource_group_name }}"
@@ -94,10 +103,10 @@ install:
 upgrade:
   - exec:
       description:
-        "Upgrade Guacamole User Resource Service (Windows 10)"
+        "Upgrade Guacamole User Resource Service (Linux VM)"
       command: echo
       arguments:
-        - "This workspace service does not implement upgrade action"
+        - "This user resource does not implement upgrade action"
 
 uninstall:
   - terraform:
@@ -112,6 +121,8 @@ uninstall:
         arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
         image: "{{ bundle.parameters.os_image }}"
+        shared_storage_access: "{{ bundle.parameters.shared_storage_access }}"
+        shared_storage_name: "{{ bundle.parameters.shared_storage_name }}"
       backendConfig:
         resource_group_name:
           "{{ bundle.parameters.tfstate_resource_group_name }}"
@@ -119,3 +130,19 @@ uninstall:
           "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.id }}"
+
+start:
+  - exec:
+      description:
+        "Start the VM"
+      command: echo
+      arguments:
+        - "NotImplemented"
+
+stop:
+  - exec:
+      description:
+        "Stop the VM"
+      command: echo
+      arguments:
+        - "NotImplemented"

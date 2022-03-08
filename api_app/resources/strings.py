@@ -8,12 +8,14 @@ API_GET_WORKSPACE_BY_ID = "Get workspace by Id"
 API_CREATE_WORKSPACE = "Create a workspace"
 API_DELETE_WORKSPACE = "Delete workspace"
 API_UPDATE_WORKSPACE = "Update an existing workspace"
+API_INVOKE_ACTION_ON_WORKSPACE = "Invoke action on a workspace"
 
 API_GET_ALL_WORKSPACE_SERVICES = "Get all workspace services for workspace"
 API_GET_WORKSPACE_SERVICE_BY_ID = "Get workspace service by Id"
 API_CREATE_WORKSPACE_SERVICE = "Create a workspace service"
 API_UPDATE_WORKSPACE_SERVICE = "Update an existing workspace service"
 API_DELETE_WORKSPACE_SERVICE = "Delete workspace service"
+API_INVOKE_ACTION_ON_WORKSPACE_SERVICE = "Invoke action on a workspace service"
 API_GET_RESOURCE_OPERATIONS = "Get all operations for a resource"
 API_GET_RESOURCE_OPERATION_BY_ID = "Get a single resource operation by id"
 
@@ -22,6 +24,7 @@ API_GET_MY_USER_RESOURCES = "Get my user resources in the workspace service"
 API_GET_USER_RESOURCE = "Get user resource by id"
 API_DELETE_USER_RESOURCE = "Delete user resource"
 API_UPDATE_USER_RESOURCE = "Update an existing user resource"
+API_INVOKE_ACTION_ON_USER_RESOURCE = "Invoke action on a user resource"
 
 API_CREATE_WORKSPACE_TEMPLATES = "Register workspace template"
 API_GET_WORKSPACE_TEMPLATES = "Get workspace templates"
@@ -79,6 +82,8 @@ WORKSPACE_SERVICE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION = "The workspace service 
 WORKSPACE_SERVICES_NEED_TO_BE_DELETED_BEFORE_WORKSPACE = "All workspace services need to be deleted before you can delete the workspace"
 WORKSPACE_TEMPLATE_VERSION_EXISTS = "A template with this version already exists"
 OPERATION_DOES_NOT_EXIST = "Operation does not exist"
+CUSTOM_ACTION_NOT_DEFINED = "The specified custom action isn't defined in the targeted resource."
+CUSTOM_ACTIONS_DO_NOT_EXIST = "The resource being targeted does not implement any custom actions."
 
 WORKSPACE_SERVICE_TEMPLATE_DOES_NOT_EXIST = "Could not retrieve the workspace service template specified"
 TEMPLATE_DOES_NOT_EXIST = "Could not retrieve the 'current' template with this name"
@@ -95,6 +100,11 @@ RESOURCE_STATUS_DELETING = "deleting"
 RESOURCE_STATUS_DELETED = "deleted"
 RESOURCE_STATUS_FAILED = "failed"
 RESOURCE_STATUS_DELETING_FAILED = "deleting_failed"
+
+# Resource Action Status
+RESOURCE_ACTION_STATUS_INVOKING = "invoking_action"
+RESOURCE_ACTION_STATUS_SUCCEEDED = "action_succeeded"
+RESOURCE_ACTION_STATUS_FAILED = "action_failed"
 
 # Resource Type
 RESOURCE_TYPE_WORKSPACE = "workspace"

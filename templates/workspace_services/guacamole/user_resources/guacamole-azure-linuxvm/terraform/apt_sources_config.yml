@@ -1,3 +1,4 @@
+---
 apt:
   preserve_sources_list: false
   primary:

@@ -8,19 +8,22 @@ locals {
   core_resource_group_name       = "rg-${var.tre_id}"
   vm_name                        = "windowsvm${local.short_service_id}"
   keyvault_name                  = lower("kv-${substr(local.workspace_resource_name_suffix, -20, -1)}")
+  storage_name                   = lower(replace("stg${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
   nexus_proxy_url                = "https://nexus-${var.tre_id}.azurewebsites.net"
   image_ref = {
     "Windows 10" = {
-      "publisher" = "MicrosoftWindowsDesktop"
-      "offer"     = "windows-10"
-      "sku"       = "20h2-pro-g2"
-      "version"   = "latest"
+      "publisher"    = "MicrosoftWindowsDesktop"
+      "offer"        = "windows-10"
+      "sku"          = "20h2-pro-g2"
+      "version"      = "latest"
+      "conda_config" = false
     },
     "Server 2019 Data Science VM" = {
-      "publisher" = "microsoft-dsvm"
-      "offer"     = "dsvm-win-2019"
-      "sku"       = "server-2019"
-      "version"   = "latest"
+      "publisher"    = "microsoft-dsvm"
+      "offer"        = "dsvm-win-2019"
+      "sku"          = "server-2019"
+      "version"      = "latest"
+      "conda_config" = true
     }
   }
 }

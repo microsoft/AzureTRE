@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema",
-  "$id": "https://github.com/microsoft/AzureTRE/schema/workspace_service.json",
+  "$id": "https://github.com/microsoft/AzureTRE/schema/user_resource.json",
   "type": "object",
   "title": "User Resource Default Parameters",
   "description": "These parameters are required for all user resources",
@@ -12,12 +12,14 @@
       "display_name": {
           "type": "string",
           "title": "Name for the user resource",
-          "description": "The name of the user resource to be displayed to users"
+          "description": "The name of the user resource to be displayed to users",
+          "updateable": true
       },
       "description": {
           "type": "string",
           "title": "Description of the user resource",
-          "description": "Description of the user resource"
+          "description": "Description of the user resource",
+          "updateable": true
       }
   }
 }

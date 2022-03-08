@@ -16,7 +16,7 @@ def test_enrich_workspace_template_enriches_with_workspace_defaults_and_aad(enri
     services.schema_service.enrich_workspace_template(workspace_template)
 
     read_schema_mock.assert_has_calls([call('workspace.json'), call('azuread.json')])
-    enrich_template_mock.assert_called_once_with(workspace_template, [default_props, aad_props])
+    enrich_template_mock.assert_called_once_with(workspace_template, [default_props, aad_props], is_update=False)
 
 
 @patch('services.schema_service.read_schema')
@@ -29,7 +29,7 @@ def test_enrich_workspace_service_template_enriches_with_workspace_service_defau
     services.schema_service.enrich_workspace_service_template(workspace_service_template)
 
     read_schema_mock.assert_called_once_with('workspace_service.json')
-    enrich_template_mock.assert_called_once_with(workspace_service_template, [default_props])
+    enrich_template_mock.assert_called_once_with(workspace_service_template, [default_props], is_update=False)
 
 
 @patch('services.schema_service.read_schema')
@@ -42,7 +42,7 @@ def test_enrich_user_resource_template_enriches_with_user_resource_defaults(enri
     services.schema_service.enrich_user_resource_template(user_resource_template)
 
     read_schema_mock.assert_called_once_with('user_resource.json')
-    enrich_template_mock.assert_called_once_with(user_resource_template, [default_props])
+    enrich_template_mock.assert_called_once_with(user_resource_template, [default_props], is_update=False)
 
 
 @pytest.mark.parametrize('original, extra1, extra2, expected', [
@@ -124,3 +124,12 @@ def test_enrich_template_adds_system_properties(basic_resource_template):
     template = services.schema_service.enrich_template(original_template, [])
 
     assert 'tre_id' in template['system_properties']
+
+
+def test_enrich_template_adds_read_only_on_update(basic_resource_template):
+    original_template = basic_resource_template
+
+    template = services.schema_service.enrich_template(original_template, [], is_update=True)
+
+    assert "readOnly" not in template["properties"]["updateable_property"].keys()
+    assert template["properties"]["fixed_property"]["readOnly"] is True

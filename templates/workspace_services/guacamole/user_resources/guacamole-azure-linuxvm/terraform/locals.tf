@@ -8,21 +8,24 @@ locals {
   core_resource_group_name       = "rg-${var.tre_id}"
   vm_name                        = "linuxvm${local.short_service_id}"
   keyvault_name                  = lower("kv-${substr(local.workspace_resource_name_suffix, -20, -1)}")
+  storage_name                   = lower(replace("stg${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
   nexus_proxy_url                = "https://nexus-${var.tre_id}.azurewebsites.net"
   image_ref = {
     "Ubuntu 18.04" = {
-      "publisher"  = "canonical"
-      "offer"      = "ubuntuserver"
-      "sku"        = "18_04-lts-gen2"
-      "version"    = "latest"
-      "install_ui" = true
+      "publisher"    = "canonical"
+      "offer"        = "ubuntuserver"
+      "sku"          = "18_04-lts-gen2"
+      "version"      = "latest"
+      "install_ui"   = true
+      "conda_config" = false
     },
     "Ubuntu 18.04 Data Science VM" = {
-      "publisher"  = "microsoft-dsvm"
-      "offer"      = "ubuntu-1804"
-      "sku"        = "1804-gen2"
-      "version"    = "latest"
-      "install_ui" = false
+      "publisher"    = "microsoft-dsvm"
+      "offer"        = "ubuntu-1804"
+      "sku"          = "1804-gen2"
+      "version"      = "latest"
+      "install_ui"   = false
+      "conda_config" = true
     }
   }
 }

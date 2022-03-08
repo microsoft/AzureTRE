@@ -60,6 +60,7 @@ nav:
       - Registering Templates: 'tre-admins/registering-templates.md'
       - Troubleshooting Guide: 'tre-admins/troubleshooting-guide.md'
   - TRE Developers:
+      - 'tre-developers/index.md'
       - API: 'tre-developers/api.md'
       - Resource Processor: 'tre-developers/resource-processor.md'
       - End to End Tests: 'tre-developers/end-to-end-tests.md'
@@ -77,3 +78,4 @@ nav:
           - InnerEye: 'tre-templates/workspace-services/inner-eye.md'
       - User Resources:
           - Guacamole Windows VM: 'tre-templates/user-resources/guacamole-windows-vm.md'
+          - Guacamole Linux VM: 'tre-templates/user-resources/guacamole-linux-vm.md'

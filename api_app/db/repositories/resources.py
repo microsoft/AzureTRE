@@ -62,7 +62,7 @@ class ResourceRepository(BaseRepository):
 
         return template_version
 
-    def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str) -> Resource:
+    def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository) -> Resource:
 
         # create a deep copy of the resource to use for history, create the history item + add to history list
         resource_copy = copy.deepcopy(resource)
@@ -70,7 +70,7 @@ class ResourceRepository(BaseRepository):
             isEnabled=resource_copy.isEnabled,
             properties=resource_copy.properties,
             resourceVersion=resource_copy.resourceVersion,
-            updatedWhen=get_timestamp()
+            updatedWhen=self.get_timestamp()
         )
         resource.history.append(history_item)
 
@@ -80,15 +80,30 @@ class ResourceRepository(BaseRepository):
         if resource_patch.isEnabled is not None:
             resource.isEnabled = resource_patch.isEnabled
 
-        # TODO -> (https://github.com/microsoft/AzureTRE/issues/1240) -> validate updated resource props here. For now - just union the 2 property dicts
         if resource_patch.properties is not None and len(resource_patch.properties) > 0:
+            self.validate_patch(resource_patch, resource_template_repo, resource_template)
+
+            # if we're here then we're valid - update the props + persist
             resource.properties.update(resource_patch.properties)
 
         return self.update_item_with_etag(resource, etag)
 
+    def validate_patch(self, resource_patch: ResourcePatch, resource_template_repo: ResourceTemplateRepository, resource_template: ResourceTemplate):
+        # get the enriched (combined) template
+        enriched_template = resource_template_repo.enrich_template(resource_template, is_update=True)
 
-def get_timestamp() -> float:
-    return datetime.utcnow().timestamp()
+        # validate the PATCH data against a cut down version of the full template.
+        update_template = copy.deepcopy(enriched_template)
+        update_template["required"] = []
+        update_template["properties"] = {}
+        for prop_name, prop in enriched_template["properties"].items():
+            if("updateable" in prop.keys() and prop["updateable"] is True):
+                update_template["properties"][prop_name] = prop
+
+        self._validate_resource_parameters(resource_patch.dict(), update_template)
+
+    def get_timestamp(self) -> float:
+        return datetime.utcnow().timestamp()
 
 
 # Cosmos query consts

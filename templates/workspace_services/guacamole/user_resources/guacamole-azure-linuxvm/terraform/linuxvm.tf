@@ -83,14 +83,23 @@ data "template_cloudinit_config" "config" {
 
   part {
     content_type = "text/x-shellscript"
-    content      = data.template_file.rdp_config.rendered
+    content      = data.template_file.vm_config.rendered
   }
 }
 
-data "template_file" "rdp_config" {
-  template = file("${path.module}/rdp_config.sh")
+data "template_file" "vm_config" {
+  template = file("${path.module}/vm_config.sh")
   vars = {
-    install_ui = local.image_ref[var.image].install_ui ? 1 : 0
+    install_ui            = local.image_ref[var.image].install_ui ? 1 : 0
+    shared_storage_access = tobool(var.shared_storage_access) ? 1 : 0
+    resource_group_name   = data.azurerm_storage_account.stg.resource_group_name
+    storage_account_name  = data.azurerm_storage_account.stg.name
+    storage_account_key   = data.azurerm_storage_account.stg.primary_access_key
+    http_endpoint         = data.azurerm_storage_account.stg.primary_file_endpoint
+    fileshare_name        = data.azurerm_storage_share.shared_storage.name
+    username              = random_string.username.result
+    nexus_proxy_url       = local.nexus_proxy_url
+    conda_config          = local.image_ref[var.image].conda_config ? 1 : 0
   }
 }
 
@@ -112,4 +121,13 @@ resource "azurerm_key_vault_secret" "linuxvm_password" {
   name         = "${local.vm_name}-admin-credentials"
   value        = "${random_string.username.result}\n${random_password.password.result}"
   key_vault_id = data.azurerm_key_vault.ws.id
+}
+data "azurerm_storage_account" "stg" {
+  name                = local.storage_name
+  resource_group_name = data.azurerm_resource_group.ws.name
+}
+
+data "azurerm_storage_share" "shared_storage" {
+  name                 = var.shared_storage_name
+  storage_account_name = data.azurerm_storage_account.stg.name
 }
