@@ -5,6 +5,7 @@ from azure.cosmos import CosmosClient
 from azure.identity.aio import DefaultAzureCredential
 from azure.servicebus.aio import ServiceBusClient
 from azure.servicebus.exceptions import ServiceBusConnectionError
+from fastapi import HTTPException, status
 
 from api.dependencies.database import get_store_key
 from core import config
@@ -23,7 +24,7 @@ async def default_credentials():
 
 
 def create_state_store_status() -> (StatusEnum, str):
-    status = StatusEnum.ok
+    request_status = StatusEnum.ok
     message = ""
     debug = True if config.DEBUG == "true" else False
     try:
@@ -32,16 +33,15 @@ def create_state_store_status() -> (StatusEnum, str):
         cosmos_client = CosmosClient(config.STATE_STORE_ENDPOINT, primary_master_key, connection_verify=debug)
         list(cosmos_client.list_databases())
     except exceptions.ServiceRequestError:
-        status = StatusEnum.not_ok
-        message = strings.STATE_STORE_ENDPOINT_NOT_RESPONDING
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                            detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
     except:  # noqa: E722 flake8 - no bare excepts
-        status = StatusEnum.not_ok
-        message = strings.UNSPECIFIED_ERROR
-    return status, message
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.UNSPECIFIED_ERROR)
+    return request_status, message
 
 
 async def create_service_bus_status() -> (StatusEnum, str):
-    status = StatusEnum.ok
+    request_status = StatusEnum.ok
     message = ""
     try:
         async with default_credentials() as credential:
@@ -53,9 +53,7 @@ async def create_service_bus_status() -> (StatusEnum, str):
                 async with receiver:
                     pass
     except ServiceBusConnectionError:
-        status = StatusEnum.not_ok
-        message = strings.SERVICE_BUS_NOT_RESPONDING
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.SERVICE_BUS_NOT_RESPONDING)
     except:  # noqa: E722 flake8 - no bare excepts
-        status = StatusEnum.not_ok
-        message = strings.UNSPECIFIED_ERROR
-    return status, message
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.UNSPECIFIED_ERROR)
+    return request_status, message

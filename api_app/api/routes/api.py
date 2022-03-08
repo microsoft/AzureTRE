@@ -7,16 +7,15 @@ from fastapi.openapi.utils import get_openapi
 
 from api.dependencies.database import get_repository
 from db.repositories.workspaces import WorkspaceRepository
-from api.routes import health, status, workspaces, workspace_templates, workspace_service_templates
+from api.routes import health, workspaces, workspace_templates, workspace_service_templates
 from core import config
 
 core_tags_metadata = [
-    {"name": "health", "description": "Verify that the API is up and running"},
+    {"name": "health", "description": "Verify that the system is up and running"},
     {"name": "workspace templates", "description": "**TRE admin** registers and can access templates"},
     {"name": "workspace service templates", "description": "**TRE admin** registers templates and can access templates"},
     {"name": "user resource templates", "description": "**TRE admin** registers templates and can access templates"},
     {"name": "workspaces", "description": "**TRE admin** administers workspaces, **TRE Users** can view their own workspaces"},
-    {"name": "status", "description": "Status of API and related resources"},
 ]
 
 workspace_tags_metadata = [
@@ -30,7 +29,6 @@ router = APIRouter()
 # Core API
 core_router = APIRouter(prefix=config.API_PREFIX)
 core_router.include_router(health.router, tags=["health"])
-core_router.include_router(status.router, tags=["status"])
 core_router.include_router(workspace_templates.workspace_templates_admin_router, tags=["workspace templates"])
 core_router.include_router(workspace_service_templates.workspace_service_templates_core_router, tags=["workspace service templates"])
 core_router.include_router(workspace_service_templates.user_resource_templates_core_router, tags=["user resource templates"])
