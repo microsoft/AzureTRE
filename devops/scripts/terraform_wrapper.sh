@@ -93,7 +93,6 @@ if [[ -z ${tf_logfile+x} ]]; then
     echo -e "No logfile provided, using ${tf_logfile}\n"
 fi
 
-export TF_LOG=""
 terraform init -input=false -backend=true -reconfigure -upgrade \
     -backend-config="resource_group_name=${mgmt_resource_group_name}" \
     -backend-config="storage_account_name=${mgmt_storage_account_name}" \
@@ -121,3 +120,11 @@ do
         exit 1
     fi
 done
+
+# upload the log file?
+if [[ $TF_LOG == "DEBUG" ]] ; then
+  az storage blob upload --file $LOG_FILE \
+    --container-name "tflogs" \
+    --account-name $mgmt_storage_account_name \
+    --auth-mode login
+fi

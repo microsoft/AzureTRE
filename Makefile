@@ -16,7 +16,12 @@ build-and-push-api: build-api-image push-api-image
 build-and-push-resource-processor: build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image
 build-and-push-gitea: build-gitea-image push-gitea-image
 build-and-push-guacamole: build-guacamole-image push-guacamole-image
-tre-deploy: deploy-core deploy-shared-services
+
+# If TF_LOG == DEBUG, suppress the output - the build will copy a log file to blob storage for inspection
+tre-deploy:
+	$(call target_title, "Deploying TRE") \
+	&& if [ "$${TF_LOG}" == "DEBUG" ]; then make deploy-core deploy-shared-services > /dev/null; else deploy-core deploy-shared-services; fi;
+
 deploy-shared-services: firewall-install gitea-install nexus-install
 
 # to move your environment from the single 'core' deployment (which includes the firewall)
