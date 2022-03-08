@@ -123,7 +123,7 @@ done
 
 # upload the log file?
 if [[ $TF_LOG == "DEBUG" ]] ; then
-  az storage blob upload --file $LOG_FILE \
+  az storage blob upload --file $tf_logfile \
     --container-name "tflogs" \
     --account-name $mgmt_storage_account_name \
     --auth-mode login
