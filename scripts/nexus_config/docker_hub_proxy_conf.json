@@ -1,5 +1,5 @@
 {
-  "name": "docker",
+  "name": "docker-hub",
   "online": true,
   "storage": {
       "blobStoreName": "default",
