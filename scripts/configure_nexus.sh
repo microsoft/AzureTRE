@@ -126,3 +126,16 @@ if [[ ${STATUS_CODE} == 404 ]]
     -H 'Content-Type: application/json' \
     -d '@./scripts/docker_proxy_conf.json'
 fi
+
+#Check if the repo already exists
+export STATUS_CODE=$(curl -iu admin:$NEXUS_PASS -X "GET" "${NEXUS_URL}/service/rest/v1/repositories/proxy/docker-public-key" -H "accept: application/json" -k -s -w "%{http_code}" -o /dev/null)
+
+if [[ ${STATUS_CODE} == 404 ]]
+ then
+    # Let's create docker proxy
+    curl -iu admin:$NEXUS_PASS -XPOST \
+    $NEXUS_URL/service/rest/v1/repositories/docker \
+    -H 'accept: application/json' \
+    -H 'Content-Type: application/json' \
+    -d '@./scripts/docker_gpg_proxy_conf.json'
+fi
