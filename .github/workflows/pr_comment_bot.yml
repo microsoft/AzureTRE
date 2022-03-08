@@ -114,6 +114,7 @@ jobs:
             console.log("User has write access: " + userHasWriteAccess);
 
             if (!userHasWriteAccess) {
+              console.log("Command: none [user doesn't have permission]");
               return "none"; // only allow actions for users with write access
             }
 
@@ -121,18 +122,19 @@ jobs:
             // Determine what action to take
             //
             const commentBody = context.payload.comment.body;
+            let command = "none";
             switch (commentBody.trim()){
               case "/test":
-                return "run-tests";
+                command = "run-tests";
               case "/test-force-approve":
-                return "test-force-approve";
+                command = "test-force-approve";
               case "/test-destroy-env":
-                return "test-destroy-env";
+                command = "test-destroy-env";
               case "/help":
-                return "show-help";
-              default:
-                return "none";
+                command = "show-help";
             }
+            console.log(`Command: ${command}`);
+            return command;
 
       # Add comment with help text in response to help command
       - name: Show Help
