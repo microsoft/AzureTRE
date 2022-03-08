@@ -123,7 +123,7 @@ terraform-shared-service-deploy:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
-  && if [[ "$${TF_LOG}" == "DEBUG" ]]; then echo "TF DEBUG" && cd ${DIR} && ../../deploy_from_local.sh 1>/dev/null 2>/dev/null; else cd ${DIR} && ../../deploy_from_local.sh; fi;
+  && if [[ "$${TF_LOG}" == "DEBUG" ]]; then echo "TF DEBUG set - output supressed - see tflogs container for log file" && cd ${DIR} && ../../deploy_from_local.sh 1>/dev/null 2>/dev/null; else cd ${DIR} && ../../deploy_from_local.sh; fi;
 
 firewall-install:
 	$(call target_title, "Installing Firewall") \
@@ -146,7 +146,7 @@ deploy-core: tre-start
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
-	&& if [[ "$${TF_LOG}" == "DEBUG" ]]; then echo "TF DEBUG" && cd ./templates/core/terraform/ && ./deploy.sh 1>/dev/null 2>/dev/null; else cd ./templates/core/terraform/ && ./deploy.sh; fi;
+	&& if [[ "$${TF_LOG}" == "DEBUG" ]]; then echo "TF DEBUG set - output supressed - see tflogs container for log file" && cd ./templates/core/terraform/ && ./deploy.sh 1>/dev/null 2>/dev/null; else cd ./templates/core/terraform/ && ./deploy.sh; fi;
 
 letsencrypt:
 	$(call target_title, "Requesting LetsEncrypt SSL certificate") \

@@ -112,7 +112,7 @@ do
       az storage blob upload --file $tf_logfile \
         --container-name "tflogs" \
         --account-name $mgmt_storage_account_name \
-        --auth-mode login
+        --auth-mode key
     fi
 
     LOCKED_STATE=$(cat ${tf_logfile} |  grep -c 'Error acquiring the state lock') || true;
