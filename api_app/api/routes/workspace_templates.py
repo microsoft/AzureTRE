@@ -1,5 +1,3 @@
-import logging
-
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import parse_obj_as
 from starlette import status

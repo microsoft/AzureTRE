@@ -105,6 +105,7 @@ def input_shared_service_template():
         }
     )
 
+
 @pytest.fixture
 def basic_resource_template(input_workspace_template):
     return ResourceTemplate(

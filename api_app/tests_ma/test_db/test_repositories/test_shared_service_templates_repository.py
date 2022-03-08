@@ -1,12 +1,19 @@
-from mock import patch, MagicMock
 import pytest
+from mock import patch
 
+from db.repositories.resource_templates import ResourceTemplateRepository
 from models.domain.resource import ResourceType
 from models.domain.resource_template import ResourceTemplate
-from .test_resource_templates_repository import sample_resource_template_as_dict, resource_template_repo
+from .test_resource_templates_repository import sample_resource_template_as_dict
 
 
 SHARED_SERVICE_ID = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
+
+
+@pytest.fixture
+def resource_template_repo():
+    with patch('azure.cosmos.CosmosClient') as cosmos_client_mock:
+        yield ResourceTemplateRepository(cosmos_client_mock)
 
 
 # Because shared service templates repository uses generic ResourceTemplate repository, most test cases are already covered

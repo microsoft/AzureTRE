@@ -106,4 +106,3 @@ class TestSharedServiceTemplates:
         response = await client.post(app.url_path_for(strings.API_CREATE_SHARED_SERVICE_TEMPLATES), json=input_shared_service_template.dict())
 
         assert response.status_code == status.HTTP_409_CONFLICT
-

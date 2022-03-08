@@ -2,9 +2,15 @@ import pytest
 from mock import patch
 
 from db.errors import DuplicateEntity, EntityDoesNotExist
+from db.repositories.resource_templates import ResourceTemplateRepository
 from models.domain.resource import ResourceType
 from models.domain.user_resource_template import UserResourceTemplate
-from .test_resource_templates_repository import resource_template_repo
+
+
+@pytest.fixture
+def resource_template_repo():
+    with patch('azure.cosmos.CosmosClient') as cosmos_client_mock:
+        yield ResourceTemplateRepository(cosmos_client_mock)
 
 
 def sample_user_resource_template_as_dict(name: str, version: str = "1.0") -> dict:
@@ -61,6 +67,7 @@ def test_get_current_user_resource_template_raises_duplicate_entity_if_multiple_
 
     with pytest.raises(DuplicateEntity):
         resource_template_repo.get_current_template(template_name, ResourceType.UserResource, parent_template_name)
+
 
 @patch('db.repositories.resource_templates.ResourceTemplateRepository.save_item')
 @patch('uuid.uuid4')

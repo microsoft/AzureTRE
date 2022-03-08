@@ -10,6 +10,7 @@ from db.errors import EntityDoesNotExist, EntityVersionExist, UnableToAccessData
 from models.domain.resource import ResourceType
 from models.domain.resource_template import ResourceTemplate
 from models.schemas.resource_template import ResourceTemplateInformation
+from models.domain.user_resource_template import UserResourceTemplate
 from models.schemas.workspace_template import WorkspaceTemplateInResponse
 from resources import strings
 from services.schema_service import enrich_workspace_service_template

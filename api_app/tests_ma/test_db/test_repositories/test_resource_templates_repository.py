@@ -145,4 +145,3 @@ def test_create_item_created_with_the_expected_type(uuid_mock, save_item_mock, r
     )
     save_item_mock.assert_called_once_with(expected_resource_template)
     assert expected_resource_template == returned_template
-
