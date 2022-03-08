@@ -40,7 +40,13 @@ def shared_service():
 
 @pytest.fixture
 def basic_shared_service_request():
-    return SharedServiceInCreate(templateName="shared-service-type", properties={"display_name": "test", "description": "test", "tre_id": "test"})
+    return SharedServiceInCreate(
+        templateName="shared-service-type",
+        properties={
+            "display_name": "test",
+            "description": "test",
+            "tre_id": "test"
+        })
 
 
 def test_get_shared_service_by_id_returns_resource(shared_service_repo, shared_service, operations_repo):
@@ -82,7 +88,7 @@ def test_get_active_shared_services_for_shared_queries_db(shared_service_repo):
 
 
 @patch('db.repositories.shared_services.SharedServiceRepository.validate_input_against_template')
-@patch('core.config.TRE_ID', "9876")
+@patch('core.config.TRE_ID', "1234")
 def test_create_shared_service_item_creates_a_shared_with_the_right_values(validate_input_mock, shared_service_repo, basic_shared_service_request, basic_shared_service_template):
     shared_service_to_create = basic_shared_service_request
 
@@ -96,9 +102,10 @@ def test_create_shared_service_item_creates_a_shared_with_the_right_values(valid
     assert shared_service.templateName == basic_shared_service_request.templateName
     assert shared_service.resourceType == ResourceType.SharedService
     assert shared_service.id == SHARED_SERVICE_ID
-    assert len(shared_service.properties["tre_id"]) > 0
-    # need to make sure request doesn't override system param
-    assert shared_service.properties["tre_id"] != "test"
+
+    # We expect tre_id to be overriden in the shared service created
+    assert shared_service.properties["tre_id"] != shared_service_to_create.properties["tre_id"]
+    assert shared_service.properties["tre_id"] == "1234"
 
 
 @patch('db.repositories.shared_services.SharedServiceRepository.validate_input_against_template', side_effect=ValueError)
