@@ -72,7 +72,7 @@ fi
      $NEXUS_URL/service/rest/v1/repositories/apt/proxy \
      -H 'accept: application/json' \
      -H 'Content-Type: application/json' \
-     -d '@./scripts/ubuntu_proxy_conf.json'
+     -d '@./scripts/nexus_config/ubuntu_proxy_conf.json'
  fi
 
  #Check if the repo already exists
@@ -85,7 +85,7 @@ fi
      $NEXUS_URL/service/rest/v1/repositories/apt/proxy \
      -H 'accept: application/json' \
      -H 'Content-Type: application/json' \
-     -d '@./scripts/ubuntu_security_proxy_conf.json'
+     -d '@./scripts/nexus_config/ubuntu_security_proxy_conf.json'
  fi
 
 #Check if the repo already exists
@@ -98,7 +98,7 @@ if [[ ${STATUS_CODE} == 404 ]]
     $NEXUS_URL/service/rest/v1/repositories/apt/proxy \
     -H 'accept: application/json' \
     -H 'Content-Type: application/json' \
-    -d '@./scripts/apt-pypi_proxy_conf.json'
+    -d '@./scripts/nexus_config/apt-pypi_proxy_conf.json'
 fi
 
 #Check if the repo already exists
@@ -111,7 +111,7 @@ if [[ ${STATUS_CODE} == 404 ]]
     $NEXUS_URL/service/rest/v1/repositories/pypi/proxy \
     -H 'accept: application/json' \
     -H 'Content-Type: application/json' \
-    -d '@./scripts/pypi_proxy_conf.json'
+    -d '@./scripts/nexus_config/pypi_proxy_conf.json'
 fi
 
 #Check if the repo already exists
@@ -124,7 +124,7 @@ if [[ ${STATUS_CODE} == 404 ]]
     $NEXUS_URL/service/rest/v1/repositories/apt/docker \
     -H 'accept: application/json' \
     -H 'Content-Type: application/json' \
-    -d '@./scripts/docker_proxy_conf.json'
+    -d '@./scripts/nexus_config/docker_proxy_conf.json'
 fi
 
 #Check if the repo already exists
@@ -137,7 +137,7 @@ if [[ ${STATUS_CODE} == 404 ]]
     $NEXUS_URL/service/rest/v1/repositories/docker \
     -H 'accept: application/json' \
     -H 'Content-Type: application/json' \
-    -d '@./scripts/docker_gpg_proxy_conf.json'
+    -d '@./scripts/nexus_config/docker_gpg_proxy_conf.json'
 fi
 
 #Check if the repo already exists
@@ -150,5 +150,5 @@ if [[ ${STATUS_CODE} == 404 ]]
     $NEXUS_URL/service/rest/v1/repositories/conda/proxy \
     -H 'accept: application/json' \
     -H 'Content-Type: application/json' \
-    -d '@./scripts/conda_proxy_conf.json'
+    -d '@./scripts/nexus_config/conda_proxy_conf.json'
 fi
