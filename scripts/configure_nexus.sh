@@ -62,93 +62,26 @@ if [ -z "$NEXUS_PASS" ]; then
     export NEXUS_PASS=$NEW_PASSWORD
 fi
 
-#Check if the repo already exists
- export STATUS_CODE=$(curl -iu admin:$NEXUS_PASS -X "GET" "${NEXUS_URL}/service/rest/v1/repositories/apt/proxy/ubuntu" -H "accept: application/json" -k -s -w "%{http_code}" -o /dev/null)
+# Create proxy for each .json file 
+for filename in ./scripts/nexus_config/*.json; do  
+    json_content=$( jq . $filename)
+    
+    # Check if apt proxy    
+    if [[ $(jq .apt $filename) ]]; then
+        url_end=apt/proxy/$(jq .name $filename | sed 's/"//g')
+    else
+        url_end=proxy/$(jq .name $filename | sed 's/"//g')
+    fi
+    
+    full_url=${NEXUS_URL}/service/rest/v1/repositories/$url_end
+    export STATUS_CODE=$(curl -iu admin:$NEXUS_PASS -X "GET" $full_url -H "accept: application/json" -k -s -w "%{http_code}" -o /dev/null)
 
- if [[ ${STATUS_CODE} == 404 ]]
-  then
-     # Let's create ubuntu library proxy
-     curl -iu admin:$NEXUS_PASS -XPOST \
-     $NEXUS_URL/service/rest/v1/repositories/apt/proxy \
-     -H 'accept: application/json' \
-     -H 'Content-Type: application/json' \
-     -d '@./scripts/nexus_config/ubuntu_proxy_conf.json'
- fi
-
- #Check if the repo already exists
- export STATUS_CODE=$(curl -iu admin:$NEXUS_PASS -X "GET" "${NEXUS_URL}/service/rest/v1/repositories/apt/proxy/ubuntu-security" -H "accept: application/json" -k -s -w "%{http_code}" -o /dev/null)
-
- if [[ ${STATUS_CODE} == 404 ]]
-  then
-     # Let's create ubuntu security library proxy
-     curl -iu admin:$NEXUS_PASS -XPOST \
-     $NEXUS_URL/service/rest/v1/repositories/apt/proxy \
-     -H 'accept: application/json' \
-     -H 'Content-Type: application/json' \
-     -d '@./scripts/nexus_config/ubuntu_security_proxy_conf.json'
- fi
-
-#Check if the repo already exists
-export STATUS_CODE=$(curl -iu admin:$NEXUS_PASS -X "GET" "${NEXUS_URL}/service/rest/v1/repositories/apt/proxy/apt-pypi" -H "accept: application/json" -k -s -w "%{http_code}" -o /dev/null)
-
-if [[ ${STATUS_CODE} == 404 ]]
- then
-    # Let's create pypi proxy
-    curl -iu admin:$NEXUS_PASS -XPOST \
-    $NEXUS_URL/service/rest/v1/repositories/apt/proxy \
-    -H 'accept: application/json' \
-    -H 'Content-Type: application/json' \
-    -d '@./scripts/nexus_config/apt-pypi_proxy_conf.json'
-fi
-
-#Check if the repo already exists
-export STATUS_CODE=$(curl -iu admin:$NEXUS_PASS -X "GET" "${NEXUS_URL}/service/rest/v1/repositories/proxy/pypi" -H "accept: application/json" -k -s -w "%{http_code}" -o /dev/null)
-
-if [[ ${STATUS_CODE} == 404 ]]
- then
-    # Let's create pypi proxy
-    curl -iu admin:$NEXUS_PASS -XPOST \
-    $NEXUS_URL/service/rest/v1/repositories/pypi/proxy \
-    -H 'accept: application/json' \
-    -H 'Content-Type: application/json' \
-    -d '@./scripts/nexus_config/pypi_proxy_conf.json'
-fi
-
-#Check if the repo already exists
-export STATUS_CODE=$(curl -iu admin:$NEXUS_PASS -X "GET" "${NEXUS_URL}/service/rest/v1/repositories/apt/proxy/docker" -H "accept: application/json" -k -s -w "%{http_code}" -o /dev/null)
-
-if [[ ${STATUS_CODE} == 404 ]]
- then
-    # Let's create docker proxy
-    curl -iu admin:$NEXUS_PASS -XPOST \
-    $NEXUS_URL/service/rest/v1/repositories/apt/docker \
-    -H 'accept: application/json' \
-    -H 'Content-Type: application/json' \
-    -d '@./scripts/nexus_config/docker_proxy_conf.json'
-fi
-
-#Check if the repo already exists
-export STATUS_CODE=$(curl -iu admin:$NEXUS_PASS -X "GET" "${NEXUS_URL}/service/rest/v1/repositories/proxy/docker-public-key" -H "accept: application/json" -k -s -w "%{http_code}" -o /dev/null)
-
-if [[ ${STATUS_CODE} == 404 ]]
- then
-    # Let's create docker proxy
-    curl -iu admin:$NEXUS_PASS -XPOST \
-    $NEXUS_URL/service/rest/v1/repositories/docker \
-    -H 'accept: application/json' \
-    -H 'Content-Type: application/json' \
-    -d '@./scripts/nexus_config/docker_gpg_proxy_conf.json'
-fi
-
-#Check if the repo already exists
-export STATUS_CODE=$(curl -iu admin:$NEXUS_PASS -X "GET" "${NEXUS_URL}/service/rest/v1/repositories/proxy/conda" -H "accept: application/json" -k -s -w "%{http_code}" -o /dev/null)
-
-if [[ ${STATUS_CODE} == 404 ]]
- then
-    # Let's create pypi proxy
-    curl -iu admin:$NEXUS_PASS -XPOST \
-    $NEXUS_URL/service/rest/v1/repositories/conda/proxy \
-    -H 'accept: application/json' \
-    -H 'Content-Type: application/json' \
-    -d '@./scripts/nexus_config/conda_proxy_conf.json'
-fi
+    if [[ ${STATUS_CODE} == 404 ]]
+    then
+        curl -iu admin:$NEXUS_PASS -XPOST \
+        $full_url \
+        -H 'accept: application/json' \
+        -H 'Content-Type: application/json' \
+        -d $filename
+    fi
+done
