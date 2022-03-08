@@ -15,7 +15,8 @@
       "indexType": "HUB"
   },
   "docker": {
-    "v1Enabled": true
+    "v1Enabled": true,
+    "forceBasicAuth": false
   },
   "negativeCache": {
       "enabled": true,
