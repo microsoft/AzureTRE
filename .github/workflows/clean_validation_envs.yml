@@ -28,5 +28,6 @@ jobs:
       - name: Run clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MAIN_TRE_ID: ${{ secrets.TRE_ID }}
           BRANCH_LAST_ACTIVITY_IN_HOURS: 4
         run: devops/scripts/clean_ci_validation_envs.sh
