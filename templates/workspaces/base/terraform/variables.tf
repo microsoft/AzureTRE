@@ -8,6 +8,12 @@ variable "tre_resource_id" {
   description = "Resource ID"
 }
 
+variable "shared_storage_quota" {
+  type        = number
+  default     = 50
+  description = "Quota (in GB) to set for the VM Shared Storage."
+}
+
 variable "location" {
   type        = string
   description = "Azure location (region) for deployment of core TRE services"
