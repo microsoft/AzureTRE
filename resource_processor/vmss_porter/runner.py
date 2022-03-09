@@ -160,7 +160,7 @@ async def get_porter_outputs(msg_body, message_logger_adapter):
     """
     Get outputs JSON from a Porter command
     """
-    porter_command = await build_porter_command_for_outputs(config, logger_adapter, msg_body)
+    porter_command = await build_porter_command_for_outputs(msg_body)
     returncode, stdout, err = await run_porter(porter_command)
 
     if returncode != 0:
