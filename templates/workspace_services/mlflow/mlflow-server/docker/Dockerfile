@@ -1,6 +1,7 @@
 FROM python:3.8-buster
 
 # Install MLflow Python Packages
+RUN pip install psycopg2==2.9.3
 RUN pip install mlflow==1.24.0
 # RUN pip install mlflow[extras]
 # RUN pip install mlflow-skinny sqlalchemy alembic sqlparse
@@ -17,4 +18,4 @@ COPY ./docker/sshd_config /etc/ssh/
 COPY ./docker/startup.sh /usr/local/bin/
 
 EXPOSE 5000 2222
-ENTRYPOINT ["sh", "./startup.sh"]
+ENTRYPOINT ["sh", "/usr/local/bin/startup.sh"]

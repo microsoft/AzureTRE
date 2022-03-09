@@ -6,5 +6,5 @@ terraform init -input=false -backend=true -reconfigure -upgrade \
     -backend-config="container_name=$TF_VAR_terraform_state_container_name" \
     -backend-config="key=tre-service-mlflow-$TF_VAR_ID"
 
-terraform plan
-terraform apply -auto-approve
+terraform plan -out tfplan
+terraform apply tfplan -auto-approve

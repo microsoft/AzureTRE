@@ -9,24 +9,18 @@ variable "mgmt_resource_group_name" {}
 variable "image_name" {
   type        = string
   description = "value"
-  default     = "MLflow/Server"
+  default     = "mlflow/server"
 }
 variable "image_tag" {
   type        = string
   description = "value"
-  default     = "v1.0"
+  default     = "v0.1.0"
 }
 
 variable "arm_use_msi" {}
 variable "arm_tenant_id" {}
 variable "arm_client_id" {}
 variable "arm_client_secret" {}
-
-variable "mlflow_storage_limit" {
-  type        = number
-  description = "Space allocated in GB for MLflow data in Azure Files Share"
-  default     = 1024
-}
 
 variable "is_exposed_externally" {
   type        = bool

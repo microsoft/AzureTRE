@@ -1,7 +1,6 @@
-resource "azurerm_storage_share" "mlflow" {
-  name                 = local.fileshare_name
-  storage_account_name = data.azurerm_storage_account.mlflow.name
-  quota                = var.mlflow_storage_limit
+data "azurerm_storage_share" "shared_storage" {
+  name                 = local.shared_storage_share
+  storage_account_name = local.storage_name
 }
 
 resource "azurerm_app_service" "mlflow" {
@@ -27,7 +26,7 @@ resource "azurerm_app_service" "mlflow" {
     MLFLOW_SERVER_PORT                  = "5000"
     MLFLOW_SERVER_HOST                  = "0.0.0.0"
     MLFLOW_SERVER_FILE_STORE            = format("%s%s%s%s%s%s%s%s%s", "postgresql://", local.postgresql_server_name, ".postgres.database.azure.com:5432/mlflowdb?user=", random_password.password.result, "@", local.postgresql_server_name, "&password=", random_password.password.result, "&sslmode=require")
-    MLFLOW_SERVER_DEFAULT_ARTIFACT_ROOT = format("%s%s%s%s%s", "wasbs://", azurerm_storage_share.mlflow.name, "@", data.azurerm_storage_account.mlflow.name, ".blob.core.windows.net/mlartefacts")
+    MLFLOW_SERVER_DEFAULT_ARTIFACT_ROOT = format("%s%s%s%s%s", "wasbs://", data.azurerm_storage_share.shared_storage.name, "@", data.azurerm_storage_account.mlflow.name, ".blob.core.windows.net/mlartefacts")
     AZURE_STORAGE_CONNECTION_STRING     = data.azurerm_storage_account.mlflow.primary_connection_string
   }
 
@@ -37,7 +36,7 @@ resource "azurerm_app_service" "mlflow" {
     account_name = data.azurerm_storage_account.mlflow.name
 
     access_key = data.azurerm_storage_account.mlflow.primary_access_key
-    share_name = azurerm_storage_share.mlflow.name
+    share_name = data.azurerm_storage_share.shared_storage.name
     mount_path = "/mlartefacts"
   }
 

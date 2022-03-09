@@ -9,5 +9,5 @@ locals {
   postgresql_server_name         = "mlflow-${local.service_resource_name_suffix}"
   keyvault_name                  = lower("kv-${substr(local.workspace_resource_name_suffix, -20, -1)}")
   storage_name                   = lower(replace("stg${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
-  fileshare_name                 = "mlflowshare-${local.short_service_id}"
+  shared_storage_share           = "vm-shared-storage"
 }
