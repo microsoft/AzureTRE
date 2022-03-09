@@ -1,6 +1,6 @@
 ---
 name: tre-service-guacamole-linuxvm
-version: 0.1.4
+version: 0.1.5
 description: "An Azure TRE User Resource Template for Guacamole (Linux)"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -61,8 +61,8 @@ outputs:
       - install
   - name: hostname
     type: string
-    applyTo:
-      - install
+  - name: resource_group
+    type: string
   - name: connection_uri
     type: string
     applyTo:
@@ -72,6 +72,7 @@ mixins:
   - exec
   - terraform:
       clientVersion: 1.0.4
+  - az
 
 install:
   - terraform:
@@ -98,6 +99,7 @@ install:
       outputs:
         - name: ip
         - name: hostname
+        - name: resource_group
         - name: connection_uri
 
 upgrade:
@@ -132,12 +134,15 @@ uninstall:
         key: "{{ bundle.parameters.id }}"
 
 start:
-  - exec:
+  - az:
       description:
         "Start the VM"
-      command: echo
       arguments:
-        - "NotImplemented"
+        - vm
+        - start
+      flags:
+        name: "{{ bundle.outputs.hostname }}"
+        resource-group: "{{ bundle.outputs.resource_group }}"
 
 stop:
   - exec:

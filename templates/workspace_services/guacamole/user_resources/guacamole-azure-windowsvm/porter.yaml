@@ -1,6 +1,6 @@
 ---
 name: tre-service-guacamole-windowsvm
-version: 0.1.4
+version: 0.1.5
 description: "An Azure TRE User Resource Template for Guacamole (Windows 10)"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -63,6 +63,13 @@ outputs:
     type: string
     applyTo:
       - install
+      - start
+      - stop
+  - name: resource_group
+    type: string
+    applyTo:
+      - start
+      - stop
   - name: connection_uri
     type: string
     applyTo:
@@ -72,6 +79,7 @@ mixins:
   - exec
   - terraform:
       clientVersion: 1.0.4
+  - az
 
 install:
   - terraform:
@@ -132,17 +140,67 @@ uninstall:
         key: "{{ bundle.parameters.id }}"
 
 start:
-  - exec:
+  - terraform:
+      arguments:
+        - "output"
+      description: "Get VM hostname and rg from Terraform outputs"
+      backendConfig:
+        resource_group_name:
+          "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name:
+          "{{ bundle.parameters.tfstate_storage_account_name }}"
+        container_name: "{{ bundle.parameters.tfstate_container_name }}"
+        key: "{{ bundle.parameters.id }}"
+      outputs:
+        - name: hostname
+        - name: resource_group
+  - az:
+      description:
+        "Login to Azure"
+      arguments:
+        - login
+      flags:
+        identity:
+        username: "{{ bundle.credentials.azure_client_id }}"
+  - az:
       description:
         "Start the VM"
-      command: echo
       arguments:
-        - "NotImplemented"
+        - vm
+        - start
+      flags:
+        name: "{{ bundle.outputs.hostname }}"
+        resource-group: "{{ bundle.outputs.resource_group }}"
 
 stop:
-  - exec:
+  - terraform:
+      arguments:
+        - "output"
+      description: "Get VM hostname and rg from Terraform outputs"
+      backendConfig:
+        resource_group_name:
+          "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name:
+          "{{ bundle.parameters.tfstate_storage_account_name }}"
+        container_name: "{{ bundle.parameters.tfstate_container_name }}"
+        key: "{{ bundle.parameters.id }}"
+      outputs:
+        - name: hostname
+        - name: resource_group
+  - az:
+      description:
+        "Login to Azure"
+      arguments:
+        - login
+      flags:
+        identity:
+        username: "{{ bundle.credentials.azure_client_id }}"
+  - az:
       description:
         "Stop the VM"
-      command: echo
       arguments:
-        - "NotImplemented"
+        - vm
+        - stop
+      flags:
+        name: "{{ bundle.outputs.hostname }}"
+        resource-group: "{{ bundle.outputs.resource_group }}"

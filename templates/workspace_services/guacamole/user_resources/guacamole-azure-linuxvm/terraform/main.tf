@@ -55,6 +55,10 @@ output "hostname" {
   value = azurerm_linux_virtual_machine.linuxvm.name
 }
 
+output "resource_group" {
+  value = data.azurerm_resource_group.ws.name
+}
+
 output "azure_resource_id" {
   value = azurerm_linux_virtual_machine.linuxvm.id
 }
