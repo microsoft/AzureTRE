@@ -7,7 +7,7 @@ See: [https://gitea.io/](https://gitea.io)
 The Gitea worskpace service needs outbound access to:
 
 - AzureActiveDirectory
-- Azure AD CDN - https://aadcdn.msftauth.net
+- Azure AD CDN - `https://aadcdn.msftauth.net`
 
 ## Prerequisites
 
