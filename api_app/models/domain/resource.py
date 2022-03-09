@@ -14,6 +14,7 @@ class ResourceType(str, Enum):
     Workspace = strings.RESOURCE_TYPE_WORKSPACE
     WorkspaceService = strings.RESOURCE_TYPE_WORKSPACE_SERVICE
     UserResource = strings.USER_RESOURCE
+    SharedService = strings.RESOURCE_TYPE_SHARED_SERVICE
 
 
 class ResourceHistoryItem(AzureTREModel):
