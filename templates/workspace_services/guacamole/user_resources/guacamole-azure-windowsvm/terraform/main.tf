@@ -52,7 +52,7 @@ output "ip" {
 }
 
 output "hostname" {
-  value = local.vm_name
+  value = azurerm_windows_virtual_machine.windowsvm.name
 }
 
 output "resource_group" {
