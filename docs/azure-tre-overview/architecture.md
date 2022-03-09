@@ -6,7 +6,7 @@ There is one network for the core components and one network per Workspace.
 
 All traffic has to be explicitly allowed by the Application Gateway or the Firewall.
 
-![Architecture overview](../assets/archtecture-overview.png)
+[![Architecture overview](../assets/archtecture-overview.png)](../assets/archtecture-overview.png)
 
 The Azure resources outside the network boundries of the Azure TRE are Azure Active Directory, Microsoft Graph and TRE Management. TRE Management are resources used during deployment.
 
@@ -29,7 +29,9 @@ Shared Services are services available to all Workspaces. **Source Mirror** can 
 
 The following diagram shows the Azure components deployed as part of a typical TRE deployment. The exact configuration will vary depending on the specific deployment.
 
-![Azure Architecture Diagram](../assets/architecture-azure.png)
+[![Azure Architecture Diagram](../assets/architecture-azure.png)](../assets/architecture-azure.png)
+
+For a full breakdown of Azure Resources see [Azure TRE Resources Breakdown](tre-resources-breakdown.md)
 
 ## Composition Service
 
@@ -48,7 +50,7 @@ A Porter bundle is a fully encapsulated versioned bundle with everything needed 
 
 To automate Porter it needs a place to live in Azure TRE. The home chosen for Porter to run was a Linux virtual machine. This Azure TRE component encompassing Porter and its dependencies is called **Resource Processor**.
 
-![Resource Processor overview](../assets/resource-processor-overview.jpg)
+[![Resource Processor overview](../assets/resource-processor-overview.jpg)](../assets/resource-processor-overview.jpg)
 
 <!-- markdownlint-disable MD013 -->
 During the deployment of Resource Processor itself it is given the credentials of a managed identity with the privileges to modify and deploy resources to the subscription associated with the Azure TRE instance. Resource Processor later then uses these credentials to receive and send Service Bus messages, authorizes Porter to deploy Porter bundles and to access the storage account to update installation data.
@@ -67,7 +69,7 @@ Details on how to [register a Workspace Template](../tre-admins/registering-temp
 
 ## Provisioning a Workspace
 
-![Composition Service](../assets/composition-service.png)
+[![Composition Service](../assets/composition-service.png)](../assets/composition-service.png)
 
 The flow to provision a Workspace is as follows (the flow is the same for all kinds of mutations to a Workspace):
 
