@@ -28,5 +28,5 @@
         }
     },
     "baseType": "pypi",
-    "proxyType": "proxy"
+    "repoType": "proxy"
 }

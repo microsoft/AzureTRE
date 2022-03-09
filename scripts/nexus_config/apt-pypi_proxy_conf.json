@@ -32,5 +32,5 @@
         "flat": false
     },
     "baseType": "apt",
-    "proxyType": "proxy"
+    "repoType": "proxy"
 }

@@ -28,5 +28,5 @@
       }
   },
   "baseType": "raw",
-  "proxyType": "proxy"
+  "repoType": "proxy"
 }

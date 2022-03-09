@@ -36,5 +36,5 @@
       }
   },
   "baseType": "docker",
-  "proxyType": "proxy"
+  "repoType": "proxy"
 }
