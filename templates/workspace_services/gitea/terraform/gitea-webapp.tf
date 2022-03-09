@@ -30,15 +30,15 @@ resource "azurerm_app_service" "gitea" {
   key_vault_reference_identity_id = azurerm_user_assigned_identity.gitea_id.id
 
   app_settings = {
-    WEBSITES_PORT                       = "3000"
-    WEBSITES_ENABLE_APP_SERVICE_STORAGE = true
-    WEBSITE_DNS_SERVER                  = "168.63.129.16"
-    GITEA_USERNAME = "giteaadmin"
-    GITEA_PASSWD   = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.gitea_password.id})"
-    GITEA_EMAIL    = "giteaadmin@azuretre.com"
-    GITEA_OPENID_CLIENT_ID     = var.openid_client_id
-    GITEA_OPENID_CLIENT_SECRET = var.openid_client_secret
-    GITEA_OPENID_AUTHORITY     = var.openid_authority
+    WEBSITES_PORT                                    = "3000"
+    WEBSITES_ENABLE_APP_SERVICE_STORAGE              = true
+    WEBSITE_DNS_SERVER                               = "168.63.129.16"
+    GITEA_USERNAME                                   = "giteaadmin"
+    GITEA_PASSWD                                     = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.gitea_password.id})"
+    GITEA_EMAIL                                      = "giteaadmin@azuretre.com"
+    GITEA_OPENID_CLIENT_ID                           = var.openid_client_id
+    GITEA_OPENID_CLIENT_SECRET                       = var.openid_client_secret
+    GITEA_OPENID_AUTHORITY                           = var.openid_authority
     GITEA__server__ROOT_URL                          = "https://${local.webapp_name}.azurewebsites.net/"
     GITEA__server__LFS_START_SERVER                  = "true"
     GITEA__server__OFFLINE_MODE                      = true
