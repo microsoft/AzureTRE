@@ -33,34 +33,31 @@ resource "azurerm_app_service" "gitea" {
     WEBSITES_PORT                       = "3000"
     WEBSITES_ENABLE_APP_SERVICE_STORAGE = true
     WEBSITE_DNS_SERVER                  = "168.63.129.16"
-
     GITEA_USERNAME = "giteaadmin"
     GITEA_PASSWD   = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.gitea_password.id})"
     GITEA_EMAIL    = "giteaadmin@azuretre.com"
-
+    GITEA_OPENID_CLIENT_ID     = var.openid_client_id
+    GITEA_OPENID_CLIENT_SECRET = var.openid_client_secret
+    GITEA_OPENID_AUTHORITY     = var.openid_authority
     GITEA__server__ROOT_URL                          = "https://${local.webapp_name}.azurewebsites.net/"
     GITEA__server__LFS_START_SERVER                  = "true"
+    GITEA__server__OFFLINE_MODE                      = true
     GITEA__lfs__PATH                                 = "/data/gitea/lfs"
     GITEA__lfs__STORAGE_TYPE                         = "local"
     GITEA__log_0x2E_console__COLORIZE                = "false" # Azure monitor doens't show colors, so this is easier to read.
     GITEA__openid__ENALBLE_OPENID_SIGNIN             = "false"
     GITEA__openid__ENABLE_OPENID_SIGNUP              = "true"
-    GITEA__openid__WHITELISTED_URIS                  = "login.microsoftonline.com"
     GITEA__picture__DISABLE_GRAVATAR                 = "true" # external avaters are not available due to network restrictions
     GITEA__security__INSTALL_LOCK                    = true
     GITEA__service__DISABLE_REGISTRATION             = false
     GITEA__service__ALLOW_ONLY_EXTERNAL_REGISTRATION = true
     GITEA__service__SHOW_REGISTRATION_BUTTON         = false
-
-
-
-    GITEA__database__SSL_MODE = "true"
-    GITEA__database__DB_TYPE  = "mysql"
-    GITEA__database__HOST     = azurerm_mysql_server.gitea.fqdn
-    GITEA__database__NAME     = azurerm_mysql_database.gitea.name
-    GITEA__database__USER     = "${azurerm_mysql_server.gitea.administrator_login}@${azurerm_mysql_server.gitea.fqdn}"
-    GITEA__database__PASSWD   = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.db_password.id})"
-
+    GITEA__database__SSL_MODE                        = "true"
+    GITEA__database__DB_TYPE                         = "mysql"
+    GITEA__database__HOST                            = azurerm_mysql_server.gitea.fqdn
+    GITEA__database__NAME                            = azurerm_mysql_database.gitea.name
+    GITEA__database__USER                            = "${azurerm_mysql_server.gitea.administrator_login}@${azurerm_mysql_server.gitea.fqdn}"
+    GITEA__database__PASSWD                          = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.db_password.id})"
   }
 
   lifecycle { ignore_changes = [tags] }
@@ -74,23 +71,19 @@ resource "azurerm_app_service" "gitea" {
     linux_fx_version                     = "DOCKER|${data.azurerm_container_registry.mgmt_acr.login_server}/microsoft/azuretre/gitea-workspace-service:${local.version}"
     acr_use_managed_identity_credentials = true
     acr_user_managed_identity_client_id  = azurerm_user_assigned_identity.gitea_id.client_id
-
-    always_on              = true
-    min_tls_version        = "1.2"
-    vnet_route_all_enabled = true
-
-    websockets_enabled = false
+    always_on                            = true
+    min_tls_version                      = "1.2"
+    vnet_route_all_enabled               = true
+    websockets_enabled                   = false
   }
 
   storage_account {
     name         = "gitea-data"
     type         = "AzureFiles"
     account_name = azurerm_storage_account.gitea.name
-
-    access_key = azurerm_storage_account.gitea.primary_access_key
-    share_name = azurerm_storage_share.gitea.name
-
-    mount_path = "/data/gitea/"
+    access_key   = azurerm_storage_account.gitea.primary_access_key
+    share_name   = azurerm_storage_share.gitea.name
+    mount_path   = "/data/gitea/"
   }
 
   logs {

@@ -75,7 +75,7 @@ build-gitea-image:
 	$(call build_image,"gitea","templates/shared_services/gitea/version.txt","templates/shared_services/gitea/Dockerfile","templates/shared_services/gitea/")
 
 build-gitea-workspace-service-image:
-	$(call build_image,"gitea-workspace-service","templates/workspace_services/gitea/version.txt","templates/workspace_services/gitea/Dockerfile","templates/workspace_services/gitea/")
+	$(call build_image,"gitea-workspace-service","templates/workspace_services/gitea/version.txt","templates/workspace_services/gitea/docker/Dockerfile","templates/workspace_services/gitea/docker/")
 
 build-guacamole-image:
 	$(call build_image,"guac-server","templates/workspace_services/guacamole/version.txt","templates/workspace_services/guacamole/guacamole-server/docker/Dockerfile","templates/workspace_services/guacamole/guacamole-server")

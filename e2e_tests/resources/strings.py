@@ -12,6 +12,7 @@ INNEREYE = "tre-workspace-innereye"
 
 AZUREML_SERVICE = "tre-service-azureml"
 DEVTESTLABS_SERVICE = "tre-service-devtestlabs"
+INNEREYE_SERVICE = "tre-service-innereye"
 GUACAMOLE_SERVICE = "tre-service-guacamole"
 GITEA_SERVICE = "tre-workspace-service-gitea"
 

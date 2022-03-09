@@ -1,5 +1,5 @@
 name: tre-workspace-service-gitea
-version: 0.0.1
+version: 0.2.16
 description: "A Gitea workspace service"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -26,6 +26,18 @@ parameters:
     type: string
     description: "Resource group containing the devops ACR"
     env: MGMT_RESOURCE_GROUP_NAME
+  - name: openid_client_id
+    type: string
+    description: "The OpenID client ID"
+    env: OPENID_CLIENT_ID
+  - name: openid_client_secret
+    type: string
+    description: "The OpenID client secret"
+    env: OPENID_CLIENT_SECRET
+  - name: openid_authority
+    type: string
+    description: "The OpenID authority"
+    env: OPENID_AUTHORITY
   # the following are added automatically by the resource processor
   - name: id
     type: string
@@ -68,6 +80,9 @@ install:
         mgmt_acr_name: "{{ bundle.parameters.mgmt_acr_name }}"
         mgmt_resource_group_name:
           "{{ bundle.parameters.mgmt_resource_group_name }}"
+        openid_client_id: "{{ bundle.parameters.openid_client_id }}"
+        openid_client_secret: "{{ bundle.parameters.openid_client_secret }}"
+        openid_authority: "{{ bundle.parameters.openid_authority }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
@@ -92,6 +107,9 @@ uninstall:
         mgmt_acr_name: "{{ bundle.parameters.mgmt_acr_name }}"
         mgmt_resource_group_name:
           "{{ bundle.parameters.mgmt_resource_group_name }}"
+        openid_client_id: "{{ bundle.parameters.openid_client_id }}"
+        openid_client_secret: "{{ bundle.parameters.openid_client_secret }}"
+        openid_authority: "{{ bundle.parameters.openid_authority }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
