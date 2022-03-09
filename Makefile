@@ -249,6 +249,7 @@ bundle-publish:
 	$(call target_title, "Publishing ${DIR} bundle with Porter") \
 	&& ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& . ./devops/scripts/set_docker_sock_permission.sh \
 	&& az acr login --name $${ACR_NAME}	\
 	&& cd ${DIR} \
@@ -259,6 +260,7 @@ bundle-register:
 	$(call target_title, "Registering ${DIR} bundle") \
 	&& ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& az acr login --name $${ACR_NAME}	\
 	&& cd ${DIR} \
 	&& ${ROOTPATH}/devops/scripts/register_bundle_with_api.sh --acr-name $${ACR_NAME} --bundle-type $${BUNDLE_TYPE} --current --insecure --tre_url $${TRE_URL} --verify
