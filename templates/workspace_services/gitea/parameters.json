@@ -9,7 +9,8 @@
       "source": {
         "env": "TRE_RESOURCE_ID"
       }
-    },    {
+    },
+    {
       "name": "workspace_id",
       "source": {
         "env": "WORKSPACE_ID"
@@ -25,6 +26,24 @@
       "name": "acr_name",
       "source": {
         "env": "ACR_NAME"
+      }
+    },
+    {
+      "name": "openid_client_id",
+      "source": {
+        "env": "OPENID_CLIENT_ID"
+      }
+    },
+    {
+      "name": "openid_client_secret",
+      "source": {
+        "env": "OPENID_CLIENT_SECRET"
+      }
+    },
+    {
+      "name": "openid_authority",
+      "source": {
+        "env": "OPENID_AUTHORITY"
       }
     },
     {
