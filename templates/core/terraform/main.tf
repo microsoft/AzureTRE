@@ -19,6 +19,7 @@ provider "azurerm" {
   }
 }
 
+
 resource "azurerm_resource_group" "core" {
   location = var.location
   name     = "rg-${var.tre_id}"
