@@ -5,6 +5,8 @@ if [[ -z ${TRE_ID:-} ]]; then
     exit 1
 fi
 
+echo "DEBUG: Check keyvault and secrets exist"
+
 echo "az keyvault show"
 az keyvault show --name kv-${TRE_ID}
 
