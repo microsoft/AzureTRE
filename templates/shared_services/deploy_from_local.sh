@@ -5,7 +5,7 @@
 set -e
 
 PLAN_FILE="tfplan$$"
-LOG_FILE="tmp$$.log"
+LOG_FILE="$$-tre-${SHARED_SERVICE_KEY}.log"
 
 LOC="$(dirname -- "$(readlink -f "${BASH_SOURCE}")")"
 

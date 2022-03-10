@@ -1,5 +1,3 @@
-data "azurerm_client_config" "deployer" {}
-
 resource "azurerm_key_vault" "kv" {
   name                     = "kv-${var.tre_id}"
   tenant_id                = data.azurerm_client_config.current.tenant_id
@@ -13,8 +11,8 @@ resource "azurerm_key_vault" "kv" {
 
 resource "azurerm_key_vault_access_policy" "deployer" {
   key_vault_id = azurerm_key_vault.kv.id
-  tenant_id    = data.azurerm_client_config.deployer.tenant_id
-  object_id    = data.azurerm_client_config.deployer.object_id
+  tenant_id    = data.azurerm_client_config.current.tenant_id
+  object_id    = data.azurerm_client_config.current.object_id
 
   key_permissions         = ["Get", "List", "Update", "Create", "Import", "Delete", "Recover"]
   secret_permissions      = ["Get", "List", "Set", "Delete", "Purge", "Recover"]
