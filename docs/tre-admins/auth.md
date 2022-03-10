@@ -1,33 +1,38 @@
 # Authentication and authorization
 
-[Azure Active Directory (AAD)](https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-whatis) is the backbone of Authentication and Authorization in the TRE.
+[Azure Active Directory (AAD)](https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-whatis) is the backbone of Authentication and Authorization in the Trusted Research Environment.
 
-It holds the identities of all TRE/workspace users, including administrators, and connects the identities with app registrations defining the privileges per user roles.
+AAD holds the identities of all the TRE/workspace users, including administrators, and connects the identities with applications which define the permissions for each user role.
 
 ## App registrations
 
-App registrations (represented by service principals) define the privileges enabling access to the TRE system (e.g., [API](../tre-developers/api.md)) as well as the workspaces.
+App registrations (represented by service principals) define the various access permissions to the TRE system. There are a total of four main Applications of interest.
 
-You can create the app registrations needed for the API by running the `/scripts/aad-app-reg.sh` script.
+| AAD Application | Description |
+| ----------- | ----------- |
+| TRE API application | This is the main application and used to authenticate access to the [TRE API](../tre-developers/api.md). |
+| TRE Swagger UI | This is used to authenticate identities who wish to use the Swagger UI |
+| Automation App | This application is created so that you can run the  tests or any CI/CD capability. This is particularly important if your tenant is MFA enabled. |
+| Workspace API | Typically you would have an application securing one or more workspaces that are created by TRE. |
 
-Alternatively, you can create the app registrations manually via the [Azure Portal](https://docs.microsoft.com/azure/active-directory/develop/quickstart-register-app). The requirements are listed below.
-
-!!! note
-    Additional app registrations are required to run the E2E tests, and also to create workspaces - these are not configured by the `aad-app-reg.sh` script. Find information below on how to set these up.
+You can create these applications manually, but `/scripts/aad-app-reg.sh`  does the heavy lifting for you. Should you wish to create these manually via the [Azure Portal](https://docs.microsoft.com/azure/active-directory/develop/quickstart-register-app). The requirements are listed below.
 
 Some of the applications require **admin consent** to allow them to validate users against the AAD. Check the Microsoft Docs on [Configure the admin consent workflow](https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/configure-admin-consent-workflow) on how to request admin consent and handle admin consent requests.
 
-### App registration script
+## App registration script
 
-The `/scripts/aad-app-reg.sh` script automatically sets up the app registrations with the required permissions to run Azure TRE. It will create and configure the two main app registrations: **TRE API** and **TRE Swagger UI**.
+### TRE API, Swagger and Automation Account
+
+The `/scripts/aad-app-reg.sh` script automatically sets up the app registrations with the required permissions to run Azure TRE. It will create and configure all of the app registrations depending on the parameters. You would typically run this script twice.
 
 Example on how to run the script:
 
 ```bash
 ./aad-app-reg.sh \
-    --name <Prefix of the app registration names e.g., TRE> \
-    --swaggerui-redirecturl https://<TRE ID>.<Azure location>.cloudapp.azure.com/api/docs/oauth2-redirect \
-    --admin-consent
+    --name <TRE_ID> \
+    --swaggerui-redirecturl https://<TRE_ID>.<Azure location>.cloudapp.azure.com/api/docs/oauth2-redirect \
+    --admin-consent \
+    --automation-account
 ```
 
 | Argument | Description |
@@ -35,26 +40,51 @@ Example on how to run the script:
 | `--name` | The prefix of the name of the app registrations. `TRE` will give you `TRE API` and `TRE Swagger UI`. |
 | `--swaggerui-redirecturl` | The reply URL for the Swagger UI app. Use the values of the [environment variables](./environment-variables.md) `TRE_ID` and `LOCATION` in the URL. Reply URL for the localhost, `http://localhost:8000/api/docs/oauth2-redirect`, will be added by default. |
 | `--admin-consent` | Grants admin consent for the app registrations. This is required for them to function properly, but requires AAD admin privileges. |
+| `--automation-account` | This is an optional parameter but will create an application with test users with permission to use the `TRE API` and `TRE Swagger UI` |
 
 !!! caution
-    The script will create an app password (client secret) for the **TRE API** app; make sure to take note of it in the script output as it is only shown once. In case the secret is lost, the script, when run again, can reset it and display the new one.
+    The script will create an app password (client secret) for the **TRE API** app and the **Automation App** and tell you to copy these to an `.env` file. These values are only shown once, if you lose them, the script will create new secrets if run again. 
 
 
-In addition to the `TRE API` and `TRE Swagger UI` app registrations, the `aad-app-reg.sh` script can also be used to create an app registration that can be used for authenticating against the API from automation (for example, for registering bundles via CI/CD). To do this, add the `--automation-account` switch as shown in the following command:
+If you do not wish to create an Automation App, just remove the `--automation-account` from the command.
+
+### Workspaces
+
+Access to workspaces is also controlled using app registrations - one per workspace. The configuration of the app registration depends on the nature of the workspace, but this section covers the typical minimum settings.
+
+!!! caution
+    The app registration for a workspace is not created by the [API](../tre-developers/api.md). One needs to be present before using the API to provision a new workspace. The same script can be used to create the **Workspace Application**.
+
+Example on how to run the script:
 
 ```bash
 ./aad-app-reg.sh \
-    --name <Prefix of the app registration names e.g., TRE> \
-    --swaggerui-redirecturl https://<TRE ID>.<Azure location>.cloudapp.azure.com/api/docs/oauth2-redirect \
-    --automation-account \
-    --admin-consent
+    --name '<TRE_ID> - Workspace 1' \
+    --workspace \
+    --swaggerui-clientid <SWAGGER_UI_CLIENT_ID> \
+    --admin-consent \
+    --automation-clientid <AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID>
 ```
 
-### TRE API
+| Argument | Description |
+| -------- | ----------- |
+| `--name` | The name of the application. This will be suffixe with 'API' by the script. |
+| `--workspace` | This tells the script to create you are creating a workspace app rather than the TRE API app. |
+| `--swaggerui-clientid` | This value is one of the outputs when you first ran the script. It is mandatory if you use admin-consent. |
+| `--admin-consent` | Grants admin consent for the app registrations. This is required for them to function properly, but requires AAD admin privileges. |
+| `--automation-clientid` | This is an optional parameter but will grant the Automation App (created in step 1) permission to the new workspace app. |
+
+!!! caution
+    The script will create an app password (client secret) for the and tell you to copy these to an `.env` file. These values are only shown once, if you lose them, the script will create new secrets if run again. 
+
+
+If you do not wish to create an Automation App, just remove the `--automation-clientid` from the command.
+
+## TRE API
 
 The **TRE API** app registration defines the permissions, scopes and app roles for API users to authenticate and authorize API calls.
 
-#### API permissions - TRE API
+### API permissions - TRE API
 
 | API/permission name | Type | Description | Admin consent required | Status | TRE usage |
 | ------------------- | ---- | ----------- | ---------------------- | ------ | --------- |
@@ -65,31 +95,31 @@ The **TRE API** app registration defines the permissions, scopes and app roles f
 
 See [Microsoft Graph permissions reference](https://docs.microsoft.com/graph/permissions-reference) for more details.
 
-#### Scopes - TRE API
+### Scopes - TRE API
 
 * `api://<Application (client) ID>/` **`user_impersonation`** - Allow the app to access the TRE API on behalf of the signed-in user
 
-#### App roles - TRE API
+### App roles - TRE API
 
 | Display name | Description | Allowed member types | Value |
 | ------------ | ----------- | -------------------- | ----- |
 | TRE Administrators | Provides resource administrator access to the TRE. | Users/Groups,Applications | `TREAdmin` |
 | TRE Users | Provides access to the TRE application. | Users/Groups,Applications | `TREUser` |
 
-#### Authentication - TRE API
+### Authentication - TRE API
 
 The **TRE API** app registration requires no redirect URLs defined or anything else for that matter. From a security standpoint it should be noted that public client flows should not be allowed. As the identity of the client application cannot be verified (see the image below taken from app registration authentication blade in Azure Portal).
 
 ![Allow public client flows - No](../assets/app-reg-authentication-allow-public-client-flows-no.png)
 
-### TRE Swagger UI
+## TRE Swagger UI
 
 **TRE Swagger UI** app registration:
 
 * Controls the access to the Swagger UI of the TRE API
 * Has no scopes or app roles defined
 
-#### API permissions - TRE Swagger UI
+### API permissions - TRE Swagger UI
 
 | API/permission name | Type | Description | Admin consent required | Status |
 | ------------------- | ---- | ----------- | ---------------------- | ------ |
@@ -99,22 +129,41 @@ The **TRE API** app registration requires no redirect URLs defined or anything e
 
 *) See the difference between [delegated and application permission](https://docs.microsoft.com/graph/auth/auth-concepts#delegated-and-application-permissions) types.
 
-#### Authentication - TRE Swagger UI
+### Authentication - TRE Swagger UI
 
 Redirect URLs:
 
 * `https://<TRE ID>.<Azure location>.cloudapp.azure.com/docs/oauth2-redirect`
 * `http://localhost:8000/docs/oauth2-redirect` - For local testing
 
-### TRE e2e test
+## Workspaces
 
-The **TRE e2e test** app registration is used to authorize end-to-end test scenarios. It has no scopes or app roles defined.
+### Authentication - Workspaces
+
+Same as [TRE API](#authentication---tre-api).
+
+### API permissions - Workspaces
+
+| API/permission name | Type | Description | Admin consent required |
+| ------------------- | ---- | ----------- | ---------------------- |
+| Microsoft Graph/User.Read (`https://graph.microsoft.com/User.Read`) | Delegated | Allows users to sign-in to the app, and allows the app to read the profile of signed-in users. It also allows the app to read basic company information of signed-in users. | No |
+| Workspace API/user_impersonation (`api://<Workspace API Application (client) ID>/user_impersonation`) | Delegated* | Allows the app to access the workspace API on behalf of the user | No | Granted for *[directory name]* |
+
+### App roles
+
+| Display name | Description | Allowed member types | Value |
+| ------------ | ----------- | -------------------- | ----- |
+| Owners | Provides ownership access to workspace. | Users/Groups | `WorkspaceOwner` |
+| Researchers | Provides access to workspace. | Users/Groups | `WorkspaceResearcher` |
+
+## TRE e2e test
+
+The **TRE Automation Admin App** registration is used to authorize end-to-end test scenarios.
 
 !!! note
     - This app registration is only needed and used for **testing**
-    - As of writing this, there is no automated way provided for creating the **TRE e2e test** app registration, so it needs to be created manually.
 
-#### API permissions - TRE e2e test
+### API permissions - TRE e2e test
 
 | API/permission name | Type | Description | Admin consent required |
 | ------------------- | ---- | ----------- | ---------------------- |
@@ -122,7 +171,7 @@ The **TRE e2e test** app registration is used to authorize end-to-end test scena
 | Microsoft Graph/User.Read (`https://graph.microsoft.com/User.Read`) | Delegated | Allows users to sign-in to the app, and allows the app to read the profile of signed-in users. It also allows the app to read basic company information of signed-in users. | No |
 | <TRE APP client>.user_impersonation | Delegated | Allow the app access the TRE API on behalf of the signed-in user | No |
 
-#### Authentication - TRE e2e test
+### Authentication - TRE e2e test
 
 1. Define Redirect URLs:
 
@@ -142,38 +191,13 @@ The **TRE e2e test** app registration is used to authorize end-to-end test scena
 !!! warning
     OAuth 2.0 Public client flow cannot verify the the client application identity, it should only be enabled if needed.
 
-#### End-to-end test user
+### End-to-end test user
 
 The end-to-end test authentication and authorization is done via a dummy user, using its username and password, dedicated just for running the tests.
 
 The user is linked to the application (app registration) the same way as any other users (see [Enabling users](#enabling-users)).
 
 The end-to-end test should be added to **TRE Administrator** role exposed by the **TRE API** application, and to the **Owners** role exposed by the Workspaces application.
-
-### Workspaces
-
-Access to workspaces is also controlled using app registrations - one per workspace. The configuration of the app registration depends on the nature of the workspace, but this section covers the typical minimum settings.
-
-!!! caution
-    The app registration for a workspace is not created by the [API](../tre-developers/api.md). One needs to be present (created manually) before using the API to provision a new workspace.
-
-#### Authentication - Workspaces
-
-Same as [TRE API](#authentication---tre-api).
-
-#### API permissions - Workspaces
-
-| API/permission name | Type | Description | Admin consent required |
-| ------------------- | ---- | ----------- | ---------------------- |
-| Microsoft Graph/User.Read (`https://graph.microsoft.com/User.Read`) | Delegated | Allows users to sign-in to the app, and allows the app to read the profile of signed-in users. It also allows the app to read basic company information of signed-in users. | No |
-| Workspace API/user_impersonation (`api://<Workspace API Application (client) ID>/user_impersonation`) | Delegated* | Allows the app to access the workspace API on behalf of the user | No | Granted for *[directory name]* |
-
-#### App roles
-
-| Display name | Description | Allowed member types | Value |
-| ------------ | ----------- | -------------------- | ----- |
-| Owners | Provides ownership access to workspace. | Users/Groups | `WorkspaceOwner` |
-| Researchers | Provides access to workspace. | Users/Groups | `WorkspaceResearcher` |
 
 ## Enabling users
 

@@ -60,13 +60,17 @@ Next, you will set the configuration variables for the specific Azure TRE instan
 
   ```bash
   ./scripts/aad-app-reg.sh --name TRE --swaggerui-redirecturl https://mytre.westeurope.cloudapp.azure.com/api/docs/oauth2-redirect --admin-consent
+  --automation-account
   ```
 
   !!! note
-      The full functionality of the script requires directory admin privileges. You may need to contact your friendly Azure Active Directory admin to complete this step. The app registrations can be created manually in Azure Portal too. For more information, see [Authentication and authorization](../auth.md).
+      The full functionality of the script requires directory admin privileges. You may need to contact your friendly Azure Active Directory admin to complete this step. The app registrations can be created manually in Azure Portal too. For more information, see [Authentication and authorization](../auth.md). You can run the script without the `--admin-consent` and ask your admin to grant consent.
   
   !!! note
       If you don't have permissions and just want to create a development environment then skip this step and see the steps in the "Using a separate Azure Active Directory tenant) below.
+
+  !!! note
+      You can create an automation account which will aid your development flow, if you don't want to do this you can omit the `--automation-account` switch.
 
   With the output of the script, you can now provide the required auth related values for the following variables in the `/templates/core/.env` configuration file:
 
@@ -76,15 +80,19 @@ Next, you will set the configuration variables for the specific Azure TRE instan
   | `API_CLIENT_ID` | API application (client) ID. |
   | `API_CLIENT_SECRET` | API application client secret. |
   | `SWAGGER_UI_CLIENT_ID` | Swagger (OpenAPI) UI application (client) ID. |
+  | `AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID`| If you supplied `--automation-account` in the above command, this is the user that will run the tests for you |
+  | `AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET` | If you supplied `--automation-account` in the above command, this is the password of the user that will run the tests for you. |
 
 All other variables can have their default values for now. You should now have a `.env` file that looks similar to below:
 
 ```plaintext
 # Used for TRE deployment
 TRE_ID=mytre
+TRE_URL="https://${TRE_ID}.westurope.cloudapp.azure.com"
 CORE_ADDRESS_SPACE="10.1.0.0/22"
 TRE_ADDRESS_SPACE="10.0.0.0/12"
 DEPLOY_GITEA=true
+DEPLOY_NEXUS=true
 RESOURCE_PROCESSOR_TYPE="vmss_porter"
 
 # Auth configuration
@@ -92,6 +100,9 @@ AAD_TENANT_ID=72e...45
 API_CLIENT_ID=af6...dc
 API_CLIENT_SECRET=abc...12
 SWAGGER_UI_CLIENT_ID=d87...12
+
+AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID=4e...40
+AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET=sp...7c
 ```
 
 ### Using a separate Azure Active Directory tenant
@@ -115,7 +126,7 @@ SWAGGER_UI_CLIENT_ID=d87...12
 1. Run the `/scripts/aad-app-reg.sh` script to create API and Swagger UI app registrations and their service principals in Azure Active Directory. The details of the script are covered [app registration script](../auth.md#app-registration-script) section of the auth document. Below is a sample where `TRE_ID` has value `mytre` and the Azure location is `westeurope`:
 
     ```bash
-    ./scripts/aad-app-reg.sh --name TRE --swaggerui-redirecturl https://mytre.westeurope.cloudapp.azure.com/api/docs/oauth2-redirect --admin-consent
+    ./scripts/aad-app-reg.sh --name TRE --swaggerui-redirecturl https://mytre.westeurope.cloudapp.azure.com/api/docs/oauth2-redirect --admin-consent --automation-account
     ```
 
   With the output of the script, you can now provide the required auth related values for the following variables in the `/templates/core/.env` configuration file as described above in the "Set environment configuration variables of the Azure TRE instance" section.
