@@ -115,6 +115,10 @@ inputs:
     description: "A secondary ACR used for caching in CI environments"
     required: false
     default: ""
+  TF_LOG:
+    description: "Log level for terraform - values are blank | DEBUG | TRACE"
+    required: false
+    default: ""
 
 runs:
   using: composite
