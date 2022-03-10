@@ -24,7 +24,7 @@ shared_services_router = APIRouter(dependencies=[Depends(get_current_admin_user)
 
 @shared_services_router.get("shared-services", response_model=SharedServicesInList, name=strings.API_GET_ALL_SHARED_SERVICES, dependencies=[Depends(get_current_admin_user)])
 async def retrieve_shared_services(shared_service=Depends(get_shared_service_by_id_from_path), shared_services_repo=Depends(get_repository(SharedServiceRepository))) -> SharedServicesInList:
-    shared_service = shared_services_repo.get_active_shared_services_for_workspace(shared_service.id)
+    shared_service = shared_services_repo.get_active_shared_services(shared_service.id)
     return SharedServicesInList(shared_service=shared_service)
 
 
@@ -53,7 +53,7 @@ async def patch_shared_service(shared_service_patch: ResourcePatch, shared_servi
     check_for_etag(etag)
     try:
         patched_shared_service = shared_service_repo.patch_shared_service(shared_service, shared_service_patch, etag, resource_template_repo)
-        return SharedServiceInResponse(workspaceService=patched_shared_service)
+        return SharedServiceInResponse(shared_service=patched_shared_service)
     except CosmosAccessConditionFailedError:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
     except ValidationError as v:
@@ -72,8 +72,8 @@ async def delete_shared_service(response: Response, shared_service=Depends(get_s
 
 
 @shared_services_router.post("shared-services/{service_id}/invoke-action", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_INVOKE_ACTION_ON_SHARED_SERVICE, dependencies=[Depends(get_current_admin_user)])
-async def invoke_action_on_shared_service(response: Response, action: str, workspace_service=Depends(get_shared_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInResponse:
-    operation = await send_custom_action_message(workspace_service, action, ResourceType.SharedService, operations_repo, resource_template_repo)
+async def invoke_action_on_shared_service(response: Response, action: str, shared_service=Depends(get_shared_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInResponse:
+    operation = await send_custom_action_message(shared_service, action, ResourceType.SharedService, operations_repo, resource_template_repo)
     response.headers["Location"] = construct_location_header(operation)
 
     return OperationInResponse(operation=operation)
@@ -81,10 +81,10 @@ async def invoke_action_on_shared_service(response: Response, action: str, works
 
 # Shared service operations
 @shared_services_router.get("shared-services/{service_id}/operations", response_model=OperationInList, name=strings.API_GET_RESOURCE_OPERATIONS, dependencies=[Depends(get_current_admin_user), Depends(get_shared_service_by_id_from_path)])
-async def retrieve_shared_service_operations_by_shared_service_id(workspace_service=Depends(get_shared_service_by_id_from_path), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInList:
-    return OperationInList(operations=operations_repo.get_operations_by_resource_id(resource_id=workspace_service.id))
+async def retrieve_shared_service_operations_by_shared_service_id(shared_service=Depends(get_shared_service_by_id_from_path), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInList:
+    return OperationInList(operations=operations_repo.get_operations_by_resource_id(resource_id=shared_service.id))
 
 
 @shared_services_router.get("shared-services/{service_id}/operations/{operation_id}", response_model=OperationInResponse, name=strings.API_GET_RESOURCE_OPERATION_BY_ID, dependencies=[Depends(get_current_admin_user), Depends(get_shared_service_by_id_from_path)])
-async def retrieve_shared_service_operation_by_shared_service_id_and_operation_id(workspace_service=Depends(get_shared_service_by_id_from_path), operation=Depends(get_operation_by_id_from_path)) -> OperationInList:
+async def retrieve_shared_service_operation_by_shared_service_id_and_operation_id(shared_service=Depends(get_shared_service_by_id_from_path), operation=Depends(get_operation_by_id_from_path)) -> OperationInList:
     return OperationInResponse(operation=operation)
