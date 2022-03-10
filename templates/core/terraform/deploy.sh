@@ -10,7 +10,7 @@ export TF_VAR_docker_registry_username=$TF_VAR_acr_name
 export TF_VAR_docker_registry_password=$(az acr credential show --name ${TF_VAR_acr_name} --query passwords[0].value -o tsv | sed 's/"//g')
 
 PLAN_FILE="tfplan$$"
-LOG_FILE="tmp$$.log"
+LOG_FILE="$$-tre-core.log"
 
 ../../../devops/scripts/terraform_wrapper.sh \
   -g $TF_VAR_mgmt_resource_group_name \
@@ -21,4 +21,3 @@ LOG_FILE="tmp$$.log"
   -c "terraform plan -out ${PLAN_FILE} && \
   terraform apply -input=false -auto-approve ${PLAN_FILE} && \
   terraform output -json > ../tre_output.json"
-
