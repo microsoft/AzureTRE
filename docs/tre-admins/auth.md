@@ -43,12 +43,12 @@ Example on how to run the script:
 | `--automation-account` | This is an optional parameter but will create an application with test users with permission to use the `TRE API` and `TRE Swagger UI` |
 
 !!! caution
-    The script will create an app password (client secret) for the **TRE API** app and the **Automation App** and tell you to copy these to an `.env` file. These values are only shown once, if you lose them, the script will create new secrets if run again. 
+    The script will create an app password (client secret) for the **TRE API** app and the **Automation App** and tell you to copy these to an `.env` file. These values are only shown once, if you lose them, the script will create new secrets if run again.
 
 
 If you do not wish to create an Automation App, just remove the `--automation-account` from the command.
 
-### Workspaces
+### Workspace Applications
 
 Access to workspaces is also controlled using app registrations - one per workspace. The configuration of the app registration depends on the nature of the workspace, but this section covers the typical minimum settings.
 
@@ -75,7 +75,7 @@ Example on how to run the script:
 | `--automation-clientid` | This is an optional parameter but will grant the Automation App (created in step 1) permission to the new workspace app. |
 
 !!! caution
-    The script will create an app password (client secret) for the and tell you to copy these to an `.env` file. These values are only shown once, if you lose them, the script will create new secrets if run again. 
+    The script will create an app password (client secret) for the and tell you to copy these to an `.env` file. These values are only shown once, if you lose them, the script will create new secrets if run again.
 
 
 If you do not wish to create an Automation App, just remove the `--automation-clientid` from the command.
