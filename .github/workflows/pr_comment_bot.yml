@@ -82,12 +82,16 @@ jobs:
             switch (commentFirstLine.trim()){
               case "/test":
                 command = "run-tests";
+                break;
               case "/test-force-approve":
                 command = "test-force-approve";
+                break;
               case "/test-destroy-env":
                 command = "test-destroy-env";
+                break;
               case "/help":
                 command = "show-help";
+                break;
             }
             console.log(`Command: ${command}`);
             return command;
@@ -106,10 +110,7 @@ jobs:
       # Get PR commit details for running tests
       - id: get_pr_details
         name: Get PR details
-        if: |
-          ${{ steps.check_command.outputs.result == 'run-tests'
-              || steps.check_command.outputs.result == 'test-force-approve'
-              || steps.check_command.outputs.result == 'test-destroy-env' }}
+        if: ${{ steps.check_command.outputs.result == 'run-tests' || steps.check_command.outputs.result == 'test-force-approve' || steps.check_command.outputs.result == 'test-destroy-env' }}
         env:
           PR_NUMBER: ${{ github.event.issue.number }}
           REPO: ${{ github.event.repository.full_name }}
@@ -152,10 +153,7 @@ jobs:
 
       # Check if the PR build/test needs to run
       - name: Checkout
-        if: |
-          ${{ steps.check_command.outputs.result == 'run-tests'
-              || steps.check_command.outputs.result == 'test-force-approve'
-              || steps.check_command.outputs.result == 'test-destroy-env' }}
+        if: ${{ steps.check_command.outputs.result == 'run-tests' || steps.check_command.outputs.result == 'test-force-approve' || steps.check_command.outputs.result == 'test-destroy-env' }}
         uses: actions/checkout@v2
         with:
           ref: ${{ steps.get_pr_details.outputs.prRef }}
@@ -175,10 +173,7 @@ jobs:
       # If we don't run the actual deploy (below) we won't receive a check-run status,
       # and will have to send it "manually"
       - name: Bypass E2E check-runs status
-        if: |
-          ${{ (steps.check_command.outputs.result == 'run-tests'
-                && steps.filter.outputs.not-md == 'false'
-              ) || steps.check_command.outputs.result == 'test-force-approve' }}
+        if: ${{ (steps.check_command.outputs.result == 'run-tests' && steps.filter.outputs.not-md == 'false' ) || steps.check_command.outputs.result == 'test-force-approve' }}
         uses: LouisBrunner/checks-action@v1.1.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -225,9 +220,7 @@ jobs:
   run_test:
     # Run the tests with the re-usable workflow
     needs: [pr_comment]
-    if: |
-      ${{ needs.pr_comment.outputs.command == 'run-tests'
-          && needs.pr_comment.outputs.not-md == 'true' }}
+    if: ${{ needs.pr_comment.outputs.command == 'run-tests' && needs.pr_comment.outputs.not-md == 'true' }}
     name: Deploy PR
     uses: ./.github/workflows/deploy_tre_reusable.yml
     with:
