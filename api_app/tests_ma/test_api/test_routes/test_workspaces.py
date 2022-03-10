@@ -16,7 +16,7 @@ from db.repositories.workspaces import WorkspaceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
 from models.domain.authentication import RoleAssignment
 from models.domain.operation import Operation, Status
-from models.domain.resource import RequestAction, ResourceHistoryItem, ResourceType
+from models.domain.resource import ResourceHistoryItem, ResourceType
 from models.domain.user_resource import UserResource
 from models.domain.workspace import Workspace, WorkspaceRole
 from models.domain.workspace_service import WorkspaceService
@@ -35,18 +35,6 @@ APP_ID = 'f0acf127-a672-a672-a672-a15e5bf9f127'
 OPERATION_ID = '11111111-7265-4b5f-9eae-a1a62928772f'
 FAKE_UPDATE_TIME = datetime.datetime(2022, 1, 1, 17, 5, 55)
 FAKE_UPDATE_TIMESTAMP: float = FAKE_UPDATE_TIME.timestamp()
-
-
-@pytest.fixture
-def resource_repo() -> ResourceRepository:
-    with patch("azure.cosmos.CosmosClient") as cosmos_client_mock:
-        return ResourceRepository(cosmos_client_mock)
-
-
-@pytest.fixture
-def operations_repo() -> OperationRepository:
-    with patch("azure.cosmos.CosmosClient") as cosmos_client_mock:
-        return OperationRepository(cosmos_client_mock)
 
 
 @pytest.fixture
