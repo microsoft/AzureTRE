@@ -22,6 +22,7 @@ from core.events import create_start_app_handler, create_stop_app_handler
 from services.logging import disable_unwanted_loggers, initialize_logging
 from service_bus.deployment_status_update import receive_message_and_update_deployment
 
+# simple change :-)
 
 def get_application() -> FastAPI:
     application = FastAPI(
