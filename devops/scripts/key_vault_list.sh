@@ -15,3 +15,5 @@ az keyvault secret list --vault-name kv-${TRE_ID}
 
 echo "az keyvault secret list-deleted"
 az keyvault secret list-deleted --vault-name kv-${TRE_ID}
+
+# adding a comment here as a change
