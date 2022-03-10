@@ -55,10 +55,6 @@ output "hostname" {
   value = azurerm_windows_virtual_machine.windowsvm.name
 }
 
-output "resource_group" {
-  value = data.azurerm_resource_group.ws.name
-}
-
 output "azure_resource_id" {
   value = azurerm_windows_virtual_machine.windowsvm.id
 }

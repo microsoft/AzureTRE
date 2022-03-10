@@ -63,17 +63,15 @@ outputs:
     type: string
     applyTo:
       - install
-      - start
-      - stop
-  - name: resource_group
-    type: string
-    applyTo:
-      - start
-      - stop
   - name: connection_uri
     type: string
     applyTo:
       - install
+  - name: azure_resource_id
+    type: string
+    applyTo:
+      - start
+      - stop
 
 mixins:
   - exec
@@ -152,8 +150,7 @@ start:
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.id }}"
       outputs:
-        - name: hostname
-        - name: resource_group
+        - name: azure_resource_id
   - az:
       description:
         "Login to Azure"
@@ -169,8 +166,7 @@ start:
         - vm
         - start
       flags:
-        name: "{{ bundle.outputs.hostname }}"
-        resource-group: "{{ bundle.outputs.resource_group }}"
+        ids: "{{ bundle.outputs.azure_resource_id }}"
 
 stop:
   - terraform:
@@ -185,8 +181,7 @@ stop:
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.id }}"
       outputs:
-        - name: hostname
-        - name: resource_group
+        - name: azure_resource_id
   - az:
       description:
         "Login to Azure"
@@ -202,5 +197,4 @@ stop:
         - vm
         - stop
       flags:
-        name: "{{ bundle.outputs.hostname }}"
-        resource-group: "{{ bundle.outputs.resource_group }}"
+        ids: "{{ bundle.outputs.azure_resource_id }}"
