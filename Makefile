@@ -124,7 +124,7 @@ terraform-shared-service-deploy:
 	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
 	&& . ./devops/scripts/key_vault_list.sh \
-  && if [[ "$${TF_LOG}" == "DEBUG" ]]; then echo "TF DEBUG set - output supressed - see tflogs container for log file" && cd ${DIR} && ../../deploy_from_local.sh 1>/dev/null 2>/dev/null; else cd ${DIR} && ../../deploy_from_local.sh; fi;
+  && if [[ "$${TF_LOG}" == "DEBUG" ]]; then echo "TF DEBUG set - output supressed - see tflogs container for log file" && cd ${DIR} && ../../deploy_from_local.sh; else cd ${DIR} && ../../deploy_from_local.sh; fi;
 
 firewall-install:
 	$(call target_title, "Installing Firewall") \

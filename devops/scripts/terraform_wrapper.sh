@@ -91,6 +91,7 @@ if [[ -z ${tf_logfile+x} ]]; then
     echo -e "No logfile provided, using ${tf_logfile}\n"
 fi
 
+export TF_LOG=
 terraform init -input=false -backend=true -reconfigure -upgrade \
     -backend-config="resource_group_name=${mgmt_resource_group_name}" \
     -backend-config="storage_account_name=${mgmt_storage_account_name}" \
@@ -106,12 +107,12 @@ do
     script -c "$TF_CMD" "$tf_logfile"
 
     # upload the log file?
-    if [[ $TF_LOG == "DEBUG" ]] ; then
+  #  if [[ $TF_LOG == "DEBUG" ]] ; then
       az storage blob upload --file $tf_logfile \
         --container-name "tflogs" \
         --account-name $mgmt_storage_account_name \
         --auth-mode key
-    fi
+  #  fi
 
     LOCKED_STATE=$(cat ${tf_logfile} |  grep -c 'Error acquiring the state lock') || true;
     TF_ERROR=$(cat ${tf_logfile} |  grep -c 'COMMAND_EXIT_CODE="1"') || true;
