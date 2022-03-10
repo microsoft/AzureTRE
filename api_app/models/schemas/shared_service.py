@@ -33,7 +33,7 @@ class SharedServiceInResponse(BaseModel):
         }
 
 
-class sharedServicesInList(BaseModel):
+class SharedServicesInList(BaseModel):
     sharedServices: List[SharedService] = Field([], title="shared services")
 
     class Config:

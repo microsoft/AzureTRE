@@ -210,7 +210,7 @@ def disabled_user_resource():
 
 
 class TestWorkspaceHelpers:
-    @patch("api.routes.workspaces.send_resource_request_message")
+    @patch("api.routes.helpers.send_resource_request_message")
     async def test_save_and_deploy_resource_saves_item(self, _, resource_repo, operations_repo):
         resource = sample_workspace()
         operation = sample_resource_operation(resource_id=resource.id, operation_id=str(uuid.uuid4()))
@@ -230,7 +230,7 @@ class TestWorkspaceHelpers:
             await save_and_deploy_resource(resource, resource_repo, operations_repo)
         assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
-    @patch("api.routes.workspaces.send_resource_request_message", return_value=None)
+    @patch("api.routes.helpers.send_resource_request_message", return_value=None)
     async def test_save_and_deploy_resource_sends_resource_request_message(self, send_resource_request_mock, resource_repo, operations_repo):
         resource = sample_workspace()
         operation = sample_resource_operation(resource_id=resource.id, operation_id=str(uuid.uuid4()))
@@ -242,7 +242,7 @@ class TestWorkspaceHelpers:
 
         send_resource_request_mock.assert_called_once_with(resource, operations_repo, RequestAction.Install)
 
-    @patch("api.routes.workspaces.send_resource_request_message", side_effect=Exception)
+    @patch("api.routes.helpers.send_resource_request_message", side_effect=Exception)
     async def test_save_and_deploy_resource_raises_503_if_send_request_fails(self, _, resource_repo, operations_repo):
         resource = sample_workspace()
         resource_repo.save_item = MagicMock(return_value=None)
@@ -252,7 +252,7 @@ class TestWorkspaceHelpers:
             await save_and_deploy_resource(resource, resource_repo, operations_repo)
         assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
-    @patch("api.routes.workspaces.send_resource_request_message", side_effect=Exception)
+    @patch("api.routes.helpers.send_resource_request_message", side_effect=Exception)
     async def test_save_and_deploy_resource_deletes_item_from_db_if_send_request_fails(self, _, resource_repo, operations_repo):
         resource = sample_workspace()
 
@@ -265,7 +265,7 @@ class TestWorkspaceHelpers:
 
         resource_repo.delete_item.assert_called_once_with(resource.id)
 
-    @patch("api.routes.workspaces.send_resource_request_message", return_value=None)
+    @patch("api.routes.helpers.send_resource_request_message", return_value=None)
     @patch("api.routes.workspaces.OperationRepository")
     async def test_send_uninstall_message_sends_uninstall_message(self, operations_repo, send_request_mock):
         workspace = sample_workspace()
@@ -273,7 +273,7 @@ class TestWorkspaceHelpers:
 
         send_request_mock.assert_called_once_with(workspace, operations_repo, RequestAction.UnInstall)
 
-    @patch("api.routes.workspaces.send_resource_request_message", side_effect=Exception)
+    @patch("api.routes.helpers.send_resource_request_message", side_effect=Exception)
     @patch("api.routes.workspaces.OperationRepository")
     async def test_send_uninstall_message_raises_503_on_service_bus_exception(self, operations_repo, _):
         with pytest.raises(HTTPException) as ex:
@@ -363,7 +363,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         assert actual_resource["id"] == workspace.id
 
     # [POST] /workspaces/
-    @ patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
+    @ patch("api.routes.helpers.send_resource_request_message", return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
     @ patch("api.routes.workspaces.WorkspaceRepository.save_item")
     @ patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item", return_value=sample_workspace())
     @ patch("api.routes.workspaces.extract_auth_information")
@@ -374,7 +374,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         assert response.json()["operation"]["resourceId"] == WORKSPACE_ID
 
     # [POST] /workspaces/
-    @ patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
+    @ patch("api.routes.helpers.send_resource_request_message", return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
     @ patch("api.routes.workspaces.WorkspaceRepository.save_item")
     @ patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item", return_value=sample_workspace())
     @ patch("api.routes.workspaces.WorkspaceRepository._validate_resource_parameters")
@@ -386,7 +386,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         send_resource_request_message_mock.assert_called_once()
 
     # [POST] /workspaces/
-    @ patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
+    @ patch("api.routes.helpers.send_resource_request_message", return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
     @ patch("api.routes.workspaces.WorkspaceRepository.save_item")
     @ patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item", return_value=sample_workspace())
     @ patch("api.routes.workspaces.WorkspaceRepository._validate_resource_parameters")
@@ -399,7 +399,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
 
     # [POST] /workspaces/
     @ patch("api.routes.workspaces.WorkspaceRepository.delete_item")
-    @ patch("api.routes.workspaces.send_resource_request_message", side_effect=Exception)
+    @ patch("api.routes.helpers.send_resource_request_message", side_effect=Exception)
     @ patch("api.routes.workspaces.WorkspaceRepository.save_item")
     @ patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item", return_value=sample_workspace())
     @ patch("api.routes.workspaces.WorkspaceRepository._validate_resource_parameters")
@@ -497,7 +497,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.get_active_workspace_services_for_workspace", return_value=[])
     @ patch('azure.cosmos.CosmosClient')
-    @ patch('api.routes.workspaces.send_resource_request_message', return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
+    @ patch('api.routes.helpers.send_resource_request_message', return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
     async def test_delete_workspace_sends_a_request_message_to_uninstall_the_workspace(self, send_request_message_mock, cosmos_client_mock, __, get_workspace_mock, get_repository_mock, disabled_workspace, app, client):
         get_workspace_mock.return_value = disabled_workspace
         get_repository_mock.side_effects = [WorkspaceRepository(cosmos_client_mock), WorkspaceServiceRepository(cosmos_client_mock)]
@@ -530,7 +530,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
 
     # [POST] /workspaces/{workspace_id}/workspace-services
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
-    @ patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=SERVICE_ID, operation_id=OPERATION_ID))
+    @ patch("api.routes.helpers.send_resource_request_message", return_value=sample_resource_operation(resource_id=SERVICE_ID, operation_id=OPERATION_ID))
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.save_item")
     @ patch("api.routes.workspaces.OperationRepository.resource_has_deployed_operation", return_value=True)
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.create_workspace_service_item", return_value=sample_workspace_service())
@@ -922,7 +922,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
     # [POST] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_deployed_workspace_by_id")
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_deployed_workspace_service_by_id")
-    @patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=USER_RESOURCE_ID, operation_id=OPERATION_ID))
+    @patch("api.routes.helpers.send_resource_request_message", return_value=sample_resource_operation(resource_id=USER_RESOURCE_ID, operation_id=OPERATION_ID))
     @patch("api.routes.workspaces.UserResourceRepository.save_item")
     @patch("api.routes.workspaces.UserResourceRepository.create_user_resource_item")
     async def test_post_user_resources_creates_user_resource(self, create_user_resource_item_mock, _, __, ___, get_workspace_mock, app, client, sample_user_resource_input_data):
