@@ -65,18 +65,18 @@ nav:
       - API: 'tre-developers/api.md'
       - Resource Processor: 'tre-developers/resource-processor.md'
       - End to End Tests: 'tre-developers/end-to-end-tests.md'
+      - Templates:
+          - Workspaces:
+              - Base: 'tre-developers/tre-templates/workspaces/base.md'
+              - InnerEye: 'tre-developers/tre-templates/workspaces/inner-eye.md'
+          - Workspace Services:
+              - Azure ML: 'tre-developers/tre-templates/workspace-services/azure-ml.md'
+              - DevTest Labs: 'tre-developers/tre-templates/workspace-services/dev-test-labs.md'
+              - Guacamole: 'tre-developers/tre-templates/workspace-services/guacamole.md'
+              - InnerEye: 'tre-developers/tre-templates/workspace-services/inner-eye.md'
+          - User Resources:
+              - Guacamole Windows VM: 'tre-developers/tre-templates/user-resources/guacamole-windows-vm.md'
+              - Guacamole Linux VM: 'tre-developers/tre-templates/user-resources/guacamole-linux-vm.md'
   - TRE Workspace Authors:
       - Authoring Workspace Templates: 'tre-workspace-authors/authoring-workspace-templates.md'
       - Firewall Rules: 'tre-workspace-authors/firewall-rules.md'
-  - Templates:
-      - Workspaces:
-          - Base: 'tre-templates/workspaces/base.md'
-          - InnerEye: 'tre-templates/workspaces/inner-eye.md'
-      - Workspace Services:
-          - Azure ML: 'tre-templates/workspace-services/azure-ml.md'
-          - DevTest Labs: 'tre-templates/workspace-services/dev-test-labs.md'
-          - Guacamole: 'tre-templates/workspace-services/guacamole.md'
-          - InnerEye: 'tre-templates/workspace-services/inner-eye.md'
-      - User Resources:
-          - Guacamole Windows VM: 'tre-templates/user-resources/guacamole-windows-vm.md'
-          - Guacamole Linux VM: 'tre-templates/user-resources/guacamole-linux-vm.md'
