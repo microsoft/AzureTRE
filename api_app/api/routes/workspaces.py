@@ -20,7 +20,6 @@ from models.schemas.workspace import WorkspaceInCreate, WorkspacesInList, Worksp
 from models.schemas.workspace_service import WorkspaceServiceInCreate, WorkspaceServicesInList, WorkspaceServiceInResponse
 from models.schemas.resource import ResourcePatch
 from resources import strings
-from service_bus.resource_request_sender import send_resource_request_message, RequestAction
 from services.authentication import get_current_admin_user, \
     get_access_service, get_current_workspace_owner_user, get_current_workspace_owner_or_researcher_user, get_current_tre_user_or_tre_admin, get_current_workspace_owner_or_researcher_user_or_tre_admin, get_current_workspace_owner_or_tre_admin
 from services.authentication import extract_auth_information
