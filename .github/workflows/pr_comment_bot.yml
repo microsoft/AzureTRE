@@ -74,10 +74,12 @@ jobs:
 
             //
             // Determine what action to take
+            // Only use the first line of the comment to allow remainder of the body for other comments/notes
             //
             const commentBody = context.payload.comment.body;
+            const commentFirstLine = commentBody.split("\n")[0];
             let command = "none";
-            switch (commentBody.trim()){
+            switch (commentFirstLine.trim()){
               case "/test":
                 command = "run-tests";
               case "/test-force-approve":
