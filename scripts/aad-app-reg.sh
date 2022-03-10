@@ -22,12 +22,19 @@ Options:
     -s,--swaggerui-clientid    Optional, when -w and -a are specified the client ID of the swagger app must be provided.
     -r,--swaggerui-redirecturl Reply/redirect URL, for the Swagger UI app, where the auth server sends the user after authorization.
     --automation-account       Create an app registration for automation (e.g. CI/CD) to use for registering bundles etc
-                               Not valid with -w. Can be used with -a to apply admin consent
+                               Can be used with -a to apply admin consent
+    --automation-clientid      Optional, when --workspace is specified the client ID of the automation account can be added to the TRE workspace.
 
 Examples:
-    $0 -n TRE -r https://mytre.region.cloudapp.azure.com/api/docs/oauth2-redirect -a
+    1. $0 -n TRE -r https://mytre.region.cloudapp.azure.com/api/docs/oauth2-redirect -a
 
-    $0 --name 'Workspace One' --swaggerui-redirecturl https://mytre.region.cloudapp.azure.com/api/docs/oauth2-redirect --workspace
+    2. $0 --name 'Workspace One' --swaggerui-redirecturl https://mytre.region.cloudapp.azure.com/api/docs/oauth2-redirect --workspace
+
+    Using an Automation account
+    3. $0 --name 'TRE' --swaggerui-redirecturl https://mytre.region.cloudapp.azure.com/api/docs/oauth2-redirect --admin-consent --automation-account
+    4. $0 --name 'TRE - workspace 1' --workspace --admin-consent --swaggerui-clientid 7xxxxx-ccd8-4740-xxxx-a6ec01e10ab8 --automation-clientid 4xxxx-7dc5-xxxxx-bcff-xxxxx
+
+    The GUIDS in example 4 are the outputs from example 3.
 
 USAGE
     exit 1
@@ -48,6 +55,7 @@ declare replyUrl=""
 declare currentUserId=""
 declare spId=""
 declare createAutomationAccount=0
+declare automationAppId=""
 declare msGraphUri="https://graph.microsoft.com/v1.0"
 
 # Initialize parameters specified from command line
@@ -77,6 +85,10 @@ while [[ $# -gt 0 ]]; do
             createAutomationAccount=1
             shift 1
         ;;
+        --automation-clientid)
+            automationAppId=$2
+            shift 2
+        ;;
         *)
             echo "Invalid option: $1."
             show_usage
@@ -89,11 +101,6 @@ done
 if [[ -z "$appName" ]]; then
     echo "Please specify the application name" 1>&2
     show_usage
-fi
-
-if [[ $workspace -ne 0 && $createAutomationAccount -ne 0 ]]; then
-  echo "--automation-account cannot be used with --workspace"
-  show_usage
 fi
 
 # if admin consent & workspace, but not swagger client id, show error
@@ -222,6 +229,22 @@ function get_existing_app() {
     return 1
 }
 
+function get_existing_app_by_id() {
+    local existingApiApps=$(az ad app list --app-id "$1" -o json)
+
+    if [[ $(echo ${existingApiApps} | jq 'length') -ne 1 ]]; then
+        echo "There are no applications with id \"$1\"."
+        exit 1
+    fi
+
+    if [[ $(echo ${existingApiApps} | jq 'length') -eq 1 ]]; then
+        echo "${existingApiApps}" | jq -c '.[0]'
+        return 0
+    fi
+
+    return 1
+}
+
 declare existingApiApp=$(get_existing_app "${appName} API")
 
 if [[ -n ${existingApiApp} ]]; then
@@ -273,7 +296,7 @@ declare workspaceAppRoles=$(jq -c . << JSON
 [
     {
         "id": "${ownerRoleId}",
-        "allowedMemberTypes": [ "User" ],
+        "allowedMemberTypes": [ "User, Application" ],
         "description": "Provides workspace owners access to the Workspace.",
         "displayName": "Workspace Owner",
         "isEnabled": true,
@@ -282,7 +305,7 @@ declare workspaceAppRoles=$(jq -c . << JSON
     },
     {
         "id": "${researcherRoleId}",
-        "allowedMemberTypes": [ "User" ],
+        "allowedMemberTypes": [ "User, Application" ],
         "description": "Provides researchers access to the Workspace.",
         "displayName": "Workspace Researcher",
         "isEnabled": true,
@@ -619,6 +642,66 @@ declare automationApp=$(jq -c . << JSON
 }
 JSON
 )
+
+if [[ -n $automationAppId ]]; then
+    echo "Searching for existing Automation application ($automationAppId)."
+    declare existingAutomationApp=$(get_existing_app_by_id "${automationAppId}")
+
+    automationAppObjectId=$(echo ${existingAutomationApp} | jq -r .objectId)
+    automationAppName=$(echo ${existingAutomationApp} | jq -r .displayName)
+    echo "Found '${automationAppName}' with ObjectId: '${automationAppObjectId}'"
+
+    # Get the existing required resource access from the automation app,
+    # but remove the access that we are about to add for idempotency. We cant use
+    # the response from az cli as it returns an 'AdditionalProperties' element in
+    # the json
+    existingResourceAccess=$(az rest \
+      --method GET \
+      --uri "${msGraphUri}/applications/${automationAppObjectId}" \
+      --headers Content-Type=application/json \
+      | jq -r --arg apiAppId ${apiAppId} \
+      'del(.requiredResourceAccess[] | select(.resourceAppId==$apiAppId)) | .requiredResourceAccess' \
+      )
+
+    # Add the existing resource access so we don't remove any existing permissions.
+    declare automationWorkspaceAccess=$(jq -c . << JSON
+{
+    "requiredResourceAccess": [
+        {
+            "resourceAccess": [
+                {
+                    "id": "${apiUserImpersonationScopeID}",
+                    "type": "Scope"
+                },
+                {
+                    "id": "${ownerRoleId}",
+                    "type": "Role"
+                }
+            ],
+            "resourceAppId": "${apiAppId}"
+        }
+    ],
+    "existingAccess": ${existingResourceAccess}
+}
+JSON
+)
+
+    # Manipulate the json (add existingAccess into requiredResourceAccess and then remove it)
+    requiredResourceAccess=$(echo ${automationWorkspaceAccess} | \
+      jq '.requiredResourceAccess += .existingAccess | {requiredResourceAccess}')
+
+    az rest --method PATCH \
+      --uri "${msGraphUri}/applications/${automationAppObjectId}" \
+      --headers Content-Type=application/json \
+      --body "${requiredResourceAccess}"
+
+    # Grant admin consent for the delegated workspace scopes
+    if [[ $grantAdminConsent -eq 1 ]]; then
+        echo "Granting admin consent for ${automationAppName} (App ID ${automationAppId})"
+        az ad app permission admin-consent --id $automationAppId
+    fi
+fi
+
 if [[ $createAutomationAccount -ne 0 ]]; then
     # Create an App Registration to allow automation to authenticate to the API
     # E.g. to register bundles
@@ -676,6 +759,8 @@ if [[ $createAutomationAccount -ne 0 ]]; then
     az ad sp update --id $automationSpId --set tags="['WindowsAzureActiveDirectoryIntegratedApp']"
 
   # Grant admin consent for the delegated workspace scopes
+  # BUG I've noticed that there can sometimes be a delay in the app having the permissions set
+  # before we give admin-consent. If this occurs - rerun and it will work. TODO
   if [[ $grantAdminConsent -eq 1 ]]; then
       echo "Granting admin consent for ${appName} Automation Admin App (service principal ID ${automationSpId})"
       az ad app permission admin-consent --id $automationAppId
@@ -715,6 +800,9 @@ if [[ $createAutomationAccount -eq 1 ]]; then
 
 AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID=${automationAppId}
 AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET=${automationSpPassword}
+
+** Please copy this to /templates/core/.env and set it to be https://fqdn for your TRE **
+TRE_URL=__CHANGE_ME___
 
 ENV_VARS
 

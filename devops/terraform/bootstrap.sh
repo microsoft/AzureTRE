@@ -12,6 +12,9 @@ az storage account create --resource-group $TF_VAR_mgmt_resource_group_name \
 SA_KEY=$(az storage account keys list --account-name $TF_VAR_mgmt_storage_account_name --resource-group $TF_VAR_mgmt_resource_group_name --query "[0].value" -o tsv)
 az storage container create --account-name $TF_VAR_mgmt_storage_account_name --name $TF_VAR_terraform_state_container_name --account-key $SA_KEY -o table
 
+# logs container
+az storage container create --account-name $TF_VAR_mgmt_storage_account_name --name "tflogs" --account-key $SA_KEY -o table
+
 cat > bootstrap_backend.tf <<BOOTSTRAP_BACKEND
 terraform {
   backend "azurerm" {

@@ -8,51 +8,6 @@ on:
 
 jobs:
 
-  debug:
-    name: temp - debug
-    runs-on: ubuntu-latest
-    steps:
-      # Determine whether the comment is a command
-      - name: Echo payload info
-        run: |
-          echo "Debug...."
-          echo "github.event.issue.pull_request: ${{ github.event.issue.pull_request }}"
-          echo "github.event.comment.author_association: ${{ github.event.comment.author_association }}"
-
-      - name: Check for user permissions
-        uses: actions/github-script@v6
-        with:
-          result-encoding: string
-          script: |
-            // https://docs.github.com/en/rest/reference/collaborators#check-if-a-user-is-a-repository-collaborator
-            const commentUsername = context.payload.comment.user.login;
-            const repoFullName = context.payload.repository.full_name;
-            const repoParts = repoFullName.split("/");
-            const repoOwner = repoParts[0];
-            const repoName = repoParts[1];
-
-            let userHasWriteAccess = false;
-            try {
-              console.log(`Checking if user "${commentUsername}" has write access to ${repoOwner}/${repoName} ...`)
-              const result = await github.request('GET /repos/{owner}/{repo}/collaborators/{username}', {
-                owner: repoOwner,
-                repo: repoName,
-                username: commentUsername
-              });
-              userHasWriteAccess = result.status === 204;
-              console.log("success")
-              console.log(result);
-            } catch (err) {
-              console.log("error")
-              console.log(err);
-              if (err.status === 404){
-                console.log("User not found in collaborators");
-              } else {
-                console.log(`Error checking if user has write access: ${err.status} (${err.response.data.message}) `)
-              }
-            }
-            console.log("User has write access: " + userHasWriteAccess);
-
   pr_comment:
     name: PR comment
     environment: Dev
@@ -66,7 +21,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       command: ${{ steps.check_command.outputs.result }}
-      prRepo: ${{ steps.get_pr_details.outputs.prRepo }}
       prRef: ${{ steps.get_pr_details.outputs.prRef }}
       prHeadSha: ${{ steps.get_pr_details.outputs.prHeadSha }}
       refid: ${{ steps.get_pr_details.outputs.refid }}
@@ -114,25 +68,33 @@ jobs:
             console.log("User has write access: " + userHasWriteAccess);
 
             if (!userHasWriteAccess) {
+              console.log("Command: none [user doesn't have permission]");
               return "none"; // only allow actions for users with write access
             }
 
             //
             // Determine what action to take
+            // Only use the first line of the comment to allow remainder of the body for other comments/notes
             //
             const commentBody = context.payload.comment.body;
-            switch (commentBody.trim()){
+            const commentFirstLine = commentBody.split("\n")[0];
+            let command = "none";
+            switch (commentFirstLine.trim()){
               case "/test":
-                return "run-tests";
+                command = "run-tests";
+                break;
               case "/test-force-approve":
-                return "test-force-approve";
+                command = "test-force-approve";
+                break;
               case "/test-destroy-env":
-                return "test-destroy-env";
+                command = "test-destroy-env";
+                break;
               case "/help":
-                return "show-help";
-              default:
-                return "none";
+                command = "show-help";
+                break;
             }
+            console.log(`Command: ${command}`);
+            return command;
 
       # Add comment with help text in response to help command
       - name: Show Help
@@ -154,12 +116,7 @@ jobs:
           REPO: ${{ github.event.repository.full_name }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Could look at moving this to GitHub Script action as well
-
-          echo "Getting PR repo..."
-          pr_owner=$(gh pr view $PR_NUMBER --repo $REPO --json headRepositoryOwner | jq -r .headRepositoryOwner.login)
-          pr_repo=$(gh pr view $PR_NUMBER --repo $REPO --json headRepository | jq -r .headRepository.name)
-          echo -e "\tPR from $pr_owner/$pr_repo"
+          # Leaving this as bash script as GitHub Script doesn't seem to support multiple output values
 
           echo "Getting PR ref..."
           ref=$(gh pr view $PR_NUMBER --repo $REPO --json commits | jq -r ".[] | last | .oid")
@@ -171,14 +128,12 @@ jobs:
 
           echo "Setting outputs"
           echo "::set-output name=prRef::${prMergeRef}"
-          echo "::set-output name=prRepo::${pr_owner}/${pr_repo}"
-          echo "Done"
 
           github_pr_ref="refs/pull/${PR_NUMBER}/merge"
           echo "::set-output name=ciGitRef::${github_pr_ref}"
 
           REFID=$(echo ${github_pr_ref} | shasum | cut -c1-8)
-          echo "using id of: ${REFID} for GitHub Ref: ${github_pr_ref}"
+          echo "using id of: ${REFID} for GitHub Ref: ${github_pr_ref} (RG base name)"
           echo "::set-output name=refid::${REFID}"
 
           # Get PR HEAD SHA for checks status
@@ -192,7 +147,6 @@ jobs:
           echo "PR Details"
           echo "=========="
           echo "prRef    : ${{ steps.get_pr_details.outputs.prRef }}"
-          echo "prRepo   : ${{ steps.get_pr_details.outputs.prRepo }}"
           echo "prHeadSha: ${{ steps.get_pr_details.outputs.prHeadSha }}"
           echo "refid    : ${{ steps.get_pr_details.outputs.refid }}"
           echo "ciGitRef : ${{ steps.get_pr_details.outputs.ciGitRef }}"
@@ -202,7 +156,6 @@ jobs:
         if: ${{ steps.check_command.outputs.result == 'run-tests' || steps.check_command.outputs.result == 'test-force-approve' || steps.check_command.outputs.result == 'test-destroy-env' }}
         uses: actions/checkout@v2
         with:
-          # repository: ${{ steps.get_pr_details.outputs.prRepo }}
           ref: ${{ steps.get_pr_details.outputs.prRef }}
           persist-credentials: false
 
@@ -220,7 +173,7 @@ jobs:
       # If we don't run the actual deploy (below) we won't receive a check-run status,
       # and will have to send it "manually"
       - name: Bypass E2E check-runs status
-        if: ${{ (steps.check_command.outputs.result == 'run-tests' && steps.filter.outputs.not-md == 'false') || steps.check_command.outputs.result == 'test-force-approve' }}
+        if: ${{ (steps.check_command.outputs.result == 'run-tests' && steps.filter.outputs.not-md == 'false' ) || steps.check_command.outputs.result == 'test-force-approve' }}
         uses: LouisBrunner/checks-action@v1.1.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -238,7 +191,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RUN_ID: ${{ github.run_id }}
         run: |
-          echo "Showing help on PR ${PR_NUMBER}"
+          echo "Adding comment with link to run on PR ${PR_NUMBER}"
           gh pr comment ${PR_NUMBER} --repo $REPO --body "Running tests: https://github.com/${REPO}/actions/runs/${RUN_ID}"
 
       # Perform az login for destroy env script to be able to run
@@ -273,7 +226,6 @@ jobs:
     with:
       prRef: ${{ needs.pr_comment.outputs.prRef }}
       prHeadSha: ${{ needs.pr_comment.outputs.prHeadSha }}
-      # prRepo: ${{ needs.pr_comment.outputs.prRepo }}
       ciGitRef: ${{ needs.pr_comment.outputs.ciGitRef }}
     secrets:
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
@@ -302,4 +254,5 @@ jobs:
       TRE_ADDRESS_SPACE: ${{ secrets.TRE_ADDRESS_SPACE }}
       TRE_ID: ${{ format('tre{0}', needs.pr_comment.outputs.refid) }}
       CI_CACHE_ACR_NAME: ${{ secrets.ACR_NAME }}
+      TF_LOG: ${{ secrets.TF_LOG }}
 
