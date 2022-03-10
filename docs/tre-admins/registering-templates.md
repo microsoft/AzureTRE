@@ -60,17 +60,3 @@ In addition to generating the payload, the script posts the payload to the `/api
 
 !!! tip
     Follow the same procedure to register workspace service templates and user resource templates
-
-### Manual Deployment
-
-!!! caution
-    Resources should be deployed using the API (i.e. through the Swagger UI as described in the [setup instructions](../tre-admins/setup-instructions/installing-base-workspace.md)). Only deploy manually for development/testing purposes.
-
-1. Create a copy of the Porter bundle's environment settings from `/templates/<scope>/.env.sample` with the name `.env` and update the variables with the appropriate values.
-
-1. Build and deploy the Porter bundle
-
-  ```cmd
-  make bundle-build DIR=./templates/<scope>/<bundle_name>
-  make bundle-install DIR=./templates/<scope>/<bundle_name>
-  ```
