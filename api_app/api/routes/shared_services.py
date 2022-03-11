@@ -53,7 +53,7 @@ async def patch_shared_service(shared_service_patch: ResourcePatch, shared_servi
     check_for_etag(etag)
     try:
         patched_shared_service = shared_service_repo.patch_shared_service(shared_service, shared_service_patch, etag, resource_template_repo)
-        return SharedServiceInResponse(shared_service=patched_shared_service)
+        return SharedServiceInResponse(sharedService=patched_shared_service)
     except CosmosAccessConditionFailedError:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
     except ValidationError as v:

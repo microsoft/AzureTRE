@@ -1,4 +1,3 @@
-import uuid
 from typing import List
 
 from azure.cosmos import CosmosClient
@@ -69,4 +68,4 @@ class SharedServiceRepository(ResourceRepository):
     def patch_shared_service(self, shared_service: SharedService, shared_service_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository) -> SharedService:
         # get shared service template
         shared_service_template = resource_template_repo.get_template_by_name_and_version(shared_service.templateName, shared_service.templateVersion, ResourceType.SharedService)
-        return self.patch_resource(shared_service, shared_service_patch, shared_service_template, etag)
+        return self.patch_resource(shared_service, shared_service_patch, shared_service_template, etag, resource_template_repo)
