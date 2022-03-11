@@ -23,7 +23,7 @@ def get_sample_shared_service(shared_service_id: str) -> dict:
 
 
 class SharedServiceInResponse(BaseModel):
-    SharedService: SharedService
+    sharedService: SharedService
 
     class Config:
         schema_extra = {

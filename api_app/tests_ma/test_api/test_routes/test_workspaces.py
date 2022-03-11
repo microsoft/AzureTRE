@@ -1,17 +1,14 @@
 import datetime
 import uuid
 import pytest
-from mock import patch, MagicMock
+from mock import patch
 
-from fastapi import HTTPException, status
+from fastapi import status
 
-from api.routes.workspaces import save_and_deploy_resource, send_uninstall_message
 from models.domain.resource_template import ResourceTemplate
 from models.schemas.operation import OperationInResponse
 
 from db.errors import EntityDoesNotExist
-from db.repositories.operations import OperationRepository
-from db.repositories.resources import ResourceRepository
 from db.repositories.workspaces import WorkspaceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
 from models.domain.authentication import RoleAssignment
