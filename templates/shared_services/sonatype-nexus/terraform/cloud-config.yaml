@@ -33,11 +33,11 @@ write_files:
 
 runcmd:
   - export DEBIAN_FRONTEND=noninteractive
-  - docker pull sonatype/nexus
-  - docker build –rm –tag sonatype/nexus oss/
-  - docker run -d -v /var/run/docker.sock:/var/run/docker.sock
+  # Run the nexus container (exposing port 8081 and mapping volume for nexus config)
+  - docker run -d
+    -p 8081:8081
+    -v /etc/nexus-data:/nexus-data
     --restart always
     --name nexus
     --log-driver local
-    -p 8081:8081
-    sonatype/nexus:oss
+    sonatype/nexus3
