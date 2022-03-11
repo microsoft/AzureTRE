@@ -34,8 +34,9 @@ write_files:
 runcmd:
   - export DEBIAN_FRONTEND=noninteractive
   - docker pull sonatype/nexus
+  - docker build –rm –tag sonatype/nexus oss/
   - docker run -d -v /var/run/docker.sock:/var/run/docker.sock
-    --restart always --env-file .env
+    --restart always
     --name nexus
     --log-driver local
     -p 8081:8081
