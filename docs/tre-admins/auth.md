@@ -15,9 +15,9 @@ App registrations (represented by service principals) define the various access 
 | Automation App | This application is created so that you can run the  tests or any CI/CD capability. This is particularly important if your tenant is MFA enabled. |
 | Workspace API | Typically you would have an application securing one or more workspaces that are created by TRE. |
 
-You can create these applications manually, but `/scripts/aad-app-reg.sh`  does the heavy lifting for you. Should you wish to create these manually via the [Azure Portal](https://docs.microsoft.com/azure/active-directory/develop/quickstart-register-app). The requirements are listed below.
-
 Some of the applications require **admin consent** to allow them to validate users against the AAD. Check the Microsoft Docs on [Configure the admin consent workflow](https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/configure-admin-consent-workflow) on how to request admin consent and handle admin consent requests.
+
+You can create these applications manually, but `/scripts/aad-app-reg.sh`  does the heavy lifting for you. Should you wish to create these manually via the [Azure Portal](https://docs.microsoft.com/azure/active-directory/develop/quickstart-register-app). The requirements are defined [below](#-Manual-Deployment).
 
 ## App registration script
 
