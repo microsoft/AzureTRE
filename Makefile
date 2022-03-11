@@ -137,6 +137,10 @@ nexus-install:
 	$(call target_title, "Installing Nexus") \
 	&& make SHARED_SERVICE_KEY=shared-service-sonatype-nexus TF_VAR_nexus_properties_path=../nexus.properties terraform-shared-service-deploy DIR=./templates/shared_services/sonatype-nexus/terraform
 
+nexus-cert-install:
+	$(call target_title, "Installing Nexus Cert") \
+	&& make SHARED_SERVICE_KEY=shared-service-nexus-cert terraform-shared-service-deploy DIR=./templates/shared_services/nexus-cert/terraform
+
 # / End migration targets
 
 deploy-core: tre-start
