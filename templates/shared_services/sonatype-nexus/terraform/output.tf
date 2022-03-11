@@ -1,3 +1,3 @@
 output "nexus_fqdn" {
-  value = azurerm_app_service.nexus.default_site_hostname
+  value = azurerm_private_dns_a_record.nexus_vm.fqdn
 }

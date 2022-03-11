@@ -6,8 +6,30 @@ resource "azurerm_network_interface" "internal" {
   ip_configuration {
     name                          = "primary"
     subnet_id                     = data.azurerm_subnet.shared.id
-    private_ip_address_allocation = "Dynamic"
+    private_ip_address_allocation = "Static"
   }
+}
+
+resource "azurerm_private_dns_zone" "cloudapp" {
+  name                = "${var.location}.cloudapp.azure.com"
+  resource_group_name = var.resource_group_name
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "cloudapp" {
+  name                  = "cloudapp"
+  resource_group_name   = var.resource_group_name
+  private_dns_zone_name = azurerm_private_dns_zone.cloudapp.name
+  virtual_network_id    = data.azurerm_virtual_network.core.id
+}
+
+resource "azurerm_private_dns_a_record" "nexus_vm" {
+  name                = "nexus-${tre_id}"
+  zone_name           = azurerm_private_dns_zone.cloudapp.name
+  resource_group_name = var.resource_group_name
+  ttl                 = 300
+  records             = [azurerm_linux_virtual_machine.nexus.private_ip_address]
 }
 
 resource "random_password" "password" {
