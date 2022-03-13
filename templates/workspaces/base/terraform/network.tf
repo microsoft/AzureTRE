@@ -92,11 +92,19 @@ resource "azurerm_network_security_group" "ws" {
 resource "azurerm_subnet_network_security_group_association" "services" {
   network_security_group_id = azurerm_network_security_group.ws.id
   subnet_id                 = azurerm_subnet.services.id
+
+  depends_on = [
+    azurerm_subnet.services
+  ]
 }
 
 resource "azurerm_subnet_network_security_group_association" "webapps" {
   network_security_group_id = azurerm_network_security_group.ws.id
   subnet_id                 = azurerm_subnet.webapps.id
+
+  depends_on = [
+    azurerm_subnet.webapps
+  ]
 }
 
 resource "azurerm_network_security_rule" "deny-outbound-override" {
@@ -282,11 +290,19 @@ data "azurerm_route_table" "rt" {
 resource "azurerm_subnet_route_table_association" "rt_services_subnet_association" {
   route_table_id = data.azurerm_route_table.rt.id
   subnet_id      = azurerm_subnet.services.id
+
+  depends_on = [
+    azurerm_subnet.services
+  ]
 }
 
 resource "azurerm_subnet_route_table_association" "rt_webapps_subnet_association" {
   route_table_id = data.azurerm_route_table.rt.id
   subnet_id      = azurerm_subnet.webapps.id
+
+  depends_on = [
+    azurerm_subnet.webapps
+  ]
 }
 
 data "azurerm_private_dns_zone" "azurewebsites" {
