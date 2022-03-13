@@ -12,6 +12,10 @@ resource "azurerm_storage_share" "shared_storage" {
   name                 = "vm-shared-storage"
   storage_account_name = azurerm_storage_account.stg.name
   quota                = var.shared_storage_quota
+
+  depends_on = [
+    azurerm_private_endpoint.stgfilepe
+  ]
 }
 
 resource "azurerm_storage_account_network_rules" "stgrules" {
