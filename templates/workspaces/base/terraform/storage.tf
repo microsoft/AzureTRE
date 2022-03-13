@@ -32,6 +32,10 @@ resource "azurerm_private_endpoint" "stgfilepe" {
   resource_group_name = azurerm_resource_group.ws.name
   subnet_id           = azurerm_subnet.services.id
 
+  depends_on = [
+    azurerm_subnet.services
+  ]
+
   lifecycle { ignore_changes = [tags] }
 
   private_dns_zone_group {
@@ -53,6 +57,10 @@ resource "azurerm_private_endpoint" "stgblobpe" {
   location            = azurerm_resource_group.ws.location
   resource_group_name = azurerm_resource_group.ws.name
   subnet_id           = azurerm_subnet.services.id
+
+  depends_on = [
+    azurerm_subnet.services
+  ]
 
   lifecycle { ignore_changes = [tags] }
 
