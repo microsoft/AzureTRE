@@ -2,7 +2,6 @@ from unittest.mock import AsyncMock
 import pytest
 from azure.core.exceptions import ServiceRequestError
 from azure.servicebus.exceptions import ServiceBusConnectionError
-from fastapi import HTTPException
 from mock import patch
 
 from models.schemas.status import StatusEnum
@@ -29,11 +28,10 @@ def test_get_state_store_status_not_responding(cosmos_client_mock, get_store_key
     get_store_key_mock.return_value = None
     cosmos_client_mock.return_value = None
     cosmos_client_mock.side_effect = ServiceRequestError(message="some message")
-    with pytest.raises(HTTPException) as ex:
-        health_checker.create_state_store_status()
+    status, message = health_checker.create_state_store_status()
 
-    assert ex.value.status_code == 503
-    assert ex.value.detail == strings.STATE_STORE_ENDPOINT_NOT_RESPONDING
+    assert status == StatusEnum.not_ok
+    assert message == strings.STATE_STORE_ENDPOINT_NOT_RESPONDING
 
 
 @patch("services.health_checker.get_store_key")
@@ -42,11 +40,10 @@ def test_get_state_store_status_other_exception(cosmos_client_mock, get_store_ke
     get_store_key_mock.return_value = None
     cosmos_client_mock.return_value = None
     cosmos_client_mock.side_effect = Exception()
-    with pytest.raises(HTTPException) as ex:
-        health_checker.create_state_store_status()
+    status, message = health_checker.create_state_store_status()
 
-    assert ex.value.status_code == 503
-    assert ex.value.detail == strings.UNSPECIFIED_ERROR
+    assert status == StatusEnum.not_ok
+    assert message == strings.UNSPECIFIED_ERROR
 
 
 @patch("services.health_checker.default_credentials")
@@ -66,11 +63,10 @@ async def test_get_service_bus_status_not_responding(service_bus_client_mock, de
     default_credentials.return_value = AsyncMock()
     service_bus_client_mock.return_value = None
     service_bus_client_mock.side_effect = ServiceBusConnectionError(message="some message")
-    with pytest.raises(HTTPException) as ex:
-        await health_checker.create_service_bus_status()
+    status, message = await health_checker.create_service_bus_status()
 
-    assert ex.value.status_code == 503
-    assert ex.value.detail == strings.SERVICE_BUS_NOT_RESPONDING
+    assert status == StatusEnum.not_ok
+    assert message == strings.SERVICE_BUS_NOT_RESPONDING
 
 
 @patch("services.health_checker.default_credentials")
@@ -79,8 +75,7 @@ async def test_get_service_bus_status_other_exception(service_bus_client_mock, d
     default_credentials.return_value = AsyncMock()
     service_bus_client_mock.return_value = None
     service_bus_client_mock.side_effect = Exception()
-    with pytest.raises(HTTPException) as ex:
-        await health_checker.create_service_bus_status()
+    status, message = await health_checker.create_service_bus_status()
 
-    assert ex.value.status_code == 503
-    assert ex.value.detail == strings.UNSPECIFIED_ERROR
+    assert status == StatusEnum.not_ok
+    assert message == strings.UNSPECIFIED_ERROR

@@ -1,8 +1,8 @@
 from fastapi import APIRouter
-
-from models.schemas.status import HealthCheck, ServiceStatus
+from models.schemas.status import HealthCheck, ServiceStatus, StatusEnum
 from resources import strings
 from services.health_checker import create_state_store_status, create_service_bus_status
+from fastapi import HTTPException, status
 
 router = APIRouter()
 
@@ -13,4 +13,7 @@ async def health_check() -> HealthCheck:
     sb_status, sb_message = await create_service_bus_status()
     services = [ServiceStatus(service=strings.COSMOS_DB, status=cosmos_status, message=cosmos_message),
                 ServiceStatus(service=strings.SERVICE_BUS, status=sb_status, message=sb_message)]
-    return HealthCheck(services=services)
+    health_check_result = HealthCheck(services=services)
+    if cosmos_status == StatusEnum.not_ok or sb_status == StatusEnum.not_ok:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=health_check_result.json())
+    return health_check_result
