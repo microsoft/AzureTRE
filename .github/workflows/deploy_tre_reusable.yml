@@ -4,10 +4,6 @@ name: Deploy Azure TRE Resuable
 on:
   workflow_call:
     inputs:
-      prRepo:
-        description: Name of the repo GitHub repo containing the ref (as org/repo)
-        type: string
-        required: false
       prRef:
         description: The git ref to checkout
         type: string
@@ -90,7 +86,6 @@ jobs:
         run: |
           echo "Inputs"
           echo "======"
-          echo "prRepo    : ${{ inputs.prRepo }}"
           echo "prRef     : ${{ inputs.prRef }}"
           echo "prRHeadSha: ${{ inputs.prHeadSha }}"
           echo "ciGitRef  : ${{ inputs.ciGitRef }}"
@@ -101,7 +96,6 @@ jobs:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
           # then the default checkout will apply
-          repository: ${{ inputs.prRepo }}
           ref: ${{ inputs.prRef }}
 
       - name: Set up Docker BuildKit
@@ -190,7 +184,6 @@ jobs:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
           # then the default checkout will apply
-          repository: ${{ inputs.prRepo }}
           ref: ${{ inputs.prRef }}
 
       - name: Docker build
@@ -220,7 +213,6 @@ jobs:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
           # then the default checkout will apply
-          repository: ${{ inputs.prRepo }}
           ref: ${{ inputs.prRef }}
 
       - name: Deploy TRE Core
@@ -380,6 +372,8 @@ jobs:
              BUNDLE_DIR: "./templates/workspace_services/devtestlabs"}
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/innereye"}
+          - {BUNDLE_TYPE: "workspace_service",
+             BUNDLE_DIR: "./templates/workspace_services/gitea"}
     environment: Dev
     steps:
       - name: Checkout
@@ -388,7 +382,6 @@ jobs:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
           # then the default checkout will apply
-          repository: ${{ inputs.prRepo }}
           ref: ${{ inputs.prRef }}
 
       - name: Publish bundle
@@ -423,7 +416,6 @@ jobs:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
           # then the default checkout will apply
-          repository: ${{ inputs.prRepo }}
           ref: ${{ inputs.prRef }}
 
       - name: Docker build
@@ -462,6 +454,8 @@ jobs:
              BUNDLE_DIR: "./templates/workspace_services/devtestlabs"}
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/innereye"}
+          - {BUNDLE_TYPE: "workspace_service",
+             BUNDLE_DIR: "./templates/workspace_services/gitea"}
     environment: Dev
     steps:
       - name: Checkout
@@ -470,7 +464,6 @@ jobs:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
           # then the default checkout will apply
-          repository: ${{ inputs.prRepo }}
           ref: ${{ inputs.prRef }}
       - name: Register bundle
         uses: ./.github/actions/devcontainer_run_command
@@ -506,7 +499,6 @@ jobs:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
           # then the default checkout will apply
-          repository: ${{ inputs.prRepo }}
           ref: ${{ inputs.prRef }}
 
       - name: Run E2E Tests (Smoke)
@@ -571,7 +563,6 @@ jobs:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
           # then the default checkout will apply
-          repository: ${{ inputs.prRepo }}
           ref: ${{ inputs.prRef }}
 
       - name: Run E2E Tests (Extended)

@@ -12,6 +12,10 @@ resource "azurerm_storage_share" "shared_storage" {
   name                 = "vm-shared-storage"
   storage_account_name = azurerm_storage_account.stg.name
   quota                = var.shared_storage_quota
+
+  depends_on = [
+    azurerm_private_endpoint.stgfilepe
+  ]
 }
 
 resource "azurerm_storage_account_network_rules" "stgrules" {
@@ -27,6 +31,10 @@ resource "azurerm_private_endpoint" "stgfilepe" {
   location            = azurerm_resource_group.ws.location
   resource_group_name = azurerm_resource_group.ws.name
   subnet_id           = azurerm_subnet.services.id
+
+  depends_on = [
+    azurerm_subnet.services
+  ]
 
   lifecycle { ignore_changes = [tags] }
 
@@ -49,6 +57,10 @@ resource "azurerm_private_endpoint" "stgblobpe" {
   location            = azurerm_resource_group.ws.location
   resource_group_name = azurerm_resource_group.ws.name
   subnet_id           = azurerm_subnet.services.id
+
+  depends_on = [
+    azurerm_subnet.services
+  ]
 
   lifecycle { ignore_changes = [tags] }
 

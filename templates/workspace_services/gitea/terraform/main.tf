@@ -6,8 +6,8 @@ terraform {
       version = "=2.97.0"
     }
   }
-  backend "azurerm" {
-  }
+
+  backend "azurerm" {}
 }
 
 provider "azurerm" {
@@ -67,16 +67,26 @@ data "azurerm_network_security_group" "ws" {
   resource_group_name = data.azurerm_virtual_network.ws.resource_group_name
 }
 
-data "azurerm_app_service" "api_core" {
-  name                = "api-${var.tre_id}"
-  resource_group_name = "rg-${var.tre_id}"
+data "azurerm_private_dns_zone" "mysql" {
+  name                = "privatelink.mysql.database.azure.com"
+  resource_group_name = local.core_resource_group_name
 }
+
 
 data "azurerm_private_dns_zone" "filecore" {
   name                = "privatelink.file.core.windows.net"
   resource_group_name = local.core_resource_group_name
 }
 
+data "azurerm_app_service" "api_core" {
+  name                = "api-${var.tre_id}"
+  resource_group_name = "rg-${var.tre_id}"
+}
+
+data "local_file" "version" {
+  filename = "${path.module}/../version.txt"
+}
+
 output "connection_uri" {
-  value = "https://${azurerm_app_service.guacamole.default_site_hostname}/guacamole"
+  value = "https://${azurerm_app_service.gitea.default_site_hostname}/"
 }
