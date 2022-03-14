@@ -11,7 +11,7 @@ from api.routes import health, workspaces, workspace_templates, workspace_servic
 from core import config
 
 core_tags_metadata = [
-    {"name": "health", "description": "Verify that the system is up and running"},
+    {"name": "health", "description": "Verify that the TRE is up and running"},
     {"name": "workspace templates", "description": "**TRE admin** registers and can access templates"},
     {"name": "workspace service templates", "description": "**TRE admin** registers templates and can access templates"},
     {"name": "user resource templates", "description": "**TRE admin** registers templates and can access templates"},

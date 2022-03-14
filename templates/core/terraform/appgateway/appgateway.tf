@@ -107,7 +107,7 @@ resource "azurerm_application_gateway" "agw" {
     protocol                                  = "Https"
     path                                      = "/api/health"
     timeout                                   = "30"
-    unhealthy_threshold                       = "10"
+    unhealthy_threshold                       = "3"
   }
 
   # Public HTTPS listener
