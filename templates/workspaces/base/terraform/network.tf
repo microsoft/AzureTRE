@@ -7,7 +7,6 @@ resource "azurerm_virtual_network" "ws" {
   lifecycle { ignore_changes = [tags] }
 }
 
-
 resource "azurerm_subnet" "services" {
   name                 = "ServicesSubnet"
   virtual_network_name = azurerm_virtual_network.ws.name
@@ -87,7 +86,6 @@ resource "azurerm_network_security_group" "ws" {
 
   lifecycle { ignore_changes = [tags] }
 }
-
 
 resource "azurerm_subnet_network_security_group_association" "services" {
   network_security_group_id = azurerm_network_security_group.ws.id
@@ -169,7 +167,6 @@ resource "azurerm_network_security_rule" "allow-outbound-to-shared-services" {
   source_port_range           = "*"
 }
 
-
 resource "azurerm_network_security_rule" "allow-outbound-to-internet" {
   access                      = "Allow"
   destination_address_prefix  = "INTERNET"
@@ -183,7 +180,6 @@ resource "azurerm_network_security_rule" "allow-outbound-to-internet" {
   source_address_prefix       = "*"
   source_port_range           = "*"
 }
-
 
 resource "azurerm_network_security_rule" "allow-outbound-from-webapp-to-core-webapp" {
   access                      = "Allow"
@@ -207,6 +203,7 @@ resource "azurerm_network_security_rule" "allow-outbound-webapps-to-services" {
     "445",
     "3306",
     "3389",
+    "5432",
   ]
   destination_address_prefix  = azurerm_subnet.services.address_prefix
   source_address_prefix       = azurerm_subnet.webapps.address_prefix
@@ -262,6 +259,7 @@ resource "azurerm_network_security_rule" "allow-inbound-from-webapp-to-services"
     "445",
     "3306",
     "3389",
+    "5432",
   ]
   destination_address_prefix  = azurerm_subnet.services.address_prefix
   source_address_prefix       = azurerm_subnet.webapps.address_prefix
@@ -320,7 +318,6 @@ resource "azurerm_private_dns_zone_virtual_network_link" "filecorelink" {
   lifecycle { ignore_changes = [tags] }
 }
 
-
 data "azurerm_private_dns_zone" "blobcore" {
   name                = "privatelink.blob.core.windows.net"
   resource_group_name = local.core_resource_group_name
@@ -350,7 +347,6 @@ resource "azurerm_private_dns_zone_virtual_network_link" "vaultcorelink" {
   lifecycle { ignore_changes = [tags] }
 }
 
-
 data "azurerm_private_dns_zone" "azurecr" {
   name                = "privatelink.azurecr.io"
   resource_group_name = local.core_resource_group_name
@@ -374,7 +370,6 @@ data "azurerm_private_dns_zone" "azuremlcert" {
   name                = "privatelink.cert.api.azureml.ms"
   resource_group_name = local.core_resource_group_name
 }
-
 
 data "azurerm_private_dns_zone" "notebooks" {
   name                = "privatelink.notebooks.azure.net"
@@ -418,6 +413,21 @@ resource "azurerm_private_dns_zone_virtual_network_link" "mysqllink" {
   name                  = "mysqllink-${local.workspace_resource_name_suffix}"
   resource_group_name   = local.core_resource_group_name
   private_dns_zone_name = data.azurerm_private_dns_zone.mysql.name
+  virtual_network_id    = azurerm_virtual_network.ws.id
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+data "azurerm_private_dns_zone" "postgres" {
+  name                = "privatelink.postgres.database.azure.com"
+  resource_group_name = local.core_resource_group_name
+
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "postgreslink" {
+  name                  = "postgreslink-${local.workspace_resource_name_suffix}"
+  resource_group_name   = local.core_resource_group_name
+  private_dns_zone_name = data.azurerm_private_dns_zone.postgres.name
   virtual_network_id    = azurerm_virtual_network.ws.id
 
   lifecycle { ignore_changes = [tags] }
