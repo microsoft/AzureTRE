@@ -1,12 +1,32 @@
 import pytest
-
 from httpx import AsyncClient
-from resources import strings
+from mock import patch
 
+from models.schemas.status import StatusEnum
+from resources import strings
 
 pytestmark = pytest.mark.asyncio
 
 
-async def test_health(app, client: AsyncClient) -> None:
+@patch("api.routes.health.create_service_bus_status")
+@patch("api.routes.health.create_state_store_status")
+async def test_health_response_contains_cosmos_status(health_check_cosmos_mock, health_check_service_bus_mock, app,
+                                                      client: AsyncClient) -> None:
+    message = ""
+    health_check_cosmos_mock.return_value = StatusEnum.ok, message
+    health_check_service_bus_mock.return_value = StatusEnum.ok, message
     response = await client.get(app.url_path_for(strings.API_GET_HEALTH_STATUS))
-    assert response.json()["message"] == strings.PONG
+
+    assert {"message": message, "service": strings.COSMOS_DB, "status": strings.OK} in response.json()["services"]
+
+
+@patch("api.routes.health.create_service_bus_status")
+@patch("api.routes.health.create_state_store_status")
+async def test_health_response_contains_service_bus_status(health_check_cosmos_mock, health_check_service_bus_mock, app,
+                                                           client: AsyncClient) -> None:
+    message = ""
+    health_check_cosmos_mock.return_value = StatusEnum.ok, message
+    health_check_service_bus_mock.return_value = StatusEnum.ok, message
+    response = await client.get(app.url_path_for(strings.API_GET_HEALTH_STATUS))
+
+    assert {"message": message, "service": strings.SERVICE_BUS, "status": strings.OK} in response.json()["services"]
