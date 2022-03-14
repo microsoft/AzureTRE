@@ -18,9 +18,6 @@ The Azure TRE solution contains a [development container](https://code.visualstu
 
 The files for the dev container are located in `/.devcontainer/` folder.
 
-!!! tip
-    An alternative of running the development container locally is to use [GitHub Codespaces](https://docs.github.com/en/codespaces).
-
 ## Clone the Azure TRE Git repository
 
 1. Clone the Azure TRE Git repository on GitHub to your local computer.
