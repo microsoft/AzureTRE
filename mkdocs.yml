@@ -75,6 +75,7 @@ nav:
       - Workspace Services:
           - Azure ML: 'tre-templates/workspace-services/azure-ml.md'
           - DevTest Labs: 'tre-templates/workspace-services/dev-test-labs.md'
+          - Gitea: 'tre-templates/workspace-services/gitea.md'
           - Guacamole: 'tre-templates/workspace-services/guacamole.md'
           - InnerEye: 'tre-templates/workspace-services/inner-eye.md'
       - User Resources:
