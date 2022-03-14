@@ -8,7 +8,7 @@ from fastapi import status
 from db.errors import EntityDoesNotExist
 from models.domain.shared_service import SharedService
 from resources import strings
-from services.authentication import get_current_admin_user
+from services.authentication import get_current_admin_user, get_current_tre_user_or_tre_admin
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 from models.domain.resource import ResourceHistoryItem
 
@@ -42,12 +42,13 @@ def sample_shared_service(shared_service_id=SHARED_SERVICE_ID):
     )
 
 
-class TestSharedServiceRoutesThatRequireAdminRights:
+class TestSharedServiceRoutesThatDontRequireAdminRigths:
     @pytest.fixture(autouse=True, scope='class')
-    def log_in_with_admin_user(self, app, admin_user):
-        app.dependency_overrides[get_current_admin_user] = admin_user
-        yield
-        app.dependency_overrides = {}
+    def log_in_with_non_admin_user(self, app, non_admin_user):
+        with patch('services.aad_authentication.AzureADAuthorization._get_user_from_token', return_value=non_admin_user()):
+            app.dependency_overrides[get_current_tre_user_or_tre_admin] = non_admin_user
+            yield
+            app.dependency_overrides = {}
 
     # [GET] /shared-services
     @patch("api.routes.shared_services.SharedServiceRepository.get_active_shared_services",
@@ -60,6 +61,16 @@ class TestSharedServiceRoutesThatRequireAdminRights:
 
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["sharedServices"][0]["id"] == sample_shared_service().id
+
+
+class TestSharedServiceRoutesThatRequireAdminRights:
+    @pytest.fixture(autouse=True, scope='class')
+    def _prepare(self, app, admin_user):
+        with patch('services.aad_authentication.AzureADAuthorization._get_user_from_token', return_value=admin_user()):
+            app.dependency_overrides[get_current_tre_user_or_tre_admin] = admin_user
+            app.dependency_overrides[get_current_admin_user] = admin_user
+            yield
+            app.dependency_overrides = {}
 
     # [GET] /shared-services/{shared_service_id}
     @patch("api.dependencies.shared_services.SharedServiceRepository.get_shared_service_by_id", return_value=sample_shared_service())

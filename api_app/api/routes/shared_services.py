@@ -16,13 +16,13 @@ from resources import strings
 from .workspaces import save_and_deploy_resource, check_for_etag, construct_location_header
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 from .helpers import send_custom_action_message, send_uninstall_message
-from services.authentication import get_current_admin_user
+from services.authentication import get_current_admin_user, get_current_tre_user_or_tre_admin
 
 
-shared_services_router = APIRouter(dependencies=[Depends(get_current_admin_user)])
+shared_services_router = APIRouter(dependencies=[Depends(get_current_tre_user_or_tre_admin)])
 
 
-@shared_services_router.get("/shared-services", response_model=SharedServicesInList, name=strings.API_GET_ALL_SHARED_SERVICES, dependencies=[Depends(get_current_admin_user)])
+@shared_services_router.get("/shared-services", response_model=SharedServicesInList, name=strings.API_GET_ALL_SHARED_SERVICES, dependencies=[Depends(get_current_tre_user_or_tre_admin)])
 async def retrieve_shared_services(shared_services_repo=Depends(get_repository(SharedServiceRepository))) -> SharedServicesInList:
     shared_services = shared_services_repo.get_active_shared_services()
     return SharedServicesInList(sharedServices=shared_services)
