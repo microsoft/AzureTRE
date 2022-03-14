@@ -4,12 +4,12 @@ data "azurerm_storage_share" "shared_storage" {
 }
 
 resource "azurerm_app_service" "mlflow" {
-  name                = local.webapp_name
-  location            = data.azurerm_resource_group.ws.location
-  resource_group_name = data.azurerm_resource_group.ws.name
-  app_service_plan_id = data.azurerm_app_service_plan.workspace.id
-  https_only          = true
-  #vnet_route_all_enabled = true
+  name                   = local.webapp_name
+  location               = data.azurerm_resource_group.ws.location
+  resource_group_name    = data.azurerm_resource_group.ws.name
+  app_service_plan_id    = data.azurerm_app_service_plan.workspace.id
+  https_only             = true
+  vnet_route_all_enabled = true
 
   site_config {
     linux_fx_version                     = "DOCKER|${data.azurerm_container_registry.mgmt_acr.login_server}/microsoft/azuretre/${var.image_name}:${var.image_tag}"
@@ -18,8 +18,7 @@ resource "azurerm_app_service" "mlflow" {
   }
 
   app_settings = {
-    WEBSITE_DNS_SERVER     = "168.63.129.16"
-    WEBSITE_VNET_ROUTE_ALL = "1"
+    WEBSITE_DNS_SERVER = "168.63.129.16"
 
     MLFLOW_SERVER_WORKERS = "1"
     MLFLOW_SERVER_PORT    = "5000"
