@@ -9,12 +9,12 @@ variable "mgmt_resource_group_name" {}
 variable "image_name" {
   type        = string
   description = "value"
-  default     = "mlflow/server"
+  default     = "mlflow-server"
 }
 variable "image_tag" {
   type        = string
   description = "value"
-  default     = "v0.1.0"
+  default     = "0.1.0"
 }
 
 variable "arm_use_msi" {}

@@ -17,12 +17,18 @@ resource "random_password" "password" {
   min_numeric      = 1
   special          = true
   min_special      = 1
-  override_special = "_%@"
+  override_special = "_%$"
+}
+
+resource "azurerm_key_vault_secret" "postgresql_admin_username" {
+  name         = "${local.postgresql_server_name}-admin-username"
+  value        = random_string.username.result
+  key_vault_id = data.azurerm_key_vault.ws.id
 }
 
 resource "azurerm_key_vault_secret" "postgresql_admin_password" {
-  name         = "${local.postgresql_server_name}-admin-credentials"
-  value        = "${random_string.username.result}\n${random_password.password.result}"
+  name         = "${local.postgresql_server_name}-admin-password"
+  value        = random_password.password.result
   key_vault_id = data.azurerm_key_vault.ws.id
 }
 
@@ -42,7 +48,7 @@ resource "azurerm_postgresql_server" "mlflow" {
   geo_redundant_backup_enabled = false
   auto_grow_enabled            = true
 
-  public_network_access_enabled    = true
+  public_network_access_enabled    = false
   ssl_enforcement_enabled          = true
   ssl_minimal_tls_version_enforced = "TLS1_2"
 }
@@ -55,10 +61,23 @@ resource "azurerm_postgresql_database" "mlflow" {
   collation           = "English_United States.1252"
 }
 
-resource "azurerm_postgresql_virtual_network_rule" "mlflow" {
-  name                                 = "mlflow-postgresql-vnet-rule"
-  resource_group_name                  = data.azurerm_resource_group.ws.name
-  server_name                          = azurerm_postgresql_server.mlflow.name
-  subnet_id                            = data.azurerm_subnet.services.id
-  ignore_missing_vnet_service_endpoint = false
+resource "azurerm_private_endpoint" "private-endpoint" {
+  name                = "pe-${azurerm_postgresql_server.mlflow.name}-postgres"
+  location            = data.azurerm_resource_group.ws.location
+  resource_group_name = data.azurerm_resource_group.ws.name
+  subnet_id           = data.azurerm_subnet.services.id
+
+  private_service_connection {
+    private_connection_resource_id = azurerm_postgresql_server.mlflow.id
+    name                           = "psc-${azurerm_postgresql_server.mlflow.name}"
+    subresource_names              = ["postgresqlServer"]
+    is_manual_connection           = false
+  }
+
+  private_dns_zone_group {
+    name                 = "privatelink.postgres.database.azure.com"
+    private_dns_zone_ids = [data.azurerm_private_dns_zone.postgres.id]
+  }
+
+  lifecycle { ignore_changes = [tags] }
 }

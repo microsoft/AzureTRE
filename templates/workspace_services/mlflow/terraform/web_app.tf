@@ -18,14 +18,14 @@ resource "azurerm_app_service" "mlflow" {
   }
 
   app_settings = {
-    WEBSITES_PORT          = "5000"
     WEBSITE_DNS_SERVER     = "168.63.129.16"
     WEBSITE_VNET_ROUTE_ALL = "1"
 
-    MLFLOW_SERVER_WORKERS               = "1"
-    MLFLOW_SERVER_PORT                  = "5000"
-    MLFLOW_SERVER_HOST                  = "0.0.0.0"
-    MLFLOW_SERVER_FILE_STORE            = format("%s%s%s%s%s%s%s%s%s", "postgresql://", local.postgresql_server_name, ".postgres.database.azure.com:5432/mlflowdb?user=", random_password.password.result, "@", local.postgresql_server_name, "&password=", random_password.password.result, "&sslmode=require")
+    MLFLOW_SERVER_WORKERS = "1"
+    MLFLOW_SERVER_PORT    = "5000"
+    MLFLOW_SERVER_HOST    = "0.0.0.0"
+
+    MLFLOW_SERVER_FILE_STORE            = format("%s%s%s%s%s%s%s%s%s%s", "postgresql://", random_string.username.result, "@", azurerm_postgresql_server.mlflow.name, ":", random_password.password.result, "@", azurerm_postgresql_server.mlflow.name, ".postgres.database.azure.com:5432/", azurerm_postgresql_database.mlflow.name)
     MLFLOW_SERVER_DEFAULT_ARTIFACT_ROOT = format("%s%s%s%s%s", "wasbs://", data.azurerm_storage_share.shared_storage.name, "@", data.azurerm_storage_account.mlflow.name, ".blob.core.windows.net/mlartefacts")
     AZURE_STORAGE_CONNECTION_STRING     = data.azurerm_storage_account.mlflow.primary_connection_string
   }
