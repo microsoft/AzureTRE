@@ -199,16 +199,19 @@ resource "azurerm_network_security_rule" "allow-outbound-from-webapp-to-core-web
   source_port_range           = "*"
 }
 
-resource "azurerm_network_security_rule" "allow-outbound-rdp-and-https-from-webapps-to-services" {
+resource "azurerm_network_security_rule" "allow-outbound-webapps-to-services" {
   access = "Allow"
   destination_port_ranges = [
+    "80",
     "443",
+    "445",
+    "3306",
     "3389",
   ]
   destination_address_prefix  = azurerm_subnet.services.address_prefix
   source_address_prefix       = azurerm_subnet.webapps.address_prefix
   direction                   = "Outbound"
-  name                        = "outbound-rdp-and-https-from-services-to-webapps-subnets"
+  name                        = "outbound-from-services-to-webapps-subnets"
   network_security_group_name = azurerm_network_security_group.ws.name
   priority                    = 140
   protocol                    = "TCP"
@@ -251,16 +254,19 @@ resource "azurerm_network_security_rule" "allow-inbound-from-resourceprocessor" 
   source_port_range = "*"
 }
 
-resource "azurerm_network_security_rule" "allow-inbound-rdp-and-https-from-webapp-to-services" {
+resource "azurerm_network_security_rule" "allow-inbound-from-webapp-to-services" {
   access = "Allow"
   destination_port_ranges = [
+    "80",
     "443",
+    "445",
+    "3306",
     "3389",
   ]
   destination_address_prefix  = azurerm_subnet.services.address_prefix
   source_address_prefix       = azurerm_subnet.webapps.address_prefix
   direction                   = "Inbound"
-  name                        = "inbound-rdp-and-https-from-webapps-to-services-subnets"
+  name                        = "inbound-from-webapps-to-services-subnets"
   network_security_group_name = azurerm_network_security_group.ws.name
   priority                    = 130
   protocol                    = "TCP"
@@ -397,6 +403,21 @@ resource "azurerm_private_dns_zone_virtual_network_link" "notebookslink" {
   name                  = "notebookslink-${local.workspace_resource_name_suffix}"
   resource_group_name   = local.core_resource_group_name
   private_dns_zone_name = data.azurerm_private_dns_zone.notebooks.name
+  virtual_network_id    = azurerm_virtual_network.ws.id
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+data "azurerm_private_dns_zone" "mysql" {
+  name                = "privatelink.mysql.database.azure.com"
+  resource_group_name = local.core_resource_group_name
+
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "mysqllink" {
+  name                  = "mysqllink-${local.workspace_resource_name_suffix}"
+  resource_group_name   = local.core_resource_group_name
+  private_dns_zone_name = data.azurerm_private_dns_zone.mysql.name
   virtual_network_id    = azurerm_virtual_network.ws.id
 
   lifecycle { ignore_changes = [tags] }
