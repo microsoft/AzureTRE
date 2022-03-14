@@ -53,7 +53,7 @@ if [ ${shared_storage_access} -eq 1 ]; then
   sudo chmod 600 $smbCredentialFile
 
   # Configure autofs
-  sudo echo "$fileShareName -fstype=cifs,file_mode=06666,dir_mode=06666,credentials=$smbCredentialFile :$smbPath" > /etc/auto.fileshares
+  sudo echo "$fileShareName -fstype=cifs,rw,file_mode=0777,dir_mode=0777,credentials=$smbCredentialFile :$smbPath" > /etc/auto.fileshares
   sudo echo "$mntRoot /etc/auto.fileshares --timeout=60" > /etc/auto.master
 
   # Restart service to register changes
