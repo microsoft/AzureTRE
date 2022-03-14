@@ -1,3 +1,4 @@
+---
 name: tre-shared-service-nexus
 version: 0.0.1
 description: "A Sonatype Nexus shared service"
@@ -41,8 +42,10 @@ install:
         tre_id: "{{ bundle.parameters.tre_id }}"
         location: "{{ bundle.parameters.azure_location }}"
       backendConfig:
-        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
+        resource_group_name:
+          "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name:
+          "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.tre_id }}-shared-service-sonatype-nexus"
 upgrade:
@@ -59,7 +62,9 @@ uninstall:
         tre_id: "{{ bundle.parameters.tre_id }}"
         location: "{{ bundle.parameters.azure_location }}"
       backendConfig:
-        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
+        resource_group_name:
+          "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name:
+          "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.tre_id }}-shared-service-sonatype-nexus"
