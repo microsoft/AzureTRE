@@ -11,9 +11,6 @@
 
     Copy the resulting JSON payload.
 
-    !!! info
-        If you're using Codespaces, you may encounter a `Permission denied` issue with the Docker daemon. To fix this, run `sudo bash ./devops/scripts/set_docker_sock_permission.sh` from the root of the repository, then retry the make command.
-
 1. Navigate to the Swagger UI at `https://<azure_tre_fqdn>/api/docs`
 
 1. Log into the Swagger UI by clicking `Authorize`, then `Authorize` again. You will be redirected to the login page.
@@ -36,13 +33,18 @@ Now that we have published and registered a base workspace bundle we can use the
 As explained in the [auth guide](../auth.md), every workspace has a corresponding app registration which can be created using the helper script `scripts/aad-app-reg.sh`. For example:
 
 ```bash
-./scripts/aad-app-reg.sh --name 'Workspace One' --swaggerui-redirecturl https://mytre.region.cloudapp.azure.com/api/docs/oauth2-redirect --workspace
+./scripts/aad-app-reg.sh \
+    --name '<TRE_ID> - Workspace 1' \
+    --workspace \
+    --swaggerui-clientid <SWAGGER_UI_CLIENT_ID> \
+    --admin-consent \
+    --automation-clientid <AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID>
 ```
 
 !!! caution
     If you're using a separate tenant for AAD app registrations to the one where you've deployed the TRE infrastructure resources, ensure you've signed into that tenant in the `az cli` before running the above command. See **Using a separate Azure Active Directory tenant** in [Pre-deployment steps](./pre-deployment-steps.md) for more details.
 
-Running the script will report `WORKSPACE_API_CLIENT_ID` for the generated app which needs to be used in the POST body below.
+Running the script will report `WORKSPACE_API_CLIENT_ID` and `WORKSPACE_API_CLIENT_SECRET` for the generated app. Copy these into `/templates/core/.env` so that automated testing will work. You also need to use `WORKSPACE_API_CLIENT_ID` in the POST body below.
 
 Go to `https://<azure_tre_fqdn>/api/docs` and use POST `/api/workspaces` with the sample body to create a base workspace.
 

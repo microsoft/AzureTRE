@@ -75,6 +75,9 @@ build-resource-processor-vm-porter-image:
 build-gitea-image:
 	$(call build_image,"gitea","templates/shared_services/gitea/version.txt","templates/shared_services/gitea/Dockerfile","templates/shared_services/gitea/")
 
+build-gitea-workspace-service-image:
+	$(call build_image,"gitea-workspace-service","templates/workspace_services/gitea/version.txt","templates/workspace_services/gitea/docker/Dockerfile","templates/workspace_services/gitea/docker/")
+
 build-guacamole-image:
 	$(call build_image,"guac-server","templates/workspace_services/guacamole/version.txt","templates/workspace_services/guacamole/guacamole-server/docker/Dockerfile","templates/workspace_services/guacamole/guacamole-server")
 
@@ -104,6 +107,9 @@ push-resource-processor-vm-porter-image:
 push-gitea-image:
 	$(call push_image,"gitea","./templates/shared_services/gitea/version.txt")
 
+push-gitea-workspace-service-image:
+	$(call push_image,"gitea-workspace-service","./templates/workspace_services/gitea/version.txt")
+
 push-guacamole-image:
 	$(call push_image,"guac-server","./templates/workspace_services/guacamole/version.txt")
 
@@ -130,7 +136,8 @@ terraform-shared-service-deploy:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
-	&& cd ${DIR} && ../../deploy_from_local.sh
+	&& . ./devops/scripts/key_vault_list.sh \
+  && if [[ "$${TF_LOG}" == "DEBUG" ]]; then echo "TF DEBUG set - output supressed - see tflogs container for log file" && cd ${DIR} && ../../deploy_from_local.sh 1>/dev/null 2>/dev/null; else cd ${DIR} && ../../deploy_from_local.sh; fi;
 
 firewall-install:
 	$(call target_title, "Installing Firewall") \
@@ -153,7 +160,7 @@ deploy-core: tre-start
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
-	&& cd ./templates/core/terraform/ && ./deploy.sh
+	&& if [[ "$${TF_LOG}" == "DEBUG" ]]; then echo "TF DEBUG set - output supressed - see tflogs container for log file" && cd ./templates/core/terraform/ && ./deploy.sh 1>/dev/null 2>/dev/null; else cd ./templates/core/terraform/ && ./deploy.sh; fi;
 
 letsencrypt:
 	$(call target_title, "Requesting LetsEncrypt SSL certificate") \
@@ -163,7 +170,7 @@ letsencrypt:
 	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
 	&& pushd ./templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
-	&& . ./devops/scripts/load_env.sh ./templates/core/tre.env \
+	&& . ./devops/scripts/load_env.sh ./templates/core/private.env \
 	&& ./templates/core/terraform/scripts/letsencrypt.sh
 
 tre-start:
@@ -256,6 +263,8 @@ bundle-publish:
 	$(call target_title, "Publishing ${DIR} bundle with Porter") \
 	&& ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ./devops/scripts/set_docker_sock_permission.sh \
 	&& az acr login --name $${ACR_NAME}	\
 	&& cd ${DIR} \
 	&& porter publish --registry "$${ACR_NAME}.azurecr.io" --debug
@@ -265,6 +274,7 @@ bundle-register:
 	$(call target_title, "Registering ${DIR} bundle") \
 	&& ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& az acr login --name $${ACR_NAME}	\
 	&& cd ${DIR} \
 	&& ${ROOTPATH}/devops/scripts/register_bundle_with_api.sh --acr-name $${ACR_NAME} --bundle-type $${BUNDLE_TYPE} --current --insecure --tre_url $${TRE_URL} --verify
@@ -277,20 +287,16 @@ static-web-upload:
 	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
 	&& pushd ./templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
-	&& . ./devops/scripts/load_env.sh ./templates/core/tre.env \
+	&& . ./devops/scripts/load_env.sh ./templates/core/private.env \
 	&& ./templates/core/terraform/scripts/upload_static_web.sh
 
 test-e2e-smoke:
 	$(call target_title, "Running E2E smoke tests") && \
-	export SCOPE="api://${RESOURCE}/user_impersonation" && \
-	export WORKSPACE_SCOPE="api://${TEST_WORKSPACE_APP_ID}/user_impersonation" && \
 	cd e2e_tests && \
 	python -m pytest -m smoke --verify $${IS_API_SECURED:-true} --junit-xml pytest_e2e_smoke.xml
 
 test-e2e-extended:
 	$(call target_title, "Running E2E extended tests") && \
-	export SCOPE="api://${RESOURCE}/user_impersonation" && \
-	export WORKSPACE_SCOPE="api://${TEST_WORKSPACE_APP_ID}/user_impersonation" && \
 	cd e2e_tests && \
 	python -m pytest -m extended --verify $${IS_API_SECURED:-true} --junit-xml pytest_e2e_extended.xml
 
@@ -299,13 +305,13 @@ setup-local-debugging:
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& pushd ./templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
-	&& . ./devops/scripts/load_env.sh ./templates/core/tre.env \
-	&& . ./devops/scripts/setup_local_debugging.sh
+	&& . ./devops/scripts/load_env.sh ./templates/core/private.env \
+	&& . ./scripts/setup_local_debugging.sh
 
 register-aad-workspace:
 	$(call target_title,"Registering AAD Workspace") \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& pushd ./templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
-	&& . ./devops/scripts/load_env.sh ./templates/core/tre.env \
+	&& . ./devops/scripts/load_env.sh ./templates/core/private.env \
 	&& . ./devops/scripts/register-aad-workspace.sh

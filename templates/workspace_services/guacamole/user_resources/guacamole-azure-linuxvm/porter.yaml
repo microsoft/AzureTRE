@@ -1,5 +1,6 @@
+---
 name: tre-service-guacamole-linuxvm
-version: 0.1.3
+version: 0.1.7
 description: "An Azure TRE User Resource Template for Guacamole (Linux)"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -66,11 +67,17 @@ outputs:
     type: string
     applyTo:
       - install
+  - name: azure_resource_id
+    type: string
+    applyTo:
+      - start
+      - stop
 
 mixins:
   - exec
   - terraform:
       clientVersion: 1.0.4
+  - az
 
 install:
   - terraform:
@@ -131,17 +138,63 @@ uninstall:
         key: "{{ bundle.parameters.id }}"
 
 start:
-  - exec:
+  - terraform:
+      arguments:
+        - "output"
+      description: "Get resource ID from Terraform outputs"
+      backendConfig:
+        resource_group_name:
+          "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name:
+          "{{ bundle.parameters.tfstate_storage_account_name }}"
+        container_name: "{{ bundle.parameters.tfstate_container_name }}"
+        key: "{{ bundle.parameters.id }}"
+      outputs:
+        - name: azure_resource_id
+  - az:
+      description:
+        "Login to Azure"
+      arguments:
+        - login
+      flags:
+        identity:
+        username: "{{ bundle.credentials.azure_client_id }}"
+  - az:
       description:
         "Start the VM"
-      command: echo
       arguments:
-        - "NotImplemented"
+        - vm
+        - start
+      flags:
+        ids: "{{ bundle.outputs.azure_resource_id }}"
 
 stop:
-  - exec:
+  - terraform:
+      arguments:
+        - "output"
+      description: "Get VM hostname and rg from Terraform outputs"
+      backendConfig:
+        resource_group_name:
+          "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name:
+          "{{ bundle.parameters.tfstate_storage_account_name }}"
+        container_name: "{{ bundle.parameters.tfstate_container_name }}"
+        key: "{{ bundle.parameters.id }}"
+      outputs:
+        - name: azure_resource_id
+  - az:
+      description:
+        "Login to Azure"
+      arguments:
+        - login
+      flags:
+        identity:
+        username: "{{ bundle.credentials.azure_client_id }}"
+  - az:
       description:
         "Stop the VM"
-      command: echo
       arguments:
-        - "NotImplemented"
+        - vm
+        - stop
+      flags:
+        ids: "{{ bundle.outputs.azure_resource_id }}"

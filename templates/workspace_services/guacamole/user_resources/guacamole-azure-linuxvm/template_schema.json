@@ -15,7 +15,8 @@
         "enum": [
           "Ubuntu 18.04",
           "Ubuntu 18.04 Data Science VM"
-        ]
+        ],
+        "updateable": true
       }
     }
 }

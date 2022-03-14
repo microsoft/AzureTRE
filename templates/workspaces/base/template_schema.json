@@ -7,5 +7,11 @@
     "required": [
     ],
     "properties": {
+      "shared_storage_quota": {
+        "$id": "#/properties/shared_storage_quota",
+        "type": "integer",
+        "title": "Shared Storage Quota",
+        "description": "Quota (in GB) to set for the VM Shared Storage."
+      }
     }
 }

@@ -12,12 +12,14 @@
       "display_name": {
           "type": "string",
           "title": "Name for the user resource",
-          "description": "The name of the user resource to be displayed to users"
+          "description": "The name of the user resource to be displayed to users",
+          "updateable": true
       },
       "description": {
           "type": "string",
           "title": "Description of the user resource",
-          "description": "Description of the user resource"
+          "description": "Description of the user resource",
+          "updateable": true
       }
   }
 }

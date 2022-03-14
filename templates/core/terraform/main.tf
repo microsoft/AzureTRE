@@ -14,10 +14,11 @@ provider "azurerm" {
   features {
     key_vault {
       purge_soft_delete_on_destroy    = var.keyvault_purge_protection_enabled ? false : true
-      recover_soft_deleted_key_vaults = true
+      recover_soft_deleted_key_vaults = false
     }
   }
 }
+
 
 resource "azurerm_resource_group" "core" {
   location = var.location
@@ -63,7 +64,11 @@ module "appgateway" {
   api_fqdn               = azurerm_app_service.api.default_site_hostname
   keyvault_id            = azurerm_key_vault.kv.id
   static_web_dns_zone_id = module.network.static_web_dns_zone_id
-  depends_on             = [azurerm_key_vault.kv]
+
+  depends_on = [
+    azurerm_key_vault.kv,
+    azurerm_key_vault_access_policy.deployer
+  ]
 }
 
 module "resource_processor_vmss_porter" {
@@ -88,6 +93,7 @@ module "resource_processor_vmss_porter" {
 
   depends_on = [
     module.azure_monitor,
-    azurerm_key_vault.kv
+    azurerm_key_vault.kv,
+    azurerm_key_vault_access_policy.deployer
   ]
 }

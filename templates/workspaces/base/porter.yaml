@@ -1,6 +1,6 @@
 ---
 name: tre-workspace-base
-version: 0.1.7
+version: 0.1.10
 description: "A base Azure TRE workspace"
 registry: azuretre
 
@@ -41,6 +41,10 @@ parameters:
   - name: arm_use_msi
     env: ARM_USE_MSI
     default: false
+  - name: shared_storage_quota
+    env: SHARED_STORAGE_QUOTA
+    type: integer
+    default: 50
 
 mixins:
   - exec
@@ -50,12 +54,13 @@ mixins:
 install:
   - terraform:
       description: "Deploy workspace"
-      input: false
+
       vars:
         tre_id: "{{ bundle.parameters.tre_id }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
         location: "{{ bundle.parameters.azure_location }}"
         address_space: "{{ bundle.parameters.address_space }}"
+        shared_storage_quota: "{{ bundle.parameters.shared_storage_quota }}"
       backendConfig:
         resource_group_name:
           "{{ bundle.parameters.tfstate_resource_group_name }}"
@@ -74,12 +79,12 @@ upgrade:
 uninstall:
   - terraform:
       description: "Tear down workspace"
-      input: false
       vars:
         tre_id: "{{ bundle.parameters.tre_id }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
         location: "{{ bundle.parameters.azure_location }}"
         address_space: "{{ bundle.parameters.address_space }}"
+        shared_storage_quota: "{{ bundle.parameters.shared_storage_quota }}"
       backendConfig:
         resource_group_name:
           "{{ bundle.parameters.tfstate_resource_group_name }}"
