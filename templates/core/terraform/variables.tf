@@ -135,11 +135,16 @@ variable "stateful_resources_locked" {
   description = "Used to add locks on resources with state"
 }
 
-
 variable "ci_git_ref" {
   default     = ""
   description = "The git ref used by the ci to deploy this TRE"
   type        = string
+}
+
+variable "enable_local_debugging" {
+  default     = false
+  description = "This will allow Cosmos to be accesible from your local IP address and add some extra role permissions."
+  type        = bool
 }
 
 # this var is optional and used to avoid assigning a role on every run.
