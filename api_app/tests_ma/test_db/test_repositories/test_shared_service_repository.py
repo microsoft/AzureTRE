@@ -82,9 +82,9 @@ def test_get_active_shared_services_for_shared_queries_db(shared_service_repo):
     shared_service_repo.query = MagicMock()
     shared_service_repo.query.return_value = []
 
-    shared_service_repo.get_active_shared_services(SHARED_SERVICE_ID)
+    shared_service_repo.get_active_shared_services()
 
-    shared_service_repo.query.assert_called_once_with(query=SharedServiceRepository.active_shared_services_query(SHARED_SERVICE_ID))
+    shared_service_repo.query.assert_called_once_with(query=SharedServiceRepository.active_shared_services_query())
 
 
 @patch('db.repositories.shared_services.SharedServiceRepository.validate_input_against_template')

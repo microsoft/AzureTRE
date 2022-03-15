@@ -17,18 +17,24 @@ class SharedServiceRepository(ResourceRepository):
         super().__init__(client)
 
     @staticmethod
-    def shared_services_query(shared_service_id: str):
+    def shared_service_query(shared_service_id: str):
         return f'SELECT * FROM c WHERE c.resourceType = "{ResourceType.SharedService}" AND c.id = "{shared_service_id}"'
 
     @staticmethod
-    def active_shared_services_query(shared_service_id: str):
-        return f'SELECT * FROM c WHERE {IS_ACTIVE_CLAUSE} AND c.resourceType = "{ResourceType.SharedService}" AND c.id = "{shared_service_id}"'
+    def active_shared_services_query():
+        return f'SELECT * FROM c WHERE {IS_ACTIVE_CLAUSE} AND c.resourceType = "{ResourceType.SharedService}"'
 
-    def get_active_shared_services(self, shared_service_id: str) -> List[SharedService]:
+    def get_shared_service_by_id(self, shared_service_id: str):
+        shared_services = self.query(self.shared_service_query(shared_service_id))
+        if not shared_services:
+            raise EntityDoesNotExist
+        return parse_obj_as(SharedService, shared_services[0])
+
+    def get_active_shared_services(self) -> List[SharedService]:
         """
         returns list of "non-deleted" shared services linked to this shared
         """
-        query = SharedServiceRepository.active_shared_services_query(shared_service_id)
+        query = SharedServiceRepository.active_shared_services_query()
         shared_services = self.query(query=query)
         return parse_obj_as(List[SharedService], shared_services)
 
@@ -39,12 +45,6 @@ class SharedServiceRepository(ResourceRepository):
             raise ResourceIsNotDeployed
 
         return shared_service
-
-    def get_shared_service_by_id(self, shared_service_id: str):
-        shared_services = self.query(self.shared_services_query(shared_service_id))
-        if not shared_services:
-            raise EntityDoesNotExist
-        return parse_obj_as(SharedService, shared_services[0])
 
     def get_shared_service_spec_params(self):
         return self.get_resource_base_spec_params()

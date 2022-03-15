@@ -16,8 +16,7 @@ from services.authentication import get_access_service
 async def save_and_deploy_resource(resource, resource_repo, operations_repo) -> Operation:
     try:
         resource_repo.save_item(resource)
-    except Exception as e:
-        logging.error(f"Failed to save resource in DB: {e}")
+    except Exception:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
 
     try:
