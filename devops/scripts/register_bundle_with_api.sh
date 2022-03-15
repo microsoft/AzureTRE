@@ -13,14 +13,14 @@ function usage() {
     Usage: $0 [-u --tre_url]  [-c --current] [-i --insecure]
 
     Options:
-        -r, --acr-name            Azure Container Registry Name
-        -t, --bundle-type         Bundle type, workspace or workspace_service
-        -n, --user-resource-name  The template name of the user resource
-        -c, --current             Make this the currently deployed version of this template
-        -i, --insecure            Bypass SSL certificate checks
-        -u, --tre_url             URL for the TRE (required for automatic registration)
-        -a, --access-token        Azure access token to automatically post to the API (required for automatic registration)
-        -v, --verify              Verify registration with the API
+        -r, --acr-name                Azure Container Registry Name
+        -t, --bundle-type             Bundle type, workspace or workspace_service
+        -w, --workspace-service-name  The template name of the user resource
+        -c, --current                 Make this the currently deployed version of this template
+        -i, --insecure                Bypass SSL certificate checks
+        -u, --tre_url                 URL for the TRE (required for automatic registration)
+        -a, --access-token            Azure access token to automatically post to the API (required for automatic registration)
+        -v, --verify                  Verify registration with the API
 USAGE
     exit 1
 }
@@ -58,9 +58,9 @@ while [ "$1" != "" ]; do
         esac
         bundle_type=$1
         ;;
-    -n | --user-resource-name)
+    -w | --workspace-service-name)
         shift
-        user_resource_name=$1
+        workspace_service_name=$1
         ;;
     -c| --current)
         current="true"
@@ -102,8 +102,8 @@ if [[ -z ${BUNDLE_TYPE:-} ]]; then
     usage
 fi
 
-if [ ${BUNDLE_TYPE} == "user_resource" ] && [ -z ${user_resource_name:-} ]; then
-    echo -e "You must supply a user resource name if you are registering a user_resource bundle\n"
+if [ ${BUNDLE_TYPE} == "user_resource" ] && [ -z ${workspace_service_name:-} ]; then
+    echo -e "You must supply a workspace service_name name if you are registering a user_resource bundle\n"
     usage
 fi
 
@@ -162,7 +162,7 @@ else
   case "${BUNDLE_TYPE}" in
     ("workspace") tre_get_path="api/workspace-templates" ;;
     ("workspace_service") tre_get_path="api/workspace-service-templates" ;;
-    ("user_resource") tre_get_path="/api/workspace-service-templates/${user_resource_name}/user-resource-templates";;
+    ("user_resource") tre_get_path="/api/workspace-service-templates/${workspace_service_name}/user-resource-templates";;
   esac
 
   echo -e "Server Response:\n"

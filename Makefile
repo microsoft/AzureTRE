@@ -270,7 +270,7 @@ bundle-register:
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& az acr login --name $${ACR_NAME}	\
 	&& cd ${DIR} \
-	&& ${ROOTPATH}/devops/scripts/register_bundle_with_api.sh --acr-name $${ACR_NAME} --bundle-type $${BUNDLE_TYPE} --current --insecure --tre_url $${TRE_URL} --verify --user-resource-name $${USER_RESOURCE_NAME}
+	&& ${ROOTPATH}/devops/scripts/register_bundle_with_api.sh --acr-name $${ACR_NAME} --bundle-type $${BUNDLE_TYPE} --current --insecure --tre_url $${TRE_URL} --verify --workspace-service-name $${WOKSPACE_SERVICE_NAME}
 
 static-web-upload:
 	$(call target_title, "Uploading to static website") \
