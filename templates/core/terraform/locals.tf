@@ -14,5 +14,5 @@ data "azurerm_container_registry" "mgmt_acr" {
 }
 
 data "http" "myip" {
-  url = "http://ipv4.icanhazip.com"
+  url = "https://ipecho.net/plain"
 }
