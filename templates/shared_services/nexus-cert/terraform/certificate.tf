@@ -43,7 +43,7 @@ resource "azurerm_key_vault_certificate" "tlscert" {
   }
 }
 
-data "azurerm_key_vault" "key_vault"{
+data "azurerm_key_vault" "key_vault" {
   name                = "kv-${var.tre_id}"
   resource_group_name = local.core_resource_group_name
 }

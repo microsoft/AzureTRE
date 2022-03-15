@@ -159,7 +159,7 @@ resource "azurerm_application_gateway" "agw" {
 }
 
 data "azurerm_subnet" "app_gw_subnet" {
-  name = "AppGwSubnet"
+  name                 = "AppGwSubnet"
   virtual_network_name = "vnet-${var.tre_id}"
   resource_group_name  = local.core_resource_group_name
 }
