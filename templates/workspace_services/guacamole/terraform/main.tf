@@ -72,6 +72,11 @@ data "azurerm_app_service" "api_core" {
   resource_group_name = "rg-${var.tre_id}"
 }
 
+data "azurerm_private_dns_zone" "filecore" {
+  name                = "privatelink.file.core.windows.net"
+  resource_group_name = local.core_resource_group_name
+}
+
 output "connection_uri" {
   value = "https://${azurerm_app_service.guacamole.default_site_hostname}/guacamole"
 }

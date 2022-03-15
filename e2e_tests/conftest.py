@@ -32,7 +32,7 @@ async def admin_token(verify) -> str:
 
         else:
             # Use Resource Owner Password Credentials flow
-            payload = f"grant_type=password&resource={config.API_CLIENT_ID}&username={config.USERNAME}&password={config.PASSWORD}&scope=api://{config.API_CLIENT_ID}/user_impersonation&client_id={config.CLIENT_ID}"
+            payload = f"grant_type=password&resource={config.API_CLIENT_ID}&username={config.TEST_USER_NAME}&password={config.TEST_USER_PASSWORD}&scope=api://{config.API_CLIENT_ID}/user_impersonation&client_id={config.TEST_APP_ID}"
             url = f"https://login.microsoftonline.com/{config.AAD_TENANT_ID}/oauth2/token"
 
         response = await client.post(url, headers=headers, content=payload)
@@ -55,7 +55,7 @@ async def workspace_owner_token(verify) -> str:
 
         else:
             # Use Resource Owner Password Credentials flow
-            payload = f"grant_type=password&resource={config.TEST_WORKSPACE_APP_ID}&username={config.USERNAME}&password={config.PASSWORD}&scope=api://{config.TEST_WORKSPACE_APP_ID}/user_impersonation&client_id={config.CLIENT_ID}"
+            payload = f"grant_type=password&resource={config.TEST_WORKSPACE_APP_ID}&username={config.TEST_USER_NAME}&password={config.TEST_USER_PASSWORD}&scope=api://{config.TEST_WORKSPACE_APP_ID}/user_impersonation&client_id={config.TEST_APP_ID}"
             url = f"https://login.microsoftonline.com/{config.AAD_TENANT_ID}/oauth2/token"
 
         response = await client.post(url, headers=headers, content=payload)

@@ -2,6 +2,7 @@
 name: Publish docs via Github Pages
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
@@ -13,8 +14,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-        with:
-          persist-credentials: false
       - uses: actions/setup-python@v2
         with:
           python-version: 3.x
