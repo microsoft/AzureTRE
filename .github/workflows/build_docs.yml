@@ -2,6 +2,7 @@
 name: Publish docs via Github Pages
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
