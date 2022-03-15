@@ -31,7 +31,7 @@ The Guacamole workspace service also has user resources, there are the VMs that 
 
     ```cmd
     make bundle-publish DIR=./templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm BUNDLE_TYPE=user_resource
-    make bundle-register DIR=./templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm BUNDLE_TYPE=user_resource
+    make bundle-register DIR=./templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm BUNDLE_TYPE=user_resource WORKSPACE_SERVICE_NAME=tre-service-guacamole
     ```
 
     Copy the resulting JSON payload.

@@ -1,11 +1,11 @@
 resource "azurerm_cosmosdb_account" "tre-db-account" {
-  name                = "cosmos-${var.tre_id}"
-  location            = azurerm_resource_group.core.location
-  resource_group_name = azurerm_resource_group.core.name
-  offer_type          = "Standard"
-  kind                = "GlobalDocumentDB"
-
+  name                      = "cosmos-${var.tre_id}"
+  location                  = azurerm_resource_group.core.location
+  resource_group_name       = azurerm_resource_group.core.name
+  offer_type                = "Standard"
+  kind                      = "GlobalDocumentDB"
   enable_automatic_failover = false
+  ip_range_filter           = var.enable_local_debugging ? "${chomp(data.http.myip.body)}" : null
 
   consistency_policy {
     consistency_level       = "BoundedStaleness"
