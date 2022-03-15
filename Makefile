@@ -17,7 +17,7 @@ build-and-push-resource-processor: build-resource-processor-vm-porter-image push
 build-and-push-gitea: build-gitea-image push-gitea-image
 build-and-push-guacamole: build-guacamole-image push-guacamole-image
 build-and-push-mlflow: build-mlflow-image push-mlflow-image
-tre-deploy: deploy-core deploy-shared-services
+tre-deploy: deploy-core deploy-shared-services show-core-output
 deploy-shared-services: firewall-install gitea-install nexus-install
 
 # to move your environment from the single 'core' deployment (which includes the firewall)
@@ -315,3 +315,7 @@ register-aad-workspace:
 	&& pushd ./templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ./devops/scripts/load_env.sh ./templates/core/private.env \
 	&& . ./devops/scripts/register-aad-workspace.sh
+
+show-core-output:
+	$(call target_title,"Display TRE core output") \
+	&& pushd ./templates/core/terraform/ > /dev/null && terraform show && popd > /dev/null

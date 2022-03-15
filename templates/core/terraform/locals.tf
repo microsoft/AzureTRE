@@ -12,3 +12,7 @@ data "azurerm_container_registry" "mgmt_acr" {
   name                = var.acr_name
   resource_group_name = var.mgmt_resource_group_name
 }
+
+data "http" "myip" {
+  url = "https://ipecho.net/plain"
+}
