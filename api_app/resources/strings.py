@@ -26,8 +26,6 @@ API_DELETE_USER_RESOURCE = "Delete user resource"
 API_UPDATE_USER_RESOURCE = "Update an existing user resource"
 API_INVOKE_ACTION_ON_USER_RESOURCE = "Invoke action on a user resource"
 
-API_GET_STATUS_OF_SERVICES = "Get status of services"
-
 API_CREATE_WORKSPACE_TEMPLATES = "Register workspace template"
 API_GET_WORKSPACE_TEMPLATES = "Get workspace templates"
 API_GET_WORKSPACE_TEMPLATE_BY_NAME = "Get workspace template by name"
@@ -57,6 +55,10 @@ NOT_OK = "Not OK"
 COSMOS_DB = "Cosmos DB"
 STATE_STORE_ENDPOINT_NOT_RESPONDING = "State Store endpoint is not responding"
 UNSPECIFIED_ERROR = "Unspecified error"
+
+# Service bus status
+SERVICE_BUS = "Service Bus"
+SERVICE_BUS_NOT_RESPONDING = "Service Bus is not responding"
 
 # Error strings
 ACCESS_APP_IS_MISSING_ROLE = "The App is missing role"

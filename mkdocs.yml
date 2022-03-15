@@ -42,6 +42,7 @@ nav:
       - User Roles: 'azure-tre-overview/user-roles.md'
       - Architecture: 'azure-tre-overview/architecture.md'
       - Network Architecture: 'azure-tre-overview/networking.md'
+      - Azure Resource Breakdown: 'azure-tre-overview/tre-resources-breakdown.md'
       - Shared Services:
           - Gitea (Source Mirror): 'azure-tre-overview/shared-services/gitea.md'
           - Nexus (Package Mirror): 'azure-tre-overview/shared-services/nexus.md'
@@ -74,6 +75,7 @@ nav:
       - Workspace Services:
           - Azure ML: 'tre-templates/workspace-services/azure-ml.md'
           - DevTest Labs: 'tre-templates/workspace-services/dev-test-labs.md'
+          - Gitea: 'tre-templates/workspace-services/gitea.md'
           - Guacamole: 'tre-templates/workspace-services/guacamole.md'
           - InnerEye: 'tre-templates/workspace-services/inner-eye.md'
       - User Resources:

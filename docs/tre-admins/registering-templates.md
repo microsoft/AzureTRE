@@ -15,7 +15,7 @@ It carries out the following actions:
 
 ### Registration using Swagger UI
 
-1. Build the porter bundle
+1. Build the Porter bundle
 
    ```cmd
    porter build

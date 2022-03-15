@@ -16,7 +16,7 @@ build-and-push-api: build-api-image push-api-image
 build-and-push-resource-processor: build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image
 build-and-push-gitea: build-gitea-image push-gitea-image
 build-and-push-guacamole: build-guacamole-image push-guacamole-image
-tre-deploy: deploy-core deploy-shared-services
+tre-deploy: deploy-core deploy-shared-services show-core-output
 deploy-shared-services: firewall-install gitea-install nexus-install
 
 # to move your environment from the single 'core' deployment (which includes the firewall)
@@ -74,6 +74,9 @@ build-resource-processor-vm-porter-image:
 build-gitea-image:
 	$(call build_image,"gitea","templates/shared_services/gitea/version.txt","templates/shared_services/gitea/Dockerfile","templates/shared_services/gitea/")
 
+build-gitea-workspace-service-image:
+	$(call build_image,"gitea-workspace-service","templates/workspace_services/gitea/version.txt","templates/workspace_services/gitea/docker/Dockerfile","templates/workspace_services/gitea/docker/")
+
 build-guacamole-image:
 	$(call build_image,"guac-server","templates/workspace_services/guacamole/version.txt","templates/workspace_services/guacamole/guacamole-server/docker/Dockerfile","templates/workspace_services/guacamole/guacamole-server")
 
@@ -100,6 +103,9 @@ push-resource-processor-vm-porter-image:
 push-gitea-image:
 	$(call push_image,"gitea","./templates/shared_services/gitea/version.txt")
 
+push-gitea-workspace-service-image:
+	$(call push_image,"gitea-workspace-service","./templates/workspace_services/gitea/version.txt")
+
 push-guacamole-image:
 	$(call push_image,"guac-server","./templates/workspace_services/guacamole/version.txt")
 
@@ -123,7 +129,8 @@ terraform-shared-service-deploy:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
-	&& cd ${DIR} && ../../deploy_from_local.sh
+	&& . ./devops/scripts/key_vault_list.sh \
+  && if [[ "$${TF_LOG}" == "DEBUG" ]]; then echo "TF DEBUG set - output supressed - see tflogs container for log file" && cd ${DIR} && ../../deploy_from_local.sh 1>/dev/null 2>/dev/null; else cd ${DIR} && ../../deploy_from_local.sh; fi;
 
 firewall-install:
 	$(call target_title, "Installing Firewall") \
@@ -146,7 +153,7 @@ deploy-core: tre-start
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
-	&& cd ./templates/core/terraform/ && ./deploy.sh
+	&& if [[ "$${TF_LOG}" == "DEBUG" ]]; then echo "TF DEBUG set - output supressed - see tflogs container for log file" && cd ./templates/core/terraform/ && ./deploy.sh 1>/dev/null 2>/dev/null; else cd ./templates/core/terraform/ && ./deploy.sh; fi;
 
 letsencrypt:
 	$(call target_title, "Requesting LetsEncrypt SSL certificate") \
@@ -301,3 +308,7 @@ register-aad-workspace:
 	&& pushd ./templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ./devops/scripts/load_env.sh ./templates/core/private.env \
 	&& . ./devops/scripts/register-aad-workspace.sh
+
+show-core-output:
+	$(call target_title,"Display TRE core output") \
+	&& pushd ./templates/core/terraform/ > /dev/null && terraform show && popd > /dev/null
