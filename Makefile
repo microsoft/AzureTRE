@@ -9,7 +9,7 @@ FULL_IMAGE_NAME_PREFIX:=`echo "${FULL_CONTAINER_REGISTRY_NAME}/${IMAGE_NAME_PREF
 
 target_title = @echo -e "\n\e[34m»»» 🧩 \e[96m$(1)\e[0m..."
 
-all: bootstrap mgmt-deploy images tre-deploy
+all: bootstrap mgmt-deploy images tre-deploy show-core-output
 images: build-and-push-api build-and-push-resource-processor build-and-push-gitea build-and-push-guacamole
 
 build-and-push-api: build-api-image push-api-image
@@ -308,3 +308,7 @@ register-aad-workspace:
 	&& pushd ./templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ./devops/scripts/load_env.sh ./templates/core/private.env \
 	&& . ./devops/scripts/register-aad-workspace.sh
+
+show-core-output:
+	$(call target_title,"Display TRE core output") \
+	&& pushd ./templates/core/terraform/ > /dev/null && terraform show && popd > /dev/null
