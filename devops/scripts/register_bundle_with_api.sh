@@ -114,12 +114,12 @@ then
       -d 'grant_type=client_credentials'   \
       -d "scope=api://${API_CLIENT_ID}/.default"   \
       -d "client_secret=${AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET}")
-  elif [ ! -z "${API_CLIENT_ID:-}" ] && [ ! -z "${CLIENT_ID:-}" ] && [ ! -z "${USERNAME:-}" ] && [ ! -z "${PASSWORD:-}" ] && [ ! -z "${AAD_TENANT_ID:-}" ]
+  elif [ ! -z "${API_CLIENT_ID:-}" ] && [ ! -z "${TEST_APP_ID:-}" ] && [ ! -z "${TEST_USER_NAME:-}" ] && [ ! -z "${TEST_USER_PASSWORD:-}" ] && [ ! -z "${AAD_TENANT_ID:-}" ]
   then
     # Use resource owner password credentials flow with USERNAME/PASSWORD
-    echo "Using USERNAME to get token via resource owner password credential flow"
+    echo "Using TEST_USER_NAME to get token via resource owner password credential flow"
     token_response=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d \
-      "grant_type=password&resource=${API_CLIENT_ID}&client_id=${CLIENT_ID}&username=${USERNAME}&password=${PASSWORD}&scope=default)" \
+      "grant_type=password&resource=${API_CLIENT_ID}&client_id=${TEST_APP_ID}&username=${TEST_USER_NAME}&password=${TEST_USER_PASSWORD}&scope=default)" \
       https://login.microsoftonline.com/${AAD_TENANT_ID}/oauth2/token)
   fi
 
