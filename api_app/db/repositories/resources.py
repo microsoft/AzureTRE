@@ -86,7 +86,8 @@ class ResourceRepository(BaseRepository):
             # if we're here then we're valid - update the props + persist
             resource.properties.update(resource_patch.properties)
 
-        return self.update_item_with_etag(resource, etag)
+        self.update_item_with_etag(resource, etag)
+        return resource
 
     def validate_patch(self, resource_patch: ResourcePatch, resource_template_repo: ResourceTemplateRepository, resource_template: ResourceTemplate):
         # get the enriched (combined) template
