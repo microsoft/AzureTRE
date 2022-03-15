@@ -296,7 +296,7 @@ declare workspaceAppRoles=$(jq -c . << JSON
 [
     {
         "id": "${ownerRoleId}",
-        "allowedMemberTypes": [ "User, Application" ],
+        "allowedMemberTypes": [ "User", "Application" ],
         "description": "Provides workspace owners access to the Workspace.",
         "displayName": "Workspace Owner",
         "isEnabled": true,
@@ -305,7 +305,7 @@ declare workspaceAppRoles=$(jq -c . << JSON
     },
     {
         "id": "${researcherRoleId}",
-        "allowedMemberTypes": [ "User, Application" ],
+        "allowedMemberTypes": [ "User", "Application" ],
         "description": "Provides researchers access to the Workspace.",
         "displayName": "Workspace Researcher",
         "isEnabled": true,
