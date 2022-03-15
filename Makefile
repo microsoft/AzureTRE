@@ -285,15 +285,17 @@ static-web-upload:
 
 test-e2e-smoke:
 	$(call target_title, "Running E2E smoke tests") \
+	&& cp --force ./templates/core/.env ./e2e_tests/.env \
 	&& . ./devops/scripts/load_env.sh ./templates/core/private.env \
 	&& cd ./e2e_tests \
 	&& python -m pytest -m smoke --verify $${IS_API_SECURED:-true} --junit-xml pytest_e2e_smoke.xml
 
 test-e2e-extended:
 	$(call target_title, "Running E2E extended tests") \
+	&& cp --force ./templates/core/.env ./e2e_tests/.env \
 	&& . ./devops/scripts/load_env.sh ./templates/core/private.env \
 	&& cd ./e2e_tests \
-	python -m pytest -m extended --verify $${IS_API_SECURED:-true} --junit-xml pytest_e2e_extended.xml
+	&& python -m pytest -m extended --verify $${IS_API_SECURED:-true} --junit-xml pytest_e2e_extended.xml
 
 setup-local-debugging:
 	$(call target_title,"Setting up the ability to debug the API and Resource Processor") \
