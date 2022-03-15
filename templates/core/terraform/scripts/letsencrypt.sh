@@ -3,8 +3,6 @@ set -e
 
 script_dir=$(realpath $(dirname "${BASH_SOURCE[0]}"))
 
-echo $FQDN
-exit
 if [[ -z ${STORAGE_ACCOUNT} ]]; then
   echo "STORAGE_ACCOUNT not set"
   exit 1
