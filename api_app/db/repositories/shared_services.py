@@ -1,3 +1,4 @@
+import uuid
 from typing import List
 
 from azure.cosmos import CosmosClient
@@ -49,7 +50,8 @@ class SharedServiceRepository(ResourceRepository):
     def get_shared_service_spec_params(self):
         return self.get_resource_base_spec_params()
 
-    def create_shared_service_item(self, shared_service_input: SharedServiceTemplateInCreate, shared_service_id: str) -> SharedService:
+    def create_shared_service_item(self, shared_service_input: SharedServiceTemplateInCreate) -> SharedService:
+        shared_service_id = str(uuid.uuid4())
         template_version = self.validate_input_against_template(shared_service_input.templateName, shared_service_input, ResourceType.SharedService)
 
         resource_spec_parameters = {**shared_service_input.properties, **self.get_shared_service_spec_params()}

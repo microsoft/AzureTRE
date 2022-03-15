@@ -34,10 +34,9 @@ async def retrieve_shared_service_by_id(shared_service=Depends(get_shared_servic
 
 
 @shared_services_router.post("/shared-services", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_CREATE_SHARED_SERVICE, dependencies=[Depends(get_current_admin_user)])
-async def create_shared_service(response: Response, shared_service_input: SharedServiceInCreate, shared_services_repo=Depends(get_repository(SharedServiceRepository)), operations_repo=Depends(get_repository(OperationRepository)), shared_service=Depends(get_shared_service_by_id_from_path)) -> OperationInResponse:
-
+async def create_shared_service(response: Response, shared_service_input: SharedServiceInCreate, shared_services_repo=Depends(get_repository(SharedServiceRepository)), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInResponse:
     try:
-        shared_service = shared_services_repo.create_shared_service_item(shared_service_input, shared_service.id)
+        shared_service = shared_services_repo.create_shared_service_item(shared_service_input)
     except (ValidationError, ValueError) as e:
         logging.error(f"Failed create shared service model instance: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

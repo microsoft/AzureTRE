@@ -97,11 +97,10 @@ def test_create_shared_service_item_creates_a_shared_with_the_right_values(valid
 
     validate_input_mock.return_value = basic_shared_service_request.templateName
 
-    shared_service = shared_service_repo.create_shared_service_item(shared_service_to_create, SHARED_SERVICE_ID)
+    shared_service = shared_service_repo.create_shared_service_item(shared_service_to_create)
 
     assert shared_service.templateName == basic_shared_service_request.templateName
     assert shared_service.resourceType == ResourceType.SharedService
-    assert shared_service.id == SHARED_SERVICE_ID
 
     # We expect tre_id to be overriden in the shared service created
     assert shared_service.properties["tre_id"] != shared_service_to_create.properties["tre_id"]
@@ -113,4 +112,4 @@ def test_create_shared_item_raises_value_error_if_template_is_invalid(_, shared_
     shared_service_to_create = basic_shared_service_request
 
     with pytest.raises(ValueError):
-        shared_service_repo.create_shared_service_item(shared_service_to_create, SHARED_SERVICE_ID)
+        shared_service_repo.create_shared_service_item(shared_service_to_create)
