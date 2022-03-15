@@ -84,6 +84,22 @@
           ]
         },
         {
+          "name": "E2E Smoke",
+          "type": "python",
+          "request": "launch",
+          "module": "pytest",
+          "justMyCode": true,
+          "cwd": "${workspaceFolder}/e2e_tests/",
+          "preLaunchTask": "Copy_env_file_for_e2e_debug",
+          "envFile": "${workspaceFolder}/templates/core/private.env",
+          "args": [
+            "-m",
+            "smoke",
+            "--verify",
+            "false"
+          ]
+        },
+        {
           "name": "Resource Processor",
           "type": "python",
           "request": "launch",
