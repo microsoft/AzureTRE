@@ -10,4 +10,6 @@ locals {
   keyvault_name                  = lower("kv-${substr(local.workspace_resource_name_suffix, -20, -1)}")
   storage_name                   = lower(replace("stg${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
   shared_storage_share           = "vm-shared-storage"
+  image_name                     = "mlflow-server"
+  image_tag                      = replace(replace(replace(data.local_file.version.content, "__version__ = \"", ""), "\"", ""), "\n", "")
 }

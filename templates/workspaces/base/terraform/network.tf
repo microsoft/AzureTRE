@@ -7,6 +7,7 @@ resource "azurerm_virtual_network" "ws" {
   lifecycle { ignore_changes = [tags] }
 }
 
+
 resource "azurerm_subnet" "services" {
   name                 = "ServicesSubnet"
   virtual_network_name = azurerm_virtual_network.ws.name
@@ -86,6 +87,7 @@ resource "azurerm_network_security_group" "ws" {
 
   lifecycle { ignore_changes = [tags] }
 }
+
 
 resource "azurerm_subnet_network_security_group_association" "services" {
   network_security_group_id = azurerm_network_security_group.ws.id
@@ -167,6 +169,7 @@ resource "azurerm_network_security_rule" "allow-outbound-to-shared-services" {
   source_port_range           = "*"
 }
 
+
 resource "azurerm_network_security_rule" "allow-outbound-to-internet" {
   access                      = "Allow"
   destination_address_prefix  = "INTERNET"
@@ -180,6 +183,7 @@ resource "azurerm_network_security_rule" "allow-outbound-to-internet" {
   source_address_prefix       = "*"
   source_port_range           = "*"
 }
+
 
 resource "azurerm_network_security_rule" "allow-outbound-from-webapp-to-core-webapp" {
   access                      = "Allow"
@@ -318,6 +322,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "filecorelink" {
   lifecycle { ignore_changes = [tags] }
 }
 
+
 data "azurerm_private_dns_zone" "blobcore" {
   name                = "privatelink.blob.core.windows.net"
   resource_group_name = local.core_resource_group_name
@@ -347,6 +352,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "vaultcorelink" {
   lifecycle { ignore_changes = [tags] }
 }
 
+
 data "azurerm_private_dns_zone" "azurecr" {
   name                = "privatelink.azurecr.io"
   resource_group_name = local.core_resource_group_name
@@ -370,6 +376,7 @@ data "azurerm_private_dns_zone" "azuremlcert" {
   name                = "privatelink.cert.api.azureml.ms"
   resource_group_name = local.core_resource_group_name
 }
+
 
 data "azurerm_private_dns_zone" "notebooks" {
   name                = "privatelink.notebooks.azure.net"

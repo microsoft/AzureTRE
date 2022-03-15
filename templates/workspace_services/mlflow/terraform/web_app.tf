@@ -3,18 +3,22 @@ data "azurerm_storage_share" "shared_storage" {
   storage_account_name = local.storage_name
 }
 
+data "local_file" "version" {
+  filename = "${path.module}/../mlflow-server/version.txt"
+}
+
 resource "azurerm_app_service" "mlflow" {
-  name                   = local.webapp_name
-  location               = data.azurerm_resource_group.ws.location
-  resource_group_name    = data.azurerm_resource_group.ws.name
-  app_service_plan_id    = data.azurerm_app_service_plan.workspace.id
-  https_only             = true
-  vnet_route_all_enabled = true
+  name                = local.webapp_name
+  location            = data.azurerm_resource_group.ws.location
+  resource_group_name = data.azurerm_resource_group.ws.name
+  app_service_plan_id = data.azurerm_app_service_plan.workspace.id
+  https_only          = true
 
   site_config {
-    linux_fx_version                     = "DOCKER|${data.azurerm_container_registry.mgmt_acr.login_server}/microsoft/azuretre/${var.image_name}:${var.image_tag}"
+    linux_fx_version                     = "DOCKER|${data.azurerm_container_registry.mgmt_acr.login_server}/microsoft/azuretre/${local.image_name}:${local.image_tag}"
     http2_enabled                        = true
     acr_use_managed_identity_credentials = true
+    vnet_route_all_enabled               = true
   }
 
   app_settings = {
