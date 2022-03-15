@@ -2,12 +2,10 @@
 set -e
 
 script_dir=$(realpath $(dirname "${BASH_SOURCE[0]}"))
-
 if [[ -z ${STORAGE_ACCOUNT} ]]; then
   echo "STORAGE_ACCOUNT not set"
   exit 1
 fi
-
 
 echo "Checking for index.html file in storage account"
 
@@ -43,8 +41,7 @@ else
     echo "index.html already present"
 fi
 
-ledir=$(pwd)/letsencrypt
-
+ledir=$(cd ${script_dir} && cd ../ && pwd)/letsencrypt
 mkdir -p "${ledir}/logs"
 
 # Initiate the ACME challange
@@ -56,13 +53,14 @@ mkdir -p "${ledir}/logs"
     --preferred-challenges=http \
     --manual-auth-hook ${script_dir}/auth-hook.sh \
     --manual-cleanup-hook ${script_dir}/cleanup-hook.sh \
-    --domain $FQDN \
+    --domain ${FQDN} \
     --non-interactive \
     --agree-tos \
     --register-unsafely-without-email
 
+
 # Convert the generated certificate to a .pfx
-CERT_DIR="${ledir}/live/$FQDN"
+CERT_DIR="${ledir}/live/${FQDN}"
 CERT_PASSWORD=$(openssl rand -base64 30)
 openssl pkcs12 -export \
     -inkey "${CERT_DIR}/privkey.pem" \
