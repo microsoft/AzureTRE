@@ -9,14 +9,14 @@ FULL_IMAGE_NAME_PREFIX:=`echo "${FULL_CONTAINER_REGISTRY_NAME}/${IMAGE_NAME_PREF
 
 target_title = @echo -e "\n\e[34m»»» 🧩 \e[96m$(1)\e[0m..."
 
-all: bootstrap mgmt-deploy images tre-deploy show-core-output
+all: bootstrap mgmt-deploy images tre-deploy
 images: build-and-push-api build-and-push-resource-processor build-and-push-gitea build-and-push-guacamole
 
 build-and-push-api: build-api-image push-api-image
 build-and-push-resource-processor: build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image
 build-and-push-gitea: build-gitea-image push-gitea-image
 build-and-push-guacamole: build-guacamole-image push-guacamole-image
-tre-deploy: deploy-core deploy-shared-services
+tre-deploy: deploy-core deploy-shared-services show-core-output
 deploy-shared-services: firewall-install gitea-install nexus-install
 
 # to move your environment from the single 'core' deployment (which includes the firewall)
