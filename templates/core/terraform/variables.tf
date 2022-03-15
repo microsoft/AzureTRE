@@ -143,7 +143,7 @@ variable "ci_git_ref" {
 
 variable "enable_local_debugging" {
   default     = false
-  description = "This will allow Cosmos to be accesible from your local IP address and add some extra role permissions."
+  description = "This will allow Cosmos to be accessible from your local IP address and add some extra role permissions."
   type        = bool
 }
 
