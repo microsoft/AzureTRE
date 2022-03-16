@@ -10,7 +10,7 @@ jobs:
 
   pr_comment:
     name: PR comment
-    environment: Dev
+    environment: CICD
     # https://docs.github.com/en/graphql/reference/enums#commentauthorassociation
     # (and https://docs.github.com/en/rest/reference/issues#comments)
 
