@@ -11,7 +11,7 @@ export TF_VAR_docker_registry_password=$(az acr credential show --name ${TF_VAR_
 
 PLAN_FILE="tfplan$$"
 TS=$(date +"%s")
-LOG_FILE="${TS}-tre-core.log.log"
+LOG_FILE="${TS}-tre-core.log"
 
 ../../../devops/scripts/terraform_wrapper.sh \
   -g $TF_VAR_mgmt_resource_group_name \
