@@ -11,7 +11,7 @@ def get_sample_shared_service(shared_service_id: str) -> dict:
     return {
         "id": shared_service_id,
         "isActive": True,
-        "templateName": "tre-service-firewall",
+        "templateName": "tre-shared-service-firewall",
         "templateVersion": "0.1.0",
         "properties": {
             "display_name": "My shared service",
@@ -53,7 +53,7 @@ class SharedServiceInCreate(BaseModel):
     class Config:
         schema_extra = {
             "example": {
-                "templateName": "tre-service-firewall",
+                "templateName": "tre-shared-service-firewall",
                 "properties": {
                     "display_name": "My shared service",
                     "description": "Some description",
