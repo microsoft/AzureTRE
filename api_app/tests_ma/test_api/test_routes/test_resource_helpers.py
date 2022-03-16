@@ -62,7 +62,7 @@ def sample_resource_operation(resource_id: str, operation_id: str):
     return operation
 
 
-class TestHelpers:
+class TestResourceHelpers:
     @patch("api.routes.resource_helpers.send_resource_request_message")
     async def test_save_and_deploy_resource_saves_item(self, _, resource_repo, operations_repo):
         resource = sample_resource()
