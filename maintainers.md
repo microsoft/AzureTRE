@@ -4,7 +4,9 @@ This document is targetted at maintainers of the AzureTRE project. For informati
 
 ## PR Comment bot commands
 
-**Note** that these commands are not immediate - you need to wait for the GitHub action that performs the task to start up.
+**Notes**
+- these commands are not immediate - you need to wait for the GitHub action that performs the task to start up.
+- builds triggered via these commands will use the workflow definitions from `main`. To test workflow changes before merging to `main`, the changes need to be pushed to a branch in the main repo and then the `deploy_tre_branch.yml` workflow can be run against that branch.
 
 These commands can only be run when commented by a user who is identified as a repo collaborator (see [granting access to run commands](#granting-access-to-run-commands))
 
