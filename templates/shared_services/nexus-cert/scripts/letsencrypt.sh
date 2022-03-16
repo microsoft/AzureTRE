@@ -41,7 +41,7 @@ else
     echo "index.html already present"
 fi
 
-ledir=$(cd ${script_dir} && cd ../ && pwd)/letsencrypt
+ledir="${script_dir}/../letsencrypt"
 mkdir -p "${ledir}/logs"
 
 # Initiate the ACME challange
