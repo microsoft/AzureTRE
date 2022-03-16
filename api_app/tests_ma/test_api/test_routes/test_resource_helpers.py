@@ -4,7 +4,7 @@ from mock import patch, MagicMock
 
 from fastapi import HTTPException, status
 
-from api.routes.helpers import save_and_deploy_resource, send_uninstall_message
+from api.routes.resource_helpers import save_and_deploy_resource, send_uninstall_message
 
 from db.repositories.resources import ResourceRepository
 from db.repositories.operations import OperationRepository
@@ -63,7 +63,7 @@ def sample_resource_operation(resource_id: str, operation_id: str):
 
 
 class TestHelpers:
-    @patch("api.routes.helpers.send_resource_request_message")
+    @patch("api.routes.resource_helpers.send_resource_request_message")
     async def test_save_and_deploy_resource_saves_item(self, _, resource_repo, operations_repo):
         resource = sample_resource()
         operation = sample_resource_operation(resource_id=resource.id, operation_id=str(uuid.uuid4()))
@@ -83,7 +83,7 @@ class TestHelpers:
             await save_and_deploy_resource(resource, resource_repo, operations_repo)
         assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
-    @patch("api.routes.helpers.send_resource_request_message", return_value=None)
+    @patch("api.routes.resource_helpers.send_resource_request_message", return_value=None)
     async def test_save_and_deploy_resource_sends_resource_request_message(self, send_resource_request_mock, resource_repo, operations_repo):
         resource = sample_resource()
         operation = sample_resource_operation(resource_id=resource.id, operation_id=str(uuid.uuid4()))
@@ -95,7 +95,7 @@ class TestHelpers:
 
         send_resource_request_mock.assert_called_once_with(resource, operations_repo, RequestAction.Install)
 
-    @patch("api.routes.helpers.send_resource_request_message", side_effect=Exception)
+    @patch("api.routes.resource_helpers.send_resource_request_message", side_effect=Exception)
     async def test_save_and_deploy_resource_raises_503_if_send_request_fails(self, _, resource_repo, operations_repo):
         resource = sample_resource()
         resource_repo.save_item = MagicMock(return_value=None)
@@ -105,7 +105,7 @@ class TestHelpers:
             await save_and_deploy_resource(resource, resource_repo, operations_repo)
         assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
-    @patch("api.routes.helpers.send_resource_request_message", side_effect=Exception)
+    @patch("api.routes.resource_helpers.send_resource_request_message", side_effect=Exception)
     async def test_save_and_deploy_resource_deletes_item_from_db_if_send_request_fails(self, _, resource_repo, operations_repo):
         resource = sample_resource()
 
@@ -118,7 +118,7 @@ class TestHelpers:
 
         resource_repo.delete_item.assert_called_once_with(resource.id)
 
-    @patch("api.routes.helpers.send_resource_request_message", return_value=None)
+    @patch("api.routes.resource_helpers.send_resource_request_message", return_value=None)
     @patch("api.routes.workspaces.OperationRepository")
     async def test_send_uninstall_message_sends_uninstall_message(self, operations_repo, send_request_mock):
         resource = sample_resource()
@@ -126,7 +126,7 @@ class TestHelpers:
 
         send_request_mock.assert_called_once_with(resource, operations_repo, RequestAction.UnInstall)
 
-    @patch("api.routes.helpers.send_resource_request_message", side_effect=Exception)
+    @patch("api.routes.resource_helpers.send_resource_request_message", side_effect=Exception)
     @patch("api.routes.workspaces.OperationRepository")
     async def test_send_uninstall_message_raises_503_on_service_bus_exception(self, operations_repo, _):
         with pytest.raises(HTTPException) as ex:

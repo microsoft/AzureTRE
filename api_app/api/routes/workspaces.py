@@ -25,7 +25,7 @@ from services.authentication import get_current_admin_user, \
 from services.authentication import extract_auth_information
 from services.azure_resource_status import get_azure_resource_status
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
-from .helpers import get_user_role_assignments, save_and_deploy_resource, construct_location_header, send_uninstall_message, check_for_etag, \
+from .resource_helpers import get_user_role_assignments, save_and_deploy_resource, construct_location_header, send_uninstall_message, check_for_etag, \
     send_custom_action_message
 
 workspaces_core_router = APIRouter(dependencies=[Depends(get_current_tre_user_or_tre_admin)])

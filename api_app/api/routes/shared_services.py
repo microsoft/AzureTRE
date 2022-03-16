@@ -15,7 +15,7 @@ from models.schemas.resource import ResourcePatch
 from resources import strings
 from .workspaces import save_and_deploy_resource, check_for_etag, construct_location_header
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
-from .helpers import send_custom_action_message, send_uninstall_message
+from .resource_helpers import send_custom_action_message, send_uninstall_message
 from services.authentication import get_current_admin_user, get_current_tre_user_or_tre_admin
 
 
