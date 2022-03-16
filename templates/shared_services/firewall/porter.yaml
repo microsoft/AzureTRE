@@ -1,6 +1,6 @@
 ---
 name: tre-shared-service-firewall
-version: 0.0.3
+version: 0.0.5
 description: "An Azure TRE Firewall shared service"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -19,9 +19,6 @@ parameters:
   - name: tre_id
     type: string
     description: "The ID of the parent TRE instance e.g., mytre-dev-3142"
-  - name: azure_location
-    type: string
-    description: "Azure location (region) to deploy to"
   - name: tfstate_resource_group_name
     type: string
     description: "Resource group containing the Terraform state storage account"
@@ -44,7 +41,6 @@ install:
       input: false
       vars:
         tre_id: "{{ bundle.parameters.tre_id }}"
-        location: "{{ bundle.parameters.azure_location }}"
       backendConfig:
         resource_group_name:
           "{{ bundle.parameters.tfstate_resource_group_name }}"
@@ -68,7 +64,6 @@ uninstall:
       input: false
       vars:
         tre_id: "{{ bundle.parameters.tre_id }}"
-        location: "{{ bundle.parameters.azure_location }}"
       backendConfig:
         resource_group_name:
           "{{ bundle.parameters.tfstate_resource_group_name }}"
