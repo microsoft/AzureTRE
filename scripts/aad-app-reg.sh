@@ -296,7 +296,7 @@ declare workspaceAppRoles=$(jq -c . << JSON
 [
     {
         "id": "${ownerRoleId}",
-        "allowedMemberTypes": [ "User, Application" ],
+        "allowedMemberTypes": [ "User", "Application" ],
         "description": "Provides workspace owners access to the Workspace.",
         "displayName": "Workspace Owner",
         "isEnabled": true,
@@ -305,7 +305,7 @@ declare workspaceAppRoles=$(jq -c . << JSON
     },
     {
         "id": "${researcherRoleId}",
-        "allowedMemberTypes": [ "User, Application" ],
+        "allowedMemberTypes": [ "User", "Application" ],
         "description": "Provides researchers access to the Workspace.",
         "displayName": "Workspace Researcher",
         "isEnabled": true,
@@ -759,8 +759,9 @@ if [[ $createAutomationAccount -ne 0 ]]; then
     az ad sp update --id $automationSpId --set tags="['WindowsAzureActiveDirectoryIntegratedApp']"
 
   # Grant admin consent for the delegated workspace scopes
-  # BUG I've noticed that there can sometimes be a delay in the app having the permissions set
-  # before we give admin-consent. If this occurs - rerun and it will work. TODO
+  # https://github.com/microsoft/AzureTRE/issues/1513
+  # I've noticed that there can sometimes be a delay in the app having the permissions set
+  # before we give admin-consent. If this occurs - rerun and it will work.
   if [[ $grantAdminConsent -eq 1 ]]; then
       echo "Granting admin consent for ${appName} Automation Admin App (service principal ID ${automationSpId})"
       az ad app permission admin-consent --id $automationAppId
