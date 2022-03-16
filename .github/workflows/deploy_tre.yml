@@ -1,5 +1,7 @@
 ---
 name: Deploy Azure TRE
+# This workflow is the integration build run for pushes to the main branch
+# It also runs on a schedule, serving as the nightly build
 
 on:
   schedule:
