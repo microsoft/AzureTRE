@@ -1,4 +1,4 @@
-resource "azurerm_network_interface" "internal" {
+resource "azurerm_network_interface" "nexus" {
   name                = "internal-nic-nexus-${var.tre_id}"
   location            = var.location
   resource_group_name = local.core_resource_group_name
@@ -10,23 +10,23 @@ resource "azurerm_network_interface" "internal" {
   }
 }
 
-resource "azurerm_private_dns_zone" "cloudapp" {
-  name                = "${var.location}.cloudapp.azure.com"
+resource "azurerm_private_dns_zone" "nexus" {
+  name                = "nexus-${var.tre_id}.${var.location}.cloudapp.azure.com"
   resource_group_name = local.core_resource_group_name
 
   lifecycle { ignore_changes = [tags] }
 }
 
-resource "azurerm_private_dns_zone_virtual_network_link" "cloudapp" {
-  name                  = "cloudapp"
+resource "azurerm_private_dns_zone_virtual_network_link" "nexus" {
+  name                  = "nexus"
   resource_group_name   = local.core_resource_group_name
-  private_dns_zone_name = azurerm_private_dns_zone.cloudapp.name
+  private_dns_zone_name = azurerm_private_dns_zone.nexus.name
   virtual_network_id    = data.azurerm_virtual_network.core.id
 }
 
 resource "azurerm_private_dns_a_record" "nexus_vm" {
-  name                = "nexus-${var.tre_id}"
-  zone_name           = azurerm_private_dns_zone.cloudapp.name
+  name                = "@"
+  zone_name           = azurerm_private_dns_zone.nexus.name
   resource_group_name = local.core_resource_group_name
   ttl                 = 300
   records             = [azurerm_linux_virtual_machine.nexus.private_ip_address]
@@ -55,7 +55,7 @@ resource "azurerm_linux_virtual_machine" "nexus" {
   name                            = "nexus-${var.tre_id}"
   resource_group_name             = local.core_resource_group_name
   location                        = var.location
-  network_interface_ids           = [azurerm_network_interface.internal.id]
+  network_interface_ids           = [azurerm_network_interface.nexus.id]
   size                            = "Standard_B2s"
   disable_password_authentication = false
   admin_username                  = "adminuser"
