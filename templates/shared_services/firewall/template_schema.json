@@ -3,7 +3,7 @@
   "$id": "https://github.com/microsoft/AzureTRE/templates/shared_services/firewall/template_schema.json",
   "type": "object",
   "title": "Firewall Shared Service",
-  "description": "Provides Firewall for all workspaces",
+  "description": "Provides Firewall shared service",
   "required": [],
   "properties": {}
   }

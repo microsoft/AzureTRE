@@ -127,7 +127,7 @@ class TestSharedServiceRoutesThatRequireAdminRights:
     @patch("api.routes.shared_services.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
     @patch("api.routes.shared_services.SharedServiceRepository.update_item_with_etag", return_value=sample_shared_service())
     @patch("api.routes.shared_services.SharedServiceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
-    async def test_patch_workspace_service_patches_workspace_service(self, _, update_item_mock, __, get_shared_service_mock, app, client):
+    async def test_patch_shared_service_patches_shared_service(self, _, update_item_mock, __, get_shared_service_mock, app, client):
         get_shared_service_mock.return_value = sample_shared_service(SHARED_SERVICE_ID)
         etag = "some-etag-value"
         shared_service_patch = {"isEnabled": False}

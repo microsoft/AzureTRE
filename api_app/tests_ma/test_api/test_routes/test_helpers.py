@@ -4,7 +4,7 @@ from mock import patch, MagicMock
 
 from fastapi import HTTPException, status
 
-from api.routes.workspaces import save_and_deploy_resource, send_uninstall_message
+from api.routes.helpers import save_and_deploy_resource, send_uninstall_message
 
 from db.repositories.resources import ResourceRepository
 from db.repositories.operations import OperationRepository

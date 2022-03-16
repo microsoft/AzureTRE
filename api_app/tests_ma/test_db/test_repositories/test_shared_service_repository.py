@@ -27,7 +27,7 @@ def operations_repo():
 
 @pytest.fixture
 def shared_service():
-    workspace_service = SharedService(
+    shared_service = SharedService(
         id=SHARED_SERVICE_ID,
         templateVersion="0.1.0",
         etag='',
@@ -35,7 +35,7 @@ def shared_service():
         templateName="my-shared-service",
         resourcePath="test"
     )
-    return workspace_service
+    return shared_service
 
 
 @pytest.fixture
