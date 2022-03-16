@@ -80,15 +80,6 @@ build-gitea-workspace-service-image:
 build-guacamole-image:
 	$(call build_image,"guac-server","templates/workspace_services/guacamole/version.txt","templates/workspace_services/guacamole/guacamole-server/docker/Dockerfile","templates/workspace_services/guacamole/guacamole-server")
 
-# TODO: ?
-build-firewall-image:
-	$(call build_image,"firewall","templates/shared_services/firewall/version.txt","templates/shared_services/firewall/Dockerfile","templates/shared_services/firewall/")
-
-build-firewall-tmp:
-	$(call target_title, "Building Firewall") \
-	&& make bundle-build DIR=./templates/shared_services/firewall
-
-
 # A recipe for pushing images. Parameters:
 # 1. Image name suffix
 # 2. Version file path
@@ -118,12 +109,9 @@ push-gitea-workspace-service-image:
 push-guacamole-image:
 	$(call push_image,"guac-server","./templates/workspace_services/guacamole/version.txt")
 
-push-firewall-image:
-	$(call push_image,"firewall","./templates/shared_services/firewall/version.txt")
-
-# These targets are for a graceful migration of Firewall
-# from terraform state in Core to a Shared Service.
-# See https://github.com/microsoft/AzureTRE/issues/1177
+# # These targets are for a graceful migration of Firewall
+# # from terraform state in Core to a Shared Service.
+# # See https://github.com/microsoft/AzureTRE/issues/1177
 prepare-tf-state:
 	$(call target_title, "Preparing terraform state") \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
