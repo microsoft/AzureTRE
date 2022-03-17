@@ -43,7 +43,7 @@ flowchart RL
     A --> |1. Request to            | B
     B --> |2. Attempts to hit       | C
     C --> |3. App Gateway routes    | D
-    D --> |4. Respondes             | C
+    D --> |4. Responds             | C
     C --> |5. Respondes             | B
     B --> |6. Aquires certificate   | A
     A --> |7. Stores Certificate    | E
