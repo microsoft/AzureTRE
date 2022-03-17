@@ -26,5 +26,7 @@
             "enableCookies": false,
             "useTrustStore": false
         }
-    }
+    },
+    "baseType": "pypi",
+    "repoType": "proxy"
 }
