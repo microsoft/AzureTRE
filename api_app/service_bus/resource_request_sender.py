@@ -30,6 +30,8 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
         operation = operations_repo.create_operation_item(resource_id=resource.id, status=Status.NotDeployed, action=action, message=strings.RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE, resource_path=resource.resourcePath)
     elif action == RequestAction.UnInstall:
         operation = operations_repo.create_operation_item(resource_id=resource.id, status=Status.Deleting, action=action, message=strings.RESOURCE_STATUS_DELETING, resource_path=resource.resourcePath)
+    elif action == RequestAction.Upgrade:
+        operation = operations_repo.create_operation_item(resource_id=resource.id, status=Status.NotDeployed, action=action, message=strings.RESOURCE_STATUS_UPGRADE_NOT_STARTED_MESSAGE, resource_path=resource.resourcePath)
     else:
         operation = operations_repo.create_operation_item(resource_id=resource.id, status=Status.InvokingAction, action=action, message=strings.RESOURCE_ACTION_STATUS_INVOKING, resource_path=resource.resourcePath)
 

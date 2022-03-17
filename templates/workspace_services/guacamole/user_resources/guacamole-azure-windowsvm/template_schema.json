@@ -15,6 +15,19 @@
         "enum": [
           "Windows 10",
           "Server 2019 Data Science VM"
+        ]
+      },
+      "vm_size": {
+        "$id": "#/properties/vm_size",
+        "type": "string",
+        "title": "VM Size",
+        "description": "Select size of VM",
+        "enum": [
+          "1 CPU | 3.5GB RAM",
+          "2 CPU | 7GB RAM",
+          "4 CPU | 14GB RAM",
+          "8 CPU | 28GB RAM",
+          "16 CPU | 56GB RAM"
         ],
         "updateable": true
       }
