@@ -81,6 +81,10 @@ resource "azurerm_linux_virtual_machine" "nexus" {
   identity {
     type = "SystemAssigned"
   }
+
+  boot_diagnostics {
+    storage_account_uri = data.azurerm_storage_account.nexus.primary_blob_endpoint
+  }
 }
 
 data "template_cloudinit_config" "nexus_config" {

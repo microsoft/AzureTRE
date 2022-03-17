@@ -1,6 +1,7 @@
 ---
 #cloud-config
 package_upgrade: true
+package_update: true
 apt:
   sources:
     docker.list:
@@ -16,6 +17,15 @@ packages:
   - docker-compose
   - gnupg2
   - pass
+
+# create the docker group
+groups:
+  - docker
+
+# Add default auto created user to docker group
+system_info:
+  default_user:
+    groups: [docker]
 
 write_files:
   # a weekly cron job to have docker free disk space
