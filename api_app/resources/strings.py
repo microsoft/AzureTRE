@@ -121,6 +121,7 @@ RESOURCE_TYPE_SHARED_SERVICE = "shared-service"
 
 # Deployments
 RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE = "This resource has not yet been deployed"
+RESOURCE_STATUS_UPGRADE_NOT_STARTED_MESSAGE = "The upgrade for this resource has not yet started"
 
 # Service bus
 SERVICE_BUS_GENERAL_ERROR_MESSAGE = "Service bus failure"

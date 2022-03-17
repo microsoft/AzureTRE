@@ -10,5 +10,6 @@ failed_status_string_for = defaultdict(lambda: strings.RESOURCE_ACTION_STATUS_FA
 
 pass_status_string_for = defaultdict(lambda: strings.RESOURCE_ACTION_STATUS_SUCCEEDED, {
     "install": strings.RESOURCE_STATUS_DEPLOYED,
+    "upgrade": strings.RESOURCE_STATUS_DEPLOYED,
     "uninstall": strings.RESOURCE_STATUS_DELETED
 })
