@@ -103,7 +103,7 @@ az keyvault list --resource-group ${core_tre_rg} --query "[?properties.enablePur
 if [[ -n ${LOG_KEYVAULT:-} ]]; then
   # write the debug output from listing the Key Vaults to a file and upload to storage
   TS=$(date +"%s")
-  LOG_FILE="${TS}-${TRE_ID}-kv-list.json"
+  LOG_FILE="${TS}-${core_tre_rg}-kv-list.json"
   echo "Logging KeyVault query to ${LOG_FILE}"
   az keyvault list --resource-group ${core_tre_rg} --query "[].properties" --debug > $LOG_FILE
   az storage blob upload --file $LOG_FILE \
