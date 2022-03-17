@@ -102,7 +102,7 @@ Example tasks:
 Expected skills:
 
 - Infrastructure as Code (Terraform, ARM, Git)
-- Python, C#, PowerShell, Bash
+- Python, Bash
 - Azure administration
 
 ## Azure TRE developer
@@ -116,8 +116,8 @@ Example tasks:
 
 Expected skills:
 
-- Infrastructure as Code (Terraform, ARM, Git)
-- Python, C#, PowerShell, Bash
+- Python, Bash
+- Infrastructure as Code (Terraform, ARM, Git
 - Azure administration
 
 ## Data engineer
