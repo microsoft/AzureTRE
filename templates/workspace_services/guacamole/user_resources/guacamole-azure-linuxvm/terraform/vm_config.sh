@@ -1,9 +1,19 @@
 #!/bin/bash
+
+# Remove apt sources not included in sources.list file 
+sudo rm /etc/apt/sources.list.d/*
+
+# Update apt packages from configured Nexus sources
 sudo apt-get update
 
 # Install xrdp so Guacamole can connect via RDP
 sudo apt-get install xrdp -y
 sudo adduser xrdp ssl-cert
+
+# Required packages for Docker installation
+sudo apt-get install ca-certificates curl gnupg lsb-release
+# Get Docker Public key from Nexus
+curl -fsSL ${nexus_proxy_url}/repository/docker-public-key/gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/docker-archive-keyring.gpg
 
 # Install desktop environment if image doesn't have one already
 if [ ${install_ui} -eq 1 ]; then

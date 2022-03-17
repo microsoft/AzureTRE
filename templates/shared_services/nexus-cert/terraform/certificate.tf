@@ -37,7 +37,7 @@ resource "azurerm_key_vault_certificate" "tlscert" {
     }
   }
 
-  # The certificate will get replaced with a real one, so we don't want Terrafomr to try and revert it.
+  # The certificate will get replaced with a real one, so we don't want Terraform to try and revert it.
   lifecycle {
     ignore_changes = all
   }
