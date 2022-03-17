@@ -32,7 +32,20 @@ resource "azurerm_private_dns_a_record" "nexus_vm" {
   records             = [azurerm_linux_virtual_machine.nexus.private_ip_address]
 }
 
-resource "random_password" "password" {
+resource "random_password" "nexus_vm_password" {
+  length           = 16
+  lower            = true
+  min_lower        = 1
+  upper            = true
+  min_upper        = 1
+  number           = true
+  min_numeric      = 1
+  special          = true
+  min_special      = 1
+  override_special = "_%@"
+}
+
+resource "random_password" "nexus_admin_password" {
   length           = 16
   lower            = true
   min_lower        = 1
@@ -47,7 +60,13 @@ resource "random_password" "password" {
 
 resource "azurerm_key_vault_secret" "nexus_vm_password" {
   name         = "nexus-vm-password"
-  value        = random_password.password.result
+  value        = random_password.nexus_vm_password.result
+  key_vault_id = data.azurerm_key_vault.kv.id
+}
+
+resource "azurerm_key_vault_secret" "nexus_vm_password" {
+  name         = "nexus-admin-password"
+  value        = random_password.nexus_admin_password.result
   key_vault_id = data.azurerm_key_vault.kv.id
 }
 
@@ -59,7 +78,7 @@ resource "azurerm_linux_virtual_machine" "nexus" {
   size                            = "Standard_B2s"
   disable_password_authentication = false
   admin_username                  = "adminuser"
-  admin_password                  = random_password.password.result
+  admin_password                  = random_password.nexus_vm_password.result
 
   custom_data = data.template_cloudinit_config.nexus_config.rendered
 
@@ -99,4 +118,7 @@ data "template_cloudinit_config" "nexus_config" {
 
 data "template_file" "nexus_config" {
   template = file("${path.module}/cloud-config.yaml")
+  vars = {
+    nexus_admin_password = random_password.nexus_admin_password.result
+  }
 }

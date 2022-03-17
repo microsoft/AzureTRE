@@ -53,3 +53,7 @@ runcmd:
     --name nexus
     --log-driver local
     sonatype/nexus3
+  # Set our own admin password so we can connect to the Nexus repository manager later on
+  - CURRENT_PASSWORD=$(cat /etc/nexus-data/admin.password)
+  - curl -ifu admin:${CURRENT_PASSWORD} -XPUT -H 'Content-Type: text/plain' --data "${nexus_admin_password}" \
+      http://localhost:8081/service/rest/v1/security/users/admin/change-password
