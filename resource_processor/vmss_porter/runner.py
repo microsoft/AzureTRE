@@ -1,3 +1,4 @@
+import _thread
 import json
 import socket
 import asyncio
@@ -6,6 +7,7 @@ import sys
 from resources.commands import build_porter_command, build_porter_command_for_outputs
 from shared.config import get_config
 from resources.helpers import get_installation_id
+from resources.httpserver import start_server
 
 from shared.logging import disable_unwanted_loggers, initialize_logging, get_message_id_logger, shell_output_logger  # pylint: disable=import-error # noqa
 from resources import strings, statuses  # pylint: disable=import-error # noqa
@@ -178,7 +180,7 @@ async def get_porter_outputs(msg_body, message_logger_adapter):
         return True, outputs_json
 
 
-async def runner():
+async def receiving_message_loop():
     async with default_credentials(config["vmss_msi_id"]) as credential:
         service_bus_client = ServiceBusClient(config["service_bus_namespace"], credential)
         logger_adapter.info("Starting message receiving loop...")
@@ -201,6 +203,12 @@ async def runner():
             await asyncio.sleep(60)
 
 
+async def runner():
+    logger_adapter.info("Starting http server...")
+    _thread.start_new_thread(start_server)
+    receiving_message_loop()
+
 if __name__ == "__main__":
     logger_adapter.info("Started resource processor")
     asyncio.run(runner())
+    asyncio.run(receiving_message_loop())
