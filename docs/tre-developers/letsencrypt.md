@@ -43,9 +43,9 @@ flowchart RL
     A --> |1. Request to            | B
     B --> |2. Attempts to hit       | C
     C --> |3. App Gateway routes    | D
-    D --> |4. Responds             | C
-    C --> |5. Responds             | B
-    B --> |6. Acquires certificate   | A
+    D --> |4. Responds              | C
+    C --> |5. Responds              | B
+    B --> |6. Acquires certificate  | A
     A --> |7. Stores Certificate    | E
     F --> |8. Pulls Certificate     | E
       
