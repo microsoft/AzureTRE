@@ -100,16 +100,8 @@ az keyvault list --resource-group ${core_tre_rg} --query "[].properties"
 echo "keyvault purge protection evaluation result:"
 az keyvault list --resource-group ${core_tre_rg} --query "[?properties.enablePurgeProtection==``null``] | length (@)"
 
-if [[ -n ${LOG_KEYVAULT:-} ]]; then
-  # write the debug output from listing the Key Vaults to a file and upload to storage
-  TS=$(date +"%s")
-  LOG_FILE="${TS}-${core_tre_rg}-kv-list.json"
-  echo "Logging KeyVault query to ${LOG_FILE}"
-  az keyvault list --resource-group ${core_tre_rg} --query "[].properties" --debug > $LOG_FILE
-  az storage blob upload --file $LOG_FILE \
-    --container-name "tflogs" \
-    --account-name $TF_VAR_mgmt_storage_account_name \
-    --auth-mode key
+if [[ -n ${SHOW_KEYVAULT_DEBUG_ON_DESTROY:-} ]]; then
+  az keyvault list --resource-group ${core_tre_rg} --query "[].properties" --debug
 fi
 # DEBUG END
 
