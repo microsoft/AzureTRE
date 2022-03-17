@@ -3,6 +3,7 @@ FROM python:3.8-buster
 # Install MLflow Python Packages
 RUN pip install psycopg2==2.9.3
 RUN pip install mlflow==1.24.0
+RUN pip install azure-storage-blob==12.10.0
 
 RUN apt-get update && apt-get install openssh-server -y --no-install-recommends
 

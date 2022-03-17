@@ -3,6 +3,28 @@ data "azurerm_storage_share" "shared_storage" {
   storage_account_name = local.storage_name
 }
 
+resource "local_file" "mlflow-windows-config" {
+  content  = "[Environment]::SetEnvironmentVariable('AZURE_STORAGE_CONNECTION_STRING', '${data.azurerm_storage_account.mlflow.primary_connection_string}', 'Machine')\npip install mlflow==1.24.0\npip install azure-storage-blob==12.10.0\n"
+  filename = "${path.module}/../mlflow-vm-config/windows/config.ps1"
+}
+
+resource "local_file" "mlflow-linux-config" {
+  content  = "export AZURE_STORAGE_CONNECTION_STRING=${data.azurerm_storage_account.mlflow.primary_connection_string}\npip install mlflow==1.24.0\npip install azure-storage-blob==12.10.0\n"
+  filename = "${path.module}/../mlflow-vm-config/linux/config.sh"
+}
+
+resource "azurerm_storage_share_file" "mlflow-config-windows" {
+  name             = "mlflow-windows-config-${local.webapp_name}.ps1"
+  storage_share_id = data.azurerm_storage_share.shared_storage.id
+  source           = "${path.module}/../mlflow-vm-config/windows/config.ps1"
+}
+
+resource "azurerm_storage_share_file" "mlflow-config-linux" {
+  name             = "mlflow-linux-config-${local.webapp_name}.sh"
+  storage_share_id = data.azurerm_storage_share.shared_storage.id
+  source           = "${path.module}/../mlflow-vm-config/linux/config.sh"
+}
+
 data "local_file" "version" {
   filename = "${path.module}/../mlflow-server/version.txt"
 }
