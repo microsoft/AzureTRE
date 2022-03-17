@@ -43,6 +43,8 @@ write_files:
 
 runcmd:
   - export DEBIAN_FRONTEND=noninteractive
+  # Give the Nexus process write permissions on the folder mounted as persistent volume
+  - chown -R 200 /etc/nexus-data
   # Run the nexus container (exposing port 8081 and mapping volume for nexus config)
   - docker run -d
     -p 8081:8081
