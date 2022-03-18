@@ -12,12 +12,14 @@
       "display_name": {
           "type": "string",
           "title": "Name for the shared service",
-          "description": "The name of the shared service to be displayed to users"
+          "description": "The name of the shared service to be displayed to users",
+          "updateable": true
       },
       "description": {
           "type": "string",
           "title": "Description of the shared service",
-          "description": "Description of the shared service"
+          "description": "Description of the shared service",
+          "updateable": true
       }
   }
 }

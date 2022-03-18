@@ -30,3 +30,7 @@ data "azurerm_log_analytics_workspace" "tre" {
   name                = "log-${var.tre_id}"
   resource_group_name = local.core_resource_group_name
 }
+
+data "azurerm_resource_group" "rg" {
+  name = local.core_resource_group_name
+}
