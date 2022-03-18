@@ -12,7 +12,6 @@ from resources import strings
 from services.authentication import get_current_admin_user, get_current_tre_user_or_tre_admin
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 from models.domain.resource import ResourceHistoryItem
-from models.domain.operation import Operation, Status
 
 
 pytestmark = pytest.mark.asyncio
