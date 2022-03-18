@@ -44,21 +44,6 @@ def sample_shared_service(shared_service_id=SHARED_SERVICE_ID):
     )
 
 
-def sample_resource_operation(resource_id: str, operation_id: str):
-    operation = Operation(
-        id=operation_id,
-        resourceId=resource_id,
-        resourcePath=f'/shared-services/{resource_id}',
-        resourceVersion=0,
-        action="install",
-        message="test",
-        Status=Status.Deployed,
-        createdWhen=1642611942.423857,
-        updatedWhen=1642611942.423857
-    )
-    return operation
-
-
 class TestSharedServiceRoutesThatDontRequireAdminRigths:
     @pytest.fixture(autouse=True, scope='class')
     def log_in_with_non_admin_user(self, app, non_admin_user):
