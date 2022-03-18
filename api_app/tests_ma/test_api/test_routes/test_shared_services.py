@@ -4,6 +4,7 @@ import pytest
 from mock import patch
 
 from fastapi import status
+from .test_workspaces import OPERATION_ID, sample_resource_operation
 
 from db.errors import EntityDoesNotExist
 from models.domain.shared_service import SharedService
@@ -11,6 +12,7 @@ from resources import strings
 from services.authentication import get_current_admin_user, get_current_tre_user_or_tre_admin
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 from models.domain.resource import ResourceHistoryItem
+from models.domain.operation import Operation, Status
 
 
 pytestmark = pytest.mark.asyncio
@@ -40,6 +42,21 @@ def sample_shared_service(shared_service_id=SHARED_SERVICE_ID):
         properties={},
         resourcePath=f'/shared-services/{shared_service_id}'
     )
+
+
+def sample_resource_operation(resource_id: str, operation_id: str):
+    operation = Operation(
+        id=operation_id,
+        resourceId=resource_id,
+        resourcePath=f'/shared-services/{resource_id}',
+        resourceVersion=0,
+        action="install",
+        message="test",
+        Status=Status.Deployed,
+        createdWhen=1642611942.423857,
+        updatedWhen=1642611942.423857
+    )
+    return operation
 
 
 class TestSharedServiceRoutesThatDontRequireAdminRigths:
@@ -123,12 +140,12 @@ class TestSharedServiceRoutesThatRequireAdminRights:
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     # [PATCH] /shared-services/{shared_service_id}
-    @patch("api.dependencies.shared_services.SharedServiceRepository.get_shared_service_by_id", return_value=sample_shared_service())
+    @patch("api.routes.shared_services.SharedServiceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
+    @patch("api.dependencies.shared_services.SharedServiceRepository.get_shared_service_by_id", return_value=sample_shared_service(SHARED_SERVICE_ID))
     @patch("api.routes.shared_services.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
     @patch("api.routes.shared_services.SharedServiceRepository.update_item_with_etag", return_value=sample_shared_service())
-    @patch("api.routes.shared_services.SharedServiceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
-    async def test_patch_shared_service_patches_shared_service(self, _, update_item_mock, __, get_shared_service_mock, app, client):
-        get_shared_service_mock.return_value = sample_shared_service(SHARED_SERVICE_ID)
+    @patch("api.routes.shared_services.send_resource_request_message", return_value=sample_resource_operation(resource_id=SHARED_SERVICE_ID, operation_id=OPERATION_ID))
+    async def test_patch_shared_service_patches_shared_service(self, _, update_item_mock, __, ___, ____, app, client):
         etag = "some-etag-value"
         shared_service_patch = {"isEnabled": False}
 

@@ -15,8 +15,9 @@ from models.schemas.resource import ResourcePatch
 from resources import strings
 from .workspaces import save_and_deploy_resource, check_for_etag, construct_location_header
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
-from .resource_helpers import send_custom_action_message, send_uninstall_message
+from .resource_helpers import send_custom_action_message, send_uninstall_message, send_resource_request_message
 from services.authentication import get_current_admin_user, get_current_tre_user_or_tre_admin
+from models.domain.request_action import RequestAction
 
 
 shared_services_router = APIRouter(dependencies=[Depends(get_current_tre_user_or_tre_admin)])
@@ -48,10 +49,12 @@ async def create_shared_service(response: Response, shared_service_input: Shared
 
 
 @shared_services_router.patch("/shared-services/{shared_service_id}", response_model=SharedServiceInResponse, name=strings.API_UPDATE_SHARED_SERVICE, dependencies=[Depends(get_current_admin_user), Depends(get_shared_service_by_id_from_path)])
-async def patch_shared_service(shared_service_patch: ResourcePatch, shared_service_repo=Depends(get_repository(SharedServiceRepository)), shared_service=Depends(get_shared_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), etag: str = Header(None)) -> SharedServiceInResponse:
+async def patch_shared_service(shared_service_patch: ResourcePatch, response: Response, shared_service_repo=Depends(get_repository(SharedServiceRepository)), shared_service=Depends(get_shared_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), etag: str = Header(None)) -> SharedServiceInResponse:
     check_for_etag(etag)
     try:
         patched_shared_service = shared_service_repo.patch_shared_service(shared_service, shared_service_patch, etag, resource_template_repo)
+        operation = await send_resource_request_message(patched_shared_service, operations_repo, RequestAction.Upgrade)
+        response.headers["Location"] = construct_location_header(operation)
         return SharedServiceInResponse(sharedService=patched_shared_service)
     except CosmosAccessConditionFailedError:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
@@ -60,7 +63,7 @@ async def patch_shared_service(shared_service_patch: ResourcePatch, shared_servi
 
 
 @shared_services_router.delete("/shared-services/{shared_service_id}", response_model=OperationInResponse, name=strings.API_DELETE_SHARED_SERVICE, dependencies=[Depends(get_current_admin_user)])
-async def delete_shared_service(response: Response, shared_service=Depends(get_shared_service_by_id_from_path), shared_service_repo=Depends(get_repository(SharedServiceRepository)), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInResponse:
+async def delete_shared_service(response: Response, shared_service=Depends(get_shared_service_by_id_from_path), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInResponse:
     if shared_service.isEnabled:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.SHARED_SERVICE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION)
 

@@ -26,7 +26,8 @@ from services.authentication import extract_auth_information
 from services.azure_resource_status import get_azure_resource_status
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 from .resource_helpers import get_user_role_assignments, save_and_deploy_resource, construct_location_header, send_uninstall_message, check_for_etag, \
-    send_custom_action_message
+    send_custom_action_message, send_resource_request_message
+from models.domain.request_action import RequestAction
 
 workspaces_core_router = APIRouter(dependencies=[Depends(get_current_tre_user_or_tre_admin)])
 workspaces_shared_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_tre_admin)])
