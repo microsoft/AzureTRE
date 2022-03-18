@@ -1,4 +1,5 @@
 # TODO: Remove when have shared services support
+# (tracked in https://github.com/microsoft/AzureTRE/issues/23)
 
 data "azurerm_firewall" "fw" {
   name                = "fw-${var.tre_id}"
