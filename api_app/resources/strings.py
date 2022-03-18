@@ -38,6 +38,13 @@ API_CREATE_SHARED_SERVICE_TEMPLATES = "Register shared service template"
 API_GET_SHARED_SERVICE_TEMPLATES = "Get shared service templates"
 API_GET_SHARED_SERVICE_TEMPLATE_BY_NAME = "Get shared service template by name"
 
+API_GET_ALL_SHARED_SERVICES = "Get all shared services"
+API_GET_SHARED_SERVICE_BY_ID = "Get shared service by Id"
+API_CREATE_SHARED_SERVICE = "Create a shared service"
+API_UPDATE_SHARED_SERVICE = "Update an existing shared service"
+API_DELETE_SHARED_SERVICE = "Delete shared service"
+API_INVOKE_ACTION_ON_SHARED_SERVICE = "Invoke action on a shared service"
+
 API_CREATE_USER_RESOURCE_TEMPLATES = "Register user resource template"
 API_GET_USER_RESOURCE_TEMPLATES = "Get user resource templates applicable to the workspace service template"
 API_GET_USER_RESOURCE_TEMPLATE_BY_NAME = "Get user resource template by name and workspace service"
@@ -92,6 +99,8 @@ CUSTOM_ACTIONS_DO_NOT_EXIST = "The resource being targeted does not implement an
 WORKSPACE_SERVICE_TEMPLATE_DOES_NOT_EXIST = "Could not retrieve the workspace service template specified"
 TEMPLATE_DOES_NOT_EXIST = "Could not retrieve the 'current' template with this name"
 NO_UNIQUE_CURRENT_FOR_TEMPLATE = "The template has multiple 'current' versions"
+
+SHARED_SERVICE_DOES_NOT_EXIST = "Shared service does not exist"
 
 SHARED_SERVICE_TEMPLATE_DOES_NOT_EXIST = "Could not retrieve the workspace service template specified"
 SHARED_SERVICE_TEMPLATE_VERSION_EXISTS = "A template with this version already exists"

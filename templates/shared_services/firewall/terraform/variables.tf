@@ -1,5 +1,4 @@
 variable "tre_id" {}
-variable "location" {}
 variable "stateful_resources_locked" {
   type        = bool
   default     = true
