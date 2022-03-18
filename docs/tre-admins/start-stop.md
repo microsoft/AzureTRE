@@ -5,9 +5,9 @@ Once you've provisioned an Azure TRE instance it will begin to incurr running co
 Within evaluation or development, you may want to "pause" the TRE environment during out of hours or weekends, to reduce costs without having to completely destroy the environment.  The following `make targets` provide a simple way to start and stop both the Azure Firewall and Azure Application Gateway instances, considerably reducing the Azure TRE instance running costs.
 
 !!! info
-    After running `make all` all services are automatically started, billing will start.
+    After running `make all` underlying Azure TRE services are automatically started, billing will start.
 
-## Start TRE
+## Start Azure TRE
 
 This will allocate the Azure Firewall settings with a public IP and start the Azure Application Gateway service, starting billing of both services.
 
@@ -15,7 +15,7 @@ This will allocate the Azure Firewall settings with a public IP and start the Az
 make tre-start
 ```
 
-## Stop TRE
+## Stop Azure TRE
 
 This will deallocate the Azure Firewall public IP and stop the Azure Application Gateway service, stopping billing of both services.
 
