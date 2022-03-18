@@ -1,7 +1,7 @@
 resource "azurerm_public_ip" "fwpip" {
   name                = "pip-fw-${var.tre_id}"
   resource_group_name = local.core_resource_group_name
-  location            = var.location
+  location            = data.azurerm_resource_group.rg.location
   allocation_method   = "Static"
   sku                 = "Standard"
 
@@ -12,7 +12,7 @@ resource "azurerm_firewall" "fw" {
   depends_on          = [azurerm_public_ip.fwpip]
   name                = "fw-${var.tre_id}"
   resource_group_name = local.core_resource_group_name
-  location            = var.location
+  location            = data.azurerm_resource_group.rg.location
   ip_configuration {
     name                 = "fw-ip-configuration"
     subnet_id            = data.azurerm_subnet.firewall.id
