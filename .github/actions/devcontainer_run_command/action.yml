@@ -143,6 +143,8 @@ runs:
         TEST_APP_ID: "${{ inputs.TEST_APP_ID }}"
         TEST_USER_NAME: "${{ inputs.TEST_USER_NAME }}"
         TEST_USER_PASSWORD: "${{ inputs.TEST_USER_PASSWORD }}"
+        AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID: "${{ inputs.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID }}"
+        AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET: "${{ inputs.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET }}"
         ACR_NAME: ${{ inputs.ACR_NAME }}
         TRE_URL:
             "https://${{inputs.TRE_ID}}.${{inputs.LOCATION}}.cloudapp.azure.com"
@@ -200,6 +202,8 @@ runs:
           -e TEST_APP_ID \
           -e TEST_USER_NAME \
           -e TEST_USER_PASSWORD \
+          -e AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID \
+          -e AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET \
           -e IS_API_SECURED \
           -e DOCKER_BUILDKIT \
           -e TF_VAR_keyvault_purge_protection_enabled=${{ inputs.TF_VAR_keyvault_purge_protection_enabled }} \
