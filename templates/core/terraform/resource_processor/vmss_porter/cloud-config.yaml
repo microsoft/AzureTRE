@@ -46,7 +46,7 @@ write_files:
       #!/bin/bash
       set -o errexit
       used_percent=$(df / --output=pcent | tail -1 | sed 's/[^0-9]//g')
-      echo "Used disk space percent: ${used_percent}"
+      echo "Used disk space percent: $${used_percent}"
       if (( used_percent > 60 )); then
         echo "Free space too low, pruning..."
         docker system prune -f
