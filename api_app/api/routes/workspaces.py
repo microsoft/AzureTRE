@@ -12,8 +12,7 @@ from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.user_resources import UserResourceRepository
 from db.repositories.workspaces import WorkspaceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
-from models.domain.resource import ResourceType, Resource
-from models.domain.operation import Operation
+from models.domain.resource import ResourceType
 from models.domain.workspace import WorkspaceRole
 from models.schemas.operation import OperationInList, OperationInResponse
 from models.schemas.user_resource import UserResourceInResponse, UserResourceInCreate, UserResourcesInList
@@ -21,36 +20,20 @@ from models.schemas.workspace import WorkspaceInCreate, WorkspacesInList, Worksp
 from models.schemas.workspace_service import WorkspaceServiceInCreate, WorkspaceServicesInList, WorkspaceServiceInResponse
 from models.schemas.resource import ResourcePatch
 from resources import strings
-from service_bus.resource_request_sender import send_resource_request_message, RequestAction
 from services.authentication import get_current_admin_user, \
     get_access_service, get_current_workspace_owner_user, get_current_workspace_owner_or_researcher_user, get_current_tre_user_or_tre_admin, get_current_workspace_owner_or_researcher_user_or_tre_admin, get_current_workspace_owner_or_tre_admin
 from services.authentication import extract_auth_information
 from services.azure_resource_status import get_azure_resource_status
-
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
+from .resource_helpers import get_user_role_assignments, save_and_deploy_resource, construct_location_header, send_uninstall_message, check_for_etag, \
+    send_custom_action_message, send_resource_request_message
+from models.domain.request_action import RequestAction
 
 workspaces_core_router = APIRouter(dependencies=[Depends(get_current_tre_user_or_tre_admin)])
 workspaces_shared_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_tre_admin)])
 workspaces_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user)])
 workspace_services_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user)])
 user_resources_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user)])
-
-
-# HELPER FUNCTIONS
-async def save_and_deploy_resource(resource, resource_repo, operations_repo) -> Operation:
-    try:
-        resource_repo.save_item(resource)
-    except Exception as e:
-        logging.error(f"Failed to save resource in DB: {e}")
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
-
-    try:
-        operation = await send_resource_request_message(resource, operations_repo, RequestAction.Install)
-        return operation
-    except Exception as e:
-        resource_repo.delete_item(resource.id)
-        logging.error(f"Failed send resource request message: {e}")
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
 
 
 def validate_user_is_workspace_owner_or_resource_owner(user, user_resource):
@@ -61,46 +44,6 @@ def validate_user_is_workspace_owner_or_resource_owner(user, user_resource):
         return
 
     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.ACCESS_USER_IS_NOT_OWNER_OR_RESEARCHER)
-
-
-def construct_location_header(operation: Operation) -> str:
-    return f'/api{operation.resourcePath}/operations/{operation.id}'
-
-
-def get_user_role_assignments(user):
-    access_service = get_access_service()
-    return access_service.get_user_role_assignments(user.id)
-
-
-async def send_uninstall_message(resource: Resource, operations_repo: OperationRepository, resource_type: ResourceType) -> Operation:
-    try:
-        operation = await send_resource_request_message(resource, operations_repo, RequestAction.UnInstall)
-        return operation
-    except Exception as e:
-        logging.error(f"Failed to send {resource_type} resource delete message: {e}")
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
-
-
-async def send_custom_action_message(resource: Resource, custom_action: str, resource_type: ResourceType, operations_repo: OperationRepository, resource_template_repo: ResourceTemplateRepository, parent_service_name: str = None) -> Operation:
-
-    # Validate that the custom_action specified is present in the resource template
-    resource_template = resource_template_repo.get_template_by_name_and_version(resource.templateName, resource.templateVersion, resource_type, parent_service_name=parent_service_name)
-    if not resource_template.customActions:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.CUSTOM_ACTIONS_DO_NOT_EXIST)
-    elif not any(action.name == custom_action for action in resource_template.customActions):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.CUSTOM_ACTION_NOT_DEFINED)
-
-    try:
-        operation = await send_resource_request_message(resource, operations_repo, custom_action)
-        return operation
-    except Exception as e:
-        logging.error(f"Failed to send {resource_type} resource custom action message: {e}")
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
-
-
-def check_for_etag(etag: str):
-    if etag is None or len(etag) == 0:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.ETAG_REQUIRED)
 
 
 # WORKSPACE ROUTES
@@ -141,12 +84,14 @@ async def create_workspace(workspace_create: WorkspaceInCreate, response: Respon
     return OperationInResponse(operation=operation)
 
 
-@workspaces_core_router.patch("/workspaces/{workspace_id}", response_model=WorkspaceInResponse, name=strings.API_UPDATE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
-async def patch_workspace(workspace_patch: ResourcePatch, workspace=Depends(get_workspace_by_id_from_path), workspace_repo=Depends(get_repository(WorkspaceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), etag: str = Header(None)) -> WorkspaceInResponse:
+@workspaces_core_router.patch("/workspaces/{workspace_id}", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_UPDATE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
+async def patch_workspace(workspace_patch: ResourcePatch, response: Response, workspace=Depends(get_workspace_by_id_from_path), workspace_repo=Depends(get_repository(WorkspaceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), etag: str = Header(None)) -> OperationInResponse:
     check_for_etag(etag)
     try:
         patched_workspace = workspace_repo.patch_workspace(workspace, workspace_patch, etag, resource_template_repo)
-        return WorkspaceInResponse(workspace=patched_workspace)
+        operation = await send_resource_request_message(patched_workspace, operations_repo, RequestAction.Upgrade)
+        response.headers["Location"] = construct_location_header(operation)
+        return OperationInResponse(operation=operation)
     except CosmosAccessConditionFailedError:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
     except ValidationError as v:
@@ -212,12 +157,14 @@ async def create_workspace_service(response: Response, workspace_service_input: 
     return OperationInResponse(operation=operation)
 
 
-@workspace_services_workspace_router.patch("/workspaces/{workspace_id}/workspace-services/{service_id}", response_model=WorkspaceServiceInResponse, name=strings.API_UPDATE_WORKSPACE_SERVICE, dependencies=[Depends(get_current_workspace_owner_or_researcher_user), Depends(get_workspace_by_id_from_path)])
-async def patch_workspace_service(workspace_service_patch: ResourcePatch, workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), workspace_service=Depends(get_workspace_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), etag: str = Header(None)) -> WorkspaceServiceInResponse:
+@workspace_services_workspace_router.patch("/workspaces/{workspace_id}/workspace-services/{service_id}", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_UPDATE_WORKSPACE_SERVICE, dependencies=[Depends(get_current_workspace_owner_or_researcher_user), Depends(get_workspace_by_id_from_path)])
+async def patch_workspace_service(workspace_service_patch: ResourcePatch, response: Response, workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), workspace_service=Depends(get_workspace_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), etag: str = Header(None)) -> OperationInResponse:
     check_for_etag(etag)
     try:
         patched_workspace_service = workspace_service_repo.patch_workspace_service(workspace_service, workspace_service_patch, etag, resource_template_repo)
-        return WorkspaceServiceInResponse(workspaceService=patched_workspace_service)
+        operation = await send_resource_request_message(patched_workspace_service, operations_repo, RequestAction.Upgrade)
+        response.headers["Location"] = construct_location_header(operation)
+        return OperationInResponse(operation=operation)
     except CosmosAccessConditionFailedError:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
     except ValidationError as v:
@@ -312,14 +259,16 @@ async def delete_user_resource(response: Response, user=Depends(get_current_work
     return OperationInResponse(operation=operation)
 
 
-@user_resources_workspace_router.patch("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}", response_model=UserResourceInResponse, name=strings.API_UPDATE_USER_RESOURCE, dependencies=[Depends(get_workspace_by_id_from_path), Depends(get_workspace_service_by_id_from_path)])
-async def patch_user_resource(user_resource_patch: ResourcePatch, user=Depends(get_current_workspace_owner_or_researcher_user), user_resource=Depends(get_user_resource_by_id_from_path), workspace_service=Depends(get_workspace_service_by_id_from_path), user_resource_repo=Depends(get_repository(UserResourceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), etag: str = Header(None)) -> UserResourceInResponse:
+@user_resources_workspace_router.patch("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_UPDATE_USER_RESOURCE, dependencies=[Depends(get_workspace_by_id_from_path), Depends(get_workspace_service_by_id_from_path)])
+async def patch_user_resource(user_resource_patch: ResourcePatch, response: Response, user=Depends(get_current_workspace_owner_or_researcher_user), user_resource=Depends(get_user_resource_by_id_from_path), workspace_service=Depends(get_workspace_service_by_id_from_path), user_resource_repo=Depends(get_repository(UserResourceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), etag: str = Header(None)) -> OperationInResponse:
     check_for_etag(etag)
     validate_user_is_workspace_owner_or_resource_owner(user, user_resource)
 
     try:
         patched_user_resource = user_resource_repo.patch_user_resource(user_resource, user_resource_patch, etag, resource_template_repo, workspace_service.templateName)
-        return UserResourceInResponse(userResource=patched_user_resource)
+        operation = await send_resource_request_message(patched_user_resource, operations_repo, RequestAction.Upgrade)
+        response.headers["Location"] = construct_location_header(operation)
+        return OperationInResponse(operation=operation)
     except CosmosAccessConditionFailedError:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
     except ValidationError as v:

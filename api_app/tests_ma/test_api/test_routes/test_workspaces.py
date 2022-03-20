@@ -1,22 +1,19 @@
 import datetime
 import uuid
 import pytest
-from mock import patch, MagicMock
+from mock import patch
 
-from fastapi import HTTPException, status
+from fastapi import status
 
-from api.routes.workspaces import save_and_deploy_resource, send_uninstall_message
 from models.domain.resource_template import ResourceTemplate
 from models.schemas.operation import OperationInResponse
 
 from db.errors import EntityDoesNotExist
-from db.repositories.operations import OperationRepository
-from db.repositories.resources import ResourceRepository
 from db.repositories.workspaces import WorkspaceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
 from models.domain.authentication import RoleAssignment
 from models.domain.operation import Operation, Status
-from models.domain.resource import RequestAction, ResourceHistoryItem, ResourceType
+from models.domain.resource import ResourceHistoryItem, ResourceType
 from models.domain.user_resource import UserResource
 from models.domain.workspace import Workspace, WorkspaceRole
 from models.domain.workspace_service import WorkspaceService
@@ -35,18 +32,6 @@ APP_ID = 'f0acf127-a672-a672-a672-a15e5bf9f127'
 OPERATION_ID = '11111111-7265-4b5f-9eae-a1a62928772f'
 FAKE_UPDATE_TIME = datetime.datetime(2022, 1, 1, 17, 5, 55)
 FAKE_UPDATE_TIMESTAMP: float = FAKE_UPDATE_TIME.timestamp()
-
-
-@pytest.fixture
-def resource_repo() -> ResourceRepository:
-    with patch("azure.cosmos.CosmosClient") as cosmos_client_mock:
-        return ResourceRepository(cosmos_client_mock)
-
-
-@pytest.fixture
-def operations_repo() -> OperationRepository:
-    with patch("azure.cosmos.CosmosClient") as cosmos_client_mock:
-        return OperationRepository(cosmos_client_mock)
 
 
 @pytest.fixture
@@ -209,78 +194,6 @@ def disabled_user_resource():
     return UserResource(id=USER_RESOURCE_ID, templateName='template name', templateVersion='1.0', etag="", isEnabled=False, properties={}, resourcePath="test")
 
 
-class TestWorkspaceHelpers:
-    @patch("api.routes.workspaces.send_resource_request_message")
-    async def test_save_and_deploy_resource_saves_item(self, _, resource_repo, operations_repo):
-        resource = sample_workspace()
-        operation = sample_resource_operation(resource_id=resource.id, operation_id=str(uuid.uuid4()))
-
-        resource_repo.save_item = MagicMock(return_value=None)
-        operations_repo.create_operation_item = MagicMock(return_value=operation)
-
-        await save_and_deploy_resource(resource, resource_repo, operations_repo)
-
-        resource_repo.save_item.assert_called_once_with(resource)
-
-    async def test_save_and_deploy_resource_raises_503_if_save_to_db_fails(self, resource_repo, operations_repo):
-        resource = sample_workspace()
-        resource_repo.save_item = MagicMock(side_effect=Exception)
-
-        with pytest.raises(HTTPException) as ex:
-            await save_and_deploy_resource(resource, resource_repo, operations_repo)
-        assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
-
-    @patch("api.routes.workspaces.send_resource_request_message", return_value=None)
-    async def test_save_and_deploy_resource_sends_resource_request_message(self, send_resource_request_mock, resource_repo, operations_repo):
-        resource = sample_workspace()
-        operation = sample_resource_operation(resource_id=resource.id, operation_id=str(uuid.uuid4()))
-
-        resource_repo.save_item = MagicMock(return_value=None)
-        operations_repo.create_operations_item = MagicMock(return_value=operation)
-
-        await save_and_deploy_resource(resource, resource_repo, operations_repo)
-
-        send_resource_request_mock.assert_called_once_with(resource, operations_repo, RequestAction.Install)
-
-    @patch("api.routes.workspaces.send_resource_request_message", side_effect=Exception)
-    async def test_save_and_deploy_resource_raises_503_if_send_request_fails(self, _, resource_repo, operations_repo):
-        resource = sample_workspace()
-        resource_repo.save_item = MagicMock(return_value=None)
-        resource_repo.delete_item = MagicMock(return_value=None)
-
-        with pytest.raises(HTTPException) as ex:
-            await save_and_deploy_resource(resource, resource_repo, operations_repo)
-        assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
-
-    @patch("api.routes.workspaces.send_resource_request_message", side_effect=Exception)
-    async def test_save_and_deploy_resource_deletes_item_from_db_if_send_request_fails(self, _, resource_repo, operations_repo):
-        resource = sample_workspace()
-
-        resource_repo.save_item = MagicMock(return_value=None)
-        resource_repo.delete_item = MagicMock(return_value=None)
-        operations_repo.create_operation_item = MagicMock(return_value=None)
-
-        with pytest.raises(HTTPException):
-            await save_and_deploy_resource(resource, resource_repo, operations_repo)
-
-        resource_repo.delete_item.assert_called_once_with(resource.id)
-
-    @patch("api.routes.workspaces.send_resource_request_message", return_value=None)
-    @patch("api.routes.workspaces.OperationRepository")
-    async def test_send_uninstall_message_sends_uninstall_message(self, operations_repo, send_request_mock):
-        workspace = sample_workspace()
-        await send_uninstall_message(workspace, operations_repo, ResourceType.Workspace)
-
-        send_request_mock.assert_called_once_with(workspace, operations_repo, RequestAction.UnInstall)
-
-    @patch("api.routes.workspaces.send_resource_request_message", side_effect=Exception)
-    @patch("api.routes.workspaces.OperationRepository")
-    async def test_send_uninstall_message_raises_503_on_service_bus_exception(self, operations_repo, _):
-        with pytest.raises(HTTPException) as ex:
-            await send_uninstall_message(sample_workspace(), operations_repo, ResourceType.Workspace)
-        assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
-
-
 class TestWorkspaceRoutesThatDontRequireAdminRights:
     @pytest.fixture(autouse=True, scope='class')
     def log_in_with_non_admin_user(self, app, non_admin_user):
@@ -363,7 +276,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         assert actual_resource["id"] == workspace.id
 
     # [POST] /workspaces/
-    @ patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
+    @ patch("api.routes.resource_helpers.send_resource_request_message", return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
     @ patch("api.routes.workspaces.WorkspaceRepository.save_item")
     @ patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item", return_value=sample_workspace())
     @ patch("api.routes.workspaces.extract_auth_information")
@@ -374,7 +287,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         assert response.json()["operation"]["resourceId"] == WORKSPACE_ID
 
     # [POST] /workspaces/
-    @ patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
+    @ patch("api.routes.resource_helpers.send_resource_request_message", return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
     @ patch("api.routes.workspaces.WorkspaceRepository.save_item")
     @ patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item", return_value=sample_workspace())
     @ patch("api.routes.workspaces.WorkspaceRepository._validate_resource_parameters")
@@ -386,7 +299,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         send_resource_request_message_mock.assert_called_once()
 
     # [POST] /workspaces/
-    @ patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
+    @ patch("api.routes.resource_helpers.send_resource_request_message", return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
     @ patch("api.routes.workspaces.WorkspaceRepository.save_item")
     @ patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item", return_value=sample_workspace())
     @ patch("api.routes.workspaces.WorkspaceRepository._validate_resource_parameters")
@@ -399,7 +312,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
 
     # [POST] /workspaces/
     @ patch("api.routes.workspaces.WorkspaceRepository.delete_item")
-    @ patch("api.routes.workspaces.send_resource_request_message", side_effect=Exception)
+    @ patch("api.routes.resource_helpers.send_resource_request_message", side_effect=Exception)
     @ patch("api.routes.workspaces.WorkspaceRepository.save_item")
     @ patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item", return_value=sample_workspace())
     @ patch("api.routes.workspaces.WorkspaceRepository._validate_resource_parameters")
@@ -433,11 +346,12 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     # [PATCH] /workspaces/{workspace_id}
+    @ patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
     @ patch("api.routes.workspaces.WorkspaceRepository.update_item_with_etag", return_value=sample_workspace())
     @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
     @ patch("api.routes.workspaces.WorkspaceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
-    async def test_patch_workspaces_patches_workspace(self, _, __, update_item_mock, ___, app, client):
+    async def test_patch_workspaces_patches_workspace(self, _, __, update_item_mock, ___, ____, app, client):
         workspace_patch = {"isEnabled": False}
         etag = "some-etag-value"
 
@@ -449,7 +363,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=WORKSPACE_ID), json=workspace_patch, headers={"etag": etag})
 
         update_item_mock.assert_called_once_with(modified_workspace, etag)
-        assert response.status_code == status.HTTP_200_OK
+        assert response.status_code == status.HTTP_202_ACCEPTED
 
     # [PATCH] /workspaces/{workspace_id}
 
@@ -497,7 +411,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.get_active_workspace_services_for_workspace", return_value=[])
     @ patch('azure.cosmos.CosmosClient')
-    @ patch('api.routes.workspaces.send_resource_request_message', return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
+    @ patch('api.routes.resource_helpers.send_resource_request_message', return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
     async def test_delete_workspace_sends_a_request_message_to_uninstall_the_workspace(self, send_request_message_mock, cosmos_client_mock, __, get_workspace_mock, get_repository_mock, disabled_workspace, app, client):
         get_workspace_mock.return_value = disabled_workspace
         get_repository_mock.side_effects = [WorkspaceRepository(cosmos_client_mock), WorkspaceServiceRepository(cosmos_client_mock)]
@@ -530,7 +444,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
 
     # [POST] /workspaces/{workspace_id}/workspace-services
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
-    @ patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=SERVICE_ID, operation_id=OPERATION_ID))
+    @ patch("api.routes.resource_helpers.send_resource_request_message", return_value=sample_resource_operation(resource_id=SERVICE_ID, operation_id=OPERATION_ID))
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.save_item")
     @ patch("api.routes.workspaces.OperationRepository.resource_has_deployed_operation", return_value=True)
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.create_workspace_service_item", return_value=sample_workspace_service())
@@ -675,6 +589,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     # [PATCH] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
+    @ patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=USER_RESOURCE_ID, operation_id=OPERATION_ID))
     @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
     @ patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=sample_workspace_service())
@@ -682,7 +597,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     @ patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id", return_value=sample_user_resource_object())
     @ patch("api.routes.workspaces.UserResourceRepository.update_item_with_etag", return_value=sample_user_resource_object())
     @ patch("api.routes.workspaces.UserResourceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
-    async def test_patch_user_resources_patches_user_resource(self, _, update_item_mock, __, ___, ____, _____, ______, app, client):
+    async def test_patch_user_resources_patches_user_resource(self, _, update_item_mock, __, ___, ____, _____, ______, _______, app, client):
         user_resource_service_patch = {"isEnabled": False}
         etag = "some-etag-value"
 
@@ -694,16 +609,17 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         response = await client.patch(app.url_path_for(strings.API_UPDATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID), json=user_resource_service_patch, headers={"etag": etag})
 
         update_item_mock.assert_called_once_with(modified_user_resource, etag)
-        assert response.status_code == status.HTTP_200_OK
+        assert response.status_code == status.HTTP_202_ACCEPTED
 
     # [PATCH] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
+    @ patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=USER_RESOURCE_ID, operation_id=OPERATION_ID))
     @ patch("api.routes.workspaces.UserResourceRepository.update_item_with_etag", return_value=sample_user_resource_object())
     @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=sample_resource_template())
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=sample_workspace_service())
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
     @ patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id", return_value=sample_user_resource_object())
     @ patch("api.routes.workspaces.UserResourceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
-    async def test_patch_user_resource_validates_against_template(self, _, __, ___, ____, _____, update_item_mock, app, client):
+    async def test_patch_user_resource_validates_against_template(self, _, __, ___, ____, _____, update_item_mock, ______, app, client):
         user_resource_service_patch = {'isEnabled': False, 'properties': {'vm_size': 'large'}}
         etag = "some-etag-value"
 
@@ -716,7 +632,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         response = await client.patch(app.url_path_for(strings.API_UPDATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID), json=user_resource_service_patch, headers={"etag": etag})
 
         update_item_mock.assert_called_once_with(modified_resource, etag)
-        assert response.status_code == status.HTTP_200_OK
+        assert response.status_code == status.HTTP_202_ACCEPTED
 
     # [PATCH] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
     @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=sample_resource_template())
@@ -857,12 +773,13 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     # [PATCH] /workspaces/{workspace_id}/services/{service_id}
+    @ patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
     @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=sample_workspace_service())
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.update_item_with_etag", return_value=sample_workspace_service())
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
-    async def test_patch_workspace_service_patches_workspace_service(self, _, update_item_mock, get_workspace_mock, __, ___, app, client):
+    async def test_patch_workspace_service_patches_workspace_service(self, _, update_item_mock, get_workspace_mock, __, ___, ____, app, client):
         auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'roles': {'WorkspaceOwner': 'ab124', 'WorkspaceResearcher': 'ab125'}}
 
         get_workspace_mock.return_value = sample_deployed_workspace(WORKSPACE_ID, auth_info_user_in_workspace_owner_role)
@@ -877,7 +794,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
         response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID), json=workspace_service_patch, headers={"etag": etag})
         update_item_mock.assert_called_once_with(modified_workspace_service, etag)
 
-        assert response.status_code == status.HTTP_200_OK
+        assert response.status_code == status.HTTP_202_ACCEPTED
 
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @ patch("api.routes.workspaces.UserResourceRepository.get_user_resources_for_workspace_service")
@@ -922,7 +839,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
     # [POST] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_deployed_workspace_by_id")
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_deployed_workspace_service_by_id")
-    @patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=USER_RESOURCE_ID, operation_id=OPERATION_ID))
+    @patch("api.routes.resource_helpers.send_resource_request_message", return_value=sample_resource_operation(resource_id=USER_RESOURCE_ID, operation_id=OPERATION_ID))
     @patch("api.routes.workspaces.UserResourceRepository.save_item")
     @patch("api.routes.workspaces.UserResourceRepository.create_user_resource_item")
     async def test_post_user_resources_creates_user_resource(self, create_user_resource_item_mock, _, __, ___, get_workspace_mock, app, client, sample_user_resource_input_data):
@@ -1024,6 +941,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     # [PATCH] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
+    @ patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=USER_RESOURCE_ID, operation_id=OPERATION_ID))
     @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
     @ patch("api.routes.workspaces.validate_user_is_workspace_owner_or_resource_owner")
     @ patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=sample_workspace_service())
@@ -1031,7 +949,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
     @ patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id", return_value=sample_user_resource_object())
     @ patch("api.routes.workspaces.UserResourceRepository.update_item_with_etag", return_value=sample_user_resource_object())
     @ patch("api.routes.workspaces.UserResourceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
-    async def test_patch_user_resources_patches_user_resource(self, _, update_item_mock, __, ___, ____, _____, ______, app, client):
+    async def test_patch_user_resources_patches_user_resource(self, _, update_item_mock, __, ___, ____, _____, ______, _______, app, client):
         user_resource_service_patch = {"isEnabled": False}
         etag = "some-etag-value"
 
@@ -1043,7 +961,8 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
         response = await client.patch(app.url_path_for(strings.API_UPDATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID), json=user_resource_service_patch, headers={"etag": etag})
 
         update_item_mock.assert_called_once_with(modified_user_resource, etag)
-        assert response.status_code == status.HTTP_200_OK
+
+        assert response.status_code == status.HTTP_202_ACCEPTED
 
     # [DELETE] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")

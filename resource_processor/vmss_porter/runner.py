@@ -123,8 +123,8 @@ async def invoke_porter_action(msg_body, sb_client, message_logger_adapter) -> b
     message_logger_adapter.info(f"{installation_id}: {action} action configuration starting")
     sb_sender = sb_client.get_queue_sender(queue_name=config["deployment_status_queue"])
 
-    # If the action is install, post message on sb queue to start a deployment job
-    if action == "install":
+    # If the action is install/upgrade, post message on sb queue to start a deployment job
+    if action == "install" or action == "upgrade":
         resource_request_message = service_bus_message_generator(msg_body, strings.RESOURCE_STATUS_DEPLOYING, "Deployment job starting")
         await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"]))
 

@@ -45,7 +45,7 @@ async def get_service_template(template_name, token, verify):
         yield response
 
 
-async def post_resource(payload, endpoint, resource_type, token, admin_token, verify):
+async def post_resource(payload, endpoint, resource_type, token, admin_token, verify, method="POST"):
     async with AsyncClient(verify=verify) as client:
 
         if resource_type == 'workspace':
@@ -56,7 +56,10 @@ async def post_resource(payload, endpoint, resource_type, token, admin_token, ve
         full_endpoint = f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{endpoint}"
         print(f'POSTING RESOURCE TO: {full_endpoint}')
 
-        response = await client.post(full_endpoint, headers=auth_headers, json=payload)
+        if method == "POST":
+            response = await client.post(full_endpoint, headers=auth_headers, json=payload)
+        else:
+            response = await client.patch(full_endpoint, headers=auth_headers, json=payload)
 
         print(f'RESPONSE: {response}')
         print(f'RESPONSE Content: {response.content}')
