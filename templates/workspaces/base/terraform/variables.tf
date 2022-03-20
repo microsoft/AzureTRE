@@ -35,3 +35,9 @@ variable "app_service_plan_sku" {
   default     = "P1v3"
   description = "App Service Plan SKU"
 }
+
+variable "storage_is_exposed_externally" {
+  type        = bool
+  default     = false
+  description = "whether to block internet access to the storage account. Set to true when deploying locally."
+}
