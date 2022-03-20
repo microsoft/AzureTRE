@@ -60,6 +60,12 @@ inputs:
   TEST_USER_PASSWORD:
     description: "The Test User password Id used to interact with the API."
     required: true
+  AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID:
+    description: "The Test User password Id used to interact with the API."
+    required: true
+  AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET:
+    description: "The Test User password Id used to interact with the API."
+    required: true
   TEST_WORKSPACE_APP_ID:
     description: "The Test Workspace Id used to interact with the API."
     required: true

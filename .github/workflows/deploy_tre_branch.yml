@@ -63,9 +63,6 @@ jobs:
       STATE_STORAGE_ACCOUNT_NAME: ${{ format('tre{0}mgmt', needs.prepare-not-main.outputs.refid) }}
       SWAGGER_UI_CLIENT_ID: ${{ secrets.SWAGGER_UI_CLIENT_ID }}
       TEST_APP_ID: ${{ secrets.TEST_APP_ID }}
-      TEST_USER_NAME: ${{ secrets.TEST_USER_NAME }}
-      TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
-      TEST_WORKSPACE_APP_ID: ${{ secrets.TEST_WORKSPACE_APP_ID }}
       AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID }}"
       AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET }}"
       TF_STATE_CONTAINER: ${{ secrets.TF_STATE_CONTAINER }}
