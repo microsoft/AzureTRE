@@ -17,7 +17,7 @@ resource "azurerm_app_service" "guacamole" {
   }
 
   app_settings = {
-    WEBSITES_PORT                  = "8080"
+    WEBSITES_PORT                  = "8085"
     WEBSITE_VNET_ROUTE_ALL         = "1"
     WEBSITE_DNS_SERVER             = "168.63.129.16"
     SCM_DO_BUILD_DURING_DEPLOYMENT = "True"
@@ -35,15 +35,14 @@ resource "azurerm_app_service" "guacamole" {
     GUAC_DRIVE_NAME       = "${var.guac_drive_name}"
     GUAC_DRIVE_PATH       = "${var.guac_drive_path}"
     GUAC_DISABLE_DOWNLOAD = "${var.guac_disable_download}"
-    AUDIENCE              = "${var.openid_client_id}"
+    AUDIENCE              = "${var.ws_client_id}"
     ISSUER                = local.issuer
 
-    OPENID_AUTHORIZATION_ENDPOINT = "https://login.microsoftonline.com/${local.aad_tenant_id}/oauth2/v2.0/authorize"
-    OPENID_JWKS_ENDPOINT          = "https://login.microsoftonline.com/${local.aad_tenant_id}/discovery/v2.0/keys"
-    OPENID_ISSUER                 = "https://login.microsoftonline.com/${local.aad_tenant_id}/v2.0"
-    OPENID_CLIENT_ID              = "${var.openid_client_id}"
-    OPENID_REDIRECT_URI           = "https://${local.webapp_name}.azurewebsites.net/guacamole/"
-    OPENID_USERNAME_CLAIM_TYPE    = "email"
+    OAUTH2_PROXY_CLIENT_ID         = "${var.ws_client_id}"
+    OAUTH2_PROXY_CLIENT_SECRET     = "${var.ws_client_secret}"
+    OAUTH2_PROXY_REDIRECT_URI      = "https://${local.webapp_name}.azurewebsites.net/oauth2/callback"
+    OAUTH2_PROXY_EMAIL_DOMAIN      = "${var.oauth2_proxy_email_domain}" #
+    OAUTH2_PROXY_OIDC_ISSUER_URL   = "https://login.microsoftonline.com/${local.aad_tenant_id}/v2.0"
 
     # Solving the pulling from acr problem
     DOCKER_REGISTRY_SERVER_URL      = "${data.azurerm_container_registry.mgmt_acr.login_server}"

@@ -43,9 +43,9 @@ public class ConnectionService {
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionService.class);
 
-    public Map<String, Connection> getConnections(final AzureTREAuthenticatedUser user) throws GuacamoleException {
+    public static Map<String, Connection> getConnections(final AzureTREAuthenticatedUser user) throws GuacamoleException {
         final Map<String, Connection> connections = new TreeMap<>();
-        final Map<String, GuacamoleConfiguration> configs = this.getConfigurations(user);
+        final Map<String, GuacamoleConfiguration> configs = getConfigurations(user);
 
         for (final Map.Entry<String, GuacamoleConfiguration> config : configs.entrySet()) {
             final Connection connection = new TokenInjectingConnection(config.getKey(), config.getKey(),
@@ -57,7 +57,7 @@ public class ConnectionService {
         return connections;
     }
 
-    private Map<String, GuacamoleConfiguration> getConfigurations(final AzureTREAuthenticatedUser user)
+    private static Map<String, GuacamoleConfiguration> getConfigurations(final AzureTREAuthenticatedUser user)
         throws GuacamoleException {
         final Map<String, GuacamoleConfiguration> configs = new TreeMap<>();
         if (user != null) {
@@ -97,7 +97,7 @@ public class ConnectionService {
         return configs;
     }
 
-    private JSONArray getVMsFromProjectAPI(final AzureTREAuthenticatedUser user) throws GuacamoleException {
+    private static JSONArray getVMsFromProjectAPI(final AzureTREAuthenticatedUser user) throws GuacamoleException {
         final JSONArray virtualMachines;
         final String url = String.format("%s/api/workspaces/%s/workspace-services/%s/user-resources",
             System.getenv("API_URL"), System.getenv("WORKSPACE_ID"), System.getenv("SERVICE_ID"));

@@ -23,10 +23,13 @@ import com.google.inject.Inject;
 import org.apache.guacamole.net.auth.AbstractAuthenticatedUser;
 import org.apache.guacamole.net.auth.AuthenticationProvider;
 import org.apache.guacamole.net.auth.Credentials;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AzureTREAuthenticatedUser extends AbstractAuthenticatedUser {
 
-    @Inject
+    private static final Logger LOGGER = LoggerFactory.getLogger(AzureTREAuthenticatedUser.class);
+
     private AuthenticationProvider authProvider;
 
     private Credentials credentials;
@@ -36,12 +39,14 @@ public class AzureTREAuthenticatedUser extends AbstractAuthenticatedUser {
     private String token;
 
     public void init(final Credentials credentials,
-                     final String token,
+                     final String accessToken,
                      final String username,
-                     final String objectId) {
+                     final String objectId,
+                     final AuthenticationProvider provider) {
         this.credentials = credentials;
-        this.token = token;
+        this.token = accessToken;
         this.objectId = objectId;
+        this.authProvider = provider;
         setIdentifier(username.toLowerCase());
     }
 
