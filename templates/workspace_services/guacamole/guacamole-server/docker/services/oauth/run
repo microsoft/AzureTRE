@@ -7,8 +7,10 @@ tar zxvpf /etc/oauth2/oauth2-proxy-v7.2.1.linux-amd64.tar.gz
 chmod +x ./oauth2-proxy-v7.2.1.linux-amd64/oauth2-proxy
 ./oauth2-proxy-v7.2.1.linux-amd64/oauth2-proxy --version
 
+export COOKIE_SECRET=$(dd if=/dev/urandom bs=32 count=1 2>/dev/null | base64 | tr -d -- '\n' | tr -- '+/' '-_'; echo)
+
 ./oauth2-proxy-v7.2.1.linux-amd64/oauth2-proxy \
---client-id ${OAUTH2_PROXY_CLIENT_ID}  --provider oidc --client-secret ${OAUTH2_PROXY_CLIENT_SECRET} \
+--provider oidc \
 --oidc-issuer-url ${OAUTH2_PROXY_OIDC_ISSUER_URL} \
 --upstream http://0.0.0.0:8080  \
 --email-domain ${OAUTH2_PROXY_EMAIL_DOMAIN}  \
@@ -24,4 +26,6 @@ chmod +x ./oauth2-proxy-v7.2.1.linux-amd64/oauth2-proxy
 --pass-basic-auth true \
 --scope "openid offline_access api://${AUDIENCE}/user_impersonation"
 
+# --cookie-secret ${cookiesecret} \
+# --client-id ${OAUTH2_PROXY_CLIENT_ID}  --provider oidc --client-secret ${OAUTH2_PROXY_CLIENT_SECRET} \
 # --scope "openid offline_access api://xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/user_impersonation"
