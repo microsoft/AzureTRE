@@ -94,6 +94,11 @@ jobs:
     name: Deploy Management
     runs-on: ubuntu-latest
     environment: CICD
+    outputs:
+      ACR_NAME: ${{ steps.set_values.outputs.ACR_NAME }}
+      ACTIONS_DEVCONTAINER_TAG: ${{ steps.set_values.outputs.ACTIONS_DEVCONTAINER_TAG }}
+      MGMT_RESOURCE_GROUP: ${{ steps.set_values.outputs.MGMT_RESOURCE_GROUP }}
+      TRE_ID: ${{ steps.set_values.outputs.ACR_NAME }}
     steps:
       - name: Show inputs
         run: |
@@ -268,18 +273,18 @@ jobs:
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ steps.set_values.outputs.ACTIONS_DEVCONTAINER_TAG }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ needs.deploy_management.outputs.ACTIONS_DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          ACR_NAME: ${{ steps.set_values.outputs.ACR_NAME }}
+          ACR_NAME: ${{ needs.deploy_management.outputs.ACR_NAME }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
 
   deploy_tre:
     name: Deploy TRE
     runs-on: ubuntu-latest
-    needs: [build_core_images]
+    needs: [deploy_management, build_core_images]
     environment: CICD
     steps:
       - name: Checkout
@@ -297,7 +302,7 @@ jobs:
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ steps.set_values.outputs.ACTIONS_DEVCONTAINER_TAG }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ needs.deploy_management.outputs.ACTIONS_DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
@@ -308,12 +313,12 @@ jobs:
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
           AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID }}"
           AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET }}"
-          TRE_ID: "${{ steps.set_values.outputs.TRE_ID }}"
+          TRE_ID: "${{ needs.deploy_management.outputs.TRE_ID }}"
           LOCATION: ${{ secrets.LOCATION }}
-          ACR_NAME: ${{ steps.set_values.outputs.ACR_NAME }}
+          ACR_NAME: ${{ needs.deploy_management.outputs.ACR_NAME }}
           TF_VAR_terraform_state_container_name:
             ${{ secrets.TF_STATE_CONTAINER }}
-          TF_VAR_mgmt_resource_group_name: ${{ steps.set_values.outputs.MGMT_RESOURCE_GROUP }}
+          TF_VAR_mgmt_resource_group_name: ${{ needs.deploy_management.outputs.MGMT_RESOURCE_GROUP }}
           TF_VAR_mgmt_storage_account_name:
             ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
           TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
@@ -331,7 +336,7 @@ jobs:
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ steps.set_values.outputs.ACTIONS_DEVCONTAINER_TAG }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ needs.deploy_management.outputs.ACTIONS_DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
@@ -342,12 +347,12 @@ jobs:
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
           AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID }}"
           AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET }}"
-          TRE_ID: "${{ steps.set_values.outputs.TRE_ID }}"
+          TRE_ID: "${{ needs.deploy_management.outputs.TRE_ID }}"
           LOCATION: ${{ secrets.LOCATION }}
-          ACR_NAME: ${{ steps.set_values.outputs.ACR_NAME }}
+          ACR_NAME: ${{ needs.deploy_management.outputs.ACR_NAME }}
           TF_VAR_terraform_state_container_name:
             ${{ secrets.TF_STATE_CONTAINER }}
-          TF_VAR_mgmt_resource_group_name: ${{ steps.set_values.outputs.MGMT_RESOURCE_GROUP }}
+          TF_VAR_mgmt_resource_group_name: ${{ needs.deploy_management.outputs.MGMT_RESOURCE_GROUP }}
           TF_VAR_mgmt_storage_account_name:
             ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
           TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
@@ -365,7 +370,7 @@ jobs:
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ steps.set_values.outputs.ACTIONS_DEVCONTAINER_TAG }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ needs.deploy_management.outputs.ACTIONS_DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
@@ -376,12 +381,12 @@ jobs:
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
           AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID }}"
           AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET }}"
-          TRE_ID: "${{ steps.set_values.outputs.TRE_ID }}"
+          TRE_ID: "${{ needs.deploy_management.outputs.TRE_ID }}"
           LOCATION: ${{ secrets.LOCATION }}
-          ACR_NAME: ${{ steps.set_values.outputs.ACR_NAME }}
+          ACR_NAME: ${{ needs.deploy_management.outputs.ACR_NAME }}
           TF_VAR_terraform_state_container_name:
             ${{ secrets.TF_STATE_CONTAINER }}
-          TF_VAR_mgmt_resource_group_name: ${{ steps.set_values.outputs.MGMT_RESOURCE_GROUP }}
+          TF_VAR_mgmt_resource_group_name: ${{ needs.deploy_management.outputs.MGMT_RESOURCE_GROUP }}
           TF_VAR_mgmt_storage_account_name:
             ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
           TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
@@ -399,7 +404,7 @@ jobs:
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ steps.set_values.outputs.ACTIONS_DEVCONTAINER_TAG }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ needs.deploy_management.outputs.ACTIONS_DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
@@ -410,12 +415,12 @@ jobs:
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
           AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID }}"
           AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET }}"
-          TRE_ID: "${{ steps.set_values.outputs.TRE_ID }}"
+          TRE_ID: "${{ needs.deploy_management.outputs.TRE_ID }}"
           LOCATION: ${{ secrets.LOCATION }}
-          ACR_NAME: ${{ steps.set_values.outputs.ACR_NAME }}
+          ACR_NAME: ${{ needs.deploy_management.outputs.ACR_NAME }}
           TF_VAR_terraform_state_container_name:
             ${{ secrets.TF_STATE_CONTAINER }}
-          TF_VAR_mgmt_resource_group_name: ${{ steps.set_values.outputs.MGMT_RESOURCE_GROUP }}
+          TF_VAR_mgmt_resource_group_name: ${{ needs.deploy_management.outputs.MGMT_RESOURCE_GROUP }}
           TF_VAR_mgmt_storage_account_name:
             ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
           TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
@@ -468,12 +473,12 @@ jobs:
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ steps.set_values.outputs.ACTIONS_DEVCONTAINER_TAG }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ needs.deploy_management.outputs.ACTIONS_DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          ACR_NAME: ${{ steps.set_values.outputs.ACR_NAME }}
+          ACR_NAME: ${{ needs.deploy_management.outputs.ACR_NAME }}
 
   build_additional_images:
     # used to build images NOT used by core infrastructure
@@ -502,18 +507,18 @@ jobs:
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ steps.set_values.outputs.ACTIONS_DEVCONTAINER_TAG }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ needs.deploy_management.outputs.ACTIONS_DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          ACR_NAME: ${{ steps.set_values.outputs.ACR_NAME }}
+          ACR_NAME: ${{ needs.deploy_management.outputs.ACR_NAME }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
 
   register_bundles:
     name: Register Bundles
     runs-on: ubuntu-latest
-    needs: [deploy_tre, publish_bundles]
+    needs: [deploy_management, deploy_tre, publish_bundles]
     strategy:
       matrix:
         include:
@@ -551,18 +556,18 @@ jobs:
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ steps.set_values.outputs.ACTIONS_DEVCONTAINER_TAG }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ needs.deploy_management.outputs.ACTIONS_DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          ACR_NAME: ${{ steps.set_values.outputs.ACR_NAME }}
+          ACR_NAME: ${{ needs.deploy_management.outputs.ACR_NAME }}
           API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
           AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID }}"
           AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET }}"
-          TRE_ID: "${{ steps.set_values.outputs.TRE_ID }}"
+          TRE_ID: "${{ needs.deploy_management.outputs.TRE_ID }}"
           LOCATION: "${{ secrets.LOCATION }}"
           BUNDLE_TYPE: ${{ matrix.BUNDLE_TYPE }}
 
@@ -570,7 +575,7 @@ jobs:
     name: "Run E2E Tests (Smoke)"
     runs-on: ubuntu-latest
     environment: CICD
-    needs: [register_bundles, build_additional_images]
+    needs: [deploy_management, register_bundles, build_additional_images]
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -587,7 +592,7 @@ jobs:
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ steps.set_values.outputs.ACTIONS_DEVCONTAINER_TAG }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ needs.deploy_management.outputs.ACTIONS_DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
@@ -599,7 +604,7 @@ jobs:
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
           AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID }}"
           AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET }}"
-          TRE_ID: "${{ steps.set_values.outputs.TRE_ID }}"
+          TRE_ID: "${{ needs.deploy_management.outputs.TRE_ID }}"
           IS_API_SECURED: false
 
       # For PR builds triggered from comment builds, the GITHUB_REF is set to main
@@ -634,7 +639,7 @@ jobs:
     if: ${{ github.ref == 'refs/heads/main' && inputs.prRef == '' }}
     runs-on: ubuntu-latest
     environment: CICD
-    needs: [register_bundles, build_additional_images]
+    needs: [deploy_management, register_bundles, build_additional_images]
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -651,7 +656,7 @@ jobs:
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ steps.set_values.outputs.ACTIONS_DEVCONTAINER_TAG }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ needs.deploy_management.outputs.ACTIONS_DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
@@ -663,7 +668,7 @@ jobs:
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
           AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID }}"
           AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET }}"
-          TRE_ID: "${{ steps.set_values.outputs.TRE_ID }}"
+          TRE_ID: "${{ needs.deploy_management.outputs.TRE_ID }}"
           IS_API_SECURED: false
 
       - name: Upload Test Results
