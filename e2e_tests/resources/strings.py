@@ -26,3 +26,8 @@ RESOURCE_STATUS_DELETING = "deleting"
 RESOURCE_STATUS_DELETED = "deleted"
 RESOURCE_STATUS_FAILED = "failed"
 RESOURCE_STATUS_DELETING_FAILED = "deleting_failed"
+
+# Resource Action Status
+RESOURCE_ACTION_STATUS_INVOKING = "invoking_action"
+RESOURCE_ACTION_STATUS_SUCCEEDED = "action_succeeded"
+RESOURCE_ACTION_STATUS_FAILED = "action_failed"
