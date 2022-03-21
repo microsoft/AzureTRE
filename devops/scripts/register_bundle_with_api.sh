@@ -14,8 +14,8 @@ function usage() {
 
     Options:
         -r, --acr-name                Azure Container Registry Name
-        -t, --bundle-type             Bundle type, workspace or workspace_service
-        -w, --workspace-service-name  The template name of the user resource
+        -t, --bundle-type             Bundle type: workspace, workspace_service, user_resource or shared_service
+        -w, --workspace-service-name  The template name of the user resource (if registering a user_resource)
         -c, --current                 Make this the currently deployed version of this template
         -i, --insecure                Bypass SSL certificate checks
         -u, --tre_url                 URL for the TRE (required for automatic registration)
@@ -52,8 +52,10 @@ while [ "$1" != "" ]; do
         ;;
         user_resource)
         ;;
+        shared_service)
+        ;;
         *)
-            echo "Bundle type must be workspace, workspace_service or user_resource, not $1"
+            echo "Bundle type must be workspace, workspace_service, shared_service or user_resource, not $1"
             exit 1
         esac
         bundle_type=$1
@@ -97,19 +99,19 @@ if [[ -z ${acr_name:-} ]]; then
     usage
 fi
 
-if [[ -z ${BUNDLE_TYPE:-} ]]; then
+if [[ -z ${bundle_type:-} ]]; then
     echo -e "No bundle type provided\n"
     usage
 fi
 
-if [ ${BUNDLE_TYPE} == "user_resource" ] && [ -z ${workspace_service_name:-} ]; then
+if [ ${bundle_type} == "user_resource" ] && [ -z ${workspace_service_name:-} ]; then
     echo -e "You must supply a workspace service_name name if you are registering a user_resource bundle\n"
     usage
 fi
 
 explain_json=$(porter explain --reference ${acr_name}.azurecr.io/$(yq eval '.name' porter.yaml):v$(yq eval '.version' porter.yaml) -o json)
 
-payload=$(echo ${explain_json} | jq --argfile json_schema template_schema.json --arg current "${current}" --arg bundle_type "${BUNDLE_TYPE}" '. + {"json_schema": $json_schema, "resourceType": $bundle_type, "current": $current}')
+payload=$(echo ${explain_json} | jq --argfile json_schema template_schema.json --arg current "${current}" --arg bundle_type "${bundle_type}" '. + {"json_schema": $json_schema, "resourceType": $bundle_type, "current": $current}')
 
 if [ -z "${access_token:-}" ]
 then
@@ -159,10 +161,11 @@ else
     usage
   fi
 
-  case "${BUNDLE_TYPE}" in
+  case "${bundle_type}" in
     ("workspace") tre_get_path="api/workspace-templates" ;;
     ("workspace_service") tre_get_path="api/workspace-service-templates" ;;
     ("user_resource") tre_get_path="/api/workspace-service-templates/${workspace_service_name}/user-resource-templates";;
+    ("shared_service") tre_get_path="/api/shared-service-templates";;
   esac
 
   echo -e "Server Response:\n"
