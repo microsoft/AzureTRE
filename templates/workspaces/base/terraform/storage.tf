@@ -14,15 +14,16 @@ resource "azurerm_storage_share" "shared_storage" {
   quota                = var.shared_storage_quota
 
   depends_on = [
-    azurerm_private_endpoint.stgfilepe
+    azurerm_private_endpoint.stgfilepe,
+    azurerm_storage_account_network_rules.stgrules
   ]
 }
 
 resource "azurerm_storage_account_network_rules" "stgrules" {
-  resource_group_name  = azurerm_resource_group.ws.name
-  storage_account_name = azurerm_storage_account.stg.name
+  storage_account_id = azurerm_storage_account.stg.id
 
-  default_action = "Deny"
+  # When deploying from a local machine we need to "allow"
+  default_action = var.enable_local_debugging ? "Allow" : "Deny"
   bypass         = ["AzureServices"]
 }
 
@@ -50,7 +51,6 @@ resource "azurerm_private_endpoint" "stgfilepe" {
     subresource_names              = ["File"]
   }
 }
-
 
 resource "azurerm_private_endpoint" "stgblobpe" {
   name                = "stgblobpe-${local.workspace_resource_name_suffix}"
