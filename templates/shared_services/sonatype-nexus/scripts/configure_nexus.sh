@@ -49,7 +49,7 @@ if [ -z "$NEXUS_PASS" ]; then
 fi
 
 # Create proxy for each .json file
-for filename in ./scripts/nexus_config/*.json; do
+for filename in "$(dirname ${BASH_SOURCE[0]})/nexus_config/*.json"; do
     # Check if apt proxy
     base_type=$( jq .baseType $filename | sed 's/"//g')
     repo_type=$( jq .repoType $filename | sed 's/"//g')
