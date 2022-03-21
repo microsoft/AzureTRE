@@ -60,6 +60,12 @@ inputs:
   TEST_USER_PASSWORD:
     description: "The Test User password Id used to interact with the API."
     required: true
+  AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID:
+    description: "The Test Automation Account Client Id used to interact with the API."
+    required: true
+  AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET:
+    description: "The Test Automation Account Client Secret used to interact with the API."
+    required: true
   TEST_WORKSPACE_APP_ID:
     description: "The Test Workspace Id used to interact with the API."
     required: true
@@ -139,13 +145,15 @@ runs:
         ARM_SUBSCRIPTION_ID: "${{ inputs.ARM_SUBSCRIPTION_ID }}"
         API_CLIENT_ID: "${{ inputs.API_CLIENT_ID }}"
         AAD_TENANT_ID: "${{ inputs.AAD_TENANT_ID }}"
-        CLIENT_ID: "${{ inputs.TEST_APP_ID }}"
-        USERNAME: "${{ inputs.TEST_USER_NAME }}"
-        PASSWORD: "${{ inputs.TEST_USER_PASSWORD }}"
+        TEST_WORKSPACE_APP_ID: "${{ inputs.TEST_WORKSPACE_APP_ID }}"
+        TEST_APP_ID: "${{ inputs.TEST_APP_ID }}"
+        TEST_USER_NAME: "${{ inputs.TEST_USER_NAME }}"
+        TEST_USER_PASSWORD: "${{ inputs.TEST_USER_PASSWORD }}"
+        AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID: "${{ inputs.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID }}"
+        AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET: "${{ inputs.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET }}"
         ACR_NAME: ${{ inputs.ACR_NAME }}
         TRE_URL:
             "https://${{inputs.TRE_ID}}.${{inputs.LOCATION}}.cloudapp.azure.com"
-        TEST_WORKSPACE_APP_ID: "${{ inputs.TEST_WORKSPACE_APP_ID }}"
         TRE_ID: "${{ inputs.TRE_ID }}"
         TF_VAR_tre_id: "${{ inputs.TRE_ID }}"
         TF_VAR_terraform_state_container_name:
@@ -193,13 +201,15 @@ runs:
           -e TF_VAR_tre_address_space \
           -e API_CLIENT_ID \
           -e AAD_TENANT_ID \
-          -e CLIENT_ID \
-          -e USERNAME \
-          -e PASSWORD \
           -e TRE_ID \
           -e TF_VAR_tre_id \
           -e TRE_URL \
           -e TEST_WORKSPACE_APP_ID \
+          -e TEST_APP_ID \
+          -e TEST_USER_NAME \
+          -e TEST_USER_PASSWORD \
+          -e AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID \
+          -e AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET \
           -e IS_API_SECURED \
           -e DOCKER_BUILDKIT \
           -e TF_VAR_keyvault_purge_protection_enabled=${{ inputs.TF_VAR_keyvault_purge_protection_enabled }} \

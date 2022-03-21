@@ -13,13 +13,14 @@ function usage() {
     Usage: $0 [-u --tre_url]  [-c --current] [-i --insecure]
 
     Options:
-        -r, --acr-name        Azure Container Registry Name
-        -t, --bundle-type     Bundle type, workspace or workspace_service
-        -c, --current         Make this the currently deployed version of this template
-        -i, --insecure        Bypass SSL certificate checks
-        -u, --tre_url         URL for the TRE (required for automatic registration)
-        -a, --access-token    Azure access token to automatically post to the API (required for automatic registration)
-        -v, --verify          Verify registration with the API
+        -r, --acr-name                Azure Container Registry Name
+        -t, --bundle-type             Bundle type, workspace or workspace_service
+        -w, --workspace-service-name  The template name of the user resource
+        -c, --current                 Make this the currently deployed version of this template
+        -i, --insecure                Bypass SSL certificate checks
+        -u, --tre_url                 URL for the TRE (required for automatic registration)
+        -a, --access-token            Azure access token to automatically post to the API (required for automatic registration)
+        -v, --verify                  Verify registration with the API
 USAGE
     exit 1
 }
@@ -56,6 +57,10 @@ while [ "$1" != "" ]; do
             exit 1
         esac
         bundle_type=$1
+        ;;
+    -w | --workspace-service-name)
+        shift
+        workspace_service_name=$1
         ;;
     -c| --current)
         current="true"
@@ -97,6 +102,11 @@ if [[ -z ${BUNDLE_TYPE:-} ]]; then
     usage
 fi
 
+if [ ${BUNDLE_TYPE} == "user_resource" ] && [ -z ${workspace_service_name:-} ]; then
+    echo -e "You must supply a workspace service_name name if you are registering a user_resource bundle\n"
+    usage
+fi
+
 explain_json=$(porter explain --reference ${acr_name}.azurecr.io/$(yq eval '.name' porter.yaml):v$(yq eval '.version' porter.yaml) -o json)
 
 payload=$(echo ${explain_json} | jq --argfile json_schema template_schema.json --arg current "${current}" --arg bundle_type "${BUNDLE_TYPE}" '. + {"json_schema": $json_schema, "resourceType": $bundle_type, "current": $current}')
@@ -104,7 +114,7 @@ payload=$(echo ${explain_json} | jq --argfile json_schema template_schema.json -
 if [ -z "${access_token:-}" ]
 then
   # We didn't get an access token but we can try to generate one.
-  if [ ! -z "${AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID:-}" ] && [ ! -z ${AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET:-} ] && [ ! -z "${AAD_TENANT_ID:-}" ] && [ ! -z "${API_CLIENT_ID:-}" ]
+  if [ ! -z "${AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID:-}" ] && [ ! -z "${AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET:-}" ] && [ ! -z "${AAD_TENANT_ID:-}" ] && [ ! -z "${API_CLIENT_ID:-}" ]
   then
     # Use client credentials flow with AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID/SECRET
     echo "Using AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID to get token via client credential flow"
@@ -114,12 +124,12 @@ then
       -d 'grant_type=client_credentials'   \
       -d "scope=api://${API_CLIENT_ID}/.default"   \
       -d "client_secret=${AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET}")
-  elif [ ! -z "${API_CLIENT_ID:-}" ] && [ ! -z "${CLIENT_ID:-}" ] && [ ! -z "${USERNAME:-}" ] && [ ! -z "${PASSWORD:-}" ] && [ ! -z "${AAD_TENANT_ID:-}" ]
+  elif [ ! -z "${API_CLIENT_ID:-}" ] && [ ! -z "${TEST_APP_ID:-}" ] && [ ! -z "${TEST_USER_NAME:-}" ] && [ ! -z "${TEST_USER_PASSWORD:-}" ] && [ ! -z "${AAD_TENANT_ID:-}" ]
   then
     # Use resource owner password credentials flow with USERNAME/PASSWORD
-    echo "Using USERNAME to get token via resource owner password credential flow"
+    echo "Using TEST_USER_NAME to get token via resource owner password credential flow"
     token_response=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d \
-      "grant_type=password&resource=${API_CLIENT_ID}&client_id=${CLIENT_ID}&username=${USERNAME}&password=${PASSWORD}&scope=default)" \
+      "grant_type=password&resource=${API_CLIENT_ID}&client_id=${TEST_APP_ID}&username=${TEST_USER_NAME}&password=${TEST_USER_PASSWORD}&scope=default)" \
       https://login.microsoftonline.com/${AAD_TENANT_ID}/oauth2/token)
   fi
 
@@ -152,6 +162,7 @@ else
   case "${BUNDLE_TYPE}" in
     ("workspace") tre_get_path="api/workspace-templates" ;;
     ("workspace_service") tre_get_path="api/workspace-service-templates" ;;
+    ("user_resource") tre_get_path="/api/workspace-service-templates/${workspace_service_name}/user-resource-templates";;
   esac
 
   echo -e "Server Response:\n"

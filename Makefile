@@ -16,7 +16,7 @@ build-and-push-api: build-api-image push-api-image
 build-and-push-resource-processor: build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image
 build-and-push-gitea: build-gitea-image push-gitea-image
 build-and-push-guacamole: build-guacamole-image push-guacamole-image
-tre-deploy: deploy-core deploy-shared-services
+tre-deploy: deploy-core deploy-shared-services show-core-output
 deploy-shared-services: firewall-install gitea-install nexus-install
 
 # to move your environment from the single 'core' deployment (which includes the firewall)
@@ -270,7 +270,7 @@ bundle-register:
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& az acr login --name $${ACR_NAME}	\
 	&& cd ${DIR} \
-	&& ${ROOTPATH}/devops/scripts/register_bundle_with_api.sh --acr-name $${ACR_NAME} --bundle-type $${BUNDLE_TYPE} --current --insecure --tre_url $${TRE_URL} --verify
+	&& ${ROOTPATH}/devops/scripts/register_bundle_with_api.sh --acr-name "$${ACR_NAME}" --bundle-type "$${BUNDLE_TYPE}" --current --insecure --tre_url "$${TRE_URL}" --verify --workspace-service-name "$${WORKSPACE_SERVICE_NAME}"
 
 static-web-upload:
 	$(call target_title, "Uploading to static website") \
@@ -308,3 +308,7 @@ register-aad-workspace:
 	&& pushd ./templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ./devops/scripts/load_env.sh ./templates/core/private.env \
 	&& . ./devops/scripts/register-aad-workspace.sh
+
+show-core-output:
+	$(call target_title,"Display TRE core output") \
+	&& pushd ./templates/core/terraform/ > /dev/null && terraform show && popd > /dev/null

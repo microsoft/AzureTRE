@@ -26,8 +26,6 @@ API_DELETE_USER_RESOURCE = "Delete user resource"
 API_UPDATE_USER_RESOURCE = "Update an existing user resource"
 API_INVOKE_ACTION_ON_USER_RESOURCE = "Invoke action on a user resource"
 
-API_GET_STATUS_OF_SERVICES = "Get status of services"
-
 API_CREATE_WORKSPACE_TEMPLATES = "Register workspace template"
 API_GET_WORKSPACE_TEMPLATES = "Get workspace templates"
 API_GET_WORKSPACE_TEMPLATE_BY_NAME = "Get workspace template by name"
@@ -40,6 +38,13 @@ API_CREATE_SHARED_SERVICE_TEMPLATES = "Register shared service template"
 API_GET_SHARED_SERVICE_TEMPLATES = "Get shared service templates"
 API_GET_SHARED_SERVICE_TEMPLATE_BY_NAME = "Get shared service template by name"
 
+API_GET_ALL_SHARED_SERVICES = "Get all shared services"
+API_GET_SHARED_SERVICE_BY_ID = "Get shared service by Id"
+API_CREATE_SHARED_SERVICE = "Create a shared service"
+API_UPDATE_SHARED_SERVICE = "Update an existing shared service"
+API_DELETE_SHARED_SERVICE = "Delete shared service"
+API_INVOKE_ACTION_ON_SHARED_SERVICE = "Invoke action on a shared service"
+
 API_CREATE_USER_RESOURCE_TEMPLATES = "Register user resource template"
 API_GET_USER_RESOURCE_TEMPLATES = "Get user resource templates applicable to the workspace service template"
 API_GET_USER_RESOURCE_TEMPLATE_BY_NAME = "Get user resource template by name and workspace service"
@@ -50,6 +55,10 @@ NOT_OK = "Not OK"
 COSMOS_DB = "Cosmos DB"
 STATE_STORE_ENDPOINT_NOT_RESPONDING = "State Store endpoint is not responding"
 UNSPECIFIED_ERROR = "Unspecified error"
+
+# Service bus status
+SERVICE_BUS = "Service Bus"
+SERVICE_BUS_NOT_RESPONDING = "Service Bus is not responding"
 
 # Error strings
 ACCESS_APP_IS_MISSING_ROLE = "The App is missing role"
@@ -91,6 +100,8 @@ WORKSPACE_SERVICE_TEMPLATE_DOES_NOT_EXIST = "Could not retrieve the workspace se
 TEMPLATE_DOES_NOT_EXIST = "Could not retrieve the 'current' template with this name"
 NO_UNIQUE_CURRENT_FOR_TEMPLATE = "The template has multiple 'current' versions"
 
+SHARED_SERVICE_DOES_NOT_EXIST = "Shared service does not exist"
+
 SHARED_SERVICE_TEMPLATE_DOES_NOT_EXIST = "Could not retrieve the workspace service template specified"
 SHARED_SERVICE_TEMPLATE_VERSION_EXISTS = "A template with this version already exists"
 
@@ -119,6 +130,7 @@ RESOURCE_TYPE_SHARED_SERVICE = "shared-service"
 
 # Deployments
 RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE = "This resource has not yet been deployed"
+RESOURCE_STATUS_UPGRADE_NOT_STARTED_MESSAGE = "The upgrade for this resource has not yet started"
 
 # Service bus
 SERVICE_BUS_GENERAL_ERROR_MESSAGE = "Service bus failure"

@@ -85,16 +85,26 @@ export -f delete_resource_diagnostic
 
 echo "Looking for diagnostic settings..."
 # sometimes, diagnostic settings aren't deleted with the resource group. we need to manually do that,
-# and unfortuanlly, there's no easy way to list all that are present.
+# and unfortunately, there's no easy way to list all that are present.
 # using xargs to run in parallel.
 az resource list --resource-group ${core_tre_rg} --query '[].[id]' -o tsv | xargs -P 10 -I {} bash -c 'delete_resource_diagnostic "{}"'
 
+
 # purge keyvault if possible (makes it possible to reuse the same tre_id later)
 # this has to be done before we delete the resource group since we might not wait for it to complete
+
+# DEBUG START
+# This section is to aid debugging an issue where keyvaults aren't being deleted and purged
 echo "keyvault properties:"
 az keyvault list --resource-group ${core_tre_rg} --query "[].properties"
 echo "keyvault purge protection evaluation result:"
 az keyvault list --resource-group ${core_tre_rg} --query "[?properties.enablePurgeProtection==``null``] | length (@)"
+
+if [[ -n ${SHOW_KEYVAULT_DEBUG_ON_DESTROY:-} ]]; then
+  az keyvault list --resource-group ${core_tre_rg} --query "[].properties" --debug
+fi
+# DEBUG END
+
 if [[ $(az keyvault list --resource-group ${core_tre_rg} --query "[?properties.enablePurgeProtection==``null``] | length (@)") != 0 ]]; then
   tre_id=${core_tre_rg#"rg-"}
   keyvault_name="kv-${tre_id}"

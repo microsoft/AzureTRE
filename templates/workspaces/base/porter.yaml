@@ -62,8 +62,10 @@ install:
         address_space: "{{ bundle.parameters.address_space }}"
         shared_storage_quota: "{{ bundle.parameters.shared_storage_quota }}"
       backendConfig:
-        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
+        resource_group_name:
+          "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name:
+          "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "tre-workspace-base-{{ bundle.parameters.id }}"
 
@@ -84,7 +86,9 @@ uninstall:
         address_space: "{{ bundle.parameters.address_space }}"
         shared_storage_quota: "{{ bundle.parameters.shared_storage_quota }}"
       backendConfig:
-        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
+        resource_group_name:
+          "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name:
+          "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "tre-workspace-base-{{ bundle.parameters.id }}"
