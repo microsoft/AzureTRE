@@ -46,20 +46,41 @@ write_files:
       #!/bin/bash
       # Get the current password so we can post to the API
       # (this is created in the /nexus-data mounted volume as part of Nexus container start-up in cloud-init)
-      timeout=120
+      password_timeout=120
+      echo 'Checking for Nexus admin password file...'
       while [ ! -f /etc/nexus-data/admin.password ]; do
         # We must first wait for the file to be created
-        if [ $timeout == 0 ]; then
+        if [ $password_timeout == 0 ]; then
           echo 'ERROR - Timeout while waiting for nexus-data/admin.password to be created'
           exit 1
         fi
         sleep 1
-        ((timeout--))
+        ((password_timeout--))
       done
       CURRENT_PASSWORD=$(cat /etc/nexus-data/admin.password)
+
       # Set our own admin password so we can connect to the Nexus repository manager later on using TF KV secret
-      curl -ifu admin:$CURRENT_PASSWORD -XPUT -H 'Content-Type:text/plain' --data '${nexus_admin_password}' \
-        http://localhost:8081/service/rest/v1/security/users/admin/change-password
+      reset_timeout=120
+      echo 'Nexus default admin password found. Resetting...'
+      # While the container is starting up it may return a number of transient errors (i.e. connection reset) which we need to retry until operational
+      # NOTE: we can't use curl's built-in retry flags as it doesn't catch for the connection reset response
+      res=1
+      while test "$res" != "0"; do
+        curl -ifu admin:$CURRENT_PASSWORD -XPUT -H 'Content-Type:text/plain' --data '${nexus_admin_password}' \
+          http://localhost/service/rest/v1/security/users/admin/change-password
+        $res=$?
+        echo "Attempt to reset password finished with code $res"
+        if test "$res" == "0"; then
+          echo 'Password reset successfully. Admin can now log in with secret stored in KeyVault. Nexus configuration complete.'
+        else
+          if [ $reset_timeout == 0 ]; then
+            echo 'ERROR - Timeout while trying to reset Nexus admin password'
+            exit 1
+          fi
+          sleep 5
+          ((reset_timeout+=5))
+        fi
+      done
     permissions: '0744'
 
 runcmd:
@@ -68,7 +89,7 @@ runcmd:
   - chown -R 200 /etc/nexus-data
   # Run the nexus container (exposing port 8081 and mapping volume for nexus config)
   - docker run -d
-      -p 8081:8081
+      -p 80:8081 -p 443:8081
       -v /etc/nexus-data:/nexus-data
       --restart always
       --name nexus

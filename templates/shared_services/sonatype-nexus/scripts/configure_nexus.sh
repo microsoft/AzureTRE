@@ -38,7 +38,7 @@ while [ "$1" != "" ]; do
     shift # remove the current value for `$1` and use the next
 done
 
-export NEXUS_URL="http://nexus-${tre_id}.${location}.cloudapp.azure.com:8081" # TODO: change to https once ssl cert is added
+export NEXUS_URL="http://nexus-${tre_id}.${location}.cloudapp.azure.com" # TODO: change to https once ssl cert is added
 export NEXUS_ADMIN_PASSWORD_NAME="nexus-admin-password"
 export KEYVAULT_NAME="kv-${tre_id}"
 export NEXUS_PASS=$(az keyvault secret show --name ${NEXUS_ADMIN_PASSWORD_NAME} --vault-name ${KEYVAULT_NAME} -o json | jq -r '.value')
