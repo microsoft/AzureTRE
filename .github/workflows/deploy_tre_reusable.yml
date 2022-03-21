@@ -16,27 +16,32 @@ on:
         description: The git ref to use in annotations to associate a deployment with the code that triggered it
         type: string
         required: true
+      # Note: the following values exist both here and under secrets. See the comment in the set_values step
       ACR_NAME:
-        required: true
+        required: false
         type: string
       ACTIONS_DEVCONTAINER_TAG:
-        required: true
+        required: false
         type: string
       MGMT_RESOURCE_GROUP:
-        required: true
+        required: false
         type: string
       TRE_ID:
-        required: true
+        required: false
         type: string
     secrets:
       AAD_TENANT_ID:
         required: true
+      ACR_NAME:
+        required: false
       ACTIONS_ACR_NAME:
         required: true
       ACTIONS_ACR_URI:
         required: true
       ACTIONS_ACR_PASSWORD:
         required: true
+      ACTIONS_DEVCONTAINER_TAG:
+        required: false
       API_CLIENT_ID:
         required: true
       API_CLIENT_SECRET:
@@ -53,6 +58,8 @@ on:
         required: true
       LOCATION:
         required: true
+      MGMT_RESOURCE_GROUP:
+        required: false
       MS_TEAMS_WEBHOOK_URI:
         required: true
       STATE_STORAGE_ACCOUNT_NAME:
@@ -75,6 +82,8 @@ on:
         required: false
       TF_LOG:
         required: false
+      TRE_ID:
+        required: false
 
 # This will prevent multiple runs of this entire workflow.
 # We should NOT cancel in progress runs as that can destabilize the environment.
@@ -94,6 +103,68 @@ jobs:
           echo "prRHeadSha: ${{ inputs.prHeadSha }}"
           echo "ciGitRef  : ${{ inputs.ciGitRef }}"
 
+      - name: Set values
+        id: set_values
+        run: |
+          # We want to be able to use the environment secret for TRE_ID when running against main
+          # and the PR value when running a PR
+          #
+          # For main builds, the values coming from repo/environment secrets means that they
+          # will be masked in the output
+          # For PR builds, it is helpful if these values are not masked, which is why the values
+          # were moved from secrets to inputs
+          #
+          # However, the following error occurrs when attempting to pass secrets as  inputs:
+          #     "Unrecognized named-value: 'secrets'"
+          #
+          # As a way round this, the values manipulated in this step are allowed to be omitted
+          # when invoking this workflow and are defaulted to the environment secrets if missing.
+          #
+          # This way, the main build can omit the values and PR builds can supply them
+          # Future steps in this workflow can then use the outputs from this step and will
+          # get the correct values
+
+
+          echo "running..."
+
+          if [[ -z ${ACR_NAME_INPUT} && -z ${ACR_NAME_SECRET} ]]; then
+            echo "Must set one of ACR_NAME_INPUT or ACR_NAME_SECRET"
+            exit 1
+          fi
+          echo "::set-output name=ACR_NAME::${ACR_NAME_INPUT:-$ACR_NAME_SECRET}"
+
+
+          if [[ -z ${ACTIONS_DEVCONTAINER_TAG_INPUT} && -z ${ACTIONS_DEVCONTAINER_TAG_SECRET} ]]; then
+            echo "Must set one of ACTIONS_DEVCONTAINER_TAG_INPUT or ACTIONS_DEVCONTAINER_TAG_SECRET"
+            exit 1
+          fi
+          echo "::set-output name=ACTIONS_DEVCONTAINER_TAG::${ACTIONS_DEVCONTAINER_TAG_INPUT:-$ACTIONS_DEVCONTAINER_TAG_SECRET}"
+
+
+          if [[ -z ${MGMT_RESOURCE_GROUP_INPUT} && -z ${MGMT_RESOURCE_GROUP_SECRET} ]]; then
+            echo "Must set one of MGMT_RESOURCE_GROUP_INPUT or MGMT_RESOURCE_GROUP_SECRET"
+            exit 1
+          fi
+          echo "::set-output name=MGMT_RESOURCE_GROUP::${MGMT_RESOURCE_GROUP_INPUT:-$MGMT_RESOURCE_GROUP_SECRET}"
+
+
+          if [[ -z ${TRE_ID_INPUT} && -z ${TRE_ID_SECRET} ]]; then
+            echo "Must set one of TRE_ID_INPUT or TRE_ID_SECRET"
+            exit 1
+          fi
+          echo "::set-output name=TRE_ID::${TRE_ID_INPUT:-$TRE_ID_SECRET}"
+
+
+          echo "done."
+        env:
+          ACR_NAME_INPUT: ${{ inputs.ACR_NAME }}
+          ACR_NAME_SECRET:  ${{ secrets.ACR_NAME }}
+          ACTIONS_DEVCONTAINER_TAG_INPUT: ${{ inputs.ACTIONS_DEVCONTAINER_TAG }}
+          ACTIONS_DEVCONTAINER_TAG_SECRET:  ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
+          MGMT_RESOURCE_GROUP_INPUT: ${{ inputs.MGMT_RESOURCE_GROUP }}
+          MGMT_RESOURCE_GROUP_SECRET:  ${{ secrets.MGMT_RESOURCE_GROUP }}
+          TRE_ID_INPUT: ${{ inputs.TRE_ID }}
+          TRE_ID_SECRET:  ${{ secrets.TRE_ID }}
       - name: Checkout
         uses: actions/checkout@v2
         with:
@@ -138,19 +209,19 @@ jobs:
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ inputs.ACTIONS_DEVCONTAINER_TAG }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ steps.set_values.outputs.ACTIONS_DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
           API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
-          TRE_ID: "${{ inputs.TRE_ID }}"
+          TRE_ID: "${{ steps.set_values.outputs.treId }}"
           LOCATION: ${{ secrets.LOCATION }}
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
-          ACR_NAME: ${{ inputs.ACR_NAME }}
+          ACR_NAME: ${{ steps.set_values.outputs.ACR_NAME }}
           TF_VAR_terraform_state_container_name:
             ${{ secrets.TF_STATE_CONTAINER }}
-          TF_VAR_mgmt_resource_group_name: "${{ inputs.MGMT_RESOURCE_GROUP }}"
+          TF_VAR_mgmt_resource_group_name: "${{ steps.set_values.outputs.MGMT_RESOURCE_GROUP }}"
           TF_VAR_mgmt_storage_account_name:
             ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
           TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
@@ -165,7 +236,7 @@ jobs:
         run: |
           set -e
           docker image push \
-            ${{ secrets.ACTIONS_ACR_URI }}tredev:${{ inputs.ACTIONS_DEVCONTAINER_TAG }}
+            ${{ secrets.ACTIONS_ACR_URI }}tredev:${{ steps.set_values.outputs.ACTIONS_DEVCONTAINER_TAG }}
 
   build_core_images:
     # used to build images used by core infrastructure
@@ -197,12 +268,12 @@ jobs:
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ inputs.ACTIONS_DEVCONTAINER_TAG }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ steps.set_values.outputs.ACTIONS_DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          ACR_NAME: ${{ inputs.ACR_NAME }}
+          ACR_NAME: ${{ steps.set_values.outputs.ACR_NAME }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
 
   deploy_tre:
@@ -226,7 +297,7 @@ jobs:
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ inputs.ACTIONS_DEVCONTAINER_TAG }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ steps.set_values.outputs.ACTIONS_DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
@@ -237,12 +308,12 @@ jobs:
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
           AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID }}"
           AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET }}"
-          TRE_ID: "${{ inputs.TRE_ID }}"
+          TRE_ID: "${{ steps.set_values.outputs.TRE_ID }}"
           LOCATION: ${{ secrets.LOCATION }}
-          ACR_NAME: ${{ inputs.ACR_NAME }}
+          ACR_NAME: ${{ steps.set_values.outputs.ACR_NAME }}
           TF_VAR_terraform_state_container_name:
             ${{ secrets.TF_STATE_CONTAINER }}
-          TF_VAR_mgmt_resource_group_name: ${{ inputs.MGMT_RESOURCE_GROUP }}
+          TF_VAR_mgmt_resource_group_name: ${{ steps.set_values.outputs.MGMT_RESOURCE_GROUP }}
           TF_VAR_mgmt_storage_account_name:
             ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
           TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
@@ -260,7 +331,7 @@ jobs:
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ inputs.ACTIONS_DEVCONTAINER_TAG }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ steps.set_values.outputs.ACTIONS_DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
@@ -271,12 +342,12 @@ jobs:
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
           AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID }}"
           AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET }}"
-          TRE_ID: "${{ inputs.TRE_ID }}"
+          TRE_ID: "${{ steps.set_values.outputs.TRE_ID }}"
           LOCATION: ${{ secrets.LOCATION }}
-          ACR_NAME: ${{ inputs.ACR_NAME }}
+          ACR_NAME: ${{ steps.set_values.outputs.ACR_NAME }}
           TF_VAR_terraform_state_container_name:
             ${{ secrets.TF_STATE_CONTAINER }}
-          TF_VAR_mgmt_resource_group_name: ${{ inputs.MGMT_RESOURCE_GROUP }}
+          TF_VAR_mgmt_resource_group_name: ${{ steps.set_values.outputs.MGMT_RESOURCE_GROUP }}
           TF_VAR_mgmt_storage_account_name:
             ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
           TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
@@ -294,7 +365,7 @@ jobs:
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ inputs.ACTIONS_DEVCONTAINER_TAG }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ steps.set_values.outputs.ACTIONS_DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
@@ -305,12 +376,12 @@ jobs:
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
           AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID }}"
           AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET }}"
-          TRE_ID: "${{ inputs.TRE_ID }}"
+          TRE_ID: "${{ steps.set_values.outputs.TRE_ID }}"
           LOCATION: ${{ secrets.LOCATION }}
-          ACR_NAME: ${{ inputs.ACR_NAME }}
+          ACR_NAME: ${{ steps.set_values.outputs.ACR_NAME }}
           TF_VAR_terraform_state_container_name:
             ${{ secrets.TF_STATE_CONTAINER }}
-          TF_VAR_mgmt_resource_group_name: ${{ inputs.MGMT_RESOURCE_GROUP }}
+          TF_VAR_mgmt_resource_group_name: ${{ steps.set_values.outputs.MGMT_RESOURCE_GROUP }}
           TF_VAR_mgmt_storage_account_name:
             ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
           TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
@@ -328,7 +399,7 @@ jobs:
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ inputs.ACTIONS_DEVCONTAINER_TAG }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ steps.set_values.outputs.ACTIONS_DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
@@ -339,12 +410,12 @@ jobs:
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
           AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID }}"
           AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET }}"
-          TRE_ID: "${{ inputs.TRE_ID }}"
+          TRE_ID: "${{ steps.set_values.outputs.TRE_ID }}"
           LOCATION: ${{ secrets.LOCATION }}
-          ACR_NAME: ${{ inputs.ACR_NAME }}
+          ACR_NAME: ${{ steps.set_values.outputs.ACR_NAME }}
           TF_VAR_terraform_state_container_name:
             ${{ secrets.TF_STATE_CONTAINER }}
-          TF_VAR_mgmt_resource_group_name: ${{ inputs.MGMT_RESOURCE_GROUP }}
+          TF_VAR_mgmt_resource_group_name: ${{ steps.set_values.outputs.MGMT_RESOURCE_GROUP }}
           TF_VAR_mgmt_storage_account_name:
             ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
           TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
@@ -397,12 +468,12 @@ jobs:
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ inputs.ACTIONS_DEVCONTAINER_TAG }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ steps.set_values.outputs.ACTIONS_DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          ACR_NAME: ${{ inputs.ACR_NAME }}
+          ACR_NAME: ${{ steps.set_values.outputs.ACR_NAME }}
 
   build_additional_images:
     # used to build images NOT used by core infrastructure
@@ -431,12 +502,12 @@ jobs:
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ inputs.ACTIONS_DEVCONTAINER_TAG }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ steps.set_values.outputs.ACTIONS_DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          ACR_NAME: ${{ inputs.ACR_NAME }}
+          ACR_NAME: ${{ steps.set_values.outputs.ACR_NAME }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
 
   register_bundles:
@@ -480,18 +551,18 @@ jobs:
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ inputs.ACTIONS_DEVCONTAINER_TAG }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ steps.set_values.outputs.ACTIONS_DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          ACR_NAME: ${{ inputs.ACR_NAME }}
+          ACR_NAME: ${{ steps.set_values.outputs.ACR_NAME }}
           API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
           AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID }}"
           AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET }}"
-          TRE_ID: "${{ inputs.TRE_ID }}"
+          TRE_ID: "${{ steps.set_values.outputs.TRE_ID }}"
           LOCATION: "${{ secrets.LOCATION }}"
           BUNDLE_TYPE: ${{ matrix.BUNDLE_TYPE }}
 
@@ -516,7 +587,7 @@ jobs:
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ inputs.ACTIONS_DEVCONTAINER_TAG }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ steps.set_values.outputs.ACTIONS_DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
@@ -528,7 +599,7 @@ jobs:
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
           AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID }}"
           AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET }}"
-          TRE_ID: "${{ inputs.TRE_ID }}"
+          TRE_ID: "${{ steps.set_values.outputs.TRE_ID }}"
           IS_API_SECURED: false
 
       # For PR builds triggered from comment builds, the GITHUB_REF is set to main
@@ -580,7 +651,7 @@ jobs:
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ inputs.ACTIONS_DEVCONTAINER_TAG }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ steps.set_values.outputs.ACTIONS_DEVCONTAINER_TAG }}
           ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
           ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
           ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
@@ -592,7 +663,7 @@ jobs:
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
           AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID }}"
           AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET }}"
-          TRE_ID: "${{ inputs.TRE_ID }}"
+          TRE_ID: "${{ steps.set_values.outputs.TRE_ID }}"
           IS_API_SECURED: false
 
       - name: Upload Test Results
