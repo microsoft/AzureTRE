@@ -38,15 +38,13 @@ while [ "$1" != "" ]; do
     shift # remove the current value for `$1` and use the next
 done
 
-export NEXUS_URL="https://nexus-${tre_id}.${location}.cloudapp.azure.com:8081"
+export NEXUS_URL="http://nexus-${tre_id}.${location}.cloudapp.azure.com:8081" # TODO: change to https once ssl cert is added
 export NEXUS_ADMIN_PASSWORD_NAME="nexus-admin-password"
 export KEYVAULT_NAME="kv-${tre_id}"
-export STORAGE_ACCOUNT_NAME="stg${tre_id//-/}"
-
 export NEXUS_PASS=$(az keyvault secret show --name ${NEXUS_ADMIN_PASSWORD_NAME} --vault-name ${KEYVAULT_NAME} -o json | jq -r '.value')
 
 if [ -z "$NEXUS_PASS" ]; then
-  echo "Unable to get the Nexus admin password from Keyvault. You may need to manually reset it - refer to the public Nexus documentation for more information."
+  echo "Unable to get the Nexus admin password from Keyvault. You may need to manually reset it in the Nexus host. Refer to the public Nexus documentation for more information."
   exit 1
 fi
 

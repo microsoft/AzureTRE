@@ -64,7 +64,7 @@ resource "azurerm_key_vault_secret" "nexus_vm_password" {
   key_vault_id = data.azurerm_key_vault.kv.id
 }
 
-resource "azurerm_key_vault_secret" "nexus_vm_password" {
+resource "azurerm_key_vault_secret" "nexus_admin_password" {
   name         = "nexus-admin-password"
   value        = random_password.nexus_admin_password.result
   key_vault_id = data.azurerm_key_vault.kv.id

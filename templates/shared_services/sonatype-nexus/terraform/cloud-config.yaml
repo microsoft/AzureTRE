@@ -40,6 +40,27 @@ write_files:
     content: |
       nexus.skipDefaultRepositories=true
     permissions: '0755'
+  # Write a script that will reset the admin password for Nexus to the one TF generated
+  - path: /home/adminuser/reset-nexus-password.sh
+    content: |
+      #!/bin/bash
+      # Get the current password so we can post to the API
+      # (this is created in the /nexus-data mounted volume as part of Nexus container start-up in cloud-init)
+      timeout=120
+      while [ ! -f /etc/nexus-data/admin.password ]; do
+        # We must first wait for the file to be created
+        if [ $timeout == 0 ]; then
+          echo 'ERROR - Timeout while waiting for nexus-data/admin.password to be created'
+          exit 1
+        fi
+        sleep 1
+        ((timeout--))
+      done
+      CURRENT_PASSWORD=$(cat /etc/nexus-data/admin.password)
+      # Set our own admin password so we can connect to the Nexus repository manager later on using TF KV secret
+      curl -ifu admin:$CURRENT_PASSWORD -XPUT -H 'Content-Type:text/plain' --data '${nexus_admin_password}' \
+        http://localhost:8081/service/rest/v1/security/users/admin/change-password
+    permissions: '0744'
 
 runcmd:
   - export DEBIAN_FRONTEND=noninteractive
@@ -47,13 +68,11 @@ runcmd:
   - chown -R 200 /etc/nexus-data
   # Run the nexus container (exposing port 8081 and mapping volume for nexus config)
   - docker run -d
-    -p 8081:8081
-    -v /etc/nexus-data:/nexus-data
-    --restart always
-    --name nexus
-    --log-driver local
-    sonatype/nexus3
-  # Set our own admin password so we can connect to the Nexus repository manager later on
-  - CURRENT_PASSWORD=$(cat /etc/nexus-data/admin.password)
-  - curl -ifu admin:${CURRENT_PASSWORD} -XPUT -H 'Content-Type: text/plain' --data "${nexus_admin_password}" \
-      http://localhost:8081/service/rest/v1/security/users/admin/change-password
+      -p 8081:8081
+      -v /etc/nexus-data:/nexus-data
+      --restart always
+      --name nexus
+      --log-driver local
+      sonatype/nexus3
+  # Run the script to reset Nexus password (we write this as a script file first to avoid tricky handling of special chars in yml)
+  - bash /home/adminuser/reset-nexus-password.sh
