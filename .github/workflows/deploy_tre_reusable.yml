@@ -61,6 +61,10 @@ on:
         required: true
       TEST_WORKSPACE_APP_ID:
         required: true
+      AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID:
+        required: true
+      AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET:
+        required: true
       TF_STATE_CONTAINER:
         required: true
       TRE_ADDRESS_SPACE:
@@ -80,7 +84,7 @@ jobs:
   deploy_management:
     name: Deploy Management
     runs-on: ubuntu-latest
-    environment: Dev
+    environment: CICD
     steps:
       - name: Show inputs
         run: |
@@ -168,7 +172,7 @@ jobs:
     name: Build Core Docker Images
     runs-on: ubuntu-latest
     needs: [deploy_management]
-    environment: Dev
+    environment: CICD
     strategy:
       fail-fast: true
       matrix:
@@ -205,7 +209,7 @@ jobs:
     name: Deploy TRE
     runs-on: ubuntu-latest
     needs: [build_core_images]
-    environment: Dev
+    environment: CICD
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -233,6 +237,8 @@ jobs:
           TEST_USER_NAME: "${{ secrets.TEST_USER_NAME }}"
           TEST_USER_PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
+          AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID }}"
+          AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
           LOCATION: ${{ secrets.LOCATION }}
           ACR_NAME: ${{ secrets.ACR_NAME }}
@@ -267,6 +273,8 @@ jobs:
           TEST_USER_NAME: "${{ secrets.TEST_USER_NAME }}"
           TEST_USER_PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
+          AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID }}"
+          AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
           LOCATION: ${{ secrets.LOCATION }}
           ACR_NAME: ${{ secrets.ACR_NAME }}
@@ -301,6 +309,8 @@ jobs:
           TEST_USER_NAME: "${{ secrets.TEST_USER_NAME }}"
           TEST_USER_PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
+          AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID }}"
+          AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
           LOCATION: ${{ secrets.LOCATION }}
           ACR_NAME: ${{ secrets.ACR_NAME }}
@@ -335,6 +345,8 @@ jobs:
           TEST_USER_NAME: "${{ secrets.TEST_USER_NAME }}"
           TEST_USER_PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
+          AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID }}"
+          AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
           LOCATION: ${{ secrets.LOCATION }}
           ACR_NAME: ${{ secrets.ACR_NAME }}
@@ -376,7 +388,7 @@ jobs:
              BUNDLE_DIR: "./templates/workspace_services/gitea"}
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/mlflow"}
-    environment: Dev
+    environment: CICD
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -405,7 +417,7 @@ jobs:
     name: Build Additional Docker Images
     runs-on: ubuntu-latest
     needs: [deploy_management]
-    environment: Dev
+    environment: CICD
     strategy:
       fail-fast: true
       matrix:
@@ -460,7 +472,7 @@ jobs:
              BUNDLE_DIR: "./templates/workspace_services/gitea"}
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/mlflow"}
-    environment: Dev
+    environment: CICD
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -487,6 +499,8 @@ jobs:
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
           TEST_USER_NAME: "${{ secrets.TEST_USER_NAME }}"
           TEST_USER_PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
+          AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID }}"
+          AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
           LOCATION: "${{ secrets.LOCATION }}"
           BUNDLE_TYPE: ${{ matrix.BUNDLE_TYPE }}
@@ -494,7 +508,7 @@ jobs:
   e2e_tests_smoke:
     name: "Run E2E Tests (Smoke)"
     runs-on: ubuntu-latest
-    environment: Dev
+    environment: CICD
     needs: [register_bundles, build_additional_images]
     steps:
       - name: Checkout
@@ -524,6 +538,8 @@ jobs:
           TEST_USER_NAME: "${{ secrets.TEST_USER_NAME }}"
           TEST_USER_PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
+          AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID }}"
+          AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
           IS_API_SECURED: false
 
@@ -558,7 +574,7 @@ jobs:
     name: "Run E2E Tests (Extended)"
     if: ${{ github.ref == 'refs/heads/main' && inputs.prRef == '' }}
     runs-on: ubuntu-latest
-    environment: Dev
+    environment: CICD
     needs: [register_bundles, build_additional_images]
     steps:
       - name: Checkout
@@ -588,6 +604,8 @@ jobs:
           TEST_USER_NAME: "${{ secrets.TEST_USER_NAME }}"
           TEST_USER_PASSWORD: "${{ secrets.TEST_USER_PASSWORD }}"
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
+          AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID }}"
+          AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
           IS_API_SECURED: false
 
@@ -609,7 +627,7 @@ jobs:
     needs: [e2e_tests_smoke, e2e_tests_extended]
     runs-on: ubuntu-latest
     if: ${{ always() && (github.ref == 'refs/heads/main' && inputs.prRef == '') }}
-    environment: Dev
+    environment: CICD
     steps:
       - uses: technote-space/workflow-conclusion-action@v2
 

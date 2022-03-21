@@ -114,7 +114,7 @@ payload=$(echo ${explain_json} | jq --argfile json_schema template_schema.json -
 if [ -z "${access_token:-}" ]
 then
   # We didn't get an access token but we can try to generate one.
-  if [ ! -z "${AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID:-}" ] && [ ! -z ${AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET:-} ] && [ ! -z "${AAD_TENANT_ID:-}" ] && [ ! -z "${API_CLIENT_ID:-}" ]
+  if [ ! -z "${AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID:-}" ] && [ ! -z "${AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET:-}" ] && [ ! -z "${AAD_TENANT_ID:-}" ] && [ ! -z "${API_CLIENT_ID:-}" ]
   then
     # Use client credentials flow with AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID/SECRET
     echo "Using AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID to get token via client credential flow"
