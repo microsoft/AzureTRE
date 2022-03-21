@@ -44,7 +44,7 @@ parameters:
   - name: shared_storage_quota
     type: integer
     default: 50
-  - name: storage_is_exposed_externally
+  - name: enable_local_debugging
     type: boolean
     default: false
 mixins:
@@ -61,8 +61,8 @@ install:
         location: "{{ bundle.parameters.azure_location }}"
         address_space: "{{ bundle.parameters.address_space }}"
         shared_storage_quota: "{{ bundle.parameters.shared_storage_quota }}"
-        storage_is_exposed_externally:
-          "{{ bundle.parameters.storage_is_exposed_externally }}"
+        enable_local_debugging:
+          "{{ bundle.parameters.enable_local_debugging }}"
       backendConfig:
         resource_group_name:
           "{{ bundle.parameters.tfstate_resource_group_name }}"
@@ -89,8 +89,8 @@ uninstall:
         location: "{{ bundle.parameters.azure_location }}"
         address_space: "{{ bundle.parameters.address_space }}"
         shared_storage_quota: "{{ bundle.parameters.shared_storage_quota }}"
-        storage_is_exposed_externally:
-          "{{ bundle.parameters.storage_is_exposed_externally }}"
+        enable_local_debugging:
+          "{{ bundle.parameters.enable_local_debugging }}"
       backendConfig:
         resource_group_name:
           "{{ bundle.parameters.tfstate_resource_group_name }}"
