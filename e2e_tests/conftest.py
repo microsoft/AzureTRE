@@ -38,6 +38,7 @@ async def admin_token(verify) -> str:
         response = await client.post(url, headers=headers, content=payload)
         responseJson = response.json()
 
+        assert "access_token" in responseJson, "Failed to get access_token: {}".format(response.content)
         token = responseJson["access_token"]
         assert token is not None, "Token not returned"
         return token if (response.status_code == status.HTTP_200_OK) else None
@@ -59,8 +60,10 @@ async def workspace_owner_token(verify) -> str:
             url = f"https://login.microsoftonline.com/{config.AAD_TENANT_ID}/oauth2/token"
 
         response = await client.post(url, headers=headers, content=payload)
-        token = response.json()["access_token"]
+        responseJson = response.json()
 
+        assert "access_token" in responseJson, "Failed to get access_token: {}".format(response.content)
+        token = responseJson["access_token"]
         assert token is not None, "Token not returned"
 
         return token if (response.status_code == status.HTTP_200_OK) else None
