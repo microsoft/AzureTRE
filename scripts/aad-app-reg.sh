@@ -2,6 +2,7 @@
 
 # Setup Script
 set -euo pipefail
+AZURE_CORE_OUTPUT=jsonc # force CLI output to JSON for the script (user can still change default for interactive usage in the dev container)
 
 function show_usage()
 {
