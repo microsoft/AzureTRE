@@ -54,12 +54,6 @@ inputs:
   TEST_APP_ID:
     description: "The Test Application Id used to interact with the API."
     required: true
-  TEST_USER_NAME:
-    description: "The Test User used to interact with the API."
-    required: true
-  TEST_USER_PASSWORD:
-    description: "The Test User password Id used to interact with the API."
-    required: true
   AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID:
     description: "The Test Automation Account Client Id used to interact with the API."
     required: true
@@ -147,8 +141,6 @@ runs:
         AAD_TENANT_ID: "${{ inputs.AAD_TENANT_ID }}"
         TEST_WORKSPACE_APP_ID: "${{ inputs.TEST_WORKSPACE_APP_ID }}"
         TEST_APP_ID: "${{ inputs.TEST_APP_ID }}"
-        TEST_USER_NAME: "${{ inputs.TEST_USER_NAME }}"
-        TEST_USER_PASSWORD: "${{ inputs.TEST_USER_PASSWORD }}"
         AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID: "${{ inputs.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID }}"
         AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET: "${{ inputs.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET }}"
         ACR_NAME: ${{ inputs.ACR_NAME }}
@@ -206,8 +198,6 @@ runs:
           -e TRE_URL \
           -e TEST_WORKSPACE_APP_ID \
           -e TEST_APP_ID \
-          -e TEST_USER_NAME \
-          -e TEST_USER_PASSWORD \
           -e AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID \
           -e AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET \
           -e IS_API_SECURED \
