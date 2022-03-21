@@ -36,8 +36,8 @@ variable "app_service_plan_sku" {
   description = "App Service Plan SKU"
 }
 
-variable "storage_is_exposed_externally" {
+variable "enable_local_debugging" {
   type        = bool
   default     = false
-  description = "whether to block internet access to the storage account. Set to true when deploying locally."
+  description = "This will allow storage account access over the internet. Set to true to allow deploying this from a local machine."
 }

@@ -23,7 +23,7 @@ resource "azurerm_storage_account_network_rules" "stgrules" {
   storage_account_id = azurerm_storage_account.stg.id
 
   # When deploying from a local machine we need to "allow"
-  default_action = var.storage_is_exposed_externally ? "Allow" : "Deny"
+  default_action = var.enable_local_debugging ? "Allow" : "Deny"
   bypass         = ["AzureServices"]
 }
 
