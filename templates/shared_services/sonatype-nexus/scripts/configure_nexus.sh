@@ -50,6 +50,7 @@ fi
 
 # Create proxy for each .json file
 for filename in "$(dirname ${BASH_SOURCE[0]})/nexus_config/*.json"; do
+    echo "Found config file: $filename. Sending to Nexus..."
     # Check if apt proxy
     base_type=$( jq .baseType $filename | sed 's/"//g')
     repo_type=$( jq .repoType $filename | sed 's/"//g')
@@ -59,6 +60,7 @@ for filename in "$(dirname ${BASH_SOURCE[0]})/nexus_config/*.json"; do
     full_url=$base_url/$repo_name
 
     export STATUS_CODE=$(curl -iu admin:$NEXUS_PASS -X "GET" $full_url -H "accept: application/json" -k -s -w "%{http_code}" -o /dev/null)
+    echo "Response received from Nexus: $STATUS_CODE"
 
     if [[ ${STATUS_CODE} == 404 ]]
     then
