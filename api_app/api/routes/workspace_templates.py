@@ -10,7 +10,7 @@ from models.schemas.resource_template import ResourceTemplateInResponse, Resourc
 from models.schemas.workspace_template import WorkspaceTemplateInCreate, WorkspaceTemplateInResponse
 from resources import strings
 from services.authentication import get_current_admin_user
-from .templates import get_current_template_by_name
+from .resource_helpers import get_current_template_by_name
 
 
 workspace_templates_admin_router = APIRouter(dependencies=[Depends(get_current_admin_user)])
