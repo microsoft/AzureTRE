@@ -55,16 +55,6 @@ resource "azurerm_app_service" "mlflow" {
     AZURE_STORAGE_CONNECTION_STRING     = data.azurerm_storage_account.mlflow.primary_connection_string
   }
 
-  storage_account {
-    name         = "mlflow-data"
-    type         = "AzureFiles"
-    account_name = data.azurerm_storage_account.mlflow.name
-
-    access_key = data.azurerm_storage_account.mlflow.primary_access_key
-    share_name = data.azurerm_storage_share.shared_storage.name
-    mount_path = "/mlartefacts"
-  }
-
   logs {
     application_logs {
       file_system_level = "Information"

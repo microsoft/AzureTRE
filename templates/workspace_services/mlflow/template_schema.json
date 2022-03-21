@@ -5,12 +5,5 @@
   "title": "MLflow machine learning lifecycle",
   "description": "Deploys MLflow server to manage machine learning lifecycle.",
   "required": [],
-  "properties": {
-    "is_exposed_externally": {
-      "$id": "#/properties/is_exposed_externally",
-      "type": "boolean",
-      "title": "Expose externally",
-      "description": "Is the MLflow service exposed outside of the vnet"
-    }
-  }
+  "properties": {}
 }
