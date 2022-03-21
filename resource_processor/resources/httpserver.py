@@ -8,11 +8,14 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(b'OK')
 
+    def do_OPTIONS(self):
+        self.send_response(200)
+
 
 class ThreadingSimpleServer(ThreadingMixIn, HTTPServer):
     pass
 
 
 def start_server():
-    server = ThreadingSimpleServer(('0.0.0.0', 4444), Handler)
+    server = ThreadingSimpleServer(('0.0.0.0', 8080), Handler)
     server.serve_forever()

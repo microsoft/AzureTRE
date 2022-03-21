@@ -1,4 +1,4 @@
-import _thread
+import threading
 import json
 import socket
 import asyncio
@@ -180,7 +180,7 @@ async def get_porter_outputs(msg_body, message_logger_adapter):
         return True, outputs_json
 
 
-async def receiving_message_loop():
+async def runner():
     async with default_credentials(config["vmss_msi_id"]) as credential:
         service_bus_client = ServiceBusClient(config["service_bus_namespace"], credential)
         logger_adapter.info("Starting message receiving loop...")
@@ -202,13 +202,11 @@ async def receiving_message_loop():
             logger_adapter.info("All messages processed. Sleeping...")
             await asyncio.sleep(60)
 
-
-async def runner():
-    logger_adapter.info("Starting http server...")
-    _thread.start_new_thread(start_server)
-    receiving_message_loop()
-
 if __name__ == "__main__":
     logger_adapter.info("Started resource processor")
-    asyncio.run(runner())
-    asyncio.run(receiving_message_loop())
+    asyncio.ensure_future(runner())
+    loop = asyncio.get_event_loop()
+    logger_adapter.info("Started http server")
+    httpserver_thread = threading.Thread(target=start_server)
+    httpserver_thread.start()
+    loop.run_forever()
