@@ -20,7 +20,7 @@ jobs:
   renew_letsencrypt_certs:
     name: Renew Lets Encrypt Certificates
     runs-on: ubuntu-latest
-    environment: Dev
+    environment: CICD
     steps:
       - name: Checkout
         uses: actions/checkout@v2
