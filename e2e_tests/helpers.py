@@ -59,6 +59,7 @@ async def post_resource(payload, endpoint, resource_type, token, admin_token, ve
         if method == "POST":
             response = await client.post(full_endpoint, headers=auth_headers, json=payload)
         else:
+            auth_headers["eTag"] = "*"  # * = force the update regardless. We have other tests to check the validity of the etag
             response = await client.patch(full_endpoint, headers=auth_headers, json=payload)
 
         print(f'RESPONSE: {response}')
