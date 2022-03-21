@@ -800,8 +800,8 @@ fi
 if [[ $createAutomationAccount -eq 1 ]]; then
   cat << ENV_VARS
 
-AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID=${automationAppId}
-AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET=${automationSpPassword}
+TEST_AUTOMATION_ACCOUNT_CLIENT_ID=${automationAppId}
+TEST_AUTOMATION_ACCOUNT_CLIENT_SECRET=${automationSpPassword}
 
 ** Please copy this to /templates/core/.env and set it to be https://fqdn for your TRE **
 TRE_URL=__CHANGE_ME___
