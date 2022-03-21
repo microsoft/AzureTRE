@@ -67,7 +67,7 @@ for filename in "$(dirname "${BASH_SOURCE[0]}")"/nexus_config/*.json; do
         curl -iu admin:$NEXUS_PASS -XPOST \
         $base_url \
         -H 'accept: application/json' \
-        -H 'Content-Type: application/json' \cd
+        -H 'Content-Type: application/json' \
         -d @$filename
     else
         echo "$repo_type proxy for $repo_name already exists."
