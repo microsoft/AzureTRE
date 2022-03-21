@@ -49,7 +49,7 @@ if [ -z "$NEXUS_PASS" ]; then
 fi
 
 # Create proxy for each .json file
-for filename in "$(dirname ${BASH_SOURCE[0]})/nexus_config/*.json"; do
+for filename in "$(dirname "${BASH_SOURCE[0]}")"/nexus_config/*.json; do
     echo "Found config file: $filename. Sending to Nexus..."
     # Check if apt proxy
     base_type=$( jq .baseType $filename | sed 's/"//g')
@@ -67,7 +67,7 @@ for filename in "$(dirname ${BASH_SOURCE[0]})/nexus_config/*.json"; do
         curl -iu admin:$NEXUS_PASS -XPOST \
         $base_url \
         -H 'accept: application/json' \
-        -H 'Content-Type: application/json' \
+        -H 'Content-Type: application/json' \cd
         -d @$filename
     else
         echo "$repo_type proxy for $repo_name already exists."
