@@ -1,6 +1,6 @@
 # Workspace Templates
 
-In this folder Workspace Templates are located. These Templates for the Composition Service to make instances of.
+Workspace Templates are located in this folder. These Templates are for the Composition Service to make instances of.
 
 | Template name | Description |
 | --- | --- |
