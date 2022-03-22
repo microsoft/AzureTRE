@@ -23,7 +23,7 @@ resource "local_file" "mlflow-windows-config" {
 }
 
 resource "local_file" "mlflow-linux-config" {
-  content  =  data.template_file.mlflow-linux-config.rendered
+  content  = data.template_file.mlflow-linux-config.rendered
   filename = "${path.module}/../mlflow-vm-config/linux/config.sh"
 }
 
