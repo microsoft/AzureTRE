@@ -48,5 +48,5 @@ As the traditional channels (conda-forge, defaults etc) have been replaced with 
 To retireve these channels, run `conda config --show channels` once conda has been configured to use Nexus.
 
 !!! note
-  When logging models using sklearn, an optional parameter `conda_env` can be passed as either JSON or YML.  If this is not passed a default `conda.yml` will be generate for the model, targeting the channel `conda-forge` causing any subsequent environments created using the model to fail. 
+  When logging models using sklearn, an optional parameter `conda_env` can be passed as either JSON or YML.  If this is not passed a default `conda.yml` will be generate for the model, targeting the channel `conda-forge` causing any subsequent environments created using the model to fail.
   See the official documentation [here](https://www.mlflow.org/docs/latest/python_api/mlflow.sklearn.html) for the full details.
