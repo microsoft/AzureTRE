@@ -15,4 +15,4 @@ if [ ! -f ../tre_output.json ]; then
 fi
 
 # Now create an .env file
-./json-to-env.sh < ../tre_output.json > ../private.env
+./json-to-env.sh < ../tre_output.json > ../.env

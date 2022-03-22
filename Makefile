@@ -157,7 +157,7 @@ nexus-letsencrypt:
 	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
 	&& pushd ./templates/shared_services/nexus-cert/scripts/ > /dev/null && . ./outputs.sh && popd > /dev/null \
-	&& . ./devops/scripts/load_env.sh ./templates/shared_services/nexus-cert/private.env \
+	&& . ./devops/scripts/load_env.sh ./templates/shared_services/nexus-cert/.env \
 	&& ./templates/shared_services/nexus-cert/scripts/letsencrypt.sh
 
 deploy-core: tre-start
