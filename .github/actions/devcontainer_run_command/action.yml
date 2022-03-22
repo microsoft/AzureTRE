@@ -144,15 +144,12 @@ runs:
         AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID: "${{ inputs.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID }}"
         AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET: "${{ inputs.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET }}"
         ACR_NAME: ${{ inputs.ACR_NAME }}
-        TRE_URL:
-            "https://${{inputs.TRE_ID}}.${{inputs.LOCATION}}.cloudapp.azure.com"
+        TRE_URL: "https://${{inputs.TRE_ID}}.${{inputs.LOCATION}}.cloudapp.azure.com"
         TRE_ID: "${{ inputs.TRE_ID }}"
         TF_VAR_tre_id: "${{ inputs.TRE_ID }}"
-        TF_VAR_terraform_state_container_name:
-            "${{ inputs.TF_VAR_terraform_state_container_name }}"
+        TF_VAR_terraform_state_container_name: "${{ inputs.TF_VAR_terraform_state_container_name }}"
         TF_VAR_mgmt_resource_group_name: "${{ inputs.TF_VAR_mgmt_resource_group_name }}"
-        TF_VAR_mgmt_storage_account_name:
-            "${{ inputs.TF_VAR_mgmt_storage_account_name }}"
+        TF_VAR_mgmt_storage_account_name: "${{ inputs.TF_VAR_mgmt_storage_account_name }}"
         TF_VAR_core_address_space: "${{ inputs.TF_VAR_core_address_space }}"
         TF_VAR_tre_address_space: "${{ inputs.TF_VAR_tre_address_space }}"
         TF_VAR_swagger_ui_client_id: "${{ inputs.TF_VAR_swagger_ui_client_id }}"

@@ -7,7 +7,6 @@ on:
     # https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#issue_comment
 
 jobs:
-
   pr_comment:
     name: PR comment
     environment: CICD
@@ -217,7 +216,6 @@ jobs:
           devops/scripts/destroy_env_no_terraform.sh --core-tre-rg ${RG_NAME}
           gh pr comment ${PR_NUMBER} --repo $REPO --body "Test environment destroy complete"
 
-
   run_test:
     # Run the tests with the re-usable workflow
     needs: [pr_comment]
@@ -256,4 +254,3 @@ jobs:
       TRE_ADDRESS_SPACE: ${{ secrets.TRE_ADDRESS_SPACE }}
       CI_CACHE_ACR_NAME: ${{ secrets.ACR_NAME }}
       TF_LOG: ${{ secrets.TF_LOG }}
-

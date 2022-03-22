@@ -115,7 +115,7 @@ jobs:
       - name: Build new devcontainer
         shell: bash
         env:
-            DOCKER_BUILDKIT: 1
+          DOCKER_BUILDKIT: 1
         run: |
           set -e
           USER_UID=$(id -u)
@@ -148,11 +148,9 @@ jobs:
           LOCATION: ${{ secrets.LOCATION }}
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           ACR_NAME: ${{ inputs.ACR_NAME }}
-          TF_VAR_terraform_state_container_name:
-            ${{ secrets.TF_STATE_CONTAINER }}
+          TF_VAR_terraform_state_container_name: ${{ secrets.TF_STATE_CONTAINER }}
           TF_VAR_mgmt_resource_group_name: "${{ inputs.MGMT_RESOURCE_GROUP }}"
-          TF_VAR_mgmt_storage_account_name:
-            ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+          TF_VAR_mgmt_storage_account_name: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
           TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
           TF_VAR_tre_address_space: ${{ secrets.TRE_ADDRESS_SPACE }}
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
@@ -176,10 +174,12 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        target: [
-          build-and-push-api,
-          build-and-push-resource-processor,
-          build-and-push-gitea]
+        target:
+          [
+            build-and-push-api,
+            build-and-push-resource-processor,
+            build-and-push-gitea,
+          ]
 
     steps:
       - name: Checkout
@@ -240,11 +240,9 @@ jobs:
           TRE_ID: "${{ inputs.TRE_ID }}"
           LOCATION: ${{ secrets.LOCATION }}
           ACR_NAME: ${{ inputs.ACR_NAME }}
-          TF_VAR_terraform_state_container_name:
-            ${{ secrets.TF_STATE_CONTAINER }}
+          TF_VAR_terraform_state_container_name: ${{ secrets.TF_STATE_CONTAINER }}
           TF_VAR_mgmt_resource_group_name: ${{ inputs.MGMT_RESOURCE_GROUP }}
-          TF_VAR_mgmt_storage_account_name:
-            ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+          TF_VAR_mgmt_storage_account_name: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
           TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
           TF_VAR_tre_address_space: ${{ secrets.TRE_ADDRESS_SPACE }}
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
@@ -274,11 +272,9 @@ jobs:
           TRE_ID: "${{ inputs.TRE_ID }}"
           LOCATION: ${{ secrets.LOCATION }}
           ACR_NAME: ${{ inputs.ACR_NAME }}
-          TF_VAR_terraform_state_container_name:
-            ${{ secrets.TF_STATE_CONTAINER }}
+          TF_VAR_terraform_state_container_name: ${{ secrets.TF_STATE_CONTAINER }}
           TF_VAR_mgmt_resource_group_name: ${{ inputs.MGMT_RESOURCE_GROUP }}
-          TF_VAR_mgmt_storage_account_name:
-            ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+          TF_VAR_mgmt_storage_account_name: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
           TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
           TF_VAR_tre_address_space: ${{ secrets.TRE_ADDRESS_SPACE }}
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
@@ -308,11 +304,9 @@ jobs:
           TRE_ID: "${{ inputs.TRE_ID }}"
           LOCATION: ${{ secrets.LOCATION }}
           ACR_NAME: ${{ inputs.ACR_NAME }}
-          TF_VAR_terraform_state_container_name:
-            ${{ secrets.TF_STATE_CONTAINER }}
+          TF_VAR_terraform_state_container_name: ${{ secrets.TF_STATE_CONTAINER }}
           TF_VAR_mgmt_resource_group_name: ${{ inputs.MGMT_RESOURCE_GROUP }}
-          TF_VAR_mgmt_storage_account_name:
-            ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+          TF_VAR_mgmt_storage_account_name: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
           TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
           TF_VAR_tre_address_space: ${{ secrets.TRE_ADDRESS_SPACE }}
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
@@ -342,11 +336,9 @@ jobs:
           TRE_ID: "${{ inputs.TRE_ID }}"
           LOCATION: ${{ secrets.LOCATION }}
           ACR_NAME: ${{ inputs.ACR_NAME }}
-          TF_VAR_terraform_state_container_name:
-            ${{ secrets.TF_STATE_CONTAINER }}
+          TF_VAR_terraform_state_container_name: ${{ secrets.TF_STATE_CONTAINER }}
           TF_VAR_mgmt_resource_group_name: ${{ inputs.MGMT_RESOURCE_GROUP }}
-          TF_VAR_mgmt_storage_account_name:
-            ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+          TF_VAR_mgmt_storage_account_name: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
           TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
           TF_VAR_tre_address_space: ${{ secrets.TRE_ADDRESS_SPACE }}
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
@@ -362,24 +354,40 @@ jobs:
     strategy:
       matrix:
         include:
-        # bundles type can be inferred from the bundle
-        # dir (but this is more explicit)
-          - {BUNDLE_TYPE: "workspace",
-             BUNDLE_DIR: "./templates/workspaces/base"}
-          - {BUNDLE_TYPE: "workspace",
-             BUNDLE_DIR: "./templates/workspaces/innereye"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/guacamole"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/azureml"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/devtestlabs"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/innereye"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/gitea"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/mlflow"}
+          # bundles type can be inferred from the bundle
+          # dir (but this is more explicit)
+          - {
+              BUNDLE_TYPE: "workspace",
+              BUNDLE_DIR: "./templates/workspaces/base",
+            }
+          - {
+              BUNDLE_TYPE: "workspace",
+              BUNDLE_DIR: "./templates/workspaces/innereye",
+            }
+          - {
+              BUNDLE_TYPE: "workspace_service",
+              BUNDLE_DIR: "./templates/workspace_services/guacamole",
+            }
+          - {
+              BUNDLE_TYPE: "workspace_service",
+              BUNDLE_DIR: "./templates/workspace_services/azureml",
+            }
+          - {
+              BUNDLE_TYPE: "workspace_service",
+              BUNDLE_DIR: "./templates/workspace_services/devtestlabs",
+            }
+          - {
+              BUNDLE_TYPE: "workspace_service",
+              BUNDLE_DIR: "./templates/workspace_services/innereye",
+            }
+          - {
+              BUNDLE_TYPE: "workspace_service",
+              BUNDLE_DIR: "./templates/workspace_services/gitea",
+            }
+          - {
+              BUNDLE_TYPE: "workspace_service",
+              BUNDLE_DIR: "./templates/workspace_services/mlflow",
+            }
     environment: CICD
     steps:
       - name: Checkout
@@ -446,24 +454,40 @@ jobs:
     strategy:
       matrix:
         include:
-        # bundles type can be inferred from the bundle
-        # dir (but this is more explicit)
-          - {BUNDLE_TYPE: "workspace",
-             BUNDLE_DIR: "./templates/workspaces/base"}
-          - {BUNDLE_TYPE: "workspace",
-             BUNDLE_DIR: "./templates/workspaces/innereye"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/guacamole"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/azureml"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/devtestlabs"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/innereye"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/gitea"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/mlflow"}
+          # bundles type can be inferred from the bundle
+          # dir (but this is more explicit)
+          - {
+              BUNDLE_TYPE: "workspace",
+              BUNDLE_DIR: "./templates/workspaces/base",
+            }
+          - {
+              BUNDLE_TYPE: "workspace",
+              BUNDLE_DIR: "./templates/workspaces/innereye",
+            }
+          - {
+              BUNDLE_TYPE: "workspace_service",
+              BUNDLE_DIR: "./templates/workspace_services/guacamole",
+            }
+          - {
+              BUNDLE_TYPE: "workspace_service",
+              BUNDLE_DIR: "./templates/workspace_services/azureml",
+            }
+          - {
+              BUNDLE_TYPE: "workspace_service",
+              BUNDLE_DIR: "./templates/workspace_services/devtestlabs",
+            }
+          - {
+              BUNDLE_TYPE: "workspace_service",
+              BUNDLE_DIR: "./templates/workspace_services/innereye",
+            }
+          - {
+              BUNDLE_TYPE: "workspace_service",
+              BUNDLE_DIR: "./templates/workspace_services/gitea",
+            }
+          - {
+              BUNDLE_TYPE: "workspace_service",
+              BUNDLE_DIR: "./templates/workspace_services/mlflow",
+            }
     environment: CICD
     steps:
       - name: Checkout
