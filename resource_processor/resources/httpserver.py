@@ -2,20 +2,16 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from socketserver import ThreadingMixIn
 
 
-class Handler(BaseHTTPRequestHandler):
+class RequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.end_headers()
-        self.wfile.write(b'OK')
-
-    def do_OPTIONS(self):
-        self.send_response(200)
 
 
-class ThreadingSimpleServer(ThreadingMixIn, HTTPServer):
-    pass
+class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
+    """Handle requests in a separate thread."""
 
 
 def start_server():
-    server = ThreadingSimpleServer(('0.0.0.0', 8080), Handler)
+    server = ThreadedHTTPServer(('0.0.0.0', 8080), RequestHandler)
     server.serve_forever()

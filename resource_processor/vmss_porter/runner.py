@@ -203,10 +203,11 @@ async def runner():
             await asyncio.sleep(60)
 
 if __name__ == "__main__":
-    logger_adapter.info("Started resource processor")
-    asyncio.ensure_future(runner())
-    loop = asyncio.get_event_loop()
-    logger_adapter.info("Started http server")
     httpserver_thread = threading.Thread(target=start_server)
     httpserver_thread.start()
-    loop.run_forever()
+    logger_adapter.info("Started http server")
+
+    asyncio.ensure_future(runner())
+    event_loop = asyncio.get_event_loop()
+    event_loop.run_forever()
+    logger_adapter.info("Started resource processor")

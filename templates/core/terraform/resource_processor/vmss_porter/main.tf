@@ -74,7 +74,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "vm_linux" {
       {
         port        = 8080
         protocol    = "http"
-        requestPath = "/get"
+        requestPath = "/health"
       }
     )
     type                 = "ApplicationHealthLinux"
