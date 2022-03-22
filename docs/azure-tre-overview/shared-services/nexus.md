@@ -34,4 +34,24 @@ Notice that since Nexus Shared Service is running on an App Service, the outgoin
 | --- | --- |
 | AzureActiveDirectory | Authorize the signed in user against Azure Active Directory. |
 | AzureContainerRegistry | Pull the Nexus container image, as it is located in Azure Container Registry.  |
-| pypi.org | Enables Nexus to "proxy" python packages to use inside of workspaces |
+| pypi.org | Enables Nexus to "proxy" python packages to use inside of workspaces. |
+| repo.anaconda.com | Enables Nexus to "proxy" conda packages to use inside of workspaces. |
+| conda.anaconda.org | Enables Nexus to "proxy" additional conda packages to use inside of workspaces such as conda-forge. |
+| *.docker.com | Enables Nexus to "proxy" docker repos to use inside of workspaces. |
+| *.docker.io | Enables Nexus to "proxy" docker repos to use inside of workspaces. |
+| archive.ubuntu.com | Enables Nexus to "proxy" apt packages to use inside of workspaces. |
+| security.ubuntu.com | Enables Nexus to "proxy" apt packages to use inside of workspaces. |
+
+## Current Repos
+
+| Name | Type | Source URI | Nexus URI | Usage |
+| --- | --- | --- | --- | --- |
+| PiPy | PiPy | [https://pypi.org/] | `https://nexus-<TRE_ID>.azurewebsites.net/repository/pypi/` | Allow use of pip commands. |
+| Apt PiPy | Apt | [https://pypi.org/] | `https://nexus-<TRE_ID>.azurewebsites.net/repository/apt-pypi/` | Install pip via apt on Linux systems. |
+| Conda | conda | [https://repo.anaconda.com/pkgs/main/] | `https://nexus-<TRE_ID>.azurewebsites.net/repository/conda/` | Configure conda to have access to default conda packages. |
+| Conda-Forge | conda | [https://conda.anaconda.org/conda-forge/] | `https://nexus-<TRE_ID>.azurewebsites.net/repository/conda-forge/` | Configure conda to have access to conda-forge packages. |
+| Docker | apt | [https://download.docker.com/linux/ubuntu/] | `https://nexus-<TRE_ID>.azurewebsites.net/repository/docker/` | Install Docker via apt on Linux systems.|
+| Docker GPG | raw | [https://download.docker.com/linux/ubuntu/] | `https://nexus-<TRE_ID>.azurewebsites.net/repository/docker-public-key/` | Provide public key to sign apt source for above Docker apt. |
+| Docker Hub | docker | [https://registry-1.docker.io] | `https://nexus-<TRE_ID>.azurewebsites.net/repository/docker-hub/` | Provide docker access to public images repo. |
+| Ubuntu Packages | apt | [http://archive.ubuntu.com/ubuntu/] | `https://nexus-<TRE_ID>.azurewebsites.net/repository/ubuntu/` | Provide access to Ubuntu apt packages on Ubuntu systems. |
+| Ubuntu Security Packages | apt | [http://security.ubuntu.com/ubuntu/] | `https://nexus-<TRE_ID>.azurewebsites.net/repository/ubuntu-security/` | Provide access to Ubuntu Security apt packages on Ubuntu systems. |
