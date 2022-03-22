@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Remove apt sources not included in sources.list file 
+# Remove apt sources not included in sources.list file
 sudo rm /etc/apt/sources.list.d/*
 
 # Update apt packages from configured Nexus sources
