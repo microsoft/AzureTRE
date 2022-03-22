@@ -141,8 +141,8 @@ runs:
         AAD_TENANT_ID: "${{ inputs.AAD_TENANT_ID }}"
         TEST_WORKSPACE_APP_ID: "${{ inputs.TEST_WORKSPACE_APP_ID }}"
         TEST_APP_ID: "${{ inputs.TEST_APP_ID }}"
-        TEST_ACCOUNT_CLIENT_ID: "${{ inputs.TEST_AUTOMATION_ACCOUNT_CLIENT_ID }}"
-        TEST_ACCOUNT_CLIENT_SECRET: "${{ inputs.TEST_AUTOMATION_ACCOUNT_CLIENT_SECRET }}"
+        TEST_ACCOUNT_CLIENT_ID: "${{ inputs.TEST_ACCOUNT_CLIENT_ID }}"
+        TEST_ACCOUNT_CLIENT_SECRET: "${{ inputs.TEST_ACCOUNT_CLIENT_SECRET }}"
         ACR_NAME: ${{ inputs.ACR_NAME }}
         TRE_URL:
             "https://${{inputs.TRE_ID}}.${{inputs.LOCATION}}.cloudapp.azure.com"
