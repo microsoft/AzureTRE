@@ -560,7 +560,7 @@ jobs:
 
   e2e_tests_extended:
     name: "Run E2E Tests (Extended)"
-    if: ${{ github.ref == 'refs/heads/main' && inputs.prRef == '' }}
+    # if: ${{ github.ref == 'refs/heads/main' && inputs.prRef == '' }}
     runs-on: ubuntu-latest
     environment: CICD
     needs: [register_bundles, build_additional_images]
