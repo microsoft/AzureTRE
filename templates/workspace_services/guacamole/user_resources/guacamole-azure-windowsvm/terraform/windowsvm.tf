@@ -68,7 +68,7 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
 }
 
 resource "azurerm_virtual_machine_extension" "config_script" {
-  name                 = "${azurerm_windows_virtual_machine.windowsvm.name}-vmextention"
+  name                 = "${azurerm_windows_virtual_machine.windowsvm.name}-vmextension"
   virtual_machine_id   = azurerm_windows_virtual_machine.windowsvm.id
   publisher            = "Microsoft.Compute"
   type                 = "CustomScriptExtension"
