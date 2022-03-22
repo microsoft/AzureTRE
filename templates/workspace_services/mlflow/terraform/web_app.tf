@@ -6,14 +6,14 @@ data "azurerm_storage_share" "shared_storage" {
 data "template_file" "mlflow-windows-config" {
   template = file("${path.module}/../mlflow-vm-config/windows/template_config.ps1")
   vars = {
-    nexus_proxy_url = data.azurerm_storage_account.mlflow.primary_connection_string
+    MLFlow_Connection_String = data.azurerm_storage_account.mlflow.primary_connection_string
   }
 }
 
 data "template_file" "mlflow-linux-config" {
   template = file("${path.module}/../mlflow-vm-config/linux/template_config.sh")
   vars = {
-    nexus_proxy_url = data.azurerm_storage_account.mlflow.primary_connection_string
+    MLFlow_Connection_String = data.azurerm_storage_account.mlflow.primary_connection_string
   }
 }
 
