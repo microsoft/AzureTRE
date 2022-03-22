@@ -12,12 +12,12 @@ Nexus will be deployed as part of the main TRE terraform deployment. A configura
 
 1. Fetch the Nexus generated password from storage account.
 2. Reset the default password and set a new one.
-3. Store the new password in Key Vault under 'nexus-<TRE_ID>-admin-password'
+3. Store the new password in Key Vault under `nexus-<TRE_ID>-admin-password`
 4. Create an anonymous default PyPI proxy repository
 
 ## Setup and usage
 
-1. A TRE Administrator can access Nexus though the admin jumpbox provisioned as part of the TRE deployment. The credentials for the jumpbox are located in the KeyVault under "vm-<tre-id>-jumpbox-admin-credentials"
+1. A TRE Administrator can access Nexus though the admin jumpbox provisioned as part of the TRE deployment. The credentials for the jumpbox are located in the KeyVault under `vm-<tre-id>-jumpbox-admin-credentials`
 2. A researcher can access Nexus from within the workspace by using the internal Nexus URL of: [https://nexus-<TRE_ID>.azurewebsites.net/](https://nexus-<TRE_ID>.azurewebsites.net/)
 3. To fetch Python packages from the PyPI proxy, a researcher can use pip install while specifying the proxy server:
 
