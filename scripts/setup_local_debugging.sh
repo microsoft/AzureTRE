@@ -13,7 +13,11 @@ set -o nounset
 # set -o xtrace
 
 SERVICE_BUS_NAMESPACE="sb-${TRE_ID}"
-IPADDR=$(curl ipecho.net/plain; echo)
+if [[ -z ${LOCAL_IP_ADDRESS:-} ]]; then
+  IPADDR=$(curl ipecho.net/plain; echo)
+else
+  IPADDR=${LOCAL_IP_ADDRESS}
+fi
 
 echo "Adding local IP Address to ${COSMOSDB_ACCOUNT_NAME}. This may take a while . . . "
 az cosmosdb update \
