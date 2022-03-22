@@ -30,7 +30,7 @@ mlflow.set_tracking_uri(remote_server_uri)
 
 ## Using with Conda-Forge
 
-If working with Conda-Forge you need to ensure the user resource you are using is configured correctly and using the channels available via the [Nexus repository](link).
+If working with Conda-Forge you need to ensure the user resource you are using is configured correctly and using the channels available via the [Nexus repository](../../azure-tre-overview/shared-services/nexus.md).
 If the user resource you have deployed used one of the pre-existing Guacamole user resource templates and has conda installed by default, conda will already be configured to use the correct channels via Nexus.
 If not and conda has been manually deployed on the user resource, the following script can be used to configure conda:
 
