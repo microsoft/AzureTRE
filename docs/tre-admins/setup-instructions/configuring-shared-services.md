@@ -15,7 +15,7 @@ Complete the configuration of the shared services (Nexus and Gitea) from inside 
 ## Configure Nexus repository
 
 1. Run the Nexus configuration script to reset the password and setup a PyPI proxy on Nexus:
-```./templates/shared_services/sonatype-nexus/scripts/configure_nexus.sh -t <tre_id>```
+```./templates/shared_services/sonatype-nexus/scripts/configure_nexus.sh -t <tre_id> -l <location>```
 
 ## Configure Gitea repository
 
