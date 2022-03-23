@@ -63,7 +63,7 @@ Example on how to run the script:
     --workspace \
     --swaggerui-clientid <SWAGGER_UI_CLIENT_ID> \
     --admin-consent \
-    --automation-clientid <AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID>
+    --automation-clientid <TEST_ACCOUNT_CLIENT_ID>
 ```
 
 | Argument | Description |

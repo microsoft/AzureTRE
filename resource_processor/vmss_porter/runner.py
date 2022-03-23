@@ -1,3 +1,4 @@
+import threading
 import json
 import socket
 import asyncio
@@ -6,6 +7,7 @@ import sys
 from resources.commands import build_porter_command, build_porter_command_for_outputs
 from shared.config import get_config
 from resources.helpers import get_installation_id
+from resources.httpserver import start_server
 
 from shared.logging import disable_unwanted_loggers, initialize_logging, get_message_id_logger, shell_output_logger  # pylint: disable=import-error # noqa
 from resources import strings, statuses  # pylint: disable=import-error # noqa
@@ -200,7 +202,12 @@ async def runner():
             logger_adapter.info("All messages processed. Sleeping...")
             await asyncio.sleep(60)
 
-
 if __name__ == "__main__":
+    httpserver_thread = threading.Thread(target=start_server)
+    httpserver_thread.start()
+    logger_adapter.info("Started http server")
+
+    asyncio.ensure_future(runner())
+    event_loop = asyncio.get_event_loop()
+    event_loop.run_forever()
     logger_adapter.info("Started resource processor")
-    asyncio.run(runner())

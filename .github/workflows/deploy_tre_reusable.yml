@@ -16,6 +16,11 @@ on:
         description: The git ref to use in annotations to associate a deployment with the code that triggered it
         type: string
         required: true
+      runExtendedTests:
+        description: Controls whether to run the extended tests as part of the deployment
+        type: boolean
+        default: false
+        required: false
     secrets:
       AAD_TENANT_ID:
         required: true
@@ -57,9 +62,9 @@ on:
         required: true
       TEST_WORKSPACE_APP_ID:
         required: true
-      AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID:
+      TEST_ACCOUNT_CLIENT_ID:
         required: true
-      AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET:
+      TEST_ACCOUNT_CLIENT_SECRET:
         required: true
       TF_STATE_CONTAINER:
         required: true
@@ -231,8 +236,8 @@ jobs:
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
-          AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID }}"
-          AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET }}"
+          TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
+          TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
           LOCATION: ${{ secrets.LOCATION }}
           ACR_NAME: ${{ secrets.ACR_NAME }}
@@ -265,8 +270,8 @@ jobs:
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
-          AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID }}"
-          AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET }}"
+          TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
+          TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
           LOCATION: ${{ secrets.LOCATION }}
           ACR_NAME: ${{ secrets.ACR_NAME }}
@@ -299,8 +304,8 @@ jobs:
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
-          AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID }}"
-          AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET }}"
+          TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
+          TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
           LOCATION: ${{ secrets.LOCATION }}
           ACR_NAME: ${{ secrets.ACR_NAME }}
@@ -333,8 +338,8 @@ jobs:
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
-          AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID }}"
-          AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET }}"
+          TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
+          TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
           LOCATION: ${{ secrets.LOCATION }}
           ACR_NAME: ${{ secrets.ACR_NAME }}
@@ -485,8 +490,8 @@ jobs:
           API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
-          AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID }}"
-          AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET }}"
+          TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
+          TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
           LOCATION: "${{ secrets.LOCATION }}"
           BUNDLE_TYPE: ${{ matrix.BUNDLE_TYPE }}
@@ -522,8 +527,8 @@ jobs:
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
-          AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID }}"
-          AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET }}"
+          TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
+          TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
           IS_API_SECURED: false
 
@@ -556,7 +561,7 @@ jobs:
 
   e2e_tests_extended:
     name: "Run E2E Tests (Extended)"
-    # if: ${{ github.ref == 'refs/heads/main' && inputs.prRef == '' }}
+    if: ${{ inputs.runExtendedTests }}
     runs-on: ubuntu-latest
     environment: CICD
     needs: [register_bundles, build_additional_images]
@@ -586,8 +591,8 @@ jobs:
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
-          AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID }}"
-          AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET }}"
+          TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
+          TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
           IS_API_SECURED: false
 

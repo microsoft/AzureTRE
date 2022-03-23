@@ -38,7 +38,7 @@ As explained in the [auth guide](../auth.md), every workspace has a correspondin
     --workspace \
     --swaggerui-clientid <SWAGGER_UI_CLIENT_ID> \
     --admin-consent \
-    --automation-clientid <AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID>
+    --automation-clientid <TEST_ACCOUNT_CLIENT_ID>
 ```
 
 !!! caution
