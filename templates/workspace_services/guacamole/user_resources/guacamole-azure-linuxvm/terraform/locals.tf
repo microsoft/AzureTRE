@@ -9,7 +9,7 @@ locals {
   vm_name                        = "linuxvm${local.short_service_id}"
   keyvault_name                  = lower("kv-${substr(local.workspace_resource_name_suffix, -20, -1)}")
   storage_name                   = lower(replace("stg${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
-  nexus_proxy_url                = "https://nexus-${var.tre_id}.azurewebsites.net"
+  nexus_proxy_url                = "https://nexus-${var.tre_id}.${var.location}.cloudapp.azure.com"
   image_ref = {
     "Ubuntu 18.04" = {
       "publisher"    = "canonical"

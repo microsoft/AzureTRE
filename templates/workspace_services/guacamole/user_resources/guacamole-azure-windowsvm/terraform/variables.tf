@@ -1,6 +1,7 @@
 variable "workspace_id" {}
 variable "tre_id" {}
 variable "parent_service_id" {}
+variable "location" {}
 
 variable "arm_client_id" {}
 variable "arm_client_secret" {}

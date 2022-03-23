@@ -76,6 +76,10 @@ jq -r '
         {
             "path": "registry_server",
             "env_var": "REGISTRY_SERVER"
+        },
+        {
+            "path": "location",
+            "env_var": "LOCATION"
         }
     ]
         as $env_vars_to_extract

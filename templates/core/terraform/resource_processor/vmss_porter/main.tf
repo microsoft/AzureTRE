@@ -18,6 +18,7 @@ data "template_file" "cloudconfig" {
     resource_processor_vmss_porter_image_repository = var.resource_processor_vmss_porter_image_repository
     resource_processor_vmss_porter_image_tag        = local.version
     app_insights_connection_string                  = var.app_insights_connection_string
+    location                                        = var.location
   }
 }
 

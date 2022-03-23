@@ -76,3 +76,7 @@ output "terraform_state_container_name" {
 output "registry_server" {
   value = var.docker_registry_server
 }
+
+output "location" {
+  value = var.location
+}
