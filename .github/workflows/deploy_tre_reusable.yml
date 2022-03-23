@@ -223,7 +223,7 @@ jobs:
       - name: Deploy TRE Core
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: "TF_VAR_ci_git_ref=${{ inputs.ciGitRef }} TF_LOG=${{ secrets.TF_LOG }} make deploy-core"
+          COMMAND: "TF_VAR_ci_git_ref=${{ inputs.ciGitRef }} TF_LOG=${{ secrets.TF_LOG }} make deploy-core && make api-healthcheck"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
