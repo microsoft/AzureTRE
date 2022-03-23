@@ -18,12 +18,6 @@ resource "azurerm_storage_share" "shared_storage" {
   ]
 }
 
-resource "azurerm_storage_container" "shared_storage" {
-  name                  = "vm-shared-storage"
-  storage_account_name  = azurerm_storage_account.stg.name
-  container_access_type = "private"
-}
-
 resource "azurerm_storage_account_network_rules" "stgrules" {
   resource_group_name  = azurerm_resource_group.ws.name
   storage_account_name = azurerm_storage_account.stg.name
