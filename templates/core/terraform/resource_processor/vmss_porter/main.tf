@@ -81,6 +81,11 @@ resource "azurerm_linux_virtual_machine_scale_set" "vm_linux" {
     type_handler_version = "1.0"
   }
 
+  automatic_os_upgrade_policy {
+    disable_automatic_rollback  = false
+    enable_automatic_os_upgrade = true
+  }
+
   rolling_upgrade_policy {
     max_batch_instance_percent              = 100
     max_unhealthy_instance_percent          = 100
