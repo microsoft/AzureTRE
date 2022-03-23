@@ -71,7 +71,7 @@ while read -r rg_name rg_ref_name; do
       echo "Ref ${rg_ref_name} does not exist, and environment ${rg_name} can be deleted."
       devops/scripts/destroy_env_no_terraform.sh --core-tre-rg ${rg_name} --no-wait
     else
-       # Checking when was the last commit on the branch.
+       # checking when was the last commit on the branch.
       last_commit_date_string=$(git for-each-ref --sort='-committerdate:iso8601' --format=' %(committerdate:iso8601)%09%(refname)' ${ref_in_remote} | cut -f1)
       echo "Native ref is ${rg_ref_name}, last commit was on: ${last_commit_date_string}"
       diff_in_hours=$(( ($(date +%s) - $(date -d "${last_commit_date_string}" +%s) )/(60*60) ))
