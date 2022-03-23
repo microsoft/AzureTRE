@@ -22,15 +22,13 @@ jobs:
     uses: ./.github/workflows/deploy_tre_reusable.yml
     with:
       ciGitRef: ${{ github.ref }}
-      ACR_NAME: ${{ secrets.ACR_NAME }}
-      ACTIONS_DEVCONTAINER_TAG: 'latest'
-      MGMT_RESOURCE_GROUP: ${{ secrets.MGMT_RESOURCE_GROUP }}
-      TRE_ID: ${{ secrets.TRE_ID }}
     secrets:
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
+      ACR_NAME: ${{ secrets.ACR_NAME }}
       ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
       ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/
       ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
+      ACTIONS_DEVCONTAINER_TAG: 'latest'
       API_CLIENT_ID: ${{ secrets.API_CLIENT_ID }}
       API_CLIENT_SECRET: ${{ secrets.API_CLIENT_SECRET }}
       ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
@@ -39,6 +37,7 @@ jobs:
       ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
       CORE_ADDRESS_SPACE: ${{ secrets.CORE_ADDRESS_SPACE }}
       LOCATION: ${{ secrets.LOCATION }}
+      MGMT_RESOURCE_GROUP: ${{ secrets.MGMT_RESOURCE_GROUP }}
       MS_TEAMS_WEBHOOK_URI: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
       STATE_STORAGE_ACCOUNT_NAME: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
       SWAGGER_UI_CLIENT_ID: ${{ secrets.SWAGGER_UI_CLIENT_ID }}
@@ -48,3 +47,4 @@ jobs:
       TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
       TF_STATE_CONTAINER: ${{ secrets.TF_STATE_CONTAINER }}
       TRE_ADDRESS_SPACE: ${{ secrets.TRE_ADDRESS_SPACE }}
+      TRE_ID: ${{ secrets.TRE_ID }}
