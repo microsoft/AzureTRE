@@ -17,7 +17,7 @@ variable "nexus_storage_limit" {
 variable "nexus_allowed_fqdns" {
   type        = string
   description = "comma seperated string of allowed FQDNs for Nexus"
-  default     = "*pypi.org,files.pythonhosted.org,security.ubuntu.com,archive.ubuntu.com,repo.anaconda.com,*.docker.com,*.docker.io"
+  default     = "*pypi.org,files.pythonhosted.org,security.ubuntu.com,archive.ubuntu.com,repo.anaconda.com,*.docker.com,*.docker.io,conda.anaconda.org"
 }
 
 variable "nexus_properties_path" {
