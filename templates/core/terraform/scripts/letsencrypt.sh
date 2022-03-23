@@ -34,10 +34,10 @@ if  [[ "${LETSENCRYPT_DROP_ALL_RULES}" == "1" ]]; then
 
 else
 
-  if [[ -z ${LOCAL_IP_ADDRESS:-} ]]; then
+  if [[ -z ${DEPLOYMENT_IP_ADDRESS:-} ]]; then
     IPADDR=$(curl ipecho.net/plain; echo)
   else
-    IPADDR=${LOCAL_IP_ADDRESS}
+    IPADDR=${DEPLOYMENT_IP_ADDRESS}
   fi
 
   echo "Creating network rule on storage account ${STORAGE_ACCOUNT} for $IPADDR"
