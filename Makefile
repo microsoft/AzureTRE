@@ -323,7 +323,7 @@ show-core-output:
 
 
 api-healthcheck:
-	$(call target_title,"Setting up the ability to debug the API and Resource Processor") \
+	$(call target_title,"Checking API Health") \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
