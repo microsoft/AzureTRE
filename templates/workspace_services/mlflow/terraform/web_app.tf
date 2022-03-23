@@ -43,6 +43,12 @@ data "local_file" "version" {
   filename = "${path.module}/../mlflow-server/version.txt"
 }
 
+resource "azurerm_storage_container" "mlflow_artefacts" {
+  name                  = local.mlflow_artefacts_container_name
+  storage_account_name  = local.storage_name
+  container_access_type = "private"
+}
+
 resource "azurerm_app_service" "mlflow" {
   name                = local.webapp_name
   location            = data.azurerm_resource_group.ws.location
@@ -65,7 +71,7 @@ resource "azurerm_app_service" "mlflow" {
     MLFLOW_SERVER_HOST    = "0.0.0.0"
 
     MLFLOW_SERVER_FILE_STORE            = format("%s%s%s%s%s%s%s%s%s%s", "postgresql://", random_string.username.result, "@", azurerm_postgresql_server.mlflow.name, ":", random_password.password.result, "@", azurerm_postgresql_server.mlflow.name, ".postgres.database.azure.com:5432/", azurerm_postgresql_database.mlflow.name)
-    MLFLOW_SERVER_DEFAULT_ARTIFACT_ROOT = format("%s%s%s%s%s", "wasbs://", data.azurerm_storage_share.shared_storage.name, "@", data.azurerm_storage_account.mlflow.name, ".blob.core.windows.net/mlartefacts")
+    MLFLOW_SERVER_DEFAULT_ARTIFACT_ROOT = format("%s%s%s%s%s%s", "wasbs://", azurerm_storage_container.mlflow_artefacts.name, "@", data.azurerm_storage_account.mlflow.name, ".blob.core.windows.net/", azurerm_storage_container.mlflow_artefacts.name)
     AZURE_STORAGE_CONNECTION_STRING     = data.azurerm_storage_account.mlflow.primary_connection_string
   }
 
