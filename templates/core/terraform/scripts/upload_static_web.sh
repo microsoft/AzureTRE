@@ -8,10 +8,10 @@ if [[ -z ${STORAGE_ACCOUNT} ]]; then
   exit 1
 fi
 
-if [[ -z ${DEPLOYMENT_IP_ADDRESS:-} ]]; then
+if [[ -z ${PUBLIC_DEPLOYMENT_IP_ADDRESS:-} ]]; then
   IPADDR=$(curl ipecho.net/plain; echo)
 else
-  IPADDR=${DEPLOYMENT_IP_ADDRESS}
+  IPADDR=${PUBLIC_DEPLOYMENT_IP_ADDRESS}
 fi
 
 # The storage account is protected by network rules
