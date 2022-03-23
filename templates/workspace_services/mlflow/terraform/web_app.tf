@@ -9,7 +9,7 @@ resource "local_file" "mlflow-windows-config" {
 }
 
 resource "local_file" "mlflow-linux-config" {
-  content  = "export AZURE_STORAGE_CONNECTION_STRING=${data.azurerm_storage_account.mlflow.primary_connection_string}\npip install mlflow==1.24.0\npip install azure-storage-blob==12.10.0\n"
+  content  = "export AZURE_STORAGE_CONNECTION_STRING=\"${data.azurerm_storage_account.mlflow.primary_connection_string}\"\npip install mlflow==1.24.0\npip install azure-storage-blob==12.10.0\n"
   filename = "${path.module}/../mlflow-vm-config/linux/config.sh"
 }
 
