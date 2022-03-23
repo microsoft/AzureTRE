@@ -54,10 +54,10 @@ inputs:
   TEST_APP_ID:
     description: "The Test Application Id used to interact with the API."
     required: true
-  AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID:
+  TEST_ACCOUNT_CLIENT_ID:
     description: "The Test Automation Account Client Id used to interact with the API."
     required: true
-  AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET:
+  TEST_ACCOUNT_CLIENT_SECRET:
     description: "The Test Automation Account Client Secret used to interact with the API."
     required: true
   TEST_WORKSPACE_APP_ID:
@@ -141,8 +141,8 @@ runs:
         AAD_TENANT_ID: "${{ inputs.AAD_TENANT_ID }}"
         TEST_WORKSPACE_APP_ID: "${{ inputs.TEST_WORKSPACE_APP_ID }}"
         TEST_APP_ID: "${{ inputs.TEST_APP_ID }}"
-        AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID: "${{ inputs.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID }}"
-        AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET: "${{ inputs.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET }}"
+        TEST_ACCOUNT_CLIENT_ID: "${{ inputs.TEST_ACCOUNT_CLIENT_ID }}"
+        TEST_ACCOUNT_CLIENT_SECRET: "${{ inputs.TEST_ACCOUNT_CLIENT_SECRET }}"
         ACR_NAME: ${{ inputs.ACR_NAME }}
         TRE_URL: "https://${{inputs.TRE_ID}}.${{inputs.LOCATION}}.cloudapp.azure.com"
         TRE_ID: "${{ inputs.TRE_ID }}"
@@ -195,8 +195,8 @@ runs:
           -e TRE_URL \
           -e TEST_WORKSPACE_APP_ID \
           -e TEST_APP_ID \
-          -e AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID \
-          -e AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET \
+          -e TEST_ACCOUNT_CLIENT_ID \
+          -e TEST_ACCOUNT_CLIENT_SECRET \
           -e IS_API_SECURED \
           -e DOCKER_BUILDKIT \
           -e TF_VAR_keyvault_purge_protection_enabled=${{ inputs.TF_VAR_keyvault_purge_protection_enabled }} \
