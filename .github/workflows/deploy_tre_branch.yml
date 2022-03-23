@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       runExtendedTests:
-        description: Controls whether to run the extended tests as part of the deployment
+        description: Run the extended tests as part of the deployment?
         type: boolean
         default: false
         required: false
@@ -49,7 +49,8 @@ jobs:
     uses: ./.github/workflows/deploy_tre_reusable.yml
     with:
       ciGitRef: ${{ github.ref }}
-      runExtendedTests: ${{ github.event.inputs.runExtendedTests }}
+      # testing input against string 'true' - see https://github.com/actions/runner/issues/1483
+      runExtendedTests: ${{ github.event.inputs.runExtendedTests == 'true' }}
     secrets:
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
       ACR_NAME: ${{ format('tre{0}', needs.prepare-not-main.outputs.refid) }}
