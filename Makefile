@@ -320,3 +320,13 @@ register-aad-workspace:
 show-core-output:
 	$(call target_title,"Display TRE core output") \
 	&& pushd ./templates/core/terraform/ > /dev/null && terraform show && popd > /dev/null
+
+
+api-healthcheck:
+	$(call target_title,"Setting up the ability to debug the API and Resource Processor") \
+	&& . ./devops/scripts/check_dependencies.sh nodocker \
+	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& pushd ./templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
+	&& . ./devops/scripts/load_env.sh ./templates/core/private.env \
+	&& ./devops/scripts/api_healthcheck.sh
