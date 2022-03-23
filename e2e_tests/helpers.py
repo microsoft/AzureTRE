@@ -175,4 +175,6 @@ async def check_deployment(client, operation_endpoint, headers):
         message = response.json()["operation"]["message"]
         return deployment_status, message
     else:
+        print(f"Response status: {response.status_code}")
+        print(f"Full response: {response}")
         raise Exception("Non 200 response in check_deployment")
