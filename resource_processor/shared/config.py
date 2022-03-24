@@ -12,6 +12,12 @@ def get_config() -> dict:
     config["resource_request_queue"] = os.environ["SERVICE_BUS_RESOURCE_REQUEST_QUEUE"]
     config["service_bus_namespace"] = os.environ["SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE"]
     config["vmss_msi_id"] = os.environ.get("VMSS_MSI_ID", None)
+    config["number_processes"] = os.environ.get("NUMBER_PROCESSES", "1")
+
+    try:
+        config["number_processes_int"] = int(config["number_processes"])
+    except ValueError:
+        config["number_processes_int"] = 1
 
     # Needed for running porter
     config["arm_use_msi"] = os.environ.get("ARM_USE_MSI", "false")

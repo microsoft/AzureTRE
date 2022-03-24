@@ -39,6 +39,7 @@ write_files:
       AZURE_TENANT_ID=${arm_tenant_id}
       ARM_USE_MSI=true
       APPLICATIONINSIGHTS_CONNECTION_STRING=${app_insights_connection_string}
+      NUMBER_PROCESSES=2
   # a weekly cron job to have docker free disk space
   - path: /etc/cron.weekly/docker-prune
     content: |
