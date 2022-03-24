@@ -77,6 +77,10 @@ data "azurerm_private_dns_zone" "filecore" {
   resource_group_name = local.core_resource_group_name
 }
 
+data "local_file" "version" {
+  filename = "${path.module}/../version.txt"
+}
+
 output "connection_uri" {
   value = "https://${azurerm_app_service.guacamole.default_site_hostname}/guacamole"
 }
