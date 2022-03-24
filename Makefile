@@ -153,6 +153,21 @@ nexus-install:
 
 # / End migration targets
 
+nexus-cert-install:
+	$(call target_title, "Installing Nexus Cert") \
+	&& make SHARED_SERVICE_KEY=shared-service-nexus-cert terraform-shared-service-deploy DIR=./templates/shared_services/nexus-cert/terraform
+
+nexus-letsencrypt:
+	$(call target_title, "Requesting LetsEncrypt SSL certificate for Nexus") \
+	&& . ./devops/scripts/check_dependencies.sh nodocker,certbot \
+	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
+	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
+	&& pushd ./templates/shared_services/nexus-cert/scripts/ > /dev/null && . ./outputs.sh && popd > /dev/null \
+	&& . ./devops/scripts/load_env.sh ./templates/shared_services/nexus-cert/.env \
+	&& ./templates/shared_services/nexus-cert/scripts/letsencrypt.sh
+
 deploy-core: tre-start
 	$(call target_title, "Deploying TRE") \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \

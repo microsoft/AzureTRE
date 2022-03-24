@@ -66,6 +66,7 @@ nav:
       - API: 'tre-developers/api.md'
       - Resource Processor: 'tre-developers/resource-processor.md'
       - End to End Tests: 'tre-developers/end-to-end-tests.md'
+      - Letsencrypt: 'tre-developers/letsencrypt.md'
   - TRE Workspace Authors:
       - Authoring Workspace Templates: 'tre-workspace-authors/authoring-workspace-templates.md'
       - Firewall Rules: 'tre-workspace-authors/firewall-rules.md'
