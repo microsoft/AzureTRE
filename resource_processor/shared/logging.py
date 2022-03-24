@@ -106,7 +106,7 @@ def shell_output_logger(console_output: str, prefix_item: str, logger: logging.L
     """
     logger.log(logging_level, prefix_item)
 
-    if (console_output is None or len(console_output) == 0):
+    if not console_output:
         return
 
     logger.log(logging_level, console_output)
