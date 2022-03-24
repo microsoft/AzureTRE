@@ -187,12 +187,12 @@ async def runner(i):
         logger_adapter.info("Starting message receiving loop...")
 
         while True:
-            logger_adapter.info(f'Checking for new messages on process {i}...')
+            logger_adapter.info(f'Process {i}: Checking for new messages...')
             receive_message_gen = receive_message(service_bus_client)
 
             try:
                 async for message in receive_message_gen:
-                    logger_adapter.info(f"Message received with id={message['id']} on process {i}")
+                    logger_adapter.info(f"Process {i}: Message received with id={message['id']}")
                     message_logger_adapter = get_message_id_logger(message['id'])  # logger includes message id in every entry.
                     result = await invoke_porter_action(message, service_bus_client, message_logger_adapter)
                     await receive_message_gen.asend(result)
@@ -200,7 +200,7 @@ async def runner(i):
             except StopAsyncIteration:  # the async generator when finished signals end with this exception.
                 pass
 
-            logger_adapter.info(f'Process {i} sleeping...')
+            logger_adapter.info(f'Process {i}: All messages processed. Sleeping...')
             await asyncio.sleep(30)
 
 
