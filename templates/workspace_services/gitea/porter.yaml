@@ -78,8 +78,7 @@ install:
         tre_id: "{{ bundle.parameters.tre_id }}"
         id: "{{ bundle.parameters.id }}"
         mgmt_acr_name: "{{ bundle.parameters.mgmt_acr_name }}"
-        mgmt_resource_group_name:
-          "{{ bundle.parameters.mgmt_resource_group_name }}"
+        mgmt_resource_group_name: "{{ bundle.parameters.mgmt_resource_group_name }}"
         openid_client_id: "{{ bundle.parameters.openid_client_id }}"
         openid_client_secret: "{{ bundle.parameters.openid_client_secret }}"
         openid_authority: "{{ bundle.parameters.openid_authority }}"
@@ -105,8 +104,7 @@ uninstall:
         tre_id: "{{ bundle.parameters.tre_id }}"
         id: "{{ bundle.parameters.id }}"
         mgmt_acr_name: "{{ bundle.parameters.mgmt_acr_name }}"
-        mgmt_resource_group_name:
-          "{{ bundle.parameters.mgmt_resource_group_name }}"
+        mgmt_resource_group_name: "{{ bundle.parameters.mgmt_resource_group_name }}"
         openid_client_id: "{{ bundle.parameters.openid_client_id }}"
         openid_client_secret: "{{ bundle.parameters.openid_client_secret }}"
         openid_authority: "{{ bundle.parameters.openid_authority }}"

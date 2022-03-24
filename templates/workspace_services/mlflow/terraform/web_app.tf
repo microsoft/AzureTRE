@@ -3,13 +3,27 @@ data "azurerm_storage_share" "shared_storage" {
   storage_account_name = local.storage_name
 }
 
+data "template_file" "mlflow-windows-config" {
+  template = file("${path.module}/../mlflow-vm-config/windows/template_config.ps1")
+  vars = {
+    MLFlow_Connection_String = data.azurerm_storage_account.mlflow.primary_connection_string
+  }
+}
+
+data "template_file" "mlflow-linux-config" {
+  template = file("${path.module}/../mlflow-vm-config/linux/template_config.sh")
+  vars = {
+    MLFlow_Connection_String = data.azurerm_storage_account.mlflow.primary_connection_string
+  }
+}
+
 resource "local_file" "mlflow-windows-config" {
-  content  = "[Environment]::SetEnvironmentVariable('AZURE_STORAGE_CONNECTION_STRING', '${data.azurerm_storage_account.mlflow.primary_connection_string}', 'Machine')\npip install mlflow==1.24.0\npip install azure-storage-blob==12.10.0\n"
+  content  = data.template_file.mlflow-windows-config.rendered
   filename = "${path.module}/../mlflow-vm-config/windows/config.ps1"
 }
 
 resource "local_file" "mlflow-linux-config" {
-  content  = "export AZURE_STORAGE_CONNECTION_STRING=\"${data.azurerm_storage_account.mlflow.primary_connection_string}\"\npip install mlflow==1.24.0\npip install azure-storage-blob==12.10.0\n"
+  content  = data.template_file.mlflow-linux-config.rendered
   filename = "${path.module}/../mlflow-vm-config/linux/config.sh"
 }
 
@@ -27,6 +41,12 @@ resource "azurerm_storage_share_file" "mlflow-config-linux" {
 
 data "local_file" "version" {
   filename = "${path.module}/../mlflow-server/version.txt"
+}
+
+resource "azurerm_storage_container" "mlflow_artefacts" {
+  name                  = local.mlflow_artefacts_container_name
+  storage_account_name  = local.storage_name
+  container_access_type = "private"
 }
 
 resource "azurerm_app_service" "mlflow" {
@@ -51,7 +71,7 @@ resource "azurerm_app_service" "mlflow" {
     MLFLOW_SERVER_HOST    = "0.0.0.0"
 
     MLFLOW_SERVER_FILE_STORE            = format("%s%s%s%s%s%s%s%s%s%s", "postgresql://", random_string.username.result, "@", azurerm_postgresql_server.mlflow.name, ":", random_password.password.result, "@", azurerm_postgresql_server.mlflow.name, ".postgres.database.azure.com:5432/", azurerm_postgresql_database.mlflow.name)
-    MLFLOW_SERVER_DEFAULT_ARTIFACT_ROOT = format("%s%s%s%s%s", "wasbs://", data.azurerm_storage_share.shared_storage.name, "@", data.azurerm_storage_account.mlflow.name, ".blob.core.windows.net/mlartefacts")
+    MLFLOW_SERVER_DEFAULT_ARTIFACT_ROOT = format("%s%s%s%s%s%s", "wasbs://", azurerm_storage_container.mlflow_artefacts.name, "@", data.azurerm_storage_account.mlflow.name, ".blob.core.windows.net/", azurerm_storage_container.mlflow_artefacts.name)
     AZURE_STORAGE_CONNECTION_STRING     = data.azurerm_storage_account.mlflow.primary_connection_string
   }
 
