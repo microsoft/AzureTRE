@@ -1,6 +1,7 @@
 # Maintainers
 
-This document is targetted at maintainers of the AzureTRE project. For information on developing and contributing to AzureTRE, see the [TRE Developers docs](https://microsoft.github.io/AzureTRE/tre-developers/)
+This document is targetted at maintainers of the AzureTRE project.
+For information on developing and contributing to AzureTRE, see the [TRE Developers docs](https://microsoft.github.io/AzureTRE/tre-developers/)
 
 ## PR Comment bot commands
 
@@ -16,11 +17,12 @@ This command will cause the pr-comment-bot to respond with a comment listing the
 
 ### `/test`
 
-This command runs the build, deploy and test cycle for a PR.
+This command runs the build, deploy, and smoke tests for a PR.
 
 **IMPORTANT**
 
-This command works on PRs from forks, and makes the deployment secrets available. Before running tests on a PR, ensure that there are no changes in the PR that could have unintended consequences (e.g. leak secrets or perform undesirable operations in the testing subscription).
+This command works on PRs from forks, and makes the deployment secrets available.
+Before running tests on a PR, ensure that there are no changes in the PR that could have unintended consequences (e.g. leak secrets or perform undesirable operations in the testing subscription).
 
 Check for changes to anything that is run during the build/deploy/test cycle, including:
 - modifications to workflows (including adding new actions or changing versions of existing actions)
@@ -28,6 +30,14 @@ Check for changes to anything that is run during the build/deploy/test cycle, in
 - modifications to scripts
 - new python packages being installed
 
+### `/test-extended`
+
+This command runs the build, deploy, and smoke & extended tests for a PR.
+
+**IMPORTANT**
+
+As with `/test`, this command works on PRs from forks, and makes the deployment secrets available.
+Before running tests on a PR, run the same checks on the PR code as for `/test`.
 
 ### `/test-destroy-env`
 
@@ -35,7 +45,8 @@ When running `/test` multiple times on a PR, the same TRE ID and environment are
 
 ### `/test-force-approve`
 
-This command skips running tests for a build and marks the checks as completed. This is intended to be used in scenarios where running the tests for a PR doesn't add value (for example, changing a workflow file that is always pulled from the default branch).
+This command skips running tests for a build and marks the checks as completed.
+This is intended to be used in scenarios where running the tests for a PR doesn't add value (for example, changing a workflow file that is always pulled from the default branch).
 
 
 ## Granting access to run commands
