@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Remove apt sources not included in sources.list file 
+# Remove apt sources not included in sources.list file
 sudo rm /etc/apt/sources.list.d/*
 
 # Update apt packages from configured Nexus sources
@@ -63,7 +63,7 @@ if [ ${shared_storage_access} -eq 1 ]; then
   sudo chmod 600 $smbCredentialFile
 
   # Configure autofs
-  sudo echo "$fileShareName -fstype=cifs,file_mode=06666,dir_mode=06666,credentials=$smbCredentialFile :$smbPath" > /etc/auto.fileshares
+  sudo echo "$fileShareName -fstype=cifs,rw,dir_mode=0777,credentials=$smbCredentialFile :$smbPath" > /etc/auto.fileshares
   sudo echo "$mntRoot /etc/auto.fileshares --timeout=60" > /etc/auto.master
 
   # Restart service to register changes
@@ -79,6 +79,7 @@ if [ ${conda_config} -eq 1 ]; then
   export PATH="/anaconda/bin":$PATH
   export PATH="/anaconda/envs/py38_default/bin":$PATH
   conda config --add channels ${nexus_proxy_url}/repository/conda/  --system
+  conda config --add channels ${nexus_proxy_url}/repository/conda-forge/  --system
   conda config --remove channels defaults --system
   conda config --set channel_alias ${nexus_proxy_url}/repository/conda/  --system
 fi

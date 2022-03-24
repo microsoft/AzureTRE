@@ -207,6 +207,7 @@ resource "azurerm_network_security_rule" "allow-outbound-webapps-to-services" {
     "445",
     "3306",
     "3389",
+    "5432",
   ]
   destination_address_prefix  = azurerm_subnet.services.address_prefix
   source_address_prefix       = azurerm_subnet.webapps.address_prefix
@@ -262,6 +263,7 @@ resource "azurerm_network_security_rule" "allow-inbound-from-webapp-to-services"
     "445",
     "3306",
     "3389",
+    "5432",
   ]
   destination_address_prefix  = azurerm_subnet.services.address_prefix
   source_address_prefix       = azurerm_subnet.webapps.address_prefix
@@ -432,6 +434,17 @@ resource "azurerm_private_dns_zone_virtual_network_link" "nexuslink" {
   name                  = "nexuslink-${local.workspace_resource_name_suffix}"
   resource_group_name   = local.core_resource_group_name
   private_dns_zone_name = data.azurerm_private_dns_zone.nexus.name
+}
+
+data "azurerm_private_dns_zone" "postgres" {
+  name                = "privatelink.postgres.database.azure.com"
+  resource_group_name = local.core_resource_group_name
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "postgreslink" {
+  name                  = "postgreslink-${local.workspace_resource_name_suffix}"
+  resource_group_name   = local.core_resource_group_name
+  private_dns_zone_name = data.azurerm_private_dns_zone.postgres.name
   virtual_network_id    = azurerm_virtual_network.ws.id
 
   lifecycle { ignore_changes = [tags] }

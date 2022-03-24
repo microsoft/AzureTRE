@@ -1,3 +1,4 @@
+import threading
 import json
 import socket
 import asyncio
@@ -6,6 +7,7 @@ import sys
 from resources.commands import build_porter_command, build_porter_command_for_outputs
 from shared.config import get_config
 from resources.helpers import get_installation_id
+from resources.httpserver import start_server
 
 from shared.logging import disable_unwanted_loggers, initialize_logging, get_message_id_logger, shell_output_logger  # pylint: disable=import-error # noqa
 from resources import strings, statuses  # pylint: disable=import-error # noqa
@@ -123,8 +125,8 @@ async def invoke_porter_action(msg_body, sb_client, message_logger_adapter) -> b
     message_logger_adapter.info(f"{installation_id}: {action} action configuration starting")
     sb_sender = sb_client.get_queue_sender(queue_name=config["deployment_status_queue"])
 
-    # If the action is install, post message on sb queue to start a deployment job
-    if action == "install":
+    # If the action is install/upgrade, post message on sb queue to start a deployment job
+    if action == "install" or action == "upgrade":
         resource_request_message = service_bus_message_generator(msg_body, strings.RESOURCE_STATUS_DEPLOYING, "Deployment job starting")
         await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"]))
 
@@ -200,7 +202,12 @@ async def runner():
             logger_adapter.info("All messages processed. Sleeping...")
             await asyncio.sleep(60)
 
-
 if __name__ == "__main__":
+    httpserver_thread = threading.Thread(target=start_server)
+    httpserver_thread.start()
+    logger_adapter.info("Started http server")
+
+    asyncio.ensure_future(runner())
+    event_loop = asyncio.get_event_loop()
+    event_loop.run_forever()
     logger_adapter.info("Started resource processor")
-    asyncio.run(runner())

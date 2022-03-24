@@ -4,7 +4,7 @@ ARG BUNDLE_DIR
 
 RUN apt-get update && apt-get install -y ca-certificates
 
-# Install Azure CLI (neeeded for import_state.sh)
+# Install Azure CLI
 RUN apt-get update \
     && apt-get install -y ca-certificates jq curl apt-transport-https lsb-release gnupg \
     && curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null \

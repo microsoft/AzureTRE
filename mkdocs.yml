@@ -55,7 +55,8 @@ nav:
           - 4. Configuring Shared Services: 'tre-admins/setup-instructions/configuring-shared-services.md'
           - 5. Installing Base Workspace: 'tre-admins/setup-instructions/installing-base-workspace.md'
           - 6. Installing Workspace Service and User Resource: 'tre-admins/setup-instructions/installing-workspace-service-and-user-resource.md'
-          - Tear-down: 'tre-admins/setup-instructions/tear-down.md'
+      - Start-stop: 'tre-admins/start-stop.md'
+      - Tear-down: 'tre-admins/tear-down.md'
       - Environment Variables: 'tre-admins/environment-variables.md'
       - Authentication and Authorization: 'tre-admins/auth.md'
       - Registering Templates: 'tre-admins/registering-templates.md'
@@ -78,6 +79,7 @@ nav:
           - Gitea: 'tre-templates/workspace-services/gitea.md'
           - Guacamole: 'tre-templates/workspace-services/guacamole.md'
           - InnerEye: 'tre-templates/workspace-services/inner-eye.md'
+          - MLFlow: 'tre-templates/workspace-services/mlflow.md'
       - User Resources:
           - Guacamole Windows VM: 'tre-templates/user-resources/guacamole-windows-vm.md'
           - Guacamole Linux VM: 'tre-templates/user-resources/guacamole-linux-vm.md'

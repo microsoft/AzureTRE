@@ -11,5 +11,11 @@ variable "location" {
 variable "nexus_allowed_fqdns" {
   type        = string
   description = "comma seperated string of allowed FQDNs for Nexus"
-  default     = "*pypi.org,files.pythonhosted.org,security.ubuntu.com,archive.ubuntu.com,repo.anaconda.com,*.docker.com,*.docker.io,keyserver.ubuntu.com,azure.archive.ubuntu.com"
+  default     = "*pypi.org,files.pythonhosted.org,security.ubuntu.com,archive.ubuntu.com,repo.anaconda.com,*.docker.com,*.docker.io,conda.anaconda.org"
+}
+
+variable "nexus_properties_path" {
+  type        = string
+  description = "relative path of nexus properties file"
+  default     = "/cnab/app/nexus.properties"
 }

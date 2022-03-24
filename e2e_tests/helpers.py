@@ -45,7 +45,7 @@ async def get_service_template(template_name, token, verify):
         yield response
 
 
-async def post_resource(payload, endpoint, resource_type, token, admin_token, verify):
+async def post_resource(payload, endpoint, resource_type, token, admin_token, verify, method="POST"):
     async with AsyncClient(verify=verify) as client:
 
         if resource_type == 'workspace':
@@ -56,7 +56,13 @@ async def post_resource(payload, endpoint, resource_type, token, admin_token, ve
         full_endpoint = f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{endpoint}"
         print(f'POSTING RESOURCE TO: {full_endpoint}')
 
-        response = await client.post(full_endpoint, headers=auth_headers, json=payload)
+        if method == "POST":
+            response = await client.post(full_endpoint, headers=auth_headers, json=payload)
+            check_method = install_done
+        else:
+            auth_headers["eTag"] = "*"  # * = force the update regardless. We have other tests to check the validity of the etag
+            check_method = patch_done
+            response = await client.patch(full_endpoint, headers=auth_headers, json=payload)
 
         print(f'RESPONSE: {response}')
         print(f'RESPONSE Content: {response.content}')
@@ -67,7 +73,8 @@ async def post_resource(payload, endpoint, resource_type, token, admin_token, ve
         resource_id = response.json()["operation"]["resourceId"]
         operation_endpoint = response.headers["Location"]
 
-        await wait_for(install_done, client, operation_endpoint, get_auth_header(token), strings.RESOURCE_STATUS_FAILED)
+        await wait_for(check_method, client, operation_endpoint, get_auth_header(token), strings.RESOURCE_STATUS_FAILED)
+
         return resource_path, resource_id
 
 
@@ -86,7 +93,9 @@ async def disable_and_delete_resource(endpoint, resource_type, token, admin_toke
         # disable
         payload = {"isEnabled": False}
         response = await client.patch(full_endpoint, headers=auth_headers, json=payload)
-        assert (response.status_code == status.HTTP_200_OK), "Disable resource failed"
+        assert (response.status_code == status.HTTP_202_ACCEPTED), "Disable resource failed"
+        operation_endpoint = response.headers["Location"]
+        await wait_for(patch_done, client, operation_endpoint, auth_headers, strings.RESOURCE_STATUS_FAILED)
 
         # delete
         response = await client.delete(full_endpoint, headers=auth_headers)
@@ -148,6 +157,12 @@ async def delete_done(client, operation_endpoint, headers):
 
 async def install_done(client, operation_endpoint, headers):
     install_terminal_states = [strings.RESOURCE_STATUS_DEPLOYED, strings.RESOURCE_STATUS_FAILED]
+    deployment_status, message = await check_deployment(client, operation_endpoint, headers)
+    return (True, deployment_status, message) if deployment_status in install_terminal_states else (False, deployment_status, message)
+
+
+async def patch_done(client, operation_endpoint, headers):
+    install_terminal_states = [strings.RESOURCE_ACTION_STATUS_SUCCEEDED, strings.RESOURCE_ACTION_STATUS_FAILED]
     deployment_status, message = await check_deployment(client, operation_endpoint, headers)
     return (True, deployment_status, message) if deployment_status in install_terminal_states else (False, deployment_status, message)
 

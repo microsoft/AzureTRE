@@ -39,28 +39,30 @@ parameters:
     default: "tfstate"
     description: "The name of the Terraform state storage container"
   - name: arm_use_msi
-    env: ARM_USE_MSI
+    type: boolean
     default: false
   - name: shared_storage_quota
-    env: SHARED_STORAGE_QUOTA
     type: integer
     default: 50
-
+  - name: enable_local_debugging
+    type: boolean
+    default: false
 mixins:
   - exec
   - terraform:
-      clientVersion: 1.0.4
+      clientVersion: 1.1.7
 
 install:
   - terraform:
       description: "Deploy workspace"
-
       vars:
         tre_id: "{{ bundle.parameters.tre_id }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
         location: "{{ bundle.parameters.azure_location }}"
         address_space: "{{ bundle.parameters.address_space }}"
         shared_storage_quota: "{{ bundle.parameters.shared_storage_quota }}"
+        enable_local_debugging:
+          "{{ bundle.parameters.enable_local_debugging }}"
       backendConfig:
         resource_group_name:
           "{{ bundle.parameters.tfstate_resource_group_name }}"
@@ -79,12 +81,16 @@ upgrade:
 uninstall:
   - terraform:
       description: "Tear down workspace"
+      # https://github.com/microsoft/AzureTRE/issues/1526
+      logLevel: Debug
       vars:
         tre_id: "{{ bundle.parameters.tre_id }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
         location: "{{ bundle.parameters.azure_location }}"
         address_space: "{{ bundle.parameters.address_space }}"
         shared_storage_quota: "{{ bundle.parameters.shared_storage_quota }}"
+        enable_local_debugging:
+          "{{ bundle.parameters.enable_local_debugging }}"
       backendConfig:
         resource_group_name:
           "{{ bundle.parameters.tfstate_resource_group_name }}"

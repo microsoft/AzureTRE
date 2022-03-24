@@ -78,8 +78,8 @@ Next, you will set the configuration variables for the specific Azure TRE instan
   | `API_CLIENT_ID` | API application (client) ID. |
   | `API_CLIENT_SECRET` | API application client secret. |
   | `SWAGGER_UI_CLIENT_ID` | Swagger (OpenAPI) UI application (client) ID. |
-  | `AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID`| If you supplied `--automation-account` in the above command, this is the user that will run the tests for you |
-  | `AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET` | If you supplied `--automation-account` in the above command, this is the password of the user that will run the tests for you. |
+  | `TEST_ACCOUNT_CLIENT_ID`| If you supplied `--automation-account` in the above command, this is the user that will run the tests for you |
+  | `TEST_ACCOUNT_CLIENT_SECRET` | If you supplied `--automation-account` in the above command, this is the password of the user that will run the tests for you. |
 
 All other variables can have their default values for now. You should now have a `.env` file that looks similar to below:
 
@@ -99,8 +99,8 @@ API_CLIENT_ID=af6...dc
 API_CLIENT_SECRET=abc...12
 SWAGGER_UI_CLIENT_ID=d87...12
 
-AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID=4e...40
-AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET=sp...7c
+TEST_ACCOUNT_CLIENT_ID=4e...40
+TEST_ACCOUNT_CLIENT_SECRET=sp...7c
 ```
 
 ### Using a separate Azure Active Directory tenant

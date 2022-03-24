@@ -52,7 +52,7 @@ runcmd:
   - export DEBIAN_FRONTEND=noninteractive
   - az login --identity -u ${vmss_msi_id}
   - az acr login --name ${docker_registry_server}
-  - docker run -d -v /var/run/docker.sock:/var/run/docker.sock
+  - docker run -d -p 8080:8080 -v /var/run/docker.sock:/var/run/docker.sock
     --restart always --env-file .env
     --name resource_processor_vmss_porter1
     --log-driver local

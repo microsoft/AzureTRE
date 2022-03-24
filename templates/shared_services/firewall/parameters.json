@@ -11,12 +11,6 @@
       }
     },
     {
-      "name": "azure_location",
-      "source": {
-        "env": "LOCATION"
-      }
-    },
-    {
       "name": "tfstate_container_name",
       "source": {
         "env": "TERRAFORM_STATE_CONTAINER_NAME"
