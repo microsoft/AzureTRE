@@ -3,9 +3,9 @@
 # This script register a bundle with the TRE API. It relies on the bundle
 # pre-existing in the remote repository (i.e. has been publish beforehand).
 
-set -o errexit
+# set -o errexit
 set -o pipefail
-# set -o xtrace
+set -o xtrace
 
 function usage() {
     cat <<USAGE
@@ -15,23 +15,25 @@ function usage() {
     Options:
         -r, --acr-name                Azure Container Registry Name
         -t, --bundle-type             Bundle type: workspace, workspace_service, user_resource or shared_service
-        -w, --workspace-service-name  The template name of the user resource (if registering a user_resource)
+        -w, --workspace-service-name  The template name of the user resource (if registering a user_resource), or shared service (if registering a shared_service)
         -c, --current                 Make this the currently deployed version of this template
         -i, --insecure                Bypass SSL certificate checks
         -u, --tre_url                 URL for the TRE (required for automatic registration)
         -a, --access-token            Azure access token to automatically post to the API (required for automatic registration)
         -v, --verify                  Verify registration with the API
+        -d, --deploy_shared_service   If registering a shared service bundle, deploy it as well
 USAGE
     exit 1
 }
 
 # if no arguments are provided, return usage function
-if [ $# -eq 0 ]; then
+if [[ $# -eq 0 ]]; then
     usage # run usage function
 fi
 
 current="false"
-verify=false
+verify="false"
+deploy_shared_service="false"
 
 while [ "$1" != "" ]; do
     case $1 in
@@ -75,7 +77,10 @@ while [ "$1" != "" ]; do
         access_token=$1
         ;;
     -v| --verify)
-        verify=true
+        verify="true"
+        ;;
+    -d | --deploy_shared_service)
+        deploy_shared_service="true"
         ;;
     *)
         echo "Unexpected argument: '$1'"
@@ -105,7 +110,12 @@ if [[ -z ${bundle_type:-} ]]; then
 fi
 
 if [ ${bundle_type} == "user_resource" ] && [ -z ${workspace_service_name:-} ]; then
-    echo -e "You must supply a workspace service_name name if you are registering a user_resource bundle\n"
+    echo -e "You must supply a workspace_service_name name if you are registering a user_resource bundle\n"
+    usage
+fi
+
+if [ "${deploy_shared_service}" = "true" ] && [ ${bundle_type} != "shared_service" ]; then
+    echo -e "You can only deploy a shared_service bundle via this script\n"
     usage
 fi
 
@@ -168,19 +178,31 @@ else
     ("shared_service") tre_get_path="/api/shared-service-templates";;
   esac
 
-  echo -e "Server Response:\n"
-  eval "curl -X 'POST' ${tre_url}/${tre_get_path} -H 'accept: application/json' -H 'Content-Type: application/json' -H 'Authorization: Bearer ${access_token}' -d '${payload}' ${options}"
-  echo -e "\n"
+  # echo -e "Server Response:\n"
+  # eval "curl -X 'POST' ${tre_url}/${tre_get_path} -H 'accept: application/json' -H 'Content-Type: application/json' -H 'Authorization: Bearer ${access_token}' -d '${payload}' ${options}"
+  # echo -e "\n"
 
-  if ${verify}
-  then
+  if [[ "${verify}" = "true" ]]; then
     # Check that the template got registered
     template_name=$(yq eval '.name' porter.yaml)
     status_code=$(curl -X "GET" "${tre_url}/${tre_get_path}/${template_name}" -H "accept: application/json" -H "Authorization: Bearer ${access_token}" ${options} -s -w "%{http_code}" -o /dev/null)
 
-    if [[ ${status_code} != 200 ]]
-    then
+    if [[ ${status_code} != 200 ]]; then
       echo "::warning ::Template API check for ${bundle_type} ${template_name} returned http status: ${status_code}"
+      exit 1
+    fi
+  fi
+
+  if [[ "${deploy_shared_service}" = "true" ]]; then
+    echo DEPLOYING
+
+    template_name=$(yq eval '.name' porter.yaml)
+    payload="{ \"templateName\": \"${template_name}\", \"properties\": { \"display_name\": \"Shared service ${template_name}\", \"description\": \"Automatically deployed ${template_name}\" } }"
+
+    status_code=$(curl -X "POST" "${tre_url}/api/shared-services" -H "accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer ${access_token}" -d "${payload}" ${options} -s -w "%{http_code}" -o /dev/null)
+
+    if [[ ${status_code} != 202 ]]; then
+      echo "::warning ::Deployment of shared service ${template_name} via API check returned http status: ${status_code}"
       exit 1
     fi
   fi
