@@ -1,3 +1,4 @@
+from json import JSONDecodeError
 import pytest
 
 from httpx import AsyncClient
@@ -36,7 +37,10 @@ async def admin_token(verify) -> str:
             url = f"https://login.microsoftonline.com/{config.AAD_TENANT_ID}/oauth2/token"
 
         response = await client.post(url, headers=headers, content=payload)
-        responseJson = response.json()
+        try:
+            responseJson = response.json()
+        except JSONDecodeError:
+            assert False, "Failed to parse response as JSON: {}".format(response.content)
 
         assert "access_token" in responseJson, "Failed to get access_token: {}".format(response.content)
         token = responseJson["access_token"]
@@ -60,7 +64,10 @@ async def workspace_owner_token(verify) -> str:
             url = f"https://login.microsoftonline.com/{config.AAD_TENANT_ID}/oauth2/token"
 
         response = await client.post(url, headers=headers, content=payload)
-        responseJson = response.json()
+        try:
+            responseJson = response.json()
+        except JSONDecodeError:
+            assert False, "Failed to parse response as JSON: {}".format(response.content)
 
         assert "access_token" in responseJson, "Failed to get access_token: {}".format(response.content)
         token = responseJson["access_token"]
