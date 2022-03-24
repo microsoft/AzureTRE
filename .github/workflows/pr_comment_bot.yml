@@ -7,10 +7,9 @@ on:
     # https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#issue_comment
 
 jobs:
-
   pr_comment:
     name: PR comment
-    environment: Dev
+    environment: CICD
     # https://docs.github.com/en/graphql/reference/enums#commentauthorassociation
     # (and https://docs.github.com/en/rest/reference/issues#comments)
 
@@ -83,6 +82,9 @@ jobs:
               case "/test":
                 command = "run-tests";
                 break;
+              case "/test-extended":
+                command = "run-tests-extended";
+                break;
               case "/test-force-approve":
                 command = "test-force-approve";
                 break;
@@ -105,12 +107,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Showing help on PR ${PR_NUMBER}"
-          gh pr comment ${PR_NUMBER} --repo $REPO --body "Hello<br/><br/>You can use the following commands:<br/>    /test - run tests on a PR<br/>    /test-force-approve - force approval of the PR tests (i.e. skip the deployment checks)<br/>    /test-destroy-env - delete the validation environment for a PR (e.g. to enable testing a deployment from a clean start after previous tests)    /help - show this help"
+          gh pr comment ${PR_NUMBER} --repo $REPO --body "Hello<br/><br/>You can use the following commands:<br/>    /test - build, deploy and run smoke tests on a PR<br/>    /test-extended - build, deploy and run somke & extended tests on a PR<br/>    /test-force-approve - force approval of the PR tests (i.e. skip the deployment checks)<br/>    /test-destroy-env - delete the validation environment for a PR (e.g. to enable testing a deployment from a clean start after previous tests)    /help - show this help"
 
       # Get PR commit details for running tests
       - id: get_pr_details
         name: Get PR details
-        if: ${{ steps.check_command.outputs.result == 'run-tests' || steps.check_command.outputs.result == 'test-force-approve' || steps.check_command.outputs.result == 'test-destroy-env' }}
+        if: ${{ steps.check_command.outputs.result == 'run-tests' || steps.check_command.outputs.result == 'run-tests-extended' || steps.check_command.outputs.result == 'test-force-approve' || steps.check_command.outputs.result == 'test-destroy-env' }}
         env:
           PR_NUMBER: ${{ github.event.issue.number }}
           REPO: ${{ github.event.repository.full_name }}
@@ -184,7 +186,7 @@ jobs:
           conclusion: "success"
 
       - name: Comment with link to run
-        if: ${{ steps.check_command.outputs.result == 'run-tests' }}
+        if: ${{ steps.check_command.outputs.result == 'run-tests' || steps.check_command.outputs.result == 'run-tests-extended' }}
         env:
           PR_NUMBER: ${{ github.event.issue.number }}
           REPO: ${{ github.event.repository.full_name }}
@@ -217,17 +219,17 @@ jobs:
           devops/scripts/destroy_env_no_terraform.sh --core-tre-rg ${RG_NAME}
           gh pr comment ${PR_NUMBER} --repo $REPO --body "Test environment destroy complete"
 
-
   run_test:
     # Run the tests with the re-usable workflow
     needs: [pr_comment]
-    if: ${{ needs.pr_comment.outputs.command == 'run-tests' && needs.pr_comment.outputs.not-md == 'true' }}
+    if: ${{ (needs.pr_comment.outputs.command == 'run-tests' && needs.pr_comment.outputs.not-md == 'true') || needs.pr_comment.outputs.command == 'run-tests-extended' }}
     name: Deploy PR
     uses: ./.github/workflows/deploy_tre_reusable.yml
     with:
       prRef: ${{ needs.pr_comment.outputs.prRef }}
       prHeadSha: ${{ needs.pr_comment.outputs.prHeadSha }}
       ciGitRef: ${{ needs.pr_comment.outputs.ciGitRef }}
+      runExtendedTests: ${{ needs.pr_comment.outputs.command == 'run-tests-extended' }}
     secrets:
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
       ACR_NAME: ${{ format('tre{0}', needs.pr_comment.outputs.refid) }}
@@ -248,12 +250,11 @@ jobs:
       STATE_STORAGE_ACCOUNT_NAME: ${{ format('tre{0}mgmt', needs.pr_comment.outputs.refid) }}
       SWAGGER_UI_CLIENT_ID: ${{ secrets.SWAGGER_UI_CLIENT_ID }}
       TEST_APP_ID: ${{ secrets.TEST_APP_ID }}
-      TEST_USER_NAME: ${{ secrets.TEST_USER_NAME }}
-      TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
       TEST_WORKSPACE_APP_ID: ${{ secrets.TEST_WORKSPACE_APP_ID }}
+      TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
+      TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
       TF_STATE_CONTAINER: ${{ secrets.TF_STATE_CONTAINER }}
       TRE_ADDRESS_SPACE: ${{ secrets.TRE_ADDRESS_SPACE }}
       TRE_ID: ${{ format('tre{0}', needs.pr_comment.outputs.refid) }}
       CI_CACHE_ACR_NAME: ${{ secrets.ACR_NAME }}
       TF_LOG: ${{ secrets.TF_LOG }}
-

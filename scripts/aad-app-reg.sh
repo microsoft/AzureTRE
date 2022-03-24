@@ -2,6 +2,7 @@
 
 # Setup Script
 set -euo pipefail
+AZURE_CORE_OUTPUT=jsonc # force CLI output to JSON for the script (user can still change default for interactive usage in the dev container)
 
 function show_usage()
 {
@@ -799,8 +800,8 @@ fi
 if [[ $createAutomationAccount -eq 1 ]]; then
   cat << ENV_VARS
 
-AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID=${automationAppId}
-AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET=${automationSpPassword}
+TEST_ACCOUNT_CLIENT_ID=${automationAppId}
+TEST_ACCOUNT_CLIENT_SECRET=${automationSpPassword}
 
 ** Please copy this to /templates/core/.env and set it to be https://fqdn for your TRE **
 TRE_URL=__CHANGE_ME___

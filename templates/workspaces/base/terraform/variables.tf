@@ -35,3 +35,9 @@ variable "app_service_plan_sku" {
   default     = "P1v3"
   description = "App Service Plan SKU"
 }
+
+variable "enable_local_debugging" {
+  type        = bool
+  default     = false
+  description = "This will allow storage account access over the internet. Set to true to allow deploying this from a local machine."
+}

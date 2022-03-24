@@ -64,6 +64,28 @@ resource "azurerm_linux_virtual_machine_scale_set" "vm_linux" {
   resource_group_name = var.resource_group_name
   upgrade_mode        = "Automatic"
 
+  extension {
+    auto_upgrade_minor_version = false
+    automatic_upgrade_enabled  = false
+    name                       = "healthRepairExtension"
+    provision_after_extensions = []
+    publisher                  = "Microsoft.ManagedServices"
+    settings = jsonencode(
+      {
+        port        = 8080
+        protocol    = "http"
+        requestPath = "/health"
+      }
+    )
+    type                 = "ApplicationHealthLinux"
+    type_handler_version = "1.0"
+  }
+
+  automatic_os_upgrade_policy {
+    disable_automatic_rollback  = false
+    enable_automatic_os_upgrade = true
+  }
+
   rolling_upgrade_policy {
     max_batch_instance_percent              = 100
     max_unhealthy_instance_percent          = 100

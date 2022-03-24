@@ -80,6 +80,7 @@ nav:
           - Gitea: 'tre-templates/workspace-services/gitea.md'
           - Guacamole: 'tre-templates/workspace-services/guacamole.md'
           - InnerEye: 'tre-templates/workspace-services/inner-eye.md'
+          - MLFlow: 'tre-templates/workspace-services/mlflow.md'
       - User Resources:
           - Guacamole Windows VM: 'tre-templates/user-resources/guacamole-windows-vm.md'
           - Guacamole Linux VM: 'tre-templates/user-resources/guacamole-linux-vm.md'
