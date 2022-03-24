@@ -1,7 +1,7 @@
 import os
 
 
-def get_config() -> dict:
+def get_config(logger_adapter) -> dict:
     config = {}
 
     config["registry_server"] = os.environ["REGISTRY_SERVER"]
@@ -17,6 +17,7 @@ def get_config() -> dict:
     try:
         config["number_processes_int"] = int(config["number_processes"])
     except ValueError:
+        logger_adapter.info("Invalid setting for NUMBER_PROCESSES, will default to 1")
         config["number_processes_int"] = 1
 
     # Needed for running porter

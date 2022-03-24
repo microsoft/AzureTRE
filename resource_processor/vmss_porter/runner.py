@@ -24,7 +24,7 @@ disable_unwanted_loggers()
 
 # Initialise config
 try:
-    config = get_config()
+    config = get_config(logger_adapter)
 except KeyError as e:
     logger_adapter.error(f"Environment variable {e} is not set correctly...Exiting")
     sys.exit(1)
@@ -204,7 +204,7 @@ async def runner(i):
             await asyncio.sleep(30)
 
 
-def start_ruuner_process(i):
+def start_runner_process(i):
     asyncio.ensure_future(runner(i))
     event_loop = asyncio.get_event_loop()
     event_loop.run_forever()
@@ -216,7 +216,8 @@ if __name__ == "__main__":
     httpserver_thread.start()
     logger_adapter.info("Started http server")
 
+    logger_adapter.info(f'Starting {str(config["number_processes_int"])} processes...')
     for i in range(config["number_processes_int"]):
         logger_adapter.info(f'Starting process {str(i)}')
-        process = Process(target=start_ruuner_process(i))
+        process = Process(target=start_runner_process, args=(str(i)))
         process.start()
