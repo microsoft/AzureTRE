@@ -4,8 +4,12 @@ from contextlib import asynccontextmanager
 from httpx import AsyncClient
 from starlette import status
 
+import logging
+
 import config
 from resources import strings
+
+LOGGER = logging.getLogger(__name__)
 
 
 class InstallFailedException(Exception):
@@ -54,7 +58,7 @@ async def post_resource(payload, endpoint, resource_type, token, admin_token, ve
             auth_headers = get_auth_header(token)
 
         full_endpoint = f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{endpoint}"
-        print(f'POSTING RESOURCE TO: {full_endpoint}')
+        LOGGER.info(f'POSTING RESOURCE TO: {full_endpoint}')
 
         if method == "POST":
             response = await client.post(full_endpoint, headers=auth_headers, json=payload)
@@ -64,9 +68,9 @@ async def post_resource(payload, endpoint, resource_type, token, admin_token, ve
             check_method = patch_done
             response = await client.patch(full_endpoint, headers=auth_headers, json=payload)
 
-        print(f'RESPONSE: {response}')
-        print(f'RESPONSE Content: {response.content}')
-        print(f'RESPONSE status code: {response.status_code}')
+        LOGGER.info(f'RESPONSE: {response}')
+        LOGGER.info(f'RESPONSE Content: {response.content}')
+        LOGGER.info(f'RESPONSE status code: {response.status_code}')
         assert (response.status_code == status.HTTP_202_ACCEPTED), f"Request for resource {payload['templateName']} creation failed"
 
         resource_path = response.json()["operation"]["resourcePath"]
@@ -120,7 +124,7 @@ async def ping_guacamole_workspace_service(workspace_id, workspace_service_id, t
         while (True):
             try:
                 response = await client.get(url=endpoint, headers=headers, timeout=10)
-                print("GUAC RESPONSE", response)
+                LOGGER.info(f"GUAC RESPONSE: {response}")
 
                 if response.status_code in terminal_http_status:
                     break
@@ -128,7 +132,7 @@ async def ping_guacamole_workspace_service(workspace_id, workspace_service_id, t
                 await asyncio.sleep(30)
 
             except Exception as e:
-                print(e)
+                LOGGER.error(e)
 
         assert (response.status_code == status.HTTP_200_OK), "Guacamole cannot be reached"
 
@@ -136,16 +140,16 @@ async def ping_guacamole_workspace_service(workspace_id, workspace_service_id, t
 async def wait_for(func, client, operation_endoint, headers, failure_state):
     done, done_state, message = await func(client, operation_endoint, headers)
     while not done:
-        print(f'WAITING FOR OP: {operation_endoint}')
+        LOGGER.info(f'WAITING FOR OP: {operation_endoint}')
         await asyncio.sleep(30)
 
         done, done_state, message = await func(client, operation_endoint, headers)
-        print(done, done_state, message)
+        LOGGER.info(f"{done}, {done_state}, {message}")
     try:
         assert done_state != failure_state
     except Exception as e:
-        print(f"Failed to deploy status message: {message}")
-        print(e)
+        LOGGER.error(f"Failed to deploy status message: {message}")
+        LOGGER.error(e)
         raise
 
 
@@ -175,6 +179,6 @@ async def check_deployment(client, operation_endpoint, headers):
         message = response.json()["operation"]["message"]
         return deployment_status, message
     else:
-        print(f"Response status: {response.status_code}")
-        print(f"Full response: {response}")
+        LOGGER.error(f"Non 200 response in check_deployment: {response.status_code}")
+        LOGGER.error(f"Full response: {response}")
         raise Exception("Non 200 response in check_deployment")
