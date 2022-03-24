@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Remove apt sources not included in sources.list file 
+# Remove apt sources not included in sources.list file
 sudo rm /etc/apt/sources.list.d/*
 
 # Update apt packages from configured Nexus sources
@@ -79,6 +79,7 @@ if [ ${conda_config} -eq 1 ]; then
   export PATH="/anaconda/bin":$PATH
   export PATH="/anaconda/envs/py38_default/bin":$PATH
   conda config --add channels ${nexus_proxy_url}/repository/conda/  --system
+  conda config --add channels ${nexus_proxy_url}/repository/conda-forge/  --system
   conda config --remove channels defaults --system
   conda config --set channel_alias ${nexus_proxy_url}/repository/conda/  --system
 fi
