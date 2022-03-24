@@ -10,9 +10,9 @@ echo
 not_ok_count=$(echo "${response}"  | jq -r '[.services | .[] | select(.status!="OK")] | length')
 
 if [[ "$not_ok_count" == "0" ]]; then
-  echo "*** API healthy ***"
+  echo "*** ✅ API healthy ***"
 else
-  echo "*** API _not_ healthy ***"
+  echo "*** ⚠️ API _not_ healthy ***"
   echo "Unhealthy services:"
   echo "${response}"  | jq -r '[.services | .[] | select(.status!="OK")]'
   exit 1
