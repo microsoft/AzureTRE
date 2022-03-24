@@ -82,7 +82,7 @@ uninstall:
   - terraform:
       description: "Tear down workspace"
       # https://github.com/microsoft/AzureTRE/issues/1526
-      logLevel: Debug
+      # logLevel: Debug
       vars:
         tre_id: "{{ bundle.parameters.tre_id }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
