@@ -149,7 +149,7 @@ gitea-install:
 
 nexus-install:
 	$(call target_title, "Installing Nexus") \
-	&& make SHARED_SERVICE_KEY=shared-service-sonatype-nexus TF_VAR_nexus_properties_path=../nexus.properties terraform-shared-service-deploy DIR=./templates/shared_services/sonatype-nexus/terraform
+	&& make SHARED_SERVICE_KEY=shared-service-sonatype-nexus terraform-shared-service-deploy DIR=./templates/shared_services/sonatype-nexus/terraform
 
 # / End migration targets
 
