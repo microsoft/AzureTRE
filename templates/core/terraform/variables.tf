@@ -153,3 +153,9 @@ variable "arm_subscription_id" {
   type        = string
   default     = ""
 }
+
+variable "public_deployment_ip_address" {
+  description = "Your local IP address if https://ipecho.net/plain is blocked."
+  type        = string
+  default     = ""
+}
