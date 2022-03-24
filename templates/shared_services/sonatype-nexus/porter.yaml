@@ -1,6 +1,6 @@
 ---
 name: tre-shared-service-nexus
-version: 0.0.4
+version: 0.0.7
 description: "A Sonatype Nexus shared service"
 registry: azuretre
 credentials:
