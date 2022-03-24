@@ -8,7 +8,11 @@ if [[ -z ${STORAGE_ACCOUNT} ]]; then
   exit 1
 fi
 
-IPADDR=$(curl ipecho.net/plain; echo)
+if [[ -z ${PUBLIC_DEPLOYMENT_IP_ADDRESS:-} ]]; then
+  IPADDR=$(curl ipecho.net/plain; echo)
+else
+  IPADDR=${PUBLIC_DEPLOYMENT_IP_ADDRESS}
+fi
 
 # The storage account is protected by network rules
 # The rules need to be temporarily lifted so that the index.html file, if required, and certificate can be uploaded

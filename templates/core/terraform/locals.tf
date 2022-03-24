@@ -14,5 +14,10 @@ data "azurerm_container_registry" "mgmt_acr" {
 }
 
 data "http" "myip" {
-  url = "https://ipecho.net/plain"
+  count = var.public_deployment_ip_address == "" ? 1 : 0
+  url   = "https://ipecho.net/plain"
+}
+
+locals {
+  myip = var.public_deployment_ip_address != "" ? var.public_deployment_ip_address : chomp(data.http.myip[0].body)
 }
