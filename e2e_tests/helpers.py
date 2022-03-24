@@ -180,4 +180,5 @@ async def check_deployment(client, operation_endpoint, headers):
         return deployment_status, message
     else:
         LOGGER.error(f"Non 200 response in check_deployment: {response.status_code}")
+        LOGGER.error(f"Full response: {response}")
         raise Exception("Non 200 response in check_deployment")
