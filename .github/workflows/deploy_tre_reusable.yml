@@ -291,7 +291,7 @@ jobs:
       - name: Install Firewall
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: "TF_LOG=${{ secrets.TF_LOG }} make firewall-install"
+          COMMAND: "TF_LOG=${{ secrets.TF_LOG }} make build-and-deploy-firewall-shared-service"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
@@ -325,7 +325,7 @@ jobs:
       - name: Install Nexus
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: "TF_LOG=${{ secrets.TF_LOG }} make nexus-install"
+          COMMAND: "TF_LOG=${{ secrets.TF_LOG }} make build-and-deploy-nexus-shared-service"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
@@ -359,7 +359,7 @@ jobs:
       - name: Install Gitea
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: "TF_LOG=${{ secrets.TF_LOG }} make gitea-install"
+          COMMAND: "TF_LOG=${{ secrets.TF_LOG }} make build-and-deploy-gitea-shared-service"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
