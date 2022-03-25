@@ -274,7 +274,7 @@ bundle-register:
 
 shared-service-register-and-deploy:
 	@# NOTE: ACR_NAME below comes from the env files, so needs the double '$$'. Others are set on command execution and don't
-	$(call target_title, "Registering ${DIR} bundle") \
+	$(call target_title, "Registering and deploying ${DIR} shared service") \
 	&& ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
