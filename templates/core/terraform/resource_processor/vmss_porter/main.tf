@@ -5,6 +5,7 @@ data "azurerm_client_config" "current" {}
 data "template_file" "cloudconfig" {
   template = file("${path.module}/cloud-config.yaml")
   vars = {
+    location                                        = var.location
     docker_registry_server                          = var.docker_registry_server
     terraform_state_container_name                  = var.terraform_state_container_name
     mgmt_resource_group_name                        = var.mgmt_resource_group_name

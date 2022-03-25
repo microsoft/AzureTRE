@@ -27,6 +27,7 @@ write_files:
   - path: .env
     content: |
       REGISTRY_SERVER=${docker_registry_server}
+      RESOURCE_LOCATION=${location}
       TERRAFORM_STATE_CONTAINER_NAME=${terraform_state_container_name}
       MGMT_RESOURCE_GROUP_NAME=${mgmt_resource_group_name}
       MGMT_STORAGE_ACCOUNT_NAME=${mgmt_storage_account_name}
