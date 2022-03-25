@@ -1,12 +1,9 @@
 import os
 
-TODO
-
 
 def get_config() -> dict:
     config = {}
 
-    config["azure_location"] = os.environ["RESOURCE_LOCATION"]
     config["registry_server"] = os.environ["REGISTRY_SERVER"]
     config["tfstate_container_name"] = os.environ["TERRAFORM_STATE_CONTAINER_NAME"]
     config["tfstate_resource_group_name"] = os.environ["MGMT_RESOURCE_GROUP_NAME"]

@@ -1,6 +1,7 @@
 import uuid
 from typing import List
 
+from core import config
 from azure.cosmos import CosmosClient
 from pydantic import parse_obj_as
 from db.repositories.resource_templates import ResourceTemplateRepository
@@ -48,7 +49,12 @@ class SharedServiceRepository(ResourceRepository):
         return shared_service
 
     def get_shared_service_spec_params(self):
-        return self.get_resource_base_spec_params()
+        params = self.get_resource_base_spec_params()
+        params.update({
+            # TODO: this should get picked up
+            "azure_location": config.RESOURCE_LOCATION,
+        })
+        return params
 
     def create_shared_service_item(self, shared_service_input: SharedServiceTemplateInCreate) -> SharedService:
         shared_service_id = str(uuid.uuid4())
