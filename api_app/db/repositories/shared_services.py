@@ -51,7 +51,6 @@ class SharedServiceRepository(ResourceRepository):
     def get_shared_service_spec_params(self):
         params = self.get_resource_base_spec_params()
         params.update({
-            # TODO: this should get picked up
             "azure_location": config.RESOURCE_LOCATION,
         })
         return params
