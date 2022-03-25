@@ -16,7 +16,7 @@ function usage() {
     Options:
         -r, --acr-name                Azure Container Registry Name
         -t, --bundle-type             Bundle type: workspace, workspace_service, user_resource or shared_service
-        -w, --workspace-service-name  The template name of the user resource (if registering a user_resource), or shared service (if registering a shared_service)
+        -w, --workspace-service-name  The template name of the user resource (if registering a user_resource)
         -c, --current                 Make this the currently deployed version of this template
         -i, --insecure                Bypass SSL certificate checks
         -u, --tre_url                 URL for the TRE (required for automatic registration)
