@@ -28,7 +28,7 @@ USAGE
 }
 
 # if no arguments are provided, return usage function
-if [[ $# -eq 0 ]]; then
+if [ $# -eq 0 ]; then
     usage # run usage function
 fi
 
