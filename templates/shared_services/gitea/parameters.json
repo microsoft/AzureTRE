@@ -11,6 +11,12 @@
       }
     },
     {
+      "name": "azure_location",
+      "source": {
+        "env": "RESOURCE_LOCATION"
+      }
+    },
+    {
       "name": "acr_name",
       "source": {
         "env": "MGMT_ACR_NAME"
