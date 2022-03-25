@@ -181,18 +181,18 @@ async def get_porter_outputs(msg_body, message_logger_adapter):
         return True, outputs_json
 
 
-async def runner(i):
+async def runner(process_num):
     async with default_credentials(config["vmss_msi_id"]) as credential:
         service_bus_client = ServiceBusClient(config["service_bus_namespace"], credential)
         logger_adapter.info("Starting message receiving loop...")
 
         while True:
-            logger_adapter.info(f'Process {i}: Checking for new messages...')
+            logger_adapter.info(f'Process {process_num}: Checking for new messages...')
             receive_message_gen = receive_message(service_bus_client)
 
             try:
                 async for message in receive_message_gen:
-                    logger_adapter.info(f"Process {i}: Message received with id={message['id']}")
+                    logger_adapter.info(f"Process {process_num}: Message received with id={message['id']}")
                     message_logger_adapter = get_message_id_logger(message['id'])  # logger includes message id in every entry.
                     result = await invoke_porter_action(message, service_bus_client, message_logger_adapter)
                     await receive_message_gen.asend(result)
@@ -200,12 +200,12 @@ async def runner(i):
             except StopAsyncIteration:  # the async generator when finished signals end with this exception.
                 pass
 
-            logger_adapter.info(f'Process {i}: All messages processed. Sleeping...')
+            logger_adapter.info(f'Process {process_num}: All messages processed. Sleeping...')
             await asyncio.sleep(30)
 
 
-def start_runner_process(i):
-    asyncio.ensure_future(runner(i))
+def start_runner_process(process_num):
+    asyncio.ensure_future(runner(process_num))
     event_loop = asyncio.get_event_loop()
     event_loop.run_forever()
     logger_adapter.info("Started resource processor")
