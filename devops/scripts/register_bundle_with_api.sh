@@ -3,9 +3,10 @@
 # This script register a bundle with the TRE API. It relies on the bundle
 # pre-existing in the remote repository (i.e. has been publish beforehand).
 
-# set -o errexit
+set -o errexit
 set -o pipefail
-set -o xtrace
+# Uncomment this line to see each command for debugging (careful: this will show secrets!)
+# set -o xtrace
 
 function usage() {
     cat <<USAGE
@@ -178,9 +179,9 @@ else
     ("shared_service") tre_get_path="/api/shared-service-templates";;
   esac
 
-  # echo -e "Server Response:\n"
-  # eval "curl -X 'POST' ${tre_url}/${tre_get_path} -H 'accept: application/json' -H 'Content-Type: application/json' -H 'Authorization: Bearer ${access_token}' -d '${payload}' ${options}"
-  # echo -e "\n"
+  echo -e "Server Response:\n"
+  eval "curl -X 'POST' ${tre_url}/${tre_get_path} -H 'accept: application/json' -H 'Content-Type: application/json' -H 'Authorization: Bearer ${access_token}' -d '${payload}' ${options}"
+  echo -e "\n"
 
   if [[ "${verify}" = "true" ]]; then
     # Check that the template got registered
