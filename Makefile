@@ -19,7 +19,7 @@ build-and-push-guacamole: build-guacamole-image push-guacamole-image
 build-and-push-firewall: build-firewall-bundle push-firewall-bundle
 build-and-push-mlflow: build-mlflow-image push-mlflow-image
 tre-deploy: deploy-core deploy-shared-services show-core-output
-deploy-shared-services: build-and-deploy-firewall-shared-service build-and-deploy-gitea-shared-service build-and-deploy-nexus-shared-service
+deploy-shared-services: firewall-install nexus-install gitea-install
 
 # to move your environment from the single 'core' deployment (which includes the firewall)
 # toward the shared services model, where it is split out - run the following make target before a tre-deploy
@@ -85,17 +85,17 @@ build-guacamole-image:
 build-mlflow-image:
 	$(call build_image,"mlflow-server","templates/workspace_services/mlflow/mlflow-server/version.txt","templates/workspace_services/mlflow/mlflow-server/docker/Dockerfile","templates/workspace_services/mlflow/mlflow-server")
 
-build-and-deploy-firewall-shared-service:
+firewall-install:
 	make bundle-build DIR=./templates/shared_services/firewall/ \
 	&& make bundle-publish DIR=./templates/shared_services/firewall/ \
 	&& make shared-service-register-and-deploy DIR=./templates/shared_services/firewall/ BUNDLE_TYPE=shared_service
 
-build-and-deploy-nexus-shared-service:
+nexus-install:
 	make bundle-build DIR=./templates/shared_services/sonatype-nexus/ \
 	&& make bundle-publish DIR=./templates/shared_services/sonatype-nexus/ \
 	&& make shared-service-register-and-deploy DIR=./templates/shared_services/sonatype-nexus/ BUNDLE_TYPE=shared_service
 
-build-and-deploy-gitea-shared-service:
+gitea-install:
 	make bundle-build DIR=./templates/shared_services/gitea/ \
 	&& make bundle-publish DIR=./templates/shared_services/gitea/ \
 	&& make shared-service-register-and-deploy DIR=./templates/shared_services/gitea/ BUNDLE_TYPE=shared_service
