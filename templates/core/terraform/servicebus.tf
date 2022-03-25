@@ -64,5 +64,5 @@ resource "azurerm_private_endpoint" "sbpe" {
 resource "azurerm_servicebus_namespace_network_rule_set" "servicebus_network_rule_set" {
   namespace_id                  = azurerm_servicebus_namespace.sb.id
   public_network_access_enabled = var.enable_local_debugging
-  ip_rules                      = var.enable_local_debugging ? ["${chomp(data.http.myip.body)}"] : null
+  ip_rules                      = var.enable_local_debugging ? ["${local.myip}"] : null
 }

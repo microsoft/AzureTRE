@@ -38,7 +38,7 @@ A **workspace** is a set of resources on a network, with inbound traffic restric
 
 The workspace is a security boundary and there should be zero transfer of data out from the workspace unless explicitly configured. Data transfer is not restricted within a workspace.
 
-The workspace itself contains only the bare essentials to provide this functionality, such as firewalls, storage etc.
+The workspace itself contains only the bare essentials to provide this functionality, such as virtual network(s), storage etc.
 
 Workspaces can be enhanced with one or more building blocks called **workspace services** like Azure ML, Guacamole etc. to allow functionality such as development of machine learning models, data engineering, data analysis and software development.
 
