@@ -1,7 +1,7 @@
 import os
 
 
-def get_config() -> dict:
+def get_config(logger_adapter) -> dict:
     config = {}
 
     config["registry_server"] = os.environ["REGISTRY_SERVER"]
@@ -12,6 +12,13 @@ def get_config() -> dict:
     config["resource_request_queue"] = os.environ["SERVICE_BUS_RESOURCE_REQUEST_QUEUE"]
     config["service_bus_namespace"] = os.environ["SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE"]
     config["vmss_msi_id"] = os.environ.get("VMSS_MSI_ID", None)
+    config["number_processes"] = os.environ.get("NUMBER_PROCESSES", "1")
+
+    try:
+        config["number_processes_int"] = int(config["number_processes"])
+    except ValueError:
+        logger_adapter.info("Invalid setting for NUMBER_PROCESSES, will default to 1")
+        config["number_processes_int"] = 1
 
     # Needed for running porter
     config["arm_use_msi"] = os.environ.get("ARM_USE_MSI", "false")
