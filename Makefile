@@ -16,8 +16,9 @@ build-and-push-api: build-api-image push-api-image
 build-and-push-resource-processor: build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image
 build-and-push-gitea: build-gitea-image push-gitea-image
 build-and-push-guacamole: build-guacamole-image push-guacamole-image
+build-and-push-firewall: build-firewall-bundle push-firewall-bundle
 tre-deploy: deploy-core deploy-shared-services show-core-output
-deploy-shared-services: firewall-install gitea-install nexus-install
+deploy-shared-services: build-and-deploy-firewall-shared-service build-and-deploy-gitea-shared-service build-and-deploy-nexus-shared-service
 
 # to move your environment from the single 'core' deployment (which includes the firewall)
 # toward the shared services model, where it is split out - run the following make target before a tre-deploy
@@ -80,6 +81,21 @@ build-gitea-workspace-service-image:
 build-guacamole-image:
 	$(call build_image,"guac-server","templates/workspace_services/guacamole/version.txt","templates/workspace_services/guacamole/guacamole-server/docker/Dockerfile","templates/workspace_services/guacamole/guacamole-server")
 
+build-and-deploy-firewall-shared-service:
+	make bundle-build DIR=./templates/shared_services/firewall/ \
+	&& make bundle-publish DIR=./templates/shared_services/firewall/ \
+	&& make shared-service-register-and-deploy DIR=./templates/shared_services/firewall/ BUNDLE_TYPE=shared_service
+
+build-and-deploy-nexus-shared-service:
+	make bundle-build DIR=./templates/shared_services/sonatype-nexus/ \
+	&& make bundle-publish DIR=./templates/shared_services/sonatype-nexus/ \
+	&& make shared-service-register-and-deploy DIR=./templates/shared_services/sonatype-nexus/ BUNDLE_TYPE=shared_service
+
+build-and-deploy-gitea-shared-service:
+	make bundle-build DIR=./templates/shared_services/gitea/ \
+	&& make bundle-publish DIR=./templates/shared_services/gitea/ \
+	&& make shared-service-register-and-deploy DIR=./templates/shared_services/gitea/ BUNDLE_TYPE=shared_service
+
 # A recipe for pushing images. Parameters:
 # 1. Image name suffix
 # 2. Version file path
@@ -121,29 +137,6 @@ prepare-tf-state:
 	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
 	&& pushd ./templates/core/terraform > /dev/null && ../../shared_services/firewall/terraform/remove_state.sh && popd > /dev/null \
 	&& pushd ./templates/shared_services/firewall/terraform > /dev/null && ./import_state.sh && popd > /dev/null
-
-terraform-shared-service-deploy:
-	$(call target_title, "Deploying ${DIR} with Terraform") \
-	&& . ./devops/scripts/check_dependencies.sh \
-	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
-	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
-	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
-	&& . ./devops/scripts/key_vault_list.sh \
-  && if [[ "$${TF_LOG}" == "DEBUG" ]]; then echo "TF DEBUG set - output supressed - see tflogs container for log file" && cd ${DIR} && ../../deploy_from_local.sh 1>/dev/null 2>/dev/null; else cd ${DIR} && ../../deploy_from_local.sh; fi;
-
-firewall-install:
-	$(call target_title, "Installing Firewall") \
-  && make SHARED_SERVICE_KEY=shared-service-firewall terraform-shared-service-deploy DIR=./templates/shared_services/firewall/terraform
-
-gitea-install:
-	$(call target_title, "Installing Gitea") \
-	&& make SHARED_SERVICE_KEY=shared-service-gitea terraform-shared-service-deploy DIR=./templates/shared_services/gitea/terraform
-
-nexus-install:
-	$(call target_title, "Installing Nexus") \
-	&& make SHARED_SERVICE_KEY=shared-service-sonatype-nexus TF_VAR_nexus_properties_path=../nexus.properties terraform-shared-service-deploy DIR=./templates/shared_services/sonatype-nexus/terraform
-
 # / End migration targets
 
 deploy-core: tre-start
@@ -271,6 +264,16 @@ bundle-register:
 	&& az acr login --name $${ACR_NAME}	\
 	&& cd ${DIR} \
 	&& ${ROOTPATH}/devops/scripts/register_bundle_with_api.sh --acr-name "$${ACR_NAME}" --bundle-type "$${BUNDLE_TYPE}" --current --insecure --tre_url "$${TRE_URL}" --verify --workspace-service-name "$${WORKSPACE_SERVICE_NAME}"
+
+shared-service-register-and-deploy:
+	@# NOTE: ACR_NAME below comes from the env files, so needs the double '$$'. Others are set on command execution and don't
+	$(call target_title, "Registering ${DIR} bundle") \
+	&& ./devops/scripts/check_dependencies.sh porter \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
+	&& az acr login --name $${ACR_NAME}	\
+	&& cd ${DIR} \
+	&& ${ROOTPATH}/devops/scripts/register_bundle_with_api.sh --acr-name "$${ACR_NAME}" --bundle-type "$${BUNDLE_TYPE}" --current --insecure --tre_url "$${TRE_URL}" --verify --deploy_shared_service
 
 static-web-upload:
 	$(call target_title, "Uploading to static website") \
