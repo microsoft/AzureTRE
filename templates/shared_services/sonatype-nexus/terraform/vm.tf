@@ -120,5 +120,6 @@ data "template_file" "nexus_config" {
   template = file("${path.module}/cloud-config.yaml")
   vars = {
     nexus_admin_password = random_password.nexus_admin_password.result
+    ssl_certificate_base64 = data.azurerm_key_vault_certificate.ssl_certificate.certificate_data_base64
   }
 }

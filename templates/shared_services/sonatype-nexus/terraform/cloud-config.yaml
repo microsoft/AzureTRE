@@ -17,6 +17,7 @@ packages:
   - docker-compose
   - gnupg2
   - pass
+  - default-jre
 
 # create the docker group
 groups:
@@ -39,6 +40,12 @@ write_files:
   - path: /etc/nexus-data/nexus.properties
     content: |
       nexus.skipDefaultRepositories=true
+      application-port-ssl=8443
+    permissions: '0755'
+  # create the ssl cert
+  - path: /home/adminuser/ssl.pem
+    content: |
+      ${ssl_certificate_base64}
     permissions: '0755'
   # Write a script that will reset the admin password for Nexus to the one TF generated
   - path: /home/adminuser/reset-nexus-password.sh
@@ -87,9 +94,12 @@ runcmd:
   - export DEBIAN_FRONTEND=noninteractive
   # Give the Nexus process write permissions on the folder mounted as persistent volume
   - chown -R 200 /etc/nexus-data
-  # Run the nexus container (exposing port 8081 and mapping volume for nexus config)
+  # Prepare ssl certificate
+  - openssl pkcs12 -export -out ssl.pkcs12 -in /home/adminuser/ssl.pem
+  - keytool -v -importkeystore -srckeystore ssl.pkcs12 -srcstoretype PKCS12 -destkeystore /etc/nexus-data/etc/ssl/keystore.jks -deststoretype JKS
+  # Run the nexus container (mapping volume for nexus config)
   - docker run -d
-      -p 80:8081 -p 443:8081
+      -p 80:8081 -p 443:8443
       -v /etc/nexus-data:/nexus-data
       --restart always
       --name nexus

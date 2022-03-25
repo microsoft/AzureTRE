@@ -24,6 +24,11 @@ data "azurerm_key_vault" "kv" {
   resource_group_name = local.core_resource_group_name
 }
 
+data "azurerm_key_vault_certificate" "ssl_certificate" {
+  name         = "nexus-letsencrypt"
+  key_vault_id = data.azurerm_key_vault.kv.id
+}
+
 data "azurerm_storage_account" "nexus" {
   name                = local.storage_account_name
   resource_group_name = local.core_resource_group_name
