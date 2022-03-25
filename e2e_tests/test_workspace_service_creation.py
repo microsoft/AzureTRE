@@ -65,8 +65,13 @@ async def test_create_guacamole_service_into_base_workspace(admin_token, workspa
 
     # patch the guac service. we'll just update the display_name but this will still force a full deployment run
     # and essentially terraform no-op
-    service_payload["properties"]["display_name"] = "Updated guac name"
-    await post_resource(service_payload, f'/api{workspace_service_path}', 'workspace_service', workspace_owner_token, None, verify, method="PATCH")
+    patch_payload = {
+        "properties": {
+            "display_name": "Updated Guac Name",
+        }
+    }
+
+    await post_resource(patch_payload, f'/api{workspace_service_path}', 'workspace_service', workspace_owner_token, None, verify, method="PATCH")
 
     await disable_and_delete_resource(f'/api{workspace_service_path}', 'workspace_service', workspace_owner_token, None, verify)
 

@@ -83,7 +83,7 @@ async def get_porter_parameter_keys(config, logger, msg_body):
         env=config["porter_env"])
 
     stdout, stderr = await proc.communicate()
-    logging.info(f'get_porter_parameter_keys exited with {proc.returncode}]')
+    logging.info(f'get_porter_parameter_keys exited with {proc.returncode}')
     result_stdout = None
     result_stderr = None
 

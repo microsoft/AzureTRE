@@ -1,3 +1,4 @@
+import threading
 import json
 import socket
 import asyncio
@@ -6,6 +7,7 @@ import sys
 from resources.commands import build_porter_command, build_porter_command_for_outputs
 from shared.config import get_config
 from resources.helpers import get_installation_id
+from resources.httpserver import start_server
 
 from shared.logging import disable_unwanted_loggers, initialize_logging, get_message_id_logger, shell_output_logger  # pylint: disable=import-error # noqa
 from resources import strings, statuses  # pylint: disable=import-error # noqa
@@ -81,13 +83,13 @@ async def run_porter(command):
         env=config["porter_env"])
 
     stdout, stderr = await proc.communicate()
-    logging.info(f'run porter exited with {proc.returncode}]')
+    logging.info(f'run porter exited with {proc.returncode}')
     result_stdout = None
     result_stderr = None
 
     if stdout:
         result_stdout = stdout.decode()
-        shell_output_logger(result_stderr, '[stdout]', logger_adapter, logging.INFO)
+        shell_output_logger(result_stdout, '[stdout]', logger_adapter, logging.INFO)
 
     if stderr:
         result_stderr = stderr.decode()
@@ -120,7 +122,7 @@ async def invoke_porter_action(msg_body, sb_client, message_logger_adapter) -> b
     """
     installation_id = get_installation_id(msg_body)
     action = msg_body["action"]
-    message_logger_adapter.info(f"{installation_id}: {action} action configuration starting")
+    message_logger_adapter.info(f"{installation_id}: {action} action starting...")
     sb_sender = sb_client.get_queue_sender(queue_name=config["deployment_status_queue"])
 
     # If the action is install/upgrade, post message on sb queue to start a deployment job
@@ -130,7 +132,7 @@ async def invoke_porter_action(msg_body, sb_client, message_logger_adapter) -> b
 
     # Build and run porter command (flagging if its a built-in action or custom so we can adapt porter command appropriately)
     is_custom_action = action not in ["install", "upgrade", "uninstall"]
-    porter_command = await build_porter_command(config, logger_adapter, msg_body, is_custom_action)
+    porter_command = await build_porter_command(config, message_logger_adapter, msg_body, is_custom_action)
     returncode, _, err = await run_porter(porter_command)
 
     # Handle command output
@@ -171,9 +173,9 @@ async def get_porter_outputs(msg_body, message_logger_adapter):
         outputs_json = {}
         try:
             outputs_json = json.loads(stdout)
-            logger_adapter.info(f"Got outputs as json: {outputs_json}")
+            message_logger_adapter.info(f"Got outputs as json: {outputs_json}")
         except ValueError:
-            logger_adapter.info(f"Got outputs invalid json: {stdout}")
+            message_logger_adapter.error(f"Got outputs invalid json: {stdout}")
 
         return True, outputs_json
 
@@ -200,7 +202,12 @@ async def runner():
             logger_adapter.info("All messages processed. Sleeping...")
             await asyncio.sleep(60)
 
-
 if __name__ == "__main__":
+    httpserver_thread = threading.Thread(target=start_server)
+    httpserver_thread.start()
+    logger_adapter.info("Started http server")
+
+    asyncio.ensure_future(runner())
+    event_loop = asyncio.get_event_loop()
+    event_loop.run_forever()
     logger_adapter.info("Started resource processor")
-    asyncio.run(runner())
