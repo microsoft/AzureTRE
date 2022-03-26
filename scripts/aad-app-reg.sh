@@ -46,10 +46,12 @@ if ! command -v az &> /dev/null; then
     exit 1
 fi
 
+# Get the directory that this script is in
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 
 declare grantAdminConsent=0
-declare swaggerSpId=""
+declare swaggerAppId=""
 declare workspace=0
 declare appName=""
 declare replyUrl=""
@@ -75,7 +77,7 @@ while [[ $# -gt 0 ]]; do
             shift 1
         ;;
         -s|--swaggerui-clientid)
-            swaggerSpId=$2
+            swaggerAppId=$2
             shift 2
         ;;
         -r|--swaggerui-redirecturl)
@@ -98,14 +100,16 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-
+###################################
+# CHECK INCOMMING PARAMETERS      #
+###################################
 if [[ -z "$appName" ]]; then
     echo "Please specify the application name" 1>&2
     show_usage
 fi
 
 # if admin consent & workspace, but not swagger client id, show error
-if [[ $workspace -ne 0 && $grantAdminConsent -eq 1 && ! -n "$swaggerSpId" ]]; then
+if [[ $workspace -ne 0 && $grantAdminConsent -eq 1 && ! -n "$swaggerAppId" ]]; then
     echo "When specifying --admin-consent and --workspace, please specify the swagger application client ID option" 1>&2
     show_usage
 fi
@@ -115,54 +119,6 @@ if [[ $(az account list --only-show-errors -o json | jq 'length') -eq 0 ]]; then
     exit 1
 fi
 
-
-# This function polls looking for an app registration with the given ID.
-# If after the number of retries no app registration is found, the function exits.
-function wait_for_new_app_registration()
-{
-    appId=$1
-    retries=10
-    counter=0
-    objectId=$(az ad app list --filter "appId eq '${appId}'" --query '[0].objectId' --output tsv)
-
-    while [[ -z $objectId && $counter -lt $retries ]]; do
-        counter=$((counter+1))
-        echo "Waiting for app registration with ID ${appId} to show up (${counter}/${retries})..."
-        sleep 5
-        objectId=$(az ad app list --filter "appId eq '${appId}'" --query '[0].objectId' --output tsv)
-    done
-
-    if [[ -z $objectId ]]; then
-        echo "Failed"
-        exit 1
-    fi
-
-    echo "App registration with ID ${appId} found"
-}
-
-# This function polls looking for a service principal with the given ID.
-# If after the number of retries no app registration is found, the function exits.
-function wait_for_new_service_principal()
-{
-    servicePrincipalId=$1
-    retries=10
-    counter=0
-    output=$(az rest --method GET --uri https://graph.microsoft.com/v1.0/servicePrincipals/${servicePrincipalId} 2>/dev/null || true)
-
-    while [[ -z $output && $counter -lt $retries ]]; do
-        counter=$((counter+1))
-        echo "Waiting for service principal with ID ${servicePrincipalId} to show up (${counter}/${retries})..."
-        sleep 5
-        output=$(az rest --method GET --uri https://graph.microsoft.com/v1.0/servicePrincipals/${servicePrincipalId} 2>/dev/null || true)
-    done
-
-    if [[ -z $output ]]; then
-        echo "Failed"
-        exit 1
-    fi
-
-    echo "Service principal with ID ${servicePrincipalId} found"
-}
 
 # Grants admin consent for the given app permission.
 #
@@ -177,7 +133,8 @@ function grant_admin_consent()
     appRoleId=$3
 
     # test if enabled to avoid "Permission being assigned already exists on the object" error
-    is_enabled=$(az rest --method GET --uri ${msGraphUri}/servicePrincipals/${principalId}/appRoleAssignments -o json | jq -r ".value | map( select(.appRoleId==\"${appRoleId}\") ) | length")
+    is_enabled=$(az rest --method GET --uri ${msGraphUri}/servicePrincipals/${principalId}/appRoleAssignments -o json \
+      | jq -r ".value | map( select(.appRoleId==\"${appRoleId}\") ) | length")
 
     if [[ "$is_enabled" != "1" ]]; then
         data=$(jq -c . << JSON
@@ -232,13 +189,13 @@ function get_existing_app() {
 
 function get_existing_app_by_id() {
     local existingApiApps=$(az ad app list --app-id "$1" -o json)
-
+    echo $existingApiApps
     if [[ $(echo ${existingApiApps} | jq 'length') -ne 1 ]]; then
         echo "There are no applications with id \"$1\"."
         exit 1
     fi
 
-    if [[ $(echo ${existingApiApps} | jq 'length') -eq 1 ]]; then
+    if [ $(echo ${existingApiApps} | jq 'length') -eq 1 ]; then
         echo "${existingApiApps}" | jq -c '.[0]'
         return 0
     fi
@@ -356,6 +313,7 @@ declare msGraphProfileScopeId="14dad69e-099b-42c9-810b-d002981feec1"
 declare msGraphObjectId=$(az ad sp show --id ${msGraphAppId} --query "objectId" --output tsv)
 declare directoryReadAllId=$(az ad sp show --id ${msGraphAppId} --query "appRoles[?value=='Directory.Read.All'].id" --output tsv)
 declare userReadAllId=$(az ad sp show --id ${msGraphAppId} --query "appRoles[?value=='User.Read.All'].id" --output tsv)
+declare applicationReadWriteAllId=$(az ad sp show --id ${msGraphAppId} --query "appRoles[?value=='Application.ReadWrite.All'].id" --output tsv)
 
 function get_msgraph_scope() {
     local scope=$(az ad sp show --id ${msGraphAppId} --query "oauth2Permissions[?value=='$1'].id | [0]" --output tsv)
@@ -379,6 +337,7 @@ JSON
 
 declare roleUserReadAll=$(get_msgraph_role "User.Read.All" )
 declare roleDirectoryReadAll=$(get_msgraph_role "Directory.Read.All" )
+declare roleApplicationReadWriteAll=$(get_msgraph_role "Application.ReadWrite.All" )
 
 declare apiRequiredResourceAccess=$(jq -c . << JSON
 [
@@ -387,6 +346,18 @@ declare apiRequiredResourceAccess=$(jq -c . << JSON
         "resourceAccess": [
             ${roleUserReadAll},
             ${roleDirectoryReadAll}
+        ]
+    }
+]
+JSON
+)
+
+declare workspaceRequiredResourceAccess=$(jq -c . << JSON
+[
+    {
+        "resourceAppId": "${msGraphAppId}",
+        "resourceAccess": [
+            ${roleApplicationReadWriteAll}
         ]
     }
 ]
@@ -418,6 +389,7 @@ else
     },
     "appRoles": ${workspaceAppRoles},
     "signInAudience": "AzureADMyOrg",
+    "requiredResourceAccess": ${workspaceRequiredResourceAccess},
     "web":{
         "implicitGrantSettings":{
             "enableIdTokenIssuance":true,
@@ -447,7 +419,6 @@ JSON
 )
 fi
 
-
 # Is the API app already registered?
 if [[ -n ${apiAppObjectId} ]]; then
     echo "Updating API app registration with ID ${apiAppObjectId}"
@@ -460,11 +431,10 @@ else
     echo "AppId: ${apiAppId}"
 
     # Poll until the app registration is found in the listing.
-    echo "Waiting for the new app registration"
-    wait_for_new_app_registration $apiAppId
+    $DIR/aad/wait_for_new_app_registration.sh $apiAppId
 
     # Update to set the identifier URI.
-    echo "Updating identifier URI"
+    echo "Updating identifier URI 'api://${apiAppId}'"
     az ad app update --id ${apiAppId} --identifier-uris "api://${apiAppId}"
 fi
 
@@ -489,8 +459,8 @@ resetPassword=0
 # If not, create a new service principal
 if [[ -z "$spId" ]]; then
     spId=$(az ad sp create --id ${apiAppId} --query 'objectId' --output tsv)
-    echo "Creating a new service principal, for ${appName} API app, with ID $spId"
-    wait_for_new_service_principal $spId
+    echo "Creating a new service principal, for '${appName} API' app, with ID $spId"
+    $DIR/aad/wait_for_new_service_principal.sh $spId
     resetPassword=1
 else
     echo "Service principal for the app already exists."
@@ -508,7 +478,7 @@ spPassword=""
 if [[ "$resetPassword" == 1 ]]; then
     # Reset the app password (client secret) and display it
     spPassword=$(az ad sp credential reset --name ${apiAppId} --query 'password' --output tsv)
-    echo "${appName} API app password (client secret): ${spPassword}"
+    echo "'${appName} API' app password (client secret): ${spPassword}"
 fi
 
 # This tag ensures the app is listed in "Enterprise applications"
@@ -522,14 +492,66 @@ az ad app permission grant --id ${apiAppId} --api ${msGraphAppId}
 if [[ $workspace -ne 0 ]]; then
   # Grant admin consent for the delegated workspace scopes
   if [[ $grantAdminConsent -eq 1 ]]; then
-      echo "Granting admin consent for ${appName} Swagger UI app (service principal ID ${swaggerSpId})"
-      az ad app permission grant --id $swaggerSpId --api $apiAppId --scope "user_impersonation"
+      echo "Granting admin consent for '${appName}' Workspace app (service principal ID ${spId}) - NOTE: Directory admin privileges required for this step"
+      $DIR/aad/wait_for_new_service_principal.sh $spId
+      grant_admin_consent $spId $msGraphObjectId $applicationReadWriteAllId
   fi
+
+  # The Swagger UI (which was created as part of the API) needs to also have access to this Workspace
+  echo "Searching for existing Swagger application (${swaggerAppId})."
+  declare existingSwaggerApp=$(get_existing_app_by_id "${swaggerAppId}")
+  swaggerObjectId=$(echo ${existingSwaggerApp} | jq -r .objectId)
+
+  # Get the existing required resource access from the swagger app,
+  # but remove the access that we are about to add for idempotency. We cant use
+  # the response from az cli as it returns an 'AdditionalProperties' element in
+  # the json
+  existingResourceAccess=$(az rest \
+    --method GET \
+    --uri "${msGraphUri}/applications/${swaggerObjectId}" \
+    --headers Content-Type=application/json \
+    | jq -r --arg apiAppId ${apiAppId} \
+    'del(.requiredResourceAccess[] | select(.resourceAppId==$apiAppId)) | .requiredResourceAccess' \
+    )
+
+    # Add the existing resource access so we don't remove any existing permissions.
+    declare swaggerWorkspaceAccess=$(jq -c . << JSON
+{
+    "requiredResourceAccess": [
+        {
+            "resourceAccess": [
+                {
+                    "id": "${apiUserImpersonationScopeID}",
+                    "type": "Scope"
+                }
+            ],
+            "resourceAppId": "${apiAppId}"
+        }
+    ],
+    "existingAccess": ${existingResourceAccess}
+}
+JSON
+)
+
+    # Manipulate the json (add existingAccess into requiredResourceAccess and then remove it)
+    requiredResourceAccess=$(echo ${swaggerWorkspaceAccess} | \
+      jq '.requiredResourceAccess += .existingAccess | {requiredResourceAccess}')
+
+    az rest --method PATCH \
+      --uri "${msGraphUri}/applications/${swaggerObjectId}" \
+      --headers Content-Type=application/json \
+      --body "${requiredResourceAccess}"
+
+  echo "Grant Swagger UI delegated access '${appName} API' (Client ID ${swaggerAppId})"
+  az ad app permission grant --id ${swaggerAppId} --api ${apiAppId} --scope "user_impersonation"
+
 else
   # Grant admin consent on the required resource accesses (Graph API)
   if [[ $grantAdminConsent -eq 1 ]]; then
-      echo "Granting admin consent for ${appName} API app (service principal ID ${spId}) - NOTE: Directory admin privileges required for this step"
+      echo "Granting admin consent for '${appName} API' app (service principal ID ${spId}) - NOTE: Directory admin privileges required for this step"
+      $DIR/aad/wait_for_new_service_principal.sh $spId
       grant_admin_consent $spId $msGraphObjectId $directoryReadAllId
+      $DIR/aad/wait_for_new_service_principal.sh $spId
       grant_admin_consent $spId $msGraphObjectId $userReadAllId
   fi
 
@@ -594,7 +616,7 @@ JSON
       echo "Creating a new app registration, ${appName} Swagger UI, with ID ${swaggerAppId}"
 
       # Poll until the app registration is found in the listing.
-      wait_for_new_app_registration $swaggerAppId
+      $DIR/aad/wait_for_new_app_registration.sh $swaggerAppId
   fi
 
   # Make the current user an owner of the application.
@@ -607,15 +629,12 @@ JSON
   if [[ -z "$swaggerSpId" ]]; then
       swaggerSpId=$(az ad sp create --id ${swaggerAppId} --query 'objectId' --output tsv)
       echo "Creating a new service principal, for ${appName} Swagger UI app, with ID $swaggerSpId"
-      wait_for_new_service_principal $swaggerSpId
+      $DIR/aad/wait_for_new_service_principal.sh $swaggerSpId
   fi
 
-  # Grant admin consent for the delegated scopes
-  if [[ $grantAdminConsent -eq 1 ]]; then
-      echo "Granting admin consent for ${appName} Swagger UI app (service principal ID ${swaggerSpId})"
-      az ad app permission grant --id $swaggerSpId --api $msGraphObjectId --scope "offline_access openid"
-      az ad app permission grant --id $swaggerSpId --api $apiAppId --scope "user_impersonation"
-  fi
+  echo "Granting delegated access for ${appName} Swagger UI app (service principal ID ${swaggerSpId})"
+  az ad app permission grant --id $swaggerSpId --api $msGraphObjectId --scope "offline_access openid"
+  az ad app permission grant --id $swaggerSpId --api $apiAppId --scope "user_impersonation"
 fi
 
 declare automationApp=$(jq -c . << JSON
@@ -644,8 +663,8 @@ declare automationApp=$(jq -c . << JSON
 JSON
 )
 
-if [[ -n $automationAppId ]]; then
-    echo "Searching for existing Automation application ($automationAppId)."
+if [[ -n ${automationAppId} ]]; then
+    echo "Searching for existing Automation application (${automationAppId})."
     declare existingAutomationApp=$(get_existing_app_by_id "${automationAppId}")
 
     automationAppObjectId=$(echo ${existingAutomationApp} | jq -r .objectId)
@@ -698,7 +717,7 @@ JSON
 
     # Grant admin consent for the delegated workspace scopes
     if [[ $grantAdminConsent -eq 1 ]]; then
-        echo "Granting admin consent for ${automationAppName} (App ID ${automationAppId})"
+        echo "Granting admin consent for ${automationAppName} (ClientID ${automationAppId})"
         az ad app permission admin-consent --id $automationAppId
     fi
 fi
@@ -721,7 +740,7 @@ if [[ $createAutomationAccount -ne 0 ]]; then
         echo "Creating a new automation admin app registration, '${appName} Automation Admin App', with ID ${automationAppId}"
 
         # Poll until the app registration is found in the listing.
-        wait_for_new_app_registration $automationAppId
+        $DIR/aad/wait_for_new_app_registration.sh $automationAppId
 
         # Make the current user an owner of the application.
         az ad app owner add --id ${automationAppId} --owner-object-id $currentUserId
@@ -735,7 +754,7 @@ if [[ $createAutomationAccount -ne 0 ]]; then
     if [[ -z "$automationSpId" ]]; then
         automationSpId=$(az ad sp create --id ${automationAppId} --query 'objectId' --output tsv)
         echo "Creating a new service principal, for ${appName} Automation Admin App, with ID $automationSpId"
-        wait_for_new_service_principal $automationSpId
+        $DIR/aad/wait_for_new_service_principal.sh $automationSpId
         resetPassword=1
     else
         echo "Service principal for the app already exists."
@@ -764,8 +783,9 @@ if [[ $createAutomationAccount -ne 0 ]]; then
   # I've noticed that there can sometimes be a delay in the app having the permissions set
   # before we give admin-consent. If this occurs - rerun and it will work.
   if [[ $grantAdminConsent -eq 1 ]]; then
-      echo "Granting admin consent for ${appName} Automation Admin App (service principal ID ${automationSpId})"
-      az ad app permission admin-consent --id $automationAppId
+      echo "Granting admin consent for ${appName} Automation Admin App (ClientID ${automationAppId})"
+      $DIR/aad/wait_for_new_app_registration.sh ${automationAppId}
+      az ad app permission admin-consent --id ${automationAppId}
   fi
 fi
 
@@ -776,40 +796,38 @@ echo "Done"
 if [[ $workspace -eq 0 ]]; then
   cat << ENV_VARS
 
+AAD_TENANT_ID="$(az account show --output json | jq -r '.tenantId')"
+
 ** Please copy the following variables to /templates/core/.env **
 
-AAD_TENANT_ID=$(az account show --output json | jq -r '.tenantId')
-API_CLIENT_ID=${apiAppId}
-API_CLIENT_SECRET=${spPassword}
-SWAGGER_UI_CLIENT_ID=${swaggerAppId}
+API_CLIENT_ID="${apiAppId}"
+API_CLIENT_SECRET="${spPassword}"
+SWAGGER_UI_CLIENT_ID="${swaggerAppId}"
 
 ENV_VARS
 
 else
   cat << ENV_VARS
 
+AAD_TENANT_ID="$(az account show --output json | jq -r '.tenantId')"
+
 ** Please copy the following variables to /templates/core/.env **
 
-AAD_TENANT_ID=$(az account show --output json | jq -r '.tenantId')
-WORKSPACE_API_CLIENT_ID=${apiAppId}
-WORKSPACE_API_CLIENT_SECRET=${spPassword}
+WORKSPACE_API_OBJECT_ID="$(az ad app show --id ${apiAppId} --query objectId -o tsv)"
+WORKSPACE_API_CLIENT_ID="${apiAppId}"
+WORKSPACE_API_CLIENT_SECRET="${spPassword}"
 
 ENV_VARS
 fi
 
 if [[ $createAutomationAccount -eq 1 ]]; then
   cat << ENV_VARS
-
-TEST_ACCOUNT_CLIENT_ID=${automationAppId}
-TEST_ACCOUNT_CLIENT_SECRET=${automationSpPassword}
-
-** Please copy this to /templates/core/.env and set it to be https://fqdn for your TRE **
-TRE_URL=__CHANGE_ME___
+TEST_ACCOUNT_CLIENT_ID="${automationAppId}"
+TEST_ACCOUNT_CLIENT_SECRET="${automationSpPassword}"
 
 ENV_VARS
 
 fi
-
 
 if [[ $grantAdminConsent -eq 0 ]]; then
     echo "NOTE: Make sure the API permissions of the app registrations have admin consent granted."

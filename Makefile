@@ -309,13 +309,13 @@ setup-local-debugging:
 	&& . ./devops/scripts/load_env.sh ./templates/core/private.env \
 	&& . ./scripts/setup_local_debugging.sh
 
-register-aad-workspace:
-	$(call target_title,"Registering AAD Workspace") \
+auth:
+	$(call target_title,"Setting up Azure Active Directory") \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& pushd ./templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ./devops/scripts/load_env.sh ./templates/core/private.env \
-	&& . ./devops/scripts/register-aad-workspace.sh
+	&& . ./scripts/create_aad_assets.sh
 
 show-core-output:
 	$(call target_title,"Display TRE core output") \
