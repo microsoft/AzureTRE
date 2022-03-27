@@ -535,6 +535,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: CICD
     needs: [register_bundles, build_additional_images]
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -584,7 +585,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v2
         with:
-          name: E2E Test Results (Python ${{ matrix.python-version }})
+          name: E2E Test (Smoke) Results
           path: "./e2e_tests/pytest_e2e_smoke.xml"
 
       - name: Publish Test Results
@@ -599,6 +600,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: CICD
     needs: [register_bundles, build_additional_images]
+    timeout-minutes: 50
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -634,7 +636,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v2
         with:
-          name: E2E Test (Extended) Results (Python ${{ matrix.python-version }})
+          name: E2E Test (Extended) Results
           path: "./e2e_tests/pytest_e2e_extended.xml"
 
       - name: Publish Test Results
