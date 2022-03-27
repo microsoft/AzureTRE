@@ -76,6 +76,12 @@ variable "resource_processor_client_secret" {
   description = "The client secret (app password) of a service principal with Owner role to the subscription."
 }
 
+variable "resource_processor_number_processes_per_instance" {
+  type        = string
+  default     = "2"
+  description = "The number of CPU processes to run the RP on per VM instance"
+}
+
 variable "docker_registry_server" {
   type        = string
   description = "Docker registry server"

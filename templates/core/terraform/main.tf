@@ -72,24 +72,25 @@ module "appgateway" {
 }
 
 module "resource_processor_vmss_porter" {
-  count                                           = var.resource_processor_type == "vmss_porter" ? 1 : 0
-  source                                          = "./resource_processor/vmss_porter"
-  tre_id                                          = var.tre_id
-  location                                        = var.location
-  resource_group_name                             = azurerm_resource_group.core.name
-  acr_id                                          = data.azurerm_container_registry.mgmt_acr.id
-  app_insights_connection_string                  = module.azure_monitor.app_insights_connection_string
-  resource_processor_subnet_id                    = module.network.resource_processor_subnet_id
-  docker_registry_server                          = var.docker_registry_server
-  resource_processor_vmss_porter_image_repository = var.resource_processor_vmss_porter_image_repository
-  service_bus_namespace_id                        = azurerm_servicebus_namespace.sb.id
-  service_bus_resource_request_queue              = azurerm_servicebus_queue.workspacequeue.name
-  service_bus_deployment_status_update_queue      = azurerm_servicebus_queue.service_bus_deployment_status_update_queue.name
-  mgmt_storage_account_name                       = var.mgmt_storage_account_name
-  mgmt_resource_group_name                        = var.mgmt_resource_group_name
-  terraform_state_container_name                  = var.terraform_state_container_name
-  keyvault_id                                     = azurerm_key_vault.kv.id
-  subscription_id                                 = var.arm_subscription_id
+  count                                            = var.resource_processor_type == "vmss_porter" ? 1 : 0
+  source                                           = "./resource_processor/vmss_porter"
+  tre_id                                           = var.tre_id
+  location                                         = var.location
+  resource_group_name                              = azurerm_resource_group.core.name
+  acr_id                                           = data.azurerm_container_registry.mgmt_acr.id
+  app_insights_connection_string                   = module.azure_monitor.app_insights_connection_string
+  resource_processor_subnet_id                     = module.network.resource_processor_subnet_id
+  docker_registry_server                           = var.docker_registry_server
+  resource_processor_vmss_porter_image_repository  = var.resource_processor_vmss_porter_image_repository
+  service_bus_namespace_id                         = azurerm_servicebus_namespace.sb.id
+  service_bus_resource_request_queue               = azurerm_servicebus_queue.workspacequeue.name
+  service_bus_deployment_status_update_queue       = azurerm_servicebus_queue.service_bus_deployment_status_update_queue.name
+  mgmt_storage_account_name                        = var.mgmt_storage_account_name
+  mgmt_resource_group_name                         = var.mgmt_resource_group_name
+  terraform_state_container_name                   = var.terraform_state_container_name
+  keyvault_id                                      = azurerm_key_vault.kv.id
+  subscription_id                                  = var.arm_subscription_id
+  resource_processor_number_processes_per_instance = var.resource_processor_number_processes_per_instance
 
   depends_on = [
     module.azure_monitor,

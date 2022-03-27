@@ -4,8 +4,12 @@ from contextlib import asynccontextmanager
 from httpx import AsyncClient
 from starlette import status
 
+import logging
+
 import config
 from resources import strings
+
+LOGGER = logging.getLogger(__name__)
 
 
 class InstallFailedException(Exception):
@@ -54,7 +58,7 @@ async def post_resource(payload, endpoint, resource_type, token, admin_token, ve
             auth_headers = get_auth_header(token)
 
         full_endpoint = f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{endpoint}"
-        print(f'POSTING RESOURCE TO: {full_endpoint}')
+        LOGGER.info(f'POSTING RESOURCE TO: {full_endpoint}')
 
         if method == "POST":
             response = await client.post(full_endpoint, headers=auth_headers, json=payload)
@@ -64,9 +68,9 @@ async def post_resource(payload, endpoint, resource_type, token, admin_token, ve
             check_method = patch_done
             response = await client.patch(full_endpoint, headers=auth_headers, json=payload)
 
-        print(f'RESPONSE: {response}')
-        print(f'RESPONSE Content: {response.content}')
-        print(f'RESPONSE status code: {response.status_code}')
+        LOGGER.info(f'RESPONSE: {response}')
+        LOGGER.info(f'RESPONSE Content: {response.content}')
+        LOGGER.info(f'RESPONSE status code: {response.status_code}')
         assert (response.status_code == status.HTTP_202_ACCEPTED), f"Request for resource {payload['templateName']} creation failed"
 
         resource_path = response.json()["operation"]["resourcePath"]
@@ -114,21 +118,25 @@ async def ping_guacamole_workspace_service(workspace_id, workspace_service_id, t
     short_workspace_service_id = workspace_service_id[-4:]
     endpoint = f"https://guacamole-{config.TRE_ID}-ws-{short_workspace_id}-svc-{short_workspace_service_id}.azurewebsites.net/guacamole"
     headers = {'x-access-token': f'{token}'}
-    terminal_http_status = [status.HTTP_200_OK, status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
+    terminal_http_status = [status.HTTP_200_OK,
+                            status.HTTP_401_UNAUTHORIZED,
+                            status.HTTP_403_FORBIDDEN,
+                            status.HTTP_302_FOUND  # usually means auth header wasn't accepted
+                            ]
 
     async with AsyncClient(verify=verify) as client:
         while (True):
             try:
                 response = await client.get(url=endpoint, headers=headers, timeout=10)
-                print("GUAC RESPONSE", response)
+                LOGGER.info(f"GUAC RESPONSE: {response}")
 
                 if response.status_code in terminal_http_status:
                     break
 
                 await asyncio.sleep(30)
 
-            except Exception as e:
-                print(e)
+            except Exception:
+                LOGGER.exception("Generic execption in ping.")
 
         assert (response.status_code == status.HTTP_200_OK), "Guacamole cannot be reached"
 
@@ -136,16 +144,15 @@ async def ping_guacamole_workspace_service(workspace_id, workspace_service_id, t
 async def wait_for(func, client, operation_endoint, headers, failure_state):
     done, done_state, message = await func(client, operation_endoint, headers)
     while not done:
-        print(f'WAITING FOR OP: {operation_endoint}')
+        LOGGER.info(f'WAITING FOR OP: {operation_endoint}')
         await asyncio.sleep(30)
 
         done, done_state, message = await func(client, operation_endoint, headers)
-        print(done, done_state, message)
+        LOGGER.info(f"{done}, {done_state}, {message}")
     try:
         assert done_state != failure_state
-    except Exception as e:
-        print(f"Failed to deploy status message: {message}")
-        print(e)
+    except Exception:
+        LOGGER.exception(f"Failed to deploy status message: {message}")
         raise
 
 
@@ -175,4 +182,6 @@ async def check_deployment(client, operation_endpoint, headers):
         message = response.json()["operation"]["message"]
         return deployment_status, message
     else:
+        LOGGER.error(f"Non 200 response in check_deployment: {response.status_code}")
+        LOGGER.error(f"Full response: {response}")
         raise Exception("Non 200 response in check_deployment")
