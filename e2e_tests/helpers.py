@@ -125,6 +125,10 @@ async def ping_guacamole_workspace_service(workspace_id, workspace_service_id, t
             try:
                 response = await client.get(url=endpoint, headers=headers, timeout=10)
                 LOGGER.info(f"GUAC RESPONSE: {response}")
+                LOGGER.info(f"GUAC t: {token[-4:]}")
+                LOGGER.info(f"GUAC status: {response.status_code}")
+                LOGGER.info(f"GUAC headers: {response.headers}")
+                LOGGER.info(f"GUAC content: {response.content}")
 
                 if response.status_code in terminal_http_status:
                     break
