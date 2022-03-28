@@ -4,6 +4,20 @@
 
 AAD holds the identities of all the TRE/workspace users, including administrators, and connects the identities with applications which define the permissions for each user role.
 
+## Pre-requisites
+The following values are needed to be in place to run the script. (`/templates/core/.env`)
+| Key | Description |
+| ----------- | ----------- |
+|TRE_ID|This is needed to build up the redirect URI for the Swagger App|
+|AAD_TENANT_ID|The tenant id of where your AAD identities will be placed. This can be different to the tenant where your Azure resources are created.
+
+## Create Authentication assets
+You can build all of the Identity assets by running the following at the command line
+```bash
+make auth
+```
+Follow the instructions and prompts in the script. It will ask you to confirm at various stages, so don't go and make a coffee! This will create the 4 parts of authentication outlined below, and if succesful you will not need to do anything apart from copy some values into `/templates/core/.env`. The details below are for your understanding.
+
 ## App registrations
 
 App registrations (represented by service principals) define the various access permissions to the TRE system. There are a total of four main Applications of interest.

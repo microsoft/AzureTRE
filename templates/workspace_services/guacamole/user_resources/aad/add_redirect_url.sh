@@ -82,8 +82,6 @@ if [ ! -z "${token_response:-}" ]; then
   fi
 fi
 
-echo $access_token
-
 web=$(curl -X "GET" "https://graph.microsoft.com/v1.0/applications/${workspace_object_id}" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${access_token}" \
