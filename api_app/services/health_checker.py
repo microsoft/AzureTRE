@@ -74,9 +74,9 @@ def create_resource_processor_status() -> (StatusEnum, str):
         for vm in vmsslist:
             instance_view = computeClient.virtual_machine_scale_set_vms.get_instance_view(config.RESOURCE_GROUP_NAME, vmssName, vm.instance_id)
             health_status = instance_view.vm_health.status.code
-        if health_status != strings.RESOURCE_PROCESSOR_HEALTHY_MESSAGE:
-            status = StatusEnum.not_ok
-            message = strings.RESOURCE_PROCESSOR_GENERAL_ERROR_MESSAGE
+            if health_status != strings.RESOURCE_PROCESSOR_HEALTHY_MESSAGE:
+                status = StatusEnum.not_ok
+                message = strings.RESOURCE_PROCESSOR_GENERAL_ERROR_MESSAGE
     except:  # noqa: E722 flake8 - no bare excepts
         status = StatusEnum.not_ok
         message = strings.UNSPECIFIED_ERROR
