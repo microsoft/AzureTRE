@@ -5,6 +5,8 @@ import pytest
 from mock import patch, MagicMock
 
 from jsonschema.exceptions import ValidationError
+from tests_ma.test_api.test_routes.test_resource_helpers import FAKE_CREATE_TIMESTAMP, FAKE_UPDATE_TIMESTAMP
+from tests_ma.test_api.conftest import create_test_user
 
 from db.errors import EntityDoesNotExist
 from db.repositories.resources import ResourceRepository
@@ -16,8 +18,6 @@ from models.schemas.resource import ResourcePatch
 from models.schemas.workspace import WorkspaceInCreate
 
 
-FAKE_UPDATE_TIME = datetime.datetime(2022, 1, 1, 17, 5, 55)
-FAKE_UPDATE_TIMESTAMP: float = FAKE_UPDATE_TIME.timestamp()
 RESOURCE_ID = str(uuid.uuid4())
 
 
@@ -47,7 +47,9 @@ def sample_resource() -> Resource:
         },
         resourceType=ResourceType.Workspace,
         etag="some-etag-value",
-        resourceVersion=0
+        resourceVersion=0,
+        updatedWhen=FAKE_CREATE_TIMESTAMP,
+        user=create_test_user()
     )
 
 
@@ -190,14 +192,23 @@ def test_patch_resource_preserves_property_history(_, __, resource_repo):
     resource_patch = ResourcePatch(isEnabled=True, properties={'display_name': 'updated name'})
 
     etag = "some-etag-value"
+    user = create_test_user()
 
     resource = sample_resource()
     expected_resource = sample_resource()
-    expected_resource.history = [ResourceHistoryItem(isEnabled=True, resourceVersion=0, updatedWhen=FAKE_UPDATE_TIMESTAMP, properties={'display_name': 'initial display name', 'description': 'initial description', 'computed_prop': 'computed_val'})]
+    expected_resource.history = [
+        ResourceHistoryItem(
+            isEnabled=True,
+            resourceVersion=0,
+            updatedWhen=FAKE_CREATE_TIMESTAMP,
+            properties={'display_name': 'initial display name', 'description': 'initial description', 'computed_prop': 'computed_val'},
+            user=user)]
     expected_resource.properties['display_name'] = 'updated name'
     expected_resource.resourceVersion = 1
+    expected_resource.user = user
+    expected_resource.updatedWhen = FAKE_UPDATE_TIMESTAMP
 
-    resource_repo.patch_resource(resource, resource_patch, None, etag, None)
+    resource_repo.patch_resource(resource, resource_patch, None, etag, None, user)
     resource_repo.update_item_with_etag.assert_called_once_with(expected_resource, etag)
 
     # now patch again
@@ -208,15 +219,17 @@ def test_patch_resource_preserves_property_history(_, __, resource_repo):
             isEnabled=True,
             resourceVersion=1,
             updatedWhen=FAKE_UPDATE_TIMESTAMP,
-            properties={'display_name': 'updated name', 'description': 'initial description', 'computed_prop': 'computed_val'}
+            properties={'display_name': 'updated name', 'description': 'initial description', 'computed_prop': 'computed_val'},
+            user=user
         )
     )
 
     expected_resource.resourceVersion = 2
     expected_resource.properties['display_name'] = "updated name 2"
     expected_resource.isEnabled = False
+    expected_resource.user = user
 
-    resource_repo.patch_resource(new_resource, new_patch, None, etag, None)
+    resource_repo.patch_resource(new_resource, new_patch, None, etag, None, user)
     resource_repo.update_item_with_etag.assert_called_with(expected_resource, etag)
 
 

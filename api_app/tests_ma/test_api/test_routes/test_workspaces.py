@@ -4,6 +4,8 @@ import pytest
 from mock import patch
 
 from fastapi import status
+from tests_ma.test_api.test_routes.test_resource_helpers import FAKE_CREATE_TIMESTAMP, FAKE_UPDATE_TIMESTAMP
+from tests_ma.test_api.conftest import create_admin_user, create_test_user, create_workspace_owner_user, create_workspace_researcher_user
 
 from models.domain.resource_template import ResourceTemplate
 from models.schemas.operation import OperationInResponse
@@ -30,8 +32,6 @@ SERVICE_ID = 'abcad738-7265-4b5f-9eae-a1a62928772e'
 USER_RESOURCE_ID = 'a33ad738-7265-4b5f-9eae-a1a62928772a'
 APP_ID = 'f0acf127-a672-a672-a672-a15e5bf9f127'
 OPERATION_ID = '11111111-7265-4b5f-9eae-a1a62928772f'
-FAKE_UPDATE_TIME = datetime.datetime(2022, 1, 1, 17, 5, 55)
-FAKE_UPDATE_TIMESTAMP: float = FAKE_UPDATE_TIME.timestamp()
 
 
 @pytest.fixture
@@ -72,7 +72,7 @@ def disabled_workspace() -> Workspace:
     return workspace
 
 
-def sample_workspace(workspace_id=WORKSPACE_ID, auth_info: dict = {}):
+def sample_workspace(workspace_id=WORKSPACE_ID, auth_info: dict = {}) -> Workspace:
     workspace = Workspace(
         id=workspace_id,
         templateName="tre-workspace-base",
@@ -81,7 +81,9 @@ def sample_workspace(workspace_id=WORKSPACE_ID, auth_info: dict = {}):
         properties={
             "app_id": "12345"
         },
-        resourcePath=f'/workspaces/{workspace_id}'
+        resourcePath=f'/workspaces/{workspace_id}',
+        updatedWhen=FAKE_CREATE_TIMESTAMP,
+        user=create_admin_user()
     )
     if auth_info:
         workspace.authInformation = auth_info
@@ -97,8 +99,9 @@ def sample_resource_operation(resource_id: str, operation_id: str):
         action="install",
         message="test",
         Status=Status.Deployed,
-        createdWhen=1642611942.423857,
-        updatedWhen=1642611942.423857
+        createdWhen=FAKE_UPDATE_TIMESTAMP,
+        updatedWhen=FAKE_UPDATE_TIMESTAMP,
+        user=create_test_user()
     )
     return operation
 
@@ -115,7 +118,8 @@ def sample_deployed_workspace(workspace_id=WORKSPACE_ID, auth_info: dict = {}):
         templateVersion="0.1.0",
         etag="",
         properties={},
-        resourcePath="test"
+        resourcePath="test",
+        updatedWhen=FAKE_CREATE_TIMESTAMP
     )
     if auth_info:
         workspace.authInformation = auth_info
@@ -130,7 +134,9 @@ def sample_workspace_service(workspace_service_id=SERVICE_ID, workspace_id=WORKS
         templateVersion="0.1.0",
         etag="",
         properties={},
-        resourcePath=f'/workspaces/{workspace_id}/workspace-services/{workspace_service_id}'
+        resourcePath=f'/workspaces/{workspace_id}/workspace-services/{workspace_service_id}',
+        updatedWhen=FAKE_CREATE_TIMESTAMP,
+        user=create_workspace_owner_user()
     )
 
 
@@ -143,7 +149,9 @@ def sample_user_resource_object(user_resource_id=USER_RESOURCE_ID, workspace_id=
         templateVersion="0.1.0",
         etag="",
         properties={},
-        resourcePath=f'/workspaces/{workspace_id}/workspace-services/{parent_workspace_service_id}/user-resources/{user_resource_id}'
+        resourcePath=f'/workspaces/{workspace_id}/workspace-services/{parent_workspace_service_id}/user-resources/{user_resource_id}',
+        updatedWhen=FAKE_CREATE_TIMESTAMP,
+        user=create_workspace_researcher_user()
     )
 
     return user_resource
@@ -357,8 +365,10 @@ class TestWorkspaceRoutesThatRequireAdminRights:
 
         modified_workspace = sample_workspace()
         modified_workspace.isEnabled = False
-        modified_workspace.history = [ResourceHistoryItem(properties={'app_id': '12345'}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_UPDATE_TIMESTAMP)]
+        modified_workspace.history = [ResourceHistoryItem(properties={'app_id': '12345'}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_admin_user())]
         modified_workspace.resourceVersion = 1
+        modified_workspace.user = create_admin_user()
+        modified_workspace.updatedWhen = FAKE_UPDATE_TIMESTAMP
 
         response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=WORKSPACE_ID), json=workspace_patch, headers={"etag": etag})
 
@@ -366,7 +376,6 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         assert response.status_code == status.HTTP_202_ACCEPTED
 
     # [PATCH] /workspaces/{workspace_id}
-
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
     @ patch("api.routes.workspaces.WorkspaceRepository.update_item_with_etag", side_effect=CosmosAccessConditionFailedError)
     @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
@@ -376,8 +385,10 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         etag = "some-etag-value"
         modified_workspace = sample_workspace()
         modified_workspace.isEnabled = False
-        modified_workspace.history = [ResourceHistoryItem(properties={'app_id': '12345'}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_UPDATE_TIMESTAMP)]
+        modified_workspace.history = [ResourceHistoryItem(properties={'app_id': '12345'}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_admin_user())]
         modified_workspace.resourceVersion = 1
+        modified_workspace.user = create_admin_user()
+        modified_workspace.updatedWhen = FAKE_UPDATE_TIMESTAMP
 
         response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=WORKSPACE_ID), json=workspace_patch, headers={"etag": etag})
 
@@ -603,8 +614,10 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
 
         modified_user_resource = sample_user_resource_object()
         modified_user_resource.isEnabled = False
-        modified_user_resource.history = [ResourceHistoryItem(properties={}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_UPDATE_TIMESTAMP)]
+        modified_user_resource.history = [ResourceHistoryItem(properties={}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_workspace_researcher_user())]
         modified_user_resource.resourceVersion = 1
+        modified_user_resource.updatedWhen = FAKE_UPDATE_TIMESTAMP
+        modified_user_resource.user = create_workspace_owner_user()
 
         response = await client.patch(app.url_path_for(strings.API_UPDATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID), json=user_resource_service_patch, headers={"etag": etag})
 
@@ -625,9 +638,11 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
 
         modified_resource = sample_user_resource_object()
         modified_resource.isEnabled = False
-        modified_resource.history = [ResourceHistoryItem(properties={}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_UPDATE_TIMESTAMP)]
+        modified_resource.history = [ResourceHistoryItem(properties={}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_workspace_researcher_user())]
         modified_resource.resourceVersion = 1
         modified_resource.properties["vm_size"] = "large"
+        modified_resource.updatedWhen = FAKE_UPDATE_TIMESTAMP
+        modified_resource.user = create_workspace_owner_user()
 
         response = await client.patch(app.url_path_for(strings.API_UPDATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID), json=user_resource_service_patch, headers={"etag": etag})
 
@@ -788,8 +803,10 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
 
         modified_workspace_service = sample_workspace_service()
         modified_workspace_service.isEnabled = False
-        modified_workspace_service.history = [ResourceHistoryItem(properties={}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_UPDATE_TIMESTAMP)]
+        modified_workspace_service.history = [ResourceHistoryItem(properties={}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_workspace_owner_user())]
         modified_workspace_service.resourceVersion = 1
+        modified_workspace_service.user = create_workspace_researcher_user()
+        modified_workspace_service.updatedWhen = FAKE_UPDATE_TIMESTAMP
 
         response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID), json=workspace_service_patch, headers={"etag": etag})
         update_item_mock.assert_called_once_with(modified_workspace_service, etag)
@@ -955,8 +972,10 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
 
         modified_user_resource = sample_user_resource_object()
         modified_user_resource.isEnabled = False
-        modified_user_resource.history = [ResourceHistoryItem(properties={}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_UPDATE_TIMESTAMP)]
+        modified_user_resource.history = [ResourceHistoryItem(properties={}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_workspace_researcher_user())]
         modified_user_resource.resourceVersion = 1
+        modified_user_resource.updatedWhen = FAKE_UPDATE_TIMESTAMP
+        modified_user_resource.user = create_workspace_researcher_user()
 
         response = await client.patch(app.url_path_for(strings.API_UPDATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID), json=user_resource_service_patch, headers={"etag": etag})
 

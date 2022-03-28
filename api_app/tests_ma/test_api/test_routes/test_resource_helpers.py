@@ -1,3 +1,4 @@
+import datetime
 import uuid
 import pytest
 from mock import patch, MagicMock
@@ -5,6 +6,7 @@ from mock import patch, MagicMock
 from fastapi import HTTPException, status
 
 from api.routes.resource_helpers import save_and_deploy_resource, send_uninstall_message
+from tests_ma.test_api.conftest import create_test_user
 
 from db.repositories.resources import ResourceRepository
 from db.repositories.operations import OperationRepository
@@ -17,6 +19,10 @@ pytestmark = pytest.mark.asyncio
 
 
 WORKSPACE_ID = '933ad738-7265-4b5f-9eae-a1a62928772e'
+FAKE_CREATE_TIME = datetime.datetime(2021, 1, 1, 17, 5, 55)
+FAKE_CREATE_TIMESTAMP: float = FAKE_CREATE_TIME.timestamp()
+FAKE_UPDATE_TIME = datetime.datetime(2022, 1, 1, 17, 5, 55)
+FAKE_UPDATE_TIMESTAMP: float = FAKE_UPDATE_TIME.timestamp()
 
 
 @pytest.fixture
@@ -40,7 +46,9 @@ def sample_resource(workspace_id=WORKSPACE_ID, auth_info: dict = {}):
         properties={
             "app_id": "12345"
         },
-        resourcePath=f'/workspaces/{workspace_id}'
+        resourcePath=f'/workspaces/{workspace_id}',
+        user=create_test_user(),
+        updatedWhen=FAKE_CREATE_TIMESTAMP
     )
     if auth_info:
         workspace.authInformation = auth_info
@@ -56,8 +64,9 @@ def sample_resource_operation(resource_id: str, operation_id: str):
         action="install",
         message="test",
         Status=Status.Deployed,
-        createdWhen=1642611942.423857,
-        updatedWhen=1642611942.423857
+        createdWhen=FAKE_CREATE_TIMESTAMP,
+        updatedWhen=FAKE_CREATE_TIMESTAMP,
+        user=create_test_user()
     )
     return operation
 
@@ -71,7 +80,7 @@ class TestResourceHelpers:
         resource_repo.save_item = MagicMock(return_value=None)
         operations_repo.create_operation_item = MagicMock(return_value=operation)
 
-        await save_and_deploy_resource(resource, resource_repo, operations_repo)
+        await save_and_deploy_resource(resource, resource_repo, operations_repo, user=create_test_user())
 
         resource_repo.save_item.assert_called_once_with(resource)
 
@@ -80,7 +89,7 @@ class TestResourceHelpers:
         resource_repo.save_item = MagicMock(side_effect=Exception)
 
         with pytest.raises(HTTPException) as ex:
-            await save_and_deploy_resource(resource, resource_repo, operations_repo)
+            await save_and_deploy_resource(resource, resource_repo, operations_repo, user=create_test_user())
         assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
     @patch("api.routes.resource_helpers.send_resource_request_message", return_value=None)
@@ -91,9 +100,10 @@ class TestResourceHelpers:
         resource_repo.save_item = MagicMock(return_value=None)
         operations_repo.create_operations_item = MagicMock(return_value=operation)
 
-        await save_and_deploy_resource(resource, resource_repo, operations_repo)
+        user = create_test_user()
+        await save_and_deploy_resource(resource, resource_repo, operations_repo, user)
 
-        send_resource_request_mock.assert_called_once_with(resource, operations_repo, RequestAction.Install)
+        send_resource_request_mock.assert_called_once_with(resource=resource, operations_repo=operations_repo, user=user, action=RequestAction.Install)
 
     @patch("api.routes.resource_helpers.send_resource_request_message", side_effect=Exception)
     async def test_save_and_deploy_resource_raises_503_if_send_request_fails(self, _, resource_repo, operations_repo):
@@ -102,7 +112,7 @@ class TestResourceHelpers:
         resource_repo.delete_item = MagicMock(return_value=None)
 
         with pytest.raises(HTTPException) as ex:
-            await save_and_deploy_resource(resource, resource_repo, operations_repo)
+            await save_and_deploy_resource(resource, resource_repo, operations_repo, user=create_test_user())
         assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
     @patch("api.routes.resource_helpers.send_resource_request_message", side_effect=Exception)
@@ -114,7 +124,7 @@ class TestResourceHelpers:
         operations_repo.create_operation_item = MagicMock(return_value=None)
 
         with pytest.raises(HTTPException):
-            await save_and_deploy_resource(resource, resource_repo, operations_repo)
+            await save_and_deploy_resource(resource, resource_repo, operations_repo, user=create_test_user())
 
         resource_repo.delete_item.assert_called_once_with(resource.id)
 
