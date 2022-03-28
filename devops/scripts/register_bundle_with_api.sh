@@ -194,17 +194,31 @@ else
     fi
   fi
 
+  # TODO: extract resource deploying into a separate script (https://github.com/microsoft/AzureTRE/issues/1611)
   if [[ "${deploy_shared_service}" = "true" ]]; then
-    echo DEPLOYING
-
     template_name=$(yq eval '.name' porter.yaml)
+    echo "Deploying shared service ${template_name}"
+
     payload="{ \"templateName\": \"${template_name}\", \"properties\": { \"display_name\": \"Shared service ${template_name}\", \"description\": \"Automatically deployed ${template_name}\" } }"
+    deploy_result=$(curl -X "POST" "${tre_url}/api/shared-services" -H "accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer ${access_token}" -d "${payload}" ${options} -s)
 
-    status_code=$(curl -X "POST" "${tre_url}/api/shared-services" -H "accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer ${access_token}" -d "${payload}" ${options} -s -w "%{http_code}" -o /dev/null)
+    shared_service_id=$(echo ${deploy_result} | jq -r .operation.resourceId)
+    operation_id=$(echo ${deploy_result} | jq -r .operation.id)
+    status=$(echo ${deploy_result} | jq -r .operation.status)
 
-    if [[ ${status_code} != 202 ]]; then
-      echo "::warning ::Deployment of shared service ${template_name} via API check returned http status: ${status_code}"
+    while [[ ${status} = "not_deployed" ]] || [[ ${status} = "deploying" ]]; do
+      # Poll for the result of operation
+      echo "Waiting for deployment of ${template_name} to finish... (current status: ${status})"
+      sleep 5
+      get_operation_result=$(curl -X "GET" "${tre_url}/api/shared-services/${shared_service_id}/operations/${operation_id}"  -H "accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer ${access_token}" ${options} -s)
+      status=$(echo ${get_operation_result} | jq -r .operation.status)
+    done
+
+    if [[ ${status} != "deployed" ]]; then
+      echo "Failed to deploy shared service ${template_name} (status is ${status}). Please check resource processor logs"
       exit 1
     fi
+
+    echo "Deployed shared service ${template_name}"
   fi
 fi
