@@ -118,7 +118,11 @@ async def ping_guacamole_workspace_service(workspace_id, workspace_service_id, t
     short_workspace_service_id = workspace_service_id[-4:]
     endpoint = f"https://guacamole-{config.TRE_ID}-ws-{short_workspace_id}-svc-{short_workspace_service_id}.azurewebsites.net/guacamole"
     headers = {'x-access-token': f'{token}'}
-    terminal_http_status = [status.HTTP_200_OK, status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
+    terminal_http_status = [status.HTTP_200_OK,
+                            status.HTTP_401_UNAUTHORIZED,
+                            status.HTTP_403_FORBIDDEN,
+                            status.HTTP_302_FOUND  # usually means auth header wasn't accepted
+                            ]
 
     async with AsyncClient(verify=verify) as client:
         while (True):
@@ -131,8 +135,8 @@ async def ping_guacamole_workspace_service(workspace_id, workspace_service_id, t
 
                 await asyncio.sleep(30)
 
-            except Exception as e:
-                LOGGER.error(e)
+            except Exception:
+                LOGGER.exception("Generic execption in ping.")
 
         assert (response.status_code == status.HTTP_200_OK), "Guacamole cannot be reached"
 
@@ -147,9 +151,8 @@ async def wait_for(func, client, operation_endoint, headers, failure_state):
         LOGGER.info(f"{done}, {done_state}, {message}")
     try:
         assert done_state != failure_state
-    except Exception as e:
-        LOGGER.error(f"Failed to deploy status message: {message}")
-        LOGGER.error(e)
+    except Exception:
+        LOGGER.exception(f"Failed to deploy status message: {message}")
         raise
 
 
