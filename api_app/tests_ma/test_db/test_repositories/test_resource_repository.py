@@ -1,5 +1,4 @@
 import copy
-import datetime
 import uuid
 import pytest
 from mock import patch, MagicMock
