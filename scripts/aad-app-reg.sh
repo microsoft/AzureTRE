@@ -313,7 +313,7 @@ declare msGraphProfileScopeId="14dad69e-099b-42c9-810b-d002981feec1"
 declare msGraphObjectId=$(az ad sp show --id ${msGraphAppId} --query "objectId" --output tsv)
 declare directoryReadAllId=$(az ad sp show --id ${msGraphAppId} --query "appRoles[?value=='Directory.Read.All'].id" --output tsv)
 declare userReadAllId=$(az ad sp show --id ${msGraphAppId} --query "appRoles[?value=='User.Read.All'].id" --output tsv)
-declare applicationReadWriteAllId=$(az ad sp show --id ${msGraphAppId} --query "appRoles[?value=='Application.ReadWrite.All'].id" --output tsv)
+declare applicationReadWriteOwnedById=$(az ad sp show --id ${msGraphAppId} --query "appRoles[?value=='Application.ReadWrite.OwnedBy'].id" --output tsv)
 
 function get_msgraph_scope() {
     local scope=$(az ad sp show --id ${msGraphAppId} --query "oauth2Permissions[?value=='$1'].id | [0]" --output tsv)
@@ -337,7 +337,7 @@ JSON
 
 declare roleUserReadAll=$(get_msgraph_role "User.Read.All" )
 declare roleDirectoryReadAll=$(get_msgraph_role "Directory.Read.All" )
-declare roleApplicationReadWriteAll=$(get_msgraph_role "Application.ReadWrite.All" )
+declare roleApplicationReadWriteOwnedBy=$(get_msgraph_role "Application.ReadWrite.OwnedBy" )
 
 declare apiRequiredResourceAccess=$(jq -c . << JSON
 [
@@ -357,7 +357,7 @@ declare workspaceRequiredResourceAccess=$(jq -c . << JSON
     {
         "resourceAppId": "${msGraphAppId}",
         "resourceAccess": [
-            ${roleApplicationReadWriteAll}
+            ${roleApplicationReadWriteOwnedBy}
         ]
     }
 ]
@@ -459,8 +459,9 @@ resetPassword=0
 # If not, create a new service principal
 if [[ -z "$spId" ]]; then
     spId=$(az ad sp create --id ${apiAppId} --query 'objectId' --output tsv)
-    echo "Creating a new service principal, for '${appName} API' app, with ID $spId"
-    $DIR/aad/wait_for_new_service_principal.sh $spId
+    echo "Creating a new service principal, for '${appName} API' app, with ID ${spId}"
+    $DIR/aad/wait_for_new_service_principal.sh ${spId}
+    az ad app owner add --id ${apiAppId} --owner-object-id ${spId}
     resetPassword=1
 else
     echo "Service principal for the app already exists."
@@ -494,7 +495,7 @@ if [[ $workspace -ne 0 ]]; then
   if [[ $grantAdminConsent -eq 1 ]]; then
       echo "Granting admin consent for '${appName}' Workspace app (service principal ID ${spId}) - NOTE: Directory admin privileges required for this step"
       $DIR/aad/wait_for_new_service_principal.sh $spId
-      grant_admin_consent $spId $msGraphObjectId $applicationReadWriteAllId
+      grant_admin_consent $spId $msGraphObjectId $applicationReadWriteOwnedById
   fi
 
   # The Swagger UI (which was created as part of the API) needs to also have access to this Workspace
@@ -715,6 +716,9 @@ JSON
       --headers Content-Type=application/json \
       --body "${requiredResourceAccess}"
 
+    # We've just updated a required resource. Wait for the update to complete.
+    $DIR/aad/wait_for_new_app_registration.sh ${automationAppId}
+
     # Grant admin consent for the delegated workspace scopes
     if [[ $grantAdminConsent -eq 1 ]]; then
         echo "Granting admin consent for ${automationAppName} (ClientID ${automationAppId})"
@@ -754,7 +758,7 @@ if [[ $createAutomationAccount -ne 0 ]]; then
     if [[ -z "$automationSpId" ]]; then
         automationSpId=$(az ad sp create --id ${automationAppId} --query 'objectId' --output tsv)
         echo "Creating a new service principal, for ${appName} Automation Admin App, with ID $automationSpId"
-        $DIR/aad/wait_for_new_service_principal.sh $automationSpId
+        $DIR/aad/wait_for_new_service_principal.sh ${automationSpId}
         resetPassword=1
     else
         echo "Service principal for the app already exists."
@@ -785,7 +789,12 @@ if [[ $createAutomationAccount -ne 0 ]]; then
   if [[ $grantAdminConsent -eq 1 ]]; then
       echo "Granting admin consent for ${appName} Automation Admin App (ClientID ${automationAppId})"
       $DIR/aad/wait_for_new_app_registration.sh ${automationAppId}
-      az ad app permission admin-consent --id ${automationAppId}
+      adminConsentResponse=$(az ad app permission admin-consent --id ${automationAppId})
+      echo ${adminConsentResponse}
+      if [ -z ${adminConsentResponse} ]; then
+          echo "Admin consent failed, trying once more: ${adminConsentResponse}"
+          az ad app permission admin-consent --id ${automationAppId}
+      fi
   fi
 fi
 
