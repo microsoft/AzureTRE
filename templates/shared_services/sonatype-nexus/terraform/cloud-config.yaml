@@ -1,13 +1,17 @@
 ---
 #cloud-config
 package_upgrade: true
-package_update: true
 apt:
   sources:
     docker.list:
       source: deb [arch=amd64]
         https://download.docker.com/linux/ubuntu $RELEASE stable
       keyid: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
+      keyserver: hkp://keyserver.ubuntu.com:80
+    azure-cli.list:
+      source: deb [arch=amd64]
+        https://packages.microsoft.com/repos/azure-cli/ $RELEASE main
+      keyid: BC528686B50D79E339D3721CEB3E94ADBE1229CF
       keyserver: hkp://keyserver.ubuntu.com:80
 
 packages:
@@ -17,6 +21,7 @@ packages:
   - docker-compose
   - gnupg2
   - pass
+  - azure-cli
   - default-jre
 
 # create the docker group
@@ -41,11 +46,6 @@ write_files:
     content: |
       nexus.skipDefaultRepositories=true
       application-port-ssl=8443
-    permissions: '0755'
-  # create the ssl cert
-  - path: /home/adminuser/ssl.pem
-    content: |
-      ${ssl_certificate_base64}
     permissions: '0755'
   # Write a script that will reset the admin password for Nexus to the one TF generated
   - path: /home/adminuser/reset-nexus-password.sh
@@ -95,7 +95,9 @@ runcmd:
   # Give the Nexus process write permissions on the folder mounted as persistent volume
   - chown -R 200 /etc/nexus-data
   # Prepare ssl certificate
-  - openssl pkcs12 -export -out ssl.pkcs12 -in /home/adminuser/ssl.pem
+  - az login --identity
+  - az keyvault certificate download --vault-name ${vault_name} -n {ssl_cert_name} -f cert.pem
+  - openssl pkcs12 -export -out ssl.pkcs12 -in cert.pem
   - keytool -v -importkeystore -srckeystore ssl.pkcs12 -srcstoretype PKCS12 -destkeystore /etc/nexus-data/etc/ssl/keystore.jks -deststoretype JKS
   # Run the nexus container (mapping volume for nexus config)
   - docker run -d

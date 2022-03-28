@@ -70,6 +70,21 @@ resource "azurerm_key_vault_secret" "nexus_admin_password" {
   key_vault_id = data.azurerm_key_vault.kv.id
 }
 
+resource "azurerm_user_assigned_identity" "nexus_msi" {
+  name                = "id-nexus-${var.tre_id}"
+  location            = var.location
+  resource_group_name = local.core_resource_group_name
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_key_vault_access_policy" "nexus_msi" {
+  key_vault_id = data.azurerm_key_vault.kv.id
+  tenant_id    = azurerm_user_assigned_identity.nexus_msi.tenant_id
+  object_id    = azurerm_user_assigned_identity.nexus_msi.principal_id
+
+  certificate_permissions = ["Get"]
+}
+
 resource "azurerm_linux_virtual_machine" "nexus" {
   name                            = "nexus-${var.tre_id}"
   resource_group_name             = local.core_resource_group_name
@@ -98,12 +113,17 @@ resource "azurerm_linux_virtual_machine" "nexus" {
   }
 
   identity {
-    type = "SystemAssigned"
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.nexus_msi.id]
   }
 
   boot_diagnostics {
     storage_account_uri = data.azurerm_storage_account.nexus.primary_blob_endpoint
   }
+
+  depends_on = [
+    azurerm_key_vault_access_policy.nexus_msi
+  ]
 }
 
 data "template_cloudinit_config" "nexus_config" {
@@ -120,6 +140,7 @@ data "template_file" "nexus_config" {
   template = file("${path.module}/cloud-config.yaml")
   vars = {
     nexus_admin_password = random_password.nexus_admin_password.result
-    ssl_certificate_base64 = data.azurerm_key_vault_certificate.ssl_certificate.certificate_data_base64
+    vault_name = data.azurerm_key_vault.kv.name
+    ssl_cert_name = "nexus-letsencrypt"
   }
 }
