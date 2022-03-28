@@ -3,6 +3,7 @@ from datetime import datetime
 from jsonschema import validate
 from pydantic import UUID4
 import copy
+from models.domain.authentication import User
 
 from core import config
 from db.errors import EntityDoesNotExist
@@ -62,7 +63,7 @@ class ResourceRepository(BaseRepository):
 
         return template_version
 
-    def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository) -> Resource:
+    def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository, user: User) -> Resource:
 
         # create a deep copy of the resource to use for history, create the history item + add to history list
         resource_copy = copy.deepcopy(resource)
@@ -70,12 +71,15 @@ class ResourceRepository(BaseRepository):
             isEnabled=resource_copy.isEnabled,
             properties=resource_copy.properties,
             resourceVersion=resource_copy.resourceVersion,
-            updatedWhen=self.get_timestamp()
+            updatedWhen=resource_copy.updatedWhen,
+            user=resource_copy.user
         )
         resource.history.append(history_item)
 
         # now update the resource props
         resource.resourceVersion = resource.resourceVersion + 1
+        resource.user = user
+        resource.updatedWhen = self.get_timestamp()
 
         if resource_patch.isEnabled is not None:
             resource.isEnabled = resource_patch.isEnabled

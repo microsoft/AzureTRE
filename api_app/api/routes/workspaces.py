@@ -69,7 +69,7 @@ async def retrieve_workspace_by_workspace_id(workspace=Depends(get_workspace_by_
 
 
 @workspaces_core_router.post("/workspaces", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_CREATE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
-async def create_workspace(workspace_create: WorkspaceInCreate, response: Response, workspace_repo=Depends(get_repository(WorkspaceRepository)), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInResponse:
+async def create_workspace(workspace_create: WorkspaceInCreate, response: Response, user=Depends(get_current_admin_user), workspace_repo=Depends(get_repository(WorkspaceRepository)), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInResponse:
     try:
         # TODO: This requires Directory.ReadAll ( Application.Read.All ) to be enabled in the Azure AD application to enable a users workspaces to be listed. This should be made optional.
         auth_info = extract_auth_information(workspace_create.properties["app_id"])
@@ -78,18 +78,18 @@ async def create_workspace(workspace_create: WorkspaceInCreate, response: Respon
         logging.error(f"Failed to create workspace model instance: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
-    operation = await save_and_deploy_resource(workspace, workspace_repo, operations_repo)
+    operation = await save_and_deploy_resource(workspace, workspace_repo, operations_repo, user)
     response.headers["Location"] = construct_location_header(operation)
 
     return OperationInResponse(operation=operation)
 
 
 @workspaces_core_router.patch("/workspaces/{workspace_id}", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_UPDATE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
-async def patch_workspace(workspace_patch: ResourcePatch, response: Response, workspace=Depends(get_workspace_by_id_from_path), workspace_repo=Depends(get_repository(WorkspaceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), etag: str = Header(None)) -> OperationInResponse:
+async def patch_workspace(workspace_patch: ResourcePatch, response: Response, user=Depends(get_current_admin_user), workspace=Depends(get_workspace_by_id_from_path), workspace_repo=Depends(get_repository(WorkspaceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), etag: str = Header(None)) -> OperationInResponse:
     check_for_etag(etag)
     try:
-        patched_workspace = workspace_repo.patch_workspace(workspace, workspace_patch, etag, resource_template_repo)
-        operation = await send_resource_request_message(patched_workspace, operations_repo, RequestAction.Upgrade)
+        patched_workspace = workspace_repo.patch_workspace(workspace, workspace_patch, etag, resource_template_repo, user)
+        operation = await send_resource_request_message(resource=patched_workspace, operations_repo=operations_repo, user=user, action=RequestAction.Upgrade)
         response.headers["Location"] = construct_location_header(operation)
         return OperationInResponse(operation=operation)
     except CosmosAccessConditionFailedError:
@@ -112,8 +112,8 @@ async def delete_workspace(response: Response, workspace=Depends(get_workspace_b
 
 
 @workspaces_core_router.post("/workspaces/{workspace_id}/invoke-action", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_INVOKE_ACTION_ON_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
-async def invoke_action_on_workspace(response: Response, action: str, workspace=Depends(get_workspace_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInResponse:
-    operation = await send_custom_action_message(workspace, action, ResourceType.Workspace, operations_repo, resource_template_repo)
+async def invoke_action_on_workspace(response: Response, action: str, user=Depends(get_current_admin_user), workspace=Depends(get_workspace_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInResponse:
+    operation = await send_custom_action_message(resource=workspace, action=action, resource_type=ResourceType.Workspace, operations_repo=operations_repo, resource_template_repo=resource_template_repo, user=user)
     response.headers["Location"] = construct_location_header(operation)
 
     return OperationInResponse(operation=operation)
@@ -143,7 +143,7 @@ async def retrieve_workspace_service_by_id(workspace_service=Depends(get_workspa
 
 
 @workspace_services_workspace_router.post("/workspaces/{workspace_id}/workspace-services", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_CREATE_WORKSPACE_SERVICE, dependencies=[Depends(get_current_workspace_owner_user)])
-async def create_workspace_service(response: Response, workspace_service_input: WorkspaceServiceInCreate, workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), operations_repo=Depends(get_repository(OperationRepository)), workspace=Depends(get_deployed_workspace_by_id_from_path)) -> OperationInResponse:
+async def create_workspace_service(response: Response, workspace_service_input: WorkspaceServiceInCreate, user=Depends(get_current_workspace_owner_user), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), operations_repo=Depends(get_repository(OperationRepository)), workspace=Depends(get_deployed_workspace_by_id_from_path)) -> OperationInResponse:
 
     try:
         workspace_service = workspace_service_repo.create_workspace_service_item(workspace_service_input, workspace.id)
@@ -151,18 +151,18 @@ async def create_workspace_service(response: Response, workspace_service_input: 
         logging.error(f"Failed create workspace service model instance: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
-    operation = await save_and_deploy_resource(workspace_service, workspace_service_repo, operations_repo)
+    operation = await save_and_deploy_resource(workspace_service, workspace_service_repo, operations_repo, user)
     response.headers["Location"] = construct_location_header(operation)
 
     return OperationInResponse(operation=operation)
 
 
 @workspace_services_workspace_router.patch("/workspaces/{workspace_id}/workspace-services/{service_id}", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_UPDATE_WORKSPACE_SERVICE, dependencies=[Depends(get_current_workspace_owner_or_researcher_user), Depends(get_workspace_by_id_from_path)])
-async def patch_workspace_service(workspace_service_patch: ResourcePatch, response: Response, workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), workspace_service=Depends(get_workspace_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), etag: str = Header(None)) -> OperationInResponse:
+async def patch_workspace_service(workspace_service_patch: ResourcePatch, response: Response, user=Depends(get_current_workspace_owner_or_researcher_user), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), workspace_service=Depends(get_workspace_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), etag: str = Header(None)) -> OperationInResponse:
     check_for_etag(etag)
     try:
-        patched_workspace_service = workspace_service_repo.patch_workspace_service(workspace_service, workspace_service_patch, etag, resource_template_repo)
-        operation = await send_resource_request_message(patched_workspace_service, operations_repo, RequestAction.Upgrade)
+        patched_workspace_service = workspace_service_repo.patch_workspace_service(workspace_service, workspace_service_patch, etag, resource_template_repo, user)
+        operation = await send_resource_request_message(resource=patched_workspace_service, operations_repo=operations_repo, user=user, action=RequestAction.Upgrade)
         response.headers["Location"] = construct_location_header(operation)
         return OperationInResponse(operation=operation)
     except CosmosAccessConditionFailedError:
@@ -187,8 +187,8 @@ async def delete_workspace_service(response: Response, workspace=Depends(get_wor
 
 
 @workspace_services_workspace_router.post("/workspaces/{workspace_id}/workspace-services/{service_id}/invoke-action", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_INVOKE_ACTION_ON_WORKSPACE_SERVICE, dependencies=[Depends(get_current_workspace_owner_user)])
-async def invoke_action_on_workspace_service(response: Response, action: str, workspace_service=Depends(get_workspace_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInResponse:
-    operation = await send_custom_action_message(workspace_service, action, ResourceType.WorkspaceService, operations_repo, resource_template_repo)
+async def invoke_action_on_workspace_service(response: Response, action: str, user=Depends(get_current_workspace_owner_user), workspace_service=Depends(get_workspace_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInResponse:
+    operation = await send_custom_action_message(resource=workspace_service, action=action, resource_type=ResourceType.WorkspaceService, operations_repo=operations_repo, resource_template_repo=resource_template_repo, user=user)
     response.headers["Location"] = construct_location_header(operation)
 
     return OperationInResponse(operation=operation)
@@ -240,7 +240,7 @@ async def create_user_resource(response: Response, user_resource_create: UserRes
         logging.error(f"Failed create user resource model instance: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
-    operation = await save_and_deploy_resource(user_resource, user_resource_repo, operations_repo)
+    operation = await save_and_deploy_resource(user_resource, user_resource_repo, operations_repo, user)
     response.headers["Location"] = construct_location_header(operation)
 
     return OperationInResponse(operation=operation)
@@ -265,8 +265,8 @@ async def patch_user_resource(user_resource_patch: ResourcePatch, response: Resp
     validate_user_is_workspace_owner_or_resource_owner(user, user_resource)
 
     try:
-        patched_user_resource = user_resource_repo.patch_user_resource(user_resource, user_resource_patch, etag, resource_template_repo, workspace_service.templateName)
-        operation = await send_resource_request_message(patched_user_resource, operations_repo, RequestAction.Upgrade)
+        patched_user_resource = user_resource_repo.patch_user_resource(user_resource, user_resource_patch, etag, resource_template_repo, workspace_service.templateName, user)
+        operation = await send_resource_request_message(resource=patched_user_resource, operations_repo=operations_repo, user=user, action=RequestAction.Upgrade)
         response.headers["Location"] = construct_location_header(operation)
         return OperationInResponse(operation=operation)
     except CosmosAccessConditionFailedError:
@@ -279,7 +279,7 @@ async def patch_user_resource(user_resource_patch: ResourcePatch, response: Resp
 @user_resources_workspace_router.post("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}/invoke-action", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_INVOKE_ACTION_ON_USER_RESOURCE)
 async def invoke_action_on_user_resource(response: Response, action: str, user_resource=Depends(get_user_resource_by_id_from_path), workspace_service=Depends(get_workspace_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), user=Depends(get_current_workspace_owner_or_researcher_user)) -> OperationInResponse:
     validate_user_is_workspace_owner_or_resource_owner(user, user_resource)
-    operation = await send_custom_action_message(user_resource, action, ResourceType.UserResource, operations_repo, resource_template_repo, workspace_service.templateName)
+    operation = await send_custom_action_message(resource=user_resource, action=action, resource_type=ResourceType.UserResource, operations_repo=operations_repo, resource_template_repo=resource_template_repo, user=user, parent_service_name=workspace_service.templateName)
     response.headers["Location"] = construct_location_header(operation)
 
     return OperationInResponse(operation=operation)

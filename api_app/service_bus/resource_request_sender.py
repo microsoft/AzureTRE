@@ -6,6 +6,8 @@ from azure.servicebus import ServiceBusMessage
 from azure.servicebus.aio import ServiceBusClient
 from contextlib import asynccontextmanager
 
+from models.domain.authentication import User
+
 from core import config
 from resources import strings
 
@@ -16,7 +18,7 @@ from models.domain.operation import Status, Operation
 from db.repositories.operations import OperationRepository
 
 
-async def send_resource_request_message(resource: Resource, operations_repo: OperationRepository, action: RequestAction = RequestAction.Install) -> Operation:
+async def send_resource_request_message(resource: Resource, operations_repo: OperationRepository, user: User, action: RequestAction = RequestAction.Install) -> Operation:
     """
     Creates and sends a resource request message for the resource to the Service Bus.
     The resource ID is added to the message to serve as an correlation ID for the deployment process.
@@ -34,6 +36,9 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
         operation = operations_repo.create_operation_item(resource_id=resource.id, status=Status.NotDeployed, action=action, message=strings.RESOURCE_STATUS_UPGRADE_NOT_STARTED_MESSAGE, resource_path=resource.resourcePath)
     else:
         operation = operations_repo.create_operation_item(resource_id=resource.id, status=Status.InvokingAction, action=action, message=strings.RESOURCE_ACTION_STATUS_INVOKING, resource_path=resource.resourcePath)
+
+    # tag the requesting user against the op
+    operation.user = user
 
     content = json.dumps(resource.get_resource_request_message_payload(operation.id, action))
 

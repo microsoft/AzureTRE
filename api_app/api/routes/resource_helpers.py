@@ -2,6 +2,7 @@ import logging
 
 from fastapi import HTTPException
 from starlette import status
+from models.domain.authentication import User
 
 from db.errors import DuplicateEntity, EntityDoesNotExist
 from db.repositories.operations import OperationRepository
@@ -13,14 +14,15 @@ from service_bus.resource_request_sender import send_resource_request_message, R
 from services.authentication import get_access_service
 
 
-async def save_and_deploy_resource(resource, resource_repo, operations_repo) -> Operation:
+async def save_and_deploy_resource(resource: Resource, resource_repo, operations_repo, user: User) -> Operation:
     try:
+        resource.user = user
         resource_repo.save_item(resource)
     except Exception:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
 
     try:
-        operation = await send_resource_request_message(resource, operations_repo, RequestAction.Install)
+        operation = await send_resource_request_message(resource=resource, operations_repo=operations_repo, user=user, action=RequestAction.Install)
         return operation
     except Exception as e:
         resource_repo.delete_item(resource.id)
@@ -46,7 +48,7 @@ async def send_uninstall_message(resource: Resource, operations_repo: OperationR
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
 
 
-async def send_custom_action_message(resource: Resource, custom_action: str, resource_type: ResourceType, operations_repo: OperationRepository, resource_template_repo: ResourceTemplateRepository, parent_service_name: str = None) -> Operation:
+async def send_custom_action_message(resource: Resource, custom_action: str, resource_type: ResourceType, operations_repo: OperationRepository, resource_template_repo: ResourceTemplateRepository, user: User, parent_service_name: str = None) -> Operation:
 
     # Validate that the custom_action specified is present in the resource template
     resource_template = resource_template_repo.get_template_by_name_and_version(resource.templateName, resource.templateVersion, resource_type, parent_service_name=parent_service_name)
@@ -56,7 +58,7 @@ async def send_custom_action_message(resource: Resource, custom_action: str, res
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.CUSTOM_ACTION_NOT_DEFINED)
 
     try:
-        operation = await send_resource_request_message(resource, operations_repo, custom_action)
+        operation = await send_resource_request_message(resource=resource, operations_repo=operations_repo, user=user, action=custom_action)
         return operation
     except Exception as e:
         logging.error(f"Failed to send {resource_type} resource custom action message: {e}")
