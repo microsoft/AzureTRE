@@ -63,11 +63,11 @@ async def patch_shared_service(shared_service_patch: ResourcePatch, response: Re
 
 
 @shared_services_router.delete("/shared-services/{shared_service_id}", response_model=OperationInResponse, name=strings.API_DELETE_SHARED_SERVICE, dependencies=[Depends(get_current_admin_user)])
-async def delete_shared_service(response: Response, shared_service=Depends(get_shared_service_by_id_from_path), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInResponse:
+async def delete_shared_service(response: Response, user=Depends(get_current_admin_user), shared_service=Depends(get_shared_service_by_id_from_path), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInResponse:
     if shared_service.isEnabled:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.SHARED_SERVICE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION)
 
-    operation = await send_uninstall_message(shared_service, operations_repo, ResourceType.SharedService)
+    operation = await send_uninstall_message(shared_service, operations_repo, ResourceType.SharedService, user)
     response.headers["Location"] = construct_location_header(operation)
 
     return OperationInResponse(operation=operation)

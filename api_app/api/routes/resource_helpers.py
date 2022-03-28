@@ -39,9 +39,9 @@ def get_user_role_assignments(user):
     return access_service.get_user_role_assignments(user.id)
 
 
-async def send_uninstall_message(resource: Resource, operations_repo: OperationRepository, resource_type: ResourceType) -> Operation:
+async def send_uninstall_message(resource: Resource, operations_repo: OperationRepository, resource_type: ResourceType, user: User) -> Operation:
     try:
-        operation = await send_resource_request_message(resource, operations_repo, RequestAction.UnInstall)
+        operation = await send_resource_request_message(resource=resource, operations_repo=operations_repo, user=user, action=RequestAction.UnInstall)
         return operation
     except Exception as e:
         logging.error(f"Failed to send {resource_type} resource delete message: {e}")

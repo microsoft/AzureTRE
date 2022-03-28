@@ -132,13 +132,14 @@ class TestResourceHelpers:
     @patch("api.routes.workspaces.OperationRepository")
     async def test_send_uninstall_message_sends_uninstall_message(self, operations_repo, send_request_mock):
         resource = sample_resource()
-        await send_uninstall_message(resource, operations_repo, ResourceType.Workspace)
+        user = create_test_user()
+        await send_uninstall_message(resource, operations_repo, ResourceType.Workspace, user)
 
-        send_request_mock.assert_called_once_with(resource, operations_repo, RequestAction.UnInstall)
+        send_request_mock.assert_called_once_with(resource=resource, operations_repo=operations_repo, user=user, action=RequestAction.UnInstall)
 
     @patch("api.routes.resource_helpers.send_resource_request_message", side_effect=Exception)
     @patch("api.routes.workspaces.OperationRepository")
     async def test_send_uninstall_message_raises_503_on_service_bus_exception(self, operations_repo, _):
         with pytest.raises(HTTPException) as ex:
-            await send_uninstall_message(sample_resource(), operations_repo, ResourceType.Workspace)
+            await send_uninstall_message(sample_resource(), operations_repo, ResourceType.Workspace, create_test_user())
         assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
