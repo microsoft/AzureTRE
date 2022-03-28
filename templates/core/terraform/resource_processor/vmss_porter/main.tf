@@ -163,3 +163,11 @@ resource "azurerm_role_assignment" "subscription_owner" {
   role_definition_name = "Owner"
   principal_id         = azurerm_user_assigned_identity.vmss_msi.principal_id
 }
+
+resource "azurerm_key_vault_access_policy" "resource_processor" {
+  key_vault_id = var.keyvault_id
+  tenant_id    = data.azurerm_user_assigned_identity.resource_processor_vmss_id.tenant_id
+  object_id    = data.azurerm_user_assigned_identity.resource_processor_vmss_id.principal_id
+
+  secret_permissions = ["Get", "List", "Set", "Delete"]
+}
