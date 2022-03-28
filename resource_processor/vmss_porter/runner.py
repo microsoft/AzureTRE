@@ -1,4 +1,5 @@
 import threading
+from multiprocessing import Process
 import json
 import socket
 import asyncio
@@ -23,7 +24,7 @@ disable_unwanted_loggers()
 
 # Initialise config
 try:
-    config = get_config()
+    config = get_config(logger_adapter)
 except KeyError as e:
     logger_adapter.error(f"Environment variable {e} is not set correctly...Exiting")
     sys.exit(1)
@@ -51,7 +52,7 @@ async def receive_message(service_bus_client):
         receiver = service_bus_client.get_queue_receiver(queue_name=q_name, auto_lock_renewer=renewer)
 
         async with receiver:
-            received_msgs = await receiver.receive_messages(max_message_count=10, max_wait_time=5)
+            received_msgs = await receiver.receive_messages(max_message_count=1, max_wait_time=5)
 
             for msg in received_msgs:
                 result = True
@@ -180,18 +181,18 @@ async def get_porter_outputs(msg_body, message_logger_adapter):
         return True, outputs_json
 
 
-async def runner():
+async def runner(process_num):
     async with default_credentials(config["vmss_msi_id"]) as credential:
         service_bus_client = ServiceBusClient(config["service_bus_namespace"], credential)
         logger_adapter.info("Starting message receiving loop...")
 
         while True:
-            logger_adapter.info("Checking for new messages...")
+            logger_adapter.info(f'Process {process_num}: Checking for new messages...')
             receive_message_gen = receive_message(service_bus_client)
 
             try:
                 async for message in receive_message_gen:
-                    logger_adapter.info(f"Message received with id={message['id']}")
+                    logger_adapter.info(f"Process {process_num}: Message received with id={message['id']}")
                     message_logger_adapter = get_message_id_logger(message['id'])  # logger includes message id in every entry.
                     result = await invoke_porter_action(message, service_bus_client, message_logger_adapter)
                     await receive_message_gen.asend(result)
@@ -199,15 +200,24 @@ async def runner():
             except StopAsyncIteration:  # the async generator when finished signals end with this exception.
                 pass
 
-            logger_adapter.info("All messages processed. Sleeping...")
-            await asyncio.sleep(60)
+            logger_adapter.info(f'Process {process_num}: All messages processed. Sleeping...')
+            await asyncio.sleep(30)
+
+
+def start_runner_process(process_num):
+    asyncio.ensure_future(runner(process_num))
+    event_loop = asyncio.get_event_loop()
+    event_loop.run_forever()
+    logger_adapter.info("Started resource processor")
+
 
 if __name__ == "__main__":
     httpserver_thread = threading.Thread(target=start_server)
     httpserver_thread.start()
     logger_adapter.info("Started http server")
 
-    asyncio.ensure_future(runner())
-    event_loop = asyncio.get_event_loop()
-    event_loop.run_forever()
-    logger_adapter.info("Started resource processor")
+    logger_adapter.info(f'Starting {str(config["number_processes_int"])} processes...')
+    for i in range(config["number_processes_int"]):
+        logger_adapter.info(f'Starting process {str(i)}')
+        process = Process(target=start_runner_process, args=(str(i)))
+        process.start()
