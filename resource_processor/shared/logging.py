@@ -28,6 +28,8 @@ UNWANTED_LOGGERS = [
     "uamqp.receiver"
 ]
 
+debug = os.environ.get('DEBUG', 'False').lower() in ('true', '1')
+
 
 def disable_unwanted_loggers():
     """
@@ -48,11 +50,19 @@ def initialize_logging(logging_level: int, correlation_id: str) -> logging.Logge
     :returns: A newly created logger adapter.
     """
     logger = logging.getLogger()
-    logger.addHandler(logging.StreamHandler())  # For logging into console
-    app_insights_connection_string = os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING")
+
+    # For logging into console
+    console_formatter = logging.Formatter(fmt='%(asctime)s %(levelname)-8s %(message)s')
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(console_formatter)
+    logger.addHandler(console_handler)
 
     try:
-        logger.addHandler(AzureLogHandler(connection_string=app_insights_connection_string))
+        azurelog_formatter = AzureLogFormatter()
+        # picks up APPLICATIONINSIGHTS_CONNECTION_STRING automatically
+        azurelog_handler = AzureLogHandler()
+        azurelog_handler.setFormatter(azurelog_formatter)
+        logger.addHandler(azurelog_handler)
     except ValueError as e:
         logger.error(f"Failed to set Application Insights logger handler: {e}")
 
@@ -96,9 +106,13 @@ def shell_output_logger(console_output: str, prefix_item: str, logger: logging.L
     """
     logger.log(logging_level, prefix_item)
 
-    if console_output is None:
+    if not console_output:
         return
 
+    logger.log(logging_level, console_output)
+
+
+class AzureLogFormatter(logging.Formatter):
     # 7-bit C1 ANSI sequences
     ansi_escape = re.compile(r'''
         \x1B  # ESC
@@ -112,9 +126,19 @@ def shell_output_logger(console_output: str, prefix_item: str, logger: logging.L
         )
     ''', re.VERBOSE)
 
-    for string in console_output.split('\n'):
-        if os.environ.get('DEBUG', False) is False:
-            string = ansi_escape.sub('', string)  # removes all ANSI formatting
+    MAX_MESSAGE_LENGTH = 32000
+    TRUNCATION_TEXT = "MESSAGE TOO LONG, TAILING..."
 
-        if len(string) != 0:
-            logger.log(logging_level, string)
+    def format(self, record):
+        s = super().format(record)
+        s = AzureLogFormatter.ansi_escape.sub('', s)
+
+        # not doing this here might produce errors if we try to log empty strings.
+        if (s == ''):
+            s = "EMPTY MESSAGE!"
+
+        # azure monitor is limiting the message size.
+        if (len(s) > AzureLogFormatter.MAX_MESSAGE_LENGTH):
+            s = f"{AzureLogFormatter.TRUNCATION_TEXT}\n{s[-1 * AzureLogFormatter.MAX_MESSAGE_LENGTH:]}"
+
+        return s

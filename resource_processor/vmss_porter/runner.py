@@ -1,4 +1,5 @@
 import threading
+from multiprocessing import Process
 import json
 import socket
 import asyncio
@@ -23,7 +24,7 @@ disable_unwanted_loggers()
 
 # Initialise config
 try:
-    config = get_config()
+    config = get_config(logger_adapter)
 except KeyError as e:
     logger_adapter.error(f"Environment variable {e} is not set correctly...Exiting")
     sys.exit(1)
@@ -51,7 +52,7 @@ async def receive_message(service_bus_client):
         receiver = service_bus_client.get_queue_receiver(queue_name=q_name, auto_lock_renewer=renewer)
 
         async with receiver:
-            received_msgs = await receiver.receive_messages(max_message_count=10, max_wait_time=5)
+            received_msgs = await receiver.receive_messages(max_message_count=1, max_wait_time=5)
 
             for msg in received_msgs:
                 result = True
@@ -83,13 +84,13 @@ async def run_porter(command):
         env=config["porter_env"])
 
     stdout, stderr = await proc.communicate()
-    logging.info(f'run porter exited with {proc.returncode}]')
+    logging.info(f'run porter exited with {proc.returncode}')
     result_stdout = None
     result_stderr = None
 
     if stdout:
         result_stdout = stdout.decode()
-        shell_output_logger(result_stderr, '[stdout]', logger_adapter, logging.INFO)
+        shell_output_logger(result_stdout, '[stdout]', logger_adapter, logging.INFO)
 
     if stderr:
         result_stderr = stderr.decode()
@@ -122,7 +123,7 @@ async def invoke_porter_action(msg_body, sb_client, message_logger_adapter) -> b
     """
     installation_id = get_installation_id(msg_body)
     action = msg_body["action"]
-    message_logger_adapter.info(f"{installation_id}: {action} action configuration starting")
+    message_logger_adapter.info(f"{installation_id}: {action} action starting...")
     sb_sender = sb_client.get_queue_sender(queue_name=config["deployment_status_queue"])
 
     # If the action is install/upgrade, post message on sb queue to start a deployment job
@@ -132,7 +133,7 @@ async def invoke_porter_action(msg_body, sb_client, message_logger_adapter) -> b
 
     # Build and run porter command (flagging if its a built-in action or custom so we can adapt porter command appropriately)
     is_custom_action = action not in ["install", "upgrade", "uninstall"]
-    porter_command = await build_porter_command(config, logger_adapter, msg_body, is_custom_action)
+    porter_command = await build_porter_command(config, message_logger_adapter, msg_body, is_custom_action)
     returncode, _, err = await run_porter(porter_command)
 
     # Handle command output
@@ -173,25 +174,25 @@ async def get_porter_outputs(msg_body, message_logger_adapter):
         outputs_json = {}
         try:
             outputs_json = json.loads(stdout)
-            logger_adapter.info(f"Got outputs as json: {outputs_json}")
+            message_logger_adapter.info(f"Got outputs as json: {outputs_json}")
         except ValueError:
-            logger_adapter.info(f"Got outputs invalid json: {stdout}")
+            message_logger_adapter.error(f"Got outputs invalid json: {stdout}")
 
         return True, outputs_json
 
 
-async def runner():
+async def runner(process_num):
     async with default_credentials(config["vmss_msi_id"]) as credential:
         service_bus_client = ServiceBusClient(config["service_bus_namespace"], credential)
         logger_adapter.info("Starting message receiving loop...")
 
         while True:
-            logger_adapter.info("Checking for new messages...")
+            logger_adapter.info(f'Process {process_num}: Checking for new messages...')
             receive_message_gen = receive_message(service_bus_client)
 
             try:
                 async for message in receive_message_gen:
-                    logger_adapter.info(f"Message received with id={message['id']}")
+                    logger_adapter.info(f"Process {process_num}: Message received with id={message['id']}")
                     message_logger_adapter = get_message_id_logger(message['id'])  # logger includes message id in every entry.
                     result = await invoke_porter_action(message, service_bus_client, message_logger_adapter)
                     await receive_message_gen.asend(result)
@@ -199,15 +200,24 @@ async def runner():
             except StopAsyncIteration:  # the async generator when finished signals end with this exception.
                 pass
 
-            logger_adapter.info("All messages processed. Sleeping...")
-            await asyncio.sleep(60)
+            logger_adapter.info(f'Process {process_num}: All messages processed. Sleeping...')
+            await asyncio.sleep(30)
+
+
+def start_runner_process(process_num):
+    asyncio.ensure_future(runner(process_num))
+    event_loop = asyncio.get_event_loop()
+    event_loop.run_forever()
+    logger_adapter.info("Started resource processor")
+
 
 if __name__ == "__main__":
     httpserver_thread = threading.Thread(target=start_server)
     httpserver_thread.start()
     logger_adapter.info("Started http server")
 
-    asyncio.ensure_future(runner())
-    event_loop = asyncio.get_event_loop()
-    event_loop.run_forever()
-    logger_adapter.info("Started resource processor")
+    logger_adapter.info(f'Starting {str(config["number_processes_int"])} processes...')
+    for i in range(config["number_processes_int"]):
+        logger_adapter.info(f'Starting process {str(i)}')
+        process = Process(target=start_runner_process, args=(str(i)))
+        process.start()

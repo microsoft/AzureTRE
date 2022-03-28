@@ -35,6 +35,13 @@ if [[ "$1" == *"start"* ]]; then
   else
     echo "Application Gateway already running"
   fi
+
+  az mysql server list --query "[?resourceGroup=='rg-${TRE_ID}'&&userVisibleState=='Stopped'].name" -o tsv |
+  while read -r mysql_name; do
+    echo "Starting MySQL ${mysql_name}"
+    az mysql server start --resource-group "rg-$TRE_ID" --name "${mysql_name}"
+  done
+
 elif [[ "$1" == *"stop"* ]]; then
   if [[ $(az network firewall list --output json --query "[?resourceGroup=='rg-${TRE_ID}'&&name=='fw-${TRE_ID}'] | length(@)") != 0 ]]; then
     IPCONFIG_NAME=$(az network firewall ip-config list -f "fw-$TRE_ID" -g "rg-$TRE_ID" --query "[0].name" -o tsv)
@@ -53,6 +60,12 @@ elif [[ "$1" == *"stop"* ]]; then
   else
     echo "Application Gateway already stopped"
   fi
+
+  az mysql server list --query "[?resourceGroup=='rg-${TRE_ID}'&&userVisibleState=='Ready'].name" -o tsv |
+  while read -r mysql_name; do
+    echo "Stopping MySQL ${mysql_name}"
+    az mysql server stop --resource-group "rg-$TRE_ID" --name "${mysql_name}"
+  done
 fi
 
 # Report final FW status
