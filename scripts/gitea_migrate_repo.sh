@@ -47,7 +47,7 @@ username=giteaadmin
 
 keyVaultName="kv-"$tre_id
 tokenSecretName="gitea-"$tre_id"-admin-token"
-pwdSecretName="gitea-"$tre_id"-admin-password"
+pwdSecretName="gitea-"$tre_id"-administrator-password"
 
 giteaUrl="https://gitea-$tre_id.azurewebsites.net"
 

@@ -1,4 +1,4 @@
-function getCommandFromComment({ context, github }) {
+async function getCommandFromComment({ context, github }) {
   const commentUsername = context.payload.comment.user.login;
   const repoFullName = context.payload.repository.full_name;
   const repoParts = repoFullName.split("/");
@@ -6,7 +6,7 @@ function getCommandFromComment({ context, github }) {
   const repoName = repoParts[1];
 
   // only allow actions for users with write access
-  if (!userHasWriteAccessToRepo({ github }, commentUsername, repoOwner, repoName)) {
+  if (!await userHasWriteAccessToRepo({ github }, commentUsername, repoOwner, repoName)) {
     console.log("Command: none [user doesn't have write permission]");
     return "none";
   }
@@ -39,12 +39,12 @@ function getCommandFromComment({ context, github }) {
   return command;
 }
 
-function labelAsExternalIfAuthorDoesNotHaveWriteAccess({ core, context, github }) {
+async function labelAsExternalIfAuthorDoesNotHaveWriteAccess({ core, context, github }) {
   const username = context.payload.pull_request.user.login;
   const owner = context.repo.owner;
   const repo = context.repo.repo;
 
-  if (!userHasWriteAccessToRepo({ github }, username, owner, repo)) {
+  if (!await userHasWriteAccessToRepo({ github }, username, owner, repo)) {
     console.log("Adding external label to PR " + context.payload.pull_request.number)
     github.rest.issues.addLabels({
       owner,
@@ -55,7 +55,7 @@ function labelAsExternalIfAuthorDoesNotHaveWriteAccess({ core, context, github }
   }
 }
 
-function userHasWriteAccessToRepo({ github }, username, repoOwner, repoName) {
+async function userHasWriteAccessToRepo({ github }, username, repoOwner, repoName) {
   // Previously, we attempted to use github.event.comment.author_association to check for OWNER or COLLABORATOR
   // Unfortunately, that always shows MEMBER if you are in the microsoft org and have that set to publicly visible
   // (Can check via https://github.com/orgs/microsoft/people?query=<username>)
