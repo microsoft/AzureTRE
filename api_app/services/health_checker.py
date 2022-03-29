@@ -67,12 +67,12 @@ def create_resource_processor_status() -> (StatusEnum, str):
     status = StatusEnum.ok
     message = ""
     try:
-        vmssName = f"vmss-rp-porter-{config.TRE_ID}"
+        vmss_name = f"vmss-rp-porter-{config.TRE_ID}"
         credential = SyncDefaultAzureCredential(managed_identity_client_id=config.MANAGED_IDENTITY_CLIENT_ID)
-        computeClient = ComputeManagementClient(credential=credential, subscription_id=config.SUBSCRIPTION_ID)
-        vmsslist = computeClient.virtual_machine_scale_set_vms.list(config.RESOURCE_GROUP_NAME, vmssName)
-        for vm in vmsslist:
-            instance_view = computeClient.virtual_machine_scale_set_vms.get_instance_view(config.RESOURCE_GROUP_NAME, vmssName, vm.instance_id)
+        compute_client = ComputeManagementClient(credential=credential, subscription_id=config.SUBSCRIPTION_ID)
+        vmss_list = compute_client.virtual_machine_scale_set_vms.list(config.RESOURCE_GROUP_NAME, vmss_name)
+        for vm in vmss_list:
+            instance_view = compute_client.virtual_machine_scale_set_vms.get_instance_view(config.RESOURCE_GROUP_NAME, vmss_name, vm.instance_id)
             health_status = instance_view.vm_health.status.code
             if health_status != strings.RESOURCE_PROCESSOR_HEALTHY_MESSAGE:
                 status = StatusEnum.not_ok
