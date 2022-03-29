@@ -30,5 +30,5 @@
 | `API_CLIENT_SECRET` | Generated when following [pre-deployment steps](./setup-instructions/pre-deployment-steps.md) guide. Client secret of the "TRE API". |
 | `DEPLOY_GITEA` | If set to `false` disables deployment of the [Gitea shared service](../azure-tre-overview/shared-services/gitea.md). |
 | `DEPLOY_NEXUS` | If set to `false` disables deployment of the [Nexus shared service](../azure-tre-overview/shared-services/nexus.md). |
-| `KEYVAULT_PURGE_PROTECTION_ENABLED` | If set to `false` disables purge protection of keyvault. A Recommanded setting for developers. |
-| `STATEFUL_RESOURCES_LOCKED` | If set to `false` locks on stateful resources won't be created. A Recommanded setting for developers. |
+| `KEYVAULT_PURGE_PROTECTION_ENABLED` | If set to `false` disables purge protection of keyvault. A recommended setting for developers. |
+| `STATEFUL_RESOURCES_LOCKED` | If set to `false` locks on stateful resources won't be created. A recommended setting for developers. |
