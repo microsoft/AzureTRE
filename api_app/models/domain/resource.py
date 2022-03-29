@@ -1,7 +1,6 @@
 from enum import Enum
 from typing import List
 from pydantic import Field
-
 from models.domain.azuretremodel import AzureTREModel
 from models.domain.request_action import RequestAction
 from resources import strings
@@ -25,6 +24,7 @@ class ResourceHistoryItem(AzureTREModel):
     isEnabled: bool
     resourceVersion: int
     updatedWhen: float
+    user: dict = {}
 
 
 class Resource(AzureTREModel):
@@ -41,6 +41,8 @@ class Resource(AzureTREModel):
     etag: str = Field(title="_etag", description="eTag of the document", alias="_etag")
     resourcePath: str = ""
     resourceVersion: int = 0
+    user: dict = {}
+    updatedWhen: float = 0
     history: List[ResourceHistoryItem] = []
 
     def get_resource_request_message_payload(self, operation_id: str, action: RequestAction) -> dict:
