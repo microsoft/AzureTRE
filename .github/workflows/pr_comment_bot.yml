@@ -26,6 +26,12 @@ jobs:
       ciGitRef: ${{ steps.get_pr_details.outputs.ciGitRef }}
       not-md: ${{ steps.filter.outputs.not-md }}
     steps:
+      # Ensure we have the script file for the github-script action to use
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
       # Determine whether the comment is a command
       - id: check_command
         name: Check for a command using GitHub script
