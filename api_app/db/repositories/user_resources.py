@@ -3,6 +3,7 @@ from typing import List
 
 from azure.cosmos import CosmosClient
 from pydantic import parse_obj_as
+from models.domain.authentication import User
 
 from db.errors import EntityDoesNotExist
 from db.repositories.resource_templates import ResourceTemplateRepository
@@ -65,7 +66,7 @@ class UserResourceRepository(ResourceRepository):
     def get_user_resource_spec_params(self):
         return self.get_resource_base_spec_params()
 
-    def patch_user_resource(self, user_resource: UserResource, user_resource_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository, parent_template_name: str) -> UserResource:
+    def patch_user_resource(self, user_resource: UserResource, user_resource_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository, parent_template_name: str, user: User) -> UserResource:
         # get user resource template
         user_resource_template = resource_template_repo.get_template_by_name_and_version(user_resource.templateName, user_resource.templateVersion, ResourceType.UserResource, parent_service_name=parent_template_name)
-        return self.patch_resource(user_resource, user_resource_patch, user_resource_template, etag, resource_template_repo)
+        return self.patch_resource(user_resource, user_resource_patch, user_resource_template, etag, resource_template_repo, user)
