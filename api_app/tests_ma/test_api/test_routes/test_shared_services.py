@@ -1,10 +1,11 @@
-import datetime
 import uuid
 import pytest
 from mock import patch
 
 from fastapi import status
-from .test_workspaces import OPERATION_ID, sample_resource_operation
+
+from tests_ma.test_api.conftest import create_admin_user
+from .test_workspaces import FAKE_CREATE_TIMESTAMP, FAKE_UPDATE_TIMESTAMP, OPERATION_ID, sample_resource_operation
 
 from db.errors import EntityDoesNotExist
 from models.domain.shared_service import SharedService
@@ -18,8 +19,6 @@ pytestmark = pytest.mark.asyncio
 
 
 SHARED_SERVICE_ID = 'abcad738-7265-4b5f-9eae-a1a62928772e'
-FAKE_UPDATE_TIME = datetime.datetime(2022, 1, 1, 17, 5, 55)
-FAKE_UPDATE_TIMESTAMP: float = FAKE_UPDATE_TIME.timestamp()
 
 
 @pytest.fixture
@@ -39,7 +38,9 @@ def sample_shared_service(shared_service_id=SHARED_SERVICE_ID):
         templateVersion="0.1.0",
         etag="",
         properties={},
-        resourcePath=f'/shared-services/{shared_service_id}'
+        resourcePath=f'/shared-services/{shared_service_id}',
+        updatedWhen=FAKE_CREATE_TIMESTAMP,
+        user=create_admin_user()
     )
 
 
@@ -135,8 +136,10 @@ class TestSharedServiceRoutesThatRequireAdminRights:
 
         modified_shared_service = sample_shared_service()
         modified_shared_service.isEnabled = False
-        modified_shared_service.history = [ResourceHistoryItem(properties={}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_UPDATE_TIMESTAMP)]
+        modified_shared_service.history = [ResourceHistoryItem(properties={}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_admin_user())]
         modified_shared_service.resourceVersion = 1
+        modified_shared_service.updatedWhen = FAKE_UPDATE_TIMESTAMP
+        modified_shared_service.user = create_admin_user()
 
         response = await client.patch(app.url_path_for(strings.API_UPDATE_SHARED_SERVICE, shared_service_id=SHARED_SERVICE_ID), json=shared_service_patch, headers={"etag": etag})
         update_item_mock.assert_called_once_with(modified_shared_service, etag)
