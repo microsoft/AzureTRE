@@ -102,9 +102,8 @@ runcmd:
   - chown -R 200 /etc/nexus-data
   # Prepare ssl certificate
   - az login --identity -u ${msi_id}
-  - az keyvault certificate download --vault-name ${vault_name} -n {ssl_cert_name} -f cert.pem
-  - openssl pkcs12 -export -out ssl.pkcs12 -in cert.pem
-  - keytool -v -importkeystore -srckeystore ssl.pkcs12 -srcstoretype PKCS12 -destkeystore /etc/nexus-data/etc/ssl/keystore.jks -deststoretype JKS
+  - az keyvault secret download --vault-name ${vault_name} --name {ssl_cert_name} --file ssl.pfx
+  - keytool -v -importkeystore -srckeystore ssl.pfx -srcstoretype PKCS12 -destkeystore /etc/nexus-data/etc/ssl/keystore.jks -deststoretype JKS
   # Run the nexus container (mapping volume for nexus config)
   - docker run -d
       -p 80:8081 -p 443:8443

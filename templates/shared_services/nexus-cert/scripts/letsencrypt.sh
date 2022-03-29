@@ -77,6 +77,11 @@ if [[ -n ${KEYVAULT} ]]; then
         --password "${CERT_PASSWORD}" \
         | jq -r '.sid')
 
+    # Save the certificate password to KV
+    az keyvault secret set --name nexus-letsencrypt-cert-password \
+      --vault-name ${KEYVAULT} \
+      --value "${CERT_PASSWORD}"
+
     az network application-gateway ssl-cert update \
         --resource-group "${RESOURCE_GROUP_NAME}" \
         --gateway-name "${APPLICATION_GATEWAY}" \
