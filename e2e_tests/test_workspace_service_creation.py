@@ -3,7 +3,7 @@ from httpx import AsyncClient
 from starlette import status
 
 import config
-from helpers import disable_and_delete_resource, get_service_template, post_resource, get_auth_header, ping_guacamole_workspace_service
+from helpers import disable_and_delete_resource, get_service_template, post_resource, get_auth_header
 from resources import strings
 
 pytestmark = pytest.mark.asyncio
