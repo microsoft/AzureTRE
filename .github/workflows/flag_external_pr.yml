@@ -11,6 +11,12 @@ jobs:
     name: Check PR author
     runs-on: ubuntu-latest
     steps:
+      # Ensure we have the script file for the github-script action to use
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
       - id: check_command
         name: Check for a command using GitHub script
         uses: actions/github-script@v6
@@ -18,4 +24,4 @@ jobs:
           result-encoding: string
           script: |
             const script = require('./.github/workflows/script.js')
-            script.labelAsExternalIfAuthorDoesNotHaveWriteAccess({core, context, github});
+            await script.labelAsExternalIfAuthorDoesNotHaveWriteAccess({core, context, github});
