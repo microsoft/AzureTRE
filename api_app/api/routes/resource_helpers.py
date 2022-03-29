@@ -1,3 +1,4 @@
+import datetime
 import logging
 
 from fastapi import HTTPException
@@ -17,6 +18,7 @@ from services.authentication import get_access_service
 async def save_and_deploy_resource(resource: Resource, resource_repo, operations_repo, user: User) -> Operation:
     try:
         resource.user = user
+        resource.updatedWhen = datetime.utcnow().timestamp()
         resource_repo.save_item(resource)
     except Exception:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
