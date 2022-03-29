@@ -39,7 +39,7 @@ function getCommandFromComment({ context, github }) {
   return command;
 }
 
-function labelAsExternalIfAuthorDoesNotHaveWriteAccess({ context, github }) {
+function labelAsExternalIfAuthorDoesNotHaveWriteAccess({ core, context, github }) {
   const username = context.payload.pull_request.user.login;
   const owner = context.repo.owner;
   const repo = context.repo.repo;
