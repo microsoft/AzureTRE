@@ -53,7 +53,7 @@ write_files:
     content: |
       nexus.skipDefaultRepositories=true
       application-port-ssl=8443
-      nexus-args=${jetty.etc}/jetty.xml,${jetty.etc}/jetty-http.xml,${jetty.etc}/jetty-requestlog.xml,/nexus-data/etc/jetty/jetty-https.xml
+      nexus-args=$${jetty.etc}/jetty.xml,$${jetty.etc}/jetty-http.xml,$${jetty.etc}/jetty-requestlog.xml,/nexus-data/etc/jetty/jetty-https.xml
     permissions: '0755'
   # Write a script that will reset the admin password for Nexus to the one TF generated
   - path: /home/adminuser/reset-nexus-password.sh
