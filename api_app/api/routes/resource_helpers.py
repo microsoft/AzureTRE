@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 import logging
 
 from fastapi import HTTPException
@@ -18,7 +18,7 @@ from services.authentication import get_access_service
 async def save_and_deploy_resource(resource: Resource, resource_repo, operations_repo, user: User) -> Operation:
     try:
         resource.user = user
-        resource.updatedWhen = datetime.utcnow().timestamp()
+        resource.updatedWhen = get_timestamp()
         resource_repo.save_item(resource)
     except Exception:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
@@ -83,3 +83,7 @@ def get_current_template_by_name(template_name: str, template_repo: ResourceTemp
     except Exception as e:
         logging.debug(e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
+
+
+def get_timestamp() -> float:
+    return datetime.utcnow().timestamp()
