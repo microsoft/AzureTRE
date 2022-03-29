@@ -32,9 +32,8 @@ fi
 set -a
 . ./templates/core/.env
 
-echo "At the moment, this script is not sourcing the .env file back in correctly."
-echo "test account is : $TEST_ACCOUNT_CLIENT_ID"
-echo "Check this value is correct"
+echo "Please check that the following value is the same as above to check you have copied yoru keys."
+echo "Test account client id is : $TEST_ACCOUNT_CLIENT_ID"
 
 ./scripts/aad-app-reg.sh \
   --name "${TRE_ID} - workspace 1" \
