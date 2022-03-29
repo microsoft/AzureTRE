@@ -189,7 +189,6 @@ function get_existing_app() {
 
 function get_existing_app_by_id() {
     local existingApiApps=$(az ad app list --app-id "$1" -o json)
-    echo $existingApiApps
     if [[ $(echo ${existingApiApps} | jq 'length') -ne 1 ]]; then
         echo "There are no applications with id \"$1\"."
         exit 1
@@ -721,7 +720,7 @@ JSON
 
     # Grant admin consent for the delegated workspace scopes
     if [[ $grantAdminConsent -eq 1 ]]; then
-        echo "Granting admin consent for ${automationAppName} (ClientID ${automationAppId})"
+        echo "Granting admin consent for ${automationAppName} (App ID ${automationAppId})"
         az ad app permission admin-consent --id $automationAppId
     fi
 fi
