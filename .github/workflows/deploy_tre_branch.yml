@@ -12,7 +12,7 @@ on:
       runExtendedTests:
         description: Run the extended tests as part of the deployment?
         type: boolean
-        default: true
+        default: false
         required: false
 
 # This will prevent multiple runs of this entire workflow.
