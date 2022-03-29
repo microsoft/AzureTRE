@@ -3,6 +3,8 @@
 SHELL:=/bin/bash
 ROOTPATH:=$(shell pwd)
 
+# Nothing to see here, move along - testing workflows
+
 IMAGE_NAME_PREFIX?="microsoft/azuretre"
 FULL_CONTAINER_REGISTRY_NAME?="$${ACR_NAME}.azurecr.io"
 FULL_IMAGE_NAME_PREFIX:=`echo "${FULL_CONTAINER_REGISTRY_NAME}/${IMAGE_NAME_PREFIX}" | tr A-Z a-z`
