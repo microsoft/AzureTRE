@@ -1,3 +1,5 @@
+#!/bin/bash
+
 mlflow server \
     --backend-store-uri "$MLFLOW_SERVER_FILE_STORE" \
     --default-artifact-root "$MLFLOW_SERVER_DEFAULT_ARTIFACT_ROOT" \

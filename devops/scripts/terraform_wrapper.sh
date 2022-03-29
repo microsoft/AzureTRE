@@ -64,33 +64,33 @@ done
 
 
 if [[ -z ${mgmt_resource_group_name+x} ]]; then
-    echo -e "No terraform state resource group name provided\n"
+    echo -e "No terraform state resource group name provided\\n"
     usage
 fi
 
 if [[ -z ${mgmt_storage_account_name+x} ]]; then
-    echo -e "No terraform state storage account name provided\n"
+    echo -e "No terraform state storage account name provided\\n"
     usage
 fi
 
 if [[ -z ${container_name+x} ]]; then
-    echo -e "No terraform state container name provided\n"
+    echo -e "No terraform state container name provided\\n"
     usage
 fi
 
 if [[ -z ${key+x} ]]; then
-    echo -e "No key provided\n"
+    echo -e "No key provided\\n"
     usage
 fi
 
 if [[ -z ${tf_command+x} ]]; then
-    echo -e "No command provided\n"
+    echo -e "No command provided\\n"
     usage
 fi
 
 if [[ -z ${tf_logfile+x} ]]; then
     tf_logfile="tmp$$.log"
-    echo -e "No logfile provided, using ${tf_logfile}\n"
+    echo -e "No logfile provided, using ${tf_logfile}\\n"
 fi
 
 terraform init -input=false -backend=true -reconfigure -upgrade \

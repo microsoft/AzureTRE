@@ -80,6 +80,6 @@ fi
 # Report final AGW status
 AGW_STATE=$(az network application-gateway list --query "[?resourceGroup=='rg-${TRE_ID}'&&name=='agw-${TRE_ID}'].operationalState | [0]" -o tsv)
 
-echo -e "\n\e[34m»»» 🔨 \e[96mTRE Status for $TRE_ID\e[0m"
-echo -e "\e[34m»»»   • \e[96mFirewall:              \e[33m$FW_STATE\e[0m"
-echo -e "\e[34m»»»   • \e[96mApplication Gateway:   \e[33m$AGW_STATE\e[0m\n"
+echo -e "\\n\\e[34m»»» 🔨 \\e[96mTRE Status for $TRE_ID\\e[0m"
+echo -e "\\e[34m»»»   • \\e[96mFirewall:              \\e[33m$FW_STATE\\e[0m"
+echo -e "\\e[34m»»»   • \\e[96mApplication Gateway:   \\e[33m$AGW_STATE\\e[0m\\n"

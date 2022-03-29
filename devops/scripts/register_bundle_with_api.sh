@@ -93,17 +93,17 @@ done
 set -o nounset
 
 if [[ -z ${acr_name:-} ]]; then
-    echo -e "No Azure Container Registry name provided\n"
+    echo -e "No Azure Container Registry name provided\\n"
     usage
 fi
 
 if [[ -z ${BUNDLE_TYPE:-} ]]; then
-    echo -e "No bundle type provided\n"
+    echo -e "No bundle type provided\\n"
     usage
 fi
 
 if [ ${BUNDLE_TYPE} == "user_resource" ] && [ -z ${workspace_service_name:-} ]; then
-    echo -e "You must supply a workspace service_name name if you are registering a user_resource bundle\n"
+    echo -e "You must supply a workspace service_name name if you are registering a user_resource bundle\\n"
     usage
 fi
 
@@ -155,7 +155,7 @@ else
 
   if [[ -z ${tre_url} ]]; then
     # access_token specified but no URL
-    echo -e "No TRE URL provided\n"
+    echo -e "No TRE URL provided\\n"
     usage
   fi
 
@@ -165,9 +165,9 @@ else
     ("user_resource") tre_get_path="/api/workspace-service-templates/${workspace_service_name}/user-resource-templates";;
   esac
 
-  echo -e "Server Response:\n"
+  echo -e "Server Response:\\n"
   eval "curl -X 'POST' ${tre_url}/${tre_get_path} -H 'accept: application/json' -H 'Content-Type: application/json' -H 'Authorization: Bearer ${access_token}' -d '${payload}' ${options}"
-  echo -e "\n"
+  echo -e "\\n"
 
   if ${verify}
   then

@@ -1,3 +1,5 @@
+#!/bin/bash
+
 PLAN_FILE="devops.tfplan"
 
 terraform init -input=false -backend=true -reconfigure -upgrade

@@ -2,7 +2,7 @@
 set -e
 
 # Baseline Azure resources
-echo -e "\n\e[34m»»» 🤖 \e[96mCreating resource group and storage account\e[0m..."
+echo -e "\\n\\e[34m»»» 🤖 \\e[96mCreating resource group and storage account\\e[0m..."
 az group create --resource-group $TF_VAR_mgmt_resource_group_name --location $LOCATION -o table
 az storage account create --resource-group $TF_VAR_mgmt_resource_group_name \
 --name $TF_VAR_mgmt_storage_account_name --location $LOCATION \
@@ -28,11 +28,11 @@ BOOTSTRAP_BACKEND
 
 
 # Set up Terraform
-echo -e "\n\e[34m»»» ✨ \e[96mTerraform init\e[0m..."
+echo -e "\\n\\e[34m»»» ✨ \\e[96mTerraform init\\e[0m..."
 terraform init -input=false -backend=true -reconfigure -upgrade
 
 # Import the storage account & res group into state
-echo -e "\n\e[34m»»» 📤 \e[96mImporting resources to state\e[0m..."
+echo -e "\\n\\e[34m»»» 📤 \\e[96mImporting resources to state\\e[0m..."
 if ! terraform state show azurerm_resource_group.mgmt > /dev/null; then
   terraform import azurerm_resource_group.mgmt "/subscriptions/$ARM_SUBSCRIPTION_ID/resourceGroups/$TF_VAR_mgmt_resource_group_name"
 fi
