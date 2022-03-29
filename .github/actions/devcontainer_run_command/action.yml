@@ -47,55 +47,55 @@ inputs:
     required: true
   API_CLIENT_ID:
     description: "The API Client Id."
-    required: true
+    required: false
   AAD_TENANT_ID:
     description: "The Tenant Id where the App is registered and the Test User is registered for the E2E Tests."
-    required: true
+    required: false
   TEST_APP_ID:
     description: "The Test Application Id used to interact with the API."
-    required: true
+    required: false
   TEST_ACCOUNT_CLIENT_ID:
     description: "The Test Automation Account Client Id used to interact with the API."
-    required: true
+    required: false
   TEST_ACCOUNT_CLIENT_SECRET:
     description: "The Test Automation Account Client Secret used to interact with the API."
-    required: true
+    required: false
   TEST_WORKSPACE_APP_ID:
     description: "The Test Workspace Id used to interact with the API."
-    required: true
+    required: false
   TRE_ID:
     description: "The TRE Id."
-    required: true
+    required: false
   TF_VAR_terraform_state_container_name:
     description: "The name of the container to store the Terraform state."
-    required: true
+    required: false
   TF_VAR_mgmt_resource_group_name:
     description: "The resource group used to store the Terraform state."
-    required: true
+    required: false
   TF_VAR_mgmt_storage_account_name:
     description: "The storage account used to store the Terraform state."
-    required: true
+    required: false
   TF_VAR_core_address_space:
     description: "Core address space."
-    required: true
+    required: false
   TF_VAR_tre_address_space:
     description: "TRE address apace."
-    required: true
+    required: false
   TF_VAR_swagger_ui_client_id:
     description: "The Swagger UI Client ID."
-    required: true
+    required: false
   TF_VAR_api_client_id:
     description: "The API Client Id. (Same as Resource)"
-    required: true
+    required: false
   TF_VAR_api_client_secret:
     description: "The API Client Secret."
-    required: true
+    required: false
   ACR_NAME:
     description: "The Container Registry that holds our Research images."
-    required: true
+    required: false
   LOCATION:
     description: "The Azure Region (e.g. WestEurope)."
-    required: true
+    required: false
   BUNDLE_TYPE:
     description: "The Bundle type (workspace / Workspace-service / User Resource)."
     required: false

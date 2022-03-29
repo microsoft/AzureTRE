@@ -3,7 +3,7 @@ name: Deploy Azure TRE
 # This workflow is the integration build run for pushes to the main branch
 # It also runs on a schedule, serving as the nightly build
 
-on:
+on:  # yamllint disable-line rule:truthy
   schedule:
     # 1am each night https://crontab.guru/#0_1_*_*_*
     - cron: "0 1 * * *"
