@@ -5,6 +5,8 @@ from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import AsyncClient
 
+from models.domain.authentication import User
+
 
 @pytest.fixture(autouse=True)
 def no_database():
@@ -24,48 +26,82 @@ def no_auth_token():
             yield
 
 
+def create_test_user() -> User:
+    return User(
+        id="user-guid-here",
+        name="Test User",
+        email="test@user.com",
+        roles=[],
+        roleAssignments=[]
+    )
+
+
+def create_admin_user() -> User:
+    user = create_test_user()
+    user.roles = ["TREAdmin"]
+    user.roleAssignments = [("ab123", "ab124")]
+    return user
+
+
+def create_non_admin_user() -> User:
+    user = create_test_user()
+    user.roles = ["TREUser"]
+    user.roleAssignments = [("ab123", "ab124")]
+    return user
+
+
+def create_workspace_owner_user() -> User:
+    user = create_test_user()
+    user.roles = ["WorkspaceOwner"]
+    return user
+
+
+def create_workspace_researcher_user() -> User:
+    user = create_test_user()
+    user.roles = ["WorkspaceResearcher"]
+    return user
+
+
 def override_get_user():
-    from models.domain.authentication import User
-    return User(id="1234", name="test", email="test", roles=[""], roleAssignments=[("ab123", "ab124")])
+    user = create_test_user()
+    user.roles = []
+    user.roleAssignments = [("ab123", "ab124")]
+    return user
 
 
 @pytest.fixture(scope='module')
 def admin_user():
     def inner():
-        from models.domain.authentication import User
-        return User(id="1234", name="test", email="test", roles=["TREAdmin"], roleAssignments=[("ab123", "ab124")])
+        return create_admin_user()
     return inner
 
 
 @pytest.fixture(scope='module')
 def non_admin_user():
     def inner():
-        from models.domain.authentication import User
-        return User(id="1234", name="test", email="test", roles=["TREUser"], roleAssignments=[("ab123", "ab124")])
+        return create_non_admin_user()
     return inner
 
 
 @pytest.fixture(scope='module')
 def owner_user():
     def inner():
-        from models.domain.authentication import User
-        return User(id="1234", name="test", email="test", roles=["WorkspaceOwner"])
+        return create_workspace_owner_user()
     return inner
 
 
 @pytest.fixture(scope='module')
 def researcher_user():
     def inner():
-        from models.domain.authentication import User
-        return User(id="1234", name="test", email="test", roles=["WorkspaceResearcher"])
+        return create_workspace_researcher_user()
     return inner
 
 
 @pytest.fixture(scope='module')
 def no_workspace_role_user():
     def inner():
-        from models.domain.authentication import User
-        return User(id="1234", name="test", email="test", roles=[])
+        user = create_test_user()
+        return user
     return inner
 
 
