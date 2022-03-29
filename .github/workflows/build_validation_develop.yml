@@ -26,7 +26,7 @@ jobs:
 
       - name: Lint code base
         # the slim image is 2GB smaller and we don't use the extra stuff
-        uses: github/super-linter@slim-v4
+        uses: github/super-linter@v4
         env:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: main
