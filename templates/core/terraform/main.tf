@@ -90,7 +90,7 @@ module "resource_processor_vmss_porter" {
   terraform_state_container_name                   = var.terraform_state_container_name
   subscription_id                                  = var.arm_subscription_id
   resource_processor_number_processes_per_instance = var.resource_processor_number_processes_per_instance
-  key_vault_name                                   = azurerm_key_vault.kv.name      
+  key_vault_name                                   = azurerm_key_vault.kv.name
 
   depends_on = [
     module.azure_monitor,
