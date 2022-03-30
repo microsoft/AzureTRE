@@ -1,6 +1,6 @@
 ---
 name: tre-service-guacamole-windowsvm
-version: 0.1.7
+version: 0.1.8
 description: "An Azure TRE User Resource Template for Guacamole (Windows 10)"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -14,6 +14,14 @@ credentials:
     env: ARM_CLIENT_ID
   - name: azure_client_secret
     env: ARM_CLIENT_SECRET
+  - name: api_admin_client_id
+    env: API_ADMIN_CLIENT_ID
+  - name: api_admin_client_secret
+    env: API_ADMIN_CLIENT_SECRET
+  - name: api_app_id
+    env: API_APP_ID
+  - name: auth_tenant_id
+    env: AUTH_TENANT_ID
 
 parameters:
   - name: workspace_id
@@ -83,6 +91,15 @@ mixins:
   - az
 
 install:
+  - exec:
+      command: ./patch_workspace.sh
+      description: Interact with the API
+      flags:
+        api-admin-client-id: '{{ bundle.credentials.api_admin_client_id }}'
+        api-admin-client-secret: '{{ bundle.credentials.api_admin_client_secret }}'
+        api-app-id: '{{ bundle.credentials.api_app_id }}'
+        auth-tenant-id: '{{ bundle.credentials.auth_tenant_id }}'
+        tre-url: https://{{ bundle.parameters.tre_id }}.westeurope.cloudapp.azure.com
   - terraform:
       description: "Deploy Guacamole User Resource Service (Windows VM)"
       vars:
