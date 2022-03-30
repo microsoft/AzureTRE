@@ -59,6 +59,14 @@ resource "azurerm_user_assigned_identity" "vmss_msi" {
   lifecycle { ignore_changes = [tags] }
 }
 
+resource "azurerm_key_vault_access_policy" "resource_processor" {
+  key_vault_id = data.azurerm_key_vault.kv.id
+  tenant_id    = azurerm_user_assigned_identity.vmss_msi.tenant_id
+  object_id    = azurerm_user_assigned_identity.vmss_msi.principal_id
+
+  secret_permissions = ["Get", "List"]
+}
+
 resource "azurerm_linux_virtual_machine_scale_set" "vm_linux" {
 
   name                = "vmss-rp-porter-${var.tre_id}"
