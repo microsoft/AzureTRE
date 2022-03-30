@@ -460,7 +460,7 @@ resetPassword=0
 
 # If not, create a new service principal
 if [[ -z "$spId" ]]; then
-    spId=$(az ad sp create --id ${apiAppId} --query 'objectId' --output tsv)
+    spId=$(az ad sp create --id "${apiAppId}" --query 'objectId' --output tsv)
     echo "Creating a new service principal, for '${appName} API' app, with ID ${spId}"
     "${DIR}"/aad/wait_for_new_service_principal.sh "${spId}"
     az ad app owner add --id "${apiAppId}" --owner-object-id "${spId}"
@@ -480,7 +480,7 @@ spPassword=""
 
 if [[ "$resetPassword" == 1 ]]; then
     # Reset the app password (client secret) and display it
-    spPassword=$(az ad sp credential reset --name ${apiAppId} --query 'password' --output tsv)
+    spPassword=$(az ad sp credential reset --name "${apiAppId}" --query 'password' --output tsv)
     echo "'${appName} API' app password (client secret): ${spPassword}"
 fi
 
@@ -503,7 +503,7 @@ if [[ "$workspace" -ne 0 ]]; then
   # The Swagger UI (which was created as part of the API) needs to also have access to this Workspace
   echo "Searching for existing Swagger application (${swaggerAppId})."
   existingSwaggerApp=$(get_existing_app_by_id "${swaggerAppId}")
-  swaggerObjectId=$(echo ${existingSwaggerApp} | jq -r .objectId)
+  swaggerObjectId=$(echo "${existingSwaggerApp}" | jq -r .objectId)
 
   # Get the existing required resource access from the swagger app,
   # but remove the access that we are about to add for idempotency. We cant use
@@ -513,7 +513,7 @@ if [[ "$workspace" -ne 0 ]]; then
     --method GET \
     --uri "${msGraphUri}/applications/${swaggerObjectId}" \
     --headers Content-Type=application/json \
-    | jq -r --arg apiAppId ${apiAppId} \
+    | jq -r --arg apiAppId "${apiAppId}" \
     'del(.requiredResourceAccess[] | select(.resourceAppId==$apiAppId)) | .requiredResourceAccess' \
     )
 
@@ -537,7 +537,7 @@ JSON
 )
 
     # Manipulate the json (add existingAccess into requiredResourceAccess and then remove it)
-    requiredResourceAccess=$(echo ${swaggerWorkspaceAccess} | \
+    requiredResourceAccess=$(echo "${swaggerWorkspaceAccess}" | \
       jq '.requiredResourceAccess += .existingAccess | {requiredResourceAccess}')
 
     az rest --method PATCH \
@@ -552,9 +552,9 @@ else
   # Grant admin consent on the required resource accesses (Graph API)
   if [[ $grantAdminConsent -eq 1 ]]; then
       echo "Granting admin consent for '${appName} API' app (service principal ID ${spId}) - NOTE: Directory admin privileges required for this step"
-      $DIR/aad/wait_for_new_service_principal.sh "${spId}"
+      "$DIR"/aad/wait_for_new_service_principal.sh "${spId}"
       grant_admin_consent "${spId}" "$msGraphObjectId" "${directoryReadAllId}"
-      $DIR/aad/wait_for_new_service_principal.sh "${spId}"
+      "$DIR"/aad/wait_for_new_service_principal.sh "${spId}"
       grant_admin_consent "${spId}" "${msGraphObjectId}" "${userReadAllId}"
   fi
 
@@ -612,7 +612,7 @@ JSON
       swaggerUIAppObjectId=$(echo "${existingSwaggerUIApp}" | jq -r '.objectId')
       echo "Updating Swagger UI app with ID ${swaggerUIAppObjectId}"
       az rest --method PATCH --uri "${msGraphUri}/applications/${swaggerUIAppObjectId}" --headers Content-Type=application/json --body "${swaggerUIApp}"
-      swaggerAppId=$(az ad app show --id ${swaggerUIAppObjectId} --query "appId" --output tsv)
+      swaggerAppId=$(az ad app show --id "${swaggerUIAppObjectId}" --query "appId" --output tsv)
       echo "Swagger UI app registration with ID ${swaggerAppId} updated"
   else
       swaggerAppId=$(az rest --method POST --uri "${msGraphUri}/applications" --headers Content-Type=application/json --body "${swaggerUIApp}" --output tsv --query "appId")
@@ -630,14 +630,14 @@ JSON
 
   # If not, create a new service principal
   if [[ -z "$swaggerSpId" ]]; then
-      swaggerSpId=$(az ad sp create --id ${swaggerAppId} --query 'objectId' --output tsv)
+      swaggerSpId=$(az ad sp create --id "${swaggerAppId}" --query 'objectId' --output tsv)
       echo "Creating a new service principal, for ${appName} Swagger UI app, with ID $swaggerSpId"
       "${DIR}"/aad/wait_for_new_service_principal.sh "${swaggerSpId}"
   fi
 
   echo "Granting delegated access for ${appName} Swagger UI app (service principal ID ${swaggerSpId})"
-  az ad app permission grant --id $swaggerSpId --api $msGraphObjectId --scope "offline_access openid"
-  az ad app permission grant --id $swaggerSpId --api $apiAppId --scope "user_impersonation"
+  az ad app permission grant --id "$swaggerSpId" --api "$msGraphObjectId" --scope "offline_access openid"
+  az ad app permission grant --id "$swaggerSpId" --api "$apiAppId" --scope "user_impersonation"
 fi
 
 automationApp=$(jq -c . << JSON
@@ -682,7 +682,7 @@ if [[ -n ${automationAppId} ]]; then
       --method GET \
       --uri "${msGraphUri}/applications/${automationAppObjectId}" \
       --headers Content-Type=application/json \
-      | jq -r --arg apiAppId ${apiAppId} \
+      | jq -r --arg apiAppId "${apiAppId}" \
       'del(.requiredResourceAccess[] | select(.resourceAppId==$apiAppId)) | .requiredResourceAccess' \
       )
 
@@ -710,7 +710,7 @@ JSON
 )
 
     # Manipulate the json (add existingAccess into requiredResourceAccess and then remove it)
-    requiredResourceAccess=$(echo ${automationWorkspaceAccess} | \
+    requiredResourceAccess=$(echo "${automationWorkspaceAccess}" | \
       jq '.requiredResourceAccess += .existingAccess | {requiredResourceAccess}')
 
     az rest --method PATCH \
@@ -736,8 +736,8 @@ if [[ $createAutomationAccount -ne 0 ]]; then
 
     if [[ -n ${existingAutomationApp} ]]; then
         echo "Automation app exists - updating..."
-        automationAppObjectId=$(echo ${existingAutomationApp} | jq -r .objectId)
-        automationAppId=$(echo ${existingAutomationApp} | jq -r .appId)
+        automationAppObjectId=$(echo "${existingAutomationApp}" | jq -r .objectId)
+        automationAppId=$(echo "${existingAutomationApp}" | jq -r .appId)
         az rest --method PATCH --uri "${msGraphUri}/applications/${automationAppObjectId}" --headers Content-Type=application/json --body "${automationApp}"
     else
         echo "Automation app doesn't exist - creating..."
@@ -758,7 +758,7 @@ if [[ $createAutomationAccount -ne 0 ]]; then
     resetPassword=0
     # If not, create a new service principal
     if [[ -z "$automationSpId" ]]; then
-        automationSpId=$(az ad sp create --id '${automationAppId}' --query 'objectId' --output tsv)
+        automationSpId=$(az ad sp create --id "${automationAppId}" --query 'objectId' --output tsv)
         echo "Creating a new service principal, for '${appName}' Automation Admin App, with ID '$automationSpId'"
         "${DIR}"/aad/wait_for_new_service_principal.sh "${automationSpId}"
         resetPassword=1
@@ -793,7 +793,7 @@ if [[ $createAutomationAccount -ne 0 ]]; then
       "${DIR}"/aad/wait_for_new_app_registration.sh "${automationAppId}"
       adminConsentResponse=$(az ad app permission admin-consent --id "${automationAppId}")
       echo "${adminConsentResponse}"
-      if [ -z ${adminConsentResponse} ]; then
+      if [ -z "${adminConsentResponse}" ]; then
           echo "Admin consent failed, trying once more: ${adminConsentResponse}"
           az ad app permission admin-consent --id "${automationAppId}"
       fi
@@ -824,7 +824,7 @@ AAD_TENANT_ID="$(az account show --output json | jq -r '.tenantId')"
 
 ** Please copy the following variables to /templates/core/.env **
 
-WORKSPACE_API_OBJECT_ID="$(az ad app show --id '${apiAppId}' --query objectId -o tsv)"
+WORKSPACE_API_OBJECT_ID=$(az ad app show --id "${apiAppId}" --query objectId)
 WORKSPACE_API_CLIENT_ID="${apiAppId}"
 WORKSPACE_API_CLIENT_SECRET="${spPassword}"
 
