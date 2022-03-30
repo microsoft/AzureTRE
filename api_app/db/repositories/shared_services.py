@@ -3,6 +3,7 @@ from typing import List
 
 from azure.cosmos import CosmosClient
 from pydantic import parse_obj_as
+from models.domain.authentication import User
 from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.resources import ResourceRepository, IS_ACTIVE_CLAUSE
 from db.repositories.operations import OperationRepository
@@ -67,7 +68,7 @@ class SharedServiceRepository(ResourceRepository):
 
         return shared_service
 
-    def patch_shared_service(self, shared_service: SharedService, shared_service_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository) -> SharedService:
+    def patch_shared_service(self, shared_service: SharedService, shared_service_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository, user: User) -> SharedService:
         # get shared service template
         shared_service_template = resource_template_repo.get_template_by_name_and_version(shared_service.templateName, shared_service.templateVersion, ResourceType.SharedService)
-        return self.patch_resource(shared_service, shared_service_patch, shared_service_template, etag, resource_template_repo)
+        return self.patch_resource(shared_service, shared_service_patch, shared_service_template, etag, resource_template_repo, user)

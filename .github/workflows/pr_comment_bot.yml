@@ -27,6 +27,12 @@ jobs:
       ciGitRef: ${{ steps.get_pr_details.outputs.ciGitRef }}
       not-md: ${{ steps.filter.outputs.not-md }}
     steps:
+      # Ensure we have the script file for the github-script action to use
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
       # Determine whether the comment is a command
       - id: check_command
         name: Check for a command using GitHub script
@@ -34,70 +40,10 @@ jobs:
         with:
           result-encoding: string
           script: |
-            // Previously, we attempted to use github.event.comment.author_association to check for OWNER or COLLABORATOR
-            // Unfortunately, that always shows MEMBER if you are in the microsoft org and have that set to publicly visible
-            // (Can check via https://github.com/orgs/microsoft/people?query=<username>)
-
-            // https://docs.github.com/en/rest/reference/collaborators#check-if-a-user-is-a-repository-collaborator
-            const commentUsername = context.payload.comment.user.login;
-            const repoFullName = context.payload.repository.full_name;
-            const repoParts = repoFullName.split("/");
-            const repoOwner = repoParts[0];
-            const repoName = repoParts[1];
-
-            let userHasWriteAccess = false;
-            try {
-              console.log(`Checking if user "${commentUsername}" has write access to ${repoOwner}/${repoName} ...`)
-              const result = await github.request('GET /repos/{owner}/{repo}/collaborators/{username}', {
-                owner: repoOwner,
-                repo: repoName,
-                username: commentUsername
-              });
-              userHasWriteAccess = result.status === 204;
-              console.log("success")
-              console.log(result);
-            } catch (err) {
-              console.log("error")
-              console.log(err);
-              if (err.status === 404){
-                console.log("User not found in collaborators");
-              } else {
-                console.log(`Error checking if user has write access: ${err.status} (${err.response.data.message}) `)
-              }
-            }
-            console.log("User has write access: " + userHasWriteAccess);
-
-            if (!userHasWriteAccess) {
-              console.log("Command: none [user doesn't have permission]");
-              return "none"; // only allow actions for users with write access
-            }
-
-            //
-            // Determine what action to take
-            // Only use the first line of the comment to allow remainder of the body for other comments/notes
-            //
-            const commentBody = context.payload.comment.body;
-            const commentFirstLine = commentBody.split("\n")[0];
-            let command = "none";
-            switch (commentFirstLine.trim()){
-              case "/test":
-                command = "run-tests";
-                break;
-              case "/test-extended":
-                command = "run-tests-extended";
-                break;
-              case "/test-force-approve":
-                command = "test-force-approve";
-                break;
-              case "/test-destroy-env":
-                command = "test-destroy-env";
-                break;
-              case "/help":
-                command = "show-help";
-                break;
-            }
-            console.log(`Command: ${command}`);
-            return command;
+            const script = require('./.github/workflows/script.js')
+            const result = script.getCommandFromComment({core, context, github});
+            console.log(result);
+            return result;
 
       # Add comment with help text in response to help command
       - name: Show Help
