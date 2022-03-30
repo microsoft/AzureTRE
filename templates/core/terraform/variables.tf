@@ -165,3 +165,16 @@ variable "public_deployment_ip_address" {
   type        = string
   default     = ""
 }
+
+# These variables will be renamed in the future to avoid confusion.
+variable "test_account_client_id" {
+  type        = string
+  description = "The client id (app id) of the registration in Azure AD for the test account."
+  sensitive   = true
+}
+
+variable "test_account_client_secret" {
+  type        = string
+  description = "The client secret (app password) of the registration in Azure AD for the test account."
+  sensitive   = true
+}
