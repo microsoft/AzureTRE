@@ -51,8 +51,14 @@ def initialize_logging(logging_level: int, correlation_id: str) -> logging.Logge
     """
     logger = logging.getLogger()
 
+    # When using sessions and NEXT_AVAILABLE_SESSION we see regular exceptions which are actually expected
+    # See https://github.com/Azure/azure-sdk-for-python/issues/9402
+    # We don't want these making the logs any noisier so we raise the logging level for that logger here
+    uamqp_logger = logging.getLogger("azure.servicebus.aio._base_handler_async")
+    uamqp_logger.setLevel(logging.ERROR)
+
     # For logging into console
-    console_formatter = logging.Formatter(fmt='%(asctime)s %(levelname)-8s %(message)s')
+    console_formatter = logging.Formatter(fmt='%(module)-7s %(name)-7s %(process)-7s %(asctime)s %(levelname)-7s %(message)s')
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(console_formatter)
     logger.addHandler(console_handler)
