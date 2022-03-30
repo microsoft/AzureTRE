@@ -1,5 +1,5 @@
 ---
-#cloud-config
+# cloud-config
 package_upgrade: true
 apt:
   sources:

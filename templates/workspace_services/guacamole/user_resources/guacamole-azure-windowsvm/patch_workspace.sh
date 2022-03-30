@@ -66,18 +66,19 @@ if [[ -z ${tre_url:-} ]]; then
     usage
 fi
 
-token_response=$(curl -X POST -H 'Content-Type: application/x-www-form-urlencoded' \
-  https://login.microsoftonline.com/${auth_tenant_id}/oauth2/v2.0/token \
+token_response=$(curl -X POST \
+  "https://login.microsoftonline.com/${auth_tenant_id}/oauth2/v2.0/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
   -d "grant_type=client_credentials"   \
   -d "scope=api://${api_app_id}/.default"   \
   -d "client_id=${api_admin_client_id}"   \
   -d "client_secret=${api_admin_client_secret}")
 
-if [ ! -z "${token_response:-}" ]; then
-  access_token=$(echo ${token_response} | jq -r .access_token)
+if [ -n "${token_response:-}" ]; then
+  access_token=$(echo "${token_response}" | jq -r .access_token)
   if [[ ${access_token} == "null" ]]; then
       echo "Failed to obtain auth token for API:"
-      echo ${token_response}
+      echo "${token_response}"
       exit 2
   fi
 fi
@@ -86,4 +87,4 @@ tre_get_path="api/workspaces"
 response=$(curl -X "GET" "${tre_url}/${tre_get_path}" \
   -H "accept: application/json" \
   -H "Authorization: Bearer ${access_token}")
-echo $response
+echo "$response"
