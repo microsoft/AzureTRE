@@ -16,7 +16,10 @@ UNWANTED_LOGGERS = [
     "azure.identity.aio._internal.decorators",
     "azure.identity.aio._credentials.chained",
     "azure.identity",
-    "msal.token_cache",
+    "msal.token_cache"
+]
+
+LOGGERS_FOR_ERRORS_ONLY = [
     "uamqp",
     "uamqp.authentication.cbs_auth_async",
     "uamqp.async_ops.client_async",
@@ -25,7 +28,11 @@ UNWANTED_LOGGERS = [
     "uamqp.authentication",
     "uamqp.c_uamqp",
     "uamqp.connection",
-    "uamqp.receiver"
+    "uamqp.receiver",
+    "uamqp.async_ops.session_async",
+    "uamqp.sender",
+    "uamqp.client",
+    "azure.servicebus.aio._base_handler_async"
 ]
 
 debug = os.environ.get('DEBUG', 'False').lower() in ('true', '1')
@@ -53,9 +60,11 @@ def initialize_logging(logging_level: int, correlation_id: str) -> logging.Logge
 
     # When using sessions and NEXT_AVAILABLE_SESSION we see regular exceptions which are actually expected
     # See https://github.com/Azure/azure-sdk-for-python/issues/9402
+    # Other log entries such as 'link detach' also confuse the logs, and are expected.
     # We don't want these making the logs any noisier so we raise the logging level for that logger here
-    uamqp_logger = logging.getLogger("azure.servicebus.aio._base_handler_async")
-    uamqp_logger.setLevel(logging.ERROR)
+    # To inspect all the loggers, use -> loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict]
+    for logger_name in LOGGERS_FOR_ERRORS_ONLY:
+        logging.getLogger(logger_name).setLevel(logging.ERROR)
 
     # For logging into console
     console_formatter = logging.Formatter(fmt='%(module)-7s %(name)-7s %(process)-7s %(asctime)s %(levelname)-7s %(message)s')

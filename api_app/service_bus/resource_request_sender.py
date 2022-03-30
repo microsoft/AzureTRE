@@ -39,7 +39,7 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
 
     content = json.dumps(resource.get_resource_request_message_payload(operation.id, action))
 
-    resource_request_message = ServiceBusMessage(body=content, correlation_id=resource.id, session_id=resource.id)
+    resource_request_message = ServiceBusMessage(body=content, correlation_id=operation.id, session_id=resource.id)
     logging.info(f"Sending resource request message with correlation ID {resource_request_message.correlation_id}, action: {action}")
     await _send_message(resource_request_message, config.SERVICE_BUS_RESOURCE_REQUEST_QUEUE)
     return operation

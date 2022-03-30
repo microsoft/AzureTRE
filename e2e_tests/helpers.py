@@ -49,7 +49,7 @@ async def get_service_template(template_name, token, verify):
         yield response
 
 
-async def post_resource(payload, endpoint, resource_type, token, admin_token, verify, method="POST"):
+async def post_resource(payload, endpoint, resource_type, token, admin_token, verify, method="POST", wait=True):
     async with AsyncClient(verify=verify) as client:
 
         if resource_type == 'workspace':
@@ -77,7 +77,8 @@ async def post_resource(payload, endpoint, resource_type, token, admin_token, ve
         resource_id = response.json()["operation"]["resourceId"]
         operation_endpoint = response.headers["Location"]
 
-        await wait_for(check_method, client, operation_endpoint, get_auth_header(token), strings.RESOURCE_STATUS_FAILED)
+        if wait:
+            await wait_for(check_method, client, operation_endpoint, get_auth_header(token), strings.RESOURCE_STATUS_FAILED)
 
         return resource_path, resource_id
 

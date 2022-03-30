@@ -52,9 +52,10 @@ async def receive_message(service_bus_client):
     while True:
         logger_adapter.info('Checking for new messages...')
         try:
-            async with service_bus_client.get_queue_receiver(queue_name=q_name, max_wait_time=1, idle_timeout=30, session_id=NEXT_AVAILABLE_SESSION) as receiver:
-                with AutoLockRenewer() as renewer:
-                    renewer.register(receiver, receiver.session, max_lock_renewal_duration=30)
+            async with service_bus_client.get_queue_receiver(queue_name=q_name, max_wait_time=1, session_id=NEXT_AVAILABLE_SESSION) as receiver:
+                async with AutoLockRenewer() as renewer:
+                    # allow a message to be auto lock renewed for up to an hour
+                    renewer.register(receiver, receiver.session, max_lock_renewal_duration=3600)
 
                     async for msg in receiver:
                         result = True
@@ -62,8 +63,8 @@ async def receive_message(service_bus_client):
 
                         try:
                             message = json.loads(str(msg))
-                            logger_adapter.info(f"Message received with id={message['id']}")
-                            message_logger_adapter = get_message_id_logger(message['id'])  # logger includes message id in every entry.
+                            logger_adapter.info(f"Message received for resource_id={message['id']}, operation_id={message['operationId']}")
+                            message_logger_adapter = get_message_id_logger(message['operationId'])  # correlate messages per operation
                             result = await invoke_porter_action(message, service_bus_client, message_logger_adapter)
                         except (json.JSONDecodeError) as e:
                             logging.error(f"Received bad service bus resource request message: {e}")
@@ -77,7 +78,7 @@ async def receive_message(service_bus_client):
                         await receiver.complete_message(msg)
 
         except OperationTimeoutError:
-            logger_adapter.info("Timeout occurred whilst connecting to a session - this is expected and indicates no non-empty sessions are available")
+            # Timeout occurred whilst connecting to a session - this is expected and indicates no non-empty sessions are available
             logger_adapter.info("Sleeping 30s...")
             await asyncio.sleep(30)
 
@@ -196,8 +197,8 @@ async def runner():
         await receive_message(service_bus_client)
 
 
-def start_runner_process(process_num):
-    asyncio.ensure_future(runner(process_num))
+def start_runner_process():
+    asyncio.ensure_future(runner())
     event_loop = asyncio.get_event_loop()
     event_loop.run_forever()
     logger_adapter.info("Started resource processor")
@@ -211,5 +212,5 @@ if __name__ == "__main__":
     logger_adapter.info(f'Starting {str(config["number_processes_int"])} processes...')
     for i in range(config["number_processes_int"]):
         logger_adapter.info(f'Starting process {str(i)}')
-        process = Process(target=start_runner_process, args=(str(i)))
+        process = Process(target=start_runner_process)
         process.start()
