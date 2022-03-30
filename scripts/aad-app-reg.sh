@@ -2,7 +2,7 @@
 
 # Setup Script
 set -euo pipefail
-AZURE_CORE_OUTPUT=jsonc # force CLI output to JSON for the script (user can still change default for interactive usage in the dev container)
+# AZURE_CORE_OUTPUT=jsonc # force CLI output to JSON for the script (user can still change default for interactive usage in the dev container)
 
 function show_usage()
 {
@@ -170,14 +170,14 @@ apiUserImpersonationScopeID=$(cat /proc/sys/kernel/random/uuid)
 apiAppObjectId=""
 
 function get_existing_app() {
-    local existingApiApps=$(az ad app list --display-name "$1" -o json)
+    existingApiApps=$(az ad app list --display-name "$1" -o json)
 
-    if [[ $(echo ${existingApiApps} | jq 'length') -gt 1 ]]; then
+    if [[ $(echo "${existingApiApps}" | jq 'length') -gt 1 ]]; then
         echo "There are more than one applications with the name \"$1\" already."
         exit 1
     fi
 
-    if [[ $(echo ${existingApiApps} | jq 'length') -eq 1 ]]; then
+    if [[ $(echo "${existingApiApps}" | jq 'length') -eq 1 ]]; then
         echo "${existingApiApps}" | jq -c '.[0]'
         return 0
     fi
@@ -186,13 +186,13 @@ function get_existing_app() {
 }
 
 function get_existing_app_by_id() {
-    local existingApiApps=$(az ad app list --app-id "$1" -o json)
+    existingApiApps=$(az ad app list --app-id "$1" -o json)
     if [[ $(echo ${existingApiApps} | jq 'length') -ne 1 ]]; then
         echo "There are no applications with id \"$1\"."
         exit 1
     fi
 
-    if [ $(echo ${existingApiApps} | jq 'length') -eq 1 ]; then
+    if [ $(echo "${existingApiApps}" | jq 'length') -eq 1 ]; then
         echo "${existingApiApps}" | jq -c '.[0]'
         return 0
     fi
@@ -203,7 +203,7 @@ function get_existing_app_by_id() {
 existingApiApp=$(get_existing_app "${appName} API")
 
 if [[ -n ${existingApiApp} ]]; then
-    apiAppObjectId=$(echo ${existingApiApp} | jq -r '.objectId')
+    apiAppObjectId=$(echo "${existingApiApp}" | jq -r '.objectId')
 
     # Get existing IDs of roles and scopes.
     if [[ $workspace -eq 0 ]]; then
@@ -313,20 +313,20 @@ userReadAllId=$(az ad sp show --id ${msGraphAppId} --query "appRoles[?value=='Us
 applicationReadWriteOwnedById=$(az ad sp show --id ${msGraphAppId} --query "appRoles[?value=='Application.ReadWrite.OwnedBy'].id" --output tsv)
 
 function get_msgraph_scope() {
-    local scope=$(az ad sp show --id ${msGraphAppId} --query "oauth2Permissions[?value=='$1'].id | [0]" --output tsv)
+    oauthScope=$(az ad sp show --id ${msGraphAppId} --query "oauth2Permissions[?value=='$1'].id | [0]" --output tsv)
     jq -c . <<- JSON
     {
-        "id": "${scope}",
+        "id": "${oauthScope}",
         "type": "Scope"
     }
 JSON
 }
 
 function get_msgraph_role() {
-    local scope=$(az ad sp show --id ${msGraphAppId} --query "appRoles[?value=='$1'].id | [0]" --output tsv)
+    appRoleScope=$(az ad sp show --id ${msGraphAppId} --query "appRoles[?value=='$1'].id | [0]" --output tsv)
     jq -c . <<- JSON
     {
-        "id": "${scope}",
+        "id": "${appRoleScope}",
         "type": "Role"
     }
 JSON

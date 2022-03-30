@@ -68,7 +68,7 @@ fi
 
 token_response=$(curl -X POST \
   "https://login.microsoftonline.com/${auth_tenant_id}/oauth2/v2.0/token" \
-  -H "Content-Type: application/x-www-form-urlencoded"
+  -H "Content-Type: application/x-www-form-urlencoded" \
   -d "client_id=${workspace_client_id}"   \
   -d "grant_type=client_credentials"   \
   -d "scope=https%3A%2F%2Fgraph.microsoft.com%2F.default"   \
