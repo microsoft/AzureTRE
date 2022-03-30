@@ -75,7 +75,7 @@ token_response=$(curl -X POST \
   -d "client_secret=${workspace_client_secret}")
 
 if [ -n "${token_response:-}" ]; then
-  access_token=$(echo ${token_response} | jq -r .access_token)
+  access_token=$(echo "${token_response}" | jq -r .access_token)
   if [[ ${access_token} == "null" ]]; then
       echo "Failed to obtain auth token for API:"
       echo "${token_response}"

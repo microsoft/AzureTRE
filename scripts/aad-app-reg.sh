@@ -109,7 +109,7 @@ if [[ -z "$appName" ]]; then
 fi
 
 # if admin consent & workspace, but not swagger client id, show error
-if [[ $workspace -ne 0 && $grantAdminConsent -eq 1 && ! -n "$swaggerAppId" ]]; then
+if [[ $workspace -eq 1 && $grantAdminConsent -eq 1 && -z "$swaggerAppId" ]]; then
     echo "When specifying --admin-consent and --workspace, please specify the swagger application client ID option" 1>&2
     show_usage
 fi
@@ -133,7 +133,8 @@ function grant_admin_consent()
     appRoleId=$3
 
     # test if enabled to avoid "Permission being assigned already exists on the object" error
-    is_enabled=$(az rest --method GET --uri ${msGraphUri}/servicePrincipals/${principalId}/appRoleAssignments -o json \
+    is_enabled=$(az rest --method GET \
+      --uri "${msGraphUri}/servicePrincipals/${principalId}/appRoleAssignments" -o json \
       | jq -r ".value | map( select(.appRoleId==\"${appRoleId}\") ) | length")
 
     if [[ "$is_enabled" != "1" ]]; then
@@ -171,13 +172,14 @@ apiAppObjectId=""
 
 function get_existing_app() {
     existingApiApps=$(az ad app list --display-name "$1" -o json)
+    declare -i existing=$(echo "${existingApiApps}" | jq 'length')
 
-    if [[ $(echo "${existingApiApps}" | jq 'length') -gt 1 ]]; then
+    if [[ ${existing} -gt 1 ]]; then
         echo "There are more than one applications with the name \"$1\" already."
         exit 1
     fi
 
-    if [[ $(echo "${existingApiApps}" | jq 'length') -eq 1 ]]; then
+    if [[ ${existing} -eq 1 ]]; then
         echo "${existingApiApps}" | jq -c '.[0]'
         return 0
     fi
@@ -187,12 +189,14 @@ function get_existing_app() {
 
 function get_existing_app_by_id() {
     existingApiApps=$(az ad app list --app-id "$1" -o json)
-    if [[ $(echo ${existingApiApps} | jq 'length') -ne 1 ]]; then
+    declare -i existing=$(echo "${existingApiApps}" | jq 'length')
+
+    if [[ ${existing} -ne 1 ]]; then
         echo "There are no applications with id \"$1\"."
         exit 1
     fi
 
-    if [ $(echo "${existingApiApps}" | jq 'length') -eq 1 ]; then
+    if [ ${existing} -eq 1 ]; then
         echo "${existingApiApps}" | jq -c '.[0]'
         return 0
     fi
