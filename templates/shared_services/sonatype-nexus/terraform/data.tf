@@ -35,8 +35,8 @@ data "azurerm_subnet" "web_app" {
   resource_group_name  = local.core_resource_group_name
 }
 
-data "azurerm_firewall" "fw" {
-  name                = "fw-${var.tre_id}"
+data "azurerm_firewall_policy" "fw_policy" {
+  name = local.firewall_policy_name
   resource_group_name = local.core_resource_group_name
 }
 
