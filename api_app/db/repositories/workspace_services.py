@@ -3,6 +3,7 @@ from typing import List
 
 from azure.cosmos import CosmosClient
 from pydantic import parse_obj_as
+from models.domain.authentication import User
 from db.repositories.resource_templates import ResourceTemplateRepository
 
 from db.repositories.resources import ResourceRepository, IS_ACTIVE_CLAUSE
@@ -72,7 +73,7 @@ class WorkspaceServiceRepository(ResourceRepository):
 
         return workspace_service
 
-    def patch_workspace_service(self, workspace_service: WorkspaceService, workspace_service_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository) -> WorkspaceService:
+    def patch_workspace_service(self, workspace_service: WorkspaceService, workspace_service_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository, user: User) -> WorkspaceService:
         # get workspace service template
         workspace_service_template = resource_template_repo.get_template_by_name_and_version(workspace_service.templateName, workspace_service.templateVersion, ResourceType.WorkspaceService)
-        return self.patch_resource(workspace_service, workspace_service_patch, workspace_service_template, etag, resource_template_repo)
+        return self.patch_resource(workspace_service, workspace_service_patch, workspace_service_template, etag, resource_template_repo, user)

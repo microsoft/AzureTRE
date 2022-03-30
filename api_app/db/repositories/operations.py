@@ -4,6 +4,7 @@ from typing import List
 
 from azure.cosmos import CosmosClient
 from pydantic import parse_obj_as
+from models.domain.authentication import User
 from core import config
 from db.repositories.base import BaseRepository
 
@@ -19,7 +20,7 @@ class OperationRepository(BaseRepository):
     def operations_query():
         return 'SELECT * FROM c WHERE'
 
-    def create_operation_item(self, resource_id: str, status: Status, action: str, message: str, resource_path: str) -> Operation:
+    def create_operation_item(self, resource_id: str, status: Status, action: str, message: str, resource_path: str, user: User) -> Operation:
         operation_id = str(uuid.uuid4())
 
         timestamp = datetime.utcnow().timestamp()
@@ -32,7 +33,8 @@ class OperationRepository(BaseRepository):
             createdWhen=timestamp,
             updatedWhen=timestamp,
             action=action,
-            message=message
+            message=message,
+            user=user
         )
 
         self.save_item(operation)
