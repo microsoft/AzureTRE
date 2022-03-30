@@ -23,6 +23,10 @@
     "type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock"
   ],
   "remoteUser": "vscode",
+  "remoteEnv": {
+    // this is used for SuperLinter
+    "LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}",
+  },
   // Set *default* container specific settings.json values on container create.
   "settings": {
     "terminal.integrated.defaultProfile.linux": "bash",
@@ -181,7 +185,8 @@
     "editorconfig.editorconfig",
     "github.vscode-pull-request-github",
     "mikestead.dotenv",
-    "humao.rest-client"
+    "humao.rest-client",
+    "timonwong.shellcheck",
   ],
   "forwardPorts": [
     8000

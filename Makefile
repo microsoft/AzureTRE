@@ -221,10 +221,26 @@ terraform-destroy:
 	&& . ./devops/scripts/load_terraform_env.sh ${DIR}/.env \
 	&& cd ${DIR}/terraform/ && ./destroy.sh
 
+# This will validate all files, not only the changed ones as the CI version does.
 lint:
-	$(call target_title, "Linting Python and Terraform") && \
-	flake8 && \
-	cd ./templates && terraform fmt -check -recursive -diff
+	$(call target_title, "Linting")
+	@terraform fmt -check -recursive -diff
+	@echo "You might not see much on the screen for a few minutes..."
+	@# LOG_LEVEL=NOTICE reduces noise but it might also seem like the process is stuck - it's not...
+	@docker run --name superlinter --pull=always --rm \
+		-e RUN_LOCAL=true \
+		-e LOG_LEVEL=NOTICE \
+		-e VALIDATE_MARKDOWN=true \
+		-e VALIDATE_PYTHON_FLAKE8=true \
+		-e VALIDATE_YAML=true \
+		-e VALIDATE_TERRAFORM_TFLINT=true \
+		-e VALIDATE_JAVA=true \
+		-e JAVA_FILE_NAME=checkstyle.xml \
+		-e VALIDATE_BASH=true \
+		-e VALIDATE_BASH_EXEC=true \
+		-e VALIDATE_GITHUB_ACTIONS=true \
+		-v $${LOCAL_WORKSPACE_FOLDER}:/tmp/lint \
+		github/super-linter:slim-v4
 
 bundle-build:
 	$(call target_title, "Building ${DIR} bundle with Porter") \
