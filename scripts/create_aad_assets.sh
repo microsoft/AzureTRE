@@ -30,6 +30,7 @@ fi
 
 # Load the new values back in
 set -a
+# shellcheck disable=SC1091
 . ./templates/core/.env
 
 echo "Please check that the following value is the same as above to check you have copied yoru keys."
