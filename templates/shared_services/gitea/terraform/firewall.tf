@@ -4,9 +4,9 @@ resource "azurerm_firewall_policy_rule_collection_group" "gitea_rule_collection_
   priority           = 502
 
   application_rule_collection {
-    name                = "arc-web_app_subnet_gitea"
-    priority            = 303
-    action              = "Allow"
+    name     = "arc-web_app_subnet_gitea"
+    priority = 303
+    action   = "Allow"
 
     rule {
       name = "gitea-sources"
@@ -19,8 +19,8 @@ resource "azurerm_firewall_policy_rule_collection_group" "gitea_rule_collection_
         type = "Http"
       }
 
-      destination_fqdns     = local.gitea_allowed_fqdns_list
-      source_addresses = data.azurerm_subnet.web_app.address_prefixes
+      destination_fqdns = local.gitea_allowed_fqdns_list
+      source_addresses  = data.azurerm_subnet.web_app.address_prefixes
     }
   }
 }

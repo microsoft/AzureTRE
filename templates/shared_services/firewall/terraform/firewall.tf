@@ -11,7 +11,7 @@ resource "azurerm_public_ip" "fwpip" {
 // Note: No Azure Firewall Manager policy charges will be done for policies that are associated to a single firewall.
 // (see https://azure.microsoft.com/en-gb/pricing/details/firewall-manager/)
 resource "azurerm_firewall_policy" "fw_policy" {
-  name = "fwpolicy-${var.tre_id}"
+  name                = "fwpolicy-${var.tre_id}"
   resource_group_name = local.core_resource_group_name
   location            = data.azurerm_resource_group.rg.location
 }
@@ -22,9 +22,9 @@ resource "azurerm_firewall_policy_rule_collection_group" "rule_collection_group"
   priority           = 500
 
   network_rule_collection {
-    name                = "general"
-    priority            = 200
-    action              = "Allow"
+    name     = "general"
+    priority = 200
+    action   = "Allow"
 
     rule {
       name = "time"
@@ -47,9 +47,9 @@ resource "azurerm_firewall_policy_rule_collection_group" "rule_collection_group"
   }
 
   network_rule_collection {
-    name                = "nrc-resource_processor_subnet"
-    action              = "Allow"
-    priority            = 201
+    name     = "nrc-resource_processor_subnet"
+    action   = "Allow"
+    priority = 201
 
     rule {
       name = "AzureServiceTags"
@@ -74,9 +74,9 @@ resource "azurerm_firewall_policy_rule_collection_group" "rule_collection_group"
   }
 
   network_rule_collection {
-    name                = "nrc-web_app_subnet"
-    priority            = 202
-    action              = "Allow"
+    name     = "nrc-web_app_subnet"
+    priority = 202
+    action   = "Allow"
 
     rule {
       name = "Azure-Services"
@@ -99,9 +99,9 @@ resource "azurerm_firewall_policy_rule_collection_group" "rule_collection_group"
   }
 
   application_rule_collection {
-    name                = "arc-shared_subnet"
-    priority            = 300
-    action              = "Allow"
+    name     = "arc-shared_subnet"
+    priority = 300
+    action   = "Allow"
 
     rule {
       name = "admin-resources"
@@ -137,9 +137,9 @@ resource "azurerm_firewall_policy_rule_collection_group" "rule_collection_group"
   }
 
   application_rule_collection {
-    name                = "arc-resource_processor_subnet"
-    priority            = 301
-    action              = "Allow"
+    name     = "arc-resource_processor_subnet"
+    priority = 301
+    action   = "Allow"
 
     rule {
       name = "package-sources"
@@ -171,9 +171,9 @@ resource "azurerm_firewall_policy_rule_collection_group" "rule_collection_group"
   }
 
   application_rule_collection {
-    name                = "arc-web_app_subnet"
-    priority            = 302
-    action              = "Allow"
+    name     = "arc-web_app_subnet"
+    priority = 302
+    action   = "Allow"
     rule {
       name = "microsoft-graph"
       protocols {

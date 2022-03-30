@@ -31,7 +31,7 @@ data "azurerm_subnet" "web_app" {
 }
 
 data "azurerm_firewall_policy" "fw_policy" {
-  name = local.firewall_policy_name
+  name                = local.firewall_policy_name
   resource_group_name = local.core_resource_group_name
 }
 

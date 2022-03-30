@@ -4,9 +4,9 @@ resource "azurerm_firewall_policy_rule_collection_group" "nexus_rule_collection_
   priority           = 501
 
   application_rule_collection {
-    name                = "arc-web_app_subnet_nexus"
-    priority            = 304
-    action              = "Allow"
+    name     = "arc-web_app_subnet_nexus"
+    priority = 304
+    action   = "Allow"
 
     rule {
       name = "nexus-package-sources"
@@ -19,8 +19,8 @@ resource "azurerm_firewall_policy_rule_collection_group" "nexus_rule_collection_
         type = "Http"
       }
 
-      destination_fqdns     = local.nexus_allowed_fqdns_list
-      source_addresses = data.azurerm_subnet.web_app.address_prefixes
+      destination_fqdns = local.nexus_allowed_fqdns_list
+      source_addresses  = data.azurerm_subnet.web_app.address_prefixes
     }
   }
 }
