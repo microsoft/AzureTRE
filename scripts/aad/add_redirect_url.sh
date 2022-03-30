@@ -66,18 +66,19 @@ if [[ -z ${redirect_url:-} ]]; then
     usage
 fi
 
-token_response=$(curl -X POST -H 'Content-Type: application/x-www-form-urlencoded' \
-  https://login.microsoftonline.com/${auth_tenant_id}/oauth2/v2.0/token \
+token_response=$(curl -X POST \
+  "https://login.microsoftonline.com/${auth_tenant_id}/oauth2/v2.0/token" \
+  -H "Content-Type: application/x-www-form-urlencoded"
   -d "client_id=${workspace_client_id}"   \
   -d "grant_type=client_credentials"   \
   -d "scope=https%3A%2F%2Fgraph.microsoft.com%2F.default"   \
   -d "client_secret=${workspace_client_secret}")
 
-if [ ! -z "${token_response:-}" ]; then
+if [ -n "${token_response:-}" ]; then
   access_token=$(echo ${token_response} | jq -r .access_token)
   if [[ ${access_token} == "null" ]]; then
       echo "Failed to obtain auth token for API:"
-      echo ${token_response}
+      echo "${token_response}"
       exit 2
   fi
 fi
@@ -85,7 +86,7 @@ fi
 web=$(curl -X "GET" "https://graph.microsoft.com/v1.0/applications/${workspace_object_id}" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ${access_token}" \
-  | jq -r --arg redirectUri ${redirect_url} \
+  | jq -r --arg redirectUri "${redirect_url}" \
   ' .web.redirectUris += [$redirectUri] | .web.implicitGrantSettings.enableAccessTokenIssuance = true | .web.implicitGrantSettings.enableIdTokenIssuance = true | {web}')
 
 echo -e "Patching ${web} \nto https://graph.microsoft.com/v1.0/applications/${workspace_object_id}"

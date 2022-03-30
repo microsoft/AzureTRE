@@ -10,7 +10,7 @@ if [ "${LOGGED_IN_TENANT_ID}" != "${AAD_TENANT_ID}" ]; then
   echo "Attempting to sign you onto ${AAD_TENANT_ID} to add an App Registration."
 
   # First we need to login to the AAD tenant (as it is different to the subscription tenant)
-  az login --tenant ${AAD_TENANT_ID} --allow-no-subscriptions --use-device-code
+  az login --tenant "${AAD_TENANT_ID}" --allow-no-subscriptions --use-device-code
   CHANGED_TENANT=1
 fi
 
@@ -38,12 +38,12 @@ echo "Test account client id is : $TEST_ACCOUNT_CLIENT_ID"
 ./scripts/aad-app-reg.sh \
   --name "${TRE_ID} - workspace 1" \
   --workspace --admin-consent \
-  --swaggerui-clientid ${SWAGGER_UI_CLIENT_ID} \
-  --automation-clientid ${TEST_ACCOUNT_CLIENT_ID}
+  --swaggerui-clientid "${SWAGGER_UI_CLIENT_ID}" \
+  --automation-clientid "${TEST_ACCOUNT_CLIENT_ID}"
 
 if [ "${CHANGED_TENANT}" -ne 0 ]; then
   echo "Attempting to sign you back into ${LOGGED_IN_TENANT_ID}."
 
   # Log back into the tenant the user started on.
-  az login --tenant ${LOGGED_IN_TENANT_ID} --allow-no-subscriptions
+  az login --tenant "${LOGGED_IN_TENANT_ID}" --allow-no-subscriptions
 fi
