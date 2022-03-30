@@ -64,22 +64,34 @@ resource "azurerm_key_vault_secret" "api_admin_client_id" {
   name         = "api-admin-client-id"
   value        = var.test_account_client_id
   key_vault_id = azurerm_key_vault.kv.id
+  depends_on = [
+    azurerm_key_vault_access_policy.deployer
+  ]
 }
 
 resource "azurerm_key_vault_secret" "api_admin_client_secret" {
   name         = "api-admin-client-secret"
   value        = var.test_account_client_secret
   key_vault_id = azurerm_key_vault.kv.id
+  depends_on = [
+    azurerm_key_vault_access_policy.deployer
+  ]
 }
 
 resource "azurerm_key_vault_secret" "api_app_id" {
   name         = "api-app-id"
   value        = var.api_client_id
   key_vault_id = azurerm_key_vault.kv.id
+  depends_on = [
+    azurerm_key_vault_access_policy.deployer
+  ]
 }
 
 resource "azurerm_key_vault_secret" "auth_tenant_id" {
   name         = "auth-tenant-id"
   value        = var.aad_tenant_id
   key_vault_id = azurerm_key_vault.kv.id
+  depends_on = [
+    azurerm_key_vault_access_policy.deployer
+  ]
 }
