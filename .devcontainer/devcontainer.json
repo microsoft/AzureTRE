@@ -23,6 +23,9 @@
     "type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock"
   ],
   "remoteUser": "vscode",
+  "containerEnv": {
+    "DOCKER_BUILDKIT": "1",
+  },
   "remoteEnv": {
     // this is used for SuperLinter
     "LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}",

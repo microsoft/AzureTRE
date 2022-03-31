@@ -6,10 +6,6 @@ inputs:
     description: "Use ENV variables rather than a file."
     required: false
     default: "true"
-  DOCKER_BUILDKIT:
-    description: "Use Moby Buildkit."
-    required: false
-    default: "1"
   TF_INPUT:
     description: "Make Terraform fail if missing variables."
     required: false
@@ -158,7 +154,6 @@ runs:
         TF_VAR_api_client_secret: "${{ inputs.TF_VAR_api_client_secret }}"
         TF_VAR_acr_name: ${{ inputs.ACR_NAME }}
         IS_API_SECURED: ${{ inputs.IS_API_SECURED }}
-        DOCKER_BUILDKIT: ${{ inputs.DOCKER_BUILDKIT }}
       run: |
         docker run --rm --mount \
           "type=bind,src=${{ github.workspace }},dst=/workspaces/tre" \
@@ -198,7 +193,7 @@ runs:
           -e TEST_ACCOUNT_CLIENT_ID \
           -e TEST_ACCOUNT_CLIENT_SECRET \
           -e IS_API_SECURED \
-          -e DOCKER_BUILDKIT \
+          -e DOCKER_BUILDKIT=1 \
           -e TF_VAR_keyvault_purge_protection_enabled=${{ inputs.TF_VAR_keyvault_purge_protection_enabled }} \
           -e TF_VAR_stateful_resources_locked=${{ inputs.TF_VAR_stateful_resources_locked }} \
           -e CI_CACHE_ACR_NAME="${{ inputs.CI_CACHE_ACR_NAME }}" \
