@@ -1,0 +1,7 @@
+---
+extends: default
+
+rules:
+  line-length:
+    max: 120  # Keep this updated with the editorconfig file
+    level: warning

@@ -1,6 +1,6 @@
 name: flag_external_pr
 
-on:
+on:  # yamllint disable-line rule:truthy
   pull_request_target:
     types: [opened] # only run on new PRs
     # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#issue_comment

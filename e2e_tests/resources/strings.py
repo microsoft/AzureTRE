@@ -1,7 +1,6 @@
 PONG = "pong"
 
 API_HEALTH = "/api/health"
-API_STATUS = "/api/status"
 API_WORKSPACE_TEMPLATES = "/api/workspace-templates"
 API_WORKSPACES = "/api/workspaces"
 API_WORKSPACE_SERVICE_TEMPLATES = "/api/workspace-service-templates"
