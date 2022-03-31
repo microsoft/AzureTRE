@@ -89,6 +89,79 @@ resource "azurerm_monitor_diagnostic_setting" "firewall" {
   }
 }
 
+resource "azurerm_firewall_application_rule_collection" "resource_processor_subnet" {
+  name                = "arc-resource_processor_subnet"
+  azure_firewall_name = azurerm_firewall.fw.name
+  resource_group_name = azurerm_firewall.fw.resource_group_name
+  priority            = 101
+  action              = "Allow"
+
+
+  rule {
+    name = "package-sources"
+    protocol {
+      port = "443"
+      type = "Https"
+    }
+    protocol {
+      port = "80"
+      type = "Http"
+    }
+
+    target_fqdns = [
+      "packages.microsoft.com",
+      "keyserver.ubuntu.com",
+      "api.snapcraft.io",
+      "azure.archive.ubuntu.com",
+      "security.ubuntu.com",
+      "entropy.ubuntu.com",
+      "download.docker.com",
+      "registry-1.docker.io",
+      "auth.docker.io",
+      "registry.terraform.io",
+      "releases.hashicorp.com"
+    ]
+    source_addresses = data.azurerm_subnet.resource_processor.address_prefixes
+  }
+
+  depends_on = [
+    azurerm_firewall_network_rule_collection.resource_processor_subnet
+  ]
+}
+
+resource "azurerm_firewall_network_rule_collection" "resource_processor_subnet" {
+  name                = "nrc-resource_processor_subnet"
+  azure_firewall_name = azurerm_firewall.fw.name
+  resource_group_name = azurerm_firewall.fw.resource_group_name
+  priority            = 101
+  action              = "Allow"
+
+  rule {
+    name = "AzureServiceTags"
+
+    protocols = [
+      "TCP"
+    ]
+
+    destination_addresses = [
+      "AzureActiveDirectory",
+      "AzureResourceManager",
+      "AzureContainerRegistry",
+      "Storage",
+      "AzureKeyVault"
+    ]
+
+    destination_ports = [
+      "443"
+    ]
+    source_addresses = data.azurerm_subnet.resource_processor.address_prefixes
+  }
+
+  depends_on = [
+    azurerm_firewall_network_rule_collection.general
+  ]
+}
+
 resource "azurerm_firewall_application_rule_collection" "shared_subnet" {
   name                = "arc-shared_subnet"
   azure_firewall_name = azurerm_firewall.fw.name
@@ -127,45 +200,9 @@ resource "azurerm_firewall_application_rule_collection" "shared_subnet" {
 
     source_addresses = data.azurerm_subnet.shared.address_prefixes
   }
-}
-
-resource "azurerm_firewall_application_rule_collection" "resource_processor_subnet" {
-  name                = "arc-resource_processor_subnet"
-  azure_firewall_name = azurerm_firewall.fw.name
-  resource_group_name = azurerm_firewall.fw.resource_group_name
-  priority            = 101
-  action              = "Allow"
-
-
-  rule {
-    name = "package-sources"
-    protocol {
-      port = "443"
-      type = "Https"
-    }
-    protocol {
-      port = "80"
-      type = "Http"
-    }
-
-    target_fqdns = [
-      "packages.microsoft.com",
-      "keyserver.ubuntu.com",
-      "api.snapcraft.io",
-      "azure.archive.ubuntu.com",
-      "security.ubuntu.com",
-      "entropy.ubuntu.com",
-      "download.docker.com",
-      "registry-1.docker.io",
-      "auth.docker.io",
-      "registry.terraform.io",
-      "releases.hashicorp.com"
-    ]
-    source_addresses = data.azurerm_subnet.resource_processor.address_prefixes
-  }
 
   depends_on = [
-    azurerm_firewall_application_rule_collection.shared_subnet
+    azurerm_firewall_network_rule_collection.resource_processor_subnet
   ]
 }
 
@@ -196,40 +233,7 @@ resource "azurerm_firewall_network_rule_collection" "general" {
   }
 
   depends_on = [
-    azurerm_firewall_application_rule_collection.resource_processor_subnet
-  ]
-}
-
-resource "azurerm_firewall_network_rule_collection" "resource_processor_subnet" {
-  name                = "nrc-resource_processor_subnet"
-  azure_firewall_name = azurerm_firewall.fw.name
-  resource_group_name = azurerm_firewall.fw.resource_group_name
-  priority            = 101
-  action              = "Allow"
-
-  rule {
-    name = "AzureServiceTags"
-
-    protocols = [
-      "TCP"
-    ]
-
-    destination_addresses = [
-      "AzureActiveDirectory",
-      "AzureResourceManager",
-      "AzureContainerRegistry",
-      "Storage",
-      "AzureKeyVault"
-    ]
-
-    destination_ports = [
-      "443"
-    ]
-    source_addresses = data.azurerm_subnet.resource_processor.address_prefixes
-  }
-
-  depends_on = [
-    azurerm_firewall_network_rule_collection.general
+    azurerm_firewall_application_rule_collection.shared_subnet
   ]
 }
 
@@ -260,7 +264,7 @@ resource "azurerm_firewall_network_rule_collection" "web_app_subnet" {
   }
 
   depends_on = [
-    azurerm_firewall_network_rule_collection.resource_processor_subnet
+    azurerm_firewall_network_rule_collection.general
   ]
 }
 
