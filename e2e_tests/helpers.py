@@ -50,7 +50,7 @@ async def get_service_template(template_name, token, verify):
 
 
 async def post_resource(payload, endpoint, resource_type, token, admin_token, verify, method="POST", wait=True):
-    async with AsyncClient(verify=verify) as client:
+    async with AsyncClient(verify=verify, timeout=30.0) as client:
 
         if resource_type == 'workspace':
             auth_headers = get_auth_header(admin_token)
@@ -84,7 +84,7 @@ async def post_resource(payload, endpoint, resource_type, token, admin_token, ve
 
 
 async def disable_and_delete_resource(endpoint, resource_type, token, admin_token, verify):
-    async with AsyncClient(verify=verify) as client:
+    async with AsyncClient(verify=verify, timeout=30.0) as client:
 
         if resource_type == 'workspace':
             auth_headers = get_auth_header(admin_token)

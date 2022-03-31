@@ -14,7 +14,7 @@ from shared.logging import disable_unwanted_loggers, initialize_logging, get_mes
 from resources import strings, statuses  # pylint: disable=import-error # noqa
 from contextlib import asynccontextmanager
 from azure.servicebus import ServiceBusMessage, NEXT_AVAILABLE_SESSION
-from azure.servicebus.exceptions import OperationTimeoutError
+from azure.servicebus.exceptions import OperationTimeoutError, ServiceBusConnectionError
 from azure.servicebus.aio import ServiceBusClient, AutoLockRenewer
 from azure.identity.aio import DefaultAzureCredential
 
@@ -50,9 +50,10 @@ async def receive_message(service_bus_client):
     q_name = config["resource_request_queue"]
 
     while True:
-        logger_adapter.info('Checking for new messages...')
         try:
-            async with service_bus_client.get_queue_receiver(queue_name=q_name, max_wait_time=1, session_id=NEXT_AVAILABLE_SESSION) as receiver:
+            logger_adapter.info("Looking for new session...")
+            async with service_bus_client.get_queue_receiver(queue_name=q_name, session_id=NEXT_AVAILABLE_SESSION) as receiver:
+                logger_adapter.info("Got a session containing messages")
                 async with AutoLockRenewer() as renewer:
                     # allow a message to be auto lock renewed for up to an hour
                     renewer.register(receiver, receiver.session, max_lock_renewal_duration=3600)
@@ -79,7 +80,17 @@ async def receive_message(service_bus_client):
 
         except OperationTimeoutError:
             # Timeout occurred whilst connecting to a session - this is expected and indicates no non-empty sessions are available
-            logger_adapter.info("Sleeping 30s...")
+            logger_adapter.info("No sessions for this process. Sleeping 30s then will look again...")
+
+        except ServiceBusConnectionError:
+            # Occasionally there will be a transient / network-level error in connecting to SB.
+            logger_adapter.info("Unknown Service Bus connection error. Sleeping and will retry...")
+
+        except Exception:
+            # Catch all other exceptions, log them via .exception to get the stack trace, sleep, and reconnect
+            logger_adapter.exception("Unknown exception. Sleeping and will retry...")
+
+        finally:
             await asyncio.sleep(30)
 
 
