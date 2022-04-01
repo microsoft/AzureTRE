@@ -51,7 +51,7 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(admin_toke
     number_vms = 2
     number_updates = 5
 
-    # To avoid creating + deleting a workspace + service in this test, set the vars for existing ones in private.env
+    # To avoid creating + deleting a workspace + service in this test, set the vars for existing ones in ./templates/core/.env
     # PERF_TEST_WORKSPACE_ID | PERF_TEST_WORKSPACE_SERVICE_ID
     if config.PERF_TEST_WORKSPACE_ID == "":
         # create the workspace to use
