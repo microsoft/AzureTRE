@@ -190,7 +190,7 @@ else
     fi
   fi
 
-  # TODO: extract resource deploying into a separate script (https://github.com/microsoft/AzureTRE/issues/1611)
+  # extract resource deploying into a separate script (https://github.com/microsoft/AzureTRE/issues/1611)
   if [[ "${deploy_shared_service}" = "true" ]]; then
     if [ "${deploy_shared_service}" = "true" ] && [ ${bundle_type} != "shared_service" ]; then
         echo -e "You can only deploy a shared_service bundle via this script\n"
