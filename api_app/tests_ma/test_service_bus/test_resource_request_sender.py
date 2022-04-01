@@ -4,6 +4,7 @@ import uuid
 
 from azure.servicebus import ServiceBusMessage
 from mock import AsyncMock, patch
+from tests_ma.test_api.conftest import create_test_user
 from tests_ma.test_service_bus.test_deployment_status_update import create_sample_operation
 
 from models.domain.resource import Resource, ResourceType
@@ -34,7 +35,7 @@ async def test_resource_request_message_generated_correctly(service_bus_client_m
 
     operations_repo_mock.create_operation_item.return_value = create_sample_operation(resource.id)
 
-    await send_resource_request_message(resource, operations_repo_mock, request_action)
+    await send_resource_request_message(resource, operations_repo_mock, create_test_user(), request_action)
 
     args = service_bus_client_mock().get_queue_sender().send_messages.call_args.args
     assert len(args) == 1

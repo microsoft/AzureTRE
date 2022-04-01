@@ -110,16 +110,6 @@ if [[ -z ${bundle_type:-} ]]; then
     usage
 fi
 
-if [ ${bundle_type} == "user_resource" ] && [ -z ${workspace_service_name:-} ]; then
-    echo -e "You must supply a workspace_service_name name if you are registering a user_resource bundle\n"
-    usage
-fi
-
-if [ "${deploy_shared_service}" = "true" ] && [ ${bundle_type} != "shared_service" ]; then
-    echo -e "You can only deploy a shared_service bundle via this script\n"
-    usage
-fi
-
 explain_json=$(porter explain --reference ${acr_name}.azurecr.io/$(yq eval '.name' porter.yaml):v$(yq eval '.version' porter.yaml) -o json)
 
 payload=$(echo ${explain_json} | jq --argfile json_schema template_schema.json --arg current "${current}" --arg bundle_type "${bundle_type}" '. + {"json_schema": $json_schema, "resourceType": $bundle_type, "current": $current}')
@@ -162,6 +152,12 @@ then
   echo "API access token isn't available - automatic bundle registration not possible. Use the script output to self-register. See documentation for more details."
   echo $(echo ${payload} | jq --color-output .)
 else
+  if [ ${bundle_type} == "user_resource" ] && [ -z ${workspace_service_name:-} ]; then
+    echo -e "You must supply a workspace service_name name if you would like to automatically register the user_resource bundle\n"
+    echo $(echo ${payload} | jq --color-output .)
+    usage
+  fi
+
   if [[ -n ${insecure+x} ]]; then
       options=" -k"
   fi
@@ -196,6 +192,11 @@ else
 
   # TODO: extract resource deploying into a separate script (https://github.com/microsoft/AzureTRE/issues/1611)
   if [[ "${deploy_shared_service}" = "true" ]]; then
+    if [ "${deploy_shared_service}" = "true" ] && [ ${bundle_type} != "shared_service" ]; then
+        echo -e "You can only deploy a shared_service bundle via this script\n"
+        usage
+    fi
+
     template_name=$(yq eval '.name' porter.yaml)
     echo "Deploying shared service ${template_name}"
 
