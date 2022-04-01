@@ -18,7 +18,7 @@ build-and-push-gitea: build-gitea-image push-gitea-image
 build-and-push-guacamole: build-guacamole-image push-guacamole-image
 build-and-push-mlflow: build-mlflow-image push-mlflow-image
 tre-deploy: deploy-core deploy-shared-services show-core-output
-deploy-shared-services: firewall-install nexus-install gitea-install
+deploy-shared-services: firewall-install gitea-install nexus-install
 
 # to move your environment from the single 'core' deployment (which includes the firewall)
 # toward the shared services model, where it is split out - run the following make target before a tre-deploy
