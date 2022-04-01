@@ -159,7 +159,7 @@ else
   fi
 
   if [[ -n ${insecure+x} ]]; then
-      options=" -k"
+      options="-k"
   fi
 
   if [[ -z ${tre_url} ]]; then
@@ -182,7 +182,7 @@ else
   if [[ "${verify}" = "true" ]]; then
     # Check that the template got registered
     template_name=$(yq eval '.name' porter.yaml)
-    status_code=$(curl -X "GET" "${tre_url}/${tre_get_path}/${template_name}" -H "accept: application/json" -H "Authorization: Bearer ${access_token}" "${options}" -s -w "%{http_code}" -o /dev/null)
+    status_code=$(curl -X "GET" "${tre_url}/${tre_get_path}/${template_name}" -H "accept: application/json" -H "Authorization: Bearer ""${access_token}""" "${options}" -s -w "%{http_code}" -o /dev/null)
 
     if [[ ${status_code} != 200 ]]; then
       echo "::warning ::Template API check for ${bundle_type} ${template_name} returned http status: ${status_code}"
@@ -201,7 +201,7 @@ else
     echo "Deploying shared service ${template_name}"
 
     payload="{ \"templateName\": \"""${template_name}""\", \"properties\": { \"display_name\": \"Shared service ""${template_name}""\", \"description\": \"Automatically deployed ""${template_name}""\" } }"
-    deploy_result=$(curl -X "POST" "${tre_url}/api/shared-services" -H "accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer ${access_token}" -d "${payload}" "${options}" -s)
+    deploy_result=$(curl -X "POST" "${tre_url}/api/shared-services" -H "accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer ""${access_token}""" -d "${payload}" "${options}" -s)
 
     shared_service_id=$(echo "${deploy_result}" | jq -r .operation.resourceId)
     operation_id=$(echo "${deploy_result}" | jq -r .operation.id)
@@ -211,7 +211,7 @@ else
       # Poll for the result of operation
       echo "Waiting for deployment of ""${template_name}"" to finish... (current status: ""${status}"")"
       sleep 5
-      get_operation_result=$(curl -X "GET" "${tre_url}"/api/shared-services/"${shared_service_id}"/operations/"${operation_id}"  -H "accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer ""${access_token}"" ""${options}""" -s)
+      get_operation_result=$(curl -X "GET" "${tre_url}"/api/shared-services/"${shared_service_id}"/operations/"${operation_id}"  -H "accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer ""${access_token}""" "${options}" -s)
       status=$(echo "${get_operation_result}" | jq -r .operation.status)
     done
 
