@@ -11,6 +11,36 @@ variable "mgmt_resource_group_name" {
 variable "location" {
   type        = string
   description = "Location used for all resources"
+
+  validation {
+    condition     = contains(["brazilsouth",
+                              "canadacentral",
+                              "centralusstage",
+                              "eastus",
+                              "eastus2",
+                              "southcentralus",
+                              "westus2",
+                              "westus3",
+                              "usgovvirginia",
+                              "francecentral",
+                              "germanywestcentral",
+                              "northeurope",
+                              "norwayeast",
+                              "uksouth",
+                              "westeurope",
+                              "swedencentral",
+                              "switzerlandnorth",
+                              "southafricanorth",
+                              "australiaeast",
+                              "centralindia",
+                              "japaneast",
+                              "koreacentral",
+                              "southeastasia",
+                              "eastasia",
+                              "chinanorth3"],
+                              var.location)
+    error_message = "Location should be within an availability zones please select one of the following: https://docs.microsoft.com/en-us/azure/availability-zones/az-overview."
+  }
 }
 
 variable "acr_sku" {
