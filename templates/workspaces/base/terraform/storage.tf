@@ -31,17 +31,17 @@ resource "azurerm_private_endpoint" "stgfilepe" {
   name                = "stgfilepe-${local.workspace_resource_name_suffix}"
   location            = azurerm_resource_group.ws.location
   resource_group_name = azurerm_resource_group.ws.name
-  subnet_id           = azurerm_subnet.services.id
+  subnet_id           = module.network.services_subnet_id
 
   depends_on = [
-    azurerm_subnet.services
+    module.network,
   ]
 
   lifecycle { ignore_changes = [tags] }
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group"
-    private_dns_zone_ids = [data.azurerm_private_dns_zone.filecore.id]
+    private_dns_zone_ids = [module.network.filecore_zone_id]
   }
 
   private_service_connection {
@@ -56,17 +56,17 @@ resource "azurerm_private_endpoint" "stgblobpe" {
   name                = "stgblobpe-${local.workspace_resource_name_suffix}"
   location            = azurerm_resource_group.ws.location
   resource_group_name = azurerm_resource_group.ws.name
-  subnet_id           = azurerm_subnet.services.id
+  subnet_id           = module.network.services_subnet_id
 
   depends_on = [
-    azurerm_subnet.services
+    module.network,
   ]
 
   lifecycle { ignore_changes = [tags] }
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group"
-    private_dns_zone_ids = [data.azurerm_private_dns_zone.blobcore.id]
+    private_dns_zone_ids = [module.network.blobcore_zone_id]
   }
 
   private_service_connection {

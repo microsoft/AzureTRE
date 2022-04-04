@@ -2,8 +2,8 @@ variable "tre_id" {
   type        = string
   description = "Unique identifier for the TRE, such as projectx-dev-1234"
   validation {
-    condition     = length(var.tre_id) < 12
-    error_message = "The tre_id value must be < 12 chars."
+    condition     = length(var.tre_id) < 12 && lower(var.tre_id) == var.tre_id
+    error_message = "The tre_id value must be lowercase and < 12 chars."
   }
 }
 

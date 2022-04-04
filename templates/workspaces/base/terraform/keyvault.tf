@@ -18,13 +18,17 @@ resource "azurerm_private_endpoint" "kvpe" {
   name                = "kvpe-${local.workspace_resource_name_suffix}"
   location            = azurerm_resource_group.ws.location
   resource_group_name = azurerm_resource_group.ws.name
-  subnet_id           = azurerm_subnet.services.id
+  subnet_id           = module.network.services_subnet_id
+
+  depends_on = [
+    module.network,
+  ]
 
   lifecycle { ignore_changes = [tags] }
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group"
-    private_dns_zone_ids = [data.azurerm_private_dns_zone.vaultcore.id]
+    private_dns_zone_ids = [module.network.vaultcore_zone_id]
   }
 
   private_service_connection {
