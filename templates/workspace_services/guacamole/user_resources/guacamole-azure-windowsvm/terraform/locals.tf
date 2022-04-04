@@ -11,11 +11,10 @@ locals {
   storage_name                   = lower(replace("stg${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
   nexus_proxy_url                = "https://nexus-${var.tre_id}.azurewebsites.net"
   vm_size = {
-    "1 CPU | 3.5GB RAM" = { value = "Standard_DS1_v2" },
-    "2 CPU | 7GB RAM"   = { value = "Standard_DS2_v2" },
-    "4 CPU | 14GB RAM"  = { value = "Standard_DS3_v2" },
-    "8 CPU | 28GB RAM"  = { value = "Standard_DS4_v2" },
-    "16 CPU | 56GB RAM" = { value = "Standard_DS5_v2" }
+    "2 CPU | 8GB RAM"   = { value = "Standard_D2s_v5" },
+    "4 CPU | 16GB RAM"  = { value = "Standard_D4s_v5" },
+    "8 CPU | 32GB RAM"  = { value = "Standard_D8s_v5" },
+    "16 CPU | 64GB RAM" = { value = "Standard_D16s_v5" }
   }
   image_ref = {
     "Windows 10" = {
