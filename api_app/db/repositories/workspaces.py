@@ -3,6 +3,7 @@ from typing import List
 
 from azure.cosmos import CosmosClient
 from pydantic import parse_obj_as
+from models.domain.authentication import User
 
 from core import config
 from db.errors import EntityDoesNotExist, InvalidInput, ResourceIsNotDeployed
@@ -106,10 +107,10 @@ class WorkspaceRepository(ResourceRepository):
         new_address_space = generate_new_cidr(networks, cidr_netmask)
         return new_address_space
 
-    def patch_workspace(self, workspace: Workspace, workspace_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository) -> Workspace:
+    def patch_workspace(self, workspace: Workspace, workspace_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository, user: User) -> Workspace:
         # get the workspace template
         workspace_template = resource_template_repo.get_template_by_name_and_version(workspace.templateName, workspace.templateVersion, ResourceType.Workspace)
-        return self.patch_resource(workspace, workspace_patch, workspace_template, etag, resource_template_repo)
+        return self.patch_resource(workspace, workspace_patch, workspace_template, etag, resource_template_repo, user)
 
     def get_workspace_spec_params(self, full_workspace_id: str):
         params = self.get_resource_base_spec_params()

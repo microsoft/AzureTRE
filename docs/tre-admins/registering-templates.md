@@ -4,14 +4,9 @@ To enable users to deploy Workspaces, Workspace Services or User Resources, we n
 
 ## Porter Bundles
 
-Templates are encapsulated in [Porter](https://porter.sh) bundles. Porter bundles can either be registered interactively using the Swagger UI or automatically using the `/devops/scripts/publish_register_bundle.sh` script (useful in CI/CD scenarios).
+Templates are encapsulated in [Porter](https://porter.sh) bundles. Porter bundles can either be registered interactively using the Swagger UI or automatically using the `/devops/scripts/register_bundle_with_api.sh` script (useful in CI/CD scenarios).
 
-This script can also be used to generate the payload required by the API without actually calling the API.
-
-It carries out the following actions:
-
-1. Publishes the bundle to the Azure Container Registry specified.
-1. Extracts the parameters from the bundle using `porter explain`.
+This script can also be used to retrieve the payload required by the API without actually calling the API by using `porter explain`.
 
 ### Registration using Swagger UI
 
@@ -24,7 +19,7 @@ It carries out the following actions:
 1. Use the utility script to generate the payload. The script needs to be executed from within the bundle directory, for example `/templates/workspaces/base/`
 
    ```cmd
-   ../../../devops/scripts/publish_register_bundle.sh -r <acr_name> -i -t workspace
+   ../../../devops/scripts/register_bundle_with_api.sh -r <acr_name> -i -t workspace
    ```
 
    Copy the resulting JSON payload.
@@ -45,15 +40,17 @@ To use the script to automatically register the template, you must create a user
 The script needs to be executed from within the bundle directory, for example `/templates/workspaces/base/`
 
 ```cmd
-Usage: ../../../devops/scripts/publish_register_bundle.sh [-u --tre_url]  [-c --current] [-i --insecure]
+Usage: ../../../devops/scripts/register_bundle_with_api.sh [-u --tre_url]  [-c --current] [-i --insecure]
 
 Options:
-   -r, --acr-name        Azure Container Registry Name
-   -t, --bundle-type     Bundle type, workspace
-   -c, --current:        Make this the currently deployed version of this template
-   -i, --insecure:       Bypass SSL certificate checks
-   -u, --tre_url:        URL for the TRE (required for automatic registration)
-   -a, --access-token    Azure access token to automatically post to the API (required for automatic registration)
+  -r, --acr-name                Azure Container Registry Name
+  -t, --bundle-type             Bundle type, workspace or workspace_service
+  -w, --workspace-service-name  The template name of the user resource
+  -c, --current                 Make this the currently deployed version of this template
+  -i, --insecure                Bypass SSL certificate checks
+  -u, --tre_url                 URL for the TRE (required for automatic registration)
+  -a, --access-token            Azure access token to automatically post to the API (required for automatic registration)
+  -v, --verify                  Verify registration with the API
 ```
 
 In addition to generating the payload, the script posts the payload to the `/api/workspace-templates` endpoint. Once registered the template can be retrieved by a `GET` operation on `/api/workspace-templates`.
