@@ -151,6 +151,6 @@ data "template_file" "nexus_config" {
     msi_id = azurerm_user_assigned_identity.nexus_msi.id
     vault_name = data.azurerm_key_vault.kv.name
     ssl_cert_name = data.azurerm_key_vault_certificate.nexus_cert.name
-    ssl_cert_password = data.azurerm_key_vault_secret.nexus_cert_password.value
+    ssl_cert_password_name = data.azurerm_key_vault_secret.nexus_cert_password.name
   }
 }
