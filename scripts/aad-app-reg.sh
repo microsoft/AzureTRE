@@ -204,7 +204,7 @@ function get_existing_app_by_id() {
     return 1
 }
 
-existingApiApp=$(get_existing_app "${appName} API")
+declare existingApiApp=$(get_existing_app "${appName} API")
 
 if [[ -n ${existingApiApp} ]]; then
     apiAppObjectId=$(echo "${existingApiApp}" | jq -r '.objectId')
@@ -606,7 +606,7 @@ JSON
 )
 
   # Is the Swagger UI app already registered?
-  existingSwaggerUIApp=$(get_existing_app "${appName} Swagger UI")
+  declare existingSwaggerUIApp=$(get_existing_app "${appName} Swagger UI")
 
   if [[ -n ${existingSwaggerUIApp} ]]; then
       swaggerUIAppObjectId=$(echo "${existingSwaggerUIApp}" | jq -r '.objectId')
@@ -668,7 +668,7 @@ JSON
 
 if [[ -n ${automationAppId} ]]; then
     echo "Searching for existing Automation application (${automationAppId})."
-    existingAutomationApp=$(get_existing_app_by_id "${automationAppId}")
+    declare existingAutomationApp=$(get_existing_app_by_id "${automationAppId}")
 
     automationAppObjectId=$(echo "${existingAutomationApp}" | jq -r .objectId)
     automationAppName=$(echo "${existingAutomationApp}" | jq -r .displayName)
@@ -732,7 +732,7 @@ if [[ $createAutomationAccount -ne 0 ]]; then
     # Create an App Registration to allow automation to authenticate to the API
     # E.g. to register bundles
 
-    existingAutomationApp=$(get_existing_app "${appName} Automation Admin App")
+    declare existingAutomationApp=$(get_existing_app "${appName} Automation Admin App")
 
     if [[ -n ${existingAutomationApp} ]]; then
         echo "Automation app exists - updating..."
@@ -792,7 +792,6 @@ if [[ $createAutomationAccount -ne 0 ]]; then
       echo "Granting admin consent for ${appName} Automation Admin App (ClientID ${automationAppId})"
       "${DIR}"/aad/wait_for_new_app_registration.sh "${automationAppId}"
       adminConsentResponse=$(az ad app permission admin-consent --id "${automationAppId}")
-      echo "${adminConsentResponse}"
       if [ -z "${adminConsentResponse}" ]; then
           echo "Admin consent failed, trying once more: ${adminConsentResponse}"
           az ad app permission admin-consent --id "${automationAppId}"
