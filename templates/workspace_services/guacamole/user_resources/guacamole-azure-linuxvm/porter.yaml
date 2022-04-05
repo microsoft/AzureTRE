@@ -30,9 +30,6 @@ parameters:
     type: string
     description: "An Id for this installation"
     env: id
-  - name: location
-    type: string
-    description: "The location the TRE is deployed in"
   - name: tfstate_resource_group_name
     type: string
     description: "Resource group containing the Terraform state storage account"
@@ -91,7 +88,6 @@ install:
       vars:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
-        location: "{{ bundle.parameters.location }}"
         parent_service_id: "{{ bundle.parameters.parent_service_id }}"
         arm_client_id: "{{ bundle.credentials.azure_client_id }}"
         arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"

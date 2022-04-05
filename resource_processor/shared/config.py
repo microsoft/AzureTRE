@@ -11,7 +11,6 @@ def get_config(logger_adapter) -> dict:
     config["deployment_status_queue"] = os.environ["SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE"]
     config["resource_request_queue"] = os.environ["SERVICE_BUS_RESOURCE_REQUEST_QUEUE"]
     config["service_bus_namespace"] = os.environ["SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE"]
-    config["location"] = os.environ["LOCATION"]
     config["vmss_msi_id"] = os.environ.get("VMSS_MSI_ID", None)
     config["number_processes"] = os.environ.get("NUMBER_PROCESSES", "1")
 
