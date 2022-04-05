@@ -13,7 +13,8 @@ from resources.httpserver import start_server
 from shared.logging import disable_unwanted_loggers, initialize_logging, get_message_id_logger, shell_output_logger  # pylint: disable=import-error # noqa
 from resources import strings, statuses  # pylint: disable=import-error # noqa
 from contextlib import asynccontextmanager
-from azure.servicebus import ServiceBusMessage
+from azure.servicebus import ServiceBusMessage, NEXT_AVAILABLE_SESSION
+from azure.servicebus.exceptions import OperationTimeoutError, ServiceBusConnectionError
 from azure.servicebus.aio import ServiceBusClient, AutoLockRenewer
 from azure.identity.aio import DefaultAzureCredential
 
@@ -42,35 +43,55 @@ async def default_credentials(msi_id):
 
 async def receive_message(service_bus_client):
     """
-    This method is an async generator which receives messages from service bus
-    and yields those messages. If the yielded function return True the message is
-    marked complete.
+    This method is run per process. Each process will connect to service bus and try to establish a session.
+    If messages are there, the process will continue to receive all the messages associated with that session.
+    If no messages are there, the session connection will time out, sleep, and retry.
     """
-    async with service_bus_client:
-        q_name = config["resource_request_queue"]
-        renewer = AutoLockRenewer(max_lock_renewal_duration=1800)
-        receiver = service_bus_client.get_queue_receiver(queue_name=q_name, auto_lock_renewer=renewer)
+    q_name = config["resource_request_queue"]
 
-        async with receiver:
-            received_msgs = await receiver.receive_messages(max_message_count=1, max_wait_time=5)
+    while True:
+        try:
+            logger_adapter.info("Looking for new session...")
+            async with service_bus_client.get_queue_receiver(queue_name=q_name, session_id=NEXT_AVAILABLE_SESSION) as receiver:
+                logger_adapter.info("Got a session containing messages")
+                async with AutoLockRenewer() as renewer:
+                    # allow a message to be auto lock renewed for up to an hour
+                    renewer.register(receiver, receiver.session, max_lock_renewal_duration=3600)
 
-            for msg in received_msgs:
-                result = True
-                message = ""
+                    async for msg in receiver:
+                        result = True
+                        message = ""
 
-                try:
-                    message = json.loads(str(msg))
-                    result = (yield message)
-                except (json.JSONDecodeError) as e:
-                    logging.error(f"Received bad service bus resource request message: {e}")
+                        try:
+                            message = json.loads(str(msg))
+                            logger_adapter.info(f"Message received for resource_id={message['id']}, operation_id={message['operationId']}")
+                            message_logger_adapter = get_message_id_logger(message['operationId'])  # correlate messages per operation
+                            result = await invoke_porter_action(message, service_bus_client, message_logger_adapter)
+                        except (json.JSONDecodeError) as e:
+                            logging.error(f"Received bad service bus resource request message: {e}")
 
-                if result:
-                    logging.info(f"Resource request for {message} is complete")
-                else:
-                    logging.error('Message processing failed!')
+                        if result:
+                            logging.info(f"Resource request for {message} is complete")
+                        else:
+                            logging.error('Message processing failed!')
 
-                logger_adapter.info(f"Message with id = {message['id']} processed as {result} and marked complete.")
-                await receiver.complete_message(msg)
+                        logger_adapter.info(f"Message with id = {message['id']} processed as {result} and marked complete.")
+                        await receiver.complete_message(msg)
+
+        except OperationTimeoutError:
+            # Timeout occurred whilst connecting to a session - this is expected and indicates no non-empty sessions are available
+            logger_adapter.info("No sessions for this process. Sleeping 30s then will look again...")
+
+        except ServiceBusConnectionError:
+            # Occasionally there will be a transient / network-level error in connecting to SB.
+            logger_adapter.info("Unknown Service Bus connection error. Sleeping and will retry...")
+
+        except Exception:
+            # Catch all other exceptions, log them via .exception to get the stack trace, sleep, and reconnect
+            logger_adapter.exception("Unknown exception. Sleeping and will retry...")
+
+        finally:
+            await asyncio.sleep(30)
 
 
 async def run_porter(command):
@@ -181,31 +202,14 @@ async def get_porter_outputs(msg_body, message_logger_adapter):
         return True, outputs_json
 
 
-async def runner(process_num):
+async def runner():
     async with default_credentials(config["vmss_msi_id"]) as credential:
         service_bus_client = ServiceBusClient(config["service_bus_namespace"], credential)
-        logger_adapter.info("Starting message receiving loop...")
-
-        while True:
-            logger_adapter.info(f'Process {process_num}: Checking for new messages...')
-            receive_message_gen = receive_message(service_bus_client)
-
-            try:
-                async for message in receive_message_gen:
-                    logger_adapter.info(f"Process {process_num}: Message received with id={message['id']}")
-                    message_logger_adapter = get_message_id_logger(message['id'])  # logger includes message id in every entry.
-                    result = await invoke_porter_action(message, service_bus_client, message_logger_adapter)
-                    await receive_message_gen.asend(result)
-
-            except StopAsyncIteration:  # the async generator when finished signals end with this exception.
-                pass
-
-            logger_adapter.info(f'Process {process_num}: All messages processed. Sleeping...')
-            await asyncio.sleep(30)
+        await receive_message(service_bus_client)
 
 
-def start_runner_process(process_num):
-    asyncio.ensure_future(runner(process_num))
+def start_runner_process():
+    asyncio.ensure_future(runner())
     event_loop = asyncio.get_event_loop()
     event_loop.run_forever()
     logger_adapter.info("Started resource processor")
@@ -219,5 +223,5 @@ if __name__ == "__main__":
     logger_adapter.info(f'Starting {str(config["number_processes_int"])} processes...')
     for i in range(config["number_processes_int"]):
         logger_adapter.info(f'Starting process {str(i)}')
-        process = Process(target=start_runner_process, args=(str(i)))
+        process = Process(target=start_runner_process)
         process.start()
