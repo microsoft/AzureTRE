@@ -62,9 +62,9 @@ if [ -z "$NEXUS_PASS" ]; then
     export NEXUS_PASS=$NEW_PASSWORD
 fi
 
-# Create proxy for each .json file 
-for filename in ./scripts/nexus_config/*.json; do  
-    # Check if apt proxy    
+# Create proxy for each .json file
+for filename in ./templates/shared_services/sonatype-nexus/scripts/nexus_config/*.json; do
+    # Check if apt proxy
     base_type=$( jq .baseType $filename | sed 's/"//g')
     repo_type=$( jq .repoType $filename | sed 's/"//g')
     repo_name=$(jq .name $filename | sed 's/"//g')
