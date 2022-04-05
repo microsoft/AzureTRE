@@ -18,6 +18,20 @@ make auth
 ```
 Follow the instructions and prompts in the script. It will ask you to confirm at various stages, so don't go and make a coffee! This will create the 4 parts of authentication outlined below, and if succesful you will not need to do anything apart from copy some values into `/templates/core/.env`. The details below are for your understanding.
 
+### Using a separate Azure Active Directory tenant
+
+!!! caution
+    This section is only relevant it you are setting up a separate Azure Active Directory tenant for use.
+    This is only recommended for development environments when you don't have the required permissions to create the necessary Azure Active Directory registrations.
+    Using a separate Azure Active Directory tenant will prevent you from using certain Azure Active Directory integrated services.
+    For production deployments, work with your Azure Active Directory administrator to perform the required registration
+
+1. Create an Azure Active Directory tenant
+    To create a new Azure Active Directory tenant, [follow the steps here](https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-create-new-tenant)
+
+1. Follow the steps outlined above. `make auth` should logon to the correct tenant. Make sure you logon back to the correct tenant before running `make all`.
+
+
 ## App registrations
 
 App registrations (represented by service principals) define the various access permissions to the TRE system. There are a total of four main Applications of interest.
@@ -31,23 +45,32 @@ App registrations (represented by service principals) define the various access 
 
 Some of the applications require **admin consent** to allow them to validate users against the AAD. Check the Microsoft Docs on [Configure the admin consent workflow](https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/configure-admin-consent-workflow) on how to request admin consent and handle admin consent requests.
 
-You can create these applications manually, but `/scripts/aad-app-reg.sh`  does the heavy lifting for you. Should you wish to create these manually via the [Azure Portal](https://docs.microsoft.com/azure/active-directory/develop/quickstart-register-app). The requirements are defined [below](#Manual-Deployment).
+You can create these applications manually, but `/scripts/aad/aad-app-reg.sh`  does the heavy lifting for you. Should you wish to create these manually via the [Azure Portal](https://docs.microsoft.com/azure/active-directory/develop/quickstart-register-app). The requirements are defined [below](#Manual-Deployment).
 
 ## App registration script
 
 ### TRE API, Swagger and Automation Account
 
-The `/scripts/aad-app-reg.sh` script automatically sets up the app registrations with the required permissions to run Azure TRE. It will create and configure all of the app registrations depending on the parameters. You would typically run this script twice; once for the **TRE API** and once for each **Workspace**.
+The `/scripts/aad/aad-app-reg.sh` script automatically sets up the app registrations with the required permissions to run Azure TRE. It will create and configure all of the app registrations depending on the parameters. You would typically run this script twice; once for the **TRE API** and once for each **Workspace**.
 
 Example on how to run the script:
 
 ```bash
-./aad-app-reg.sh \
+./scripts/aad/aad-app-reg.sh \
     --name <TRE_ID> \
     --swaggerui-redirecturl https://<TRE_ID>.<Azure location>.cloudapp.azure.com/api/docs/oauth2-redirect \
     --admin-consent \
     --automation-account
 ```
+Below is a sample where `TRE_ID` has value `mytre` and the Azure location is `westeurope`:
+
+  ```bash
+  ./scripts/aad/aad-app-reg.sh --name TRE --swaggerui-redirecturl https://mytre.westeurope.cloudapp.azure.com/api/docs/oauth2-redirect --admin-consent
+  --automation-account
+  ```
+You can run the script without the `--admin-consent` and ask your admin to grant consent. If you don't have permissions and just want to create a development environment then skip this step and see the steps in the "Using a separate Azure Active Directory tenant) below.
+
+You can create an automation account which will aid your development flow, if you don't want to do this you can omit the `--automation-account` switch.
 
 | Argument | Description |
 | -------- | ----------- |
@@ -67,13 +90,13 @@ If you do not wish to create an Automation App, just remove the `--automation-ac
 Access to workspaces is also controlled using app registrations - one per workspace. The configuration of the app registration depends on the nature of the workspace, but this section covers the typical minimum settings.
 
 !!! caution
-    The app registration for a workspace is not created by the [API](../tre-developers/api.md). One needs to be present before using the API to provision a new workspace. The same script can be used to create the **Workspace Application**.
+    The app registration for a workspace is not created by the [API](../tre-developers/api.md). One needs to be present before using the API to provision a new workspace. If you ran `make auth`, a workspace AD application was created for you. If you wish to create another, the same script can be used to create the **Workspace Application**.
 
 Example on how to run the script:
 
 ```bash
-./aad-app-reg.sh \
-    --name '<TRE_ID> - Workspace 1' \
+./scripts/aad/aad-app-reg.sh \
+    --name '<TRE_ID> - Workspace 2' \
     --workspace \
     --swaggerui-clientid <SWAGGER_UI_CLIENT_ID> \
     --admin-consent \
