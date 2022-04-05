@@ -1,7 +1,7 @@
 ---
 name: Deploy Azure TRE Resuable
 
-on:
+on:  # yamllint disable-line rule:truthy
   workflow_call:
     inputs:
       prRef:
@@ -23,58 +23,85 @@ on:
         required: false
     secrets:
       AAD_TENANT_ID:
+        description: ""
         required: true
       ACR_NAME:
+        description: ""
         required: true
       ACTIONS_ACR_NAME:
+        description: ""
         required: true
       ACTIONS_ACR_URI:
+        description: ""
         required: true
       ACTIONS_ACR_PASSWORD:
+        description: ""
         required: true
       ACTIONS_DEVCONTAINER_TAG:
+        description: ""
         required: true
       API_CLIENT_ID:
+        description: ""
         required: true
       API_CLIENT_SECRET:
+        description: ""
         required: true
       ARM_CLIENT_ID:
+        description: ""
         required: true
       ARM_CLIENT_SECRET:
+        description: ""
         required: true
       ARM_SUBSCRIPTION_ID:
+        description: ""
         required: true
       ARM_TENANT_ID:
+        description: ""
         required: true
       CORE_ADDRESS_SPACE:
+        description: ""
         required: true
       LOCATION:
+        description: ""
         required: true
       MGMT_RESOURCE_GROUP:
+        description: ""
         required: true
       MS_TEAMS_WEBHOOK_URI:
+        description: ""
         required: true
       STATE_STORAGE_ACCOUNT_NAME:
+        description: ""
         required: true
       SWAGGER_UI_CLIENT_ID:
+        description: ""
         required: true
       TEST_APP_ID:
+        description: ""
         required: true
       TEST_WORKSPACE_APP_ID:
+        description: ""
         required: true
       TEST_ACCOUNT_CLIENT_ID:
+        description: ""
         required: true
       TEST_ACCOUNT_CLIENT_SECRET:
+        description: ""
         required: true
       TF_STATE_CONTAINER:
+        description: ""
         required: true
       TRE_ADDRESS_SPACE:
+        description: ""
         required: true
       TRE_ID:
+        description: ""
         required: true
       CI_CACHE_ACR_NAME:
+        description: ""
         required: false
       TF_LOG:
+        description: ""
         required: false
 
 # This will prevent multiple runs of this entire workflow.
@@ -116,7 +143,7 @@ jobs:
       - name: Build new devcontainer
         shell: bash
         env:
-            DOCKER_BUILDKIT: 1
+          DOCKER_BUILDKIT: 1
         run: |
           set -e
           USER_UID=$(id -u)
@@ -397,8 +424,7 @@ jobs:
     strategy:
       matrix:
         include:
-        # bundles type can be inferred from the bundle
-        # dir (but this is more explicit)
+          # bundles type can be inferred from the bundle dir (but this is more explicit)
           - {BUNDLE_TYPE: "workspace",
              BUNDLE_DIR: "./templates/workspaces/base"}
           - {BUNDLE_TYPE: "workspace",
@@ -481,8 +507,7 @@ jobs:
     strategy:
       matrix:
         include:
-        # bundles type can be inferred from the bundle
-        # dir (but this is more explicit)
+          # bundles type can be inferred from the bundle dir (but this is more explicit)
           - {BUNDLE_TYPE: "workspace",
              BUNDLE_DIR: "./templates/workspaces/base"}
           - {BUNDLE_TYPE: "workspace",
@@ -535,6 +560,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: CICD
     needs: [register_bundles, build_additional_images]
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -584,7 +610,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v2
         with:
-          name: E2E Test Results (Python ${{ matrix.python-version }})
+          name: E2E Test (Smoke) Results
           path: "./e2e_tests/pytest_e2e_smoke.xml"
 
       - name: Publish Test Results
@@ -599,6 +625,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: CICD
     needs: [register_bundles, build_additional_images]
+    timeout-minutes: 50
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -634,7 +661,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v2
         with:
-          name: E2E Test (Extended) Results (Python ${{ matrix.python-version }})
+          name: E2E Test (Extended) Results
           path: "./e2e_tests/pytest_e2e_extended.xml"
 
       - name: Publish Test Results
@@ -653,7 +680,7 @@ jobs:
       - uses: technote-space/workflow-conclusion-action@v2
 
       - name: Notify teams channel
-        if: env.WORKFLOW_CONCLUSION == 'failure' # notify only if failure
+        if: env.WORKFLOW_CONCLUSION == 'failure'  # notify only if failure
         uses: sachinkundu/ms-teams-notification@1.4
         with:
           github-token: ${{ github.token }}

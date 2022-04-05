@@ -6,7 +6,7 @@ name: Deploy Azure TRE (branch)
 # Note that the branch must be in the main repo as secrets are not passed
 # to workflows run from forks
 
-on:
+on:  # yamllint disable-line rule:truthy
   workflow_dispatch:
     inputs:
       runExtendedTests:
@@ -38,7 +38,7 @@ jobs:
           echo "git SHA:    $(git rev-parse --abbrev-ref HEAD)"
           echo "git ref:    $(git rev-parse HEAD)"
           echo "github ref: ${GITHUB_REF}"
-          REFID=$(echo ${GITHUB_REF} | shasum | cut -c1-8)
+          REFID=$(echo "${GITHUB_REF}" | shasum | cut -c1-8)
           echo "using id of: ${REFID} for GitHub Ref: ${GITHUB_REF}"
           echo "::set-output name=refid::${REFID}"
 

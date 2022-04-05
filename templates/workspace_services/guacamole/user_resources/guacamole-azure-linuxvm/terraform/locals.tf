@@ -10,6 +10,12 @@ locals {
   keyvault_name                  = lower("kv-${substr(local.workspace_resource_name_suffix, -20, -1)}")
   storage_name                   = lower(replace("stg${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
   nexus_proxy_url                = "https://nexus-${var.tre_id}.azurewebsites.net"
+  vm_size = {
+    "2 CPU | 8GB RAM"   = { value = "Standard_D2s_v5" },
+    "4 CPU | 16GB RAM"  = { value = "Standard_D4s_v5" },
+    "8 CPU | 32GB RAM"  = { value = "Standard_D8s_v5" },
+    "16 CPU | 64GB RAM" = { value = "Standard_D16s_v5" }
+  }
   image_ref = {
     "Ubuntu 18.04" = {
       "publisher"    = "canonical"

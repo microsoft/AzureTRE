@@ -2,8 +2,8 @@ variable "tre_id" {
   type        = string
   description = "Unique identifier for the TRE, such as projectx-dev-1234"
   validation {
-    condition     = length(var.tre_id) < 12
-    error_message = "The tre_id value must be < 12 chars."
+    condition     = length(var.tre_id) < 12 && lower(var.tre_id) == var.tre_id
+    error_message = "The tre_id value must be lowercase and < 12 chars."
   }
 }
 
@@ -74,6 +74,12 @@ variable "resource_processor_client_secret" {
   type        = string
   default     = ""
   description = "The client secret (app password) of a service principal with Owner role to the subscription."
+}
+
+variable "resource_processor_number_processes_per_instance" {
+  type        = string
+  default     = "2"
+  description = "The number of CPU processes to run the RP on per VM instance"
 }
 
 variable "docker_registry_server" {

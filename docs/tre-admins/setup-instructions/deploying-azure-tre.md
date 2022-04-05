@@ -35,22 +35,34 @@ make letsencrypt
 
 ### Using curl
 
-Use `curl` to make a simple request to the status endpoint of the API:
+Use `curl` to make a simple request to the health endpoint of the API:
 
 ```bash
-curl https://<azure_tre_fqdn>/api/status
+curl https://<azure_tre_fqdn>/api/health
 ```
 
 The expected response is:
 
 ```json
-{"services":[{"service":"Cosmos DB","status":"OK","message":""}]}
-```
-
-You can also create a request to the `api/health` endpoint to verify that the API is deployed and responds. You should see a *pong* response as a result of the request below:
-
-```cmd
-curl https://<azure_tre_fqdn>/api/health
+{
+  "services": [
+    {
+      "service": "Cosmos DB",
+      "status": "OK",
+      "message": ""
+    },
+    {
+      "service": "Service Bus",
+      "status": "OK",
+      "message": ""
+    },
+    {
+      "service": "Resource Processor",
+      "status": "OK",
+      "message": ""
+    }
+  ]
+}
 ```
 
 ### Using the API docs

@@ -38,6 +38,7 @@ class Operation(AzureTREModel):
     message: str = Field("", title="Additional operation status information")
     createdWhen: float = Field("", title="POSIX Timestamp for when the operation was submitted")
     updatedWhen: float = Field("", title="POSIX Timestamp for When the operation was updated")
+    user: dict = {}
 
 
 class DeploymentStatusUpdateMessage(AzureTREModel):
