@@ -161,12 +161,10 @@ runcmd:
     # Give the Nexus process write permissions on the folder mounted as persistent volume
   - chown -R 200 /etc/nexus-data
     # Run the nexus container with mapped volume for nexus config
-  - docker run -d
-      -p 80:8081 -p 443:8443
-      -v /etc/nexus-data:/nexus-data
-      --restart always
-      --name nexus
-      --log-driver local
-      sonatype/nexus3
+  - docker run -d -p 80:8081 -p 443:8443 -v /etc/nexus-data:/nexus-data
+    --restart always
+    --name nexus
+    --log-driver local
+    sonatype/nexus3
   - bash /home/adminuser/reset-nexus-password.sh
   - bash /home/adminuser/configure-nexus-ssl.sh
