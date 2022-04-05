@@ -32,8 +32,9 @@ def create_test_resource():
 async def test_resource_request_message_generated_correctly(service_bus_client_mock, operations_repo_mock, request_action):
     service_bus_client_mock().get_queue_sender().send_messages = AsyncMock()
     resource = create_test_resource()
+    operation = create_sample_operation(resource.id)
 
-    operations_repo_mock.create_operation_item.return_value = create_sample_operation(resource.id)
+    operations_repo_mock.create_operation_item.return_value = operation
 
     await send_resource_request_message(resource, operations_repo_mock, create_test_user(), request_action)
 
@@ -42,7 +43,7 @@ async def test_resource_request_message_generated_correctly(service_bus_client_m
     assert isinstance(args[0], ServiceBusMessage)
 
     sent_message = args[0]
-    assert sent_message.correlation_id == resource.id
+    assert sent_message.correlation_id == operation.id
     sent_message_as_json = json.loads(str(sent_message))
     assert sent_message_as_json["id"] == resource.id
     assert sent_message_as_json["action"] == request_action
