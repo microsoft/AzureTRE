@@ -56,20 +56,11 @@ Next, you will set the configuration variables for the specific Azure TRE instan
 
 1. Open the `/templates/core/.env.sample` file and then save it without the .sample extension. You should now have a file called `.env` located in the `/templates/core` folder.
 1. Set the first one of the variables, `TRE_ID`, which is the alphanumeric, with underscores and hyphens allowed, ID for the Azure TRE instance. The value will be used in various Azure resources, and **needs to be globally unique and less than 12 characters in length**. Use only lowercase letters. Choose wisely!
-1. Run the `/scripts/aad-app-reg.sh` script to create API and Swagger UI app registrations and their service principals in Azure Active Directory. The details of the script are covered [app registration script](../auth.md#app-registration-script) section of the auth document. Below is a sample where `TRE_ID` has value `mytre` and the Azure location is `westeurope`:
-
-  ```bash
-  ./scripts/aad-app-reg.sh --name TRE --swaggerui-redirecturl https://mytre.westeurope.cloudapp.azure.com/api/docs/oauth2-redirect --admin-consent
-  --automation-account
-  ```
+1. Run `make auth` script to create 4 different AAD Applications that are used for TRE. The details of the script are covered in the [auth document](../auth.md). 
 
   !!! note
       The full functionality of the script requires directory admin privileges. You may need to contact your friendly Azure Active Directory admin to complete this step. The app registrations can be created manually in Azure Portal too. For more information, see [Authentication and authorization](../auth.md).
-
-  You can run the script without the `--admin-consent` and ask your admin to grant consent. If you don't have permissions and just want to create a development environment then skip this step and see the steps in the "Using a separate Azure Active Directory tenant) below.
-
-  You can create an automation account which will aid your development flow, if you don't want to do this you can omit the `--automation-account` switch.
-
+  
   With the output of the script, you can now provide the required auth related values for the following variables in the `/templates/core/.env` configuration file:
 
   | Variable | Description |
@@ -80,6 +71,8 @@ Next, you will set the configuration variables for the specific Azure TRE instan
   | `SWAGGER_UI_CLIENT_ID` | Swagger (OpenAPI) UI application (client) ID. |
   | `TEST_ACCOUNT_CLIENT_ID`| If you supplied `--automation-account` in the above command, this is the user that will run the tests for you |
   | `TEST_ACCOUNT_CLIENT_SECRET` | If you supplied `--automation-account` in the above command, this is the password of the user that will run the tests for you. |
+  | `WORKSPACE_API_CLIENT_ID` | Each workspace is secured behind it's own AD Application|
+  | `WORKSPACE_API_CLIENT_SECRET` | Each workspace is secured behind it's own AD Application. This is the secret for that application.|
 
 All other variables can have their default values for now. You should now have a `.env` file that looks similar to below:
 
@@ -101,39 +94,11 @@ SWAGGER_UI_CLIENT_ID=d87...12
 
 TEST_ACCOUNT_CLIENT_ID=4e...40
 TEST_ACCOUNT_CLIENT_SECRET=sp...7c
+
+WORKSPACE_API_CLIENT_ID=3e...40
+WORKSPACE_API_CLIENT_SECRET=rp...7c
+
 ```
-
-### Using a separate Azure Active Directory tenant
-
-!!! caution
-    This section is only relevant it you are setting up a separate Azure Active Directory tenant for use.
-    This is only recommended for development environments when you don't have the required permissions to create the necessary Azure Active Directory registrations.
-    Using a separate Azure Active Directory tenant will prevent you from using certain Azure Active Directory integrated services.
-    For production deployments, work with your Azure Active Directory administrator to perform the required registration
-
-1. Create an Azure Active Directory tenant
-    To create a new Azure Active Directory tenant, [follow the steps here](https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-create-new-tenant)
-
-1. Sign in to the new tenant
-    Sign in to the new tenant by running the following command (substitute the ID of the tenant you just created)
-
-    ```bash
-    az login --tenant <tenant-id-here> --allow-no-subscriptions
-    ```
-
-1. Run the `/scripts/aad-app-reg.sh` script to create API and Swagger UI app registrations and their service principals in Azure Active Directory. The details of the script are covered [app registration script](../auth.md#app-registration-script) section of the auth document. Below is a sample where `TRE_ID` has value `mytre` and the Azure location is `westeurope`:
-
-    ```bash
-    ./scripts/aad-app-reg.sh --name TRE --swaggerui-redirecturl https://mytre.westeurope.cloudapp.azure.com/api/docs/oauth2-redirect --admin-consent --automation-account
-    ```
-
-  With the output of the script, you can now provide the required auth related values for the following variables in the `/templates/core/.env` configuration file as described above in the "Set environment configuration variables of the Azure TRE instance" section.
-
-1. Reset your `az` account to use the subscription you want to deploy resources into (`az list` will show the subscriptions you are signed into)
-
-   ```bash
-   az account set --subscription <name or id of subscription>
-   ```
 
 ## Add admin user
 
