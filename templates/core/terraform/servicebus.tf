@@ -13,6 +13,7 @@ resource "azurerm_servicebus_queue" "workspacequeue" {
   namespace_id = azurerm_servicebus_namespace.sb.id
 
   enable_partitioning = false
+  requires_session    = true # use sessions here to make sure updates to each resource happen in serial, in order
 }
 
 resource "azurerm_servicebus_queue" "service_bus_deployment_status_update_queue" {
