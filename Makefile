@@ -85,9 +85,9 @@ build-mlflow-image:
 	$(call build_image,"mlflow-server","templates/workspace_services/mlflow/mlflow-server/version.txt","templates/workspace_services/mlflow/mlflow-server/docker/Dockerfile","templates/workspace_services/mlflow/mlflow-server")
 
 firewall-install:
-	$(MAKE) bundle-build DIR=./templates/shared_services/firewall/ \
-	&& $(MAKE) bundle-publish DIR=./templates/shared_services/firewall/ \
-	&& $(MAKE) shared-service-register-and-deploy DIR=./templates/shared_services/firewall/ BUNDLE_TYPE=shared_service
+	$(MAKE) bundle-build DIR=./templates/shared_services/firewall/ #\
+	# && $(MAKE) bundle-publish DIR=./templates/shared_services/firewall/ \
+	# && $(MAKE) shared-service-register-and-deploy DIR=./templates/shared_services/firewall/ BUNDLE_TYPE=shared_service
 
 nexus-install:
 	$(MAKE) bundle-build DIR=./templates/shared_services/sonatype-nexus/ \
