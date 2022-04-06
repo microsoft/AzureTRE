@@ -22,5 +22,5 @@ async def health_check() -> HealthCheck:
         logging.error(f"Cosmos status: {cosmos_status}, message: {cosmos_message}")
         logging.error(f"Service bus status: {sb_status}, message: {sb_message}")
         logging.error(f"Resource processor status: {rp_status}, message: {rp_message}")
-        # raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=health_check_result.json())
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=health_check_result.json())
     return health_check_result
