@@ -202,6 +202,7 @@ else
 
     payload="{ \"templateName\": \"""${template_name}""\", \"properties\": { \"display_name\": \"Shared service ""${template_name}""\", \"description\": \"Automatically deployed ""${template_name}""\" } }"
     deploy_result=$(curl -X "POST" "${tre_url}/api/shared-services" -H "accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer ""${access_token}""" -d "${payload}" "${options}" -s)
+    echo "Deploy result: ${deploy_result}"
 
     shared_service_id=$(echo "${deploy_result}" | jq -r .operation.resourceId)
     operation_id=$(echo "${deploy_result}" | jq -r .operation.id)
@@ -212,7 +213,7 @@ else
       echo "Waiting for deployment of ""${template_name}"" to finish... (current status: ""${status}"")"
       sleep 5
       get_operation_result=$(curl -X "GET" "${tre_url}"/api/shared-services/"${shared_service_id}"/operations/"${operation_id}"  -H "accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer ""${access_token}""" "${options}" -s)
-      echo "${get_operation_result}"
+      echo "Get operation result: ${get_operation_result}"
       status=$(echo "${get_operation_result}" | jq -r .operation.status)
     done
 
