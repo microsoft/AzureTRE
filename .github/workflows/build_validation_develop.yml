@@ -53,6 +53,18 @@ jobs:
           VALIDATE_BASH_EXEC: true
           VALIDATE_GITHUB_ACTIONS: true
 
+      # find all terraform folders and run validate to catch
+      # configuration errors
+      - name: Debugging
+        run: |
+          echo "whoami:"
+          whoami
+          echo "gitea:"
+          ls -l templates/workspace_services/gitea/
+          echo "nexus-cert:"
+          ls -l templates/shared_services/nexus-cert/
+
+
       - uses: dorny/paths-filter@v2
         id: filter
         with:
@@ -60,6 +72,17 @@ jobs:
             terraform:
               # our Terraform uses more than just *.tf files, so need to check changes in the folder
               - '**/terraform/**/*'
+
+      # find all terraform folders and run validate to catch
+      # configuration errors
+      - name: Debugging
+        run: |
+          echo "whoami:"
+          whoami
+          echo "gitea:"
+          ls -l templates/workspace_services/gitea/
+          echo "nexus-cert:"
+          ls -l templates/shared_services/nexus-cert/
 
       - name: Terraform format check
         if: ${{ steps.filter.outputs.terraform == 'true' }}
