@@ -209,6 +209,3 @@ pytest_api_unit_failed
 validation.txt
 
 index.html
-
-# ignore api-healthcheck response file
-api-response.txt
