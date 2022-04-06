@@ -201,24 +201,36 @@ else
     echo "Deploying shared service ${template_name}"
 
     payload="{ \"templateName\": \"""${template_name}""\", \"properties\": { \"display_name\": \"Shared service ""${template_name}""\", \"description\": \"Automatically deployed ""${template_name}""\" } }"
-    deploy_result=$(curl -X "POST" "${tre_url}/api/shared-services" -H "accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer ""${access_token}""" -d "${payload}" "${options}" -s)
-    echo "Deploy result: ${deploy_result}"
+    deploy_result=$(curl -i -X "POST" "${tre_url}/api/shared-services" -H "accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer ""${access_token}""" -d "${payload}" "${options}" -s)
+    http_code=$(echo "${deploy_result}" | grep HTTP | sed 's/.*HTTP\/1\.1 \([0-9]\+\).*/\1/')
+    if [[ "${http_code}" != 202 ]] && [[ "${http_code}" != 408 ]] && \
+       [[ "${http_code}" != 502 ]] && [[ "${http_code}" != 503 ]] && [[ "${http_code}" != 504 ]]; then
+      echo "Got a non-retrieable HTTP status code: ${http_code}"
+      exit 1
+    fi
+    json_deploy_result=$(echo "${deploy_result}" | grep '{')
+    shared_service_id=$(echo "${json_deploy_result}" | jq -r .operation.resourceId)
+    operation_id=$(echo "${json_deploy_result}" | jq -r .operation.id)
+    operation_status=$(echo "${json_deploy_result}" | jq -r .operation.status)
 
-    shared_service_id=$(echo "${deploy_result}" | jq -r .operation.resourceId)
-    operation_id=$(echo "${deploy_result}" | jq -r .operation.id)
-    status=$(echo "${deploy_result}" | jq -r .operation.status)
-
-    while [[ "${status}" = "not_deployed" ]] || [[ "${status}" = "deploying" ]]; do
+    while [[ "${operation_status}" = "not_deployed" ]] || [[ "${operation_status}" = "deploying" ]]; do
       # Poll for the result of operation
-      echo "Waiting for deployment of ""${template_name}"" to finish... (current status: ""${status}"")"
+      echo "Waiting for deployment of ""${template_name}"" to finish... (current status: ""${operation_status}"")"
       sleep 5
-      get_operation_result=$(curl -X "GET" "${tre_url}"/api/shared-services/"${shared_service_id}"/operations/"${operation_id}"  -H "accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer ""${access_token}""" "${options}" -s)
-      echo "Get operation result: ${get_operation_result}"
-      status=$(echo "${get_operation_result}" | jq -r .operation.status)
+      get_operation_result=$(curl -i -X "GET" "${tre_url}"/api/shared-services/"${shared_service_id}"/operations/"${operation_id}"  -H "accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer ""${access_token}""" "${options}" -s)
+      http_code=$(echo "${get_operation_result}" | grep HTTP | sed 's/.*HTTP\/1\.1 \([0-9]\+\).*/\1/')
+      operation_status=$(echo "${get_operation_result}" | grep '{' | jq -r .operation.status)
+      if [[ "${http_code}" != 200 ]] && [[ "${http_code}" != 202 ]]; then
+        if [[ "${http_code}" != 408 ]] && [[ "${http_code}" != 502 ]] && [[ "${http_code}" != 503 ]] && [[ "${http_code}" != 504 ]]; then
+          echo "Got a non-retrieable HTTP status code: ${http_code}"
+          exit 1
+        fi
+        echo "Got HTTP code ${http_code}, retrying..."
+      fi
     done
 
-    if [[ "${status}" != "deployed" ]]; then
-      echo "Failed to deploy shared service ""${template_name}"" (status is ""${status}""). Please check resource processor logs"
+    if [[ "${operation_status}" != "deployed" ]]; then
+      echo "Failed to deploy shared service ""${template_name}"" (status is ""${operation_status}""). Please check resource processor logs"
       exit 1
     fi
 
