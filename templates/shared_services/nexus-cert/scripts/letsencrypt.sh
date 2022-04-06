@@ -15,10 +15,10 @@ cat << EOF > index.html
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml"><head><meta charset="utf-8"/><title></title></head><body></body></html>
 EOF
 
+# shellcheck disable=SC2016
 indexExists=$(az storage blob list -o json \
     --account-name "${STORAGE_ACCOUNT}" \
     --auth-mode login \
-    # shellcheck disable=SC2016
     --container-name '$web' \
     --query "[?name=='index.html'].name" \
     | jq 'length')
@@ -26,10 +26,10 @@ indexExists=$(az storage blob list -o json \
 if [[ ${indexExists} -lt 1 ]]; then
     echo "Uploading index.html file"
 
+    # shellcheck disable=SC2016
     az storage blob upload \
         --account-name "${STORAGE_ACCOUNT}" \
         --auth-mode login \
-        # shellcheck disable=SC2016
         --container-name '$web' \
         --file index.html \
         --name index.html \
