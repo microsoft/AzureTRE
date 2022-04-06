@@ -27,7 +27,6 @@ jobs:
       # find all terraform folders and run validate to catch
       # configuration errors
       - name: Debugging
-        if: ${{ steps.filter.outputs.terraform == 'true' }}
         run: |
           echo "whoami:"
           whoami
