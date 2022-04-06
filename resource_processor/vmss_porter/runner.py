@@ -52,10 +52,11 @@ async def receive_message(service_bus_client):
     while True:
         try:
             logger_adapter.info("Looking for new session...")
-            async with service_bus_client.get_queue_receiver(queue_name=q_name, session_id=NEXT_AVAILABLE_SESSION) as receiver:
+            # max_wait_time=1 -> don't hold the session open after processing of the message has finished
+            async with service_bus_client.get_queue_receiver(queue_name=q_name, max_wait_time=1, session_id=NEXT_AVAILABLE_SESSION) as receiver:
                 logger_adapter.info("Got a session containing messages")
                 async with AutoLockRenewer() as renewer:
-                    # allow a message to be auto lock renewed for up to an hour
+                    # allow a session to be auto lock renewed for up to an hour - if it's processing a message
                     renewer.register(receiver, receiver.session, max_lock_renewal_duration=3600)
 
                     async for msg in receiver:
@@ -75,23 +76,23 @@ async def receive_message(service_bus_client):
                         else:
                             logging.error('Message processing failed!')
 
-                        logger_adapter.info(f"Message with id = {message['id']} processed as {result} and marked complete.")
+                        logger_adapter.info(f"Message for resource_id={message['id']}, operation_id={message['operationId']} processed as {result} and marked complete.")
                         await receiver.complete_message(msg)
+
+                    logger_adapter.info("Closing session")
+                    await renewer.close()
 
         except OperationTimeoutError:
             # Timeout occurred whilst connecting to a session - this is expected and indicates no non-empty sessions are available
-            logger_adapter.info("No sessions for this process. Sleeping 30s then will look again...")
+            logger_adapter.info("No sessions for this process. Will look again...")
 
         except ServiceBusConnectionError:
             # Occasionally there will be a transient / network-level error in connecting to SB.
-            logger_adapter.info("Unknown Service Bus connection error. Sleeping and will retry...")
+            logger_adapter.info("Unknown Service Bus connection error. Will retry...")
 
         except Exception:
             # Catch all other exceptions, log them via .exception to get the stack trace, sleep, and reconnect
-            logger_adapter.exception("Unknown exception. Sleeping and will retry...")
-
-        finally:
-            await asyncio.sleep(30)
+            logger_adapter.exception("Unknown exception. Will retry...")
 
 
 async def run_porter(command):
