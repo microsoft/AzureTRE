@@ -9,7 +9,7 @@ resource "random_password" "gitea_passwd" {
 # we have to use user-assigned to break a cycle in the dependencies: app identity, kv-policy, secrets in app settings
 resource "azurerm_user_assigned_identity" "gitea_id" {
   resource_group_name = local.core_resource_group_name
-  location            = var.location
+  location            = data.azurerm_resource_group.rg.location
 
   name = "id-gitea-${var.tre_id}"
 
@@ -19,7 +19,7 @@ resource "azurerm_user_assigned_identity" "gitea_id" {
 resource "azurerm_app_service" "gitea" {
   name                            = local.webapp_name
   resource_group_name             = local.core_resource_group_name
-  location                        = var.location
+  location                        = data.azurerm_resource_group.rg.location
   app_service_plan_id             = data.azurerm_app_service_plan.core.id
   https_only                      = true
   key_vault_reference_identity_id = azurerm_user_assigned_identity.gitea_id.id
@@ -116,7 +116,7 @@ resource "azurerm_app_service" "gitea" {
 resource "azurerm_private_endpoint" "gitea_private_endpoint" {
   name                = "pe-${local.webapp_name}"
   resource_group_name = local.core_resource_group_name
-  location            = var.location
+  location            = data.azurerm_resource_group.rg.location
   subnet_id           = data.azurerm_subnet.shared.id
 
   private_service_connection {
