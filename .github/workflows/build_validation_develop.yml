@@ -55,6 +55,16 @@ jobs:
 
       # find all terraform folders and run validate to catch
       # configuration errors
+      - name: Debugging
+        if: ${{ steps.filter.outputs.terraform == 'true' }}
+        run: |
+          whoami
+          ls -l workspace_services/gitea/
+          ls -l shared_services/nexus-cert/
+
+
+      # find all terraform folders and run validate to catch
+      # configuration errors
       - name: Terraform validation
         if: ${{ steps.filter.outputs.terraform == 'true' }}
         run: |
