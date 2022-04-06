@@ -40,7 +40,7 @@ jobs:
         with:
           result-encoding: string
           script: |
-            const script = require('./.github/workflows/script.js')
+            const script = require('./.github/scripts/build.js')
             const result = script.getCommandFromComment({core, context, github});
             console.log(result);
             return result;
