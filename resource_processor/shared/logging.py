@@ -16,7 +16,10 @@ UNWANTED_LOGGERS = [
     "azure.identity.aio._internal.decorators",
     "azure.identity.aio._credentials.chained",
     "azure.identity",
-    "msal.token_cache",
+    "msal.token_cache"
+]
+
+LOGGERS_FOR_ERRORS_ONLY = [
     "uamqp",
     "uamqp.authentication.cbs_auth_async",
     "uamqp.async_ops.client_async",
@@ -25,8 +28,14 @@ UNWANTED_LOGGERS = [
     "uamqp.authentication",
     "uamqp.c_uamqp",
     "uamqp.connection",
-    "uamqp.receiver"
+    "uamqp.receiver",
+    "uamqp.async_ops.session_async",
+    "uamqp.sender",
+    "uamqp.client",
+    "azure.servicebus.aio._base_handler_async"
 ]
+
+debug = os.environ.get('DEBUG', 'False').lower() in ('true', '1')
 
 
 def disable_unwanted_loggers():
@@ -48,11 +57,27 @@ def initialize_logging(logging_level: int, correlation_id: str) -> logging.Logge
     :returns: A newly created logger adapter.
     """
     logger = logging.getLogger()
-    logger.addHandler(logging.StreamHandler())  # For logging into console
-    app_insights_connection_string = os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING")
+
+    # When using sessions and NEXT_AVAILABLE_SESSION we see regular exceptions which are actually expected
+    # See https://github.com/Azure/azure-sdk-for-python/issues/9402
+    # Other log entries such as 'link detach' also confuse the logs, and are expected.
+    # We don't want these making the logs any noisier so we raise the logging level for that logger here
+    # To inspect all the loggers, use -> loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict]
+    for logger_name in LOGGERS_FOR_ERRORS_ONLY:
+        logging.getLogger(logger_name).setLevel(logging.ERROR)
+
+    # For logging into console
+    console_formatter = logging.Formatter(fmt='%(module)-7s %(name)-7s %(process)-7s %(asctime)s %(levelname)-7s %(message)s')
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(console_formatter)
+    logger.addHandler(console_handler)
 
     try:
-        logger.addHandler(AzureLogHandler(connection_string=app_insights_connection_string))
+        azurelog_formatter = AzureLogFormatter()
+        # picks up APPLICATIONINSIGHTS_CONNECTION_STRING automatically
+        azurelog_handler = AzureLogHandler()
+        azurelog_handler.setFormatter(azurelog_formatter)
+        logger.addHandler(azurelog_handler)
     except ValueError as e:
         logger.error(f"Failed to set Application Insights logger handler: {e}")
 
@@ -96,9 +121,13 @@ def shell_output_logger(console_output: str, prefix_item: str, logger: logging.L
     """
     logger.log(logging_level, prefix_item)
 
-    if console_output is None:
+    if not console_output:
         return
 
+    logger.log(logging_level, console_output)
+
+
+class AzureLogFormatter(logging.Formatter):
     # 7-bit C1 ANSI sequences
     ansi_escape = re.compile(r'''
         \x1B  # ESC
@@ -112,9 +141,19 @@ def shell_output_logger(console_output: str, prefix_item: str, logger: logging.L
         )
     ''', re.VERBOSE)
 
-    for string in console_output.split('\n'):
-        if os.environ.get('DEBUG', False) is False:
-            string = ansi_escape.sub('', string)  # removes all ANSI formatting
+    MAX_MESSAGE_LENGTH = 32000
+    TRUNCATION_TEXT = "MESSAGE TOO LONG, TAILING..."
 
-        if len(string) != 0:
-            logger.log(logging_level, string)
+    def format(self, record):
+        s = super().format(record)
+        s = AzureLogFormatter.ansi_escape.sub('', s)
+
+        # not doing this here might produce errors if we try to log empty strings.
+        if (s == ''):
+            s = "EMPTY MESSAGE!"
+
+        # azure monitor is limiting the message size.
+        if (len(s) > AzureLogFormatter.MAX_MESSAGE_LENGTH):
+            s = f"{AzureLogFormatter.TRUNCATION_TEXT}\n{s[-1 * AzureLogFormatter.MAX_MESSAGE_LENGTH:]}"
+
+        return s

@@ -13,11 +13,16 @@ resource "azurerm_servicebus_queue" "workspacequeue" {
   namespace_id = azurerm_servicebus_namespace.sb.id
 
   enable_partitioning = false
+  requires_session    = true # use sessions here to make sure updates to each resource happen in serial, in order
 }
 
 resource "azurerm_servicebus_queue" "service_bus_deployment_status_update_queue" {
   name         = "deploymentstatus"
   namespace_id = azurerm_servicebus_namespace.sb.id
+
+  # The returned payload might be large, especially for errors.
+  # Cosmos is the final destination of the messages where 2048 is the limit.
+  max_message_size_in_kilobytes = 2048 # default=1024
 
   enable_partitioning = false
 }
@@ -64,5 +69,5 @@ resource "azurerm_private_endpoint" "sbpe" {
 resource "azurerm_servicebus_namespace_network_rule_set" "servicebus_network_rule_set" {
   namespace_id                  = azurerm_servicebus_namespace.sb.id
   public_network_access_enabled = var.enable_local_debugging
-  ip_rules                      = var.enable_local_debugging ? ["${chomp(data.http.myip.body)}"] : null
+  ip_rules                      = var.enable_local_debugging ? ["${local.myip}"] : null
 }

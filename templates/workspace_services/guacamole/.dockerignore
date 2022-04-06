@@ -5,3 +5,7 @@
 **/*_backend.tf
 
 Dockerfile.tmpl
+
+.env*
+guacamole-server/
+user_resources/

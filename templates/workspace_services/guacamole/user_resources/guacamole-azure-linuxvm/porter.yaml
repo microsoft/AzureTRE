@@ -1,6 +1,6 @@
 ---
 name: tre-service-guacamole-linuxvm
-version: 0.1.8
+version: 0.1.10
 description: "An Azure TRE User Resource Template for Guacamole (Linux)"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -47,6 +47,9 @@ parameters:
   - name: os_image
     type: string
     default: "Ubuntu 18.04 Data Science VM"
+  - name: vm_size
+    type: string
+    default: "2 CPU | 8GB RAM"
   - name: shared_storage_access
     type: string
     default: "true"
@@ -92,6 +95,7 @@ install:
         arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
         image: "{{ bundle.parameters.os_image }}"
+        vm_size: "{{ bundle.parameters.vm_size }}"
         shared_storage_access: "{{ bundle.parameters.shared_storage_access }}"
         shared_storage_name: "{{ bundle.parameters.shared_storage_name }}"
       backendConfig:
@@ -107,12 +111,32 @@ install:
         - name: connection_uri
 
 upgrade:
-  - exec:
-      description:
-        "Upgrade Guacamole User Resource Service (Linux VM)"
-      command: echo
-      arguments:
-        - "This user resource does not implement upgrade action"
+  - terraform:
+      description: "Update Guacamole User Resource Service (Linux VM)"
+      vars:
+        workspace_id: "{{ bundle.parameters.workspace_id }}"
+        tre_id: "{{ bundle.parameters.tre_id }}"
+        parent_service_id: "{{ bundle.parameters.parent_service_id }}"
+        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
+        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
+        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
+        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
+        tre_resource_id: "{{ bundle.parameters.id }}"
+        image: "{{ bundle.parameters.os_image }}"
+        vm_size: "{{ bundle.parameters.vm_size }}"
+        shared_storage_access: "{{ bundle.parameters.shared_storage_access }}"
+        shared_storage_name: "{{ bundle.parameters.shared_storage_name }}"
+      backendConfig:
+        resource_group_name:
+          "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name:
+          "{{ bundle.parameters.tfstate_storage_account_name }}"
+        container_name: "{{ bundle.parameters.tfstate_container_name }}"
+        key: "{{ bundle.parameters.id }}"
+      outputs:
+        - name: ip
+        - name: hostname
+        - name: connection_uri
 
 uninstall:
   - terraform:
@@ -127,6 +151,7 @@ uninstall:
         arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
         image: "{{ bundle.parameters.os_image }}"
+        vm_size: "{{ bundle.parameters.vm_size }}"
         shared_storage_access: "{{ bundle.parameters.shared_storage_access }}"
         shared_storage_name: "{{ bundle.parameters.shared_storage_name }}"
       backendConfig:

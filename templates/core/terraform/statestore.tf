@@ -5,7 +5,7 @@ resource "azurerm_cosmosdb_account" "tre-db-account" {
   offer_type                = "Standard"
   kind                      = "GlobalDocumentDB"
   enable_automatic_failover = false
-  ip_range_filter           = var.enable_local_debugging ? "${chomp(data.http.myip.body)}" : null
+  ip_range_filter           = var.enable_local_debugging ? local.myip : null
 
   consistency_policy {
     consistency_level       = "BoundedStaleness"

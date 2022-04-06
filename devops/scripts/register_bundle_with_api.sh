@@ -97,33 +97,28 @@ if [[ -z ${acr_name:-} ]]; then
     usage
 fi
 
-if [[ -z ${BUNDLE_TYPE:-} ]]; then
+if [[ -z ${bundle_type:-} ]]; then
     echo -e "No bundle type provided\n"
-    usage
-fi
-
-if [ ${BUNDLE_TYPE} == "user_resource" ] && [ -z ${workspace_service_name:-} ]; then
-    echo -e "You must supply a workspace service_name name if you are registering a user_resource bundle\n"
     usage
 fi
 
 explain_json=$(porter explain --reference ${acr_name}.azurecr.io/$(yq eval '.name' porter.yaml):v$(yq eval '.version' porter.yaml) -o json)
 
-payload=$(echo ${explain_json} | jq --argfile json_schema template_schema.json --arg current "${current}" --arg bundle_type "${BUNDLE_TYPE}" '. + {"json_schema": $json_schema, "resourceType": $bundle_type, "current": $current}')
+payload=$(echo ${explain_json} | jq --argfile json_schema template_schema.json --arg current "${current}" --arg bundle_type "${bundle_type}" '. + {"json_schema": $json_schema, "resourceType": $bundle_type, "current": $current}')
 
 if [ -z "${access_token:-}" ]
 then
   # We didn't get an access token but we can try to generate one.
-  if [ ! -z "${AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID:-}" ] && [ ! -z "${AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET:-}" ] && [ ! -z "${AAD_TENANT_ID:-}" ] && [ ! -z "${API_CLIENT_ID:-}" ]
+  if [ ! -z "${TEST_ACCOUNT_CLIENT_ID:-}" ] && [ ! -z "${TEST_ACCOUNT_CLIENT_SECRET:-}" ] && [ ! -z "${AAD_TENANT_ID:-}" ] && [ ! -z "${API_CLIENT_ID:-}" ]
   then
-    # Use client credentials flow with AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID/SECRET
-    echo "Using AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID to get token via client credential flow"
+    # Use client credentials flow with TEST_ACCOUNT_CLIENT_ID/SECRET
+    echo "Using TEST_ACCOUNT_CLIENT_ID to get token via client credential flow"
     token_response=$(curl -X POST -H 'Content-Type: application/x-www-form-urlencoded' \
       https://login.microsoftonline.com/${AAD_TENANT_ID}/oauth2/v2.0/token \
-      -d "client_id=${AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID}"   \
+      -d "client_id=${TEST_ACCOUNT_CLIENT_ID}"   \
       -d 'grant_type=client_credentials'   \
       -d "scope=api://${API_CLIENT_ID}/.default"   \
-      -d "client_secret=${AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET}")
+      -d "client_secret=${TEST_ACCOUNT_CLIENT_SECRET}")
   elif [ ! -z "${API_CLIENT_ID:-}" ] && [ ! -z "${TEST_APP_ID:-}" ] && [ ! -z "${TEST_USER_NAME:-}" ] && [ ! -z "${TEST_USER_PASSWORD:-}" ] && [ ! -z "${AAD_TENANT_ID:-}" ]
   then
     # Use resource owner password credentials flow with USERNAME/PASSWORD
@@ -149,6 +144,12 @@ then
   echo "API access token isn't available - automatic bundle registration not possible. Use the script output to self-register. See documentation for more details."
   echo $(echo ${payload} | jq --color-output .)
 else
+  if [ ${bundle_type} == "user_resource" ] && [ -z ${workspace_service_name:-} ]; then
+    echo -e "You must supply a workspace service_name name if you would like to automatically register the user_resource bundle\n"
+    echo $(echo ${payload} | jq --color-output .)
+    usage
+  fi
+
   if [[ -n ${insecure+x} ]]; then
       options=" -k"
   fi
@@ -159,7 +160,7 @@ else
     usage
   fi
 
-  case "${BUNDLE_TYPE}" in
+  case "${bundle_type}" in
     ("workspace") tre_get_path="api/workspace-templates" ;;
     ("workspace_service") tre_get_path="api/workspace-service-templates" ;;
     ("user_resource") tre_get_path="/api/workspace-service-templates/${workspace_service_name}/user-resource-templates";;

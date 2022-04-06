@@ -1,6 +1,6 @@
 ---
 name: tre-service-guacamole-windowsvm
-version: 0.1.6
+version: 0.1.8
 description: "An Azure TRE User Resource Template for Guacamole (Windows 10)"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -151,6 +151,7 @@ uninstall:
         arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
         image: "{{ bundle.parameters.os_image }}"
+        vm_size: "{{ bundle.parameters.vm_size }}"
         shared_storage_access: "{{ bundle.parameters.shared_storage_access }}"
         shared_storage_name: "{{ bundle.parameters.shared_storage_name }}"
       backendConfig:

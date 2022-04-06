@@ -23,6 +23,13 @@
     "type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock"
   ],
   "remoteUser": "vscode",
+  "containerEnv": {
+    "DOCKER_BUILDKIT": "1",
+  },
+  "remoteEnv": {
+    // this is used for SuperLinter
+    "LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}",
+  },
   // Set *default* container specific settings.json values on container create.
   "settings": {
     "terminal.integrated.defaultProfile.linux": "bash",
@@ -79,6 +86,22 @@
           "args": [
             "-m",
             "extended",
+            "--verify",
+            "false"
+          ]
+        },
+        {
+          "name": "E2E Performance",
+          "type": "python",
+          "request": "launch",
+          "module": "pytest",
+          "justMyCode": true,
+          "cwd": "${workspaceFolder}/e2e_tests/",
+          "preLaunchTask": "Copy_env_file_for_e2e_debug",
+          "envFile": "${workspaceFolder}/templates/core/private.env",
+          "args": [
+            "-m",
+            "performance",
             "--verify",
             "false"
           ]
@@ -181,7 +204,8 @@
     "editorconfig.editorconfig",
     "github.vscode-pull-request-github",
     "mikestead.dotenv",
-    "humao.rest-client"
+    "humao.rest-client",
+    "timonwong.shellcheck",
   ],
   "forwardPorts": [
     8000

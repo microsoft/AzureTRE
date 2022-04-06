@@ -54,19 +54,19 @@ Now that we have published and registered both workspace service and user resour
 
 1. Navigate to the Swagger UI at `https://<azure_tre_fqdn>/api/workspaces/<workspace_id>/docs` . Where `<workspace_id>` is the workspace ID of the workspace created in the previous step.
 
-    !!! info
-        All routes are auth protected. Click the green **Authorize** button to receive a token for Swagger client.
+!!! info
+    All routes are auth protected. Click the green **Authorize** button to receive a token for Swagger client.
 
-1. Log into the Swagger UI by clicking `Authorize`, then `Authorize` again. You will be redirected to the login page.
+2. Log into the Swagger UI by clicking `Authorize`, then `Authorize` again. You will be redirected to the login page.
 
-    !!! info
-        You need to log in with a user with assigned the WorkspaceOwner role in the app regsitration used when deploying your workspace.
+!!! info
+    You need to log in with a user with assigned the WorkspaceOwner role in the app regsitration used when deploying your workspace.
 
-1. Once logged in, click `Try it out` on the `POST` `/api/workspaces/<workspace_id>/workspace-services` operation.
+3. Once logged in, click `Try it out` on the `POST` `/api/workspaces/<workspace_id>/workspace-services` operation.
 
-1. Enter the workspace_id in the `workspace_id` field.
+4. Enter the workspace_id in the `workspace_id` field.
 
-1. Paste the following payload json into the `Request body` field, update `<WORKSPACE_API_CLIENT_ID>` with the client ID of the app registration for the base workspace you created previously, then click `Execute`. Review the server response.
+5. Paste the following payload json into the `Request body` field, update `<WORKSPACE_API_CLIENT_ID>` with the client ID of the app registration for the base workspace you created previously, then click `Execute`. Review the server response.
 
     ```json
     {

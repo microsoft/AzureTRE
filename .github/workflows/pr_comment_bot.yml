@@ -1,13 +1,13 @@
+---
 name: pr_comment_bot
 
-on:
+on:  # yamllint disable-line rule:truthy
   issue_comment:
-    types: [created] # only run on new comments
+    types: [created]  # only run on new comments
     # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#issue_comment
     # https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#issue_comment
 
 jobs:
-
   pr_comment:
     name: PR comment
     environment: CICD
@@ -27,6 +27,12 @@ jobs:
       ciGitRef: ${{ steps.get_pr_details.outputs.ciGitRef }}
       not-md: ${{ steps.filter.outputs.not-md }}
     steps:
+      # Ensure we have the script file for the github-script action to use
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
       # Determine whether the comment is a command
       - id: check_command
         name: Check for a command using GitHub script
@@ -34,67 +40,10 @@ jobs:
         with:
           result-encoding: string
           script: |
-            // Previously, we attempted to use github.event.comment.author_association to check for OWNER or COLLABORATOR
-            // Unfortunately, that always shows MEMBER if you are in the microsoft org and have that set to publicly visible
-            // (Can check via https://github.com/orgs/microsoft/people?query=<username>)
-
-            // https://docs.github.com/en/rest/reference/collaborators#check-if-a-user-is-a-repository-collaborator
-            const commentUsername = context.payload.comment.user.login;
-            const repoFullName = context.payload.repository.full_name;
-            const repoParts = repoFullName.split("/");
-            const repoOwner = repoParts[0];
-            const repoName = repoParts[1];
-
-            let userHasWriteAccess = false;
-            try {
-              console.log(`Checking if user "${commentUsername}" has write access to ${repoOwner}/${repoName} ...`)
-              const result = await github.request('GET /repos/{owner}/{repo}/collaborators/{username}', {
-                owner: repoOwner,
-                repo: repoName,
-                username: commentUsername
-              });
-              userHasWriteAccess = result.status === 204;
-              console.log("success")
-              console.log(result);
-            } catch (err) {
-              console.log("error")
-              console.log(err);
-              if (err.status === 404){
-                console.log("User not found in collaborators");
-              } else {
-                console.log(`Error checking if user has write access: ${err.status} (${err.response.data.message}) `)
-              }
-            }
-            console.log("User has write access: " + userHasWriteAccess);
-
-            if (!userHasWriteAccess) {
-              console.log("Command: none [user doesn't have permission]");
-              return "none"; // only allow actions for users with write access
-            }
-
-            //
-            // Determine what action to take
-            // Only use the first line of the comment to allow remainder of the body for other comments/notes
-            //
-            const commentBody = context.payload.comment.body;
-            const commentFirstLine = commentBody.split("\n")[0];
-            let command = "none";
-            switch (commentFirstLine.trim()){
-              case "/test":
-                command = "run-tests";
-                break;
-              case "/test-force-approve":
-                command = "test-force-approve";
-                break;
-              case "/test-destroy-env":
-                command = "test-destroy-env";
-                break;
-              case "/help":
-                command = "show-help";
-                break;
-            }
-            console.log(`Command: ${command}`);
-            return command;
+            const script = require('./.github/workflows/script.js')
+            const result = script.getCommandFromComment({core, context, github});
+            console.log(result);
+            return result;
 
       # Add comment with help text in response to help command
       - name: Show Help
@@ -105,12 +54,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Showing help on PR ${PR_NUMBER}"
-          gh pr comment ${PR_NUMBER} --repo $REPO --body "Hello<br/><br/>You can use the following commands:<br/>    /test - run tests on a PR<br/>    /test-force-approve - force approval of the PR tests (i.e. skip the deployment checks)<br/>    /test-destroy-env - delete the validation environment for a PR (e.g. to enable testing a deployment from a clean start after previous tests)    /help - show this help"
+          gh pr comment "${PR_NUMBER}" --repo "$REPO" --body "Hello<br/><br/>You can use the following commands:<br/>    /test - build, deploy and run smoke tests on a PR<br/>    /test-extended - build, deploy and run somke & extended tests on a PR<br/>    /test-force-approve - force approval of the PR tests (i.e. skip the deployment checks)<br/>    /test-destroy-env - delete the validation environment for a PR (e.g. to enable testing a deployment from a clean start after previous tests)    /help - show this help"
 
       # Get PR commit details for running tests
       - id: get_pr_details
         name: Get PR details
-        if: ${{ steps.check_command.outputs.result == 'run-tests' || steps.check_command.outputs.result == 'test-force-approve' || steps.check_command.outputs.result == 'test-destroy-env' }}
+        if: ${{ steps.check_command.outputs.result == 'run-tests' || steps.check_command.outputs.result == 'run-tests-extended' || steps.check_command.outputs.result == 'test-force-approve' || steps.check_command.outputs.result == 'test-destroy-env' }}
         env:
           PR_NUMBER: ${{ github.event.issue.number }}
           REPO: ${{ github.event.repository.full_name }}
@@ -119,10 +68,10 @@ jobs:
           # Leaving this as bash script as GitHub Script doesn't seem to support multiple output values
 
           echo "Getting PR ref..."
-          ref=$(gh pr view $PR_NUMBER --repo $REPO --json commits | jq -r ".[] | last | .oid")
+          ref=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json commits | jq -r ".[] | last | .oid")
           echo -e "\tLatest commit ref: $ref"
           # Get the prMergeCommit as this is what the pull_request trigger would build
-          prMergeRef=$(gh pr view $PR_NUMBER --repo $REPO --json potentialMergeCommit | jq -r .potentialMergeCommit.oid)
+          prMergeRef=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json potentialMergeCommit | jq -r .potentialMergeCommit.oid)
           echo -e "\tprMergeRef: $prMergeRef"
           echo
 
@@ -132,13 +81,13 @@ jobs:
           github_pr_ref="refs/pull/${PR_NUMBER}/merge"
           echo "::set-output name=ciGitRef::${github_pr_ref}"
 
-          REFID=$(echo ${github_pr_ref} | shasum | cut -c1-8)
+          REFID=$(echo "${github_pr_ref}" | shasum | cut -c1-8)
           echo "using id of: ${REFID} for GitHub Ref: ${github_pr_ref} (RG base name)"
           echo "::set-output name=refid::${REFID}"
 
           # Get PR HEAD SHA for checks status
           echo "Getting PR head SHA"
-          PR_HEAD_SHA=$(gh api /repos/$REPO/pulls/$PR_NUMBER --jq .head.sha)
+          PR_HEAD_SHA=$(gh api "/repos/$REPO/pulls/$PR_NUMBER" --jq .head.sha)
           echo "PR_HEAD_SHA: ${PR_HEAD_SHA}"
           echo "::set-output name=prHeadSha::${PR_HEAD_SHA}"
 
@@ -184,7 +133,7 @@ jobs:
           conclusion: "success"
 
       - name: Comment with link to run
-        if: ${{ steps.check_command.outputs.result == 'run-tests' }}
+        if: ${{ steps.check_command.outputs.result == 'run-tests' || steps.check_command.outputs.result == 'run-tests-extended' }}
         env:
           PR_NUMBER: ${{ github.event.issue.number }}
           REPO: ${{ github.event.repository.full_name }}
@@ -192,7 +141,7 @@ jobs:
           RUN_ID: ${{ github.run_id }}
         run: |
           echo "Adding comment with link to run on PR ${PR_NUMBER}"
-          gh pr comment ${PR_NUMBER} --repo $REPO --body "Running tests: https://github.com/${REPO}/actions/runs/${RUN_ID}"
+          gh pr comment "${PR_NUMBER}" --repo "$REPO" --body "Running tests: https://github.com/${REPO}/actions/runs/${RUN_ID}"
 
       # Perform az login for destroy env script to be able to run
       - name: Azure Login
@@ -213,21 +162,21 @@ jobs:
           SHOW_KEYVAULT_DEBUG_ON_DESTROY: ${{ secrets.SHOW_KEYVAULT_DEBUG_ON_DESTROY }}
         run: |
           set -e
-          gh pr comment ${PR_NUMBER} --repo $REPO --body "Destroying test environment... (run: https://github.com/${REPO}/actions/runs/${RUN_ID})"
-          devops/scripts/destroy_env_no_terraform.sh --core-tre-rg ${RG_NAME}
-          gh pr comment ${PR_NUMBER} --repo $REPO --body "Test environment destroy complete"
-
+          gh pr comment "${PR_NUMBER}" --repo "$REPO" --body "Destroying test environment... (run: https://github.com/${REPO}/actions/runs/${RUN_ID})"
+          devops/scripts/destroy_env_no_terraform.sh --core-tre-rg "${RG_NAME}"
+          gh pr comment "${PR_NUMBER}" --repo "$REPO" --body "Test environment destroy complete"
 
   run_test:
     # Run the tests with the re-usable workflow
     needs: [pr_comment]
-    if: ${{ needs.pr_comment.outputs.command == 'run-tests' && needs.pr_comment.outputs.not-md == 'true' }}
+    if: ${{ (needs.pr_comment.outputs.command == 'run-tests' && needs.pr_comment.outputs.not-md == 'true') || needs.pr_comment.outputs.command == 'run-tests-extended' }}
     name: Deploy PR
     uses: ./.github/workflows/deploy_tre_reusable.yml
     with:
       prRef: ${{ needs.pr_comment.outputs.prRef }}
       prHeadSha: ${{ needs.pr_comment.outputs.prHeadSha }}
       ciGitRef: ${{ needs.pr_comment.outputs.ciGitRef }}
+      runExtendedTests: ${{ needs.pr_comment.outputs.command == 'run-tests-extended' }}
     secrets:
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
       ACR_NAME: ${{ format('tre{0}', needs.pr_comment.outputs.refid) }}
@@ -248,14 +197,11 @@ jobs:
       STATE_STORAGE_ACCOUNT_NAME: ${{ format('tre{0}mgmt', needs.pr_comment.outputs.refid) }}
       SWAGGER_UI_CLIENT_ID: ${{ secrets.SWAGGER_UI_CLIENT_ID }}
       TEST_APP_ID: ${{ secrets.TEST_APP_ID }}
-      TEST_USER_NAME: ${{ secrets.TEST_USER_NAME }}
-      TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
       TEST_WORKSPACE_APP_ID: ${{ secrets.TEST_WORKSPACE_APP_ID }}
-      AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID }}"
-      AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET: "${{ secrets.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET }}"
+      TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
+      TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
       TF_STATE_CONTAINER: ${{ secrets.TF_STATE_CONTAINER }}
       TRE_ADDRESS_SPACE: ${{ secrets.TRE_ADDRESS_SPACE }}
       TRE_ID: ${{ format('tre{0}', needs.pr_comment.outputs.refid) }}
       CI_CACHE_ACR_NAME: ${{ secrets.ACR_NAME }}
       TF_LOG: ${{ secrets.TF_LOG }}
-

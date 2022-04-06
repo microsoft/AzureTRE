@@ -1,3 +1,4 @@
+from json import JSONDecodeError
 import pytest
 
 from httpx import AsyncClient
@@ -25,9 +26,9 @@ async def admin_token(verify) -> str:
     async with AsyncClient(verify=verify) as client:
         responseJson = ""
         headers = {'Content-Type': "application/x-www-form-urlencoded"}
-        if config.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID != "" and config.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET != "":
+        if config.TEST_ACCOUNT_CLIENT_ID != "" and config.TEST_ACCOUNT_CLIENT_SECRET != "":
             # Use Client Credentials flow
-            payload = f"grant_type=client_credentials&client_id={config.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID}&client_secret={config.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET}&scope=api://{config.API_CLIENT_ID}/.default"
+            payload = f"grant_type=client_credentials&client_id={config.TEST_ACCOUNT_CLIENT_ID}&client_secret={config.TEST_ACCOUNT_CLIENT_SECRET}&scope=api://{config.API_CLIENT_ID}/.default"
             url = f"https://login.microsoftonline.com/{config.AAD_TENANT_ID}/oauth2/v2.0/token"
 
         else:
@@ -36,7 +37,10 @@ async def admin_token(verify) -> str:
             url = f"https://login.microsoftonline.com/{config.AAD_TENANT_ID}/oauth2/token"
 
         response = await client.post(url, headers=headers, content=payload)
-        responseJson = response.json()
+        try:
+            responseJson = response.json()
+        except JSONDecodeError:
+            assert False, "Failed to parse response as JSON: {}".format(response.content)
 
         assert "access_token" in responseJson, "Failed to get access_token: {}".format(response.content)
         token = responseJson["access_token"]
@@ -49,9 +53,9 @@ async def workspace_owner_token(verify) -> str:
     async with AsyncClient(verify=verify) as client:
 
         headers = {'Content-Type': "application/x-www-form-urlencoded"}
-        if config.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID != "" and config.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET != "":
+        if config.TEST_ACCOUNT_CLIENT_ID != "" and config.TEST_ACCOUNT_CLIENT_SECRET != "":
             # Use Client Credentials flow
-            payload = f"grant_type=client_credentials&client_id={config.AUTOMATION_ADMIN_ACCOUNT_CLIENT_ID}&client_secret={config.AUTOMATION_ADMIN_ACCOUNT_CLIENT_SECRET}&scope=api://{config.TEST_WORKSPACE_APP_ID}/.default"
+            payload = f"grant_type=client_credentials&client_id={config.TEST_ACCOUNT_CLIENT_ID}&client_secret={config.TEST_ACCOUNT_CLIENT_SECRET}&scope=api://{config.TEST_WORKSPACE_APP_ID}/.default"
             url = f"https://login.microsoftonline.com/{config.AAD_TENANT_ID}/oauth2/v2.0/token"
 
         else:
@@ -60,7 +64,10 @@ async def workspace_owner_token(verify) -> str:
             url = f"https://login.microsoftonline.com/{config.AAD_TENANT_ID}/oauth2/token"
 
         response = await client.post(url, headers=headers, content=payload)
-        responseJson = response.json()
+        try:
+            responseJson = response.json()
+        except JSONDecodeError:
+            assert False, "Failed to parse response as JSON: {}".format(response.content)
 
         assert "access_token" in responseJson, "Failed to get access_token: {}".format(response.content)
         token = responseJson["access_token"]

@@ -10,12 +10,13 @@ FULL_IMAGE_NAME_PREFIX:=`echo "${FULL_CONTAINER_REGISTRY_NAME}/${IMAGE_NAME_PREF
 target_title = @echo -e "\n\e[34m»»» 🧩 \e[96m$(1)\e[0m..."
 
 all: bootstrap mgmt-deploy images tre-deploy
-images: build-and-push-api build-and-push-resource-processor build-and-push-gitea build-and-push-guacamole
+images: build-and-push-api build-and-push-resource-processor build-and-push-gitea build-and-push-guacamole build-and-push-mlflow
 
 build-and-push-api: build-api-image push-api-image
 build-and-push-resource-processor: build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image
 build-and-push-gitea: build-gitea-image push-gitea-image
 build-and-push-guacamole: build-guacamole-image push-guacamole-image
+build-and-push-mlflow: build-mlflow-image push-mlflow-image
 tre-deploy: deploy-core deploy-shared-services show-core-output
 deploy-shared-services: firewall-install gitea-install nexus-install
 
@@ -80,6 +81,9 @@ build-gitea-workspace-service-image:
 build-guacamole-image:
 	$(call build_image,"guac-server","templates/workspace_services/guacamole/version.txt","templates/workspace_services/guacamole/guacamole-server/docker/Dockerfile","templates/workspace_services/guacamole/guacamole-server")
 
+build-mlflow-image:
+	$(call build_image,"mlflow-server","templates/workspace_services/mlflow/mlflow-server/version.txt","templates/workspace_services/mlflow/mlflow-server/docker/Dockerfile","templates/workspace_services/mlflow/mlflow-server")
+
 # A recipe for pushing images. Parameters:
 # 1. Image name suffix
 # 2. Version file path
@@ -108,6 +112,9 @@ push-gitea-workspace-service-image:
 
 push-guacamole-image:
 	$(call push_image,"guac-server","./templates/workspace_services/guacamole/version.txt")
+
+push-mlflow-image:
+	$(call push_image,"mlflow-server","./templates/workspace_services/mlflow/mlflow-server/version.txt")
 
 # # These targets are for a graceful migration of Firewall
 # # from terraform state in Core to a Shared Service.
@@ -214,10 +221,26 @@ terraform-destroy:
 	&& . ./devops/scripts/load_terraform_env.sh ${DIR}/.env \
 	&& cd ${DIR}/terraform/ && ./destroy.sh
 
+# This will validate all files, not only the changed ones as the CI version does.
 lint:
-	$(call target_title, "Linting Python and Terraform") && \
-	flake8 && \
-	cd ./templates && terraform fmt -check -recursive -diff
+	$(call target_title, "Linting")
+	@terraform fmt -check -recursive -diff
+	@echo "You might not see much on the screen for a few minutes..."
+	@# LOG_LEVEL=NOTICE reduces noise but it might also seem like the process is stuck - it's not...
+	@docker run --name superlinter --pull=always --rm \
+		-e RUN_LOCAL=true \
+		-e LOG_LEVEL=NOTICE \
+		-e VALIDATE_MARKDOWN=true \
+		-e VALIDATE_PYTHON_FLAKE8=true \
+		-e VALIDATE_YAML=true \
+		-e VALIDATE_TERRAFORM_TFLINT=true \
+		-e VALIDATE_JAVA=true \
+		-e JAVA_FILE_NAME=checkstyle.xml \
+		-e VALIDATE_BASH=true \
+		-e VALIDATE_BASH_EXEC=true \
+		-e VALIDATE_GITHUB_ACTIONS=true \
+		-v $${LOCAL_WORKSPACE_FOLDER}:/tmp/lint \
+		github/super-linter:slim-v4
 
 bundle-build:
 	$(call target_title, "Building ${DIR} bundle with Porter") \
@@ -234,7 +257,7 @@ bundle-install:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& . ./devops/scripts/load_env.sh ${DIR}/.env \
-	&& cd ${DIR} && porter install -p ./parameters.json --cred ./azure.json --allow-docker-host-access --debug
+	&& cd ${DIR} && porter install -p ./parameters.json --cred ${ROOTPATH}/resource_processor/vmss_porter/azure.json --allow-docker-host-access --debug
 
 bundle-uninstall:
 	$(call target_title, "Uninstalling ${DIR} with Porter") \
@@ -242,7 +265,7 @@ bundle-uninstall:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& . ./devops/scripts/load_env.sh ${DIR}/.env \
-	&& cd ${DIR} && porter uninstall -p ./parameters.json --cred ./azure.json --debug
+	&& cd ${DIR} && porter uninstall -p ./parameters.json --cred ${ROOTPATH}/resource_processor/vmss_porter/azure.json --allow-docker-host-access --debug
 
 bundle-custom-action:
 	$(call target_title, "Performing:${ACTION} ${DIR} with Porter") \
@@ -250,7 +273,7 @@ bundle-custom-action:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& . ./devops/scripts/load_env.sh ${DIR}/.env \
-	&& cd ${DIR} && porter invoke --action ${ACTION} -p ./parameters.json --cred ./azure.json --debug
+	&& cd ${DIR} && porter invoke --action ${ACTION} -p ./parameters.json --cred ${ROOTPATH}/resource_processor/vmss_porter/azure.json --allow-docker-host-access --debug
 
 bundle-publish:
 	$(call target_title, "Publishing ${DIR} bundle with Porter") \
@@ -297,18 +320,28 @@ setup-local-debugging:
 	$(call target_title,"Setting up the ability to debug the API and Resource Processor") \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& pushd ./templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ./devops/scripts/load_env.sh ./templates/core/private.env \
 	&& . ./scripts/setup_local_debugging.sh
 
-register-aad-workspace:
-	$(call target_title,"Registering AAD Workspace") \
+auth:
+	$(call target_title,"Setting up Azure Active Directory") \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& pushd ./templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ./devops/scripts/load_env.sh ./templates/core/private.env \
-	&& . ./devops/scripts/register-aad-workspace.sh
+	&& . ./scripts/create_aad_assets.sh
 
 show-core-output:
 	$(call target_title,"Display TRE core output") \
 	&& pushd ./templates/core/terraform/ > /dev/null && terraform show && popd > /dev/null
+
+
+api-healthcheck:
+	$(call target_title,"Checking API Health") \
+	&& . ./devops/scripts/check_dependencies.sh nodocker \
+	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& . ./devops/scripts/load_env.sh ./templates/core/private.env \
+	&& ./devops/scripts/api_healthcheck.sh
