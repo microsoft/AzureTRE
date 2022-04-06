@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-script_dir=$(realpath $(dirname "${BASH_SOURCE[0]}"))
+script_dir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 if [[ -z ${STORAGE_ACCOUNT} ]]; then
   echo "STORAGE_ACCOUNT not set"
   exit 1
@@ -18,6 +18,7 @@ EOF
 indexExists=$(az storage blob list -o json \
     --account-name "${STORAGE_ACCOUNT}" \
     --auth-mode login \
+    # shellcheck disable=SC2016
     --container-name '$web' \
     --query "[?name=='index.html'].name" \
     | jq 'length')
@@ -28,6 +29,7 @@ if [[ ${indexExists} -lt 1 ]]; then
     az storage blob upload \
         --account-name "${STORAGE_ACCOUNT}" \
         --auth-mode login \
+        # shellcheck disable=SC2016
         --container-name '$web' \
         --file index.html \
         --name index.html \
@@ -46,14 +48,14 @@ mkdir -p "${ledir}/logs"
 
 # Initiate the ACME challange
 /opt/certbot/bin/certbot certonly \
-    --config-dir ${ledir} \
-    --work-dir ${ledir} \
-    --logs-dir ${ledir}/logs \
+    --config-dir "${ledir}" \
+    --work-dir "${ledir}" \
+    --logs-dir "${ledir}"/logs \
     --manual \
     --preferred-challenges=http \
-    --manual-auth-hook ${script_dir}/auth-hook.sh \
-    --manual-cleanup-hook ${script_dir}/cleanup-hook.sh \
-    --domain ${FQDN} \
+    --manual-auth-hook "${script_dir}"/auth-hook.sh \
+    --manual-cleanup-hook "${script_dir}"/cleanup-hook.sh \
+    --domain "${FQDN}" \
     --non-interactive \
     --agree-tos \
     --register-unsafely-without-email
@@ -71,7 +73,7 @@ openssl pkcs12 -export \
 if [[ -n ${KEYVAULT} ]]; then
     sid=$(az keyvault certificate import \
         -o json \
-        --vault-name ${KEYVAULT} \
+        --vault-name "${KEYVAULT}" \
         --name 'nexus-letsencrypt' \
         --file "${CERT_DIR}/aci.pfx" \
         --password "${CERT_PASSWORD}" \
@@ -79,7 +81,7 @@ if [[ -n ${KEYVAULT} ]]; then
 
     # Save the certificate password to KV
     az keyvault secret set --name nexus-letsencrypt-cert-password \
-      --vault-name ${KEYVAULT} \
+      --vault-name "${KEYVAULT}" \
       --value "${CERT_PASSWORD}"
 
     az network application-gateway ssl-cert update \

@@ -38,10 +38,10 @@ while [ "$1" != "" ]; do
     shift # remove the current value for `$1` and use the next
 done
 
-export NEXUS_URL="https://nexus-${tre_id}.${location}.cloudapp.azure.com"
-export NEXUS_ADMIN_PASSWORD_NAME="nexus-admin-password"
-export KEYVAULT_NAME="kv-${tre_id}"
-export NEXUS_PASS=$(az keyvault secret show --name ${NEXUS_ADMIN_PASSWORD_NAME} --vault-name ${KEYVAULT_NAME} -o json | jq -r '.value')
+NEXUS_URL="https://nexus-${tre_id}.${location}.cloudapp.azure.com"
+NEXUS_ADMIN_PASSWORD_NAME="nexus-admin-password"
+KEYVAULT_NAME="kv-${tre_id}"
+NEXUS_PASS=$(az keyvault secret show --name "${NEXUS_ADMIN_PASSWORD_NAME}" --vault-name "${KEYVAULT_NAME}" -o json | jq -r '.value')
 
 if [ -z "$NEXUS_PASS" ]; then
   echo "Unable to get the Nexus admin password from Keyvault. You may need to manually reset it in the Nexus host. Refer to the public Nexus documentation for more information."
@@ -52,23 +52,23 @@ fi
 for filename in "$(dirname "${BASH_SOURCE[0]}")"/nexus_config/*.json; do
     echo "Found config file: $filename. Sending to Nexus..."
     # Check if apt proxy
-    base_type=$( jq .baseType $filename | sed 's/"//g')
-    repo_type=$( jq .repoType $filename | sed 's/"//g')
-    repo_name=$(jq .name $filename | sed 's/"//g')
+    base_type=$( jq .baseType "$filename" | sed 's/"//g')
+    repo_type=$( jq .repoType "$filename" | sed 's/"//g')
+    repo_name=$(jq .name "$filename" | sed 's/"//g')
 
     base_url=$NEXUS_URL/service/rest/v1/repositories/$base_type/$repo_type
     full_url=$base_url/$repo_name
 
-    export STATUS_CODE=$(curl -iu admin:$NEXUS_PASS -X "GET" $full_url -H "accept: application/json" -k -s -w "%{http_code}" -o /dev/null)
+    STATUS_CODE=$(curl -iu admin:"$NEXUS_PASS" -X "GET" "$full_url" -H "accept: application/json" -k -s -w "%{http_code}" -o /dev/null)
     echo "Response received from Nexus: $STATUS_CODE"
 
     if [[ ${STATUS_CODE} == 404 ]]
     then
-        curl -iu admin:$NEXUS_PASS -XPOST \
-        $base_url \
+        curl -iu admin:"$NEXUS_PASS" -XPOST \
+        "$base_url" \
         -H 'accept: application/json' \
         -H 'Content-Type: application/json' \
-        -d @$filename
+        -d @"$filename"
     else
         echo "$repo_type proxy for $repo_name already exists."
     fi
