@@ -12,14 +12,6 @@ if [ $? -ne 0 ]; then
   echo -e "\e[31m»»» ⚠️ Azure CLI is not installed! 😥 Please go to http://aka.ms/cli to set it up or rebuild your devcontainer"
   exit 1
 fi
-if [[ "$1" == *"azfirewall"* ]]; then
-  echo -e "\n\e[96mChecking for Azure CLI extension(s)\e[0m..."
-  az extension show -n azure-firewall > /dev/null 2>&1
-  if [ $? -ne 0 ]; then
-    echo -e "\e[31m»»» ⚠️ Azure CLI azure-firewall extension is not installed! 😥 Please go to http://aka.ms/cli to set it up or rebuild your devcontainer"
-    exit 1
-  fi
-fi
 
 if [[ "$1" != *"nodocker"* ]]; then
   echo -e "\n\e[96mChecking for Docker\e[0m..."

@@ -167,14 +167,14 @@ letsencrypt:
 
 tre-start:
 	$(call target_title, "Starting TRE") \
-	&& . ./devops/scripts/check_dependencies.sh azfirewall \
+	&& . ./devops/scripts/check_dependencies.sh \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& ./devops/scripts/control_tre.sh start
 
 tre-stop:
 	$(call target_title, "Stopping TRE") \
-	&& . ./devops/scripts/check_dependencies.sh azfirewall \
+	&& . ./devops/scripts/check_dependencies.sh \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& ./devops/scripts/control_tre.sh stop
