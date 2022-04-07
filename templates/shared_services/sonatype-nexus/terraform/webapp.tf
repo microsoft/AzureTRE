@@ -1,7 +1,7 @@
 resource "azurerm_app_service" "nexus" {
   name                = "nexus-${var.tre_id}"
   resource_group_name = local.core_resource_group_name
-  location            = var.location
+  location            = data.azurerm_resource_group.rg.location
   app_service_plan_id = data.azurerm_app_service_plan.core.id
   https_only          = true
 
@@ -67,7 +67,7 @@ resource "azurerm_app_service" "nexus" {
 resource "azurerm_private_endpoint" "nexus_private_endpoint" {
   name                = "pe-nexus-${var.tre_id}"
   resource_group_name = local.core_resource_group_name
-  location            = var.location
+  location            = data.azurerm_resource_group.rg.location
   subnet_id           = data.azurerm_subnet.shared.id
 
   private_service_connection {
