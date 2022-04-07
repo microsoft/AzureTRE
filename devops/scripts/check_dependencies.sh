@@ -17,7 +17,7 @@ if ! command -v az &> /dev/null; then
   exit 1
 fi
 
-if [[ "$1" != *"nodocker"* ]]; then
+if [[ "${1:-?}" != *"nodocker"* ]]; then
   echo -e "\n\e[96mChecking for Docker\e[0m..."
   if ! command -v docker &> /dev/null; then
     echo -e "\e[31m»»» ⚠️ Docker is not installed! 😥 Please go to https://docs.docker.com/engine/install/ to set it up or rebuild your devcontainer"
@@ -25,7 +25,7 @@ if [[ "$1" != *"nodocker"* ]]; then
   fi
 fi
 
-if  [[ "$1" == *"certbot"* ]]; then
+if  [[ "${1:-?}" == *"certbot"* ]]; then
   echo -e "\n\e[96mChecking for Certbot\e[0m..."
   if ! /opt/certbot/bin/certbot --version > /dev/null 2>&1; then
     echo -e "\e[31m»»» ⚠️ Certbot is not installed! 😥 Please go to https://certbot.eff.org/lets-encrypt/pip-other to set it up or rebuild your devcontainer"
@@ -33,7 +33,7 @@ if  [[ "$1" == *"certbot"* ]]; then
   fi
 fi
 
-if [[ "$1" == *"porter"* ]]; then
+if [[ "${1:-?}" == *"porter"* ]]; then
   echo -e "\n\e[96mChecking for porter\e[0m..."
   if ! command -v porter &> /dev/null; then
     echo -e "\e[31m»»» ⚠️ Porter is not installed! 😥 Please go to https://porter.sh/install/ to set it up or rebuild your devcontainer"
@@ -43,7 +43,7 @@ fi
 
 # This is called if we are in a CI system and we will login
 # with a Service Principal.
-if [ -n "${TF_IN_AUTOMATION}" ]
+if [ -n "${TF_IN_AUTOMATION:-}" ]
 then
     az login --service-principal -u "$ARM_CLIENT_ID" -p "$ARM_CLIENT_SECRET" --tenant "$ARM_TENANT_ID"
     az account set -s "$ARM_SUBSCRIPTION_ID"
