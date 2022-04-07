@@ -61,7 +61,7 @@ $(call target_title, "Building $(1) Image") \
 && az acr login -n $${ACR_NAME} \
 && if [ -n "$${CI_CACHE_ACR_NAME:-}" ]; then \
 	az acr login -n $${CI_CACHE_ACR_NAME}; \
-	ci_cache="--cache-from $${CI_CACHE_ACR_NAME}.azurecr.io/$${image_name_suffix}:$${__version__}"; fi \
+	ci_cache="--cache-from $${CI_CACHE_ACR_NAME}.azurecr.io/${IMAGE_NAME_PREFIX}/$(1):$${__version__}"; fi \
 && docker build -t ${FULL_IMAGE_NAME_PREFIX}/$(1):$${__version__} --build-arg BUILDKIT_INLINE_CACHE=1 \
 	--cache-from ${FULL_IMAGE_NAME_PREFIX}/$(1):$${__version__} $${ci_cache:-} -f $(3) $(4)
 endef
