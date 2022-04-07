@@ -147,7 +147,7 @@ gitea-install:
 	$(call target_title, "Installing Gitea") \
 	&& make SHARED_SERVICE_KEY=shared-service-gitea terraform-shared-service-deploy DIR=./templates/shared_services/gitea/terraform
 
-nexus-install:
+nexus-install: nexus-cert-install nexus-letsencrypt
 	$(call target_title, "Installing Nexus") \
 	&& make SHARED_SERVICE_KEY=shared-service-sonatype-nexus terraform-shared-service-deploy DIR=./templates/shared_services/sonatype-nexus/terraform
 

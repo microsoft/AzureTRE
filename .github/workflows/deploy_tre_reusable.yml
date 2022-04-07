@@ -349,6 +349,12 @@ jobs:
           TF_VAR_keyvault_purge_protection_enabled: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
           TF_VAR_stateful_resources_locked: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
 
+      # We need to cache letsencrypt local metadata on agent to avoid repeated challenges and blacklisting
+      - name: Cache Nexus Letsencrypt metadata
+        uses: actions/cache@v3
+        with:
+          key: nexus letsencrypt
+          path: ./templates/shared_services/nexus-cert/letsencrypt
       - name: Install Nexus
         uses: ./.github/actions/devcontainer_run_command
         with:
