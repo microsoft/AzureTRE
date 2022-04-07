@@ -4,6 +4,9 @@
 ARG VARIANT="3.8"
 FROM mcr.microsoft.com/vscode/devcontainers/python:dev-${VARIANT}-buster
 
+# This will be set to true when running in VSCode
+ARG INTERACTIVE="false"
+
 ARG USERNAME=vscode
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
@@ -30,26 +33,40 @@ COPY .devcontainer/scripts/docker-client.sh /tmp/
 RUN /tmp/docker-client.sh $USERNAME
 
 # Install Docker
-RUN apt-get update && sudo apt-get install -y  apt-transport-https ca-certificates curl gnupg  lsb-release \
+RUN apt-get update && sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release \
     && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
     && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" \
     | tee /etc/apt/sources.list.d/docker.list > /dev/null \
-    && apt-get update && apt-get install -y docker-ce docker-ce-cli containerd.io
+    && apt-get update && apt-get install -y docker-ce docker-ce-cli containerd.io \
+    && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 # Install nekos act - run GitHub workflows locally https://github.com/nektos/act
-RUN curl https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash
+RUN if [ "${INTERACTIVE}" = "true" ]; then curl https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash; fi
 
 # Install Certbot
-RUN apt-get install -y python3 python3-venv libaugeas0 \
+RUN apt-get update && apt-get install -y python3 python3-venv libaugeas0 \
     && python3 -m venv /opt/certbot/ \
-    && /opt/certbot/bin/pip install --upgrade pip \
-    && /opt/certbot/bin/pip install certbot
+    && /opt/certbot/bin/pip install --no-cache-dir --upgrade pip \
+    && /opt/certbot/bin/pip install --no-cache-dir certbot \
+    && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 # Install Porter
-RUN export PORTER_HOME=/home/$USERNAME/.porter \
-    && curl -L https://cdn.porter.sh/latest/install-linux.sh | bash \
-    && ${PORTER_HOME}/porter mixin install docker \
-    && chown -R $USERNAME ${PORTER_HOME}
+# Not using the script from https://cdn.porter.sh/latest/install-linux.sh
+# as it installes things we don't need and duplicates the binary.
+ARG PORTER_MIRROR=https://cdn.porter.sh
+ARG PORTER_PERMALINK=v0.38.10
+ARG PORTER_PKG_PERMALINK=latest
+RUN export PORTER_HOME="/home/${USERNAME}/.porter" \
+    && mkdir -p "${PORTER_HOME}/runtimes" \
+    && curl -fsSLo "${PORTER_HOME}/porter" "${PORTER_MIRROR}/${PORTER_PERMALINK}/porter-linux-amd64" \
+    && chmod +x "${PORTER_HOME}/porter" \
+    && ln -s "${PORTER_HOME}/porter" "${PORTER_HOME}/runtimes/porter-runtime" \
+    && "${PORTER_HOME}/porter" mixin install exec --version "${PORTER_PKG_PERMALINK}" \
+    && "${PORTER_HOME}/porter" mixin install terraform --version "${PORTER_PKG_PERMALINK}" \
+    && "${PORTER_HOME}/porter" mixin install az --version "${PORTER_PKG_PERMALINK}" \
+    && "${PORTER_HOME}/porter" plugin install azure --version "${PORTER_PKG_PERMALINK}" \
+    && "${PORTER_HOME}/porter" mixin install docker --version "${PORTER_PKG_PERMALINK}" \
+    && chown -R "${USERNAME}" "${PORTER_HOME}"
 
 ENV PATH /home/$USERNAME/.porter/:$PATH
 
@@ -58,14 +75,16 @@ COPY ["requirements.txt", "/tmp/pip-tmp/" ]
 COPY ["api_app/requirements.txt", "api_app/requirements-dev.txt", "/tmp/pip-tmp/api_app/" ]
 COPY ["resource_processor/vmss_porter/requirements.txt", "/tmp/pip-tmp/resource_processor/vmss_porter/" ]
 COPY ["docs/requirements.txt", "/tmp/pip-tmp/docs/"]
+COPY ["e2e_tests/requirements.txt", "/tmp/pip-tmp/e2e_tests/"]
 RUN pip3 --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requirements.txt && rm -rf /tmp/pip-tmp
 
 # Install azure-cli
 COPY ./.devcontainer/scripts/azure-cli.sh /tmp/
 RUN /tmp/azure-cli.sh
 
-RUN wget -O /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.13.0/yq_linux_amd64 \
-  && chmod +x /usr/local/bin/yq
+ARG YQ_VERSION="v4.13.0"
+RUN wget -O /usr/local/bin/yq "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64" \
+    && chmod +x /usr/local/bin/yq
 
 USER $USERNAME
 
@@ -77,4 +96,4 @@ RUN echo "export HISTFILE=$HOME/commandhistory/.bash_history" >> "$HOME/.bashrc"
 
 # Install github-cli
 COPY ./.devcontainer/scripts/gh.sh /tmp/
-RUN /tmp/gh.sh
+RUN if [ "${INTERACTIVE}" = "true" ]; then /tmp/gh.sh; fi
