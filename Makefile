@@ -89,7 +89,7 @@ firewall-install:
 	&& $(MAKE) bundle-publish DIR=./templates/shared_services/firewall/ \
 	&& $(MAKE) shared-service-register-and-deploy DIR=./templates/shared_services/firewall/ BUNDLE_TYPE=shared_service
 
-nexus-install:
+nexus-install: nexus-cert-install nexus-letsencrypt
 	$(MAKE) bundle-build DIR=./templates/shared_services/sonatype-nexus/ \
 	&& $(MAKE) bundle-publish DIR=./templates/shared_services/sonatype-nexus/ \
 	&& $(MAKE) shared-service-register-and-deploy DIR=./templates/shared_services/sonatype-nexus/ BUNDLE_TYPE=shared_service
@@ -98,6 +98,11 @@ gitea-install:
 	$(MAKE) bundle-build DIR=./templates/shared_services/gitea/ \
 	&& $(MAKE) bundle-publish DIR=./templates/shared_services/gitea/ \
 	&& $(MAKE) shared-service-register-and-deploy DIR=./templates/shared_services/gitea/ BUNDLE_TYPE=shared_service
+
+nexus-cert-install:
+	$(MAKE) bundle-build DIR=./templates/shared_services/nexus-cert/ \
+	&& $(MAKE) bundle-publish DIR=./templates/shared_services/nexus-cert/ \
+	&& $(MAKE) shared-service-register-and-deploy DIR=./templates/shared_services/nexus-cert/ BUNDLE_TYPE=shared_service
 
 # A recipe for pushing images. Parameters:
 # 1. Image name suffix
@@ -154,23 +159,7 @@ terraform-shared-service-deploy:
 	&& . ./devops/scripts/key_vault_list.sh \
   && if [[ "$${TF_LOG}" == "DEBUG" ]]; then echo "TF DEBUG set - output supressed - see tflogs container for log file" && cd ${DIR} && ../../deploy_from_local.sh 1>/dev/null 2>/dev/null; else cd ${DIR} && ../../deploy_from_local.sh; fi;
 
-firewall-install:
-	$(call target_title, "Installing Firewall") \
-  && make SHARED_SERVICE_KEY=shared-service-firewall terraform-shared-service-deploy DIR=./templates/shared_services/firewall/terraform
-
-gitea-install:
-	$(call target_title, "Installing Gitea") \
-	&& make SHARED_SERVICE_KEY=shared-service-gitea terraform-shared-service-deploy DIR=./templates/shared_services/gitea/terraform
-
-nexus-install: nexus-cert-install nexus-letsencrypt
-	$(call target_title, "Installing Nexus") \
-	&& make SHARED_SERVICE_KEY=shared-service-sonatype-nexus terraform-shared-service-deploy DIR=./templates/shared_services/sonatype-nexus/terraform
-
 # / End migration targets
-
-nexus-cert-install:
-	$(call target_title, "Installing Nexus Cert") \
-	&& make SHARED_SERVICE_KEY=shared-service-nexus-cert terraform-shared-service-deploy DIR=./templates/shared_services/nexus-cert/terraform
 
 nexus-letsencrypt:
 	$(call target_title, "Requesting LetsEncrypt SSL certificate for Nexus") \
