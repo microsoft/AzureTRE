@@ -1,6 +1,6 @@
 resource "azurerm_network_interface" "nexus" {
   name                = "nic-nexus-${var.tre_id}"
-  location            = var.location
+  location            = data.azurerm_resource_group.rg.location
   resource_group_name = local.core_resource_group_name
 
   ip_configuration {
@@ -72,7 +72,7 @@ resource "azurerm_key_vault_secret" "nexus_admin_password" {
 
 resource "azurerm_user_assigned_identity" "nexus_msi" {
   name                = "id-nexus-${var.tre_id}"
-  location            = var.location
+  location            = data.azurerm_resource_group.rg.location
   resource_group_name = local.core_resource_group_name
   lifecycle { ignore_changes = [tags] }
 }
@@ -94,7 +94,7 @@ resource "azurerm_key_vault_access_policy" "nexus_msi" {
 resource "azurerm_linux_virtual_machine" "nexus" {
   name                            = "nexus-${var.tre_id}"
   resource_group_name             = local.core_resource_group_name
-  location                        = var.location
+  location                        = data.azurerm_resource_group.rg.location
   network_interface_ids           = [azurerm_network_interface.nexus.id]
   size                            = "Standard_B2s"
   disable_password_authentication = false
