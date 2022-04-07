@@ -38,3 +38,7 @@ data "azurerm_storage_account" "nexus" {
   name                = local.storage_account_name
   resource_group_name = local.core_resource_group_name
 }
+
+data "azurerm_resource_group" "rg" {
+  name = local.core_resource_group_name
+}
