@@ -49,6 +49,15 @@ write_files:
       fi
     permissions: '0755'
 
+  - path: /etc/cron.daily/renew-nexus-cert
+    # Daily cron job to renew nexus cert based on certificate present in keyvault
+    content: |
+      #!/bin/bash
+      set -o errexit
+      echo "Calling configure-nexus-ssl script to renew ssl certificate"
+      bash /home/adminuser/configure-nexus-ssl.sh
+    permissions: '0755'
+
   # Configure Nexus to disable default repos
   - path: /etc/nexus-data/etc/nexus.properties
     content: |
