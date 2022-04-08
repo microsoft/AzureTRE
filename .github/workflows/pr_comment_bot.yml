@@ -89,11 +89,11 @@ jobs:
 
           # Also generate the REFID for the branch, but only if the headRepo is matches $REPO
           # This is used later in the destroy to destroy for the PR + branch
-          pr_head_json=$(gh pr view $PR_NUMBER --repo $REPO --json headRefName,headRepositoryOwner,headRepository)
-          pr_head_repo=$(echo $pr_head_json | jq -r '"\(.headRepositoryOwner.login)\\\(.headRepository.name)"')
+          pr_head_json=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json headRefName,headRepositoryOwner,headRepository)
+          pr_head_repo=$(echo "$pr_head_json" | jq -r '"\(.headRepositoryOwner.login)\\\(.headRepository.name)"')
           if [[ "$pr_head_repo" == "$REPO" ]]; then
-            github_branch_ref="refs/heads/$(echo $pr_head_json | jq -r '.headRefName')"
-            BRANCH_REFID=$(echo ${github_pr_ref} | shasum | cut -c1-8)
+            github_branch_ref="refs/heads/$(echo "$pr_head_json" | jq -r '.headRefName')"
+            BRANCH_REFID=$(echo "${github_pr_ref}" | shasum | cut -c1-8)
             echo "Using branch refid of $BRANCH_REFID for branch $github_branch_ref"
           else
             echo "Head repo is '$pr_head_repo' - skipping BRANCH_REFID"
@@ -186,9 +186,9 @@ jobs:
           SHOW_KEYVAULT_DEBUG_ON_DESTROY: ${{ secrets.SHOW_KEYVAULT_DEBUG_ON_DESTROY }}
         run: |
           set -e
-          gh pr comment ${PR_NUMBER} --repo $REPO --body "Destroying PR test environment (RG: ${RG_NAME})... (run: https://github.com/${REPO}/actions/runs/${RUN_ID})"
-          devops/scripts/destroy_env_no_terraform.sh --core-tre-rg ${RG_NAME}
-          gh pr comment ${PR_NUMBER} --repo $REPO --body "PR test environment destroy complete (RG: ${RG_NAME})"
+          gh pr comment "${PR_NUMBER}" --repo "$REPO" --body "Destroying PR test environment (RG: ${RG_NAME})... (run: https://github.com/${REPO}/actions/runs/${RUN_ID})"
+          devops/scripts/destroy_env_no_terraform.sh --core-tre-rg "${RG_NAME}"
+          gh pr comment "${PR_NUMBER}" --repo "$REPO" --body "PR test environment destroy complete (RG: ${RG_NAME})"
 
   destroy_branch_env:
     needs: [pr_comment]
@@ -206,9 +206,9 @@ jobs:
           SHOW_KEYVAULT_DEBUG_ON_DESTROY: ${{ secrets.SHOW_KEYVAULT_DEBUG_ON_DESTROY }}
         run: |
           set -e
-          gh pr comment ${PR_NUMBER} --repo $REPO --body "Destroying branch test environment (RG: ${RG_NAME})... (run: https://github.com/${REPO}/actions/runs/${RUN_ID})"
+          gh pr comment "${PR_NUMBER}" --repo "$REPO" --body "Destroying branch test environment (RG: ${RG_NAME})... (run: https://github.com/${REPO}/actions/runs/${RUN_ID})"
           devops/scripts/destroy_env_no_terraform.sh --core-tre-rg "${RG_NAME}"
-          gh pr comment ${PR_NUMBER} --repo $REPO --body "Branch test environment destroy complete (RG: ${RG_NAME})"
+          gh pr comment "${PR_NUMBER}" --repo "$REPO" --body "Branch test environment destroy complete (RG: ${RG_NAME})"
 
   run_test:
     # Run the tests with the re-usable workflow
