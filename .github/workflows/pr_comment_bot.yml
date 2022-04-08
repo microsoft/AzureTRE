@@ -180,6 +180,13 @@ jobs:
         with:
           persist-credentials: false
 
+      # Perform az login for destroy env script to be able to run
+      - name: Azure Login
+        if: ${{ steps.check_command.outputs.result == 'test-destroy-env' }}
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
       - name: Run deployment cleanup
         env:
           PR_NUMBER: ${{ github.event.issue.number }}
@@ -206,6 +213,13 @@ jobs:
         uses: actions/checkout@v2
         with:
           persist-credentials: false
+
+      # Perform az login for destroy env script to be able to run
+      - name: Azure Login
+        if: ${{ steps.check_command.outputs.result == 'test-destroy-env' }}
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Run deployment cleanup
         env:
