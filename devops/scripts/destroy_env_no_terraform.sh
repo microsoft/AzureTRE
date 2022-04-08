@@ -66,6 +66,12 @@ then
   no_wait_option="--no-wait"
 fi
 
+group_show_result=$(az group show --name ${core_tre_rg} > /dev/null 2>&1; echo $?)
+if [[ "$group_show_result" !=  "0" ]]; then
+  echo "Resource group ${core_tre_rg} not found - skipping destroy"
+  exit 1
+fi
+
 locks=$(az group lock list -g ${core_tre_rg} --query [].id -o tsv)
 if [ ! -z "${locks:-}" ]
 then
