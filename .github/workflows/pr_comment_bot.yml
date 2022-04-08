@@ -101,9 +101,6 @@ jobs:
           fi
           echo "::set-output name=branchRefid::${BRANCH_REFID}"
 
-          github_branch_ref="refs/heads/${PR_NUMBER}/merge"
-          BRANCH_REFID=$(echo)
-
           # Get PR HEAD SHA for checks status
           echo "Getting PR head SHA"
           PR_HEAD_SHA=$(gh api "/repos/$REPO/pulls/$PR_NUMBER" --jq .head.sha)
