@@ -174,6 +174,7 @@ jobs:
     needs: [pr_comment]
     if: ${{ needs.pr_comment.outputs.command == 'test-destroy-env' }}
     runs-on: ubuntu-latest
+    environment: CICD
     name: Destroy PR env
     steps:
       - name: Run deployment cleanup
@@ -194,6 +195,7 @@ jobs:
     needs: [pr_comment]
     if: ${{ needs.pr_comment.outputs.command == 'test-destroy-env' && needs.pr_comment.outputs.branchRefid != '' }}
     runs-on: ubuntu-latest
+    environment: CICD
     name: Destroy branch env
     steps:
       - name: Run deployment cleanup
