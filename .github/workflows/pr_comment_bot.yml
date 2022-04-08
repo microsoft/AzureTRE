@@ -174,6 +174,12 @@ jobs:
     environment: CICD
     name: Destroy PR env
     steps:
+      # Ensure we have the script files
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
       - name: Run deployment cleanup
         env:
           PR_NUMBER: ${{ github.event.issue.number }}
@@ -195,6 +201,12 @@ jobs:
     environment: CICD
     name: Destroy branch env
     steps:
+      # Ensure we have the script files
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
       - name: Run deployment cleanup
         env:
           PR_NUMBER: ${{ github.event.issue.number }}
