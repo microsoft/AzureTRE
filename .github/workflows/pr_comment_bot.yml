@@ -90,7 +90,7 @@ jobs:
           # Also generate the REFID for the branch, but only if the headRepo is matches $REPO
           # This is used later in the destroy to destroy for the PR + branch
           pr_head_json=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json headRefName,headRepositoryOwner,headRepository)
-          pr_head_repo=$(echo "$pr_head_json" | jq -r '"\(.headRepositoryOwner.login)\\\(.headRepository.name)"')
+          pr_head_repo=$(echo "$pr_head_json" | jq -r '"\(.headRepositoryOwner.login)/\(.headRepository.name)"')
           if [[ "$pr_head_repo" == "$REPO" ]]; then
             github_branch_ref="refs/heads/$(echo "$pr_head_json" | jq -r '.headRefName')"
             BRANCH_REFID=$(echo "${github_pr_ref}" | shasum | cut -c1-8)
