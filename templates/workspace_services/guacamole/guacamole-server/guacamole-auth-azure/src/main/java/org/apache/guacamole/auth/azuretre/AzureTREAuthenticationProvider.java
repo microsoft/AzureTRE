@@ -28,6 +28,7 @@ import org.apache.guacamole.net.auth.AuthenticatedUser;
 import org.apache.guacamole.net.auth.Credentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.net.URL;
 
 public class AzureTREAuthenticationProvider extends AbstractAuthenticationProvider {
 
@@ -44,8 +45,8 @@ public class AzureTREAuthenticationProvider extends AbstractAuthenticationProvid
     }
 
     @Override
-    public AzureTREAuthenticatedUser authenticateUser(Credentials credentials) throws GuacamoleException {
-        LOGGER.info("authenticateUser");
+    public AzureTREAuthenticatedUser authenticateUser(Credentials credentials) {
+        LOGGER.info("Authenticating user");
 
         // Getting headers from the oauth2 proxy
         String accessToken = credentials.getRequest().getHeader("X-Forwarded-Access-Token");
@@ -72,8 +73,11 @@ public class AzureTREAuthenticationProvider extends AbstractAuthenticationProvid
 
         if (authenticatedUser instanceof AzureTREAuthenticatedUser) {
             AzureTREAuthenticatedUser user = (AzureTREAuthenticatedUser) authenticatedUser;
+            String accessToken = user.getAccessToken();
 
-            UserContext treUserContext = new UserContext(this);
+            AuthenticationProviderService authProviderService = new AuthenticationProviderService();
+
+          UserContext treUserContext = new UserContext(this);
             treUserContext.init(user);
 
             // Validate the token 'again', the OpenID extension verified it, but it didn't verify
@@ -83,16 +87,17 @@ public class AzureTREAuthenticationProvider extends AbstractAuthenticationProvid
             // extension authorized... (The user will see an empty list of VMs)
             // Note2: The API app will also verify the token an in any case will not return any vms
             // in this case.
-            // try {
-            //     final UrlJwkProvider jwkProvider =
-            //         new UrlJwkProvider(new URL(System.getenv("OPENID_JWKS_ENDPOINT")));
-            //     authProviderService.validateToken(idToken, jwkProvider);
-            // }
-            // catch (final Exception ex) {
-            //     // Failed to validate the token
-            //     LOGGER.error("Failed to validate token. ex: " + ex);
-            //     return null;
-            // }
+            try {
+                LOGGER.info("Validating token");
+                final UrlJwkProvider jwkProvider =
+                    new UrlJwkProvider(new URL(System.getenv("OAUTH2_PROXY_JWKS_ENDPOINT")));
+                authProviderService.validateToken(accessToken, jwkProvider);
+            }
+            catch (final Exception ex) {
+                // Failed to validate the token
+                LOGGER.error("Failed to validate token. ex: " + ex);
+                return null;
+            }
 
             return treUserContext;
         }

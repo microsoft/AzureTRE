@@ -38,11 +38,12 @@ resource "azurerm_app_service" "guacamole" {
     AUDIENCE              = "${var.ws_client_id}"
     ISSUER                = local.issuer
 
-    OAUTH2_PROXY_CLIENT_ID         = "${var.ws_client_id}"
-    OAUTH2_PROXY_CLIENT_SECRET     = "${var.ws_client_secret}"
-    OAUTH2_PROXY_REDIRECT_URI      = "https://${local.webapp_name}.azurewebsites.net/oauth2/callback"
-    OAUTH2_PROXY_EMAIL_DOMAIN      = "${var.oauth2_proxy_email_domain}" #
-    OAUTH2_PROXY_OIDC_ISSUER_URL   = "https://login.microsoftonline.com/${local.aad_tenant_id}/v2.0"
+    OAUTH2_PROXY_CLIENT_ID       = "${var.ws_client_id}"
+    OAUTH2_PROXY_CLIENT_SECRET   = "${var.ws_client_secret}"
+    OAUTH2_PROXY_REDIRECT_URI    = "https://${local.webapp_name}.azurewebsites.net/oauth2/callback"
+    OAUTH2_PROXY_EMAIL_DOMAIN    = "${var.oauth2_proxy_email_domain}" #
+    OAUTH2_PROXY_OIDC_ISSUER_URL = "https://login.microsoftonline.com/${local.aad_tenant_id}/v2.0"
+    OAUTH2_PROXY_JWKS_ENDPOINT   = "https://login.microsoftonline.com/${local.aad_tenant_id}/discovery/v2.0/keys"
 
     # Solving the pulling from acr problem
     DOCKER_REGISTRY_SERVER_URL      = "${data.azurerm_container_registry.mgmt_acr.login_server}"
