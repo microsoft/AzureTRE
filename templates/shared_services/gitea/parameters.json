@@ -11,15 +11,9 @@
       }
     },
     {
-      "name": "azure_location",
-      "source": {
-        "env": "LOCATION"
-      }
-    },
-    {
       "name": "acr_name",
       "source": {
-        "env": "ACR_NAME"
+        "env": "MGMT_ACR_NAME"
       }
     },
     {

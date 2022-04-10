@@ -3,11 +3,6 @@ variable "tre_id" {
   description = "Unique TRE ID"
 }
 
-variable "location" {
-  type        = string
-  description = "Azure location (region) for deployment of core TRE services"
-}
-
 variable "gitea_allowed_fqdns" {
   type        = string
   description = "comma seperated string of allowed FQDNs for Gitea"

@@ -9,7 +9,7 @@ resource "random_password" "password" {
 resource "azurerm_mysql_server" "gitea" {
   name                              = "mysql-${var.tre_id}"
   resource_group_name               = local.core_resource_group_name
-  location                          = var.location
+  location                          = data.azurerm_resource_group.rg.location
   administrator_login               = "mysqladmin"
   administrator_login_password      = random_password.password.result
   sku_name                          = "GP_Gen5_2"
@@ -36,7 +36,7 @@ resource "azurerm_mysql_database" "gitea" {
 
 resource "azurerm_private_endpoint" "private-endpoint" {
   name                = "pe-${azurerm_mysql_server.gitea.name}"
-  location            = var.location
+  location            = data.azurerm_resource_group.rg.location
   resource_group_name = local.core_resource_group_name
   subnet_id           = data.azurerm_subnet.shared.id
 
