@@ -235,6 +235,7 @@ else
       if [[ "${http_code}" != 200 ]] && [[ "${http_code}" != 202 ]]; then
         if [[ "${http_code}" != 408 ]] && [[ "${http_code}" != 502 ]] && [[ "${http_code}" != 503 ]] && [[ "${http_code}" != 504 ]]; then
           echo "Got a non-retrieable HTTP status code: ${http_code}"
+          echo "${get_operation_result}"
           exit 1
         fi
         echo "Got HTTP code ${http_code}, retrying..."

@@ -79,7 +79,6 @@ All other variables can have their default values for now. You should now have a
 ```plaintext
 # Used for TRE deployment
 TRE_ID=mytre
-TRE_URL="https://${TRE_ID}.westurope.cloudapp.azure.com"
 CORE_ADDRESS_SPACE="10.1.0.0/22"
 TRE_ADDRESS_SPACE="10.0.0.0/12"
 DEPLOY_GITEA=true

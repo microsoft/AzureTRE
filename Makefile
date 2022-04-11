@@ -285,7 +285,7 @@ bundle-register:
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& az acr login --name $${ACR_NAME}	\
 	&& cd ${DIR} \
-	&& ${ROOTPATH}/devops/scripts/register_bundle_with_api.sh --acr-name "$${ACR_NAME}" --bundle-type "$${BUNDLE_TYPE}" --current --insecure --tre_url "$${TRE_URL}" --verify --workspace-service-name "$${WORKSPACE_SERVICE_NAME}"
+	&& ${ROOTPATH}/devops/scripts/register_bundle_with_api.sh --acr-name "$${ACR_NAME}" --bundle-type "$${BUNDLE_TYPE}" --current --insecure --tre_url "https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com" --verify --workspace-service-name "$${WORKSPACE_SERVICE_NAME}"
 
 shared-service-register-and-deploy:
 	@# NOTE: ACR_NAME below comes from the env files, so needs the double '$$'. Others are set on command execution and don't
@@ -295,7 +295,7 @@ shared-service-register-and-deploy:
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& az acr login --name $${ACR_NAME}	\
 	&& cd ${DIR} \
-	&& ${ROOTPATH}/devops/scripts/register_bundle_with_api.sh --acr-name "$${ACR_NAME}" --bundle-type "$${BUNDLE_TYPE}" --current --insecure --tre_url "$${TRE_URL}" --verify --deploy_shared_service
+	&& ${ROOTPATH}/devops/scripts/register_bundle_with_api.sh --acr-name "$${ACR_NAME}" --bundle-type "$${BUNDLE_TYPE}" --current --insecure --tre_url "https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com" --verify --deploy_shared_service
 
 static-web-upload:
 	$(call target_title, "Uploading to static website") \
