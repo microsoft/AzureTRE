@@ -3,8 +3,8 @@ data "azurerm_client_config" "deployer" {}
 # See https://microsoft.github.io/AzureTRE/tre-developers/letsencrypt/
 resource "azurerm_storage_account" "staticweb" {
   name                      = local.staticweb_storage_name
-  resource_group_name       = local.core_resource_group_name
-  location                  = var.location
+  resource_group_name       = data.azurerm_resource_group.rg.name
+  location                  = data.azurerm_resource_group.rg.location
   account_kind              = "StorageV2"
   account_tier              = "Standard"
   account_replication_type  = "LRS"

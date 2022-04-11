@@ -1,7 +1,7 @@
 resource "azurerm_public_ip" "appgwpip" {
   name                = "pip-nexus-${var.tre_id}"
-  resource_group_name = local.core_resource_group_name
-  location            = var.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+  location            = data.azurerm_resource_group.rg.location
   allocation_method   = "Static"
   sku                 = "Standard"
   domain_name_label   = "nexus-${var.tre_id}"
@@ -10,8 +10,8 @@ resource "azurerm_public_ip" "appgwpip" {
 }
 
 resource "azurerm_user_assigned_identity" "agw_id" {
-  resource_group_name = local.core_resource_group_name
-  location            = var.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+  location            = data.azurerm_resource_group.rg.location
   name                = "id-agw-nexuscert-${var.tre_id}"
 
   lifecycle { ignore_changes = [tags] }
@@ -19,8 +19,8 @@ resource "azurerm_user_assigned_identity" "agw_id" {
 
 resource "azurerm_application_gateway" "agw" {
   name                = "agw-nexuscert-${var.tre_id}"
-  resource_group_name = local.core_resource_group_name
-  location            = var.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+  location            = data.azurerm_resource_group.rg.location
 
   sku {
     name     = "Standard_v2"
@@ -161,11 +161,11 @@ resource "azurerm_application_gateway" "agw" {
 data "azurerm_subnet" "app_gw_subnet" {
   name                 = "AppGwSubnet"
   virtual_network_name = "vnet-${var.tre_id}"
-  resource_group_name  = local.core_resource_group_name
+  resource_group_name  = data.azurerm_resource_group.rg.name
 }
 
 data "azurerm_public_ip" "appgwpip_data" {
   depends_on          = [azurerm_application_gateway.agw]
   name                = "pip-nexus-${var.tre_id}"
-  resource_group_name = local.core_resource_group_name
+  resource_group_name = data.azurerm_resource_group.rg.name
 }

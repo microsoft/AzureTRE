@@ -1,8 +1,6 @@
 locals {
   staticweb_storage_name = lower(replace("stwebnexus${var.tre_id}", "-", ""))
 
-  core_resource_group_name = "rg-${var.tre_id}"
-
   staticweb_backend_pool_name = "beap-nexuscret-staticweb"
   app_path_map_name           = "upm-nexuscert"
   redirect_path_map_name      = "upm-nexuscert-redirect"
