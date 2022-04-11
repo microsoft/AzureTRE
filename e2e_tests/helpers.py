@@ -32,20 +32,11 @@ def get_auth_header(token: str) -> dict:
 
 
 @asynccontextmanager
-async def get_template(template_name, admin_token, verify):
+async def get_template(template_name, endpoint, admin_token, verify):
     async with AsyncClient(verify=verify) as client:
         headers = {'Authorization': f'Bearer {admin_token}'}
 
-        response = await client.get(f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACE_TEMPLATES}/{template_name}", headers=headers)
-        yield response
-
-
-@asynccontextmanager
-async def get_service_template(template_name, token, verify):
-    async with AsyncClient(verify=verify) as client:
-        headers = {'Authorization': f'Bearer {token}'}
-
-        response = await client.get(f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACE_SERVICE_TEMPLATES}/{template_name}", headers=headers)
+        response = await client.get(f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{endpoint}/{template_name}", headers=headers)
         yield response
 
 
