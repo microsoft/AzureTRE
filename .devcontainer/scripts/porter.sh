@@ -5,7 +5,7 @@ set -o nounset
 # Uncomment this line to see each command for debugging (careful: this will show secrets!)
 # set -o xtrace
 
-PORTER_HOME="/home/${USERNAME}/.porter"
+export PORTER_HOME="/home/${USERNAME}/.porter"
 
 mkdir -p "${PORTER_HOME}/runtimes"
 curl -fsSLo "${PORTER_HOME}/porter" "${PORTER_MIRROR}/${PORTER_PERMALINK}/porter-linux-amd64"
