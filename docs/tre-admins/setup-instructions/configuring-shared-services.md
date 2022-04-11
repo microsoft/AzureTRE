@@ -34,16 +34,15 @@ You can add repositories to Gitea either by command line or using the Web interf
 
 ### By the web interface
 
-1. on the jumbox, open Edge and go to: 
+1. on the jumbox, open Edge and go to:
 ```https://gitea-<TRE_ID>.azurewebsites.net/```
-1. Authenticate yourself using username ```giteaadmin``` and the secret ```<gitea-TRE_ID-administrator-password>``` stored in the keyvault, 
+1. Authenticate yourself using username ```giteaadmin``` and the secret ```<gitea-TRE_ID-administrator-password>``` stored in the keyvault,
 1. Add the repository of your choice
 
 ### Check the result
 
-In a workspace VM: 
+In a workspace VM:
 
   - command line: ```git clone https://gitea-<TRE_ID>.azurewebsites.net/giteaadmin/<NameOfrepository>```
 
   - or by looking at the web URL: ```https://gitea-<TRE_ID>.azurewebsites.net/```
-
