@@ -27,7 +27,7 @@ You can add repositories to Gitea either by command line or using the Web interf
 
 ### By command line
 
-1. On the jumbox, run: 
+1. On the jumbox, run:
 ```./scripts/gitea_migrate_repo.sh -t <tre_id> -g <URL_of_github_repo_to_migrate>```
 1. If you have issues with token or token doesn't work, you can reset the token by setting it's value to null in Key Vault:
 ```az keyvault secret set --name gitea-<tre-id>-admin-token --vault-name kv-<tre-id> --value null```
@@ -43,6 +43,6 @@ You can add repositories to Gitea either by command line or using the Web interf
 
 In a workspace VM:
 
-  - command line: ```git clone https://gitea-<TRE_ID>.azurewebsites.net/giteaadmin/<NameOfrepository>```
+command line: ```git clone https://gitea-<TRE_ID>.azurewebsites.net/giteaadmin/<NameOfrepository>```
 
-  - or by looking at the web URL: ```https://gitea-<TRE_ID>.azurewebsites.net/```
+web URL: ```https://gitea-<TRE_ID>.azurewebsites.net/```
