@@ -315,6 +315,26 @@ static-web-upload:
 	&& . ./devops/scripts/load_env.sh ./templates/core/private.env \
 	&& ./templates/core/terraform/scripts/upload_static_web.sh
 
+# TODO: register bundles that are currently used in e2e
+workspace_bundle = echo $(1) && $(MAKE) bundle-build DIR=./templates/workspaces/$(1)/ \
+	&& $(MAKE) bundle-publish DIR=./templates/workspaces/$(1)/ \
+	&& $(MAKE) bundle-register DIR="./templates/workspaces/$(1)" BUNDLE_TYPE=workspace
+
+workspace_service_bundle = echo $(1) && $(MAKE) bundle-build DIR=./templates/workspace_services/$(1)/ \
+	&& $(MAKE) bundle-publish DIR=./templates/workspace_services/$(1)/ \
+	&& $(MAKE) bundle-register DIR="./templates/workspace_services/$(1)" BUNDLE_TYPE=workspace_service
+
+prepare-for-e2e:
+	$(call workspace_bundle,base) \
+	&& $(call workspace_bundle,innereye) \
+	&& $(call workspace_service_bundle,guacamole) \
+	&& $(call workspace_service_bundle,azureml) \
+	&& $(call workspace_service_bundle,devtestlabs) \
+	&& $(call workspace_service_bundle,gitea)
+
+prepare-for-e2e2:
+	$(call workspace_service_bundle,innereye)
+
 test-e2e-smoke:
 	$(call target_title, "Running E2E smoke tests") && \
 	cd e2e_tests && \

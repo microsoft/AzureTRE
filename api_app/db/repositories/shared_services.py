@@ -7,7 +7,7 @@ from models.domain.authentication import User
 from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.resources import ResourceRepository, IS_ACTIVE_CLAUSE
 from db.repositories.operations import OperationRepository
-from db.errors import ResourceIsNotDeployed, EntityDoesNotExist
+from db.errors import DuplicateEntity, ResourceIsNotDeployed, EntityDoesNotExist
 from models.domain.shared_service import SharedService
 from models.schemas.resource import ResourcePatch
 from models.schemas.shared_service_template import SharedServiceTemplateInCreate
@@ -21,6 +21,10 @@ class SharedServiceRepository(ResourceRepository):
     @staticmethod
     def shared_service_query(shared_service_id: str):
         return f'SELECT * FROM c WHERE c.resourceType = "{ResourceType.SharedService}" AND c.id = "{shared_service_id}"'
+
+    @staticmethod
+    def shared_service_by_template_name_query(shared_service_template_name: str):
+        return f'SELECT * FROM c WHERE c.resourceType = "{ResourceType.SharedService}" AND c.templateName = "{shared_service_template_name}"'
 
     @staticmethod
     def active_shared_services_query():
@@ -52,6 +56,10 @@ class SharedServiceRepository(ResourceRepository):
         return self.get_resource_base_spec_params()
 
     def create_shared_service_item(self, shared_service_input: SharedServiceTemplateInCreate) -> SharedService:
+        existing_shared_service = self.query(self.shared_service_by_template_name_query(shared_service_input.templateName))
+        if existing_shared_service:
+            raise DuplicateEntity
+
         shared_service_id = str(uuid.uuid4())
         template_version = self.validate_input_against_template(shared_service_input.templateName, shared_service_input, ResourceType.SharedService)
 

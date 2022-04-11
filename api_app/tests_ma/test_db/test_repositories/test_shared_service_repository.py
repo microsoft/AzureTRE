@@ -2,7 +2,7 @@
 import pytest
 from mock import patch, MagicMock
 
-from db.errors import EntityDoesNotExist, ResourceIsNotDeployed
+from db.errors import DuplicateEntity, EntityDoesNotExist, ResourceIsNotDeployed
 from db.repositories.shared_services import SharedServiceRepository
 from db.repositories.operations import OperationRepository
 from models.domain.shared_service import SharedService
@@ -91,10 +91,6 @@ def test_get_active_shared_services_for_shared_queries_db(shared_service_repo):
 @patch('core.config.TRE_ID', "1234")
 def test_create_shared_service_item_creates_a_shared_with_the_right_values(validate_input_mock, shared_service_repo, basic_shared_service_request, basic_shared_service_template):
     shared_service_to_create = basic_shared_service_request
-
-    resource_template = basic_shared_service_template
-    resource_template.required = ["display_name", "description"]
-
     validate_input_mock.return_value = basic_shared_service_request.templateName
 
     shared_service = shared_service_repo.create_shared_service_item(shared_service_to_create)
@@ -105,6 +101,22 @@ def test_create_shared_service_item_creates_a_shared_with_the_right_values(valid
     # We expect tre_id to be overriden in the shared service created
     assert shared_service.properties["tre_id"] != shared_service_to_create.properties["tre_id"]
     assert shared_service.properties["tre_id"] == "1234"
+
+
+@patch('db.repositories.shared_services.SharedServiceRepository.validate_input_against_template')
+@patch('core.config.TRE_ID', "1234")
+def test_create_shared_service_item_with_the_same_name_twice_fails(validate_input_mock, shared_service_repo, basic_shared_service_request, basic_shared_service_template):
+    shared_service_to_create = basic_shared_service_request
+
+    # resource_template = basic_shared_service_template
+    validate_input_mock.return_value = basic_shared_service_request.templateName
+
+    shared_service = shared_service_repo.create_shared_service_item(shared_service_to_create)
+
+    assert shared_service.templateName == basic_shared_service_request.templateName
+    assert shared_service.resourceType == ResourceType.SharedService
+
+    shared_service = shared_service_repo.create_shared_service_item(shared_service_to_create)
 
 
 @patch('db.repositories.shared_services.SharedServiceRepository.validate_input_against_template', side_effect=ValueError)
