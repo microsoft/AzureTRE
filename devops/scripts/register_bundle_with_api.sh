@@ -117,7 +117,6 @@ payload=$(echo "${explain_json}" | jq --argfile json_schema template_schema.json
 function get_http_code() {
   curl_output="$1"
   http_code=$(echo "${curl_output}" | grep HTTP | sed 's/.*HTTP\/1\.1 \([0-9]\+\).*/\1/' | tail -n 1)
-  echo "${http_code}"
 }
 
 if [ -z "${access_token:-}" ]
