@@ -4,7 +4,7 @@ Complete the configuration of the shared services (Nexus and Gitea) from inside 
 
 ## Prepare the admin jumpbox
 
-1. Sign in to the admin jumpbox provisioned as part of the TRE deployment using Bastion. The credentials for the jumpbox are located in the KeyVault under "vm-<tre-id>-jumpbox-admin-credentials"
+1. Sign in to the admin jumpbox provisioned as part of the TRE deployment using Bastion. The credentials for the jumpbox are located in the KeyVault under ```vm-<tre-id>-jumpbox-admin-credentials```
 2. Download Git for Windows from [https://git-scm.com/download/win](https://git-scm.com/download/win) and install
 3. Download Azure CLI from [https://aka.ms/installazurecliwindows](https://aka.ms/installazurecliwindows) and install
 4. Open Git Bash
@@ -19,7 +19,31 @@ Complete the configuration of the shared services (Nexus and Gitea) from inside 
 
 ## Configure Gitea repository
 
-1. Migrate the required repositories to Gitea by running:
+Note : This is a shared Gitea for all workspace, you can also create a Gitea service per workspace (not created by default).
+
+By default, this Gitea is correctly configured but empty.
+
+You can add repositories to Gitea either by command line or using the Web interface.
+
+### By command line
+
+1. On the jumbox, run: 
 ```./scripts/gitea_migrate_repo.sh -t <tre_id> -g <URL_of_github_repo_to_migrate>```
 1. If you have issues with token or token doesn't work, you can reset the token by setting it's value to null in Key Vault:
 ```az keyvault secret set --name gitea-<tre-id>-admin-token --vault-name kv-<tre-id> --value null```
+
+### By the web interface
+
+1. on the jumbox, open Edge and go to: 
+```https://gitea-<TRE_ID>.azurewebsites.net/```
+1. Authenticate yourself using username ```giteaadmin``` and the secret ```<gitea-TRE_ID-administrator-password>``` stored in the keyvault, 
+1. Add the repository of your choice
+
+### Check the result
+
+In a workspace VM: 
+
+  - command line: ```git clone https://gitea-<TRE_ID>.azurewebsites.net/giteaadmin/<NameOfrepository>```
+
+  - or by looking at the web URL: ```https://gitea-<TRE_ID>.azurewebsites.net/```
+
