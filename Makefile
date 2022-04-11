@@ -334,8 +334,7 @@ auth:
 	$(call target_title,"Setting up Azure Active Directory") \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
-	&& pushd ./templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
-	&& . ./devops/scripts/load_env.sh ./templates/core/private.env \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./scripts/create_aad_assets.sh
 
 show-core-output:
