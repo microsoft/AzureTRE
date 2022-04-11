@@ -43,6 +43,8 @@ Before running tests on a PR, run the same checks on the PR code as for `/test`.
 
 When running `/test` multiple times on a PR, the same TRE ID and environment are used by default. The `/test-destroy-env` command destroys a previously created validation environment, allowing you to re-run `/test` with a clean starting point.
 
+The `/test-destroy-env` command also destroys the environmnent associated with the PR branch (created by running the `deploy_tre_branch` workflow).
+
 ### `/test-force-approve`
 
 This command skips running tests for a build and marks the checks as completed.

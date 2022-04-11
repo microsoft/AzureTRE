@@ -24,6 +24,7 @@ jobs:
       prRef: ${{ steps.get_pr_details.outputs.prRef }}
       prHeadSha: ${{ steps.get_pr_details.outputs.prHeadSha }}
       refid: ${{ steps.get_pr_details.outputs.refid }}
+      branchRefid: ${{ steps.get_pr_details.outputs.branchRefid }}
       ciGitRef: ${{ steps.get_pr_details.outputs.ciGitRef }}
       not-md: ${{ steps.filter.outputs.not-md }}
     steps:
@@ -40,7 +41,7 @@ jobs:
         with:
           result-encoding: string
           script: |
-            const script = require('./.github/workflows/script.js')
+            const script = require('./.github/scripts/build.js')
             const result = script.getCommandFromComment({core, context, github});
             console.log(result);
             return result;
@@ -78,12 +79,27 @@ jobs:
           echo "Setting outputs"
           echo "::set-output name=prRef::${prMergeRef}"
 
+          # REFID is the basis for the TRE_ID for the PR
           github_pr_ref="refs/pull/${PR_NUMBER}/merge"
           echo "::set-output name=ciGitRef::${github_pr_ref}"
 
           REFID=$(echo "${github_pr_ref}" | shasum | cut -c1-8)
-          echo "using id of: ${REFID} for GitHub Ref: ${github_pr_ref} (RG base name)"
+          echo "using refid of: ${REFID} for GitHub Ref: ${github_pr_ref} (RG base name)"
           echo "::set-output name=refid::${REFID}"
+
+          # Also generate the REFID for the branch, but only if the headRepo is matches $REPO
+          # This is used later in the destroy to destroy for the PR + branch
+          pr_head_json=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json headRefName,headRepositoryOwner,headRepository)
+          pr_head_repo=$(echo "$pr_head_json" | jq -r '"\(.headRepositoryOwner.login)/\(.headRepository.name)"')
+          if [[ "$pr_head_repo" == "$REPO" ]]; then
+            github_branch_ref="refs/heads/$(echo "$pr_head_json" | jq -r '.headRefName')"
+            BRANCH_REFID=$(echo "${github_branch_ref}" | shasum | cut -c1-8)
+            echo "Using branch refid of $BRANCH_REFID for branch $github_branch_ref"
+          else
+            echo "Head repo is '$pr_head_repo' - skipping BRANCH_REFID"
+            BRANCH_REFID=""
+          fi
+          echo "::set-output name=branchRefid::${BRANCH_REFID}"
 
           # Get PR HEAD SHA for checks status
           echo "Getting PR head SHA"
@@ -150,21 +166,60 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # Destroy validation deployment
+
+  destroy_pr_env:
+    needs: [pr_comment]
+    if: ${{ needs.pr_comment.outputs.command == 'test-destroy-env' }}
+    runs-on: ubuntu-latest
+    environment: CICD
+    name: Destroy PR env
+    steps:
+      # Ensure we have the script files
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
       - name: Run deployment cleanup
-        if: ${{ steps.check_command.outputs.result == 'test-destroy-env' }}
         env:
           PR_NUMBER: ${{ github.event.issue.number }}
           REPO: ${{ github.event.repository.full_name }}
-          RG_NAME: ${{ format('rg-tre{0}', steps.get_pr_details.outputs.refid) }}
+          RG_NAME: ${{ format('rg-tre{0}', needs.pr_comment.outputs.refid) }}
           RUN_ID: ${{ github.run_id }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SHOW_KEYVAULT_DEBUG_ON_DESTROY: ${{ secrets.SHOW_KEYVAULT_DEBUG_ON_DESTROY }}
         run: |
           set -e
-          gh pr comment "${PR_NUMBER}" --repo "$REPO" --body "Destroying test environment... (run: https://github.com/${REPO}/actions/runs/${RUN_ID})"
+          gh pr comment "${PR_NUMBER}" --repo "$REPO" --body "Destroying PR test environment (RG: ${RG_NAME})... (run: https://github.com/${REPO}/actions/runs/${RUN_ID})"
           devops/scripts/destroy_env_no_terraform.sh --core-tre-rg "${RG_NAME}"
-          gh pr comment "${PR_NUMBER}" --repo "$REPO" --body "Test environment destroy complete"
+          gh pr comment "${PR_NUMBER}" --repo "$REPO" --body "PR test environment destroy complete (RG: ${RG_NAME})"
+
+  destroy_branch_env:
+    needs: [pr_comment]
+    if: ${{ needs.pr_comment.outputs.command == 'test-destroy-env' && needs.pr_comment.outputs.branchRefid != '' }}
+    runs-on: ubuntu-latest
+    environment: CICD
+    name: Destroy branch env
+    steps:
+      # Ensure we have the script files
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
+      - name: Run deployment cleanup
+        env:
+          PR_NUMBER: ${{ github.event.issue.number }}
+          REPO: ${{ github.event.repository.full_name }}
+          RG_NAME: ${{ format('rg-tre{0}', needs.pr_comment.outputs.branchRefid) }}
+          RUN_ID: ${{ github.run_id }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SHOW_KEYVAULT_DEBUG_ON_DESTROY: ${{ secrets.SHOW_KEYVAULT_DEBUG_ON_DESTROY }}
+        run: |
+          set -e
+          gh pr comment "${PR_NUMBER}" --repo "$REPO" --body "Destroying branch test environment (RG: ${RG_NAME})... (run: https://github.com/${REPO}/actions/runs/${RUN_ID})"
+          devops/scripts/destroy_env_no_terraform.sh --core-tre-rg "${RG_NAME}"
+          gh pr comment "${PR_NUMBER}" --repo "$REPO" --body "Branch test environment destroy complete (RG: ${RG_NAME})"
 
   run_test:
     # Run the tests with the re-usable workflow
