@@ -52,21 +52,12 @@ RUN apt-get update && apt-get install -y python3 python3-venv libaugeas0 \
 
 # Install Porter
 # Not using the script from https://cdn.porter.sh/latest/install-linux.sh
-# as it installes things we don't need and duplicates the binary.
+# as it installs things we don't need and duplicates the binary.
 ARG PORTER_MIRROR=https://cdn.porter.sh
 ARG PORTER_PERMALINK=v0.38.10
 ARG PORTER_PKG_PERMALINK=latest
-RUN export PORTER_HOME="/home/${USERNAME}/.porter" \
-    && mkdir -p "${PORTER_HOME}/runtimes" \
-    && curl -fsSLo "${PORTER_HOME}/porter" "${PORTER_MIRROR}/${PORTER_PERMALINK}/porter-linux-amd64" \
-    && chmod +x "${PORTER_HOME}/porter" \
-    && ln -s "${PORTER_HOME}/porter" "${PORTER_HOME}/runtimes/porter-runtime" \
-    && "${PORTER_HOME}/porter" mixin install exec --version "${PORTER_PKG_PERMALINK}" \
-    && "${PORTER_HOME}/porter" mixin install terraform --version "${PORTER_PKG_PERMALINK}" \
-    && "${PORTER_HOME}/porter" mixin install az --version "${PORTER_PKG_PERMALINK}" \
-    && "${PORTER_HOME}/porter" plugin install azure --version "${PORTER_PKG_PERMALINK}" \
-    && "${PORTER_HOME}/porter" mixin install docker --version "${PORTER_PKG_PERMALINK}" \
-    && chown -R "${USERNAME}" "${PORTER_HOME}"
+COPY .devcontainer/scripts/porter.sh /tmp/
+RUN /tmp/porter.sh
 
 ENV PATH /home/$USERNAME/.porter/:$PATH
 
