@@ -1,6 +1,6 @@
 ---
 name: tre-workspace-base
-version: 0.1.12
+version: 0.1.13
 description: "A base Azure TRE workspace"
 registry: azuretre
 
