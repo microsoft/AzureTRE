@@ -1,8 +1,9 @@
+---
 name: pr_comment_bot
 
-on:
+on:  # yamllint disable-line rule:truthy
   issue_comment:
-    types: [created] # only run on new comments
+    types: [created]  # only run on new comments
     # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#issue_comment
     # https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#issue_comment
 
@@ -23,9 +24,16 @@ jobs:
       prRef: ${{ steps.get_pr_details.outputs.prRef }}
       prHeadSha: ${{ steps.get_pr_details.outputs.prHeadSha }}
       refid: ${{ steps.get_pr_details.outputs.refid }}
+      branchRefid: ${{ steps.get_pr_details.outputs.branchRefid }}
       ciGitRef: ${{ steps.get_pr_details.outputs.ciGitRef }}
       not-md: ${{ steps.filter.outputs.not-md }}
     steps:
+      # Ensure we have the script file for the github-script action to use
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
       # Determine whether the comment is a command
       - id: check_command
         name: Check for a command using GitHub script
@@ -33,70 +41,10 @@ jobs:
         with:
           result-encoding: string
           script: |
-            // Previously, we attempted to use github.event.comment.author_association to check for OWNER or COLLABORATOR
-            // Unfortunately, that always shows MEMBER if you are in the microsoft org and have that set to publicly visible
-            // (Can check via https://github.com/orgs/microsoft/people?query=<username>)
-
-            // https://docs.github.com/en/rest/reference/collaborators#check-if-a-user-is-a-repository-collaborator
-            const commentUsername = context.payload.comment.user.login;
-            const repoFullName = context.payload.repository.full_name;
-            const repoParts = repoFullName.split("/");
-            const repoOwner = repoParts[0];
-            const repoName = repoParts[1];
-
-            let userHasWriteAccess = false;
-            try {
-              console.log(`Checking if user "${commentUsername}" has write access to ${repoOwner}/${repoName} ...`)
-              const result = await github.request('GET /repos/{owner}/{repo}/collaborators/{username}', {
-                owner: repoOwner,
-                repo: repoName,
-                username: commentUsername
-              });
-              userHasWriteAccess = result.status === 204;
-              console.log("success")
-              console.log(result);
-            } catch (err) {
-              console.log("error")
-              console.log(err);
-              if (err.status === 404){
-                console.log("User not found in collaborators");
-              } else {
-                console.log(`Error checking if user has write access: ${err.status} (${err.response.data.message}) `)
-              }
-            }
-            console.log("User has write access: " + userHasWriteAccess);
-
-            if (!userHasWriteAccess) {
-              console.log("Command: none [user doesn't have permission]");
-              return "none"; // only allow actions for users with write access
-            }
-
-            //
-            // Determine what action to take
-            // Only use the first line of the comment to allow remainder of the body for other comments/notes
-            //
-            const commentBody = context.payload.comment.body;
-            const commentFirstLine = commentBody.split("\n")[0];
-            let command = "none";
-            switch (commentFirstLine.trim()){
-              case "/test":
-                command = "run-tests";
-                break;
-              case "/test-extended":
-                command = "run-tests-extended";
-                break;
-              case "/test-force-approve":
-                command = "test-force-approve";
-                break;
-              case "/test-destroy-env":
-                command = "test-destroy-env";
-                break;
-              case "/help":
-                command = "show-help";
-                break;
-            }
-            console.log(`Command: ${command}`);
-            return command;
+            const script = require('./.github/scripts/build.js')
+            const result = script.getCommandFromComment({core, context, github});
+            console.log(result);
+            return result;
 
       # Add comment with help text in response to help command
       - name: Show Help
@@ -107,7 +55,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Showing help on PR ${PR_NUMBER}"
-          gh pr comment ${PR_NUMBER} --repo $REPO --body "Hello<br/><br/>You can use the following commands:<br/>    /test - build, deploy and run smoke tests on a PR<br/>    /test-extended - build, deploy and run somke & extended tests on a PR<br/>    /test-force-approve - force approval of the PR tests (i.e. skip the deployment checks)<br/>    /test-destroy-env - delete the validation environment for a PR (e.g. to enable testing a deployment from a clean start after previous tests)    /help - show this help"
+          gh pr comment "${PR_NUMBER}" --repo "$REPO" --body "Hello<br/><br/>You can use the following commands:<br/>    /test - build, deploy and run smoke tests on a PR<br/>    /test-extended - build, deploy and run somke & extended tests on a PR<br/>    /test-force-approve - force approval of the PR tests (i.e. skip the deployment checks)<br/>    /test-destroy-env - delete the validation environment for a PR (e.g. to enable testing a deployment from a clean start after previous tests)    /help - show this help"
 
       # Get PR commit details for running tests
       - id: get_pr_details
@@ -121,26 +69,41 @@ jobs:
           # Leaving this as bash script as GitHub Script doesn't seem to support multiple output values
 
           echo "Getting PR ref..."
-          ref=$(gh pr view $PR_NUMBER --repo $REPO --json commits | jq -r ".[] | last | .oid")
+          ref=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json commits | jq -r ".[] | last | .oid")
           echo -e "\tLatest commit ref: $ref"
           # Get the prMergeCommit as this is what the pull_request trigger would build
-          prMergeRef=$(gh pr view $PR_NUMBER --repo $REPO --json potentialMergeCommit | jq -r .potentialMergeCommit.oid)
+          prMergeRef=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json potentialMergeCommit | jq -r .potentialMergeCommit.oid)
           echo -e "\tprMergeRef: $prMergeRef"
           echo
 
           echo "Setting outputs"
           echo "::set-output name=prRef::${prMergeRef}"
 
+          # REFID is the basis for the TRE_ID for the PR
           github_pr_ref="refs/pull/${PR_NUMBER}/merge"
           echo "::set-output name=ciGitRef::${github_pr_ref}"
 
-          REFID=$(echo ${github_pr_ref} | shasum | cut -c1-8)
-          echo "using id of: ${REFID} for GitHub Ref: ${github_pr_ref} (RG base name)"
+          REFID=$(echo "${github_pr_ref}" | shasum | cut -c1-8)
+          echo "using refid of: ${REFID} for GitHub Ref: ${github_pr_ref} (RG base name)"
           echo "::set-output name=refid::${REFID}"
+
+          # Also generate the REFID for the branch, but only if the headRepo is matches $REPO
+          # This is used later in the destroy to destroy for the PR + branch
+          pr_head_json=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json headRefName,headRepositoryOwner,headRepository)
+          pr_head_repo=$(echo "$pr_head_json" | jq -r '"\(.headRepositoryOwner.login)/\(.headRepository.name)"')
+          if [[ "$pr_head_repo" == "$REPO" ]]; then
+            github_branch_ref="refs/heads/$(echo "$pr_head_json" | jq -r '.headRefName')"
+            BRANCH_REFID=$(echo "${github_branch_ref}" | shasum | cut -c1-8)
+            echo "Using branch refid of $BRANCH_REFID for branch $github_branch_ref"
+          else
+            echo "Head repo is '$pr_head_repo' - skipping BRANCH_REFID"
+            BRANCH_REFID=""
+          fi
+          echo "::set-output name=branchRefid::${BRANCH_REFID}"
 
           # Get PR HEAD SHA for checks status
           echo "Getting PR head SHA"
-          PR_HEAD_SHA=$(gh api /repos/$REPO/pulls/$PR_NUMBER --jq .head.sha)
+          PR_HEAD_SHA=$(gh api "/repos/$REPO/pulls/$PR_NUMBER" --jq .head.sha)
           echo "PR_HEAD_SHA: ${PR_HEAD_SHA}"
           echo "::set-output name=prHeadSha::${PR_HEAD_SHA}"
 
@@ -194,7 +157,7 @@ jobs:
           RUN_ID: ${{ github.run_id }}
         run: |
           echo "Adding comment with link to run on PR ${PR_NUMBER}"
-          gh pr comment ${PR_NUMBER} --repo $REPO --body "Running tests: https://github.com/${REPO}/actions/runs/${RUN_ID}"
+          gh pr comment "${PR_NUMBER}" --repo "$REPO" --body "Running tests: https://github.com/${REPO}/actions/runs/${RUN_ID}"
 
       # Perform az login for destroy env script to be able to run
       - name: Azure Login
@@ -203,21 +166,60 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # Destroy validation deployment
+
+  destroy_pr_env:
+    needs: [pr_comment]
+    if: ${{ needs.pr_comment.outputs.command == 'test-destroy-env' }}
+    runs-on: ubuntu-latest
+    environment: CICD
+    name: Destroy PR env
+    steps:
+      # Ensure we have the script files
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
       - name: Run deployment cleanup
-        if: ${{ steps.check_command.outputs.result == 'test-destroy-env' }}
         env:
           PR_NUMBER: ${{ github.event.issue.number }}
           REPO: ${{ github.event.repository.full_name }}
-          RG_NAME: ${{ format('rg-tre{0}', steps.get_pr_details.outputs.refid) }}
+          RG_NAME: ${{ format('rg-tre{0}', needs.pr_comment.outputs.refid) }}
           RUN_ID: ${{ github.run_id }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SHOW_KEYVAULT_DEBUG_ON_DESTROY: ${{ secrets.SHOW_KEYVAULT_DEBUG_ON_DESTROY }}
         run: |
           set -e
-          gh pr comment ${PR_NUMBER} --repo $REPO --body "Destroying test environment... (run: https://github.com/${REPO}/actions/runs/${RUN_ID})"
-          devops/scripts/destroy_env_no_terraform.sh --core-tre-rg ${RG_NAME}
-          gh pr comment ${PR_NUMBER} --repo $REPO --body "Test environment destroy complete"
+          gh pr comment "${PR_NUMBER}" --repo "$REPO" --body "Destroying PR test environment (RG: ${RG_NAME})... (run: https://github.com/${REPO}/actions/runs/${RUN_ID})"
+          devops/scripts/destroy_env_no_terraform.sh --core-tre-rg "${RG_NAME}"
+          gh pr comment "${PR_NUMBER}" --repo "$REPO" --body "PR test environment destroy complete (RG: ${RG_NAME})"
+
+  destroy_branch_env:
+    needs: [pr_comment]
+    if: ${{ needs.pr_comment.outputs.command == 'test-destroy-env' && needs.pr_comment.outputs.branchRefid != '' }}
+    runs-on: ubuntu-latest
+    environment: CICD
+    name: Destroy branch env
+    steps:
+      # Ensure we have the script files
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
+      - name: Run deployment cleanup
+        env:
+          PR_NUMBER: ${{ github.event.issue.number }}
+          REPO: ${{ github.event.repository.full_name }}
+          RG_NAME: ${{ format('rg-tre{0}', needs.pr_comment.outputs.branchRefid) }}
+          RUN_ID: ${{ github.run_id }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SHOW_KEYVAULT_DEBUG_ON_DESTROY: ${{ secrets.SHOW_KEYVAULT_DEBUG_ON_DESTROY }}
+        run: |
+          set -e
+          gh pr comment "${PR_NUMBER}" --repo "$REPO" --body "Destroying branch test environment (RG: ${RG_NAME})... (run: https://github.com/${REPO}/actions/runs/${RUN_ID})"
+          devops/scripts/destroy_env_no_terraform.sh --core-tre-rg "${RG_NAME}"
+          gh pr comment "${PR_NUMBER}" --repo "$REPO" --body "Branch test environment destroy complete (RG: ${RG_NAME})"
 
   run_test:
     # Run the tests with the re-usable workflow

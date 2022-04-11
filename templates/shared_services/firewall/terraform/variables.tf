@@ -1,4 +1,8 @@
-variable "tre_id" {}
+variable "tre_id" {
+  type        = string
+  description = "Unique TRE ID"
+}
+
 variable "stateful_resources_locked" {
   type        = bool
   default     = true

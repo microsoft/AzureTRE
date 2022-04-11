@@ -84,6 +84,21 @@ build-guacamole-image:
 build-mlflow-image:
 	$(call build_image,"mlflow-server","templates/workspace_services/mlflow/mlflow-server/version.txt","templates/workspace_services/mlflow/mlflow-server/docker/Dockerfile","templates/workspace_services/mlflow/mlflow-server")
 
+firewall-install:
+	$(MAKE) bundle-build DIR=./templates/shared_services/firewall/ \
+	&& $(MAKE) bundle-publish DIR=./templates/shared_services/firewall/ \
+	&& $(MAKE) shared-service-register-and-deploy DIR=./templates/shared_services/firewall/ BUNDLE_TYPE=shared_service
+
+nexus-install:
+	$(MAKE) bundle-build DIR=./templates/shared_services/sonatype-nexus/ \
+	&& $(MAKE) bundle-publish DIR=./templates/shared_services/sonatype-nexus/ \
+	&& $(MAKE) shared-service-register-and-deploy DIR=./templates/shared_services/sonatype-nexus/ BUNDLE_TYPE=shared_service
+
+gitea-install:
+	$(MAKE) bundle-build DIR=./templates/shared_services/gitea/ \
+	&& $(MAKE) bundle-publish DIR=./templates/shared_services/gitea/ \
+	&& $(MAKE) shared-service-register-and-deploy DIR=./templates/shared_services/gitea/ BUNDLE_TYPE=shared_service
+
 # A recipe for pushing images. Parameters:
 # 1. Image name suffix
 # 2. Version file path
@@ -128,29 +143,6 @@ prepare-tf-state:
 	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
 	&& pushd ./templates/core/terraform > /dev/null && ../../shared_services/firewall/terraform/remove_state.sh && popd > /dev/null \
 	&& pushd ./templates/shared_services/firewall/terraform > /dev/null && ./import_state.sh && popd > /dev/null
-
-terraform-shared-service-deploy:
-	$(call target_title, "Deploying ${DIR} with Terraform") \
-	&& . ./devops/scripts/check_dependencies.sh \
-	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
-	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
-	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
-	&& . ./devops/scripts/key_vault_list.sh \
-  && if [[ "$${TF_LOG}" == "DEBUG" ]]; then echo "TF DEBUG set - output supressed - see tflogs container for log file" && cd ${DIR} && ../../deploy_from_local.sh 1>/dev/null 2>/dev/null; else cd ${DIR} && ../../deploy_from_local.sh; fi;
-
-firewall-install:
-	$(call target_title, "Installing Firewall") \
-  && make SHARED_SERVICE_KEY=shared-service-firewall terraform-shared-service-deploy DIR=./templates/shared_services/firewall/terraform
-
-gitea-install:
-	$(call target_title, "Installing Gitea") \
-	&& make SHARED_SERVICE_KEY=shared-service-gitea terraform-shared-service-deploy DIR=./templates/shared_services/gitea/terraform
-
-nexus-install:
-	$(call target_title, "Installing Nexus") \
-	&& make SHARED_SERVICE_KEY=shared-service-sonatype-nexus TF_VAR_nexus_properties_path=../nexus.properties terraform-shared-service-deploy DIR=./templates/shared_services/sonatype-nexus/terraform
-
 # / End migration targets
 
 deploy-core: tre-start
@@ -221,10 +213,26 @@ terraform-destroy:
 	&& . ./devops/scripts/load_terraform_env.sh ${DIR}/.env \
 	&& cd ${DIR}/terraform/ && ./destroy.sh
 
+# This will validate all files, not only the changed ones as the CI version does.
 lint:
-	$(call target_title, "Linting Python and Terraform") && \
-	flake8 && \
-	cd ./templates && terraform fmt -check -recursive -diff
+	$(call target_title, "Linting")
+	@terraform fmt -check -recursive -diff
+	@echo "You might not see much on the screen for a few minutes..."
+	@# LOG_LEVEL=NOTICE reduces noise but it might also seem like the process is stuck - it's not...
+	@docker run --name superlinter --pull=always --rm \
+		-e RUN_LOCAL=true \
+		-e LOG_LEVEL=NOTICE \
+		-e VALIDATE_MARKDOWN=true \
+		-e VALIDATE_PYTHON_FLAKE8=true \
+		-e VALIDATE_YAML=true \
+		-e VALIDATE_TERRAFORM_TFLINT=true \
+		-e VALIDATE_JAVA=true \
+		-e JAVA_FILE_NAME=checkstyle.xml \
+		-e VALIDATE_BASH=true \
+		-e VALIDATE_BASH_EXEC=true \
+		-e VALIDATE_GITHUB_ACTIONS=true \
+		-v $${LOCAL_WORKSPACE_FOLDER}:/tmp/lint \
+		github/super-linter:slim-v4
 
 bundle-build:
 	$(call target_title, "Building ${DIR} bundle with Porter") \
@@ -279,6 +287,16 @@ bundle-register:
 	&& cd ${DIR} \
 	&& ${ROOTPATH}/devops/scripts/register_bundle_with_api.sh --acr-name "$${ACR_NAME}" --bundle-type "$${BUNDLE_TYPE}" --current --insecure --tre_url "$${TRE_URL}" --verify --workspace-service-name "$${WORKSPACE_SERVICE_NAME}"
 
+shared-service-register-and-deploy:
+	@# NOTE: ACR_NAME below comes from the env files, so needs the double '$$'. Others are set on command execution and don't
+	$(call target_title, "Registering and deploying ${DIR} shared service") \
+	&& ./devops/scripts/check_dependencies.sh porter \
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
+	&& az acr login --name $${ACR_NAME}	\
+	&& cd ${DIR} \
+	&& ${ROOTPATH}/devops/scripts/register_bundle_with_api.sh --acr-name "$${ACR_NAME}" --bundle-type "$${BUNDLE_TYPE}" --current --insecure --tre_url "$${TRE_URL}" --verify --deploy_shared_service
+
 static-web-upload:
 	$(call target_title, "Uploading to static website") \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
@@ -309,13 +327,12 @@ setup-local-debugging:
 	&& . ./devops/scripts/load_env.sh ./templates/core/private.env \
 	&& . ./scripts/setup_local_debugging.sh
 
-register-aad-workspace:
-	$(call target_title,"Registering AAD Workspace") \
+auth:
+	$(call target_title,"Setting up Azure Active Directory") \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
-	&& pushd ./templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
-	&& . ./devops/scripts/load_env.sh ./templates/core/private.env \
-	&& . ./devops/scripts/register-aad-workspace.sh
+	&& . ./devops/scripts/load_env.sh ./devops/.env \
+	&& . ./scripts/create_aad_assets.sh
 
 show-core-output:
 	$(call target_title,"Display TRE core output") \

@@ -13,11 +13,16 @@ resource "azurerm_servicebus_queue" "workspacequeue" {
   namespace_id = azurerm_servicebus_namespace.sb.id
 
   enable_partitioning = false
+  requires_session    = true # use sessions here to make sure updates to each resource happen in serial, in order
 }
 
 resource "azurerm_servicebus_queue" "service_bus_deployment_status_update_queue" {
   name         = "deploymentstatus"
   namespace_id = azurerm_servicebus_namespace.sb.id
+
+  # The returned payload might be large, especially for errors.
+  # Cosmos is the final destination of the messages where 2048 is the limit.
+  max_message_size_in_kilobytes = 2048 # default=1024
 
   enable_partitioning = false
 }

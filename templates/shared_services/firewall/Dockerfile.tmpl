@@ -12,9 +12,6 @@ RUN apt-get update \
     && echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | tee /etc/apt/sources.list.d/azure-cli.list \
     && apt-get update && apt-get -y install azure-cli
 
-# To be able to use `az network firewall` commands
-RUN az config set extension.use_dynamic_install=yes_without_prompt
-
 # This is a template Dockerfile for the bundle's invocation image
 # You can customize it to use different base images, install tools and copy configuration files.
 #

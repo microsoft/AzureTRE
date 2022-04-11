@@ -60,6 +60,11 @@ UNSPECIFIED_ERROR = "Unspecified error"
 SERVICE_BUS = "Service Bus"
 SERVICE_BUS_NOT_RESPONDING = "Service Bus is not responding"
 
+# Resource processor status
+RESOURCE_PROCESSOR = "Resource Processor"
+RESOURCE_PROCESSOR_GENERAL_ERROR_MESSAGE = "Resource Processor is not responding"
+RESOURCE_PROCESSOR_HEALTHY_MESSAGE = "HealthState/healthy"
+
 # Error strings
 ACCESS_APP_IS_MISSING_ROLE = "The App is missing role"
 ACCESS_PLEASE_SUPPLY_APP_ID = "Please supply the app_id for the AAD application"
