@@ -90,7 +90,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "vm_linux" {
   rolling_upgrade_policy {
     max_batch_instance_percent              = 100
     max_unhealthy_instance_percent          = 100
-    max_unhealthy_upgraded_instance_percent = 10
+    max_unhealthy_upgraded_instance_percent = 100
     pause_time_between_batches              = "PT1M"
 
   }
@@ -162,4 +162,12 @@ resource "azurerm_role_assignment" "subscription_owner" {
   scope                = var.subscription_id != "" ? "/subscriptions/${var.subscription_id}" : data.azurerm_subscription.current.id
   role_definition_name = "Owner"
   principal_id         = azurerm_user_assigned_identity.vmss_msi.principal_id
+}
+
+resource "azurerm_key_vault_access_policy" "resource_processor" {
+  key_vault_id = var.keyvault_id
+  tenant_id    = azurerm_user_assigned_identity.vmss_msi.tenant_id
+  object_id    = azurerm_user_assigned_identity.vmss_msi.principal_id
+
+  secret_permissions = ["Get", "List", "Set", "Delete"]
 }

@@ -1,7 +1,7 @@
 ---
 name: Build Validation
 
-on:
+on:  # yamllint disable-line rule:truthy
   pull_request:
     branches: [main]
 
@@ -24,20 +24,6 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Lint code base
-        uses: github/super-linter@v4
-        env:
-          VALIDATE_ALL_CODEBASE: false
-          DEFAULT_BRANCH: main
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VALIDATE_MARKDOWN: true
-          VALIDATE_PYTHON_FLAKE8: true
-          VALIDATE_YAML: true
-          VALIDATE_TERRAFORM: true
-          RUN_LOCAL: true
-          VALIDATE_JAVA: true
-          JAVA_FILE_NAME: checkstyle.xml
-
       - uses: dorny/paths-filter@v2
         id: filter
         with:
@@ -58,3 +44,21 @@ jobs:
           find . -type d -name 'terraform' -not -path '*cnab*' -print0 \
           | xargs -0 -I{} sh -c 'echo "***** Validating: {} *****"; \
           terraform -chdir={} init -backend=false; terraform -chdir={} validate'
+
+      - name: Lint code base
+        # the slim image is 2GB smaller and we don't use the extra stuff
+        # Moved this after the Terraform checks above due something similar to this issue: https://github.com/github/super-linter/issues/2433
+        uses: github/super-linter/slim@v4
+        env:
+          VALIDATE_ALL_CODEBASE: false
+          DEFAULT_BRANCH: main
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VALIDATE_MARKDOWN: true
+          VALIDATE_PYTHON_FLAKE8: true
+          VALIDATE_YAML: true
+          VALIDATE_TERRAFORM_TFLINT: true
+          VALIDATE_JAVA: true
+          JAVA_FILE_NAME: checkstyle.xml
+          VALIDATE_BASH: true
+          VALIDATE_BASH_EXEC: true
+          VALIDATE_GITHUB_ACTIONS: true
