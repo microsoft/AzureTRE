@@ -1,5 +1,6 @@
 import pytest
 from mock import patch
+from api_app.models.domain.user_resource_template import UserResourceTemplate
 
 from db.repositories.resource_templates import ResourceTemplateRepository
 from db.errors import EntityDoesNotExist
@@ -142,6 +143,37 @@ def test_create_item_created_with_the_expected_type(uuid_mock, save_item_mock, r
         customActions=input_workspace_template.customActions,
         required=input_workspace_template.json_schema["required"],
         current=input_workspace_template.current
+    )
+    save_item_mock.assert_called_once_with(expected_resource_template)
+    assert expected_resource_template == returned_template
+
+
+@patch('db.repositories.resource_templates.ResourceTemplateRepository.save_item')
+@patch('uuid.uuid4')
+def test_create_item_with_pipeline_succeeds(uuid_mock, save_item_mock, resource_template_repo, input_user_resource_template):
+    uuid_mock.return_value = "1234"
+    expected_type = ResourceType.UserResource
+    # add the pipeline block
+    pipeline = {
+        "upgrade": [],
+        "install": [],
+        "uninstall": []
+    }
+    input_user_resource_template.json_schema["pipeline"] = pipeline
+    returned_template = resource_template_repo.create_template(input_user_resource_template, expected_type)
+    expected_resource_template = UserResourceTemplate(
+        id="1234",
+        name=input_user_resource_template.name,
+        title=input_user_resource_template.json_schema["title"],
+        description=input_user_resource_template.json_schema["description"],
+        version=input_user_resource_template.version,
+        resourceType=expected_type,
+        properties=input_user_resource_template.json_schema["properties"],
+        customActions=input_user_resource_template.customActions,
+        required=input_user_resource_template.json_schema["required"],
+        current=input_user_resource_template.current,
+        pipeline=pipeline,
+        parentWorkspaceService=""
     )
     save_item_mock.assert_called_once_with(expected_resource_template)
     assert expected_resource_template == returned_template
