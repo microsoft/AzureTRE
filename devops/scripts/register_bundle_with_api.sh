@@ -114,6 +114,12 @@ explain_json=$(porter explain --reference "${acr_name}".azurecr.io/"$(yq eval '.
 
 payload=$(echo "${explain_json}" | jq --argfile json_schema template_schema.json --arg current "${current}" --arg bundle_type "${bundle_type}" '. + {"json_schema": $json_schema, "resourceType": $bundle_type, "current": $current}')
 
+function get_http_code() {
+  curl_output="$1"
+  http_code=$(echo "${curl_output}" | grep HTTP | sed 's/.*HTTP\/1\.1 \([0-9]\+\).*/\1/' | tail -n 1)
+  echo "${http_code}"
+}
+
 if [ -z "${access_token:-}" ]
 then
   # We didn't get an access token but we can try to generate one.
@@ -175,9 +181,15 @@ else
     ("shared_service") tre_get_path="/api/shared-service-templates";;
   esac
 
-  echo -e "Server Response:\n"
-  eval "curl -X 'POST' ${tre_url}/${tre_get_path} -H 'accept: application/json' -H 'Content-Type: application/json' -H 'Authorization: Bearer ${access_token}' -d '${payload}' ${options}"
-  echo -e "\n"
+  register_result=$(curl -i -X "POST" "${tre_url}/${tre_get_path}" -H "accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer ${access_token}" -d "${payload}" "${options}")
+  get_http_code "${register_result}"
+  if [[ ${http_code} == 409 ]]; then
+    echo "Template with this version already exists"
+  elif [[ ${http_code} != 201 ]]; then
+    echo "Echo while registering template"
+    echo "${register_result}"
+    exit 1
+  fi
 
   if [[ "${verify}" = "true" ]]; then
     # Check that the template got registered
@@ -202,7 +214,7 @@ else
 
     payload="{ \"templateName\": \"""${template_name}""\", \"properties\": { \"display_name\": \"Shared service ""${template_name}""\", \"description\": \"Automatically deployed ""${template_name}""\" } }"
     deploy_result=$(curl -i -X "POST" "${tre_url}/api/shared-services" -H "accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer ""${access_token}""" -d "${payload}" "${options}" -s)
-    http_code=$(echo "${deploy_result}" | grep HTTP | sed 's/.*HTTP\/1\.1 \([0-9]\+\).*/\1/')
+    get_http_code "${deploy_result}"
     if [[ "${http_code}" != 202 ]] && [[ "${http_code}" != 408 ]] && \
        [[ "${http_code}" != 502 ]] && [[ "${http_code}" != 503 ]] && [[ "${http_code}" != 504 ]]; then
       echo "Got a non-retrieable HTTP status code: ${http_code}"
@@ -218,7 +230,7 @@ else
       echo "Waiting for deployment of ""${template_name}"" to finish... (current status: ""${operation_status}"")"
       sleep 5
       get_operation_result=$(curl -i -X "GET" "${tre_url}"/api/shared-services/"${shared_service_id}"/operations/"${operation_id}"  -H "accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer ""${access_token}""" "${options}" -s)
-      http_code=$(echo "${get_operation_result}" | grep HTTP | sed 's/.*HTTP\/1\.1 \([0-9]\+\).*/\1/')
+      get_http_code "${get_operation_result}"
       operation_status=$(echo "${get_operation_result}" | grep '{' | jq -r .operation.status)
       if [[ "${http_code}" != 200 ]] && [[ "${http_code}" != 202 ]]; then
         if [[ "${http_code}" != 408 ]] && [[ "${http_code}" != 502 ]] && [[ "${http_code}" != 503 ]] && [[ "${http_code}" != 504 ]]; then
