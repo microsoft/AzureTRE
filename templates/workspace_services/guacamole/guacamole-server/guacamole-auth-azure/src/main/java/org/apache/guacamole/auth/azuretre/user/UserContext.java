@@ -20,7 +20,6 @@
 package org.apache.guacamole.auth.azuretre.user;
 
 
-import com.google.inject.Inject;
 import org.apache.guacamole.GuacamoleException;
 import org.apache.guacamole.auth.azuretre.AzureTREAuthenticationProvider;
 import org.apache.guacamole.auth.azuretre.connection.ConnectionService;
@@ -47,8 +46,6 @@ public class UserContext extends AbstractUserContext {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserContext.class);
 
-    // private ConnectionService connectionService;
-
     private AuthenticationProvider authProvider;
 
     private User self;
@@ -64,7 +61,7 @@ public class UserContext extends AbstractUserContext {
     private ConnectionGroup rootGroup;
 
 
-	  public UserContext(AuthenticationProvider authProvider/*, AzureTREAuthenticatedUser user*/) throws GuacamoleException {
+	  public UserContext(final AuthenticationProvider authProvider/*, AzureTREAuthenticatedUser user*/) {
 	      LOGGER.debug("Creating a new tre user context.");
         this.authProvider = authProvider;
 	  }

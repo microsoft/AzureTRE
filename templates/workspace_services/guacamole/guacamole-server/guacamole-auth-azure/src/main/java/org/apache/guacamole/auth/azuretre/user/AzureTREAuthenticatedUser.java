@@ -19,7 +19,6 @@
 
 package org.apache.guacamole.auth.azuretre.user;
 
-import com.google.inject.Inject;
 import org.apache.guacamole.net.auth.AbstractAuthenticatedUser;
 import org.apache.guacamole.net.auth.AuthenticationProvider;
 import org.apache.guacamole.net.auth.Credentials;

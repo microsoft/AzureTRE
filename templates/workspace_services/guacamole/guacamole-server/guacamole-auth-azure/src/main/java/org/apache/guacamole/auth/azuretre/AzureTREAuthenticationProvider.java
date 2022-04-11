@@ -28,6 +28,7 @@ import org.apache.guacamole.net.auth.AuthenticatedUser;
 import org.apache.guacamole.net.auth.Credentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.net.URL;
 
 public class AzureTREAuthenticationProvider extends AbstractAuthenticationProvider {
@@ -45,12 +46,12 @@ public class AzureTREAuthenticationProvider extends AbstractAuthenticationProvid
     }
 
     @Override
-    public AzureTREAuthenticatedUser authenticateUser(Credentials credentials) {
+    public AzureTREAuthenticatedUser authenticateUser(final Credentials credentials) {
         LOGGER.info("Authenticating user");
 
         // Getting headers from the oauth2 proxy
-        String accessToken = credentials.getRequest().getHeader("X-Forwarded-Access-Token");
-        String prefEmail = credentials.getRequest().getHeader("X-Forwarded-Email");
+        final String accessToken = credentials.getRequest().getHeader("X-Forwarded-Access-Token");
+        final String prefEmail = credentials.getRequest().getHeader("X-Forwarded-Email");
 
 
         if (Strings.isNullOrEmpty(accessToken)) {
@@ -62,7 +63,7 @@ public class AzureTREAuthenticationProvider extends AbstractAuthenticationProvid
             return null;
         }
 
-        AzureTREAuthenticatedUser treUser = new AzureTREAuthenticatedUser();
+        final AzureTREAuthenticatedUser treUser = new AzureTREAuthenticatedUser();
         treUser.init(credentials, accessToken, prefEmail, null, this);
         return treUser;
     }
@@ -72,12 +73,12 @@ public class AzureTREAuthenticationProvider extends AbstractAuthenticationProvid
         LOGGER.debug("Getting user context.");
 
         if (authenticatedUser instanceof AzureTREAuthenticatedUser) {
-            AzureTREAuthenticatedUser user = (AzureTREAuthenticatedUser) authenticatedUser;
-            String accessToken = user.getAccessToken();
+            final AzureTREAuthenticatedUser user = (AzureTREAuthenticatedUser) authenticatedUser;
+            final String accessToken = user.getAccessToken();
 
-            AuthenticationProviderService authProviderService = new AuthenticationProviderService();
+            final AuthenticationProviderService authProviderService = new AuthenticationProviderService();
 
-          UserContext treUserContext = new UserContext(this);
+          final UserContext treUserContext = new UserContext(this);
             treUserContext.init(user);
 
             // Validate the token 'again', the OpenID extension verified it, but it didn't verify
