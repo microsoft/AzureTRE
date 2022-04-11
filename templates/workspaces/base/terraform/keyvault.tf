@@ -7,7 +7,7 @@ resource "azurerm_key_vault" "kv" {
   tenant_id                = data.azurerm_client_config.current.tenant_id
 
   network_acls {
-    bypass         = "None"
+    bypass         = "AzureServices"
     default_action = "Deny"
   }
 
