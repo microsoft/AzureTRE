@@ -23,5 +23,5 @@ jobs:
         with:
           result-encoding: string
           script: |
-            const script = require('./.github/workflows/script.js')
+            const script = require('./.github/scripts/build.js')
             await script.labelAsExternalIfAuthorDoesNotHaveWriteAccess({core, context, github});

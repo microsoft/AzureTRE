@@ -52,7 +52,7 @@ done
 set -o nounset
 
 if [[ -z ${core_tre_rg:-} ]]; then
-  if [[ ! -z ${TRE_ID:-} ]]; then
+  if [[ -n ${TRE_ID:-} ]]; then
     core_tre_rg="rg-${TRE_ID}"
   else
     echo "Core TRE resource group name wasn't provided"
@@ -66,19 +66,25 @@ then
   no_wait_option="--no-wait"
 fi
 
-locks=$(az group lock list -g ${core_tre_rg} --query [].id -o tsv)
-if [ ! -z "${locks:-}" ]
+group_show_result=$(az group show --name "${core_tre_rg}" > /dev/null 2>&1; echo $?)
+if [[ "$group_show_result" !=  "0" ]]; then
+  echo "Resource group ${core_tre_rg} not found - skipping destroy"
+  exit 1
+fi
+
+locks=$(az group lock list -g "${core_tre_rg}" --query [].id -o tsv)
+if [ -n "${locks:-}" ]
 then
   echo "Deleting locks..."
-  az resource lock delete --ids ${locks}
+  az resource lock delete --ids "${locks}"
 fi
 
 delete_resource_diagnostic() {
   # the command will return an error if the resource doesn't support this setting, so need to suppress it.
-  az monitor diagnostic-settings list --resource $1 --query "value[].name" -o tsv 2> /dev/null |
+  az monitor diagnostic-settings list --resource "$1" --query "value[].name" -o tsv 2> /dev/null |
   while read -r diag_name; do
     echo "Deleting ${diag_name} on $1"
-    az monitor diagnostic-settings delete --resource $1 --name ${diag_name}
+    az monitor diagnostic-settings delete --resource "$1" --name "${diag_name}"
   done
 }
 export -f delete_resource_diagnostic
@@ -87,7 +93,7 @@ echo "Looking for diagnostic settings..."
 # sometimes, diagnostic settings aren't deleted with the resource group. we need to manually do that,
 # and unfortunately, there's no easy way to list all that are present.
 # using xargs to run in parallel.
-az resource list --resource-group ${core_tre_rg} --query '[].[id]' -o tsv | xargs -P 10 -I {} bash -c 'delete_resource_diagnostic "{}"'
+az resource list --resource-group "${core_tre_rg}" --query '[].[id]' -o tsv | xargs -P 10 -I {} bash -c 'delete_resource_diagnostic "{}"'
 
 
 # purge keyvault if possible (makes it possible to reuse the same tre_id later)
@@ -96,24 +102,24 @@ az resource list --resource-group ${core_tre_rg} --query '[].[id]' -o tsv | xarg
 # DEBUG START
 # This section is to aid debugging an issue where keyvaults aren't being deleted and purged
 echo "keyvault properties:"
-az keyvault list --resource-group ${core_tre_rg} --query "[].properties"
+az keyvault list --resource-group "${core_tre_rg}" --query "[].properties"
 echo "keyvault purge protection evaluation result:"
-az keyvault list --resource-group ${core_tre_rg} --query "[?properties.enablePurgeProtection==``null``] | length (@)"
+az keyvault list --resource-group "${core_tre_rg}" --query "[?properties.enablePurgeProtection==``null``] | length (@)"
 
 if [[ -n ${SHOW_KEYVAULT_DEBUG_ON_DESTROY:-} ]]; then
-  az keyvault list --resource-group ${core_tre_rg} --query "[].properties" --debug
+  az keyvault list --resource-group "${core_tre_rg}" --query "[].properties" --debug
 fi
 # DEBUG END
 
-if [[ $(az keyvault list --resource-group ${core_tre_rg} --query "[?properties.enablePurgeProtection==``null``] | length (@)") != 0 ]]; then
+if [[ $(az keyvault list --resource-group "${core_tre_rg}" --query "[?properties.enablePurgeProtection==``null``] | length (@)") != 0 ]]; then
   tre_id=${core_tre_rg#"rg-"}
   keyvault_name="kv-${tre_id}"
 
   echo "Deleting keyvault: ${keyvault_name}"
-  az keyvault delete --name ${keyvault_name} --resource-group ${core_tre_rg}
+  az keyvault delete --name "${keyvault_name}" --resource-group "${core_tre_rg}"
 
   echo "Purging keyvault: ${keyvault_name}"
-  az keyvault purge --name ${keyvault_name} ${no_wait_option}
+  az keyvault purge --name "${keyvault_name}" ${no_wait_option}
 else
   echo "Resource group ${core_tre_rg} doesn't have a keyvault without pruge protection."
 fi
