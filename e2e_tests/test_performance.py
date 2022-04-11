@@ -76,7 +76,9 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(admin_toke
             "properties": {
                 "display_name": "Workspace service test",
                 "description": "",
-                "openid_client_id": f"{config.TEST_WORKSPACE_APP_ID}"
+                "ws_client_id": f"{config.TEST_WORKSPACE_APP_ID}",
+                "ws_client_secret": f"{config.TEST_WORKSPACE_APP_SECRET}",
+                "oauth2_proxy_email_domain": f"{config.TEST_OAUTH2_PROXY_EMAIL_DOMAIN}"
             }
         }
 
