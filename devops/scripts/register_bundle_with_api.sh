@@ -215,9 +215,9 @@ else
     payload="{ \"templateName\": \"""${template_name}""\", \"properties\": { \"display_name\": \"Shared service ""${template_name}""\", \"description\": \"Automatically deployed ""${template_name}""\" } }"
     deploy_result=$(curl -i -X "POST" "${tre_url}/api/shared-services" -H "accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer ""${access_token}""" -d "${payload}" "${options}" -s)
     get_http_code "${deploy_result}"
-    if [[ "${http_code}" != 202 ]] && [[ "${http_code}" != 408 ]] && \
-       [[ "${http_code}" != 502 ]] && [[ "${http_code}" != 503 ]] && [[ "${http_code}" != 504 ]]; then
-      echo "Got a non-retrieable HTTP status code: ${http_code}"
+    if [[ "${http_code}" != 202 ]]; then
+      echo "Failed to deploy shared service: ${http_code}"
+      echo "${deploy_result}"
       exit 1
     fi
     json_deploy_result=$(echo "${deploy_result}" | grep '{')
@@ -231,7 +231,6 @@ else
       sleep 5
       get_operation_result=$(curl -i -X "GET" "${tre_url}"/api/shared-services/"${shared_service_id}"/operations/"${operation_id}"  -H "accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer ""${access_token}""" "${options}" -s)
       get_http_code "${get_operation_result}"
-      operation_status=$(echo "${get_operation_result}" | grep '{' | jq -r .operation.status)
       if [[ "${http_code}" != 200 ]] && [[ "${http_code}" != 202 ]]; then
         if [[ "${http_code}" != 408 ]] && [[ "${http_code}" != 502 ]] && [[ "${http_code}" != 503 ]] && [[ "${http_code}" != 504 ]]; then
           echo "Got a non-retrieable HTTP status code: ${http_code}"
@@ -240,6 +239,7 @@ else
         fi
         echo "Got HTTP code ${http_code}, retrying..."
       fi
+      operation_status=$(echo "${get_operation_result}" | grep '{' | jq -r .operation.status)
     done
 
     if [[ "${operation_status}" != "deployed" ]]; then
