@@ -57,6 +57,21 @@ class TRECosmosDBMigrations:
                 resources_container.upsert_item(item)
                 print(f'Moved deployment from resource id {item["id"]} to operations')
 
+    def useSharedServiceTemplateNamesAsIds(self, container_name):
+        container = self.database.get_container_client(container_name)
+
+        print(container._get_properties()["partitionKey"])
+
+        for item in container.query_items(query='SELECT * FROM c WHERE c.resourceType = "shared-service"', enable_cross_partition_query=True):
+            if item["id"] != item["templateName"]:
+                newItem = {**item}
+                newItem["id"] = item["templateName"]
+
+                container.upsert_item(newItem)
+                print(f'Shared service that previously had id {item["id"]} now has id {item["templateName"]}')
+                container.delete_item(item, partition_key=item["id"])
+                print(f'Deleted shared service with id {item["id"]}')
+
 
 def main():
     migrations = TRECosmosDBMigrations()
@@ -72,6 +87,9 @@ def main():
 
     # Operations History
     migrations.moveDeploymentsToOperations("Resources", "Operations")
+
+    # PR ??
+    migrations.useSharedServiceTemplateNamesAsIds("Resources")
 
 
 if __name__ == "__main__":
