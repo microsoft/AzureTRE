@@ -11,6 +11,7 @@ cookiesecret=$(dd if=/dev/urandom bs=32 count=1 2>/dev/null | base64 | tr -d -- 
 
 ./oauth2-proxy-v7.2.1.linux-amd64/oauth2-proxy \
 --provider oidc \
+--skip-provider-button \
 --cookie-secret ${cookiesecret} \
 --oidc-issuer-url ${OAUTH2_PROXY_OIDC_ISSUER_URL} \
 --upstream http://0.0.0.0:8080  \
