@@ -23,7 +23,6 @@ Note : This is a Gitea *shared service* which will be accessible from all worksp
 
 By default, this Gitea instance does not have any repositories configured. You can add repositories to Gitea either by using the command line or by using the Gitea web interface.
 
-You can add repositories to Gitea either by command line or using the Web interface.
 
 ### By command line
 
