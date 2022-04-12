@@ -41,7 +41,7 @@ resource "azurerm_app_service" "guacamole" {
     OAUTH2_PROXY_CLIENT_ID       = "${var.ws_client_id}"
     OAUTH2_PROXY_CLIENT_SECRET   = "${var.ws_client_secret}"
     OAUTH2_PROXY_REDIRECT_URI    = "https://${local.webapp_name}.azurewebsites.net/oauth2/callback"
-    OAUTH2_PROXY_EMAIL_DOMAIN    = "\"*\""
+    OAUTH2_PROXY_EMAIL_DOMAIN    = "\"*\"" # oauth proxy will allow all email domains only when the value is "*"
     OAUTH2_PROXY_OIDC_ISSUER_URL = "https://login.microsoftonline.com/${local.aad_tenant_id}/v2.0"
     OAUTH2_PROXY_JWKS_ENDPOINT   = "https://login.microsoftonline.com/${local.aad_tenant_id}/discovery/v2.0/keys"
 

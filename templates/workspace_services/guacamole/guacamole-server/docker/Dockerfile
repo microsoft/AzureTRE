@@ -61,4 +61,4 @@ RUN wget -O  /etc/oauth2/oauth2-proxy-v7.2.1.linux-amd64.tar.gz 'https://github.
 
 ENTRYPOINT [ "/init" ]
 
-EXPOSE 80 2222 443
+EXPOSE 80 2222

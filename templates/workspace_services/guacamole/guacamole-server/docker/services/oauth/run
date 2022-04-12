@@ -12,11 +12,11 @@ cookiesecret=$(dd if=/dev/urandom bs=32 count=1 2>/dev/null | base64 | tr -d -- 
 ./oauth2-proxy-v7.2.1.linux-amd64/oauth2-proxy \
 --provider oidc \
 --skip-provider-button \
---cookie-secret ${cookiesecret} \
---oidc-issuer-url ${OAUTH2_PROXY_OIDC_ISSUER_URL} \
+--cookie-secret "${cookiesecret}" \
+--oidc-issuer-url "${OAUTH2_PROXY_OIDC_ISSUER_URL}" \
 --upstream http://0.0.0.0:8080  \
---email-domain ${OAUTH2_PROXY_EMAIL_DOMAIN}  \
---redirect-url ${OAUTH2_PROXY_REDIRECT_URI} --pass-host-header true \
+--email-domain "${OAUTH2_PROXY_EMAIL_DOMAIN}"  \
+--redirect-url "${OAUTH2_PROXY_REDIRECT_URI}" --pass-host-header true \
 --show-debug-on-error true --pass-authorization-header true --pass-user-headers true \
 --http-address http://0.0.0.0:8085 \
 --https-address https://0.0.0.0:8086 \
@@ -27,6 +27,3 @@ cookiesecret=$(dd if=/dev/urandom bs=32 count=1 2>/dev/null | base64 | tr -d -- 
 --set-xauthrequest true \
 --pass-basic-auth true \
 --scope "openid offline_access api://${AUDIENCE}/user_impersonation"
-
-# --client-id ${OAUTH2_PROXY_CLIENT_ID}  --provider oidc --client-secret ${OAUTH2_PROXY_CLIENT_SECRET} \
-# --scope "openid offline_access api://xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/user_impersonation"
