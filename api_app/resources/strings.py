@@ -39,7 +39,7 @@ API_GET_SHARED_SERVICE_TEMPLATES = "Get shared service templates"
 API_GET_SHARED_SERVICE_TEMPLATE_BY_NAME = "Get shared service template by name"
 
 API_GET_ALL_SHARED_SERVICES = "Get all shared services"
-API_GET_SHARED_SERVICE_BY_ID = "Get shared service by Id"
+API_GET_SHARED_SERVICE_BY_ID = "Get shared service by ID"
 API_CREATE_SHARED_SERVICE = "Create a shared service"
 API_UPDATE_SHARED_SERVICE = "Update an existing shared service"
 API_DELETE_SHARED_SERVICE = "Delete shared service"
