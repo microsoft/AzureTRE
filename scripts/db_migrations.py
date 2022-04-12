@@ -60,8 +60,6 @@ class TRECosmosDBMigrations:
     def useSharedServiceTemplateNamesAsIds(self, container_name):
         container = self.database.get_container_client(container_name)
 
-        print(container._get_properties()["partitionKey"])
-
         for item in container.query_items(query='SELECT * FROM c WHERE c.resourceType = "shared-service"', enable_cross_partition_query=True):
             if item["id"] != item["templateName"]:
                 newItem = {**item}
