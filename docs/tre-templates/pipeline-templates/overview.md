@@ -1,5 +1,7 @@
 # Pipeline Templates
 
+> NOTE: This feature is under development, and not currently functional. These documents will be updated alongside the code.
+
 Occasionally there will be a need for the deployment / update of one resource to affect a change in another. This section outlines how that can be achieved with Pipeline Templates.
 
 ## Overview
