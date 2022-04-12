@@ -3,6 +3,7 @@ set -e
 
 if [ ! -f ../tre_output.json ]; then
   # Connect to the remote backend of Terraform
+  pushd ../terraform > /dev/null
   export TF_LOG=""
   terraform init -input=false -backend=true -reconfigure -upgrade \
       -backend-config="resource_group_name=${TF_VAR_mgmt_resource_group_name:?}" \
@@ -12,6 +13,7 @@ if [ ! -f ../tre_output.json ]; then
 
   # Convert the output to json
   terraform output -json > ../tre_output.json
+  popd > /dev/null
 fi
 
 # Now create an .env file
