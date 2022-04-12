@@ -19,7 +19,7 @@ Complete the configuration of the shared services (Nexus and Gitea) from inside 
 
 ## Configure Gitea repository
 
-Note : This is a shared Gitea for all workspace, you can also create a Gitea service per workspace (not created by default).
+Note : This is a Gitea *shared service* which will be accessible from all workspaces intended for mirroring external Git repositories. A Gitea *workspace service* can also be deployed per workspace to enable Gitea to be used within a specific workspace.
 
 By default, this Gitea is correctly configured but empty.
 
