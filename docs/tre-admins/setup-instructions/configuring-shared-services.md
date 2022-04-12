@@ -38,7 +38,7 @@ By default, this Gitea instance does not have any repositories configured. You c
 1. Authenticate yourself using username ```giteaadmin``` and the secret ```<gitea-TRE_ID-administrator-password>``` stored in the keyvault,
 1. Add the repository of your choice
 
-### Check the result
+### Verify can access the mirrored repository
 
 In a workspace VM:
 
