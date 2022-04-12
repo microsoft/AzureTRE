@@ -60,11 +60,10 @@ public class UserContext extends AbstractUserContext {
 
     private ConnectionGroup rootGroup;
 
-
-	  public UserContext(final AuthenticationProvider authProvider/*, AzureTREAuthenticatedUser user*/) {
-	      LOGGER.debug("Creating a new tre user context.");
+    public UserContext(final AuthenticationProvider authProvider/*, AzureTREAuthenticatedUser user*/) {
+        LOGGER.debug("Creating a new tre user context.");
         this.authProvider = authProvider;
-	  }
+    }
 
     public void init(final AzureTREAuthenticatedUser user) throws GuacamoleException {
         final Map<String, User> users = new HashMap<>(1);

@@ -78,7 +78,7 @@ public class AzureTREAuthenticationProvider extends AbstractAuthenticationProvid
 
             final AuthenticationProviderService authProviderService = new AuthenticationProviderService();
 
-          final UserContext treUserContext = new UserContext(this);
+            final UserContext treUserContext = new UserContext(this);
             treUserContext.init(user);
 
             // Validate the token 'again', the OpenID extension verified it, but it didn't verify
