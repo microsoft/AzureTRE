@@ -1,6 +1,6 @@
 import pytest
 from mock import patch
-from api_app.models.domain.user_resource_template import UserResourceTemplate
+from models.domain.user_resource_template import UserResourceTemplate
 
 from db.repositories.resource_templates import ResourceTemplateRepository
 from db.errors import EntityDoesNotExist
