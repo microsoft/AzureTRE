@@ -23,7 +23,6 @@ cookiesecret=$(dd if=/dev/urandom bs=32 count=1 2>/dev/null | base64 | tr -d -- 
 --cookie-secure false \
 --reverse-proxy true \
 --pass-access-token true \
---pass-authorization-header true \
 --set-xauthrequest true \
 --pass-basic-auth true \
 --scope "openid offline_access api://${AUDIENCE}/user_impersonation"
