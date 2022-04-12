@@ -1,4 +1,5 @@
 #!/bin/bash
+
 sudo tee /etc/pip.conf > dev/null <<'EOF'
 [global]
 index = ${nexus_proxy_url}/repository/pypi/pypi
