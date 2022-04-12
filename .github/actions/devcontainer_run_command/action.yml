@@ -139,7 +139,7 @@ runs:
         API_CLIENT_ID: "${{ inputs.API_CLIENT_ID }}"
         AAD_TENANT_ID: "${{ inputs.AAD_TENANT_ID }}"
         TEST_WORKSPACE_APP_ID: "${{ inputs.TEST_WORKSPACE_APP_ID }}"
-        TEST_WORKSPACE_SECRET: "${{ inputs.TEST_WORKSPACE_SECRET }}"
+        TEST_WORKSPACE_APP_SECRET: "${{ inputs.TEST_WORKSPACE_APP_SECRET }}"
         TEST_APP_ID: "${{ inputs.TEST_APP_ID }}"
         TEST_ACCOUNT_CLIENT_ID: "${{ inputs.TEST_ACCOUNT_CLIENT_ID }}"
         TEST_ACCOUNT_CLIENT_SECRET: "${{ inputs.TEST_ACCOUNT_CLIENT_SECRET }}"
@@ -193,7 +193,7 @@ runs:
           -e TF_VAR_tre_id \
           -e TRE_URL \
           -e TEST_WORKSPACE_APP_ID \
-          -e TEST_WORKSPACE_SECRET \
+          -e TEST_WORKSPACE_APP_SECRET \
           -e TEST_APP_ID \
           -e TEST_ACCOUNT_CLIENT_ID \
           -e TEST_ACCOUNT_CLIENT_SECRET \
