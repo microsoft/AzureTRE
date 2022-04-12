@@ -13,9 +13,11 @@ sudo adduser xrdp ssl-cert
 # Required packages for Docker installation
 sudo apt-get install ca-certificates curl gnupg lsb-release
 # Get Docker Public key from Nexus
+# shellcheck disable=SC2154
 curl -fsSL ${nexus_proxy_url}/repository/docker-public-key/gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/docker-archive-keyring.gpg
 
 # Install desktop environment if image doesn't have one already
+# shellcheck disable=SC2154
 if [ ${install_ui} -eq 1 ]; then
   sudo apt-get install xorg xfce4 xfce4-goodies dbus-x11 x11-xserver-utils -y
   echo xfce4-session > ~/.xsession
@@ -27,21 +29,25 @@ sudo sed -i 's|!/bin/sh|!/bin/bash|g' /etc/xrdp/startwm.sh
 # Make sure xrdp service starts up with the system
 sudo systemctl enable xrdp
 
-
+# shellcheck disable=SC2154
 if [ ${shared_storage_access} -eq 1 ]; then
   # Install required packages
   sudo apt-get install autofs
 
   # Pass in required variables
-  resourceGroupName="${resource_group_name}"
+  # shellcheck disable=SC2154
   storageAccountName="${storage_account_name}"
+  # shellcheck disable=SC2154
   storageAccountKey="${storage_account_key}"
+  # shellcheck disable=SC2154
   httpEndpoint="${http_endpoint}"
+  # shellcheck disable=SC2154
   fileShareName="${fileshare_name}"
   mntRoot="/fileshares"
   credentialRoot="/etc/smbcredentials"
 
   mntPath="$mntRoot/$fileShareName"
+    # shellcheck disable=SC2046
   smbPath=$(echo $httpEndpoint | cut -c7-$(expr length $httpEndpoint))$fileShareName
   smbCredentialFile="$credentialRoot/$storageAccountName.cred"
 
@@ -63,7 +69,9 @@ if [ ${shared_storage_access} -eq 1 ]; then
   sudo chmod 600 $smbCredentialFile
 
   # Configure autofs
+  # shellcheck disable=SC2024
   sudo echo "$fileShareName -fstype=cifs,rw,dir_mode=0777,credentials=$smbCredentialFile :$smbPath" > /etc/auto.fileshares
+  # shellcheck disable=SC2024
   sudo echo "$mntRoot /etc/auto.fileshares --timeout=60" > /etc/auto.master
 
   # Restart service to register changes
@@ -74,6 +82,7 @@ if [ ${shared_storage_access} -eq 1 ]; then
 fi
 
 ### Anaconda Config
+# shellcheck disable=SC2154
 if [ ${conda_config} -eq 1 ]; then
   export PATH="/anaconda/condabin":$PATH
   export PATH="/anaconda/bin":$PATH
