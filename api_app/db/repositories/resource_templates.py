@@ -101,6 +101,9 @@ class ResourceTemplateRepository(BaseRepository):
             "customActions": template_input.customActions
         }
 
+        if "pipeline" in template_input.json_schema:
+            template["pipeline"] = template_input.json_schema["pipeline"]
+
         if resource_type == ResourceType.UserResource:
             template["parentWorkspaceService"] = parent_service_name
             template = parse_obj_as(UserResourceTemplate, template)
