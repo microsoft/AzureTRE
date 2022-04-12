@@ -14,8 +14,8 @@ class UserResource(Resource):
     azureStatus: dict = Field({}, title="Azure Status", description="Azure status, varies per user resoruce")
     resourceType = ResourceType.UserResource
 
-    def get_resource_request_message_payload(self, operation_id: str, action: RequestAction) -> dict:
-        message_content = super().get_resource_request_message_payload(operation_id, action)
+    def get_resource_request_message_payload(self, operation_id: str, step_id: str, action: RequestAction) -> dict:
+        message_content = super().get_resource_request_message_payload(operation_id, step_id, action)
         message_content["workspaceId"] = self.workspaceId
         message_content["ownerId"] = self.ownerId
         message_content["parentWorkspaceServiceId"] = self.parentWorkspaceServiceId

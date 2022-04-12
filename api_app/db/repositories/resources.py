@@ -1,3 +1,4 @@
+from typing import Tuple
 from azure.cosmos import CosmosClient
 from datetime import datetime
 from jsonschema import validate
@@ -49,10 +50,9 @@ class ResourceRepository(BaseRepository):
             raise EntityDoesNotExist
         return resources[0]
 
-    def validate_input_against_template(self, template_name: str, resource_input, resource_type: ResourceType, parent_template_name: str = "") -> str:
+    def validate_input_against_template(self, template_name: str, resource_input, resource_type: ResourceType, parent_template_name: str = "") -> ResourceTemplate:
         try:
             template = self._get_enriched_template(template_name, resource_type, parent_template_name)
-            template_version = template["version"]
         except EntityDoesNotExist:
             if resource_type == ResourceType.UserResource:
                 raise ValueError(f'The template "{template_name}" does not exist or is not valid for the workspace service type "{parent_template_name}"')
@@ -61,10 +61,9 @@ class ResourceRepository(BaseRepository):
 
         self._validate_resource_parameters(resource_input.dict(), template)
 
-        return template_version
+        return template
 
-    def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository, user: User) -> Resource:
-
+    def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository, user: User) -> Tuple[Resource, ResourceTemplate]:
         # create a deep copy of the resource to use for history, create the history item + add to history list
         resource_copy = copy.deepcopy(resource)
         history_item = ResourceHistoryItem(
@@ -91,7 +90,7 @@ class ResourceRepository(BaseRepository):
             resource.properties.update(resource_patch.properties)
 
         self.update_item_with_etag(resource, etag)
-        return resource
+        return resource, resource_template
 
     def validate_patch(self, resource_patch: ResourcePatch, resource_template_repo: ResourceTemplateRepository, resource_template: ResourceTemplate):
         # get the enriched (combined) template

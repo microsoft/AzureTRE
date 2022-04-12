@@ -5,6 +5,7 @@ from azure.identity.aio import DefaultAzureCredential
 from azure.servicebus import ServiceBusMessage
 from azure.servicebus.aio import ServiceBusClient
 from contextlib import asynccontextmanager
+from models.domain.resource_template import ResourceTemplate
 
 from models.domain.authentication import User
 
@@ -18,7 +19,7 @@ from models.domain.operation import Status, Operation
 from db.repositories.operations import OperationRepository
 
 
-async def send_resource_request_message(resource: Resource, operations_repo: OperationRepository, user: User, action: RequestAction = RequestAction.Install) -> Operation:
+async def send_resource_request_message(resource: Resource, operations_repo: OperationRepository, user: User, resource_template: ResourceTemplate, action: RequestAction = RequestAction.Install) -> Operation:
     """
     Creates and sends a resource request message for the resource to the Service Bus.
     The resource ID is added to the message to serve as an correlation ID for the deployment process.
@@ -27,17 +28,37 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
     :param action: install, uninstall etc.
     """
 
-    # add the operation to the db
-    if action == RequestAction.Install:
-        operation = operations_repo.create_operation_item(resource_id=resource.id, status=Status.NotDeployed, action=action, message=strings.RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE, resource_path=resource.resourcePath, user=user)
-    elif action == RequestAction.UnInstall:
-        operation = operations_repo.create_operation_item(resource_id=resource.id, status=Status.Deleting, action=action, message=strings.RESOURCE_STATUS_DELETING, resource_path=resource.resourcePath, user=user)
-    elif action == RequestAction.Upgrade:
-        operation = operations_repo.create_operation_item(resource_id=resource.id, status=Status.NotDeployed, action=action, message=strings.RESOURCE_STATUS_UPGRADE_NOT_STARTED_MESSAGE, resource_path=resource.resourcePath, user=user)
-    else:
-        operation = operations_repo.create_operation_item(resource_id=resource.id, status=Status.InvokingAction, action=action, message=strings.RESOURCE_ACTION_STATUS_INVOKING, resource_path=resource.resourcePath, user=user)
+    status = Status.InvokingAction
+    message = strings.RESOURCE_ACTION_STATUS_INVOKING
 
-    content = json.dumps(resource.get_resource_request_message_payload(operation.id, action))
+    if action == RequestAction.Install:
+        status = Status.NotDeployed
+        message = strings.RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE
+    elif action == RequestAction.UnInstall:
+        status = Status.Deleting
+        message = strings.RESOURCE_STATUS_DELETING
+    elif action == RequestAction.Upgrade:
+        status = Status.NotDeployed
+        message = strings.RESOURCE_STATUS_UPGRADE_NOT_STARTED_MESSAGE
+
+    # add the operation to the db - this will create all the steps needed (if any are defined in the template)
+    operation = operations_repo.create_operation_item(resource_id=resource.id, status=status, action=action, message=message, resource_path=resource.resourcePath, user=user, resource_template=resource_template)
+
+    # get the first step - if it's not "main" - get the resource, update the props, save it and enqueue a message for it
+    resource_to_send = resource
+    step_id = "main"
+
+    # if resource_template.pipeline is not None:
+    #    if action in resource_template.pipeline:
+    #        first_step = resource_template.pipeline[action].steps[0]
+    #        if first_step.stepId != "main":
+    #            step_id = first_step.stepId
+    #            resource_to_send = resource_repo.get_resource_by_template_name_and_resource_type(template_name=first_step.resourceTemplateName, resource_type=first_step.resourceType)
+    #            for prop in first_step.properties:
+    #                resource_to_send.properties[prop.name] = prop.value
+    #            await resource_repo.save(resource_to_send)
+
+    content = json.dumps(resource_to_send.get_resource_request_message_payload(operation_id=operation.id, step_id=step_id, action=action))
 
     resource_request_message = ServiceBusMessage(body=content, correlation_id=operation.id, session_id=resource.id)
     logging.info(f"Sending resource request message with correlation ID {resource_request_message.correlation_id}, action: {action}")

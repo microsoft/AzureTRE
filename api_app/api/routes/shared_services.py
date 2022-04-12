@@ -37,12 +37,12 @@ async def retrieve_shared_service_by_id(shared_service=Depends(get_shared_servic
 @shared_services_router.post("/shared-services", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_CREATE_SHARED_SERVICE, dependencies=[Depends(get_current_admin_user)])
 async def create_shared_service(response: Response, shared_service_input: SharedServiceInCreate, user=Depends(get_current_admin_user), shared_services_repo=Depends(get_repository(SharedServiceRepository)), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInResponse:
     try:
-        shared_service = shared_services_repo.create_shared_service_item(shared_service_input)
+        shared_service, resource_template = shared_services_repo.create_shared_service_item(shared_service_input)
     except (ValidationError, ValueError) as e:
         logging.error(f"Failed create shared service model instance: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
-    operation = await save_and_deploy_resource(shared_service, shared_services_repo, operations_repo, user)
+    operation = await save_and_deploy_resource(shared_service, shared_services_repo, operations_repo, user, resource_template)
     response.headers["Location"] = construct_location_header(operation)
 
     return OperationInResponse(operation=operation)
@@ -52,8 +52,8 @@ async def create_shared_service(response: Response, shared_service_input: Shared
 async def patch_shared_service(shared_service_patch: ResourcePatch, response: Response, user=Depends(get_current_admin_user), shared_service_repo=Depends(get_repository(SharedServiceRepository)), shared_service=Depends(get_shared_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), etag: str = Header(None)) -> SharedServiceInResponse:
     check_for_etag(etag)
     try:
-        patched_shared_service = shared_service_repo.patch_shared_service(shared_service, shared_service_patch, etag, resource_template_repo, user)
-        operation = await send_resource_request_message(resource=patched_shared_service, operations_repo=operations_repo, user=user, action=RequestAction.Upgrade)
+        patched_shared_service, resource_template = shared_service_repo.patch_shared_service(shared_service, shared_service_patch, etag, resource_template_repo, user)
+        operation = await send_resource_request_message(resource=patched_shared_service, operations_repo=operations_repo, user=user, resource_template=resource_template, action=RequestAction.Upgrade)
         response.headers["Location"] = construct_location_header(operation)
         return SharedServiceInResponse(sharedService=patched_shared_service)
     except CosmosAccessConditionFailedError:

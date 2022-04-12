@@ -3,6 +3,7 @@ import logging
 
 from fastapi import HTTPException
 from starlette import status
+from models.domain.resource_template import ResourceTemplate
 from models.domain.authentication import User
 
 from db.errors import DuplicateEntity, EntityDoesNotExist
@@ -15,7 +16,7 @@ from service_bus.resource_request_sender import send_resource_request_message, R
 from services.authentication import get_access_service
 
 
-async def save_and_deploy_resource(resource: Resource, resource_repo, operations_repo, user: User) -> Operation:
+async def save_and_deploy_resource(resource: Resource, resource_repo, operations_repo, user: User, resource_template: ResourceTemplate) -> Operation:
     try:
         resource.user = user
         resource.updatedWhen = get_timestamp()
@@ -24,7 +25,7 @@ async def save_and_deploy_resource(resource: Resource, resource_repo, operations
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
 
     try:
-        operation = await send_resource_request_message(resource=resource, operations_repo=operations_repo, user=user, action=RequestAction.Install)
+        operation = await send_resource_request_message(resource=resource, operations_repo=operations_repo, user=user, resource_template=resource_template, action=RequestAction.Install)
         return operation
     except Exception as e:
         resource_repo.delete_item(resource.id)
@@ -41,9 +42,9 @@ def get_user_role_assignments(user):
     return access_service.get_user_role_assignments(user.id)
 
 
-async def send_uninstall_message(resource: Resource, operations_repo: OperationRepository, resource_type: ResourceType, user: User) -> Operation:
+async def send_uninstall_message(resource: Resource, operations_repo: OperationRepository, resource_type: ResourceType, user: User, resource_template: ResourceTemplate) -> Operation:
     try:
-        operation = await send_resource_request_message(resource=resource, operations_repo=operations_repo, user=user, action=RequestAction.UnInstall)
+        operation = await send_resource_request_message(resource=resource, operations_repo=operations_repo, user=user, resource_template=resource_template, action=RequestAction.UnInstall)
         return operation
     except Exception as e:
         logging.error(f"Failed to send {resource_type} resource delete message: {e}")
@@ -60,7 +61,7 @@ async def send_custom_action_message(resource: Resource, custom_action: str, res
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.CUSTOM_ACTION_NOT_DEFINED)
 
     try:
-        operation = await send_resource_request_message(resource=resource, operations_repo=operations_repo, user=user, action=custom_action)
+        operation = await send_resource_request_message(resource=resource, operations_repo=operations_repo, user=user, action=custom_action, resource_template=resource_template)
         return operation
     except Exception as e:
         logging.error(f"Failed to send {resource_type} resource custom action message: {e}")

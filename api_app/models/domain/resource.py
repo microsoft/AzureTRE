@@ -45,9 +45,10 @@ class Resource(AzureTREModel):
     updatedWhen: float = 0
     history: List[ResourceHistoryItem] = []
 
-    def get_resource_request_message_payload(self, operation_id: str, action: RequestAction) -> dict:
+    def get_resource_request_message_payload(self, operation_id: str, step_id: str, action: RequestAction) -> dict:
         return {
             "operationId": operation_id,
+            "stepId": step_id,
             "action": action,
             "id": self.id,
             "name": self.templateName,
