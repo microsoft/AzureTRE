@@ -1,11 +1,11 @@
 from enum import Enum
-from typing import List
+from typing import List, Optional
 
 from pydantic import Field
 from pydantic.types import UUID4
 
 from models.domain.azuretremodel import AzureTREModel
-from models.domain.resource import Output
+from models.domain.resource import Output, ResourceType
 from resources import strings
 
 
@@ -25,6 +25,20 @@ class Status(str, Enum):
     ActionFailed = strings.RESOURCE_ACTION_STATUS_FAILED
 
 
+class OperationStep(AzureTREModel):
+    """
+    Model to define a step in an operation
+    """
+    stepId: str = Field(title="stepId", description="Unique id identifying the step")
+    stepTitle: str = Field(title="stepTitle", description="Human readable title of what the step is for")
+    resourceTemplateName: str = Field("", title="resourceTemplateName", description="Name of the template for the resource under change")
+    resourceType: ResourceType = Field(title="resourceType", description="Type of resource under change")
+    resourceAction: str = Field(title="resourceAction", description="Action - install / upgrade / uninstall etc")
+    status: Status = Field(Status.NotDeployed, title="Operation step status")
+    message: str = Field("", title="Additional operation step status information")
+    updatedWhen: float = Field("", title="POSIX Timestamp for When the operation step was updated")
+
+
 class Operation(AzureTREModel):
     """
     Operation model
@@ -39,6 +53,7 @@ class Operation(AzureTREModel):
     createdWhen: float = Field("", title="POSIX Timestamp for when the operation was submitted")
     updatedWhen: float = Field("", title="POSIX Timestamp for When the operation was updated")
     user: dict = {}
+    steps: Optional[List[OperationStep]] = Field(None, title="Operation Steps")
 
 
 class DeploymentStatusUpdateMessage(AzureTREModel):
