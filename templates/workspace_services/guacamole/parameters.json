@@ -46,12 +46,6 @@
       }
     },
     {
-      "name": "oauth2_proxy_email_domain",
-      "source": {
-        "env": "OAUTH2_PROXY_EMAIL_DOMAIN"
-      }
-    },
-    {
       "name": "tfstate_container_name",
       "source": {
         "env": "TERRAFORM_STATE_CONTAINER_NAME"

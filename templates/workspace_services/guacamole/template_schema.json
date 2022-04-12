@@ -51,12 +51,6 @@
       "type": "string",
       "title": "workspace app client secret",
       "description": "The workspace app client secret which should be submitted to the OpenID service when necessary. This value is typically provided to you by the OpenID service when OpenID credentials are generated for your application."
-    },
-    "oauth2_proxy_email_domain": {
-      "$id": "#/properties/oauth2_proxy_email_domain",
-      "type": "string",
-      "title": "email domain",
-      "description": "."
     }
   }
 }

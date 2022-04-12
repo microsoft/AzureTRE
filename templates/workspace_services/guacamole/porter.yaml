@@ -85,11 +85,6 @@ parameters:
     env: WS_CLIENT_SECRET
     description:
       "The WS client secret"
-  - name: oauth2_proxy_email_domain
-    type: string
-    env: OAUTH2_PROXY_EMAIL_DOMAIN
-    description:
-      "email domain"
   # the following are added automatically by the resource processor
   - name: id
     type: string
@@ -146,7 +141,6 @@ install:
         is_exposed_externally: "{{ bundle.parameters.is_exposed_externally }}"
         ws_client_id: "{{ bundle.parameters.ws_client_id }}"
         ws_client_secret: "{{ bundle.parameters.ws_client_secret }}"
-        oauth2_proxy_email_domain: "{{ bundle.parameters.oauth2_proxy_email_domain }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
       backendConfig:
         resource_group_name:
@@ -189,7 +183,6 @@ uninstall:
         is_exposed_externally: "{{ bundle.parameters.is_exposed_externally }}"
         ws_client_id: "{{ bundle.parameters.ws_client_id }}"
         ws_client_secret: "{{ bundle.parameters.ws_client_secret }}"
-        oauth2_proxy_email_domain: "{{ bundle.parameters.oauth2_proxy_email_domain }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
       backendConfig:
         resource_group_name:
