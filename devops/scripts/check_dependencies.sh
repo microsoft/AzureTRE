@@ -59,6 +59,7 @@ fi
 export SUB_NAME=$(az account show --query name -o tsv)
 export SUB_ID=$(az account show --query id -o tsv)
 export TENANT_ID=$(az account show --query tenantId -o tsv)
+export OBJECT_ID=$(az ad signed-in-user show --query objectId -o tsv)
 if [ -z "$SUB_NAME" ]; then
   echo -e "\n\e[31m»»» ⚠️ You are not logged in to Azure!"
   exit 1

@@ -1,5 +1,3 @@
-data "azurerm_client_config" "deployer" {}
-
 # See https://microsoft.github.io/AzureTRE/tre-developers/letsencrypt/
 resource "azurerm_storage_account" "staticweb" {
   name                      = local.staticweb_storage_name
@@ -27,5 +25,5 @@ resource "azurerm_storage_account" "staticweb" {
 resource "azurerm_role_assignment" "stgwriter" {
   scope                = azurerm_storage_account.staticweb.id
   role_definition_name = "Storage Blob Data Contributor"
-  principal_id         = data.azurerm_client_config.deployer.object_id
+  principal_id         = var.deployer_object_id
 }

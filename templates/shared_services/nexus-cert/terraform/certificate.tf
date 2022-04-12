@@ -3,13 +3,8 @@ resource "azurerm_key_vault_access_policy" "app_gw_managed_identity" {
   tenant_id    = azurerm_user_assigned_identity.agw_id.tenant_id
   object_id    = azurerm_user_assigned_identity.agw_id.principal_id
 
-  key_permissions = [
-    "Get",
-  ]
-
-  secret_permissions = [
-    "Get",
-  ]
+  key_permissions    = ["Get"]
+  secret_permissions = ["Get"]
 }
 
 resource "azurerm_key_vault_certificate" "tlscert" {
@@ -41,9 +36,5 @@ resource "azurerm_key_vault_certificate" "tlscert" {
   lifecycle {
     ignore_changes = all
   }
-}
 
-data "azurerm_key_vault" "key_vault" {
-  name                = "kv-${var.tre_id}"
-  resource_group_name = data.azurerm_resource_group.rg.name
 }
