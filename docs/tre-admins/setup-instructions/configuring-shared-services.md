@@ -24,7 +24,7 @@ Note : This is a Gitea *shared service* which will be accessible from all worksp
 By default, this Gitea instance does not have any repositories configured. You can add repositories to Gitea either by using the command line or by using the Gitea web interface.
 
 
-### By command line
+### Command Line
 
 1. On the jumbox, run:
 ```./scripts/gitea_migrate_repo.sh -t <tre_id> -g <URL_of_github_repo_to_migrate>```
