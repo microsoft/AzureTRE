@@ -43,7 +43,8 @@ public class ConnectionService {
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionService.class);
 
-    public static Map<String, Connection> getConnections(final AzureTREAuthenticatedUser user) throws GuacamoleException {
+    public static Map<String, Connection> getConnections(final AzureTREAuthenticatedUser user)
+          throws GuacamoleException {
         final Map<String, Connection> connections = new TreeMap<>();
         final Map<String, GuacamoleConfiguration> configs = getConfigurations(user);
 
@@ -58,7 +59,7 @@ public class ConnectionService {
     }
 
     private static Map<String, GuacamoleConfiguration> getConfigurations(final AzureTREAuthenticatedUser user)
-        throws GuacamoleException {
+          throws GuacamoleException {
         final Map<String, GuacamoleConfiguration> configs = new TreeMap<>();
         if (user != null) {
             try {
