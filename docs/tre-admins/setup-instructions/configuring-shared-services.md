@@ -40,8 +40,6 @@ By default, this Gitea instance does not have any repositories configured. You c
 
 ### Verify can access the mirrored repository
 
-In a workspace VM:
-
-command line: ```git clone https://gitea-<TRE_ID>.azurewebsites.net/giteaadmin/<NameOfrepository>```
-
-web URL: ```https://gitea-<TRE_ID>.azurewebsites.net/```
+From a virtual machine within a workspace:
+- Command line: ```git clone https://gitea-<TRE_ID>.azurewebsites.net/giteaadmin/<NameOfrepository>```
+- Gitea Web Interface: ```https://gitea-<TRE_ID>.azurewebsites.net/```
