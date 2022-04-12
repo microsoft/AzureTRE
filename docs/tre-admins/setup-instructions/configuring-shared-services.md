@@ -31,7 +31,7 @@ By default, this Gitea instance does not have any repositories configured. You c
 1. If you have issues with token or token doesn't work, you can reset the token by setting it's value to null in Key Vault:
 ```az keyvault secret set --name gitea-<tre-id>-admin-token --vault-name kv-<tre-id> --value null```
 
-### By the web interface
+### Gitea Web Interface
 
 1. on the jumbox, open Edge and go to:
 ```https://gitea-<TRE_ID>.azurewebsites.net/```
