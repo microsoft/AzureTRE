@@ -18,4 +18,3 @@ variable "is_exposed_externally" {}
 variable "tre_resource_id" {}
 variable "ws_client_id" {}
 variable "ws_client_secret" {}
-variable "oauth2_proxy_email_domain" {}
