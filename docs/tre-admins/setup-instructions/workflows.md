@@ -103,7 +103,6 @@ Configure the TEST_WORKSPACE_APP_ID repository secret
 | ----------- | ----------- |
 | `TEST_WORKSPACE_APP_ID` | The application (client) ID of the Workspaces app. |
 | `TEST_WORKSPACE_SECRET` | The application (client) secret of the Workspaces app. |
-| `TEST_OAUTH2_PROXY_EMAIL_DOMAIN` | Specified email domain for guacamole oauth proxy. |
 
 ### Create a Teams Webhook for deployment notifications
 

@@ -29,7 +29,6 @@ Use the 'Run and Debug' icon within Visual Studio Code and chose "E2E Extended" 
     | `TEST_USER_PASSWORD` | The password of the [E2E User](../tre-admins/auth.md#end-to-end-test-user). | |
     | `TEST_WORKSPACE_APP_ID` | The application (client) ID of the [workspaces app](../tre-admins/auth.md#workspaces). | |
     | `TEST_WORKSPACE_SECRET` | The application (client) secret of the [workspaces app](../tre-admins/auth.md#workspaces). | |
-    | `TEST_OAUTH2_PROXY_EMAIL_DOMAIN` |  Specified email domain for guacamole oauth proxy. | |  
 
 1. Run the E2E tests:
 

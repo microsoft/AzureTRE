@@ -57,13 +57,10 @@ inputs:
     description: "The Test Automation Account Client Secret used to interact with the API."
     required: false
   TEST_WORKSPACE_APP_ID:
-    description: "The Test Workspace Id used to interact with the API."
+    description: "The Test Workspace application Id used to interact with the API."
     required: false
   TEST_WORKSPACE_APP_SECRET:
-    description: "The Test Workspace secret used to interact with the API."
-    required: false
-  TEST_OAUTH2_PROXY_EMAIL_DOMAIN:
-    description: "Specified email domain for the oauth proxy."
+    description: "The Test Workspace application secret used to interact with the API."
     required: false
   TRE_ID:
     description: "The TRE Id."
@@ -143,7 +140,6 @@ runs:
         AAD_TENANT_ID: "${{ inputs.AAD_TENANT_ID }}"
         TEST_WORKSPACE_APP_ID: "${{ inputs.TEST_WORKSPACE_APP_ID }}"
         TEST_WORKSPACE_SECRET: "${{ inputs.TEST_WORKSPACE_SECRET }}"
-        TEST_OAUTH2_PROXY_EMAIL_DOMAIN: "${{ inputs.TEST_OAUTH2_PROXY_EMAIL_DOMAIN }}"
         TEST_APP_ID: "${{ inputs.TEST_APP_ID }}"
         TEST_ACCOUNT_CLIENT_ID: "${{ inputs.TEST_ACCOUNT_CLIENT_ID }}"
         TEST_ACCOUNT_CLIENT_SECRET: "${{ inputs.TEST_ACCOUNT_CLIENT_SECRET }}"
@@ -198,7 +194,6 @@ runs:
           -e TRE_URL \
           -e TEST_WORKSPACE_APP_ID \
           -e TEST_WORKSPACE_SECRET \
-          -e TEST_OAUTH2_PROXY_EMAIL_DOMAIN \
           -e TEST_APP_ID \
           -e TEST_ACCOUNT_CLIENT_ID \
           -e TEST_ACCOUNT_CLIENT_SECRET \
