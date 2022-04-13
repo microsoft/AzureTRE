@@ -113,6 +113,14 @@ async def get_openapi_json(workspace_id: str, request: Request, workspace_repo=D
         }
         openapi_definitions[workspace_id]['components']['securitySchemes']['oauth2']['flows']['authorizationCode']['scopes'] = workspace_scopes
 
+        # Add an example into every workspace_id path parameter so users don't have to cut and paste them in.
+        for route in openapi_definitions[workspace_id]['paths'].values():
+            for verb in route.values():
+                # We now have a list of parameters for each route
+                for parameter in verb['parameters']:
+                    if (parameter['name'] == 'workspace_id'):
+                        parameter['schema']['example'] = workspace_id
+
     return openapi_definitions[workspace_id]
 
 

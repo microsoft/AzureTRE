@@ -15,9 +15,9 @@ if [ "${LOGGED_IN_TENANT_ID}" != "${AAD_TENANT_ID}" ]; then
 fi
 
 # Then register an App
-./scripts/aad-app-reg.sh \
+./scripts/aad/aad-app-reg.sh \
   --name "${TRE_ID}" \
-  --swaggerui-redirecturl "https://${TRE_ID}.${RESOURCE_LOCATION}.cloudapp.azure.com/api/docs/oauth2-redirect" \
+  --swaggerui-redirecturl "https://${TRE_ID}.${LOCATION}.cloudapp.azure.com/api/docs/oauth2-redirect" \
   --admin-consent --automation-account
 
 echo "Please copy the values above into your /templates/core/.env."
@@ -34,9 +34,9 @@ set -a
 . ./templates/core/.env
 
 echo "Please check that the following value is the same as above to check you have copied yoru keys."
-echo "Test account client id is : $TEST_ACCOUNT_CLIENT_ID"
+echo "API client id is : ${API_CLIENT_ID}"
 
-./scripts/aad-app-reg.sh \
+./scripts/aad/aad-app-reg.sh \
   --name "${TRE_ID} - workspace 1" \
   --workspace --admin-consent \
   --swaggerui-clientid "${SWAGGER_UI_CLIENT_ID}" \
