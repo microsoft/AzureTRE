@@ -91,7 +91,7 @@ write_files:
         ((keystore_timeout--))
       done
       echo 'Directory found. Importing ssl cert into nexus-data/keystores/keystore.jks...'
-      keytool -v -importkeystore -srckeystore nexus-ssl.pfx -srcstoretype PKCS12 \
+      keytool -v -importkeystore -noprompt -srckeystore nexus-ssl.pfx -srcstoretype PKCS12 \
         -destkeystore /etc/nexus-data/keystores/keystore.jks \
         -deststoretype JKS -srcstorepass "$CERT_PASSWORD" -deststorepass "$CERT_PASSWORD"
 

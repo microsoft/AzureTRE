@@ -12,12 +12,14 @@ Complete the configuration of the shared services (Nexus and Gitea) from inside 
 6. Git clone the TRE repository: ```git clone https://github.com/microsoft/AzureTRE.git```
 7. Download jq ```curl -L -o /usr/bin/jq.exe https://github.com/stedolan/jq/releases/latest/download/jq-win64.exe```
 
-## Configure Nexus repository
+## Configure Nexus repository proxies
 
-1. Run the Nexus configuration script to reset the password and setup a PyPI proxy on Nexus:
+1. Run the Nexus configuration script to reset the password and set up several common repository proxies on Nexus. Substitute `<tre_id>` with the TRE_ID you chose for the core deployment and `<location>` with the Azure region you deployed to:
 ```./templates/shared_services/sonatype-nexus/scripts/configure_nexus.sh -t <tre_id> -l <location>```
 
-## Configure Gitea repository
+You can optionally go to the Nexus web interface by visiting `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/` in the jumpbox and signing in with the username `admin` and the password secret located in your core keyvault, with the key `nexus-admin-password`.
+
+## Configure Gitea repositories
 
 Note : This is a Gitea *shared service* which will be accessible from all workspaces intended for mirroring external Git repositories. A Gitea *workspace service* can also be deployed per workspace to enable Gitea to be used within a specific workspace.
 
