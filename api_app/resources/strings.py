@@ -106,6 +106,7 @@ TEMPLATE_DOES_NOT_EXIST = "Could not retrieve the 'current' template with this n
 NO_UNIQUE_CURRENT_FOR_TEMPLATE = "The template has multiple 'current' versions"
 
 SHARED_SERVICE_DOES_NOT_EXIST = "Shared service does not exist"
+SHARED_SERVICE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION = "Shared service needs to be disabled before you can delete it"
 
 SHARED_SERVICE_TEMPLATE_DOES_NOT_EXIST = "Could not retrieve the workspace service template specified"
 SHARED_SERVICE_TEMPLATE_VERSION_EXISTS = "A template with this version already exists"
