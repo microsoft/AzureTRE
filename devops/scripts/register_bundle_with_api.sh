@@ -6,7 +6,7 @@
 set -o errexit
 set -o pipefail
 # Uncomment this line to see each command for debugging (careful: this will show secrets!)
-set -o xtrace
+# set -o xtrace
 
 function usage() {
     cat <<USAGE
@@ -176,8 +176,8 @@ else
   case "${bundle_type}" in
     ("workspace") tre_get_path="api/workspace-templates" ;;
     ("workspace_service") tre_get_path="api/workspace-service-templates" ;;
-    ("user_resource") tre_get_path="/api/workspace-service-templates/${workspace_service_name}/user-resource-templates";;
-    ("shared_service") tre_get_path="/api/shared-service-templates";;
+    ("user_resource") tre_get_path="api/workspace-service-templates/${workspace_service_name}/user-resource-templates";;
+    ("shared_service") tre_get_path="api/shared-service-templates";;
   esac
 
   register_result=$(curl -i -X "POST" "${tre_url}/${tre_get_path}" -H "accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer ${access_token}" -d "${payload}" "${options}")
@@ -185,7 +185,7 @@ else
   if [[ ${http_code} == 409 ]]; then
     echo "Template with this version already exists"
   elif [[ ${http_code} != 201 ]]; then
-    echo "Echo while registering template"
+    echo "Error while registering template"
     echo "${register_result}"
     exit 1
   fi
@@ -214,6 +214,10 @@ else
     payload="{ \"templateName\": \"""${template_name}""\", \"properties\": { \"display_name\": \"Shared service ""${template_name}""\", \"description\": \"Automatically deployed ""${template_name}""\" } }"
     deploy_result=$(curl -i -X "POST" "${tre_url}/api/shared-services" -H "accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer ""${access_token}""" -d "${payload}" "${options}" -s)
     get_http_code "${deploy_result}"
+    if [[ "${http_code}" == 409 ]]; then
+      echo "Shared service ${template_name} has already been deployed"
+      exit 0
+    fi
     if [[ "${http_code}" != 202 ]]; then
       echo "Failed to deploy shared service: ${http_code}"
       echo "${deploy_result}"
