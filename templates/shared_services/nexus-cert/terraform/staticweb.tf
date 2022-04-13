@@ -20,10 +20,3 @@ resource "azurerm_storage_account" "staticweb" {
 
   lifecycle { ignore_changes = [tags] }
 }
-
-# Assign the "Storage Blob Data Contributor" role needed for uploading certificates to the storage account
-resource "azurerm_role_assignment" "stgwriter" {
-  scope                = azurerm_storage_account.staticweb.id
-  role_definition_name = "Storage Blob Data Contributor"
-  principal_id         = var.deployer_object_id
-}

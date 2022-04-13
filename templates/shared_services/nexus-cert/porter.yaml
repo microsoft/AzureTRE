@@ -1,6 +1,6 @@
 ---
 name: tre-shared-service-nexus-cert
-version: 0.0.8
+version: 0.0.9
 description: "An Azure TRE Nexus certificate creation shared service"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -33,9 +33,6 @@ parameters:
     env: ARM_USE_MSI
     type: boolean
     default: false
-  - name: arm_object_id
-    env: AZURE_OBJECT_ID
-    type: string
 
 mixins:
   - exec
@@ -48,7 +45,6 @@ install:
       input: false
       vars:
         tre_id: "{{ bundle.parameters.tre_id }}"
-        deployer_object_id: "{{ bundle.parameters.arm_object_id }}"
       backendConfig:
         resource_group_name:
           "{{ bundle.parameters.tfstate_resource_group_name }}"

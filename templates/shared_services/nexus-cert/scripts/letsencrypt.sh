@@ -2,12 +2,18 @@
 set -e
 
 script_dir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
-if [[ -z ${STORAGE_ACCOUNT} ]]; then
+if [[ -z ${STORAGE_ACCOUNT_NAME} ]]; then
   echo "STORAGE_ACCOUNT not set"
   exit 1
 fi
 
 echo "Checking for index.html file in storage account"
+
+# Assign Storage Blob Data Contributor permissions if not already present
+objectId=$(az ad signed-in-user show --query objectId -o tsv)
+az role assignment create --assignee "${objectId}" \
+  --role "Storage Blob Data Contributor" \
+  --scope "${STORAGE_ACCOUNT_ID}"
 
 # Create the default index.html page
 cat << EOF > index.html
@@ -17,7 +23,7 @@ EOF
 
 # shellcheck disable=SC2016
 indexExists=$(az storage blob list -o json \
-    --account-name "${STORAGE_ACCOUNT}" \
+    --account-name "${STORAGE_ACCOUNT_NAME}" \
     --auth-mode login \
     --container-name '$web' \
     --query "[?name=='index.html'].name" \
@@ -28,7 +34,7 @@ if [[ ${indexExists} -lt 1 ]]; then
 
     # shellcheck disable=SC2016
     az storage blob upload \
-        --account-name "${STORAGE_ACCOUNT}" \
+        --account-name "${STORAGE_ACCOUNT_NAME}" \
         --auth-mode login \
         --container-name '$web' \
         --file index.html \

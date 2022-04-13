@@ -27,4 +27,3 @@ echo "TEST_WORKSPACE_APP_ID='${WORKSPACE_API_CLIENT_ID}'" >> ../private.env
 echo "SUBSCRIPTION_ID='${SUB_ID}'" >> ../private.env
 echo "AZURE_SUBSCRIPTION_ID='${SUB_ID}'" >> ../private.env
 echo "AZURE_TENANT_ID='${TENANT_ID}'" >> ../private.env
-echo "AZURE_OBJECT_ID='${OBJECT_ID}'" >> ../private.env

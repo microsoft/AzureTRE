@@ -6,7 +6,7 @@ EOF
 
 # shellcheck disable=SC2016
 az storage blob upload \
-    --account-name "${STORAGE_ACCOUNT}" \
+    --account-name "${STORAGE_ACCOUNT_NAME}" \
     --auth-mode login \
     --container-name '$web' \
     --file 'validation.txt' \

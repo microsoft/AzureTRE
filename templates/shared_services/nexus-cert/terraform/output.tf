@@ -6,8 +6,12 @@ output "application_gateway" {
   value = azurerm_application_gateway.agw.name
 }
 
-output "storage_account" {
+output "storage_account_name" {
   value = azurerm_storage_account.staticweb.name
+}
+
+output "storage_account_id" {
+  value = azurerm_storage_account.staticweb.id
 }
 
 output "resource_group_name" {

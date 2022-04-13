@@ -36,7 +36,6 @@ write_files:
       VMSS_MSI_ID=${vmss_msi_id}
       AZURE_SUBSCRIPTION_ID=${arm_subscription_id}
       ARM_CLIENT_ID=${vmss_msi_id}
-      AZURE_OBJECT_ID=${arm_object_id}
       AZURE_TENANT_ID=${arm_tenant_id}
       ARM_USE_MSI=true
       APPLICATIONINSIGHTS_CONNECTION_STRING=${app_insights_connection_string}

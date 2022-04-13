@@ -14,8 +14,12 @@ jq -r '
             "env_var": "APPLICATION_GATEWAY"
         },
         {
-            "path": "storage_account",
-            "env_var": "STORAGE_ACCOUNT"
+            "path": "storage_account_id",
+            "env_var": "STORAGE_ACCOUNT_ID"
+        },
+        {
+            "path": "storage_account_name",
+            "env_var": "STORAGE_ACCOUNT_NAME"
         },
         {
             "path": "resource_group_name",

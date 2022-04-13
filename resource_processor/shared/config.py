@@ -26,9 +26,6 @@ def get_config(logger_adapter) -> dict:
     config["arm_client_id"] = os.environ["ARM_CLIENT_ID"]
     config["arm_tenant_id"] = os.environ["AZURE_TENANT_ID"]
 
-    # Needed for deploying bundles that need deployer's object Id
-    config["arm_object_id"] = os.environ["AZURE_OBJECT_ID"]
-
     # Only set client secret if MSI is disabled
     config["arm_client_secret"] = os.environ["ARM_CLIENT_SECRET"] if config["arm_use_msi"] == "false" else ""
 
