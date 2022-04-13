@@ -330,10 +330,8 @@ prepare-for-e2e:
 	&& $(call workspace_service_bundle,guacamole) \
 	&& $(call workspace_service_bundle,azureml) \
 	&& $(call workspace_service_bundle,devtestlabs) \
-	&& $(call workspace_service_bundle,gitea)
-
-prepare-for-e2e2:
-	$(call workspace_service_bundle,innereye)
+	&& $(call workspace_service_bundle,gitea) \
+	&& $(call workspace_service_bundle,innereye)
 
 test-e2e-smoke:
 	$(call target_title, "Running E2E smoke tests") && \
