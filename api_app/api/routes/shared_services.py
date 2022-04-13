@@ -59,7 +59,7 @@ async def patch_shared_service(shared_service_patch: ResourcePatch, response: Re
         patched_shared_service = shared_service_repo.patch_shared_service(shared_service, shared_service_patch, etag, resource_template_repo, user)
         operation = await send_resource_request_message(resource=patched_shared_service, operations_repo=operations_repo, user=user, action=RequestAction.Upgrade)
         response.headers["Location"] = construct_location_header(operation)
-        return SharedServiceInResponse(sharedService=patched_shared_service)
+        return OperationInResponse(operation=operation)
     except CosmosAccessConditionFailedError:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
     except ValidationError as v:
