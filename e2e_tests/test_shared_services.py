@@ -12,14 +12,15 @@ shared_service_templates = [
 
 @pytest.mark.extended
 @pytest.mark.parametrize("shared_service_template_name", shared_service_templates)
-async def test_patch_shared_service(template_name, admin_token, verify):
+async def test_patch_shared_service(shared_service_template_name, admin_token, verify):
     patch_payload = {
         "properties": {
-            "display_name": "Updated Firewall Name",
-        }
+            "display_name": "TEST",
+        },
+        "templateName": shared_service_template_name,
     }
 
-    shared_service_path = f'/shared-services/{template_name}'
+    shared_service_path = f'/shared-services/{shared_service_template_name}'
 
     # TODO: path has shared service in it?
     await post_resource(patch_payload, f'/api{shared_service_path}', 'shared_service', admin_token, None, verify, method="PATCH")
