@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Header, status, Response
 from jsonschema.exceptions import ValidationError
 
 from db.repositories.operations import OperationRepository
+from db.errors import DuplicateEntity
 from api.dependencies.database import get_repository
 from api.dependencies.shared_services import get_shared_service_by_id_from_path, get_operation_by_id_from_path
 from db.repositories.resource_templates import ResourceTemplateRepository
@@ -41,6 +42,9 @@ async def create_shared_service(response: Response, shared_service_input: Shared
     except (ValidationError, ValueError) as e:
         logging.error(f"Failed create shared service model instance: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except DuplicateEntity as e:
+        logging.error(f"Shared service already exists: {e}")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
 
     operation = await save_and_deploy_resource(shared_service, shared_services_repo, operations_repo, user)
     response.headers["Location"] = construct_location_header(operation)
