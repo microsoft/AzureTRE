@@ -33,7 +33,7 @@ resource "random_password" "password" {
   override_special = "_%@"
 }
 
-resource "azurerm_virtual_machine" "jumpbox" {
+resource "azurerm_windows_virtual_machine" "jumpbox" {
   name                  = "vm-${var.tre_id}"
   resource_group_name   = azurerm_resource_group.core.name
   location              = azurerm_resource_group.core.location
