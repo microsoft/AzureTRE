@@ -126,15 +126,15 @@ resource "azurerm_network_security_rule" "allow-outbound-webapps-to-services" {
     "3389",
     "5432",
   ]
-  destination_address_prefixes  = azurerm_subnet.services.address_prefixes
-  source_address_prefixes       = azurerm_subnet.webapps.address_prefixes
-  direction                     = "Outbound"
-  name                          = "outbound-from-services-to-webapps-subnets"
-  network_security_group_name   = azurerm_network_security_group.ws.name
-  priority                      = 140
-  protocol                      = "Tcp"
-  resource_group_name           = var.ws_resource_group_name
-  source_port_range             = "*"
+  destination_address_prefixes = azurerm_subnet.services.address_prefixes
+  source_address_prefixes      = azurerm_subnet.webapps.address_prefixes
+  direction                    = "Outbound"
+  name                         = "outbound-from-services-to-webapps-subnets"
+  network_security_group_name  = azurerm_network_security_group.ws.name
+  priority                     = 140
+  protocol                     = "Tcp"
+  resource_group_name          = var.ws_resource_group_name
+  source_port_range            = "*"
 }
 
 resource "azurerm_network_security_rule" "allow-inbound-from-bastion" {
@@ -182,13 +182,13 @@ resource "azurerm_network_security_rule" "allow-inbound-from-webapp-to-services"
     "3389",
     "5432",
   ]
-  destination_address_prefixes  = azurerm_subnet.services.address_prefixes
-  source_address_prefixes       = azurerm_subnet.webapps.address_prefixes
-  direction                     = "Inbound"
-  name                          = "inbound-from-webapps-to-services-subnets"
-  network_security_group_name   = azurerm_network_security_group.ws.name
-  priority                      = 130
-  protocol                      = "Tcp"
-  resource_group_name           = var.ws_resource_group_name
-  source_port_range             = "*"
+  destination_address_prefixes = azurerm_subnet.services.address_prefixes
+  source_address_prefixes      = azurerm_subnet.webapps.address_prefixes
+  direction                    = "Inbound"
+  name                         = "inbound-from-webapps-to-services-subnets"
+  network_security_group_name  = azurerm_network_security_group.ws.name
+  priority                     = 130
+  protocol                     = "Tcp"
+  resource_group_name          = var.ws_resource_group_name
+  source_port_range            = "*"
 }

@@ -1,4 +1,4 @@
-variable tre_id {
+variable "tre_id" {
   type = string
 }
 variable "tre_resource_id" {
@@ -35,13 +35,13 @@ variable "enable_local_debugging" {
 }
 
 # These are used to authenticate into the AAD Tenant to create the AAD App
-variable auth_tenant_id {
+variable "auth_tenant_id" {
   type = string
 }
-variable api_client_id {
+variable "api_client_id" {
   type = string
 }
-variable api_client_secret {
+variable "api_client_secret" {
   type = string
 }
 

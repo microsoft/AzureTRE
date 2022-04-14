@@ -5,11 +5,11 @@ terraform {
       version = "=3.1.0"
     }
     azuread = {
-      source = "hashicorp/azuread"
+      source  = "hashicorp/azuread"
       version = "=2.20.0"
     }
     random = {
-      source = "hashicorp/random"
+      source  = "hashicorp/random"
       version = "=3.1.2"
     }
   }
@@ -29,8 +29,8 @@ data "azurerm_subscription" "current" {}
 data "azurerm_client_config" "current" {}
 
 provider "azuread" {
-  client_id = var.api_client_id
+  client_id     = var.api_client_id
   client_secret = var.api_client_secret
-  tenant_id = var.auth_tenant_id
+  tenant_id     = var.auth_tenant_id
 }
 data "azuread_client_config" "current" {}
