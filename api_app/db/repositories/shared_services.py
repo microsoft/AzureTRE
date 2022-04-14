@@ -51,7 +51,7 @@ class SharedServiceRepository(ResourceRepository):
     def get_shared_service_spec_params(self):
         return self.get_resource_base_spec_params()
 
-    def create_shared_service_item(self, shared_service_input: SharedServiceTemplateInCreate) -> SharedService:
+    def create_shared_service_item(self, shared_service_input: SharedServiceTemplateInCreate, user: User) -> SharedService:
         shared_service_id = shared_service_input.templateName
 
         template_version = self.validate_input_against_template(shared_service_input.templateName, shared_service_input, ResourceType.SharedService)
@@ -64,6 +64,10 @@ class SharedServiceRepository(ResourceRepository):
             existing_shared_service = existing_shared_services[0]
             if existing_shared_service["isActive"] and existing_shared_service["templateVersion"] == template_version:
                 raise DuplicateEntity
+            template_repo = ResourceTemplateRepository(self._client)
+            patch = ResourcePatch(isEnabled=True, properties={})
+
+            self.patch_shared_service(existing_shared_service, patch, existing_shared_service["etag"], template_repo, user)
 
         resource_spec_parameters = {**shared_service_input.properties, **self.get_shared_service_spec_params()}
 
