@@ -324,7 +324,6 @@ static-web-upload:
 	&& . ./devops/scripts/load_env.sh ./templates/core/private.env \
 	&& ./templates/core/terraform/scripts/upload_static_web.sh
 
-# TODO: register bundles that are currently used in e2e
 workspace_bundle = echo $(1) && $(MAKE) bundle-build DIR=./templates/workspaces/$(1)/ \
 	&& $(MAKE) bundle-publish DIR=./templates/workspaces/$(1)/ \
 	&& $(MAKE) bundle-register DIR="./templates/workspaces/$(1)" BUNDLE_TYPE=workspace
