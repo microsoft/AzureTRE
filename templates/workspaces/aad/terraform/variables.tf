@@ -33,6 +33,11 @@ variable "enable_local_debugging" {
   default     = false
   description = "This will allow storage account and keyvault access over the internet. Set to true to allow deploying this from a local machine."
 }
+variable "keyvault_purge_protection_enabled" {
+  type        = bool
+  default     = true
+  description = "Whether to allow Key Vault to purge the secrets on deletion. You will need False when debugging"
+}
 variable "register_aad_application" {
   type        = bool
   default     = false

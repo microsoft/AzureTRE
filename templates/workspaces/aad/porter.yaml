@@ -1,6 +1,6 @@
 ---
 name: aad-workspace
-version: 0.0.1
+version: 0.0.3
 description: "An AAD Workspace"
 registry: azuretre
 
@@ -34,6 +34,9 @@ parameters:
   - name: enable_local_debugging
     type: boolean
     default: false
+  - name: keyvault_purge_protection_enabled
+    type: boolean
+    default: true
   - name: tfstate_resource_group_name
     type: string
     description: "Resource group containing the Terraform state storage account"
@@ -56,6 +59,14 @@ install:
       description: "Register workspace AD Application"
       vars:
         tre_id: "{{ bundle.parameters.tre_id }}"
+        tre_resource_id: "{{ bundle.parameters.id }}"
+        location: "{{ bundle.parameters.azure_location }}"
+        address_space: "{{ bundle.parameters.address_space }}"
+        shared_storage_quota: "{{ bundle.parameters.shared_storage_quota }}"
+        enable_local_debugging:
+          "{{ bundle.parameters.enable_local_debugging }}"
+        keyvault_purge_protection_enabled:
+          "{{ bundle.parameters.keyvault_purge_protection_enabled }}"
         api_client_id: "{{ bundle.credentials.api_client_id }}"
         api_client_secret: "{{ bundle.credentials.api_client_secret }}"
         auth_tenant_id: "{{ bundle.credentials.auth_tenant_id }}"
@@ -65,8 +76,7 @@ install:
         storage_account_name:
           "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        access_key: "{{ bundle.parameters.tfstate_storage_account_access_key }}"
-        key: "{{ bundle.parameters.tre_id }}-ws-aad"
+        key: "{{ bundle.parameters.tre_id }}-workspace-aad-{{ bundle.parameters.id }}"
       outputs:
         - name: workspace_resource_name_suffix
 
@@ -78,8 +88,27 @@ upgrade:
         - "This workspace does not implement upgrade action"
 
 uninstall:
-  - exec:
-      description: "Uninstall workspace"
-      command: echo
-      arguments:
-        - "This workspace does not implement uninstall action"
+  - terraform:
+      description: "Tear down workspace"
+      # https://github.com/microsoft/AzureTRE/issues/1526
+      logLevel: Debug
+      vars:
+        tre_id: "{{ bundle.parameters.tre_id }}"
+        tre_resource_id: "{{ bundle.parameters.id }}"
+        location: "{{ bundle.parameters.azure_location }}"
+        address_space: "{{ bundle.parameters.address_space }}"
+        shared_storage_quota: "{{ bundle.parameters.shared_storage_quota }}"
+        enable_local_debugging:
+          "{{ bundle.parameters.enable_local_debugging }}"
+        keyvault_purge_protection_enabled:
+          "{{ bundle.parameters.keyvault_purge_protection_enabled }}"
+        api_client_id: "{{ bundle.credentials.api_client_id }}"
+        api_client_secret: "{{ bundle.credentials.api_client_secret }}"
+        auth_tenant_id: "{{ bundle.credentials.auth_tenant_id }}"
+      backendConfig:
+        resource_group_name:
+          "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name:
+          "{{ bundle.parameters.tfstate_storage_account_name }}"
+        container_name: "{{ bundle.parameters.tfstate_container_name }}"
+        key: "{{ bundle.parameters.tre_id }}-workspace-aad-{{ bundle.parameters.id }}"

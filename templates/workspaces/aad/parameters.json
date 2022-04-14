@@ -57,6 +57,12 @@
       "source": {
         "env": "ENABLE_LOCAL_DEBUGGING"
       }
+    },
+    {
+      "name": "keyvault_purge_protection_enabled",
+      "source": {
+        "env": "KEYVAULT_PURGE_PROTECTION_ENABLED"
+      }
     }
   ]
 }
