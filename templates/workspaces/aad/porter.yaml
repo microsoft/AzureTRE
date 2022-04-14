@@ -1,0 +1,70 @@
+---
+name: aad-workspace
+version: 0.0.1
+description: "An AAD Workspace"
+registry: azuretre
+
+credentials:
+  - name: api_client_id
+    env: API_CLIENT_ID
+  - name: api_client_secret
+    env: API_CLIENT_SECRET
+  - name: auth_tenant_id
+    env: AUTH_TENANT_ID
+
+parameters:
+  - name: tre_id
+    type: string
+    description: "The ID of the parent TRE instance e.g., mytre-dev-3142"
+  - name: tfstate_resource_group_name
+    type: string
+    description: "Resource group containing the Terraform state storage account"
+  - name: tfstate_storage_account_name
+    type: string
+    description: "The name of the Terraform state storage account"
+  - name: tfstate_container_name
+    type: string
+    default: "tfstate"
+    description: "The name of the Terraform state storage container"
+  - name: tfstate_storage_account_access_key
+    type: string
+    description: "The access key of the Terraform state storage container"
+
+mixins:
+  - az
+  - exec
+  - terraform:
+      clientVersion: 1.1.7
+
+install:
+  - terraform:
+      description: "Register workspace AD Application"
+      vars:
+        tre_id: "{{ bundle.parameters.tre_id }}"
+        api_client_id: "{{ bundle.credentials.api_client_id }}"
+        api_client_secret: "{{ bundle.credentials.api_client_secret }}"
+        auth_tenant_id: "{{ bundle.credentials.auth_tenant_id }}"
+      backendConfig:
+        resource_group_name:
+          "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name:
+          "{{ bundle.parameters.tfstate_storage_account_name }}"
+        container_name: "{{ bundle.parameters.tfstate_container_name }}"
+        access_key: "{{ bundle.parameters.tfstate_storage_account_access_key }}"
+        key: "{{ bundle.parameters.tre_id }}-ws-aad"
+      outputs:
+        - name: workspace_resource_name_suffix
+
+upgrade:
+  - exec:
+      description: "Upgrade workspace"
+      command: echo
+      arguments:
+        - "This workspace does not implement upgrade action"
+
+uninstall:
+  - exec:
+      description: "Uninstall workspace"
+      command: echo
+      arguments:
+        - "This workspace does not implement uninstall action"
