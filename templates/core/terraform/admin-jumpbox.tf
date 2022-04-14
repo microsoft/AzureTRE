@@ -52,9 +52,9 @@ resource "azurerm_windows_virtual_machine" "jumpbox" {
     version   = "latest"
   }
   os_disk {
-    name              = "vm-dsk-${var.tre_id}"
-    caching           = "ReadWrite"
-    managed_disk_type = "Standard_LRS"
+    name                 = "vm-dsk-${var.tre_id}"
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
   }
 
   identity {
