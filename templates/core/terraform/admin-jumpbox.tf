@@ -79,7 +79,7 @@ resource "azurerm_key_vault_secret" "jumpbox_credentials" {
   ]
 }
 resource "azurerm_virtual_machine_extension" "config_script" {
-  name                 = "${azurerm__virtual_machine.jumpbox.name}-vmextension"
+  name                 = "${azurerm_virtual_machine.jumpbox.name}-vmextension"
   virtual_machine_id   = azurerm_virtual_machine.jumpbox.id
   publisher            = "Microsoft.Compute"
   type                 = "CustomScriptExtension"
