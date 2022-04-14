@@ -38,10 +38,8 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
   location                   = data.azurerm_resource_group.ws.location
   resource_group_name        = data.azurerm_resource_group.ws.name
   network_interface_ids      = [azurerm_network_interface.internal.id]
-  size                       = local.vm_size[var.vm_size].value
+  vm_size                    = local.vm_size[var.vm_size].value
   allow_extension_operations = true
-  admin_username             = random_string.username.result
-  admin_password             = random_password.password.result
 
   custom_data = base64encode(data.template_file.vm_config.rendered)
 
@@ -52,11 +50,22 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
     version   = local.image_ref[var.image].version
   }
 
-  os_disk {
+  storage_os_disk {
     name                 = "osdisk-${local.vm_name}"
     caching              = "ReadWrite"
+    create_option        = "FromImage"
     storage_account_type = "Standard_LRS"
   }
+
+  os_profile {
+    computer_name  = "vm-${var.tre_id}"
+    admin_username = random_string.username.result
+    admin_password = random_password.password.result
+  }
+
+  os_profile_windows_config {
+  }
+
 
   identity {
     type = "SystemAssigned"
