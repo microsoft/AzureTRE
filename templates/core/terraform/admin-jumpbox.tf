@@ -78,3 +78,20 @@ resource "azurerm_key_vault_secret" "jumpbox_credentials" {
     azurerm_key_vault_access_policy.deployer
   ]
 }
+resource "azurerm_virtual_machine_extension" "config_script" {
+  name                 = "${azurerm__virtual_machine.jumpbox.name}-vmextension"
+  virtual_machine_id   = azurerm_virtual_machine.jumpbox.id
+  publisher            = "Microsoft.Compute"
+  type                 = "CustomScriptExtension"
+  type_handler_version = "1.10"
+
+  settings = <<SETTINGS
+    {
+      "commandToExecute": "powershell -ExecutionPolicy Unrestricted -NoProfile -NonInteractive -command \"cp c:/azuredata/customdata.bin c:/azuredata/configure.ps1; c:/azuredata/configure.ps1 \""
+    }
+SETTINGS
+}
+
+data "template_file" "vm_config" {
+  template = file("${path.module}/admin-jumpbox-configure.ps1")
+}
