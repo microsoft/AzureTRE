@@ -46,7 +46,7 @@ class Resource(AzureTREModel):
     history: List[ResourceHistoryItem] = []
 
     def get_resource_request_message_payload(self, operation_id: str, step_id: str, action: RequestAction) -> dict:
-        return {
+        payload = {
             "operationId": operation_id,
             "stepId": step_id,
             "action": action,
@@ -55,6 +55,16 @@ class Resource(AzureTREModel):
             "version": self.templateVersion,
             "parameters": self.properties
         }
+
+        if self.resourceType == ResourceType.WorkspaceService:
+            payload["workspaceId"] = self.workspaceId
+
+        if self.resourceType == ResourceType.UserResource:
+            payload["workspaceId"] = self.workspaceId
+            payload["ownerId"] = self.ownerId
+            payload["parentWorkspaceServiceId"] = self.parentWorkspaceServiceId
+
+        return payload
 
 
 class Output(AzureTREModel):

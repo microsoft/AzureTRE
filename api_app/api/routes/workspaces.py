@@ -69,7 +69,7 @@ async def retrieve_workspace_by_workspace_id(workspace=Depends(get_workspace_by_
 
 
 @workspaces_core_router.post("/workspaces", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_CREATE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
-async def create_workspace(workspace_create: WorkspaceInCreate, response: Response, user=Depends(get_current_admin_user), workspace_repo=Depends(get_repository(WorkspaceRepository)), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInResponse:
+async def create_workspace(workspace_create: WorkspaceInCreate, response: Response, user=Depends(get_current_admin_user), workspace_repo=Depends(get_repository(WorkspaceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInResponse:
     try:
         # TODO: This requires Directory.ReadAll ( Application.Read.All ) to be enabled in the Azure AD application to enable a users workspaces to be listed. This should be made optional.
         auth_info = extract_auth_information(workspace_create.properties["app_id"])
@@ -78,7 +78,13 @@ async def create_workspace(workspace_create: WorkspaceInCreate, response: Respon
         logging.error(f"Failed to create workspace model instance: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
-    operation = await save_and_deploy_resource(workspace, workspace_repo, operations_repo, user, resource_template)
+    operation = await save_and_deploy_resource(
+        resource=workspace,
+        resource_repo=workspace_repo,
+        operations_repo=operations_repo,
+        resource_template_repo=resource_template_repo,
+        user=user,
+        resource_template=resource_template)
     response.headers["Location"] = construct_location_header(operation)
 
     return OperationInResponse(operation=operation)
@@ -89,7 +95,14 @@ async def patch_workspace(workspace_patch: ResourcePatch, response: Response, us
     check_for_etag(etag)
     try:
         patched_workspace, resource_template = workspace_repo.patch_workspace(workspace, workspace_patch, etag, resource_template_repo, user)
-        operation = await send_resource_request_message(resource=patched_workspace, operations_repo=operations_repo, user=user, resource_template=resource_template, action=RequestAction.Upgrade)
+        operation = await send_resource_request_message(
+            resource=patched_workspace,
+            operations_repo=operations_repo,
+            resource_repo=workspace_repo,
+            user=user,
+            resource_template=resource_template,
+            resource_template_repo=resource_template_repo,
+            action=RequestAction.Upgrade)
         response.headers["Location"] = construct_location_header(operation)
         return OperationInResponse(operation=operation)
     except CosmosAccessConditionFailedError:
@@ -143,7 +156,7 @@ async def retrieve_workspace_service_by_id(workspace_service=Depends(get_workspa
 
 
 @workspace_services_workspace_router.post("/workspaces/{workspace_id}/workspace-services", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_CREATE_WORKSPACE_SERVICE, dependencies=[Depends(get_current_workspace_owner_user)])
-async def create_workspace_service(response: Response, workspace_service_input: WorkspaceServiceInCreate, user=Depends(get_current_workspace_owner_user), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), operations_repo=Depends(get_repository(OperationRepository)), workspace=Depends(get_deployed_workspace_by_id_from_path)) -> OperationInResponse:
+async def create_workspace_service(response: Response, workspace_service_input: WorkspaceServiceInCreate, user=Depends(get_current_workspace_owner_user), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), workspace=Depends(get_deployed_workspace_by_id_from_path)) -> OperationInResponse:
 
     try:
         workspace_service, resource_template = workspace_service_repo.create_workspace_service_item(workspace_service_input, workspace.id)
@@ -151,7 +164,13 @@ async def create_workspace_service(response: Response, workspace_service_input: 
         logging.error(f"Failed create workspace service model instance: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
-    operation = await save_and_deploy_resource(workspace_service, workspace_service_repo, operations_repo, user, resource_template)
+    operation = await save_and_deploy_resource(
+        resource=workspace_service,
+        resource_repo=workspace_service_repo,
+        operations_repo=operations_repo,
+        resource_template_repo=resource_template_repo,
+        user=user,
+        resource_template=resource_template)
     response.headers["Location"] = construct_location_header(operation)
 
     return OperationInResponse(operation=operation)
@@ -162,7 +181,14 @@ async def patch_workspace_service(workspace_service_patch: ResourcePatch, respon
     check_for_etag(etag)
     try:
         patched_workspace_service, resource_template = workspace_service_repo.patch_workspace_service(workspace_service, workspace_service_patch, etag, resource_template_repo, user)
-        operation = await send_resource_request_message(resource=patched_workspace_service, operations_repo=operations_repo, user=user, resource_template=resource_template, action=RequestAction.Upgrade)
+        operation = await send_resource_request_message(
+            resource=patched_workspace_service,
+            operations_repo=operations_repo,
+            resource_repo=workspace_service_repo,
+            user=user,
+            resource_template=resource_template,
+            resource_template_repo=resource_template_repo,
+            action=RequestAction.Upgrade)
         response.headers["Location"] = construct_location_header(operation)
         return OperationInResponse(operation=operation)
     except CosmosAccessConditionFailedError:
@@ -232,7 +258,7 @@ async def retrieve_user_resource_by_id(user_resource=Depends(get_user_resource_b
 
 
 @user_resources_workspace_router.post("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_CREATE_USER_RESOURCE)
-async def create_user_resource(response: Response, user_resource_create: UserResourceInCreate, user_resource_repo=Depends(get_repository(UserResourceRepository)), operations_repo=Depends(get_repository(OperationRepository)), user=Depends(get_current_workspace_owner_or_researcher_user), workspace=Depends(get_deployed_workspace_by_id_from_path), workspace_service=Depends(get_deployed_workspace_service_by_id_from_path)) -> OperationInResponse:
+async def create_user_resource(response: Response, user_resource_create: UserResourceInCreate, user_resource_repo=Depends(get_repository(UserResourceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), user=Depends(get_current_workspace_owner_or_researcher_user), workspace=Depends(get_deployed_workspace_by_id_from_path), workspace_service=Depends(get_deployed_workspace_service_by_id_from_path)) -> OperationInResponse:
 
     try:
         user_resource, resource_template = user_resource_repo.create_user_resource_item(user_resource_create, workspace.id, workspace_service.id, workspace_service.templateName, user.id)
@@ -240,7 +266,13 @@ async def create_user_resource(response: Response, user_resource_create: UserRes
         logging.error(f"Failed create user resource model instance: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
-    operation = await save_and_deploy_resource(user_resource, user_resource_repo, operations_repo, user, resource_template)
+    operation = await save_and_deploy_resource(
+        user_resource=user_resource,
+        user_resource_repo=user_resource_repo,
+        operations_repo=operations_repo,
+        resource_template_repo=resource_template_repo,
+        user=user,
+        resource_template=resource_template)
     response.headers["Location"] = construct_location_header(operation)
 
     return OperationInResponse(operation=operation)
@@ -266,7 +298,14 @@ async def patch_user_resource(user_resource_patch: ResourcePatch, response: Resp
 
     try:
         patched_user_resource, resource_template = user_resource_repo.patch_user_resource(user_resource, user_resource_patch, etag, resource_template_repo, workspace_service.templateName, user)
-        operation = await send_resource_request_message(resource=patched_user_resource, operations_repo=operations_repo, user=user, resource_template=resource_template, action=RequestAction.Upgrade)
+        operation = await send_resource_request_message(
+            resource=patched_user_resource,
+            operations_repo=operations_repo,
+            resource_repo=user_resource_repo,
+            user=user,
+            resource_template=resource_template,
+            resource_template_repo=resource_template_repo,
+            action=RequestAction.Upgrade)
         response.headers["Location"] = construct_location_header(operation)
         return OperationInResponse(operation=operation)
     except CosmosAccessConditionFailedError:

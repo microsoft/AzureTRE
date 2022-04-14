@@ -128,6 +128,7 @@ def service_bus_message_generator(sb_message, status, deployment_message, output
     installation_id = get_installation_id(sb_message)
     message_dict = {
         "operationId": sb_message["operationId"],
+        "stepId": sb_message["stepId"],
         "id": sb_message["id"],
         "status": status,
         "message": f"{installation_id}: {deployment_message}"}

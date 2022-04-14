@@ -2,7 +2,7 @@ from typing import Tuple
 from azure.cosmos import CosmosClient
 from datetime import datetime
 from jsonschema import validate
-from pydantic import UUID4
+from pydantic import UUID4, parse_obj_as
 import copy
 from models.domain.authentication import User
 
@@ -49,6 +49,13 @@ class ResourceRepository(BaseRepository):
         if not resources:
             raise EntityDoesNotExist
         return resources[0]
+
+    def get_resource_by_template_name(self, template_name: str) -> Resource:
+        query = f"SELECT TOP 1 * FROM c WHERE c.templateName = {template_name}"
+        resources = self.query(query=query)
+        if not resources:
+            raise EntityDoesNotExist
+        return parse_obj_as(Resource, resources[0])
 
     def validate_input_against_template(self, template_name: str, resource_input, resource_type: ResourceType, parent_template_name: str = "") -> ResourceTemplate:
         try:

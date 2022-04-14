@@ -5,6 +5,9 @@ from azure.identity.aio import DefaultAzureCredential
 from azure.servicebus import ServiceBusMessage
 from azure.servicebus.aio import ServiceBusClient
 from contextlib import asynccontextmanager
+from db.repositories.resources import ResourceRepository
+from db.repositories.resource_templates import ResourceTemplateRepository
+from service_bus.step_helpers import update_resource_for_step
 from models.domain.resource_template import ResourceTemplate
 
 from models.domain.authentication import User
@@ -19,7 +22,7 @@ from models.domain.operation import Status, Operation
 from db.repositories.operations import OperationRepository
 
 
-async def send_resource_request_message(resource: Resource, operations_repo: OperationRepository, user: User, resource_template: ResourceTemplate, action: RequestAction = RequestAction.Install) -> Operation:
+async def send_resource_request_message(resource: Resource, operations_repo: OperationRepository, resource_repo: ResourceRepository, user: User, resource_template: ResourceTemplate, resource_template_repo: ResourceTemplateRepository, action: RequestAction = RequestAction.Install) -> Operation:
     """
     Creates and sends a resource request message for the resource to the Service Bus.
     The resource ID is added to the message to serve as an correlation ID for the deployment process.
@@ -44,19 +47,21 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
     # add the operation to the db - this will create all the steps needed (if any are defined in the template)
     operation = operations_repo.create_operation_item(resource_id=resource.id, status=status, action=action, message=message, resource_path=resource.resourcePath, user=user, resource_template=resource_template)
 
-    # get the first step - if it's not "main" - get the resource, update the props, save it and enqueue a message for it
     resource_to_send = resource
     step_id = "main"
 
-    # if resource_template.pipeline is not None:
-    #    if action in resource_template.pipeline:
-    #        first_step = resource_template.pipeline[action].steps[0]
-    #        if first_step.stepId != "main":
-    #            step_id = first_step.stepId
-    #            resource_to_send = resource_repo.get_resource_by_template_name_and_resource_type(template_name=first_step.resourceTemplateName, resource_type=first_step.resourceType)
-    #            for prop in first_step.properties:
-    #                resource_to_send.properties[prop.name] = prop.value
-    #            await resource_repo.save(resource_to_send)
+    # get the first step - if it's not "main" - get the resource, patch it, return it
+    if resource_template.pipeline is not None:
+        if action in resource_template.pipeline:
+            first_step = resource_template.pipeline[action].steps[0]
+            if first_step["stepId"] != "main":
+                step_id = first_step["stepId"]
+                resource_to_send = update_resource_for_step(
+                    template_step=first_step,
+                    resource_repo=resource_repo,
+                    resource_template_repo=resource_template_repo,
+                    resource_template=resource_template,
+                    user=user)
 
     content = json.dumps(resource_to_send.get_resource_request_message_payload(operation_id=operation.id, step_id=step_id, action=action))
 

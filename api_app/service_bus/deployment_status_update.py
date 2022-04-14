@@ -122,6 +122,8 @@ def update_status_in_database(resource_repo: ResourceRepository, operations_repo
     try:
         # update the op
         operation = operations_repo.get_operation_by_id(str(message.operationId))
+
+        # update the step status
         operation_to_persist = create_updated_operation_document(operation, message)
         operations_repo.update_operation_status(operation_to_persist.id, operation_to_persist.status, operation_to_persist.message)
 

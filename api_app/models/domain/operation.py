@@ -61,6 +61,7 @@ class DeploymentStatusUpdateMessage(AzureTREModel):
     Model for service bus message flowing back to API to update status in DB
     """
     operationId: UUID4 = Field(title="", description="")
+    stepId: str = Field(title="", description="")
     id: UUID4 = Field(title="", description="")
     status: Status = Field(title="", description="")
     message: str = Field(title="", description="")

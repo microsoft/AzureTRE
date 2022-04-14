@@ -30,13 +30,19 @@ class CustomAction(AzureTREModel):
     description: str = Field("", title="Action description")
 
 
+class PipelineStepProperty(AzureTREModel):
+    name: str = Field(title="name", description="name of the property to update")
+    type: str = Field(title="type", description="data type of the property to update")
+    value: str = Field(title="value", description="value to use in substitution for the property to update")
+
+
 class PipelineStep(AzureTREModel):
     stepId: str = Field(title="stepId", description="Unique id identifying the step")
     stepTitle: Optional[str] = Field(title="stepTitle", description="Human readable title of what the step is for")
     resourceTemplateName: Optional[str] = Field(title="resourceTemplateName", description="Name of the template for the resource under change")
     resourceType: Optional[ResourceType] = Field(title="resourceType", description="Type of resource under change")
     resourceAction: Optional[str] = Field(title="resourceAction", description="Action - install / upgrade / uninstall etc")
-    properties: Optional[List[dict]]
+    properties: Optional[List[PipelineStepProperty]]
 
 
 class Pipeline(AzureTREModel):
