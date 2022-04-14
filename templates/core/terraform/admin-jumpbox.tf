@@ -40,6 +40,8 @@ resource "azurerm_windows_virtual_machine" "jumpbox" {
   network_interface_ids = [azurerm_network_interface.jumpbox_nic.id]
   vm_size               = "Standard_B2s"
   allow_extension_operations = true
+  admin_username = random_string.username.result
+  admin_password = random_password.password.result
 
   delete_os_disk_on_termination = true
 
@@ -51,19 +53,14 @@ resource "azurerm_windows_virtual_machine" "jumpbox" {
     sku       = "20h2-pro-g2"
     version   = "latest"
   }
-  storage_os_disk {
+  os_disk {
     name              = "vm-dsk-${var.tre_id}"
     caching           = "ReadWrite"
-    create_option     = "FromImage"
     managed_disk_type = "Standard_LRS"
   }
-  os_profile {
-    computer_name  = "vm-${var.tre_id}"
-    admin_username = random_string.username.result
-    admin_password = random_password.password.result
-  }
 
-  os_profile_windows_config {
+  identity {
+    type = "SystemAssigned"
   }
 
   tags = {
