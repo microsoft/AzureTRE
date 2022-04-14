@@ -52,7 +52,7 @@ public class AzureTreAuthenticatedUserTests {
 
         final Credentials credentialsMock = mock(Credentials.class);
 
-        authenticatedUser.init(credentialsMock, dummyAccessToken, "dummy_username", "dummy_objectid");
+        authenticatedUser.init(credentialsMock, dummyAccessToken, "dummy_username", "dummy_objectid", null);
 
         Assert.assertEquals("dummy_objectid", authenticatedUser.getObjectId());
         Assert.assertEquals("dummy_username", authenticatedUser.getIdentifier());
