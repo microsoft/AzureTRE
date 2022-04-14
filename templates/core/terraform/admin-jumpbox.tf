@@ -34,14 +34,14 @@ resource "random_password" "password" {
 }
 
 resource "azurerm_windows_virtual_machine" "jumpbox" {
-  name                  = "vm-${var.tre_id}"
-  resource_group_name   = azurerm_resource_group.core.name
-  location              = azurerm_resource_group.core.location
-  network_interface_ids = [azurerm_network_interface.jumpbox_nic.id]
-  size               = "Standard_B2s"
+  name                       = "vm-${var.tre_id}"
+  resource_group_name        = azurerm_resource_group.core.name
+  location                   = azurerm_resource_group.core.location
+  network_interface_ids      = [azurerm_network_interface.jumpbox_nic.id]
+  size                       = "Standard_B2s"
   allow_extension_operations = true
-  admin_username = random_string.username.result
-  admin_password = random_password.password.result
+  admin_username             = random_string.username.result
+  admin_password             = random_password.password.result
 
   custom_data = base64encode(data.template_file.vm_config.rendered)
 
