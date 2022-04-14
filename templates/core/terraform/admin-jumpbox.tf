@@ -45,7 +45,7 @@ resource "azurerm_windows_virtual_machine" "jumpbox" {
 
   custom_data = base64encode(data.template_file.vm_config.rendered)
 
-  storage_image_reference {
+  source_image_reference {
     publisher = "MicrosoftWindowsDesktop"
     offer     = "windows-10"
     sku       = "20h2-pro-g2"
