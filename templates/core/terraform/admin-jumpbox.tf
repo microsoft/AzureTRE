@@ -67,7 +67,7 @@ resource "azurerm_windows_virtual_machine" "jumpbox" {
 }
 
 resource "azurerm_key_vault_secret" "jumpbox_credentials" {
-  name         = "${azurerm_virtual_machine.jumpbox.name}-jumpbox-admin-credentials"
+  name         = "${azurerm_windows_virtual_machine.jumpbox.name}-jumpbox-admin-credentials"
   value        = "${random_string.username.result}\n${random_password.password.result}"
   key_vault_id = azurerm_key_vault.kv.id
   depends_on = [
@@ -75,8 +75,8 @@ resource "azurerm_key_vault_secret" "jumpbox_credentials" {
   ]
 }
 resource "azurerm_virtual_machine_extension" "config_script" {
-  name                 = "${azurerm_virtual_machine.jumpbox.name}-vmextension"
-  virtual_machine_id   = azurerm_virtual_machine.jumpbox.id
+  name                 = "${azurerm_windows_virtual_machine.jumpbox.name}-vmextension"
+  virtual_machine_id   = azurerm_windows_virtual_machine.jumpbox.id
   publisher            = "Microsoft.Compute"
   type                 = "CustomScriptExtension"
   type_handler_version = "1.10"
