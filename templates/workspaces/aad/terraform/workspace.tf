@@ -23,3 +23,11 @@ module "network" {
   tre_resource_id        = var.tre_resource_id
   enable_local_debugging = var.enable_local_debugging
 }
+
+module "aad" {
+  source                         = "./aad"
+  count                          = var.register_aad_application ? 1 : 0
+  key_vault_id                   = azurerm_key_vault.kv.id
+  workspace_resource_name_suffix = local.workspace_resource_name_suffix
+  depends_on                     = [azurerm_key_vault_access_policy.deployer]
+}

@@ -33,6 +33,11 @@ variable "enable_local_debugging" {
   default     = false
   description = "This will allow storage account and keyvault access over the internet. Set to true to allow deploying this from a local machine."
 }
+variable "register_aad_application" {
+  type        = bool
+  default     = false
+  description = "Create an AAD application automatically for the Workspace."
+}
 
 # These are used to authenticate into the AAD Tenant to create the AAD App
 variable "auth_tenant_id" {

@@ -47,12 +47,6 @@
       }
     },
     {
-      "name": "tfstate_storage_account_access_key",
-      "source": {
-        "env": "MGMT_STORAGE_ACCOUNT_ACCESS_KEY"
-      }
-    },
-    {
       "name": "shared_storage_quota",
       "source": {
         "env": "SHARED_STORAGE_QUOTA"

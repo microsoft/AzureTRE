@@ -1,10 +1,12 @@
+data "azuread_client_config" "current" {}
+
 resource "random_uuid" "oauth2_user_impersonation_id" {}
 resource "random_uuid" "app_role_workspace_owner_id" {}
 resource "random_uuid" "app_role_workspace_researcher_id" {}
 
 resource "azuread_application" "workspace" {
-  display_name    = local.workspace_resource_name_suffix
-  identifier_uris = ["api://${local.workspace_resource_name_suffix}"]
+  display_name    = var.workspace_resource_name_suffix
+  identifier_uris = ["api://${var.workspace_resource_name_suffix}"]
   owners          = [data.azuread_client_config.current.object_id]
 
   api {
@@ -102,13 +104,11 @@ resource "azuread_service_principal_password" "workspace" {
 resource "azurerm_key_vault_secret" "client_id" {
   name         = "openid-client-id"
   value        = azuread_application.workspace.application_id
-  key_vault_id = azurerm_key_vault.kv.id
-  depends_on   = [azurerm_key_vault_access_policy.deployer]
+  key_vault_id = var.key_vault_id
 }
 
 resource "azurerm_key_vault_secret" "client_secret" {
   name         = "openid-client-secret"
   value        = azuread_service_principal_password.workspace.value
-  key_vault_id = azurerm_key_vault.kv.id
-  depends_on   = [azurerm_key_vault_access_policy.deployer]
+  key_vault_id = var.key_vault_id
 }

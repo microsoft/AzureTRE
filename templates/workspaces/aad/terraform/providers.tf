@@ -33,4 +33,3 @@ provider "azuread" {
   client_secret = var.api_client_secret
   tenant_id     = var.auth_tenant_id
 }
-data "azuread_client_config" "current" {}
