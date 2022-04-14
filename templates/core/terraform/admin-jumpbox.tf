@@ -43,9 +43,7 @@ resource "azurerm_windows_virtual_machine" "jumpbox" {
   admin_username = random_string.username.result
   admin_password = random_password.password.result
 
-  delete_os_disk_on_termination = true
-
-  delete_data_disks_on_termination = true
+  custom_data = base64encode(data.template_file.vm_config.rendered)
 
   storage_image_reference {
     publisher = "MicrosoftWindowsDesktop"
