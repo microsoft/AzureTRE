@@ -41,7 +41,7 @@ def shared_service():
 @pytest.fixture
 def basic_shared_service_request():
     return SharedServiceInCreate(
-        templateName="shared-service-type",
+        templateName="my-shared-service",
         properties={
             "display_name": "test",
             "description": "test",
@@ -117,6 +117,10 @@ def test_create_shared_service_item_with_the_same_name_twice_fails(validate_inpu
 
     with pytest.raises(DuplicateEntity):
         shared_service = shared_service_repo.create_shared_service_item(shared_service_to_create)
+
+    shared_service.templateVersion = "0.1.1"
+    # Checking that does not raise if the version is different
+    _ = shared_service_repo.create_shared_service_item(shared_service_to_create)
 
 
 @patch('db.repositories.shared_services.SharedServiceRepository.validate_input_against_template', side_effect=ValueError)

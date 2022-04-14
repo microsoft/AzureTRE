@@ -1,3 +1,4 @@
+from sqlite3 import InternalError
 from typing import List
 
 from azure.cosmos import CosmosClient
@@ -53,11 +54,16 @@ class SharedServiceRepository(ResourceRepository):
     def create_shared_service_item(self, shared_service_input: SharedServiceTemplateInCreate) -> SharedService:
         shared_service_id = shared_service_input.templateName
 
-        existing_shared_service = self.query(self.shared_service_query(shared_service_id))
-        if existing_shared_service:
-            raise DuplicateEntity
-
         template_version = self.validate_input_against_template(shared_service_input.templateName, shared_service_input, ResourceType.SharedService)
+
+        existing_shared_services = self.query(self.shared_service_query(shared_service_id))
+        # Duplicate is same template (=id), same version and active
+        if existing_shared_services:
+            if len(existing_shared_services) > 1:
+                raise InternalError(f"More than one shared service exists with the same id {shared_service_id}")
+            existing_shared_service = existing_shared_services[0]
+            if existing_shared_service["isActive"] and existing_shared_service["templateVersion"] == template_version:
+                raise DuplicateEntity
 
         resource_spec_parameters = {**shared_service_input.properties, **self.get_shared_service_spec_params()}
 
