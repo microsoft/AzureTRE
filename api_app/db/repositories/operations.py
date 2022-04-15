@@ -49,8 +49,11 @@ class OperationRepository(BaseRepository):
                     else:
                         steps.append(OperationStep(
                             stepId=step["stepId"],
+                            stepTitle=step["stepTitle"],
+                            resourceTemplateName=step["resourceTemplateName"],
+                            resourceType=step["resourceType"],
+                            resourceAction=step["resourceAction"],
                             updatedWhen=self.get_timestamp()
-                            # todo - add other props
                         ))
 
         # if no pipeline is defined for this action, create a main step only

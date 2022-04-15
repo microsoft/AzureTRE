@@ -51,9 +51,9 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
     step_id = "main"
 
     # get the first step - if it's not "main" - get the resource, patch it, return it
-    if resource_template.pipeline is not None:
-        if action in resource_template.pipeline:
-            first_step = resource_template.pipeline[action].steps[0]
+    if "pipeline" in resource_template:
+        if action in resource_template["pipeline"]:
+            first_step = resource_template["pipeline"][action][0]
             if first_step["stepId"] != "main":
                 step_id = first_step["stepId"]
                 resource_to_send = update_resource_for_step(

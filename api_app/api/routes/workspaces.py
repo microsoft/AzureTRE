@@ -267,8 +267,8 @@ async def create_user_resource(response: Response, user_resource_create: UserRes
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     operation = await save_and_deploy_resource(
-        user_resource=user_resource,
-        user_resource_repo=user_resource_repo,
+        resource=user_resource,
+        resource_repo=user_resource_repo,
         operations_repo=operations_repo,
         resource_template_repo=resource_template_repo,
         user=user,

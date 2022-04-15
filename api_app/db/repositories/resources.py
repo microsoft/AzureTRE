@@ -51,7 +51,7 @@ class ResourceRepository(BaseRepository):
         return resources[0]
 
     def get_resource_by_template_name(self, template_name: str) -> Resource:
-        query = f"SELECT TOP 1 * FROM c WHERE c.templateName = {template_name}"
+        query = f"SELECT TOP 1 * FROM c WHERE c.templateName = '{template_name}'"
         resources = self.query(query=query)
         if not resources:
             raise EntityDoesNotExist
