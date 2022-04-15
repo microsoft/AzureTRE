@@ -128,3 +128,4 @@ uninstall:
           "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.tre_id }}-workspace-aad-{{ bundle.parameters.id }}"
+        
