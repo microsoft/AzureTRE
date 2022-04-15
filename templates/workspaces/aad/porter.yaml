@@ -1,17 +1,26 @@
 ---
 name: aad-workspace
-version: 0.0.3
+version: 0.0.6
 description: "An AAD Workspace"
 registry: azuretre
 
 credentials:
+  # Credentials for interacting with the Auth tenant
   - name: api_client_id
     env: API_CLIENT_ID
   - name: api_client_secret
     env: API_CLIENT_SECRET
   - name: auth_tenant_id
     env: AUTH_TENANT_ID
-
+  # Credentials for interacting with Azure
+  - name: azure_tenant_id
+    env: ARM_TENANT_ID
+  - name: azure_subscription_id
+    env: ARM_SUBSCRIPTION_ID
+  - name: azure_client_id
+    env: ARM_CLIENT_ID
+  - name: azure_client_secret
+    env: ARM_CLIENT_SECRET
 parameters:
   - name: tre_id
     type: string
@@ -35,6 +44,9 @@ parameters:
     type: boolean
     default: false
   - name: keyvault_purge_protection_enabled
+    type: boolean
+    default: true
+  - name: register_aad_application
     type: boolean
     default: true
   - name: tfstate_resource_group_name
@@ -67,6 +79,8 @@ install:
           "{{ bundle.parameters.enable_local_debugging }}"
         keyvault_purge_protection_enabled:
           "{{ bundle.parameters.keyvault_purge_protection_enabled }}"
+        register_aad_application:
+          "{{ bundle.parameters.register_aad_application }}"
         api_client_id: "{{ bundle.credentials.api_client_id }}"
         api_client_secret: "{{ bundle.credentials.api_client_secret }}"
         auth_tenant_id: "{{ bundle.credentials.auth_tenant_id }}"
@@ -102,6 +116,8 @@ uninstall:
           "{{ bundle.parameters.enable_local_debugging }}"
         keyvault_purge_protection_enabled:
           "{{ bundle.parameters.keyvault_purge_protection_enabled }}"
+        register_aad_application:
+          "{{ bundle.parameters.register_aad_application }}"
         api_client_id: "{{ bundle.credentials.api_client_id }}"
         api_client_secret: "{{ bundle.credentials.api_client_secret }}"
         auth_tenant_id: "{{ bundle.credentials.auth_tenant_id }}"
