@@ -11,13 +11,13 @@
       }
     },
     {
-      "name": "api_app_id",
+      "name": "workspace_creation_app_id",
       "source": {
         "secret": "api-app-id"
       }
     },
     {
-      "name": "api_app_secret",
+      "name": "workspace_creation_app_secret",
       "source": {
         "secret": "api-app-secret"
       }
