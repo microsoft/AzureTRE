@@ -165,3 +165,9 @@ variable "public_deployment_ip_address" {
   type        = string
   default     = ""
 }
+
+variable "auto_workspace_app_registration" {
+  description = "Allow TRE to create the Workspace AAD Application Registration"
+  type        = bool
+  default     = false
+}
