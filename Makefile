@@ -258,7 +258,7 @@ bundle-install:
 	&& . ./devops/scripts/load_env.sh ${DIR}/.env \
 	&& cd ${DIR} && porter install -p ./parameters.json \
 		--cred ${ROOTPATH}/resource_processor/vmss_porter/azure.json \
-		--cred ${ROOTPATH}/resource_processor/vmss_porter/aad.json \
+		--cred ${ROOTPATH}/resource_processor/vmss_porter/workspace-creation-creds.json \
 		--allow-docker-host-access --debug
 
 bundle-uninstall:
@@ -269,7 +269,7 @@ bundle-uninstall:
 	&& . ./devops/scripts/load_env.sh ${DIR}/.env \
 	&& cd ${DIR} && porter uninstall -p ./parameters.json \
 		--cred ${ROOTPATH}/resource_processor/vmss_porter/azure.json \
-		--cred ${ROOTPATH}/resource_processor/vmss_porter/aad.json \
+		--cred ${ROOTPATH}/resource_processor/vmss_porter/workspace-creation-creds.json \
 		--allow-docker-host-access --debug
 
 bundle-custom-action:
@@ -280,7 +280,7 @@ bundle-custom-action:
 	&& . ./devops/scripts/load_env.sh ${DIR}/.env \
 	&& cd ${DIR} && porter invoke --action ${ACTION} -p ./parameters.json \
 		--cred ${ROOTPATH}/resource_processor/vmss_porter/azure.json \
-		--cred ${ROOTPATH}/resource_processor/vmss_porter/aad.json \
+		--cred ${ROOTPATH}/resource_processor/vmss_porter/workspace-creation-creds.json \
 		--allow-docker-host-access --debug
 
 bundle-publish:
