@@ -31,14 +31,14 @@ class OperationRepository(BaseRepository):
             stepId="main",
             stepTitle=f"Main step for {resource_id}",
             resourceId=resource_id,
-            resourceTemplateName=resource_template["name"],
-            resourceType=resource_template["resourceType"],
+            resourceTemplateName=resource_template.name,
+            resourceType=resource_template.resourceType,
             resourceAction=action,
             status=status,
             message=message,
             updatedWhen=self.get_timestamp())
 
-    def create_operation_item(self, resource_id: str, status: Status, action: str, message: str, resource_path: str, user: User, resource_template: ResourceTemplate, resource_repo: ResourceRepository) -> Operation:
+    def create_operation_item(self, resource_id: str, status: Status, action: str, message: str, resource_path: str, resource_version: int, user: User, resource_template: ResourceTemplate, resource_repo: ResourceRepository) -> Operation:
         operation_id = str(uuid.uuid4())
 
         # if the template has a pipeline defined for this action, copy over all the steps to the ops document
@@ -69,8 +69,8 @@ class OperationRepository(BaseRepository):
             id=operation_id,
             resourceId=resource_id,
             resourcePath=resource_path,
+            resourceVersion=resource_version,
             status=status,
-            resourceVersion=0,  # Resource versioning coming in future
             createdWhen=timestamp,
             updatedWhen=timestamp,
             action=action,

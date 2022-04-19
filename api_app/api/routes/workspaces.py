@@ -112,21 +112,38 @@ async def patch_workspace(workspace_patch: ResourcePatch, response: Response, us
 
 
 @workspaces_core_router.delete("/workspaces/{workspace_id}", response_model=OperationInResponse, name=strings.API_DELETE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
-async def delete_workspace(response: Response, user=Depends(get_current_admin_user), workspace=Depends(get_workspace_by_id_from_path), operations_repo=Depends(get_repository(OperationRepository)), workspace_repo=Depends(get_repository(WorkspaceRepository)), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository))) -> OperationInResponse:
+async def delete_workspace(response: Response, user=Depends(get_current_admin_user), workspace=Depends(get_workspace_by_id_from_path), operations_repo=Depends(get_repository(OperationRepository)), workspace_repo=Depends(get_repository(WorkspaceRepository)), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository))) -> OperationInResponse:
     if workspace.isEnabled:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION)
     if len(workspace_service_repo.get_active_workspace_services_for_workspace(workspace.id)) > 0:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_SERVICES_NEED_TO_BE_DELETED_BEFORE_WORKSPACE)
 
-    operation = await send_uninstall_message(workspace, operations_repo, ResourceType.Workspace, user)
+    resource_template = resource_template_repo.get_template_by_name_and_version(workspace.templateName, workspace.templateVersion, ResourceType.Workspace)
+
+    operation = await send_uninstall_message(
+        resource=workspace,
+        resource_repo=workspace_repo,
+        operations_repo=operations_repo,
+        resource_type=ResourceType.Workspace,
+        resource_template_repo=resource_template_repo,
+        user=user,
+        resource_template=resource_template)
 
     response.headers["Location"] = construct_location_header(operation)
     return OperationInResponse(operation=operation)
 
 
 @workspaces_core_router.post("/workspaces/{workspace_id}/invoke-action", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_INVOKE_ACTION_ON_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
-async def invoke_action_on_workspace(response: Response, action: str, user=Depends(get_current_admin_user), workspace=Depends(get_workspace_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInResponse:
-    operation = await send_custom_action_message(resource=workspace, action=action, resource_type=ResourceType.Workspace, operations_repo=operations_repo, resource_template_repo=resource_template_repo, user=user)
+async def invoke_action_on_workspace(response: Response, action: str, user=Depends(get_current_admin_user), workspace=Depends(get_workspace_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), workspace_repo=Depends(get_repository(WorkspaceRepository))) -> OperationInResponse:
+    operation = await send_custom_action_message(
+        resource=workspace,
+        resource_repo=workspace_repo,
+        custom_action=action,
+        resource_type=ResourceType.Workspace,
+        operations_repo=operations_repo,
+        resource_template_repo=resource_template_repo,
+        user=user)
+
     response.headers["Location"] = construct_location_header(operation)
 
     return OperationInResponse(operation=operation)
@@ -198,7 +215,7 @@ async def patch_workspace_service(workspace_service_patch: ResourcePatch, respon
 
 
 @workspace_services_workspace_router.delete("/workspaces/{workspace_id}/workspace-services/{service_id}", response_model=OperationInResponse, name=strings.API_DELETE_WORKSPACE_SERVICE, dependencies=[Depends(get_current_workspace_owner_user)])
-async def delete_workspace_service(response: Response, user=Depends(get_current_workspace_owner_user), workspace=Depends(get_workspace_by_id_from_path), workspace_service=Depends(get_workspace_service_by_id_from_path), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), user_resource_repo=Depends(get_repository(UserResourceRepository)), operations_repo=Depends(get_repository(OperationRepository)),) -> OperationInResponse:
+async def delete_workspace_service(response: Response, user=Depends(get_current_workspace_owner_user), workspace=Depends(get_workspace_by_id_from_path), workspace_service=Depends(get_workspace_service_by_id_from_path), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), user_resource_repo=Depends(get_repository(UserResourceRepository)), operations_repo=Depends(get_repository(OperationRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository))) -> OperationInResponse:
 
     if workspace_service.isEnabled:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_SERVICE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION)
@@ -206,15 +223,33 @@ async def delete_workspace_service(response: Response, user=Depends(get_current_
     if len(user_resource_repo.get_user_resources_for_workspace_service(workspace.id, workspace_service.id)) > 0:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.USER_RESOURCES_NEED_TO_BE_DELETED_BEFORE_WORKSPACE)
 
-    operation = await send_uninstall_message(workspace_service, operations_repo, ResourceType.WorkspaceService, user)
+    resource_template = resource_template_repo.get_template_by_name_and_version(workspace_service.templateName, workspace_service.templateVersion, ResourceType.WorkspaceService)
+
+    operation = await send_uninstall_message(
+        resource=workspace_service,
+        resource_repo=workspace_service_repo,
+        operations_repo=operations_repo,
+        resource_type=ResourceType.WorkspaceService,
+        resource_template_repo=resource_template_repo,
+        user=user,
+        resource_template=resource_template)
+
     response.headers["Location"] = construct_location_header(operation)
 
     return OperationInResponse(operation=operation)
 
 
 @workspace_services_workspace_router.post("/workspaces/{workspace_id}/workspace-services/{service_id}/invoke-action", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_INVOKE_ACTION_ON_WORKSPACE_SERVICE, dependencies=[Depends(get_current_workspace_owner_user)])
-async def invoke_action_on_workspace_service(response: Response, action: str, user=Depends(get_current_workspace_owner_user), workspace_service=Depends(get_workspace_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInResponse:
-    operation = await send_custom_action_message(resource=workspace_service, action=action, resource_type=ResourceType.WorkspaceService, operations_repo=operations_repo, resource_template_repo=resource_template_repo, user=user)
+async def invoke_action_on_workspace_service(response: Response, action: str, user=Depends(get_current_workspace_owner_user), workspace_service=Depends(get_workspace_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository))) -> OperationInResponse:
+    operation = await send_custom_action_message(
+        resource=workspace_service,
+        resource_repo=workspace_service_repo,
+        custom_action=action,
+        resource_type=ResourceType.WorkspaceService,
+        operations_repo=operations_repo,
+        resource_template_repo=resource_template_repo,
+        user=user)
+
     response.headers["Location"] = construct_location_header(operation)
 
     return OperationInResponse(operation=operation)
@@ -279,13 +314,23 @@ async def create_user_resource(response: Response, user_resource_create: UserRes
 
 
 @user_resources_workspace_router.delete("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}", response_model=OperationInResponse, name=strings.API_DELETE_USER_RESOURCE)
-async def delete_user_resource(response: Response, user=Depends(get_current_workspace_owner_or_researcher_user), user_resource=Depends(get_user_resource_by_id_from_path), user_resource_repo=Depends(get_repository(UserResourceRepository)), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInResponse:
+async def delete_user_resource(response: Response, user=Depends(get_current_workspace_owner_or_researcher_user), user_resource=Depends(get_user_resource_by_id_from_path), workspace_service=Depends(get_workspace_service_by_id_from_path), user_resource_repo=Depends(get_repository(UserResourceRepository)), operations_repo=Depends(get_repository(OperationRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository))) -> OperationInResponse:
     validate_user_is_workspace_owner_or_resource_owner(user, user_resource)
 
     if user_resource.isEnabled:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.USER_RESOURCE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION)
 
-    operation = await send_uninstall_message(user_resource, operations_repo, ResourceType.UserResource, user)
+    resource_template = resource_template_repo.get_template_by_name_and_version(user_resource.templateName, user_resource.templateVersion, ResourceType.UserResource, workspace_service.templateName)
+
+    operation = await send_uninstall_message(
+        resource=user_resource,
+        resource_repo=user_resource_repo,
+        operations_repo=operations_repo,
+        resource_type=ResourceType.UserResource,
+        resource_template_repo=resource_template_repo,
+        user=user,
+        resource_template=resource_template)
+
     response.headers["Location"] = construct_location_header(operation)
 
     return OperationInResponse(operation=operation)
@@ -306,6 +351,7 @@ async def patch_user_resource(user_resource_patch: ResourcePatch, response: Resp
             resource_template=resource_template,
             resource_template_repo=resource_template_repo,
             action=RequestAction.Upgrade)
+
         response.headers["Location"] = construct_location_header(operation)
         return OperationInResponse(operation=operation)
     except CosmosAccessConditionFailedError:
@@ -318,7 +364,15 @@ async def patch_user_resource(user_resource_patch: ResourcePatch, response: Resp
 @user_resources_workspace_router.post("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}/invoke-action", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_INVOKE_ACTION_ON_USER_RESOURCE)
 async def invoke_action_on_user_resource(response: Response, action: str, user_resource=Depends(get_user_resource_by_id_from_path), workspace_service=Depends(get_workspace_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), user=Depends(get_current_workspace_owner_or_researcher_user)) -> OperationInResponse:
     validate_user_is_workspace_owner_or_resource_owner(user, user_resource)
-    operation = await send_custom_action_message(resource=user_resource, action=action, resource_type=ResourceType.UserResource, operations_repo=operations_repo, resource_template_repo=resource_template_repo, user=user, parent_service_name=workspace_service.templateName)
+    operation = await send_custom_action_message(
+        resource=user_resource,
+        custom_action=action,
+        resource_type=ResourceType.UserResource,
+        operations_repo=operations_repo,
+        resource_template_repo=resource_template_repo,
+        user=user,
+        parent_service_name=workspace_service.templateName)
+
     response.headers["Location"] = construct_location_header(operation)
 
     return OperationInResponse(operation=operation)

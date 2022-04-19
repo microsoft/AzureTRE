@@ -23,6 +23,9 @@ class Status(str, Enum):
     InvokingAction = strings.RESOURCE_ACTION_STATUS_INVOKING
     ActionSucceeded = strings.RESOURCE_ACTION_STATUS_SUCCEEDED
     ActionFailed = strings.RESOURCE_ACTION_STATUS_FAILED
+    PipelineDeploying = strings.RESOURCE_ACTION_STATUS_PIPELINE_DEPLOYING
+    PipelineFailed = strings.RESOURCE_ACTION_STATUS_PIPELINE_FAILED
+    PipelineSucceeded = strings.RESOURCE_ACTION_STATUS_PIPELINE_SUCCEEDED
 
 
 class OperationStep(AzureTREModel):
@@ -42,7 +45,15 @@ class OperationStep(AzureTREModel):
     def is_success(self) -> bool:
         return self.status in (
             Status.ActionSucceeded,
-            Status.Deployed
+            Status.Deployed,
+            Status.Deleted
+        )
+
+    def is_failure(self) -> bool:
+        return self.status in (
+            Status.ActionFailed,
+            Status.DeletingFailed,
+            Status.Failed
         )
 
 

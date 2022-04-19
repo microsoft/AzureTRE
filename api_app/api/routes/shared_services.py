@@ -67,6 +67,7 @@ async def patch_shared_service(shared_service_patch: ResourcePatch, response: Re
             resource_template=resource_template,
             resource_template_repo=resource_template_repo,
             action=RequestAction.Upgrade)
+
         response.headers["Location"] = construct_location_header(operation)
         return SharedServiceInResponse(sharedService=patched_shared_service)
     except CosmosAccessConditionFailedError:
@@ -76,19 +77,37 @@ async def patch_shared_service(shared_service_patch: ResourcePatch, response: Re
 
 
 @shared_services_router.delete("/shared-services/{shared_service_id}", response_model=OperationInResponse, name=strings.API_DELETE_SHARED_SERVICE, dependencies=[Depends(get_current_admin_user)])
-async def delete_shared_service(response: Response, user=Depends(get_current_admin_user), shared_service=Depends(get_shared_service_by_id_from_path), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInResponse:
+async def delete_shared_service(response: Response, user=Depends(get_current_admin_user), shared_service=Depends(get_shared_service_by_id_from_path), operations_repo=Depends(get_repository(OperationRepository)), shared_service_repo=Depends(get_repository(SharedServiceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository))) -> OperationInResponse:
     if shared_service.isEnabled:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.SHARED_SERVICE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION)
 
-    operation = await send_uninstall_message(shared_service, operations_repo, ResourceType.SharedService, user)
+    resource_template = resource_template_repo.get_template_by_name_and_version(shared_service.templateName, shared_service.templateVersion, ResourceType.SharedService)
+
+    operation = await send_uninstall_message(
+        resource=shared_service,
+        resource_repo=shared_service_repo,
+        operations_repo=operations_repo,
+        resource_type=ResourceType.SharedService,
+        resource_template_repo=resource_template_repo,
+        user=user,
+        resource_template=resource_template)
+
     response.headers["Location"] = construct_location_header(operation)
 
     return OperationInResponse(operation=operation)
 
 
 @shared_services_router.post("/shared-services/{shared_service_id}/invoke-action", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_INVOKE_ACTION_ON_SHARED_SERVICE, dependencies=[Depends(get_current_admin_user)])
-async def invoke_action_on_shared_service(response: Response, action: str, shared_service=Depends(get_shared_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInResponse:
-    operation = await send_custom_action_message(shared_service, action, ResourceType.SharedService, operations_repo, resource_template_repo)
+async def invoke_action_on_shared_service(response: Response, action: str, user=Depends(get_current_admin_user), shared_service=Depends(get_shared_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), shared_service_repo=Depends(get_repository(SharedServiceRepository))) -> OperationInResponse:
+    operation = await send_custom_action_message(
+        resource=shared_service,
+        resource_repo=shared_service_repo,
+        custom_action=action,
+        resource_type=ResourceType.SharedService,
+        operations_repo=operations_repo,
+        resource_template_repo=resource_template_repo,
+        user=user)
+
     response.headers["Location"] = construct_location_header(operation)
 
     return OperationInResponse(operation=operation)

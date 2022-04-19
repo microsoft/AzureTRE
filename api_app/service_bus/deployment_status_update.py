@@ -11,7 +11,7 @@ from db.repositories.operations import OperationRepository
 from core import config
 from db.errors import EntityDoesNotExist
 from db.repositories.resources import ResourceRepository
-from models.domain.operation import DeploymentStatusUpdateMessage, OperationStep, Status
+from models.domain.operation import DeploymentStatusUpdateMessage, Operation, OperationStep, Status
 from resources import strings
 
 
@@ -80,6 +80,26 @@ def update_step_status(step: OperationStep, message: DeploymentStatusUpdateMessa
     return step
 
 
+def update_overall_status(operation: Operation, step: OperationStep, is_last_step: bool):
+
+    # if it's a one step operation, just replicate the status
+    if len(operation.steps) == 1:
+        operation.status = step.status
+        operation.message = step.message
+        return
+
+    operation.status = Status.PipelineDeploying
+    operation.message = "Multi step pipeline deploying. See steps for details."
+
+    if step.is_failure():
+        operation.status = Status.PipelineFailed
+        operation.message = f"Error completing step {step.stepId}"
+
+    if step.is_success() and is_last_step:
+        operation.status = Status.PipelineSucceeded
+        operation.message = "Pipeline deployment completed successfully"
+
+
 def create_updated_resource_document(resource: dict, message: DeploymentStatusUpdateMessage):
     """
     Merge the outputs with the resource document to persist
@@ -120,14 +140,13 @@ async def update_status_in_database(resource_repo: ResourceRepository, operation
         # update the step status
         update_step_status(step_to_update, message)
 
-        # keep the parent operation doc status up to date with the latest step
-        # TODO: make this more descriptive and about the stage in the pipeline you're at
-        operation.status = step_to_update.status
-        operation.message = step_to_update.message
+        # update the overall headline operation status
+        update_overall_status(operation, step_to_update, is_last_step)
 
+        # save the operation
         operations_repo.update_item(operation)
 
-        # if the step failed, or this message is an intermediary ("now deploying..."), return here.
+        # if the step failed, or this queue message is an intermediary ("now deploying..."), return here.
         if not step_to_update.is_success():
             return True
 
