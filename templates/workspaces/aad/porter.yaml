@@ -1,14 +1,14 @@
 ---
 name: aad-workspace
-version: 0.0.6
+version: 0.0.1
 description: "An AAD Workspace"
 registry: azuretre
 
 credentials:
   # Credentials for interacting with the Auth tenant
-  - name: api_client_id
+  - name: workspace_creation_app_id
     env: API_CLIENT_ID
-  - name: api_client_secret
+  - name: workspace_creation_app_secret
     env: API_CLIENT_SECRET
   - name: auth_tenant_id
     env: AUTH_TENANT_ID
@@ -81,8 +81,8 @@ install:
           "{{ bundle.parameters.keyvault_purge_protection_enabled }}"
         register_aad_application:
           "{{ bundle.parameters.register_aad_application }}"
-        api_client_id: "{{ bundle.credentials.api_client_id }}"
-        api_client_secret: "{{ bundle.credentials.api_client_secret }}"
+        api_client_id: "{{ bundle.credentials.workspace_creation_app_id }}"
+        api_client_secret: "{{ bundle.credentials.workspace_creation_app_secret }}"
         auth_tenant_id: "{{ bundle.credentials.auth_tenant_id }}"
       backendConfig:
         resource_group_name:
@@ -118,8 +118,8 @@ uninstall:
           "{{ bundle.parameters.keyvault_purge_protection_enabled }}"
         register_aad_application:
           "{{ bundle.parameters.register_aad_application }}"
-        api_client_id: "{{ bundle.credentials.api_client_id }}"
-        api_client_secret: "{{ bundle.credentials.api_client_secret }}"
+        api_client_id: "{{ bundle.credentials.workspace_creation_app_id }}"
+        api_client_secret: "{{ bundle.credentials.workspace_creation_app_secret }}"
         auth_tenant_id: "{{ bundle.credentials.auth_tenant_id }}"
       backendConfig:
         resource_group_name:
