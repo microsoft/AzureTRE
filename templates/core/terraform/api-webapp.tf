@@ -23,11 +23,11 @@ resource "azurerm_app_service_plan" "core" {
 }
 
 resource "azurerm_app_service" "api" {
-  name                = "api-${var.tre_id}"
-  resource_group_name = azurerm_resource_group.core.name
-  location            = azurerm_resource_group.core.location
-  app_service_plan_id = azurerm_app_service_plan.core.id
-  https_only          = true
+  name                            = "api-${var.tre_id}"
+  resource_group_name             = azurerm_resource_group.core.name
+  location                        = azurerm_resource_group.core.location
+  app_service_plan_id             = azurerm_app_service_plan.core.id
+  https_only                      = true
   key_vault_reference_identity_id = azurerm_user_assigned_identity.id.id
 
   app_settings = {
