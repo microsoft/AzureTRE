@@ -23,11 +23,12 @@ resource "azurerm_app_service_plan" "core" {
 }
 
 resource "azurerm_app_service" "api" {
-  name                = "api-${var.tre_id}"
-  resource_group_name = azurerm_resource_group.core.name
-  location            = azurerm_resource_group.core.location
-  app_service_plan_id = azurerm_app_service_plan.core.id
-  https_only          = true
+  name                            = "api-${var.tre_id}"
+  resource_group_name             = azurerm_resource_group.core.name
+  location                        = azurerm_resource_group.core.location
+  app_service_plan_id             = azurerm_app_service_plan.core.id
+  https_only                      = true
+  key_vault_reference_identity_id = azurerm_user_assigned_identity.id.id
 
   app_settings = {
     "APPLICATIONINSIGHTS_CONNECTION_STRING"      = module.azure_monitor.app_insights_connection_string
@@ -47,9 +48,9 @@ resource "azurerm_app_service" "api" {
     "TRE_ID"                                     = var.tre_id
     "RESOURCE_LOCATION"                          = azurerm_resource_group.core.location
     "SWAGGER_UI_CLIENT_ID"                       = var.swagger_ui_client_id
-    "AAD_TENANT_ID"                              = var.aad_tenant_id
-    "API_CLIENT_ID"                              = var.api_client_id
-    "API_CLIENT_SECRET"                          = var.api_client_secret
+    "AAD_TENANT_ID"                              = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.auth_tenant_id.id})"
+    "API_CLIENT_ID"                              = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.api_app_id.id})"
+    "API_CLIENT_SECRET"                          = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.api_app_secret.id})"
     "RESOURCE_GROUP_NAME"                        = azurerm_resource_group.core.name
     "SUBSCRIPTION_ID"                            = data.azurerm_subscription.current.subscription_id
     CORE_ADDRESS_SPACE                           = var.core_address_space

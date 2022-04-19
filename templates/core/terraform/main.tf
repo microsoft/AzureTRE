@@ -14,7 +14,7 @@ provider "azurerm" {
   features {
     key_vault {
       purge_soft_delete_on_destroy    = var.keyvault_purge_protection_enabled ? false : true
-      recover_soft_deleted_key_vaults = false
+      recover_soft_deleted_key_vaults = true
     }
   }
 }
@@ -88,7 +88,7 @@ module "resource_processor_vmss_porter" {
   mgmt_storage_account_name                        = var.mgmt_storage_account_name
   mgmt_resource_group_name                         = var.mgmt_resource_group_name
   terraform_state_container_name                   = var.terraform_state_container_name
-  keyvault_id                                      = azurerm_key_vault.kv.id
+  key_vault_name                                   = azurerm_key_vault.kv.name
   subscription_id                                  = var.arm_subscription_id
   resource_processor_number_processes_per_instance = var.resource_processor_number_processes_per_instance
 
