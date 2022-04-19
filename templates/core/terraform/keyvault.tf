@@ -79,6 +79,7 @@ resource "azurerm_key_vault_secret" "api_client_secret" {
 }
 
 resource "azurerm_key_vault_secret" "auth_tenant_id" {
+  count        = var.auto_workspace_app_registration ? 1 : 0
   name         = "auth-tenant-id"
   value        = var.aad_tenant_id
   key_vault_id = azurerm_key_vault.kv.id
