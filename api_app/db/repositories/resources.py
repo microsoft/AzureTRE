@@ -13,6 +13,10 @@ from db.repositories.resource_templates import ResourceTemplateRepository
 from models.domain.resource import Resource, ResourceHistoryItem, ResourceType
 from models.domain.resource_template import ResourceTemplate
 from models.schemas.resource import ResourcePatch
+from models.domain.shared_service import SharedService
+from models.domain.workspace import Workspace
+from models.domain.workspace_service import WorkspaceService
+from models.domain.user_resource import UserResource
 
 
 class ResourceRepository(BaseRepository):
@@ -49,6 +53,24 @@ class ResourceRepository(BaseRepository):
         if not resources:
             raise EntityDoesNotExist
         return resources[0]
+
+    def get_resource_by_id(self, resource_id: UUID4) -> Resource:
+        query = self._active_resources_by_id_query(str(resource_id))
+        resources = self.query(query=query)
+        if not resources:
+            raise EntityDoesNotExist
+
+        resource = resources[0]
+        if resource["resourceType"] == ResourceType.SharedService:
+            return parse_obj_as(SharedService, resource)
+        if resource["resourceType"] == ResourceType.Workspace:
+            return parse_obj_as(Workspace, resources)
+        if resource["resourceType"] == ResourceType.WorkspaceService:
+            return parse_obj_as(WorkspaceService, resource)
+        if resource["resourceType"] == ResourceType.UserResource:
+            return parse_obj_as(UserResource, resource)
+
+        return parse_obj_as(Resource, resource)
 
     def get_resource_by_template_name(self, template_name: str) -> Resource:
         query = f"SELECT TOP 1 * FROM c WHERE c.templateName = '{template_name}'"

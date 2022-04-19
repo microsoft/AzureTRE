@@ -31,12 +31,19 @@ class OperationStep(AzureTREModel):
     """
     stepId: str = Field(title="stepId", description="Unique id identifying the step")
     stepTitle: Optional[str] = Field(title="stepTitle", description="Human readable title of what the step is for")
+    resourceId: Optional[str] = Field(title="resourceId", description="Id of the resource to update")
     resourceTemplateName: Optional[str] = Field("", title="resourceTemplateName", description="Name of the template for the resource under change")
     resourceType: Optional[ResourceType] = Field(title="resourceType", description="Type of resource under change")
     resourceAction: Optional[str] = Field(title="resourceAction", description="Action - install / upgrade / uninstall etc")
     status: Optional[Status] = Field(Status.NotDeployed, title="Operation step status")
     message: Optional[str] = Field("", title="Additional operation step status information")
     updatedWhen: Optional[float] = Field("", title="POSIX Timestamp for When the operation step was updated")
+
+    def is_success(self) -> bool:
+        return self.status in (
+            Status.ActionSucceeded,
+            Status.Deployed
+        )
 
 
 class Operation(AzureTREModel):

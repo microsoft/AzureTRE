@@ -1,35 +1,102 @@
-from models.domain.resource import ResourceType
+from azure.identity.aio import DefaultAzureCredential
+from azure.servicebus import ServiceBusMessage
+from azure.servicebus.aio import ServiceBusClient
+from contextlib import asynccontextmanager
+
+from pydantic import parse_obj_as
+from models.domain.resource_template import PipelineStep
+from models.domain.operation import OperationStep
+from models.domain.resource import Resource, ResourceType
 from db.repositories.resource_templates import ResourceTemplateRepository
 from models.domain.authentication import User
-from models.domain.resource_template import PipelineStep, ResourceTemplate
 from models.schemas.resource import ResourcePatch
 from db.repositories.resources import ResourceRepository
+from core import config
+import logging
 
 
-def update_resource_for_step(template_step: PipelineStep, resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, resource_template: ResourceTemplate, user: User):
+@asynccontextmanager
+async def default_credentials():
+    """
+    Yields the default credentials.
+    """
+    credential = DefaultAzureCredential(managed_identity_client_id=config.MANAGED_IDENTITY_CLIENT_ID)
+    yield credential
+    await credential.close()
+
+
+async def _send_message(message: ServiceBusMessage, queue: str):
+    """
+    Sends the given message to the given queue in the Service Bus.
+
+    :param message: The message to send.
+    :type message: ServiceBusMessage
+    :param queue: The Service Bus queue to send the message to.
+    :type queue: str
+    """
+    async with default_credentials() as credential:
+        service_bus_client = ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential)
+
+        async with service_bus_client:
+            sender = service_bus_client.get_queue_sender(queue_name=queue)
+
+            async with sender:
+                await sender.send_messages(message)
+
+
+async def send_deployment_message(content, correlation_id, session_id, action):
+    resource_request_message = ServiceBusMessage(body=content, correlation_id=correlation_id, session_id=session_id)
+    logging.info(f"Sending resource request message with correlation ID {resource_request_message.correlation_id}, action: {action}")
+    await _send_message(resource_request_message, config.SERVICE_BUS_RESOURCE_REQUEST_QUEUE)
+
+
+def update_resource_for_step(operation_step: OperationStep, resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, primary_resource_id: str, resource_to_update_id: str, primary_action: str, user: User) -> Resource:
     # - get the resource to send from cosmos
     # - update the props
     # - save the resource
     # - send the action to SB
 
     # create properties dict - for now we create a basic, string only dict to use as a patch
-    properties = {}
-    for prop in template_step["properties"]:
-        # TODO: actual substitution logic #1679
-        properties[prop["name"]] = prop["value"]
 
-    if template_step["resourceAction"] == "upgrade":
+    # get primary resource to use in substitutions
+    primary_resource = resource_repo.get_resource_by_id(primary_resource_id)
+
+    # if this is main, just leave it alone and return it
+    if operation_step.stepId == "main":
+        return primary_resource
+
+    # get the template for the primary resource, to get all the step details for substitutions
+    primary_parent_service_name = ""
+    if primary_resource.resourceType == ResourceType.UserResource:
+        primary_parent_workspace_service = resource_repo.get_resource_by_id(primary_resource.parentWorkspaceServiceId)
+        primary_parent_service_name = primary_parent_workspace_service.templateName
+    primary_template = resource_template_repo.get_current_template(primary_resource.templateName, primary_resource.resourceType, primary_parent_service_name)
+
+    # get the template step
+    template_step = None
+    for step in primary_template.pipeline.dict()[primary_action]:
+        if step["stepId"] == operation_step.stepId:
+            template_step = parse_obj_as(PipelineStep, step)
+            break
+
+    if template_step is None:
+        raise f"Cannot find step with id of {operation_step.stepId} in template {primary_resource.templateName} for action {primary_action}"
+
+    # TODO: actual substitution logic #1679
+    properties = {}
+    for prop in template_step.properties:
+        properties[prop.name] = prop.value
+
+    if template_step.resourceAction == "upgrade":
         # get the resource to upgrade - currently just the top 1 by template name. more complexity around querying tbd.
-        resource = resource_repo.get_resource_by_template_name(template_step["resourceTemplateName"])
+        resource_to_update = resource_repo.get_resource_by_id(resource_to_update_id)
 
         # get the template for the resource to upgrade
         parent_service_name = ""
-        if resource.resourceType == ResourceType.UserResource:
-            parent_service_name = resource["parentWorkspaceServiceId"]
-        resource_template_to_send = resource_template_repo.get_current_template(
-            template_name=template_step["resourceTemplateName"],
-            resource_type=resource.resourceType,
-            parent_service_name=parent_service_name)
+        if resource_to_update.resourceType == ResourceType.UserResource:
+            parent_service_name = resource_to_update["parentWorkspaceServiceId"]
+
+        resource_template_to_send = resource_template_repo.get_current_template(resource_to_update.templateName, resource_to_update.resourceType, parent_service_name)
 
         # create the patch
         patch = ResourcePatch(
@@ -38,10 +105,10 @@ def update_resource_for_step(template_step: PipelineStep, resource_repo: Resourc
 
         # validate and submit the patch
         resource_to_send, _ = resource_repo.patch_resource(
-            resource=resource,
+            resource=resource_to_update,
             resource_patch=patch,
             resource_template=resource_template_to_send,
-            etag=resource.etag,
+            etag=resource_to_update.etag,
             resource_template_repo=resource_template_repo,
             user=user)
 
