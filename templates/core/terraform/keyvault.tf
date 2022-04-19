@@ -61,7 +61,6 @@ resource "azurerm_private_endpoint" "kvpe" {
 }
 
 resource "azurerm_key_vault_secret" "api_app_id" {
-  count        = var.auto_workspace_app_registration ? 1 : 0
   name         = "api-app-id"
   value        = var.api_client_id
   key_vault_id = azurerm_key_vault.kv.id
@@ -71,7 +70,6 @@ resource "azurerm_key_vault_secret" "api_app_id" {
 }
 
 resource "azurerm_key_vault_secret" "api_app_secret" {
-  count        = var.auto_workspace_app_registration ? 1 : 0
   name         = "api-app-secret"
   value        = var.api_client_secret
   key_vault_id = azurerm_key_vault.kv.id
@@ -81,7 +79,6 @@ resource "azurerm_key_vault_secret" "api_app_secret" {
 }
 
 resource "azurerm_key_vault_secret" "auth_tenant_id" {
-  count        = var.auto_workspace_app_registration ? 1 : 0
   name         = "auth-tenant-id"
   value        = var.aad_tenant_id
   key_vault_id = azurerm_key_vault.kv.id

@@ -61,7 +61,7 @@ async def build_porter_command(config, logger, msg_body, custom_action=False):
                     f" --reference {config['registry_server']}/{msg_body['name']}:v{msg_body['version']}"
                     f" {porter_parameters} --allow-docker-host-access --force"
                     f" --cred ./vmss_porter/azure.json"
-                    f" --cred ./vmss_porter/api-creds.json"
+                    f" --cred ./vmss_porter/workspace-creation-creds.json"
                     f" && porter show {installation_id}"]
     return command_line
 
