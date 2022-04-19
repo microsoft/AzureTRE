@@ -165,4 +165,3 @@ variable "public_deployment_ip_address" {
   type        = string
   default     = ""
 }
-
