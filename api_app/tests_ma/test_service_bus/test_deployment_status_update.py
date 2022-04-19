@@ -102,7 +102,7 @@ async def test_receiving_good_message(app, sb_client, logging_mock, repo, _):
 
     await receive_message_and_update_deployment(app)
 
-    repo().get_resource_dict_by_id.assert_called_once_with(test_sb_message["id"])
+    repo().get_resource_dict_by_id.assert_called_once_with(uuid.UUID(test_sb_message["id"]))
     repo().update_item_dict.assert_called_once_with(expected_workspace.dict())
     logging_mock.assert_not_called()
     sb_client().get_queue_receiver().complete_message.assert_called_once_with(service_bus_received_message_mock)

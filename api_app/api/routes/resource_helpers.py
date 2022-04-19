@@ -20,8 +20,7 @@ async def save_and_deploy_resource(resource: Resource, resource_repo, operations
         resource.user = user
         resource.updatedWhen = get_timestamp()
         resource_repo.save_item(resource)
-    except Exception as e:
-        print(e)
+    except Exception:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
 
     try:

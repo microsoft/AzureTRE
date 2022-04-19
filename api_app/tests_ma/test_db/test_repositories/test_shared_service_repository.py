@@ -113,14 +113,10 @@ def test_create_shared_service_item_with_the_same_name_twice_fails(validate_inpu
     shared_service_repo.save_item(shared_service)
 
     shared_service_repo.query = MagicMock()
-    shared_service_repo.query.return_value = [shared_service]
+    shared_service_repo.query.return_value = [shared_service.__dict__]
 
     with pytest.raises(DuplicateEntity):
         shared_service = shared_service_repo.create_shared_service_item(shared_service_to_create)
-
-    shared_service.templateVersion = "0.1.1"
-    # Checking that does not raise if the version is different
-    _ = shared_service_repo.create_shared_service_item(shared_service_to_create)
 
 
 @patch('db.repositories.shared_services.SharedServiceRepository.validate_input_against_template', side_effect=ValueError)
