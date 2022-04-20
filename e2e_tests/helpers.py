@@ -74,6 +74,24 @@ async def post_resource(payload, endpoint, resource_type, token, admin_token, ve
         return resource_path, resource_id
 
 
+async def get_shared_service_id_by_name(template_name: str, verify, token):
+    async with AsyncClient(verify=verify, timeout=30.0) as client:
+        endpoint = '/api/shared-services'
+        full_endpoint = f'https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{endpoint}'
+        LOGGER.info(f'URL: {full_endpoint}')
+
+        auth_headers = get_auth_header(token)
+
+        response = await client.get(full_endpoint, headers=auth_headers)
+        LOGGER.info(f'RESPONSE: {response} {response.json()}')
+        assert (response.status_code == status.HTTP_200_OK), "Request to get shared services failed"
+
+        shared_service_list = response.json()["sharedServices"]
+        matching_shared_services = [service for service in shared_service_list if service["templateName"] == template_name and service["isActive"]]
+        assert len(matching_shared_services) == 1, f"There can be at most one active shared service with template name {template_name}"
+        return matching_shared_services[0]
+
+
 async def disable_and_delete_resource(endpoint, resource_type, token, admin_token, verify):
     async with AsyncClient(verify=verify, timeout=30.0) as client:
 
