@@ -60,6 +60,25 @@ parameters:
   - name: register_aad_application
     type: boolean
     default: false
+
+outputs:
+  - name: WorkspaceOwner
+    type: string
+    applyTo:
+      - install
+  - name: WorkspaceResearcher
+    type: string
+    applyTo:
+      - install
+  - name: client_id
+    type: string
+    applyTo:
+      - install
+  - name: sp_id
+    type: string
+    applyTo:
+      - install
+
 mixins:
   - exec
   - terraform:
@@ -90,6 +109,11 @@ install:
           "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.id }}"
+      outputs:
+        - name: WorkspaceOwner
+        - name: WorkspaceResearcher
+        - name: client_id
+        - name: sp_id
 
 upgrade:
   - exec:
