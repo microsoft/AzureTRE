@@ -332,6 +332,10 @@ workspace_service_bundle = echo $(1) && $(MAKE) bundle-build DIR=./templates/wor
 	&& $(MAKE) bundle-publish DIR=./templates/workspace_services/$(1)/ \
 	&& $(MAKE) bundle-register DIR="./templates/workspace_services/$(1)" BUNDLE_TYPE=workspace_service
 
+shared_service_bundle = echo $(1) && $(MAKE) bundle-build DIR=./templates/shared_services/$(1)/ \
+	&& $(MAKE) bundle-publish DIR=./templates/shared_services/$(1)/ \
+	&& $(MAKE) bundle-register DIR="./templates/shared_services/$(1)" BUNDLE_TYPE=shared_service
+
 prepare-for-e2e:
 	$(call workspace_bundle,base) \
 	&& $(call workspace_bundle,innereye) \
@@ -339,7 +343,9 @@ prepare-for-e2e:
 	&& $(call workspace_service_bundle,azureml) \
 	&& $(call workspace_service_bundle,devtestlabs) \
 	&& $(call workspace_service_bundle,gitea) \
-	&& $(call workspace_service_bundle,innereye)
+	&& $(call workspace_service_bundle,innereye) \
+	&& $(call shared_service_bundle,sonatype-nexus) \
+	&& $(call shared_service_bundle,gitea)
 
 test-e2e-smoke:
 	$(call target_title, "Running E2E smoke tests") && \
