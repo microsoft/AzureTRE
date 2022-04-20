@@ -77,25 +77,11 @@ function get_http_code() {
   http_code=$(echo "${curl_output}" | grep HTTP | sed 's/.*HTTP\/1\.1 \([0-9]\+\).*/\1/' | tail -n 1)
 }
 
-# # Resource Status
-# RESOURCE_STATUS_NOT_DEPLOYED = "not_deployed"
-# RESOURCE_STATUS_DEPLOYING = "deploying"
-# RESOURCE_STATUS_DEPLOYED = "deployed"
-# RESOURCE_STATUS_DELETING = "deleting"
-# RESOURCE_STATUS_DELETED = "deleted"
-# RESOURCE_STATUS_FAILED = "failed"
-# RESOURCE_STATUS_DELETING_FAILED = "deleting_failed"
-
-# # Resource Action Status
-# RESOURCE_ACTION_STATUS_INVOKING = "invoking_action"
-# RESOURCE_ACTION_STATUS_SUCCEEDED = "action_succeeded"
-# RESOURCE_ACTION_STATUS_FAILED = "action_failed"
-
 function wait_for_operation_result() {
   operation_id="$1"
-  expected_status="$2"
+  shared_service_id="$2"
+  expected_status="$3"
 
-  # "deleting"
   while : ; do
     # Poll for the result of operation
     get_operation_result=$(curl -i -X "GET" "${tre_url}"/api/shared-services/"${shared_service_id}"/operations/"${operation_id}" \
@@ -133,63 +119,25 @@ get_shared_services_result=$(curl -i -X "GET" "${tre_url}"/api/shared-services \
                              -H "Content-Type: application/json" \
                              -H "Authorization: Bearer ""${access_token}""" "${options}" -s)
 get_http_code "${get_shared_services_result}"
-if [[ "${http_code}" != 202 ]]; then
-  echo "Failed to disable shared service ${template_name}"
+if [[ "${http_code}" != 200 ]]; then
+  echo "Failed to get shared services ${template_name}"
   echo "${get_shared_services_result}"
   exit 1
 fi
 
 deployed_shared_service=$(echo "${get_shared_services_result}" | grep '{' | jq -r ".sharedServices[] | select(.templateName == \"${template_name}\")")
 
-# Get template version of the service already deployed
-deployed_version=$(echo "${deployed_shared_service}" | jq -r ".templateVersion")
+if [[ -n "${deployed_shared_service}" ]]; then
+  # Get template version of the service already deployed
+  deployed_version=$(echo "${deployed_shared_service}" | jq -r ".templateVersion")
 
-if [[ "${template_version}" == "${deployed_version}" ]]; then
-  echo "Shared service ${template_name} of version ${template_version} has already been deployed"
-else
-  echo "Disabling existing shared service in order to deploy a new one"
-  deployed_id=$(echo "${deployed_shared_service}" | jq -r ".id")
-  deployed_etag=$(echo "${deployed_shared_service}" | jq -r ".etag")
-  # First, disable shared service
-  payload="{\"isEnabled\": false}"
-
-  patch_result=$(curl -i -X "PATCH" "${tre_url}/api/shared-services/${deployed_id}" \
-                 -H "accept: application/json" \
-                 -H "etag: ${deployed_etag}" \
-                 -H "Content-Type: application/json" \
-                 -H "Authorization: Bearer ""${access_token}""" \
-                 -d "${payload}" "${options}" -s)
-
-  get_http_code "${patch_result}"
-  if [[ "${http_code}" != 202 ]]; then
-    echo "Failed to disable shared service ${template_name}"
-    echo "${patch_result}"
-    exit 1
+  if [[ "${template_version}" == "${deployed_version}" ]]; then
+    echo "Shared service ${template_name} of version ${template_version} has already been deployed"
+    exit 0
+  else
+    echo "Resource upgrade to a newer version isn't currently implemented. See https://github.com/microsoft/AzureTRE/issues/141"
+    exit 0
   fi
-
-  json_patch_result=$(echo "${patch_result}" | grep '{')
-  operation_id=$(echo "${json_patch_result}" | jq -r .operation.id)
-
-  wait_for_operation_result "${operation_id}" "action_succeeded"
-  echo "Disabled shared service ""${template_name}"""
-
-  # Second, delete shared service
-  delete_result=$(curl -i -X "DELETE" "${tre_url}/api/shared-services/${deployed_id}" \
-                  -H "accept: application/json" \
-                  -H "Content-Type: application/json" \
-                  -H "Authorization: Bearer ""${access_token}""" \
-                  -d "${payload}" "${options}" -s)
-  get_http_code "${delete_result}"
-  if [[ "${http_code}" != 202 ]]; then
-    echo "Failed to delete shared service ${template_name}"
-    echo "${delete_result}"
-    exit 1
-  fi
-  json_delete_result=$(echo "${delete_result}" | grep '{')
-  operation_id=$(echo "${json_delete_result}" | jq -r .operation.id)
-
-  wait_for_operation_result "${operation_id}" "deleted"
-  echo "Deleted shared service ""${template_name}"""
 fi
 
 payload="{ \"templateName\": \"""${template_name}""\", \"properties\": { \"display_name\": \"Shared service ""${template_name}""\", \"description\": \"Automatically deployed ""${template_name}""\" } }"
@@ -208,10 +156,10 @@ if [[ "${http_code}" != 202 ]]; then
   exit 1
 fi
 json_deploy_result=$(echo "${deploy_result}" | grep '{')
-shared_service_id=$(echo "${json_deploy_result}" | jq -r .operation.resourceId)
 operation_id=$(echo "${json_deploy_result}" | jq -r .operation.id)
 operation_status=$(echo "${json_deploy_result}" | jq -r .operation.status)
+shared_service_id=$(echo "${json_deploy_result}" | jq -r .operation.resourceId)
 
-wait_for_operation_result "${operation_id}" "deployed"
+wait_for_operation_result "${operation_id}" "${shared_service_id}" "deployed"
 
 echo "Deployed shared service ""${template_name}"""
