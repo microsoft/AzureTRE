@@ -34,9 +34,15 @@
       }
     },
     {
-      "name": "openid_client_id",
+      "name": "ws_client_id",
       "source": {
-        "env": "OPENID_CLIENT_ID"
+        "env": "WS_CLIENT_ID"
+      }
+    },
+    {
+      "name": "ws_client_secret",
+      "source": {
+        "env": "WS_CLIENT_SECRET"
       }
     },
     {
