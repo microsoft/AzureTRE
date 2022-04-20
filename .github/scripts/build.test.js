@@ -2,9 +2,11 @@ const { getCommandFromComment, labelAsExternalIfAuthorDoesNotHaveWriteAccess } =
 
 function createGitHubContext() {
   mockGithubRestIssuesAddLabels = jest.fn();
+  mockGithubRestIssuesCreateComment = jest.fn();
   mockCoreSetOutput = jest.fn();
   return {
     mockGithubRestIssuesAddLabels,
+    mockGithubRestIssuesCreateComment,
     mockCoreSetOutput,
     core: {
       setOutput: mockCoreSetOutput,
@@ -26,6 +28,7 @@ function createGitHubContext() {
       rest: {
         issues: {
           addLabels: mockGithubRestIssuesAddLabels,
+          createComment: mockGithubRestIssuesCreateComment,
         },
         pulls: {
           get: async (params) => {
@@ -55,8 +58,9 @@ describe('getCommandFromComment', () => {
   var github;
   var core;
   var mockCoreSetOutput;
+  var mockGithubRestIssuesCreateComment;
   beforeEach(() => {
-    ({ core, github, mockCoreSetOutput } = createGitHubContext());
+    ({ core, github, mockCoreSetOutput, mockGithubRestIssuesCreateComment } = createGitHubContext());
   });
 
   function createCommentContext(username, pullRequestNumber, commentBody) {
@@ -119,10 +123,30 @@ describe('getCommandFromComment', () => {
         expect(command).toBe('test-destroy-env');
       });
 
-      test(`should return 'show-help' for '/help'`, async () => {
+      test(`should add help comment and return 'none' for '/help'`, async () => {
         context = createCommentContext('admin', 123, '/help');
         var command = await getCommandFromComment({ core, context, github });
-        expect(command).toBe('show-help');
+        expect(mockGithubRestIssuesCreateComment.mock.calls.length).toBe(1);
+        const createCommentCall = mockGithubRestIssuesCreateComment.mock.calls[0];
+        const createCommentParam = createCommentCall[0];
+        expect(createCommentParam.owner).toBe("someOwner");
+        expect(createCommentParam.repo).toBe("someRepo");
+        expect(createCommentParam.issue_number).toBe(123);
+        expect(createCommentParam.body).toMatch(/^Hello!\n\nYou can use the following commands:/);
+        expect(command).toBe('none');
+      });
+
+      test(`should add help comment and return 'none' for '/not-a-command'`, async () => {
+        context = createCommentContext('admin', 123, '/not-a-command');
+        var command = await getCommandFromComment({ core, context, github });
+        expect(mockGithubRestIssuesCreateComment.mock.calls.length).toBe(1);
+        const createCommentCall = mockGithubRestIssuesCreateComment.mock.calls[0];
+        const createCommentParam = createCommentCall[0];
+        expect(createCommentParam.owner).toBe("someOwner");
+        expect(createCommentParam.repo).toBe("someRepo");
+        expect(createCommentParam.issue_number).toBe(123);
+        expect(createCommentParam.body).toMatch(/^`\/not-a-command` is not recognised as a valid command.\n\nYou can use the following commands:/);
+        expect(command).toBe('none');
       });
     });
 

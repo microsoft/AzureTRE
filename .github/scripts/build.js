@@ -43,22 +43,30 @@ async function getCommandFromComment({ core, context, github }) {
   const commentBody = context.payload.comment.body;
   const commentFirstLine = commentBody.split("\n")[0];
   let command = "none";
-  switch (commentFirstLine.trim()) {
-    case "/test":
-      command = "run-tests";
-      break;
-    case "/test-extended":
-      command = "run-tests-extended";
-      break;
-    case "/test-force-approve":
-      command = "test-force-approve";
-      break;
-    case "/test-destroy-env":
-      command = "test-destroy-env";
-      break;
-    case "/help":
-      command = "show-help";
-      break;
+  const trimmedFirstLine = commentFirstLine.trim();
+  if (trimmedFirstLine[0] === "/") {
+    switch (trimmedFirstLine) {
+      case "/test":
+        command = "run-tests";
+        break;
+      case "/test-extended":
+        command = "run-tests-extended";
+        break;
+      case "/test-force-approve":
+        command = "test-force-approve";
+        break;
+      case "/test-destroy-env":
+        command = "test-destroy-env";
+        break;
+      case "/help":
+        showHelp(github, repoOwner, repoName, prNumber, null);
+        command = "none"; // command has been handled, so don't need to return a value for future steps
+        break;
+      default:
+        console.log(`'${trimmedFirstLine}' not recognised as a valid command`);
+        await showHelp(github, repoOwner, repoName, prNumber, trimmedFirstLine);
+        return "none";
+    }
   }
   console.log(`Command: ${command}`);
   return command;
@@ -104,6 +112,27 @@ async function userHasWriteAccessToRepo({ github }, username, repoOwner, repoNam
   }
   console.log("User has write access: " + userHasWriteAccess);
   return userHasWriteAccess
+}
+
+async function showHelp(github, repoOwner, repoName, prNumber, invalidCommand) {
+  const leadingContent = invalidCommand ? `\`${invalidCommand}\` is not recognised as a valid command.` : "Hello!";
+
+  const body = `${leadingContent}
+
+You can use the following commands:
+&nbsp;&nbsp;&nbsp;&nbsp;/test - build, deploy and run smoke tests on a PR
+&nbsp;&nbsp;&nbsp;&nbsp;/test-extended - build, deploy and run smoke & extended tests on a PR
+&nbsp;&nbsp;&nbsp;&nbsp;/test-force-approve - force approval of the PR tests (i.e. skip the deployment checks)
+&nbsp;&nbsp;&nbsp;&nbsp;/test-destroy-env - delete the validation environment for a PR (e.g. to enable testing a deployment from a clean start after previous tests)
+&nbsp;&nbsp;&nbsp;&nbsp;/help - show this help`;
+
+  github.rest.issues.createComment({
+    owner: repoOwner,
+    repo: repoName,
+    issue_number: prNumber,
+    body: body
+  });
+
 }
 
 function getRefIdForPr(prNumber) {
