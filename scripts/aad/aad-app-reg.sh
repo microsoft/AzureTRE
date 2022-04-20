@@ -61,7 +61,7 @@ declare currentUserId=""
 declare spId=""
 declare createAutomationAccount=0
 declare automationAppId=""
-declare readWriteAll=0
+declare applicationReadWriteAll=0
 declare msGraphUri="https://graph.microsoft.com/v1.0"
 
 # Initialize parameters specified from command line
@@ -96,7 +96,7 @@ while [[ $# -gt 0 ]]; do
             shift 2
         ;;
         --read-write-all-permission)
-            readWriteAll=1
+            applicationReadWriteAll=1
             shift 1
         ;;
         *)
@@ -294,7 +294,7 @@ roleApplicationReadWriteAll=""
 
 # Conditionally set whether this app can create other applications. Note the comma
 # at the end of roleApplicationReadWriteAll so that the array is maintained if present.
-if [ "$readWriteAll" -eq 1 ]; then
+if [ "$applicationReadWriteAll" -eq 1 ]; then
   roleApplicationReadWriteAll="$(get_msgraph_role 'Application.ReadWrite.All' ),"
 fi
 
@@ -516,8 +516,8 @@ else
       wait_for_new_service_principal "${spId}"
       grant_admin_consent "${spId}" "${msGraphObjectId}" "${userReadAllId}"
 
-      # Global Admin permission is not give by default.
-      if [ "$readWriteAll" -eq 1 ]; then
+      # Global Admin permission is not given by default.
+      if [ "$applicationReadWriteAll" -eq 1 ]; then
         wait_for_new_service_principal "$spId"
         grant_admin_consent "$spId" "$msGraphObjectId" "$applicationReadWriteAllId"
       fi
