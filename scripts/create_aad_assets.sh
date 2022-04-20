@@ -3,6 +3,11 @@ set -e
 
 : "${AAD_TENANT_ID?'You have not set your AAD_TENANT_ID in ./templates/core/.env'}"
 
+api_app_can_create_other_applications=""
+if [ "${AUTO_WORKSPACE_APP_REGISTRATION}" == true ]; then
+  api_app_can_create_other_applications="--read-write-all-permission"
+fi
+
 LOGGED_IN_TENANT_ID=$(az account show --query tenantId -o tsv)
 CHANGED_TENANT=0
 
@@ -18,7 +23,7 @@ fi
 ./scripts/aad/aad-app-reg.sh \
   --name "${TRE_ID}" \
   --swaggerui-redirecturl "https://${TRE_ID}.${LOCATION}.cloudapp.azure.com/api/docs/oauth2-redirect" \
-  --admin-consent --automation-account
+  --admin-consent --automation-account "${api_app_can_create_other_applications}"
 
 echo "Please copy the values above into your /templates/core/.env."
 read -p "Please confirm you have done this? (y/N) " -n 1 -r
