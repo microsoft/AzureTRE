@@ -24,17 +24,13 @@ provider "azurerm" {
       recover_soft_deleted_key_vaults = false
     }
   }
-  # These will be done by MSI
-  # client_id = var.arm_client_id
-  # client_secret = var.arm_client_secret
-  # tenant_id = var.arm_tenant_id
-  # subscription_id = var.arm_subscription_id
 }
+
 data "azurerm_subscription" "current" {}
 data "azurerm_client_config" "current" {}
 
 provider "azuread" {
-  client_id     = var.api_client_id
-  client_secret = var.api_client_secret
+  client_id     = var.auth_client_id
+  client_secret = var.auth_client_secret
   tenant_id     = var.auth_tenant_id
 }
