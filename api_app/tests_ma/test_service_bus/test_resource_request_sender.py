@@ -4,6 +4,7 @@ import uuid
 
 from azure.servicebus import ServiceBusMessage
 from mock import AsyncMock, patch
+from models.schemas.workspace_template import get_sample_workspace_template_object
 from tests_ma.test_api.conftest import create_test_user
 from tests_ma.test_service_bus.test_deployment_status_update import create_sample_operation
 
@@ -28,15 +29,25 @@ def create_test_resource():
 
 @pytest.mark.parametrize('request_action', [RequestAction.Install, RequestAction.UnInstall])
 @patch('service_bus.resource_request_sender.OperationRepository')
-@patch('service_bus.resource_request_sender.ServiceBusClient')
-async def test_resource_request_message_generated_correctly(service_bus_client_mock, operations_repo_mock, request_action):
+@patch('service_bus.step_helpers.ServiceBusClient')
+@patch('service_bus.resource_request_sender.ResourceRepository')
+@patch('service_bus.resource_request_sender.ResourceTemplateRepository')
+async def test_resource_request_message_generated_correctly(resource_template_repo, resource_repo, service_bus_client_mock, operations_repo_mock, request_action):
     service_bus_client_mock().get_queue_sender().send_messages = AsyncMock()
     resource = create_test_resource()
-    operation = create_sample_operation(resource.id)
-
+    operation = create_sample_operation(resource.id, request_action)
+    template = get_sample_workspace_template_object()
     operations_repo_mock.create_operation_item.return_value = operation
+    resource_repo.get_resource_by_id.return_value = resource
 
-    await send_resource_request_message(resource, operations_repo_mock, create_test_user(), request_action)
+    await send_resource_request_message(
+        resource=resource,
+        operations_repo=operations_repo_mock,
+        resource_repo=resource_repo,
+        user=create_test_user(),
+        resource_template=template,
+        resource_template_repo=resource_template_repo,
+        action=request_action)
 
     args = service_bus_client_mock().get_queue_sender().send_messages.call_args.args
     assert len(args) == 1

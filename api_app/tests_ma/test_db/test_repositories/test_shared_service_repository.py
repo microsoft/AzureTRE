@@ -1,4 +1,3 @@
-
 import pytest
 from mock import patch, MagicMock
 
@@ -95,9 +94,9 @@ def test_create_shared_service_item_creates_a_shared_with_the_right_values(valid
     resource_template = basic_shared_service_template
     resource_template.required = ["display_name", "description"]
 
-    validate_input_mock.return_value = basic_shared_service_request.templateName
+    validate_input_mock.return_value = resource_template.dict()
 
-    shared_service = shared_service_repo.create_shared_service_item(shared_service_to_create)
+    shared_service, _ = shared_service_repo.create_shared_service_item(shared_service_to_create)
 
     assert shared_service.templateName == basic_shared_service_request.templateName
     assert shared_service.resourceType == ResourceType.SharedService

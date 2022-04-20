@@ -1,5 +1,6 @@
 import json
 import logging
+import uuid
 
 from azure.servicebus.aio import ServiceBusClient
 from pydantic import ValidationError, parse_obj_as
@@ -151,8 +152,8 @@ async def update_status_in_database(resource_repo: ResourceRepository, operation
             return True
 
         # update the resource doc to persist any outputs
-        resource = resource_repo.get_resource_by_id(step_to_update.resourceId)
-        resource_to_persist = create_updated_resource_document(resource.dict(), message)
+        resource = resource_repo.get_resource_dict_by_id(uuid.UUID(step_to_update.resourceId))
+        resource_to_persist = create_updated_resource_document(resource, message)
         resource_repo.update_item_dict(resource_to_persist)
 
         # more steps in the op to do?
