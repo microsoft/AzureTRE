@@ -15,4 +15,3 @@ class Workspace(Resource):
     """
     workspaceURL: str = Field("", title="Workspace URL", description="Main endpoint for workspace users")
     resourceType = ResourceType.Workspace
-    authInformation: dict = Field({})
