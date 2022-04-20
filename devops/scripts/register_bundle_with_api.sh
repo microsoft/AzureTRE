@@ -241,8 +241,9 @@ else
           exit 1
         fi
         echo "Got HTTP code ${http_code}, retrying..."
+      else
+        operation_status=$(echo "${get_operation_result}" | grep '{' | jq -r .operation.status)
       fi
-      operation_status=$(echo "${get_operation_result}" | grep '{' | jq -r .operation.status)
     done
 
     if [[ "${operation_status}" != "deployed" ]]; then
