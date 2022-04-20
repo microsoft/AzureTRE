@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0-DRAFT+b6c701f",
-  "name": "workspace_creation",
+  "name": "aad_auth",
   "created": "2022-03-29T20:35:53.517982Z",
   "modified": "2022-03-29T20:35:53.517982Z",
   "credentials": [
@@ -11,15 +11,15 @@
       }
     },
     {
-      "name": "workspace_creation_app_id",
+      "name": "auth_client_id",
       "source": {
-        "secret": "api-app-id"
+        "secret": "api-client-id"
       }
     },
     {
-      "name": "workspace_creation_app_secret",
+      "name": "auth_client_secret",
       "source": {
-        "secret": "api-app-secret"
+        "secret": "api-client-secret"
       }
     }
   ]
