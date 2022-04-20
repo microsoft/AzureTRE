@@ -19,7 +19,6 @@ data "template_file" "cloudconfig" {
     resource_processor_vmss_porter_image_tag         = local.version
     app_insights_connection_string                   = var.app_insights_connection_string
     resource_processor_number_processes_per_instance = var.resource_processor_number_processes_per_instance
-    key_vault_name                                   = var.key_vault_name
   }
 }
 
@@ -49,7 +48,7 @@ resource "random_password" "password" {
 resource "azurerm_key_vault_secret" "resource_processor_vmss_password" {
   name         = "resource-processor-vmss-password"
   value        = random_password.password.result
-  key_vault_id = data.azurerm_key_vault.kv.id
+  key_vault_id = var.keyvault_id
 }
 
 resource "azurerm_user_assigned_identity" "vmss_msi" {
@@ -166,9 +165,9 @@ resource "azurerm_role_assignment" "subscription_owner" {
 }
 
 resource "azurerm_key_vault_access_policy" "resource_processor" {
-  key_vault_id = data.azurerm_key_vault.kv.id
+  key_vault_id = var.keyvault_id
   tenant_id    = azurerm_user_assigned_identity.vmss_msi.tenant_id
   object_id    = azurerm_user_assigned_identity.vmss_msi.principal_id
 
-  secret_permissions = ["Get", "List", "Set", "Delete"]
+  secret_permissions = ["Get", "List", "Set", "Delete", "Purge", "Recover"]
 }
