@@ -182,7 +182,6 @@ jobs:
 
       # Perform az login for destroy env script to be able to run
       - name: Azure Login
-        if: ${{ steps.check_command.outputs.result == 'test-destroy-env' }}
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
@@ -216,7 +215,6 @@ jobs:
 
       # Perform az login for destroy env script to be able to run
       - name: Azure Login
-        if: ${{ steps.check_command.outputs.result == 'test-destroy-env' }}
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
