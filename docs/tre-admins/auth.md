@@ -9,7 +9,8 @@ The following values are needed to be in place to run the script. (`/templates/c
 | Key | Description |
 | ----------- | ----------- |
 |TRE_ID|This is needed to build up the redirect URI for the Swagger App|
-|AAD_TENANT_ID|The tenant id of where your AAD identities will be placed. This can be different to the tenant where your Azure resources are created.
+|AAD_TENANT_ID|The tenant id of where your AAD identities will be placed. This can be different to the tenant where your Azure resources are created.|
+|AUTO_WORKSPACE_APP_REGISTRATION| Default of `false`. Setting this to true grants the `Application.ReadWrite.All` permission to the API AAD Application. This allows it to create other AAD applications, e.g. Workspaces.
 
 ## Create Authentication assets
 You can build all of the Identity assets by running the following at the command line
@@ -59,8 +60,10 @@ Example on how to run the script:
 ./scripts/aad/aad-app-reg.sh \
     --name <TRE_ID> \
     --swaggerui-redirecturl https://<TRE_ID>.<Azure location>.cloudapp.azure.com/api/docs/oauth2-redirect \
+    --read-write-all-permission \
     --admin-consent \
-    --automation-account
+    --automation-account \
+    --read-write-all-permission
 ```
 Below is a sample where `TRE_ID` has value `mytre` and the Azure location is `westeurope`:
 
@@ -68,9 +71,6 @@ Below is a sample where `TRE_ID` has value `mytre` and the Azure location is `we
   ./scripts/aad/aad-app-reg.sh --name TRE --swaggerui-redirecturl https://mytre.westeurope.cloudapp.azure.com/api/docs/oauth2-redirect --admin-consent
   --automation-account
   ```
-You can run the script without the `--admin-consent` and ask your admin to grant consent. If you don't have permissions and just want to create a development environment then skip this step and see the steps in the "Using a separate Azure Active Directory tenant) below.
-
-You can create an automation account which will aid your development flow, if you don't want to do this you can omit the `--automation-account` switch.
 
 | Argument | Description |
 | -------- | ----------- |
@@ -78,12 +78,17 @@ You can create an automation account which will aid your development flow, if yo
 | `--swaggerui-redirecturl` | The reply URL for the Swagger UI app. Use the values of the [environment variables](./environment-variables.md) `TRE_ID` and `LOCATION` in the URL. Reply URL for the localhost, `http://localhost:8000/api/docs/oauth2-redirect`, will be added by default. |
 | `--admin-consent` | Grants admin consent for the app registrations. This is required for them to function properly, but requires AAD admin privileges. |
 | `--automation-account` | This is an optional parameter but will create an application with test users with permission to use the `TRE API` and `TRE Swagger UI` |
+| `--read-write-all-permission` | This is an optional parameter that if present will grant the Read/Write All permission to the Application. This allows it to create other applications (such as workspaces).
 
 !!! caution
     The script will create an app password (client secret) for the **TRE API** app and the **Automation App** and tell you to copy these to the `/templates/core/.env` file. These values are only shown once, if you lose them, the script will create new secrets if run again.
 
 
-If you do not wish to create an Automation App, just remove the `--automation-account` from the command.
+You can create an automation account which will aid your development flow, if you don't want to do this you can omit the `--automation-account` switch.
+
+If your AAD Admin is uncomfortable allowing an Application to have the permissions to create other applications then remove the `--read-write-all-permission` from the command.
+
+You can run the script without the `--admin-consent` and ask your admin to grant consent. If you don't have permissions and just want to create a development environment then skip this step and see the steps in the "Using a separate Azure Active Directory tenant) below.
 
 ### Workspace Applications
 
