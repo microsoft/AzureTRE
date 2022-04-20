@@ -86,6 +86,7 @@ def test_get_active_shared_services_for_shared_queries_db(shared_service_repo):
 
     shared_service_repo.query.assert_called_once_with(query=SharedServiceRepository.active_shared_services_query())
 
+
 @patch('db.repositories.shared_services.SharedServiceRepository.validate_input_against_template')
 @patch('core.config.TRE_ID', "1234")
 def test_create_shared_service_item_creates_a_shared_with_the_right_values(validate_input_mock, shared_service_repo, basic_shared_service_request, basic_shared_service_template):
