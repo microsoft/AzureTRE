@@ -1,3 +1,4 @@
+#!/bin/bash
 set -e
 
 # This script is not used and is left here for you to debug the creation of the workspace
