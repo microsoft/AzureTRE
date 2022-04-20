@@ -63,9 +63,7 @@ public class AzureTREAuthenticationProvider extends AbstractAuthenticationProvid
             return null;
         }
 
-        final AzureTREAuthenticatedUser treUser = new AzureTREAuthenticatedUser();
-        treUser.init(credentials, accessToken, prefEmail, null, this);
-        return treUser;
+      return new AzureTREAuthenticatedUser(credentials, accessToken, prefEmail, null, this);
     }
 
     @Override

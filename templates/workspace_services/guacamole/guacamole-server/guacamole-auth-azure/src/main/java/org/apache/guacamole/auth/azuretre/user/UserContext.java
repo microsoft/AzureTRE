@@ -60,7 +60,7 @@ public class UserContext extends AbstractUserContext {
 
     private ConnectionGroup rootGroup;
 
-    public UserContext(final AuthenticationProvider authProvider/*, AzureTREAuthenticatedUser user*/) {
+    public UserContext(final AuthenticationProvider authProvider) {
         LOGGER.debug("Creating a new tre user context.");
         this.authProvider = authProvider;
     }

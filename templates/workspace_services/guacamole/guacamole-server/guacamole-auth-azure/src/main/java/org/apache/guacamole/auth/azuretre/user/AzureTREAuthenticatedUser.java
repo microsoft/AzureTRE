@@ -22,12 +22,8 @@ package org.apache.guacamole.auth.azuretre.user;
 import org.apache.guacamole.net.auth.AbstractAuthenticatedUser;
 import org.apache.guacamole.net.auth.AuthenticationProvider;
 import org.apache.guacamole.net.auth.Credentials;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class AzureTREAuthenticatedUser extends AbstractAuthenticatedUser {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(AzureTREAuthenticatedUser.class);
 
     private AuthenticationProvider authProvider;
 
@@ -35,15 +31,15 @@ public class AzureTREAuthenticatedUser extends AbstractAuthenticatedUser {
 
     private String objectId;
 
-    private String token;
+    private String accessToken;
 
-    public void init(final Credentials credentials,
+  public AzureTREAuthenticatedUser(final Credentials credentials,
                      final String accessToken,
                      final String username,
                      final String objectId,
                      final AuthenticationProvider provider) {
         this.credentials = credentials;
-        this.token = accessToken;
+        this.accessToken = accessToken;
         this.objectId = objectId;
         this.authProvider = provider;
         setIdentifier(username.toLowerCase());
@@ -60,7 +56,7 @@ public class AzureTREAuthenticatedUser extends AbstractAuthenticatedUser {
     }
 
     public String getAccessToken() {
-        return token;
+        return accessToken;
     }
     public String getObjectId() {
         return objectId;
