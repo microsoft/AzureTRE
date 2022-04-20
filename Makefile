@@ -90,24 +90,15 @@ build-mlflow-image:
 
 firewall-install:
 	$(call shared_service_bundle,firewall) \
-	&& $(MAKE) firewall-deploy
-
-firewall-deploy:
-	$(MAKE) deploy-shared-service DIR=./templates/shared_services/firewall/ BUNDLE_TYPE=shared_service
+	&& $(MAKE) deploy-shared-service DIR=./templates/shared_services/firewall/ BUNDLE_TYPE=shared_service
 
 nexus-install:
 	$(call shared_service_bundle,sonatype-nexus) \
-	&& $(MAKE) nexus-deploy
-
-nexus-deploy:
-	$(MAKE) deploy-shared-service DIR=./templates/shared_services/sonatype-nexus/ BUNDLE_TYPE=shared_service
+	&& $(MAKE) deploy-shared-service DIR=./templates/shared_services/sonatype-nexus/ BUNDLE_TYPE=shared_service
 
 gitea-install:
 	$(call shared_service_bundle,gitea) \
-	&& $(MAKE) gitea-deploy
-
-gitea-deploy:
-	$(MAKE) deploy-shared-service DIR=./templates/shared_services/gitea/ BUNDLE_TYPE=shared_service
+	&& $(MAKE) deploy-shared-service DIR=./templates/shared_services/gitea/ BUNDLE_TYPE=shared_service
 
 # A recipe for pushing images. Parameters:
 # 1. Image name suffix
@@ -321,29 +312,6 @@ static-web-upload:
 	&& pushd ./templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ./devops/scripts/load_env.sh ./templates/core/private.env \
 	&& ./templates/core/terraform/scripts/upload_static_web.sh
-
-workspace_bundle = echo $(1) && $(MAKE) bundle-build DIR=./templates/workspaces/$(1)/ \
-	&& $(MAKE) bundle-publish DIR=./templates/workspaces/$(1)/ \
-	&& $(MAKE) bundle-register DIR="./templates/workspaces/$(1)" BUNDLE_TYPE=workspace
-
-workspace_service_bundle = echo $(1) && $(MAKE) bundle-build DIR=./templates/workspace_services/$(1)/ \
-	&& $(MAKE) bundle-publish DIR=./templates/workspace_services/$(1)/ \
-	&& $(MAKE) bundle-register DIR="./templates/workspace_services/$(1)" BUNDLE_TYPE=workspace_service
-
-shared_service_bundle = echo $(1) && $(MAKE) bundle-build DIR=./templates/shared_services/$(1)/ \
-	&& $(MAKE) bundle-publish DIR=./templates/shared_services/$(1)/ \
-	&& $(MAKE) bundle-register DIR="./templates/shared_services/$(1)" BUNDLE_TYPE=shared_service
-
-prepare-for-e2e:
-	$(call workspace_bundle,base) \
-	&& $(call workspace_bundle,innereye) \
-	&& $(call workspace_service_bundle,guacamole) \
-	&& $(call workspace_service_bundle,azureml) \
-	&& $(call workspace_service_bundle,devtestlabs) \
-	&& $(call workspace_service_bundle,gitea) \
-	&& $(call workspace_service_bundle,innereye) \
-	&& $(call shared_service_bundle,sonatype-nexus) \
-	&& $(call shared_service_bundle,gitea)
 
 test-e2e-smoke:
 	$(call target_title, "Running E2E smoke tests") && \
