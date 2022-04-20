@@ -5,3 +5,4 @@
 **/*_backend.tf
 
 Dockerfile.tmpl
+debug.sh
