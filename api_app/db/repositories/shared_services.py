@@ -27,6 +27,10 @@ class SharedServiceRepository(ResourceRepository):
     def active_shared_services_query():
         return f'SELECT * FROM c WHERE {IS_ACTIVE_CLAUSE} AND c.resourceType = "{ResourceType.SharedService}"'
 
+    @staticmethod
+    def active_shared_service_with_template_name_query(template_name: str):
+        return f'SELECT * FROM c WHERE {IS_ACTIVE_CLAUSE} AND c.resourceType = "{ResourceType.SharedService}" AND c.templateName = "{template_name}"'
+
     def get_shared_service_by_id(self, shared_service_id: str):
         shared_services = self.query(self.shared_service_query(shared_service_id))
         if not shared_services:
@@ -55,14 +59,14 @@ class SharedServiceRepository(ResourceRepository):
     def create_shared_service_item(self, shared_service_input: SharedServiceTemplateInCreate) -> SharedService:
         shared_service_id = str(uuid.uuid4())
 
-        template_version = self.validate_input_against_template(shared_service_input.templateName, shared_service_input, ResourceType.SharedService)
-
-        existing_shared_services = self.query(self.active_shared_services_query())
+        existing_shared_services = self.query(self.active_shared_service_with_template_name_query(shared_service_input.templateName))
         # Duplicate is same template (=id), same version and active
         if existing_shared_services:
             if len(existing_shared_services) > 1:
                 raise InternalError(f"More than one active shared service exists with the same id {shared_service_id}")
             raise DuplicateEntity
+
+        template_version = self.validate_input_against_template(shared_service_input.templateName, shared_service_input, ResourceType.SharedService)
 
         resource_spec_parameters = {**shared_service_input.properties, **self.get_shared_service_spec_params()}
 

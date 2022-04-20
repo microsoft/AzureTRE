@@ -44,7 +44,7 @@ async def create_shared_service(
     operations_repo=Depends(get_repository(OperationRepository))
 ) -> OperationInResponse:
     try:
-        shared_service = shared_services_repo.create_shared_service_item(shared_service_input, user)
+        shared_service = shared_services_repo.create_shared_service_item(shared_service_input)
     except (ValidationError, ValueError) as e:
         logging.error(f"Failed create shared service model instance: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
