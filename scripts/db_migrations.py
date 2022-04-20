@@ -57,17 +57,6 @@ class TRECosmosDBMigrations:
                 resources_container.upsert_item(item)
                 print(f'Moved deployment from resource id {item["id"]} to operations')
 
-    def deleteDuplicatedSharedServices(self, resource_container_name):
-        resources_container = self.database.get_container_client(resource_container_name)
-
-        template_names = ['tre-shared-service-firewall', 'tre-shared-service-nexus', 'tre-shared-service-gitea']
-
-        for template_name in template_names:
-            for item in resources_container.query_items(query=f'SELECT * FROM c WHERE c.resourceType = "shared-service" AND c.templateName = "{template_name}" \
-                                                                ORDER BY c.updatedWhen ASC OFFSET 1 LIMIT 10000', enable_cross_partition_query=True):
-                print(f"Deleting element {item}")
-                resources_container.delete_item(item, partition_key=item["id"])
-
 
 def main():
     migrations = TRECosmosDBMigrations()
@@ -83,9 +72,6 @@ def main():
 
     # Operations History
     migrations.moveDeploymentsToOperations("Resources", "Operations")
-
-    # Shared services
-    migrations.deleteDuplicatedSharedServices("Resources")
 
 
 if __name__ == "__main__":
