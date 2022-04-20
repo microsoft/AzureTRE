@@ -20,8 +20,7 @@ def get_sample_workspace(workspace_id: str, spec_workspace_id: str = "0001") -> 
             "address_space_size": "small",
         },
         "resourceType": ResourceType.Workspace,
-        "workspaceURL": "",
-        "authInformation": {}
+        "workspaceURL": ""
     }
 
 

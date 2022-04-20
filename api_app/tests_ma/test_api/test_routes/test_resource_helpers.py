@@ -37,7 +37,7 @@ def operations_repo() -> OperationRepository:
         return OperationRepository(cosmos_client_mock)
 
 
-def sample_resource(workspace_id=WORKSPACE_ID, auth_info: dict = {}):
+def sample_resource(workspace_id=WORKSPACE_ID):
     workspace = Workspace(
         id=workspace_id,
         templateName="tre-workspace-base",
@@ -50,8 +50,6 @@ def sample_resource(workspace_id=WORKSPACE_ID, auth_info: dict = {}):
         user=create_test_user(),
         updatedWhen=FAKE_CREATE_TIMESTAMP
     )
-    if auth_info:
-        workspace.authInformation = auth_info
     return workspace
 
 

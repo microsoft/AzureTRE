@@ -85,7 +85,7 @@ def sample_workspace(workspace_id=WORKSPACE_ID, auth_info: dict = {}) -> Workspa
         user=create_admin_user()
     )
     if auth_info:
-        workspace.authInformation = auth_info
+        workspace.properties = {**auth_info}
     return workspace
 
 
@@ -110,7 +110,7 @@ def sample_resource_operation_in_response(resource_id: str, operation_id: str):
     return OperationInResponse(operation=op)
 
 
-def sample_deployed_workspace(workspace_id=WORKSPACE_ID, auth_info: dict = {}):
+def sample_deployed_workspace(workspace_id=WORKSPACE_ID, authInfo={}):
     workspace = Workspace(
         id=workspace_id,
         templateName="tre-workspace-base",
@@ -120,8 +120,8 @@ def sample_deployed_workspace(workspace_id=WORKSPACE_ID, auth_info: dict = {}):
         resourcePath="test",
         updatedWhen=FAKE_CREATE_TIMESTAMP
     )
-    if auth_info:
-        workspace.authInformation = auth_info
+    if authInfo:
+        workspace.properties = {**authInfo}
     return workspace
 
 
