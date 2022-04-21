@@ -15,25 +15,25 @@ async function getCommandFromComment({ core, context, github }) {
 
   // Determine PR SHA etc
   const prNumber = context.payload.issue.number;
-	const pr = (await github.rest.pulls.get({ owner: repoOwner, repo: repoName, pull_number: prNumber })).data;
-	console.log("==========================================================================================");
-	console.log(pr);
-	console.log("==========================================================================================");
+  const pr = (await github.rest.pulls.get({ owner: repoOwner, repo: repoName, pull_number: prNumber })).data;
+  console.log("==========================================================================================");
+  console.log(pr);
+  console.log("==========================================================================================");
 
-	const prRefId = getRefIdForPr(prNumber);
-	console.log(`prRefId: ${prRefId}`);
-	core.setOutput("prRefId", prRefId);
+  const prRefId = getRefIdForPr(prNumber);
+  console.log(`prRefId: ${prRefId}`);
+  core.setOutput("prRefId", prRefId);
 
-	console.log(`Using head ref: ${pr.head.ref}`)
-	const branchRefId = getRefIdForBranch(pr.head.ref);
-	console.log(`branchRefId: ${branchRefId}`);
+  console.log(`Using head ref: ${pr.head.ref}`)
+  const branchRefId = getRefIdForBranch(pr.head.ref);
+  console.log(`branchRefId: ${branchRefId}`);
 
-	const potentialMergeCommit = pr.merge_commit_sha;
-	console.log(`potentialMergeCommit: ${potentialMergeCommit}`);
-	core.setOutput("potentialMergeCommit", potentialMergeCommit);
+  const potentialMergeCommit = pr.merge_commit_sha;
+  console.log(`potentialMergeCommit: ${potentialMergeCommit}`);
+  core.setOutput("potentialMergeCommit", potentialMergeCommit);
 
-	const prHeadSha = pr.head.sha;;
-	console.log(`prHeadSha: ${prHeadSha}`);
+  const prHeadSha = pr.head.sha;;
+  console.log(`prHeadSha: ${prHeadSha}`);
 
 
   //
@@ -107,16 +107,16 @@ async function userHasWriteAccessToRepo({ github }, username, repoOwner, repoNam
 }
 
 function getRefIdForPr(prNumber) {
-	// Trailing newline is for compatibility with previous bash SHA calculation
-	return createShortHash(`refs/pull/${prNumber}/merge\n`);
+  // Trailing newline is for compatibility with previous bash SHA calculation
+  return createShortHash(`refs/pull/${prNumber}/merge\n`);
 }
 function getRefIdForBranch(branchName) {
-	// Trailing newline is for compatibility with previous bash SHA calculation
-	return createShortHash(`refs/heads/${branchName}\n`);
+  // Trailing newline is for compatibility with previous bash SHA calculation
+  return createShortHash(`refs/heads/${branchName}\n`);
 }
 function createShortHash(ref) {
-	const hash = createHash('sha1').update(ref, 'utf8').digest('hex')
-	return hash.substring(0, 8);
+  const hash = createHash('sha1').update(ref, 'utf8').digest('hex')
+  return hash.substring(0, 8);
 }
 
 module.exports = {
