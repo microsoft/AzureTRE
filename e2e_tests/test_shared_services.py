@@ -1,6 +1,4 @@
-from webbrowser import get
 import pytest
-import logging
 
 from helpers import disable_and_delete_resource, post_resource, get_shared_service_id_by_name
 from resources import strings
