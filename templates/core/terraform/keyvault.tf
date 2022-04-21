@@ -60,8 +60,8 @@ resource "azurerm_private_endpoint" "kvpe" {
   }
 }
 
-resource "azurerm_key_vault_secret" "api_app_id" {
-  name         = "api-app-id"
+resource "azurerm_key_vault_secret" "api_client_id" {
+  name         = "api-client-id"
   value        = var.api_client_id
   key_vault_id = azurerm_key_vault.kv.id
   depends_on = [
@@ -69,8 +69,8 @@ resource "azurerm_key_vault_secret" "api_app_id" {
   ]
 }
 
-resource "azurerm_key_vault_secret" "api_app_secret" {
-  name         = "api-app-secret"
+resource "azurerm_key_vault_secret" "api_client_secret" {
+  name         = "api-client-secret"
   value        = var.api_client_secret
   key_vault_id = azurerm_key_vault.kv.id
   depends_on = [
