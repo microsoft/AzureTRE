@@ -20,7 +20,6 @@
 package org.apache.guacamole.auth.azuretre.user;
 
 
-import com.google.inject.Inject;
 import org.apache.guacamole.GuacamoleException;
 import org.apache.guacamole.auth.azuretre.AzureTREAuthenticationProvider;
 import org.apache.guacamole.auth.azuretre.connection.ConnectionService;
@@ -47,10 +46,6 @@ public class UserContext extends AbstractUserContext {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserContext.class);
 
-    @Inject
-    private ConnectionService connectionService;
-
-    @Inject
     private AuthenticationProvider authProvider;
 
     private User self;
@@ -65,6 +60,10 @@ public class UserContext extends AbstractUserContext {
 
     private ConnectionGroup rootGroup;
 
+    public UserContext(final AuthenticationProvider authProvider/*, AzureTREAuthenticatedUser user*/) {
+        LOGGER.debug("Creating a new tre user context.");
+        this.authProvider = authProvider;
+    }
 
     public void init(final AzureTREAuthenticatedUser user) throws GuacamoleException {
         final Map<String, User> users = new HashMap<>(1);
@@ -78,7 +77,7 @@ public class UserContext extends AbstractUserContext {
         );
         // Query all accessible connections
         connectionDirectory = new SimpleDirectory<>(
-            connectionService.getConnections(user)
+            ConnectionService.getConnections(user)
         );
         // Root group contains only connections
         rootGroup = new SimpleConnectionGroup(
@@ -145,7 +144,7 @@ public class UserContext extends AbstractUserContext {
         LOGGER.debug("getConnectionDirectory");
         // instead of returning connectionDirectory object we query to get all accessible connections (fix for #850)
         return new SimpleDirectory<>(
-             connectionService.getConnections(treUser)
+            ConnectionService.getConnections(treUser)
         );
     }
 
