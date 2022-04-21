@@ -93,14 +93,23 @@ describe('getCommandFromComment', () => {
     ({ core, github, mockCoreSetOutput, mockGithubRestIssuesCreateComment } = createGitHubContext());
   });
 
-  function createCommentContext(username, pullRequestNumber, commentBody) {
+  function createCommentContext({ username, pullRequestNumber, body }) {
+    if (!username) {
+      username = 'admin'; // most tests will assume admin (i.e. user can run commands)
+    }
+    if (!pullRequestNumber) {
+      pullRequestNumber = 123;
+    }
+    if (!body) {
+      body = "nothing to see here";
+    }
     return {
       payload: {
         comment: {
           user: {
             login: username,
           },
-          body: commentBody,
+          body,
         },
         issue: {
           number: pullRequestNumber,
@@ -114,7 +123,10 @@ describe('getCommandFromComment', () => {
 
   describe('with non-contributor', () => {
     test(`should return 'none' for '/test'`, async () => {
-      const context = createCommentContext('non-contributor', 123, '/test');
+      const context = createCommentContext({
+        username: 'non-contributor',
+        body: '/test'
+      });
       const command = await getCommandFromComment({ core, context, github });
       expect(command).toBe('none');
     });
@@ -122,7 +134,10 @@ describe('getCommandFromComment', () => {
 
   describe('with contributor', () => {
     test(`should return 'none' if doesn't start with '/'`, async () => {
-      const context = createCommentContext('admin', 123, 'foo');
+      const context = createCommentContext({
+        username: 'admin',
+        body: 'foo'
+      });
       const command = await getCommandFromComment({ core, context, github });
       expect(command).toBe('none');
     });
@@ -130,31 +145,46 @@ describe('getCommandFromComment', () => {
 
     describe('and single line comments', () => {
       test(`should return 'run-tests' for '/test'`, async () => {
-        const context = createCommentContext('admin', 123, '/test');
+        const context = createCommentContext({
+          username: 'admin',
+          body: '/test'
+        });
         const command = await getCommandFromComment({ core, context, github });
         expect(command).toBe('run-tests');
       });
 
       test(`should return 'run-tests-extended' for '/test-extended'`, async () => {
-        const context = createCommentContext('admin', 123, '/test-extended');
+        const context = createCommentContext({
+          username: 'admin',
+          body: '/test-extended'
+        });
         const command = await getCommandFromComment({ core, context, github });
         expect(command).toBe('run-tests-extended');
       });
 
       test(`should return 'test-force-approve' for '/test-force-approve'`, async () => {
-        const context = createCommentContext('admin', 123, '/test-force-approve');
+        const context = createCommentContext({
+          username: 'admin',
+          body: '/test-force-approve'
+        });
         const command = await getCommandFromComment({ core, context, github });
         expect(command).toBe('test-force-approve');
       });
 
       test(`should return 'test-destroy-env' for '/test-destroy-env'`, async () => {
-        const context = createCommentContext('admin', 123, '/test-destroy-env');
+        const context = createCommentContext({
+          username: 'admin',
+          body: '/test-destroy-env'
+        });
         const command = await getCommandFromComment({ core, context, github });
         expect(command).toBe('test-destroy-env');
       });
 
       test(`should add help comment and return 'none' for '/help'`, async () => {
-        const context = createCommentContext('admin', 123, '/help');
+        const context = createCommentContext({
+          username: 'admin',
+          body: '/help'
+        });
         const command = await getCommandFromComment({ core, context, github });
         expect(mockGithubRestIssuesCreateComment.mock.calls.length).toBe(1);
         const createCommentCall = mockGithubRestIssuesCreateComment.mock.calls[0];
@@ -167,7 +197,10 @@ describe('getCommandFromComment', () => {
       });
 
       test(`should add help comment and return 'none' for '/not-a-command'`, async () => {
-        const context = createCommentContext('admin', 123, '/not-a-command');
+        const context = createCommentContext({
+          username: 'admin',
+          body: '/not-a-command'
+        });
         const command = await getCommandFromComment({ core, context, github });
         expect(mockGithubRestIssuesCreateComment.mock.calls.length).toBe(1);
         const createCommentCall = mockGithubRestIssuesCreateComment.mock.calls[0];
@@ -183,18 +216,24 @@ describe('getCommandFromComment', () => {
 
     describe('and multi-line comments', () => {
       test(`should return 'run-tests' if first line of comment is '/test'`, async () => {
-        context = createCommentContext('admin', 123, `/test
+        const context = createCommentContext({
+          username: 'admin',
+          body: `/test
 Other comment content
-goes here`);
+goes here`
+        });
         const command = await getCommandFromComment({ core, context, github });
         expect(command).toBe('run-tests');
       });
 
       test(`should return 'none' if first line of comment is a command even if later lines contain '/test'`, async () => {
-        const context = createCommentContext('admin', 123, `Non-command comment
+        const context = createCommentContext({
+          username: 'admin',
+          body: `Non-command comment
 /test
 Other comment content
-goes here`);
+goes here`
+        });
         const command = await getCommandFromComment({ core, context, github });
         expect(command).toBe('none');
       });
@@ -206,7 +245,9 @@ goes here`);
   describe('PR context', () => {
     test('should set prRef output', async () => {
       // prRef should be set to the SHA for the potentialMergeCommit for the PR
-      const context = createCommentContext('admin', 123, '/help');
+      const context = createCommentContext({
+        pullRequestNumber: 123
+      });
       await getCommandFromComment({ core, context, github });
       expect(mockCoreSetOutput).toHaveBeenCalledWith('prRef', '123456789a');
     });
@@ -214,7 +255,9 @@ goes here`);
     test('should set prRefId output', async () => {
       // Using a PR number of 123 should give a refid of 'cbce50da'
       // Based on running `echo "refs/pull/123/merge" | shasum | cut -c1-8` (as per the original bash scripts)
-      const context = createCommentContext('admin', 123, '/help');
+      const context = createCommentContext({
+        pullRequestNumber: 123
+      });
       await getCommandFromComment({ core, context, github });
       expect(mockCoreSetOutput).toHaveBeenCalledWith('prRefId', 'cbce50da');
       expect(mockCoreSetOutput.mock.calls.some(c => c[0] == 'prRefId')).toBe(true);
@@ -224,7 +267,9 @@ goes here`);
       // Using PR 456 which is faked as a PR from a fork
       // Since branch-based environments are only for upstream branches, the branchRefId
       // output should not be set for this PR
-      const context = createCommentContext('admin', 456, '/help');
+      const context = createCommentContext({
+        pullRequestNumber: 456
+      });
       await getCommandFromComment({ core, context, github });
       expect(mockCoreSetOutput.mock.calls.some(c => c[0] == 'branchRefId')).toBe(false);
     });
@@ -233,14 +278,18 @@ goes here`);
       // Using PR 123 which is faked as a PR from the upstream repo
       // The Using a PR number of 123 should give a refid of '71f7c907'
       // Based on running `echo "refs/heads/pr-head-ref" | shasum | cut -c1-8` (as per the original bash scripts)
-      const context = createCommentContext('admin', 123, '/help');
+      const context = createCommentContext({
+        pullRequestNumber: 123
+      });
       await getCommandFromComment({ core, context, github });
       expect(mockCoreSetOutput).toHaveBeenCalledWith('branchRefId', '71f7c907');
     });
 
     test('should set prHeadSha output', async () => {
       // prHeadSha should be the SHA for the head commit for the PR
-      const context = createCommentContext('admin', 123, '/help');
+      const context = createCommentContext({
+        pullRequestNumber: 123
+      });
       await getCommandFromComment({ core, context, github });
       expect(mockCoreSetOutput).toHaveBeenCalledWith('prHeadSha', '0123456789');
     });
@@ -257,7 +306,7 @@ describe('labelAsExternalIfAuthorDoesNotHaveWriteAccess', () => {
     ({ core, github, mockGithubRestIssuesAddLabels } = createGitHubContext());
   });
 
-  function createPullRequestContext(username, pullRequestNumber) {
+  function createPullRequestContext({ username, pullRequestNumber }) {
     return {
       payload: {
         pull_request: {
@@ -278,13 +327,19 @@ describe('labelAsExternalIfAuthorDoesNotHaveWriteAccess', () => {
   }
 
   test(`should apply the 'external' label for non-contributor author`, async () => {
-    const context = createPullRequestContext('non-contributor', 123);
+    const context = createPullRequestContext({
+      username: 'non-contributor',
+      pullRequestNumber: 123
+    });
     await labelAsExternalIfAuthorDoesNotHaveWriteAccess({ core, context, github });
     expect(mockGithubRestIssuesAddLabels).toHaveBeenCalled(); // should set the label for non-contributor
   });
 
   test(`should return not apply the 'external' label for contributor author`, async () => {
-    const context = createPullRequestContext('admin', 123);
+    const context = createPullRequestContext({
+      username: 'admin',
+      pullRequestNumber: 123
+    });
     await labelAsExternalIfAuthorDoesNotHaveWriteAccess({ core, context, github });
     expect(mockGithubRestIssuesAddLabels).toHaveBeenCalledTimes(0); // shouldn't set the label for contributor
   });
