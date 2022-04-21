@@ -61,8 +61,7 @@ if [ -z "${access_token:-}" ]; then
   # If access token isn't set, try to use environment variables
   if [ -z "${ACCESS_TOKEN:-}" ]
   then
-    echo "API access token isn't available - automatic bundle registration not possible. Use the script output to self-register. See documentation for more details."
-    echo "${payload}" | jq --color-output .
+    echo "Please provide an API access token to deploy shared service"
     exit 1
   fi
   access_token=${ACCESS_TOKEN}

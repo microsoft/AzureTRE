@@ -116,10 +116,10 @@ function get_http_code() {
 
 if [ -z "${access_token:-}" ]; then
   # If access token isn't set, try to obtain it
-  # We didn't get an access token but we can try to generate one.
   if [ -z "${ACCESS_TOKEN:-}" ]
   then
-    echo "API access token isn't available - automatic bundle registration not possible. Use the script output to self-register. See documentation for more details."
+    echo "API access token isn't available - automatic bundle registration not possible. Use the script output to self-register. "
+    echo "See documentation for more details: https://microsoft.github.io/AzureTRE/tre-admins/registering-templates/"
     echo "${payload}" | jq --color-output .
     exit 1
   fi
