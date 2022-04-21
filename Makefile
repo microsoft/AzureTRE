@@ -89,15 +89,21 @@ build-mlflow-image:
 	$(call build_image,"mlflow-server","templates/workspace_services/mlflow/mlflow-server/version.txt","templates/workspace_services/mlflow/mlflow-server/docker/Dockerfile","templates/workspace_services/mlflow/mlflow-server")
 
 firewall-install:
-	$(call shared_service_bundle,firewall) \
+	$(MAKE) bundle-build DIR=./templates/shared_services/firewall/ \
+	&& $(MAKE) bundle-publish DIR=./templates/shared_services/firewall/ \
+	&& $(MAKE) bundle-register DIR="./templates/shared_services/firewall" BUNDLE_TYPE=shared_service
 	&& $(MAKE) deploy-shared-service DIR=./templates/shared_services/firewall/ BUNDLE_TYPE=shared_service
 
 nexus-install:
-	$(call shared_service_bundle,sonatype-nexus) \
+	$(MAKE) bundle-build DIR=./templates/shared_services/sonatype-nexus/ \
+	&& $(MAKE) bundle-publish DIR=./templates/shared_services/sonatype-nexus/ \
+	&& $(MAKE) bundle-register DIR="./templates/shared_services/sonatype-nexus" BUNDLE_TYPE=shared_service
 	&& $(MAKE) deploy-shared-service DIR=./templates/shared_services/sonatype-nexus/ BUNDLE_TYPE=shared_service
 
 gitea-install:
-	$(call shared_service_bundle,gitea) \
+	$(MAKE) bundle-build DIR=./templates/shared_services/gitea/ \
+	&& $(MAKE) bundle-publish DIR=./templates/shared_services/gitea/ \
+	&& $(MAKE) bundle-register DIR="./templates/shared_services/gitea" BUNDLE_TYPE=shared_service
 	&& $(MAKE) deploy-shared-service DIR=./templates/shared_services/gitea/ BUNDLE_TYPE=shared_service
 
 # A recipe for pushing images. Parameters:
