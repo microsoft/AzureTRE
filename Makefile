@@ -239,7 +239,7 @@ lint:
 		-e VALIDATE_BASH_EXEC=true \
 		-e VALIDATE_GITHUB_ACTIONS=true \
 		-v $${LOCAL_WORKSPACE_FOLDER}:/tmp/lint \
-		github/super-linter:slim-v4
+		github/super-linter:slim-latest
 
 bundle-build:
 	$(call target_title, "Building ${DIR} bundle with Porter") \
