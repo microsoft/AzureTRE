@@ -41,7 +41,7 @@ class UserResourceRepository(ResourceRepository):
             ownerId=user_id,
             parentWorkspaceServiceId=parent_workspace_service_id,
             templateName=user_resource_input.templateName,
-            templateVersion=template["version"],
+            templateVersion=template.version,
             properties=resource_spec_parameters,
             resourcePath=f'/workspaces/{workspace_id}/workspace-services/{parent_workspace_service_id}/user-resources/{full_user_resource_id}',
             etag=''

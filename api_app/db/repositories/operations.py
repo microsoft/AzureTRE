@@ -26,13 +26,13 @@ class OperationRepository(BaseRepository):
     def get_timestamp() -> float:
         return datetime.utcnow().timestamp()
 
-    def create_main_step(self, resource_template: ResourceTemplate, action: str, resource_id: str, status: Status, message: str) -> OperationStep:
+    def create_main_step(self, resource_template: dict, action: str, resource_id: str, status: Status, message: str) -> OperationStep:
         return OperationStep(
             stepId="main",
             stepTitle=f"Main step for {resource_id}",
             resourceId=resource_id,
-            resourceTemplateName=resource_template.name,
-            resourceType=resource_template.resourceType,
+            resourceTemplateName=resource_template["name"],
+            resourceType=resource_template["resourceType"],
             resourceAction=action,
             status=status,
             message=message,
@@ -40,14 +40,15 @@ class OperationRepository(BaseRepository):
 
     def create_operation_item(self, resource_id: str, status: Status, action: str, message: str, resource_path: str, resource_version: int, user: User, resource_template: ResourceTemplate, resource_repo: ResourceRepository) -> Operation:
         operation_id = str(uuid.uuid4())
+        resource_template_dict = resource_template.dict(exclude_none=True)
 
         # if the template has a pipeline defined for this action, copy over all the steps to the ops document
         steps: List[OperationStep] = []
-        if "pipeline" in resource_template:
-            if action in resource_template["pipeline"]:
-                for step in resource_template["pipeline"][action]:
+        if "pipeline" in resource_template_dict and resource_template_dict["pipeline"] is not None:
+            if action in resource_template_dict["pipeline"] and resource_template_dict["pipeline"][action] is not None:
+                for step in resource_template_dict["pipeline"][action]:
                     if step["stepId"] == "main":
-                        steps.append(self.create_main_step(resource_template=resource_template, action=action, resource_id=resource_id, status=status, message=message))
+                        steps.append(self.create_main_step(resource_template=resource_template_dict, action=action, resource_id=resource_id, status=status, message=message))
                     else:
                         resource_for_step = resource_repo.get_resource_by_template_name(step["resourceTemplateName"])
                         steps.append(OperationStep(
@@ -62,7 +63,7 @@ class OperationRepository(BaseRepository):
 
         # if no pipeline is defined for this action, create a main step only
         if len(steps) == 0:
-            steps.append(self.create_main_step(resource_template=resource_template, action=action, resource_id=resource_id, status=status, message=message))
+            steps.append(self.create_main_step(resource_template=resource_template_dict, action=action, resource_id=resource_id, status=status, message=message))
 
         timestamp = self.get_timestamp()
         operation = Operation(

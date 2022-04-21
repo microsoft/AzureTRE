@@ -37,7 +37,7 @@ class PipelineStepProperty(AzureTREModel):
 
 
 class PipelineStep(AzureTREModel):
-    stepId: str = Field(title="stepId", description="Unique id identifying the step")
+    stepId: Optional[str] = Field(title="stepId", description="Unique id identifying the step")
     stepTitle: Optional[str] = Field(title="stepTitle", description="Human readable title of what the step is for")
     resourceTemplateName: Optional[str] = Field(title="resourceTemplateName", description="Name of the template for the resource under change")
     resourceType: Optional[ResourceType] = Field(title="resourceType", description="Type of resource under change")

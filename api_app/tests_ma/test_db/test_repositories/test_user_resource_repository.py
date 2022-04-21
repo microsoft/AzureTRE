@@ -42,7 +42,7 @@ def user_resource():
 @patch('core.config.TRE_ID', "9876")
 def test_create_user_resource_item_creates_a_user_resource_with_the_right_values(validate_input_mock, user_resource_repo, basic_user_resource_request, basic_user_resource_template):
     user_resource_to_create = basic_user_resource_request
-    validate_input_mock.return_value = basic_user_resource_template.dict()
+    validate_input_mock.return_value = basic_user_resource_template
 
     user_resource, _ = user_resource_repo.create_user_resource_item(user_resource_to_create, WORKSPACE_ID, SERVICE_ID, "parent-service-type", USER_ID)
 

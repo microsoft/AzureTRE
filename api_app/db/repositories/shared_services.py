@@ -61,7 +61,7 @@ class SharedServiceRepository(ResourceRepository):
         shared_service = SharedService(
             id=shared_service_id,
             templateName=shared_service_input.templateName,
-            templateVersion=template["version"],
+            templateVersion=template.version,
             properties=resource_spec_parameters,
             resourcePath=f'/shared-services/{shared_service_id}',
             etag=''

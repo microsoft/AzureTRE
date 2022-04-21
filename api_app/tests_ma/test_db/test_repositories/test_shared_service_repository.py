@@ -94,7 +94,7 @@ def test_create_shared_service_item_creates_a_shared_with_the_right_values(valid
     resource_template = basic_shared_service_template
     resource_template.required = ["display_name", "description"]
 
-    validate_input_mock.return_value = resource_template.dict()
+    validate_input_mock.return_value = resource_template
 
     shared_service, _ = shared_service_repo.create_shared_service_item(shared_service_to_create)
 

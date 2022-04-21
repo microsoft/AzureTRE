@@ -70,7 +70,7 @@ class WorkspaceRepository(ResourceRepository):
         workspace = Workspace(
             id=full_workspace_id,
             templateName=workspace_input.templateName,
-            templateVersion=template["version"],
+            templateVersion=template.version,
             properties=resource_spec_parameters,
             authInformation=auth_info,
             resourcePath=f'/workspaces/{full_workspace_id}',

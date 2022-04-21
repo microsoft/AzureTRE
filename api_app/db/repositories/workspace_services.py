@@ -66,7 +66,7 @@ class WorkspaceServiceRepository(ResourceRepository):
             id=full_workspace_service_id,
             workspaceId=workspace_id,
             templateName=workspace_service_input.templateName,
-            templateVersion=template["version"],
+            templateVersion=template.version,
             properties=resource_spec_parameters,
             resourcePath=f'/workspaces/{workspace_id}/workspace-services/{full_workspace_service_id}',
             etag=''

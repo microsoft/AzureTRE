@@ -38,7 +38,7 @@ class ResourceRepository(BaseRepository):
     def _validate_resource_parameters(resource_input, resource_template):
         validate(instance=resource_input["properties"], schema=resource_template)
 
-    def _get_enriched_template(self, template_name: str, resource_type: ResourceType, parent_template_name: str = ""):
+    def _get_enriched_template(self, template_name: str, resource_type: ResourceType, parent_template_name: str = "") -> dict:
         template_repo = ResourceTemplateRepository(self._client)
         template = template_repo.get_current_template(template_name, resource_type, parent_template_name)
         return template_repo.enrich_template(template)
@@ -64,7 +64,7 @@ class ResourceRepository(BaseRepository):
         if resource["resourceType"] == ResourceType.SharedService:
             return parse_obj_as(SharedService, resource)
         if resource["resourceType"] == ResourceType.Workspace:
-            return parse_obj_as(Workspace, resources)
+            return parse_obj_as(Workspace, resource)
         if resource["resourceType"] == ResourceType.WorkspaceService:
             return parse_obj_as(WorkspaceService, resource)
         if resource["resourceType"] == ResourceType.UserResource:
@@ -90,7 +90,7 @@ class ResourceRepository(BaseRepository):
 
         self._validate_resource_parameters(resource_input.dict(), template)
 
-        return template
+        return parse_obj_as(ResourceTemplate, template)
 
     def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository, user: User) -> Tuple[Resource, ResourceTemplate]:
         # create a deep copy of the resource to use for history, create the history item + add to history list
