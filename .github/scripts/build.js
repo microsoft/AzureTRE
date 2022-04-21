@@ -73,10 +73,11 @@ async function getCommandFromComment({ core, context, github }) {
       default:
         core.warning(`'${trimmedFirstLine}' not recognised as a valid command`);
         await showHelp(github, repoOwner, repoName, prNumber, trimmedFirstLine);
-        return "none";
+        command = "none";
+        break;
     }
   }
-  core.info(`Command: ${command}`);
+  logAndSetOutput(core, "command", command);
   return command;
 }
 

@@ -20,7 +20,7 @@ jobs:
     if: ${{ github.event.issue.pull_request }}
     runs-on: ubuntu-latest
     outputs:
-      command: ${{ steps.check_command.outputs.result }}
+      command: ${{ steps.check_command.outputs.command }}
       prRef: ${{ steps.check_command.outputs.prRef }}
       prHeadSha: ${{ steps.check_command.outputs.prHeadSha }}
       prRefId: ${{ steps.check_command.outputs.prRefId }}
@@ -39,12 +39,9 @@ jobs:
         name: Check for a command using GitHub script
         uses: actions/github-script@v6
         with:
-          result-encoding: string
           script: |
             const script = require('./.github/scripts/build.js')
-            const result = script.getCommandFromComment({core, context, github});
-            console.log(result);
-            return result;
+            await script.getCommandFromComment({core, context, github});
 
       - name: Output PR details
         run: |
@@ -58,7 +55,7 @@ jobs:
 
       # Check if the PR build/test needs to run
       - name: Checkout
-        if: ${{ steps.check_command.outputs.result == 'run-tests' || steps.check_command.outputs.result == 'test-force-approve' || steps.check_command.outputs.result == 'test-destroy-env' }}
+        if: ${{ steps.check_command.outputs.command == 'run-tests' || steps.check_command.outputs.command == 'test-force-approve' || steps.check_command.outputs.command == 'test-destroy-env' }}
         uses: actions/checkout@v2
         with:
           ref: ${{ steps.check_command.outputs.prRef }}
@@ -66,7 +63,7 @@ jobs:
 
       - uses: dorny/paths-filter@v2
         id: filter
-        if: ${{ steps.check_command.outputs.result == 'run-tests' }}
+        if: ${{ steps.check_command.outputs.command == 'run-tests' }}
         with:
           base: main
           ref: ${{ steps.check_command.outputs.prRef }}
@@ -78,7 +75,7 @@ jobs:
       # If we don't run the actual deploy (below) we won't receive a check-run status,
       # and will have to send it "manually"
       - name: Bypass E2E check-runs status
-        if: ${{ (steps.check_command.outputs.result == 'run-tests' && steps.filter.outputs.not-md == 'false' ) || steps.check_command.outputs.result == 'test-force-approve' }}
+        if: ${{ (steps.check_command.outputs.command == 'run-tests' && steps.filter.outputs.not-md == 'false' ) || steps.check_command.outputs.command == 'test-force-approve' }}
         uses: LouisBrunner/checks-action@v1.1.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -89,7 +86,7 @@ jobs:
           conclusion: "success"
 
       - name: Comment with link to run
-        if: ${{ steps.check_command.outputs.result == 'run-tests' || steps.check_command.outputs.result == 'run-tests-extended' }}
+        if: ${{ steps.check_command.outputs.command == 'run-tests' || steps.check_command.outputs.command == 'run-tests-extended' }}
         env:
           PR_NUMBER: ${{ github.event.issue.number }}
           REPO: ${{ github.event.repository.full_name }}

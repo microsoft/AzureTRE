@@ -154,8 +154,8 @@ describe('getCommandFromComment', () => {
         username: 'admin',
         body: 'foo'
       });
-      const command = await getCommandFromComment({ core, context, github });
-      expect(command).toBe('none');
+      await getCommandFromComment({ core, context, github });
+      expect(mockCoreSetOutput).toHaveBeenCalledWith('command', 'none');
     });
 
 
@@ -165,8 +165,8 @@ describe('getCommandFromComment', () => {
           username: 'admin',
           body: '/test'
         });
-        const command = await getCommandFromComment({ core, context, github });
-        expect(command).toBe('run-tests');
+        await getCommandFromComment({ core, context, github });
+        expect(mockCoreSetOutput).toHaveBeenCalledWith('command', 'run-tests');
       });
 
       test(`should return 'run-tests-extended' for '/test-extended'`, async () => {
@@ -183,8 +183,8 @@ describe('getCommandFromComment', () => {
           username: 'admin',
           body: '/test-force-approve'
         });
-        const command = await getCommandFromComment({ core, context, github });
-        expect(command).toBe('test-force-approve');
+        await getCommandFromComment({ core, context, github });
+        expect(mockCoreSetOutput).toHaveBeenCalledWith('command', 'test-force-approve');
       });
 
       test(`should return 'test-destroy-env' for '/test-destroy-env'`, async () => {
@@ -192,8 +192,8 @@ describe('getCommandFromComment', () => {
           username: 'admin',
           body: '/test-destroy-env'
         });
-        const command = await getCommandFromComment({ core, context, github });
-        expect(command).toBe('test-destroy-env');
+        await getCommandFromComment({ core, context, github });
+        expect(mockCoreSetOutput).toHaveBeenCalledWith('command', 'test-destroy-env');
       });
 
       test(`should add help comment and return 'none' for '/help'`, async () => {
@@ -201,7 +201,8 @@ describe('getCommandFromComment', () => {
           username: 'admin',
           body: '/help'
         });
-        const command = await getCommandFromComment({ core, context, github });
+        await getCommandFromComment({ core, context, github });
+        expect(mockCoreSetOutput).toHaveBeenCalledWith('command', 'none');
         expect(mockGithubRestIssuesCreateComment.mock.calls.length).toBe(1);
         const createCommentCall = mockGithubRestIssuesCreateComment.mock.calls[0];
         const createCommentParam = createCommentCall[0];
@@ -209,7 +210,6 @@ describe('getCommandFromComment', () => {
         expect(createCommentParam.repo).toBe("someRepo");
         expect(createCommentParam.issue_number).toBe(123);
         expect(createCommentParam.body).toMatch(/^Hello!\n\nYou can use the following commands:/);
-        expect(command).toBe('none');
       });
 
       test(`should add help comment and return 'none' for '/not-a-command'`, async () => {
@@ -217,7 +217,8 @@ describe('getCommandFromComment', () => {
           username: 'admin',
           body: '/not-a-command'
         });
-        const command = await getCommandFromComment({ core, context, github });
+        await getCommandFromComment({ core, context, github });
+        expect(mockCoreSetOutput).toHaveBeenCalledWith('command', 'none');
         expect(mockGithubRestIssuesCreateComment.mock.calls.length).toBe(1);
         const createCommentCall = mockGithubRestIssuesCreateComment.mock.calls[0];
         const createCommentParam = createCommentCall[0];
@@ -225,7 +226,6 @@ describe('getCommandFromComment', () => {
         expect(createCommentParam.repo).toBe("someRepo");
         expect(createCommentParam.issue_number).toBe(123);
         expect(createCommentParam.body).toMatch(/^`\/not-a-command` is not recognised as a valid command.\n\nYou can use the following commands:/);
-        expect(command).toBe('none');
       });
     });
 
@@ -238,8 +238,8 @@ describe('getCommandFromComment', () => {
 Other comment content
 goes here`
         });
-        const command = await getCommandFromComment({ core, context, github });
-        expect(command).toBe('run-tests');
+        await getCommandFromComment({ core, context, github });
+        expect(mockCoreSetOutput).toHaveBeenCalledWith('command', 'run-tests');
       });
 
       test(`should return 'none' if first line of comment is a command even if later lines contain '/test'`, async () => {
@@ -250,8 +250,8 @@ goes here`
 Other comment content
 goes here`
         });
-        const command = await getCommandFromComment({ core, context, github });
-        expect(command).toBe('none');
+        await getCommandFromComment({ core, context, github });
+        expect(mockCoreSetOutput).toHaveBeenCalledWith('command', 'none');
       });
     });
 
