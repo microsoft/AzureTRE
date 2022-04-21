@@ -2,6 +2,8 @@
 
 Complete the configuration of the shared services (Nexus and Gitea) from inside of the TRE environment.
 
+Make sure you run the following command using git bash and set your current directory as C:/AzureTRE
+
 ## Configure Nexus repository
 
 1. Run the Nexus configuration script to reset the password and setup a PyPI proxy on Nexus:
