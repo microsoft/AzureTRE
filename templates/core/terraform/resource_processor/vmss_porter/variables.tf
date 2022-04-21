@@ -12,7 +12,7 @@ variable "mgmt_storage_account_name" {}
 variable "mgmt_resource_group_name" {}
 variable "terraform_state_container_name" {}
 variable "app_insights_connection_string" {}
-variable "keyvault_id" {}
+variable "key_vault_name" {}
 variable "resource_processor_number_processes_per_instance" {}
 variable "subscription_id" {
   description = "The subscription id to create the resource processor permission/role. If not supplied will use the TF context."

@@ -180,6 +180,12 @@ jobs:
         with:
           persist-credentials: false
 
+      # Perform az login for destroy env script to be able to run
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
       - name: Run deployment cleanup
         env:
           PR_NUMBER: ${{ github.event.issue.number }}
@@ -206,6 +212,12 @@ jobs:
         uses: actions/checkout@v2
         with:
           persist-credentials: false
+
+      # Perform az login for destroy env script to be able to run
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Run deployment cleanup
         env:
@@ -253,6 +265,7 @@ jobs:
       SWAGGER_UI_CLIENT_ID: ${{ secrets.SWAGGER_UI_CLIENT_ID }}
       TEST_APP_ID: ${{ secrets.TEST_APP_ID }}
       TEST_WORKSPACE_APP_ID: ${{ secrets.TEST_WORKSPACE_APP_ID }}
+      TEST_WORKSPACE_APP_SECRET: "${{ secrets.TEST_WORKSPACE_APP_SECRET }}"
       TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
       TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
       TF_STATE_CONTAINER: ${{ secrets.TF_STATE_CONTAINER }}
