@@ -322,15 +322,15 @@ static-web-upload:
 	&& . ./devops/scripts/load_env.sh ./templates/core/private.env \
 	&& ./templates/core/terraform/scripts/upload_static_web.sh
 
-workspace_bundle = echo $(1) && $(MAKE) bundle-build DIR=./templates/workspaces/$(1)/ \
+workspace_bundle = $(MAKE) bundle-build DIR=./templates/workspaces/$(1)/ \
 	&& $(MAKE) bundle-publish DIR=./templates/workspaces/$(1)/ \
 	&& $(MAKE) bundle-register DIR="./templates/workspaces/$(1)" BUNDLE_TYPE=workspace
 
-workspace_service_bundle = echo $(1) && $(MAKE) bundle-build DIR=./templates/workspace_services/$(1)/ \
+workspace_service_bundle = $(MAKE) bundle-build DIR=./templates/workspace_services/$(1)/ \
 	&& $(MAKE) bundle-publish DIR=./templates/workspace_services/$(1)/ \
 	&& $(MAKE) bundle-register DIR="./templates/workspace_services/$(1)" BUNDLE_TYPE=workspace_service
 
-shared_service_bundle = echo $(1) && $(MAKE) bundle-build DIR=./templates/shared_services/$(1)/ \
+shared_service_bundle = $(MAKE) bundle-build DIR=./templates/shared_services/$(1)/ \
 	&& $(MAKE) bundle-publish DIR=./templates/shared_services/$(1)/ \
 	&& $(MAKE) bundle-register DIR="./templates/shared_services/$(1)" BUNDLE_TYPE=shared_service
 
