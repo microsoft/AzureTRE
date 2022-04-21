@@ -99,14 +99,6 @@ jobs:
           echo "Adding comment with link to run on PR ${PR_NUMBER}"
           gh pr comment "${PR_NUMBER}" --repo "$REPO" --body "Running tests: https://github.com/${REPO}/actions/runs/${RUN_ID}"
 
-      # Perform az login for destroy env script to be able to run
-      - name: Azure Login
-        if: ${{ steps.check_command.outputs.result == 'test-destroy-env' }}
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-
   destroy_pr_env:
     needs: [pr_comment]
     if: ${{ needs.pr_comment.outputs.command == 'test-destroy-env' }}
