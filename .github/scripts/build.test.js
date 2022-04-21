@@ -130,6 +130,22 @@ describe('getCommandFromComment', () => {
       const command = await getCommandFromComment({ core, context, github });
       expect(command).toBe('none');
     });
+
+    test(`should add a comment indicating that the user cannot run commands`, async () => {
+      const context = createCommentContext({
+        username: 'non-contributor',
+        body: '/test'
+      });
+      await getCommandFromComment({ core, context, github });
+      expect(mockGithubRestIssuesCreateComment.mock.calls.length).toBe(1);
+      const createCommentCall = mockGithubRestIssuesCreateComment.mock.calls[0];
+      const createCommentParam = createCommentCall[0];
+      expect(createCommentParam.owner).toBe("someOwner");
+      expect(createCommentParam.repo).toBe("someRepo");
+      expect(createCommentParam.issue_number).toBe(123);
+      expect(createCommentParam.body).toBe('Sorry, @non-contributor, only users with write access to the repo can run pr-bot commands.');
+    });
+
   });
 
   describe('with contributor', () => {

@@ -6,16 +6,21 @@ async function getCommandFromComment({ core, context, github }) {
   const repoParts = repoFullName.split("/");
   const repoOwner = repoParts[0];
   const repoName = repoParts[1];
+  const prNumber = context.payload.issue.number;
 
   // only allow actions for users with write access
   if (!await userHasWriteAccessToRepo({ core, github }, commentUsername, repoOwner, repoName)) {
     core.notice("Command: none - user doesn't have write permission]");
+    github.rest.issues.createComment({
+      owner: repoOwner,
+      repo: repoName,
+      issue_number: prNumber,
+      body: `Sorry, @${commentUsername}, only users with write access to the repo can run pr-bot commands.`
+    });
     return "none";
   }
 
   // Determine PR SHA etc
-  const prNumber = context.payload.issue.number;
-
   const ciGitRef = getRefForPr(prNumber);
   logAndSetOutput(core, "ciGitRef", ciGitRef);
 
