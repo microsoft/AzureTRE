@@ -46,17 +46,6 @@ jobs:
             console.log(result);
             return result;
 
-      # Add comment with help text in response to help command
-      - name: Show Help
-        if: ${{ steps.check_command.outputs.result == 'show-help' }}
-        env:
-          PR_NUMBER: ${{ github.event.issue.number }}
-          REPO: ${{ github.event.repository.full_name }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo "Showing help on PR ${PR_NUMBER}"
-          gh pr comment "${PR_NUMBER}" --repo "$REPO" --body "Hello<br/><br/>You can use the following commands:<br/>    /test - build, deploy and run smoke tests on a PR<br/>    /test-extended - build, deploy and run somke & extended tests on a PR<br/>    /test-force-approve - force approval of the PR tests (i.e. skip the deployment checks)<br/>    /test-destroy-env - delete the validation environment for a PR (e.g. to enable testing a deployment from a clean start after previous tests)    /help - show this help"
-
       # Get PR commit details for running tests
       - id: get_pr_details
         name: Get PR details
