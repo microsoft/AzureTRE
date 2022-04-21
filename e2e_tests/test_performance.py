@@ -8,7 +8,7 @@ from resources import strings
 pytestmark = pytest.mark.asyncio
 
 
-@pytest.mark.performance
+# @pytest.mark.performance
 @pytest.mark.timeout(3000)
 async def test_parallel_resource_creations(admin_token, workspace_owner_token, verify) -> None:
     """Creates N workspaces in parallel, and creates a workspace service in each, in parallel"""
@@ -48,7 +48,7 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(admin_toke
     """Optionally creates a workspace and workspace service,
     then creates N number of VMs in parallel, patches each, and deletes them"""
 
-    number_vms = 2
+    number_vms = 5
     number_updates = 5
 
     # To avoid creating + deleting a workspace + service in this test, set the vars for existing ones in ./templates/core/.env
@@ -86,11 +86,11 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(admin_toke
 
     # Create the VMs in parallel, and wait for them to be created
     user_resource_payload = {
-        "templateName": "tre-service-guacamole-windowsvm",
+        "templateName": "tre-service-dev-vm",
         "properties": {
             "display_name": "Perf test VM",
             "description": "",
-            "os_image": "Windows 10"
+            "os_image": "Ubuntu 18.04"
         }
     }
 

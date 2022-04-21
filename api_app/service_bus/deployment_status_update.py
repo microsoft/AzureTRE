@@ -6,6 +6,7 @@ from azure.servicebus.aio import ServiceBusClient
 from pydantic import ValidationError, parse_obj_as
 
 from api.dependencies.database import get_db_client
+from api.routes.resource_helpers import get_timestamp
 from db.repositories.resource_templates import ResourceTemplateRepository
 from service_bus.step_helpers import default_credentials, send_deployment_message, update_resource_for_step
 from db.repositories.operations import OperationRepository
@@ -77,11 +78,14 @@ def update_step_status(step: OperationStep, message: DeploymentStatusUpdateMessa
 
     step.status = message.status
     step.message = message.message
+    step.updatedWhen = get_timestamp()
 
     return step
 
 
 def update_overall_status(operation: Operation, step: OperationStep, is_last_step: bool):
+
+    operation.updatedWhen = get_timestamp()
 
     # if it's a one step operation, just replicate the status
     if len(operation.steps) == 1:

@@ -3,6 +3,7 @@ import pytest
 import uuid
 
 from mock import AsyncMock, patch
+from tests_ma.test_api.test_routes.test_resource_helpers import FAKE_CREATE_TIMESTAMP, FAKE_UPDATE_TIMESTAMP
 from models.domain.request_action import RequestAction
 from models.domain.resource import ResourceType
 
@@ -71,6 +72,8 @@ def create_sample_operation(resource_id, request_action):
         resourceVersion=0,
         action=request_action,
         message="test",
+        createdWhen=FAKE_CREATE_TIMESTAMP,
+        updatedWhen=FAKE_UPDATE_TIMESTAMP,
         steps=[
             OperationStep(
                 stepId="main",
@@ -78,7 +81,8 @@ def create_sample_operation(resource_id, request_action):
                 stepTitle=f"main step for {resource_id}",
                 resourceTemplateName="workspace-base",
                 resourceType=ResourceType.Workspace,
-                resourceAction=request_action
+                resourceAction=request_action,
+                updatedWhen=FAKE_UPDATE_TIMESTAMP
             )
         ]
     )
@@ -193,12 +197,13 @@ async def test_state_transitions_from_deployed_to_deploying_does_not_transition(
     repo().update_item_dict.assert_called_once_with(expected_workspace)
 
 
+@patch("service_bus.deployment_status_update.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
 @patch('service_bus.deployment_status_update.OperationRepository')
 @patch('service_bus.deployment_status_update.ResourceRepository')
 @patch('logging.error')
 @patch('service_bus.deployment_status_update.ServiceBusClient')
 @patch('fastapi.FastAPI')
-async def test_state_transitions_from_deployed_to_deleted(app, sb_client, logging_mock, repo, operations_repo_mock):
+async def test_state_transitions_from_deployed_to_deleted(app, sb_client, logging_mock, repo, operations_repo_mock, _):
     updated_message = test_sb_message
     updated_message["status"] = Status.Deleted
     updated_message["message"] = "Has been deleted"

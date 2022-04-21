@@ -13,6 +13,7 @@ from models.schemas.resource import ResourcePatch
 from db.repositories.resources import ResourceRepository
 from core import config
 import logging
+from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 
 
 @asynccontextmanager
@@ -51,13 +52,7 @@ async def send_deployment_message(content, correlation_id, session_id, action):
 
 
 def update_resource_for_step(operation_step: OperationStep, resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, primary_resource_id: str, resource_to_update_id: str, primary_action: str, user: User) -> Resource:
-    # - get the resource to send from cosmos
-    # - update the props
-    # - save the resource
-    # - send the action to SB
-
     # create properties dict - for now we create a basic, string only dict to use as a patch
-
     # get primary resource to use in substitutions
     primary_resource = resource_repo.get_resource_by_id(primary_resource_id)
 
@@ -88,31 +83,69 @@ def update_resource_for_step(operation_step: OperationStep, resource_repo: Resou
         properties[prop.name] = prop.value
 
     if template_step.resourceAction == "upgrade":
-        # get the resource to upgrade - currently just the top 1 by template name. more complexity around querying tbd.
-        resource_to_update = resource_repo.get_resource_by_id(resource_to_update_id)
-
-        # get the template for the resource to upgrade
-        parent_service_name = ""
-        if resource_to_update.resourceType == ResourceType.UserResource:
-            parent_service_name = resource_to_update["parentWorkspaceServiceId"]
-
-        resource_template_to_send = resource_template_repo.get_current_template(resource_to_update.templateName, resource_to_update.resourceType, parent_service_name)
-
-        # create the patch
-        patch = ResourcePatch(
-            properties=properties
-        )
-
-        # validate and submit the patch
-        resource_to_send, _ = resource_repo.patch_resource(
-            resource=resource_to_update,
-            resource_patch=patch,
-            resource_template=resource_template_to_send,
-            etag=resource_to_update.etag,
+        resource_to_send = try_upgrade_with_retries(
+            num_retries=3,
+            attempt_count=0,
+            resource_repo=resource_repo,
             resource_template_repo=resource_template_repo,
-            user=user)
+            properties=properties,
+            user=user,
+            resource_to_update_id=resource_to_update_id
+        )
 
         return resource_to_send
 
     else:
         raise Exception("Only upgrade is currently supported for pipeline steps")
+
+
+def try_upgrade_with_retries(num_retries: int, attempt_count: int, resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, properties: dict, user: User, resource_to_update_id: str) -> Resource:
+    try:
+        try_upgrade(
+            resource_repo=resource_repo,
+            resource_template_repo=resource_template_repo,
+            properties=properties,
+            user=user,
+            resource_to_update_id=resource_to_update_id
+        )
+    except CosmosAccessConditionFailedError as e:
+        logging.warn(f"Etag mismatch for {resource_to_update_id}. Retrying.")
+        if attempt_count < num_retries:
+            try_upgrade_with_retries(
+                num_retries=num_retries,
+                attempt_count=(attempt_count + 1),
+                resource_repo=resource_repo,
+                resource_template_repo=resource_template_repo,
+                properties=properties,
+                user=user,
+                resource_to_update_id=resource_to_update_id
+            )
+        else:
+            raise e
+
+
+def try_upgrade(resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, properties: dict, user: User, resource_to_update_id: str) -> Resource:
+    resource_to_update = resource_repo.get_resource_by_id(resource_to_update_id)
+
+    # get the template for the resource to upgrade
+    parent_service_name = ""
+    if resource_to_update.resourceType == ResourceType.UserResource:
+        parent_service_name = resource_to_update["parentWorkspaceServiceId"]
+
+    resource_template_to_send = resource_template_repo.get_current_template(resource_to_update.templateName, resource_to_update.resourceType, parent_service_name)
+
+    # create the patch
+    patch = ResourcePatch(
+        properties=properties
+    )
+
+    # validate and submit the patch
+    resource_to_send, _ = resource_repo.patch_resource(
+        resource=resource_to_update,
+        resource_patch=patch,
+        resource_template=resource_template_to_send,
+        etag=resource_to_update.etag,
+        resource_template_repo=resource_template_repo,
+        user=user)
+
+    return resource_to_send
