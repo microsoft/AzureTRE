@@ -8,32 +8,35 @@ async function getCommandFromComment({ core, context, github }) {
   const repoName = repoParts[1];
 
   // only allow actions for users with write access
-  if (!await userHasWriteAccessToRepo({ github }, commentUsername, repoOwner, repoName)) {
-    console.log("Command: none [user doesn't have write permission]");
+  if (!await userHasWriteAccessToRepo({ core, github }, commentUsername, repoOwner, repoName)) {
+    core.notice("Command: none - user doesn't have write permission]");
     return "none";
   }
 
   // Determine PR SHA etc
   const prNumber = context.payload.issue.number;
-  const pr = (await github.rest.pulls.get({ owner: repoOwner, repo: repoName, pull_number: prNumber })).data;
-  console.log("==========================================================================================");
-  console.log(pr);
-  console.log("==========================================================================================");
+
+  const ciGitRef = getRefForPr(prNumber);
+  logAndSetOutput(core, "ciGitRef", ciGitRef);
 
   const prRefId = getRefIdForPr(prNumber);
-  console.log(`prRefId: ${prRefId}`);
-  core.setOutput("prRefId", prRefId);
+  logAndSetOutput(core, "prRefId", prRefId);
 
-  console.log(`Using head ref: ${pr.head.ref}`)
-  const branchRefId = getRefIdForBranch(pr.head.ref);
-  console.log(`branchRefId: ${branchRefId}`);
+  const pr = (await github.rest.pulls.get({ owner: repoOwner, repo: repoName, pull_number: prNumber })).data;
+
+  if (repoFullName === pr.head.repo.full_name){
+    core.info(`Using head ref: ${pr.head.ref}`)
+    const branchRefId = getRefIdForBranch(pr.head.ref);
+    logAndSetOutput(core, "branchRefId", branchRefId);
+  } else {
+    core.info("Skipping branchRefId as PR is from a fork")
+  }
 
   const potentialMergeCommit = pr.merge_commit_sha;
-  console.log(`potentialMergeCommit: ${potentialMergeCommit}`);
-  core.setOutput("potentialMergeCommit", potentialMergeCommit);
+  logAndSetOutput(core, "prRef", potentialMergeCommit);
 
-  const prHeadSha = pr.head.sha;;
-  console.log(`prHeadSha: ${prHeadSha}`);
+  const prHeadSha = pr.head.sha;
+  logAndSetOutput(core, "prHeadSha", prHeadSha);
 
 
   //
@@ -63,12 +66,12 @@ async function getCommandFromComment({ core, context, github }) {
         command = "none"; // command has been handled, so don't need to return a value for future steps
         break;
       default:
-        console.log(`'${trimmedFirstLine}' not recognised as a valid command`);
+        core.warning(`'${trimmedFirstLine}' not recognised as a valid command`);
         await showHelp(github, repoOwner, repoName, prNumber, trimmedFirstLine);
         return "none";
     }
   }
-  console.log(`Command: ${command}`);
+  core.info(`Command: ${command}`);
   return command;
 }
 
@@ -77,8 +80,8 @@ async function labelAsExternalIfAuthorDoesNotHaveWriteAccess({ core, context, gi
   const owner = context.repo.owner;
   const repo = context.repo.repo;
 
-  if (!await userHasWriteAccessToRepo({ github }, username, owner, repo)) {
-    console.log("Adding external label to PR " + context.payload.pull_request.number)
+  if (!await userHasWriteAccessToRepo({ core, github }, username, owner, repo)) {
+    core.info("Adding external label to PR " + context.payload.pull_request.number)
     github.rest.issues.addLabels({
       owner,
       repo,
@@ -88,7 +91,7 @@ async function labelAsExternalIfAuthorDoesNotHaveWriteAccess({ core, context, gi
   }
 }
 
-async function userHasWriteAccessToRepo({ github }, username, repoOwner, repoName) {
+async function userHasWriteAccessToRepo({ core, github }, username, repoOwner, repoName) {
   // Previously, we attempted to use github.event.comment.author_association to check for OWNER or COLLABORATOR
   // Unfortunately, that always shows MEMBER if you are in the microsoft org and have that set to publicly visible
   // (Can check via https://github.com/orgs/microsoft/people?query=<username>)
@@ -96,7 +99,7 @@ async function userHasWriteAccessToRepo({ github }, username, repoOwner, repoNam
   // https://docs.github.com/en/rest/reference/collaborators#check-if-a-user-is-a-repository-collaborator
   let userHasWriteAccess = false;
   try {
-    console.log(`Checking if user "${username}" has write access to ${repoOwner}/${repoName} ...`)
+    core.info(`Checking if user "${username}" has write access to ${repoOwner}/${repoName} ...`)
     const result = await github.request('GET /repos/{owner}/{repo}/collaborators/{username}', {
       owner: repoOwner,
       repo: repoName,
@@ -105,12 +108,12 @@ async function userHasWriteAccessToRepo({ github }, username, repoOwner, repoNam
     userHasWriteAccess = result.status === 204;
   } catch (err) {
     if (err.status === 404) {
-      console.log("User not found in collaborators");
+      core.info("User not found in collaborators");
     } else {
-      console.log(`Error checking if user has write access: ${err.status} (${err.response.data.message}) `)
+      core.error(`Error checking if user has write access: ${err.status} (${err.response.data.message}) `)
     }
   }
-  console.log("User has write access: " + userHasWriteAccess);
+  core.info("User has write access: " + userHasWriteAccess);
   return userHasWriteAccess
 }
 
@@ -135,9 +138,18 @@ You can use the following commands:
 
 }
 
+function logAndSetOutput(core, name, value) {
+  core.info(`Setting output '${name}: ${value}`);
+  core.setOutput(name, value);
+}
+
+function getRefForPr(prNumber) {
+  return `refs/pull/${prNumber}/merge`;
+}
 function getRefIdForPr(prNumber) {
+  const prRef = getRefForPr(prNumber);
   // Trailing newline is for compatibility with previous bash SHA calculation
-  return createShortHash(`refs/pull/${prNumber}/merge\n`);
+  return createShortHash(`${prRef}\n`);
 }
 function getRefIdForBranch(branchName) {
   // Trailing newline is for compatibility with previous bash SHA calculation
