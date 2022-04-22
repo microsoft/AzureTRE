@@ -48,8 +48,7 @@ jobs:
       - name: Lint code base
         # the slim image is 2GB smaller and we don't use the extra stuff
         # Moved this after the Terraform checks above due something similar to this issue: https://github.com/github/super-linter/issues/2433
-        # Using SHA dca6e104e781e429b27da8393defc90f8eafe124 below, but revert to slim@v4 (or another release) once there is a release with this: https://github.com/github/super-linter/pull/2759 (Need actionlint>=1.6.11 for https://github.com/rhysd/actionlint/issues/104)
-        uses: github/super-linter/slim@dca6e104e781e429b27da8393defc90f8eafe124
+        uses: github/super-linter/slim@v4
         env:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: main
