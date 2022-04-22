@@ -85,17 +85,6 @@ jobs:
           status: "completed"
           conclusion: "success"
 
-      - name: Comment with link to run
-        if: ${{ steps.check_command.outputs.command == 'run-tests' || steps.check_command.outputs.command == 'run-tests-extended' }}
-        env:
-          PR_NUMBER: ${{ github.event.issue.number }}
-          REPO: ${{ github.event.repository.full_name }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RUN_ID: ${{ github.run_id }}
-        run: |
-          echo "Adding comment with link to run on PR ${PR_NUMBER}"
-          gh pr comment "${PR_NUMBER}" --repo "$REPO" --body "Running tests: https://github.com/${REPO}/actions/runs/${RUN_ID}"
-
   destroy_pr_env:
     needs: [pr_comment]
     if: ${{ needs.pr_comment.outputs.command == 'test-destroy-env' }}

@@ -7,6 +7,8 @@ async function getCommandFromComment({ core, context, github }) {
   const repoOwner = repoParts[0];
   const repoName = repoParts[1];
   const prNumber = context.payload.issue.number;
+  const commentLink = context.payload.comment.html_url;
+  const runId = context.runId;
 
   // only allow actions for users with write access
   if (!await userHasWriteAccessToRepo({ core, github }, commentUsername, repoOwner, repoName)) {
@@ -29,7 +31,7 @@ async function getCommandFromComment({ core, context, github }) {
 
   const pr = (await github.rest.pulls.get({ owner: repoOwner, repo: repoName, pull_number: prNumber })).data;
 
-  if (repoFullName === pr.head.repo.full_name){
+  if (repoFullName === pr.head.repo.full_name) {
     core.info(`Using head ref: ${pr.head.ref}`)
     const branchRefId = getRefIdForBranch(pr.head.ref);
     logAndSetOutput(core, "branchRefId", branchRefId);
@@ -55,24 +57,37 @@ async function getCommandFromComment({ core, context, github }) {
   if (trimmedFirstLine[0] === "/") {
     switch (trimmedFirstLine) {
       case "/test":
-        command = "run-tests";
-        break;
+        {
+          command = "run-tests";
+          const message = `:runner: Running tests: https://github.com/${repoFullName}/actions/runs/${runId}`;
+          await addActionComment({ github }, repoOwner, repoName, prNumber, commentUsername, commentLink, message);
+          break;
+        }
+
       case "/test-extended":
-        command = "run-tests-extended";
-        break;
+        {
+          command = "run-tests-extended";
+          const message = `:runner: Running extended tests: https://github.com/${repoFullName}/actions/runs/${runId}`;
+          await addActionComment({ github }, repoOwner, repoName, prNumber, commentUsername, commentLink, message);
+          break;
+        }
+
       case "/test-force-approve":
         command = "test-force-approve";
         break;
+
       case "/test-destroy-env":
         command = "test-destroy-env";
         break;
+
       case "/help":
-        showHelp(github, repoOwner, repoName, prNumber, null);
+        showHelp({ github }, repoOwner, repoName, prNumber, null);
         command = "none"; // command has been handled, so don't need to return a value for future steps
         break;
+
       default:
         core.warning(`'${trimmedFirstLine}' not recognised as a valid command`);
-        await showHelp(github, repoOwner, repoName, prNumber, trimmedFirstLine);
+        await showHelp({ github }, repoOwner, repoName, prNumber, trimmedFirstLine);
         command = "none";
         break;
     }
@@ -123,7 +138,7 @@ async function userHasWriteAccessToRepo({ core, github }, username, repoOwner, r
   return userHasWriteAccess
 }
 
-async function showHelp(github, repoOwner, repoName, prNumber, invalidCommand) {
+async function showHelp({ github }, repoOwner, repoName, prNumber, invalidCommand) {
   const leadingContent = invalidCommand ? `\`${invalidCommand}\` is not recognised as a valid command.` : "Hello!";
 
   const body = `${leadingContent}
@@ -134,6 +149,23 @@ You can use the following commands:
 &nbsp;&nbsp;&nbsp;&nbsp;/test-force-approve - force approval of the PR tests (i.e. skip the deployment checks)
 &nbsp;&nbsp;&nbsp;&nbsp;/test-destroy-env - delete the validation environment for a PR (e.g. to enable testing a deployment from a clean start after previous tests)
 &nbsp;&nbsp;&nbsp;&nbsp;/help - show this help`;
+
+  await github.rest.issues.createComment({
+    owner: repoOwner,
+    repo: repoName,
+    issue_number: prNumber,
+    body: body
+  });
+
+}
+async function addActionComment({ github }, repoOwner, repoName, prNumber, commentUser, commentLink, message) {
+
+  const body = `:robot: pr-bot
+
+${message}
+
+(in response to [this comment](${commentLink}) from @${commentUser})
+`;
 
   await github.rest.issues.createComment({
     owner: repoOwner,

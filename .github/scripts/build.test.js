@@ -110,6 +110,7 @@ describe('getCommandFromComment', () => {
             login: username,
           },
           body,
+          html_url: "https://wibble/comment-link"
         },
         issue: {
           number: pullRequestNumber,
@@ -118,6 +119,7 @@ describe('getCommandFromComment', () => {
           full_name: 'someOwner/someRepo'
         },
       },
+      runId: 11112222,
     };
   }
 
@@ -149,7 +151,7 @@ describe('getCommandFromComment', () => {
   });
 
   describe('with contributor', () => {
-    test(`should return 'none' if doesn't start with '/'`, async () => {
+    test(`should set command to 'none' if doesn't start with '/'`, async () => {
       const context = createCommentContext({
         username: 'admin',
         body: 'foo'
@@ -160,7 +162,7 @@ describe('getCommandFromComment', () => {
 
 
     describe('and single line comments', () => {
-      test(`should return 'run-tests' for '/test'`, async () => {
+      test(`should set command to 'run-tests' for '/test'`, async () => {
         const context = createCommentContext({
           username: 'admin',
           body: '/test'
@@ -169,7 +171,22 @@ describe('getCommandFromComment', () => {
         expect(mockCoreSetOutput).toHaveBeenCalledWith('command', 'run-tests');
       });
 
-      test(`should return 'run-tests-extended' for '/test-extended'`, async () => {
+      test(`should add comment with run link for '/test'`, async () => {
+        const context = createCommentContext({
+          username: 'admin',
+          body: '/test'
+        });
+        await getCommandFromComment({ core, context, github });
+        expect(mockGithubRestIssuesCreateComment.mock.calls.length).toBe(1);
+        const createCommentCall = mockGithubRestIssuesCreateComment.mock.calls[0];
+        const createCommentParam = createCommentCall[0];
+        expect(createCommentParam.owner).toBe("someOwner");
+        expect(createCommentParam.repo).toBe("someRepo");
+        expect(createCommentParam.issue_number).toBe(123);
+        expect(createCommentParam.body).toMatch(/Running tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222/);
+      });
+
+      test(`should set command to 'run-tests-extended' for '/test-extended'`, async () => {
         const context = createCommentContext({
           username: 'admin',
           body: '/test-extended'
@@ -178,7 +195,22 @@ describe('getCommandFromComment', () => {
         expect(command).toBe('run-tests-extended');
       });
 
-      test(`should return 'test-force-approve' for '/test-force-approve'`, async () => {
+      test(`should add comment with run link for '/test-extended'`, async () => {
+        const context = createCommentContext({
+          username: 'admin',
+          body: '/test-extended'
+        });
+        await getCommandFromComment({ core, context, github });
+        expect(mockGithubRestIssuesCreateComment.mock.calls.length).toBe(1);
+        const createCommentCall = mockGithubRestIssuesCreateComment.mock.calls[0];
+        const createCommentParam = createCommentCall[0];
+        expect(createCommentParam.owner).toBe("someOwner");
+        expect(createCommentParam.repo).toBe("someRepo");
+        expect(createCommentParam.issue_number).toBe(123);
+        expect(createCommentParam.body).toMatch(/Running extended tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222/);
+      });
+
+      test(`should set command to 'test-force-approve' for '/test-force-approve'`, async () => {
         const context = createCommentContext({
           username: 'admin',
           body: '/test-force-approve'
@@ -187,7 +219,7 @@ describe('getCommandFromComment', () => {
         expect(mockCoreSetOutput).toHaveBeenCalledWith('command', 'test-force-approve');
       });
 
-      test(`should return 'test-destroy-env' for '/test-destroy-env'`, async () => {
+      test(`should set command to 'test-destroy-env' for '/test-destroy-env'`, async () => {
         const context = createCommentContext({
           username: 'admin',
           body: '/test-destroy-env'
@@ -196,7 +228,7 @@ describe('getCommandFromComment', () => {
         expect(mockCoreSetOutput).toHaveBeenCalledWith('command', 'test-destroy-env');
       });
 
-      test(`should add help comment and return 'none' for '/help'`, async () => {
+      test(`should add help comment and set command to 'none' for '/help'`, async () => {
         const context = createCommentContext({
           username: 'admin',
           body: '/help'
@@ -212,7 +244,7 @@ describe('getCommandFromComment', () => {
         expect(createCommentParam.body).toMatch(/^Hello!\n\nYou can use the following commands:/);
       });
 
-      test(`should add help comment and return 'none' for '/not-a-command'`, async () => {
+      test(`should add help comment and set command to 'none' for '/not-a-command'`, async () => {
         const context = createCommentContext({
           username: 'admin',
           body: '/not-a-command'
@@ -231,7 +263,7 @@ describe('getCommandFromComment', () => {
 
 
     describe('and multi-line comments', () => {
-      test(`should return 'run-tests' if first line of comment is '/test'`, async () => {
+      test(`should set command to 'run-tests' if first line of comment is '/test'`, async () => {
         const context = createCommentContext({
           username: 'admin',
           body: `/test
@@ -242,7 +274,7 @@ goes here`
         expect(mockCoreSetOutput).toHaveBeenCalledWith('command', 'run-tests');
       });
 
-      test(`should return 'none' if first line of comment is a command even if later lines contain '/test'`, async () => {
+      test(`should set command to 'none' if first line of comment is a command even if later lines contain '/test'`, async () => {
         const context = createCommentContext({
           username: 'admin',
           body: `Non-command comment
