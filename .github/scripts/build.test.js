@@ -318,7 +318,7 @@ describe('getCommandFromComment', () => {
         expect(createCommentParam.owner).toBe("someOwner");
         expect(createCommentParam.repo).toBe("someRepo");
         expect(createCommentParam.issue_number).toBe(PR_NUMBER_UPSTREAM_NON_DOCS_CHANGES);
-        expect(createCommentParam.body).toMatch(/Marking tests as complete/);
+        expect(createCommentParam.body).toMatch(/Marking tests as complete \(for commit 0123456789\)/);
       });
 
       test(`for '/test-destroy-env' should set command to 'test-destroy-env'`, async () => {

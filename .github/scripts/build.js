@@ -83,7 +83,7 @@ async function getCommandFromComment({ core, context, github }) {
       case "/test-force-approve":
         {
           command = "test-force-approve";
-            const message = `:white_check_mark: Marking tests as complete`;
+            const message = `:white_check_mark: Marking tests as complete (for commit ${prHeadSha})`;
           await addActionComment({ github }, repoOwner, repoName, prNumber, commentUsername, commentLink, message);
           break;
         }
