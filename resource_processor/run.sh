@@ -16,7 +16,7 @@ fi
 # Documentation here: - https://github.com/vdice/porter-bundles/tree/master/azure-keyvault
 cat > /root/.porter/config.toml << EOF
 default-storage = "azurestorage"
-default-secrets = "workspace_creation"
+default-secrets = "aad_auth"
 no-logs = true
 
 [[storage]]
@@ -28,7 +28,7 @@ account="${MGMT_STORAGE_ACCOUNT_NAME}"
 resource-group="${MGMT_RESOURCE_GROUP_NAME}"
 
 [[secrets]]
-name = "workspace_creation"
+name = "aad_auth"
 plugin = "azure.keyvault"
 
 [secrets.config]
