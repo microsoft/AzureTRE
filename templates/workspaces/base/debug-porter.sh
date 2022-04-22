@@ -6,9 +6,7 @@ set -e
 
 # shellcheck disable=SC1091
 . .env
-# shellcheck disable=SC1091
 . ../../../devops/scripts/load_env.sh ../../../devops/.env
-# shellcheck disable=SC1091
 . ../../../devops/scripts/load_env.sh ../../../templates/core/.env
 
 porter install -p ./parameters.json \
