@@ -536,49 +536,7 @@ jobs:
       - name: Register/deploy firewall
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: "make shared-service-register-and-deploy DIR=./templates/shared_services/firewall/ BUNDLE_TYPE=shared_service"
-          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
-          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
-          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
-          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
-          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
-          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
-          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          ACR_NAME: ${{ secrets.ACR_NAME }}
-          API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
-          AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
-          TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
-          TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
-          TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
-          TRE_ID: "${{ secrets.TRE_ID }}"
-          LOCATION: "${{ secrets.LOCATION }}"
-
-      - name: Register/deploy nexus
-        uses: ./.github/actions/devcontainer_run_command
-        with:
-          COMMAND: "make shared-service-register-and-deploy DIR=./templates/shared_services/sonatype-nexus/ BUNDLE_TYPE=shared_service"
-          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
-          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
-          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
-          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
-          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
-          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
-          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          ACR_NAME: ${{ secrets.ACR_NAME }}
-          API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
-          AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
-          TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
-          TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
-          TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
-          TRE_ID: "${{ secrets.TRE_ID }}"
-          LOCATION: "${{ secrets.LOCATION }}"
-
-      - name: Register/deploy gitea
-        uses: ./.github/actions/devcontainer_run_command
-        with:
-          COMMAND: "make shared-service-register-and-deploy DIR=./templates/shared_services/gitea/ BUNDLE_TYPE=shared_service"
+          COMMAND: "make deploy-shared-service DIR=./templates/shared_services/firewall/ BUNDLE_TYPE=shared_service"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
