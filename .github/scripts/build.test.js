@@ -1,8 +1,13 @@
 const { getCommandFromComment, labelAsExternalIfAuthorDoesNotHaveWriteAccess } = require('./build.js')
 
+const PR_NUMBER_UPSTREAM_NON_DOCS_CHANGES = 123;
+const PR_NUMBER_UPSTREAM_DOCS_ONLY_CHANGES = 125;
+const PR_NUMBER_FORK_NON_DOCS_CHANGES = 456;
+
 function createGitHubContext() {
   mockGithubRestIssuesAddLabels = jest.fn();
   mockGithubRestIssuesCreateComment = jest.fn();
+  mockGithubRestPullsListFiles = jest.fn();
   mockCoreSetOutput = jest.fn();
   mockCoreNotice = jest.fn();
   mockCoreInfo = jest.fn();
@@ -24,6 +29,11 @@ function createGitHubContext() {
       error: mockCoreError,
     },
     github: {
+      paginate: (func, params) => {
+        // thin fake for paginate -> faked function being paginated should return a single page of data!
+        // if you're getting a `func is not a function` error then check that a func is being passed in
+        return func(params);
+      },
       request: async (route, data) => {
         if (route === 'GET /repos/{owner}/{repo}/collaborators/{username}') {
           if (data.username === "admin") {
@@ -47,28 +57,35 @@ function createGitHubContext() {
             if (params.owner === 'someOwner'
               && params.repo === 'someRepo') {
               switch (params.pull_number) {
-                case 123: // PR from the upstream repo
+                case PR_NUMBER_UPSTREAM_NON_DOCS_CHANGES: // PR from the upstream repo with non-docs changes
                   return {
                     data: {
                       head: {
                         ref: 'pr-head-ref',
                         sha: '0123456789',
-                        repo: {
-                          full_name: 'someOwner/someRepo'
-                        }
+                        repo: { full_name: 'someOwner/someRepo' },
                       },
                       merge_commit_sha: '123456789a',
                     },
                   }
-                case 456: // PR from a forked repo
+                case PR_NUMBER_UPSTREAM_DOCS_ONLY_CHANGES: // PR from the upstream repo with docs-only changes
+                  return {
+                    data: {
+                      head: {
+                        ref: 'pr-head-ref',
+                        sha: '0123456789',
+                        repo: { full_name: 'someOwner/someRepo' },
+                      },
+                      merge_commit_sha: '123456789a',
+                    },
+                  }
+                case PR_NUMBER_FORK_NON_DOCS_CHANGES: // PR from a forked repo
                   return {
                     data: {
                       head: {
                         ref: 'pr-head-ref',
                         sha: '23456789ab',
-                        repo: {
-                          full_name: 'anotherOwner/someRepo'
-                        }
+                        repo: { full_name: 'anotherOwner/someRepo' },
                       },
                       merge_commit_sha: '3456789abc',
                     },
@@ -77,6 +94,19 @@ function createGitHubContext() {
             }
             throw 'Unhandled params in fake pulls.get: ' + JSON.stringify(params)
           },
+          listFiles: async (params) => {
+            if (params.owner === 'someOwner'
+              && params.repo === 'someRepo') {
+              switch (params.pull_number) {
+                case PR_NUMBER_UPSTREAM_NON_DOCS_CHANGES: // PR from the upstream repo with non-docs changes
+                case PR_NUMBER_FORK_NON_DOCS_CHANGES: // PR from a forked repo
+                  return [{ filename: 'test.py' }, { filename: 'test.md' }];
+                case PR_NUMBER_UPSTREAM_DOCS_ONLY_CHANGES: // PR from the upstream repo with docs-only changes
+                  return [{ filename: 'mkdocs.yml' }, { filename: 'test.md' }, { filename: 'docs/README.md' }];
+              }
+            }
+            throw 'Unhandled params in fake pulls.listFiles: ' + JSON.stringify(params)
+          }
         },
       },
     }
@@ -98,7 +128,7 @@ describe('getCommandFromComment', () => {
       username = 'admin'; // most tests will assume admin (i.e. user can run commands)
     }
     if (!pullRequestNumber) {
-      pullRequestNumber = 123;
+      pullRequestNumber = PR_NUMBER_UPSTREAM_NON_DOCS_CHANGES;
     }
     if (!body) {
       body = "nothing to see here";
@@ -124,10 +154,10 @@ describe('getCommandFromComment', () => {
   }
 
   describe('with non-contributor', () => {
-    test(`should return 'none' for '/test'`, async () => {
+    test(`for '/test' should return 'none'`, async () => {
       const context = createCommentContext({
         username: 'non-contributor',
-        body: '/test'
+        body: '/test',
       });
       const command = await getCommandFromComment({ core, context, github });
       expect(command).toBe('none');
@@ -136,7 +166,8 @@ describe('getCommandFromComment', () => {
     test(`should add a comment indicating that the user cannot run commands`, async () => {
       const context = createCommentContext({
         username: 'non-contributor',
-        body: '/test'
+        body: '/test',
+        pullRequestNumber: PR_NUMBER_UPSTREAM_NON_DOCS_CHANGES,
       });
       await getCommandFromComment({ core, context, github });
       expect(mockGithubRestIssuesCreateComment.mock.calls.length).toBe(1);
@@ -144,17 +175,17 @@ describe('getCommandFromComment', () => {
       const createCommentParam = createCommentCall[0];
       expect(createCommentParam.owner).toBe("someOwner");
       expect(createCommentParam.repo).toBe("someRepo");
-      expect(createCommentParam.issue_number).toBe(123);
+      expect(createCommentParam.issue_number).toBe(PR_NUMBER_UPSTREAM_NON_DOCS_CHANGES);
       expect(createCommentParam.body).toBe('Sorry, @non-contributor, only users with write access to the repo can run pr-bot commands.');
     });
 
   });
 
   describe('with contributor', () => {
-    test(`should set command to 'none' if doesn't start with '/'`, async () => {
+    test(`if doesn't start with '/' should set command to 'none'`, async () => {
       const context = createCommentContext({
         username: 'admin',
-        body: 'foo'
+        body: 'foo',
       });
       await getCommandFromComment({ core, context, github });
       expect(mockCoreSetOutput).toHaveBeenCalledWith('command', 'none');
@@ -162,43 +193,99 @@ describe('getCommandFromComment', () => {
 
 
     describe('and single line comments', () => {
-      test(`should set command to 'run-tests' for '/test'`, async () => {
-        const context = createCommentContext({
-          username: 'admin',
-          body: '/test'
-        });
-        await getCommandFromComment({ core, context, github });
-        expect(mockCoreSetOutput).toHaveBeenCalledWith('command', 'run-tests');
-      });
 
-      test(`should add comment with run link for '/test'`, async () => {
-        const context = createCommentContext({
-          username: 'admin',
-          body: '/test'
+      describe(`for '/test' for PR with non-docs changes`, () => {
+        test(`should set command to 'run-tests'`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test',
+            pullRequestNumber: PR_NUMBER_UPSTREAM_NON_DOCS_CHANGES,
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(mockCoreSetOutput).toHaveBeenCalledWith('command', 'run-tests');
         });
-        await getCommandFromComment({ core, context, github });
-        expect(mockGithubRestIssuesCreateComment.mock.calls.length).toBe(1);
-        const createCommentCall = mockGithubRestIssuesCreateComment.mock.calls[0];
-        const createCommentParam = createCommentCall[0];
-        expect(createCommentParam.owner).toBe("someOwner");
-        expect(createCommentParam.repo).toBe("someRepo");
-        expect(createCommentParam.issue_number).toBe(123);
-        expect(createCommentParam.body).toMatch(/Running tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222/);
-      });
 
-      test(`should set command to 'run-tests-extended' for '/test-extended'`, async () => {
+        test(`should set nonDocsChanges to 'true'`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test',
+            pullRequestNumber: PR_NUMBER_UPSTREAM_NON_DOCS_CHANGES,
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(mockCoreSetOutput).toHaveBeenCalledWith('nonDocsChanges', 'true');
+        });
+
+        test(`should add comment with run link`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test',
+            pullRequestNumber: PR_NUMBER_UPSTREAM_NON_DOCS_CHANGES,
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(mockGithubRestIssuesCreateComment.mock.calls.length).toBe(1);
+          const createCommentCall = mockGithubRestIssuesCreateComment.mock.calls[0];
+          const createCommentParam = createCommentCall[0];
+          expect(createCommentParam.owner).toBe("someOwner");
+          expect(createCommentParam.repo).toBe("someRepo");
+          expect(createCommentParam.issue_number).toBe(PR_NUMBER_UPSTREAM_NON_DOCS_CHANGES);
+          expect(createCommentParam.body).toMatch(/Running tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222/);
+        });
+      })
+
+      describe(`for '/test' for PR with docs-only changes`, () => {
+        test(`should set command to 'test-force-approve'`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test',
+            pullRequestNumber: PR_NUMBER_UPSTREAM_DOCS_ONLY_CHANGES,
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(mockCoreSetOutput).toHaveBeenCalledWith('command', 'test-force-approve');
+        });
+
+        test(`should set nonDocsChanges to 'false'`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test',
+            pullRequestNumber: PR_NUMBER_UPSTREAM_DOCS_ONLY_CHANGES,
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(mockCoreSetOutput).toHaveBeenCalledWith('nonDocsChanges', 'false');
+        });
+
+        test(`should add comment with for skipping checks`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test',
+            pullRequestNumber: PR_NUMBER_UPSTREAM_DOCS_ONLY_CHANGES,
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(mockGithubRestIssuesCreateComment.mock.calls.length).toBe(1);
+          const createCommentCall = mockGithubRestIssuesCreateComment.mock.calls[0];
+          const createCommentParam = createCommentCall[0];
+          expect(createCommentParam.owner).toBe("someOwner");
+          expect(createCommentParam.repo).toBe("someRepo");
+          expect(createCommentParam.issue_number).toBe(PR_NUMBER_UPSTREAM_DOCS_ONLY_CHANGES);
+          expect(createCommentParam.body).toMatch(/PR only contains docs changes - marking tests as complete/);
+        });
+
+      })
+
+
+      test(`for '/test-extended' should set command to 'run-tests-extended'`, async () => {
         const context = createCommentContext({
           username: 'admin',
-          body: '/test-extended'
+          body: '/test-extended',
         });
         const command = await getCommandFromComment({ core, context, github });
         expect(command).toBe('run-tests-extended');
       });
 
-      test(`should add comment with run link for '/test-extended'`, async () => {
+      test(`for '/test-extended' should add comment with run link`, async () => {
         const context = createCommentContext({
           username: 'admin',
-          body: '/test-extended'
+          body: '/test-extended',
+          pullRequestNumber: PR_NUMBER_UPSTREAM_NON_DOCS_CHANGES,
         });
         await getCommandFromComment({ core, context, github });
         expect(mockGithubRestIssuesCreateComment.mock.calls.length).toBe(1);
@@ -206,32 +293,33 @@ describe('getCommandFromComment', () => {
         const createCommentParam = createCommentCall[0];
         expect(createCommentParam.owner).toBe("someOwner");
         expect(createCommentParam.repo).toBe("someRepo");
-        expect(createCommentParam.issue_number).toBe(123);
+        expect(createCommentParam.issue_number).toBe(PR_NUMBER_UPSTREAM_NON_DOCS_CHANGES);
         expect(createCommentParam.body).toMatch(/Running extended tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222/);
       });
 
-      test(`should set command to 'test-force-approve' for '/test-force-approve'`, async () => {
+      test(`for '/test-force-approve' should set command to 'test-force-approve'`, async () => {
         const context = createCommentContext({
           username: 'admin',
-          body: '/test-force-approve'
+          body: '/test-force-approve',
         });
         await getCommandFromComment({ core, context, github });
         expect(mockCoreSetOutput).toHaveBeenCalledWith('command', 'test-force-approve');
       });
 
-      test(`should set command to 'test-destroy-env' for '/test-destroy-env'`, async () => {
+      test(`for '/test-destroy-env' should set command to 'test-destroy-env'`, async () => {
         const context = createCommentContext({
           username: 'admin',
-          body: '/test-destroy-env'
+          body: '/test-destroy-env',
         });
         await getCommandFromComment({ core, context, github });
         expect(mockCoreSetOutput).toHaveBeenCalledWith('command', 'test-destroy-env');
       });
 
-      test(`should add help comment and set command to 'none' for '/help'`, async () => {
+      test(`for '/help' should add help comment and set command to 'none'`, async () => {
         const context = createCommentContext({
           username: 'admin',
-          body: '/help'
+          body: '/help',
+          pullRequestNumber: PR_NUMBER_UPSTREAM_NON_DOCS_CHANGES,
         });
         await getCommandFromComment({ core, context, github });
         expect(mockCoreSetOutput).toHaveBeenCalledWith('command', 'none');
@@ -240,14 +328,15 @@ describe('getCommandFromComment', () => {
         const createCommentParam = createCommentCall[0];
         expect(createCommentParam.owner).toBe("someOwner");
         expect(createCommentParam.repo).toBe("someRepo");
-        expect(createCommentParam.issue_number).toBe(123);
+        expect(createCommentParam.issue_number).toBe(PR_NUMBER_UPSTREAM_NON_DOCS_CHANGES);
         expect(createCommentParam.body).toMatch(/^Hello!\n\nYou can use the following commands:/);
       });
 
-      test(`should add help comment and set command to 'none' for '/not-a-command'`, async () => {
+      test(`for '/not-a-command' should add help comment and set command to 'none'`, async () => {
         const context = createCommentContext({
           username: 'admin',
-          body: '/not-a-command'
+          body: '/not-a-command',
+          pullRequestNumber: PR_NUMBER_UPSTREAM_NON_DOCS_CHANGES,
         });
         await getCommandFromComment({ core, context, github });
         expect(mockCoreSetOutput).toHaveBeenCalledWith('command', 'none');
@@ -256,31 +345,31 @@ describe('getCommandFromComment', () => {
         const createCommentParam = createCommentCall[0];
         expect(createCommentParam.owner).toBe("someOwner");
         expect(createCommentParam.repo).toBe("someRepo");
-        expect(createCommentParam.issue_number).toBe(123);
+        expect(createCommentParam.issue_number).toBe(PR_NUMBER_UPSTREAM_NON_DOCS_CHANGES);
         expect(createCommentParam.body).toMatch(/^`\/not-a-command` is not recognised as a valid command.\n\nYou can use the following commands:/);
       });
     });
 
 
     describe('and multi-line comments', () => {
-      test(`should set command to 'run-tests' if first line of comment is '/test'`, async () => {
+      test(`when first line of comment is '/test' should set command to 'run-tests'`, async () => {
         const context = createCommentContext({
           username: 'admin',
           body: `/test
 Other comment content
-goes here`
+goes here`,
         });
         await getCommandFromComment({ core, context, github });
         expect(mockCoreSetOutput).toHaveBeenCalledWith('command', 'run-tests');
       });
 
-      test(`should set command to 'none' if first line of comment is a command even if later lines contain '/test'`, async () => {
+      test(`when comment doesn't start with '/' (even if later lines contain '/test') should set command to 'none' `, async () => {
         const context = createCommentContext({
           username: 'admin',
           body: `Non-command comment
 /test
 Other comment content
-goes here`
+goes here`,
         });
         await getCommandFromComment({ core, context, github });
         expect(mockCoreSetOutput).toHaveBeenCalledWith('command', 'none');
@@ -294,7 +383,7 @@ goes here`
     test('should set prRef output', async () => {
       // prRef should be set to the SHA for the potentialMergeCommit for the PR
       const context = createCommentContext({
-        pullRequestNumber: 123
+        pullRequestNumber: PR_NUMBER_UPSTREAM_NON_DOCS_CHANGES
       });
       await getCommandFromComment({ core, context, github });
       expect(mockCoreSetOutput).toHaveBeenCalledWith('prRef', '123456789a');
@@ -304,7 +393,7 @@ goes here`
       // Using a PR number of 123 should give a refid of 'cbce50da'
       // Based on running `echo "refs/pull/123/merge" | shasum | cut -c1-8` (as per the original bash scripts)
       const context = createCommentContext({
-        pullRequestNumber: 123
+        pullRequestNumber: PR_NUMBER_UPSTREAM_NON_DOCS_CHANGES
       });
       await getCommandFromComment({ core, context, github });
       expect(mockCoreSetOutput).toHaveBeenCalledWith('prRefId', 'cbce50da');
@@ -316,7 +405,7 @@ goes here`
       // Since branch-based environments are only for upstream branches, the branchRefId
       // output should not be set for this PR
       const context = createCommentContext({
-        pullRequestNumber: 456
+        pullRequestNumber: PR_NUMBER_FORK_NON_DOCS_CHANGES
       });
       await getCommandFromComment({ core, context, github });
       expect(mockCoreSetOutput.mock.calls.some(c => c[0] == 'branchRefId')).toBe(false);
@@ -327,7 +416,7 @@ goes here`
       // The Using a PR number of 123 should give a refid of '71f7c907'
       // Based on running `echo "refs/heads/pr-head-ref" | shasum | cut -c1-8` (as per the original bash scripts)
       const context = createCommentContext({
-        pullRequestNumber: 123
+        pullRequestNumber: PR_NUMBER_UPSTREAM_NON_DOCS_CHANGES
       });
       await getCommandFromComment({ core, context, github });
       expect(mockCoreSetOutput).toHaveBeenCalledWith('branchRefId', '71f7c907');
@@ -336,7 +425,7 @@ goes here`
     test('should set prHeadSha output', async () => {
       // prHeadSha should be the SHA for the head commit for the PR
       const context = createCommentContext({
-        pullRequestNumber: 123
+        pullRequestNumber: PR_NUMBER_UPSTREAM_NON_DOCS_CHANGES
       });
       await getCommandFromComment({ core, context, github });
       expect(mockCoreSetOutput).toHaveBeenCalledWith('prHeadSha', '0123456789');
@@ -377,7 +466,7 @@ describe('labelAsExternalIfAuthorDoesNotHaveWriteAccess', () => {
   test(`should apply the 'external' label for non-contributor author`, async () => {
     const context = createPullRequestContext({
       username: 'non-contributor',
-      pullRequestNumber: 123
+      pullRequestNumber: PR_NUMBER_UPSTREAM_NON_DOCS_CHANGES,
     });
     await labelAsExternalIfAuthorDoesNotHaveWriteAccess({ core, context, github });
     expect(mockGithubRestIssuesAddLabels).toHaveBeenCalled(); // should set the label for non-contributor
@@ -386,7 +475,7 @@ describe('labelAsExternalIfAuthorDoesNotHaveWriteAccess', () => {
   test(`should return not apply the 'external' label for contributor author`, async () => {
     const context = createPullRequestContext({
       username: 'admin',
-      pullRequestNumber: 123
+      pullRequestNumber: PR_NUMBER_UPSTREAM_NON_DOCS_CHANGES,
     });
     await labelAsExternalIfAuthorDoesNotHaveWriteAccess({ core, context, github });
     expect(mockGithubRestIssuesAddLabels).toHaveBeenCalledTimes(0); // shouldn't set the label for contributor

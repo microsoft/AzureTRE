@@ -45,6 +45,8 @@ async function getCommandFromComment({ core, context, github }) {
   const prHeadSha = pr.head.sha;
   logAndSetOutput(core, "prHeadSha", prHeadSha);
 
+  const gotNonDocChanges = await prContainsNonDocChanges(github, repoOwner, repoName, prNumber);
+  logAndSetOutput(core, "nonDocsChanges", gotNonDocChanges.toString());
 
   //
   // Determine what action to take
@@ -58,9 +60,15 @@ async function getCommandFromComment({ core, context, github }) {
     switch (trimmedFirstLine) {
       case "/test":
         {
-          command = "run-tests";
-          const message = `:runner: Running tests: https://github.com/${repoFullName}/actions/runs/${runId}`;
-          await addActionComment({ github }, repoOwner, repoName, prNumber, commentUsername, commentLink, message);
+          if (gotNonDocChanges) {
+            command = "run-tests";
+            const message = `:runner: Running tests: https://github.com/${repoFullName}/actions/runs/${runId}`;
+            await addActionComment({ github }, repoOwner, repoName, prNumber, commentUsername, commentLink, message);
+          } else {
+            command = "test-force-approve";
+            const message = `:white_check_mark: PR only contains docs changes - marking tests as complete`;
+            await addActionComment({ github }, repoOwner, repoName, prNumber, commentUsername, commentLink, message);
+          }
           break;
         }
 
@@ -94,6 +102,21 @@ async function getCommandFromComment({ core, context, github }) {
   }
   logAndSetOutput(core, "command", command);
   return command;
+}
+
+async function prContainsNonDocChanges(github, repoOwner, repoName, prNumber) {
+  const prFilesResponse = await github.paginate(github.rest.pulls.listFiles, {
+    owner: repoOwner,
+    repo: repoName,
+    pull_number: prNumber
+  });
+  const prFiles = prFilesResponse.map(file => file.filename);
+  // Regexes describing allowed filenames
+  // If a filename matches any regex in the array then it is considered a doc
+  // Currently, match all `.md` files and `mkdocs.yml` in the root
+  const docsRegexes = [/\.md$/, /^mkdocs.yml$/];
+  const gotNonDocChanges = prFiles.some(file => docsRegexes.every(regex => !regex.test(file)));
+  return gotNonDocChanges;
 }
 
 async function labelAsExternalIfAuthorDoesNotHaveWriteAccess({ core, context, github }) {
@@ -160,7 +183,7 @@ You can use the following commands:
 }
 async function addActionComment({ github }, repoOwner, repoName, prNumber, commentUser, commentLink, message) {
 
-  const body = `:robot: pr-bot
+  const body = `:robot: pr-bot :robot:
 
 ${message}
 

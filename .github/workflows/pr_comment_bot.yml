@@ -26,7 +26,6 @@ jobs:
       prRefId: ${{ steps.check_command.outputs.prRefId }}
       branchRefId: ${{ steps.check_command.outputs.branchRefid }}
       ciGitRef: ${{ steps.check_command.outputs.ciGitRef }}
-      not-md: ${{ steps.filter.outputs.not-md }}
     steps:
       # Ensure we have the script file for the github-script action to use
       - name: Checkout
@@ -53,29 +52,10 @@ jobs:
           echo "ciGitRef    : ${{ steps.check_command.outputs.ciGitRef }}"
           echo "branchRefId : ${{ steps.check_command.outputs.prRefId }}"
 
-      # Check if the PR build/test needs to run
-      - name: Checkout
-        if: ${{ steps.check_command.outputs.command == 'run-tests' || steps.check_command.outputs.command == 'test-force-approve' || steps.check_command.outputs.command == 'test-destroy-env' }}
-        uses: actions/checkout@v2
-        with:
-          ref: ${{ steps.check_command.outputs.prRef }}
-          persist-credentials: false
-
-      - uses: dorny/paths-filter@v2
-        id: filter
-        if: ${{ steps.check_command.outputs.command == 'run-tests' }}
-        with:
-          base: main
-          ref: ${{ steps.check_command.outputs.prRef }}
-          filters: |
-            not-md:
-              # we need to check for changes in files other than *.md
-              - '**/!(*.md)'
-
-      # If we don't run the actual deploy (below) we won't receive a check-run status,
+      # If we don't run the actual deploy (see the run_test job below) we won't receive a check-run status,
       # and will have to send it "manually"
       - name: Bypass E2E check-runs status
-        if: ${{ (steps.check_command.outputs.command == 'run-tests' && steps.filter.outputs.not-md == 'false' ) || steps.check_command.outputs.command == 'test-force-approve' }}
+        if: ${{ steps.check_command.outputs.command == 'test-force-approve' }}
         uses: LouisBrunner/checks-action@v1.1.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -154,7 +134,7 @@ jobs:
   run_test:
     # Run the tests with the re-usable workflow
     needs: [pr_comment]
-    if: ${{ (needs.pr_comment.outputs.command == 'run-tests' && needs.pr_comment.outputs.not-md == 'true') || needs.pr_comment.outputs.command == 'run-tests-extended' }}
+    if: ${{ needs.pr_comment.outputs.command == 'run-tests' || needs.pr_comment.outputs.command == 'run-tests-extended' }}
     name: Deploy PR
     uses: ./.github/workflows/deploy_tre_reusable.yml
     with:
