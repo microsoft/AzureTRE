@@ -211,15 +211,11 @@ class AzureADAuthorization(AccessService):
         if "app_id" not in data:
             raise AuthConfigValidationError(strings.ACCESS_PLEASE_SUPPLY_APP_ID)
 
-        auth_info = {}
-        # The user may want us to create the AAD workspace app and therefore they
-        # don't know the app_id yet.
-        if data["app_id"] != "auto_create":
-            auth_info = self._get_app_auth_info(data["app_id"])
+        auth_info = self._get_app_auth_info(data["app_id"])
 
-            for role in ['WorkspaceOwner', 'WorkspaceResearcher']:
-                if role not in auth_info['roles']:
-                    raise AuthConfigValidationError(f"{strings.ACCESS_APP_IS_MISSING_ROLE} {role}")
+        for role in ['WorkspaceOwner', 'WorkspaceResearcher']:
+            if role not in auth_info['roles']:
+                raise AuthConfigValidationError(f"{strings.ACCESS_APP_IS_MISSING_ROLE} {role}")
 
         auth_info["app_id"] = data["app_id"]
 
@@ -235,11 +231,11 @@ class AzureADAuthorization(AccessService):
         return [RoleAssignment(role_assignment['resourceId'], role_assignment['appRoleId']) for role_assignment in graph_data['value']]
 
     def get_workspace_role(self, user: User, workspace: Workspace, user_role_assignments: List[RoleAssignment]) -> WorkspaceRole:
-        if 'sp_id' not in workspace.properties or 'roles' not in workspace.properties:
+        if 'sp_id' not in workspace.authInformation or 'roles' not in workspace.authInformation:
             raise AuthConfigValidationError(strings.AUTH_CONFIGURATION_NOT_AVAILABLE_FOR_WORKSPACE)
 
-        workspace_sp_id = workspace.properties['sp_id']
-        workspace_roles = workspace.properties['roles']
+        workspace_sp_id = workspace.authInformation['sp_id']
+        workspace_roles = workspace.authInformation['roles']
 
         if 'WorkspaceOwner' not in workspace_roles or 'WorkspaceResearcher' not in workspace_roles:
             raise AuthConfigValidationError(strings.AUTH_CONFIGURATION_NOT_AVAILABLE_FOR_WORKSPACE)

@@ -63,23 +63,23 @@ def test_extract_workspace__returns_sp_id_and_roles(get_app_sp_graph_data_mock):
                          [
                              # user not a member of the workspace app
                              (User(roleAssignments=[RoleAssignment(resource_id="ab123", role_id="ab124")], id='123', name="test", email="t@t.com"),
-                              Workspace(id='abc', etag="", templateName='template-name', templateVersion='0.1.0', resourcePath="test",
-                                        properties={'app_id': '1234', 'sp_id': 'abc127', 'roles': {'WorkspaceOwner': 'abc128', 'WorkspaceResearcher': 'abc129'}}),
+                              Workspace(authInformation={'app_id': '1234', 'sp_id': 'abc127', 'roles': {'WorkspaceOwner': 'abc128', 'WorkspaceResearcher': 'abc129'}},
+                                        id='abc', etag="", templateName='template-name', templateVersion='0.1.0', resourcePath="test"),
                               WorkspaceRole.NoRole),
                              # user is member of the workspace app but not in role
                              (User(roleAssignments=[RoleAssignment(resource_id="ab127", role_id="ab124")], id='123', name="test", email="t@t.com"),
-                              Workspace(id='abc', etag="", templateName='template-name', templateVersion='0.1.0', resourcePath="test",
-                                        properties={'app_id': '1234', 'sp_id': 'abc127', 'roles': {'WorkspaceOwner': 'abc128', 'WorkspaceResearcher': 'abc129'}}),
+                              Workspace(authInformation={'app_id': '1234', 'sp_id': 'abc127', 'roles': {'WorkspaceOwner': 'abc128', 'WorkspaceResearcher': 'abc129'}},
+                                        id='abc', etag="", templateName='template-name', templateVersion='0.1.0', resourcePath="test"),
                               WorkspaceRole.NoRole),
                              # user has owner role in workspace
                              (User(roleAssignments=[RoleAssignment(resource_id="abc127", role_id="abc128")], id='123', name="test", email="t@t.com"),
-                              Workspace(id='abc', etag="", templateName='template-name', templateVersion='0.1.0', resourcePath="test",
-                                        properties={'app_id': '1234', 'sp_id': 'abc127', 'roles': {'WorkspaceOwner': 'abc128', 'WorkspaceResearcher': 'abc129'}}),
+                              Workspace(authInformation={'app_id': '1234', 'sp_id': 'abc127', 'roles': {'WorkspaceOwner': 'abc128', 'WorkspaceResearcher': 'abc129'}},
+                                        id='abc', etag="", templateName='template-name', templateVersion='0.1.0', resourcePath="test"),
                               WorkspaceRole.Owner),
                              # user has researcher role in workspace
                              (User(roleAssignments=[RoleAssignment(resource_id="abc127", role_id="abc129")], id='123', name="test", email="t@t.com"),
-                              Workspace(id='abc', etag="", templateName='template-name', templateVersion='0.1.0', resourcePath="test",
-                                        properties={'app_id': '1234', 'sp_id': 'abc127', 'roles': {'WorkspaceOwner': 'abc128', 'WorkspaceResearcher': 'abc129'}}),
+                              Workspace(authInformation={'app_id': '1234', 'sp_id': 'abc127', 'roles': {'WorkspaceOwner': 'abc128', 'WorkspaceResearcher': 'abc129'}},
+                                        id='abc', etag="", templateName='template-name', templateVersion='0.1.0', resourcePath="test"),
                               WorkspaceRole.Researcher)
                          ])
 @patch("services.aad_authentication.AzureADAuthorization.get_user_role_assignments")
@@ -114,7 +114,7 @@ def test_raises_auth_config_error_if_auth_info_has_incorrect_roles(_):
         templateName='template-name',
         templateVersion='0.1.0',
         etag='',
-        properties={'sp_id': '123', 'roles': {}},
+        authInformation={'sp_id': '123', 'roles': {}},
         resourcePath="test")
 
     with pytest.raises(AuthConfigValidationError):
