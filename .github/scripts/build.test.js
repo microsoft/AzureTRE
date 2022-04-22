@@ -228,7 +228,7 @@ describe('getCommandFromComment', () => {
           expect(createCommentParam.owner).toBe("someOwner");
           expect(createCommentParam.repo).toBe("someRepo");
           expect(createCommentParam.issue_number).toBe(PR_NUMBER_UPSTREAM_NON_DOCS_CHANGES);
-          expect(createCommentParam.body).toMatch(/Running tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222/);
+          expect(createCommentParam.body).toMatch(/Running tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `cbce50da`\)/);
         });
       })
 
@@ -294,7 +294,7 @@ describe('getCommandFromComment', () => {
         expect(createCommentParam.owner).toBe("someOwner");
         expect(createCommentParam.repo).toBe("someRepo");
         expect(createCommentParam.issue_number).toBe(PR_NUMBER_UPSTREAM_NON_DOCS_CHANGES);
-        expect(createCommentParam.body).toMatch(/Running extended tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222/);
+        expect(createCommentParam.body).toMatch(/Running extended tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `cbce50da`\)/);
       });
 
       test(`for '/test-force-approve' should set command to 'test-force-approve'`, async () => {

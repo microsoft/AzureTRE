@@ -62,7 +62,7 @@ async function getCommandFromComment({ core, context, github }) {
         {
           if (gotNonDocChanges) {
             command = "run-tests";
-            const message = `:runner: Running tests: https://github.com/${repoFullName}/actions/runs/${runId}`;
+            const message = `:runner: Running tests: https://github.com/${repoFullName}/actions/runs/${runId} (with refid \`${prRefId}\`)`;
             await addActionComment({ github }, repoOwner, repoName, prNumber, commentUsername, commentLink, message);
           } else {
             command = "test-force-approve";
@@ -75,7 +75,7 @@ async function getCommandFromComment({ core, context, github }) {
       case "/test-extended":
         {
           command = "run-tests-extended";
-          const message = `:runner: Running extended tests: https://github.com/${repoFullName}/actions/runs/${runId}`;
+          const message = `:runner: Running extended tests: https://github.com/${repoFullName}/actions/runs/${runId} (with refid \`${prRefId}\`)`;
           await addActionComment({ github }, repoOwner, repoName, prNumber, commentUsername, commentLink, message);
           break;
         }
