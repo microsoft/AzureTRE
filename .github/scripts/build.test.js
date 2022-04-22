@@ -306,6 +306,21 @@ describe('getCommandFromComment', () => {
         expect(mockCoreSetOutput).toHaveBeenCalledWith('command', 'test-force-approve');
       });
 
+      test(`for '/test-force-approve' should add comment`, async () => {
+        const context = createCommentContext({
+          username: 'admin',
+          body: '/test-force-approve',
+        });
+        await getCommandFromComment({ core, context, github });
+        expect(mockGithubRestIssuesCreateComment.mock.calls.length).toBe(1);
+        const createCommentCall = mockGithubRestIssuesCreateComment.mock.calls[0];
+        const createCommentParam = createCommentCall[0];
+        expect(createCommentParam.owner).toBe("someOwner");
+        expect(createCommentParam.repo).toBe("someRepo");
+        expect(createCommentParam.issue_number).toBe(PR_NUMBER_UPSTREAM_NON_DOCS_CHANGES);
+        expect(createCommentParam.body).toMatch(/Marking tests as complete/);
+      });
+
       test(`for '/test-destroy-env' should set command to 'test-destroy-env'`, async () => {
         const context = createCommentContext({
           username: 'admin',
