@@ -345,7 +345,6 @@ show-core-output:
 	$(call target_title,"Display TRE core output") \
 	&& pushd ./templates/core/terraform/ > /dev/null && terraform show && popd > /dev/null
 
-
 api-healthcheck:
 	$(call target_title,"Checking API Health") \
 	&& . ./devops/scripts/check_dependencies.sh nodocker \
@@ -353,3 +352,10 @@ api-healthcheck:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_env.sh ./templates/core/private.env \
 	&& ./devops/scripts/api_healthcheck.sh
+
+db-migrate:
+	$(call target_title,"Migrating Cosmos Data") \
+	&& . ./devops/scripts/check_dependencies.sh nodocker \
+	&& pushd ./templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
+	&& . ./devops/scripts/load_env.sh ./templates/core/private.env \
+	&& python ./scripts/db_migrations.py
