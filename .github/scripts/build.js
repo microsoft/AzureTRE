@@ -11,7 +11,7 @@ async function getCommandFromComment({ core, context, github }) {
   // only allow actions for users with write access
   if (!await userHasWriteAccessToRepo({ core, github }, commentUsername, repoOwner, repoName)) {
     core.notice("Command: none - user doesn't have write permission]");
-    github.rest.issues.createComment({
+    await github.rest.issues.createComment({
       owner: repoOwner,
       repo: repoName,
       issue_number: prNumber,
@@ -88,7 +88,7 @@ async function labelAsExternalIfAuthorDoesNotHaveWriteAccess({ core, context, gi
 
   if (!await userHasWriteAccessToRepo({ core, github }, username, owner, repo)) {
     core.info("Adding external label to PR " + context.payload.pull_request.number)
-    github.rest.issues.addLabels({
+    await github.rest.issues.addLabels({
       owner,
       repo,
       issue_number: context.payload.pull_request.number,
@@ -135,7 +135,7 @@ You can use the following commands:
 &nbsp;&nbsp;&nbsp;&nbsp;/test-destroy-env - delete the validation environment for a PR (e.g. to enable testing a deployment from a clean start after previous tests)
 &nbsp;&nbsp;&nbsp;&nbsp;/help - show this help`;
 
-  github.rest.issues.createComment({
+  await github.rest.issues.createComment({
     owner: repoOwner,
     repo: repoName,
     issue_number: prNumber,
