@@ -329,7 +329,7 @@ describe('getCommandFromComment', () => {
         expect(createCommentParam.owner).toBe("someOwner");
         expect(createCommentParam.repo).toBe("someRepo");
         expect(createCommentParam.issue_number).toBe(PR_NUMBER_UPSTREAM_NON_DOCS_CHANGES);
-        expect(createCommentParam.body).toMatch(/^Hello!\n\nYou can use the following commands:/);
+        expect(createCommentParam.body).toMatch(/Hello!\n\nYou can use the following commands:/);
       });
 
       test(`for '/not-a-command' should add help comment and set command to 'none'`, async () => {
@@ -346,7 +346,7 @@ describe('getCommandFromComment', () => {
         expect(createCommentParam.owner).toBe("someOwner");
         expect(createCommentParam.repo).toBe("someRepo");
         expect(createCommentParam.issue_number).toBe(PR_NUMBER_UPSTREAM_NON_DOCS_CHANGES);
-        expect(createCommentParam.body).toMatch(/^`\/not-a-command` is not recognised as a valid command.\n\nYou can use the following commands:/);
+        expect(createCommentParam.body).toMatch(/`\/not-a-command` is not recognised as a valid command.\n\nYou can use the following commands:/);
       });
     });
 

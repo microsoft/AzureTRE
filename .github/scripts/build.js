@@ -89,13 +89,13 @@ async function getCommandFromComment({ core, context, github }) {
         break;
 
       case "/help":
-        showHelp({ github }, repoOwner, repoName, prNumber, null);
+        showHelp({ github }, repoOwner, repoName, prNumber, commentUsername, commentLink, null);
         command = "none"; // command has been handled, so don't need to return a value for future steps
         break;
 
       default:
         core.warning(`'${trimmedFirstLine}' not recognised as a valid command`);
-        await showHelp({ github }, repoOwner, repoName, prNumber, trimmedFirstLine);
+        await showHelp({ github }, repoOwner, repoName, prNumber, commentUsername, commentLink, trimmedFirstLine);
         command = "none";
         break;
     }
@@ -161,7 +161,7 @@ async function userHasWriteAccessToRepo({ core, github }, username, repoOwner, r
   return userHasWriteAccess
 }
 
-async function showHelp({ github }, repoOwner, repoName, prNumber, invalidCommand) {
+async function showHelp({ github }, repoOwner, repoName, prNumber, commentUser, commentLink, invalidCommand) {
   const leadingContent = invalidCommand ? `\`${invalidCommand}\` is not recognised as a valid command.` : "Hello!";
 
   const body = `${leadingContent}
@@ -173,12 +173,7 @@ You can use the following commands:
 &nbsp;&nbsp;&nbsp;&nbsp;/test-destroy-env - delete the validation environment for a PR (e.g. to enable testing a deployment from a clean start after previous tests)
 &nbsp;&nbsp;&nbsp;&nbsp;/help - show this help`;
 
-  await github.rest.issues.createComment({
-    owner: repoOwner,
-    repo: repoName,
-    issue_number: prNumber,
-    body: body
-  });
+  await addActionComment({github}, repoOwner, repoName, prNumber, commentUser, commentLink, body);
 
 }
 async function addActionComment({ github }, repoOwner, repoName, prNumber, commentUser, commentLink, message) {
