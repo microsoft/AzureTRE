@@ -61,4 +61,4 @@ jobs:
           JAVA_FILE_NAME: checkstyle.xml
           VALIDATE_BASH: true
           VALIDATE_BASH_EXEC: true
-          VALIDATE_GITHUB_ACTIONS: true
+          # VALIDATE_GITHUB_ACTIONS: true # https://github.com/microsoft/AzureTRE/issues/1723 tracks reverting this to enabled
