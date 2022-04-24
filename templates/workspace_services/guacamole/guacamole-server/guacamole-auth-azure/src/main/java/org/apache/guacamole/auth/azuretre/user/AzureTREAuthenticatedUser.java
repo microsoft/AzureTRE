@@ -33,7 +33,7 @@ public class AzureTREAuthenticatedUser extends AbstractAuthenticatedUser {
 
     private String accessToken;
 
-  public AzureTREAuthenticatedUser(final Credentials credentials,
+    public AzureTREAuthenticatedUser(final Credentials credentials,
                      final String accessToken,
                      final String username,
                      final String objectId,

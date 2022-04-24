@@ -87,22 +87,22 @@ public class ConnectionService {
         return configs;
     }
 
-  private static void setConfig(final GuacamoleConfiguration config, final String azureResourceId, final String ip) {
-    config.setProtocol("rdp");
-    config.setParameter("hostname", ip);
-    config.setParameter("resize-method", "display-update");
-    config.setParameter("azure-resource-id", azureResourceId);
-    config.setParameter("port", "3389");
-    config.setParameter("ignore-cert", "true");
-    config.setParameter("disable-copy", System.getenv("GUAC_DISABLE_COPY"));
-    config.setParameter("disable-paste", System.getenv("GUAC_DISABLE_PASTE"));
-    config.setParameter("enable-drive", System.getenv("GUAC_ENABLE_DRIVE"));
-    config.setParameter("drive-name", System.getenv("GUAC_DRIVE_NAME"));
-    config.setParameter("drive-path", System.getenv("GUAC_DRIVE_PATH"));
-    config.setParameter("disable-download", System.getenv("GUAC_DISABLE_DOWNLOAD"));
-  }
+    private static void setConfig(final GuacamoleConfiguration config, final String azureResourceId, final String ip) {
+        config.setProtocol("rdp");
+        config.setParameter("hostname", ip);
+        config.setParameter("resize-method", "display-update");
+        config.setParameter("azure-resource-id", azureResourceId);
+        config.setParameter("port", "3389");
+        config.setParameter("ignore-cert", "true");
+        config.setParameter("disable-copy", System.getenv("GUAC_DISABLE_COPY"));
+        config.setParameter("disable-paste", System.getenv("GUAC_DISABLE_PASTE"));
+        config.setParameter("enable-drive", System.getenv("GUAC_ENABLE_DRIVE"));
+        config.setParameter("drive-name", System.getenv("GUAC_DRIVE_NAME"));
+        config.setParameter("drive-path", System.getenv("GUAC_DRIVE_PATH"));
+        config.setParameter("disable-download", System.getenv("GUAC_DISABLE_DOWNLOAD"));
+    }
 
-  private static JSONArray getVMsFromProjectAPI(final AzureTREAuthenticatedUser user) throws GuacamoleException {
+    private static JSONArray getVMsFromProjectAPI(final AzureTREAuthenticatedUser user) throws GuacamoleException {
         final JSONArray virtualMachines;
         final String url = String.format("%s/api/workspaces/%s/workspace-services/%s/user-resources",
             System.getenv("API_URL"), System.getenv("WORKSPACE_ID"), System.getenv("SERVICE_ID"));
