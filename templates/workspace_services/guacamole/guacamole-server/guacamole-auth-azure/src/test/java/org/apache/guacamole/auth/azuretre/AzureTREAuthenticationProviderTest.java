@@ -17,38 +17,38 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 
 public class AzureTREAuthenticationProviderTest {
-  @Mock
-  HttpServletRequest requestMock;
-  @InjectMocks
-  Credentials credentialsMock;
-  AzureTREAuthenticationProvider azureTREAuthenticationProvider;
+    @Mock
+    HttpServletRequest requestMock;
+    @InjectMocks
+    Credentials credentialsMock;
+    AzureTREAuthenticationProvider azureTREAuthenticationProvider;
 
-  @BeforeEach
-  void setup() {
-    azureTREAuthenticationProvider = new AzureTREAuthenticationProvider();
-  }
+    @BeforeEach
+    void setup() {
+        azureTREAuthenticationProvider = new AzureTREAuthenticationProvider();
+    }
 
-  @Test
-  public void authenticateUserSucceed() {
-    when(credentialsMock.getRequest().getHeader("X-Forwarded-Access-Token")).thenReturn("dummy_token");
-    when(credentialsMock.getRequest().getHeader("X-Forwarded-Email")).thenReturn("mocked@mail.com");
+    @Test
+    public void authenticateUserSucceed() {
+        when(credentialsMock.getRequest().getHeader("X-Forwarded-Access-Token")).thenReturn("dummy_token");
+        when(credentialsMock.getRequest().getHeader("X-Forwarded-Email")).thenReturn("mocked@mail.com");
 
-    assertNotNull(azureTREAuthenticationProvider.authenticateUser(credentialsMock));
-  }
+        assertNotNull(azureTREAuthenticationProvider.authenticateUser(credentialsMock));
+    }
 
-  @Test
-  public void authenticateUserFailsWhenNoAccessToken() {
-    when(credentialsMock.getRequest().getHeader("X-Forwarded-Access-Token")).thenReturn("");
-    when(credentialsMock.getRequest().getHeader("X-Forwarded-Email")).thenReturn("mocked@mail.com");
+    @Test
+    public void authenticateUserFailsWhenNoAccessToken() {
+        when(credentialsMock.getRequest().getHeader("X-Forwarded-Access-Token")).thenReturn("");
+        when(credentialsMock.getRequest().getHeader("X-Forwarded-Email")).thenReturn("mocked@mail.com");
 
-    assertNull(azureTREAuthenticationProvider.authenticateUser(credentialsMock));
-  }
+        assertNull(azureTREAuthenticationProvider.authenticateUser(credentialsMock));
+    }
 
-  @Test
-  public void authenticateUserFailsWhenNoPrefEmail() {
-    when(credentialsMock.getRequest().getHeader("X-Forwarded-Access-Token")).thenReturn("dummy_token");
-    when(credentialsMock.getRequest().getHeader("X-Forwarded-Email")).thenReturn("");
+    @Test
+    public void authenticateUserFailsWhenNoPrefEmail() {
+        when(credentialsMock.getRequest().getHeader("X-Forwarded-Access-Token")).thenReturn("dummy_token");
+        when(credentialsMock.getRequest().getHeader("X-Forwarded-Email")).thenReturn("");
 
-    assertNull(azureTREAuthenticationProvider.authenticateUser(credentialsMock));
-  }
+        assertNull(azureTREAuthenticationProvider.authenticateUser(credentialsMock));
+    }
 }

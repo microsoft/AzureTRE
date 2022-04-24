@@ -81,7 +81,7 @@ public class AuthenticationProviderServiceTest {
     }
 
     private static PrivateKey getPrivateKey()
-      throws NoSuchAlgorithmException, InvalidKeySpecException {
+        throws NoSuchAlgorithmException, InvalidKeySpecException {
 
         // openssl genrsa -out private.pem 2048
         // openssl pkcs8 -topk8 -inform PEM -outform DER -in private.pem -out
@@ -127,7 +127,7 @@ public class AuthenticationProviderServiceTest {
     }
 
     private String generateNoRolesJWTToken()
-      throws IllegalArgumentException, NoSuchAlgorithmException, InvalidKeySpecException {
+        throws IllegalArgumentException, NoSuchAlgorithmException, InvalidKeySpecException {
 
         final Algorithm algorithm =
             Algorithm.RSA256((RSAPublicKey) getPublicKey(), (RSAPrivateKey) getPrivateKey());
@@ -150,10 +150,10 @@ public class AuthenticationProviderServiceTest {
                 .sign(algorithm);
 
         return jwtToken;
-      }
+    }
 
-  private String generateEmptyRolesJWTToken()
-      throws IllegalArgumentException, NoSuchAlgorithmException, InvalidKeySpecException {
+    private String generateEmptyRolesJWTToken()
+        throws IllegalArgumentException, NoSuchAlgorithmException, InvalidKeySpecException {
 
         final Algorithm algorithm =
             Algorithm.RSA256((RSAPublicKey) getPublicKey(), (RSAPrivateKey) getPrivateKey());
@@ -179,10 +179,10 @@ public class AuthenticationProviderServiceTest {
                 .sign(algorithm);
 
         return jwtToken;
-      }
+    }
 
-  private String internalGenerateValidJWTToken(String validRole)
-      throws IllegalArgumentException, NoSuchAlgorithmException, InvalidKeySpecException {
+    private String internalGenerateValidJWTToken(String validRole)
+        throws IllegalArgumentException, NoSuchAlgorithmException, InvalidKeySpecException {
 
         final Algorithm algorithm =
             Algorithm.RSA256((RSAPublicKey) getPublicKey(), (RSAPrivateKey) getPrivateKey());
@@ -208,242 +208,240 @@ public class AuthenticationProviderServiceTest {
                 .sign(algorithm);
 
         return jwtToken;
-      }
+    }
 
-  private String generateValidJWTToken()
-      throws IllegalArgumentException, NoSuchAlgorithmException, InvalidKeySpecException {
+    private String generateValidJWTToken()
+        throws IllegalArgumentException, NoSuchAlgorithmException, InvalidKeySpecException {
 
         return internalGenerateValidJWTToken("WorkspaceOwner");
-     }
-
-  private String generateValidJWTTokenWithWrongRole()
-      throws IllegalArgumentException, NoSuchAlgorithmException, InvalidKeySpecException {
-
-    return internalGenerateValidJWTToken("NotTheRightRole");
-  }
-
-  private String generateExpiredJWTToken()
-      throws IllegalArgumentException, NoSuchAlgorithmException, InvalidKeySpecException {
-
-    final Algorithm algorithm =
-        Algorithm.RSA256((RSAPublicKey) getPublicKey(), (RSAPrivateKey) getPrivateKey());
-
-    final Calendar c = Calendar.getInstance();
-    final Date currentDate = c.getTime();
-
-    c.add(Calendar.HOUR, -24);
-    final Date expireDate = c.getTime();
-
-    final String[] validUserRole = {"Project-User"};
-
-    final String jwtToken =
-        JWT.create()
-            .withIssuer(issuer)
-            .withKeyId("dummy_keyid")
-            .withAudience(audience)
-            .withIssuedAt(currentDate)
-            .withExpiresAt(expireDate)
-            .withClaim("oid", "dummy_oid")
-            .withClaim("preferred_username", "dummy_preferred_username")
-            .withArrayClaim("roles", validUserRole)
-            .sign(algorithm);
-
-    return jwtToken;
-  }
-
-  @Test
-  public void validateTokenFailsWhenNoNeededRole() throws Exception {
-
-    final String jwtToken = generateValidJWTTokenWithWrongRole();
-    final PublicKey publicKey = getPublicKey();
-    final Algorithm algorithm = Algorithm.RSA256((RSAPublicKey) publicKey, null);
-
-    try (MockedStatic<Algorithm> mockAlgorithm = Mockito.mockStatic(Algorithm.class)) {
-
-      mockAlgorithm
-          .when(() -> Algorithm.RSA256((RSAPublicKey) publicKey, null))
-          .thenReturn(algorithm);
-
-      final Jwk jwk = mock(Jwk.class);
-      final UrlJwkProvider jwkProvider = mock(UrlJwkProvider.class);
-
-      when(jwk.getPublicKey()).thenReturn(publicKey);
-      when(jwkProvider.get("dummy_keyid")).thenReturn(jwk);
-      environmentVariables.set("AUDIENCE", audience);
-      environmentVariables.set("ISSUER", issuer);
-
-      final AuthenticationProviderService azureTREAuthenticationProviderService =
-          new AuthenticationProviderService();
-      final Method validateToken =
-          AuthenticationProviderService.class.getDeclaredMethod(
-              "validateToken", String.class, UrlJwkProvider.class);
-      validateToken.setAccessible(true);
-
-      try {
-        validateToken.invoke(azureTREAuthenticationProviderService, jwtToken, jwkProvider);
-        fail("Exception not thrown");
-      } catch (final InvocationTargetException e) {
-        assertEquals(GuacamoleInvalidCredentialsException.class, e.getTargetException().getClass());
-      }
     }
-  }
 
-  private void validateTokenSucceedWhenValidRole(String role) throws Exception {
+    private String generateValidJWTTokenWithWrongRole()
+        throws IllegalArgumentException, NoSuchAlgorithmException, InvalidKeySpecException {
 
-    final String jwtToken = internalGenerateValidJWTToken(role);
-    final PublicKey publicKey = getPublicKey();
-    final Algorithm algorithm = Algorithm.RSA256((RSAPublicKey) publicKey, null);
-
-    try (MockedStatic<Algorithm> mockAlgorithm = Mockito.mockStatic(Algorithm.class)) {
-
-      mockAlgorithm
-          .when(() -> Algorithm.RSA256((RSAPublicKey) publicKey, null))
-          .thenReturn(algorithm);
-
-      final Jwk jwk = mock(Jwk.class);
-      final UrlJwkProvider jwkProvider = mock(UrlJwkProvider.class);
-
-      when(jwk.getPublicKey()).thenReturn(publicKey);
-      when(jwkProvider.get("dummy_keyid")).thenReturn(jwk);
-      environmentVariables.set("AUDIENCE", audience);
-      environmentVariables.set("ISSUER", issuer);
-
-      final AuthenticationProviderService azureTREAuthenticationProviderService =
-          new AuthenticationProviderService();
-      final Method validateToken =
-          AuthenticationProviderService.class.getDeclaredMethod(
-              "validateToken", String.class, UrlJwkProvider.class);
-      validateToken.setAccessible(true);
-      validateToken.invoke(azureTREAuthenticationProviderService, jwtToken, jwkProvider);
+        return internalGenerateValidJWTToken("NotTheRightRole");
     }
-  }
 
-  @Test
-  public void validateTokenSucceedWhenResearcherRole() throws Exception {
+    private String generateExpiredJWTToken()
+        throws IllegalArgumentException, NoSuchAlgorithmException, InvalidKeySpecException {
 
-    validateTokenSucceedWhenValidRole("WorkspaceResearcher");
-  }
+        final Algorithm algorithm =
+                Algorithm.RSA256((RSAPublicKey) getPublicKey(), (RSAPrivateKey) getPrivateKey());
 
-  @Test
-  public void validateTokenSucceedWhenOwnerRole() throws Exception {
+        final Calendar c = Calendar.getInstance();
+        final Date currentDate = c.getTime();
 
-    validateTokenSucceedWhenValidRole("WorkspaceOwner");
-  }
+        c.add(Calendar.HOUR, -24);
+        final Date expireDate = c.getTime();
 
-  @Test
-  public void validateTokenThrowsWhenNoRole() throws Exception {
+        final String[] validUserRole = {"Project-User"};
 
-    final String jwtToken = generateNoRolesJWTToken();
+        final String jwtToken =
+            JWT.create()
+                .withIssuer(issuer)
+                .withKeyId("dummy_keyid")
+                .withAudience(audience)
+                .withIssuedAt(currentDate)
+                .withExpiresAt(expireDate)
+                .withClaim("oid", "dummy_oid")
+                .withClaim("preferred_username", "dummy_preferred_username")
+                .withArrayClaim("roles", validUserRole)
+                .sign(algorithm);
 
-    final PublicKey publicKey = getPublicKey();
-    final Algorithm algorithm = Algorithm.RSA256((RSAPublicKey) publicKey, null);
-
-    try (MockedStatic<Algorithm> mockAlgorithm = Mockito.mockStatic(Algorithm.class)) {
-
-      mockAlgorithm
-          .when(() -> Algorithm.RSA256((RSAPublicKey) publicKey, null))
-          .thenReturn(algorithm);
-
-      final Jwk jwk = mock(Jwk.class);
-      final UrlJwkProvider jwkProvider = mock(UrlJwkProvider.class);
-
-      when(jwk.getPublicKey()).thenReturn(publicKey);
-      when(jwkProvider.get("dummy_keyid")).thenReturn(jwk);
-      environmentVariables.set("AUDIENCE", audience);
-      environmentVariables.set("ISSUER", issuer);
-
-      final AuthenticationProviderService azureTREAuthenticationProviderService =
-          new AuthenticationProviderService();
-      final Method validateToken =
-          AuthenticationProviderService.class.getDeclaredMethod(
-              "validateToken", String.class, UrlJwkProvider.class);
-      validateToken.setAccessible(true);
-
-      try {
-        validateToken.invoke(azureTREAuthenticationProviderService, jwtToken, jwkProvider);
-        fail("Exception not thrown");
-      } catch (final InvocationTargetException e) {
-        assertEquals(GuacamoleInvalidCredentialsException.class, e.getTargetException().getClass());
-      }
+        return jwtToken;
     }
-  }
 
-  @Test
-  public void validateTokenThrowsWhenEmptyRole() throws Exception {
+    @Test
+    public void validateTokenFailsWhenNoNeededRole() throws Exception {
 
-    final String jwtToken = generateEmptyRolesJWTToken();
+        final String jwtToken = generateValidJWTTokenWithWrongRole();
+        final PublicKey publicKey = getPublicKey();
+        final Algorithm algorithm = Algorithm.RSA256((RSAPublicKey) publicKey, null);
 
-    final PublicKey publicKey = getPublicKey();
-    final Algorithm algorithm = Algorithm.RSA256((RSAPublicKey) publicKey, null);
+        try (MockedStatic<Algorithm> mockAlgorithm = Mockito.mockStatic(Algorithm.class)) {
 
-    try (MockedStatic<Algorithm> mockAlgorithm = Mockito.mockStatic(Algorithm.class)) {
+            mockAlgorithm
+              .when(() -> Algorithm.RSA256((RSAPublicKey) publicKey, null))
+                .thenReturn(algorithm);
 
-      mockAlgorithm
-          .when(() -> Algorithm.RSA256((RSAPublicKey) publicKey, null))
-          .thenReturn(algorithm);
+            final Jwk jwk = mock(Jwk.class);
+            final UrlJwkProvider jwkProvider = mock(UrlJwkProvider.class);
 
-      final Jwk jwk = mock(Jwk.class);
-      final UrlJwkProvider jwkProvider = mock(UrlJwkProvider.class);
+            when(jwk.getPublicKey()).thenReturn(publicKey);
+            when(jwkProvider.get("dummy_keyid")).thenReturn(jwk);
+            environmentVariables.set("AUDIENCE", audience);
+            environmentVariables.set("ISSUER", issuer);
 
-      when(jwk.getPublicKey()).thenReturn(publicKey);
-      when(jwkProvider.get("dummy_keyid")).thenReturn(jwk);
-      environmentVariables.set("AUDIENCE", audience);
-      environmentVariables.set("ISSUER", issuer);
+            final AuthenticationProviderService azureTREAuthenticationProviderService =
+                new AuthenticationProviderService();
+            final Method validateToken =
+                AuthenticationProviderService.class.getDeclaredMethod(
+                  "validateToken", String.class, UrlJwkProvider.class);
+            validateToken.setAccessible(true);
 
-      final AuthenticationProviderService azureTREAuthenticationProviderService =
-          new AuthenticationProviderService();
-      final Method validateToken =
-          AuthenticationProviderService.class.getDeclaredMethod(
-              "validateToken", String.class, UrlJwkProvider.class);
-      validateToken.setAccessible(true);
-
-      try {
-        validateToken.invoke(azureTREAuthenticationProviderService, jwtToken, jwkProvider);
-        fail("Exception not thrown");
-      } catch (final InvocationTargetException e) {
-        assertEquals(GuacamoleInvalidCredentialsException.class, e.getTargetException().getClass());
-      }
+            try {
+                validateToken.invoke(azureTREAuthenticationProviderService, jwtToken, jwkProvider);
+                fail("Exception not thrown");
+            } catch (final InvocationTargetException e) {
+                assertEquals(GuacamoleInvalidCredentialsException.class, e.getTargetException().getClass());
+            }
+        }
     }
-  }
 
-  @Test
-  public void validateTokenThrowsWhenExpiredToken() throws Exception {
+    private void validateTokenSucceedWhenValidRole(String role) throws Exception {
 
-    final String jwtToken = generateExpiredJWTToken();
+        final String jwtToken = internalGenerateValidJWTToken(role);
+        final PublicKey publicKey = getPublicKey();
+        final Algorithm algorithm = Algorithm.RSA256((RSAPublicKey) publicKey, null);
 
-    final PublicKey publicKey = getPublicKey();
-    final Algorithm algorithm = Algorithm.RSA256((RSAPublicKey) publicKey, null);
+        try (MockedStatic<Algorithm> mockAlgorithm = Mockito.mockStatic(Algorithm.class)) {
 
-    try (MockedStatic<Algorithm> mockAlgorithm = Mockito.mockStatic(Algorithm.class)) {
+            mockAlgorithm
+              .when(() -> Algorithm.RSA256((RSAPublicKey) publicKey, null))
+                .thenReturn(algorithm);
 
-      mockAlgorithm
-          .when(() -> Algorithm.RSA256((RSAPublicKey) publicKey, null))
-          .thenReturn(algorithm);
+            final Jwk jwk = mock(Jwk.class);
+            final UrlJwkProvider jwkProvider = mock(UrlJwkProvider.class);
 
-      final Jwk jwk = mock(Jwk.class);
-      final UrlJwkProvider jwkProvider = mock(UrlJwkProvider.class);
+            when(jwk.getPublicKey()).thenReturn(publicKey);
+            when(jwkProvider.get("dummy_keyid")).thenReturn(jwk);
+            environmentVariables.set("AUDIENCE", audience);
+            environmentVariables.set("ISSUER", issuer);
 
-      when(jwk.getPublicKey()).thenReturn(publicKey);
-      when(jwkProvider.get("dummy_keyid")).thenReturn(jwk);
-      environmentVariables.set("AUDIENCE", audience);
-      environmentVariables.set("ISSUER", issuer);
-
-      final AuthenticationProviderService azureTREAuthenticationProviderService =
-          new AuthenticationProviderService();
-      final Method validateToken =
-          AuthenticationProviderService.class.getDeclaredMethod(
-              "validateToken", String.class, UrlJwkProvider.class);
-      validateToken.setAccessible(true);
-
-      try {
-        validateToken.invoke(azureTREAuthenticationProviderService, jwtToken, jwkProvider);
-        fail("Exception not thrown");
-      } catch (final InvocationTargetException e) {
-        assertEquals(GuacamoleInvalidCredentialsException.class, e.getTargetException().getClass());
-        assertThat(
-            e.getTargetException().getMessage(),
-            CoreMatchers.containsString("The Token has expired on"));
-      }
+            final AuthenticationProviderService azureTREAuthenticationProviderService =
+                new AuthenticationProviderService();
+            final Method validateToken =
+                AuthenticationProviderService.class.getDeclaredMethod(
+                  "validateToken", String.class, UrlJwkProvider.class);
+            validateToken.setAccessible(true);
+            validateToken.invoke(azureTREAuthenticationProviderService, jwtToken, jwkProvider);
+        }
     }
-  }
+
+    @Test
+    public void validateTokenSucceedWhenResearcherRole() throws Exception {
+        validateTokenSucceedWhenValidRole("WorkspaceResearcher");
+    }
+
+    @Test
+    public void validateTokenSucceedWhenOwnerRole() throws Exception {
+        validateTokenSucceedWhenValidRole("WorkspaceOwner");
+    }
+
+    @Test
+    public void validateTokenThrowsWhenNoRole() throws Exception {
+
+        final String jwtToken = generateNoRolesJWTToken();
+
+        final PublicKey publicKey = getPublicKey();
+        final Algorithm algorithm = Algorithm.RSA256((RSAPublicKey) publicKey, null);
+
+        try (MockedStatic<Algorithm> mockAlgorithm = Mockito.mockStatic(Algorithm.class)) {
+
+            mockAlgorithm
+            .when(() -> Algorithm.RSA256((RSAPublicKey) publicKey, null))
+                .thenReturn(algorithm);
+
+            final Jwk jwk = mock(Jwk.class);
+            final UrlJwkProvider jwkProvider = mock(UrlJwkProvider.class);
+
+            when(jwk.getPublicKey()).thenReturn(publicKey);
+            when(jwkProvider.get("dummy_keyid")).thenReturn(jwk);
+            environmentVariables.set("AUDIENCE", audience);
+            environmentVariables.set("ISSUER", issuer);
+
+            final AuthenticationProviderService azureTREAuthenticationProviderService =
+                new AuthenticationProviderService();
+            final Method validateToken =
+                AuthenticationProviderService.class.getDeclaredMethod(
+                    "validateToken", String.class, UrlJwkProvider.class);
+            validateToken.setAccessible(true);
+
+            try {
+                validateToken.invoke(azureTREAuthenticationProviderService, jwtToken, jwkProvider);
+                fail("Exception not thrown");
+            } catch (final InvocationTargetException e) {
+                assertEquals(GuacamoleInvalidCredentialsException.class, e.getTargetException().getClass());
+            }
+        }
+    }
+
+    @Test
+    public void validateTokenThrowsWhenEmptyRole() throws Exception {
+
+        final String jwtToken = generateEmptyRolesJWTToken();
+
+        final PublicKey publicKey = getPublicKey();
+        final Algorithm algorithm = Algorithm.RSA256((RSAPublicKey) publicKey, null);
+
+        try (MockedStatic<Algorithm> mockAlgorithm = Mockito.mockStatic(Algorithm.class)) {
+
+            mockAlgorithm
+              .when(() -> Algorithm.RSA256((RSAPublicKey) publicKey, null))
+                .thenReturn(algorithm);
+
+            final Jwk jwk = mock(Jwk.class);
+            final UrlJwkProvider jwkProvider = mock(UrlJwkProvider.class);
+
+            when(jwk.getPublicKey()).thenReturn(publicKey);
+            when(jwkProvider.get("dummy_keyid")).thenReturn(jwk);
+            environmentVariables.set("AUDIENCE", audience);
+            environmentVariables.set("ISSUER", issuer);
+
+            final AuthenticationProviderService azureTREAuthenticationProviderService =
+                new AuthenticationProviderService();
+            final Method validateToken =
+                AuthenticationProviderService.class.getDeclaredMethod(
+                    "validateToken", String.class, UrlJwkProvider.class);
+            validateToken.setAccessible(true);
+
+            try {
+                validateToken.invoke(azureTREAuthenticationProviderService, jwtToken, jwkProvider);
+                fail("Exception not thrown");
+            } catch (final InvocationTargetException e) {
+                assertEquals(GuacamoleInvalidCredentialsException.class, e.getTargetException().getClass());
+            }
+        }
+    }
+
+    @Test
+    public void validateTokenThrowsWhenExpiredToken() throws Exception {
+
+        final String jwtToken = generateExpiredJWTToken();
+
+        final PublicKey publicKey = getPublicKey();
+        final Algorithm algorithm = Algorithm.RSA256((RSAPublicKey) publicKey, null);
+
+        try (MockedStatic<Algorithm> mockAlgorithm = Mockito.mockStatic(Algorithm.class)) {
+
+            mockAlgorithm
+              .when(() -> Algorithm.RSA256((RSAPublicKey) publicKey, null))
+                .thenReturn(algorithm);
+
+            final Jwk jwk = mock(Jwk.class);
+            final UrlJwkProvider jwkProvider = mock(UrlJwkProvider.class);
+
+            when(jwk.getPublicKey()).thenReturn(publicKey);
+            when(jwkProvider.get("dummy_keyid")).thenReturn(jwk);
+            environmentVariables.set("AUDIENCE", audience);
+            environmentVariables.set("ISSUER", issuer);
+
+            final AuthenticationProviderService azureTREAuthenticationProviderService =
+                new AuthenticationProviderService();
+            final Method validateToken =
+                AuthenticationProviderService.class.getDeclaredMethod(
+                    "validateToken", String.class, UrlJwkProvider.class);
+            validateToken.setAccessible(true);
+
+            try {
+                validateToken.invoke(azureTREAuthenticationProviderService, jwtToken, jwkProvider);
+                fail("Exception not thrown");
+            } catch (final InvocationTargetException e) {
+                assertEquals(GuacamoleInvalidCredentialsException.class, e.getTargetException().getClass());
+                assertThat(
+                    e.getTargetException().getMessage(),
+                    CoreMatchers.containsString("The Token has expired on"));
+            }
+        }
+    }
 }
