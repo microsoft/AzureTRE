@@ -59,7 +59,9 @@ async def build_porter_command(config, logger, msg_body, custom_action=False):
                     f"{'invoke --action ' if custom_action else ''}"
                     f"{msg_body['action']} \"{installation_id}\" "
                     f" --reference {config['registry_server']}/{msg_body['name']}:v{msg_body['version']}"
-                    f" {porter_parameters} --cred ./vmss_porter/azure.json --allow-docker-host-access --force"
+                    f" {porter_parameters} --allow-docker-host-access --force"
+                    f" --cred ./vmss_porter/azure.json"
+                    f" --cred ./vmss_porter/aad_auth.json"
                     f" && porter show {installation_id}"]
     return command_line
 
