@@ -91,17 +91,20 @@ build-mlflow-image:
 firewall-install:
 	$(MAKE) bundle-build DIR=./templates/shared_services/firewall/ \
 	&& $(MAKE) bundle-publish DIR=./templates/shared_services/firewall/ \
-	&& $(MAKE) shared-service-register-and-deploy DIR=./templates/shared_services/firewall/ BUNDLE_TYPE=shared_service
+	&& $(MAKE) bundle-register DIR="./templates/shared_services/firewall" BUNDLE_TYPE=shared_service
+	&& $(MAKE) deploy-shared-service DIR=./templates/shared_services/firewall/ BUNDLE_TYPE=shared_service
 
 nexus-install:
 	$(MAKE) bundle-build DIR=./templates/shared_services/sonatype-nexus/ \
 	&& $(MAKE) bundle-publish DIR=./templates/shared_services/sonatype-nexus/ \
-	&& $(MAKE) shared-service-register-and-deploy DIR=./templates/shared_services/sonatype-nexus/ BUNDLE_TYPE=shared_service
+	&& $(MAKE) bundle-register DIR="./templates/shared_services/sonatype-nexus" BUNDLE_TYPE=shared_service
+	&& $(MAKE) deploy-shared-service DIR=./templates/shared_services/sonatype-nexus/ BUNDLE_TYPE=shared_service
 
 gitea-install:
 	$(MAKE) bundle-build DIR=./templates/shared_services/gitea/ \
 	&& $(MAKE) bundle-publish DIR=./templates/shared_services/gitea/ \
-	&& $(MAKE) shared-service-register-and-deploy DIR=./templates/shared_services/gitea/ BUNDLE_TYPE=shared_service
+	&& $(MAKE) bundle-register DIR="./templates/shared_services/gitea" BUNDLE_TYPE=shared_service
+	&& $(MAKE) deploy-shared-service DIR=./templates/shared_services/gitea/ BUNDLE_TYPE=shared_service
 
 # A recipe for pushing images. Parameters:
 # 1. Image name suffix
@@ -291,18 +294,19 @@ bundle-register:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& az acr login --name $${ACR_NAME}	\
+	&& . ./devops/scripts/get_access_token.sh \
 	&& cd ${DIR} \
 	&& ${ROOTPATH}/devops/scripts/register_bundle_with_api.sh --acr-name "$${ACR_NAME}" --bundle-type "$${BUNDLE_TYPE}" --current --insecure --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}" --verify --workspace-service-name "$${WORKSPACE_SERVICE_NAME}"
 
-shared-service-register-and-deploy:
+deploy-shared-service:
 	@# NOTE: ACR_NAME below comes from the env files, so needs the double '$$'. Others are set on command execution and don't
-	$(call target_title, "Registering and deploying ${DIR} shared service") \
+	$(call target_title, "Deploying ${DIR} shared service") \
 	&& ./devops/scripts/check_dependencies.sh porter \
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
-	&& az acr login --name $${ACR_NAME}	\
+	&& . ./devops/scripts/get_access_token.sh \
 	&& cd ${DIR} \
-	&& ${ROOTPATH}/devops/scripts/register_bundle_with_api.sh --acr-name "$${ACR_NAME}" --bundle-type "$${BUNDLE_TYPE}" --current --insecure --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}" --verify --deploy_shared_service
+	&& ${ROOTPATH}/devops/scripts/deploy_shared_service.sh --insecure --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}"
 
 static-web-upload:
 	$(call target_title, "Uploading to static website") \
