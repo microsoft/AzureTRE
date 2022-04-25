@@ -101,7 +101,7 @@ def update_resource_for_step(operation_step: OperationStep, resource_repo: Resou
 
 def try_upgrade_with_retries(num_retries: int, attempt_count: int, resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, properties: dict, user: User, resource_to_update_id: str) -> Resource:
     try:
-        try_upgrade(
+        return try_upgrade(
             resource_repo=resource_repo,
             resource_template_repo=resource_template_repo,
             properties=properties,
