@@ -53,6 +53,12 @@ write_files:
   # Set up Nexus to serve https using SSL cert
   - path: /home/adminuser/configure-nexus-ssl.sh
     content: |
+      #!/bin/bash
+      set -o errexit
+      set -o pipefail
+      set -o nounset
+      # set -o xtrace
+
       # Prepare ssl certificate
       az login --identity -u ${msi_id}
       # -- get cert from kv as secret so it contains private key
@@ -119,6 +125,11 @@ write_files:
   - path: /home/adminuser/reset-nexus-password.sh
     content: |
       #!/bin/bash
+      set -o errexit
+      set -o pipefail
+      set -o nounset
+      # set -o xtrace
+
       # Get the current password so we can post to the API
       # (this is created in /nexus-data mounted volume as part of Nexus container start-up)
       password_timeout=300
