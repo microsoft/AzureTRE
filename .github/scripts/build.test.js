@@ -100,7 +100,7 @@ describe('getCommandFromComment', () => {
             pullRequestNumber: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
           });
           await getCommandFromComment({ core, context, github });
-          expect(mockCoreSetOutput).toHaveBeenCalledWith('command', 'run-tests');
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('run-tests');
         });
 
         test(`should set nonDocsChanges to 'true'`, async () => {
@@ -315,7 +315,6 @@ describe('getCommandFromComment', () => {
             body: '/test-force-approve',
           });
           await getCommandFromComment({ core, context, github });
-          expect(mockCoreSetOutput).toHaveBeenCalledWith('command', 'test-force-approve');
           expect(outputFor(mockCoreSetOutput, 'command')).toBe('test-force-approve');
         });
 

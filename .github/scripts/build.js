@@ -78,36 +78,10 @@ async function getCommandFromComment({ core, context, github }) {
             break;
           }
 
-          // check if this is an external PR (i.e. author not a maintainer)
-          // if so, need to specify the SHA that has been vetted and check that it matches
-          // the latest head SHA for the PR
-          const prAuthorHasWriteAccess = await userHasWriteAccessToRepo({ core, github }, prAuthorUsername, repoOwner, repoName);
-          const externalPr = !prAuthorHasWriteAccess;
-          if (externalPr) {
-            if (parts.length === 1) {
-              command = "none"
-              const message = `:warning: When using \`/test\` on external PRs, the SHA of the checked commit must be specified`;
-              await addActionComment({ github }, repoOwner, repoName, prNumber, commentUsername, commentLink, message);
-              break;
-            }
-            const commentSha = parts[1];
-            if (commentSha.length < 7) {
-              command = "none"
-              const message = `:warning: When specifying a commit SHA it must be at least 7 characters (received \`234567\`)`;
-              await addActionComment({ github }, repoOwner, repoName, prNumber, commentUsername, commentLink, message);
-              break;
-            }
-            if (!prHeadSha.startsWith(commentSha)) {
-              command = "none"
-              const message = `:warning: The specified SHA \`${commentSha}\` is not the latest commit on the PR. Please validate the latest commit and re-run \`/test\``;
-              await addActionComment({ github }, repoOwner, repoName, prNumber, commentUsername, commentLink, message);
-              break;
-            }
+          const runTests = await handleTestCommand({ core, github }, parts, "tests", runId, { number: prNumber, authorUsername: prAuthorUsername, repoOwner, repoName, headSha: prHeadSha, refId: prRefId }, { username: commentUsername, link: commentLink });
+          if (runTests) {
+            command = "run-tests";
           }
-
-          command = "run-tests";
-          const message = `:runner: Running tests: https://github.com/${repoFullName}/actions/runs/${runId} (with refid \`${prRefId}\`)`;
-          await addActionComment({ github }, repoOwner, repoName, prNumber, commentUsername, commentLink, message);
           break;
         }
 
@@ -146,6 +120,37 @@ async function getCommandFromComment({ core, context, github }) {
   }
   logAndSetOutput(core, "command", command);
   return command;
+}
+
+async function handleTestCommand({ core, github }, commandParts, testDescription, runId, pr, comment) {
+  // check if this is an external PR (i.e. author not a maintainer)
+  // if so, need to specify the SHA that has been vetted and check that it matches
+  // the latest head SHA for the PR
+  const prAuthorHasWriteAccess = await userHasWriteAccessToRepo({ core, github }, pr.authorUsername, pr.repoOwner, pr.repoName);
+  const externalPr = !prAuthorHasWriteAccess;
+  if (externalPr) {
+    if (commandParts.length === 1) {
+      const message = `:warning: When using \`/test\` on external PRs, the SHA of the checked commit must be specified`;
+      await addActionComment({ github }, pr.repoOwner, pr.repoName, pr.number, comment.username, comment.link, message);
+      return false;
+    }
+    const commentSha = commandParts[1];
+    if (commentSha.length < 7) {
+      const message = `:warning: When specifying a commit SHA it must be at least 7 characters (received \`234567\`)`;
+      await addActionComment({ github }, pr.repoOwner, pr.repoName, pr.number, comment.username, comment.link, message);
+      return false;
+    }
+    if (!pr.headSha.startsWith(commentSha)) {
+      const message = `:warning: The specified SHA \`${commentSha}\` is not the latest commit on the PR. Please validate the latest commit and re-run \`/test\``;
+      await addActionComment({ github }, pr.repoOwner, pr.repoName, pr.number, comment.username, comment.link, message);
+      return false;
+    }
+  }
+
+  const message = `:runner: Running ${testDescription}: https://github.com/${pr.repoOwner}/${pr.repoName}/actions/runs/${runId} (with refid \`${pr.refId}\`)`;
+  await addActionComment({ github }, pr.repoOwner, pr.repoName, pr.number, comment.username, comment.link, message);
+  return true
+
 }
 
 async function prContainsNonDocChanges(github, repoOwner, repoName, prNumber) {
