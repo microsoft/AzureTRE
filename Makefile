@@ -17,7 +17,7 @@ build-and-push-resource-processor: build-resource-processor-vm-porter-image push
 build-and-push-gitea: build-gitea-image push-gitea-image
 build-and-push-guacamole: build-guacamole-image push-guacamole-image
 build-and-push-mlflow: build-mlflow-image push-mlflow-image
-tre-deploy: deploy-core deploy-shared-services show-core-output
+tre-deploy: deploy-core deploy-shared-services db-migrate show-core-output
 deploy-shared-services:
 	$(MAKE) firewall-install \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
