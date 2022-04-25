@@ -39,13 +39,17 @@ public class AzureTREAuthenticationProvider extends AbstractAuthenticationProvid
 
     private AuthenticationProviderService authenticationProviderService;
 
+    public AzureTREAuthenticationProvider() {
+        this.authenticationProviderService = new AuthenticationProviderService();
+    }
+
     public AzureTREAuthenticationProvider(
         AuthenticationProviderService authenticationProviderService) {
-            if (authenticationProviderService == null) {
-                this.authenticationProviderService = new AuthenticationProviderService();
-            } else {
-                this.authenticationProviderService = authenticationProviderService;
-            }
+        if (authenticationProviderService == null) {
+            this.authenticationProviderService = new AuthenticationProviderService();
+        } else {
+            this.authenticationProviderService = authenticationProviderService;
+        }
     }
 
     @Override

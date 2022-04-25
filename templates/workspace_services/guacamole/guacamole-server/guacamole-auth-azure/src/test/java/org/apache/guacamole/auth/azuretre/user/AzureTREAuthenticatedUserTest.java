@@ -19,9 +19,10 @@ package org.apache.guacamole.auth.azuretre.user;
  */
 
 import org.apache.guacamole.net.auth.Credentials;
-import org.junit.Assert;
 import org.junit.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
 
 public class AzureTREAuthenticatedUserTest {
@@ -51,9 +52,10 @@ public class AzureTREAuthenticatedUserTest {
         final AzureTREAuthenticatedUser authenticatedUser =
             new AzureTREAuthenticatedUser(credentialsMock, dummyAccessToken, "dummy_username", "dummy_objectId", null);
 
-        Assert.assertEquals("dummy_objectId", authenticatedUser.getObjectId());
-        Assert.assertEquals("dummy_username", authenticatedUser.getIdentifier());
-        Assert.assertEquals(dummyAccessToken, authenticatedUser.getAccessToken());
-        Assert.assertEquals(credentialsMock, authenticatedUser.getCredentials());
+        assertEquals("dummy_objectId", authenticatedUser.getObjectId());
+        assertEquals("dummy_username", authenticatedUser.getIdentifier());
+        assertEquals(dummyAccessToken, authenticatedUser.getAccessToken());
+        assertEquals(credentialsMock, authenticatedUser.getCredentials());
+        assertNull(authenticatedUser.getAuthenticationProvider());
     }
 }

@@ -83,7 +83,8 @@ public class AzureTREAuthenticationProviderTest {
     @Test
     @SetEnvironmentVariable(key = OAUTH_2_PROXY_JWKS_ENDPOINT, value = JWKS_MOCK_ENDPOINT_URL)
     public void getUserContextSucceed() throws GuacamoleException {
-        try (MockedStatic<ConnectionService> connectionServiceMockedStatic = Mockito.mockStatic(ConnectionService.class)) {
+        try (MockedStatic<ConnectionService> connectionServiceMockedStatic =
+                 Mockito.mockStatic(ConnectionService.class)) {
             connectionServiceMockedStatic.when(() -> ConnectionService.getConnections(authenticatedUser))
                 .thenReturn(new HashMap<String, Connection>());
             when(authenticatedUser.getAccessToken()).thenReturn(MOCKED_TOKEN);
@@ -101,15 +102,17 @@ public class AzureTREAuthenticationProviderTest {
     }
 
     @Test
-    @SetEnvironmentVariable(key = OAUTH_2_PROXY_JWKS_ENDPOINT,value = JWKS_MOCK_ENDPOINT_URL)
+    @SetEnvironmentVariable(key = OAUTH_2_PROXY_JWKS_ENDPOINT, value = JWKS_MOCK_ENDPOINT_URL)
     public void getUserContextFailsWhenTokenValidation() throws GuacamoleException {
-        try (MockedStatic<ConnectionService> connectionServiceMockedStatic = Mockito.mockStatic(ConnectionService.class)) {
+        try (MockedStatic<ConnectionService> connectionServiceMockedStatic =
+                 Mockito.mockStatic(ConnectionService.class)) {
             connectionServiceMockedStatic.when(() -> ConnectionService.getConnections(authenticatedUser))
                 .thenReturn(new HashMap<String, Connection>());
             when(authenticatedUser.getAccessToken()).thenReturn(MOCKED_TOKEN);
             doThrow(new GuacamoleInvalidCredentialsException(
                 "Could not validate token",
-                CredentialsInfo.USERNAME_PASSWORD)).when(authenticationProviderService).validateToken(anyString(), any(UrlJwkProvider.class));
+                CredentialsInfo.USERNAME_PASSWORD))
+                .when(authenticationProviderService).validateToken(anyString(), any(UrlJwkProvider.class));
             assertNull(azureTREAuthenticationProvider.getUserContext(authenticatedUser));
         }
     }
