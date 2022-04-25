@@ -26,6 +26,10 @@ class OperationRepository(BaseRepository):
     def get_timestamp() -> float:
         return datetime.utcnow().timestamp()
 
+    @staticmethod
+    def create_operation_id() -> str:
+        return str(uuid.uuid4())
+
     def create_main_step(self, resource_template: dict, action: str, resource_id: str, status: Status, message: str) -> OperationStep:
         return OperationStep(
             stepId="main",
@@ -39,7 +43,7 @@ class OperationRepository(BaseRepository):
             updatedWhen=self.get_timestamp())
 
     def create_operation_item(self, resource_id: str, status: Status, action: str, message: str, resource_path: str, resource_version: int, user: User, resource_template: ResourceTemplate, resource_repo: ResourceRepository) -> Operation:
-        operation_id = str(uuid.uuid4())
+        operation_id = self.create_operation_id()
         resource_template_dict = resource_template.dict(exclude_none=True)
 
         # if the template has a pipeline defined for this action, copy over all the steps to the ops document

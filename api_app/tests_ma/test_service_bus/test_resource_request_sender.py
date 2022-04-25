@@ -58,3 +58,12 @@ async def test_resource_request_message_generated_correctly(resource_template_re
     sent_message_as_json = json.loads(str(sent_message))
     assert sent_message_as_json["id"] == resource.id
     assert sent_message_as_json["action"] == request_action
+
+
+@patch('service_bus.resource_request_sender.OperationRepository.create_operation_item')
+@patch('service_bus.step_helpers.ServiceBusClient')
+@patch('service_bus.resource_request_sender.ResourceRepository')
+@patch('service_bus.resource_request_sender.ResourceTemplateRepository')
+async def test_multi_step_document_sends_next_step(resource_template_repo, resource_repo, service_bus_client_mock, create_op_item_mock, multi_step_operation):
+    create_op_item_mock.return_value = multi_step_operation
+
