@@ -11,6 +11,7 @@ RUN apt-get update \
     && AZ_REPO=$(lsb_release -cs) \
     && echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | tee /etc/apt/sources.list.d/azure-cli.list \
     && apt-get update && apt-get -y install azure-cli
+    && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 # This is a template Dockerfile for the bundle's invocation image
 # You can customize it to use different base images, install tools and copy configuration files.
