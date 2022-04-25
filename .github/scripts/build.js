@@ -65,7 +65,7 @@ async function getCommandFromComment({ core, context, github }) {
   let command = "none";
   const trimmedFirstLine = commentFirstLine.trim();
   if (trimmedFirstLine[0] === "/") {
-    const parts = trimmedFirstLine.split(' ');
+    const parts = trimmedFirstLine.split(' ').filter(p=>p !== '');
     const commandText = parts[0];
     switch (commandText) {
       case "/test":

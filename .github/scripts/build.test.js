@@ -309,6 +309,35 @@ describe('getCommandFromComment', () => {
         });
       })
 
+      describe(`for '/test  2345678' for external PR (i.e. with latest commit SHA specified but extra space after test)`, () => {
+        test(`should set command to 'run-tests'`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test  2345678',
+            pullRequestNumber: PR_NUMBER.FORK_NON_DOCS_CHANGES,
+            authorUsername: 'non-contributor',
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('run-tests');
+        });
+
+        test(`should add comment with run link`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test  2345678',
+            pullRequestNumber: PR_NUMBER.FORK_NON_DOCS_CHANGES,
+            authorUsername: 'non-contributor',
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(mockGithubRestIssuesCreateComment).toHaveComment({
+            owner: 'someOwner',
+            repo: 'someRepo',
+            issue_number: PR_NUMBER.FORK_NON_DOCS_CHANGES,
+            bodyMatcher: /Running tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `6db070b1`\)/,
+          });
+        });
+      })
+
       describe(`for '/test-extended'`, () => {
         test(`should set command to 'run-tests-extended'`, async () => {
           const context = createCommentContext({
