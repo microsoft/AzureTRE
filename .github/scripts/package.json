@@ -9,6 +9,6 @@
   },
   "scripts": {
     "test": "jest --verbose",
-    "test-watch": "jest --watch --verbose"
+    "test-watch": "jest --watchAll --verbose"
   }
 }
