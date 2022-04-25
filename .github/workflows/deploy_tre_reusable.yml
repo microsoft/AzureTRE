@@ -82,6 +82,9 @@ on:  # yamllint disable-line rule:truthy
       TEST_WORKSPACE_APP_ID:
         description: ""
         required: true
+      TEST_WORKSPACE_APP_SECRET:
+        description: ""
+        required: true
       TEST_ACCOUNT_CLIENT_ID:
         description: ""
         required: true
@@ -263,6 +266,7 @@ jobs:
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
+          TEST_WORKSPACE_APP_SECRET: "${{ secrets.TEST_WORKSPACE_APP_SECRET }}"
           TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
           TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
@@ -311,6 +315,7 @@ jobs:
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
+          TEST_WORKSPACE_APP_SECRET: "${{ secrets.TEST_WORKSPACE_APP_SECRET }}"
           TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
           TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
@@ -345,6 +350,7 @@ jobs:
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
+          TEST_WORKSPACE_APP_SECRET: "${{ secrets.TEST_WORKSPACE_APP_SECRET }}"
           TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
           TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
@@ -417,117 +423,6 @@ jobs:
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
           ACR_NAME: ${{ secrets.ACR_NAME }}
 
-  deploy_shared_services:
-    name: Deploy shared services
-    runs-on: ubuntu-latest
-    needs: [deploy_tre, publish_bundles]
-    environment: CICD
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-        with:
-          persist-credentials: false
-          # if the following values are missing (i.e. not triggered via comment workflow)
-          # then the default checkout will apply
-          ref: ${{ inputs.prRef }}
-
-      - name: Register/deploy firewall
-        uses: ./.github/actions/devcontainer_run_command
-        with:
-          COMMAND: "make shared-service-register-and-deploy DIR=./templates/shared_services/firewall/ BUNDLE_TYPE=shared_service"
-          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
-          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
-          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
-          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
-          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
-          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
-          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          ACR_NAME: ${{ secrets.ACR_NAME }}
-          API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
-          AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
-          TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
-          TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
-          TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
-          TRE_ID: "${{ secrets.TRE_ID }}"
-          LOCATION: "${{ secrets.LOCATION }}"
-
-      - name: Register/deploy nexus
-        uses: ./.github/actions/devcontainer_run_command
-        with:
-          COMMAND: "make shared-service-register-and-deploy DIR=./templates/shared_services/sonatype-nexus/ BUNDLE_TYPE=shared_service"
-          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
-          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
-          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
-          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
-          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
-          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
-          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          ACR_NAME: ${{ secrets.ACR_NAME }}
-          API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
-          AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
-          TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
-          TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
-          TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
-          TRE_ID: "${{ secrets.TRE_ID }}"
-          LOCATION: "${{ secrets.LOCATION }}"
-
-      - name: Register/deploy gitea
-        uses: ./.github/actions/devcontainer_run_command
-        with:
-          COMMAND: "make shared-service-register-and-deploy DIR=./templates/shared_services/gitea/ BUNDLE_TYPE=shared_service"
-          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
-          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
-          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
-          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
-          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
-          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
-          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          ACR_NAME: ${{ secrets.ACR_NAME }}
-          API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
-          AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
-          TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
-          TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
-          TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
-          TRE_ID: "${{ secrets.TRE_ID }}"
-          LOCATION: "${{ secrets.LOCATION }}"
-
-      - name: API Healthcheck
-        uses: ./.github/actions/devcontainer_run_command
-        with:
-          COMMAND: "make api-healthcheck"
-          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
-          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
-          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
-          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
-          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
-          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
-          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
-          AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
-          TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
-          TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
-          TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
-          TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
-          TRE_ID: "${{ secrets.TRE_ID }}"
-          LOCATION: ${{ secrets.LOCATION }}
-          ACR_NAME: ${{ secrets.ACR_NAME }}
-          TF_VAR_terraform_state_container_name:
-            ${{ secrets.TF_STATE_CONTAINER }}
-          TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
-          TF_VAR_mgmt_storage_account_name:
-            ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
-          TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
-          TF_VAR_tre_address_space: ${{ secrets.TRE_ADDRESS_SPACE }}
-          TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
-          TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
-          TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
-          TF_VAR_keyvault_purge_protection_enabled: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
-          TF_VAR_stateful_resources_locked: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
-
   build_additional_images:
     # used to build images NOT used by core infrastructure
     name: Build Additional Docker Images
@@ -566,7 +461,7 @@ jobs:
   register_bundles:
     name: Register Bundles
     runs-on: ubuntu-latest
-    needs: [deploy_shared_services]
+    needs: [publish_bundles, deploy_tre]
     strategy:
       matrix:
         include:
@@ -587,6 +482,12 @@ jobs:
              BUNDLE_DIR: "./templates/workspace_services/gitea"}
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/mlflow"}
+          - {BUNDLE_TYPE: "shared_service",
+             BUNDLE_DIR: "./templates/shared_services/firewall"}
+          - {BUNDLE_TYPE: "shared_service",
+             BUNDLE_DIR: "./templates/shared_services/sonatype-nexus"}
+          - {BUNDLE_TYPE: "shared_service",
+             BUNDLE_DIR: "./templates/shared_services/gitea"}
     environment: CICD
     steps:
       - name: Checkout
@@ -618,11 +519,81 @@ jobs:
           LOCATION: "${{ secrets.LOCATION }}"
           BUNDLE_TYPE: ${{ matrix.BUNDLE_TYPE }}
 
+  deploy_shared_services:
+    name: Deploy shared services
+    runs-on: ubuntu-latest
+    needs: [register_bundles, deploy_tre]
+    environment: CICD
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+          # if the following values are missing (i.e. not triggered via comment workflow)
+          # then the default checkout will apply
+          ref: ${{ inputs.prRef }}
+
+      - name: Register/deploy firewall
+        uses: ./.github/actions/devcontainer_run_command
+        with:
+          COMMAND: "make deploy-shared-service DIR=./templates/shared_services/firewall/ BUNDLE_TYPE=shared_service"
+          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
+          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
+          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
+          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
+          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
+          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+          API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
+          AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
+          TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
+          TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
+          TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
+          TRE_ID: "${{ secrets.TRE_ID }}"
+          LOCATION: "${{ secrets.LOCATION }}"
+
+      - name: API Healthcheck
+        uses: ./.github/actions/devcontainer_run_command
+        with:
+          COMMAND: "make api-healthcheck"
+          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
+          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
+          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
+          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
+          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
+          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
+          AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
+          TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
+          TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
+          TEST_WORKSPACE_APP_SECRET: "${{ secrets.TEST_WORKSPACE_APP_SECRET }}"
+          TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
+          TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
+          TRE_ID: "${{ secrets.TRE_ID }}"
+          LOCATION: ${{ secrets.LOCATION }}
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+          TF_VAR_terraform_state_container_name:
+            ${{ secrets.TF_STATE_CONTAINER }}
+          TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
+          TF_VAR_mgmt_storage_account_name:
+            ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+          TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
+          TF_VAR_tre_address_space: ${{ secrets.TRE_ADDRESS_SPACE }}
+          TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
+          TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
+          TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
+          TF_VAR_keyvault_purge_protection_enabled: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
+          TF_VAR_stateful_resources_locked: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
+
   e2e_tests_smoke:
     name: "Run E2E Tests (Smoke)"
     runs-on: ubuntu-latest
     environment: CICD
-    needs: [register_bundles, build_additional_images]
+    needs: [deploy_shared_services, build_additional_images]
     timeout-minutes: 10
     steps:
       - name: Checkout
@@ -650,6 +621,7 @@ jobs:
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
+          TEST_WORKSPACE_APP_SECRET: "${{ secrets.TEST_WORKSPACE_APP_SECRET }}"
           TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
           TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
@@ -687,7 +659,7 @@ jobs:
     if: ${{ inputs.runExtendedTests }}
     runs-on: ubuntu-latest
     environment: CICD
-    needs: [register_bundles, build_additional_images]
+    needs: [deploy_shared_services, build_additional_images]
     timeout-minutes: 50
     steps:
       - name: Checkout
@@ -715,6 +687,7 @@ jobs:
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
           TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
+          TEST_WORKSPACE_APP_SECRET: "${{ secrets.TEST_WORKSPACE_APP_SECRET }}"
           TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
           TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
           TRE_ID: "${{ secrets.TRE_ID }}"

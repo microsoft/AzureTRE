@@ -8,7 +8,7 @@ RUN bash /tmp/maven_package_and_exit_succesfully.sh
 FROM scratch as test-results
 COPY --from=client_build /target/surefire-reports/* ./
 
-FROM guacamole/guacd:1.3.0
+FROM guacamole/guacd:1.4.0
 
 ARG GUACAMOLE_AZURE_VERSION=0.1.1
 
@@ -53,14 +53,12 @@ COPY ./docker/services /etc/services.d/
 COPY --from=client_build /target/lib/* ${GUACAMOLE_LIB}
 COPY --from=client_build /target/guacamole-auth-tre-${GUACAMOLE_AZURE_VERSION}.jar "${GUACAMOLE_HOME}/extensions/"
 
-RUN wget https://apache.org/dyn/closer.lua/guacamole/1.3.0/binary/guacamole-auth-openid-1.3.0.tar.gz?action=download -O guacamole-auth-openid-1.3.0.tar.gz \
-&& tar zxvpf guacamole-auth-openid-1.3.0.tar.gz && rm guacamole-auth-openid-1.3.0.tar.gz
+RUN wget -O ${GUACAMOLE_HOME}/guacamole.war 'http://apache.org/dyn/closer.cgi?action=download&filename=guacamole/1.4.0/binary/guacamole-1.4.0.war'
 
-RUN cp ./guacamole-auth-openid-1.3.0/guacamole-auth-openid-1.3.0.jar "${GUACAMOLE_HOME}/extensions/"
+RUN mkdir /etc/oauth2
 
-RUN rm -rf ./guacamole-auth-openid-1.3.0
-
-RUN wget -O ${GUACAMOLE_HOME}/guacamole.war 'http://apache.org/dyn/closer.cgi?action=download&filename=guacamole/1.3.0/binary/guacamole-1.3.0.war'
+RUN wget -O  /etc/oauth2/oauth2-proxy-v7.2.1.linux-amd64.tar.gz 'https://github.com/oauth2-proxy/oauth2-proxy/releases/download/v7.2.1/oauth2-proxy-v7.2.1.linux-amd64.tar.gz'
 
 ENTRYPOINT [ "/init" ]
+
 EXPOSE 80 2222

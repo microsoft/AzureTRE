@@ -16,15 +16,17 @@ You must be logged in using Azure CLI with sufficient privileges to modify Azure
 Usage: $0 -n <app-name> [-r <reply-url>] [-w] [-a] [-s] [--automation-account]
 
 Options:
-    -n,--name                  Required. The prefix for the app (registration) names e.g., "TRE", or "Workspace One".
-    -w,--workspace             Create an app registration for a TRE workspace rather than the core TRE API and UI.
-    -a,--admin-consent         Optional, but recommended. Grants admin consent for the app registrations, when this flag is set.
-                               Requires directory admin privileges to the Azure AD in question.
-    -s,--swaggerui-clientid    Optional, when -w and -a are specified the client ID of the swagger app must be provided.
-    -r,--swaggerui-redirecturl Reply/redirect URL, for the Swagger UI app, where the auth server sends the user after authorization.
-    --automation-account       Create an app registration for automation (e.g. CI/CD) to use for registering bundles etc
-                               Can be used with -a to apply admin consent
-    --automation-clientid      Optional, when --workspace is specified the client ID of the automation account can be added to the TRE workspace.
+    -n,--name                   Required. The prefix for the app (registration) names e.g., "TRE", or "Workspace One".
+    -w,--workspace              Create an app registration for a TRE workspace rather than the core TRE API and UI.
+    -a,--admin-consent          Optional, but recommended. Grants admin consent for the app registrations, when this flag is set.
+                                Requires directory admin privileges to the Azure AD in question.
+    -s,--swaggerui-clientid     Optional, when -w and -a are specified the client ID of the swagger app must be provided.
+    -r,--swaggerui-redirecturl  Reply/redirect URL, for the Swagger UI app, where the auth server sends the user after authorization.
+    --automation-account        Create an app registration for automation (e.g. CI/CD) to use for registering bundles etc
+                                Can be used with -a to apply admin consent
+    --automation-clientid       Optional, when --workspace is specified the client ID of the automation account can be added to the TRE workspace.
+    --read-write-all-permission Optional, Whether to grant the application "Application.ReadWrite.All" permission.
+                                This is used when you wish TRE to be able to automatically create workspace app registrations.
 
 Examples:
     1. $0 -n TRE -r https://mytre.region.cloudapp.azure.com/api/docs/oauth2-redirect -a
@@ -59,6 +61,7 @@ declare currentUserId=""
 declare spId=""
 declare createAutomationAccount=0
 declare automationAppId=""
+declare applicationReadWriteAll=0
 declare msGraphUri="https://graph.microsoft.com/v1.0"
 
 # Initialize parameters specified from command line
@@ -91,6 +94,10 @@ while [[ $# -gt 0 ]]; do
         --automation-clientid)
             automationAppId=$2
             shift 2
+        ;;
+        --read-write-all-permission)
+            applicationReadWriteAll=1
+            shift 1
         ;;
         *)
             echo "Invalid option: $1."
@@ -257,6 +264,7 @@ msGraphProfileScopeId="14dad69e-099b-42c9-810b-d002981feec1"
 msGraphObjectId=$(az ad sp show --id ${msGraphAppId} --query "objectId" --output tsv)
 directoryReadAllId=$(az ad sp show --id ${msGraphAppId} --query "appRoles[?value=='Directory.Read.All'].id" --output tsv)
 userReadAllId=$(az ad sp show --id ${msGraphAppId} --query "appRoles[?value=='User.Read.All'].id" --output tsv)
+applicationReadWriteAllId=$(az ad sp show --id ${msGraphAppId} --query "appRoles[?value=='Application.ReadWrite.All'].id" --output tsv)
 applicationReadWriteOwnedById=$(az ad sp show --id ${msGraphAppId} --query "appRoles[?value=='Application.ReadWrite.OwnedBy'].id" --output tsv)
 
 function get_msgraph_scope() {
@@ -282,12 +290,20 @@ JSON
 roleUserReadAll=$(get_msgraph_role "User.Read.All" )
 roleDirectoryReadAll=$(get_msgraph_role "Directory.Read.All" )
 roleApplicationReadWriteOwnedBy=$(get_msgraph_role "Application.ReadWrite.OwnedBy" )
+roleApplicationReadWriteAll=""
+
+# Conditionally set whether this app can create other applications. Note the comma
+# at the end of roleApplicationReadWriteAll so that the array is maintained if present.
+if [ "$applicationReadWriteAll" -eq 1 ]; then
+  roleApplicationReadWriteAll="$(get_msgraph_role 'Application.ReadWrite.All' ),"
+fi
 
 apiRequiredResourceAccess=$(jq -c . << JSON
 [
     {
         "resourceAppId": "${msGraphAppId}",
         "resourceAccess": [
+            ${roleApplicationReadWriteAll}
             ${roleUserReadAll},
             ${roleDirectoryReadAll}
         ]
@@ -499,6 +515,12 @@ else
       grant_admin_consent "${spId}" "$msGraphObjectId" "${directoryReadAllId}"
       wait_for_new_service_principal "${spId}"
       grant_admin_consent "${spId}" "${msGraphObjectId}" "${userReadAllId}"
+
+      # Global Admin permission is not given by default.
+      if [ "$applicationReadWriteAll" -eq 1 ]; then
+        wait_for_new_service_principal "$spId"
+        grant_admin_consent "$spId" "$msGraphObjectId" "$applicationReadWriteAllId"
+      fi
   fi
 
   # Now create the app for the Swagger UI
