@@ -62,11 +62,11 @@ parameters:
     default: false
 
 outputs:
-  - name: WorkspaceOwner
+  - name: WorkspaceOwnerAppRoleId
     type: string
     applyTo:
       - install
-  - name: WorkspaceResearcher
+  - name: WorkspaceResearcherAppRoleId
     type: string
     applyTo:
       - install
@@ -110,8 +110,8 @@ install:
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.id }}"
       outputs:
-        - name: WorkspaceOwner
-        - name: WorkspaceResearcher
+        - name: WorkspaceOwnerAppRoleId
+        - name: WorkspaceResearcherAppRoleId
         - name: client_id
         - name: sp_id
 

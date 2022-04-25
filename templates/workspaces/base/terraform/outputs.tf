@@ -2,11 +2,11 @@ output "workspace_resource_name_suffix" {
   value = local.workspace_resource_name_suffix
 }
 
-output "WorkspaceOwner" {
+output "WorkspaceOwnerAppRoleId" {
   value = var.register_aad_application ? module.aad[0].app_role_workspace_owner_id : ""
 }
 
-output "WorkspaceResearcher" {
+output "WorkspaceResearcherAppRoleId" {
   value = var.register_aad_application ? module.aad[0].app_role_workspace_researcher_id : ""
 }
 

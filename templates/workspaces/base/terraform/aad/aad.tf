@@ -75,16 +75,6 @@ resource "azuread_application" "workspace" {
       type = "Scope"                                # Delegated
     }
   }
-
-  # Add this when Guacamole is added
-  # web {
-  #   redirect_uris = ["https://guacomole-here/account"]
-
-  #   implicit_grant {
-  #     access_token_issuance_enabled = true
-  #     id_token_issuance_enabled     = true
-  #   }
-  # }
 }
 
 resource "azuread_service_principal" "workspace" {
