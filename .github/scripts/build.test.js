@@ -166,28 +166,29 @@ describe('getCommandFromComment', () => {
         });
       })
 
-
-      test(`for '/test-extended' should set command to 'run-tests-extended'`, async () => {
-        const context = createCommentContext({
-          username: 'admin',
-          body: '/test-extended',
+      describe(`for '/test-extended'`, () => {
+        test(`should set command to 'run-tests-extended'`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test-extended',
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('run-tests-extended');
         });
-        await getCommandFromComment({ core, context, github });
-        expect(outputFor(mockCoreSetOutput, 'command')).toBe('run-tests-extended');
-      });
 
-      test(`for '/test-extended' should add comment with run link`, async () => {
-        const context = createCommentContext({
-          username: 'admin',
-          body: '/test-extended',
-          pullRequestNumber: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
-        });
-        await getCommandFromComment({ core, context, github });
-        expect(mockGithubRestIssuesCreateComment).toHaveComment({
-          owner: 'someOwner',
-          repo: 'someRepo',
-          issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
-          bodyMatcher: /Running extended tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `cbce50da`\)/,
+        test(`should add comment with run link`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test-extended',
+            pullRequestNumber: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(mockGithubRestIssuesCreateComment).toHaveComment({
+            owner: 'someOwner',
+            repo: 'someRepo',
+            issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+            bodyMatcher: /Running extended tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `cbce50da`\)/,
+          });
         });
       });
 
@@ -307,99 +308,120 @@ describe('getCommandFromComment', () => {
         });
       })
 
-
-      test(`for '/test-force-approve' should set command to 'test-force-approve'`, async () => {
-        const context = createCommentContext({
-          username: 'admin',
-          body: '/test-force-approve',
-        });
-        await getCommandFromComment({ core, context, github });
-        expect(mockCoreSetOutput).toHaveBeenCalledWith('command', 'test-force-approve');
-        expect(outputFor(mockCoreSetOutput, 'command')).toBe('test-force-approve');
-      });
-
-      test(`for '/test-force-approve' should add comment`, async () => {
-        const context = createCommentContext({
-          username: 'admin',
-          body: '/test-force-approve',
-        });
-        await getCommandFromComment({ core, context, github });
-        expect(mockGithubRestIssuesCreateComment).toHaveComment({
-          owner: 'someOwner',
-          repo: 'someRepo',
-          issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
-          bodyMatcher: /Marking tests as complete \(for commit 0123456789\)/,
-        });
-      });
-
-      test(`for '/test-destroy-env' should set command to 'test-destroy-env'`, async () => {
-        const context = createCommentContext({
-          username: 'admin',
-          body: '/test-destroy-env',
-        });
-        await getCommandFromComment({ core, context, github });
-        expect(outputFor(mockCoreSetOutput, 'command')).toBe('test-destroy-env');
-      });
-
-      test(`for '/help' should add help comment and set command to 'none'`, async () => {
-        const context = createCommentContext({
-          username: 'admin',
-          body: '/help',
-          pullRequestNumber: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
-        });
-        await getCommandFromComment({ core, context, github });
-        expect(mockGithubRestIssuesCreateComment).toHaveComment({
-          owner: 'someOwner',
-          repo: 'someRepo',
-          issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
-          bodyMatcher: /Hello!\n\nYou can use the following commands:/,
-        });
-      });
-
-      test(`for '/not-a-command' should add help comment and set command to 'none'`, async () => {
-        const context = createCommentContext({
-          username: 'admin',
-          body: '/not-a-command',
-          pullRequestNumber: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
-        });
-        await getCommandFromComment({ core, context, github });
-        expect(outputFor(mockCoreSetOutput, 'command')).toBe('none');
-        expect(mockGithubRestIssuesCreateComment).toHaveComment({
-          owner: 'someOwner',
-          repo: 'someRepo',
-          issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
-          bodyMatcher: /`\/not-a-command` is not recognised as a valid command.\n\nYou can use the following commands:/,
-        });
-      });
-
-
-      describe('and multi-line comments', () => {
-        test(`when first line of comment is '/test' should set command to 'run-tests'`, async () => {
+      describe(`for '/test-force-approve'`, () => {
+        test(`should set command to 'test-force-approve'`, async () => {
           const context = createCommentContext({
             username: 'admin',
-            body: `/test
-Other comment content
-goes here`,
+            body: '/test-force-approve',
           });
           await getCommandFromComment({ core, context, github });
-          expect(outputFor(mockCoreSetOutput, 'command')).toBe('run-tests');
+          expect(mockCoreSetOutput).toHaveBeenCalledWith('command', 'test-force-approve');
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('test-force-approve');
         });
 
-        test(`when comment doesn't start with '/' (even if later lines contain '/test') should set command to 'none' `, async () => {
+        test(`should add comment`, async () => {
           const context = createCommentContext({
             username: 'admin',
-            body: `Non-command comment
-/test
-Other comment content
-goes here`,
+            body: '/test-force-approve',
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(mockGithubRestIssuesCreateComment).toHaveComment({
+            owner: 'someOwner',
+            repo: 'someRepo',
+            issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+            bodyMatcher: /Marking tests as complete \(for commit 0123456789\)/,
+          });
+        });
+      });
+
+      describe(`for '/test-destroy-env'`, () => {
+        test(`should set command to 'test-destroy-env'`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test-destroy-env',
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('test-destroy-env');
+        });
+      });
+
+      describe(`for '/help'`, () => {
+        test(`should set command to 'none'`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/help',
+            pullRequestNumber: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
           });
           await getCommandFromComment({ core, context, github });
           expect(outputFor(mockCoreSetOutput, 'command')).toBe('none');
         });
+        test(`should add help comment`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/help',
+            pullRequestNumber: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(mockGithubRestIssuesCreateComment).toHaveComment({
+            owner: 'someOwner',
+            repo: 'someRepo',
+            issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+            bodyMatcher: /Hello!\n\nYou can use the following commands:/,
+          });
+        });
       });
 
+      describe(`for '/not-a-command'`, () => {
+        test(`should set command to 'none'`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/not-a-command',
+            pullRequestNumber: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('none');
+        });
+        test(`should add help comment`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/not-a-command',
+            pullRequestNumber: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(mockGithubRestIssuesCreateComment).toHaveComment({
+            owner: 'someOwner',
+            repo: 'someRepo',
+            issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+            bodyMatcher: /`\/not-a-command` is not recognised as a valid command.\n\nYou can use the following commands:/,
+          });
+        });
+      });
     });
 
+    describe('and multi-line comments', () => {
+      test(`when first line of comment is '/test' should set command to 'run-tests'`, async () => {
+        const context = createCommentContext({
+          username: 'admin',
+          body: `/test
+Other comment content
+goes here`,
+        });
+        await getCommandFromComment({ core, context, github });
+        expect(outputFor(mockCoreSetOutput, 'command')).toBe('run-tests');
+      });
+
+      test(`when comment doesn't start with '/' (even if later lines contain '/test') should set command to 'none' `, async () => {
+        const context = createCommentContext({
+          username: 'admin',
+          body: `Non-command comment
+/test
+Other comment content
+goes here`,
+        });
+        await getCommandFromComment({ core, context, github });
+        expect(outputFor(mockCoreSetOutput, 'command')).toBe('none');
+      });
+    });
 
     describe('PR context', () => {
       test('should set prRef output', async () => {
