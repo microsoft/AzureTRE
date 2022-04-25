@@ -71,18 +71,7 @@ public class ConnectionService {
                     if (templateParameters.has("hostname") && templateParameters.has("ip")) {
                         final String azureResourceId = templateParameters.getString("hostname");
                         final String ip = templateParameters.getString("ip");
-                        config.setProtocol("rdp");
-                        config.setParameter("hostname", ip);
-                        config.setParameter("resize-method", "display-update");
-                        config.setParameter("azure-resource-id", azureResourceId);
-                        config.setParameter("port", "3389");
-                        config.setParameter("ignore-cert", "true");
-                        config.setParameter("disable-copy", System.getenv("GUAC_DISABLE_COPY"));
-                        config.setParameter("disable-paste", System.getenv("GUAC_DISABLE_PASTE"));
-                        config.setParameter("enable-drive", System.getenv("GUAC_ENABLE_DRIVE"));
-                        config.setParameter("drive-name", System.getenv("GUAC_DRIVE_NAME"));
-                        config.setParameter("drive-path", System.getenv("GUAC_DRIVE_PATH"));
-                        config.setParameter("disable-download", System.getenv("GUAC_DISABLE_DOWNLOAD"));
+                        setConfig(config, azureResourceId, ip);
                         LOGGER.info("Adding a VM: {}", ip);
                         configs.putIfAbsent(config.getParameter("hostname"), config);
                     } else {
@@ -96,6 +85,21 @@ public class ConnectionService {
         }
 
         return configs;
+    }
+
+    private static void setConfig(final GuacamoleConfiguration config, final String azureResourceId, final String ip) {
+        config.setProtocol("rdp");
+        config.setParameter("hostname", ip);
+        config.setParameter("resize-method", "display-update");
+        config.setParameter("azure-resource-id", azureResourceId);
+        config.setParameter("port", "3389");
+        config.setParameter("ignore-cert", "true");
+        config.setParameter("disable-copy", System.getenv("GUAC_DISABLE_COPY"));
+        config.setParameter("disable-paste", System.getenv("GUAC_DISABLE_PASTE"));
+        config.setParameter("enable-drive", System.getenv("GUAC_ENABLE_DRIVE"));
+        config.setParameter("drive-name", System.getenv("GUAC_DRIVE_NAME"));
+        config.setParameter("drive-path", System.getenv("GUAC_DRIVE_PATH"));
+        config.setParameter("disable-download", System.getenv("GUAC_DISABLE_DOWNLOAD"));
     }
 
     private static JSONArray getVMsFromProjectAPI(final AzureTREAuthenticatedUser user) throws GuacamoleException {
