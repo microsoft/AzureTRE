@@ -58,7 +58,6 @@ public class AuthenticationProviderServiceTest {
     String issuer = "dummy_issuer";
 
     private static PublicKey getPublicKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
-
         // openssl rsa -in private.pem -outform PEM -pubout -out public.pem
         String rsaPublicKey =
             "-----BEGIN PUBLIC KEY-----"
@@ -154,7 +153,6 @@ public class AuthenticationProviderServiceTest {
 
     private String generateEmptyRolesJWTToken()
         throws IllegalArgumentException, NoSuchAlgorithmException, InvalidKeySpecException {
-
         final Algorithm algorithm =
             Algorithm.RSA256((RSAPublicKey) getPublicKey(), (RSAPrivateKey) getPrivateKey());
 
@@ -183,7 +181,6 @@ public class AuthenticationProviderServiceTest {
 
     private String internalGenerateValidJWTToken(String validRole)
         throws IllegalArgumentException, NoSuchAlgorithmException, InvalidKeySpecException {
-
         final Algorithm algorithm =
             Algorithm.RSA256((RSAPublicKey) getPublicKey(), (RSAPrivateKey) getPrivateKey());
 
@@ -224,7 +221,6 @@ public class AuthenticationProviderServiceTest {
 
     private String generateExpiredJWTToken()
         throws IllegalArgumentException, NoSuchAlgorithmException, InvalidKeySpecException {
-
         final Algorithm algorithm =
                 Algorithm.RSA256((RSAPublicKey) getPublicKey(), (RSAPrivateKey) getPrivateKey());
 
@@ -253,7 +249,6 @@ public class AuthenticationProviderServiceTest {
 
     @Test
     public void validateTokenFailsWhenNoNeededRole() throws Exception {
-
         final String jwtToken = generateValidJWTTokenWithWrongRole();
         final PublicKey publicKey = getPublicKey();
         final Algorithm algorithm = Algorithm.RSA256((RSAPublicKey) publicKey, null);
@@ -289,7 +284,6 @@ public class AuthenticationProviderServiceTest {
     }
 
     private void validateTokenSucceedWhenValidRole(String role) throws Exception {
-
         final String jwtToken = internalGenerateValidJWTToken(role);
         final PublicKey publicKey = getPublicKey();
         final Algorithm algorithm = Algorithm.RSA256((RSAPublicKey) publicKey, null);
@@ -330,7 +324,6 @@ public class AuthenticationProviderServiceTest {
 
     @Test
     public void validateTokenThrowsWhenNoRole() throws Exception {
-
         final String jwtToken = generateNoRolesJWTToken();
 
         final PublicKey publicKey = getPublicKey();
@@ -368,7 +361,6 @@ public class AuthenticationProviderServiceTest {
 
     @Test
     public void validateTokenThrowsWhenEmptyRole() throws Exception {
-
         final String jwtToken = generateEmptyRolesJWTToken();
 
         final PublicKey publicKey = getPublicKey();
@@ -406,7 +398,6 @@ public class AuthenticationProviderServiceTest {
 
     @Test
     public void validateTokenThrowsWhenExpiredToken() throws Exception {
-
         final String jwtToken = generateExpiredJWTToken();
 
         final PublicKey publicKey = getPublicKey();

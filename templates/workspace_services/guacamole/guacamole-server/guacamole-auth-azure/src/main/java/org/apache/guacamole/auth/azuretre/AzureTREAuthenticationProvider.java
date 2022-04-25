@@ -37,7 +37,15 @@ public class AzureTREAuthenticationProvider extends AbstractAuthenticationProvid
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AzureTREAuthenticationProvider.class);
 
-    public AzureTREAuthenticationProvider() {
+    private AuthenticationProviderService authenticationProviderService;
+
+    public AzureTREAuthenticationProvider(
+        AuthenticationProviderService authenticationProviderService) {
+            if (authenticationProviderService == null) {
+                this.authenticationProviderService = new AuthenticationProviderService();
+            } else {
+                this.authenticationProviderService = authenticationProviderService;
+            }
     }
 
     @Override
@@ -74,8 +82,6 @@ public class AzureTREAuthenticationProvider extends AbstractAuthenticationProvid
             final AzureTREAuthenticatedUser user = (AzureTREAuthenticatedUser) authenticatedUser;
             final String accessToken = user.getAccessToken();
 
-            final AuthenticationProviderService authProviderService = new AuthenticationProviderService();
-
             final UserContext treUserContext = new UserContext(this);
             treUserContext.init(user);
 
@@ -90,7 +96,7 @@ public class AzureTREAuthenticationProvider extends AbstractAuthenticationProvid
                 LOGGER.info("Validating token");
                 final UrlJwkProvider jwkProvider =
                     new UrlJwkProvider(new URL(System.getenv("OAUTH2_PROXY_JWKS_ENDPOINT")));
-                authProviderService.validateToken(accessToken, jwkProvider);
+                authenticationProviderService.validateToken(accessToken, jwkProvider);
             }
             catch (final Exception ex) {
                 // Failed to validate the token

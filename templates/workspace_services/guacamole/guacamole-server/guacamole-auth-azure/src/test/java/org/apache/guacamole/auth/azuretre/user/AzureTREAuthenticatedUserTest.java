@@ -46,7 +46,6 @@ public class AzureTREAuthenticatedUserTest {
 
     @Test
     public void authenticatedUserReturnsClaims() {
-
         final Credentials credentialsMock = mock(Credentials.class);
 
         final AzureTREAuthenticatedUser authenticatedUser =
