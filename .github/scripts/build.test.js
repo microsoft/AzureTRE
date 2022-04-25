@@ -166,6 +166,33 @@ describe('getCommandFromComment', () => {
         });
       });
 
+      describe(`for '/test' for non-mergeable PR`, () => {
+        test(`should set command to 'none'`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test',
+            pullRequestNumber: PR_NUMBER.UPSTREAM_NON_MERGEABLE,
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('none');
+        });
+
+        test(`should add comment with for skipping checks`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test',
+            pullRequestNumber: PR_NUMBER.UPSTREAM_NON_MERGEABLE,
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(mockGithubRestIssuesCreateComment).toHaveComment({
+            owner: 'someOwner',
+            repo: 'someRepo',
+            issue_number: PR_NUMBER.UPSTREAM_NON_MERGEABLE,
+            bodyMatcher: /Cannot run tests as PR is not mergeable. Ensure that the PR is open and doesn't have any conflicts./,
+          });
+        });
+      });
+
       describe(`for '/test' for external PR (i.e. without commit SHA specified)`, () => {
         test(`should set command to 'none'`, async () => {
           const context = createCommentContext({

@@ -38,6 +38,7 @@ const PR_NUMBER = {
   UPSTREAM_NON_DOCS_CHANGES: 123,
   UPSTREAM_DOCS_ONLY_CHANGES: 125,
   FORK_NON_DOCS_CHANGES: 456,
+  UPSTREAM_NON_MERGEABLE: 600,
 }
 
 function createGitHubContext() {
@@ -102,6 +103,7 @@ function createGitHubContext() {
                         repo: { full_name: 'someOwner/someRepo' },
                       },
                       merge_commit_sha: '123456789a',
+                      mergeable: true,
                     },
                   }
                 case PR_NUMBER.UPSTREAM_DOCS_ONLY_CHANGES: // PR from the upstream repo with docs-only changes
@@ -113,6 +115,7 @@ function createGitHubContext() {
                         repo: { full_name: 'someOwner/someRepo' },
                       },
                       merge_commit_sha: '123456789a',
+                      mergeable: true,
                     },
                   }
                 case PR_NUMBER.FORK_NON_DOCS_CHANGES: // PR from a forked repo
@@ -124,6 +127,19 @@ function createGitHubContext() {
                         repo: { full_name: 'anotherOwner/someRepo' },
                       },
                       merge_commit_sha: '3456789abc',
+                      mergeable: true,
+                    },
+                  }
+                case PR_NUMBER.UPSTREAM_NON_MERGEABLE: // PR with mergable==false
+                  return {
+                    data: {
+                      head: {
+                        ref: 'pr-head-ref',
+                        sha: '23456789ab',
+                        repo: { full_name: 'anotherOwner/someRepo' },
+                      },
+                      merge_commit_sha: '3456789abc',
+                      mergeable: false,
                     },
                   }
               }
@@ -134,10 +150,12 @@ function createGitHubContext() {
             if (params.owner === 'someOwner'
               && params.repo === 'someRepo') {
               switch (params.pull_number) {
-                case PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES: // PR from the upstream repo with non-docs changes
-                case PR_NUMBER.FORK_NON_DOCS_CHANGES: // PR from a forked repo
+                case PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES:
+                case PR_NUMBER.FORK_NON_DOCS_CHANGES:
+                case PR_NUMBER.UPSTREAM_NON_MERGEABLE:
                   return [{ filename: 'test.py' }, { filename: 'test.md' }];
-                case PR_NUMBER.UPSTREAM_DOCS_ONLY_CHANGES: // PR from the upstream repo with docs-only changes
+
+                case PR_NUMBER.UPSTREAM_DOCS_ONLY_CHANGES:
                   return [{ filename: 'mkdocs.yml' }, { filename: 'test.md' }, { filename: 'docs/README.md' }];
               }
             }

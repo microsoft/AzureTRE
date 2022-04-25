@@ -78,7 +78,7 @@ async function getCommandFromComment({ core, context, github }) {
             break;
           }
 
-          const runTests = await handleTestCommand({ core, github }, parts, "tests", runId, { number: prNumber, authorUsername: prAuthorUsername, repoOwner, repoName, headSha: prHeadSha, refId: prRefId }, { username: commentUsername, link: commentLink });
+          const runTests = await handleTestCommand({ core, github }, parts, "tests", runId, { number: prNumber, authorUsername: prAuthorUsername, repoOwner, repoName, headSha: prHeadSha, refId: prRefId, details: pr }, { username: commentUsername, link: commentLink });
           if (runTests) {
             command = "run-tests";
           }
@@ -87,7 +87,7 @@ async function getCommandFromComment({ core, context, github }) {
 
       case "/test-extended":
         {
-          const runTests = await handleTestCommand({ core, github }, parts, "extended tests", runId, { number: prNumber, authorUsername: prAuthorUsername, repoOwner, repoName, headSha: prHeadSha, refId: prRefId }, { username: commentUsername, link: commentLink });
+          const runTests = await handleTestCommand({ core, github }, parts, "extended tests", runId, { number: prNumber, authorUsername: prAuthorUsername, repoOwner, repoName, headSha: prHeadSha, refId: prRefId, details: pr }, { username: commentUsername, link: commentLink });
           if (runTests) {
             command = "run-tests-extended";
           }
@@ -123,6 +123,15 @@ async function getCommandFromComment({ core, context, github }) {
 }
 
 async function handleTestCommand({ core, github }, commandParts, testDescription, runId, pr, comment) {
+
+  if (!pr.details.mergeable) {
+    // Since we use the potential merge commit as the ref to checkout, we can only run if there is such a commit
+    // If the PR isn't mergeable, add a comment indicating that the merge issue needs addressing
+    const message = `:warning: Cannot run tests as PR is not mergeable. Ensure that the PR is open and doesn't have any conflicts.`;
+    await addActionComment({ github }, pr.repoOwner, pr.repoName, pr.number, comment.username, comment.link, message);
+    return false;
+  }
+
   // check if this is an external PR (i.e. author not a maintainer)
   // if so, need to specify the SHA that has been vetted and check that it matches
   // the latest head SHA for the PR
