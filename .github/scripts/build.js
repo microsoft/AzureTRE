@@ -9,6 +9,7 @@ async function getCommandFromComment({ core, context, github }) {
   const prNumber = context.payload.issue.number;
   const commentLink = context.payload.comment.html_url;
   const runId = context.runId;
+  const prAuthorUsername = context.payload.issue.user.login;
 
   // only allow actions for users with write access
   if (!await userHasWriteAccessToRepo({ core, github }, commentUsername, repoOwner, repoName)) {
@@ -19,6 +20,7 @@ async function getCommandFromComment({ core, context, github }) {
       issue_number: prNumber,
       body: `Sorry, @${commentUsername}, only users with write access to the repo can run pr-bot commands.`
     });
+    logAndSetOutput(core, "command", "none");
     return "none";
   }
 
@@ -57,23 +59,55 @@ async function getCommandFromComment({ core, context, github }) {
   let command = "none";
   const trimmedFirstLine = commentFirstLine.trim();
   if (trimmedFirstLine[0] === "/") {
-    switch (trimmedFirstLine) {
+    const parts = trimmedFirstLine.split(' ');
+    const commandText = parts[0];
+    switch (commandText) {
       case "/test":
         {
-          if (gotNonDocChanges) {
-            command = "run-tests";
-            const message = `:runner: Running tests: https://github.com/${repoFullName}/actions/runs/${runId} (with refid \`${prRefId}\`)`;
-            await addActionComment({ github }, repoOwner, repoName, prNumber, commentUsername, commentLink, message);
-          } else {
+          // Docs only changes don't run tests with secrets so can run regardless of whether
+          if (!gotNonDocChanges) {
             command = "test-force-approve";
             const message = `:white_check_mark: PR only contains docs changes - marking tests as complete`;
             await addActionComment({ github }, repoOwner, repoName, prNumber, commentUsername, commentLink, message);
+            break;
           }
+
+          // check if this is an external PR (i.e. author not a maintainer)
+          // if so, need to specify the SHA that has been vetted and check that it matches
+          // the latest head SHA for the PR
+          const prAuthorHasWriteAccess = await userHasWriteAccessToRepo({ core, github }, prAuthorUsername, repoOwner, repoName);
+          const externalPr = !prAuthorHasWriteAccess;
+          if (externalPr) {
+            if (parts.length === 1) {
+              command = "none"
+              const message = `:warning: When using \`/test\` on external PRs, the SHA of the checked commit must be specified`;
+              await addActionComment({ github }, repoOwner, repoName, prNumber, commentUsername, commentLink, message);
+              break;
+            }
+            const commentSha = parts[1];
+            if (commentSha.length < 7) {
+              command = "none"
+              const message = `:warning: When specifying a commit SHA it must be at least 7 characters (received \`234567\`)`;
+              await addActionComment({ github }, repoOwner, repoName, prNumber, commentUsername, commentLink, message);
+              break;
+            }
+            if (!prHeadSha.startsWith(commentSha)) {
+              command = "none"
+              const message = `:warning: The specified SHA \`${commentSha}\` is not the latest commit on the PR. Please validate the latest commit and re-run \`/test\``;
+              await addActionComment({ github }, repoOwner, repoName, prNumber, commentUsername, commentLink, message);
+              break;
+            }
+          }
+
+          command = "run-tests";
+          const message = `:runner: Running tests: https://github.com/${repoFullName}/actions/runs/${runId} (with refid \`${prRefId}\`)`;
+          await addActionComment({ github }, repoOwner, repoName, prNumber, commentUsername, commentLink, message);
           break;
         }
 
       case "/test-extended":
         {
+          // TODO - need to add SHA for /test-extended as well as /test ****************************************************************************************************************
           command = "run-tests-extended";
           const message = `:runner: Running extended tests: https://github.com/${repoFullName}/actions/runs/${runId} (with refid \`${prRefId}\`)`;
           await addActionComment({ github }, repoOwner, repoName, prNumber, commentUsername, commentLink, message);
@@ -83,7 +117,7 @@ async function getCommandFromComment({ core, context, github }) {
       case "/test-force-approve":
         {
           command = "test-force-approve";
-            const message = `:white_check_mark: Marking tests as complete (for commit ${prHeadSha})`;
+          const message = `:white_check_mark: Marking tests as complete (for commit ${prHeadSha})`;
           await addActionComment({ github }, repoOwner, repoName, prNumber, commentUsername, commentLink, message);
           break;
         }
@@ -98,8 +132,8 @@ async function getCommandFromComment({ core, context, github }) {
         break;
 
       default:
-        core.warning(`'${trimmedFirstLine}' not recognised as a valid command`);
-        await showHelp({ github }, repoOwner, repoName, prNumber, commentUsername, commentLink, trimmedFirstLine);
+        core.warning(`'${commandText}' not recognised as a valid command`);
+        await showHelp({ github }, repoOwner, repoName, prNumber, commentUsername, commentLink, commandText);
         command = "none";
         break;
     }
@@ -177,7 +211,7 @@ You can use the following commands:
 &nbsp;&nbsp;&nbsp;&nbsp;/test-destroy-env - delete the validation environment for a PR (e.g. to enable testing a deployment from a clean start after previous tests)
 &nbsp;&nbsp;&nbsp;&nbsp;/help - show this help`;
 
-  await addActionComment({github}, repoOwner, repoName, prNumber, commentUser, commentLink, body);
+  await addActionComment({ github }, repoOwner, repoName, prNumber, commentUser, commentLink, body);
 
 }
 async function addActionComment({ github }, repoOwner, repoName, prNumber, commentUser, commentLink, message) {
