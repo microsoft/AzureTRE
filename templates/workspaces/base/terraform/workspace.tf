@@ -1,24 +1,3 @@
-# Azure Provider source and version being used
-terraform {
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "=3.1.0"
-    }
-  }
-
-  backend "azurerm" {}
-}
-
-provider "azurerm" {
-  features {
-    key_vault {
-      purge_soft_delete_on_destroy    = var.keyvault_purge_protection_enabled ? false : true
-      recover_soft_deleted_key_vaults = false
-    }
-  }
-}
-
 resource "azurerm_resource_group" "ws" {
   location = var.location
   name     = "rg-${local.workspace_resource_name_suffix}"
@@ -42,4 +21,12 @@ module "network" {
   address_space          = var.address_space
   ws_resource_group_name = azurerm_resource_group.ws.name
   tre_resource_id        = var.tre_resource_id
+}
+
+module "aad" {
+  source                         = "./aad"
+  count                          = var.register_aad_application ? 1 : 0
+  key_vault_id                   = azurerm_key_vault.kv.id
+  workspace_resource_name_suffix = local.workspace_resource_name_suffix
+  depends_on                     = [azurerm_key_vault_access_policy.deployer]
 }
