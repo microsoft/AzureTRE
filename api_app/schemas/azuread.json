@@ -10,7 +10,7 @@
     "properties": {
         "app_id": {
             "type": "string",
-            "title": "App Registration ID",
+            "title": "Application (Client) ID",
             "description": "AAD App registration of the workspace"
         }
     }

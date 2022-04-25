@@ -7,8 +7,7 @@
   "required": [
       "display_name",
       "description",
-      "address_space_size",
-      "app_id"
+      "address_space_size"
   ],
   "properties": {
       "display_name": {
@@ -22,12 +21,6 @@
           "title": "Description of the workspace",
           "description": "Description of the workspace",
           "updateable": true
-      },
-      "app_id": {
-        "type": "string",
-        "title": "The authentication client id of the workspace",
-        "description": "This is the workspace client id, or 'auto_create' if you want the workspace generated.",
-        "updateable": false
       },
       "address_space_size": {
         "type": "string",
