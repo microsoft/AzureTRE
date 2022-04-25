@@ -87,10 +87,10 @@ async function getCommandFromComment({ core, context, github }) {
 
       case "/test-extended":
         {
-          // TODO - need to add SHA for /test-extended as well as /test ****************************************************************************************************************
-          command = "run-tests-extended";
-          const message = `:runner: Running extended tests: https://github.com/${repoFullName}/actions/runs/${runId} (with refid \`${prRefId}\`)`;
-          await addActionComment({ github }, repoOwner, repoName, prNumber, commentUsername, commentLink, message);
+          const runTests = await handleTestCommand({ core, github }, parts, "extended tests", runId, { number: prNumber, authorUsername: prAuthorUsername, repoOwner, repoName, headSha: prHeadSha, refId: prRefId }, { username: commentUsername, link: commentLink });
+          if (runTests) {
+            command = "run-tests-extended";
+          }
           break;
         }
 
@@ -126,11 +126,12 @@ async function handleTestCommand({ core, github }, commandParts, testDescription
   // check if this is an external PR (i.e. author not a maintainer)
   // if so, need to specify the SHA that has been vetted and check that it matches
   // the latest head SHA for the PR
+  const command = commandParts[0]
   const prAuthorHasWriteAccess = await userHasWriteAccessToRepo({ core, github }, pr.authorUsername, pr.repoOwner, pr.repoName);
   const externalPr = !prAuthorHasWriteAccess;
   if (externalPr) {
     if (commandParts.length === 1) {
-      const message = `:warning: When using \`/test\` on external PRs, the SHA of the checked commit must be specified`;
+      const message = `:warning: When using \`${command}\` on external PRs, the SHA of the checked commit must be specified`;
       await addActionComment({ github }, pr.repoOwner, pr.repoName, pr.number, comment.username, comment.link, message);
       return false;
     }

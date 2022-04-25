@@ -127,7 +127,7 @@ describe('getCommandFromComment', () => {
             bodyMatcher: /Running tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `cbce50da`\)/,
           });
         });
-      })
+      });
 
       describe(`for '/test' for non-external PR with docs-only changes`, () => {
         test(`should set command to 'test-force-approve'`, async () => {
@@ -162,32 +162,6 @@ describe('getCommandFromComment', () => {
             repo: 'someRepo',
             issue_number: PR_NUMBER.UPSTREAM_DOCS_ONLY_CHANGES,
             bodyMatcher: /PR only contains docs changes - marking tests as complete/,
-          });
-        });
-      })
-
-      describe(`for '/test-extended'`, () => {
-        test(`should set command to 'run-tests-extended'`, async () => {
-          const context = createCommentContext({
-            username: 'admin',
-            body: '/test-extended',
-          });
-          await getCommandFromComment({ core, context, github });
-          expect(outputFor(mockCoreSetOutput, 'command')).toBe('run-tests-extended');
-        });
-
-        test(`should add comment with run link`, async () => {
-          const context = createCommentContext({
-            username: 'admin',
-            body: '/test-extended',
-            pullRequestNumber: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
-          });
-          await getCommandFromComment({ core, context, github });
-          expect(mockGithubRestIssuesCreateComment).toHaveComment({
-            owner: 'someOwner',
-            repo: 'someRepo',
-            issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
-            bodyMatcher: /Running extended tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `cbce50da`\)/,
           });
         });
       });
@@ -304,6 +278,148 @@ describe('getCommandFromComment', () => {
             repo: 'someRepo',
             issue_number: PR_NUMBER.FORK_NON_DOCS_CHANGES,
             bodyMatcher: /Running tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `6db070b1`\)/,
+          });
+        });
+      })
+
+      describe(`for '/test-extended'`, () => {
+        test(`should set command to 'run-tests-extended'`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test-extended',
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('run-tests-extended');
+        });
+
+        test(`should add comment with run link`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test-extended',
+            pullRequestNumber: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(mockGithubRestIssuesCreateComment).toHaveComment({
+            owner: 'someOwner',
+            repo: 'someRepo',
+            issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+            bodyMatcher: /Running extended tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `cbce50da`\)/,
+          });
+        });
+      });
+
+      describe(`for '/test-extended' for external PR (i.e. without commit SHA specified)`, () => {
+        test(`should set command to 'none'`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test-extended',
+            pullRequestNumber: PR_NUMBER.FORK_NON_DOCS_CHANGES,
+            authorUsername: 'non-contributor',
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('none');
+        });
+
+        test(`should add comment with prompt to specify SHA`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test-extended',
+            pullRequestNumber: PR_NUMBER.FORK_NON_DOCS_CHANGES,
+            authorUsername: 'non-contributor',
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(mockGithubRestIssuesCreateComment).toHaveComment({
+            owner: 'someOwner',
+            repo: 'someRepo',
+            issue_number: PR_NUMBER.FORK_NON_DOCS_CHANGES,
+            bodyMatcher: /When using `\/test-extended` on external PRs, the SHA of the checked commit must be specified/,
+          });
+        });
+      });
+
+      describe(`for '/test-extended 00000000' for external PR (i.e. with non-latest commit SHA specified)`, () => {
+        test(`should set command to 'none'`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test-extended 00000000',
+            pullRequestNumber: PR_NUMBER.FORK_NON_DOCS_CHANGES,
+            authorUsername: 'non-contributor',
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('none');
+        });
+
+        test(`should add comment with prompt that the SHA is out-dated`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test-extended 00000000',
+            pullRequestNumber: PR_NUMBER.FORK_NON_DOCS_CHANGES,
+            authorUsername: 'non-contributor',
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(mockGithubRestIssuesCreateComment).toHaveComment({
+            owner: 'someOwner',
+            repo: 'someRepo',
+            issue_number: PR_NUMBER.FORK_NON_DOCS_CHANGES,
+            bodyMatcher: /The specified SHA `00000000` is not the latest commit on the PR. Please validate the latest commit and re-run `\/test`/,
+          });
+        });
+      })
+
+      describe(`for '/test-extended 234567' for external PR (i.e. with insufficiently long commit SHA specified)`, () => {
+        test(`should set command to 'none'`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test-extended 234567',
+            pullRequestNumber: PR_NUMBER.FORK_NON_DOCS_CHANGES,
+            authorUsername: 'non-contributor',
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('none');
+        });
+
+        test(`should add comment with prompt that the SHA is out-dated`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test-extended 234567',
+            pullRequestNumber: PR_NUMBER.FORK_NON_DOCS_CHANGES,
+            authorUsername: 'non-contributor',
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(mockGithubRestIssuesCreateComment).toHaveComment({
+            owner: 'someOwner',
+            repo: 'someRepo',
+            issue_number: PR_NUMBER.FORK_NON_DOCS_CHANGES,
+            bodyMatcher: /When specifying a commit SHA it must be at least 7 characters \(received `234567`\)/,
+          });
+        });
+      })
+
+      describe(`for '/test-extended 2345678' for external PR (i.e. with latest commit SHA specified)`, () => {
+        test(`should set command to 'run-tests-extended'`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test-extended 2345678',
+            pullRequestNumber: PR_NUMBER.FORK_NON_DOCS_CHANGES,
+            authorUsername: 'non-contributor',
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('run-tests-extended');
+        });
+
+        test(`should add comment with run link`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test-extended 2345678',
+            pullRequestNumber: PR_NUMBER.FORK_NON_DOCS_CHANGES,
+            authorUsername: 'non-contributor',
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(mockGithubRestIssuesCreateComment).toHaveComment({
+            owner: 'someOwner',
+            repo: 'someRepo',
+            issue_number: PR_NUMBER.FORK_NON_DOCS_CHANGES,
+            bodyMatcher: /Running extended tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `6db070b1`\)/,
           });
         });
       })
