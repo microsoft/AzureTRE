@@ -91,19 +91,19 @@ build-mlflow-image:
 firewall-install:
 	$(MAKE) bundle-build DIR=./templates/shared_services/firewall/ \
 	&& $(MAKE) bundle-publish DIR=./templates/shared_services/firewall/ \
-	&& $(MAKE) bundle-register DIR="./templates/shared_services/firewall" BUNDLE_TYPE=shared_service
+	&& $(MAKE) bundle-register DIR="./templates/shared_services/firewall" BUNDLE_TYPE=shared_service \
 	&& $(MAKE) deploy-shared-service DIR=./templates/shared_services/firewall/ BUNDLE_TYPE=shared_service
 
 nexus-install:
 	$(MAKE) bundle-build DIR=./templates/shared_services/sonatype-nexus/ \
 	&& $(MAKE) bundle-publish DIR=./templates/shared_services/sonatype-nexus/ \
-	&& $(MAKE) bundle-register DIR="./templates/shared_services/sonatype-nexus" BUNDLE_TYPE=shared_service
+	&& $(MAKE) bundle-register DIR="./templates/shared_services/sonatype-nexus" BUNDLE_TYPE=shared_service \
 	&& $(MAKE) deploy-shared-service DIR=./templates/shared_services/sonatype-nexus/ BUNDLE_TYPE=shared_service
 
 gitea-install:
 	$(MAKE) bundle-build DIR=./templates/shared_services/gitea/ \
 	&& $(MAKE) bundle-publish DIR=./templates/shared_services/gitea/ \
-	&& $(MAKE) bundle-register DIR="./templates/shared_services/gitea" BUNDLE_TYPE=shared_service
+	&& $(MAKE) bundle-register DIR="./templates/shared_services/gitea" BUNDLE_TYPE=shared_service \
 	&& $(MAKE) deploy-shared-service DIR=./templates/shared_services/gitea/ BUNDLE_TYPE=shared_service
 
 # A recipe for pushing images. Parameters:
@@ -259,7 +259,10 @@ bundle-install:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& . ./devops/scripts/load_env.sh ${DIR}/.env \
-	&& cd ${DIR} && porter install -p ./parameters.json --cred ${ROOTPATH}/resource_processor/vmss_porter/azure.json --allow-docker-host-access --debug
+	&& cd ${DIR} && porter install -p ./parameters.json \
+		--cred ${ROOTPATH}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
+		--cred ${ROOTPATH}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
+		--allow-docker-host-access --debug
 
 bundle-uninstall:
 	$(call target_title, "Uninstalling ${DIR} with Porter") \
@@ -267,7 +270,10 @@ bundle-uninstall:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& . ./devops/scripts/load_env.sh ${DIR}/.env \
-	&& cd ${DIR} && porter uninstall -p ./parameters.json --cred ${ROOTPATH}/resource_processor/vmss_porter/azure.json --allow-docker-host-access --debug
+	&& cd ${DIR} && porter uninstall -p ./parameters.json \
+		--cred ${ROOTPATH}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
+		--cred ${ROOTPATH}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
+		--allow-docker-host-access --debug
 
 bundle-custom-action:
 	$(call target_title, "Performing:${ACTION} ${DIR} with Porter") \
@@ -275,7 +281,10 @@ bundle-custom-action:
 	&& . ./devops/scripts/load_env.sh ./devops/.env \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& . ./devops/scripts/load_env.sh ${DIR}/.env \
-	&& cd ${DIR} && porter invoke --action ${ACTION} -p ./parameters.json --cred ${ROOTPATH}/resource_processor/vmss_porter/azure.json --allow-docker-host-access --debug
+	&& cd ${DIR} && porter invoke --action ${ACTION} -p ./parameters.json \
+		--cred ${ROOTPATH}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
+		--cred ${ROOTPATH}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
+		--allow-docker-host-access --debug
 
 bundle-publish:
 	$(call target_title, "Publishing ${DIR} bundle with Porter") \
