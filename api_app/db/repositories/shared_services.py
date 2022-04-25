@@ -1,5 +1,6 @@
-import uuid
+from sqlite3 import InternalError
 from typing import List, Tuple
+import uuid
 
 from azure.cosmos import CosmosClient
 from pydantic import parse_obj_as
@@ -8,7 +9,7 @@ from models.domain.authentication import User
 from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.resources import ResourceRepository, IS_ACTIVE_CLAUSE
 from db.repositories.operations import OperationRepository
-from db.errors import ResourceIsNotDeployed, EntityDoesNotExist
+from db.errors import DuplicateEntity, ResourceIsNotDeployed, EntityDoesNotExist
 from models.domain.shared_service import SharedService
 from models.schemas.resource import ResourcePatch
 from models.schemas.shared_service_template import SharedServiceTemplateInCreate
@@ -26,6 +27,10 @@ class SharedServiceRepository(ResourceRepository):
     @staticmethod
     def active_shared_services_query():
         return f'SELECT * FROM c WHERE {IS_ACTIVE_CLAUSE} AND c.resourceType = "{ResourceType.SharedService}"'
+
+    @staticmethod
+    def active_shared_service_with_template_name_query(template_name: str):
+        return f'SELECT * FROM c WHERE {IS_ACTIVE_CLAUSE} AND c.resourceType = "{ResourceType.SharedService}" AND c.templateName = "{template_name}"'
 
     def get_shared_service_by_id(self, shared_service_id: str):
         shared_services = self.query(self.shared_service_query(shared_service_id))
@@ -54,6 +59,14 @@ class SharedServiceRepository(ResourceRepository):
 
     def create_shared_service_item(self, shared_service_input: SharedServiceTemplateInCreate) -> Tuple[SharedService, ResourceTemplate]:
         shared_service_id = str(uuid.uuid4())
+
+        existing_shared_services = self.query(self.active_shared_service_with_template_name_query(shared_service_input.templateName))
+        # Duplicate is same template (=id), same version and active
+        if existing_shared_services:
+            if len(existing_shared_services) > 1:
+                raise InternalError(f"More than one active shared service exists with the same id {shared_service_id}")
+            raise DuplicateEntity
+
         template = self.validate_input_against_template(shared_service_input.templateName, shared_service_input, ResourceType.SharedService)
 
         resource_spec_parameters = {**shared_service_input.properties, **self.get_shared_service_spec_params()}
