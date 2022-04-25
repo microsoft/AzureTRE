@@ -260,8 +260,8 @@ bundle-install:
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& . ./devops/scripts/load_env.sh ${DIR}/.env \
 	&& cd ${DIR} && porter install -p ./parameters.json \
-		--cred ${ROOTPATH}/resource_processor/vmss_porter/azure.json \
-		--cred ${ROOTPATH}/resource_processor/vmss_porter/aad_auth.json \
+		--cred ${ROOTPATH}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
+		--cred ${ROOTPATH}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
 		--allow-docker-host-access --debug
 
 bundle-uninstall:
@@ -271,8 +271,8 @@ bundle-uninstall:
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& . ./devops/scripts/load_env.sh ${DIR}/.env \
 	&& cd ${DIR} && porter uninstall -p ./parameters.json \
-		--cred ${ROOTPATH}/resource_processor/vmss_porter/azure.json \
-		--cred ${ROOTPATH}/resource_processor/vmss_porter/aad_auth.json \
+		--cred ${ROOTPATH}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
+		--cred ${ROOTPATH}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
 		--allow-docker-host-access --debug
 
 bundle-custom-action:
@@ -282,8 +282,8 @@ bundle-custom-action:
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
 	&& . ./devops/scripts/load_env.sh ${DIR}/.env \
 	&& cd ${DIR} && porter invoke --action ${ACTION} -p ./parameters.json \
-		--cred ${ROOTPATH}/resource_processor/vmss_porter/azure.json \
-		--cred ${ROOTPATH}/resource_processor/vmss_porter/aad_auth.json \
+		--cred ${ROOTPATH}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
+		--cred ${ROOTPATH}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
 		--allow-docker-host-access --debug
 
 bundle-publish:

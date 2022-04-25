@@ -6,5 +6,3 @@
 
 Dockerfile.tmpl
 debug.sh
-debug-porter.sh
-debug-aad-auth.json
