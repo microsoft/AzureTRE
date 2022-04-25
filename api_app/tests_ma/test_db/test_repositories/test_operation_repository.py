@@ -27,8 +27,6 @@ def resource_repo():
 def test_create_operation_steps_from_multi_step_template(_, __, resource_repo, test_user, multi_step_operation, operations_repo, multi_step_resource_template, basic_shared_service):
 
     expected_op = multi_step_operation
-    expected_op.updatedWhen = FAKE_CREATE_TIMESTAMP
-    expected_op.createdWhen = FAKE_CREATE_TIMESTAMP
     expected_op.id = OPERATION_ID
 
     operations_repo.save_item = MagicMock()

@@ -1,4 +1,6 @@
+import copy
 import json
+from unittest.mock import MagicMock
 import pytest
 import uuid
 
@@ -41,6 +43,22 @@ test_sb_message_with_outputs = {
         {"Name": "name1", "Value": "value1", "Type": "type1"},
         {"Name": "name2", "Value": "\"value2\"", "Type": "type2"}
     ]
+}
+
+test_sb_message_multi_step_1_complete = {
+    "operationId": OPERATION_ID,
+    "stepId": "pre-step-1",
+    "id": "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76",
+    "status": Status.Deployed,
+    "message": "upgrade succeeded"
+}
+
+test_sb_message_multi_step_3_complete = {
+    "operationId": OPERATION_ID,
+    "stepId": "post-step-1",
+    "id": "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76",
+    "status": Status.Deployed,
+    "message": "upgrade succeeded"
 }
 
 
@@ -285,3 +303,87 @@ async def test_properties_dont_change_with_no_outputs(app, sb_client, logging_mo
     await receive_message_and_update_deployment(app)
 
     repo().update_item_dict.assert_called_once_with(expected_resource.dict())
+
+
+@patch('service_bus.deployment_status_update.OperationRepository')
+@patch('service_bus.deployment_status_update.ResourceRepository')
+@patch('service_bus.step_helpers.ServiceBusClient')
+@patch('service_bus.deployment_status_update.ServiceBusClient')
+@patch('fastapi.FastAPI')
+async def test_multi_step_operation_sends_next_step(app, sb_client, sb_sender_client, repo, operations_repo, multi_step_operation, user_resource_multi, basic_shared_service):
+    received_message = test_sb_message_multi_step_1_complete
+    received_message["status"] = Status.Deployed
+    service_bus_received_message_mock = ServiceBusReceivedMessageMock(received_message)
+    sb_client().get_queue_receiver().receive_messages = AsyncMock(return_value=[service_bus_received_message_mock])
+    sb_client().get_queue_receiver().complete_message = AsyncMock()
+    sb_sender_client().get_queue_sender().send_messages = AsyncMock()
+
+    # step 1 resource
+    repo().get_resource_dict_by_id.return_value = basic_shared_service.dict()
+
+    # step 2 resource
+    repo().get_resource_by_id.return_value = user_resource_multi
+
+    operations_repo().update_item = MagicMock(return_value=basic_shared_service)
+
+    # get the multi-step operation and process it
+    operations_repo().get_operation_by_id.return_value = multi_step_operation
+    await receive_message_and_update_deployment(app)
+
+    # check the operation is updated as expected
+    expected_operation = copy.deepcopy(multi_step_operation)
+    expected_operation.status = Status.PipelineDeploying
+    expected_operation.message = "Multi step pipeline deploying. See steps for details."
+    expected_operation.steps[0].status = Status.Deployed
+    expected_operation.steps[0].message = "upgrade succeeded"
+    operations_repo().update_item.assert_called_once_with(expected_operation)
+
+    # check it sent a message on for the next step
+    sb_sender_client().get_queue_sender().send_messages.assert_called_once()
+
+
+@patch('service_bus.deployment_status_update.OperationRepository')
+@patch('service_bus.deployment_status_update.ResourceRepository')
+@patch('service_bus.step_helpers.ServiceBusClient')
+@patch('service_bus.deployment_status_update.ServiceBusClient')
+@patch('fastapi.FastAPI')
+async def test_multi_step_operation_ends_at_last_step(app, sb_client, sb_sender_client, repo, operations_repo, multi_step_operation, user_resource_multi, basic_shared_service):
+    received_message = test_sb_message_multi_step_3_complete
+    received_message["status"] = Status.Deployed
+    service_bus_received_message_mock = ServiceBusReceivedMessageMock(received_message)
+    sb_client().get_queue_receiver().receive_messages = AsyncMock(return_value=[service_bus_received_message_mock])
+    sb_client().get_queue_receiver().complete_message = AsyncMock()
+    sb_sender_client().get_queue_sender().send_messages = AsyncMock()
+
+    # step 2 resource
+    repo().get_resource_dict_by_id.return_value = user_resource_multi.dict()
+
+    # step 3 resource
+    repo().get_resource_by_id.return_value = basic_shared_service
+
+    operations_repo().update_item = MagicMock(return_value=user_resource_multi)
+
+    # get the multi-step operation and process it
+    # simulate what the op would look like after step 2
+    in_flight_op = copy.deepcopy(multi_step_operation)
+    in_flight_op.status = Status.PipelineDeploying
+    in_flight_op.message = "Multi step pipeline deploying. See steps for details."
+    in_flight_op.steps[0].status = Status.Deployed
+    in_flight_op.steps[0].message = "upgrade succeeded"
+    in_flight_op.steps[1].status = Status.Deployed
+    in_flight_op.steps[1].message = "install succeeded"
+    in_flight_op.steps[2].status = Status.Deploying
+
+    operations_repo().get_operation_by_id.return_value = in_flight_op
+    await receive_message_and_update_deployment(app)
+
+    # check the operation is updated as expected - both step and overall status
+    expected_operation = copy.deepcopy(in_flight_op)
+    expected_operation.status = Status.PipelineSucceeded
+    expected_operation.message = "Pipeline deployment completed successfully"
+    expected_operation.steps[2].status = Status.Deployed
+    expected_operation.steps[2].message = "upgrade succeeded"
+    operations_repo().update_item.assert_called_once_with(expected_operation)
+
+    # check it did _not_ enqueue another message
+    sb_sender_client().get_queue_sender().send_messages.assert_not_called()

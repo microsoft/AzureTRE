@@ -1,4 +1,6 @@
+import uuid
 import pytest
+from models.domain.user_resource import UserResource
 from models.domain.shared_service import SharedService
 from tests_ma.test_api.test_routes.test_resource_helpers import FAKE_CREATE_TIMESTAMP
 from models.domain.authentication import User
@@ -246,7 +248,7 @@ def test_user():
 
 @pytest.fixture
 def basic_shared_service(test_user, basic_shared_service_template):
-    id = "shared-service-id-here"
+    id = str(uuid.uuid4())
     return SharedService(
         id=id,
         templateName=basic_shared_service_template.name,
@@ -260,6 +262,21 @@ def basic_shared_service(test_user, basic_shared_service_template):
 
 
 @pytest.fixture
+def user_resource_multi(test_user, multi_step_resource_template):
+    id = "resource-id"
+    return UserResource(
+        id=id,
+        templateName=multi_step_resource_template.name,
+        templateVersion=multi_step_resource_template.version,
+        etag="",
+        properties={},
+        resourcePath=f'/workspaces/foo/workspace-services/bar/user-resources/{id}',
+        updatedWhen=FAKE_CREATE_TIMESTAMP,
+        user=test_user
+    )
+
+
+@pytest.fixture
 def multi_step_operation(test_user, basic_shared_service_template, basic_shared_service):
     return Operation(
         id="op-guid-here",
@@ -267,6 +284,8 @@ def multi_step_operation(test_user, basic_shared_service_template, basic_shared_
         action="install",
         user=test_user,
         resourcePath="/workspaces/resource-id",
+        createdWhen=FAKE_CREATE_TIMESTAMP,
+        updatedWhen=FAKE_CREATE_TIMESTAMP,
         steps=[
             OperationStep(
                 stepId="pre-step-1",
