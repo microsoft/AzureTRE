@@ -149,8 +149,17 @@ public class UserContext extends AbstractUserContext {
     }
 
     @Override
-    public ConnectionGroup getRootConnectionGroup() {
+    public ConnectionGroup getRootConnectionGroup() throws GuacamoleException {
+        connectionDirectory =  new SimpleDirectory<>(
+            ConnectionService.getConnections(treUser)
+        );
         LOGGER.debug("getRootConnectionGroup");
-        return rootGroup;
+        // instead of returning connectionDirectory object we query to get all accessible connections (fix for #850)
+        return new SimpleConnectionGroup(
+            AzureTREAuthenticationProvider.ROOT_CONNECTION_GROUP,
+            AzureTREAuthenticationProvider.ROOT_CONNECTION_GROUP,
+            connectionDirectory.getIdentifiers(),
+            Collections.emptyList()
+        );
     }
 }
