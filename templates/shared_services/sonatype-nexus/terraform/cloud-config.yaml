@@ -35,20 +35,6 @@ system_info:
     groups: [docker]
 
 write_files:
-  - path: /etc/cron.hourly/docker-prune
-    # An hourly cron job to have docker free disk space. Running this frquently
-    # since disk might get full fast, but we prune only when free space is low.
-    content: |
-      #!/bin/bash
-      set -o errexit
-      used_percent=$(df / --output=pcent | tail -1 | sed 's/[^0-9]//g')
-      echo "Used disk space percent: $${used_percent}"
-      if (( used_percent > 60 )); then
-        echo "Free space too low, pruning..."
-        docker system prune -f
-      fi
-    permissions: '0755'
-
   - path: /etc/cron.daily/renew-nexus-cert
     # Daily cron job to renew nexus cert based on certificate present in keyvault
     content: |
