@@ -1,6 +1,6 @@
 import asyncio
 from contextlib import asynccontextmanager
-from httpx import AsyncClient, TimeoutConfig
+from httpx import AsyncClient, Timeout
 import logging
 from starlette import status
 
@@ -10,7 +10,7 @@ from resources import strings
 
 
 LOGGER = logging.getLogger(__name__)
-TIMEOUT = TimeoutConfig(connect_timeout=5, read_timeout=60, write_timeout=5)
+TIMEOUT = Timeout(10, read=30)
 
 
 class InstallFailedException(Exception):
