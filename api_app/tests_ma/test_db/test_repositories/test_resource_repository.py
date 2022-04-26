@@ -102,9 +102,9 @@ def test_validate_input_against_template_returns_template_version_if_template_is
                                                            properties={},
                                                            customActions=[]).dict()
 
-    template_version = resource_repo.validate_input_against_template("template1", workspace_input, ResourceType.Workspace)
+    template = resource_repo.validate_input_against_template("template1", workspace_input, ResourceType.Workspace)
 
-    assert template_version == "0.1.0"
+    assert template.version == "0.1.0"
 
 
 @patch("db.repositories.resources.ResourceRepository._get_enriched_template")
