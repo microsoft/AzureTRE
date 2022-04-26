@@ -83,3 +83,6 @@ nav:
       - User Resources:
           - Guacamole Windows VM: 'tre-templates/user-resources/guacamole-windows-vm.md'
           - Guacamole Linux VM: 'tre-templates/user-resources/guacamole-linux-vm.md'
+      - Pipeline Templates:
+          - Overview: 'tre-templates/pipeline-templates/overview.md'
+          - Pipeline Schema: 'tre-templates/pipeline-templates/template-schema.md'

@@ -128,6 +128,11 @@ RESOURCE_ACTION_STATUS_INVOKING = "invoking_action"
 RESOURCE_ACTION_STATUS_SUCCEEDED = "action_succeeded"
 RESOURCE_ACTION_STATUS_FAILED = "action_failed"
 
+# Pipeline (multi-step) deployments
+RESOURCE_ACTION_STATUS_PIPELINE_DEPLOYING = "pipeline_deploying"
+RESOURCE_ACTION_STATUS_PIPELINE_FAILED = "pipeline_failed"
+RESOURCE_ACTION_STATUS_PIPELINE_SUCCEEDED = "pipeline_succeeded"
+
 # Resource Type
 RESOURCE_TYPE_WORKSPACE = "workspace"
 RESOURCE_TYPE_WORKSPACE_SERVICE = "workspace-service"

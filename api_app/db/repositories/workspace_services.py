@@ -1,8 +1,9 @@
 import uuid
-from typing import List
+from typing import List, Tuple
 
 from azure.cosmos import CosmosClient
 from pydantic import parse_obj_as
+from models.domain.resource_template import ResourceTemplate
 from models.domain.authentication import User
 from db.repositories.resource_templates import ResourceTemplateRepository
 
@@ -53,10 +54,10 @@ class WorkspaceServiceRepository(ResourceRepository):
     def get_workspace_service_spec_params(self):
         return self.get_resource_base_spec_params()
 
-    def create_workspace_service_item(self, workspace_service_input: WorkspaceServiceInCreate, workspace_id: str) -> WorkspaceService:
+    def create_workspace_service_item(self, workspace_service_input: WorkspaceServiceInCreate, workspace_id: str) -> Tuple[WorkspaceService, ResourceTemplate]:
         full_workspace_service_id = str(uuid.uuid4())
 
-        template_version = self.validate_input_against_template(workspace_service_input.templateName, workspace_service_input, ResourceType.WorkspaceService)
+        template = self.validate_input_against_template(workspace_service_input.templateName, workspace_service_input, ResourceType.WorkspaceService)
 
         # we don't want something in the input to overwrite the system parameters, so dict.update can't work.
         resource_spec_parameters = {**workspace_service_input.properties, **self.get_workspace_service_spec_params()}
@@ -65,15 +66,15 @@ class WorkspaceServiceRepository(ResourceRepository):
             id=full_workspace_service_id,
             workspaceId=workspace_id,
             templateName=workspace_service_input.templateName,
-            templateVersion=template_version,
+            templateVersion=template.version,
             properties=resource_spec_parameters,
             resourcePath=f'/workspaces/{workspace_id}/workspace-services/{full_workspace_service_id}',
             etag=''
         )
 
-        return workspace_service
+        return workspace_service, template
 
-    def patch_workspace_service(self, workspace_service: WorkspaceService, workspace_service_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository, user: User) -> WorkspaceService:
+    def patch_workspace_service(self, workspace_service: WorkspaceService, workspace_service_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository, user: User) -> Tuple[WorkspaceService, ResourceTemplate]:
         # get workspace service template
         workspace_service_template = resource_template_repo.get_template_by_name_and_version(workspace_service.templateName, workspace_service.templateVersion, ResourceType.WorkspaceService)
         return self.patch_resource(workspace_service, workspace_service_patch, workspace_service_template, etag, resource_template_repo, user)
