@@ -1,6 +1,6 @@
 ---
 name: tre-shared-service-gitea
-version: 0.0.2
+version: 0.0.3
 description: "A Gitea shared service"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -69,7 +69,7 @@ uninstall:
         tre_id: "{{ bundle.parameters.tre_id }}"
         mgmt_resource_group_name:
           "{{ bundle.parameters.tfstate_resource_group_name }}"
-        mgmt_acr_name: "{{ bundle.parameters.mgmt_acr_name }}"
+        acr_name: "{{ bundle.parameters.mgmt_acr_name }}"
       backendConfig:
         resource_group_name:
           "{{ bundle.parameters.tfstate_resource_group_name }}"
