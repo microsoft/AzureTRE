@@ -1,6 +1,12 @@
+import uuid
 import pytest
+from models.domain.user_resource import UserResource
+from models.domain.shared_service import SharedService
+from tests_ma.test_api.test_routes.test_resource_helpers import FAKE_CREATE_TIMESTAMP
+from models.domain.authentication import User
+from models.domain.operation import Operation, OperationStep
 
-from models.domain.resource_template import ResourceTemplate, ResourceType
+from models.domain.resource_template import Pipeline, PipelineStep, PipelineStepProperty, ResourceTemplate, ResourceType
 from models.domain.user_resource_template import UserResourceTemplate
 from models.schemas.user_resource_template import UserResourceTemplateInCreate, UserResourceTemplateInResponse
 from models.schemas.workspace_template import WorkspaceTemplateInCreate
@@ -182,4 +188,131 @@ def user_resource_template_in_response(input_user_resource_template):
         properties=input_user_resource_template.json_schema["properties"],
         customActions=input_user_resource_template.customActions,
         system_properties={}
+    )
+
+
+@pytest.fixture
+def multi_step_resource_template(basic_shared_service_template):
+    return ResourceTemplate(
+        id="123",
+        name="template1",
+        description="description",
+        version="0.1.0",
+        resourceType=ResourceType.Workspace,
+        current=True,
+        required=[],
+        properties={},
+        customActions=[],
+        pipeline=Pipeline(
+            install=[
+                PipelineStep(
+                    stepId="pre-step-1",
+                    stepTitle="Title for pre-step-1",
+                    resourceTemplateName=basic_shared_service_template.name,
+                    resourceType=basic_shared_service_template.resourceType,
+                    resourceAction="upgrade",
+                    properties=[
+                        PipelineStepProperty(
+                            name="display_name",
+                            type="string",
+                            value="new name"
+                        )
+                    ]
+                ),
+                PipelineStep(
+                    stepId="main"
+                ),
+                PipelineStep(
+                    stepId="post-step-1",
+                    stepTitle="Title for post-step-1",
+                    resourceTemplateName=basic_shared_service_template.name,
+                    resourceType=basic_shared_service_template.resourceType,
+                    resourceAction="upgrade",
+                    properties=[
+                        PipelineStepProperty(
+                            name="display_name",
+                            type="string",
+                            value="old name"
+                        )
+                    ]
+                )
+            ]
+        )
+    )
+
+
+@pytest.fixture
+def test_user():
+    return User(id="user-id", name="test user", email="test@user.com")
+
+
+@pytest.fixture
+def basic_shared_service(test_user, basic_shared_service_template):
+    id = str(uuid.uuid4())
+    return SharedService(
+        id=id,
+        templateName=basic_shared_service_template.name,
+        templateVersion=basic_shared_service_template.version,
+        etag="",
+        properties={},
+        resourcePath=f'/shared-services/{id}',
+        updatedWhen=FAKE_CREATE_TIMESTAMP,
+        user=test_user
+    )
+
+
+@pytest.fixture
+def user_resource_multi(test_user, multi_step_resource_template):
+    id = "resource-id"
+    return UserResource(
+        id=id,
+        templateName=multi_step_resource_template.name,
+        templateVersion=multi_step_resource_template.version,
+        etag="",
+        properties={},
+        resourcePath=f'/workspaces/foo/workspace-services/bar/user-resources/{id}',
+        updatedWhen=FAKE_CREATE_TIMESTAMP,
+        user=test_user
+    )
+
+
+@pytest.fixture
+def multi_step_operation(test_user, basic_shared_service_template, basic_shared_service):
+    return Operation(
+        id="op-guid-here",
+        resourceId="resource-id",
+        action="install",
+        user=test_user,
+        resourcePath="/workspaces/resource-id",
+        createdWhen=FAKE_CREATE_TIMESTAMP,
+        updatedWhen=FAKE_CREATE_TIMESTAMP,
+        steps=[
+            OperationStep(
+                stepId="pre-step-1",
+                stepTitle="Title for pre-step-1",
+                resourceAction="upgrade",
+                resourceTemplateName=basic_shared_service_template.name,
+                resourceType=basic_shared_service_template.resourceType,
+                resourceId=basic_shared_service.id,
+                updatedWhen=FAKE_CREATE_TIMESTAMP
+            ),
+            OperationStep(
+                stepId="main",
+                stepTitle="Main step for resource-id",
+                resourceAction="install",
+                resourceType=ResourceType.Workspace,
+                resourceTemplateName="template1",
+                resourceId="resource-id",
+                updatedWhen=FAKE_CREATE_TIMESTAMP
+            ),
+            OperationStep(
+                stepId="post-step-1",
+                stepTitle="Title for post-step-1",
+                resourceAction="upgrade",
+                resourceType=basic_shared_service_template.resourceType,
+                resourceTemplateName=basic_shared_service_template.name,
+                resourceId=basic_shared_service.id,
+                updatedWhen=FAKE_CREATE_TIMESTAMP
+            )
+        ]
     )
