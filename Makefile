@@ -121,7 +121,7 @@ $(call target_title, "Pushing $(1) Image") \
 endef
 
 push-api-image:
-	$(call push_image,"api","./api_app/_version.py")
+	$(call push_image,"api","${MAKEFILE_DIR}/api_app/_version.py")
 
 push-resource-processor-vm-porter-image:
 	$(call push_image,"resource-processor-vm-porter","${MAKEFILE_DIR}/resource_processor/version.txt")
