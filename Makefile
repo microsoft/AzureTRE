@@ -368,7 +368,7 @@ api-healthcheck:
 
 db-migrate:
 	$(call target_title,"Migrating Cosmos Data") \
-	&& . ./devops/scripts/check_dependencies.sh nodocker \
-	&& pushd ./templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
-	&& . ./devops/scripts/load_env.sh ./templates/core/private.env \
-	&& python ./scripts/db_migrations.py
+	&& . ${CURRENT_DIR}/devops/scripts/check_dependencies.sh nodocker \
+	&& pushd ${CURRENT_DIR}/templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
+	&& . ${CURRENT_DIR}/devops/scripts/load_env.sh ./templates/core/private.env \
+	&& python ${CURRENT_DIR}/scripts/db_migrations.py
