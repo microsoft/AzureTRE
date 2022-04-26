@@ -307,6 +307,18 @@ bundle-register:
 	&& cd ${DIR} \
 	&& ${ROOTPATH}/devops/scripts/register_bundle_with_api.sh --acr-name "$${ACR_NAME}" --bundle-type "$${BUNDLE_TYPE}" --current --insecure --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}" --verify --workspace-service-name "$${WORKSPACE_SERVICE_NAME}"
 
+workspace_bundle = $(MAKE) bundle-build DIR=./templates/workspaces/$(1)/ \
+	&& $(MAKE) bundle-publish DIR=./templates/workspaces/$(1)/ \
+	&& $(MAKE) bundle-register DIR="./templates/workspaces/$(1)" BUNDLE_TYPE=workspace
+
+workspace_service_bundle = $(MAKE) bundle-build DIR=./templates/workspace_services/$(1)/ \
+	&& $(MAKE) bundle-publish DIR=./templates/workspace_services/$(1)/ \
+	&& $(MAKE) bundle-register DIR="./templates/workspace_services/$(1)" BUNDLE_TYPE=workspace_service
+
+shared_service_bundle = $(MAKE) bundle-build DIR=./templates/shared_services/$(1)/ \
+	&& $(MAKE) bundle-publish DIR=./templates/shared_services/$(1)/ \
+	&& $(MAKE) bundle-register DIR="./templates/shared_services/$(1)" BUNDLE_TYPE=shared_service
+
 deploy-shared-service:
 	@# NOTE: ACR_NAME below comes from the env files, so needs the double '$$'. Others are set on command execution and don't
 	$(call target_title, "Deploying ${DIR} shared service") \
@@ -327,6 +339,17 @@ static-web-upload:
 	&& pushd ./templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ./devops/scripts/load_env.sh ./templates/core/private.env \
 	&& ./templates/core/terraform/scripts/upload_static_web.sh
+
+prepare-for-e2e:
+	$(call workspace_bundle,base) \
+	&& $(call workspace_bundle,innereye) \
+	&& $(call workspace_service_bundle,guacamole) \
+	&& $(call workspace_service_bundle,azureml) \
+	&& $(call workspace_service_bundle,devtestlabs) \
+	&& $(call workspace_service_bundle,gitea) \
+	&& $(call workspace_service_bundle,innereye) \
+	&& $(call shared_service_bundle,sonatype-nexus) \
+	&& $(call shared_service_bundle,gitea)
 
 test-e2e-smoke:
 	$(call target_title, "Running E2E smoke tests") && \
