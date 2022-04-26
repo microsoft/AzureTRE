@@ -7,7 +7,7 @@ data "azurerm_app_service_plan" "workspace" {
 resource "azurerm_user_assigned_identity" "guacamole_id" {
   resource_group_name = data.azurerm_resource_group.ws.name
   location            = data.azurerm_resource_group.ws.location
-  name = "id-guacamole-${var.workspace_id}"
+  name                = "id-guacamole-${var.workspace_id}"
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -33,11 +33,12 @@ resource "azurerm_app_service" "guacamole" {
     WEBSITE_DNS_SERVER             = "168.63.129.16"
     SCM_DO_BUILD_DURING_DEPLOYMENT = "True"
 
-    TENANT_ID    = data.azurerm_client_config.current.tenant_id
-    KEYVAULT_URL = data.azurerm_key_vault.ws.vault_uri
-    API_URL      = local.api_url
-    SERVICE_ID   = "${var.tre_resource_id}"
-    WORKSPACE_ID = "${var.workspace_id}"
+    TENANT_ID                  = data.azurerm_client_config.current.tenant_id
+    KEYVAULT_URL               = data.azurerm_key_vault.ws.vault_uri
+    API_URL                    = local.api_url
+    SERVICE_ID                 = "${var.tre_resource_id}"
+    WORKSPACE_ID               = "${var.workspace_id}"
+    MANAGED_IDENTITY_CLIENT_ID = azurerm_user_assigned_identity.guacamole_id.client_id
 
     # Guacmole configuration
     GUAC_DISABLE_COPY     = "${var.guac_disable_copy}"
