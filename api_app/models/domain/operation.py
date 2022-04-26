@@ -30,7 +30,9 @@ class Status(str, Enum):
 
 class OperationStep(AzureTREModel):
     """
-    Model to define a step in an operation
+    Model to define a step in an operation. Each step references either a secondary resource or the primary resource (stepId=main)
+    The steps are built up front as the operation is created from the initial user request.
+    As each step completes, the next one is processed.
     """
     stepId: str = Field(title="stepId", description="Unique id identifying the step")
     stepTitle: Optional[str] = Field(title="stepTitle", description="Human readable title of what the step is for")

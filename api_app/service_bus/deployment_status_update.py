@@ -8,7 +8,7 @@ from pydantic import ValidationError, parse_obj_as
 from api.dependencies.database import get_db_client
 from api.routes.resource_helpers import get_timestamp
 from db.repositories.resource_templates import ResourceTemplateRepository
-from service_bus.step_helpers import default_credentials, send_deployment_message, update_resource_for_step
+from service_bus.helpers import default_credentials, send_deployment_message, update_resource_for_step
 from db.repositories.operations import OperationRepository
 from core import config
 from db.errors import EntityDoesNotExist
@@ -83,7 +83,7 @@ def update_step_status(step: OperationStep, message: DeploymentStatusUpdateMessa
     return step
 
 
-def update_overall_status(operation: Operation, step: OperationStep, is_last_step: bool):
+def update_overall_operation_status(operation: Operation, step: OperationStep, is_last_step: bool):
 
     operation.updatedWhen = get_timestamp()
 
@@ -123,6 +123,12 @@ def create_updated_resource_document(resource: dict, message: DeploymentStatusUp
 
 
 async def update_status_in_database(resource_repo: ResourceRepository, operations_repo: OperationRepository, resource_template_repo: ResourceTemplateRepository, message: DeploymentStatusUpdateMessage):
+    """
+    Get the operation the message references, and find the step within the operation that is to be updated
+    Update the status of the step. If it's a single step operation, copy the status into the operation status. If it's a multi step,
+    update the step and set the overall status to "pipeline_deploying".
+    If there is another step in the operation after this one, process the substitutions + patch, then enqueue a message to process it.
+    """
     result = False
 
     try:
@@ -146,7 +152,7 @@ async def update_status_in_database(resource_repo: ResourceRepository, operation
         update_step_status(step_to_update, message)
 
         # update the overall headline operation status
-        update_overall_status(operation, step_to_update, is_last_step)
+        update_overall_operation_status(operation, step_to_update, is_last_step)
 
         # save the operation
         operations_repo.update_item(operation)
@@ -162,6 +168,7 @@ async def update_status_in_database(resource_repo: ResourceRepository, operation
 
         # more steps in the op to do?
         if is_last_step is False:
+            assert current_step_index < (len(operation.steps) - 1)
             next_step = operation.steps[current_step_index + 1]
 
             resource_to_send = update_resource_for_step(

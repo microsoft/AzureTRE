@@ -5,7 +5,7 @@ import uuid
 from azure.servicebus import ServiceBusMessage
 from mock import AsyncMock, MagicMock, patch
 from models.schemas.resource import ResourcePatch
-from service_bus.step_helpers import try_upgrade_with_retries, update_resource_for_step
+from service_bus.helpers import try_upgrade_with_retries, update_resource_for_step
 from models.schemas.workspace_template import get_sample_workspace_template_object
 from tests_ma.test_api.conftest import create_test_user
 from tests_ma.test_service_bus.test_deployment_status_update import create_sample_operation
@@ -31,7 +31,7 @@ def create_test_resource():
 
 @pytest.mark.parametrize('request_action', [RequestAction.Install, RequestAction.UnInstall])
 @patch('service_bus.resource_request_sender.OperationRepository')
-@patch('service_bus.step_helpers.ServiceBusClient')
+@patch('service_bus.helpers.ServiceBusClient')
 @patch('service_bus.resource_request_sender.ResourceRepository')
 @patch('service_bus.resource_request_sender.ResourceTemplateRepository')
 async def test_resource_request_message_generated_correctly(resource_template_repo, resource_repo, service_bus_client_mock, operations_repo_mock, request_action):

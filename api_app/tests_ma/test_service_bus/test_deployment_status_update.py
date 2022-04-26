@@ -307,7 +307,7 @@ async def test_properties_dont_change_with_no_outputs(app, sb_client, logging_mo
 
 @patch('service_bus.deployment_status_update.OperationRepository')
 @patch('service_bus.deployment_status_update.ResourceRepository')
-@patch('service_bus.step_helpers.ServiceBusClient')
+@patch('service_bus.helpers.ServiceBusClient')
 @patch('service_bus.deployment_status_update.ServiceBusClient')
 @patch('fastapi.FastAPI')
 async def test_multi_step_operation_sends_next_step(app, sb_client, sb_sender_client, repo, operations_repo, multi_step_operation, user_resource_multi, basic_shared_service):
@@ -344,7 +344,7 @@ async def test_multi_step_operation_sends_next_step(app, sb_client, sb_sender_cl
 
 @patch('service_bus.deployment_status_update.OperationRepository')
 @patch('service_bus.deployment_status_update.ResourceRepository')
-@patch('service_bus.step_helpers.ServiceBusClient')
+@patch('service_bus.helpers.ServiceBusClient')
 @patch('service_bus.deployment_status_update.ServiceBusClient')
 @patch('fastapi.FastAPI')
 async def test_multi_step_operation_ends_at_last_step(app, sb_client, sb_sender_client, repo, operations_repo, multi_step_operation, user_resource_multi, basic_shared_service):

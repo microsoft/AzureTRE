@@ -8,7 +8,7 @@ from resources import strings
 pytestmark = pytest.mark.asyncio
 
 
-# @pytest.mark.performance
+@pytest.mark.performance
 @pytest.mark.timeout(3000)
 async def test_parallel_resource_creations(admin_token, workspace_owner_token, verify) -> None:
     """Creates N workspaces in parallel, and creates a workspace service in each, in parallel"""
