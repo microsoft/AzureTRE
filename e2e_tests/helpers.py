@@ -75,8 +75,8 @@ async def post_resource(payload, endpoint, resource_type, token, admin_token, ve
         return resource_path, resource_id
 
 
-async def get_shared_service_id_by_name(template_name: str, verify, token):
-    async with AsyncClient(verify=verify, timeout=30.0) as client:
+async def get_shared_service_id_by_name(template_name: str, verify, token) -> dict:
+    async with AsyncClient(verify=verify, timeout=TIMEOUT) as client:
         endpoint = '/api/shared-services'
         full_endpoint = f'https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{endpoint}'
         LOGGER.info(f'URL: {full_endpoint}')
@@ -94,7 +94,7 @@ async def get_shared_service_id_by_name(template_name: str, verify, token):
 
 
 async def disable_and_delete_resource(endpoint, resource_type, token, admin_token, verify):
-    async with AsyncClient(verify=verify, timeout=30.0) as client:
+    async with AsyncClient(verify=verify, timeout=TIMEOUT) as client:
 
         if resource_type == 'workspace':
             auth_headers = get_auth_header(admin_token)
