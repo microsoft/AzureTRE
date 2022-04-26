@@ -94,7 +94,7 @@ firewall-install:
 	&& $(MAKE) bundle-register DIR="./templates/shared_services/firewall" BUNDLE_TYPE=shared_service \
 	&& $(MAKE) deploy-shared-service DIR=./templates/shared_services/firewall/ BUNDLE_TYPE=shared_service
 
-nexus-install: nexus-cert-install nexus-letsencrypt
+nexus-install:
 	$(MAKE) bundle-build DIR=./templates/shared_services/sonatype-nexus/ \
 	&& $(MAKE) bundle-publish DIR=./templates/shared_services/sonatype-nexus/ \
 	&& $(MAKE) bundle-register DIR="./templates/shared_services/sonatype-nexus" BUNDLE_TYPE=shared_service \
@@ -109,7 +109,8 @@ gitea-install:
 nexus-cert-install:
 	$(MAKE) bundle-build DIR=./templates/shared_services/nexus-cert/ \
 	&& $(MAKE) bundle-publish DIR=./templates/shared_services/nexus-cert/ \
-	&& $(MAKE) shared-service-register-and-deploy DIR=./templates/shared_services/nexus-cert/ BUNDLE_TYPE=shared_service
+	&& $(MAKE) bundle-register DIR="./templates/shared_services/nexus-cert" BUNDLE_TYPE=shared_service \
+	&& $(MAKE) deploy-shared-service DIR=./templates/shared_services/nexus-cert/ BUNDLE_TYPE=shared_service
 
 # A recipe for pushing images. Parameters:
 # 1. Image name suffix
