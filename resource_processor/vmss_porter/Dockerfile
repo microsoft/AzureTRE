@@ -2,9 +2,9 @@ FROM python:3.8-slim-buster
 
 # Install Azure CLI
 ARG AZURE_CLI_VERSION=2.29.2-1~buster
-ENV AZURE_CLI_VERSION=${AZURE_CLI_VERSION}
 COPY scripts/azure-cli.sh /tmp/
-RUN /tmp/azure-cli.sh
+RUN export AZURE_CLI_VERSION=${AZURE_CLI_VERSION} \
+    && /tmp/azure-cli.sh
 
 # Install Terraform
 ARG TERRAFORM_VERSION="1.1.5"
@@ -18,13 +18,15 @@ RUN apt-get update \
 ARG PORTER_MIRROR=https://cdn.porter.sh
 ARG PORTER_PERMALINK=v0.38.7
 ARG PORTER_PKG_PERMALINK=latest
-ENV PORTER_MIRROR=${PORTER_MIRROR}
-ENV PORTER_PERMALINK=${PORTER_PERMALINK}
-ENV PORTER_PKG_PERMALINK=${PORTER_PKG_PERMALINK}
-COPY ./scripts/porter.sh /tmp/
-RUN export PORTER_HOME=/root/.porter \
+ARG PORTER_HOME=/root/.porter/
+COPY scripts/porter.sh /tmp/
+RUN export PORTER_MIRROR=${PORTER_MIRROR} \
+    PORTER_PERMALINK=${PORTER_PERMALINK} \
+    PORTER_PKG_PERMALINK=${PORTER_PKG_PERMALINK} \
+    PORTER_HOME=${PORTER_HOME} \
     && /tmp/porter.sh
-ENV PATH /root/.porter/:$PATH
+
+ENV PATH ${PORTER_HOME}:$PATH
 
 # Install Docker
 RUN apt-get update && apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release \
