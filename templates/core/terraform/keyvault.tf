@@ -86,3 +86,33 @@ resource "azurerm_key_vault_secret" "auth_tenant_id" {
     azurerm_key_vault_access_policy.deployer
   ]
 }
+
+resource "azurerm_monitor_diagnostic_setting" "kv" {
+  name                       = "diagnostics-kv-${var.tre_id}"
+  target_resource_id         = azurerm_key_vault.kv.id
+  log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
+  # log_analytics_destination_type = "Dedicated"
+
+  dynamic "log" {
+    for_each = toset(["AuditEvent", "AzurePolicyEvaluationDetails"])
+    content {
+      category = log.value
+      enabled  = true
+
+      retention_policy {
+        enabled = true
+        days    = 365
+      }
+    }
+  }
+
+  metric {
+    category = "AllMetrics"
+    enabled  = true
+
+    retention_policy {
+      enabled = true
+      days    = 365
+    }
+  }
+}

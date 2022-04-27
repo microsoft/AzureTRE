@@ -71,3 +71,33 @@ resource "azurerm_servicebus_namespace_network_rule_set" "servicebus_network_rul
   public_network_access_enabled = var.enable_local_debugging
   ip_rules                      = var.enable_local_debugging ? ["${local.myip}"] : null
 }
+
+resource "azurerm_monitor_diagnostic_setting" "sb" {
+  name                       = "diagnostics-sb-${var.tre_id}"
+  target_resource_id         = azurerm_servicebus_namespace.sb.id
+  log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
+  # log_analytics_destination_type = "Dedicated"
+
+  dynamic "log" {
+    for_each = toset(["OperationalLogs", "VNetAndIPFilteringLogs", "RuntimeAuditLogs", "ApplicationMetricsLogs"])
+    content {
+      category = log.value
+      enabled  = true
+
+      retention_policy {
+        enabled = true
+        days    = 365
+      }
+    }
+  }
+
+  metric {
+    category = "AllMetrics"
+    enabled  = true
+
+    retention_policy {
+      enabled = true
+      days    = 365
+    }
+  }
+}

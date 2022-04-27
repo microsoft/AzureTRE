@@ -2,7 +2,7 @@ resource "azurerm_public_ip" "appgwpip" {
   name                = "pip-agw-${var.tre_id}"
   resource_group_name = var.resource_group_name
   location            = var.location
-  allocation_method   = "Static"
+  allocation_method   = "Static" # Static IPs are allocated immediately
   sku                 = "Standard"
   domain_name_label   = var.tre_id
 
@@ -189,8 +189,39 @@ resource "azurerm_application_gateway" "agw" {
 
 }
 
-data "azurerm_public_ip" "appgwpip_data" {
-  depends_on          = [azurerm_application_gateway.agw]
-  name                = "pip-agw-${var.tre_id}"
+data "azurerm_log_analytics_workspace" "tre" {
+  name                = "log-${var.tre_id}"
   resource_group_name = var.resource_group_name
 }
+
+resource "azurerm_monitor_diagnostic_setting" "agw" {
+  name                       = "diagnostics-agw-${var.tre_id}"
+  target_resource_id         = azurerm_application_gateway.agw.id
+  log_analytics_workspace_id = var.log_analytics_workspace_id
+  # log_analytics_destination_type = "Dedicated"
+
+  dynamic "log" {
+    for_each = toset(["ApplicationGatewayAccessLog", "ApplicationGatewayPerformanceLog", "ApplicationGatewayFirewallLog"])
+    content {
+      category = log.value
+      enabled  = true
+
+      retention_policy {
+        enabled = true
+        days    = 365
+      }
+    }
+  }
+
+  metric {
+    category = "AllMetrics"
+    enabled  = true
+
+    retention_policy {
+      enabled = true
+      days    = 365
+    }
+  }
+}
+
+

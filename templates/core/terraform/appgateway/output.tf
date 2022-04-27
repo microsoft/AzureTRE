@@ -1,5 +1,5 @@
 output "app_gateway_fqdn" {
-  value = data.azurerm_public_ip.appgwpip_data.fqdn
+  value = azurerm_public_ip.appgwpip.fqdn
 }
 
 output "app_gateway_name" {
