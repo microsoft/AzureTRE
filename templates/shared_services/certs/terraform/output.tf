@@ -21,3 +21,7 @@ output "resource_group_name" {
 output "keyvault" {
   value = data.azurerm_key_vault.key_vault.name
 }
+
+output "temp_certificate_name" {
+  value = locals.certificate_name
+}

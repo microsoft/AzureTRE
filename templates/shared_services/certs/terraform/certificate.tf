@@ -8,7 +8,7 @@ resource "azurerm_key_vault_access_policy" "app_gw_managed_identity" {
 }
 
 resource "azurerm_key_vault_certificate" "tlscert" {
-  name         = "nexus-letsencrypt"
+  name         = var.cert_name
   key_vault_id = data.azurerm_key_vault.key_vault.id
 
   # This is a temporary self-signed cert for CN=temp

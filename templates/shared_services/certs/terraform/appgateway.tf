@@ -1,10 +1,10 @@
 resource "azurerm_public_ip" "appgwpip" {
-  name                = "pip-nexus-${var.tre_id}"
+  name                = "pip-cert-${var.domain_prefix}-${var.tre_id}"
   resource_group_name = data.azurerm_resource_group.rg.name
   location            = data.azurerm_resource_group.rg.location
   allocation_method   = "Static"
   sku                 = "Standard"
-  domain_name_label   = "nexus-${var.tre_id}"
+  domain_name_label   = "${var.domain_prefix}-${var.tre_id}"
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -12,13 +12,13 @@ resource "azurerm_public_ip" "appgwpip" {
 resource "azurerm_user_assigned_identity" "agw_id" {
   resource_group_name = data.azurerm_resource_group.rg.name
   location            = data.azurerm_resource_group.rg.location
-  name                = "id-agw-nexuscert-${var.tre_id}"
+  name                = "id-agw-certs-${var.tre_id}"
 
   lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_application_gateway" "agw" {
-  name                = "agw-nexuscert-${var.tre_id}"
+  name                = "agw-certs-${var.tre_id}"
   resource_group_name = data.azurerm_resource_group.rg.name
   location            = data.azurerm_resource_group.rg.location
 
@@ -60,7 +60,7 @@ resource "azurerm_application_gateway" "agw" {
 
   # Primary SSL cert linked to KeyVault
   ssl_certificate {
-    name                = local.certificate_name
+    name                = "cert-primary"
     key_vault_secret_id = azurerm_key_vault_certificate.tlscert.secret_id
   }
 
