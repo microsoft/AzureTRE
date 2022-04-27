@@ -1,6 +1,6 @@
 ---
 name: tre-workspace-base
-version: 0.2.1
+version: 0.2.2
 description: "A base Azure TRE workspace"
 registry: azuretre
 
@@ -64,17 +64,21 @@ parameters:
 outputs:
   - name: WorkspaceOwnerAppRoleId
     type: string
+    default: ""
     applyTo:
       - install
   - name: WorkspaceResearcherAppRoleId
     type: string
+    default: ""
     applyTo:
       - install
   - name: client_id
     type: string
+    default: ""
     applyTo:
       - install
   - name: sp_id
+    default: ""
     type: string
     applyTo:
       - install
