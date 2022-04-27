@@ -195,9 +195,9 @@ data "azurerm_log_analytics_workspace" "tre" {
 }
 
 resource "azurerm_monitor_diagnostic_setting" "agw" {
-  name                           = "diagnostics-agw-${var.tre_id}"
-  target_resource_id             = azurerm_application_gateway.agw.id
-  log_analytics_workspace_id     = var.log_analytics_workspace_id
+  name                       = "diagnostics-agw-${var.tre_id}"
+  target_resource_id         = azurerm_application_gateway.agw.id
+  log_analytics_workspace_id = var.log_analytics_workspace_id
   # log_analytics_destination_type = "Dedicated"
 
   dynamic "log" {
@@ -208,7 +208,7 @@ resource "azurerm_monitor_diagnostic_setting" "agw" {
 
       retention_policy {
         enabled = true
-        days = 365
+        days    = 365
       }
     }
   }
@@ -219,7 +219,7 @@ resource "azurerm_monitor_diagnostic_setting" "agw" {
 
     retention_policy {
       enabled = true
-      days = 365
+      days    = 365
     }
   }
 }

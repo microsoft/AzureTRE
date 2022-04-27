@@ -73,9 +73,9 @@ resource "azurerm_servicebus_namespace_network_rule_set" "servicebus_network_rul
 }
 
 resource "azurerm_monitor_diagnostic_setting" "sb" {
-  name                           = "diagnostics-sb-${var.tre_id}"
-  target_resource_id             = azurerm_servicebus_namespace.sb.id
-  log_analytics_workspace_id     = module.azure_monitor.log_analytics_workspace_id
+  name                       = "diagnostics-sb-${var.tre_id}"
+  target_resource_id         = azurerm_servicebus_namespace.sb.id
+  log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
   # log_analytics_destination_type = "Dedicated"
 
   dynamic "log" {
@@ -86,7 +86,7 @@ resource "azurerm_monitor_diagnostic_setting" "sb" {
 
       retention_policy {
         enabled = true
-        days = 365
+        days    = 365
       }
     }
   }
@@ -97,7 +97,7 @@ resource "azurerm_monitor_diagnostic_setting" "sb" {
 
     retention_policy {
       enabled = true
-      days = 365
+      days    = 365
     }
   }
 }
