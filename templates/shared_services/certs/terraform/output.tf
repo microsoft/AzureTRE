@@ -2,7 +2,7 @@ output "fqdn" {
   value = data.azurerm_public_ip.appgwpip_data.fqdn
 }
 
-output "application_gateway" {
+output "application_gateway_name" {
   value = azurerm_application_gateway.agw.name
 }
 
@@ -18,10 +18,6 @@ output "resource_group_name" {
   value = azurerm_application_gateway.agw.resource_group_name
 }
 
-output "keyvault" {
+output "keyvault_name" {
   value = data.azurerm_key_vault.key_vault.name
-}
-
-output "temp_certificate_name" {
-  value = locals.certificate_name
 }
