@@ -50,8 +50,8 @@ resource "azurerm_app_service" "guacamole" {
     AUDIENCE              = "${var.ws_client_id}"
     ISSUER                = local.issuer
 
-    OAUTH2_PROXY_CLIENT_ID       = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.ws_client_id.id})"
-    OAUTH2_PROXY_CLIENT_SECRET   = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.ws_client_secret.id})"
+    OAUTH2_PROXY_CLIENT_ID       = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.workspace_client_id.id})"
+    OAUTH2_PROXY_CLIENT_SECRET   = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.workspace_client_secret.id})"
     OAUTH2_PROXY_REDIRECT_URI    = "https://${local.webapp_name}.azurewebsites.net/oauth2/callback"
     OAUTH2_PROXY_EMAIL_DOMAIN    = "\"*\"" # oauth proxy will allow all email domains only when the value is "*"
     OAUTH2_PROXY_OIDC_ISSUER_URL = "https://login.microsoftonline.com/${local.aad_tenant_id}/v2.0"
@@ -82,8 +82,8 @@ resource "azurerm_app_service" "guacamole" {
   }
 
   depends_on = [
-    azurerm_key_vault_secret.ws_client_id,
-    azurerm_key_vault_secret.ws_client_secret
+    azurerm_key_vault_secret.workspace_client_id,
+    azurerm_key_vault_secret.workspace_client_secret
   ]
 }
 
@@ -223,8 +223,8 @@ resource "azurerm_key_vault_access_policy" "guacamole_policy" {
   secret_permissions = ["Get", "List", ]
 }
 
-resource "azurerm_key_vault_secret" "ws_client_id" {
-  name         = "ws-client-id"
+resource "azurerm_key_vault_secret" "workspace_client_id" {
+  name         = "workspace-client-id"
   value        = var.ws_client_id
   key_vault_id = data.azurerm_key_vault.ws.id
   depends_on = [
@@ -232,8 +232,8 @@ resource "azurerm_key_vault_secret" "ws_client_id" {
   ]
 }
 
-resource "azurerm_key_vault_secret" "ws_client_secret" {
-  name         = "ws-client-secret"
+resource "azurerm_key_vault_secret" "workspace_client_secret" {
+  name         = "workspace-client-secret"
   value        = var.ws_client_secret
   key_vault_id = data.azurerm_key_vault.ws.id
   depends_on = [
