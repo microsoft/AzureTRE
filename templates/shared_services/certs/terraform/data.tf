@@ -22,10 +22,10 @@ data "azurerm_public_ip" "appgwpip_data" {
 data "azurerm_subnet" "resource_processor" {
   name                 = "ResourceProcessorSubnet"
   virtual_network_name = "vnet-${var.tre_id}"
-  resource_group_name  = local.core_resource_group_name
+  resource_group_name  = data.azurerm_resource_group.rg.name
 }
 
 data "azurerm_firewall" "fw" {
   name                = "fw-${var.tre_id}"
-  resource_group_name = local.core_resource_group_name
+  resource_group_name = data.azurerm_resource_group.rg.name
 }
