@@ -70,7 +70,8 @@ async function getCommandFromComment({ core, context, github }) {
     switch (commandText) {
       case "/test":
         {
-          // Docs only changes don't run tests with secrets so can run regardless of whether
+          // Docs only changes don't run tests with secrets so don't require the check for
+          // whether a SHA needs to be supplied
           if (!gotNonDocChanges) {
             command = "test-force-approve";
             const message = `:white_check_mark: PR only contains docs changes - marking tests as complete`;
@@ -146,7 +147,7 @@ async function handleTestCommand({ core, github }, commandParts, testDescription
     }
     const commentSha = commandParts[1];
     if (commentSha.length < 7) {
-      const message = `:warning: When specifying a commit SHA it must be at least 7 characters (received \`234567\`)`;
+      const message = `:warning: When specifying a commit SHA it must be at least 7 characters (received \`${commentSha}\`)`;
       await addActionComment({ github }, pr.repoOwner, pr.repoName, pr.number, comment.username, comment.link, message);
       return false;
     }

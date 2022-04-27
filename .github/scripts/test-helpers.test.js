@@ -1,4 +1,4 @@
-const { lastCallFor, outputFor, toHaveComment } = require('./helpers.js')
+const { lastCallFor, outputFor, toHaveComment } = require('./test-helpers.js')
 
 describe('helper tests', () => {
 

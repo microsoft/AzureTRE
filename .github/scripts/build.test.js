@@ -1,5 +1,5 @@
 const { getCommandFromComment, labelAsExternalIfAuthorDoesNotHaveWriteAccess } = require('./build.js')
-const { createGitHubContext, PR_NUMBER, outputFor, toHaveComment } = require('./helpers.js')
+const { createGitHubContext, PR_NUMBER, outputFor, toHaveComment } = require('./test-helpers.js')
 
 expect.extend({
   toHaveComment
