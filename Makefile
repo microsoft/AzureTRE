@@ -106,12 +106,6 @@ gitea-install:
 	&& $(MAKE) bundle-register DIR="./templates/shared_services/gitea" BUNDLE_TYPE=shared_service \
 	&& $(MAKE) deploy-shared-service DIR=./templates/shared_services/gitea/ BUNDLE_TYPE=shared_service
 
-nexus-cert-install:
-	$(MAKE) bundle-build DIR=./templates/shared_services/nexus-cert/ \
-	&& $(MAKE) bundle-publish DIR=./templates/shared_services/nexus-cert/ \
-	&& $(MAKE) bundle-register DIR="./templates/shared_services/nexus-cert" BUNDLE_TYPE=shared_service \
-	&& $(MAKE) deploy-shared-service DIR=./templates/shared_services/nexus-cert/ BUNDLE_TYPE=shared_service
-
 # A recipe for pushing images. Parameters:
 # 1. Image name suffix
 # 2. Version file path
@@ -158,17 +152,6 @@ prepare-tf-state:
 	&& pushd ./templates/shared_services/firewall/terraform > /dev/null && ./import_state.sh && popd > /dev/null
 
 # / End migration targets
-
-nexus-letsencrypt:
-	$(call target_title, "Requesting LetsEncrypt SSL certificate for Nexus") \
-	&& . ./devops/scripts/check_dependencies.sh nodocker,certbot \
-	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
-	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
-	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
-	&& pushd ./templates/shared_services/nexus-cert/scripts/ > /dev/null && . ./outputs.sh && popd > /dev/null \
-	&& . ./devops/scripts/load_env.sh ./templates/shared_services/nexus-cert/.env \
-	&& ./templates/shared_services/nexus-cert/scripts/letsencrypt.sh
 
 deploy-core: tre-start
 	$(call target_title, "Deploying TRE") \
