@@ -15,5 +15,3 @@ ln -s "${PORTER_HOME}/porter" "${PORTER_HOME}/runtimes/porter-runtime"
 "${PORTER_HOME}/porter" mixin install az --version "${PORTER_PKG_PERMALINK}"
 "${PORTER_HOME}/porter" plugin install azure --version "${PORTER_PKG_PERMALINK}"
 "${PORTER_HOME}/porter" mixin install docker --version "${PORTER_PKG_PERMALINK}"
-
-chown -R "${USERNAME}" "${PORTER_HOME}"
