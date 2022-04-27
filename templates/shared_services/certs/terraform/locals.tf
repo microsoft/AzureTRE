@@ -1,5 +1,5 @@
 locals {
-  staticweb_storage_name = lower(replace("stwebnexus${var.tre_id}", "-", ""))
+  staticweb_storage_name = lower(replace("stwebcerts${var.tre_id}", "-", ""))
 
   staticweb_backend_pool_name = "beap-certs-staticweb"
   app_path_map_name           = "upm-certs"

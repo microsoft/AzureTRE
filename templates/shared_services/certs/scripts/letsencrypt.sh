@@ -96,6 +96,7 @@ ledir="${script_dir}/../letsencrypt"
 mkdir -p "${ledir}/logs"
 
 # Initiate the ACME challange
+export STORAGE_ACCOUNT_NAME="${storage_account_name}"
 /opt/certbot/bin/certbot certonly \
     --config-dir "${ledir}" \
     --work-dir "${ledir}" \
