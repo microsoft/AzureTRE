@@ -60,7 +60,7 @@ write_files:
       # set -o xtrace
 
       # Prepare ssl certificate
-      az login --identity -u ${msi_id}
+      az login --identity -u ${msi_id} --allow-no-subscriptions
       # -- get cert from kv as secret so it contains private key
       echo 'Getting cert and cert password from Keyvault...'
       az keyvault secret download --vault-name ${vault_name} --name ${ssl_cert_name} --file temp.pfx --encoding base64

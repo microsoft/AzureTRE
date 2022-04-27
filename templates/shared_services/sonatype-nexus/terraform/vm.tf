@@ -77,18 +77,12 @@ resource "azurerm_user_assigned_identity" "nexus_msi" {
   lifecycle { ignore_changes = [tags] }
 }
 
-# resource "azurerm_role_assignment" "kv_reader" {
-#   scope                = data.azurerm_key_vault.kv.id
-#   role_definition_name = "Key Vault Reader"
-#   principal_id         = azurerm_user_assigned_identity.nexus_msi.principal_id
-# }
-
 resource "azurerm_key_vault_access_policy" "nexus_msi" {
   key_vault_id = data.azurerm_key_vault.kv.id
   tenant_id    = azurerm_user_assigned_identity.nexus_msi.tenant_id
   object_id    = azurerm_user_assigned_identity.nexus_msi.principal_id
 
-  secret_permissions = ["Get"]
+  secret_permissions = ["Get", "Recover"]
 }
 
 resource "azurerm_linux_virtual_machine" "nexus" {
@@ -128,7 +122,6 @@ resource "azurerm_linux_virtual_machine" "nexus" {
   }
 
   depends_on = [
-    azurerm_role_assignment.kv_reader,
     azurerm_key_vault_access_policy.nexus_msi,
     azurerm_firewall_application_rule_collection.shared_subnet_nexus
   ]
