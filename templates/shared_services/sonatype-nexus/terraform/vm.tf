@@ -159,6 +159,12 @@ data "template_cloudinit_config" "nexus_config" {
           content     = file("${path.module}/../scripts/reset_nexus_password.sh")
           path        = "/home/adminuser/reset_nexus_password.sh"
           permissions = "0744"
+        },
+        {
+          for_each    = fileset("${path.module}/../scripts/nexus_repos_config", "*.json")
+          content     = "${each.value}"
+          path        = "/home/adminuser/nexus_repos_config/${each.key}"
+          permissions = "0744"
         }
       ]
     })

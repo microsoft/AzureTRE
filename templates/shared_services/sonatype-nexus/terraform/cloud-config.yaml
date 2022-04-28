@@ -48,3 +48,5 @@ runcmd:
   - bash /etc/cron.daily/configure_nexus_ssl.sh
   # Reset the admin password of Nexus to the one created by TF and stored in KeyVault
   - bash /home/adminuser/reset_nexus_password.sh "${NEXUS_ADMIN_PASSWORD}"
+  # Configure Nexus repositories
+  - bash /home/adminuser/configure_nexus_repos.sh "${NEXUS_ADMIN_PASSWORD}"
