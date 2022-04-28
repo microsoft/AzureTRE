@@ -13,12 +13,6 @@ data "azurerm_subnet" "app_gw_subnet" {
   resource_group_name  = data.azurerm_resource_group.rg.name
 }
 
-data "azurerm_public_ip" "appgwpip_data" {
-  depends_on          = [azurerm_application_gateway.agw]
-  name                = "pip-nexus-${var.tre_id}"
-  resource_group_name = data.azurerm_resource_group.rg.name
-}
-
 data "azurerm_subnet" "resource_processor" {
   name                 = "ResourceProcessorSubnet"
   virtual_network_name = "vnet-${var.tre_id}"
@@ -28,4 +22,9 @@ data "azurerm_subnet" "resource_processor" {
 data "azurerm_firewall" "fw" {
   name                = "fw-${var.tre_id}"
   resource_group_name = data.azurerm_resource_group.rg.name
+}
+
+data "azurerm_user_assigned_identity" "resource_processor_vmss_id" {
+  name                = "id-vmss-${var.tre_id}"
+  resource_group_name = "rg-${var.tre_id}"
 }

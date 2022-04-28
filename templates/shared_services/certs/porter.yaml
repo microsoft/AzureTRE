@@ -38,12 +38,13 @@ parameters:
     description: "The FQDN prefix (which will be prepended to {TRE_ID}.{LOCATION}.cloudapp.azure.com) to generate a certificate for"
   - name: cert_name
     type: string
-    description: "What to call the certificate exported to KeyVault"
+    description: "What to call the certificate exported to KeyVault (alphanumeric and '-' only)"
 
 mixins:
   - exec
   - terraform:
       clientVersion: 1.1.5
+  - az
 
 install:
   - terraform:
@@ -104,9 +105,16 @@ generate:
         - name: fqdn
         - name: application_gateway_name
         - name: storage_account_name
-        - name: storage_account_id
         - name: resource_group_name
         - name: keyvault_name
+  - az:
+      description:
+        "Login to Azure"
+      arguments:
+        - login
+      flags:
+        identity:
+        username: "{{ bundle.credentials.azure_client_id }}"
   - exec:
       description: "Generate/renew certificate"
       command: bash
@@ -116,7 +124,6 @@ generate:
         fqdn: "{{ bundle.outputs.fqdn }}"
         application_gateway_name: "{{ bundle.outputs.application_gateway_name }}"
         storage_account_name: "{{ bundle.outputs.storage_account_name }}"
-        storage_account_id: "{{ bundle.outputs.storage_account_id }}"
         resource_group_name: "{{ bundle.outputs.resource_group_name }}"
         keyvault_name: "{{ bundle.outputs.keyvault_name }}"
         cert_name: "{{ bundle.parameters.cert_name }}"

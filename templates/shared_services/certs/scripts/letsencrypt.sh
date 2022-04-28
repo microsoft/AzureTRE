@@ -9,10 +9,6 @@ while [ "$1" != "" ]; do
         shift
         storage_account_name=$1
         ;;
-    --storage_account_id)
-        shift
-        storage_account_id=$1
-        ;;
     --fqdn)
         shift
         fqdn=$1
@@ -52,12 +48,6 @@ set -o nounset
 
 echo "Checking for index.html file in storage account"
 
-# Assign Storage Blob Data Contributor permissions if not already present
-objectId=$(az ad signed-in-user show --query objectId -o tsv)
-az role assignment create --assignee "${objectId}" \
-  --role "Storage Blob Data Contributor" \
-  --scope "${storage_account_id}"
-
 # Create the default index.html page
 cat << EOF > index.html
 <!DOCTYPE html>
@@ -73,7 +63,7 @@ indexExists=$(az storage blob list -o json \
     | jq 'length')
 
 if [[ ${indexExists} -lt 1 ]]; then
-    echo "Uploading index.html file"
+    echo "No existing file found. Uploading index.html file"
 
     # shellcheck disable=SC2016
     az storage blob upload \
@@ -86,7 +76,7 @@ if [[ ${indexExists} -lt 1 ]]; then
         --only-show-errors
 
     # Wait a bit for the App Gateway health probe to notice
-    echo "Waiting 30s for health probe"
+    echo "Waiting 30s for app gateway health probe"
     sleep 30s
 else
     echo "index.html already present"
@@ -96,6 +86,7 @@ ledir="${script_dir}/../letsencrypt"
 mkdir -p "${ledir}/logs"
 
 # Initiate the ACME challange
+echo "Initiating ACME challenge"
 export STORAGE_ACCOUNT_NAME="${storage_account_name}"
 /opt/certbot/bin/certbot certonly \
     --config-dir "${ledir}" \
@@ -112,6 +103,7 @@ export STORAGE_ACCOUNT_NAME="${storage_account_name}"
 
 
 # Convert the generated certificate to a .pfx
+echo "Got cert. Converting to PFX"
 CERT_DIR="${ledir}/live/${fqdn}"
 CERT_PASSWORD=$(openssl rand -base64 30)
 openssl pkcs12 -export \
@@ -120,30 +112,24 @@ openssl pkcs12 -export \
     -out "${CERT_DIR}/aci.pfx" \
     -passout "pass:${CERT_PASSWORD}"
 
-if [[ -n ${keyvault_name} ]]; then
-    sid=$(az keyvault certificate import \
-        -o json \
-        --vault-name "${keyvault_name}" \
-        --name "${cert_name}" \
-        --file "${CERT_DIR}/aci.pfx" \
-        --password "${CERT_PASSWORD}" \
-        | jq -r '.sid')
+# Save cert and password to KeyVault
+echo "Importing cert to KeyVault ${keyvault_name}"
+sid=$(az keyvault certificate import \
+    -o json \
+    --vault-name "${keyvault_name}" \
+    --name "${cert_name}" \
+    --file "${CERT_DIR}/aci.pfx" \
+    --password "${CERT_PASSWORD}" \
+    | jq -r '.sid')
 
-    # Save the certificate password to KV
-    az keyvault secret set --name "${cert_name}"-password \
-      --vault-name "${keyvault_name}" \
-      --value "${CERT_PASSWORD}"
+echo "Saving certificate password to KV with key ${cert_name}-password"
+az keyvault secret set --name "${cert_name}"-password \
+  --vault-name "${keyvault_name}" \
+  --value "${CERT_PASSWORD}"
 
-    az network application-gateway ssl-cert update \
-        --resource-group "${resource_group_name}" \
-        --gateway-name "${application_gateway_name}" \
-        --name 'cert-primary' \
-        --key-vault-secret-id "${sid}"
-else
-    az network application-gateway ssl-cert update \
-        --resource-group "${resource_group_name}" \
-        --gateway-name "${application_gateway_name}" \
-        --name "${cert_name}" \
-        --cert-file "${CERT_DIR}/aci.pfx" \
-        --cert-password "${CERT_PASSWORD}"
-fi
+echo "Updating SSL cert in app gateway"
+az network application-gateway ssl-cert update \
+    --resource-group "${resource_group_name}" \
+    --gateway-name "${application_gateway_name}" \
+    --name 'cert-primary' \
+    --key-vault-secret-id "${sid}"

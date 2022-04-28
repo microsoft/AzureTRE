@@ -1,3 +1,11 @@
-variable "tre_id" {}
-variable "domain_prefix" {}
-variable "cert_name" {}
+variable "tre_id" {
+  type = string
+}
+
+variable "domain_prefix" {
+  type = string
+}
+
+variable "cert_name" {
+  type = string
+}

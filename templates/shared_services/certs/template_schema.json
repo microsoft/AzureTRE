@@ -16,7 +16,7 @@
       "$id": "#/properties/cert_name",
       "type": "string",
       "title": "Cert name",
-      "description": "What to call the certificate that's exported to KeyVault"
+      "description": "What to call the certificate that's exported to KeyVault (alphanumeric and '-' only)"
     }
   }
 }

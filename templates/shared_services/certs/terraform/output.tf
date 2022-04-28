@@ -1,5 +1,5 @@
 output "fqdn" {
-  value = data.azurerm_public_ip.appgwpip_data.fqdn
+  value = azurerm_public_ip.appgwpip.fqdn
 }
 
 output "application_gateway_name" {
@@ -8,10 +8,6 @@ output "application_gateway_name" {
 
 output "storage_account_name" {
   value = azurerm_storage_account.staticweb.name
-}
-
-output "storage_account_id" {
-  value = azurerm_storage_account.staticweb.id
 }
 
 output "resource_group_name" {

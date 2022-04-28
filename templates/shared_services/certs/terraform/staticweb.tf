@@ -20,3 +20,9 @@ resource "azurerm_storage_account" "staticweb" {
 
   lifecycle { ignore_changes = [tags] }
 }
+
+resource "azurerm_role_assignment" "stgwriter" {
+  scope                = azurerm_storage_account.staticweb.id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = data.azurerm_user_assigned_identity.resource_processor_vmss_id.principal_id
+}

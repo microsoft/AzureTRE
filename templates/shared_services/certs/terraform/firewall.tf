@@ -17,7 +17,7 @@ resource "azurerm_firewall_application_rule_collection" "resource_processor_lets
     }
 
     target_fqdns = [
-      "https://acme-v02.api.letsencrypt.org/"
+      "acme-v02.api.letsencrypt.org"
     ]
 
     source_addresses = data.azurerm_subnet.resource_processor.address_prefixes
