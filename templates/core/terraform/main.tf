@@ -55,15 +55,16 @@ module "network" {
 }
 
 module "appgateway" {
-  source                 = "./appgateway"
-  tre_id                 = var.tre_id
-  location               = var.location
-  resource_group_name    = azurerm_resource_group.core.name
-  app_gw_subnet          = module.network.app_gw_subnet_id
-  shared_subnet          = module.network.shared_subnet_id
-  api_fqdn               = azurerm_app_service.api.default_site_hostname
-  keyvault_id            = azurerm_key_vault.kv.id
-  static_web_dns_zone_id = module.network.static_web_dns_zone_id
+  source                     = "./appgateway"
+  tre_id                     = var.tre_id
+  location                   = var.location
+  resource_group_name        = azurerm_resource_group.core.name
+  app_gw_subnet              = module.network.app_gw_subnet_id
+  shared_subnet              = module.network.shared_subnet_id
+  api_fqdn                   = azurerm_app_service.api.default_site_hostname
+  keyvault_id                = azurerm_key_vault.kv.id
+  static_web_dns_zone_id     = module.network.static_web_dns_zone_id
+  log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
 
   depends_on = [
     azurerm_key_vault.kv,

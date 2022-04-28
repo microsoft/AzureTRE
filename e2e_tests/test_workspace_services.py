@@ -1,37 +1,11 @@
 import pytest
-from httpx import AsyncClient
-from starlette import status
 
 import config
-from helpers import disable_and_delete_resource, get_service_template, post_resource, get_auth_header
+from helpers import disable_and_delete_resource, post_resource
 from resources import strings
 
+
 pytestmark = pytest.mark.asyncio
-
-workspace_service_templates = [
-    (strings.AZUREML_SERVICE),
-    (strings.DEVTESTLABS_SERVICE),
-    (strings.GUACAMOLE_SERVICE),
-    (strings.INNEREYE_SERVICE),
-    (strings.GITEA_SERVICE)
-]
-
-
-@pytest.mark.smoke
-@pytest.mark.parametrize("template_name", workspace_service_templates)
-async def test_get_workspace_service_templates(template_name, admin_token, verify) -> None:
-    async with AsyncClient(verify=verify) as client:
-        response = await client.get(f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{strings.API_WORKSPACE_SERVICE_TEMPLATES}", headers=get_auth_header(admin_token))
-
-        template_names = [templates["name"] for templates in response.json()["templates"]]
-        assert (template_name in template_names), f"No {template_name} template found"
-
-
-@pytest.mark.smoke
-@pytest.mark.parametrize("template_name", workspace_service_templates)
-async def test_getting_templates(template_name, admin_token, verify) -> None:
-    async with get_service_template(template_name, admin_token, verify) as response:
-        assert (response.status_code == status.HTTP_200_OK), f"GET Request for {template_name} failed"
 
 
 @pytest.mark.extended
@@ -48,7 +22,7 @@ async def test_create_guacamole_service_into_base_workspace(admin_token, workspa
         }
     }
 
-    workspace_path, workspace_id = await post_resource(payload, strings.API_WORKSPACES, 'workspace', workspace_owner_token, admin_token, verify)
+    workspace_path, _ = await post_resource(payload, strings.API_WORKSPACES, 'workspace', workspace_owner_token, admin_token, verify)
 
     service_payload = {
         "templateName": "tre-service-guacamole",

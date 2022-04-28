@@ -1,6 +1,6 @@
 ---
 name: tre-workspace-base
-version: 0.2.0
+version: 0.2.1
 description: "A base Azure TRE workspace"
 registry: azuretre
 
@@ -61,23 +61,23 @@ parameters:
     type: boolean
     default: false
 
-outputs:
-  - name: WorkspaceOwnerAppRoleId
-    type: string
-    applyTo:
-      - install
-  - name: WorkspaceResearcherAppRoleId
-    type: string
-    applyTo:
-      - install
-  - name: client_id
-    type: string
-    applyTo:
-      - install
-  - name: sp_id
-    type: string
-    applyTo:
-      - install
+# outputs:
+#   - name: WorkspaceOwnerAppRoleId
+#     type: string
+#     applyTo:
+#       - install
+#   - name: WorkspaceResearcherAppRoleId
+#     type: string
+#     applyTo:
+#       - install
+#   - name: client_id
+#     type: string
+#     applyTo:
+#       - install
+#   - name: sp_id
+#     type: string
+#     applyTo:
+#       - install
 
 mixins:
   - exec
@@ -109,11 +109,11 @@ install:
           "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.id }}"
-      outputs:
-        - name: WorkspaceOwnerAppRoleId
-        - name: WorkspaceResearcherAppRoleId
-        - name: client_id
-        - name: sp_id
+      # outputs:
+      #   - name: WorkspaceOwnerAppRoleId
+      #   - name: WorkspaceResearcherAppRoleId
+      #   - name: client_id
+      #   - name: sp_id
 
 upgrade:
   - exec:
