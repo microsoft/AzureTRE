@@ -181,3 +181,15 @@ def test_create_workspace_item_raises_value_error_if_template_is_invalid(validat
 
     with pytest.raises(ValueError):
         workspace_repo.create_workspace_item(workspace_input, {})
+
+
+def test_get_auto_app_registration_as_boolean_string_returns_true(workspace_repo):
+    dictToTest = {"client_id": "auto_create"}
+
+    assert workspace_repo.get_auto_app_registration_as_boolean_string(dictToTest) == "true"
+
+
+def test_get_auto_app_registration_as_boolean_string_returns_false(workspace_repo):
+    dictToTest = {"client_id": "12345"}
+
+    assert workspace_repo.get_auto_app_registration_as_boolean_string(dictToTest) == "false"
