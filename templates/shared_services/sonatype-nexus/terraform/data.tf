@@ -25,7 +25,7 @@ data "azurerm_key_vault" "kv" {
 }
 
 data "azurerm_key_vault_certificate" "nexus_cert" {
-  name         = "nexus-letsencrypt"
+  name         = var.ssl_cert_name
   key_vault_id = data.azurerm_key_vault.kv.id
 }
 

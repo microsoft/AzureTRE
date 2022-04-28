@@ -1,6 +1,6 @@
 ---
 name: tre-shared-service-nexus
-version: 0.0.2
+version: 0.0.3
 description: "A Sonatype Nexus shared service"
 registry: azuretre
 credentials:
@@ -29,6 +29,11 @@ parameters:
   - name: arm_use_msi
     env: ARM_USE_MSI
     default: false
+  - name: ssl_cert_name
+    type: string
+    default: "nexus-ssl"
+    description: "Name of the certificate for configuring Nexus SSL with (stored in the core KeyVault)"
+
 mixins:
   - exec
   - az
@@ -40,6 +45,7 @@ install:
       input: false
       vars:
         tre_id: "{{ bundle.parameters.tre_id }}"
+        ssl_cert_name: "{{ bundle.parameters.ssl_cert_name }}"
       backendConfig:
         resource_group_name:
           "{{ bundle.parameters.tfstate_resource_group_name }}"
@@ -59,6 +65,7 @@ uninstall:
       input: false
       vars:
         tre_id: "{{ bundle.parameters.tre_id }}"
+        ssl_cert_name: "{{ bundle.parameters.ssl_cert_name }}"
       backendConfig:
         resource_group_name:
           "{{ bundle.parameters.tfstate_resource_group_name }}"

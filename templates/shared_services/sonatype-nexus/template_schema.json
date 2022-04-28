@@ -5,5 +5,12 @@
   "title": "Nexus Shared Service",
   "description": "Provides Nexus shared service",
   "required": [],
-  "properties": {}
+  "properties": {
+    "ssl_cert_name": {
+      "type": "string",
+      "title": "SSL certificate name",
+      "description": "The name of the certificate to use (located in the core KeyVault) for configuring Nexus SSL",
+      "default": "nexus-ssl"
+    }
+  }
 }
