@@ -133,14 +133,48 @@ data "template_cloudinit_config" "nexus_config" {
 
   part {
     content_type = "text/cloud-config"
-    content      = data.template_file.nexus_config.rendered
+    content      = data.template_file.nexus_bootstrapping.rendered
+  }
+
+  part {
+    content_type = "text/cloud-config"
+    content = jsonencode({
+      write_files = [
+        {
+          content     = file("${path.module}/../scripts/configure_nexus_repos.sh")
+          path        = "/home/adminuser/configure_nexus_repos.sh"
+          permissions = "0744"
+        },
+        {
+          content     = data.template_file.configure_nexus_ssl.rendered
+          path        = "/etc/cron.daily/configure_nexus_ssl.sh"
+          permissions = "0755"
+        },
+        {
+          content     = "nexus.skipDefaultRepositories=true"
+          path        = "/etc/nexus-data/etc/nexus.properties"
+          permissions = "0755"
+        },
+        {
+          content     = file("${path.module}/../scripts/reset_nexus_password.sh")
+          path        = "/home/adminuser/reset_nexus_password.sh"
+          permissions = "0744"
+        }
+      ]
+    })
   }
 }
 
-data "template_file" "nexus_config" {
+data "template_file" "nexus_bootstrapping" {
   template = file("${path.module}/cloud-config.yaml")
   vars = {
-    nexus_admin_password   = random_password.nexus_admin_password.result
+    nexus_admin_password = random_password.nexus_admin_password.result
+  }
+}
+
+data "template_file" "configure_nexus_ssl" {
+  template = file("${path.module}/../scripts/configure_nexus_ssl.sh")
+  vars = {
     msi_id                 = azurerm_user_assigned_identity.nexus_msi.id
     vault_name             = data.azurerm_key_vault.kv.name
     ssl_cert_name          = data.azurerm_key_vault_certificate.nexus_cert.name

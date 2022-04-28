@@ -30,7 +30,7 @@ data "azurerm_key_vault_certificate" "nexus_cert" {
 }
 
 data "azurerm_key_vault_secret" "nexus_cert_password" {
-  name         = "nexus-letsencrypt-cert-password"
+  name         = "${data.azurerm_key_vault_certificate.nexus_cert.name}-password"
   key_vault_id = data.azurerm_key_vault.kv.id
 }
 
