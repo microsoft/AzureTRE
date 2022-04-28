@@ -63,7 +63,7 @@ parameters:
     description: "Whether this bundle should register the workspace in AAD"
   - name: client_id
     type: string
-    description: "The client id of the workspace in the identity provider, this can be passed in, or come back as an output."
+    description: "The client id of the workspace in the identity provider."
   - name: sp_id
     type: string
     default: ""
