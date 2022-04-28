@@ -1,6 +1,6 @@
 ---
 name: tre-service-guacamole
-version: 0.1.12
+version: 0.1.14
 description: "An Azure TRE service for Guacamole"
 registry: azuretre
 dockerfile: Dockerfile.tmpl

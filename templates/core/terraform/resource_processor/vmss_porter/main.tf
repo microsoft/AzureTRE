@@ -170,6 +170,5 @@ resource "azurerm_key_vault_access_policy" "resource_processor" {
   tenant_id    = azurerm_user_assigned_identity.vmss_msi.tenant_id
   object_id    = azurerm_user_assigned_identity.vmss_msi.principal_id
 
-  secret_permissions      = ["Get", "List", "Set", "Delete", "Recover"]
-  certificate_permissions = ["Get", "Update", "Create", "Import", "Delete"]
+  secret_permissions = ["Get", "List", "Set", "Delete", "Purge", "Recover"]
 }

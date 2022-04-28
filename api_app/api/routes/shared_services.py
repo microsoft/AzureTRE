@@ -58,7 +58,11 @@ async def create_shared_service(response: Response, shared_service_input: Shared
     return OperationInResponse(operation=operation)
 
 
-@shared_services_router.patch("/shared-services/{shared_service_id}", response_model=SharedServiceInResponse, name=strings.API_UPDATE_SHARED_SERVICE, dependencies=[Depends(get_current_admin_user), Depends(get_shared_service_by_id_from_path)])
+@shared_services_router.patch("/shared-services/{shared_service_id}",
+                              status_code=status.HTTP_202_ACCEPTED,
+                              response_model=OperationInResponse,
+                              name=strings.API_UPDATE_SHARED_SERVICE,
+                              dependencies=[Depends(get_current_admin_user), Depends(get_shared_service_by_id_from_path)])
 async def patch_shared_service(shared_service_patch: ResourcePatch, response: Response, user=Depends(get_current_admin_user), shared_service_repo=Depends(get_repository(SharedServiceRepository)), shared_service=Depends(get_shared_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), etag: str = Header(None)) -> SharedServiceInResponse:
     check_for_etag(etag)
     try:
@@ -73,7 +77,7 @@ async def patch_shared_service(shared_service_patch: ResourcePatch, response: Re
             action=RequestAction.Upgrade)
 
         response.headers["Location"] = construct_location_header(operation)
-        return SharedServiceInResponse(sharedService=patched_shared_service)
+        return OperationInResponse(operation=operation)
     except CosmosAccessConditionFailedError:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
     except ValidationError as v:

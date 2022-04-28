@@ -39,7 +39,7 @@ API_GET_SHARED_SERVICE_TEMPLATES = "Get shared service templates"
 API_GET_SHARED_SERVICE_TEMPLATE_BY_NAME = "Get shared service template by name"
 
 API_GET_ALL_SHARED_SERVICES = "Get all shared services"
-API_GET_SHARED_SERVICE_BY_ID = "Get shared service by Id"
+API_GET_SHARED_SERVICE_BY_ID = "Get shared service by ID"
 API_CREATE_SHARED_SERVICE = "Create a shared service"
 API_UPDATE_SHARED_SERVICE = "Update an existing shared service"
 API_DELETE_SHARED_SERVICE = "Delete shared service"
@@ -106,6 +106,7 @@ TEMPLATE_DOES_NOT_EXIST = "Could not retrieve the 'current' template with this n
 NO_UNIQUE_CURRENT_FOR_TEMPLATE = "The template has multiple 'current' versions"
 
 SHARED_SERVICE_DOES_NOT_EXIST = "Shared service does not exist"
+SHARED_SERVICE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION = "Shared service needs to be disabled before you can delete it"
 
 SHARED_SERVICE_TEMPLATE_DOES_NOT_EXIST = "Could not retrieve the workspace service template specified"
 SHARED_SERVICE_TEMPLATE_VERSION_EXISTS = "A template with this version already exists"

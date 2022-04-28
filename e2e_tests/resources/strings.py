@@ -4,6 +4,8 @@ API_HEALTH = "/api/health"
 API_WORKSPACE_TEMPLATES = "/api/workspace-templates"
 API_WORKSPACES = "/api/workspaces"
 API_WORKSPACE_SERVICE_TEMPLATES = "/api/workspace-service-templates"
+API_SHARED_SERVICE_TEMPLATES = "/api/shared-service-templates"
+API_SHARED_SERVICES = "/api/shared-services"
 API_WORKSPACE_SERVICES = "workspace-services"
 API_USER_RESOURCES = "user-resources"
 
@@ -15,6 +17,10 @@ DEVTESTLABS_SERVICE = "tre-service-devtestlabs"
 INNEREYE_SERVICE = "tre-service-innereye"
 GUACAMOLE_SERVICE = "tre-service-guacamole"
 GITEA_SERVICE = "tre-workspace-service-gitea"
+
+FIREWALL_SHARED_SERVICE = "tre-shared-service-firewall"
+GITEA_SHARED_SERVICE = "tre-shared-service-gitea"
+NEXUS_SHARED_SERVICE = "tre-shared-service-nexus"
 
 TEST_WORKSPACE_SERVICE_TEMPLATE = "e2e-test-workspace-service"
 
