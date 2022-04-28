@@ -54,12 +54,17 @@ RUN apt-get update && apt-get install -y python3 python3-venv libaugeas0 \
 # Not using the script from https://cdn.porter.sh/latest/install-linux.sh
 # as it installs things we don't need and duplicates the binary.
 ARG PORTER_MIRROR=https://cdn.porter.sh
-ARG PORTER_PERMALINK=v0.38.10
+ARG PORTER_PERMALINK=v0.38.7
 ARG PORTER_PKG_PERMALINK=latest
+ARG PORTER_HOME=/home/$USERNAME/.porter/
 COPY .devcontainer/scripts/porter.sh /tmp/
-RUN /tmp/porter.sh
+RUN export PORTER_MIRROR=${PORTER_MIRROR} \
+    PORTER_PERMALINK=${PORTER_PERMALINK} \
+    PORTER_PKG_PERMALINK=${PORTER_PKG_PERMALINK} \
+    PORTER_HOME=${PORTER_HOME} \
+    && /tmp/porter.sh
 
-ENV PATH /home/$USERNAME/.porter/:$PATH
+ENV PATH ${PORTER_HOME}:$PATH
 
 # Install requirements
 COPY ["requirements.txt", "/tmp/pip-tmp/" ]
@@ -70,8 +75,10 @@ COPY ["e2e_tests/requirements.txt", "/tmp/pip-tmp/e2e_tests/"]
 RUN pip3 --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requirements.txt && rm -rf /tmp/pip-tmp
 
 # Install azure-cli
-COPY ./.devcontainer/scripts/azure-cli.sh /tmp/
-RUN /tmp/azure-cli.sh
+ARG AZURE_CLI_VERSION=2.29.2-1~buster
+COPY .devcontainer/scripts/azure-cli.sh /tmp/
+RUN export AZURE_CLI_VERSION=${AZURE_CLI_VERSION} \
+    && /tmp/azure-cli.sh
 
 ARG YQ_VERSION="v4.13.0"
 RUN wget -O /usr/local/bin/yq "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64" \

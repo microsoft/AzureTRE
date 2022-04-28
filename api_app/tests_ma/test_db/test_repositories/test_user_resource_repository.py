@@ -40,11 +40,11 @@ def user_resource():
 
 @patch('db.repositories.user_resources.UserResourceRepository.validate_input_against_template')
 @patch('core.config.TRE_ID', "9876")
-def test_create_user_resource_item_creates_a_user_resource_with_the_right_values(validate_input_mock, user_resource_repo, basic_user_resource_request):
+def test_create_user_resource_item_creates_a_user_resource_with_the_right_values(validate_input_mock, user_resource_repo, basic_user_resource_request, basic_user_resource_template):
     user_resource_to_create = basic_user_resource_request
-    validate_input_mock.return_value = basic_user_resource_request.templateName
+    validate_input_mock.return_value = basic_user_resource_template
 
-    user_resource = user_resource_repo.create_user_resource_item(user_resource_to_create, WORKSPACE_ID, SERVICE_ID, "parent-service-type", USER_ID)
+    user_resource, _ = user_resource_repo.create_user_resource_item(user_resource_to_create, WORKSPACE_ID, SERVICE_ID, "parent-service-type", USER_ID)
 
     assert user_resource.templateName == basic_user_resource_request.templateName
     assert user_resource.resourceType == ResourceType.UserResource

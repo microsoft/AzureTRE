@@ -15,9 +15,14 @@ These commands can only be run when commented by a user who is identified as a r
 
 This command will cause the pr-comment-bot to respond with a comment listing the available commands.
 
-### `/test`
+### `/test [<sha>]`
 
 This command runs the build, deploy, and smoke tests for a PR.
+
+For PRs from maintainers (i.e. users with write access to microsoft/AzureTRE), `/test` is sufficient.
+
+For other PRs, the checks below should be carried out. Once satisfied that the PR is safe to run tests against, you should use `/test <sha>` where `<sha>` is the SHA for the commit that you have verified.
+You can use the full or short form of the SHA, but it must be at least 7 characters (GitHub UI shows 7 characters).
 
 **IMPORTANT**
 
@@ -30,9 +35,14 @@ Check for changes to anything that is run during the build/deploy/test cycle, in
 - modifications to scripts
 - new python packages being installed
 
-### `/test-extended`
+### `/test-extended [<sha>]`
 
 This command runs the build, deploy, and smoke & extended tests for a PR.
+
+For PRs from maintainers (i.e. users with write access to microsoft/AzureTRE), `/test-extended` is sufficient.
+
+For other PRs, the checks below should be carried out. Once satisfied that the PR is safe to run tests against, you should use `/test-extended <sha>` where `<sha>` is the SHA for the commit that you have verified.
+You can use the full or short form of the SHA, but it must be at least 7 characters (GitHub UI shows 7 characters).
 
 **IMPORTANT**
 

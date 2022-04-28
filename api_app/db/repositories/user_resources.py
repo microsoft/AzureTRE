@@ -1,8 +1,9 @@
 import uuid
-from typing import List
+from typing import List, Tuple
 
 from azure.cosmos import CosmosClient
 from pydantic import parse_obj_as
+from models.domain.resource_template import ResourceTemplate
 from models.domain.authentication import User
 
 from db.errors import EntityDoesNotExist
@@ -26,10 +27,10 @@ class UserResourceRepository(ResourceRepository):
     def active_user_resources_query(workspace_id: str, service_id: str):
         return f'SELECT * FROM c WHERE {IS_ACTIVE_CLAUSE} AND c.resourceType = "{ResourceType.UserResource}" AND c.parentWorkspaceServiceId = "{service_id}" AND c.workspaceId = "{workspace_id}"'
 
-    def create_user_resource_item(self, user_resource_input: UserResourceInCreate, workspace_id: str, parent_workspace_service_id: str, parent_template_name: str, user_id: str) -> UserResource:
+    def create_user_resource_item(self, user_resource_input: UserResourceInCreate, workspace_id: str, parent_workspace_service_id: str, parent_template_name: str, user_id: str) -> Tuple[UserResource, ResourceTemplate]:
         full_user_resource_id = str(uuid.uuid4())
 
-        template_version = self.validate_input_against_template(user_resource_input.templateName, user_resource_input, ResourceType.UserResource, parent_template_name)
+        template = self.validate_input_against_template(user_resource_input.templateName, user_resource_input, ResourceType.UserResource, parent_template_name)
 
         # we don't want something in the input to overwrite the system parameters, so dict.update can't work.
         resource_spec_parameters = {**user_resource_input.properties, **self.get_user_resource_spec_params()}
@@ -40,13 +41,13 @@ class UserResourceRepository(ResourceRepository):
             ownerId=user_id,
             parentWorkspaceServiceId=parent_workspace_service_id,
             templateName=user_resource_input.templateName,
-            templateVersion=template_version,
+            templateVersion=template.version,
             properties=resource_spec_parameters,
             resourcePath=f'/workspaces/{workspace_id}/workspace-services/{parent_workspace_service_id}/user-resources/{full_user_resource_id}',
             etag=''
         )
 
-        return user_resource
+        return user_resource, template
 
     def get_user_resources_for_workspace_service(self, workspace_id: str, service_id: str) -> List[UserResource]:
         """
@@ -66,7 +67,7 @@ class UserResourceRepository(ResourceRepository):
     def get_user_resource_spec_params(self):
         return self.get_resource_base_spec_params()
 
-    def patch_user_resource(self, user_resource: UserResource, user_resource_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository, parent_template_name: str, user: User) -> UserResource:
+    def patch_user_resource(self, user_resource: UserResource, user_resource_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository, parent_template_name: str, user: User) -> Tuple[UserResource, ResourceTemplate]:
         # get user resource template
         user_resource_template = resource_template_repo.get_template_by_name_and_version(user_resource.templateName, user_resource.templateVersion, ResourceType.UserResource, parent_service_name=parent_template_name)
         return self.patch_resource(user_resource, user_resource_patch, user_resource_template, etag, resource_template_repo, user)

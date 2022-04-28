@@ -30,6 +30,27 @@ class CustomAction(AzureTREModel):
     description: str = Field("", title="Action description")
 
 
+class PipelineStepProperty(AzureTREModel):
+    name: str = Field(title="name", description="name of the property to update")
+    type: str = Field(title="type", description="data type of the property to update")
+    value: str = Field(title="value", description="value to use in substitution for the property to update")
+
+
+class PipelineStep(AzureTREModel):
+    stepId: Optional[str] = Field(title="stepId", description="Unique id identifying the step")
+    stepTitle: Optional[str] = Field(title="stepTitle", description="Human readable title of what the step is for")
+    resourceTemplateName: Optional[str] = Field(title="resourceTemplateName", description="Name of the template for the resource under change")
+    resourceType: Optional[ResourceType] = Field(title="resourceType", description="Type of resource under change")
+    resourceAction: Optional[str] = Field(title="resourceAction", description="Action - install / upgrade / uninstall etc")
+    properties: Optional[List[PipelineStepProperty]]
+
+
+class Pipeline(AzureTREModel):
+    install: Optional[List[PipelineStep]]
+    upgrade: Optional[List[PipelineStep]]
+    uninstall: Optional[List[PipelineStep]]
+
+
 class ResourceTemplate(AzureTREModel):
     id: str
     name: str = Field(title="Unique template name")
@@ -43,7 +64,7 @@ class ResourceTemplate(AzureTREModel):
     properties: Dict[str, Property] = Field(title="Template properties")
     actions: List[CustomAction] = Field(default=[], title="Template actions")
     customActions: List[CustomAction] = Field(default=[], title="Template custom actions")
-    pipeline: Optional[dict] = Field(default=None, title="Template pipeline to define updates to other resources")
+    pipeline: Optional[Pipeline] = Field(default=None, title="Template pipeline to define updates to other resources")
 
     # setting this to false means if extra, unexpected fields are supplied, the request is invalidated
     additionalProperties: bool = Field(default=False, title="Prevent unspecified properties being applied")

@@ -99,9 +99,9 @@ def test_create_workspace_service_item_creates_a_workspace_with_the_right_values
     resource_template = basic_workspace_service_template
     resource_template.required = ["display_name", "description"]
 
-    validate_input_mock.return_value = basic_workspace_service_request.templateName
+    validate_input_mock.return_value = basic_workspace_service_template
 
-    workspace_service = workspace_service_repo.create_workspace_service_item(workspace_service_to_create, WORKSPACE_ID)
+    workspace_service, _ = workspace_service_repo.create_workspace_service_item(workspace_service_to_create, WORKSPACE_ID)
 
     assert workspace_service.templateName == basic_workspace_service_request.templateName
     assert workspace_service.resourceType == ResourceType.WorkspaceService

@@ -1,14 +1,13 @@
 import json
-import logging
 
-from azure.identity.aio import DefaultAzureCredential
-from azure.servicebus import ServiceBusMessage
-from azure.servicebus.aio import ServiceBusClient
-from contextlib import asynccontextmanager
+
+from db.repositories.resources import ResourceRepository
+from db.repositories.resource_templates import ResourceTemplateRepository
+from service_bus.helpers import send_deployment_message, update_resource_for_step
+from models.domain.resource_template import ResourceTemplate
 
 from models.domain.authentication import User
 
-from core import config
 from resources import strings
 
 from models.domain.request_action import RequestAction
@@ -18,7 +17,7 @@ from models.domain.operation import Status, Operation
 from db.repositories.operations import OperationRepository
 
 
-async def send_resource_request_message(resource: Resource, operations_repo: OperationRepository, user: User, action: RequestAction = RequestAction.Install) -> Operation:
+async def send_resource_request_message(resource: Resource, operations_repo: OperationRepository, resource_repo: ResourceRepository, user: User, resource_template: ResourceTemplate, resource_template_repo: ResourceTemplateRepository, action: RequestAction = RequestAction.Install) -> Operation:
     """
     Creates and sends a resource request message for the resource to the Service Bus.
     The resource ID is added to the message to serve as an correlation ID for the deployment process.
@@ -27,48 +26,44 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
     :param action: install, uninstall etc.
     """
 
-    # add the operation to the db
+    status = Status.InvokingAction
+    message = strings.RESOURCE_ACTION_STATUS_INVOKING
+
     if action == RequestAction.Install:
-        operation = operations_repo.create_operation_item(resource_id=resource.id, status=Status.NotDeployed, action=action, message=strings.RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE, resource_path=resource.resourcePath, user=user)
+        status = Status.NotDeployed
+        message = strings.RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE
     elif action == RequestAction.UnInstall:
-        operation = operations_repo.create_operation_item(resource_id=resource.id, status=Status.Deleting, action=action, message=strings.RESOURCE_STATUS_DELETING, resource_path=resource.resourcePath, user=user)
+        status = Status.Deleting
+        message = strings.RESOURCE_STATUS_DELETING
     elif action == RequestAction.Upgrade:
-        operation = operations_repo.create_operation_item(resource_id=resource.id, status=Status.NotDeployed, action=action, message=strings.RESOURCE_STATUS_UPGRADE_NOT_STARTED_MESSAGE, resource_path=resource.resourcePath, user=user)
-    else:
-        operation = operations_repo.create_operation_item(resource_id=resource.id, status=Status.InvokingAction, action=action, message=strings.RESOURCE_ACTION_STATUS_INVOKING, resource_path=resource.resourcePath, user=user)
+        status = Status.NotDeployed
+        message = strings.RESOURCE_STATUS_UPGRADE_NOT_STARTED_MESSAGE
 
-    content = json.dumps(resource.get_resource_request_message_payload(operation.id, action))
+    # add the operation to the db - this will create all the steps needed (if any are defined in the template)
+    operation = operations_repo.create_operation_item(
+        resource_id=resource.id,
+        status=status,
+        action=action,
+        message=message,
+        resource_path=resource.resourcePath,
+        resource_version=resource.resourceVersion,
+        user=user,
+        resource_template=resource_template,
+        resource_repo=resource_repo)
 
-    resource_request_message = ServiceBusMessage(body=content, correlation_id=operation.id, session_id=resource.id)
-    logging.info(f"Sending resource request message with correlation ID {resource_request_message.correlation_id}, action: {action}")
-    await _send_message(resource_request_message, config.SERVICE_BUS_RESOURCE_REQUEST_QUEUE)
+    # prep the first step to send in SB
+    first_step = operation.steps[0]
+    resource_to_send = update_resource_for_step(
+        operation_step=first_step,
+        resource_repo=resource_repo,
+        resource_template_repo=resource_template_repo,
+        primary_resource_id=resource.id,
+        resource_to_update_id=first_step.resourceId,
+        primary_action=action,
+        user=user)
+
+    # create + send the message
+    content = json.dumps(resource_to_send.get_resource_request_message_payload(operation_id=operation.id, step_id=first_step.stepId, action=first_step.resourceAction))
+    await send_deployment_message(content=content, correlation_id=operation.id, session_id=first_step.resourceId, action=first_step.resourceAction)
+
     return operation
-
-
-@asynccontextmanager
-async def _get_default_credentials():
-    """
-    Yields the default credentials.
-    """
-    credential = DefaultAzureCredential(managed_identity_client_id=config.MANAGED_IDENTITY_CLIENT_ID)
-    yield credential
-    await credential.close()
-
-
-async def _send_message(message: ServiceBusMessage, queue: str):
-    """
-    Sends the given message to the given queue in the Service Bus.
-
-    :param message: The message to send.
-    :type message: ServiceBusMessage
-    :param queue: The Service Bus queue to send the message to.
-    :type queue: str
-    """
-    async with _get_default_credentials() as credential:
-        service_bus_client = ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential)
-
-        async with service_bus_client:
-            sender = service_bus_client.get_queue_sender(queue_name=queue)
-
-            async with sender:
-                await sender.send_messages(message)

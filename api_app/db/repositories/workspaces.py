@@ -1,8 +1,9 @@
 import uuid
-from typing import List
+from typing import List, Tuple
 
 from azure.cosmos import CosmosClient
 from pydantic import parse_obj_as
+from models.domain.resource_template import ResourceTemplate
 from models.domain.authentication import User
 
 from core import config
@@ -56,10 +57,10 @@ class WorkspaceRepository(ResourceRepository):
             raise EntityDoesNotExist
         return parse_obj_as(Workspace, workspaces[0])
 
-    def create_workspace_item(self, workspace_input: WorkspaceInCreate, auth_info: dict) -> Workspace:
+    def create_workspace_item(self, workspace_input: WorkspaceInCreate, auth_info: dict) -> Tuple[Workspace, ResourceTemplate]:
         full_workspace_id = str(uuid.uuid4())
 
-        template_version = self.validate_input_against_template(workspace_input.templateName, workspace_input, ResourceType.Workspace)
+        template = self.validate_input_against_template(workspace_input.templateName, workspace_input, ResourceType.Workspace)
 
         address_space_param = {"address_space": self.get_address_space_based_on_size(workspace_input.properties)}
 
@@ -69,14 +70,14 @@ class WorkspaceRepository(ResourceRepository):
         workspace = Workspace(
             id=full_workspace_id,
             templateName=workspace_input.templateName,
-            templateVersion=template_version,
+            templateVersion=template.version,
             properties=resource_spec_parameters,
             authInformation=auth_info,
             resourcePath=f'/workspaces/{full_workspace_id}',
             etag=''  # need to validate the model
         )
 
-        return workspace
+        return workspace, template
 
     def get_address_space_based_on_size(self, workspace_properties: dict):
         # Default the address space to 'small' if not supplied.
@@ -107,7 +108,7 @@ class WorkspaceRepository(ResourceRepository):
         new_address_space = generate_new_cidr(networks, cidr_netmask)
         return new_address_space
 
-    def patch_workspace(self, workspace: Workspace, workspace_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository, user: User) -> Workspace:
+    def patch_workspace(self, workspace: Workspace, workspace_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository, user: User) -> Tuple[Workspace, ResourceTemplate]:
         # get the workspace template
         workspace_template = resource_template_repo.get_template_by_name_and_version(workspace.templateName, workspace.templateVersion, ResourceType.Workspace)
         return self.patch_resource(workspace, workspace_patch, workspace_template, etag, resource_template_repo, user)

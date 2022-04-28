@@ -79,15 +79,15 @@ def test_get_workspace_by_id_queries_db(workspace_repo, workspace):
 @patch('db.repositories.workspaces.WorkspaceRepository.validate_input_against_template')
 @patch('core.config.RESOURCE_LOCATION', "useast2")
 @patch('core.config.TRE_ID', "9876")
-def test_create_workspace_item_creates_a_workspace_with_the_right_values(validate_input_mock, new_cidr_mock, workspace_repo, basic_workspace_request):
+def test_create_workspace_item_creates_a_workspace_with_the_right_values(validate_input_mock, new_cidr_mock, workspace_repo, basic_workspace_request, basic_resource_template):
     workspace_to_create = basic_workspace_request
     # make sure the input doesn't include an address_space so that one will be generated
     workspace_to_create.properties.pop("address_space", None)
 
-    validate_input_mock.return_value = workspace_to_create.templateName
+    validate_input_mock.return_value = basic_resource_template
     new_cidr_mock.return_value = "1.2.3.4/24"
 
-    workspace = workspace_repo.create_workspace_item(workspace_to_create, {})
+    workspace, _ = workspace_repo.create_workspace_item(workspace_to_create, {})
 
     assert workspace.templateName == workspace_to_create.templateName
     assert workspace.resourceType == ResourceType.Workspace
@@ -139,13 +139,13 @@ def test_get_address_space_based_on_size_with_large_address_space(workspace_repo
 @patch('core.config.TRE_ID', "9876")
 @patch('core.config.CORE_ADDRESS_SPACE', "10.1.0.0/22")
 @patch('core.config.TRE_ADDRESS_SPACE', "10.0.0.0/12")
-def test_create_workspace_item_creates_a_workspace_with_custom_address_space(validate_input_mock, workspace_repo, basic_workspace_request):
+def test_create_workspace_item_creates_a_workspace_with_custom_address_space(validate_input_mock, workspace_repo, basic_workspace_request, basic_resource_template):
     workspace_to_create = basic_workspace_request
     workspace_to_create.properties["address_space_size"] = "custom"
     workspace_to_create.properties["address_space"] = "10.2.4.0/24"
-    validate_input_mock.return_value = workspace_to_create.templateName
+    validate_input_mock.return_value = basic_resource_template
 
-    workspace = workspace_repo.create_workspace_item(workspace_to_create, {})
+    workspace, _ = workspace_repo.create_workspace_item(workspace_to_create, {})
 
     assert workspace.properties["address_space"] == workspace_to_create.properties["address_space"]
 
@@ -155,11 +155,11 @@ def test_create_workspace_item_creates_a_workspace_with_custom_address_space(val
 @patch('core.config.TRE_ID', "9876")
 @patch('core.config.CORE_ADDRESS_SPACE', "10.1.0.0/22")
 @patch('core.config.TRE_ADDRESS_SPACE', "10.0.0.0/12")
-def test_create_workspace_item_throws_exception_with_bad_custom_address_space(validate_input_mock, workspace_repo, basic_workspace_request):
+def test_create_workspace_item_throws_exception_with_bad_custom_address_space(validate_input_mock, workspace_repo, basic_workspace_request, basic_resource_template):
     workspace_to_create = basic_workspace_request
     workspace_to_create.properties["address_space_size"] = "custom"
     workspace_to_create.properties["address_space"] = "192.168.0.0/24"
-    validate_input_mock.return_value = workspace_to_create.templateName
+    validate_input_mock.return_value = basic_resource_template
 
     with pytest.raises(InvalidInput):
         workspace_repo.create_workspace_item(workspace_to_create, {})

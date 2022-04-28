@@ -1,4 +1,3 @@
-
 import pytest
 from mock import patch, MagicMock
 
@@ -91,9 +90,9 @@ def test_get_active_shared_services_for_shared_queries_db(shared_service_repo):
 @patch('core.config.TRE_ID', "1234")
 def test_create_shared_service_item_creates_a_shared_with_the_right_values(validate_input_mock, shared_service_repo, basic_shared_service_request, basic_shared_service_template):
     shared_service_to_create = basic_shared_service_request
-    validate_input_mock.return_value = basic_shared_service_request.templateName
+    validate_input_mock.return_value = basic_shared_service_template
 
-    shared_service = shared_service_repo.create_shared_service_item(shared_service_to_create)
+    shared_service, _ = shared_service_repo.create_shared_service_item(shared_service_to_create)
 
     assert shared_service.templateName == basic_shared_service_request.templateName
     assert shared_service.resourceType == ResourceType.SharedService
@@ -105,12 +104,12 @@ def test_create_shared_service_item_creates_a_shared_with_the_right_values(valid
 
 @patch('db.repositories.shared_services.SharedServiceRepository.validate_input_against_template')
 @patch('core.config.TRE_ID', "1234")
-def test_create_shared_service_item_with_the_same_name_twice_fails(validate_input_mock, shared_service_repo, basic_shared_service_request):
+def test_create_shared_service_item_with_the_same_name_twice_fails(validate_input_mock, shared_service_repo, basic_shared_service_request, basic_shared_service_template):
     shared_service_to_create = basic_shared_service_request
 
-    validate_input_mock.return_value = basic_shared_service_request.templateName
+    validate_input_mock.return_value = basic_shared_service_template
 
-    shared_service = shared_service_repo.create_shared_service_item(basic_shared_service_request)
+    shared_service, _ = shared_service_repo.create_shared_service_item(basic_shared_service_request)
     shared_service_repo.save_item(shared_service)
 
     shared_service_repo.query = MagicMock()
