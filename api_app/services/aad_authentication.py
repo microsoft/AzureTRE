@@ -201,11 +201,6 @@ class AzureADAuthorization(AccessService):
             if appRole['value'] in self.WORKSPACE_ROLES_DICT.keys():
                 authInfo[self.WORKSPACE_ROLES_DICT[appRole['value']]] = appRole['id']
 
-        # Check we've get all our required roles
-        for role in self.WORKSPACE_ROLES_DICT.items():
-            if role[1] not in authInfo:
-                raise AuthConfigValidationError(f"{strings.ACCESS_APP_IS_MISSING_ROLE} {role[0]}")
-
         return authInfo
 
     def _get_role_assignment_graph_data(self, user_id: str) -> dict:
@@ -223,6 +218,12 @@ class AzureADAuthorization(AccessService):
         # don't know the app_id yet.
         if data["app_id"] != "auto_create":
             auth_info = self._get_app_auth_info(data["app_id"])
+
+            # Check we've get all our required roles
+            for role in self.WORKSPACE_ROLES_DICT.items():
+                if role[1] not in auth_info:
+                    raise AuthConfigValidationError(f"{strings.ACCESS_APP_IS_MISSING_ROLE} {role[0]}")
+
 
         auth_info["app_id"] = data["app_id"]
         auth_info["client_id"] = data["app_id"]
