@@ -24,7 +24,6 @@ class AzureADAuthorization(AccessService):
     require_one_of_roles = None
 
     TRE_CORE_ROLES = ['TREAdmin', 'TREUser']
-    WORKSPACE_ROLES = ['WorkspaceOwner', 'WorkspaceResearcher']
     WORKSPACE_ROLES_DICT = {'WorkspaceOwner': 'app_role_id_workspace_owner', 'WorkspaceResearcher': 'app_role_id_workspace_researcher'}
 
     def __init__(self, auto_error: bool = True, require_one_of_roles: list = None):
@@ -44,7 +43,7 @@ class AzureADAuthorization(AccessService):
         decoded_token = None
 
         # Try workspace app registration if appropriate
-        if 'workspace_id' in request.path_params and any(role in self.require_one_of_roles for role in self.WORKSPACE_ROLES):
+        if 'workspace_id' in request.path_params and any(role in self.require_one_of_roles for role in self.WORKSPACE_ROLES_DICT.keys()):
             # as we have a workspace_id not given, try decoding token
             logging.debug("Workspace ID was provided. Getting Workspace API app registration")
             try:
@@ -236,17 +235,17 @@ class AzureADAuthorization(AccessService):
         return [RoleAssignment(role_assignment['resourceId'], role_assignment['appRoleId']) for role_assignment in graph_data['value']]
 
     def get_workspace_role(self, user: User, workspace: Workspace, user_role_assignments: List[RoleAssignment]) -> WorkspaceRole:
-        if 'sp_id' not in workspace.properties or 'roles' not in workspace.properties:
+        if 'sp_id' not in workspace.properties:
             raise AuthConfigValidationError(strings.AUTH_CONFIGURATION_NOT_AVAILABLE_FOR_WORKSPACE)
 
         workspace_sp_id = workspace.properties['sp_id']
-        workspace_roles = workspace.properties['roles']
 
-        if 'WorkspaceOwner' not in workspace_roles or 'WorkspaceResearcher' not in workspace_roles:
-            raise AuthConfigValidationError(strings.AUTH_CONFIGURATION_NOT_AVAILABLE_FOR_WORKSPACE)
+        for requiredRole in self.WORKSPACE_ROLES_DICT.values():
+            if requiredRole not in workspace.properties:
+                raise AuthConfigValidationError(strings.AUTH_CONFIGURATION_NOT_AVAILABLE_FOR_WORKSPACE)
 
-        if RoleAssignment(resource_id=workspace_sp_id, role_id=workspace_roles['WorkspaceOwner']) in user_role_assignments:
+        if RoleAssignment(resource_id=workspace_sp_id, role_id=workspace.properties['app_role_id_workspace_owner']) in user_role_assignments:
             return WorkspaceRole.Owner
-        if RoleAssignment(resource_id=workspace_sp_id, role_id=workspace_roles['WorkspaceResearcher']) in user_role_assignments:
+        if RoleAssignment(resource_id=workspace_sp_id, role_id=workspace.properties['app_role_id_workspace_researcher']) in user_role_assignments:
             return WorkspaceRole.Researcher
         return WorkspaceRole.NoRole

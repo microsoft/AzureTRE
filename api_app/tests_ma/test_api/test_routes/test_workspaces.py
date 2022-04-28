@@ -231,9 +231,9 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
     @patch("api.routes.workspaces.WorkspaceRepository.get_active_workspaces")
     @patch("api.routes.workspaces.get_user_role_assignments")
     async def test_get_workspaces_returns_correct_data_when_resources_exist(self, access_service_mock, get_workspaces_mock, app, client) -> None:
-        auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'roles': {'WorkspaceOwner': 'ab124', 'WorkspaceResearcher': 'ab125'}}
-        auth_info_user_in_workspace_researcher_role = {'sp_id': 'ab123', 'roles': {'WorkspaceOwner': 'ab127', 'WorkspaceResearcher': 'ab126'}}
-        auth_info_user_not_in_workspace_role = {'sp_id': 'ab127', 'roles': {'WorkspaceOwner': 'ab128', 'WorkspaceResearcher': 'ab129'}}
+        auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'app_role_id_workspace_owner': 'ab124', 'app_role_id_workspace_researcher': 'ab125'}
+        auth_info_user_in_workspace_researcher_role = {'sp_id': 'ab123', 'app_role_id_workspace_owner': 'ab127', 'app_role_id_workspace_researcher': 'ab126'}
+        auth_info_user_not_in_workspace_role = {'sp_id': 'ab127', 'app_role_id_workspace_owner': 'ab128', 'app_role_id_workspace_researcher': 'ab129'}
 
         valid_ws_1 = sample_workspace(workspace_id=str(uuid.uuid4()), auth_info=auth_info_user_in_workspace_owner_role)
         valid_ws_2 = sample_workspace(workspace_id=str(uuid.uuid4()), auth_info=auth_info_user_in_workspace_researcher_role)
