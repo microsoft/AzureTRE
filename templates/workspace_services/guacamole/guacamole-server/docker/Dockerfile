@@ -59,6 +59,8 @@ RUN mkdir /etc/oauth2
 
 RUN wget -O  /etc/oauth2/oauth2-proxy-v7.2.1.linux-amd64.tar.gz 'https://github.com/oauth2-proxy/oauth2-proxy/releases/download/v7.2.1/oauth2-proxy-v7.2.1.linux-amd64.tar.gz'
 
+COPY ./docker/index.jsp /usr/share/tomcat9/webapps/ROOT/index.jsp
+
 ENTRYPOINT [ "/init" ]
 
 EXPOSE 80 2222
