@@ -29,7 +29,7 @@ pytestmark = pytest.mark.asyncio
 WORKSPACE_ID = '933ad738-7265-4b5f-9eae-a1a62928772e'
 SERVICE_ID = 'abcad738-7265-4b5f-9eae-a1a62928772e'
 USER_RESOURCE_ID = 'a33ad738-7265-4b5f-9eae-a1a62928772a'
-APP_ID = 'f0acf127-a672-a672-a672-a15e5bf9f127'
+CLIENT_ID = 'f0acf127-a672-a672-a672-a15e5bf9f127'
 OPERATION_ID = '11111111-7265-4b5f-9eae-a1a62928772f'
 
 
@@ -39,7 +39,7 @@ def workspace_input():
         "templateName": "test-workspace",
         "properties": {
             "display_name": "display",
-            "app_id": APP_ID
+            "client_id": CLIENT_ID
         }
     }
 
@@ -78,7 +78,7 @@ def sample_workspace(workspace_id=WORKSPACE_ID, auth_info: dict = {}) -> Workspa
         templateVersion="0.1.0",
         etag="",
         properties={
-            "app_id": "12345"
+            "client_id": "12345"
         },
         resourcePath=f'/workspaces/{workspace_id}',
         updatedWhen=FAKE_CREATE_TIMESTAMP,
@@ -383,7 +383,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
 
         modified_workspace = sample_workspace()
         modified_workspace.isEnabled = False
-        modified_workspace.history = [ResourceHistoryItem(properties={'app_id': '12345'}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_admin_user())]
+        modified_workspace.history = [ResourceHistoryItem(properties={'client_id': '12345'}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_admin_user())]
         modified_workspace.resourceVersion = 1
         modified_workspace.user = create_admin_user()
         modified_workspace.updatedWhen = FAKE_UPDATE_TIMESTAMP
@@ -403,7 +403,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         etag = "some-etag-value"
         modified_workspace = sample_workspace()
         modified_workspace.isEnabled = False
-        modified_workspace.history = [ResourceHistoryItem(properties={'app_id': '12345'}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_admin_user())]
+        modified_workspace.history = [ResourceHistoryItem(properties={'client_id': '12345'}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_admin_user())]
         modified_workspace.resourceVersion = 1
         modified_workspace.user = create_admin_user()
         modified_workspace.updatedWhen = FAKE_UPDATE_TIMESTAMP

@@ -85,7 +85,7 @@ class WorkspaceRepository(ResourceRepository):
         return workspace, template
 
     def get_auto_app_registration_based_on_input(self, properties: dict) -> bool:
-        return "true" if properties["app_id"] == "auto_create" else "false"
+        return "true" if properties["client_id"] == "auto_create" else "false"
 
     def get_address_space_based_on_size(self, workspace_properties: dict):
         # Default the address space to 'small' if not supplied.

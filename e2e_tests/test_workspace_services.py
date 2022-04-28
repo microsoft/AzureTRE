@@ -8,6 +8,32 @@ from resources import strings
 pytestmark = pytest.mark.asyncio
 
 
+@pytest.mark.rossclean
+@pytest.mark.timeout(3000)
+async def test_ross_clean_workspace(admin_token, workspace_owner_token, verify) -> None:
+
+    workspace_paths = ["/workspaces/836dc1fd-635b-4bf0-82b0-4bd0eecc6408"]
+    for workspace_path in workspace_paths:
+        await disable_and_delete_resource(f'/api{workspace_path}', 'workspace', workspace_owner_token, admin_token, verify)
+
+
+@pytest.mark.ross
+@pytest.mark.timeout(3000)
+async def test_ross_create_base_workspace(admin_token, workspace_owner_token, verify) -> None:
+
+    payload = {
+        "templateName": "tre-workspace-base",
+        "properties": {
+            "display_name": "E2E test guacamole service",
+            "description": "workspace for E2E",
+            "address_space_size": "small",
+            "client_id": f"{config.TEST_WORKSPACE_APP_ID}"
+        }
+    }
+
+    workspace_path, _ = await post_resource(payload, strings.API_WORKSPACES, 'workspace', workspace_owner_token, admin_token, verify)
+
+
 @pytest.mark.extended
 @pytest.mark.timeout(3000)
 async def test_create_guacamole_service_into_base_workspace(admin_token, workspace_owner_token, verify) -> None:
@@ -18,7 +44,7 @@ async def test_create_guacamole_service_into_base_workspace(admin_token, workspa
             "display_name": "E2E test guacamole service",
             "description": "workspace for E2E",
             "address_space_size": "small",
-            "app_id": f"{config.TEST_WORKSPACE_APP_ID}"
+            "client_id": f"{config.TEST_WORKSPACE_APP_ID}"
         }
     }
 

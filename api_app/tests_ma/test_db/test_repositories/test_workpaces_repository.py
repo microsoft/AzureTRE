@@ -12,7 +12,7 @@ from models.schemas.workspace import WorkspaceInCreate
 
 @pytest.fixture
 def basic_workspace_request():
-    return WorkspaceInCreate(templateName="base-tre", properties={"display_name": "test", "description": "test", "app_id": "123", "tre_id": "test"})
+    return WorkspaceInCreate(templateName="base-tre", properties={"display_name": "test", "description": "test", "client_id": "123", "tre_id": "test"})
 
 
 @pytest.fixture

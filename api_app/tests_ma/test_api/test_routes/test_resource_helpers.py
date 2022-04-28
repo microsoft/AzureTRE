@@ -44,7 +44,7 @@ def sample_resource(workspace_id=WORKSPACE_ID):
         templateVersion="0.1.0",
         etag="",
         properties={
-            "app_id": "12345"
+            "client_id": "12345"
         },
         resourcePath=f'/workspaces/{workspace_id}',
         user=create_test_user(),

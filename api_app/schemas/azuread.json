@@ -5,10 +5,10 @@
     "title": "Azure AD Authorisation Schema",
     "default": {},
     "required": [
-        "app_id"
+        "client_id"
     ],
     "properties": {
-        "app_id": {
+        "client_id": {
             "type": "string",
             "title": "Application (Client) ID",
             "description": "AAD App registration of the workspace"
