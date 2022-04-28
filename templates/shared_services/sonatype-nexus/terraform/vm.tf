@@ -151,7 +151,7 @@ data "template_cloudinit_config" "nexus_config" {
           permissions = "0755"
         },
         {
-          content     = "nexus.skipDefaultRepositories=true"
+          content     = "nexus.skipDefaultRepositories=true\n"
           path        = "/etc/nexus-data/etc/nexus.properties"
           permissions = "0755"
         },
