@@ -63,7 +63,7 @@ class WorkspaceRepository(ResourceRepository):
         template = self.validate_input_against_template(workspace_input.templateName, workspace_input, ResourceType.Workspace)
 
         address_space_param = {"address_space": self.get_address_space_based_on_size(workspace_input.properties)}
-        auto_app_registration_param = {"register_aad_application": self.get_auto_app_registration_as_boolean_string(workspace_input.properties)}
+        auto_app_registration_param = {"register_aad_application": self.automatically_create_application_registration(workspace_input.properties)}
 
         # we don't want something in the input to overwrite the system parameters,
         # so dict.update can't work. Priorities from right to left.
@@ -84,8 +84,8 @@ class WorkspaceRepository(ResourceRepository):
 
         return workspace, template
 
-    def get_auto_app_registration_as_boolean_string(self, properties: dict) -> str:
-        return "true" if properties["client_id"] == "auto_create" else "false"
+    def automatically_create_application_registration(self, properties: dict) -> bool:
+        return True if properties["client_id"] == "auto_create" else False
 
     def get_address_space_based_on_size(self, workspace_properties: dict):
         # Default the address space to 'small' if not supplied.

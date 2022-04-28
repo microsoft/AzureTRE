@@ -183,13 +183,13 @@ def test_create_workspace_item_raises_value_error_if_template_is_invalid(validat
         workspace_repo.create_workspace_item(workspace_input, {})
 
 
-def test_get_auto_app_registration_as_boolean_string_returns_true(workspace_repo):
+def test_automatically_create_application_registration_returns_true(workspace_repo):
     dictToTest = {"client_id": "auto_create"}
 
-    assert workspace_repo.get_auto_app_registration_as_boolean_string(dictToTest) == "true"
+    assert workspace_repo.automatically_create_application_registration(dictToTest) is True
 
 
-def test_get_auto_app_registration_as_boolean_string_returns_false(workspace_repo):
+def test_automatically_create_application_registration_returns_false(workspace_repo):
     dictToTest = {"client_id": "12345"}
 
-    assert workspace_repo.get_auto_app_registration_as_boolean_string(dictToTest) == "false"
+    assert workspace_repo.automatically_create_application_registration(dictToTest) is False
