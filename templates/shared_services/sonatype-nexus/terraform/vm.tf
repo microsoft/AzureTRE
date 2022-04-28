@@ -168,16 +168,16 @@ data "template_cloudinit_config" "nexus_config" {
 data "template_file" "nexus_bootstrapping" {
   template = file("${path.module}/cloud-config.yaml")
   vars = {
-    nexus_admin_password = random_password.nexus_admin_password.result
+    NEXUS_ADMIN_PASSWORD = random_password.nexus_admin_password.result
   }
 }
 
 data "template_file" "configure_nexus_ssl" {
   template = file("${path.module}/../scripts/configure_nexus_ssl.sh")
   vars = {
-    msi_id                 = azurerm_user_assigned_identity.nexus_msi.id
-    vault_name             = data.azurerm_key_vault.kv.name
-    ssl_cert_name          = data.azurerm_key_vault_certificate.nexus_cert.name
-    ssl_cert_password_name = data.azurerm_key_vault_secret.nexus_cert_password.name
+    MSI_ID                 = azurerm_user_assigned_identity.nexus_msi.id
+    VAULT_NAME             = data.azurerm_key_vault.kv.name
+    SSL_CERT_NAME          = data.azurerm_key_vault_certificate.nexus_cert.name
+    SSL_CERT_PASSWORD_NAME = data.azurerm_key_vault_secret.nexus_cert_password.name
   }
 }

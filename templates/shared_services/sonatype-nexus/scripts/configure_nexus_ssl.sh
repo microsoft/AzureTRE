@@ -8,15 +8,15 @@ set -o nounset
 # set -o xtrace
 
 # Prepare ssl certificate
-az login --identity -u "${msi_id}" --allow-no-subscriptions
+az login --identity -u "${MSI_ID}" --allow-no-subscriptions
 # -- get cert from kv as secret so it contains private key
 echo 'Getting cert and cert password from Keyvault...'
-az keyvault secret download --vault-name "${vault_name}" --name "${ssl_cert_name}" --file temp.pfx --encoding base64
-CERT_PASSWORD=$(az keyvault secret show --vault-name "${vault_name}" \
-  --name "${ssl_cert_password_name}" -o tsv --query value)
+az keyvault secret download --vault-name "${VAULT_NAME}" --name "${SSL_CERT_NAME}" --file temp.pfx --encoding base64
+cert_password=$(az keyvault secret show --vault-name "${VAULT_NAME}" \
+  --name "${SSL_CERT_PASSWORD_NAME}" -o tsv --query value)
 # -- az cli strips out password from cert so we re-add by converting to PEM then PFX with pwd
 openssl pkcs12 -in temp.pfx -out temp.pem -nodes -password pass:
-openssl pkcs12 -export -out nexus-ssl.pfx -in temp.pem -password "pass:$CERT_PASSWORD"
+openssl pkcs12 -export -out nexus-ssl.pfx -in temp.pem -password "pass:$cert_password"
 
 # Import ssl cert to keystore within Nexus volume
 keystore_timeout=300
@@ -33,7 +33,7 @@ done
 echo 'Directory found. Importing ssl cert into nexus-data/keystores/keystore.jks...'
 keytool -v -importkeystore -noprompt -srckeystore nexus-ssl.pfx -srcstoretype PKCS12 \
   -destkeystore /etc/nexus-data/keystores/keystore.jks \
-  -deststoretype JKS -srcstorepass "$CERT_PASSWORD" -deststorepass "$CERT_PASSWORD"
+  -deststoretype JKS -srcstorepass "$cert_password" -deststorepass "$cert_password"
 
 # Configure Jetty instance within Nexus to consume ssl cert
 echo 'Modifying Nexus Jetty configuration to enable ssl...'
@@ -43,13 +43,13 @@ docker exec -u root nexus cp /opt/sonatype/nexus/etc/jetty/jetty-https.xml /nexu
 # -- then we replace password values with the ssl cert keystore password
 xmlstarlet ed -P --inplace \
   -u "/Configure[@id='Server']/New[@id='sslContextFactory']/Set[@name='KeyStorePassword']" \
-  -v "$CERT_PASSWORD" /etc/nexus-data/etc/jetty/jetty-https.xml
+  -v "$cert_password" /etc/nexus-data/etc/jetty/jetty-https.xml
 xmlstarlet ed -P --inplace \
   -u "/Configure[@id='Server']/New[@id='sslContextFactory']/Set[@name='KeyManagerPassword']" \
-  -v "$CERT_PASSWORD" /etc/nexus-data/etc/jetty/jetty-https.xml
+  -v "$cert_password" /etc/nexus-data/etc/jetty/jetty-https.xml
 xmlstarlet ed -P --inplace \
   -u "/Configure[@id='Server']/New[@id='sslContextFactory']/Set[@name='TrustStorePassword']" \
-  -v "$CERT_PASSWORD" /etc/nexus-data/etc/jetty/jetty-https.xml
+  -v "$cert_password" /etc/nexus-data/etc/jetty/jetty-https.xml
 # -- then update the location of our keystore
 xmlstarlet ed -P --inplace \
   -u "/Configure[@id='Server']/New[@id='sslContextFactory']/Set[@name='KeyStorePath']" \
