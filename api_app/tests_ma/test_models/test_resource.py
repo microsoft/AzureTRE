@@ -7,6 +7,7 @@ from models.domain.workspace_service import WorkspaceService
 
 
 OPERATION_ID = "0000c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+STEP_ID = "main"
 
 
 @pytest.mark.parametrize('resource, expected', [
@@ -28,7 +29,7 @@ def test_user_resource_get_resource_request_message_payload_augments_payload_wit
 
     user_resource = UserResource(id="123", templateName="user-template", templateVersion="1.0", etag="", ownerId=owner_id, workspaceId=workspace_id, parentWorkspaceServiceId=parent_service_id, resourcePath="test")
 
-    message_payload = user_resource.get_resource_request_message_payload(OPERATION_ID, RequestAction.Install)
+    message_payload = user_resource.get_resource_request_message_payload(OPERATION_ID, STEP_ID, RequestAction.Install)
 
     assert message_payload["workspaceId"] == workspace_id
     assert message_payload["ownerId"] == owner_id
@@ -39,6 +40,6 @@ def test_workspace_service_get_resource_request_message_payload_augments_payload
     workspace_id = "123"
     workspace_service = WorkspaceService(id="123", templateName="service-template", templateVersion="1.0", etag="", workspaceId=workspace_id, resourcePath="test")
 
-    message_payload = workspace_service.get_resource_request_message_payload(OPERATION_ID, RequestAction.Install)
+    message_payload = workspace_service.get_resource_request_message_payload(OPERATION_ID, STEP_ID, RequestAction.Install)
 
     assert message_payload["workspaceId"] == workspace_id

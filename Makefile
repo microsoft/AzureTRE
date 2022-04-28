@@ -1,8 +1,8 @@
 .PHONY: bootstrap-init mgmt-deploy mgmt-destroy build-api-image push-api-image deploy-tre destroy-tre letsencrypt
 
 SHELL:=/bin/bash
-ROOTPATH:=$(shell pwd)
-
+MAKEFILE_FULLPATH := $(abspath $(lastword $(MAKEFILE_LIST)))
+MAKEFILE_DIR := $(dir $(MAKEFILE_FULLPATH))
 IMAGE_NAME_PREFIX?="microsoft/azuretre"
 FULL_CONTAINER_REGISTRY_NAME?="$${ACR_NAME}.azurecr.io"
 FULL_IMAGE_NAME_PREFIX:=`echo "${FULL_CONTAINER_REGISTRY_NAME}/${IMAGE_NAME_PREFIX}" | tr A-Z a-z`
@@ -31,23 +31,23 @@ migrate-firewall-state: prepare-tf-state
 
 bootstrap:
 	$(call target_title, "Bootstrap Terraform") \
-	&& . ./devops/scripts/check_dependencies.sh nodocker \
-	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
-	&& cd ./devops/terraform && ./bootstrap.sh
+	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ./devops/.env \
+	&& cd ${MAKEFILE_DIR}/devops/terraform && ./bootstrap.sh
 
 mgmt-deploy:
 	$(call target_title, "Deploying management infrastructure") \
-	&& . ./devops/scripts/check_dependencies.sh nodocker \
-	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
-	&& cd ./devops/terraform && ./deploy.sh
+	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ./devops/.env \
+	&& cd ${MAKEFILE_DIR}/devops/terraform && ./deploy.sh
 
 mgmt-destroy:
 	$(call target_title, "Destroying management infrastructure") \
-	. ./devops/scripts/check_dependencies.sh nodocker \
-	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
-	&& cd ./devops/terraform && ./destroy.sh
+	. ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ./devops/.env \
+	&& cd ${MAKEFILE_DIR}/devops/terraform && ./destroy.sh
 
 # A recipe for building images. Parameters:
 # 1. Image name suffix
@@ -58,9 +58,9 @@ mgmt-destroy:
 # The CI_CACHE_ACR_NAME is an optional container registry used for caching in addition to what's in ACR_NAME
 define build_image
 $(call target_title, "Building $(1) Image") \
-&& . ./devops/scripts/check_dependencies.sh \
-&& . ./devops/scripts/load_env.sh ./devops/.env \
-&& . ./devops/scripts/set_docker_sock_permission.sh \
+&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh \
+&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
+&& . ${MAKEFILE_DIR}/devops/scripts/set_docker_sock_permission.sh \
 && source <(grep = $(2) | sed 's/ *= */=/g') \
 && az acr login -n $${ACR_NAME} \
 && if [ -n "$${CI_CACHE_ACR_NAME:-}" ]; then \
@@ -71,40 +71,40 @@ $(call target_title, "Building $(1) Image") \
 endef
 
 build-api-image:
-	$(call build_image,"api","api_app/_version.py","api_app/Dockerfile","api_app/")
+	$(call build_image,"api","${MAKEFILE_DIR}/api_app/_version.py","${MAKEFILE_DIR}/api_app/Dockerfile","${MAKEFILE_DIR}/api_app/")
 
 build-resource-processor-vm-porter-image:
-	$(call build_image,"resource-processor-vm-porter","resource_processor/version.txt","resource_processor/vmss_porter/Dockerfile","resource_processor/")
+	$(call build_image,"resource-processor-vm-porter","${MAKEFILE_DIR}/resource_processor/version.txt","${MAKEFILE_DIR}/resource_processor/vmss_porter/Dockerfile","${MAKEFILE_DIR}/resource_processor/")
 
 build-gitea-image:
-	$(call build_image,"gitea","templates/shared_services/gitea/version.txt","templates/shared_services/gitea/Dockerfile","templates/shared_services/gitea/")
+	$(call build_image,"gitea","${MAKEFILE_DIR}/templates/shared_services/gitea/version.txt","${MAKEFILE_DIR}/templates/shared_services/gitea/Dockerfile","${MAKEFILE_DIR}/templates/shared_services/gitea/")
 
 build-gitea-workspace-service-image:
-	$(call build_image,"gitea-workspace-service","templates/workspace_services/gitea/version.txt","templates/workspace_services/gitea/docker/Dockerfile","templates/workspace_services/gitea/docker/")
+	$(call build_image,"gitea-workspace-service","${MAKEFILE_DIR}/templates/workspace_services/gitea/version.txt","${MAKEFILE_DIR}/templates/workspace_services/gitea/docker/Dockerfile","${MAKEFILE_DIR}/templates/workspace_services/gitea/docker/")
 
 build-guacamole-image:
-	$(call build_image,"guac-server","templates/workspace_services/guacamole/version.txt","templates/workspace_services/guacamole/guacamole-server/docker/Dockerfile","templates/workspace_services/guacamole/guacamole-server")
+	$(call build_image,"guac-server","${MAKEFILE_DIR}/templates/workspace_services/guacamole/version.txt","${MAKEFILE_DIR}/templates/workspace_services/guacamole/guacamole-server/docker/Dockerfile","${MAKEFILE_DIR}/templates/workspace_services/guacamole/guacamole-server")
 
 build-mlflow-image:
-	$(call build_image,"mlflow-server","templates/workspace_services/mlflow/mlflow-server/version.txt","templates/workspace_services/mlflow/mlflow-server/docker/Dockerfile","templates/workspace_services/mlflow/mlflow-server")
+	$(call build_image,"mlflow-server","${MAKEFILE_DIR}/templates/workspace_services/mlflow/mlflow-server/version.txt","${MAKEFILE_DIR}/templates/workspace_services/mlflow/mlflow-server/docker/Dockerfile","${MAKEFILE_DIR}/templates/workspace_services/mlflow/mlflow-server")
 
 firewall-install:
-	$(MAKE) bundle-build DIR=./templates/shared_services/firewall/ \
-	&& $(MAKE) bundle-publish DIR=./templates/shared_services/firewall/ \
-	&& $(MAKE) bundle-register DIR="./templates/shared_services/firewall" BUNDLE_TYPE=shared_service \
-	&& $(MAKE) deploy-shared-service DIR=./templates/shared_services/firewall/ BUNDLE_TYPE=shared_service
+	$(MAKE) bundle-build DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ \
+	&& $(MAKE) bundle-publish DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ \
+	&& $(MAKE) bundle-register DIR="${MAKEFILE_DIR}/templates/shared_services/firewall" BUNDLE_TYPE=shared_service \
+	&& $(MAKE) deploy-shared-service DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ BUNDLE_TYPE=shared_service
 
 nexus-install:
-	$(MAKE) bundle-build DIR=./templates/shared_services/sonatype-nexus/ \
-	&& $(MAKE) bundle-publish DIR=./templates/shared_services/sonatype-nexus/ \
-	&& $(MAKE) bundle-register DIR="./templates/shared_services/sonatype-nexus" BUNDLE_TYPE=shared_service \
-	&& $(MAKE) deploy-shared-service DIR=./templates/shared_services/sonatype-nexus/ BUNDLE_TYPE=shared_service
+	$(MAKE) bundle-build DIR=${MAKEFILE_DIR}/templates/shared_services/sonatype-nexus/ \
+	&& $(MAKE) bundle-publish DIR=${MAKEFILE_DIR}/templates/shared_services/sonatype-nexus/ \
+	&& $(MAKE) bundle-register DIR="${MAKEFILE_DIR}/templates/shared_services/sonatype-nexus" BUNDLE_TYPE=shared_service \
+	&& $(MAKE) deploy-shared-service DIR=${MAKEFILE_DIR}/templates/shared_services/sonatype-nexus/ BUNDLE_TYPE=shared_service
 
 gitea-install:
-	$(MAKE) bundle-build DIR=./templates/shared_services/gitea/ \
-	&& $(MAKE) bundle-publish DIR=./templates/shared_services/gitea/ \
-	&& $(MAKE) bundle-register DIR="./templates/shared_services/gitea" BUNDLE_TYPE=shared_service \
-	&& $(MAKE) deploy-shared-service DIR=./templates/shared_services/gitea/ BUNDLE_TYPE=shared_service
+	$(MAKE) bundle-build DIR=${MAKEFILE_DIR}/templates/shared_services/gitea/ \
+	&& $(MAKE) bundle-publish DIR=${MAKEFILE_DIR}/templates/shared_services/gitea/ \
+	&& $(MAKE) bundle-register DIR="${MAKEFILE_DIR}/templates/shared_services/gitea" BUNDLE_TYPE=shared_service \
+	&& $(MAKE) deploy-shared-service DIR=${MAKEFILE_DIR}/templates/shared_services/gitea/ BUNDLE_TYPE=shared_service
 
 # A recipe for pushing images. Parameters:
 # 1. Image name suffix
@@ -112,115 +112,115 @@ gitea-install:
 # Example: $(call push_image,"api","./api_app/_version.py")
 define push_image
 $(call target_title, "Pushing $(1) Image") \
-&& . ./devops/scripts/check_dependencies.sh \
-&& . ./devops/scripts/load_env.sh ./devops/.env \
-&& . ./devops/scripts/set_docker_sock_permission.sh \
+&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh \
+&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
+&& . ${MAKEFILE_DIR}/devops/scripts/set_docker_sock_permission.sh \
 && source <(grep = $(2) | sed 's/ *= */=/g') \
 && az acr login -n $${ACR_NAME} \
 && docker push "${FULL_IMAGE_NAME_PREFIX}/$(1):$${__version__}"
 endef
 
 push-api-image:
-	$(call push_image,"api","./api_app/_version.py")
+	$(call push_image,"api","${MAKEFILE_DIR}/api_app/_version.py")
 
 push-resource-processor-vm-porter-image:
-	$(call push_image,"resource-processor-vm-porter","./resource_processor/version.txt")
+	$(call push_image,"resource-processor-vm-porter","${MAKEFILE_DIR}/resource_processor/version.txt")
 
 push-gitea-image:
-	$(call push_image,"gitea","./templates/shared_services/gitea/version.txt")
+	$(call push_image,"gitea","${MAKEFILE_DIR}/templates/shared_services/gitea/version.txt")
 
 push-gitea-workspace-service-image:
-	$(call push_image,"gitea-workspace-service","./templates/workspace_services/gitea/version.txt")
+	$(call push_image,"gitea-workspace-service","${MAKEFILE_DIR}/templates/workspace_services/gitea/version.txt")
 
 push-guacamole-image:
-	$(call push_image,"guac-server","./templates/workspace_services/guacamole/version.txt")
+	$(call push_image,"guac-server","${MAKEFILE_DIR}/templates/workspace_services/guacamole/version.txt")
 
 push-mlflow-image:
-	$(call push_image,"mlflow-server","./templates/workspace_services/mlflow/mlflow-server/version.txt")
+	$(call push_image,"mlflow-server","${MAKEFILE_DIR}/templates/workspace_services/mlflow/mlflow-server/version.txt")
 
 # # These targets are for a graceful migration of Firewall
 # # from terraform state in Core to a Shared Service.
 # # See https://github.com/microsoft/AzureTRE/issues/1177
 prepare-tf-state:
 	$(call target_title, "Preparing terraform state") \
-	&& . ./devops/scripts/check_dependencies.sh nodocker \
-	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
-	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
-	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
-	&& pushd ./templates/core/terraform > /dev/null && ../../shared_services/firewall/terraform/remove_state.sh && popd > /dev/null \
-	&& pushd ./templates/shared_services/firewall/terraform > /dev/null && ./import_state.sh && popd > /dev/null
+	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ./devops/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ./templates/core/.env \
+	&& pushd ${MAKEFILE_DIR}/templates/core/terraform > /dev/null && ../../shared_services/firewall/terraform/remove_state.sh && popd > /dev/null \
+	&& pushd ${MAKEFILE_DIR}/templates/shared_services/firewall/terraform > /dev/null && ./import_state.sh && popd > /dev/null
 # / End migration targets
 
 deploy-core: tre-start
 	$(call target_title, "Deploying TRE") \
-	&& . ./devops/scripts/check_dependencies.sh nodocker \
-	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
-	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
-	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
-	&& if [[ "$${TF_LOG}" == "DEBUG" ]]; then echo "TF DEBUG set - output supressed - see tflogs container for log file" && cd ./templates/core/terraform/ && ./deploy.sh 1>/dev/null 2>/dev/null; else cd ./templates/core/terraform/ && ./deploy.sh; fi;
+	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ./devops/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ./templates/core/.env \
+	&& if [[ "$${TF_LOG}" == "DEBUG" ]]; then echo "TF DEBUG set - output supressed - see tflogs container for log file" && cd ${MAKEFILE_DIR}/templates/core/terraform/ && ./deploy.sh 1>/dev/null 2>/dev/null; else cd ${MAKEFILE_DIR}/templates/core/terraform/ && ./deploy.sh; fi;
 
 letsencrypt:
 	$(call target_title, "Requesting LetsEncrypt SSL certificate") \
-	&& . ./devops/scripts/check_dependencies.sh nodocker,certbot \
-	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
-	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
-	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
-	&& pushd ./templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
-	&& . ./devops/scripts/load_env.sh ./templates/core/private.env \
-	&& ./templates/core/terraform/scripts/letsencrypt.sh
+	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,certbot \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ./devops/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ./templates/core/.env \
+	&& pushd ${MAKEFILE_DIR}/templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/private.env \
+	&& ${MAKEFILE_DIR}/templates/core/terraform/scripts/letsencrypt.sh
 
 tre-start:
 	$(call target_title, "Starting TRE") \
-	&& . ./devops/scripts/check_dependencies.sh \
-	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
-	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& ./devops/scripts/control_tre.sh start
+	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
+	&& ${MAKEFILE_DIR}/devops/scripts/control_tre.sh start
 
 tre-stop:
 	$(call target_title, "Stopping TRE") \
-	&& . ./devops/scripts/check_dependencies.sh \
-	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
-	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& ./devops/scripts/control_tre.sh stop
+	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
+	&& ${MAKEFILE_DIR}/devops/scripts/control_tre.sh stop
 
 tre-destroy:
 	$(call target_title, "Destroying TRE") \
-	&& . ./devops/scripts/check_dependencies.sh nodocker \
-	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
-	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& . ./devops/scripts/destroy_env_no_terraform.sh
+	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/destroy_env_no_terraform.sh
 
 terraform-deploy:
 	$(call target_title, "Deploying ${DIR} with Terraform") \
-	&& . ./devops/scripts/check_dependencies.sh \
-	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
-	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
-	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
-	&& . ./devops/scripts/load_terraform_env.sh ${DIR}/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ./devops/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ./templates/core/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ${DIR}/.env \
 	&& cd ${DIR}/terraform/ && ./deploy.sh
 
 terraform-import:
 	$(call target_title, "Importing ${DIR} with Terraform") \
-	&& . ./devops/scripts/check_dependencies.sh \
-	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
-	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
-	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
-	&& . ./devops/scripts/load_terraform_env.sh ${DIR}/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ./devops/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ./templates/core/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ${DIR}/.env \
 	&& cd ${DIR}/terraform/ && ./import.sh
 
 terraform-destroy:
 	$(call target_title, "Destroying ${DIR} Service") \
-	&& . ./devops/scripts/check_dependencies.sh \
-	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
-	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
-	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
-	&& . ./devops/scripts/load_terraform_env.sh ${DIR}/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ./devops/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ./templates/core/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ${DIR}/.env \
 	&& cd ${DIR}/terraform/ && ./destroy.sh
 
 # This will validate all files, not only the changed ones as the CI version does.
@@ -246,52 +246,52 @@ lint:
 
 bundle-build:
 	$(call target_title, "Building ${DIR} bundle with Porter") \
-	&& . ./devops/scripts/check_dependencies.sh porter \
-	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
-	&& . ./devops/scripts/load_env.sh ${DIR}/.env \
-	&& . ./devops/scripts/set_docker_sock_permission.sh \
+	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/set_docker_sock_permission.sh \
 	&& cd ${DIR} && porter build --debug
 
 bundle-install:
 	$(call target_title, "Deploying ${DIR} with Porter") \
-	&& . ./devops/scripts/check_dependencies.sh porter \
-	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
-	&& . ./devops/scripts/load_env.sh ${DIR}/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
 	&& cd ${DIR} && porter install -p ./parameters.json \
-		--cred ${ROOTPATH}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
-		--cred ${ROOTPATH}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
+		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
+		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
 		--allow-docker-host-access --debug
 
 bundle-uninstall:
 	$(call target_title, "Uninstalling ${DIR} with Porter") \
-	&& ./devops/scripts/check_dependencies.sh porter \
-	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
-	&& . ./devops/scripts/load_env.sh ${DIR}/.env \
+	&& ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
 	&& cd ${DIR} && porter uninstall -p ./parameters.json \
-		--cred ${ROOTPATH}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
-		--cred ${ROOTPATH}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
+		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
+		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
 		--allow-docker-host-access --debug
 
 bundle-custom-action:
 	$(call target_title, "Performing:${ACTION} ${DIR} with Porter") \
-	&& . ./devops/scripts/check_dependencies.sh porter \
-	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
-	&& . ./devops/scripts/load_env.sh ${DIR}/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
 	&& cd ${DIR} && porter invoke --action ${ACTION} -p ./parameters.json \
-		--cred ${ROOTPATH}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
-		--cred ${ROOTPATH}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
+		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
+		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
 		--allow-docker-host-access --debug
 
 bundle-publish:
 	$(call target_title, "Publishing ${DIR} bundle with Porter") \
-	&& ./devops/scripts/check_dependencies.sh porter \
-	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
-	&& . ./devops/scripts/set_docker_sock_permission.sh \
+	&& ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/set_docker_sock_permission.sh \
 	&& az acr login --name $${ACR_NAME}	\
 	&& cd ${DIR} \
 	&& porter publish --registry "$${ACR_NAME}.azurecr.io" --debug
@@ -299,34 +299,57 @@ bundle-publish:
 bundle-register:
 	@# NOTE: ACR_NAME below comes from the env files, so needs the double '$$'. Others are set on command execution and don't
 	$(call target_title, "Registering ${DIR} bundle") \
-	&& ./devops/scripts/check_dependencies.sh porter \
-	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
+	&& ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
 	&& az acr login --name $${ACR_NAME}	\
-	&& . ./devops/scripts/get_access_token.sh \
+	&& . ${MAKEFILE_DIR}/devops/scripts/get_access_token.sh \
 	&& cd ${DIR} \
-	&& ${ROOTPATH}/devops/scripts/register_bundle_with_api.sh --acr-name "$${ACR_NAME}" --bundle-type "$${BUNDLE_TYPE}" --current --insecure --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}" --verify --workspace-service-name "$${WORKSPACE_SERVICE_NAME}"
+	&& ${MAKEFILE_DIR}/devops/scripts/register_bundle_with_api.sh --acr-name "$${ACR_NAME}" --bundle-type "$${BUNDLE_TYPE}" --current --insecure --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}" --verify --workspace-service-name "$${WORKSPACE_SERVICE_NAME}"
+
+workspace_bundle = $(MAKE) bundle-build DIR=./templates/workspaces/$(1)/ \
+	&& $(MAKE) bundle-publish DIR=./templates/workspaces/$(1)/ \
+	&& $(MAKE) bundle-register DIR="./templates/workspaces/$(1)" BUNDLE_TYPE=workspace
+
+workspace_service_bundle = $(MAKE) bundle-build DIR=./templates/workspace_services/$(1)/ \
+	&& $(MAKE) bundle-publish DIR=./templates/workspace_services/$(1)/ \
+	&& $(MAKE) bundle-register DIR="./templates/workspace_services/$(1)" BUNDLE_TYPE=workspace_service
+
+shared_service_bundle = $(MAKE) bundle-build DIR=./templates/shared_services/$(1)/ \
+	&& $(MAKE) bundle-publish DIR=./templates/shared_services/$(1)/ \
+	&& $(MAKE) bundle-register DIR="./templates/shared_services/$(1)" BUNDLE_TYPE=shared_service
 
 deploy-shared-service:
 	@# NOTE: ACR_NAME below comes from the env files, so needs the double '$$'. Others are set on command execution and don't
 	$(call target_title, "Deploying ${DIR} shared service") \
-	&& ./devops/scripts/check_dependencies.sh porter \
-	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
-	&& . ./devops/scripts/get_access_token.sh \
+	&& ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/get_access_token.sh \
 	&& cd ${DIR} \
-	&& ${ROOTPATH}/devops/scripts/deploy_shared_service.sh --insecure --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}"
+	&& ${MAKEFILE_DIR}/devops/scripts/deploy_shared_service.sh --insecure --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}"
 
 static-web-upload:
 	$(call target_title, "Uploading to static website") \
-	&& . ./devops/scripts/check_dependencies.sh nodocker \
-	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
-	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& . ./devops/scripts/load_terraform_env.sh ./devops/.env \
-	&& . ./devops/scripts/load_terraform_env.sh ./templates/core/.env \
-	&& pushd ./templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
-	&& . ./devops/scripts/load_env.sh ./templates/core/private.env \
-	&& ./templates/core/terraform/scripts/upload_static_web.sh
+	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ./devops/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ./templates/core/.env \
+	&& pushd ${MAKEFILE_DIR}/templates/core/terraform/ > /dev/null && . ${MAKEFILE_DIR}/outputs.sh && popd > /dev/null \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/templates/core/private.env \
+	&& ${MAKEFILE_DIR}/templates/core/terraform/scripts/upload_static_web.sh
+
+prepare-for-e2e:
+	$(call workspace_bundle,base) \
+	&& $(call workspace_bundle,innereye) \
+	&& $(call workspace_service_bundle,guacamole) \
+	&& $(call workspace_service_bundle,azureml) \
+	&& $(call workspace_service_bundle,devtestlabs) \
+	&& $(call workspace_service_bundle,gitea) \
+	&& $(call workspace_service_bundle,innereye) \
+	&& $(call shared_service_bundle,sonatype-nexus) \
+	&& $(call shared_service_bundle,gitea)
 
 test-e2e-smoke:
 	$(call target_title, "Running E2E smoke tests") && \
@@ -340,35 +363,35 @@ test-e2e-extended:
 
 setup-local-debugging:
 	$(call target_title,"Setting up the ability to debug the API and Resource Processor") \
-	&& . ./devops/scripts/check_dependencies.sh nodocker \
-	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
-	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& pushd ./templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
-	&& . ./devops/scripts/load_env.sh ./templates/core/private.env \
-	&& . ./scripts/setup_local_debugging.sh
+	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
+	&& pushd ${MAKEFILE_DIR}/templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/private.env \
+	&& . ${MAKEFILE_DIR}/scripts/setup_local_debugging.sh
 
 auth:
 	$(call target_title,"Setting up Azure Active Directory") \
-	&& . ./devops/scripts/check_dependencies.sh nodocker \
-	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
-	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& . ./scripts/create_aad_assets.sh
+	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
+	&& . ${MAKEFILE_DIR}/scripts/create_aad_assets.sh
 
 show-core-output:
 	$(call target_title,"Display TRE core output") \
-	&& pushd ./templates/core/terraform/ > /dev/null && terraform show && popd > /dev/null
+	&& pushd ${MAKEFILE_DIR}/templates/core/terraform/ > /dev/null && terraform show && popd > /dev/null
 
 api-healthcheck:
 	$(call target_title,"Checking API Health") \
-	&& . ./devops/scripts/check_dependencies.sh nodocker \
-	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
-	&& . ./devops/scripts/load_env.sh ./devops/.env \
-	&& . ./devops/scripts/load_env.sh ./templates/core/private.env \
-	&& ./devops/scripts/api_healthcheck.sh
+	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/private.env \
+	&& ${MAKEFILE_DIR}/devops/scripts/api_healthcheck.sh
 
 db-migrate:
 	$(call target_title,"Migrating Cosmos Data") \
-	&& . ./devops/scripts/check_dependencies.sh nodocker \
-	&& pushd ./templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
-	&& . ./devops/scripts/load_env.sh ./templates/core/private.env \
-	&& python ./scripts/db_migrations.py
+	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker \
+	&& pushd ${MAKEFILE_DIR}/templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/private.env \
+	&& python ${MAKEFILE_DIR}/scripts/db_migrations.py

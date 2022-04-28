@@ -10,9 +10,22 @@ def get_sample_operation(operation_id: str) -> dict:
         "resourcePath": "/workspaces/933ad738-7265-4b5f-9eae-a1a62928772e",
         "resourceVersion": 0,
         "status": "not_deployed",
+        "action": "install",
         "message": "",
         "createdWhen": 1642611942.423857,
-        "updatedWhen": 1642611942.423857
+        "updatedWhen": 1642611942.423857,
+        "steps": [
+            {
+                "stepId": "main",
+                "stepTitle": "deployment for main",
+                "resourceId": "933ad738-7265-4b5f-9eae-a1a62928772e",
+                "resourceTemplateName": "tre-workspace-base",
+                "resourceType": "workspace",
+                "resourceAction": "install",
+                "status": "not_deployed",
+                "updatedWhen": 1642611942.423857
+            }
+        ]
     }
 
 

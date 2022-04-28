@@ -19,10 +19,11 @@ Consider the following `template_schema.json`:
   "pipeline": {
     "install": [
       {
-        "step_id": "6d2d7eb7-984e-4330-bd3c-c7ec98658402",
-        "resource_template_name": "tre-shared-service-firewall",
-        "resource_type": "shared_service",
-        "resource_action": "upgrade",
+        "stepId": "6d2d7eb7-984e-4330-bd3c-c7ec98658402",
+        "stepTitle": "Update the firewall name",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared_service",
+        "resourceAction": "upgrade",
         "properties": [
         {
           "name": "display_name",
@@ -31,10 +32,10 @@ Consider the following `template_schema.json`:
         }]
       },
       {
-        "step_id": "main"
+        "stepId": "main"
       },
       {
-        "step_id": "2fe8a6a7-2c27-4c49-8773-127df8a48b4e",
+        "stepId": "2fe8a6a7-2c27-4c49-8773-127df8a48b4e",
         ...
       }
     ]

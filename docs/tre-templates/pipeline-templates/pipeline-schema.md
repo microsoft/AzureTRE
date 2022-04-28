@@ -8,10 +8,11 @@ This document will help you write a valid `pipeline: {}` block in your template.
 "pipeline": {
     "install": [ // <-- currently only install supported
       {
-        "step_id": "a unique string value here",
-        "resource_template_name": "name of the resource template to update",
-        "resource_type": "shared_service", // <-- currently only shared_service types supported
-        "resource_action": "upgrade", // <-- currently only upgrade supported
+        "stepId": "a unique string value here",
+        "stepTitle": "Friendly description for the user here",
+        "resourceTemplateName": "name of the resource template to update",
+        "resourceType": "shared_service", // <-- currently only shared_service types supported
+        "resourceAction": "upgrade", // <-- currently only upgrade supported
         "properties": [
         {
           "name": "display_name",
@@ -20,7 +21,7 @@ This document will help you write a valid `pipeline: {}` block in your template.
         }]
       },
       {
-        "step_id": "main" // <-- deployment of the VM resource
+        "stepId": "main" // <-- deployment of the VM resource
       },
 
 ```

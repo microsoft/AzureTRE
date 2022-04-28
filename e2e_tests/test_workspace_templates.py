@@ -29,6 +29,6 @@ async def test_get_workspace_templates(template_name, admin_token, verify) -> No
 
 @pytest.mark.smoke
 @pytest.mark.parametrize("template_name", workspace_templates)
-async def test_getting_templates(template_name, admin_token, verify) -> None:
-    async with get_template(template_name, admin_token, verify) as response:
+async def test_get_workspace_template(template_name, admin_token, verify) -> None:
+    async with get_template(template_name, strings.API_WORKSPACE_TEMPLATES, admin_token, verify) as response:
         assert (response.status_code == status.HTTP_200_OK), f"GET Request for {template_name} creation failed"
