@@ -65,6 +65,25 @@ variable "auth_client_secret" {
   type = string
 }
 
+# These variables are only passed in if you are not registering an AAD
+# application as they need passing back out
+variable "app_role_id_workspace_owner" {
+  type = string
+  default = ""
+}
+variable "app_role_id_workspace_researcher" {
+  type = string
+  default = ""
+}
+variable "client_id" {
+  type = string
+  default = ""
+}
+variable "sp_id" {
+  type = string
+  default = ""
+}
+
 locals {
   core_vnet                      = "vnet-${var.tre_id}"
   short_workspace_id             = substr(var.tre_resource_id, -4, -1)

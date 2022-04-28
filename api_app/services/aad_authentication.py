@@ -25,6 +25,7 @@ class AzureADAuthorization(AccessService):
 
     TRE_CORE_ROLES = ['TREAdmin', 'TREUser']
     WORKSPACE_ROLES = ['WorkspaceOwner', 'WorkspaceResearcher']
+    WORKSPACE_ROLES_DICT = {'WorkspaceOwner': 'app_role_id_workspace_owner', 'WorkspaceResearcher': 'app_role_id_workspace_researcher'}
 
     def __init__(self, auto_error: bool = True, require_one_of_roles: list = None):
         super(AzureADAuthorization, self).__init__(
@@ -193,13 +194,19 @@ class AzureADAuthorization(AccessService):
             raise AuthConfigValidationError(f"{strings.ACCESS_UNABLE_TO_GET_INFO_FOR_APP} {app_id}")
 
         app_info = graph_data['value'][0]
-        sp_id = app_info['id']
-        roles = app_info['appRoles']
+        authInfo = {'sp_id': app_info['id']}
 
-        return {
-            'sp_id': sp_id,
-            'roles': {role['value']: role['id'] for role in roles}
-        }
+        # Convert the roles into ids (We could have more roles defined in the app than we need.)
+        for appRole in app_info['appRoles']:
+            if appRole['value'] in self.WORKSPACE_ROLES_DICT.keys():
+                authInfo[self.WORKSPACE_ROLES_DICT[appRole['value']]] = appRole['id']
+
+        # Check we've get all our required roles
+        for role in self.WORKSPACE_ROLES_DICT.items():
+            if role[1] not in authInfo:
+                raise AuthConfigValidationError(f"{strings.ACCESS_APP_IS_MISSING_ROLE} {role[0]}")
+
+        return authInfo
 
     def _get_role_assignment_graph_data(self, user_id: str) -> dict:
         msgraph_token = self._get_msgraph_token()
@@ -217,11 +224,8 @@ class AzureADAuthorization(AccessService):
         if data["app_id"] != "auto_create":
             auth_info = self._get_app_auth_info(data["app_id"])
 
-            for role in ['WorkspaceOwner', 'WorkspaceResearcher']:
-                if role not in auth_info['roles']:
-                    raise AuthConfigValidationError(f"{strings.ACCESS_APP_IS_MISSING_ROLE} {role}")
-
         auth_info["app_id"] = data["app_id"]
+        auth_info["client_id"] = data["app_id"]
 
         return auth_info
 
