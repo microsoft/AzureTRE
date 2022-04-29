@@ -31,7 +31,7 @@ for filename in "$(dirname "${BASH_SOURCE[0]}")"/nexus_repos_config/*.json; do
 
     config_timeout=300
     status_code=1
-    while [ $status_code != 200 ]; do
+    while [ $status_code != 201 ]; do
       status_code=$(curl -iu admin:"$1" -XPOST \
         "$base_url" \
         -H 'accept: application/json' \
@@ -43,7 +43,7 @@ for filename in "$(dirname "${BASH_SOURCE[0]}")"/nexus_repos_config/*.json; do
       if [ $config_timeout == 0 ]; then
         echo "ERROR - Timeout while trying to configure $repo_name"
         exit 1
-      elif [ "$status_code" != 200 ]; then
+      elif [ "$status_code" != 201 ]; then
         sleep 1
         ((config_timeout--))
       fi
