@@ -35,7 +35,7 @@ parameters:
     default: false
   - name: domain_prefix
     type: string
-    description: "The FQDN prefix (which will be prepended to {TRE_ID}.{LOCATION}.cloudapp.azure.com) to generate a certificate for"
+    description: "The FQDN prefix (prepended to {TRE_ID}.{LOCATION}.cloudapp.azure.com) to generate certificate for"
   - name: cert_name
     type: string
     description: "What to call the certificate exported to KeyVault (alphanumeric and '-' only)"
