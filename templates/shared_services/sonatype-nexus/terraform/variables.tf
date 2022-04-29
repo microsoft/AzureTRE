@@ -1,7 +1,7 @@
 variable "tre_id" {
-  type        = string
+  type = string
 }
 
 variable "ssl_cert_name" {
-  type        = string
+  type = string
 }

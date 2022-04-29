@@ -128,7 +128,7 @@ resource "azurerm_linux_virtual_machine" "nexus" {
 
   connection {
     type     = "ssh"
-    host     = "${azurerm_network_interface.nexus.private_ip_address}"
+    host     = azurerm_network_interface.nexus.private_ip_address
     user     = "adminuser"
     password = random_password.nexus_vm_password.result
     agent    = false
