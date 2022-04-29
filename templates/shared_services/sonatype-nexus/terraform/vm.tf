@@ -125,6 +125,20 @@ resource "azurerm_linux_virtual_machine" "nexus" {
     azurerm_key_vault_access_policy.nexus_msi,
     azurerm_firewall_application_rule_collection.shared_subnet_nexus
   ]
+
+  connection {
+    type     = "ssh"
+    host     = "${azurerm_network_interface.nexus.private_ip_address}"
+    user     = "adminuser"
+    password = random_password.nexus_vm_password.result
+    agent    = false
+    timeout  = "10m"
+  }
+
+  provisioner "file" {
+    source      = "${path.module}/../scripts/nexus_repos_config"
+    destination = "/tmp/nexus_repos_config"
+  }
 }
 
 data "template_cloudinit_config" "nexus_config" {
@@ -142,7 +156,7 @@ data "template_cloudinit_config" "nexus_config" {
       write_files = [
         {
           content     = file("${path.module}/../scripts/configure_nexus_repos.sh")
-          path        = "/home/adminuser/configure_nexus_repos.sh"
+          path        = "/tmp/configure_nexus_repos.sh"
           permissions = "0744"
         },
         {
@@ -157,13 +171,7 @@ data "template_cloudinit_config" "nexus_config" {
         },
         {
           content     = file("${path.module}/../scripts/reset_nexus_password.sh")
-          path        = "/home/adminuser/reset_nexus_password.sh"
-          permissions = "0744"
-        },
-        {
-          for_each    = fileset("${path.module}/../scripts/nexus_repos_config", "*.json")
-          content     = "${each.value}"
-          path        = "/home/adminuser/nexus_repos_config/${each.key}"
+          path        = "/tmp/reset_nexus_password.sh"
           permissions = "0744"
         }
       ]

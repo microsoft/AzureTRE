@@ -24,6 +24,7 @@ packages:
   - azure-cli
   - default-jre
   - xmlstarlet
+  - jq
 
 # create the docker group
 groups:
@@ -44,9 +45,9 @@ runcmd:
     --name nexus
     --log-driver local
     sonatype/nexus3
+  # Reset the admin password of Nexus to the one created by TF and stored in KeyVault
+  - bash /tmp/reset_nexus_password.sh "${NEXUS_ADMIN_PASSWORD}"
   # Invoke Nexus SSL configuration (which will also be ran as CRON daily to renew cert)
   - bash /etc/cron.daily/configure_nexus_ssl.sh
-  # Reset the admin password of Nexus to the one created by TF and stored in KeyVault
-  - bash /home/adminuser/reset_nexus_password.sh "${NEXUS_ADMIN_PASSWORD}"
   # Configure Nexus repositories
-  - bash /home/adminuser/configure_nexus_repos.sh "${NEXUS_ADMIN_PASSWORD}"
+  - bash /tmp/configure_nexus_repos.sh "${NEXUS_ADMIN_PASSWORD}"
