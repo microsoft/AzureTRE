@@ -49,7 +49,7 @@ public class ConnectionService {
         final Map<String, GuacamoleConfiguration> configs = getConfigurations(user);
 
         for (final Map.Entry<String, GuacamoleConfiguration> config : configs.entrySet()) {
-            final Connection connection = new TokenInjectingConnection(config.getKey(), config.getKey(),
+            final Connection connection = new TokenInjectingConnection(config.getValue().getParameter("display_name"), config.getKey(),
                 config.getValue(), true);
             connection.setParentIdentifier(AzureTREAuthenticationProvider.ROOT_CONNECTION_GROUP);
             connections.putIfAbsent(config.getKey(), connection);
@@ -71,9 +71,10 @@ public class ConnectionService {
                     if (templateParameters.has("hostname") && templateParameters.has("ip")) {
                         final String azureResourceId = templateParameters.getString("hostname");
                         final String ip = templateParameters.getString("ip");
-                        setConfig(config, azureResourceId, ip);
+                        final String display_name = templateParameters.getString("display_name");
+                        setConfig(config, azureResourceId, ip, display_name);
                         LOGGER.info("Adding a VM: {}", ip);
-                        configs.putIfAbsent(config.getParameter("hostname"), config);
+                        configs.putIfAbsent(templateParameters.getString("hostname"), config);
                     } else {
                         LOGGER.info("Missing ip or hostname, skipping...");
                     }
@@ -87,9 +88,10 @@ public class ConnectionService {
         return configs;
     }
 
-    private static void setConfig(final GuacamoleConfiguration config, final String azureResourceId, final String ip) {
+    private static void setConfig(final GuacamoleConfiguration config, final String azureResourceId, final String ip, final String display_name) {
         config.setProtocol("rdp");
         config.setParameter("hostname", ip);
+        config.setParameter("display_name", display_name);
         config.setParameter("resize-method", "display-update");
         config.setParameter("azure-resource-id", azureResourceId);
         config.setParameter("port", "3389");

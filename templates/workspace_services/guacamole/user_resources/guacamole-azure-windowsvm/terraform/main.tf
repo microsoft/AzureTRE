@@ -60,5 +60,5 @@ output "azure_resource_id" {
 }
 
 output "connection_uri" {
-  value = "https://${data.azurerm_app_service.guacamole.default_site_hostname}/?/client/${textencodebase64("${azurerm_network_interface.internal.private_ip_address}\u0000c\u0000azuretre", "UTF-8")}"
+  value = "https://${data.azurerm_app_service.guacamole.default_site_hostname}/?/client/${textencodebase64("${azurerm_linux_virtual_machine.linuxvm.name}\u0000c\u0000azuretre", "UTF-8")}"
 }

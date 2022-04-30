@@ -1,6 +1,6 @@
 ---
 name: tre-service-dev-vm
-version: 0.1.10
+version: 0.1.11
 description: "An Azure TRE User Resource Template for a Dev VM"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
