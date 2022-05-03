@@ -4,7 +4,7 @@ Certain components of the TRE require the aquisition of a certificate via Letsen
 
 In order to aquire these certificates, there must be a public facing endpoint which can be reached by Letsencrypt.
 
-As TREs are secured environments with very few publicly facing points, additional resources are required ensure the certificate can be provisioned for the correct domain.
+As TREs are secured environments with very few publicly facing points, additional resources are required to ensure the certificate can be provisioned for the correct domain.
 
 The additional resources are as followed:
 
