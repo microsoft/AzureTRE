@@ -1,4 +1,5 @@
 import asyncio
+from typing import Optional
 from contextlib import asynccontextmanager
 from httpx import AsyncClient, Timeout
 import logging
@@ -63,9 +64,7 @@ async def post_resource(payload, endpoint, resource_type, token, admin_token, ve
             check_method = patch_done
             response = await client.patch(full_endpoint, headers=auth_headers, json=payload, timeout=TIMEOUT)
 
-        LOGGER.info(f'RESPONSE: {response}')
-        LOGGER.info(f'RESPONSE Content: {response.content}')
-        LOGGER.info(f'RESPONSE status code: {response.status_code}')
+        LOGGER.info(f'RESPONSE Status code: {response.status_code} Content: {response.content}')
         assert (response.status_code == status.HTTP_202_ACCEPTED), f"Request for resource {payload['templateName']} creation failed"
 
         resource_path = response.json()["operation"]["resourcePath"]
@@ -78,7 +77,7 @@ async def post_resource(payload, endpoint, resource_type, token, admin_token, ve
         return resource_path, resource_id
 
 
-async def get_shared_service_id_by_name(template_name: str, verify, token) -> dict:
+async def get_shared_service_id_by_name(template_name: str, verify, token) -> Optional[dict]:
     async with AsyncClient(verify=verify, timeout=TIMEOUT) as client:
         endpoint = '/api/shared-services'
         full_endpoint = f'https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{endpoint}'
@@ -92,6 +91,8 @@ async def get_shared_service_id_by_name(template_name: str, verify, token) -> di
 
         shared_service_list = response.json()["sharedServices"]
         matching_shared_services = [service for service in shared_service_list if service["templateName"] == template_name and service["isActive"]]
+        if len(matching_shared_services) == 0:
+            return None
         assert len(matching_shared_services) == 1, f"There can be at most one active shared service with template name {template_name}"
         return matching_shared_services[0]
 
@@ -111,6 +112,7 @@ async def disable_and_delete_resource(endpoint, resource_type, token, admin_toke
         # disable
         payload = {"isEnabled": False}
         response = await client.patch(full_endpoint, headers=auth_headers, json=payload, timeout=TIMEOUT)
+        LOGGER.info(f'RESPONSE Status code: {response.status_code} Content: {response.content}')
         assert (response.status_code == status.HTTP_202_ACCEPTED), "Disable resource failed"
         operation_endpoint = response.headers["Location"]
         await wait_for(patch_done, client, operation_endpoint, auth_headers, strings.RESOURCE_STATUS_FAILED)
