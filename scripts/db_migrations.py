@@ -23,7 +23,7 @@ class TRECosmosDBMigrations:
             self.database = self.client.get_database_client(STATE_STORE_DATABASE)
 
     def can_connect_to_cosmos(self) -> bool:
-        return os.getenv('ENABLE_LOCAL_DEBUGGING', 'False').lower() in ('true',1, 't') if 'ENABLE_LOCAL_DEBUGGING' in os.environ else False
+        return os.getenv('ENABLE_LOCAL_DEBUGGING', 'False').lower() in ('true', 1, 't') if 'ENABLE_LOCAL_DEBUGGING' in os.environ else False
 
     def get_store_key(self) -> str:
         if 'STATE_STORE_KEY' in os.environ:
@@ -110,7 +110,7 @@ class TRECosmosDBMigrations:
 def main():
     migrations = TRECosmosDBMigrations()
     if not migrations.can_connect_to_cosmos():
-        print(f'You cannot migrate the cosmos database without setting ENABLE_LOCAL_DEBUGGING to true.')
+        print('You cannot migrate the cosmos database without setting ENABLE_LOCAL_DEBUGGING to true.')
     else:
         # PR 1030
         migrations.renameCosmosDBFields("Resources", 'resourceTemplateName', 'templateName')
