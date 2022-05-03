@@ -334,6 +334,25 @@ jobs:
           TF_VAR_keyvault_purge_protection_enabled: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
           TF_VAR_stateful_resources_locked: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
 
+      - name: Migrate Database
+        uses: ./.github/actions/devcontainer_run_command
+        with:
+          COMMAND: "make db-migrate"
+          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
+          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
+          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
+          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
+          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
+          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+          TF_VAR_terraform_state_container_name:
+            ${{ secrets.TF_STATE_CONTAINER }}
+          TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
+          TF_VAR_mgmt_storage_account_name:
+            ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+
       - name: API Healthcheck
         uses: ./.github/actions/devcontainer_run_command
         with:
@@ -553,25 +572,6 @@ jobs:
           TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
           TRE_ID: "${{ secrets.TRE_ID }}"
           LOCATION: "${{ secrets.LOCATION }}"
-
-      - name: Migrate Database
-        uses: ./.github/actions/devcontainer_run_command
-        with:
-          COMMAND: "make db-migrate"
-          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
-          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
-          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
-          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
-          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
-          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
-          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          ACR_NAME: ${{ secrets.ACR_NAME }}
-          TF_VAR_terraform_state_container_name:
-            ${{ secrets.TF_STATE_CONTAINER }}
-          TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
-          TF_VAR_mgmt_storage_account_name:
-            ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
 
       - name: API Healthcheck
         uses: ./.github/actions/devcontainer_run_command
