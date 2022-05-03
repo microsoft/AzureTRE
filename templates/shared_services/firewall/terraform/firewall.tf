@@ -291,7 +291,7 @@ resource "azurerm_firewall_application_rule_collection" "web_app_subnet" {
 
 # these rule collections are driven by the API, through resource properties
 resource "azurerm_firewall_application_rule_collection" "api_driven_rules" {
-  for_each            = var.api_driven_rule_collections
+  for_each            = { for i, v in jsondecode(base64decode(var.api_driven_rule_collections_b64)) : i => v }
   name                = each.value.name
   azure_firewall_name = azurerm_firewall.fw.name
   resource_group_name = azurerm_firewall.fw.resource_group_name
@@ -306,12 +306,13 @@ resource "azurerm_firewall_application_rule_collection" "api_driven_rules" {
       dynamic "protocol" {
         for_each = rule.value.protocols
         content {
-          port = protocol.port
-          type = protocol.type
+          port = protocol.value.port
+          type = protocol.value.type
         }
       }
-      target_fqdns     = rule.value.target_fqdns
-      source_addresses = rule.value.source_addresses
+      target_fqdns     = try(rule.value.target_fqdns, [])
+      source_addresses = try(rule.value.source_addresses, [])
+      fqdn_tags        = try(rule.value.fqdn_tags, [])
     }
   }
 }
