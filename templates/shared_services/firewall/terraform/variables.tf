@@ -10,6 +10,6 @@ variable "stateful_resources_locked" {
 }
 
 variable "api_driven_rule_collections_b64" {
-  type = string
+  type    = string
   default = "W10=" #b64 for []
 }
