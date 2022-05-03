@@ -19,8 +19,11 @@ fi
 ./json-to-env.sh < ../tre_output.json > ../private.env
 
 # Pull in the core templates environment variables so we can build up new key/value pairs
-# shellcheck disable=SC1091
-source ../.env
+if [ -f ../.env ]; then
+  # shellcheck disable=SC1091
+  source ../.env
+fi
+
 # Add a few extra values to the file to help us (i.e. for local debugging api_app and resource processor)
 # shellcheck disable=SC2129
 echo "SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE='sb-${TRE_ID}.servicebus.windows.net'" >> ../private.env
