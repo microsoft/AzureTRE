@@ -7,13 +7,12 @@
   "required": [],
   "properties": {
     "rule_collections": {
-			"$id": "#root/rule_collections",
-			"title": "Rule_collections",
+			"$id": "#properties/rule_collections",
+			"title": "rule_collections",
 			"type": "array",
 			"default": [],
       "updateable": true,
 			"items":{
-				"$id": "#root/rule_collections/items",
 				"title": "items",
 				"type": "object",
 				"required": [
@@ -24,7 +23,6 @@
 				],
 				"properties": {
 					"name": {
-						"$id": "#root/rule_collections/items/name",
 						"title": "name",
 						"type": "string",
 						"examples": [
@@ -33,7 +31,6 @@
 						"pattern": "^.*$"
 					},
 					"priority": {
-						"$id": "#root/rule_collections/items/priority",
 						"title": "priority",
 						"type": "integer",
 						"examples": [
@@ -41,7 +38,6 @@
 						]
 					},
 					"action": {
-						"$id": "#root/rule_collections/items/action",
 						"title": "action",
 						"type": "string",
 						"examples": [
@@ -53,12 +49,10 @@
             ]
           },
 					"rules": {
-						"$id": "#root/rule_collections/items/rules",
 						"title": "rules",
 						"type": "array",
 						"default": [],
 						"items":{
-							"$id": "#root/rule_collections/items/rules/items",
 							"title": "Items",
 							"type": "object",
 							"required": [
@@ -66,7 +60,6 @@
 							],
 							"properties": {
 								"name": {
-									"$id": "#root/rule_collections/items/rules/items/name",
 									"title": "name",
 									"type": "string",
 									"examples": [
@@ -75,7 +68,6 @@
 									"pattern": "^.*$"
 								},
 								"description": {
-									"$id": "#root/rule_collections/items/rules/items/description",
 									"title": "description",
 									"type": "string",
 									"default": "",
@@ -85,12 +77,10 @@
 									"pattern": "^.*$"
 								},
 								"protocols": {
-									"$id": "#root/rule_collections/items/rules/items/protocols",
 									"title": "protocols",
 									"type": "array",
 									"default": [],
 									"items":{
-										"$id": "#root/rule_collections/items/rules/items/protocols/items",
 										"title": "Items",
 										"type": "object",
 										"required": [
@@ -99,7 +89,6 @@
 										],
 										"properties": {
 											"port": {
-												"$id": "#root/rule_collections/items/rules/items/protocols/items/port",
 												"title": "port",
 												"type": "string",
 												"examples": [
@@ -108,7 +97,6 @@
 												"pattern": "^.*$"
 											},
 											"type": {
-												"$id": "#root/rule_collections/items/rules/items/protocols/items/type",
 												"title": "type",
 												"type": "string",
                         "enum": [
@@ -124,12 +112,10 @@
 									}
 								},
                 "fqdn_tags": {
-									"$id": "#root/rule_collections/items/rules/items/fqdn_tags",
 									"title": "fqdn_tags",
 									"type": "array",
 									"default": [],
 									"items":{
-										"$id": "#root/rule_collections/items/rules/items/fqdn_tags/items",
 										"title": "Items",
 										"type": "string",
 										"default": "",
@@ -149,12 +135,10 @@
 									}
 								},
 								"target_fqdns": {
-									"$id": "#root/rule_collections/items/rules/items/target_fqdns",
 									"title": "target_fqdns",
 									"type": "array",
 									"default": [],
 									"items":{
-										"$id": "#root/rule_collections/items/rules/items/target_fqdns/items",
 										"title": "Items",
 										"type": "string",
 										"default": "",
@@ -164,12 +148,10 @@
 									}
 								},
 								"source_addresses": {
-									"$id": "#root/rule_collections/items/rules/items/source_addresses",
 									"title": "Source_addresses",
 									"type": "array",
 									"default": [],
 									"items":{
-										"$id": "#root/rule_collections/items/rules/items/source_addresses/items",
 										"title": "Items",
 										"type": "string",
 										"default": "",
