@@ -8,7 +8,7 @@ As TREs are secured environments with very few publicly facing points, additiona
 
 The additional resources are as followed:
 
-1. Public IP provisioned in the same location as the web app the certificate is intended for with a domain lable which matches the web apps name.
+1. Public IP provisioned in the same location as the web app that the certificate is intended for; this will also have a domain label which matches the web app name.
 1. Storage Account with a static web app.
 1. Application gateway to route traffic from thepPublic IP to the static web app
 
