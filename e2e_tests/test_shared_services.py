@@ -1,7 +1,11 @@
 import pytest
+import logging
 
 from helpers import disable_and_delete_resource, post_resource, get_shared_service_id_by_name
 from resources import strings
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 @pytest.mark.extended
@@ -30,7 +34,14 @@ shared_service_templates_to_create = [
 @pytest.mark.extended
 @pytest.mark.timeout(30 * 60)
 @pytest.mark.parametrize("template_name", shared_service_templates_to_create)
-async def test_create_shared_service(template_name, admin_token, workspace_owner_token, verify) -> None:
+async def test_create_shared_service(template_name, admin_token, verify) -> None:
+    # Check that the shared service hasn't already been created
+    shared_service = await get_shared_service_id_by_name(template_name, verify, admin_token)
+    if shared_service:
+        id = shared_service["id"]
+        LOGGER.info(f"Shared service {template_name} already exists (id {id}), deleting it first...")
+        await disable_and_delete_resource(f'/api/shared-services/{id}', 'shared_service', admin_token, None, verify)
+
     post_payload = {
         "templateName": template_name,
         "properties": {
