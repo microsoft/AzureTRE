@@ -8,6 +8,7 @@ from resources import strings
 pytestmark = pytest.mark.asyncio
 
 
+@pytest.mark.skip
 @pytest.mark.extended
 @pytest.mark.timeout(3000)
 async def test_create_guacamole_service_into_base_workspace(admin_token, workspace_owner_token, verify) -> None:

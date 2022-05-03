@@ -8,6 +8,7 @@ from resources import strings
 LOGGER = logging.getLogger(__name__)
 
 
+@pytest.mark.skip
 @pytest.mark.extended
 async def test_patch_firewall(admin_token, verify):
     template_name = strings.FIREWALL_SHARED_SERVICE
@@ -27,7 +28,7 @@ async def test_patch_firewall(admin_token, verify):
 
 shared_service_templates_to_create = [
     (strings.GITEA_SHARED_SERVICE),
-    (strings.NEXUS_SHARED_SERVICE),
+    # (strings.NEXUS_SHARED_SERVICE),
 ]
 
 
