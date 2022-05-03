@@ -10,7 +10,7 @@ The additional resources are as followed:
 
 1. Public IP provisioned in the same location as the web app that the certificate is intended for; this will also have a domain label which matches the web app name.
 1. Storage Account with a static web app.
-1. Application gateway to route traffic from thepPublic IP to the static web app
+1. Application gateway to route traffic from the Public IP to the static web app
 
 The following diagram illustrated the flow of data between the resources:
 
