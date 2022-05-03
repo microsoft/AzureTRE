@@ -77,7 +77,7 @@ public class ConnectionService {
                         final String ip = templateParameters.getString("ip");
                         final String displayName = templateParameters.getString("display_name");
                         setConfig(config, azureResourceId, ip, displayName);
-                        LOGGER.info("Adding a VM: {}", ip);
+                        LOGGER.info("Adding a VM, ID: {} IP: {}, Name:{}", azureResourceId, ip, displayName);
                         configs.putIfAbsent(templateParameters.getString("hostname"), config);
                     } else {
                         LOGGER.info("Missing ip or hostname, skipping...");
