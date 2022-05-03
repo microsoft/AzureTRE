@@ -4,7 +4,7 @@ Complete the configuration of the shared services (Nexus and Gitea) from inside 
 
 ## Configure Nexus
 
-Before deploying the Nexus shared service, you need to make sure that it will have access to a certificate to configure serving proxies over https with. By default, the Nexus service will serve proxies from `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/`, and thus it requires a certificate that validates ownership of this domain to use for SSL.
+Before deploying the Nexus shared service, you need to make sure that it will have access to a certificate to configure serving secure proxies. By default, the Nexus service will serve proxies from `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/`, and thus it requires a certificate that validates ownership of this domain to use for SSL.
 
 You can use the Certs Shared Service to set one up by following these steps:
 
