@@ -23,7 +23,7 @@ class Property(AzureTREModel):
     pattern: Optional[str] = Field(None, title="Pattern")
     updateable: Optional[bool] = Field(None, title="Indicates that the field can be updated")
     readOnly: Optional[bool] = Field(None, title="Indicates the field is read-only")
-    items: Optional[dict] = []
+    items: Optional[dict] = None
 
 
 class CustomAction(AzureTREModel):
