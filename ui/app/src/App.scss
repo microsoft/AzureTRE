@@ -1,0 +1,25 @@
+#root{
+   
+}
+.tre-root{ 
+}
+.tre-home-link{
+    color:#fff;
+    text-decoration: none;
+}
+.tre-body{
+    height:100%;
+    overflow: hidden;
+}
+.tre-body-inner{
+    height:100%;
+    overflow:hidden;
+}
+.tre-left-nav{
+    width:200px;
+    overflow-y: scroll;
+}
+.tre-body-content{
+    width: calc(100% - 200px);
+    overflow-y: scroll;
+}
