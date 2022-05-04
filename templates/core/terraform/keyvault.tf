@@ -4,7 +4,7 @@ resource "azurerm_key_vault" "kv" {
   location                 = azurerm_resource_group.core.location
   resource_group_name      = azurerm_resource_group.core.name
   sku_name                 = "standard"
-  purge_protection_enabled = var.keyvault_purge_protection_enabled
+  // purge_protection_enabled = var.keyvault_purge_protection_enabled
 
   lifecycle { ignore_changes = [access_policy, tags] }
 }

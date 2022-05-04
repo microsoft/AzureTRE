@@ -1,3 +1,4 @@
+/*
 resource "azurerm_firewall_application_rule_collection" "web_app_subnet_gitea" {
   name                = "arc-web_app_subnet_gitea"
   azure_firewall_name = data.azurerm_firewall.fw.name
@@ -21,3 +22,4 @@ resource "azurerm_firewall_application_rule_collection" "web_app_subnet_gitea" {
   }
 }
 
+*/
