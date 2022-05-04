@@ -3,7 +3,7 @@ resource "azurerm_log_analytics_workspace" "core" {
   resource_group_name = var.resource_group_name
   location            = var.location
   retention_in_days   = 30
-  sku                 = "PerGB2018"
+  sku                 = "pergb2018"
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -17,7 +17,7 @@ resource "azurerm_storage_account" "app_insights" {
   account_kind             = "StorageV2"
   account_tier             = "Standard"
   account_replication_type = "LRS"
-  allow_nested_items_to_be_public = false
+  allow_blob_public_access = false
 
   lifecycle { ignore_changes = [tags] }
 }
