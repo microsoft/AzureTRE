@@ -17,7 +17,6 @@
 				"type": "object",
 				"required": [
 					"name",
-					"priority",
 					"action",
 					"rules"
 				],
@@ -33,6 +32,7 @@
 					"priority": {
 						"title": "priority",
 						"type": "integer",
+            "description": "Numeric priority for rule collection - leave blank for auto numbering",
 						"examples": [
 							110
 						]

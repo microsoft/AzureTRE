@@ -295,7 +295,7 @@ resource "azurerm_firewall_application_rule_collection" "api_driven_rules" {
   name                = each.value.name
   azure_firewall_name = azurerm_firewall.fw.name
   resource_group_name = azurerm_firewall.fw.resource_group_name
-  priority            = each.value.priority
+  priority            = try(each.value.priority, (200 + each.key))
   action              = each.value.action
 
   dynamic "rule" {

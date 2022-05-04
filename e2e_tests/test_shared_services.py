@@ -22,7 +22,6 @@ async def test_patch_firewall(admin_token, verify):
             "rule_collections": [
                 {
                     "name": "e2e-rule-collection-1",
-                    "priority": 200,
                     "action": "Allow",
                     "rules": [
                         {
@@ -31,11 +30,43 @@ async def test_patch_firewall(admin_token, verify):
                             "protocols": [{"port": "5555", "type": "Http"}],
                             "target_fqdns": [
                                 "one.two.three.microsoft.com",
-                                "two.three.microsoft.com",
+                                "two.three.microsoft.com"
                             ],
-                            "source_addresses": ["172.196.0.0"],
+                            "source_addresses": ["172.196.0.0"]
                         }
-                    ],
+                    ]
+                },
+                {
+                    "name": "e2e-rule-collection-2",
+                    "action": "Allow",
+                    "rules": [
+                        {
+                            "name": "e2e test rule 1",
+                            "description": "desc here",
+                            "protocols": [{"port": "5556", "type": "Http"}],
+                            "target_fqdns": [
+                                "one.two.microsoft.com",
+                                "two.microsoft.com"
+                            ],
+                            "source_addresses": ["172.196.0.1"]
+                        }
+                    ]
+                },
+                {
+                    "name": "e2e-rule-collection-3",
+                    "action": "Allow",
+                    "priority": 501,
+                    "rules": [
+                        {
+                            "name": "e2e test rule 1",
+                            "description": "desc here",
+                            "protocols": [{"port": "5557", "type": "Http"}],
+                            "target_fqdns": [
+                                "one.two.three.microsoft.com.uk"
+                            ],
+                            "source_addresses": ["172.196.0.2"]
+                        }
+                    ]
                 }
             ],
         },
