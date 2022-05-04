@@ -49,8 +49,12 @@ public class ConnectionService {
         final Map<String, GuacamoleConfiguration> configs = getConfigurations(user);
 
         for (final Map.Entry<String, GuacamoleConfiguration> config : configs.entrySet()) {
-            final Connection connection = new TokenInjectingConnection(config.getKey(), config.getKey(),
-                config.getValue(), true);
+            final Connection connection =
+                  new TokenInjectingConnection(
+                      config.getValue().getParameter("display_name"),
+                      config.getKey(),
+                      config.getValue(),
+                      true);
             connection.setParentIdentifier(AzureTREAuthenticationProvider.ROOT_CONNECTION_GROUP);
             connections.putIfAbsent(config.getKey(), connection);
         }
@@ -71,9 +75,10 @@ public class ConnectionService {
                     if (templateParameters.has("hostname") && templateParameters.has("ip")) {
                         final String azureResourceId = templateParameters.getString("hostname");
                         final String ip = templateParameters.getString("ip");
-                        setConfig(config, azureResourceId, ip);
-                        LOGGER.info("Adding a VM: {}", ip);
-                        configs.putIfAbsent(config.getParameter("hostname"), config);
+                        final String displayName = templateParameters.getString("display_name");
+                        setConfig(config, azureResourceId, ip, displayName);
+                        LOGGER.info("Adding a VM, ID: {} IP: {}, Name:{}", azureResourceId, ip, displayName);
+                        configs.putIfAbsent(templateParameters.getString("hostname"), config);
                     } else {
                         LOGGER.info("Missing ip or hostname, skipping...");
                     }
@@ -87,9 +92,14 @@ public class ConnectionService {
         return configs;
     }
 
-    private static void setConfig(final GuacamoleConfiguration config, final String azureResourceId, final String ip) {
+    private static void setConfig(
+        final GuacamoleConfiguration config,
+        final String azureResourceId,
+        final String ip,
+        final String displayName) {
         config.setProtocol("rdp");
         config.setParameter("hostname", ip);
+        config.setParameter("display_name", displayName);
         config.setParameter("resize-method", "display-update");
         config.setParameter("azure-resource-id", azureResourceId);
         config.setParameter("port", "3389");
