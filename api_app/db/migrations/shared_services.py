@@ -1,3 +1,5 @@
+import logging
+
 from azure.cosmos import CosmosClient
 from db.repositories.shared_services import SharedServiceRepository
 
@@ -12,5 +14,5 @@ class SharedServiceMigration(SharedServiceRepository):
         for template_name in template_names:
             for item in self.query(query=f'SELECT * FROM c WHERE c.resourceType = "shared-service" AND c.templateName = "{template_name}" \
                                                                 ORDER BY c.updatedWhen ASC OFFSET 1 LIMIT 10000', enable_cross_partition_query=True):
-                print(f"Deleting element {item}")
+                logging.INFO(f"Deleting element {item}")
                 self.delete_item(item, partition_key=item["id"])
