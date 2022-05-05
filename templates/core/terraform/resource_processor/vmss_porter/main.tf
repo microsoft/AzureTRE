@@ -157,8 +157,7 @@ resource "azurerm_role_assignment" "vmss_sb_receiver" {
   principal_id         = azurerm_user_assigned_identity.vmss_msi.principal_id
 }
 
-# add issue to look at reduced scope - needs to create and add resources to rgs
-resource "azurerm_role_assignment" "subscription_owner" {
+resource "azurerm_role_assignment" "subscription_administrator" {
   # Below is a workaround TF replacing this resource when using the data object.
   scope                = var.subscription_id != "" ? "/subscriptions/${var.subscription_id}" : data.azurerm_subscription.current.id
   role_definition_name = "Owner"
