@@ -43,9 +43,9 @@ After verifying the certificate has been generated, you can deploy Nexus:
 1. Run the below commands in your terminal to build, publish and register the Nexus shared service bundle:
 
   ```cmd
-  make bundle-build DIR=./templates/shared_services/certs
-  make bundle-publish DIR=./templates/shared_services/certs
-  make bundle-register DIR=./templates/shared_services/certs BUNDLE_TYPE=shared_service
+  make bundle-build DIR=./templates/shared_services/sonatype-nexus
+  make bundle-publish DIR=./templates/shared_services/sonatype-nexus
+  make bundle-register DIR=./templates/shared_services/sonatype-nexus BUNDLE_TYPE=shared_service
   ```
 
 1. Navigate to the Swagger UI for your TRE API at `https://<azure_tre_fqdn>/api/docs`, and authenticate if you haven't already by clicking `Authorize`.
