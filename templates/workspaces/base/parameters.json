@@ -69,6 +69,30 @@
       "source": {
         "env": "REGISTER_AAD_APPLICATION"
       }
+    },
+    {
+      "name": "client_id",
+      "source": {
+        "env": "CLIENT_ID"
+      }
+    },
+    {
+      "name": "sp_id",
+      "source": {
+        "env": "SP_ID"
+      }
+    },
+    {
+      "name": "app_role_id_workspace_owner",
+      "source": {
+        "env": "APP_ROLE_ID_WORKSPACE_OWNER"
+      }
+    },
+    {
+      "name": "app_role_id_workspace_researcher",
+      "source": {
+        "env": "APP_ROLE_ID_WORKSPACE_RESEARCHER"
+      }
     }
   ]
 }

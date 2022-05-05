@@ -2,6 +2,7 @@ PONG = "pong"
 
 # API Descriptions
 API_GET_HEALTH_STATUS = "Get health status"
+API_MIGRATE_DATABASE = "Migrate documents in the database"
 
 API_GET_ALL_WORKSPACES = "Get all workspaces"
 API_GET_WORKSPACE_BY_ID = "Get workspace by Id"
@@ -67,7 +68,7 @@ RESOURCE_PROCESSOR_HEALTHY_MESSAGE = "HealthState/healthy"
 
 # Error strings
 ACCESS_APP_IS_MISSING_ROLE = "The App is missing role"
-ACCESS_PLEASE_SUPPLY_APP_ID = "Please supply the app_id for the AAD application"
+ACCESS_PLEASE_SUPPLY_CLIENT_ID = "Please supply the client_id for the AAD application"
 ACCESS_UNABLE_TO_GET_INFO_FOR_APP = "Unable to get app info for app:"
 ACCESS_UNABLE_TO_GET_ROLE_ASSIGNMENTS_FOR_USER = "Unable to get role assignments for user"
 

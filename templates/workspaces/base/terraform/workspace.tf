@@ -28,5 +28,9 @@ module "aad" {
   count                          = var.register_aad_application ? 1 : 0
   key_vault_id                   = azurerm_key_vault.kv.id
   workspace_resource_name_suffix = local.workspace_resource_name_suffix
-  depends_on                     = [azurerm_key_vault_access_policy.deployer]
+  depends_on = [
+    azurerm_key_vault_access_policy.deployer,
+    azurerm_key_vault_access_policy.resource_processor,
+    azurerm_private_endpoint.kvpe
+  ]
 }
