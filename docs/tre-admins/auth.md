@@ -6,6 +6,7 @@ AAD holds the identities of all the TRE/workspace users, including administrator
 
 ## Pre-requisites
 The following values are needed to be in place to run the script. (`/templates/core/.env`)
+
 | Key | Description |
 | ----------- | ----------- |
 |TRE_ID|This is needed to build up the redirect URI for the Swagger App|
