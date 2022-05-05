@@ -36,12 +36,12 @@ async def migrate_database(resources_repo=Depends(get_repository(ResourceReposit
         migrations.append(Migration(issueNumber="PR 1031", status="Executed"))
 
         logging.info("PR 1717. - Shared services")
-        status = "Executed" if shared_services_migration.deleteDuplicatedSharedServices() else "Skipped"
-        migrations.append(Migration(issueNumber="PR 1717", status=status))
+        migration_status = "Executed" if shared_services_migration.deleteDuplicatedSharedServices() else "Skipped"
+        migrations.append(Migration(issueNumber="PR 1717", status=migration_status))
 
         logging.info("PR 1726. - Authentication needs to be in properties so we can update them")
-        status = "Executed" if workspace_migration.moveAuthInformationToProperties() else "Skipped"
-        migrations.append(Migration(issueNumber="PR 1726", status=status))
+        migration_status = "Executed" if workspace_migration.moveAuthInformationToProperties() else "Skipped"
+        migrations.append(Migration(issueNumber="PR 1726", status=migration_status))
 
         return MigrationOutList(migrations=migrations)
     except Exception as e:
