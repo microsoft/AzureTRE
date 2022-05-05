@@ -1,13 +1,25 @@
 import React from 'react';
-import { getTheme, mergeStyles } from '@fluentui/react';
+import { getTheme, mergeStyles, Stack } from '@fluentui/react';
 import { Link } from 'react-router-dom';
+import { UserMenu } from './UserMenu';
 
 
 export const TopNav: React.FunctionComponent = () => {
   return (
+    <>
       <div className={contentClass}>
-        <Link to='/' className='tre-home-link'>Azure TRE</Link>
+        <Stack horizontal>
+          <Stack.Item grow={100}>
+
+            <Link to='/' className='tre-home-link'>Azure TRE</Link>
+
+          </Stack.Item>
+          <Stack.Item grow>
+            <UserMenu />
+          </Stack.Item>
+        </Stack>
       </div>
+    </>
   );
 };
 

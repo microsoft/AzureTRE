@@ -1,12 +1,32 @@
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans',
+      'Droid Sans', 'Helvetica Neue', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+  
+code {
+font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+  
 #root{
    
 }
 .tre-root{ 
 }
+
 .tre-home-link{
     color:#fff;
     text-decoration: none;
 }
+.tre-user-menu{
+    margin-top:8px;
+}
+.ms-Persona-primaryText{
+    color:#fff;
+}
+
 .tre-body{
     height:100%;
     overflow: hidden;

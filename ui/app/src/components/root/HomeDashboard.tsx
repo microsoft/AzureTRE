@@ -1,12 +1,39 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { ApiEndpoint } from '../../models/apiEndpoints';
+import { Workspace } from '../../models/workspace';
+import { HttpMethod, useAuthApiCall } from '../../useAuthApiCall';
 
-export const HomeDashboard: React.FunctionComponent = () => {
-  return(
-  <>
-    <h1>Workspaces</h1>
-    <Link to='/workspaces/187654-76543-65432'>Workspace 1</Link> <br />
-    <Link to='/workspaces/6543-76543-6543-543'>Workspace 2</Link> <br />
-  </>
+interface HomeDashboardProps {
+  selectWorkspace: (workspace: Workspace) => void
+}
+
+export const HomeDashboard: React.FunctionComponent<HomeDashboardProps> = (props:HomeDashboardProps) => {
+  const [workspaces, setWorkspaces] = useState([{} as Workspace]);
+  const apiCall = useAuthApiCall();
+
+  useEffect(() => {
+    const getWorkspaces = async () => {
+      const r = await apiCall(ApiEndpoint.Workspaces, HttpMethod.Get)
+      setWorkspaces(r.workspaces);
+    };
+    getWorkspaces();
+  }, [apiCall]);
+
+  return (
+    <>
+      <h1>Workspaces</h1>
+      <ul>
+      {
+        workspaces.map((ws, i) => {
+          return (
+            <li key={i}>
+              <Link to={`/${ApiEndpoint.Workspaces}/${ws.id}`} onClick={() => props.selectWorkspace(ws)}>{ws.properties?.display_name}</Link>
+            </li>
+          )
+        })
+      }
+      </ul>
+    </>
   );
 };

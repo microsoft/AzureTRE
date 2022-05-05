@@ -1,35 +1,42 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { DefaultPalette, IStackStyles, Stack } from '@fluentui/react';
 import './App.scss';
 import { TopNav } from './components/shared/TopNav';
 import { Footer } from './components/shared/Footer';
 import { Routes, Route } from 'react-router-dom';
 import { HomeLayout } from './components/root/HomeLayout';
-import { WorkspaceLayout } from './components/workspaces/WorkspaceLayout';
+import { WorkspaceProvider } from './components/workspaces/WorkspaceProvider';
+import { AuthenticatedTemplate, useMsalAuthentication } from '@azure/msal-react';
+import { InteractionType } from '@azure/msal-browser';
+import { Workspace } from './models/workspace';
 
 
 export const App: React.FunctionComponent = () => {
-  return (
-    <Stack styles={stackStyles} className='tre-root'>
-      <Stack.Item grow>
-        <TopNav />
-      </Stack.Item>
-     
-      <Stack.Item grow={100} className='tre-body'>
-        <Stack horizontal className='tre-body-inner'>
-          
-         <Routes>
-           <Route path="*" element={<HomeLayout />} />
-           <Route path="/workspaces/:workspaceId//*" element={<WorkspaceLayout />} />
-         </Routes>
+  useMsalAuthentication(InteractionType.Redirect);
+  const [selectedWorkspace, setSelectedWorkspace] = useState({} as Workspace);
 
-        </Stack>
-      </Stack.Item>
-     
-      <Stack.Item grow>
-        <Footer />
-      </Stack.Item>
-    </Stack>
+  return (
+    <AuthenticatedTemplate>
+      <Stack styles={stackStyles} className='tre-root'>
+        <Stack.Item grow>
+          <TopNav />
+        </Stack.Item>
+
+        <Stack.Item grow={100} className='tre-body'>
+          <Stack horizontal className='tre-body-inner'>
+
+            <Routes>
+              <Route path="*" element={<HomeLayout selectWorkspace={(ws: Workspace) => setSelectedWorkspace(ws)} />} />
+              <Route path="/workspaces/:workspaceId//*" element={<WorkspaceProvider workspace={selectedWorkspace}/>} />
+            </Routes>
+
+          </Stack>
+        </Stack.Item>
+        <Stack.Item grow>
+          <Footer />
+        </Stack.Item>
+      </Stack>
+    </AuthenticatedTemplate>
   );
 };
 

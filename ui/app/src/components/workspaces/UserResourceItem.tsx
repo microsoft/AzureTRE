@@ -1,7 +1,12 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
+import { Workspace } from '../../models/workspace';
 
-export const UserResourceItem: React.FunctionComponent = () => {
+interface UserResourceItemProps {
+  workspace: Workspace
+}
+
+export const UserResourceItem: React.FunctionComponent<UserResourceItemProps> = (props:UserResourceItemProps) => {
   const { userResourceId } = useParams();
 
   return (
