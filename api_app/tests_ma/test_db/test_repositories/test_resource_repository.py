@@ -28,7 +28,7 @@ def resource_repo():
 
 @pytest.fixture
 def workspace_input():
-    return WorkspaceInCreate(templateName="base-tre", properties={"display_name": "test", "description": "test", "app_id": "123"})
+    return WorkspaceInCreate(templateName="base-tre", properties={"display_name": "test", "description": "test", "client_id": "123"})
 
 
 def sample_resource() -> Resource:

@@ -12,7 +12,7 @@ from models.schemas.workspace import WorkspaceInCreate
 
 @pytest.fixture
 def basic_workspace_request():
-    return WorkspaceInCreate(templateName="base-tre", properties={"display_name": "test", "description": "test", "app_id": "123", "tre_id": "test"})
+    return WorkspaceInCreate(templateName="base-tre", properties={"display_name": "test", "description": "test", "client_id": "123", "tre_id": "test"})
 
 
 @pytest.fixture
@@ -181,3 +181,15 @@ def test_create_workspace_item_raises_value_error_if_template_is_invalid(validat
 
     with pytest.raises(ValueError):
         workspace_repo.create_workspace_item(workspace_input, {})
+
+
+def test_automatically_create_application_registration_returns_true(workspace_repo):
+    dictToTest = {"client_id": "auto_create"}
+
+    assert workspace_repo.automatically_create_application_registration(dictToTest) is True
+
+
+def test_automatically_create_application_registration_returns_false(workspace_repo):
+    dictToTest = {"client_id": "12345"}
+
+    assert workspace_repo.automatically_create_application_registration(dictToTest) is False

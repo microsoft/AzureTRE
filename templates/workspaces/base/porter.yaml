@@ -1,6 +1,6 @@
 ---
 name: tre-workspace-base
-version: 0.2.1
+version: 0.2.5
 description: "A base Azure TRE workspace"
 registry: azuretre
 
@@ -60,24 +60,44 @@ parameters:
   - name: register_aad_application
     type: boolean
     default: false
+    description: "Whether this bundle should register the workspace in AAD"
+  - name: client_id
+    type: string
+    description: "The client id of the workspace in the identity provider."
+  - name: sp_id
+    type: string
+    default: ""
+    description: "The Service Principal in the Identity provider to be able to get claims"
+  - name: app_role_id_workspace_owner
+    type: string
+    default: ""
+    description: "The id of the application role WorkspaceOwner in the identity provider"
+  - name: app_role_id_workspace_researcher
+    type: string
+    default: ""
+    description: "The id of the application role WorkspaceResearcher in the identity provider"
 
-# outputs:
-#   - name: WorkspaceOwnerAppRoleId
-#     type: string
-#     applyTo:
-#       - install
-#   - name: WorkspaceResearcherAppRoleId
-#     type: string
-#     applyTo:
-#       - install
-#   - name: client_id
-#     type: string
-#     applyTo:
-#       - install
-#   - name: sp_id
-#     type: string
-#     applyTo:
-#       - install
+outputs:
+  - name: app_role_id_workspace_owner
+    type: string
+    default: "{{ bundle.parameters.app_role_id_workspace_owner }}"
+    applyTo:
+      - install
+  - name: app_role_id_workspace_researcher
+    type: string
+    default: "{{ bundle.parameters.app_role_id_workspace_researcher }}"
+    applyTo:
+      - install
+  - name: client_id
+    type: string
+    default: "{{ bundle.parameters.client_id }}"
+    applyTo:
+      - install
+  - name: sp_id
+    default: "{{ bundle.parameters.sp_id }}"
+    type: string
+    applyTo:
+      - install
 
 mixins:
   - exec
@@ -102,6 +122,10 @@ install:
         auth_client_id: "{{ bundle.credentials.auth_client_id }}"
         auth_client_secret: "{{ bundle.credentials.auth_client_secret }}"
         auth_tenant_id: "{{ bundle.credentials.auth_tenant_id }}"
+        client_id: "{{ bundle.parameters.client_id }}"
+        sp_id: "{{ bundle.parameters.sp_id }}"
+        app_role_id_workspace_owner: "{{ bundle.parameters.app_role_id_workspace_owner }}"
+        app_role_id_workspace_researcher: "{{ bundle.parameters.app_role_id_workspace_researcher }}"
       backendConfig:
         resource_group_name:
           "{{ bundle.parameters.tfstate_resource_group_name }}"
@@ -109,11 +133,11 @@ install:
           "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.id }}"
-      # outputs:
-      #   - name: WorkspaceOwnerAppRoleId
-      #   - name: WorkspaceResearcherAppRoleId
-      #   - name: client_id
-      #   - name: sp_id
+      outputs:
+        - name: app_role_id_workspace_owner
+        - name: app_role_id_workspace_researcher
+        - name: client_id
+        - name: sp_id
 
 upgrade:
   - exec:
