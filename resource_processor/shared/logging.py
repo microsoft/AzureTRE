@@ -1,7 +1,6 @@
 import logging
 import os
 import re
-import multiprocessing
 
 from opencensus.ext.azure.log_exporter import AzureLogHandler
 from opencensus.trace import config_integration
@@ -57,7 +56,7 @@ def initialize_logging(logging_level: int, correlation_id: str, add_console_hand
     :param correlation_id: Optional. The correlation ID that is passed on to the operation_Id in App Insights.
     :returns: A newly created logger adapter.
     """
-    logger = multiprocessing.get_logger()
+    logger = logging.getLogger()
 
     # When using sessions and NEXT_AVAILABLE_SESSION we see regular exceptions which are actually expected
     # See https://github.com/Azure/azure-sdk-for-python/issues/9402
