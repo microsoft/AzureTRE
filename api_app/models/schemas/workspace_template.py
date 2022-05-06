@@ -13,11 +13,11 @@ def get_sample_workspace_template_object(template_name: str = "tre-workspace-bas
         resourceType=ResourceType.Workspace,
         current=True,
         type="object",
-        required=["display_name", "description", "app_id"],
+        required=["display_name", "description", "client_id"],
         properties={
             "display_name": Property(type="string"),
             "description": Property(type="string"),
-            "app_id": Property(type="string"),
+            "client_id": Property(type="string"),
             "address_space_size": Property(
                 type="string",
                 default="small",

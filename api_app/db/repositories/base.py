@@ -49,3 +49,10 @@ class BaseRepository:
 
     def delete_item(self, item_id: str):
         self.container.delete_item(item=item_id, partition_key=item_id)
+
+    def rename_field_name(self, old_field_name: str, new_field_name: str):
+        for item in self.query('SELECT * FROM c'):
+            if old_field_name in item:
+                item[new_field_name] = item[old_field_name]
+                del item[old_field_name]
+                self.update_item_dict(item)

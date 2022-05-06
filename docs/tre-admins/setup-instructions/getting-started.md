@@ -33,13 +33,13 @@ The files for the dev container are located in `/.devcontainer/` folder.
 
   ```cmd
   cd AzureTRE
-  AzureTRE> git checkout -b quickstartenv
+  git checkout -b quickstartenv
   ```
 
 1. Open the cloned repository in Visual Studio Code and connect to the development container.
 
   ```cmd
-  AzureTRE> code .
+  code .
   ```
 
 !!! tip

@@ -50,7 +50,10 @@ async def post_resource(payload, endpoint, resource_type, token, admin_token, ve
         else:
             auth_headers = get_auth_header(token)
 
-        full_endpoint = f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{endpoint}"
+        if (config.TRE_URL != ""):
+            full_endpoint = f"{config.TRE_URL}{endpoint}"
+        else:
+            full_endpoint = f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{endpoint}"
         LOGGER.info(f'POSTING RESOURCE TO: {full_endpoint}')
 
         if method == "POST":

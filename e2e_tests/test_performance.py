@@ -24,7 +24,7 @@ async def test_parallel_resource_creations(admin_token, workspace_owner_token, v
                 "display_name": f'Perf Test Workspace {i}',
                 "description": "workspace for perf test",
                 "address_space_size": "small",
-                "app_id": f"{config.TEST_WORKSPACE_APP_ID}"
+                "client_id": f"{config.TEST_WORKSPACE_APP_ID}"
             }
         }
 
@@ -61,7 +61,7 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(admin_toke
                 "display_name": "E2E test guacamole service",
                 "description": "",
                 "address_space_size": "small",
-                "app_id": f"{config.TEST_WORKSPACE_APP_ID}"
+                "client_id": f"{config.TEST_WORKSPACE_APP_ID}"
             }
         }
 
