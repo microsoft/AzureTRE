@@ -4,6 +4,11 @@ import { ApiEndpoint } from '../../models/apiEndpoints';
 import { Workspace } from '../../models/workspace';
 import { HttpMethod, useAuthApiCall } from '../../useAuthApiCall';
 
+// TODO:
+// - Create WorkspaceCard component + use instead of <Link>
+// - Spinner / placeholders for loading
+// - Error handling for bad requests
+
 interface HomeDashboardProps {
   selectWorkspace: (workspace: Workspace) => void
 }

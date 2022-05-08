@@ -2,6 +2,9 @@ import React from 'react';
 import { Persona, PersonaSize } from '@fluentui/react';
 import { useAccount, useMsal } from '@azure/msal-react';
 
+// TODO:
+// - Dropdown / option to logout
+// - Graph query to get user profile picture? 
 
 export const UserMenu: React.FunctionComponent = () => {
   const { accounts } = useMsal();

@@ -6,6 +6,10 @@ import { ApiEndpoint } from '../../models/apiEndpoints';
 import { HttpMethod, useAuthApiCall } from '../../useAuthApiCall';
 import { WorkspaceService } from '../../models/workspaceService';
 
+// TODO:
+// - we lose the selected styling when navigating into a user resource. This may not matter as the user resource page might die away.
+// - loading placeholders / error content(?)
+
 interface WorkspaceLeftNavProps {
   workspace: Workspace,
   setWorkspaceService: (workspaceService: WorkspaceService) => void

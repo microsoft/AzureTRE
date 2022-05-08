@@ -6,6 +6,11 @@ import { useAuthApiCall, HttpMethod } from '../../useAuthApiCall';
 import { UserResource } from '../../models/userResource';
 import { WorkspaceService } from '../../models/workspaceService';
 import { ResourceDebug } from './ResourceDebug';
+
+// TODO:
+// - replace list of user resources with cards
+// - loading placeholders / error management
+
 interface WorkspaceServiceItemProps {
   workspace: Workspace,
   workspaceService?: WorkspaceService,

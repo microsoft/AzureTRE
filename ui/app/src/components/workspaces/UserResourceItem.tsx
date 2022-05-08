@@ -6,6 +6,9 @@ import { useAuthApiCall, HttpMethod } from '../../useAuthApiCall';
 import { UserResource } from '../../models/userResource';
 import { ResourceDebug } from './ResourceDebug';
 
+// TODO:
+// - This 'page' might die in place of a card on the Workspace services page - leave it alone for now
+
 interface UserResourceItemProps {
   workspace: Workspace,
   userResource?: UserResource

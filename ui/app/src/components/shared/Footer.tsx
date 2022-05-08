@@ -1,6 +1,9 @@
 import React from 'react';
 import { AnimationClassNames, getTheme, mergeStyles } from '@fluentui/react';
 
+// TODO:
+// - change text to link
+// - include any small print
 
 export const Footer: React.FunctionComponent = () => {
   return (

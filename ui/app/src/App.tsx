@@ -10,6 +10,9 @@ import { AuthenticatedTemplate, useMsalAuthentication } from '@azure/msal-react'
 import { InteractionType } from '@azure/msal-browser';
 import { Workspace } from './models/workspace';
 
+// TODO:
+// - handle auth token timeouts that require user intervention
+// - log out
 
 export const App: React.FunctionComponent = () => {
   useMsalAuthentication(InteractionType.Redirect);

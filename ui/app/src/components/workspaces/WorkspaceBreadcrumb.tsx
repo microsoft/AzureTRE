@@ -2,6 +2,9 @@ import React from 'react';
 import { Breadcrumb, IBreadcrumbItem } from '@fluentui/react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+// TODO:
+// - resize / style the text so we can get more than 1 link on at a time
+// - get workspace / service / resource via props if possible so we can display the resource name instead of the ID from the URL
 
 export const WorkspaceBreadcrumb: React.FunctionComponent = () => {
   const path = useLocation().pathname;
