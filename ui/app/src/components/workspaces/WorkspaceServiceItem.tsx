@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { ApiEndpoint } from '../../models/apiEndpoints';
 import { Workspace } from '../../models/workspace';
 import { useAuthApiCall, HttpMethod } from '../../useAuthApiCall';
 import { UserResource } from '../../models/userResource';
 import { WorkspaceService } from '../../models/workspaceService';
+import { ResourceDebug } from './ResourceDebug';
 interface WorkspaceServiceItemProps {
   workspace: Workspace,
-  workspaceService?: WorkspaceService
+  workspaceService?: WorkspaceService,
+  setUserResource: (userResource: UserResource) => void
 }
 
-export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemProps> = (props:WorkspaceServiceItemProps) => {
+export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemProps> = (props: WorkspaceServiceItemProps) => {
   const { workspaceServiceId } = useParams();
   const [userResources, setUserResources] = useState([{} as UserResource])
   const [workspaceService, setWorkspaceService] = useState({} as WorkspaceService)
@@ -35,40 +37,25 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
 
   return (
     <>
-      <h1>Workspace Service: {workspaceServiceId}</h1>
-
-      <h2>Details:</h2>
-      <ul>      
-      {
-        Object.keys(workspaceService).map((key, i) => {
-          let val = typeof((workspaceService as any)[key]) === 'object' ?
-            JSON.stringify((workspaceService as any)[key]) :
-            (workspaceService as any)[key].toString()
-
-          return (
-            <li key={i}>
-              <b>{key}: </b>{val}
-            </li>
-          )
-        })
-      }
-      </ul>
+      <h1>{workspaceService.properties?.display_name}</h1>
 
       <h2>User Resources:</h2>
       {
-        userResources && 
+        userResources &&
         <ul>
           {
             userResources.map((userResource, i) => {
               return (
                 <li key={i}>
-                  {userResource.properties?.display_name}
+                  <Link to={`user-resources/${userResource.id}`} onClick={() => props.setUserResource(userResource)}>{userResource.properties?.display_name}</Link>
                 </li>
               )
             })
           }
         </ul>
       }
+
+      <ResourceDebug resource={workspaceService} />
     </>
   );
 };

@@ -29,6 +29,6 @@ const contentClass = mergeStyles([
     backgroundColor: theme.palette.themeDark,
     color: theme.palette.white,
     lineHeight: '50px',
-    padding: '0 20px',
+    padding: '0 20px'
   }
 ]);

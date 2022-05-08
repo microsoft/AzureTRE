@@ -1,49 +1,40 @@
 import React from 'react';
-import { getTheme, mergeStyles } from '@fluentui/react';
-import { Link } from 'react-router-dom';
-import { useLocation } from 'react-router-dom';
+import { Breadcrumb, IBreadcrumbItem } from '@fluentui/react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 
 export const WorkspaceBreadcrumb: React.FunctionComponent = () => {
-  const path = useLocation().pathname
+  const path = useLocation().pathname;
+  const navigate = useNavigate();
 
-  let parts = path.split('/')
-  let workspaceId = parts[2]
-  let workspaceServiceId = parts[4] || ''
-  let userResourceId = parts[6] || ''
+  let parts = path.split('/');
+  let workspaceId = parts[2];
+  let workspaceServiceId = parts[4] || '';
+  let userResourceId = parts[6] || '';
+
+  const _onBreadcrumbItemClicked = (ev?: React.MouseEvent<HTMLElement>, item?: IBreadcrumbItem): void => {
+    item && navigate(item.key);
+  } 
+
+  const items: IBreadcrumbItem[] = [
+    { text: 'Dashboard', key: '/', onClick: _onBreadcrumbItemClicked },
+    { text: `(ws): ${workspaceId}`, key: `/workspaces/${workspaceId}`, onClick: _onBreadcrumbItemClicked },
+  ]
+
+  if (workspaceServiceId) items.push({ text: `(wss): ${workspaceServiceId}`, key: `/workspaces/${workspaceId}/workspace-services/${workspaceServiceId}`, onClick: _onBreadcrumbItemClicked });
+  if (userResourceId) items.push({ text: `(ur): ${userResourceId}`, key: `/workspaces/${workspaceId}/workspace-services/${workspaceServiceId}/user-resources/${userResourceId}`, onClick: _onBreadcrumbItemClicked });
 
   return (
-    <div className={contentClass}>
-      <Link to='/'>Dashboard</Link>
-      &gt;
-      <Link to={'/workspaces/' + workspaceId}>{workspaceId}</Link>
-      
-      {
-        workspaceServiceId && (
-          <>
-            &gt;
-            <Link to={'/workspaces/' + workspaceId + '/workspace-services/' + workspaceServiceId}>{workspaceServiceId}</Link>
-          </>
-        )
-      }
+    <div className='tre-workspace-breadcrumb'>
 
-      {
-        userResourceId && (
-          <>
-             &gt;
-            <Link to={'/workspace-services/' + workspaceServiceId + '/user-resources/' + userResourceId}>{userResourceId}</Link>
-          </>
-        )}
+      <Breadcrumb
+        items={items}
+        maxDisplayedItems={5}
+        ariaLabel="Workspace breadcrumb"
+        overflowAriaLabel="More..."
+      />
+
     </div>
   );
 };
 
-const theme = getTheme();
-const contentClass = mergeStyles([
-  {
-    backgroundColor: theme.palette.white,
-    color: theme.palette.themePrimary,
-    lineHeight: '20px',
-    padding: '0 20px',
-  }
-]);

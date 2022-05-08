@@ -5,7 +5,9 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
-  
+h1{
+    margin-top:0;
+}
 code {
 font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
@@ -14,6 +16,10 @@ font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
    
 }
 .tre-root{ 
+}
+.tre-top-nav{
+    box-shadow: 0 1px 2px 0px #033d68;
+    z-index: 100;
 }
 
 .tre-home-link{
@@ -35,11 +41,18 @@ font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
     height:100%;
     overflow:hidden;
 }
+.tre-body-content{
+    padding-left:10px;
+}
 .tre-left-nav{
     width:200px;
     overflow-y: scroll;
+    box-shadow: 1px 0 8px 0px #ccc;
 }
 .tre-body-content{
     width: calc(100% - 200px);
     overflow-y: scroll;
+}
+.tre-workspace-header h1{
+    margin:10px 0 10px 0;
 }

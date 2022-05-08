@@ -18,19 +18,17 @@ export const App: React.FunctionComponent = () => {
   return (
     <AuthenticatedTemplate>
       <Stack styles={stackStyles} className='tre-root'>
-        <Stack.Item grow>
+        <Stack.Item grow className='tre-top-nav'>
           <TopNav />
         </Stack.Item>
 
         <Stack.Item grow={100} className='tre-body'>
-          <Stack horizontal className='tre-body-inner'>
 
             <Routes>
               <Route path="*" element={<HomeLayout selectWorkspace={(ws: Workspace) => setSelectedWorkspace(ws)} />} />
               <Route path="/workspaces/:workspaceId//*" element={<WorkspaceProvider workspace={selectedWorkspace}/>} />
             </Routes>
 
-          </Stack>
         </Stack.Item>
         <Stack.Item grow>
           <Footer />

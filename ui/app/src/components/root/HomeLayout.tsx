@@ -10,17 +10,19 @@ interface HomeLayoutProps {
   selectWorkspace: (workspace: Workspace) => void
 }
 
-export const HomeLayout: React.FunctionComponent<HomeLayoutProps> = (props:HomeLayoutProps) => {
+export const HomeLayout: React.FunctionComponent<HomeLayoutProps> = (props: HomeLayoutProps) => {
   return (
     <>
-      <Stack.Item className='tre-left-nav'>
-        <LeftNav />
-      </Stack.Item><Stack.Item className='tre-body-content'>
-        <Routes>
-          <Route path="/" element={<HomeDashboard selectWorkspace={props.selectWorkspace}/>} />
-          <Route path="/admin" element={<Admin />} />
-        </Routes>
-      </Stack.Item>
+      <Stack horizontal className='tre-body-inner'>
+        <Stack.Item className='tre-left-nav'>
+          <LeftNav />
+        </Stack.Item><Stack.Item className='tre-body-content'>
+          <Routes>
+            <Route path="/" element={<HomeDashboard selectWorkspace={props.selectWorkspace} />} />
+            <Route path="/admin" element={<Admin />} />
+          </Routes>
+        </Stack.Item>
+      </Stack>
     </>
   );
 };
