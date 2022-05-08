@@ -16,11 +16,14 @@ STATE_STORE_DATABASE = "AzureTRE"
 class TRECosmosDBMigrations:
 
     def __init__(self):
+        if (self.can_connect_to_cosmos()):
+            url = os.environ['STATE_STORE_ENDPOINT']
+            key = self.get_store_key()
+            self.client = CosmosClient(url=url, credential=key)
+            self.database = self.client.get_database_client(STATE_STORE_DATABASE)
 
-        url = os.environ['STATE_STORE_ENDPOINT']
-        key = self.get_store_key()
-        self.client = CosmosClient(url=url, credential=key)
-        self.database = self.client.get_database_client(STATE_STORE_DATABASE)
+    def can_connect_to_cosmos(self) -> bool:
+        return os.getenv('ENABLE_LOCAL_DEBUGGING', 'False').lower() in ('true', 1, 't') if 'ENABLE_LOCAL_DEBUGGING' in os.environ else False
 
     def get_store_key(self) -> str:
         if 'STATE_STORE_KEY' in os.environ:
@@ -89,7 +92,7 @@ class TRECosmosDBMigrations:
 
         for item in resources_container.query_items(query='SELECT * FROM c', enable_cross_partition_query=True):
             template_version = semantic_version.Version(item["templateVersion"])
-            if (template_version > semantic_version.Version('0.3.0') and "authInformation" in item):
+            if (template_version < semantic_version.Version('2.5.0') and "authInformation" in item):
                 print(f'Found workspace {item["id"]} that needs migrating')
 
                 # Rename app_id to be client_id
@@ -106,24 +109,27 @@ class TRECosmosDBMigrations:
 
 def main():
     migrations = TRECosmosDBMigrations()
-    # PR 1030
-    migrations.renameCosmosDBFields("Resources", 'resourceTemplateName', 'templateName')
-    migrations.renameCosmosDBFields("Resources", 'resourceTemplateVersion', 'templateVersion')
-    migrations.renameCosmosDBFields("Resources", 'resourceTemplateParameters', 'properties')
+    if not migrations.can_connect_to_cosmos():
+        print('You cannot migrate the cosmos database without setting ENABLE_LOCAL_DEBUGGING to true.')
+    else:
+        # PR 1030
+        migrations.renameCosmosDBFields("Resources", 'resourceTemplateName', 'templateName')
+        migrations.renameCosmosDBFields("Resources", 'resourceTemplateVersion', 'templateVersion')
+        migrations.renameCosmosDBFields("Resources", 'resourceTemplateParameters', 'properties')
 
-    # PR 1031
-    migrations.renameCosmosDBFields("Resources", 'workspaceType', 'templateName')
-    migrations.renameCosmosDBFields("Resources", 'workspaceServiceType', 'templateName')
-    migrations.renameCosmosDBFields("Resources", 'userResourceType', 'templateName')
+        # PR 1031
+        migrations.renameCosmosDBFields("Resources", 'workspaceType', 'templateName')
+        migrations.renameCosmosDBFields("Resources", 'workspaceServiceType', 'templateName')
+        migrations.renameCosmosDBFields("Resources", 'userResourceType', 'templateName')
 
-    # Operations History
-    migrations.moveDeploymentsToOperations("Resources", "Operations")
+        # Operations History
+        migrations.moveDeploymentsToOperations("Resources", "Operations")
 
-    # Shared services (PR #1717)
-    migrations.deleteDuplicatedSharedServices("Resources")
+        # Shared services (PR #1717)
+        migrations.deleteDuplicatedSharedServices("Resources")
 
-    # Authentication needs to be in properties so we can update them. (PR #1726)
-    migrations.moveAuthInformationToProperties("Resources")
+        # Authentication needs to be in properties so we can update them. (PR #1726)
+        migrations.moveAuthInformationToProperties("Resources")
 
 
 if __name__ == "__main__":
