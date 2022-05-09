@@ -62,7 +62,7 @@ public class ConnectionService {
         return connections;
     }
 
-    public static Map<String, GuacamoleConfiguration> getConfigurations(final AzureTREAuthenticatedUser user)
+    private static Map<String, GuacamoleConfiguration> getConfigurations(final AzureTREAuthenticatedUser user)
           throws GuacamoleException {
         final Map<String, GuacamoleConfiguration> configs = new TreeMap<>();
         if (user != null) {

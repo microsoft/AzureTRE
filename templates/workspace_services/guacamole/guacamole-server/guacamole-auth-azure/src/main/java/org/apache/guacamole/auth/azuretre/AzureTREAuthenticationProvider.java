@@ -134,7 +134,7 @@ public class AzureTREAuthenticationProvider extends AbstractAuthenticationProvid
         throws GuacamoleException {
         LOGGER.info("Updating usercontext");
         var userContext = getUserContext(authenticatedUser);
-        LOGGER.info("Updating usercontext - Done");
+
         return userContext;
     }
 }
