@@ -1,4 +1,3 @@
-from cgitb import enable
 import threading
 from typing import Optional
 from multiprocessing import Process

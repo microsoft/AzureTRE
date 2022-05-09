@@ -329,6 +329,9 @@ deploy-shared-service:
 	&& cd ${DIR} \
 	&& ${MAKEFILE_DIR}/devops/scripts/deploy_shared_service.sh --insecure --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}"
 
+temp-do-upload:
+	$(MAKE) static-web-upload DIR=${MAKEFILE_DIR}/dummy
+
 static-web-upload:
 	$(call target_title, "Uploading to static website") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker \
@@ -336,7 +339,7 @@ static-web-upload:
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ./templates/core/.env \
-	&& pushd ${MAKEFILE_DIR}/templates/core/terraform/ > /dev/null && . ${MAKEFILE_DIR}/outputs.sh && popd > /dev/null \
+	&& pushd ${MAKEFILE_DIR}/templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/templates/core/private.env \
 	&& ${MAKEFILE_DIR}/templates/core/terraform/scripts/upload_static_web.sh
 
