@@ -56,7 +56,7 @@ Go to `https://<azure_tre_fqdn>/api/docs` and use POST `/api/workspaces` with th
   "properties": {
     "display_name": "manual-from-swagger",
     "description": "workspace for team X",
-    "app_id": "WORKSPACE_API_CLIENT_ID",
+    "client_id": "WORKSPACE_API_CLIENT_ID",
     "address_space_size": "medium"
   }
 }

@@ -20,8 +20,7 @@ def get_sample_workspace(workspace_id: str, spec_workspace_id: str = "0001") -> 
             "address_space_size": "small",
         },
         "resourceType": ResourceType.Workspace,
-        "workspaceURL": "",
-        "authInformation": {}
+        "workspaceURL": ""
     }
 
 
@@ -73,7 +72,7 @@ class WorkspaceInCreate(BaseModel):
                 "properties": {
                     "display_name": "the workspace display name",
                     "description": "workspace description",
-                    "app_id": "9d52b04f-89cf-47b4-868a-e12be7133b36",
+                    "client_id": "9d52b04f-89cf-47b4-868a-e12be7133b36",
                     "address_space_size": "small"
                 }
             }

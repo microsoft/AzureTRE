@@ -63,21 +63,29 @@ class WorkspaceRepository(ResourceRepository):
         template = self.validate_input_against_template(workspace_input.templateName, workspace_input, ResourceType.Workspace)
 
         address_space_param = {"address_space": self.get_address_space_based_on_size(workspace_input.properties)}
+        auto_app_registration_param = {"register_aad_application": self.automatically_create_application_registration(workspace_input.properties)}
 
-        # we don't want something in the input to overwrite the system parameters, so dict.update can't work. Priorities from right to left.
-        resource_spec_parameters = {**workspace_input.properties, **address_space_param, **self.get_workspace_spec_params(full_workspace_id)}
+        # we don't want something in the input to overwrite the system parameters,
+        # so dict.update can't work. Priorities from right to left.
+        resource_spec_parameters = {**workspace_input.properties,
+                                    **address_space_param,
+                                    **auto_app_registration_param,
+                                    **auth_info,
+                                    **self.get_workspace_spec_params(full_workspace_id)}
 
         workspace = Workspace(
             id=full_workspace_id,
             templateName=workspace_input.templateName,
             templateVersion=template.version,
             properties=resource_spec_parameters,
-            authInformation=auth_info,
             resourcePath=f'/workspaces/{full_workspace_id}',
             etag=''  # need to validate the model
         )
 
         return workspace, template
+
+    def automatically_create_application_registration(self, properties: dict) -> bool:
+        return True if properties["client_id"] == "auto_create" else False
 
     def get_address_space_based_on_size(self, workspace_properties: dict):
         # Default the address space to 'small' if not supplied.
