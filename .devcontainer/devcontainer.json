@@ -88,7 +88,9 @@
             "-m",
             "extended",
             "--verify",
-            "false"
+            "false",
+            "-n",
+            "5"
           ]
         },
         {
@@ -104,7 +106,9 @@
             "-m",
             "performance",
             "--verify",
-            "false"
+            "false",
+            "-n",
+            "5"
           ]
         },
         {
@@ -190,6 +194,8 @@
             "pytest",
             "-m",
             "smoke",
+            "-n",
+            "5"
           ]
         }
       ]

@@ -354,12 +354,12 @@ prepare-for-e2e:
 test-e2e-smoke:
 	$(call target_title, "Running E2E smoke tests") && \
 	cd e2e_tests && \
-	python -m pytest -m smoke --verify $${IS_API_SECURED:-true} --junit-xml pytest_e2e_smoke.xml
+	python -m pytest -m smoke -n 5 --verify $${IS_API_SECURED:-true} --junit-xml pytest_e2e_smoke.xml
 
 test-e2e-extended:
 	$(call target_title, "Running E2E extended tests") && \
 	cd e2e_tests && \
-	python -m pytest -m extended --verify $${IS_API_SECURED:-true} --junit-xml pytest_e2e_extended.xml
+	python -m pytest -m extended -n 5 --verify $${IS_API_SECURED:-true} --junit-xml pytest_e2e_extended.xml
 
 setup-local-debugging:
 	$(call target_title,"Setting up the ability to debug the API and Resource Processor") \
