@@ -19,7 +19,17 @@ export const useAuthApiCall = () => {
     const { instance, accounts } = useMsal();
     const account = useAccount(accounts[0] || {});
 
-    return useCallback( async (endpoint: string, method: HttpMethod, clientId?: String, body?: any, resultType?: ResultType) => {
+    const parseJwt = (token: String) => {
+        var base64Url = token.split('.')[1];
+        var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        var jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+    
+        return JSON.parse(jsonPayload);
+    }
+
+    return useCallback( async (endpoint: string, method: HttpMethod, clientId?: String, body?: any, resultType?: ResultType, setRoles?: (roles: Array<String>) => void, tokenOnly?: boolean) => {
         
         if(!account) {
             console.error("No account object found, please refresh.");
@@ -39,6 +49,16 @@ export const useAuthApiCall = () => {
             return;
         }
 
+        // caller can pass a function to allow us to set the roles to use for RBAC
+        if(setRoles){
+            let decodedToken = parseJwt(tokenResponse.accessToken);
+            config.debug && console.log("Decoded token", decodedToken);
+            setRoles(decodedToken.roles);
+        }
+
+        // we might just want the token to get the roles.
+        if (tokenOnly) return;
+        
         // default to JSON unless otherwise told
         resultType = resultType || ResultType.JSON;
         config.debug && console.log(`Calling ${method} on authenticated api: ${endpoint}`);

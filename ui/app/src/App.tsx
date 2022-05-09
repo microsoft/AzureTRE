@@ -9,6 +9,8 @@ import { WorkspaceProvider } from './components/workspaces/WorkspaceProvider';
 import { AuthenticatedTemplate, useMsalAuthentication } from '@azure/msal-react';
 import { InteractionType } from '@azure/msal-browser';
 import { Workspace } from './models/workspace';
+import { RootRolesContext } from './components/shared/RootRolesContext';
+import { WorkspaceRolesContext } from './components/workspaces/WorkspaceRolesContext';
 
 // TODO:
 // - handle auth token timeouts that require user intervention
@@ -20,23 +22,26 @@ export const App: React.FunctionComponent = () => {
 
   return (
     <AuthenticatedTemplate>
-      <Stack styles={stackStyles} className='tre-root'>
-        <Stack.Item grow className='tre-top-nav'>
-          <TopNav />
-        </Stack.Item>
-
-        <Stack.Item grow={100} className='tre-body'>
-
+      <RootRolesContext.Provider value={{ roles: [] as Array<String> }}>
+        <Stack styles={stackStyles} className='tre-root'>
+          <Stack.Item grow className='tre-top-nav'>
+            <TopNav />
+          </Stack.Item>
+          <Stack.Item grow={100} className='tre-body'>
             <Routes>
               <Route path="*" element={<HomeLayout selectWorkspace={(ws: Workspace) => setSelectedWorkspace(ws)} />} />
-              <Route path="/workspaces/:workspaceId//*" element={<WorkspaceProvider workspace={selectedWorkspace}/>} />
+              <Route path="/workspaces/:workspaceId//*" element={
+                <WorkspaceRolesContext.Provider value={{ roles: [] as Array<String> }}>
+                  <WorkspaceProvider workspace={selectedWorkspace} />
+                </WorkspaceRolesContext.Provider>
+              } />
             </Routes>
-
-        </Stack.Item>
-        <Stack.Item grow>
-          <Footer />
-        </Stack.Item>
-      </Stack>
+          </Stack.Item>
+          <Stack.Item grow>
+            <Footer />
+          </Stack.Item>
+        </Stack>
+      </RootRolesContext.Provider>
     </AuthenticatedTemplate>
   );
 };
