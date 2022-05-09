@@ -78,7 +78,7 @@ variable "resource_processor_client_secret" {
 
 variable "resource_processor_number_processes_per_instance" {
   type        = string
-  default     = "2"
+  default     = "5"
   description = "The number of CPU processes to run the RP on per VM instance"
 }
 
