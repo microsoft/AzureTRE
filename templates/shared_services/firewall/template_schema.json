@@ -5,5 +5,166 @@
   "title": "Firewall Shared Service",
   "description": "Provides Firewall shared service",
   "required": [],
-  "properties": {}
+  "properties": {
+    "rule_collections": {
+			"$id": "#properties/rule_collections",
+			"title": "rule_collections",
+			"type": "array",
+			"default": [],
+      "updateable": true,
+			"items":{
+				"title": "items",
+				"type": "object",
+				"required": [
+					"name",
+					"action",
+					"rules"
+				],
+				"properties": {
+					"name": {
+						"title": "name",
+						"type": "string",
+						"examples": [
+							"my-rule"
+						],
+						"pattern": "^.*$"
+					},
+					"priority": {
+						"title": "priority",
+						"type": "integer",
+            "description": "Numeric priority for rule collection - leave blank for auto numbering",
+						"examples": [
+							110
+						]
+					},
+					"action": {
+						"title": "action",
+						"type": "string",
+						"examples": [
+							"Allow"
+						],
+            "enum": [
+              "Allow",
+              "Deny"
+            ]
+          },
+					"rules": {
+						"title": "rules",
+						"type": "array",
+						"default": [],
+						"items":{
+							"title": "Items",
+							"type": "object",
+							"required": [
+								"name"
+							],
+							"properties": {
+								"name": {
+									"title": "name",
+									"type": "string",
+									"examples": [
+										"rule 1"
+									],
+									"pattern": "^.*$"
+								},
+								"description": {
+									"title": "description",
+									"type": "string",
+									"default": "",
+									"examples": [
+										"My rule description here"
+									],
+									"pattern": "^.*$"
+								},
+								"protocols": {
+									"title": "protocols",
+									"type": "array",
+									"default": [],
+									"items":{
+										"title": "Items",
+										"type": "object",
+										"required": [
+											"port",
+											"type"
+										],
+										"properties": {
+											"port": {
+												"title": "port",
+												"type": "string",
+												"examples": [
+													"1234"
+												],
+												"pattern": "^.*$"
+											},
+											"type": {
+												"title": "type",
+												"type": "string",
+                        "enum": [
+                          "Http",
+                          "Https",
+                          "Mssql"
+                        ],
+												"examples": [
+													"Http"
+												]
+											}
+										}
+									}
+								},
+                "fqdn_tags": {
+									"title": "fqdn_tags",
+									"type": "array",
+									"default": [],
+									"items":{
+										"title": "Items",
+										"type": "string",
+										"default": "",
+                    "enum":[
+                      "AppServiceEnvironment",
+                      "AzureBackup",
+                      "AzureKubernetesService",
+                      "HDInsight",
+                      "MicrosoftActiveProtectionService",
+                      "WindowsDiagnostics",
+                      "WindowsUpdate",
+                      "WindowsVirtualDesktop"
+                    ],
+										"examples": [
+											"AzureKubernetesService"
+										]
+									}
+								},
+								"target_fqdns": {
+									"title": "target_fqdns",
+									"type": "array",
+									"default": [],
+									"items":{
+										"title": "Items",
+										"type": "string",
+										"default": "",
+										"examples": [
+											"one.two.three.com"
+										]
+									}
+								},
+								"source_addresses": {
+									"title": "Source_addresses",
+									"type": "array",
+									"default": [],
+									"items":{
+										"title": "Items",
+										"type": "string",
+										"default": "",
+										"examples": [
+											"172.196.0.0"
+										]
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+    }
+  }
 }
