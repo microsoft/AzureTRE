@@ -23,7 +23,7 @@ fi
 ./scripts/aad/aad-app-reg.sh \
   --name "${TRE_ID}" \
   --swaggerui-redirecturl "https://${TRE_ID}.${LOCATION}.cloudapp.azure.com/api/docs/oauth2-redirect" \
-  --admin-consent --automation-account "${api_app_can_create_other_applications}"
+  --admin-consent --automation-account ${api_app_can_create_other_applications}
 
 echo "Please copy the values above into your /templates/core/.env."
 read -p "Please confirm you have done this? (y/N) " -n 1 -r

@@ -92,13 +92,16 @@ class TRECosmosDBMigrations:
 
         for item in resources_container.query_items(query='SELECT * FROM c', enable_cross_partition_query=True):
             template_version = semantic_version.Version(item["templateVersion"])
-            if (template_version < semantic_version.Version('2.5.0') and "authInformation" in item):
+            if (template_version < semantic_version.Version('0.2.5') and "authInformation" in item):
                 print(f'Found workspace {item["id"]} that needs migrating')
 
                 # Rename app_id to be client_id
-                item["properties"]["client_id"] = item["properties"]["app_id"]
-                del item["properties"]["app_id"]
-                del item["authInformation"]["app_id"]
+                if "app_id" in item["properties"]:
+                    item["properties"]["client_id"] = item["properties"]["app_id"]
+                    del item["properties"]["app_id"]
+
+                if "app_id" in item["authInformation"]:
+                    del item["authInformation"]["app_id"]
 
                 # merge authInformation into properties
                 item["properties"] = {**item["authInformation"], **item["properties"]}
