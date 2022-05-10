@@ -105,6 +105,34 @@ If this happens, you will see a log similar to this:
 
 To fix, run `make build-and-push-api` from your branch and restart the instance.
 
+### Investigating /api/health response
+
+The endpoint `/api/health` tracks health of not only API, but other components of the system too, and can help to narrow down any problems with your deployment:
+
+```json
+{
+  "services": [
+    {
+      "service": "Cosmos DB",
+      "status": "OK",
+      "message": ""
+    },
+    {
+      "service": "Service Bus",
+      "status": "OK",
+      "message": ""
+    },
+    {
+      "service": "Resource Processor",
+      "status": "Not OK",
+      "message": "Resource Processor is not responding"
+    }
+  ]
+}
+```
+
+In this case, next step is to look at logs of Resource Processor. See also [Resource Processor docs](resource-processor.md).
+
 ## Using Swagger UI
 
 Swagger UI lets you send requests to the API.
