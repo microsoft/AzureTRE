@@ -105,32 +105,6 @@ If this happens, you will see a log similar to this:
 
 To fix, run `make build-and-push-api` from your branch and restart the instance.
 
-### API returns errors
-
-If this happens, you can have a look at `/api/health` response. It will have a JSON response to this, which should help to narrow down the problem:
-
-```json
-{
-  "services": [
-    {
-      "service": "Cosmos DB",
-      "status": "OK",
-      "message": ""
-    },
-    {
-      "service": "Service Bus",
-      "status": "OK",
-      "message": ""
-    },
-    {
-      "service": "Resource Processor",
-      "status": "Not OK",
-      "message": "Resource Processor is not responding"
-    }
-  ]
-}
-```
-
 ## Using Swagger UI
 
 Swagger UI lets you send requests to the API.
