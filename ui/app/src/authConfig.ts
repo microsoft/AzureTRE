@@ -5,7 +5,8 @@ import config from "./config.json"
 const configuration: Configuration = {
     auth: {
         clientId: config.rootClientId,
-        authority: `https://login.microsoftonline.com/${config.rootTenantId}`
+        authority: `https://login.microsoftonline.com/${config.rootTenantId}`,
+        redirectUri: `${window.location.protocol}//${window.location.hostname}:${window.location.port}`
     }
 };
 

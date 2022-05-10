@@ -33,19 +33,19 @@ export const WorkspaceItem: React.FunctionComponent<WorkspaceItemProps> = (props
 
 
       <SecuredByRole allowedRoles={[WorkspaceRoleName.WorkspaceOwner]} workspaceAuth={true} element={
-        <PrimaryButton >Seen by workspace *owners* only</PrimaryButton>
+        <PrimaryButton>Seen by workspace *owners* only</PrimaryButton>
       } />
 
       &nbsp; 
 
       <SecuredByRole allowedRoles={[WorkspaceRoleName.WorkspaceResearcher]} workspaceAuth={true} element={
-        <PrimaryButton >Seen by workspace *reseachers* only</PrimaryButton>
+        <PrimaryButton>Seen by workspace *reseachers* only</PrimaryButton>
       } />
 
       &nbsp; 
 
       <SecuredByRole allowedRoles={[WorkspaceRoleName.WorkspaceOwner, WorkspaceRoleName.WorkspaceResearcher]} workspaceAuth={true} element={
-        <PrimaryButton >Seen by workspace *owners* AND *reseachers*</PrimaryButton>
+        <PrimaryButton>Seen by workspace *owners* AND *reseachers*</PrimaryButton>
       } />
       
       <ResourceDebug resource={props.workspace} />
