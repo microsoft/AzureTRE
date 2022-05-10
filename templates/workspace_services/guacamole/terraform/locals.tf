@@ -6,7 +6,7 @@ locals {
   webapp_name                    = "guacamole-${local.service_resource_name_suffix}"
   core_vnet                      = "vnet-${var.tre_id}"
   core_resource_group_name       = "rg-${var.tre_id}"
-  aad_tenant_id                  = data.azurerm_app_service.api_core.app_settings["AAD_TENANT_ID"]
+  aad_tenant_id                  = data.azurerm_key_vault_secret.aad_tenant_id.value
   issuer                         = "https://login.microsoftonline.com/${local.aad_tenant_id}/v2.0"
   api_url                        = "https://api-${var.tre_id}.azurewebsites.net"
   keyvault_name                  = lower("kv-${substr(local.workspace_resource_name_suffix, -20, -1)}")

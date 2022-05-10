@@ -34,6 +34,11 @@ data "azurerm_key_vault" "ws" {
   resource_group_name = data.azurerm_resource_group.ws.name
 }
 
+data "azurerm_key_vault_secret" "aad_tenant_id" {
+  name         = "auth-tenant-id"
+  key_vault_id = data.azurerm_key_vault.ws.id
+}
+
 data "azurerm_subnet" "web_apps" {
   name                 = "WebAppsSubnet"
   virtual_network_name = data.azurerm_virtual_network.ws.name
