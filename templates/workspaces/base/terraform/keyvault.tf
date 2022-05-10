@@ -69,6 +69,7 @@ resource "azurerm_key_vault_secret" "aad_tenant_id" {
   key_vault_id = azurerm_key_vault.kv.id
   depends_on = [
     azurerm_key_vault_access_policy.deployer,
-    azurerm_key_vault_access_policy.resource_processor
+    azurerm_key_vault_access_policy.resource_processor,
+    azurerm_private_endpoint.kvpe
   ]
 }
