@@ -1,6 +1,8 @@
 import asyncio
 import json
 import logging
+import base64
+
 from resources.helpers import get_installation_id
 from shared.logging import shell_output_logger
 
@@ -50,6 +52,13 @@ async def build_porter_command(config, logger, msg_body, custom_action=False):
 
             # only append if we have a value, porter will complain anyway about missing parameters
             if parameter_value is not None:
+                if isinstance(parameter_value, dict) or isinstance(parameter_value, list):
+                    # base64 encode complex types to pass in safely
+                    val = json.dumps(parameter_value)
+                    val_bytes = val.encode("ascii")
+                    val_base64_bytes = base64.b64encode(val_bytes)
+                    parameter_value = val_base64_bytes.decode("ascii")
+
                 porter_parameters = porter_parameters + f" --param {parameter_name}=\"{parameter_value}\""
 
     installation_id = get_installation_id(msg_body)

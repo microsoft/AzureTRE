@@ -25,19 +25,19 @@ import org.apache.guacamole.net.auth.Credentials;
 
 public class AzureTREAuthenticatedUser extends AbstractAuthenticatedUser {
 
-    private AuthenticationProvider authProvider;
+    private final AuthenticationProvider authProvider;
 
-    private Credentials credentials;
+    private final Credentials credentials;
 
-    private String objectId;
+    private final String objectId;
 
-    private String accessToken;
+    private final String accessToken;
 
     public AzureTREAuthenticatedUser(final Credentials credentials,
-                     final String accessToken,
-                     final String username,
-                     final String objectId,
-                     final AuthenticationProvider provider) {
+                                   final String accessToken,
+                                   final String username,
+                                   final String objectId,
+                                   final AuthenticationProvider provider) {
         this.credentials = credentials;
         this.accessToken = accessToken;
         this.objectId = objectId;
@@ -58,6 +58,7 @@ public class AzureTREAuthenticatedUser extends AbstractAuthenticatedUser {
     public String getAccessToken() {
         return accessToken;
     }
+
     public String getObjectId() {
         return objectId;
     }

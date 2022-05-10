@@ -33,6 +33,10 @@ parameters:
     env: ARM_USE_MSI
     type: boolean
     default: false
+  - name: rule_collections
+    type: string
+    default: "W10=" #b64 for []
+
 
 mixins:
   - exec
@@ -45,6 +49,7 @@ install:
       input: false
       vars:
         tre_id: "{{ bundle.parameters.tre_id }}"
+        api_driven_rule_collections_b64: "{{ bundle.parameters.rule_collections }}"
       backendConfig:
         resource_group_name:
           "{{ bundle.parameters.tfstate_resource_group_name }}"
@@ -56,11 +61,21 @@ install:
           "{{ bundle.parameters.tre_id }}-shared-service-firewall"
 
 upgrade:
-  - exec:
+  - terraform:
       description: "Upgrade shared service"
-      command: echo
-      arguments:
-        - "This shared service does not implement upgrade action"
+      input: false
+      vars:
+        tre_id: "{{ bundle.parameters.tre_id }}"
+        api_driven_rule_collections_b64: "{{ bundle.parameters.rule_collections }}"
+      backendConfig:
+        resource_group_name:
+          "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name:
+          "{{ bundle.parameters.tfstate_storage_account_name }}"
+        container_name:
+          "{{ bundle.parameters.tfstate_container_name }}"
+        key:
+          "{{ bundle.parameters.tre_id }}-shared-service-firewall"
 
 uninstall:
   - terraform:
@@ -68,6 +83,7 @@ uninstall:
       input: false
       vars:
         tre_id: "{{ bundle.parameters.tre_id }}"
+        api_driven_rule_collections_b64: "{{ bundle.parameters.rule_collections }}"
       backendConfig:
         resource_group_name:
           "{{ bundle.parameters.tfstate_resource_group_name }}"

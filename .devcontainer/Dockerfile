@@ -54,7 +54,7 @@ RUN apt-get update && apt-get install -y python3 python3-venv libaugeas0 \
 # Not using the script from https://cdn.porter.sh/latest/install-linux.sh
 # as it installs things we don't need and duplicates the binary.
 ARG PORTER_MIRROR=https://cdn.porter.sh
-ARG PORTER_PERMALINK=v0.38.7
+ARG PORTER_PERMALINK=v0.38.11
 ARG PORTER_PKG_PERMALINK=latest
 ARG PORTER_HOME=/home/$USERNAME/.porter/
 COPY .devcontainer/scripts/porter.sh /tmp/

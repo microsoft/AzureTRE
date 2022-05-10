@@ -29,7 +29,7 @@ pytestmark = pytest.mark.asyncio
 WORKSPACE_ID = '933ad738-7265-4b5f-9eae-a1a62928772e'
 SERVICE_ID = 'abcad738-7265-4b5f-9eae-a1a62928772e'
 USER_RESOURCE_ID = 'a33ad738-7265-4b5f-9eae-a1a62928772a'
-APP_ID = 'f0acf127-a672-a672-a672-a15e5bf9f127'
+CLIENT_ID = 'f0acf127-a672-a672-a672-a15e5bf9f127'
 OPERATION_ID = '11111111-7265-4b5f-9eae-a1a62928772f'
 
 
@@ -39,7 +39,7 @@ def workspace_input():
         "templateName": "test-workspace",
         "properties": {
             "display_name": "display",
-            "app_id": APP_ID
+            "client_id": CLIENT_ID
         }
     }
 
@@ -78,14 +78,14 @@ def sample_workspace(workspace_id=WORKSPACE_ID, auth_info: dict = {}) -> Workspa
         templateVersion="0.1.0",
         etag="",
         properties={
-            "app_id": "12345"
+            "client_id": "12345"
         },
         resourcePath=f'/workspaces/{workspace_id}',
         updatedWhen=FAKE_CREATE_TIMESTAMP,
         user=create_admin_user()
     )
     if auth_info:
-        workspace.authInformation = auth_info
+        workspace.properties = {**auth_info}
     return workspace
 
 
@@ -118,7 +118,7 @@ def sample_resource_operation_in_response(resource_id: str, operation_id: str):
     return OperationInResponse(operation=op)
 
 
-def sample_deployed_workspace(workspace_id=WORKSPACE_ID, auth_info: dict = {}):
+def sample_deployed_workspace(workspace_id=WORKSPACE_ID, authInfo={}):
     workspace = Workspace(
         id=workspace_id,
         templateName="tre-workspace-base",
@@ -128,8 +128,8 @@ def sample_deployed_workspace(workspace_id=WORKSPACE_ID, auth_info: dict = {}):
         resourcePath="test",
         updatedWhen=FAKE_CREATE_TIMESTAMP
     )
-    if auth_info:
-        workspace.authInformation = auth_info
+    if authInfo:
+        workspace.properties = {**authInfo}
     return workspace
 
 
@@ -231,9 +231,9 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
     @patch("api.routes.workspaces.WorkspaceRepository.get_active_workspaces")
     @patch("api.routes.workspaces.get_user_role_assignments")
     async def test_get_workspaces_returns_correct_data_when_resources_exist(self, access_service_mock, get_workspaces_mock, app, client) -> None:
-        auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'roles': {'WorkspaceOwner': 'ab124', 'WorkspaceResearcher': 'ab125'}}
-        auth_info_user_in_workspace_researcher_role = {'sp_id': 'ab123', 'roles': {'WorkspaceOwner': 'ab127', 'WorkspaceResearcher': 'ab126'}}
-        auth_info_user_not_in_workspace_role = {'sp_id': 'ab127', 'roles': {'WorkspaceOwner': 'ab128', 'WorkspaceResearcher': 'ab129'}}
+        auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'app_role_id_workspace_owner': 'ab124', 'app_role_id_workspace_researcher': 'ab125'}
+        auth_info_user_in_workspace_researcher_role = {'sp_id': 'ab123', 'app_role_id_workspace_owner': 'ab127', 'app_role_id_workspace_researcher': 'ab126'}
+        auth_info_user_not_in_workspace_role = {'sp_id': 'ab127', 'app_role_id_workspace_owner': 'ab128', 'app_role_id_workspace_researcher': 'ab129'}
 
         valid_ws_1 = sample_workspace(workspace_id=str(uuid.uuid4()), auth_info=auth_info_user_in_workspace_owner_role)
         valid_ws_2 = sample_workspace(workspace_id=str(uuid.uuid4()), auth_info=auth_info_user_in_workspace_researcher_role)
@@ -383,7 +383,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
 
         modified_workspace = sample_workspace()
         modified_workspace.isEnabled = False
-        modified_workspace.history = [ResourceHistoryItem(properties={'app_id': '12345'}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_admin_user())]
+        modified_workspace.history = [ResourceHistoryItem(properties={'client_id': '12345'}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_admin_user())]
         modified_workspace.resourceVersion = 1
         modified_workspace.user = create_admin_user()
         modified_workspace.updatedWhen = FAKE_UPDATE_TIMESTAMP
@@ -403,7 +403,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         etag = "some-etag-value"
         modified_workspace = sample_workspace()
         modified_workspace.isEnabled = False
-        modified_workspace.history = [ResourceHistoryItem(properties={'app_id': '12345'}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_admin_user())]
+        modified_workspace.history = [ResourceHistoryItem(properties={'client_id': '12345'}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_admin_user())]
         modified_workspace.resourceVersion = 1
         modified_workspace.user = create_admin_user()
         modified_workspace.updatedWhen = FAKE_UPDATE_TIMESTAMP
