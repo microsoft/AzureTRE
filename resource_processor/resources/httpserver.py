@@ -13,5 +13,5 @@ class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
 
 
 def start_server():
-    server = ThreadedHTTPServer(('0.0.0.0', 8082), RequestHandler)
+    server = ThreadedHTTPServer(('0.0.0.0', 8080), RequestHandler)
     server.serve_forever()
