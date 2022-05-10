@@ -43,6 +43,7 @@ pytest --ignore=e2e_tests
 ```
 
 Please refer to a different [guide on running E2E tests locally](end-to-end-tests.md).
+
 ## Local debugging
 
 To set up local debugging, first run (if you haven't done so already)
@@ -64,6 +65,7 @@ Now, you should be able to open Swagger UI for your local instance on [http://lo
 ## Cloud instance
 
 On Azure Portal, find an App Service instance named `app-${TRE_ID}`.
+
 There, you can access logs via `Deployment Center` on the left side, then `Logs`. See screenshot:
 [![API Deployment Logs](../assets/api_deployment_logs.png)](../assets/api_deployment_logs.png)
 
@@ -79,6 +81,19 @@ AppTraces
 | order by TimeGenerated desc 
 ```
 
+### Deploying a cloud instance
+
+To deploy a new version of the API to your TRE deployment, do this:
+
+1. Update the version in `api_app/_version.py`
+
+2. Run
+
+```cmd
+make build-and-push-api
+make deploy-core
+```
+
 ## Troubleshooting
 
 ### Wrong docker image version
@@ -90,9 +105,9 @@ If this happens, you will see a log similar to this:
 
 To fix, run `make build-and-push-api` from your branch and restart the instance.
 
-### API returns errors
+### Investigating /api/health response
 
-If this happens, you can have a look at `/api/health` response. It will have a JSON response to this, which should help to narrow down the problem:
+The endpoint `/api/health` tracks health of not only API, but other components of the system too, and can help to narrow down any problems with your deployment:
 
 ```json
 {
@@ -116,15 +131,20 @@ If this happens, you can have a look at `/api/health` response. It will have a J
 }
 ```
 
+In this case, next step is to look at logs of Resource Processor. See also [Resource Processor docs](resource-processor.md).
+
 ## Using Swagger UI
 
-Swagger UI lets you send requests to the API. To send a request, click on the row with the request, then `Try out`, then `Execute`. See screenshot:
+Swagger UI lets you send requests to the API.
+
+To send a request, click on the row with the request, then `Try out`, then `Execute`. See screenshot:
 
 [![Swagger UI Send Request](../assets/api_swagger_send_request.png)](../assets/api_swagger_send_request.png)
 
 ### Authorization
 
 Swagger UI is accessible under `https://${TRE_ID}.${LOCATION}.cloudapp.azure.com/api/docs`.
+
 To start using it, click Authorize button, then click Authorize (leave the field `client_secret` empty). See screenshot:
 
 [![Swagger UI Authorize](../assets/api_swagger_ui_authorize.png)](../assets/api_swagger_ui_authorize.png)
