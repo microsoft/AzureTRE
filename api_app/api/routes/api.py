@@ -108,7 +108,7 @@ async def get_openapi_json(workspace_id: str, request: Request, workspace_repo=D
         )
 
         workspace = workspace_repo.get_workspace_by_id(workspace_id)
-        ws_app_reg_id = workspace.properties['app_id']
+        ws_app_reg_id = workspace.properties['client_id']
         workspace_scopes = {
             f"api://{ws_app_reg_id}/user_impersonation": "List and Get TRE Workspaces"
         }
@@ -129,7 +129,7 @@ async def get_openapi_json(workspace_id: str, request: Request, workspace_repo=D
 async def get_workspace_swagger(workspace_id, request: Request, workspace_repo=Depends(get_repository(WorkspaceRepository))):
 
     workspace = workspace_repo.get_workspace_by_id(workspace_id)
-    ws_app_reg_id = workspace.properties['app_id']
+    ws_app_reg_id = workspace.properties['client_id']
     swagger_ui_html = get_swagger_ui_html(
         openapi_url="openapi.json",
         title=request.app.title + " - Swagger UI",

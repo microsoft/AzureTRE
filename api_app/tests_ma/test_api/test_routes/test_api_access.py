@@ -19,7 +19,7 @@ USER_RESOURCE_ID = 'abcad738-7265-4b5f-9eae-a1a62928772e'
 
 
 def sample_workspace():
-    return Workspace(id=WORKSPACE_ID, templateName='template name', templateVersion='1.0', etag='', properties={"app_id": "12345"}, resourcePath="test")
+    return Workspace(id=WORKSPACE_ID, templateName='template name', templateVersion='1.0', etag='', properties={"client_id": "12345"}, resourcePath="test")
 
 
 def sample_workspace_service():
@@ -92,7 +92,7 @@ class TestWorkspaceServiceOwnerRoutesAccess:
             "templateName": "test-workspace-service",
             "properties": {
                 "display_name": "display",
-                "app_id": "f0acf127-a672-a672-a672-a15e5bf9f127"
+                "client_id": "f0acf127-a672-a672-a672-a15e5bf9f127"
             }
         }
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID), json=workspace_service_input)

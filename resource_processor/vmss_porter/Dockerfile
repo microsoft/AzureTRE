@@ -16,7 +16,7 @@ RUN apt-get update \
 
 # Install Porter
 ARG PORTER_MIRROR=https://cdn.porter.sh
-ARG PORTER_PERMALINK=v0.38.7
+ARG PORTER_PERMALINK=v0.38.11
 ARG PORTER_PKG_PERMALINK=latest
 ARG PORTER_HOME=/root/.porter/
 COPY scripts/porter.sh /tmp/

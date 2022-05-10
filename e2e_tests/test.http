@@ -29,7 +29,7 @@ Content-type: application/json
   "properties": {
       "display_name": "E2E test",
       "description": "workspace for E2E",
-      "app_id": "<CHANGE_ME_APP_ID>",
+      "client_id": "<CHANGE_ME_CLIENT_ID>",
       "address_space_size": "small"
   }
 }
