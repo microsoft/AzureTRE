@@ -16,7 +16,6 @@ TEST_ACCOUNT_CLIENT_ID: str = config("TEST_ACCOUNT_CLIENT_ID", default="")
 TEST_ACCOUNT_CLIENT_SECRET: str = config("TEST_ACCOUNT_CLIENT_SECRET", default="")
 TEST_WORKSPACE_APP_ID: str = config("TEST_WORKSPACE_APP_ID", default="")
 TEST_WORKSPACE_APP_SECRET: str = config("TEST_WORKSPACE_APP_SECRET", default="")
-AUTO_WORKSPACE_APP_REGISTRATION: bool = config("AUTO_WORKSPACE_APP_REGISTRATION", default=False).lower() in ('true', '1', 't')
 
 # Perf test env vars - set these in private.env if you want to run perf tests and use an existing
 # workspace + workspace service for quicker execution. If they're blank the perf test will create + delete them.
