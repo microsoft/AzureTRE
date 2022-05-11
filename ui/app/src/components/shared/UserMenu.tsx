@@ -1,23 +1,38 @@
 import React from 'react';
-import { Persona, PersonaSize } from '@fluentui/react';
+import { IContextualMenuProps, Persona, PersonaSize, PrimaryButton } from '@fluentui/react';
 import { useAccount, useMsal } from '@azure/msal-react';
 
-// TODO:
-// - Dropdown / option to logout
-// - Graph query to get user profile picture? 
-
 export const UserMenu: React.FunctionComponent = () => {
-  const { accounts } = useMsal();
+  const { instance, accounts } = useMsal();
   const account = useAccount(accounts[0] || {});
+
+  const menuProps: IContextualMenuProps = {
+    shouldFocusOnMount: true,
+    directionalHint: 6, // bottom right edge
+    items: [
+      {
+        key: 'logout',
+        text: 'Logout',
+        iconProps: { iconName: 'SignOut' },
+        onClick: () => {
+          instance.logout().then();
+        }
+      }
+    ]
+  };
 
   return (
     <div className='tre-user-menu'>
-      <Persona
-        text={account?.name}
-        size={PersonaSize.size32}
-        imageAlt={account?.name}
-      />
+      <PrimaryButton menuProps={menuProps} style={{background:'none', border:'none'}}>
+        <Persona
+          text={account?.name}
+          size={PersonaSize.size32}
+          imageAlt={account?.name}
+        />
+      </PrimaryButton>
+
     </div>
   );
 };
+
 

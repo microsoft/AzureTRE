@@ -10,7 +10,7 @@ import { MessageBar, MessageBarType, Spinner, SpinnerSize } from '@fluentui/reac
 
 // TODO:
 // - replace list of user resources with cards
-// - loading placeholders instead of spinner
+// - separate loading placeholders for user resources instead of spinner
 
 interface WorkspaceServiceItemProps {
   workspace: Workspace,

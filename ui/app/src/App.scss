@@ -11,7 +11,10 @@ h1{
 code {
 font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
-  
+.tre-logout-message{
+    margin:40px auto;
+    width:70%;
+}
 #root{
    
 }
@@ -26,8 +29,8 @@ font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
     color:#fff;
     text-decoration: none;
 }
-.tre-user-menu{
-    margin-top:8px;
+.tre-user-menu .ms-Persona-primaryText:hover{
+    color:#fff;
 }
 .ms-Persona-primaryText{
     color:#fff;
