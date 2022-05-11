@@ -14,6 +14,11 @@ on:  # yamllint disable-line rule:truthy
         type: boolean
         default: false
         required: false
+      runSharedServicesTests:
+        description: Run the shared services tests as part of the deployment?
+        type: boolean
+        default: false
+        required: false
 
 # This will prevent multiple runs of this entire workflow.
 # We should NOT cancel in progress runs as that can destabilize the environment.
@@ -51,6 +56,7 @@ jobs:
       ciGitRef: ${{ github.ref }}
       # testing input against string 'true' - see https://github.com/actions/runner/issues/1483
       runExtendedTests: ${{ github.event.inputs.runExtendedTests == 'true' }}
+      runSharedSevicesTests: ${{ github.event.inputs.runSharedServicesTests == 'true' }}
     secrets:
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
       ACR_NAME: ${{ format('tre{0}', needs.prepare-not-main.outputs.refid) }}

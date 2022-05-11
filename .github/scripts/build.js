@@ -95,6 +95,15 @@ async function getCommandFromComment({ core, context, github }) {
           break;
         }
 
+      case "/test-shared-services":
+        {
+          const runTests = await handleTestCommand({ core, github }, parts, "shared service tests", runId, { number: prNumber, authorUsername: prAuthorUsername, repoOwner, repoName, headSha: prHeadSha, refId: prRefId, details: pr }, { username: commentUsername, link: commentLink });
+          if (runTests) {
+            command = "run-tests-shared-services";
+          }
+          break;
+        }
+
       case "/test-force-approve":
         {
           command = "test-force-approve";
@@ -229,6 +238,7 @@ async function showHelp({ github }, repoOwner, repoName, prNumber, commentUser, 
 You can use the following commands:
 &nbsp;&nbsp;&nbsp;&nbsp;/test - build, deploy and run smoke tests on a PR
 &nbsp;&nbsp;&nbsp;&nbsp;/test-extended - build, deploy and run smoke & extended tests on a PR
+&nbsp;&nbsp;&nbsp;&nbsp;/test-shared-services - test the deployment of shared services on a PR build
 &nbsp;&nbsp;&nbsp;&nbsp;/test-force-approve - force approval of the PR tests (i.e. skip the deployment checks)
 &nbsp;&nbsp;&nbsp;&nbsp;/test-destroy-env - delete the validation environment for a PR (e.g. to enable testing a deployment from a clean start after previous tests)
 &nbsp;&nbsp;&nbsp;&nbsp;/help - show this help`;
