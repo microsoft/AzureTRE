@@ -126,7 +126,7 @@ async def run_porter(command, logger_adapter: logging.LoggerAdapter, config: dic
     return (proc.returncode, result_stdout, result_stderr)
 
 
-def service_bus_message_generator(sb_message, status, deployment_message, outputs=None):
+def service_bus_message_generator(sb_message: dict, status: str, deployment_message: str, outputs=None):
     """
     Generate a resource request message
     """
@@ -145,7 +145,7 @@ def service_bus_message_generator(sb_message, status, deployment_message, output
     return resource_request_message
 
 
-async def invoke_porter_action(msg_body, sb_client, message_logger_adapter, config: dict) -> bool:
+async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, message_logger_adapter: logging.LoggerAdapter, config: dict) -> bool:
     """
     Handle resource message by invoking specified porter action (i.e. install, uninstall)
     """
@@ -162,7 +162,7 @@ async def invoke_porter_action(msg_body, sb_client, message_logger_adapter, conf
     # Build and run porter command (flagging if its a built-in action or custom so we can adapt porter command appropriately)
     is_custom_action = action not in ["install", "upgrade", "uninstall"]
     porter_command = await build_porter_command(config, message_logger_adapter, msg_body, is_custom_action)
-    returncode, _, err = await run_porter(porter_command)
+    returncode, _, err = await run_porter(porter_command, message_logger_adapter, config)
 
     # Handle command output
     if returncode != 0:
@@ -177,7 +177,7 @@ async def invoke_porter_action(msg_body, sb_client, message_logger_adapter, conf
     else:
         # Get the outputs
         # TODO: decide if this should "fail" the deployment
-        _, outputs = await get_porter_outputs(msg_body, message_logger_adapter)
+        _, outputs = await get_porter_outputs(msg_body, message_logger_adapter, config)
 
         success_message = f"{action} action completed successfully."
         resource_request_message = service_bus_message_generator(msg_body, statuses.pass_status_string_for[action], success_message, outputs)
@@ -187,12 +187,12 @@ async def invoke_porter_action(msg_body, sb_client, message_logger_adapter, conf
         return True
 
 
-async def get_porter_outputs(msg_body, message_logger_adapter):
+async def get_porter_outputs(msg_body: dict, message_logger_adapter: logging.LoggerAdapter, config: dict):
     """
     Get outputs JSON from a Porter command
     """
     porter_command = await build_porter_command_for_outputs(msg_body)
-    returncode, stdout, err = await run_porter(porter_command)
+    returncode, stdout, err = await run_porter(porter_command, message_logger_adapter, config)
 
     if returncode != 0:
         error_message = "Error context message = " + " ".join(err.split('\n'))
