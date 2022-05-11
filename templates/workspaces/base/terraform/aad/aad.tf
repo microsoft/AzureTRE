@@ -1,6 +1,5 @@
 data "azuread_client_config" "current" {}
 
-resource "random_uuid" "scope_id" {}
 resource "random_uuid" "oauth2_user_impersonation_id" {}
 resource "random_uuid" "app_role_workspace_owner_id" {}
 resource "random_uuid" "app_role_workspace_researcher_id" {}
