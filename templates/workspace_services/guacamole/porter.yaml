@@ -1,6 +1,6 @@
 ---
 name: tre-service-guacamole
-version: 0.1.14
+version: 0.1.15
 description: "An Azure TRE service for Guacamole"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -26,7 +26,7 @@ parameters:
     description: "The name of the guacamole image"
   - name: image_tag
     type: string
-    default: "" # will use the value in the version.txt file unless provided
+    default: ""   # will use the value in the version.txt file unless provided
     description: "The tag of the guacamole image"
   - name: mgmt_acr_name
     type: string
