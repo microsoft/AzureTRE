@@ -7,7 +7,7 @@ resource "random_uuid" "app_role_workspace_researcher_id" {}
 
 resource "azuread_application" "workspace" {
   display_name    = var.workspace_resource_name_suffix
-  identifier_uris = ["api://${random_uuid.scope_id.result}"]
+  identifier_uris = ["api://${var.workspace_resource_name_suffix}"]
   owners          = [data.azuread_client_config.current.object_id]
 
   api {

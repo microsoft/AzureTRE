@@ -11,7 +11,7 @@ output "client_id" {
 }
 
 output "scope_id" {
-  value = random_uuid.scope_id.result
+  value = "api://${var.workspace_resource_name_suffix}"
 }
 
 output "sp_id" {
