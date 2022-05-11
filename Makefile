@@ -364,6 +364,11 @@ test-e2e-extended:
 	cd e2e_tests && \
 	python -m pytest -m extended --verify $${IS_API_SECURED:-true} --junit-xml pytest_e2e_extended.xml
 
+test-e2e-shared-services:
+	$(call target_title, "Running E2E shared service tests") && \
+	cd e2e_tests && \
+	python -m pytest -m shared_services --verify $${IS_API_SECURED:-true} --junit-xml pytest_e2e_shared_services.xml
+
 setup-local-debugging:
 	$(call target_title,"Setting up the ability to debug the API and Resource Processor") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker \

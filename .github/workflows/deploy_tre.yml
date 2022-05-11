@@ -23,6 +23,7 @@ jobs:
     with:
       ciGitRef: ${{ github.ref }}
       runExtendedTests: true
+      runSharedServicesTests: true
     secrets:
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
       ACR_NAME: ${{ secrets.ACR_NAME }}
