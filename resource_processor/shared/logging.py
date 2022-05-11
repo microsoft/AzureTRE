@@ -46,7 +46,7 @@ def disable_unwanted_loggers():
         logging.getLogger(logger_name).disabled = True
 
 
-def initialize_logging(logging_level: int, correlation_id: str) -> logging.LoggerAdapter:
+def initialize_logging(logging_level: int, correlation_id: str, add_console_handler: bool = False) -> logging.LoggerAdapter:
     """
     Adds the Application Insights handler for the root logger and sets the given logging level.
     Creates and returns a logger adapter that integrates the correlation ID, if given, to the log messages.
@@ -66,11 +66,11 @@ def initialize_logging(logging_level: int, correlation_id: str) -> logging.Logge
     for logger_name in LOGGERS_FOR_ERRORS_ONLY:
         logging.getLogger(logger_name).setLevel(logging.ERROR)
 
-    # For logging into console
-    console_formatter = logging.Formatter(fmt='%(module)-7s %(name)-7s %(process)-7s %(asctime)s %(levelname)-7s %(message)s')
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(console_formatter)
-    logger.addHandler(console_handler)
+    if add_console_handler:
+        console_formatter = logging.Formatter(fmt='%(module)-7s %(name)-7s %(process)-7s %(asctime)s %(levelname)-7s %(message)s')
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(console_formatter)
+        logger.addHandler(console_handler)
 
     try:
         azurelog_formatter = AzureLogFormatter()
