@@ -1,4 +1,5 @@
 import threading
+from typing import Optional
 from multiprocessing import Process
 import json
 import socket
@@ -19,16 +20,20 @@ from azure.servicebus.aio import ServiceBusClient, AutoLockRenewer
 from azure.identity.aio import DefaultAzureCredential
 
 
-# Initialise logging
-logger_adapter = initialize_logging(logging.INFO, socket.gethostname())
-disable_unwanted_loggers()
+def set_up_logger(enable_console_logging: bool) -> logging.LoggerAdapter:
+    # Initialise logging
+    logger_adapter = initialize_logging(logging.INFO, socket.gethostname(), enable_console_logging)
+    disable_unwanted_loggers()
+    return logger_adapter
 
-# Initialise config
-try:
-    config = get_config(logger_adapter)
-except KeyError as e:
-    logger_adapter.error(f"Environment variable {e} is not set correctly...Exiting")
-    sys.exit(1)
+
+def set_up_config(logger_adapter: logging.LoggerAdapter) -> Optional[dict]:
+    try:
+        config = get_config(logger_adapter)
+        return config
+    except KeyError as e:
+        logger_adapter.error(f"Environment variable {e} is not set correctly...Exiting")
+        sys.exit(1)
 
 
 @asynccontextmanager
@@ -41,7 +46,7 @@ async def default_credentials(msi_id):
     await credential.close()
 
 
-async def receive_message(service_bus_client):
+async def receive_message(service_bus_client, logger_adapter: logging.LoggerAdapter, config: dict):
     """
     This method is run per process. Each process will connect to service bus and try to establish a session.
     If messages are there, the process will continue to receive all the messages associated with that session.
@@ -67,7 +72,7 @@ async def receive_message(service_bus_client):
                             message = json.loads(str(msg))
                             logger_adapter.info(f"Message received for resource_id={message['id']}, operation_id={message['operationId']}, step_id={message['stepId']}")
                             message_logger_adapter = get_message_id_logger(message['operationId'])  # correlate messages per operation
-                            result = await invoke_porter_action(message, service_bus_client, message_logger_adapter)
+                            result = await invoke_porter_action(message, service_bus_client, message_logger_adapter, config)
                         except (json.JSONDecodeError) as e:
                             logging.error(f"Received bad service bus resource request message: {e}")
 
@@ -95,7 +100,7 @@ async def receive_message(service_bus_client):
             logger_adapter.exception("Unknown exception. Will retry...")
 
 
-async def run_porter(command):
+async def run_porter(command, logger_adapter: logging.LoggerAdapter, config: dict):
     """
     Run a Porter command
     """
@@ -121,7 +126,7 @@ async def run_porter(command):
     return (proc.returncode, result_stdout, result_stderr)
 
 
-def service_bus_message_generator(sb_message, status, deployment_message, outputs=None):
+def service_bus_message_generator(sb_message: dict, status: str, deployment_message: str, outputs=None):
     """
     Generate a resource request message
     """
@@ -140,7 +145,7 @@ def service_bus_message_generator(sb_message, status, deployment_message, output
     return resource_request_message
 
 
-async def invoke_porter_action(msg_body, sb_client, message_logger_adapter) -> bool:
+async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, message_logger_adapter: logging.LoggerAdapter, config: dict) -> bool:
     """
     Handle resource message by invoking specified porter action (i.e. install, uninstall)
     """
@@ -157,7 +162,7 @@ async def invoke_porter_action(msg_body, sb_client, message_logger_adapter) -> b
     # Build and run porter command (flagging if its a built-in action or custom so we can adapt porter command appropriately)
     is_custom_action = action not in ["install", "upgrade", "uninstall"]
     porter_command = await build_porter_command(config, message_logger_adapter, msg_body, is_custom_action)
-    returncode, _, err = await run_porter(porter_command)
+    returncode, _, err = await run_porter(porter_command, message_logger_adapter, config)
 
     # Handle command output
     if returncode != 0:
@@ -172,7 +177,7 @@ async def invoke_porter_action(msg_body, sb_client, message_logger_adapter) -> b
     else:
         # Get the outputs
         # TODO: decide if this should "fail" the deployment
-        _, outputs = await get_porter_outputs(msg_body, message_logger_adapter)
+        _, outputs = await get_porter_outputs(msg_body, message_logger_adapter, config)
 
         success_message = f"{action} action completed successfully."
         resource_request_message = service_bus_message_generator(msg_body, statuses.pass_status_string_for[action], success_message, outputs)
@@ -182,12 +187,12 @@ async def invoke_porter_action(msg_body, sb_client, message_logger_adapter) -> b
         return True
 
 
-async def get_porter_outputs(msg_body, message_logger_adapter):
+async def get_porter_outputs(msg_body: dict, message_logger_adapter: logging.LoggerAdapter, config: dict):
     """
     Get outputs JSON from a Porter command
     """
     porter_command = await build_porter_command_for_outputs(msg_body)
-    returncode, stdout, err = await run_porter(porter_command)
+    returncode, stdout, err = await run_porter(porter_command, message_logger_adapter, config)
 
     if returncode != 0:
         error_message = "Error context message = " + " ".join(err.split('\n'))
@@ -204,26 +209,34 @@ async def get_porter_outputs(msg_body, message_logger_adapter):
         return True, outputs_json
 
 
-async def runner():
+async def runner(logger_adapter: logging.LoggerAdapter, config: dict):
     async with default_credentials(config["vmss_msi_id"]) as credential:
         service_bus_client = ServiceBusClient(config["service_bus_namespace"], credential)
-        await receive_message(service_bus_client)
+        await receive_message(service_bus_client, logger_adapter, config)
 
 
-def start_runner_process():
-    asyncio.ensure_future(runner())
+def start_runner_process(config: dict):
+    # Set up logger adapter copy for this process
+    logger_adapter = set_up_logger(enable_console_logging=False)
+
+    asyncio.ensure_future(runner(logger_adapter, config))
     event_loop = asyncio.get_event_loop()
     event_loop.run_forever()
+
     logger_adapter.info("Started resource processor")
 
 
 if __name__ == "__main__":
     httpserver_thread = threading.Thread(target=start_server)
     httpserver_thread.start()
+
+    logger_adapter: logging.LoggerAdapter = set_up_logger(enable_console_logging=True)
+    config = set_up_config(logger_adapter)
+
     logger_adapter.info("Started http server")
 
     logger_adapter.info(f'Starting {str(config["number_processes_int"])} processes...')
     for i in range(config["number_processes_int"]):
         logger_adapter.info(f'Starting process {str(i)}')
-        process = Process(target=start_runner_process)
+        process = Process(target=lambda: start_runner_process(config))
         process.start()
