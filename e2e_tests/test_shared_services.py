@@ -12,7 +12,7 @@ from resources import strings
 LOGGER = logging.getLogger(__name__)
 
 
-@pytest.mark.extended
+@pytest.mark.shared_services
 async def test_patch_firewall(admin_token, verify):
     template_name = strings.FIREWALL_SHARED_SERVICE
 
@@ -95,7 +95,7 @@ shared_service_templates_to_create = [
 ]
 
 
-@pytest.mark.extended
+@pytest.mark.shared_services
 @pytest.mark.timeout(30 * 60)
 @pytest.mark.parametrize("template_name", shared_service_templates_to_create)
 async def test_create_shared_service(template_name, admin_token, verify) -> None:
