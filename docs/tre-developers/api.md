@@ -2,7 +2,7 @@
 
 The TRE API is a service that users can interact with to request changes to workspaces e.g., to create, update, delete workspaces and workspace services inside each workspace.
 
-This page is a guide for a developer looking to make a change to the API and debug it. 
+This page is a guide for a developer looking to make a change to the API and debug it.
 
 ## Repository folder structure
 
@@ -123,8 +123,7 @@ To enable debugging on an already running instance:
 
 If this happens, you will see a log similar to this:
 
-`2022-05-10T05:34:48.844Z ERROR - DockerApiException: Docker API responded with status code=NotFound, response={"message":"manifest for tborisdevtreacr.azurecr.io/microsoft/azuretre/api:0.2.24 not found: manifest unknown: manifest tagged by \"0.2.24\" is not found"}
-`
+`2022-05-10T05:34:48.844Z ERROR - DockerApiException: Docker API responded with status code=NotFound, response={"message":"manifest for tborisdevtreacr.azurecr.io/microsoft/azuretre/api:0.2.24 not found: manifest unknown: manifest tagged by \"0.2.24\" is not found"}`
 
 To fix, run `make build-and-push-api` from your branch and restart the instance.
 
