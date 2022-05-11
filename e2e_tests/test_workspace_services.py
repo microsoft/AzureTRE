@@ -70,7 +70,7 @@ async def test_create_guacamole_service_into_aad_workspace(admin_token, workspac
     }
 
     workspace_path, workspace_id = await post_resource(payload, strings.API_WORKSPACES, access_token=admin_token, verify=verify)
-    workspace_owner_token = await get_workspace_owner_token(access_token=admin_token, workspace_id=workspace_id, verify=verify)
+    workspace_owner_token = await get_workspace_owner_token(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
 
     service_payload = {
         "templateName": "tre-service-guacamole",

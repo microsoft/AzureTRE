@@ -226,9 +226,9 @@ async def get_identifier_uri(client, workspace_id: str, auth_headers) -> str:
         return f"api://{workspace['properties']['scope_id']}"
 
 
-async def get_workspace_owner_token(access_token, workspace_id, verify) -> str:
+async def get_workspace_owner_token(admin_token, workspace_id, verify) -> str:
     async with AsyncClient(verify=verify) as client:
-        auth_headers = get_auth_header(access_token)
+        auth_headers = get_auth_header(admin_token)
         scope_uri = await get_identifier_uri(client, workspace_id, auth_headers)
 
         if config.TEST_ACCOUNT_CLIENT_ID != "" and config.TEST_ACCOUNT_CLIENT_SECRET != "":
