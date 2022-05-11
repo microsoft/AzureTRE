@@ -3,7 +3,7 @@ import React, { useContext } from 'react';
 import { WorkspaceRoleName } from '../../models/roleNames';
 import { Workspace } from '../../models/workspace';
 import { SecuredByRole } from '../shared/SecuredByRole';
-import { ResourceDebug } from './ResourceDebug';
+import { ResourceDebug } from '../shared/ResourceDebug';
 import { WorkspaceRolesContext } from './WorkspaceRolesContext';
 
 

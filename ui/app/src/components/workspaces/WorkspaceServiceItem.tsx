@@ -5,7 +5,7 @@ import { Workspace } from '../../models/workspace';
 import { useAuthApiCall, HttpMethod } from '../../useAuthApiCall';
 import { UserResource } from '../../models/userResource';
 import { WorkspaceService } from '../../models/workspaceService';
-import { ResourceDebug } from './ResourceDebug';
+import { ResourceDebug } from '../shared/ResourceDebug';
 
 // TODO:
 // - replace list of user resources with cards
