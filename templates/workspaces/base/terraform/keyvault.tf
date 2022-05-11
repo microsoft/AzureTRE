@@ -69,7 +69,7 @@ resource "null_resource" "wait_for_dns_vault" {
   }
 
   triggers = {
-    always_run = azurerm_private_endpoint.kvpe.private_ip_address # only wait on new/changed private IP address
+    always_run = azurerm_private_endpoint.kvpe.private_service_connection[0].private_ip_address # only wait on new/changed private IP address
   }
 
   depends_on = [azurerm_private_endpoint.kvpe]
