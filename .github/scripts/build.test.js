@@ -364,6 +364,32 @@ describe('getCommandFromComment', () => {
         });
       });
 
+      describe(`for '/test-shared-services'`, () => {
+        test(`should set command to 'run-tests-shared-services'`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test-shared-services',
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('run-tests-shared-services');
+        });
+
+        test(`should add comment with run link`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test-shared-services',
+            pullRequestNumber: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(mockGithubRestIssuesCreateComment).toHaveComment({
+            owner: 'someOwner',
+            repo: 'someRepo',
+            issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+            bodyMatcher: /Running shared service tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `cbce50da`\)/,
+          });
+        });
+      });
+
       describe(`for '/test-extended' for external PR (i.e. without commit SHA specified)`, () => {
         test(`should set command to 'none'`, async () => {
           const context = createCommentContext({
