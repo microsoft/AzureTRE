@@ -58,6 +58,7 @@ Next, go to "Run and Debug" panel in VSCode, and select TRE API.
 [![VSCode API debugging screenshot](../assets/api_local_debugging_vscode_screenshot.png)](../assets/api_local_debugging_vscode_screenshot.png)
 
 You will see a log similar to this:
+
 [![Local API debugging screenshot](../assets/api_local_debugging_log.png)](../assets/api_local_debugging_log.png)
 
 Now, you should be able to open Swagger UI for your local instance on [http://localhost:8000/api/docs](http://localhost:8000/api/docs).
@@ -117,44 +118,6 @@ To enable debugging on an already running instance:
 
 ![API Debug True](../assets/api_debug_true.png)
 
-## Troubleshooting
-
-### Wrong docker image version
-
-If this happens, you will see a log similar to this:
-
-`2022-05-10T05:34:48.844Z ERROR - DockerApiException: Docker API responded with status code=NotFound, response={"message":"manifest for tborisdevtreacr.azurecr.io/microsoft/azuretre/api:0.2.24 not found: manifest unknown: manifest tagged by \"0.2.24\" is not found"}`
-
-To fix, run `make build-and-push-api` from your branch and restart the instance.
-
-### Investigating /api/health response
-
-The endpoint `/api/health` tracks health of not only API, but other components of the system too, and can help to narrow down any problems with your deployment:
-
-```json
-{
-  "services": [
-    {
-      "service": "Cosmos DB",
-      "status": "OK",
-      "message": ""
-    },
-    {
-      "service": "Service Bus",
-      "status": "OK",
-      "message": ""
-    },
-    {
-      "service": "Resource Processor",
-      "status": "Not OK",
-      "message": "Resource Processor is not responding"
-    }
-  ]
-}
-```
-
-In this case, next step is to look at logs of Resource Processor. See also [Resource Processor docs](resource-processor.md).
-
 ## Using Swagger UI
 
 Swagger UI lets you send requests to the API.
@@ -202,3 +165,41 @@ Alternatively, in Azure Portal you can add the redirect URL to the App Registrat
 Under AAD, find App Registrations, and find the App Registration with the ID shown in the error message.
 There, go to Redirect URL and add the URL given to you by the error message (it will have a form of
 `https://${TRE_ID}.westeurope.cloudapp.azure.com/api/docs/oauth2-redirect`).
+
+## Troubleshooting
+
+### Wrong docker image version
+
+If this happens, you will see a log similar to this:
+
+`2022-05-10T05:34:48.844Z ERROR - DockerApiException: Docker API responded with status code=NotFound, response={"message":"manifest for tborisdevtreacr.azurecr.io/microsoft/azuretre/api:0.2.24 not found: manifest unknown: manifest tagged by \"0.2.24\" is not found"}`
+
+To fix, run `make build-and-push-api` from your branch and restart the instance.
+
+### Investigating /api/health response
+
+The endpoint `/api/health` tracks health of not only API, but other components of the system too, and can help to narrow down any problems with your deployment:
+
+```json
+{
+  "services": [
+    {
+      "service": "Cosmos DB",
+      "status": "OK",
+      "message": ""
+    },
+    {
+      "service": "Service Bus",
+      "status": "OK",
+      "message": ""
+    },
+    {
+      "service": "Resource Processor",
+      "status": "Not OK",
+      "message": "Resource Processor is not responding"
+    }
+  ]
+}
+```
+
+In this case, next step is to look at logs of Resource Processor. See also [Resource Processor docs](resource-processor.md).
