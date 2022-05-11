@@ -5,7 +5,7 @@ from httpx import AsyncClient, Timeout
 import logging
 from starlette import status
 
-
+from json import JSONDecodeError
 import config
 from resources import strings
 
@@ -53,14 +53,11 @@ async def get_template(template_name, endpoint, admin_token, verify):
         yield response
 
 
-async def post_resource(payload, endpoint, resource_type, token, admin_token, verify, method="POST", wait=True):
+async def post_resource(payload, endpoint, access_token, verify, method="POST", wait=True):
     async with AsyncClient(verify=verify, timeout=30.0) as client:
 
         full_endpoint = get_full_endpoint(endpoint)
-        if resource_type == 'workspace':
-            auth_headers = get_auth_header(admin_token)
-        else:
-            auth_headers = get_auth_header(token)
+        auth_headers = get_auth_header(access_token)
 
         if method == "POST":
             response = await client.post(full_endpoint, headers=auth_headers, json=payload, timeout=TIMEOUT)
@@ -100,15 +97,11 @@ async def get_shared_service_id_by_name(template_name: str, verify, token) -> Op
         return matching_shared_services[0]
 
 
-async def disable_and_delete_resource(endpoint, resource_type, token, admin_token, verify):
+async def disable_and_delete_resource(endpoint, access_token, verify):
     async with AsyncClient(verify=verify, timeout=TIMEOUT) as client:
 
         full_endpoint = get_full_endpoint(endpoint)
-        if resource_type == 'workspace':
-            auth_headers = get_auth_header(admin_token)
-        else:
-            auth_headers = get_auth_header(token)
-
+        auth_headers = get_auth_header(access_token)
         auth_headers["etag"] = "*"  # for now, send in the wildcard to skip around etag checking
 
         # disable
@@ -203,3 +196,60 @@ async def check_deployment(client, operation_endpoint, headers):
         LOGGER.error(f"Non 200 response in check_deployment: {response.status_code}")
         LOGGER.error(f"Full response: {response}")
         raise Exception("Non 200 response in check_deployment")
+
+
+async def get_workspace(client, workspace_id: str, headers) -> dict:
+    full_endpoint = get_full_endpoint(f"/api/workspaces/{workspace_id}")
+
+    response = await client.get(full_endpoint, headers=headers, timeout=TIMEOUT)
+    if response.status_code == 200:
+        return response.json()["workspace"]
+    else:
+        LOGGER.error(f"Non 200 response in get_workspace: {response.status_code}")
+        LOGGER.error(f"Full response: {response}")
+        raise Exception("Non 200 response in get_workspace")
+
+
+async def get_identifier_uri(client, workspace_id: str, auth_headers) -> str:
+    workspace = await get_workspace(client, workspace_id, auth_headers)
+
+    if ("properties" not in workspace):
+        raise Exception("Properties not found in workspace.")
+
+    if ("scope_id" not in workspace["properties"]):
+        raise Exception("Scope Id not found in workspace properties.")
+
+    # Cope with the fact that scope id can have api:// at the front.
+    if workspace["properties"]["scope_id"].startswith("api://"):
+        return workspace["properties"]["scope_id"]
+    else:
+        return f"api://{workspace['properties']['scope_id']}"
+
+
+async def get_workspace_owner_token(access_token, workspace_id, verify) -> str:
+    async with AsyncClient(verify=verify) as client:
+        auth_headers = get_auth_header(access_token)
+        scope_uri = await get_identifier_uri(client, workspace_id, auth_headers)
+
+        if config.TEST_ACCOUNT_CLIENT_ID != "" and config.TEST_ACCOUNT_CLIENT_SECRET != "":
+            # Use Client Credentials flow
+            payload = f"grant_type=client_credentials&client_id={config.TEST_ACCOUNT_CLIENT_ID}&client_secret={config.TEST_ACCOUNT_CLIENT_SECRET}&scope={scope_uri}/.default"
+            url = f"https://login.microsoftonline.com/{config.AAD_TENANT_ID}/oauth2/v2.0/token"
+
+        else:
+            # Use Resource Owner Password Credentials flow
+            payload = f"grant_type=password&resource={workspace_id}&username={config.TEST_USER_NAME}&password={config.TEST_USER_PASSWORD}&scope={scope_uri}/user_impersonation&client_id={config.TEST_APP_ID}"
+            url = f"https://login.microsoftonline.com/{config.AAD_TENANT_ID}/oauth2/token"
+
+        response = await client.post(url, headers=auth_headers, content=payload)
+        try:
+            responseJson = response.json()
+        except JSONDecodeError:
+            raise Exception("Failed to parse response as JSON: {}".format(response.content))
+
+        if "access_token" not in responseJson:
+            raise Exception("Failed to get access_token: {}".format(response.content))
+
+        token = responseJson["access_token"]
+
+        return token if (response.status_code == status.HTTP_200_OK) else None

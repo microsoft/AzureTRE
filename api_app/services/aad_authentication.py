@@ -193,7 +193,7 @@ class AzureADAuthorization(AccessService):
             raise AuthConfigValidationError(f"{strings.ACCESS_UNABLE_TO_GET_INFO_FOR_APP} {client_id}")
 
         app_info = graph_data['value'][0]
-        authInfo = {'sp_id': app_info['id']}
+        authInfo = {'sp_id': app_info['id'], 'scope_id': app_info['servicePrincipalNames'][0]}
 
         # Convert the roles into ids (We could have more roles defined in the app than we need.)
         for appRole in app_info['appRoles']:

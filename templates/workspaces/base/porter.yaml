@@ -1,6 +1,6 @@
 ---
 name: tre-workspace-base
-version: 0.2.5
+version: 0.2.10
 description: "A base Azure TRE workspace"
 registry: azuretre
 
@@ -64,6 +64,10 @@ parameters:
   - name: client_id
     type: string
     description: "The client id of the workspace in the identity provider."
+  - name: scope_id
+    type: string
+    default: ""
+    description: "The Service Principal Name or identifierUri (e.g. api://GUID"
   - name: sp_id
     type: string
     default: ""
@@ -91,6 +95,11 @@ outputs:
   - name: client_id
     type: string
     default: "{{ bundle.parameters.client_id }}"
+    applyTo:
+      - install
+  - name: scope_id
+    type: string
+    default: "{{ bundle.parameters.scope_id }}"
     applyTo:
       - install
   - name: sp_id
@@ -123,6 +132,7 @@ install:
         auth_client_secret: "{{ bundle.credentials.auth_client_secret }}"
         auth_tenant_id: "{{ bundle.credentials.auth_tenant_id }}"
         client_id: "{{ bundle.parameters.client_id }}"
+        scope_id: "{{ bundle.parameters.scope_id }}"
         sp_id: "{{ bundle.parameters.sp_id }}"
         app_role_id_workspace_owner: "{{ bundle.parameters.app_role_id_workspace_owner }}"
         app_role_id_workspace_researcher: "{{ bundle.parameters.app_role_id_workspace_researcher }}"
@@ -137,6 +147,7 @@ install:
         - name: app_role_id_workspace_owner
         - name: app_role_id_workspace_researcher
         - name: client_id
+        - name: scope_id
         - name: sp_id
 
 upgrade:

@@ -10,6 +10,10 @@ output "client_id" {
   value = azuread_application.workspace.application_id
 }
 
+output "scope_id" {
+  value = random_uuid.scope_id.result
+}
+
 output "sp_id" {
   value = azuread_service_principal.workspace.object_id
 }

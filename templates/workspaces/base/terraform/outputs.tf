@@ -17,3 +17,7 @@ output "client_id" {
 output "sp_id" {
   value = var.register_aad_application ? module.aad[0].sp_id : var.sp_id
 }
+
+output "scope_id" {
+  value = var.register_aad_application ? module.aad[0].scope_id : var.scope_id
+}

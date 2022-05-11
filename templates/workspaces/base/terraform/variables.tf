@@ -32,7 +32,7 @@ variable "deploy_app_service_plan" {
 
 variable "app_service_plan_sku" {
   type        = string
-  default     = "P1v3"
+  default     = "P1v2"
   description = "App Service Plan SKU"
 }
 
@@ -88,6 +88,11 @@ variable "sp_id" {
   type        = string
   default     = ""
   description = "The Service Principal in the Identity provider to be able to get claims, this is passed in so that we may return it as an output."
+}
+variable "scope_id" {
+  type        = string
+  default     = ""
+  description = "The Service Principal Name or Identifier URI, this is passed in so that we may return it as an output."
 }
 
 locals {

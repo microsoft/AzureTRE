@@ -1,12 +1,13 @@
 data "azuread_client_config" "current" {}
 
+resource "random_uuid" "scope_id" {}
 resource "random_uuid" "oauth2_user_impersonation_id" {}
 resource "random_uuid" "app_role_workspace_owner_id" {}
 resource "random_uuid" "app_role_workspace_researcher_id" {}
 
 resource "azuread_application" "workspace" {
   display_name    = var.workspace_resource_name_suffix
-  identifier_uris = ["api://${var.workspace_resource_name_suffix}"]
+  identifier_uris = ["api://${random_uuid.scope_id.result}"]
   owners          = [data.azuread_client_config.current.object_id]
 
   api {
