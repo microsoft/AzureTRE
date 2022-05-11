@@ -9,7 +9,7 @@ variable "tre_id" {
 
 variable "location" {
   type        = string
-  description = "Azure region for deployment of core TRE services"
+  description = "Azure region for deployment of core TRE services - CHANGE TO IGNORE"
 }
 
 variable "acr_name" {
