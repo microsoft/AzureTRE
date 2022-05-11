@@ -15,10 +15,13 @@ export const SecuredByRole: React.FunctionComponent<SecuredByRoleProps> = (props
 
   const userRoles = props.workspaceAuth ? workspaceRoles.roles : rootRoles.roles;
 
-  let intersection = props.allowedRoles.filter(x => userRoles.includes(x));
+  if (userRoles && userRoles.length > 0)
+  {
+    let intersection = props.allowedRoles.filter(x => userRoles.includes(x));
 
-  if (intersection.length > 0){
-    return props.element
+    if (intersection.length > 0){
+      return props.element
+    }
   }
   
   return (<></>);

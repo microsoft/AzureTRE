@@ -4,13 +4,14 @@ import './App.scss';
 import { TopNav } from './components/shared/TopNav';
 import { Footer } from './components/shared/Footer';
 import { Routes, Route } from 'react-router-dom';
-import { HomeLayout } from './components/root/HomeLayout';
+import { RootLayout } from './components/root/RootLayout';
 import { WorkspaceProvider } from './components/workspaces/WorkspaceProvider';
 import { AuthenticatedTemplate, useMsalAuthentication } from '@azure/msal-react';
 import { InteractionType } from '@azure/msal-browser';
 import { Workspace } from './models/workspace';
 import { RootRolesContext } from './components/shared/RootRolesContext';
 import { WorkspaceRolesContext } from './components/workspaces/WorkspaceRolesContext';
+import { GenericErrorBoundary } from './components/shared/GenericErrorBoundary';
 
 // TODO:
 // - handle auth token timeouts that require user intervention
@@ -28,14 +29,16 @@ export const App: React.FunctionComponent = () => {
             <TopNav />
           </Stack.Item>
           <Stack.Item grow={100} className='tre-body'>
+          <GenericErrorBoundary>
             <Routes>
-              <Route path="*" element={<HomeLayout selectWorkspace={(ws: Workspace) => setSelectedWorkspace(ws)} />} />
-              <Route path="/workspaces/:workspaceId//*" element={
-                <WorkspaceRolesContext.Provider value={{ roles: [] as Array<String> }}>
-                  <WorkspaceProvider workspace={selectedWorkspace} />
-                </WorkspaceRolesContext.Provider>
-              } />
+                <Route path="*" element={<RootLayout selectWorkspace={(ws: Workspace) => setSelectedWorkspace(ws)} />} />
+                <Route path="/workspaces/:workspaceId//*" element={
+                  <WorkspaceRolesContext.Provider value={{ roles: [] as Array<String> }}>
+                    <WorkspaceProvider workspace={selectedWorkspace} />
+                  </WorkspaceRolesContext.Provider>
+                } />
             </Routes>
+            </GenericErrorBoundary>
           </Stack.Item>
           <Stack.Item grow>
             <Footer />

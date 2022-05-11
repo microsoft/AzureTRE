@@ -65,6 +65,7 @@ export const useAuthApiCall = () => {
 
         // set the headers for auth + http method
         const opts: RequestInit = {
+            mode: "cors",
             headers: {
                 Authorization: `Bearer ${tokenResponse.accessToken}`
             },

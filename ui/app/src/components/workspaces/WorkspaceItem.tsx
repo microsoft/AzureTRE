@@ -6,7 +6,6 @@ import { SecuredByRole } from '../shared/SecuredByRole';
 import { ResourceDebug } from '../shared/ResourceDebug';
 import { WorkspaceRolesContext } from './WorkspaceRolesContext';
 
-
 // TODO:
 // - commands for managing workspace
 // - nicer display of key properties
@@ -23,6 +22,7 @@ export const WorkspaceItem: React.FunctionComponent<WorkspaceItemProps> = (props
       <h3>Roles:</h3>
       <ul>
         {
+          workspaceRoles.roles &&
           workspaceRoles.roles.map((role: String, i: number) => {
             return (
               <li key={i}>{role}</li>
