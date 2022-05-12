@@ -29,6 +29,10 @@ Now, go to "Run and Debug" panel in VSCode, and select Resource Processor.
 !!! info
     If you get an error similar to `Environment variable 'ARM_CLIENT_ID' is not set correctly`, make sure you have ran `make setup-local-debugging`
 
+You can use an API instance deployed in your environment to create deployment requests, and debug your locally running Resource Processor.
+
+For more information on how to use API, refer to [API documentation](./api.md#using-swagger-ui).
+
 ## Cloud instance
 
 On Azure Portal, find an Virtual VM scale set with a name `vmss-rp-porter-${TRE_ID}`.
@@ -112,7 +116,7 @@ Azure TRE needed a solution for implementing and deploying workspaces and worksp
 Porter meets all these requirements well. Porter packages cloud application into a versioned, self-contained Docker container called a Porter bundle.
 
 <!-- markdownlint-disable MD013 -->
-CNAB spec defines actions that Porter [implements](https://porter.sh/author-bundles/#bundle-actions): **install, upgrade and uninstall**. The developer has practically complete freedom on how to implement logic for these actions. The deployment pipeline definition is created in YAML - something that is very familiar to anyone that have experience in creating continuous integration/deployment (CI/CD) pipelines with [GitHub Actions](https://github.com/features/actions) (workflows) or in [Azure DevOps](https://azure.microsoft.com/services/devops/pipelines/). The YAML file is called [Porter manifest](https://porter.sh/author-bundles/) and in additon to the actions, it contains the name, version, description of the bundle and defines the input parameters, possible credentials and output.
+CNAB spec defines actions that Porter [implements](https://porter.sh/author-bundles/#bundle-actions): **install, upgrade and uninstall**. The developer has practically complete freedom on how to implement logic for these actions. The deployment pipeline definition is created in YAML. The YAML file is called [Porter manifest](https://porter.sh/author-bundles/) and in additon to the actions, it contains the name, version, description of the bundle and defines the input parameters, possible credentials and output.
 
 Furthermore, Porter provides a set of [mixins](https://porter.sh/mixins/) - analogous to the concrete actions in GitHub workflows and tasks in Azure DevOps pipelines - which simplify and reduce the development cost when implementing deployment logic. For example, Terraform mixin installs the required tools and provides a clean step in the pipeline to execute Terraform deployments. [Exec mixin](https://porter.sh/mixins/exec/) allows running any command or script; especially useful, if no suitable mixin for a specific technology is available. Implementing custom mixins is possible too.
 <!-- markdownlint-enable MD013 -->
@@ -121,3 +125,11 @@ Furthermore, Porter provides a set of [mixins](https://porter.sh/mixins/) - anal
 
 Resource Processor uses [Porter Azure plugin](https://github.com/getporter/azure-plugins) to store Porter data in TRE management storage account. The storage container, named `porter`, is created during the bootstrapping phase of TRE deployment. The `/resource_processor/run.sh` script generates a `config.toml` file in Porter home folder to enable the Azure plugin when the image is started.
 
+TODO: how to find the porter table
+
+### Porter bundle inputs
+
+When Porter runs bundle actions, it passes input parameters. Full set of inputs that Porter passes can be found in [config.py](../../resource_processor/shared/config.py).
+
+!!! info
+    Note that Resource Processor does not pass any location-related attributes when running bundle actions. Instead, a `location` attribute is passed from the API. This is so that different TRE resources could be potentially deployed to different regions.
