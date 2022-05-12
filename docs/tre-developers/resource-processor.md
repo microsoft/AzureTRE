@@ -2,76 +2,122 @@
 
 Resource Processor is the Azure TRE component automating [Porter](https://porter.sh) bundle deployments. It hosts Porter and its dependencies.
 
-## Build and run the container
+This page is a guide for a developer looking to make a change to the Resource Processor and debug it.
 
-1. Navigate to `resource_processor/` folder and run `docker build` command:
+## Local debugging
 
-    ```cmd
-    docker build -t resource-processor-vm-porter -f ./vmss_porter/Dockerfile .
-    ```
+To set up local debugging, first run (if you haven't done so already):
 
-1. Run the image:
-
-    ```cmd
-    docker run -it -v /var/run/docker.sock:/var/run/docker.sock --env-file .env resource-processor-vm-porter
-    ```
-
-## Local development
-
-To work locally in Visual Studio Code within the Dev Container you can use the `Resource Processor` debug profile to run the app.
-
-Before using this, you'll need to run `make setup-local-debugging` to whitelist your local IP against your resources and create a Service Principal for the Resource Processor to access and create Service Bus messages and deploy resources.
-
-Once the above is set up you can simulate receiving messages from Service Bus by going to Service Bus explorer on the portal and using a message payload for `SERVICE_BUS_RESOURCE_REQUEST_QUEUE` as follows:
-
-```json
-{"action": "install", "id": "a8911125-50b4-491b-9e7c-ed8ff42220f9", "name": "tre-workspace-base", "version": "0.1.0", "parameters": {"azure_location": "westeurope", "workspace_id": "20f9", "tre_id": "myfavtre", "address_space": "192.168.3.0/24"}}
+```cmd
+az login
+make setup-local-debugging
 ```
 
-This will trigger receiving of messages, and you can freely debug the code by setting breakpoints as desired.
+This will allowlist your local IP against Azure resources and create a Service Principal for the Resource Processor.
 
-> If you get a credential error when trying to connect to Service Bus, make sure you've authenticated in the AZ CLI first as it uses your local credentials.
+Next, disable the existing Resource Processor from running in your deployment. The easiest way to do this is to stop the VM scale set:
 
-## Porter Azure plugin
+[![Stop RP VM scale set](../assets/rp_stop_vm_scale_set.png)](../assets/rp_stop_vm_scale_set.png)
+
+Now, go to "Run and Debug" panel in VSCode, and select Resource Processor.
+
+[![VSCode RP debugging screenshot](../assets/rp_local_debugging_vscode_screenshot.png)](../assets/rp_local_debugging_vscode_screenshot.png)
+
+!!! info
+    If you get a credential error when trying to connect to Service Bus, make sure you've authenticated in the AZ CLI first as it uses your local credentials.
+
+!!! info
+    If you get an error similar to `Environment variable 'ARM_CLIENT_ID' is not set correctly`, make sure you have ran `make setup-local-debugging`
+
+## Cloud instance
+
+On Azure Portal, find an Virtual VM scale set with a name `vmss-rp-porter-${TRE_ID}`.
+
+### Resource Processor logs in LogAnalytics
+
+To find logs in LogAnalytics, go to your resource group, then to LogAnalytics instance, which is named like `log-${TRE_ID}`.
+
+There, you can run a query like
+
+```cmd
+AppTraces 
+| where AppRoleName == "runner.py"
+| order by TimeGenerated desc 
+```
+
+### SSH-ing to the instance
+
+The processor runs in a VNET, and you cannot connect to it directly.
+To SSH to this instance, use Bastion.
+
+1. Find a keyvault with a name `kv-${TRE_ID}` in your resource group.
+1. Add yourself to the Access Policy of this keyvault with a permission to read secrets:
+
+  [![Keyvault access policy](../assets/rp_kv_access_policy.png)](../assets/rp_kv_access_policy.png)
+
+1. Copy a secret named `resource-processor-vmss-password`
+
+  ![VMSS Password](../assets/vmss_password.png)
+
+1. Connect to the instance using Bastion. Use the username `adminuser` and the password you just copied.
+
+  ![Bastion](../assets/bastion.png "Bastion")
+
+### Getting container logs
+
+1. SSH into the Resource Processor VM as described above
+1. Check the status of the container using `sudo docker ps`
+
+  If you see nothing (and the container was pulled) then the processor has either not started yet or it has crashed.
+
+1. Get the logs from the container using `docker logs <container_id>` command.
+
+### Starting container manually
+
+1. Find the **runner_image:tag** by running ``docker ps``
+1. Execute the following command from the root (/) of the file system
+
+  ```cmd
+  docker run -v /var/run/docker.sock:/var/run/docker.sock --env-file .env --name resource_processor_vmss_porter_debug [runner_image:tag]
+  ```
+
+!!! info
+    If you start a container manually you will probably want to install software, for example, an editor. However, the firewall blocks all ingress traffic, so you cannot run `sudo apt update`. You need to add an override rule in the firewall to allow the traffic.
+
+!!! caution
+    Remember to remove this rule when debugging is done.
+
+## Troubleshooting
+
+### No container logs on the instance
+
+1. If you don't see container logs, you should check the status of **cloud-init** which is used to bootstrap the machine with docker and start the processor. Log files for cloud init are:
+
+   - `/var/log/cloud-init.log`
+   - `/var/log/cloud-init-output.log`
+
+   If the Docker container is pulled as shown in logs then the resource processor should start.
+1. Check the status of all Docker processes using `docker ps -a` which should show you if the container terminated prematurely.
+
+## Implementation details
+
+### Porter
+
+Azure TRE needed a solution for implementing and deploying workspaces and workspace services with the following properties:
+
+* Means for packaging and versioning workspaces and workspace services
+* Providing unified structure for deployment definitions (scripts, pipelines) so that the process can be easily automated
+* Solid developer experience - easy to use and learn
+
+Porter meets all these requirements well. Porter packages cloud application into a versioned, self-contained Docker container called a Porter bundle.
+
+<!-- markdownlint-disable MD013 -->
+CNAB spec defines actions that Porter [implements](https://porter.sh/author-bundles/#bundle-actions): **install, upgrade and uninstall**. The developer has practically complete freedom on how to implement logic for these actions. The deployment pipeline definition is created in YAML - something that is very familiar to anyone that have experience in creating continuous integration/deployment (CI/CD) pipelines with [GitHub Actions](https://github.com/features/actions) (workflows) or in [Azure DevOps](https://azure.microsoft.com/services/devops/pipelines/). The YAML file is called [Porter manifest](https://porter.sh/author-bundles/) and in additon to the actions, it contains the name, version, description of the bundle and defines the input parameters, possible credentials and output.
+
+Furthermore, Porter provides a set of [mixins](https://porter.sh/mixins/) - analogous to the concrete actions in GitHub workflows and tasks in Azure DevOps pipelines - which simplify and reduce the development cost when implementing deployment logic. For example, Terraform mixin installs the required tools and provides a clean step in the pipeline to execute Terraform deployments. [Exec mixin](https://porter.sh/mixins/exec/) allows running any command or script; especially useful, if no suitable mixin for a specific technology is available. Implementing custom mixins is possible too.
+<!-- markdownlint-enable MD013 -->
+
+### Porter Azure plugin
 
 Resource Processor uses [Porter Azure plugin](https://github.com/getporter/azure-plugins) to store Porter data in TRE management storage account. The storage container, named `porter`, is created during the bootstrapping phase of TRE deployment. The `/resource_processor/run.sh` script generates a `config.toml` file in Porter home folder to enable the Azure plugin when the image is started.
 
-## Debugging the deployed processor on Azure
-
-See the [debugging and troubleshooting guide](../tre-admins/troubleshooting-guide.md).
-
-## Network requirements
-
-The Resource Processor needs to access the following resources outside the Azure TRE VNET via explicit allowed [Service Tags](https://docs.microsoft.com/en-us/azure/virtual-network/service-tags-overview) or URLs.
-
-| Service Tag | Justification |
-| --- | --- |
-| AzureActiveDirectory | Authenticate with the User Assigned identity to access Azure Resource Manager and Azure Service Bus. |
-| AzureResourceManager | Access the Azure control plane to deploy and manage Azure resources. |
-| AzureContainerRegistry | Pull the Resource Processor container image, as it is located in Azure Container Registry.  |
-| Storage | The Porter bundles stores state between executions in an Azure Storage Account. |
-| AzureKeyVault | The Porter bundles might need to create an Azure Key Vault inside of the Workspace. To verify the creation, before a private link connection is created, Terraform needs to reach Key Vault over public network |
-
-To install Docker, Porter and related packages ([script](/templates/core/terraform/resource_processor/vmss_porter/cloud-config.yaml)) on the Resource Processor, the VM must have access to download from the following URLs:
-
-* packages.microsoft.com
-* keyserver.ubuntu.com
-* api.snapcraft.io
-* azure.archive.ubuntu.com
-* security.ubuntu.com
-* entropy.ubuntu.com
-* download.docker.com
-* registry-1.docker.io
-* auth.docker.io
-* registry.terraform.io
-* releases.hashicorp.com
-
-## Challenges
-
-The notable challenges that needed to be solved included Porter automation, namely hosting environment, managing workspace (deployment) states and concurrency.
-
-<!-- markdownlint-disable MD013 -->
-Hosting the Porter runner in a container is an expected design idea and appealing due to its cost effectiveness among other things. However, that would create a nested Docker environment, "Docker in Docker". Although this is possible using [Azure CNAB Driver](https://github.com/deislabs/cnab-azure-driver), the solution is less reliable and troubleshooting becomes difficult; due to the environment's ephemeral nature, there is not much in addition to the [Application Insights](https://docs.microsoft.com/azure/azure-monitor/app/app-insights-overview) logs the developer can rely on. In contrast, the developer can always log in to the VM and see what's going on and run tests manually to reproduce bugs.
-
-Porter can keep tap on the installations, but Azure TRE needs a state record that is more tangible. It is instead the responsibility of the API to maintain the state of deployments in configuration store. The state is updated when a user deploys, modifies or deletes workspaces and based on the deployment status messages sent by Resource Processor. All possible states of a workspace or a workspace service are defined by the API in [`resource.py` file](https://github.com/microsoft/AzureTRE/blob/main/api_app/models/domain/resource.py).
-<!-- markdownlint-enable MD013 -->

@@ -65,6 +65,9 @@ async def receive_message(service_bus_client):
 
                         try:
                             message = json.loads(str(msg))
+                            # TODO
+                            message['operationId'] = "333"
+                            message['stepId'] = "444"
                             logger_adapter.info(f"Message received for resource_id={message['id']}, operation_id={message['operationId']}, step_id={message['stepId']}")
                             message_logger_adapter = get_message_id_logger(message['operationId'])  # correlate messages per operation
                             result = await invoke_porter_action(message, service_bus_client, message_logger_adapter)
