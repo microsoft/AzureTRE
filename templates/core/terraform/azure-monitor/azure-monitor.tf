@@ -11,13 +11,13 @@ resource "azurerm_log_analytics_workspace" "core" {
 # Storage account for Application Insights
 # Because Private Link is enabled on Application Performance Management (APM), Bring Your Own Storage (BYOS) approach is required
 resource "azurerm_storage_account" "app_insights" {
-  name                     = lower(replace("stappinsights${var.tre_id}", "-", ""))
-  resource_group_name      = var.resource_group_name
-  location                 = var.location
-  account_kind             = "StorageV2"
-  account_tier             = "Standard"
-  account_replication_type = "LRS"
-  allow_blob_public_access = false
+  name                            = lower(replace("stappinsights${var.tre_id}", "-", ""))
+  resource_group_name             = var.resource_group_name
+  location                        = var.location
+  account_kind                    = "StorageV2"
+  account_tier                    = "Standard"
+  account_replication_type        = "LRS"
+  allow_nested_items_to_be_public = false
 
   lifecycle { ignore_changes = [tags] }
 }

@@ -1,14 +1,14 @@
 data "azurerm_client_config" "deployer" {}
 
 resource "azurerm_storage_account" "staticweb" {
-  name                      = local.staticweb_storage_name
-  resource_group_name       = var.resource_group_name
-  location                  = var.location
-  account_kind              = "StorageV2"
-  account_tier              = "Standard"
-  account_replication_type  = "LRS"
-  enable_https_traffic_only = true
-  allow_blob_public_access  = false
+  name                            = local.staticweb_storage_name
+  resource_group_name             = var.resource_group_name
+  location                        = var.location
+  account_kind                    = "StorageV2"
+  account_tier                    = "Standard"
+  account_replication_type        = "LRS"
+  enable_https_traffic_only       = true
+  allow_nested_items_to_be_public = false
 
   tags = {
     tre_id = var.tre_id
