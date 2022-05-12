@@ -89,6 +89,45 @@ def sample_resource_template() -> ResourceTemplate:
                             actions=[]).dict(exclude_none=True)
 
 
+def sample_nested_template() -> ResourceTemplate:
+    return ResourceTemplate(
+        id="123",
+        name="template1",
+        description="description",
+        version="0.1.0",
+        resourceType=ResourceType.Workspace,
+        current=True,
+        required=[],
+        properties={
+            'rules': {
+                'type': 'array',
+                'items': {
+                    'type': 'object',
+                    'required': [],
+                    'properties': {
+                        'protocol': {
+                            'type': 'object',
+                            'required': ['port'],
+                            'items': {
+                                'type': 'object',
+                                'properties': {
+                                    'port': {
+                                        'type': 'string'
+                                    },
+                                    'method': {
+                                        'type': 'string'
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        customActions=[]
+    ).dict(exclude_none=True)
+
+
 @patch("db.repositories.resources.ResourceRepository._get_enriched_template")
 @patch("db.repositories.resources.ResourceRepository._validate_resource_parameters", return_value=None)
 def test_validate_input_against_template_returns_template_version_if_template_is_valid(_, enriched_template_mock, resource_repo, workspace_input):
@@ -139,6 +178,42 @@ def test_validate_input_against_template_raises_value_error_if_payload_is_invali
 
     with pytest.raises(ValidationError):
         resource_repo.validate_input_against_template("template1", workspace_input, ResourceType.Workspace)
+
+
+@patch("db.repositories.resources.ResourceRepository._get_enriched_template")
+def test_validate_input_against_nested_template_missing_nested_prop(enriched_template_mock, resource_repo):
+    enriched_template_mock.return_value = sample_nested_template()
+    # missing port
+    nested_input = WorkspaceInCreate(templateName="template1")
+    nested_input.properties['rules'] = [
+        {
+            'protocol': {
+                'method': 'post'
+            }
+        }
+    ]
+
+    with pytest.raises(ValidationError):
+        resource_repo.validate_input_against_template("template1", nested_input, ResourceType.Workspace)
+
+
+@patch("db.repositories.resources.ResourceRepository._get_enriched_template")
+def test_validate_input_against_nested_template_valid(enriched_template_mock, resource_repo):
+    enriched_template_mock.return_value = sample_nested_template()
+
+    # has required props, nested
+    nested_input = WorkspaceInCreate(templateName="template1")
+    nested_input.properties['rules'] = [
+        {
+            'protocol': {
+                'method': 'post',
+                'port': '1234'
+            }
+        }
+    ]
+
+    resp_template = resource_repo.validate_input_against_template("template1", nested_input, ResourceType.Workspace)
+    assert resp_template is not None
 
 
 @patch("db.repositories.resources.ResourceTemplateRepository.get_current_template")
