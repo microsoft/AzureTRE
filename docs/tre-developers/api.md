@@ -2,202 +2,9 @@
 
 The TRE API is a service that users can interact with to request changes to workspaces e.g., to create, update, delete workspaces and workspace services inside each workspace.
 
-## Prerequisites
+This page is a guide for a developer looking to make a change to the API and debug it.
 
-### Tools
-
-* [Python](https://www.python.org/downloads/) >= 3.8 with [pip](https://packaging.python.org/tutorials/installing-packages/#ensure-you-can-run-pip-from-the-command-line)
-
-### Azure resources
-
-* [Application Insights](https://docs.microsoft.com/azure/azure-monitor/app/app-insights-overview) - Not required for testing locally
-* [Azure Cosmos DB](https://docs.microsoft.com/azure/cosmos-db/introduction) (SQL)
-  * You can use the [Cosmos DB Emulator](https://docs.microsoft.com/azure/cosmos-db/local-emulator?tabs=cli%2Cssl-netstd21) for testing locally
-* [Azure Service Bus](https://docs.microsoft.com/azure/service-bus-messaging/service-bus-messaging-overview)
-* Service principal for the API to access Azure services such as Azure Service Bus
-* AAD applications (for the API and Swagger UI) - see [Authentication & authorization](../tre-admins/auth.md) for more information
-
-#### Creating resources (Bash)
-
-The following snippets can be used to create resources for local testing with Bash shell.
-
-Sign in with Azure CLI:
-
-```cmd
-az login
-az account list
-az account set --subscription <subscription ID>
-```
-
-Provision Azure Service Bus:
-
-```bash
-RESOURCE_GROUP=<resource group name>
-LOCATION=westeurope
-SERVICE_BUS_NAMESPACE=<service bus namespace name>
-SERVICE_BUS_RESOURCE_REQUEST_QUEUE=workspacequeue
-SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE=deploymentstatus
-
-az servicebus namespace create --resource-group $RESOURCE_GROUP --name $SERVICE_BUS_NAMESPACE --location $LOCATION
-az servicebus queue create --resource-group $RESOURCE_GROUP --namespace-name $SERVICE_BUS_NAMESPACE --name $SERVICE_BUS_RESOURCE_REQUEST_QUEUE
-az servicebus queue create --resource-group $RESOURCE_GROUP --namespace-name $SERVICE_BUS_NAMESPACE --name $SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE
-```
-
-Provision Azure Cosmos DB:
-
-```bash
-COSMOS_NAME=<cosmos_name>
-COSMOS_DB_NAME=<database_name>
-
-az cosmosdb create -n $COSMOS_NAME -g $RESOURCE_GROUP --locations regionName=$LOCATION
-az cosmosdb sql database create -a $COSMOS_NAME -g $RESOURCE_GROUP -n $COSMOS_DB_NAME
-```
-
-[Create a service principal](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli) and assign it permissions to access Service Bus and Cosmos:
-
-```bash
-az ad sp create-for-rbac --name <service principal name>
-
-SERVICE_PRINCIPAL_ID=<the AppId of the Service Principal>
-SUBSCRIPTION_ID=$(az account show --query id --output tsv)
-
-az role assignment create \
-    --role "Azure Service Bus Data Sender" \
-    --assignee $SERVICE_PRINCIPAL_ID \
-    --scope /subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.ServiceBus/namespaces/$SERVICE_BUS_NAMESPACE
-
-az role assignment create \
-    --role "Azure Service Bus Data Receiver" \
-    --assignee $SERVICE_PRINCIPAL_ID \
-    --scope /subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.ServiceBus/namespaces/$SERVICE_BUS_NAMESPACE
-
-az role assignment create \
-    --role "Contributor" \
-    --assignee $SERVICE_PRINCIPAL_ID \
-    --scope /subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.DocumentDB/databaseAccounts/$COSMOS_NAME
-```
-
-!!! caution
-    Keep in mind that Azure role assignments may take up to five minutes to propagate.
-
-## Configuration
-
-### General
-
-| <div style="width: 340px">Environment variable name</div> | Description |
-| ------------------------- | ----------- |
-| `DEBUG` | When set to `True`, the debugging information for unhandled exceptions is shown in the Swagger UI and logging is more verbose. |
-| `TRE_ID` | The Azure TRE instance name - used for deployment of resources (can be set to anything when debugging locally). Example value: `mytre-dev-3142` |
-| `RESOURCE_LOCATION` | The location (region) to deploy resources (e.g., workspaces) to. This can be set to anything as the deployment service is not called locally. Example value: `westeurope` |
-
-### Authentication and Authorization
-
-The TRE API depends on [TRE API](../tre-admins/auth.md#tre-api) and [TRE Swagger UI](../tre-admins/auth.md#tre-swagger-ui) app registrations. The API requires the environment variables listed in the table below to be present. See [Authentication and authorization](../tre-admins/auth.md) for more information.
-
-| <div style="width: 340px">Environment variable name</div> | Description |
-| ------------------------- | ----------- |
-| `AAD_TENANT_ID` | The tenant ID of the Azure AD. |
-| `API_CLIENT_ID` | The application (client) ID of the [TRE API](../tre-admins/auth.md#tre-api) service principal. |
-| `API_CLIENT_SECRET` | The application password (client secret) of the [TRE API](../tre-admins/auth.md#tre-api) service principal. |
-| `SWAGGER_UI_CLIENT_ID` | The application (client) ID of the [TRE Swagger UI](../tre-admins/auth.md#tre-swagger-ui) service principal. |
-
-See also: [Auth in code](#auth-in-code)
-
-### State store
-
-| <div style="width: 340px">Environment variable name</div> | Description |
-| ------------------------- | ----------- |
-| `STATE_STORE_ENDPOINT` | The Cosmos DB endpoint. Use `localhost` with an emulator. Example value: `https://localhost:8081` |
-| `STATE_STORE_KEY` | The Cosmos DB key. Use only with localhost emulator. |
-| `COSMOSDB_ACCOUNT_NAME` | The Cosmos DB account name. |
-| `SUBSCRIPTION_ID` | The Azure Subscription ID where Cosmos DB is located. |
-| `RESOURCE_GROUP_NAME` | The Azure Resource Group name where Cosmos DB is located. |
-
-### Service Bus
-
-| <div style="width: 340px">Environment variable name</div> | Description |
-| ------------------------- | ----------- |
-| `SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE` | Example value: `<your namespace>.servicebus.windows.net` |
-| `SERVICE_BUS_RESOURCE_REQUEST_QUEUE` | The queue for resource request messages sent by the API. Example value: `workspacequeue` |
-| `SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE` | The queue for deployment status update messages sent by [Resource Processor](resource-processor.md) and received by the API. Example value: `deploymentstatus` |
-
-### Logging and monitoring
-
-| <div style="width: 340px">Environment variable name</div> | Description |
-| ------------------------- | ----------- |
-| `APPLICATIONINSIGHTS_CONNECTION_STRING` | Application Insights connection string - can be left blank when debugging locally. |
-| `APPINSIGHTS_INSTRUMENTATIONKEY` | Application Insights instrumentation key - can be left blank when debugging locally. |
-
-### Service principal for API process identity
-
-| <div style="width: 340px">Environment variable name</div> | Description |
-| ------------------------- | ----------- |
-| `AZURE_SUBSCRIPTION_ID` | Azure Subscription ID |
-| `AZURE_TENANT_ID` | Azure Tenant ID |
-| `AZURE_CLIENT_ID` | API Service Principal ID |
-| `AZURE_CLIENT_SECRET` | API Service Principal Secret |
-
-## Running the API
-
-### Develop and run locally
-
-1. Install python dependencies (in a virtual environment)
-
-    ```cmd
-    virtualenv venv
-    venv/Scripts/activate
-    pip install -r requirements.txt
-    ```
-
-1. Copy `.env.tmpl` in the **api_app** folder to `.env` and configure the variables. Notice: You might also need to export those variables to your env (`export VAR_NAME=VALUE` for all vars in the .env file).
-1. Start the web API
-
-    ```cmd
-    cd api_app
-    uvicorn main:app --reload
-    ```
-
-The API endpoints documentation and the Swagger UI will be available at [https://localhost:8000/api/docs](https://localhost:8000/api/docs).
-
-### Develop and run in a dev container
-
-1. Open the project in Visual Studio Code in the DevContainer
-1. Copy `.env.sample` in the **api_app** folder to `.env` and configure the variables
-1. Start the web API
-
-    ```cmd
-    cd api_app
-    pip install -r requirements.txt
-    pip install -r requirements-dev.txt
-    uvicorn main:app --reload
-    ```
-
-The API endpoints documentation and the Swagger UI will be available at [https://localhost:8000/api/docs](https://localhost:8000/api/docs).
-
-### Deploy with Docker
-
-You must have Docker and Docker Compose tools installed, and an Azure Cosmos DB configured in `.env` as described above.
-
-Then run:
-
-```cmd
-cd api_app
-docker compose up -d app
-```
-
-The API will be available at [https://localhost:8000/api](https://localhost:8000/api) in your browser.
-
-## Unit tests
-
-The unit tests are written with pytest and located in folder `/api_app/tests_ma/`.
-
-Run all unit tests with the following command in the root folder of the repository:
-
-```cmd
-pytest --ignore=e2e_tests
-```
-
-## API application folder structure
+## Repository folder structure
 
 ```text
 api_app
@@ -218,58 +25,181 @@ api_app
 │
 ├── resources        - Strings that are used e.g., in web responses
 │
-├── services         - Logic that is not only CRUD related
+├── services         - Logic that is not only CRUD related (authentication, logging, tracing, etc)
 │
 ├── tests_ma         - Unit tests
 │
 └── main.py          - FastAPI application creation and configuration
 ```
 
-## Auth in code
+## Unit tests
 
-The bulk of the authentication and authorization (A&A) related code of the API is located in `/api_app/services/` folder. The A&A code has an abstract base for enabling the possibility to add additional A&A service providers. The Azure Active Directory (AAD) specific implementation is derived as follows:
+The unit tests are written with pytest and located in folder `/api_app/tests_ma/`.
 
-```plaintext
-AccessService (access_service.py) <─── AADAccessService (api_app/services/aad_authentication.py)
+Run all unit tests with the following command in the root folder of the repository:
 
-fastapi.security.OAuth2AuthorizationCodeBearer <─── AccessService (access_service.py)
+```cmd
+pytest --ignore=e2e_tests
 ```
 
-All the sensitive routes (API calls that can query sensitive data or modify resources) in the TRE API depend on having a "current user" authenticated. E.g., in `/api_app/api/routes/workspaces.py`:
+Please refer to a different [guide on running E2E tests locally](end-to-end-tests.md).
 
-```python
-router = APIRouter(dependencies=[Depends(get_current_user)])
+## Local debugging
+
+To set up local debugging, first run (if you haven't done so already)
+
+```cmd
+az login
+make setup-local-debugging
 ```
 
-Where `APIRouter` is part of the [FastAPI](https://fastapi.tiangolo.com/).
+Next, go to "Run and Debug" panel in VSCode, and select TRE API.
 
-The user details, once authenticated, are stored as an instance of the custom `User` class.
+[![VSCode API debugging screenshot](../assets/api_local_debugging_vscode_screenshot.png)](../assets/api_local_debugging_vscode_screenshot.png)
 
-## Auth in workspace requests
+You will see a log similar to this:
 
-Some workspace routes require `authConfig` field in the request body. The AAD specific implementation expects a dictionary inside `data` field to contain the application (client) ID of the [app registration associated with workspace](../tre-admins/auth.md#workspaces):
+[![Local API debugging screenshot](../assets/api_local_debugging_log.png)](../assets/api_local_debugging_log.png)
+
+Now, you should be able to open Swagger UI for your local instance on [http://localhost:8000/api/docs](http://localhost:8000/api/docs).
+
+## Cloud instance
+
+On Azure Portal, find an App Service instance named `app-${TRE_ID}`.
+
+### API logs using deployment center
+
+Check that the version you are debugging/troubleshooting is the same one deployed on the App Service.
+
+You can check this in Deployment Center, or follow the logs as generated by the container in the logs tabs.
+
+![Deployment Center](../assets/api_deployment_center.png)
+
+### API logs using in App Insights
+
+You can also access logs in App Insights or LogAnalytics.
+
+To find logs in LogAnalytics, go to your resource group, then to LogAnalytics instance, which is named like `log-${TRE_ID}`.
+
+There, you can run a query like
+
+```cmd
+AppTraces 
+| where AppRoleName == "uvicorn"
+| order by TimeGenerated desc 
+```
+
+### Deploying a cloud instance
+
+To deploy a new version of the API to your TRE deployment, do this:
+
+1. Update the version in `api_app/_version.py`
+
+2. Run
+
+```cmd
+make build-and-push-api
+make deploy-core
+```
+
+### Enabling DEBUG mode on the API
+
+For security, the API is by default configured to not show detailed error messages and stack trace when an error occurs.
+
+You can enable debugging via one of the two ways:
+
+1. Set `DEBUG=true` in `templates/core/.env` file (see [])
+
+To enable debugging on an already running instance:
+
+1. Go to App Service for the API and select **Settings > Configuration**.
+1. Click **New Application Setting**.
+1. in the new dialog box set **Name=DEBUG** and **Value=true**
+
+![API Debug True](../assets/api_debug_true.png)
+
+## Using Swagger UI
+
+Swagger UI lets you send requests to the API.
+
+To send a request, click on the row with the request, then `Try out`, then `Execute`. See screenshot:
+
+[![Swagger UI Send Request](../assets/api_swagger_send_request.png)](../assets/api_swagger_send_request.png)
+
+### Authorization
+
+Swagger UI is accessible under `https://${TRE_ID}.${LOCATION}.cloudapp.azure.com/api/docs`.
+
+To start using it, click Authorize button, then click Authorize (leave the field `client_secret` empty). See screenshot:
+
+[![Swagger UI Authorize](../assets/api_swagger_ui_authorize.png)](../assets/api_swagger_ui_authorize.png)
+
+
+If you see an error message saying something like:
+
+```text
+The redirect URI 'https://tanyagts8.westeurope.cloudapp.azure.com/api/docs/oauth2-redirect' specified in the request does not match the redirect URIs configured for the application '558602a8-764a-453c-8efa-4dc3ddd61570'.
+```
+
+Then you'll need to update the redirect URI (see below).
+
+Otherwise, after you sign in on Azure Portal, the lock icon on Authorize button should look "locked". Then you can start executing queries.
+
+See also [setup instructions](../tre-admins/setup-instructions/deploying-azure-tre/#validate-the-deployment).
+
+All workspace operations are executed using a different URL: `https://${TRE_ID}.${LOCATION}.cloudapp.azure.com/api/workspaces/${WORKSPACE_ID}/docs`. See also [instructions on installing base workspace](../tre-admins/setup-instructions/installing-base-workspace).
+
+### Updating the redirect URI
+
+If you get the following error:
+
+[![Swagger UI Auth Error](../assets/api_swagger_ui_auth_error.png)](../assets/api_swagger_ui_auth_error.png)
+
+You should run:
+
+```cmd
+make auth
+```
+
+Alternatively, in Azure Portal you can add the redirect URL to the App Registration.
+Under AAD, find App Registrations, and find the App Registration with the ID shown in the error message.
+There, go to Redirect URL and add the URL given to you by the error message (it will have a form of
+`https://${TRE_ID}.westeurope.cloudapp.azure.com/api/docs/oauth2-redirect`).
+
+## Troubleshooting
+
+### Wrong docker image version
+
+If this happens, you will see a log similar to this:
+
+`2022-05-10T05:34:48.844Z ERROR - DockerApiException: Docker API responded with status code=NotFound, response={"message":"manifest for tborisdevtreacr.azurecr.io/microsoft/azuretre/api:0.2.24 not found: manifest unknown: manifest tagged by \"0.2.24\" is not found"}`
+
+To fix, run `make build-and-push-api` from your branch and restart the instance.
+
+### Investigating /api/health response
+
+The endpoint `/api/health` tracks health of not only API, but other components of the system too, and can help to narrow down any problems with your deployment:
 
 ```json
 {
-  "authConfig": {
-    "provider": "AAD",
-    "data": {
-      "app_id": "c36f2ee3-8ec3-4431-9240-b1c0a0eb80a0"
+  "services": [
+    {
+      "service": "Cosmos DB",
+      "status": "OK",
+      "message": ""
+    },
+    {
+      "service": "Service Bus",
+      "status": "OK",
+      "message": ""
+    },
+    {
+      "service": "Resource Processor",
+      "status": "Not OK",
+      "message": "Resource Processor is not responding"
     }
-  }
+  ]
 }
 ```
 
-!!! caution
-    The app registration for a workspace is not created by the API. One needs to be present (created manually) before using the API to provision a new workspace.
-
-## Network requirements
-
-To be able to run the TRE API it needs to access the following resource outside the Azure TRE VNET via explicit allowed [Service Tags](https://docs.microsoft.com/en-us/azure/virtual-network/service-tags-overview) or URLs.
-
-| Service Tag / Destination | Justification |
-| --- | --- |
-| AzureActiveDirectory | Authenticate with the User Assigned identity to access Azure Cosmos DB and Azure Service Bus. |
-| AzureResourceManager | To perform control plane operations, such as create database in State Store. |
-| AzureContainerRegistry | Pull the TRE API container image, as it is located in Azure Container Registry.  |
-| graph.microsoft.com | Lookup role assignments for Azure Active Directory user, to only show TRE resources and user has access to. |
+In this case, next step is to look at logs of Resource Processor. See also [Resource Processor docs](resource-processor.md).
