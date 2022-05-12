@@ -43,12 +43,16 @@ def test_extract_workspace__returns_sp_id_and_roles(get_app_sp_graph_data_mock):
                 'appRoles': [
                     {'id': '1abc3', 'value': 'WorkspaceResearcher'},
                     {'id': '1abc4', 'value': 'WorkspaceOwner'},
+                ],
+                'servicePrincipalNames': [
+                    "api://tre_ws_1234"
                 ]
             }
         ]
     }
     expected_auth_info = {
         "sp_id": "12345",
+        "scope_id": "api://tre_ws_1234",
         "app_role_id_workspace_owner": "1abc4",
         "app_role_id_workspace_researcher": "1abc3"
     }

@@ -13,5 +13,3 @@ terraform init -reconfigure -input=false -backend=true \
     -backend-config="container_name=${TF_VAR_terraform_state_container_name}" \
     -backend-config="key=${TF_VAR_tre_id}-ws-${TF_VAR_tre_resource_id}"
 terraform apply -auto-approve
-
-terraform destroy -auto-approve
