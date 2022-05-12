@@ -4,6 +4,12 @@ Resource Processor is the Azure TRE component automating [Porter](https://porter
 
 This page is a guide for a developer looking to make a change to the Resource Processor and debug it.
 
+## Overview
+
+The logic in Resource Processor is written in Python. The Resource Processor implementation is located in [`resource_processor` folder](https://github.com/microsoft/AzureTRE/blob/main/resource_processor/) of the repository.
+
+Read [how a workspace is provisioned using Porter](./../azure-tre-overview/architecture.md#provisioning-a-workspace)
+
 ## Local debugging
 
 To set up local debugging, first run (if you haven't done so already):
