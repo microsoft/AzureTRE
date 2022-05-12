@@ -7,13 +7,13 @@ import { Workspace } from '../../models/workspace';
 import { WorkspaceService } from '../../models/workspaceService';
 import { HttpMethod, ResultType, useAuthApiCall } from '../../useAuthApiCall';
 import { UserResourceItem } from './UserResourceItem';
-import { WorkspaceBreadcrumb } from './WorkspaceBreadcrumb';
 import { WorkspaceHeader } from './WorkspaceHeader';
 import { WorkspaceItem } from './WorkspaceItem';
 import { WorkspaceLeftNav } from './WorkspaceLeftNav';
 import { WorkspaceServiceItem } from './WorkspaceServiceItem';
 import config from '../../config.json';
 import { WorkspaceRolesContext } from './WorkspaceRolesContext';
+import { WorkspaceServices } from './WorkspaceServices';
 
 interface WorkspaceProviderProps {
   workspace?: Workspace
@@ -24,6 +24,7 @@ export const WorkspaceProvider: React.FunctionComponent<WorkspaceProviderProps> 
   const [workspace, setWorkspace] = useState({} as Workspace);
   const [selectedWorkspaceService, setSelectedWorkspaceService] = useState({} as WorkspaceService);
   const [selectedUserResource, setSelectedUserResource] = useState({} as UserResource);
+  const [workspaceServices, setWorkspaceServices] = useState([] as Array<WorkspaceService>)
   const workspaceRoles = useRef(useContext(WorkspaceRolesContext));
   const [loadingState, setLoadingState] = useState('loading');
   const { workspaceId } = useParams();
@@ -45,6 +46,11 @@ export const WorkspaceProvider: React.FunctionComponent<WorkspaceProviderProps> 
           workspaceRoles.current.roles = roles;
           setLoadingState(roles && roles.length > 0 ? 'ok' : 'denied');
         }, true);
+
+        // get workspace services to pass to nav + ws services page
+        const workspaceServices = await apiCall(`${ApiEndpoint.Workspaces}/${ws.id}/${ApiEndpoint.WorkspaceServices}`, HttpMethod.Get, ws.properties.app_id);
+        setWorkspaceServices(workspaceServices.workspaceServices);
+
       } catch {
         setLoadingState('error');
       }
@@ -59,15 +65,13 @@ export const WorkspaceProvider: React.FunctionComponent<WorkspaceProviderProps> 
           <WorkspaceHeader workspace={workspace} />
           <Stack horizontal className='tre-body-inner'>
             <Stack.Item className='tre-left-nav'>
-              <WorkspaceLeftNav workspace={workspace} setWorkspaceService={(ws: WorkspaceService) => setSelectedWorkspaceService(ws)} />
+              <WorkspaceLeftNav workspace={workspace} workspaceServices={workspaceServices} setWorkspaceService={(ws: WorkspaceService) => setSelectedWorkspaceService(ws)} />
             </Stack.Item><Stack.Item className='tre-body-content'>
               <Stack>
-                <Stack.Item grow>
-                  <WorkspaceBreadcrumb />
-                </Stack.Item>
                 <Stack.Item grow={100}>
                   <Routes>
                     <Route path="/" element={<WorkspaceItem workspace={workspace} />} />
+                    <Route path="workspace-services" element={<WorkspaceServices workspace={workspace} workspaceServices={workspaceServices} setWorkspaceService={(ws: WorkspaceService) => setSelectedWorkspaceService(ws)}/>} />
                     <Route path="workspace-services/:workspaceServiceId/*" element={<WorkspaceServiceItem workspace={workspace} workspaceService={selectedWorkspaceService} setUserResource={(userResource: UserResource) => setSelectedUserResource(userResource)} />} />
                     <Route path="workspace-services/:workspaceServiceId/user-resources/:userResourceId/*" element={<UserResourceItem workspace={workspace} userResource={selectedUserResource} />} />
                   </Routes>

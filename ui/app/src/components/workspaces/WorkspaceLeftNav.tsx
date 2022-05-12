@@ -3,7 +3,6 @@ import { Nav, INavLinkGroup } from '@fluentui/react/lib/Nav';
 import { useNavigate } from 'react-router-dom';
 import { Workspace } from '../../models/workspace';
 import { ApiEndpoint } from '../../models/apiEndpoints';
-import { HttpMethod, useAuthApiCall } from '../../useAuthApiCall';
 import { WorkspaceService } from '../../models/workspaceService';
 
 // TODO:
@@ -12,23 +11,21 @@ import { WorkspaceService } from '../../models/workspaceService';
 
 interface WorkspaceLeftNavProps {
   workspace: Workspace,
+  workspaceServices: Array<WorkspaceService>,
   setWorkspaceService: (workspaceService: WorkspaceService) => void
 }
 
 export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = (props:WorkspaceLeftNavProps) => {
   const navigate = useNavigate();
-  const apiCall = useAuthApiCall();
   const emptyLinks: INavLinkGroup[] = [{links:[]}];
   const [serviceLinks, setServiceLinks] = useState(emptyLinks);
-  const [workspaceServices, setWorkspaceServices] = useState([{} as WorkspaceService]);
 
   useEffect(() => {
     const getWorkspaceServices = async () => {
       // get the workspace services
-      const ws = await apiCall(`${ApiEndpoint.Workspaces}/${props.workspace.id}/${ApiEndpoint.WorkspaceServices}`, HttpMethod.Get, props.workspace.properties.app_id);
-      setWorkspaceServices(ws.workspaceServices);
+      
       let serviceLinkArray: Array<any> = [];
-      ws.workspaceServices.forEach((service: WorkspaceService) => {
+      props.workspaceServices.forEach((service: WorkspaceService) => {
         serviceLinkArray.push(
           {
             name: service.properties.display_name,
@@ -41,9 +38,15 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
         {
           links: [
             {
+              name: 'Overview',
+              key: 'overview',
+              url: `/${ApiEndpoint.Workspaces}/${props.workspace.id}`,
+              isExpanded: true
+            },
+            {
               name: 'Services',
               key: 'services',
-              url: '',
+              url: ApiEndpoint.WorkspaceServices,
               isExpanded: true,
               links: serviceLinkArray
             }
@@ -54,16 +57,15 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
       setServiceLinks(seviceNavLinks);
     };
     getWorkspaceServices();
-  }, [apiCall, props.workspace.id, props.workspace.properties.app_id]);
+  }, [props.workspace.id, props.workspace.properties.app_id, props.workspaceServices]);
 
   return (
     <Nav
       onLinkClick={(e, item) => { 
         e?.preventDefault(); 
         if (!item || !item.url) return;
-        let selectedService = workspaceServices.find((w) => w.id === item.key);
+        let selectedService = props.workspaceServices.find((w) => item.key?.indexOf(w.id.toString()) !== -1);
         if(selectedService) {
-          console.log("You hit", selectedService);
           props.setWorkspaceService(selectedService);
         }
         navigate(item.url)}}

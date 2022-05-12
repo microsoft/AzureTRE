@@ -15,7 +15,7 @@ export const UserMenu: React.FunctionComponent = () => {
         text: 'Logout',
         iconProps: { iconName: 'SignOut' },
         onClick: () => {
-          instance.logout().then();
+          instance.logout(); // will use MSAL to logout and redirect to the /logout page
         }
       }
     ]
