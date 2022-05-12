@@ -1,6 +1,6 @@
 ---
 name: tre-workspace-base
-version: 0.2.12
+version: 0.2.13
 description: "A base Azure TRE workspace"
 registry: azuretre
 
@@ -54,9 +54,6 @@ parameters:
   - name: enable_local_debugging
     type: boolean
     default: false
-  - name: keyvault_purge_protection_enabled
-    type: boolean
-    default: true
   - name: register_aad_application
     type: boolean
     default: false
@@ -124,8 +121,6 @@ install:
         shared_storage_quota: "{{ bundle.parameters.shared_storage_quota }}"
         enable_local_debugging:
           "{{ bundle.parameters.enable_local_debugging }}"
-        keyvault_purge_protection_enabled:
-          "{{ bundle.parameters.keyvault_purge_protection_enabled }}"
         register_aad_application:
           "{{ bundle.parameters.register_aad_application }}"
         auth_client_id: "{{ bundle.credentials.auth_client_id }}"
@@ -168,8 +163,6 @@ uninstall:
         shared_storage_quota: "{{ bundle.parameters.shared_storage_quota }}"
         enable_local_debugging:
           "{{ bundle.parameters.enable_local_debugging }}"
-        keyvault_purge_protection_enabled:
-          "{{ bundle.parameters.keyvault_purge_protection_enabled }}"
         register_aad_application:
           "{{ bundle.parameters.register_aad_application }}"
         auth_client_id: "{{ bundle.credentials.auth_client_id }}"
