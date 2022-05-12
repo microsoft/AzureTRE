@@ -2,7 +2,7 @@ resource "azurerm_firewall_application_rule_collection" "resource_processor_lets
   name                = "resource_processor_subnet_letsencrypt"
   azure_firewall_name = data.azurerm_firewall.fw.name
   resource_group_name = data.azurerm_firewall.fw.resource_group_name
-  priority            = 106
+  priority            = 601
   action              = "Allow"
 
   rule {
