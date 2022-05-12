@@ -32,11 +32,14 @@ You can use the Certs Shared Service to set one up by following these steps:
   }
   ```
 
+!!! caution
+  If you have KeyVault Purge Protection enabled and are re-deploying your environment using the same `cert_name`, you may encounter this: `Status=409 Code=\"Conflict\" Message=\"Certificate nexus-ssl is currently in a deleted but recoverable state`. You need to either manually recover the certificate or purge it before redeploying; or alternatively give it a new unique name.
+
 1. Once the shared service has been deployed (which you can check by querying the `/api/shared-services/operations` method), copy its `resource_id`, then find the `POST` operation for `/api/shared-services/{shared_service_id}/invoke_action`, click `Try it out` and paste in the resource id into the `shared_service_id` field, and enter `generate` into the `action` field, then click `Execute`.
 
 This will invoke the certs service to use Letsencrypt to generate a certificate for the specified domain prefix followed by `-{TRE_ID}.{LOCATION}.cloudapp.azure.com`, so in our case, having entered `nexus`, this will be `nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com`, which will be the public domain for our Nexus service.
 
-Once this has completed, you can verify its success either from the operation output, or by navigating to your core keyvault (`kv-{TRE_ID}`) and looking for a certificate called `nexus-ssl`.
+Once this has completed, you can verify its success either from the operation output, or by navigating to your core keyvault (`kv-{TRE_ID}`) and looking for a certificate called `nexus-ssl` (or whatever you called it).
 
 After verifying the certificate has been generated, you can deploy Nexus:
 
@@ -57,10 +60,14 @@ After verifying the certificate has been generated, you can deploy Nexus:
     "templateName": "tre-shared-service-nexus",
     "properties": {
       "display_name": "Nexus",
-      "description": "Proxy public repositories with Nexus"
+      "description": "Proxy public repositories with Nexus",
+      "ssl_cert_name": "nexus-ssl"
     }
   }
   ```
+
+!!! tip
+  If you called your cert something different in the certs shared service step, make sure that is reflected above.
 
 This will deploy the infrastructure required for Nexus, then start the service and configure it with the repository configurations located in the `./templates/shared_services/sonatype-nexus/scripts/nexus_repos_config` folder. It will also set up HTTPS using the certificate you generated in the previous section, so proxies can be served at `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com`.
 
