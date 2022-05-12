@@ -11,7 +11,7 @@ This document describes the requirements, and the process to author a template.
 
 To create a bundle from scratch follow the Porter [Quickstart Guide](https://porter.sh/quickstart/) ([`porter create` CLI command](https://porter.sh/cli/porter_create/) will generate a new bundle in the current directory).
 
-Read more about porter in [Resource Processor doc](../tre-developers/resource-processor.md#porter).
+Read more about Porter in [Resource Processor doc](../tre-developers/resource-processor.md#porter).
 
 ## Prerequisites
 
