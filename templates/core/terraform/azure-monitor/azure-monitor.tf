@@ -3,7 +3,7 @@ resource "azurerm_log_analytics_workspace" "core" {
   resource_group_name = var.resource_group_name
   location            = var.location
   retention_in_days   = 30
-  sku                 = "pergb2018"
+  sku                 = "PerGB2018"
 
   lifecycle { ignore_changes = [tags] }
 }
