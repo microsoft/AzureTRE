@@ -5,7 +5,7 @@ from httpx import AsyncClient, Timeout
 import logging
 from starlette import status
 
-
+from json import JSONDecodeError
 import config
 from resources import strings
 
@@ -33,28 +33,28 @@ def get_auth_header(token: str) -> dict:
     return {'Authorization': f'Bearer {token}'}
 
 
+def get_full_endpoint(endpoint: str) -> str:
+    if (config.TRE_URL != ""):
+        return f"{config.TRE_URL}{endpoint}"
+    else:
+        return f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{endpoint}"
+
+
 @asynccontextmanager
 async def get_template(template_name, endpoint, admin_token, verify):
     async with AsyncClient(verify=verify) as client:
         headers = {'Authorization': f'Bearer {admin_token}'}
+        full_endpoint = get_full_endpoint(endpoint)
 
-        response = await client.get(f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{endpoint}/{template_name}", headers=headers, timeout=TIMEOUT)
+        response = await client.get(f"{full_endpoint}/{template_name}", headers=headers, timeout=TIMEOUT)
         yield response
 
 
-async def post_resource(payload, endpoint, resource_type, token, admin_token, verify, method="POST", wait=True):
+async def post_resource(payload, endpoint, access_token, verify, method="POST", wait=True):
     async with AsyncClient(verify=verify, timeout=30.0) as client:
 
-        if resource_type == 'workspace':
-            auth_headers = get_auth_header(admin_token)
-        else:
-            auth_headers = get_auth_header(token)
-
-        if (config.TRE_URL != ""):
-            full_endpoint = f"{config.TRE_URL}{endpoint}"
-        else:
-            full_endpoint = f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{endpoint}"
-        LOGGER.info(f'POSTING RESOURCE TO: {full_endpoint}')
+        full_endpoint = get_full_endpoint(endpoint)
+        auth_headers = get_auth_header(access_token)
 
         if method == "POST":
             response = await client.post(full_endpoint, headers=auth_headers, json=payload, timeout=TIMEOUT)
@@ -72,17 +72,14 @@ async def post_resource(payload, endpoint, resource_type, token, admin_token, ve
         operation_endpoint = response.headers["Location"]
 
         if wait:
-            await wait_for(check_method, client, operation_endpoint, get_auth_header(token), strings.RESOURCE_STATUS_FAILED)
+            await wait_for(check_method, client, operation_endpoint, auth_headers, strings.RESOURCE_STATUS_FAILED)
 
         return resource_path, resource_id
 
 
 async def get_shared_service_id_by_name(template_name: str, verify, token) -> Optional[dict]:
     async with AsyncClient(verify=verify, timeout=TIMEOUT) as client:
-        endpoint = '/api/shared-services'
-        full_endpoint = f'https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{endpoint}'
-        LOGGER.info(f'URL: {full_endpoint}')
-
+        full_endpoint = get_full_endpoint('/api/shared-services')
         auth_headers = get_auth_header(token)
 
         response = await client.get(full_endpoint, headers=auth_headers, timeout=TIMEOUT)
@@ -97,17 +94,12 @@ async def get_shared_service_id_by_name(template_name: str, verify, token) -> Op
         return matching_shared_services[0]
 
 
-async def disable_and_delete_resource(endpoint, resource_type, token, admin_token, verify):
+async def disable_and_delete_resource(endpoint, access_token, verify):
     async with AsyncClient(verify=verify, timeout=TIMEOUT) as client:
 
-        if resource_type == 'workspace':
-            auth_headers = get_auth_header(admin_token)
-        else:
-            auth_headers = get_auth_header(token)
-
+        full_endpoint = get_full_endpoint(endpoint)
+        auth_headers = get_auth_header(access_token)
         auth_headers["etag"] = "*"  # for now, send in the wildcard to skip around etag checking
-
-        full_endpoint = f'https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{endpoint}'
 
         # disable
         payload = {"isEnabled": False}
@@ -124,8 +116,7 @@ async def disable_and_delete_resource(endpoint, resource_type, token, admin_toke
         resource_id = response.json()["operation"]["resourceId"]
         operation_endpoint = response.headers["Location"]
 
-        owner_auth_headers = get_auth_header(token)
-        await wait_for(delete_done, client, operation_endpoint, owner_auth_headers, strings.RESOURCE_STATUS_DELETING_FAILED)
+        await wait_for(delete_done, client, operation_endpoint, auth_headers, strings.RESOURCE_STATUS_DELETING_FAILED)
         return resource_id
 
 
@@ -157,13 +148,13 @@ async def ping_guacamole_workspace_service(workspace_id, workspace_service_id, t
         assert (response.status_code == status.HTTP_200_OK), "Guacamole cannot be reached"
 
 
-async def wait_for(func, client, operation_endoint, headers, failure_state):
-    done, done_state, message = await func(client, operation_endoint, headers)
+async def wait_for(func, client, operation_endpoint, headers, failure_state):
+    done, done_state, message = await func(client, operation_endpoint, headers)
     while not done:
-        LOGGER.info(f'WAITING FOR OP: {operation_endoint}')
+        LOGGER.info(f'WAITING FOR OP: {operation_endpoint}')
         await asyncio.sleep(30)
 
-        done, done_state, message = await func(client, operation_endoint, headers)
+        done, done_state, message = await func(client, operation_endpoint, headers)
         LOGGER.info(f"{done}, {done_state}, {message}")
     try:
         assert done_state != failure_state
@@ -191,8 +182,9 @@ async def patch_done(client, operation_endpoint, headers):
 
 
 async def check_deployment(client, operation_endpoint, headers):
-    response = await client.get(
-        f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{operation_endpoint}", headers=headers, timeout=TIMEOUT)
+    full_endpoint = get_full_endpoint(operation_endpoint)
+
+    response = await client.get(full_endpoint, headers=headers, timeout=TIMEOUT)
     if response.status_code == 200:
         deployment_status = response.json()["operation"]["status"]
         message = response.json()["operation"]["message"]
@@ -201,3 +193,57 @@ async def check_deployment(client, operation_endpoint, headers):
         LOGGER.error(f"Non 200 response in check_deployment: {response.status_code}")
         LOGGER.error(f"Full response: {response}")
         raise Exception("Non 200 response in check_deployment")
+
+
+async def get_workspace(client, workspace_id: str, headers) -> dict:
+    full_endpoint = get_full_endpoint(f"/api/workspaces/{workspace_id}")
+
+    response = await client.get(full_endpoint, headers=headers, timeout=TIMEOUT)
+    if response.status_code == 200:
+        return response.json()["workspace"]
+    else:
+        LOGGER.error(f"Non 200 response in get_workspace: {response.status_code}")
+        LOGGER.error(f"Full response: {response}")
+        raise Exception("Non 200 response in get_workspace")
+
+
+async def get_identifier_uri(client, workspace_id: str, auth_headers) -> str:
+    workspace = await get_workspace(client, workspace_id, auth_headers)
+
+    if ("properties" not in workspace):
+        raise Exception("Properties not found in workspace.")
+
+    if ("scope_id" not in workspace["properties"]):
+        raise Exception("Scope Id not found in workspace properties.")
+
+    # Cope with the fact that scope id can have api:// at the front.
+    return f"api://{workspace['properties']['scope_id'].lstrip('api://')}"
+
+
+async def get_workspace_owner_token(admin_token, workspace_id, verify) -> Optional[str]:
+    async with AsyncClient(verify=verify) as client:
+        auth_headers = get_auth_header(admin_token)
+        scope_uri = await get_identifier_uri(client, workspace_id, auth_headers)
+
+        if config.TEST_ACCOUNT_CLIENT_ID != "" and config.TEST_ACCOUNT_CLIENT_SECRET != "":
+            # Logging in as an Enterprise Application: Use Client Credentials flow
+            payload = f"grant_type=client_credentials&client_id={config.TEST_ACCOUNT_CLIENT_ID}&client_secret={config.TEST_ACCOUNT_CLIENT_SECRET}&scope={scope_uri}/.default"
+            url = f"https://login.microsoftonline.com/{config.AAD_TENANT_ID}/oauth2/v2.0/token"
+
+        else:
+            # Logging in as a User: Use Resource Owner Password Credentials flow
+            payload = f"grant_type=password&resource={workspace_id}&username={config.TEST_USER_NAME}&password={config.TEST_USER_PASSWORD}&scope={scope_uri}/user_impersonation&client_id={config.TEST_APP_ID}"
+            url = f"https://login.microsoftonline.com/{config.AAD_TENANT_ID}/oauth2/token"
+
+        response = await client.post(url, headers=auth_headers, content=payload)
+        try:
+            responseJson = response.json()
+        except JSONDecodeError:
+            raise Exception("Failed to parse response as JSON: {}".format(response.content))
+
+        if "access_token" not in responseJson:
+            raise Exception("Failed to get access_token: {}".format(response.content))
+
+        token = responseJson["access_token"]
+
+        return token if (response.status_code == status.HTTP_200_OK) else None
