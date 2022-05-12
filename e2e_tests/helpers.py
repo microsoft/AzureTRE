@@ -217,10 +217,7 @@ async def get_identifier_uri(client, workspace_id: str, auth_headers) -> str:
         raise Exception("Scope Id not found in workspace properties.")
 
     # Cope with the fact that scope id can have api:// at the front.
-    if workspace["properties"]["scope_id"].startswith("api://"):
-        return workspace["properties"]["scope_id"]
-    else:
-        return f"api://{workspace['properties']['scope_id']}"
+    return f"api://{workspace['properties']['scope_id'].lstrip('api://')}"
 
 
 async def get_workspace_owner_token(admin_token, workspace_id, verify) -> Optional[str]:
