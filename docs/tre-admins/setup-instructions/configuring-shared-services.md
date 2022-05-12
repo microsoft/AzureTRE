@@ -2,7 +2,9 @@
 
 ## Deploy/configure Nexus
 
-There is a new Nexus shared service which can be located in the `./templates/shared_services/sonatype-nexus-vm` directory, with the bundle name `tre-shared-service-sonatype-nexus`, which is now hosted using a VM to enable additional configuration required for proxying certain repositories. This has been created as a separate service as the domain name exposed for proxies will be different to the one used by the original Nexus service and thus will break any user resources configured with the old proxy URL.
+There is a new Nexus shared service which can be located in the `./templates/shared_services/sonatype-nexus-vm` directory, with the bundle name `tre-shared-service-sonatype-nexus`, which is now hosted using a VM to enable additional configuration required for proxying certain repositories.
+
+This has been created as a separate service as the domain name exposed for proxies will be different to the one used by the original Nexus service and thus will break any user resources configured with the old proxy URL.
 
 The original Nexus service that runs on App Service (located in `./templates/shared_services/sonatype-nexus`) has the bundle name `tre-shared-service-nexus` so can co-exist with the new VM-based shared service to enable smoother upgrading of existing resources.
 
@@ -90,9 +92,11 @@ Once you've created the new VM-based Nexus service by following section `A`, you
 
 1. Identify any existing Guacamole user resources that are using the old proxy URL (`https://nexus-{TRE_ID}.azurewebsites.net/`). These will be any VMs with bundle versions < `0.2.0`.
 
-1. These will need to be either **re-deployed** with the new template versions `0.2.0` or later (which target the new proxy URL format of `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/`), or manually have their proxy URLs updated by remoting into the VMs and updating the various configuration files of required package managers with the new URL. For example, pip will need the `index`, `index-url` and `trusted-host` values in the global `pip.conf` file to be modified to use the new URL.
+1. These will need to be either **re-deployed** with the new template versions `0.2.0` or later (which target the new proxy URL format of `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/`), or manually have their proxy URLs updated by remoting into the VMs and updating the various configuration files of required package managers with the new URL.
 
-1. Once you've confirmed there are no dependencies on the old Nexus shared service, you can delete it using the API.
+   1. For example, pip will need the `index`, `index-url` and `trusted-host` values in the global `pip.conf` file to be modified to use the new URL.
+
+2. Once you've confirmed there are no dependencies on the old Nexus shared service, you can delete it using the API.
 
 ## Configure Gitea repositories
 
