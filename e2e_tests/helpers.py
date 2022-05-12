@@ -34,13 +34,10 @@ def get_auth_header(token: str) -> dict:
 
 
 def get_full_endpoint(endpoint: str) -> str:
-    full_endpoint = ""
     if (config.TRE_URL != ""):
-        full_endpoint = f"{config.TRE_URL}{endpoint}"
+        return f"{config.TRE_URL}{endpoint}"
     else:
-        full_endpoint = f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{endpoint}"
-    LOGGER.info(f'POSTING RESOURCE TO: {full_endpoint}')
-    return full_endpoint
+        return f"https://{config.TRE_ID}.{config.RESOURCE_LOCATION}.cloudapp.azure.com{endpoint}"
 
 
 @asynccontextmanager
@@ -226,18 +223,18 @@ async def get_identifier_uri(client, workspace_id: str, auth_headers) -> str:
         return f"api://{workspace['properties']['scope_id']}"
 
 
-async def get_workspace_owner_token(admin_token, workspace_id, verify) -> str:
+async def get_workspace_owner_token(admin_token, workspace_id, verify) -> Optional[str]:
     async with AsyncClient(verify=verify) as client:
         auth_headers = get_auth_header(admin_token)
         scope_uri = await get_identifier_uri(client, workspace_id, auth_headers)
 
         if config.TEST_ACCOUNT_CLIENT_ID != "" and config.TEST_ACCOUNT_CLIENT_SECRET != "":
-            # Use Client Credentials flow
+            # Logging in as an Enterprise Application: Use Client Credentials flow
             payload = f"grant_type=client_credentials&client_id={config.TEST_ACCOUNT_CLIENT_ID}&client_secret={config.TEST_ACCOUNT_CLIENT_SECRET}&scope={scope_uri}/.default"
             url = f"https://login.microsoftonline.com/{config.AAD_TENANT_ID}/oauth2/v2.0/token"
 
         else:
-            # Use Resource Owner Password Credentials flow
+            # Logging in as a User: Use Resource Owner Password Credentials flow
             payload = f"grant_type=password&resource={workspace_id}&username={config.TEST_USER_NAME}&password={config.TEST_USER_PASSWORD}&scope={scope_uri}/user_impersonation&client_id={config.TEST_APP_ID}"
             url = f"https://login.microsoftonline.com/{config.AAD_TENANT_ID}/oauth2/token"
 

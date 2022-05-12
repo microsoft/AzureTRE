@@ -95,10 +95,7 @@ workspace_swagger_router = APIRouter()
 
 def get_scope(workspace) -> str:
     # Cope with the fact that scope id can have api:// at the front.
-    if workspace["properties"]["scope_id"].startswith("api://"):
-        return f"{workspace['properties']['scope_id']}/user_impersonation"
-    else:
-        return f"api://{workspace['properties']['scope_id']}/user_impersonation"
+    return f"api://{workspace['properties']['scope_id'].lstrip('api://')}/user_impersonation"
 
 
 @workspace_swagger_router.get("/workspaces/{workspace_id}/openapi.json", include_in_schema=False, name="openapi_definitions")
@@ -116,9 +113,9 @@ async def get_openapi_json(workspace_id: str, request: Request, workspace_repo=D
         )
 
         workspace = workspace_repo.get_workspace_by_id(workspace_id)
-        scopes = {get_scope(workspace): "List and Get TRE Workspaces"}
+        scope = {get_scope(workspace): "List and Get TRE Workspaces"}
 
-        openapi_definitions[workspace_id]['components']['securitySchemes']['oauth2']['flows']['authorizationCode']['scopes'] = scopes
+        openapi_definitions[workspace_id]['components']['securitySchemes']['oauth2']['flows']['authorizationCode']['scopes'] = scope
 
         # Add an example into every workspace_id path parameter so users don't have to cut and paste them in.
         for route in openapi_definitions[workspace_id]['paths'].values():
@@ -135,7 +132,7 @@ async def get_openapi_json(workspace_id: str, request: Request, workspace_repo=D
 async def get_workspace_swagger(workspace_id, request: Request, workspace_repo=Depends(get_repository(WorkspaceRepository))):
 
     workspace = workspace_repo.get_workspace_by_id(workspace_id)
-    scopes = get_scope(workspace)
+    scope = get_scope(workspace)
     swagger_ui_html = get_swagger_ui_html(
         openapi_url="openapi.json",
         title=request.app.title + " - Swagger UI",
@@ -143,7 +140,7 @@ async def get_workspace_swagger(workspace_id, request: Request, workspace_repo=D
         init_oauth={
             "usePkceWithAuthorizationCodeGrant": True,
             "clientId": config.SWAGGER_UI_CLIENT_ID,
-            "scopes": ["openid", "offline_access", scopes]
+            "scopes": ["openid", "offline_access", scope]
         }
     )
 

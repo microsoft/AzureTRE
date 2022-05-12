@@ -58,6 +58,7 @@ async def test_create_guacamole_service_into_base_workspace(admin_token, verify)
 @pytest.mark.extended_aad
 @pytest.mark.timeout(3000)
 async def test_create_guacamole_service_into_aad_workspace(admin_token, workspace_owner_token, verify) -> None:
+    """This test will create a Guacamole service but will create a workspace and automatically register the AAD Application"""
 
     payload = {
         "templateName": "tre-workspace-base",

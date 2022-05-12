@@ -32,7 +32,7 @@ variable "deploy_app_service_plan" {
 
 variable "app_service_plan_sku" {
   type        = string
-  default     = "P1v2"
+  default     = "P1v3"
   description = "App Service Plan SKU"
 }
 
@@ -94,6 +94,12 @@ variable "scope_id" {
   default     = ""
   description = "The Service Principal Name or Identifier URI, this is passed in so that we may return it as an output."
 }
+variable "workspace_owner_object_id" {
+  type        = string
+  default     = ""
+  description = "The Object Id of the user that you wish to be the Workspace Owner. E.g. the TEST_AUTOMATION_ACCOUNT."
+}
+
 
 locals {
   core_vnet                      = "vnet-${var.tre_id}"

@@ -102,8 +102,8 @@ class TRECosmosDBMigrations:
                     updated = True
 
                 if "scope_id" not in item["properties"]:
-                    updated = True
                     item["properties"]["scope_id"] = item["properties"]["client_id"]
+                    updated = True
 
                 if "authInformation" in item:
                     print(f'Upgrading authInformation in workspace {item["id"]}')
