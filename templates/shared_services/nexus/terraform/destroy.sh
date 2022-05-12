@@ -1,3 +1,4 @@
+#!/bin/bash
 export TF_LOG=""
 
 terraform init -input=false -backend=true -reconfigure \
