@@ -20,7 +20,7 @@ resource "azurerm_storage_account" "state_storage" {
   account_tier             = "Standard"
   account_kind             = "StorageV2"
   account_replication_type = "LRS"
-  allow_blob_public_access = false
+  allow_nested_items_to_be_public = false
 
   lifecycle { ignore_changes = [tags] }
 }
