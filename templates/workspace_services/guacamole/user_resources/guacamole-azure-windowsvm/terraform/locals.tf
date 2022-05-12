@@ -1,7 +1,3 @@
-data "azurerm_resource_group" "core" {
-  name = "rg-${var.tre_id}"
-}
-
 locals {
   short_service_id               = substr(var.tre_resource_id, -4, -1)
   short_workspace_id             = substr(var.workspace_id, -4, -1)
