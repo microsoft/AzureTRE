@@ -129,12 +129,6 @@ variable "resource_processor_type" {
   type        = string
 }
 
-variable "keyvault_purge_protection_enabled" {
-  type        = bool
-  default     = true
-  description = "Used to turn Keyvault purge protection"
-}
-
 variable "stateful_resources_locked" {
   type        = bool
   default     = true
