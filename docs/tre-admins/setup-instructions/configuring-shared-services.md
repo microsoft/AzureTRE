@@ -1,8 +1,17 @@
 # Configuring Shared Services
 
-Complete the configuration of the shared services (Nexus and Gitea) from inside of the TRE environment.
+## Deploy/configure Nexus
 
-## Configure Nexus
+There is a new Nexus shared service which can be located in the `./templates/shared_services/sonatype-nexus-vm` directory, with the bundle name `tre-shared-service-sonatype-nexus`, which is now hosted using a VM to enable additional configuration required for proxying certain repositories. This has been created as a separate service as the domain name exposed for proxies will be different to the one used by the original Nexus service and thus will break any user resources configured with the old proxy URL.
+
+The original Nexus service that runs on App Service (located in `./templates/shared_services/sonatype-nexus`) has the bundle name `tre-shared-service-nexus` so can co-exist with the new VM-based shared service to enable smoother upgrading of existing resources.
+
+If you're deploying a brand new environment you should deploy the new service (read section `A`). If you wish to migrate from an existing App Service Nexus service to the new VM service, first deploy the new service (section `A`) then proceed to section `B`.
+
+!!! info
+    The Makefile commands for deploying shared services temporarily target the old Nexus service so that existing environments won't have a new Nexus service deployed automatically by CICD and introduce breaking changes. The new Nexus service will need to be deployed manually using the steps detailed below.
+
+### A. Deploy & configure new Nexus service (hosted on VM)
 
 Before deploying the Nexus shared service, you need to make sure that it will have access to a certificate to configure serving secure proxies. By default, the Nexus service will serve proxies from `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/`, and thus it requires a certificate that validates ownership of this domain to use for SSL.
 
@@ -16,9 +25,9 @@ You can use the Certs Shared Service to set one up by following these steps:
   make bundle-register DIR=./templates/shared_services/certs BUNDLE_TYPE=shared_service
   ```
 
-1. Navigate to the Swagger UI for your TRE API at `https://<azure_tre_fqdn>/api/docs`, and authenticate if you haven't already by clicking `Authorize`.
+2. Navigate to the Swagger UI for your TRE API at `https://<azure_tre_fqdn>/api/docs`, and authenticate if you haven't already by clicking `Authorize`.
 
-1. Click `Try it out` on the `POST` `/api/shared-services` operation, and paste the following to deploy the certs service:
+3. Click `Try it out` on the `POST` `/api/shared-services` operation, and paste the following to deploy the certs service:
 
   ```json
   {
@@ -33,9 +42,9 @@ You can use the Certs Shared Service to set one up by following these steps:
   ```
 
 !!! caution
-  If you have KeyVault Purge Protection enabled and are re-deploying your environment using the same `cert_name`, you may encounter this: `Status=409 Code=\"Conflict\" Message=\"Certificate nexus-ssl is currently in a deleted but recoverable state`. You need to either manually recover the certificate or purge it before redeploying; or alternatively give it a new unique name.
+    If you have KeyVault Purge Protection enabled and are re-deploying your environment using the same `cert_name`, you may encounter this: `Status=409 Code=\"Conflict\" Message=\"Certificate nexus-ssl is currently in a deleted but recoverable state`. You need to either manually recover the certificate or purge it before redeploying; or alternatively give it a new unique name.
 
-1. Once the shared service has been deployed (which you can check by querying the `/api/shared-services/operations` method), copy its `resource_id`, then find the `POST` operation for `/api/shared-services/{shared_service_id}/invoke_action`, click `Try it out` and paste in the resource id into the `shared_service_id` field, and enter `generate` into the `action` field, then click `Execute`.
+4. Once the shared service has been deployed (which you can check by querying the `/api/shared-services/operations` method), copy its `resource_id`, then find the `POST` operation for `/api/shared-services/{shared_service_id}/invoke_action`, click `Try it out` and paste in the resource id into the `shared_service_id` field, and enter `generate` into the `action` field, then click `Execute`.
 
 This will invoke the certs service to use Letsencrypt to generate a certificate for the specified domain prefix followed by `-{TRE_ID}.{LOCATION}.cloudapp.azure.com`, so in our case, having entered `nexus`, this will be `nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com`, which will be the public domain for our Nexus service.
 
@@ -46,9 +55,9 @@ After verifying the certificate has been generated, you can deploy Nexus:
 1. Run the below commands in your terminal to build, publish and register the Nexus shared service bundle:
 
   ```cmd
-  make bundle-build DIR=./templates/shared_services/sonatype-nexus
-  make bundle-publish DIR=./templates/shared_services/sonatype-nexus
-  make bundle-register DIR=./templates/shared_services/sonatype-nexus BUNDLE_TYPE=shared_service
+  make bundle-build DIR=./templates/shared_services/sonatype-nexus-vm
+  make bundle-publish DIR=./templates/shared_services/sonatype-nexus-vm
+  make bundle-register DIR=./templates/shared_services/sonatype-nexus-vm BUNDLE_TYPE=shared_service
   ```
 
 1. Navigate to the Swagger UI for your TRE API at `https://<azure_tre_fqdn>/api/docs`, and authenticate if you haven't already by clicking `Authorize`.
@@ -57,7 +66,7 @@ After verifying the certificate has been generated, you can deploy Nexus:
 
   ```json
   {
-    "templateName": "tre-shared-service-nexus",
+    "templateName": "tre-shared-service-sonatype-nexus",
     "properties": {
       "display_name": "Nexus",
       "description": "Proxy public repositories with Nexus",
@@ -67,13 +76,23 @@ After verifying the certificate has been generated, you can deploy Nexus:
   ```
 
 !!! tip
-  If you called your cert something different in the certs shared service step, make sure that is reflected above.
+    If you called your cert something different in the certs shared service step, make sure that is reflected above.
 
-This will deploy the infrastructure required for Nexus, then start the service and configure it with the repository configurations located in the `./templates/shared_services/sonatype-nexus/scripts/nexus_repos_config` folder. It will also set up HTTPS using the certificate you generated in the previous section, so proxies can be served at `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com`.
+This will deploy the infrastructure required for Nexus, then start the service and configure it with the repository configurations located in the `./templates/shared_services/sonatype-nexus-vm/scripts/nexus_repos_config` folder. It will also set up HTTPS using the certificate you generated in the previous section, so proxies can be served at `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com`.
 
 You can optionally go to the Nexus web interface by visiting `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/` in the jumpbox and signing in with the username `admin` and the password secret located in your core keyvault, with the key `nexus-admin-password`. Here you should be able to see all of the configured repositories and you can use the UI to manage settings etc.
 
 Just bear in mind that if this service is redeployed any changes in the UI won't be persisted. If you wish to add new repositories or alter existing ones, use the JSON files within the `./nexus_repos_config` directory.
+
+### B. Migrate from existing Nexus service (hosted on App Service)
+
+Once you've created the new VM-based Nexus service by following section `A`, you can migrate from the old App Service Nexus service by following these steps:
+
+1. Identify any existing Guacamole user resources that are using the old proxy URL (`https://nexus-{TRE_ID}.azurewebsites.net/`). These will be any VMs with bundle versions < `0.2.0`.
+
+1. These will need to be either **re-deployed** with the new template versions `0.2.0` or later (which target the new proxy URL format of `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/`), or manually have their proxy URLs updated by remoting into the VMs and updating the various configuration files of required package managers with the new URL. For example, pip will need the `index`, `index-url` and `trusted-host` values in the global `pip.conf` file to be modified to use the new URL.
+
+1. Once you've confirmed there are no dependencies on the old Nexus shared service, you can delete it using the API.
 
 ## Configure Gitea repositories
 

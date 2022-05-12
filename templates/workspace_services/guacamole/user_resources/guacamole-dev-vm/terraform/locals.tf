@@ -9,7 +9,7 @@ locals {
   vm_name                        = "linuxvm${local.short_service_id}"
   keyvault_name                  = lower("kv-${substr(local.workspace_resource_name_suffix, -20, -1)}")
   storage_name                   = lower(replace("stg${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
-  nexus_proxy_url                = "https://nexus-${var.tre_id}.azurewebsites.net"
+  nexus_proxy_url                = "https://nexus-${var.tre_id}.${data.azurerm_resource_group.core.location}.cloudapp.azure.com"
   vm_size = {
     "2 CPU | 8GB RAM"   = { value = "Standard_D2s_v5" },
     "4 CPU | 16GB RAM"  = { value = "Standard_D4s_v5" },

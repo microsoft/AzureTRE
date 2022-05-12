@@ -1,6 +1,6 @@
 ---
 name: tre-service-guacamole-linuxvm
-version: 0.1.11
+version: 0.2.0
 description: "An Azure TRE User Resource Template for Guacamole (Linux)"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
