@@ -186,6 +186,9 @@ class AzureADAuthorization(AccessService):
         graph_data = requests.get(sp_endpoint, headers=self._get_auth_header(msgraph_token)).json()
         return graph_data
 
+    # This method is called when you create a workspace and you already have an AAD App Registration
+    # to link it to. You pass in teh client_id and go and get the extra information you need from AAD
+    # If the client_id is `auto_create`, then these values will be written by Terraform.
     def _get_app_auth_info(self, client_id: str) -> dict:
         graph_data = self._get_app_sp_graph_data(client_id)
         if 'value' not in graph_data or len(graph_data['value']) == 0:
