@@ -2,21 +2,15 @@
 
 ## Deploy/configure Nexus
 
-There is a new Nexus shared service which can be located in the `./templates/shared_services/sonatype-nexus-vm` directory, with the bundle name `tre-shared-service-sonatype-nexus`, which is now hosted using a VM to enable additional configuration required for proxying certain repositories.
-
-This has been created as a separate service as the domain name exposed for proxies will be different to the one used by the original Nexus service and thus will break any user resources configured with the old proxy URL.
-
-The original Nexus service that runs on App Service (located in `./templates/shared_services/sonatype-nexus`) has the bundle name `tre-shared-service-nexus` so can co-exist with the new VM-based shared service to enable smoother upgrading of existing resources.
-
-If you're deploying a brand new environment you should deploy the new service (read section `A`). If you wish to migrate from an existing App Service Nexus service to the new VM service, first deploy the new service (section `A`) then proceed to section `B`.
+If you're deploying a brand new environment you should deploy the VM-based service (read section `A`). If you wish to migrate from an existing App Service Nexus service to the VM-based service, first deploy the new service (section `A`) then proceed to section `B`.
 
 !!! info
-    The Makefile commands for deploying shared services temporarily target the old Nexus service so that existing environments won't have a new Nexus service deployed automatically by CICD and introduce breaking changes. The new Nexus service will need to be deployed manually using the steps detailed below.
+    The Makefile commands for deploying shared services temporarily target the App Service based Nexus service so that existing environments won't have a new Nexus service deployed automatically by CICD and introduce breaking changes. The VM-based Nexus service will need to be deployed manually using the steps detailed below.
 
-### A. Deploy & configure new Nexus service (hosted on VM)
+### A. Deploy & configure Nexus service (hosted on VM)
 
 !!! caution
-    Before deploying the new Nexus service, you will need workspaces of version `0.2.14` or above due to a dependency on a DNS zone link for the workspace(s) to connect to the Nexus VM.
+    Before deploying the VM-based Nexus service, you will need workspaces of version `0.2.14` or above due to a dependency on a DNS zone link for the workspace(s) to connect to the Nexus VM.
 
 Before deploying the Nexus shared service, you need to make sure that it will have access to a certificate to configure serving secure proxies. By default, the Nexus service will serve proxies from `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/`, and thus it requires a certificate that validates ownership of this domain to use for SSL.
 
@@ -89,7 +83,7 @@ You can optionally go to the Nexus web interface by visiting `https://nexus-{TRE
 
 Just bear in mind that if this service is redeployed any changes in the UI won't be persisted. If you wish to add new repositories or alter existing ones, use the JSON files within the `./nexus_repos_config` directory.
 
-### B. Migrate from existing Nexus service (hosted on App Service)
+### B. Migrate from an existing Nexus service (hosted on App Service)
 
 Once you've created the new VM-based Nexus service by following section `A`, you can migrate from the old App Service Nexus service by following these steps:
 
@@ -100,6 +94,14 @@ Once you've created the new VM-based Nexus service by following section `A`, you
    1. For example, pip will need the `index`, `index-url` and `trusted-host` values in the global `pip.conf` file to be modified to use the new URL.
 
 2. Once you've confirmed there are no dependencies on the old Nexus shared service, you can delete it using the API.
+
+### Upgrade notes
+
+The new Nexus shared service can be located in the `./templates/shared_services/sonatype-nexus-vm` directory, with the bundle name `tre-shared-service-sonatype-nexus`, which is now hosted using a VM to enable additional configuration required for proxying certain repositories.
+
+This has been created as a separate service as the domain name exposed for proxies will be different to the one used by the original Nexus service and thus will break any user resources configured with the old proxy URL.
+
+The original Nexus service that runs on App Service (located in `./templates/shared_services/sonatype-nexus`) has the bundle name `tre-shared-service-nexus` so can co-exist with the new VM-based shared service to enable smoother upgrading of existing resources.
 
 ## Configure Gitea repositories
 
