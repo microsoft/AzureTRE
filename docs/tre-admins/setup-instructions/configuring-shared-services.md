@@ -41,9 +41,9 @@ You can use the Certs Shared Service to set one up by following these steps:
   ```
 
 !!! caution
-    If you have KeyVault Purge Protection enabled and are re-deploying your environment using the same `cert_name`, you may encounter this: `Status=409 Code=\"Conflict\" Message=\"Certificate nexus-ssl is currently in a deleted but recoverable state`. You need to either manually recover the certificate or purge it before redeploying; or alternatively give it a new unique name.
+    If you have KeyVault Purge Protection enabled and are re-deploying your environment using the same `cert_name`, you may encounter this: `Status=409 Code=\"Conflict\" Message=\"Certificate nexus-ssl is currently in a deleted but recoverable state`. You need to either manually recover the certificate or purge it before redeploying.
 
-4. Once the shared service has been deployed (which you can check by querying the `/api/shared-services/operations` method), copy its `resource_id`, then find the `POST` operation for `/api/shared-services/{shared_service_id}/invoke_action`, click `Try it out` and paste in the resource id into the `shared_service_id` field, and enter `generate` into the `action` field, then click `Execute`.
+1. Once the shared service has been deployed (which you can check by querying the `/api/shared-services/operations` method), copy its `resource_id`, then find the `POST` operation for `/api/shared-services/{shared_service_id}/invoke_action`, click `Try it out` and paste in the resource id into the `shared_service_id` field, and enter `generate` into the `action` field, then click `Execute`.
 
 This will invoke the certs service to use Letsencrypt to generate a certificate for the specified domain prefix followed by `-{TRE_ID}.{LOCATION}.cloudapp.azure.com`, so in our case, having entered `nexus`, this will be `nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com`, which will be the public domain for our Nexus service.
 
