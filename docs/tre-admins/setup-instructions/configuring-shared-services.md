@@ -15,6 +15,9 @@ If you're deploying a brand new environment you should deploy the new service (r
 
 ### A. Deploy & configure new Nexus service (hosted on VM)
 
+!!! caution
+    Before deploying the new Nexus service, you will need workspaces of version `0.2.14` or above due to a dependency on a DNS zone link for the workspace(s) to connect to the Nexus VM.
+
 Before deploying the Nexus shared service, you need to make sure that it will have access to a certificate to configure serving secure proxies. By default, the Nexus service will serve proxies from `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/`, and thus it requires a certificate that validates ownership of this domain to use for SSL.
 
 You can use the Certs Shared Service to set one up by following these steps:
