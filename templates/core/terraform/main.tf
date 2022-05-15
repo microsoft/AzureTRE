@@ -72,6 +72,13 @@ module "appgateway" {
   ]
 }
 
+module "airlock_resources" {
+  source              = "./airlock"
+  tre_id              = var.tre_id
+  location            = var.location
+  resource_group_name = azurerm_resource_group.core.name
+}
+
 module "resource_processor_vmss_porter" {
   count                                            = var.resource_processor_type == "vmss_porter" ? 1 : 0
   source                                           = "./resource_processor/vmss_porter"
