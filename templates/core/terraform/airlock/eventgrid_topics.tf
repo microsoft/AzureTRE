@@ -77,26 +77,26 @@ resource "azurerm_eventgrid_event_subscription" "updated-status-subscription" {
   name  = "update-status"
   scope = azurerm_eventgrid_topic.egt_update_status_topic.id
 
-  service_bus_queue_endpoint_id = azurerm_servicebus_queue.update-status_import.id
+  service_bus_queue_endpoint_id = azurerm_servicebus_queue.update_status_queue.id
 }
 
 resource "azurerm_eventgrid_event_subscription" "status-changed-subscription" {
   name  = "status-changed"
   scope = azurerm_eventgrid_topic.egt_status_changed_topic.id
 
-  service_bus_queue_endpoint_id = azurerm_servicebus_queue.status_changed.id
+  service_bus_queue_endpoint_id = azurerm_servicebus_queue.status_changed_queue.id
 }
 
 resource "azurerm_eventgrid_event_subscription" "inprogress-import-blob-created-subscription" {
   name  = "in-prog-import-blob-created"
   scope = azurerm_storage_account.sa_in-progress_import.id
 
-  service_bus_queue_endpoint_id = azurerm_servicebus_queue.in_progress_queue.id
+  service_bus_queue_endpoint_id = azurerm_servicebus_queue.in_progress_import_queue.id
 }
 
 resource "azurerm_eventgrid_event_subscription" "rejected-import-blob-created-subscription" {
   name  = "rejected-import-blob-created"
   scope = azurerm_storage_account.sa_rejected_import.id
 
-  service_bus_queue_endpoint_id = azurerm_servicebus_queue.rejected_queue.id
+  service_bus_queue_endpoint_id = azurerm_servicebus_queue.rejected_import_queue.id
 }
