@@ -1,5 +1,5 @@
 import React from "react";
 
 export const WorkspaceRolesContext = React.createContext({
-    roles: [] as Array<String>
+    roles: [] as Array<string>
   });

@@ -33,7 +33,7 @@ export const WorkspaceItem: React.FunctionComponent<WorkspaceItemProps> = (props
           <ul>
             {
               workspaceRoles.roles &&
-              workspaceRoles.roles.map((role: String, i: number) => {
+              workspaceRoles.roles.map((role: string, i: number) => {
                 return (
                   <li key={i}>{role}</li>
                 )

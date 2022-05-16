@@ -5,7 +5,7 @@ import { RootRolesContext } from './RootRolesContext';
 interface SecuredByRoleProps {
   element: JSX.Element,
   workspaceAuth?: boolean,
-  allowedRoles: Array<String>
+  allowedRoles: Array<string>
 }
 
 // Check if the user roles match any of the roles we are given - if they do, show the element, if not, don't

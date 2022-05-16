@@ -41,7 +41,7 @@ export const WorkspaceProvider: React.FunctionComponent<WorkspaceProviderProps> 
         setWorkspace(ws);
 
         // now 'authenticate' against the workspace - just get the roles for this workspace (tokenOnly = true)
-        await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get, ws.properties.app_id, undefined, ResultType.None, (roles: Array<String>) => {
+        await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get, ws.properties.app_id, undefined, ResultType.None, (roles: Array<string>) => {
           config.debug && console.log(`Workspace roles for ${ws.properties?.display_name}`, roles);
           workspaceRoles.current.roles = roles;
           setLoadingState(roles && roles.length > 0 ? 'ok' : 'denied');

@@ -1,7 +1,7 @@
 export interface User {
-    email: String,
-    id: String,
-    name: String,
+    email: string,
+    id: string,
+    name: string,
     roleAssignments: Array<any>,
-    roles: Array<String>
+    roles: Array<string>
 }

@@ -20,7 +20,7 @@ export const useAuthApiCall = () => {
     const { instance, accounts } = useMsal();
     const account = useAccount(accounts[0] || {});
 
-    const parseJwt = (token: String) => {
+    const parseJwt = (token: string) => {
         var base64Url = token.split('.')[1];
         var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
         var jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
@@ -30,7 +30,7 @@ export const useAuthApiCall = () => {
         return JSON.parse(jsonPayload);
     }
 
-    return useCallback(async (endpoint: string, method: HttpMethod, clientId?: String, body?: any, resultType?: ResultType, setRoles?: (roles: Array<String>) => void, tokenOnly?: boolean) => {
+    return useCallback(async (endpoint: string, method: HttpMethod, clientId?: string, body?: any, resultType?: ResultType, setRoles?: (roles: Array<string>) => void, tokenOnly?: boolean) => {
 
         if (!account) {
             console.error("No account object found, please refresh.");

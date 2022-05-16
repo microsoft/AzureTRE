@@ -21,7 +21,7 @@ export const App: React.FunctionComponent = () => {
       <Routes>
         <Route path="*" element={
           <MsalAuthenticationTemplate interactionType={InteractionType.Redirect}>
-            <RootRolesContext.Provider value={{ roles: [] as Array<String> }}>
+            <RootRolesContext.Provider value={{ roles: [] as Array<string> }}>
               <Stack styles={stackStyles} className='tre-root'>
                 <Stack.Item grow className='tre-top-nav'>
                   <TopNav />
@@ -31,7 +31,7 @@ export const App: React.FunctionComponent = () => {
                     <Routes>
                       <Route path="*" element={<RootLayout selectWorkspace={(ws: Workspace) => setSelectedWorkspace(ws)} />} />
                       <Route path="/workspaces/:workspaceId//*" element={
-                        <WorkspaceRolesContext.Provider value={{ roles: [] as Array<String> }}>
+                        <WorkspaceRolesContext.Provider value={{ roles: [] as Array<string> }}>
                           <WorkspaceProvider workspace={selectedWorkspace} />
                         </WorkspaceRolesContext.Provider>
                       } />

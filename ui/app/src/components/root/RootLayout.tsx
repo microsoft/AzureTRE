@@ -23,7 +23,7 @@ export const RootLayout: React.FunctionComponent<RootLayoutProps> = (props: Root
   useEffect(() => {
     const getWorkspaces = async () => {
       try {
-        const r = await apiCall(ApiEndpoint.Workspaces, HttpMethod.Get, undefined, undefined, ResultType.JSON, (roles: Array<String>) => {
+        const r = await apiCall(ApiEndpoint.Workspaces, HttpMethod.Get, undefined, undefined, ResultType.JSON, (roles: Array<string>) => {
           config.debug && console.log("Root Roles", roles);
           rootRolesContext.current.roles = roles;
           setLoadingState(roles && roles.length > 0 ? 'ok' : 'denied');

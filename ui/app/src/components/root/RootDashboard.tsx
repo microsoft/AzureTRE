@@ -25,7 +25,7 @@ export const RootDashboard: React.FunctionComponent<RootDashboardProps> = (props
       <ul>
         {
           rootRolesContext.roles &&
-          rootRolesContext.roles.map((role:String, i:number) => {
+          rootRolesContext.roles.map((role:string, i:number) => {
             return (
               <li key={i}>
                 {role}
