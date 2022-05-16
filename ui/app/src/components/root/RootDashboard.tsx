@@ -7,7 +7,6 @@ import { RootRolesContext } from '../shared/RootRolesContext';
 import { PrimaryButton } from '@fluentui/react';
 import { SecuredByRole } from '../shared/SecuredByRole';
 import { RoleName } from '../../models/roleNames';
-import { NotificationPanel } from '../shared/notifications/NotificationPanel';
 
 // TODO:
 // - Create WorkspaceCard component + use instead of <Link>
@@ -22,7 +21,6 @@ export const RootDashboard: React.FunctionComponent<RootDashboardProps> = (props
 
   return (
     <>
-      <NotificationPanel />
       <h3>TRE Roles</h3>
       <ul>
         {

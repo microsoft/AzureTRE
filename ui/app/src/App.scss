@@ -28,7 +28,22 @@ font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
     box-shadow: 0 1px 2px 0px #033d68;
     z-index: 100;
 }
-
+.tre-notifications-button{
+    position:relative;
+    top:7px;
+    color:#fff;
+}
+.tre-notifications-button i{
+    font-size: 24px;
+}
+ul.tre-notifications-list{
+    margin:0;
+    padding:0;
+}
+.tre-notifications-list li{
+    list-style: none;
+    margin-top:20px;
+}
 .tre-home-link{
     color:#fff;
     text-decoration: none;
