@@ -79,12 +79,10 @@ async def test_patch_firewall(admin_token, verify):
     shared_service_path = f'/shared-services/{shared_service_firewall["id"]}'
 
     await post_resource(
-        patch_payload,
-        f"/api{shared_service_path}",
-        "shared_service",
-        admin_token,
-        None,
-        verify,
+        payload=patch_payload,
+        endpoint=f"/api{shared_service_path}",
+        access_token=admin_token,
+        verify=verify,
         method="PATCH",
     )
 
@@ -121,12 +119,10 @@ async def test_create_shared_service(template_name, admin_token, verify) -> None
     }
 
     shared_service_path, _ = await post_resource(
-        post_payload,
-        "/api/shared-services",
-        "shared_service",
-        admin_token,
-        None,
-        verify,
+        payload=post_payload,
+        endpoint="/api/shared-services",
+        access_token=admin_token,
+        verify=verify,
     )
 
     await disable_and_delete_resource(
