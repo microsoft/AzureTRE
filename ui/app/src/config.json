@@ -3,5 +3,6 @@
     "rootTenantId": "64bdc039-7c7f-4290-949e-d4ae71101008",
     "treApiClientId": "88da88b4-32eb-4743-b828-b1b83edf481a",
     "treUrl": "https://ocwtre32.northeurope.cloudapp.azure.com/api",
+    "pollingDelayMilliseconds": 5000,
     "debug": true
 }

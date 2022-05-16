@@ -12,37 +12,46 @@ import { Workspace } from './models/workspace';
 import { RootRolesContext } from './components/shared/RootRolesContext';
 import { WorkspaceRolesContext } from './components/workspaces/WorkspaceRolesContext';
 import { GenericErrorBoundary } from './components/shared/GenericErrorBoundary';
+import { NotificationsContext } from './components/shared/notifications/NotificationsContext';
+import { Operation } from './models/operation';
 
 export const App: React.FunctionComponent = () => {
   const [selectedWorkspace, setSelectedWorkspace] = useState({} as Workspace);
+  const [operations, setOperations] = useState([] as Array<Operation>);
 
   return (
     <>
       <Routes>
         <Route path="*" element={
           <MsalAuthenticationTemplate interactionType={InteractionType.Redirect}>
-            <RootRolesContext.Provider value={{ roles: [] as Array<string> }}>
-              <Stack styles={stackStyles} className='tre-root'>
-                <Stack.Item grow className='tre-top-nav'>
-                  <TopNav />
-                </Stack.Item>
-                <Stack.Item grow={100} className='tre-body'>
-                  <GenericErrorBoundary>
-                    <Routes>
-                      <Route path="*" element={<RootLayout selectWorkspace={(ws: Workspace) => setSelectedWorkspace(ws)} />} />
-                      <Route path="/workspaces/:workspaceId//*" element={
-                        <WorkspaceRolesContext.Provider value={{ roles: [] as Array<string> }}>
-                          <WorkspaceProvider workspace={selectedWorkspace} />
-                        </WorkspaceRolesContext.Provider>
-                      } />
-                    </Routes>
-                  </GenericErrorBoundary>
-                </Stack.Item>
-                <Stack.Item grow>
-                  <Footer />
-                </Stack.Item>
-              </Stack>
-            </RootRolesContext.Provider>
+            <NotificationsContext.Provider value={{ operations: operations, addOperation: (op: Operation) => {
+                let newOps = [...operations]
+                newOps.push(op);
+                setOperations(newOps);
+            }}}>
+              <RootRolesContext.Provider value={{ roles: [] as Array<string> }}>
+                <Stack styles={stackStyles} className='tre-root'>
+                  <Stack.Item grow className='tre-top-nav'>
+                    <TopNav />
+                  </Stack.Item>
+                  <Stack.Item grow={100} className='tre-body'>
+                    <GenericErrorBoundary>
+                      <Routes>
+                        <Route path="*" element={<RootLayout selectWorkspace={(ws: Workspace) => setSelectedWorkspace(ws)} />} />
+                        <Route path="/workspaces/:workspaceId//*" element={
+                          <WorkspaceRolesContext.Provider value={{ roles: [] as Array<string> }}>
+                            <WorkspaceProvider workspace={selectedWorkspace} />
+                          </WorkspaceRolesContext.Provider>
+                        } />
+                      </Routes>
+                    </GenericErrorBoundary>
+                  </Stack.Item>
+                  <Stack.Item grow>
+                    <Footer />
+                  </Stack.Item>
+                </Stack>
+              </RootRolesContext.Provider>
+            </NotificationsContext.Provider>
           </MsalAuthenticationTemplate>
         } />
         <Route path='/logout' element={
