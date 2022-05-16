@@ -17,18 +17,14 @@ import { Operation } from './models/operation';
 
 export const App: React.FunctionComponent = () => {
   const [selectedWorkspace, setSelectedWorkspace] = useState({} as Workspace);
-  const [operations, setOperations] = useState([] as Array<Operation>);
+  const [latestOperation, setLatestOperation] = useState({} as Operation);
 
   return (
     <>
       <Routes>
         <Route path="*" element={
           <MsalAuthenticationTemplate interactionType={InteractionType.Redirect}>
-            <NotificationsContext.Provider value={{ operations: operations, addOperation: (op: Operation) => {
-                let newOps = [...operations]
-                newOps.push(op);
-                setOperations(newOps);
-            }}}>
+            <NotificationsContext.Provider value={{ latestOperation: latestOperation, addOperation: (op: Operation) => {setLatestOperation(op);}}}>
               <RootRolesContext.Provider value={{ roles: [] as Array<string> }}>
                 <Stack styles={stackStyles} className='tre-root'>
                   <Stack.Item grow className='tre-top-nav'>
