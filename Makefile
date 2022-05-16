@@ -344,15 +344,7 @@ static-web-upload:
 	&& ${MAKEFILE_DIR}/templates/core/terraform/scripts/upload_static_web.sh
 
 prepare-for-e2e:
-	$(call workspace_bundle,base) \
-	&& $(call workspace_bundle,innereye) \
-	&& $(call workspace_service_bundle,guacamole) \
-	&& $(call workspace_service_bundle,azureml) \
-	&& $(call workspace_service_bundle,devtestlabs) \
-	&& $(call workspace_service_bundle,gitea) \
-	&& $(call workspace_service_bundle,innereye) \
-	&& $(call shared_service_bundle,sonatype-nexus) \
-	&& $(call shared_service_bundle,gitea)
+	$(call workspace_bundle,base)
 
 test-e2e-smoke:
 	$(call target_title, "Running E2E smoke tests") && \
