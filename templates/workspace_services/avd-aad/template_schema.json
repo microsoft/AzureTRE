@@ -1,0 +1,49 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/avd-aad/template_schema.json",
+  "type": "object",
+  "title": "Azure Virtual Desktop",
+  "description": "Azure Virtual Desktop hostpool joined to Azure Active Directory",
+  "required": [],
+  "properties": {
+    "localAdminName": {
+      "type": "string",
+      "title": "Local Admin Name",
+      "description": "The name of the local administrator account to be created on the virtual machine.",
+      "default": "adminuser"
+    },
+    "localAdminPassword": {
+      "type": "string",
+      "title": "Local Admin Password",
+      "description": "The password of the local administrator account to be created on the virtual machine."
+    },
+    "vmSize": {
+      "type": "string",
+      "title": "Virtual Machine Size",
+      "description": "The size of the virtual machine to be created.",
+      "enum": [
+        "Standard_D2as_v4",
+        "Standard_D4as_v4",
+        "Standard_D8as_v4",
+        "Standard_D16as_v4"
+      ],
+      "default": "Standard_D2as_v4"
+    },
+    "vmCount": {
+      "type": "integer",
+      "title": "Number of Virtual Machines",
+      "description": "The number of virtual machines to be created.",
+      "default": 1
+    },
+    "vmLicenseType": {
+      "type": "string",
+      "title": "Virtual Machine License Type",
+      "description": "The license type of the virtual machine to be created.",
+      "enum": [
+        "Windows_Server",
+        "Windows_Client"
+      ],
+      "default": "Windows_Client"
+    }
+  }
+}

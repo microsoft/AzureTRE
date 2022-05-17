@@ -1,0 +1,81 @@
+name: tre-service-avd-aad
+version: 0.1.0
+description: "An Azure TRE service Azure Virtual Desktop"
+registry: azuretre
+dockerfile: Dockerfile.tmpl
+
+credentials:
+  - name: azure_tenant_id
+    env: ARM_TENANT_ID
+  - name: azure_subscription_id
+    env: ARM_SUBSCRIPTION_ID
+  - name: azure_client_id
+    env: ARM_CLIENT_ID
+  - name: azure_client_secret
+    env: ARM_CLIENT_SECRET
+
+parameters:
+  - name: workspace_id
+    type: string
+  - name: tre_id
+    type: string
+  - name: id
+    type: string
+  - name: azure_location
+    type: string
+  - name: localAdminName
+    type: string
+    default: adminuser
+  - name: localAdminPassword
+    type: string
+  - name: vmSize
+    type: string
+    default: "Standard_DS2as_v4"
+  - name: vmCount
+    type: integer
+    default: 1
+  - name: vmLicenseType
+    type: string
+    default: "Windows_Client"
+
+outputs:
+  - name: connection_uri
+    type: string
+    applyTo:
+      - install
+
+mixins:
+  - exec
+  - az
+
+install:
+  - az:
+      description: "az login"
+      arguments:
+        - login
+      flags:
+        service-principal:
+        username: "{{ bundle.credentials.azure_client_id}}"
+        password: "{{ bundle.credentials.azure_client_secret}}"
+        tenant: "{{ bundle.credentials.azure_tenant_id}}"
+  - az:
+      description: "Deploy Azure Virtual Desktop Service"
+      name: "tre-service-avd-aad"
+      arguments:
+        - deployment
+        - sub
+        - create
+      flags:
+        template-file: main.json
+        location: "{{ bundle.parameters.azure_location }}"
+        name: "{{ bundle.parameters.id }}"
+        parameters: id={{ bundle.parameters.id }} workspaceId={{ bundle.parameters.workspace_id }} treId={{ bundle.parameters.tre_id }} localAdminName={{ bundle.parameters.localAdminName }} localAdminPassword={{ bundle.parameters.localAdminPassword }} vmSize={{ bundle.parameters.vmSize }} vmCount={{ bundle.parameters.vmCount }} vmLicenseType={{ bundle.parameters.vmLicenseType }}
+      outputs:
+        - name: connection_uri
+
+uninstall:
+  - exec:
+      description: "Uninstall Azure Virtual Desktop Service"
+      command: echo
+      arguments:
+        - "This service does not yet implement uninstall action."
