@@ -18,6 +18,8 @@ fi
 
 az config set extension.use_dynamic_install=yes_without_prompt
 
+az --version
+
 if [[ "$1" == *"start"* ]]; then
   if [[ $(az network firewall list --output json --query "[?resourceGroup=='rg-${TRE_ID}'&&name=='fw-${TRE_ID}'] | length(@)") != 0 ]]; then
     CURRENT_PUBLIC_IP=$(az network firewall ip-config list -f "fw-$TRE_ID" -g "rg-$TRE_ID" --query "[0].publicIpAddress" -o tsv)
