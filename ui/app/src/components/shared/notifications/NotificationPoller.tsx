@@ -4,6 +4,7 @@ import { HttpMethod, useAuthApiCall } from '../../../useAuthApiCall';
 import { ApiEndpoint } from '../../../models/apiEndpoints';
 import { TRENotification } from '../../../models/treNotification';
 import { Operation } from '../../../models/operation';
+import config from '../../../config.json';
 
 interface NotificationPollerProps {
   notification: TRENotification,
@@ -21,7 +22,7 @@ export const NotificationPoller: React.FunctionComponent<NotificationPollerProps
       props.notification.operation = op;
       props.updateNotification(props.notification);
     }
-  }, 5000);
+  }, config.pollingDelayMilliseconds);
 
   return (<></>);
 };
