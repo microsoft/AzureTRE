@@ -1,0 +1,106 @@
+---
+name: tre-service-ohdsi
+version: 0.0.1
+description: "An Azure TRE service for ohdsi"
+registry: azuretre
+dockerfile: Dockerfile.tmpl
+
+credentials:
+  - name: azure_tenant_id
+    env: ARM_TENANT_ID
+  - name: azure_subscription_id
+    env: ARM_SUBSCRIPTION_ID
+  - name: azure_client_id
+    env: ARM_CLIENT_ID
+  - name: azure_client_secret
+    env: ARM_CLIENT_SECRET
+
+parameters:
+  - name: workspace_id
+    type: string
+  - name: tre_id
+    type: string
+  - name: id
+    type: string
+    description: "An Id for this installation"
+  - name: mgmt_acr_name
+    type: string
+  - name: tfstate_resource_group_name
+    type: string
+    description: "Resource group containing the Terraform state storage account"
+    env: MGMT_RESOURCE_GROUP_NAME
+  - name: tfstate_storage_account_name
+    type: string
+    description: "The name of the Terraform state storage account"
+    env: MGMT_STORAGE_ACCOUNT_NAME
+  - name: tfstate_container_name
+    type: string
+    default: "tfstate"
+    description: "The name of the Terraform state storage container"
+    env: TERRAFORM_STATE_CONTAINER_NAME
+  - name: arm_use_msi
+    env: ARM_USE_MSI
+    default: false
+
+mixins:
+  - az
+  - docker
+  - terraform:
+      clientVersion: 1.0.5
+
+install:
+  # - az:
+  #     description: "az login"
+  #     arguments:
+  #       - login
+  #     flags:
+  #       identity:
+  #       username: "{{ bundle.credentials.azure_client_id}}"
+  # - az:
+  #     description: "acr login"
+  #     arguments:
+  #       - acr
+  #       - login
+  #     flags:
+  #       name: "{{ bundle.parameters.mgmt_acr_name }}"
+  - terraform:
+      description: "Deploy ohdsi service"
+      vars:
+        workspace_id: "{{ bundle.parameters.workspace_id }}"
+        tre_id: "{{ bundle.parameters.tre_id }}"
+        tre_resource_id: "{{ bundle.parameters.id }}"
+        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
+        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
+        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
+        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
+      backendConfig:
+        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
+        container_name: "{{ bundle.parameters.tfstate_container_name }}"
+        key: "tre-service-ohdsi-{{ bundle.parameters.id }}"
+      outputs:
+        - name: azureml_compute_cluster_name
+
+upgrade:
+  - exec:
+      description: "Upgrade service"
+      command: echo
+      arguments:
+        - "This workspace does not implement upgrade action"
+
+uninstall:
+  - terraform:
+      description: "Tear down workspace"
+      vars:
+        workspace_id: "{{ bundle.parameters.workspace_id }}"
+        tre_id: "{{ bundle.parameters.tre_id }}"
+        tre_resource_id: "{{ bundle.parameters.id }}"
+        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
+        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
+        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
+        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
+      backendConfig:
+        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
+        container_name: "{{ bundle.parameters.tfstate_container_name }}"
+        key: "tre-service-ohdsi-{{ bundle.parameters.id }}"
