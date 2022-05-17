@@ -1,7 +1,9 @@
 import * as React from 'react';
+import { Stack } from "@fluentui/react";
 import { List } from '@fluentui/react/lib/List';
 import { ITheme, mergeStyleSets, getTheme, getFocusStyle } from '@fluentui/react/lib/Styling';
 import { HistoryItem } from '../../models/resource';
+import { ResourcePropertyPanelItem } from './ResourcePropertyPanel';
 
 const theme: ITheme = getTheme();
 const { palette, semanticColors, fonts } = theme;
@@ -58,7 +60,11 @@ const onRenderCell = (item: any, index: number | undefined): JSX.Element => {
   var propertyBag = {...item.properties}
   delete propertyBag['display_name']
   delete propertyBag['description']
-  let val = JSON.stringify(propertyBag)
+
+  function userFriendlyKey(key: String){
+    let friendlyKey = key.replaceAll('_', ' ');
+    return friendlyKey.charAt(0).toUpperCase() + friendlyKey.slice(1).toLowerCase();
+  }
 
   return (
     <div className={classNames.itemCell} data-is-focusable={true}>
@@ -66,7 +72,18 @@ const onRenderCell = (item: any, index: number | undefined): JSX.Element => {
         <div className={classNames.itemName}>{item.properties.display_name}</div>
         <div className={classNames.itemIndex}>{`Item ${index}`}</div>
         <div>{item.properties.description}</div>
-        <div>{val}</div>
+        <Stack wrap horizontal>
+          <Stack grow>
+            {
+                Object.keys(propertyBag).map((key) => {
+                    let val = (propertyBag as any)[key].toString();
+                    return (
+                        <ResourcePropertyPanelItem header={userFriendlyKey(key)} val={val} key={key}/>
+                    )
+                })
+            }
+            </Stack>
+        </Stack>
       </div>
     </div>
   );
