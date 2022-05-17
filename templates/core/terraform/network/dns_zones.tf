@@ -6,6 +6,7 @@
 # - privatelink.ods.opinsights.azure.com
 # - privatelink.agentsvc.azure-automation.net
 # - privatelink.blob.core.windows.net (used also by Storage module)
+# - privatelink.dfs.core.windows.net
 resource "azurerm_private_dns_zone" "azure_monitor" {
   name                = "privatelink.monitor.azure.com"
   resource_group_name = var.resource_group_name
@@ -91,6 +92,22 @@ resource "azurerm_private_dns_zone_virtual_network_link" "blobcore" {
   lifecycle { ignore_changes = [tags] }
 }
 
+# dfs DNS zone is used by Storage modules
+resource "azurerm_private_dns_zone" "dfscore" {
+  name                = "privatelink.dfs.core.windows.net"
+  resource_group_name = var.resource_group_name
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "dfscore" {
+  name                  = "dfscorelink"
+  resource_group_name   = var.resource_group_name
+  private_dns_zone_name = azurerm_private_dns_zone.dfscore.name
+  virtual_network_id    = azurerm_virtual_network.core.id
+
+  lifecycle { ignore_changes = [tags] }
+}
 
 resource "azurerm_private_dns_zone" "azurewebsites" {
   name                = "privatelink.azurewebsites.net"
