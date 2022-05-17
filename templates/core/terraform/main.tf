@@ -77,6 +77,7 @@ module "airlock_resources" {
   tre_id              = var.tre_id
   location            = var.location
   resource_group_name = azurerm_resource_group.core.name
+  subscription_id     = var.arm_subscription_id
 }
 
 module "resource_processor_vmss_porter" {

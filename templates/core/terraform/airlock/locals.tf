@@ -11,4 +11,6 @@ locals {
   egt_scan_result_topic_name            = "egt-scan-res-${var.tre_id}"
   egt_update_status_topic_name          = "egt-update-status-${var.tre_id}"
   egt_status_changed_topic_name         = "egt-status-changed-${var.tre_id}"
+
+  logic_app_name = "logicapp-orchestrator-${var.tre_id}"
 }

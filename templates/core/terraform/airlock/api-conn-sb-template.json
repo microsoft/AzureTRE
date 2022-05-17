@@ -1,0 +1,64 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "connections_servicebus_name": {
+      "type": "String"
+    },
+    "conn_string": {
+      "type": "String"
+    },
+    "subscription_id": {
+      "type": "String"
+    }
+  },
+  "variables": {},
+  "resources": [
+    {
+      "apiVersion": "2018-07-01-preview",
+      "kind": "V1",
+      "properties": {
+        "displayName": "[parameters('connections_servicebus_name')]",
+        "authenticatedUser": {},
+        "overallStatus": "Connected",
+        "statuses": [
+          {
+            "status": "Connected"
+          }
+        ],
+        "parameterValueSet": {
+          "name": "connectionstringauth",
+          "values": {
+            "connectionString": {
+              "value": "[parameters('conn_string')]"
+            }
+          }
+        },
+        "customParameterValues": {},
+        "createdTime": "2022-05-16T10:13:02.852Z",
+        "changedTime": "2022-05-16T10:13:03.149Z",
+        "api": {
+          "name": "servicebus",
+          "displayName": "Service Bus",
+          "description": "Connect to Azure Service Bus to send and receive messages. You can perform actions such as send to queue, send to topic, receive from queue, receive from subscription, etc.",
+          "iconUri": "https://connectoricons-prod.azureedge.net/releases/v1.0.1568/1.0.1568.2757/servicebus/icon.png",
+          "brandColor": "#c4d5ff",
+          "category": "Standard",
+          "type": "Microsoft.Web/locations/managedApis",
+          "id": "[concat('/subscriptions/', parameters('subscription_id'), '/providers/Microsoft.Web/locations/centralus/managedApis/', 'servicebus')]"
+        },
+        "testLinks": [],
+        "testRequests": []
+      },
+      "name": "[parameters('connections_servicebus_name')]",
+      "type": "Microsoft.Web/connections",
+      "location": "centralus"
+    }
+  ],
+  "outputs": {
+    "resourceid": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Web/connections', parameters('connections_servicebus_name'))]"
+    }
+  }
+}

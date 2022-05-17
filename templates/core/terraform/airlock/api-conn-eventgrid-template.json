@@ -1,0 +1,65 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "connections_azureeventgridpublish_name": {
+            "type": "String"
+        },
+        "api_key": {
+            "defaultValue": "",
+            "type": "String"
+        },
+        "subscription_id": {
+            "type": "String"
+        },
+        "endpoint": {
+            "type": "String"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "apiVersion": "2018-07-01-preview",
+            "kind": "V1",
+            "properties": {
+                "displayName": "[parameters('connections_azureeventgridpublish_name')]",
+                "authenticatedUser": {},
+                "overallStatus": "Connected",
+                "statuses": [
+                    {
+                        "status": "Connected"
+                    }
+                ],
+                "parameterValues": {
+                    "endpoint": "[parameters('endpoint')]",
+                    "api_key": "[parameters('api_key')]"
+                },
+                "customParameterValues": {},
+                "createdTime": "2022-05-16T10:15:34.131Z",
+                "changedTime": "2022-05-16T10:15:34.225Z",
+                "api": {
+                    "name": "azureeventgridpublish",
+                    "displayName": "Azure Event Grid Publish",
+                    "description": "Azure Event Grid Publish will publish data to any Azure Event Grid Custom Topic.",
+                    "iconUri": "https://connectoricons-prod.azureedge.net/releases/v1.0.1538/1.0.1538.2619/azureeventgridpublish/icon.png",
+                    "brandColor": "#0072c6",
+                    "category": "Standard",
+                    "type": "Microsoft.Web/locations/managedApis",
+                    "id": "[concat('/subscriptions/', parameters('subscription_id'), '/providers/Microsoft.Web/locations/centralus/managedApis/', 'azureeventgridpublish')]"
+
+                },
+                "testLinks": [],
+                "testRequests": []
+            },
+            "name": "[parameters('connections_azureeventgridpublish_name')]",
+            "type": "Microsoft.Web/connections",
+            "location": "centralus"
+        }
+    ],
+    "outputs": {
+        "resourceid": {
+            "type": "string",
+            "value": "[resourceId('Microsoft.Web/connections',parameters('connections_azureeventgridpublish_name'))]"
+        }
+    }
+}
