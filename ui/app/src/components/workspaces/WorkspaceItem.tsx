@@ -4,6 +4,7 @@ import { WorkspaceRoleName } from '../../models/roleNames';
 import { Workspace } from '../../models/workspace';
 import { SecuredByRole } from '../shared/SecuredByRole';
 import { ResourceDebug } from '../shared/ResourceDebug';
+import { ResourceHistory } from '../shared/ResourceHistory';
 import { WorkspaceRolesContext } from './WorkspaceRolesContext';
 
 // TODO:
@@ -47,16 +48,12 @@ export const WorkspaceItem: React.FunctionComponent<WorkspaceItemProps> = (props
 
         </PivotItem>
         <PivotItem headerText="History">
-          <h3>--History goes here--</h3>
+          <ResourceHistory history={props.workspace.history} />
         </PivotItem>
         <PivotItem headerText="Operations">
           <h3>--Operations Log here</h3>
         </PivotItem>
       </Pivot>
-
-
-
-
 
     </>
   );
