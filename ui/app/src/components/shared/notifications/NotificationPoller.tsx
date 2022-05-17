@@ -13,10 +13,6 @@ interface NotificationPollerProps {
 export const NotificationPoller: React.FunctionComponent<NotificationPollerProps> = (props: NotificationPollerProps) => {
   const apiCall = useAuthApiCall();
 
-  useEffect(() => {
-    console.warn(`Poller rendering ${props.notification.operation.createdWhen}`);
-  })
-
   useInterval(async () => {
     let op = (await apiCall(`${props.notification.operation.resourcePath}/${ApiEndpoint.Operations}/${props.notification.operation.id}`, HttpMethod.Get, props.notification.workspace ? props.notification.workspace.properties.app_id : null)).operation as Operation;
 

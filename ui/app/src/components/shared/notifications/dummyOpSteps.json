@@ -6,8 +6,8 @@
     "status": "pipeline_deploying",
     "action": "install",
     "message": "Pipeline deployment completed successfully",
-    "createdWhen": 1650898740.112206,
-    "updatedWhen": 1650899911.042079,
+    "createdWhen": 1650653543.343581,
+    "updatedWhen": 1650653543.343581,
     "user": {
         "id": "7f9756c3-7925-4b78-a10b-83927ab9c008",
         "name": "joalmeid@microsoft.com Lopes de Almeida",

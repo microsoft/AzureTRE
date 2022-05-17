@@ -36,6 +36,9 @@ font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 .tre-notifications-button i{
     font-size: 24px;
 }
+.tre-notifications-dismiss{
+    text-align: right;
+}
 ul.tre-notifications-list{
     margin:0;
     padding:0;
@@ -43,6 +46,14 @@ ul.tre-notifications-list{
 .tre-notifications-list li{
     list-style: none;
     margin-top:20px;
+    padding-bottom:10px;
+    border-bottom:1px #ccc solid;
+}
+.tre-notification-time{
+    font-style: italic;
+    text-align: right;
+    font-size: 12px;
+    margin-top:10px;
 }
 .tre-home-link{
     color:#fff;
