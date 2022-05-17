@@ -17,7 +17,7 @@ if [[ $(az group list --output json --query "[?name=='rg-${TRE_ID}'] | length(@)
 fi
 
 az config set extension.use_dynamic_install=yes_without_prompt
-
+az extension add --name azure-firewall
 az --version
 
 if [[ "$1" == *"start"* ]]; then
