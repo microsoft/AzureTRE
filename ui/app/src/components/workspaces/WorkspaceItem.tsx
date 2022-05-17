@@ -5,6 +5,7 @@ import { Workspace } from '../../models/workspace';
 import { SecuredByRole } from '../shared/SecuredByRole';
 import { ResourceDebug } from '../shared/ResourceDebug';
 import { ResourceHistory } from '../shared/ResourceHistory';
+import { ResourcePropertyPanel } from '../shared/ResourcePropertyPanel';
 import { WorkspaceRolesContext } from './WorkspaceRolesContext';
 
 // TODO:
@@ -28,7 +29,8 @@ export const WorkspaceItem: React.FunctionComponent<WorkspaceItemProps> = (props
             'data-title': 'Overview',
           }}
         >
-          <h3>--Workspace details panel here--</h3>
+          
+          <ResourcePropertyPanel resource={props.workspace}/>
 
           <h3>Roles:</h3>
           <ul>
