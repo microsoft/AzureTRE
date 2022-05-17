@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useInterval } from './useInterval';
 import { HttpMethod, useAuthApiCall } from '../../../useAuthApiCall';
 import { ApiEndpoint } from '../../../models/apiEndpoints';

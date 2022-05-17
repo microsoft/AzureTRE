@@ -3,6 +3,7 @@ import { Operation } from '../../../models/operation';
 import { PrimaryButton } from '@fluentui/react';
 import { NotificationsContext } from './NotificationsContext';
 import dummyOp from './dummyOp.json';
+import dummyOpSteps from './dummyOpSteps.json';
 import { HttpMethod, ResultType, useAuthApiCall } from '../../../useAuthApiCall';
 
 export const AddNotificationDemo: React.FunctionComponent = () => {
@@ -11,8 +12,13 @@ export const AddNotificationDemo: React.FunctionComponent = () => {
 
   const addSampleNotification = () => {
     let d = JSON.parse(JSON.stringify(dummyOp)) as Operation; // avoid reusing the same object
-    d.createdWhen = Math.random();
     console.log("adding test notification", d);
+    opsContext.addOperation(d);
+  }
+
+  const addSampleNotificationWithSteps = () => {
+    let d = JSON.parse(JSON.stringify(dummyOpSteps)) as Operation; // avoid reusing the same object
+    console.log("adding test notification with steps", d);
     opsContext.addOperation(d);
   }
 
@@ -31,7 +37,8 @@ export const AddNotificationDemo: React.FunctionComponent = () => {
     <>
     <h4>Notifications test harness</h4>
       <PrimaryButton onClick={() => addSampleNotification()}>Add Test Notification</PrimaryButton>&nbsp;
-      <PrimaryButton onClick={() => postDemoPatch()}>Patch a VM</PrimaryButton>
+      <PrimaryButton onClick={() => addSampleNotificationWithSteps()}>Add Test Notification (with steps)</PrimaryButton>&nbsp;
+      <PrimaryButton onClick={() => postDemoPatch()}>Patch a real VM</PrimaryButton>
     </>
   );
 };

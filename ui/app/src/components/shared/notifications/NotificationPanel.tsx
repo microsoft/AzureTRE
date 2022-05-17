@@ -1,4 +1,4 @@
-import { Callout, DirectionalHint, FontWeights, Link, mergeStyleSets, MessageBar, MessageBarType, Panel, Text } from '@fluentui/react';
+import { Callout, DirectionalHint, FontWeights, Link, mergeStyleSets, MessageBar, MessageBarType, Panel, Shimmer, ShimmerElementType, Text } from '@fluentui/react';
 import React, { useContext, useEffect, useState } from 'react';
 import { completedStates, Operation } from '../../../models/operation';
 import { NotificationsContext } from './NotificationsContext';
@@ -13,6 +13,7 @@ export const NotificationPanel: React.FunctionComponent = () => {
   const opsContext = useContext(NotificationsContext);
   const [isOpen, setIsOpen] = useState(false);
   const [showCallout, setShowCallout] = useState(false);
+  const [loadingNotification, setLoadingNotification] = useState(false);
   const [notifications, setNotifications] = useState([] as Array<TRENotification>)
   const apiCall = useAuthApiCall();
 
@@ -47,11 +48,13 @@ export const NotificationPanel: React.FunctionComponent = () => {
     }
 
     const addOp = async () => {
-      let currentNotifications = [...notifications];
       setIsOpen(true);
+      setLoadingNotification(true);
+      let currentNotifications = [...notifications];
       let n = await setupNotification(opsContext.latestOperation);
       currentNotifications.push(n);
       setNotifications(currentNotifications);
+      setLoadingNotification(false);
     };
 
     if (opsContext.latestOperation && opsContext.latestOperation.id) addOp();
@@ -145,6 +148,7 @@ export const NotificationPanel: React.FunctionComponent = () => {
         })
       }
       <Panel
+        isLightDismiss
         headerText="Notifications"
         isOpen={isOpen}
         onDismiss={() => { setIsOpen(false) }}
@@ -156,7 +160,7 @@ export const NotificationPanel: React.FunctionComponent = () => {
           }>Dismiss Completed</Link>
         </div>
         {
-          notifications.length === 0 &&
+          notifications.length === 0 && !loadingNotification &&
           <div style={{ marginTop: '20px' }}>
             <MessageBar
               messageBarType={MessageBarType.success}
@@ -173,6 +177,17 @@ export const NotificationPanel: React.FunctionComponent = () => {
                 <NotificationItem notification={n} key={i} />
               )
             })
+          }
+          {
+            loadingNotification &&
+            <div>
+              <Shimmer shimmerElements={[{ type: ShimmerElementType.gap, width: '100%' },]} />
+              <Shimmer width="50%"/>
+              <Shimmer shimmerElements={[{ type: ShimmerElementType.gap, width: '100%' },]} />
+              <Shimmer />
+              <Shimmer shimmerElements={[{ type: ShimmerElementType.gap, width: '100%' },]} />
+              <Shimmer />
+            </div>
           }
         </ul>
       </Panel>
