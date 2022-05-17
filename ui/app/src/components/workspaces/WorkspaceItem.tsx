@@ -5,6 +5,7 @@ import { Workspace } from '../../models/workspace';
 import { SecuredByRole } from '../shared/SecuredByRole';
 import { ResourceDebug } from '../shared/ResourceDebug';
 import { WorkspaceRolesContext } from './WorkspaceRolesContext';
+import { WorkspaceOperationsPanel } from './WorkspaceOperationsPanel';
 
 // TODO:
 // - commands for managing workspace
@@ -48,8 +49,11 @@ export const WorkspaceItem: React.FunctionComponent<WorkspaceItemProps> = (props
         </PivotItem>
         <PivotItem headerText="History">
           <h3>--History goes here--</h3>
+
+
         </PivotItem>
         <PivotItem headerText="Operations">
+            <WorkspaceOperationsPanel workspace={props.workspace} />
           <h3>--Operations Log here</h3>
         </PivotItem>
       </Pivot>
