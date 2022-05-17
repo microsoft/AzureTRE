@@ -28,8 +28,7 @@ export const WorkspaceItem: React.FunctionComponent<WorkspaceItemProps> = (props
             'data-title': 'Overview',
           }}
         >
-          <h3>--Workspace details panel here--</h3>
-
+          
           <ResourcePropertyPanel resource={props.workspace}/>
 
           <h3>Roles:</h3>
