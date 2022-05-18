@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {  useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { ApiEndpoint } from '../../models/apiEndpoints';
 import { Workspace } from '../../models/workspace';
 import { useAuthApiCall, HttpMethod } from '../../useAuthApiCall';
@@ -56,10 +56,10 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
           <h2>User Resources:</h2>
           {
             userResources &&
-            <ResourceCardList 
-              resources={userResources} 
-              selectResource={(r: Resource) => props.setUserResource(r as UserResource)} 
-              emptyText="This workspace service contains no user resources."/>
+            <ResourceCardList
+              resources={userResources}
+              selectResource={(r: Resource) => props.setUserResource(r as UserResource)}
+              emptyText="This workspace service contains no user resources." />
           }
           <ResourceDebug resource={workspaceService} />
         </>

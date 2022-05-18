@@ -10,15 +10,15 @@ interface WorkspaceServicesProps {
   setWorkspaceService: (workspaceService: WorkspaceService) => void
 }
 
-export const WorkspaceServices: React.FunctionComponent<WorkspaceServicesProps> = (props:WorkspaceServicesProps) => {
+export const WorkspaceServices: React.FunctionComponent<WorkspaceServicesProps> = (props: WorkspaceServicesProps) => {
 
   return (
     <>
-     <h1>Workspace Services</h1>
-      <ResourceCardList 
-        resources={props.workspaceServices} 
-        selectResource={(r: Resource) => props.setWorkspaceService(r as WorkspaceService)} 
-        emptyText="This workspace currently has no workspace services."/>
+      <h1>Workspace Services</h1>
+      <ResourceCardList
+        resources={props.workspaceServices}
+        selectResource={(r: Resource) => props.setWorkspaceService(r as WorkspaceService)}
+        emptyText="This workspace has no workspace services." />
     </>
   );
 };
