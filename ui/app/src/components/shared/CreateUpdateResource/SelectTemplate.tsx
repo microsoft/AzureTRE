@@ -1,31 +1,11 @@
 import { DefaultButton, MessageBar, MessageBarType, Spinner, SpinnerSize, Stack } from "@fluentui/react";
 import { useEffect, useState } from "react";
-import { ApiEndpoint } from "../../../models/apiEndpoints";
 import { LoadingState } from "../../../models/loadingState";
-import { ResourceType } from "../../../models/resourceType";
 import { HttpMethod, useAuthApiCall } from "../../../useAuthApiCall";
 
 interface SelectTemplateProps {
-    resourceType: ResourceType,
-    serviceName?: string,
+    templatesPath: string,
     onSelectTemplate: (templateName: string) => void
-}
-
-const getTemplatePath = (resourceType: string, serviceName?: string) => {
-    switch (resourceType) {
-        case ResourceType.Workspace:
-            return ApiEndpoint.WorkspaceTemplates;
-        case ResourceType.WorkspaceService:
-            return ApiEndpoint.WorkspaceServiceTemplates;
-        case ResourceType.UserResource:
-            if (serviceName) {
-                return `${ApiEndpoint.WorkspaceServiceTemplates}/${serviceName}/${ApiEndpoint.UserResourceTemplates}`;
-            } else {
-                throw Error('serviceTemplateName must also be passed for workspace-service resourceType.');
-            }
-        default:
-            throw Error('Unsupported resource type.');
-    }
 }
 
 export const SelectTemplate: React.FunctionComponent<SelectTemplateProps> = (props: SelectTemplateProps) => {
@@ -36,11 +16,8 @@ export const SelectTemplate: React.FunctionComponent<SelectTemplateProps> = (pro
     useEffect(() => {
         const getTemplates = async () => {
             try {
-                // Construct the templates API path for specified ResourceType
-                const path = getTemplatePath(props.resourceType, props.serviceName);
-
                 // Get the templates from the API
-                const templatesResponse = await apiCall(path, HttpMethod.Get);
+                const templatesResponse = await apiCall(props.templatesPath, HttpMethod.Get);
                 setTemplates(templatesResponse.templates);
                 setLoading(LoadingState.Ok);
             } catch {
@@ -57,7 +34,7 @@ export const SelectTemplate: React.FunctionComponent<SelectTemplateProps> = (pro
     switch (loading) {
         case LoadingState.Ok:
             return (
-                templates ? <Stack>
+                templates ? <Stack style={{ marginTop: 20 }}>
                 {
                     templates.map((template: any, i) => {
                         return (
@@ -78,12 +55,12 @@ export const SelectTemplate: React.FunctionComponent<SelectTemplateProps> = (pro
                     isMultiline={true}
                 >
                     <h3>Error retrieving templates</h3>
-                    <p>There was an error retrieving templates. Please see the browser console for details.</p>
+                    <p>There was an error retrieving resource templates. Please see the browser console for details.</p>
                 </MessageBar>
             );
         default:
             return (
-                <div style={{ marginTop: '20px' }}>
+                <div style={{ marginTop: 20 }}>
                     <Spinner label="Loading templates" ariaLive="assertive" labelPosition="top" size={SpinnerSize.large} />
                 </div>
             )

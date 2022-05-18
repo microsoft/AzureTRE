@@ -1,11 +1,12 @@
-import { DefaultButton, MessageBar, MessageBarType, Spinner, SpinnerSize } from "@fluentui/react";
+import { MessageBar, MessageBarType, Spinner, SpinnerSize } from "@fluentui/react";
 import { useEffect, useState } from "react";
 import { LoadingState } from "../../../models/loadingState";
 import { HttpMethod, useAuthApiCall } from "../../../useAuthApiCall";
+import Form from "@rjsf/fluent-ui";
 
 interface ResourceFormProps {
     templatePath: string,
-    onCreateResource: () => void
+    createResource: (resource: {}) => void
 }
 
 export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: ResourceFormProps) => {
@@ -18,21 +19,26 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
             try {
                 // Get the full resource template containing the required parameters
                 const templateResponse = await apiCall(props.templatePath, HttpMethod.Get);
-                setTemplate(templateResponse.template);
+                console.log(templateResponse);
+                setTemplate(templateResponse);
                 setLoading(LoadingState.Ok);
             } catch {
                 setLoading(LoadingState.Error);
             }
         };
 
-        // Fetch resource templates only if not already fetched
-        getFullTemplate();
+        // Fetch full resource template only if not in state
+        if (!template) {
+            getFullTemplate();
+        }
     });
 
     switch (loading) {
         case LoadingState.Ok:
             return (
-                template ? <p>{template.name}</p> : null
+                template ? <div style={{ marginTop: 20 }}>
+                    <Form schema={template} onSubmit={(e: any) => props.createResource(e.formData)}/>
+                </div> : null
             )
         case LoadingState.Error:
             return (
@@ -41,12 +47,12 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
                     isMultiline={true}
                 >
                     <h3>Error retrieving template</h3>
-                    <p>There was an error retrieving the template. Please see the browser console for details.</p>
+                    <p>There was an error retrieving the full resource template. Please see the browser console for details.</p>
                 </MessageBar>
             );
         default:
             return (
-                <div style={{ marginTop: '20px' }}>
+                <div style={{ marginTop: 20 }}>
                     <Spinner label="Loading template" ariaLive="assertive" labelPosition="top" size={SpinnerSize.large} />
                 </div>
             )

@@ -49,7 +49,7 @@ export const RootDashboard: React.FunctionComponent<RootDashboardProps> = (props
       } />
       <hr/>
 
-      <Stack horizontal horizontalAlign="space-between">
+      <Stack horizontal horizontalAlign="space-between" style={{ padding: 10 }}>
         <h1>Workspaces</h1>
         <CreateUpdateResource resourceType={ResourceType.Workspace}></CreateUpdateResource>
       </Stack>

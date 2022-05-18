@@ -1,6 +1,0 @@
-{
-  "dependencies": {
-    "@rjsf/core": "^4.2.0",
-    "@rjsf/fluent-ui": "^4.2.0"
-  }
-}
