@@ -7,6 +7,7 @@ import { Resource } from '../../models/resource';
 interface ResourceCardListProps {
   resources: Array<Resource>,
   selectResource: (resource: Resource) => void,
+  contextMenuElement?: JSX.Element,
   emptyText: string
 }
 
@@ -36,7 +37,7 @@ export const ResourceCardList: React.FunctionComponent<ResourceCardListProps> = 
               props.resources.map((r, i) => {
                 return (
                   <Stack.Item key={i} style={gridItemStyles} >
-                    <ResourceCard resource={r} selectResource={() => props.selectResource(r)} to={''} />
+                    <ResourceCard resource={r} selectResource={() => props.selectResource(r)} itemId={i} contextMenuElement={props.contextMenuElement}/>
                   </Stack.Item>
                 )
               })
