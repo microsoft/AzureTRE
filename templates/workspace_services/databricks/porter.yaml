@@ -62,7 +62,7 @@ install:
         parameters: id={{ bundle.parameters.id }} workspaceId={{ bundle.parameters.workspace_id }} treId={{ bundle.parameters.tre_id }} hostSubnetAddressPrefix={{ bundle.parameters.hostSubnetAddressPrefix }} containerSubnetAddressPrefix={{ bundle.parameters.containerSubnetAddressPrefix }}
 
 uninstall:
-- exec:
+  - exec:
       description: "Uninstall Azure Databricks Service"
       command: echo
       arguments:
