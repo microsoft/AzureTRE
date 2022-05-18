@@ -9,7 +9,6 @@ param localAdminName string = 'adminuser'
 param localAdminPassword string
 param vmSize string = 'Standard_D2as_v4'
 param vmCount int = 1
-param vmLicenseType string = 'Windows_Client'
 
 var shortWorkspaceId = substring(workspaceId, length(workspaceId) - 4, 4)
 var shortServiceId = substring(id, length(id) - 4, 4)
@@ -69,14 +68,11 @@ module sessionHost 'modules/sessionHost.bicep' = {
     localAdminPassword: localAdminPassword
     subnetName: 'ServicesSubnet'
     vmSize: vmSize
-    count: vmCount
-    licenseType: vmLicenseType
+    vmCount: vmCount
     vnetId: workspaceVirtualNetwork.id
+    hostPoolName: hostPool.outputs.name
+    hostPoolRegToken: hostPool.outputs.token
   }
-
-  dependsOn: [
-    hostPool
-  ]
 }
 
 output connection_uri string = 'https://aka.ms/wvdarmweb'

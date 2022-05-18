@@ -32,3 +32,5 @@ resource hostPool 'Microsoft.DesktopVirtualization/hostPools@2021-03-09-preview'
 }
 
 output id string = hostPool.id
+output name string = hostPool.name
+output token string = string(hostPool.properties.registrationInfo.token)

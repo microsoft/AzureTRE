@@ -115,11 +115,11 @@ install:
         template-file: main.json
         location: "{{ bundle.parameters.azure_location }}"
         name: "{{ bundle.parameters.id }}"
-        parameters: id={{ bundle.parameters.id }} workspaceId={{ bundle.parameters.workspace_id }} treId={{ bundle.parameters.tre_id }} localAdminName={{ bundle.parameters.localAdminName }} localAdminPassword={{ bundle.parameters.localAdminPassword }} vmSize={{ bundle.parameters.vmSize }} vmCount={{ bundle.parameters.vmCount }} vmLicenseType={{ bundle.parameters.vmLicenseType }}
+        parameters: id={{ bundle.parameters.id }} workspaceId={{ bundle.parameters.workspace_id }} treId={{ bundle.parameters.tre_id }} localAdminName={{ bundle.parameters.localAdminName }} localAdminPassword={{ bundle.parameters.localAdminPassword }} vmSize={{ bundle.parameters.vmSize }} vmCount={{ bundle.parameters.vmCount }}
       outputs:
         # TODO: Porter doesn't see this
         - name: connection_uri
-          jsonPath: $.properties.outputs["connection_uri"].value
+          jsonPath: "$.properties.outputs['connection_uri'].value"
   - az:
       description: "Remove Az FW rule only needed during deployment"
       arguments:
@@ -140,4 +140,4 @@ uninstall:
       description: "Uninstall Azure Virtual Desktop Service"
       command: echo
       arguments:
-        - "This service does not yet implement uninstall action."
+        - "This service does not yet implement the uninstall action."

@@ -1,129 +1,151 @@
 param name string
 param tags object
 param location string
-param count int
 param vnetId string
 param subnetName string
 param localAdminName string
 @secure()
 param localAdminPassword string
 param vmSize string
-@allowed([
-  'Windows_Client'
-  'Windows_Server'
-])
-param licenseType string = 'Windows_Client'
-param installNVidiaGPUDriver bool = false
+param hostPoolRegToken string
 
-// Retrieve the host pool info to pass into the module that builds session hosts. These values will be used when invoking the VM extension to install AVD agents
-resource hostPoolToken 'Microsoft.DesktopVirtualization/hostPools@2021-01-14-preview' existing = {
-  name: 'hp-${name}'
+param intuneEnroll bool = false
+param hostPoolName string
+param vmCount int = 1
+
+// All N-series except for NV_v4 use Nvidia
+var installNVidiaGPUDriver = (startsWith(vmSize, 'Standard_N') && !(endsWith(vmSize, '_v4'))) ? true : false
+// NV_v4 uses AMD
+var installAmdGPUDriver = (startsWith(vmSize, 'Standard_NV') && endsWith(vmSize, '_v4')) ? true : false
+
+param deploymentNameStructure string = 'AVD'
+
+// Use the same VM templates as used by the Add VM to hostpool process
+var nestedTemplatesLocation = 'https://wvdportalstorageblob.blob.core.windows.net/galleryartifacts/armtemplates/Hostpool_12-9-2021/nestedTemplates/'
+var vmTemplateUri = '${nestedTemplatesLocation}managedDisks-galleryvm.json'
+
+var rdshPrefix = 'vm-${take(name, 10)}-'
+var subnetId = '${vnetId}/subnets/${subnetName}'
+
+resource availabilitySet 'Microsoft.Compute/availabilitySets@2021-11-01' = {
+  name: 'avail-${name}'
+  location: location
+  properties: {
+    platformFaultDomainCount: 2
+    platformUpdateDomainCount: 5
+  }
+  sku: {
+    name: 'Aligned'
+  }
+  tags: tags
 }
 
-resource networkInterface 'Microsoft.Network/networkInterfaces@2019-07-01' = [for i in range(0, count): {
-  name: 'nic-${take(name, 10)}-${i + 1}'
-  location: location
-  tags: tags
+// Deploy the session host VMs just like the Add VM to hostpool process would
+resource vmDeployment 'Microsoft.Resources/deployments@2021-04-01' = {
+  name: replace(deploymentNameStructure, '{rtype}', 'avdvm')
   properties: {
-    ipConfigurations: [
-      {
-        name: 'ipconfig1'
-        properties: {
-          subnet: {
-            id: '${vnetId}/subnets/${subnetName}'
-          }
-          privateIPAllocationMethod: 'Dynamic'
-        }
+    mode: 'Incremental'
+    templateLink: {
+      uri: vmTemplateUri
+      contentVersion: '1.0.0.0'
+    }
+    parameters: {
+      artifactsLocation: {
+        value: 'https://wvdportalstorageblob.blob.core.windows.net/galleryartifacts/Configuration_02-23-2022.zip'
       }
-    ]
-  }
-}]
-
-resource sessionHost 'Microsoft.Compute/virtualMachines@2019-07-01' = [for i in range(0, count): {
-  name: 'vm${take(name, 10)}-${i + 1}'
-  location: location
-  tags: tags
-  identity: {
-    type: 'SystemAssigned'
-  }
-  properties: {
-    osProfile: {
-      computerName: 'vm${take(name, 10)}-${i + 1}'
-      adminUsername: localAdminName
-      adminPassword: localAdminPassword
-    }
-    hardwareProfile: {
-      vmSize: vmSize
-    }
-    storageProfile: {
-      imageReference: {
-        publisher: 'microsoftwindowsdesktop'
-        offer: 'office-365'
-        sku: '20h2-evd-o365pp'
-        version: 'latest'
+      availabilityOption: {
+        value: 'AvailabilitySet'
       }
-      osDisk: {
-        createOption: 'FromImage'
+      availabilitySetName: {
+        value: availabilitySet.name
+      }
+      vmGalleryImageOffer: {
+        value: 'office-365'
+      }
+      vmGalleryImagePublisher: {
+        value: 'microsoftwindowsdesktop'
+      }
+      vmGalleryImageHasPlan: {
+        value: false
+      }
+      vmGalleryImageSKU: {
+        value: 'win11-21h2-avd-m365'
+      }
+      rdshPrefix: {
+        value: rdshPrefix
+      }
+      rdshNumberOfInstances: {
+        value: vmCount
+      }
+      rdshVMDiskType: {
+        value: 'StandardSSD_LRS'
+      }
+      rdshVmSize: {
+        value: vmSize
+      }
+      enableAcceleratedNetworking: {
+        value: true
+      }
+      vmAdministratorAccountUsername: {
+        value: localAdminName
+      }
+      vmAdministratorAccountPassword: {
+        value: localAdminPassword
+      }
+      // These values are required but unused for AAD join
+      administratorAccountUsername: {
+        value: ''
+      }
+      administratorAccountPassword: {
+        value: ''
+      }
+      // End required but unused for AAD join
+      'subnet-id': {
+        value: subnetId
+      }
+      vhds: {
+        value: 'vhds/${rdshPrefix}'
+      }
+      location: {
+        value: location
+      }
+      createNetworkSecurityGroup: {
+        value: false
+      }
+      vmInitialNumber: {
+        value: 0
+      }
+      hostpoolName: {
+        value: hostPoolName
+      }
+      hostpoolToken: {
+        value: hostPoolRegToken
+      }
+      aadJoin: {
+        value: true
+      }
+      intune: {
+        // In the CSE TRE DEMO tenant, Intune does not appear to be config'd
+        value: intuneEnroll
+      }
+      securityType: {
+        value: 'TrustedLaunch'
+      }
+      secureBoot: {
+        value: true
+      }
+      vTPM: {
+        value: true
+      }
+      vmImageVhdUri: {
+        value: ''
       }
     }
-    licenseType: licenseType
-    networkProfile: {
-      networkInterfaces: [
-        {
-          properties: {
-            primary: true
-          }
-          id: networkInterface[i].id
-        }
-      ]
-    }
   }
+}
 
-  // dependsOn: [
-  //   networkInterface[i]
-  // ]
-}]
-
-// Run this if we are Azure AD joining the session hosts
-resource sessionHostAADLogin 'Microsoft.Compute/virtualMachines/extensions@2020-06-01' = [for i in range(0, count): {
-  name: '${sessionHost[i].name}/AADLoginForWindows'
-  location: location
-  tags: tags
-  properties: {
-    publisher: 'Microsoft.Azure.ActiveDirectory'
-    type: 'AADLoginForWindows'
-    typeHandlerVersion: '1.0'
-    autoUpgradeMinorVersion: true
-  }
-}]
-
-resource sessionHostAVDAgent 'Microsoft.Compute/virtualMachines/extensions@2020-06-01' = [for i in range(0, count): {
-  name: '${sessionHost[i].name}/AddSessionHost'
-  location: location
-  tags: tags
-  properties: {
-    publisher: 'Microsoft.Powershell'
-    type: 'DSC'
-    typeHandlerVersion: '2.73'
-    autoUpgradeMinorVersion: true
-    settings: {
-      modulesUrl: 'https://wvdportalstorageblob.blob.core.windows.net/galleryartifacts/Configuration_02-23-2022.zip'
-      configurationFunction: 'Configuration.ps1\\AddSessionHost'
-      properties: {
-        hostPoolName: hostPoolToken.name
-        registrationInfoToken: hostPoolToken.properties.registrationInfo.token
-        aadJoin: true
-      }
-    }
-  }
-
-  // dependsOn: [
-  //   sessionHostAADLogin
-  // ]
-}]
-
-resource sessionHostGPUDriver 'Microsoft.Compute/virtualMachines/extensions@2020-06-01' = [for i in range(0, count): if (installNVidiaGPUDriver) {
-  name: '${sessionHost[i].name}/InstallNvidiaGpuDriverWindows'
+resource sessionHostGPUDriver 'Microsoft.Compute/virtualMachines/extensions@2020-06-01' = [for i in range(0, vmCount): if (installNVidiaGPUDriver) {
+  name: '${rdshPrefix}${i}/InstallNvidiaGpuDriverWindows'
   location: location
   tags: tags
   properties: {
@@ -131,6 +153,20 @@ resource sessionHostGPUDriver 'Microsoft.Compute/virtualMachines/extensions@2020
     type: 'NvidiaGpuDriverWindows'
     typeHandlerVersion: '1.3'
     autoUpgradeMinorVersion: true
-    settings: {}
+  }
+  dependsOn: [
+    vmDeployment
+  ]
+}]
+
+resource sessionHostAMDGPUDriver 'Microsoft.Compute/virtualMachines/extensions@2021-11-01' = [for i in range(0, vmCount): if (installAmdGPUDriver) {
+  name: '${rdshPrefix}${i}/AmdGpuDriverWindows'
+  location: location
+  tags: tags
+  properties: {
+    publisher: 'Microsoft.HpcCompute'
+    type: 'AmdGpuDriverWindows'
+    typeHandlerVersion: '1.0'
+    autoUpgradeMinorVersion: true
   }
 }]
