@@ -1,10 +1,8 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Resource } from '../../models/resource';
 import { Workspace } from '../../models/workspace';
 import { WorkspaceService } from '../../models/workspaceService';
-
-// TODO:
-// - workspace service cards
+import { ResourceCardList } from '../shared/ResourceCardList';
 
 interface WorkspaceServicesProps {
   workspace: Workspace,
@@ -12,22 +10,15 @@ interface WorkspaceServicesProps {
   setWorkspaceService: (workspaceService: WorkspaceService) => void
 }
 
-export const WorkspaceServices: React.FunctionComponent<WorkspaceServicesProps> = (props:WorkspaceServicesProps) => {
+export const WorkspaceServices: React.FunctionComponent<WorkspaceServicesProps> = (props: WorkspaceServicesProps) => {
 
   return (
     <>
-     <h1>Workspace Services Landing</h1>
-
-      <h2>Services</h2>
-      <ul>
-      {
-        props.workspaceServices.map((ws:WorkspaceService, i:number) => {
-          return (
-            <li key={i}><Link to={ws.id.toString()} onClick={() => props.setWorkspaceService(ws)}>{ws.properties.display_name}</Link></li>
-          )
-        })
-      }
-      </ul>
+      <h1>Workspace Services</h1>
+      <ResourceCardList
+        resources={props.workspaceServices}
+        selectResource={(r: Resource) => props.setWorkspaceService(r as WorkspaceService)}
+        emptyText="This workspace has no workspace services." />
     </>
   );
 };
