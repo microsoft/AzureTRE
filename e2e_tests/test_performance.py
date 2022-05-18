@@ -1,5 +1,6 @@
 import asyncio
 import pytest
+import logging
 
 import config
 from helpers import disable_and_delete_resource, get_workspace_owner_token, post_resource
@@ -35,15 +36,14 @@ async def test_parallel_resource_creations(admin_token, verify) -> None:
 
     # Now disable + delete them all in parallel
     tasks = []
-    for workspace_path, workspace_id in resource_paths:
-        workspace_owner_token = await get_workspace_owner_token(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
-
-        task = asyncio.create_task(disable_and_delete_resource(f'/api{workspace_path}', workspace_owner_token, verify))
+    for workspace_path, _ in resource_paths:
+        task = asyncio.create_task(disable_and_delete_resource(f'/api{workspace_path}', admin_token, verify))
         tasks.append(task)
 
     await asyncio.gather(*tasks)
 
 
+@pytest.mark.skip
 @pytest.mark.performance
 @pytest.mark.timeout(3000)
 async def test_bulk_updates_to_ensure_each_resource_updated_in_series(admin_token, verify) -> None:
