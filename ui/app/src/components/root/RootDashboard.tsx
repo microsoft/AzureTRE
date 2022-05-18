@@ -4,9 +4,11 @@ import { ApiEndpoint } from '../../models/apiEndpoints';
 import { Workspace } from '../../models/workspace';
 
 import { RootRolesContext } from '../shared/RootRolesContext';
-import { PrimaryButton } from '@fluentui/react';
+import { PrimaryButton, Stack } from '@fluentui/react';
 import { SecuredByRole } from '../shared/SecuredByRole';
 import { RoleName } from '../../models/roleNames';
+import { CreateUpdateResource } from '../shared/CreateUpdateResource/CreateUpdateResource';
+import { ResourceType } from '../../models/resourceType';
 
 // TODO:
 // - Create WorkspaceCard component + use instead of <Link>
@@ -46,7 +48,12 @@ export const RootDashboard: React.FunctionComponent<RootDashboardProps> = (props
         <PrimaryButton>Will be hidden for all</PrimaryButton>
       } />
       <hr/>
-      <h1>Workspaces</h1>
+
+      <Stack horizontal horizontalAlign="space-between">
+        <h1>Workspaces</h1>
+        <CreateUpdateResource resourceType={ResourceType.Workspace}></CreateUpdateResource>
+      </Stack>
+
       <ul>
       {
         props.workspaces.map((ws, i) => {
