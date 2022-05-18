@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
-import { Icon, ProgressIndicator, Link as FluentLink, Stack } from '@fluentui/react';
+import { Icon, ProgressIndicator, Link as FluentLink, Stack, DefaultPalette } from '@fluentui/react';
 import { TRENotification } from '../../../models/treNotification';
 import { completedStates, failedStates, inProgressStates, OperationStep } from '../../../models/operation';
 import { Link } from 'react-router-dom';
 import moment from 'moment';
 import { useInterval } from './useInterval';
-import { isNoSubstitutionTemplateLiteral } from 'typescript';
-import { relative } from 'path';
 
 interface NotificationItemProps {
   notification: TRENotification
@@ -29,7 +27,7 @@ export const NotificationItem: React.FunctionComponent<NotificationItemProps> = 
     if (failedStates.includes(status)) return ['ErrorBadge', 'red'];
     if (completedStates.includes(status)) return ['SkypeCheck', 'green'];
     if (status === "not_deployed") return ['Clock', '#cccccc'];
-    return ['ProgressLoopInner', 'blue'];
+    return ['ProgressLoopInner', DefaultPalette.themePrimary];
   }
 
   return (
@@ -39,7 +37,7 @@ export const NotificationItem: React.FunctionComponent<NotificationItemProps> = 
           <>
             <ProgressIndicator
               barHeight={4}
-              label={<Link style={{ textDecoration: 'none', fontWeight: 'bold', color: 'blue' }} to={props.notification.operation.resourcePath}>
+              label={<Link style={{ textDecoration: 'none', fontWeight: 'bold', color: DefaultPalette.themePrimary }} to={props.notification.operation.resourcePath}>
                 {props.notification.resource.properties.display_name}: {props.notification.operation.action}
               </Link>}
               description={`${props.notification.resource.resourceType} is ${props.notification.operation.status}`} />
@@ -49,7 +47,7 @@ export const NotificationItem: React.FunctionComponent<NotificationItemProps> = 
             barHeight={4}
             percentComplete={100}
             label={
-              <Link style={{ textDecoration: 'none', fontWeight: 'bold', color: 'blue' }} to={props.notification.operation.resourcePath}>
+              <Link style={{ textDecoration: 'none', fontWeight: 'bold', color: DefaultPalette.themePrimary }} to={props.notification.operation.resourcePath}>
                 <Icon iconName={getIconAndColourForStatus(props.notification.operation.status)[0]} style={{ color: getIconAndColourForStatus(props.notification.operation.status)[1], position: 'relative', top: '2px', marginRight: '10px' }} />
                 {props.notification.resource.properties.display_name}: {props.notification.operation.action}
               </Link>

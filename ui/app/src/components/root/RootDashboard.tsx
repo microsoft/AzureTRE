@@ -1,65 +1,23 @@
-import React, { useContext } from 'react';
-import { Link } from 'react-router-dom';
-import { ApiEndpoint } from '../../models/apiEndpoints';
+import React from 'react';
 import { Workspace } from '../../models/workspace';
 
-import { RootRolesContext } from '../shared/RootRolesContext';
-import { PrimaryButton } from '@fluentui/react';
-import { SecuredByRole } from '../shared/SecuredByRole';
-import { RoleName } from '../../models/roleNames';
-import { AddNotificationDemo } from '../shared/notifications/AddNotificationDemo';
-
-// TODO:
-// - Create WorkspaceCard component + use instead of <Link>
+import { ResourceCardList } from '../shared/ResourceCardList';
+import { Resource } from '../../models/resource';
 
 interface RootDashboardProps {
   selectWorkspace: (workspace: Workspace) => void,
   workspaces: Array<Workspace>
 }
 
-export const RootDashboard: React.FunctionComponent<RootDashboardProps> = (props:RootDashboardProps) => {
-  const rootRolesContext = useContext(RootRolesContext);
+export const RootDashboard: React.FunctionComponent<RootDashboardProps> = (props: RootDashboardProps) => {
 
   return (
     <>
-      <AddNotificationDemo />
-      <h3>TRE Roles</h3>
-      <ul>
-        {
-          rootRolesContext.roles &&
-          rootRolesContext.roles.map((role:string, i:number) => {
-            return (
-              <li key={i}>
-                {role}
-              </li>
-            )
-          })
-        }
-      </ul>
-      <SecuredByRole allowedRoles={[RoleName.TREAdmin]} element={
-        <PrimaryButton>Admin Only</PrimaryButton>
-      } />
-      &nbsp; 
-      <SecuredByRole allowedRoles={[RoleName.TREAdmin, RoleName.TREUser]} element={
-        <PrimaryButton>Admin + TRE User Only</PrimaryButton>
-      } />
-      &nbsp; 
-      <SecuredByRole allowedRoles={["NotARole"]} element={
-        <PrimaryButton>Will be hidden for all</PrimaryButton>
-      } />
-      <hr/>
       <h1>Workspaces</h1>
-      <ul>
-      {
-        props.workspaces.map((ws, i) => {
-          return (
-            <li key={i}>
-              <Link to={`/${ApiEndpoint.Workspaces}/${ws.id}`} onClick={() => props.selectWorkspace(ws)}>{ws.properties?.display_name}</Link>
-            </li>
-          )
-        })
-      }
-      </ul>
+      <ResourceCardList 
+        resources={props.workspaces} 
+        selectResource={(r: Resource) => {props.selectWorkspace(r as Workspace)}} 
+        emptyText="No workspaces to display. Create one to get started." />
     </>
   );
 };
