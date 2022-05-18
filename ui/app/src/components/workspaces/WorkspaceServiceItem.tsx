@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { ApiEndpoint } from '../../models/apiEndpoints';
 import { Workspace } from '../../models/workspace';
 import { useAuthApiCall, HttpMethod } from '../../useAuthApiCall';
@@ -8,9 +8,10 @@ import { WorkspaceService } from '../../models/workspaceService';
 import { ResourceDebug } from '../shared/ResourceDebug';
 import { MessageBar, MessageBarType, Spinner, SpinnerSize } from '@fluentui/react';
 import { ResourcePropertyPanel } from '../shared/ResourcePropertyPanel';
+import { Resource } from '../../models/resource';
+import { ResourceCardList } from '../shared/ResourceCardList';
 
 // TODO:
-// - replace list of user resources with cards
 // - separate loading placeholders for user resources instead of spinner
 
 interface WorkspaceServiceItemProps {
@@ -57,17 +58,10 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
           <h2>User Resources:</h2>
           {
             userResources &&
-            <ul>
-              {
-                userResources.map((userResource, i) => {
-                  return (
-                    <li key={i}>
-                      <Link to={`user-resources/${userResource.id}`} onClick={() => props.setUserResource(userResource)}>{userResource.properties?.display_name}</Link>
-                    </li>
-                  )
-                })
-              }
-            </ul>
+            <ResourceCardList
+              resources={userResources}
+              selectResource={(r: Resource) => props.setUserResource(r as UserResource)}
+              emptyText="This workspace service contains no user resources." />
           }
           <ResourceDebug resource={workspaceService} />
         </>
