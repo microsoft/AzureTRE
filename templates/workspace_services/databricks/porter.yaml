@@ -1,0 +1,69 @@
+name: tre-service-databricks
+version: 0.1.0
+description: "An Azure TRE service for Azure Databricks"
+registry: azuretre
+dockerfile: Dockerfile.tmpl
+
+credentials:
+  - name: azure_tenant_id
+    env: TENANT_ID
+  - name: azure_subscription_id
+    env: SUBSCRIPTION_ID
+  - name: azure_client_id
+    env: CLIENT_ID
+  - name: azure_client_secret
+    env: CLIENT_SECRET
+
+parameters:
+  - name: workspace_id
+    type: string
+  - name: tre_id
+    type: string
+  - name: id
+    type: string
+  - name: azure_location
+    type: string
+  - name: hostSubnetAddressPrefix
+    type: string
+  - name: containerSubnetAddressPrefix
+    type: string
+
+
+# outputs:
+#   - name: databricksWorkspaceName
+#     type: string
+#     applyTo:
+#       - install
+
+mixins:
+  - exec
+  - az
+
+install:
+  - az:
+      description: "az login"
+      arguments:
+        - login
+      flags:
+        service-principal:
+        username: "{{ bundle.credentials.azure_client_id}}"
+        password: "{{ bundle.credentials.azure_client_secret}}"
+        tenant: "{{ bundle.credentials.azure_tenant_id}}"
+  - az:
+      description: "Deploy Azure Databricks service."
+      arguments:
+        - deployment
+        - sub
+        - create
+      flags:
+        template-file: main.json
+        location: "{{ bundle.parameters.azure_location }}"
+        name: "{{ bundle.parameters.id }}"
+        parameters: id={{ bundle.parameters.id }} workspaceId={{ bundle.parameters.workspace_id }} treId={{ bundle.parameters.tre_id }} hostSubnetAddressPrefix={{ bundle.parameters.hostSubnetAddressPrefix }} containerSubnetAddressPrefix={{ bundle.parameters.containerSubnetAddressPrefix }}
+
+uninstall:
+- exec:
+      description: "Uninstall Azure Databricks Service"
+      command: echo
+      arguments:
+        - "This service does not implement uninstall action"

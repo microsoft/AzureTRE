@@ -1,0 +1,11 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/databricks/template_schema.json",
+  "type": "object",
+  "title": "Azure Databricks",
+  "description": "Installs Azure Databricks.",
+  "required": [
+  ],
+  "properties": {
+  }
+}

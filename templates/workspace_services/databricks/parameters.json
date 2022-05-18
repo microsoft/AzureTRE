@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0.0-DRAFT+TODO",
+  "name": "databricks",
+  "created": "2021-06-03T11:54:54.0225968Z",
+  "modified": "2021-06-03T11:54:54.0225968Z",
+  "parameters": [
+    {
+      "name": "id",
+      "source": {
+        "env": "ID"
+      }
+    },
+    {
+      "name": "workspace_id",
+      "source": {
+        "env": "WORKSPACE_ID"
+      }
+    },
+    {
+      "name": "tre_id",
+      "source": {
+        "env": "TRE_ID"
+      }
+    },
+    {
+      "name": "azure_location",
+      "source": {
+        "env": "AZURE_LOCATION"
+      }
+    },
+    {
+      "name": "hostSubnetAddressPrefix",
+      "source": {
+        "env": "HOST_SUBNET_ADDRESS_PREFIX"
+      }
+    },
+    {
+      "name": "containerSubnetAddressPrefix",
+      "source": {
+        "env": "CONTAINER_SUBNET_ADDRESS_PREFIX"
+      }
+    }
+  ]
+}
