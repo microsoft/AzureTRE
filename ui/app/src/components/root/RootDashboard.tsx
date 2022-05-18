@@ -9,6 +9,7 @@ import { SecuredByRole } from '../shared/SecuredByRole';
 import { RoleName } from '../../models/roleNames';
 import { CreateUpdateResource } from '../shared/CreateUpdateResource/CreateUpdateResource';
 import { ResourceType } from '../../models/resourceType';
+import { AddNotificationDemo } from '../shared/notifications/AddNotificationDemo';
 
 // TODO:
 // - Create WorkspaceCard component + use instead of <Link>
@@ -23,6 +24,7 @@ export const RootDashboard: React.FunctionComponent<RootDashboardProps> = (props
 
   return (
     <>
+      <AddNotificationDemo />
       <h3>TRE Roles</h3>
       <ul>
         {
