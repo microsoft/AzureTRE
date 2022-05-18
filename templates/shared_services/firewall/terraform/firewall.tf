@@ -13,6 +13,8 @@ resource "azurerm_firewall" "fw" {
   name                = "fw-${var.tre_id}"
   resource_group_name = local.core_resource_group_name
   location            = data.azurerm_resource_group.rg.location
+  sku_tier            = "Standard"
+  sku_name            = "AZFW_VNet"
   ip_configuration {
     name                 = "fw-ip-configuration"
     subnet_id            = data.azurerm_subnet.firewall.id

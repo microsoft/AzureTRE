@@ -53,7 +53,7 @@ resource "azurerm_app_service" "mlflow" {
   name                = local.webapp_name
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
-  app_service_plan_id = data.azurerm_app_service_plan.workspace.id
+  app_service_plan_id = data.azurerm_service_plan.workspace.id
   https_only          = true
 
   site_config {
