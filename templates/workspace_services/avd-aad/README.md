@@ -6,24 +6,22 @@ AzureAD-Joined session hosts requires the following:
 
 ## Resources
 
-- https://github.com/Azure/bicep/blob/main/docs/cicd-with-bicep.md
-- https://docs.microsoft.com/en-us/azure/templates
-- https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/bicep-modules
-- https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/loop-resources#resource-iteration-with-condition
-- https://docs.microsoft.com/en-us/azure/templates/
-- https://docs.microsoft.com/en-us/azure/templates/microsoft.network/virtualnetworks?tabs=bicep
-- https://docs.microsoft.com/en-us/azure/templates/microsoft.network/networksecuritygroups?tabs=bicep
-- https://docs.microsoft.com/en-us/azure/templates/microsoft.compute/virtualmachines?tabs=bicep
-- https://docs.microsoft.com/en-us/rest/api/desktopvirtualization/host-pools/create-or-update
-- https://docs.microsoft.com/en-us/rest/api/desktopvirtualization/application-groups/create-or-update
-- https://docs.microsoft.com/en-us/rest/api/desktopvirtualization/workspaces/create-or-update
-- https://docs.microsoft.com/en-us/azure/api-management/api-management-using-with-vnet#-common-network-configuration-issues
-- https://github.com/Azure/bicep-types-az/blob/main/generated/desktopvirtualization/microsoft.desktopvirtualization/2021-07-12/types.md
-- https://catalogartifact.azureedge.net/publicartifacts/Microsoft.Hostpool-ARM-1.10.0/managedDisks-galleryvm.json
-- https://docs.microsoft.com/en-us/cli/azure/desktopvirtualization?view=azure-cli-latest
+### Learning Bicep
+
+- [Define resources with Bicep and ARM templates](https://docs.microsoft.com/azure/templates)
+- [Bicep modules](https://docs.microsoft.com/azure/azure-resource-manager/templates/bicep-modules)
+- [Iterative loops in Bicep](https://docs.microsoft.com/azure/azure-resource-manager/bicep/loop-resources#resource-iteration-with-condition)
+
+### Specific Azure Resource Definitions in Bicep
+
+- [Bicep reference: Microsoft.DesktopVirtualization/hostPools](https://docs.microsoft.com/azure/templates/microsoft.desktopvirtualization/hostpools?tabs=bicep)
+- [Bicep reference: Microsoft.DesktopVirtualization/applicationGroups](https://docs.microsoft.com/azure/templates/microsoft.desktopvirtualization/applicationgroups?tabs=bicep)
+- [Bicep reference: Microsoft.DesktopVirtualization/workspaces](https://docs.microsoft.com/azure/templates/microsoft.desktopvirtualization/workspaces?tabs=bicep)
+- [ARM reference: Microsoft.DesktopVirtualization@2021-07-12](https://github.com/Azure/bicep-types-az/blob/main/generated/desktopvirtualization/microsoft.desktopvirtualization/2021-07-12/types.md)
+- [ARM template for VM creation](https://wvdportalstorageblob.blob.core.windows.net/galleryartifacts/armtemplates/Hostpool_12-9-2021/nestedTemplates/managedDisks-galleryvm.json)
 
 ## Some notes
 
-The `Microsoft.DesktopVirtualization` namespace isn't well documented yet in https://docs.microsoft.com/en-us/azure/templates/, so I recommend you reference the REST API docs to determine which API versions you should be using https://docs.microsoft.com/en-us/rest/api/desktopvirtualization/.
+The `Microsoft.DesktopVirtualization` namespace isn't well documented yet, so I recommend you reference the [REST API docs](https://docs.microsoft.com/rest/api/desktopvirtualization/) to determine which API versions you should be using.
 
-Common VM extension error messages: https://docs.microsoft.com/en-us/troubleshoot/azure/virtual-machines/error-messages
+To research common VM extension error messages, see [Understand common error messages when you manage virtual machines in Azure](https://docs.microsoft.com/troubleshoot/azure/virtual-machines/error-messages).
