@@ -171,23 +171,23 @@ export const NotificationPanel: React.FunctionComponent = () => {
           </div>
         }
         <ul className="tre-notifications-list">
-          {
-            notifications.map((n: TRENotification, i: number) => {
-              return (
-                <NotificationItem notification={n} key={i} />
-              )
-            })
-          }
-          {
+        {
             loadingNotification &&
-            <div>
+            <li>
               <Shimmer shimmerElements={[{ type: ShimmerElementType.gap, width: '100%' },]} />
               <Shimmer width="50%"/>
               <Shimmer shimmerElements={[{ type: ShimmerElementType.gap, width: '100%' },]} />
               <Shimmer />
               <Shimmer shimmerElements={[{ type: ShimmerElementType.gap, width: '100%' },]} />
               <Shimmer />
-            </div>
+            </li>
+          }
+          {
+            notifications.map((n: TRENotification, i: number) => {
+              return (
+                <NotificationItem notification={n} key={i} />
+              )
+            })
           }
         </ul>
       </Panel>
