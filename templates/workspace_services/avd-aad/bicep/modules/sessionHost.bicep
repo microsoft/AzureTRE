@@ -9,6 +9,7 @@ param localAdminPassword string
 param vmSize string
 param hostPoolRegToken string
 
+param deploymentNameStructure string = '${name}-${utcNow()}'
 param intuneEnroll bool = false
 param hostPoolName string
 param vmCount int = 1
@@ -18,9 +19,7 @@ var installNVidiaGPUDriver = (startsWith(vmSize, 'Standard_N') && !(endsWith(vmS
 // NV_v4 uses AMD
 var installAmdGPUDriver = (startsWith(vmSize, 'Standard_NV') && endsWith(vmSize, '_v4')) ? true : false
 
-param deploymentNameStructure string = 'AVD'
-
-// Use the same VM templates as used by the Add VM to hostpool process
+// Use the same VM templates as used by the Add VM to hostpool Portal
 var nestedTemplatesLocation = 'https://wvdportalstorageblob.blob.core.windows.net/galleryartifacts/armtemplates/Hostpool_12-9-2021/nestedTemplates/'
 var vmTemplateUri = '${nestedTemplatesLocation}managedDisks-galleryvm.json'
 
@@ -42,7 +41,7 @@ resource availabilitySet 'Microsoft.Compute/availabilitySets@2021-11-01' = {
 
 // Deploy the session host VMs just like the Add VM to hostpool process would
 resource vmDeployment 'Microsoft.Resources/deployments@2021-04-01' = {
-  name: replace(deploymentNameStructure, '{rtype}', 'avdvm')
+  name: replace(deploymentNameStructure, '{rtype}', 'AVD-VMs')
   properties: {
     mode: 'Incremental'
     templateLink: {
