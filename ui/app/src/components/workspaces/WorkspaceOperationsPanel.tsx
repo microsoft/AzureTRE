@@ -1,5 +1,5 @@
 import { DefaultPalette, IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Operation } from '../../models/operation';
 import { Workspace } from '../../models/workspace';
@@ -44,12 +44,12 @@ const WorkspaceOperationPanelItem: React.FunctionComponent<WorkspaceOperationPan
 }
 
 export const WorkspaceOperationsPanel: React.FunctionComponent<WorkspaceOperationPanelProps> = (props: WorkspaceOperationPanelProps) => {
-    const { workspaceId } = useParams();
     const apiCall = useAuthApiCall();
-    const [loadingState, setLoadingState] = useState('loading');
+    const { workspaceId } = useParams();
+    const [workspaceOperations, setWorkspaceOperations] = useState([] as Array<Operation>)
+    
 
     const getOperations = async () => {
-        try {
         let ws = props.workspace && props.workspace.id ?
         props.workspace :
         (await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get)).workspace;
@@ -59,11 +59,10 @@ export const WorkspaceOperationsPanel: React.FunctionComponent<WorkspaceOperatio
         }, true);
 
         // get workspace operations 
+        config.debug && console.log(`Getting Workspace Operations for workspace:${props.workspace.id}`);
         const workspaceOperations = await apiCall(`${ApiEndpoint.Workspaces}/${ws.id}/${ApiEndpoint.Operations}`, HttpMethod.Get, ws.properties.app_id);
-        
-        } catch {
-            setLoadingState('error');
-        }
+        config.debug && console.log(`Got Workspace Operations, for workspace:${props.workspace.id}: ${workspaceOperations.operations}`);
+        setWorkspaceOperations(workspaceOperations.operations);
     };
     getOperations();
 
@@ -76,22 +75,26 @@ export const WorkspaceOperationsPanel: React.FunctionComponent<WorkspaceOperatio
 
     return (
         <>
-            <Stack wrap horizontal>
-                <Stack grow styles={stackStyles}>
-
-                    <WorkspaceOperationPanelItem header={'Resource Id'} val={props.workspace.id} />
-                    {/* <WorkspaceOperationPanelItem header={'Resource Path'} val={props.operations.resourcePath} />
-                    <WorkspaceOperationPanelItem header={'Resource Version'} val={props.operations.resourceVersion} />
-
-                    <WorkspaceOperationPanelItem header={'Status'} val={props.operations.status} />
-                    <WorkspaceOperationPanelItem header={'Action'} val={props.operations.action} />
-                    <WorkspaceOperationPanelItem header={'Message'} val={props.operations.message} />
-                    <WorkspaceOperationPanelItem header={'Created'} val={props.operations.createdWhen.toString()} />
-                    <WorkspaceOperationPanelItem header={'Updated'} val={props.operations.updatedWhen.toString()} />
-                    <WorkspaceOperationPanelItem header={'Message'} val={props.operations.message} />
-                    <WorkspaceOperationPanelItem header={'User'} val={props.operations.user.name} /> */}
-                </Stack>    
-            </Stack>
+            {
+                workspaceOperations && workspaceOperations.map((op:Operation) => {
+                    return (
+                        <Stack wrap horizontal>
+                            <Stack grow styles={stackStyles}>
+                                <WorkspaceOperationPanelItem header={'Resource Id'} val={op.resourceId} />
+                                <WorkspaceOperationPanelItem header={'Resource Path'} val={op.resourcePath} />
+                                <WorkspaceOperationPanelItem header={'Resource Version'} val={op.resourceVersion} />
+                                <WorkspaceOperationPanelItem header={'Status'} val={op.status} />
+                                <WorkspaceOperationPanelItem header={'Action'} val={op.action} />
+                                <WorkspaceOperationPanelItem header={'Message'} val={op.message} />
+                                <WorkspaceOperationPanelItem header={'Created'} val={new Date(op.createdWhen).toTimeString()} />
+                                <WorkspaceOperationPanelItem header={'Updated'} val={new Date(op.updatedWhen).toTimeString()} />
+                                <WorkspaceOperationPanelItem header={'Message'} val={op.message} />
+                                <WorkspaceOperationPanelItem header={'User'} val={op.user.name} />
+                            </Stack>    
+                        </Stack>
+                    )
+                })
+            }
         </>
     );
 };

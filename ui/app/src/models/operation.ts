@@ -7,8 +7,8 @@ export interface Operation {
     status: string,
     action: string,
     message: string
-    createdWhen: number,
-    updatedWhen: number,
+    createdWhen: Date,
+    updatedWhen: Date,
     user: User
 }
 

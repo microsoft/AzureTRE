@@ -54,7 +54,6 @@ export const WorkspaceItem: React.FunctionComponent<WorkspaceItemProps> = (props
         </PivotItem>
         <PivotItem headerText="Operations">
             <WorkspaceOperationsPanel workspace={props.workspace} />
-          <h3>--Operations Log here</h3>
         </PivotItem>
       </Pivot>
 
