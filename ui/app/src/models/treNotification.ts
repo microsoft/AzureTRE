@@ -7,3 +7,4 @@ export interface TRENotification {
     resource: Resource,
     workspace?: Workspace
   }
+  

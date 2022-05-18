@@ -52,7 +52,7 @@ export const NotificationPanel: React.FunctionComponent = () => {
       setLoadingNotification(true);
       let currentNotifications = [...notifications];
       let n = await setupNotification(opsContext.latestOperation);
-      currentNotifications.push(n);
+      currentNotifications.splice(0, 0, n); // push the new notification to the beginning of the array
       setNotifications(currentNotifications);
       setLoadingNotification(false);
     };

@@ -15,7 +15,7 @@ export interface Operation {
     steps?: Array<OperationStep>
 }
 
-interface OperationStep {
+export interface OperationStep {
     stepId: string,
     stepTitle: string,
     resourceId: string,

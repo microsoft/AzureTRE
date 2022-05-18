@@ -3,7 +3,7 @@
     "resourceId": "8b6e42a0-e236-46ae-9541-01b462e4b468",
     "resourcePath": "/workspaces/1e800001-7385-46a1-9f6d-490a6201ea01/workspace-services/8c70974a-5f66-4ae9-9502-7a54e9e0bb86/user-resources/8b6e42a0-e236-46ae-9541-01b462e4b468",
     "resourceVersion": 0,
-    "status": "pipeline_deploying",
+    "status": "pipeline_failed",
     "action": "install",
     "message": "Pipeline deployment completed successfully",
     "createdWhen": 1650653543.343581,
@@ -36,7 +36,7 @@
             "resourceTemplateName": "tre-service-dev-vm",
             "resourceType": "user-resource",
             "resourceAction": "install",
-            "status": "deployed",
+            "status": "failed",
             "message": "8b6e42a0-e236-46ae-9541-01b462e4b468: install action completed successfully.",
             "updatedWhen": 1650899841.316169
         },
@@ -47,7 +47,7 @@
             "resourceTemplateName": "tre-shared-service-firewall",
             "resourceType": "shared-service",
             "resourceAction": "upgrade",
-            "status": "deploying",
+            "status": "not_deployed",
             "message": "ea079a34-ec53-43e0-9454-84531c96599e: upgrade action in progress",
             "updatedWhen": 1650899911.042068
         }

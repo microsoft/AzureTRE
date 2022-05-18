@@ -16,8 +16,8 @@ code {
 font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 .tre-logout-message{
-    margin:40px auto;
-    width:70%;
+    margin: 40px auto;
+    width: 70%;
 }
 #root{
    
@@ -29,9 +29,9 @@ font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
     z-index: 100;
 }
 .tre-notifications-button{
-    position:relative;
-    top:7px;
-    color:#fff;
+    position: relative;
+    top: 7px;
+    color: #fff;
 }
 .tre-notifications-button i{
     font-size: 24px;
@@ -40,34 +40,41 @@ font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
     text-align: right;
 }
 ul.tre-notifications-list{
-    margin:0;
-    padding:0;
+    margin: 0;
+    padding: 0;
 }
 .tre-notifications-list li{
     list-style: none;
-    margin-top:20px;
-    padding-bottom:10px;
-    border-bottom:1px #ccc solid;
+    margin-top: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px #ccc solid;
+}
+ul.tre-notifications-steps-list{
+  padding: 5px 15px 15px 15px;
+  background-color: #f9f9f9;
+  margin: 10px 0 0 0;  
+}
+ul.tre-notifications-steps-list li{
+    border: none;
 }
 .tre-notification-time{
     font-style: italic;
     text-align: right;
     font-size: 12px;
-    margin-top:10px;
 }
 .tre-home-link{
-    color:#fff;
+    color: #fff;
     text-decoration: none;
 }
 .tre-user-menu .ms-Persona-primaryText:hover{
     color:#fff;
 }
 .ms-Persona-primaryText{
-    color:#fff;
+    color: #fff;
 }
 
 .tre-body{
-    height:100%;
+    height: 100%;
     overflow: hidden;
 }
 .tre-body-inner{

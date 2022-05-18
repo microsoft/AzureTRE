@@ -5,3 +5,4 @@ export const NotificationsContext = React.createContext({
     latestOperation: {} as Operation,
     addOperation: (op: Operation) => {}
   });
+  

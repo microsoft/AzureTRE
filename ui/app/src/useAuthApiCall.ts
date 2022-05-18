@@ -30,7 +30,15 @@ export const useAuthApiCall = () => {
         return JSON.parse(jsonPayload);
     }
 
-    return useCallback(async (endpoint: string, method: HttpMethod, clientId?: string, body?: any, resultType?: ResultType, setRoles?: (roles: Array<string>) => void, tokenOnly?: boolean, etag?: string) => {
+    return useCallback(async (
+        endpoint: string,
+        method: HttpMethod,
+        clientId?: string,
+        body?: any,
+        resultType?: ResultType,
+        setRoles?: (roles: Array<string>) => void,
+        tokenOnly?: boolean,
+        etag?: string) => {
 
         if (!account) {
             console.error("No account object found, please refresh.");
@@ -85,8 +93,6 @@ export const useAuthApiCall = () => {
             },
             method: method
         }
-
-      //  if (etag) opts.headers.etag = etag;
 
         // add a body if we're given one
         if (body) opts.body = JSON.stringify(body);
