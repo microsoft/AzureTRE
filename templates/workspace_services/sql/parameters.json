@@ -1,15 +1,15 @@
 {
   "schemaVersion": "1.0.0-DRAFT+TODO",
-  "name": "base",
-  "created": "2021-06-04T13:37:29.5071039+03:00",
-  "modified": "2021-06-04T13:37:29.5071039+03:00",
+  "name": "sql",
+  "created": "2021-06-03T11:54:54.0225968Z",
+  "modified": "2021-06-03T11:54:54.0225968Z",
   "parameters": [
     {
-      "name": "tre_resource_id",
-      "source": {
-        "env": "TRE_RESOURCE_ID"
-      }
-    },
+        "name": "id",
+        "source": {
+          "env": "ID"
+        }
+      },
     {
       "name": "workspace_id",
       "source": {
@@ -17,33 +17,15 @@
       }
     },
     {
+      "name": "parent_service_id",
+      "source": {
+        "env": "PARENT_SERVICE_ID"
+      }
+    },
+    {
       "name": "tre_id",
       "source": {
         "env": "TRE_ID"
-      }
-    },
-    {
-      "name": "acr_name",
-      "source": {
-        "env": "ACR_NAME"
-      }
-    },
-    {
-      "name": "openid_client_id",
-      "source": {
-        "env": "OPENID_CLIENT_ID"
-      }
-    },
-    {
-      "name": "openid_client_secret",
-      "source": {
-        "env": "OPENID_CLIENT_SECRET"
-      }
-    },
-    {
-      "name": "openid_authority",
-      "source": {
-        "env": "OPENID_AUTHORITY"
       }
     },
     {

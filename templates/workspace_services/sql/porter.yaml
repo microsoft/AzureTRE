@@ -1,6 +1,6 @@
 ---
 name: tre-workspace-service-mysql
-version: 0.1.0
+version: 0.1.4
 description: "A MySQL workspace service"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -19,26 +19,7 @@ parameters:
     type: string
   - name: tre_id
     type: string
-  - name: mgmt_acr_name
-    type: string
-    env: mgmt_acr_name
-    description: "The devops ACR name"
-  - name: mgmt_resource_group_name
-    type: string
-    description: "Resource group containing the devops ACR"
-    env: MGMT_RESOURCE_GROUP_NAME
-  - name: openid_client_id
-    type: string
-    description: "The OpenID client ID"
-    env: OPENID_CLIENT_ID
-  - name: openid_client_secret
-    type: string
-    description: "The OpenID client secret"
-    env: OPENID_CLIENT_SECRET
-  - name: openid_authority
-    type: string
-    description: "The OpenID authority"
-    env: OPENID_AUTHORITY
+
   # the following are added automatically by the resource processor
   - name: id
     type: string
@@ -58,17 +39,26 @@ parameters:
   - name: arm_use_msi
     env: ARM_USE_MSI
     default: false
+  - name: sql_sku
+    type: string
+    default: "GP | 5GB 2vCores"
+  - name: storage_mb
+    type: number
+    default: 5120
+  - name: db_name
+    type: string
+    default: tredb
 
 mixins:
   - exec
   - terraform:
       clientVersion: 1.1.5
 
-outputs:
-  - name: connection_uri
-    type: string
-    applyTo:
-      - install
+# outputs:
+#   - name: connection_uri
+#     type: string
+#     applyTo:
+#       - install
 
 install:
   - terraform:
@@ -78,11 +68,6 @@ install:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
         id: "{{ bundle.parameters.id }}"
-        mgmt_acr_name: "{{ bundle.parameters.mgmt_acr_name }}"
-        mgmt_resource_group_name: "{{ bundle.parameters.mgmt_resource_group_name }}"
-        openid_client_id: "{{ bundle.parameters.openid_client_id }}"
-        openid_client_secret: "{{ bundle.parameters.openid_client_secret }}"
-        openid_authority: "{{ bundle.parameters.openid_authority }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
@@ -104,11 +89,6 @@ uninstall:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
         id: "{{ bundle.parameters.id }}"
-        mgmt_acr_name: "{{ bundle.parameters.mgmt_acr_name }}"
-        mgmt_resource_group_name: "{{ bundle.parameters.mgmt_resource_group_name }}"
-        openid_client_id: "{{ bundle.parameters.openid_client_id }}"
-        openid_client_secret: "{{ bundle.parameters.openid_client_secret }}"
-        openid_authority: "{{ bundle.parameters.openid_authority }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"

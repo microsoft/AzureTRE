@@ -17,19 +17,6 @@ async function getCommandFromComment({ core, context, github }) {
   const runId = context.runId;
   const prAuthorUsername = context.payload.issue.user.login;
 
-  // only allow actions for users with write access
-  if (!await userHasWriteAccessToRepo({ core, github }, commentUsername, repoOwner, repoName)) {
-    core.notice("Command: none - user doesn't have write permission]");
-    await github.rest.issues.createComment({
-      owner: repoOwner,
-      repo: repoName,
-      issue_number: prNumber,
-      body: `Sorry, @${commentUsername}, only users with write access to the repo can run pr-bot commands.`
-    });
-    logAndSetOutput(core, "command", "none");
-    return "none";
-  }
-
   // Determine PR SHA etc
   const ciGitRef = getRefForPr(prNumber);
   logAndSetOutput(core, "ciGitRef", ciGitRef);
@@ -65,7 +52,20 @@ async function getCommandFromComment({ core, context, github }) {
   let command = "none";
   const trimmedFirstLine = commentFirstLine.trim();
   if (trimmedFirstLine[0] === "/") {
-    const parts = trimmedFirstLine.split(' ').filter(p=>p !== '');
+    // only allow actions for users with write access
+    if (!await userHasWriteAccessToRepo({ core, github }, commentUsername, repoOwner, repoName)) {
+      core.notice("Command: none - user doesn't have write permission]");
+      await github.rest.issues.createComment({
+        owner: repoOwner,
+        repo: repoName,
+        issue_number: prNumber,
+        body: `Sorry, @${commentUsername}, only users with write access to the repo can run pr-bot commands.`
+      });
+      logAndSetOutput(core, "command", "none");
+      return "none";
+    }
+
+    const parts = trimmedFirstLine.split(' ').filter(p => p !== '');
     const commandText = parts[0];
     switch (commandText) {
       case "/test":

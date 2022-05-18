@@ -13,7 +13,7 @@ resource "azurerm_mysql_server" "mysql" {
   administrator_login               = "mysqladmin"
   administrator_login_password      = random_password.password.result
   sku_name                          = local.sql_sku[var.sql_sku].value
-  storage_mb                        = 5120 //TBD
+  storage_mb                        = var.storage_mb
   version                           = "8.0"
   auto_grow_enabled                 = true
   backup_retention_days             = 7
@@ -33,7 +33,7 @@ resource "azurerm_mysql_database" "db" {
   charset             = "utf8"
   collation           = "utf8_unicode_ci"
 }
-//TBD
+
 resource "azurerm_private_endpoint" "private-endpoint" {
   name                = "pe-${azurerm_mysql_server.mysql.name}"
   location            = data.azurerm_resource_group.ws.location

@@ -3,30 +3,27 @@
   "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/guacamole/template_schema.json",
   "type": "object",
   "title": "MySQL Workspace Service",
-  "description": "Provides Git services within the workspace",
+  "description": "Provides MySQL within the workspace",
   "required": [
-    "openid_client_id",
-    "openid_client_secret",
-    "openid_authority"
   ],
   "properties": {
-    "openid_client_id": {
-      "$id": "#/properties/openid_client_id",
+    "sql_sku": {
+      "$id": "#/properties/sql_sku",
       "type": "string",
-      "title": "OpenID client id",
-      "description": "The OpenID client ID. This value is typically provided to you by the OpenID service when OpenID credentials are generated for your application."
+      "title": "The sku for the MySQL server",
+      "description": "The MySQL SKU"
     },
-    "openid_client_secret": {
-      "$id": "#/properties/openid_client_secret",
-      "type": "string",
-      "title": "OpenID client secret",
-      "description": "The OpenID client secret. This value is typically provided to you by the OpenID service when OpenID credentials are generated for your application."
+    "storage_mb": {
+      "$id": "#/properties/storage_mb",
+      "type": "number",
+      "title": "Max storage allowed for a server",
+      "description": "Max storage allowed for a server"
     },
-    "openid_authority": {
-      "$id": "#/properties/openid_authority",
+    "db_name": {
+      "$id": "#/properties/db_name",
       "type": "string",
-      "title": "OpenID authority",
-      "description": "The OpenID authority. This value is typically provided to you by the OpenID service when OpenID credentials are generated for your application."
+      "title": "Database name",
+      "description": "Database name"
     }
   }
 }
