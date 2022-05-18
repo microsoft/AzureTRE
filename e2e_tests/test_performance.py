@@ -1,7 +1,5 @@
 import asyncio
 import pytest
-import logging
-
 import config
 from helpers import disable_and_delete_resource, get_workspace_owner_token, post_resource
 from resources import strings
