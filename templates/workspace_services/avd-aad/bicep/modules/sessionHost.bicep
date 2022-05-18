@@ -107,7 +107,7 @@ resource sessionHostAVDAgent 'Microsoft.Compute/virtualMachines/extensions@2020-
     typeHandlerVersion: '2.73'
     autoUpgradeMinorVersion: true
     settings: {
-      modulesUrl: 'https://wvdportalstorageblob.blob.core.windows.net/galleryartifacts/Configuration_8-16-2021.zip'
+      modulesUrl: 'https://wvdportalstorageblob.blob.core.windows.net/galleryartifacts/Configuration_02-23-2022.zip'
       configurationFunction: 'Configuration.ps1\\AddSessionHost'
       properties: {
         hostPoolName: hostPoolToken.name
