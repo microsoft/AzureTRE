@@ -79,4 +79,4 @@ module sessionHost 'modules/sessionHost.bicep' = {
   ]
 }
 
-output connection_uri string = 'https://rdweb.wvd.microsoft.com/arm/webclient/index.html'
+output connection_uri string = 'https://aka.ms/wvdarmweb'
