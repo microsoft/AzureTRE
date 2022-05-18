@@ -107,7 +107,7 @@ async def test_create_shared_service(template_name, admin_token, verify) -> None
             f"Shared service {template_name} already exists (id {id}), deleting it first..."
         )
         await disable_and_delete_resource(
-            f"/api/shared-services/{id}", "shared_service", admin_token, None, verify
+            f"/api/shared-services/{id}", admin_token, verify
         )
 
     post_payload = {
@@ -126,5 +126,5 @@ async def test_create_shared_service(template_name, admin_token, verify) -> None
     )
 
     await disable_and_delete_resource(
-        f"/api{shared_service_path}", "shared_service", admin_token, None, verify
+        f"/api{shared_service_path}", admin_token, verify
     )
