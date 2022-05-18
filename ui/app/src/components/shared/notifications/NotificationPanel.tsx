@@ -189,7 +189,6 @@ export const NotificationPanel: React.FunctionComponent = () => {
               )
             })
           }
-         
         </ul>
       </Panel>
     </>
