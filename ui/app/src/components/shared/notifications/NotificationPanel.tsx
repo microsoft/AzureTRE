@@ -1,0 +1,196 @@
+import { Callout, DirectionalHint, FontWeights, Link, mergeStyleSets, MessageBar, MessageBarType, Panel, Shimmer, ShimmerElementType, Text } from '@fluentui/react';
+import React, { useContext, useEffect, useState } from 'react';
+import { completedStates, Operation } from '../../../models/operation';
+import { NotificationsContext } from './NotificationsContext';
+import { NotificationItem } from './NotificationItem';
+import { IconButton } from '@fluentui/react/lib/Button';
+import { HttpMethod, useAuthApiCall } from '../../../useAuthApiCall';
+import { ApiEndpoint } from '../../../models/apiEndpoints';
+import { NotificationPoller } from './NotificationPoller';
+import { TRENotification } from '../../../models/treNotification';
+
+export const NotificationPanel: React.FunctionComponent = () => {
+  const opsContext = useContext(NotificationsContext);
+  const [isOpen, setIsOpen] = useState(false);
+  const [showCallout, setShowCallout] = useState(false);
+  const [loadingNotification, setLoadingNotification] = useState(false);
+  const [notifications, setNotifications] = useState([] as Array<TRENotification>)
+  const apiCall = useAuthApiCall();
+
+
+  useEffect(() => {
+    const setupNotification = async (op: Operation) => {
+      let workspaceAuth = false;
+      let isWs = false;
+      let ws = null;
+      let resource = null;
+
+      if (op.resourcePath.indexOf(ApiEndpoint.Workspaces) !== -1) {
+        // we need the workspace to get auth details
+        workspaceAuth = true;
+        const wsId = op.resourcePath.split('/')[2];
+        ws = (await apiCall(`${ApiEndpoint.Workspaces}/${wsId}`, HttpMethod.Get)).workspace;
+
+        if (op.resourcePath.split('/').length === 3) {
+          isWs = true;
+          resource = ws;
+        }
+
+        if (!isWs) {
+          let r = await apiCall(op.resourcePath, HttpMethod.Get, workspaceAuth ? ws.properties.app_id : null);
+          if (r['userResource']) resource = r.userResource;
+          if (r['workspaceService']) resource = r.workspaceService;
+          if (r['sharedService']) resource = r.sharedService;
+        }
+      }
+
+      return { operation: op, resource: resource, workspace: ws };
+    }
+
+    const addOp = async () => {
+      setIsOpen(true);
+      setLoadingNotification(true);
+      let currentNotifications = [...notifications];
+      let n = await setupNotification(opsContext.latestOperation);
+      currentNotifications.splice(0, 0, n); // push the new notification to the beginning of the array
+      setNotifications(currentNotifications);
+      setLoadingNotification(false);
+    };
+
+    if (opsContext.latestOperation && opsContext.latestOperation.id) addOp();
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apiCall, opsContext.latestOperation]); // the linter wants to include notifications in the deps, but we are choosing _not_ to re-trigger this hook on state change
+
+  const updateNotification = (n: TRENotification) => {
+    // splice the updated notification into the array
+    let i = notifications.findIndex((v: TRENotification) => {
+      return v.operation.id === n.operation.id;
+    });
+    let updatedNotifications = [...notifications];
+    updatedNotifications.splice(i, 1, n);
+    setNotifications(updatedNotifications);
+    if (completedStates.includes(n.operation.status) && !isOpen) setShowCallout(true);
+  }
+
+  const dismissCompleted = () => {
+    let inProgressNotifications = [] as Array<TRENotification>;
+    notifications.forEach((n: TRENotification) => {
+      if (!completedStates.includes(n.operation.status)) inProgressNotifications.push(n);
+    });
+    setNotifications(inProgressNotifications);
+  }
+
+  const styles = mergeStyleSets({
+    buttonArea: {
+      verticalAlign: 'top',
+      display: 'inline-block',
+      textAlign: 'center',
+      margin: '0 100px',
+      minWidth: 130,
+      height: 32,
+    },
+    configArea: {
+      width: 300,
+      display: 'inline-block',
+    },
+    button: {
+      width: 130,
+    },
+    callout: {
+      width: 320,
+      padding: '20px 24px',
+    },
+    title: {
+      marginBottom: 12,
+      fontWeight: FontWeights.semilight,
+    },
+    link: {
+      display: 'block',
+      marginTop: 20,
+    },
+  });
+
+  // We had to separate out the polling logic from the notification item display as when the panel is collapsed the items are 
+  // unmounted. We want to keep polling in the background, so NotificationPoller is a component without display, outside of the panel.
+  return (
+    <>
+      <IconButton id="tre-notification-btn" className='tre-notifications-button' iconProps={{ iconName: notifications.length > 0 ? 'RingerSolid' : 'Ringer' }} onClick={() => setIsOpen(true)} title="Notifications" ariaLabel="Notifications" />
+      {
+        showCallout &&
+        <Callout
+          ariaLabelledBy={'labelId'}
+          ariaDescribedBy={'descriptionId'}
+          role="dialog"
+          className={styles.callout}
+          gapSpace={0}
+          target={'#tre-notification-btn'}
+          isBeakVisible={true}
+          beakWidth={20}
+          onDismiss={() => { setShowCallout(false) }}
+          directionalHint={DirectionalHint.bottomLeftEdge}
+          setInitialFocus
+        >
+          <Text block variant="xLarge" id={'labelId'}>
+            Resource operation completed
+          </Text>
+          <br/>
+          <Text block variant="medium" id={'descriptionId'}>
+            See notifications panel for detail
+          </Text>
+        </Callout>
+      }
+      {
+        notifications.filter((v: TRENotification) => { return !completedStates.includes(v.operation.status) }).map((n: TRENotification, i: number) => {
+          return (
+            <NotificationPoller notification={n} updateNotification={(notification: TRENotification) => updateNotification(notification)} key={i} />
+          )
+        })
+      }
+      <Panel
+        isLightDismiss
+        headerText="Notifications"
+        isOpen={isOpen}
+        onDismiss={() => { setIsOpen(false) }}
+        closeButtonAriaLabel="Close Notifications"
+      >
+        <div className="tre-notifications-dismiss">
+          <Link href="#" onClick={(e) => { dismissCompleted(); return false; }} disabled={
+            notifications.filter((f: TRENotification) => completedStates.includes(f.operation.status)).length === 0
+          }>Dismiss Completed</Link>
+        </div>
+        {
+          notifications.length === 0 && !loadingNotification &&
+          <div style={{ marginTop: '20px' }}>
+            <MessageBar
+              messageBarType={MessageBarType.success}
+              isMultiline={false}
+            >
+              No notifications to display
+            </MessageBar>
+          </div>
+        }
+        <ul className="tre-notifications-list">
+          {
+            notifications.map((n: TRENotification, i: number) => {
+              return (
+                <NotificationItem notification={n} key={i} />
+              )
+            })
+          }
+          {
+            loadingNotification &&
+            <div>
+              <Shimmer shimmerElements={[{ type: ShimmerElementType.gap, width: '100%' },]} />
+              <Shimmer width="50%"/>
+              <Shimmer shimmerElements={[{ type: ShimmerElementType.gap, width: '100%' },]} />
+              <Shimmer />
+              <Shimmer shimmerElements={[{ type: ShimmerElementType.gap, width: '100%' },]} />
+              <Shimmer />
+            </div>
+          }
+        </ul>
+      </Panel>
+    </>
+  );
+};
