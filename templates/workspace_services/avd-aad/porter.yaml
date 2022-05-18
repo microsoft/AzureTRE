@@ -41,12 +41,15 @@ parameters:
 outputs:
   - name: connection_uri
     type: string
+    default: "https://aka.ms/wvdarmweb"
     applyTo:
       - install
 
 mixins:
   - exec
-  - az
+  - az:
+      extensions:
+        - azure-firewall
 
 install:
   - az:
@@ -58,6 +61,49 @@ install:
         username: "{{ bundle.credentials.azure_client_id}}"
         password: "{{ bundle.credentials.azure_client_secret}}"
         tenant: "{{ bundle.credentials.azure_tenant_id}}"
+  - az:
+      description: "Set Az FW rules for AVD - TODO: use David's solution"
+      arguments:
+        - network
+        - firewall
+        - network-rule
+        - create
+      flags:
+        # TODO: Use WS ID as a param
+        collection-name: "nrc-mrtredev-ws-0821-svc-f62b"
+        priority: 1000
+        destination-ports: "443"
+        # TODO: Do not hardcode
+        firewall-name: "fw-mrtredev"
+        name: "AVDInfra"
+        protocols: "TCP"
+        action: "Allow"
+        description: "'Allow access to AVD infrastructure'"
+        # Uses Service Tag
+        dest-addr: "WindowsVirtualDesktop"
+        # TODO: Do not hardcode
+        source-addresses: "10.0.9.0/25"
+        resource-group: "rg-mrtredev"
+  - az:
+      description: "Set Az FW rules for AVD - TODO: use David's solution"
+      arguments:
+        - network
+        - firewall
+        - network-rule
+        - create
+      flags:
+        # TODO: Use WS ID as a param
+        collection-name: "nrc-mrtredev-ws-0821-svc-f62b"
+        destination-ports: "443"
+        # TODO: Do not hardcode
+        firewall-name: "fw-mrtredev"
+        name: "AVD_PS_DSC_Modules"
+        protocols: "TCP"
+        description: "'Allow access to PowerShell DSC Modules'"
+        # TODO: Do not hardcode
+        source-addresses: "10.0.9.0/25"
+        destination-fqdns: "'wvdportalstorageblob.blob.core.windows.net'"
+        resource-group: "rg-mrtredev"
   - az:
       description: "Deploy Azure Virtual Desktop Service"
       name: "tre-service-avd-aad"
@@ -71,7 +117,23 @@ install:
         name: "{{ bundle.parameters.id }}"
         parameters: id={{ bundle.parameters.id }} workspaceId={{ bundle.parameters.workspace_id }} treId={{ bundle.parameters.tre_id }} localAdminName={{ bundle.parameters.localAdminName }} localAdminPassword={{ bundle.parameters.localAdminPassword }} vmSize={{ bundle.parameters.vmSize }} vmCount={{ bundle.parameters.vmCount }} vmLicenseType={{ bundle.parameters.vmLicenseType }}
       outputs:
+        # TODO: Porter doesn't see this
         - name: connection_uri
+          jsonPath: $.properties.outputs["connection_uri"].value
+  - az:
+      description: "Remove Az FW rule only needed during deployment"
+      arguments:
+        - network
+        - firewall
+        - network-rule
+        - delete
+      flags:
+        # TODO: Use WS ID as a param
+        collection-name: "nrc-mrtredev-ws-0821-svc-f62b"
+        # TODO: Do not hardcode
+        firewall-name: "fw-mrtredev"
+        name: "AVD_PS_DSC_Modules"
+        resource-group: "rg-mrtredev"
 
 uninstall:
   - exec:
