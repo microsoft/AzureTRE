@@ -1,6 +1,6 @@
 ---
 name: tre-service-ohdsi
-version: 0.0.1
+version: 0.0.3
 description: "An Azure TRE service for ohdsi"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -43,10 +43,10 @@ parameters:
     default: false
 
 mixins:
-  - az
+  # - az
   - docker
   - terraform:
-      clientVersion: 1.0.5
+      clientVersion: 1.1.9
 
 install:
   # - az:

@@ -34,12 +34,9 @@ resource "azurerm_storage_container" "vocabularies" {
   container_access_type = "private"
 }
 
-
 #############################
 # APP SERVICE
 #############################
-
-
 
 # This creates the Broadsea app service definition
 resource "azurerm_app_service" "omop_broadsea" {
