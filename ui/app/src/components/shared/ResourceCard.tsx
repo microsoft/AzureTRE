@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Resource } from '../../models/resource';
-import { Callout, DefaultPalette, FontWeights, IconButton, mergeStyleSets, Stack, Text } from '@fluentui/react';
+import { Callout, DefaultPalette, FontWeights, IconButton, mergeStyleSets, PrimaryButton, Stack, Text } from '@fluentui/react';
 import { Link } from 'react-router-dom';
 import moment from 'moment';
 
@@ -35,13 +35,22 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
   }
 
   const bodyStyles: React.CSSProperties = {
-    borderBottom: '1px #ccc solid',
     padding: '5px 10px',
     minHeight: '70px'
   }
 
+  const bodyStylesWithConnect: React.CSSProperties = {
+    padding: '5px 10px',
+    minHeight: '40px'
+  }
+
+  const connectStyles: React.CSSProperties = {
+    padding: '5px 10px'
+  }
+
   const footerStyles: React.CSSProperties = {
     backgroundColor: DefaultPalette.white,
+    borderTop: '1px #ccc solid',
     padding: '5px 10px',
     minHeight: '30px'
   }
@@ -72,24 +81,31 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
     },
   });
 
+  let canConnect = props.resource.properties && props.resource.properties['connection_uri'];
+  let connectUri = canConnect ? props.resource.properties['connection_uri'] : '';
+
   return (
     <>
       <Stack style={cardStyles}>
         <Stack horizontal>
-        <Stack.Item grow={5} style={headerStyles}>
-          <Link to={props.resource.resourcePath} onClick={() => {props.selectResource(props.resource); return false}} style={headerLinkStyles}>{props.resource.properties.display_name}</Link>
-        </Stack.Item>
-        <Stack.Item style={headerIconStyles}>
-          <Stack horizontal>
-            <Stack.Item><IconButton iconProps={{iconName: 'Info'}} id={`item-${props.itemId}`} onClick={() => setShowInfo(!showInfo)} /></Stack.Item>
-            <Stack.Item>{props.contextMenuElement && props.contextMenuElement}</Stack.Item>
-          </Stack>
-          
-        </Stack.Item>
+          <Stack.Item grow={5} style={headerStyles}>
+            <Link to={props.resource.resourcePath} onClick={() => {props.selectResource(props.resource); return false}} style={headerLinkStyles}>{props.resource.properties.display_name}</Link>
+          </Stack.Item>
+          <Stack.Item style={headerIconStyles}>
+            <Stack horizontal>
+              <Stack.Item><IconButton iconProps={{iconName: 'Info'}} id={`item-${props.itemId}`} onClick={() => setShowInfo(!showInfo)} /></Stack.Item>
+              <Stack.Item>{props.contextMenuElement && props.contextMenuElement}</Stack.Item>
+            </Stack>
+          </Stack.Item>
         </Stack>
-        <Stack.Item grow={3} style={bodyStyles}>
+        <Stack.Item style={ (canConnect) ? bodyStylesWithConnect : bodyStyles}>
           <Text>{props.resource.properties.description}</Text>
         </Stack.Item>
+        { canConnect &&
+        <Stack.Item style={connectStyles}>
+            <PrimaryButton onClick={ () => window.open(connectUri) }>Connect</PrimaryButton>
+        </Stack.Item>
+        }
         <Stack.Item style={footerStyles}>
           &nbsp;
         </Stack.Item>
