@@ -1,4 +1,5 @@
 import { DefaultPalette, IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
+import moment from "moment";
 import React from "react";
 import { Link } from "react-router-dom";
 import { Resource } from "../../models/resource";
@@ -69,7 +70,7 @@ export const ResourcePropertyPanel: React.FunctionComponent<ResourcePropertyPane
                     <ResourcePropertyPanelItem header={'Is active'} val={props.resource.isActive.toString()} />
                     <ResourcePropertyPanelItem header={'Is enabled'} val={props.resource.isEnabled.toString()} />
                     <ResourcePropertyPanelItem header={'User'} val={props.resource.user.name} />
-                    <ResourcePropertyPanelItem header={'Last updated'} val={props.resource.updatedWhen.toString()} />
+                    <ResourcePropertyPanelItem header={'Last updated'} val={moment.unix(props.resource.updatedWhen).toDate().toDateString()} />
                 </Stack>    
                 <Stack grow styles={stackStyles}>
                 {
