@@ -118,6 +118,8 @@ export const useAuthApiCall = () => {
                     return;
             }
         } catch (err: any) {
+            // TODO: this is currently hiding errors, we should either rethrow to be handled in components
+            // or hook this up to user-facing alerts
             console.error("Error calling API", err);
         }
     }, [account, instance]);
