@@ -55,6 +55,9 @@ resource "azurerm_subnet" "shared" {
   address_prefixes     = [local.shared_services_subnet_address_prefix]
   # notice that private endpoints do not adhere to NSG rules
   enforce_private_link_endpoint_network_policies = true
+
+  service_endpoints = ["Microsoft.Storage"]
+
 }
 
 resource "azurerm_subnet" "resource_processor" {

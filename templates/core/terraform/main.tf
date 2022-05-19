@@ -73,10 +73,17 @@ module "appgateway" {
 }
 
 module "airlock_resources" {
-  source              = "./airlock"
-  tre_id              = var.tre_id
-  location            = var.location
-  resource_group_name = azurerm_resource_group.core.name
+  source                 = "./airlock"
+  tre_id                 = var.tre_id
+  location               = var.location
+  resource_group_name    = azurerm_resource_group.core.name
+  shared_subnet_id       = module.network.shared_subnet_id
+  enable_local_debugging = var.enable_local_debugging
+
+  depends_on = [
+    azurerm_servicebus_namespace.sb,
+    module.network
+  ]
 }
 
 module "resource_processor_vmss_porter" {
