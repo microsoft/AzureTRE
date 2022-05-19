@@ -27,7 +27,7 @@ const ResourcePropertyPanelItem: React.FunctionComponent<ResourcePropertyPanelIt
                 <Stack.Item grow styles={stackItemStyles}>
                     {props.header}
                 </Stack.Item>
-                <Stack.Item grow styles={stackItemStyles}>
+                <Stack.Item grow={3} styles={stackItemStyles}>
                     : {props.val}
                 </Stack.Item>
             </Stack>
