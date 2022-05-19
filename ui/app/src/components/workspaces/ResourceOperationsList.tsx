@@ -49,21 +49,15 @@ export const ResourceOperationsList: React.FunctionComponent<ResourceOperationsL
     useEffect(() => {
         const getOperations = async () => {
             try {
-                // let ws = props.workspace && props.workspace.id ?
-                // props.workspace :
-                // (await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get)).workspace;
                 let ws = props.resource && props.resource.id ?
                 props.resource :
                 (await apiCall(`/${props.resource.resourcePath}`, HttpMethod.Get)).workspace;
                 
                 // get resource operations 
                 const resourceOperations = await apiCall(`${ApiEndpoint.Workspaces}/${ws.id}/${ApiEndpoint.Operations}`, HttpMethod.Get, ws.properties.app_id);
-                // const resourceOperations = await apiCall(`/${resource.resourcePath}/${ApiEndpoint.Operations}`, HttpMethod.Get, ws.properties.app_id);
-                  
-                setLoadingState(resourceOperations && resourceOperations.operations.length > 0 ? 'ok' : 'error');
-
                 config.debug && console.log(`Got resource operations, for resource:${props.resource.id}: ${resourceOperations.operations}`);
                 setResourceOperations(resourceOperations.operations);
+                setLoadingState(resourceOperations && resourceOperations.operations.length > 0 ? 'ok' : 'error');
             } catch {
                 setLoadingState('error');
             }
