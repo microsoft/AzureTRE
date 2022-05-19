@@ -1,7 +1,6 @@
 import { DefaultPalette, IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
 import moment from "moment";
 import React from "react";
-import { Link } from "react-router-dom";
 import { Resource } from "../../models/resource";
 
 interface ResourcePropertyPanelProps {
