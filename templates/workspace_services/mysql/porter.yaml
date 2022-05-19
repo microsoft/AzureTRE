@@ -68,6 +68,10 @@ install:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
         id: "{{ bundle.parameters.id }}"
+        sql_sku: "{{ bundle.parameters.sql_sku }}"
+        storage_mb: "{{ bundle.parameters.storage_mb }}"
+        db_name: "{{ bundle.parameters.db_name }}"
+
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
@@ -89,6 +93,9 @@ uninstall:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
         id: "{{ bundle.parameters.id }}"
+        sql_sku: "{{ bundle.parameters.sql_sku }}"
+        storage_mb: "{{ bundle.parameters.storage_mb }}"
+        db_name: "{{ bundle.parameters.db_name }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"

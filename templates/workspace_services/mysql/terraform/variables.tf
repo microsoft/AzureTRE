@@ -1,8 +1,6 @@
 variable "workspace_id" {}
 variable "tre_id" {}
 variable "id" {}
-variable "mgmt_resource_group_name" {}
-variable "mgmt_acr_name" {}
 variable "sql_sku" {}
 variable "db_name" {}
 variable "storage_mb" {

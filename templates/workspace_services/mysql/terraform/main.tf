@@ -44,7 +44,3 @@ data "azurerm_private_dns_zone" "mysql" {
 data "local_file" "version" {
   filename = "${path.module}/../version.txt"
 }
-
-output "mysql_fqdn" {
-  value = "https://${azurerm_mysql_server.mysql.fqdn}/"
-}

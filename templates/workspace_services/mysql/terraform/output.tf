@@ -1,4 +1,3 @@
-/* TBD */
-/* output "connection_string" {
-  value = azurerm_app_service.gitea.default_site_hostname
-} */
+output "mysql_fqdn" {
+   value = azurerm_mysql_server.mysql.fqdn
+}
