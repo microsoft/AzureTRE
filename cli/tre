@@ -31,18 +31,17 @@ def logout():
 
 
 @cli.group(help='Commands operate on workspaces')
-# @click.option('--output')  # , '-o', default='table', help='Output format', type=click.Choice(['table', 'json']))
 def workspace():
     pass
 
 
-@workspace.command(name='list')
+@workspace.command(name='list', help='List all workspaces')
 @click.option('--output', '-o', default='text', help='Output format', type=click.Choice(['text', 'json']))
 def ws_list(output):
     commands.workspaces.list(output)
 
 
-@workspace.command(name='show')
+@workspace.command(name='show', help='Get details of a single workspaces')
 @click.option('--output', '-o', default='text', help='Output format', type=click.Choice(['text', 'json']))
 @click.argument('workspace_id')
 def ws_show(workspace_id, output):
