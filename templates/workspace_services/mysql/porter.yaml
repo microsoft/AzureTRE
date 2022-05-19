@@ -54,11 +54,11 @@ mixins:
   - terraform:
       clientVersion: 1.1.5
 
-# outputs:
-#   - name: connection_uri
-#     type: string
-#     applyTo:
-#       - install
+outputs:
+  - name: mysql_fqdn
+    type: string
+    applyTo:
+      - install
 
 install:
   - terraform:
@@ -74,7 +74,7 @@ install:
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "tre-workspace-service-mysql-{{ bundle.parameters.id }}"
       outputs:
-        - name: connection_uri
+        - name: mysql_fqdn
 upgrade:
   - exec:
       description: "Upgrade shared service"

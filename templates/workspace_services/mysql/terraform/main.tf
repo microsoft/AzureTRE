@@ -45,6 +45,6 @@ data "local_file" "version" {
   filename = "${path.module}/../version.txt"
 }
 
-output "connection_uri" {
-  value = "https://${azurerm_app_service.mysql.default_site_hostname}/"
+output "mysql_fqdn" {
+  value = "https://${azurerm_mysql_server.mysql.fqdn}/"
 }
