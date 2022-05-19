@@ -31,9 +31,9 @@ resource "azurerm_management_lock" "fw" {
 }
 
 resource "azurerm_monitor_diagnostic_setting" "firewall" {
-  name                           = "diagnostics-fw-${var.tre_id}"
-  target_resource_id             = azurerm_firewall.fw.id
-  log_analytics_workspace_id     = data.azurerm_log_analytics_workspace.tre.id
+  name                       = "diagnostics-fw-${var.tre_id}"
+  target_resource_id         = azurerm_firewall.fw.id
+  log_analytics_workspace_id = data.azurerm_log_analytics_workspace.tre.id
   #log_analytics_destination_type = "Dedicated"
 
   log {
