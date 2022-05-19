@@ -81,8 +81,7 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
     },
   });
 
-  let canConnect = props.resource.properties && props.resource.properties['connection_uri'];
-  let connectUri = canConnect ? props.resource.properties['connection_uri'] : '';
+  let connectUri = props.resource.properties && props.resource.properties['connection_uri'];
 
   return (
     <>
@@ -98,10 +97,11 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
             </Stack>
           </Stack.Item>
         </Stack>
-        <Stack.Item grow={3} style={ (canConnect) ? bodyStylesWithConnect : bodyStyles}>
+        <Stack.Item grow={3} style={ (connectUri) ? bodyStylesWithConnect : bodyStyles}>
           <Text>{props.resource.properties.description}</Text>
         </Stack.Item>
-        { canConnect &&
+        { 
+        connectUri &&
         <Stack.Item style={connectStyles}>
             <PrimaryButton onClick={ () => window.open(connectUri) }>Connect</PrimaryButton>
         </Stack.Item>
