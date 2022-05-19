@@ -6,7 +6,7 @@
     "configurations": [
         {
             "name": "Launch Edge (localhost)",
-            "type": "msedge",
+            "type": "pwa-msedge",
             "request": "launch",
             "url": "http://localhost:3000",
             "webRoot": "${workspaceFolder}/app"
