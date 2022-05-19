@@ -4,6 +4,7 @@ import { Workspace } from "../models/workspace";
 export const WorkspaceContext = React.createContext({
   roles: [] as Array<string>,
   setRoles: (roles: Array<string>) => { },
+  setWorkspace: (w: Workspace) => { },
   workspace: {} as Workspace,
   workspaceClientId: "" as string
 });

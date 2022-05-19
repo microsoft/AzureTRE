@@ -38,6 +38,20 @@ export const RootLayout: React.FunctionComponent<RootLayoutProps> = (props: Root
     getWorkspaces();
   }, [apiCall]);
 
+  const updateWorkspace = (w: Workspace) => {
+    let i = workspaces.findIndex((f: Workspace) => f.id === w.id);
+    let ws = [...workspaces]
+    ws.splice(i, 1, w);
+    setWorkspaces(ws);
+  }
+
+  const removeWorkspace = (w: Workspace) => {
+    let i = workspaces.findIndex((f: Workspace) => f.id === w.id);
+    let ws = [...workspaces];
+    ws.splice(i, 1);
+    setWorkspaces(ws);
+  }
+
   switch (loadingState) {
 
     case 'ok':
@@ -47,7 +61,7 @@ export const RootLayout: React.FunctionComponent<RootLayoutProps> = (props: Root
             <LeftNav />
           </Stack.Item><Stack.Item className='tre-body-content'>
             <Routes>
-              <Route path="/" element={<RootDashboard selectWorkspace={props.selectWorkspace} workspaces={workspaces} />} />
+              <Route path="/" element={<RootDashboard selectWorkspace={props.selectWorkspace} workspaces={workspaces} updateWorkspace={(w: Workspace) => updateWorkspace(w)} removeWorkspace={(w: Workspace) => removeWorkspace(w)} />} />
               <Route path="/admin" element={<Admin />} />
             </Routes>
           </Stack.Item>

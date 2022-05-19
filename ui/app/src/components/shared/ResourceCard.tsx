@@ -1,29 +1,32 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { ComponentAction, getResourceFromResult, Resource, ResourceUpdate } from '../../models/resource';
-import { Callout, DefaultPalette, FontWeights, IconButton, IContextualMenuItem, IContextualMenuProps, mergeStyleSets, ProgressIndicator, Shimmer, ShimmerElementType, Stack, Text } from '@fluentui/react';
+import { Callout, DefaultPalette, FontWeights, IconButton, IContextualMenuItem, IContextualMenuProps, mergeStyleSets, ProgressIndicator, Shimmer, Stack, Text } from '@fluentui/react';
 import { Link } from 'react-router-dom';
 import moment from 'moment';
-import { RoleName } from '../../models/roleNames';
+import { RoleName, WorkspaceRoleName } from '../../models/roleNames';
 import { SecuredByRole } from './SecuredByRole';
 import { ResourceType } from '../../models/resourceType';
 import { ConfirmDisableEnableResource } from './ConfirmDisableEnableResource';
 import { NotificationsContext } from '../../contexts/NotificationsContext';
 import { HttpMethod, useAuthApiCall } from '../../useAuthApiCall';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
+import { ConfirmDeleteResource } from './ConfirmDeleteResource';
 
 interface ResourceCardProps {
   resource: Resource,
   itemId: number,
-  selectResource: (resource: Resource) => void
+  selectResource: (resource: Resource) => void,
+  onUpdate: (resource: Resource) => void,
+  onDelete: (resource: Resource) => void
 }
 
 export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: ResourceCardProps) => {
   const apiCall = useAuthApiCall();
   const workspaceCtx = useContext(WorkspaceContext);
-  const [resource, setResource] = useState(props.resource);
   const [loading, setLoading] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [showDisable, setShowDisable] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
   const [componentAction, setComponentAction] = useState(ComponentAction.None);
 
   const opsReadContext = useContext(NotificationsContext);
@@ -31,37 +34,50 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
 
   // set the latest component action
   useEffect(() => {
-    let updates = opsReadContext.resourceUpdates.filter((r: ResourceUpdate) => { return r.resourceId === resource.id });
+    let updates = opsReadContext.resourceUpdates.filter((r: ResourceUpdate) => { return r.resourceId === props.resource.id });
     setComponentAction((updates && updates.length > 0) ?
       updates[updates.length - 1].componentAction :
       ComponentAction.None);
-  }, [opsReadContext.resourceUpdates, resource.id])
+  }, [opsReadContext.resourceUpdates, props.resource.id])
 
   // act on component action changes
   useEffect(() => {
     const checkForReload = async () => {
       if (componentAction === ComponentAction.Reload) {
         setLoading(true);
-        let r = await apiCall(resource.resourcePath, HttpMethod.Get, workspaceCtx.workspaceClientId);
-        setResource(getResourceFromResult(r));
+        let result = await apiCall(props.resource.resourcePath, HttpMethod.Get, workspaceCtx.workspaceClientId);
+        let r = getResourceFromResult(result);
         setLoading(false);
-        opsWriteContext.current.clearUpdatesForResource(resource.id);
+        opsWriteContext.current.clearUpdatesForResource(props.resource.id);
+        props.onUpdate(r);
+      } else if (componentAction === ComponentAction.Remove) {
+        opsWriteContext.current.clearUpdatesForResource(props.resource.id);
+        props.onDelete(props.resource);
       }
     }
     checkForReload();
-  }, [apiCall, componentAction, resource.id, resource.resourcePath, workspaceCtx.workspaceClientId]);
+  }, [apiCall, componentAction, props, workspaceCtx.workspaceClientId]);
 
   // context menu
   let i: Array<IContextualMenuItem> = [];
   let roles: Array<string> = [];
-  switch (resource.resourceType) {
+  let wsAuth = false;
+
+  i = [
+    { key: 'update', text: 'Update', iconProps: { iconName: 'WindowEdit' }, onClick: () => console.log('update') },
+    { key: 'disable', text: props.resource.isEnabled ? 'Disable' : 'Enable', iconProps: { iconName: props.resource.isEnabled ? 'CirclePause' : 'PlayResume' }, onClick: () => setShowDisable(true) },
+    { key: 'delete', text: 'Delete', title: props.resource.isEnabled ? 'Must be disabled to delete' : 'Delete this resource', iconProps: { iconName: 'Delete' }, onClick: () => setShowDelete(true), disabled: props.resource.isEnabled }
+  ];
+
+  switch (props.resource.resourceType) {
     case ResourceType.Workspace:
-      i = [
-        { key: 'update', text: 'Update', iconProps: { iconName: 'WindowEdit' }, onClick: () => console.log('update') },
-        { key: 'disable', text: resource.isEnabled ? 'Disable' : 'Enable', iconProps: { iconName: resource.isEnabled ? 'CirclePause' : 'PlayResume' }, onClick: () => setShowDisable(true) },
-        { key: 'delete', text: 'Delete', iconProps: { iconName: 'Delete' }, onClick: () => console.log('delete clicked') }
-      ];
+    case ResourceType.SharedService:
       roles = [RoleName.TREAdmin];
+      break;
+    case ResourceType.WorkspaceService:
+    case ResourceType.UserResource:
+      wsAuth = true;
+      roles = [WorkspaceRoleName.WorkspaceOwner];
       break;
   }
 
@@ -93,13 +109,14 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
           <Stack style={cardStyles}>
             <Stack horizontal>
               <Stack.Item grow={5} style={headerStyles}>
-                <Link to={resource.resourcePath} onClick={() => { props.selectResource(resource); return false }} style={headerLinkStyles}>{resource.properties.display_name}</Link>
+                <Link to={props.resource.resourcePath} onClick={() => { props.selectResource(props.resource); return false }} style={headerLinkStyles}>{props.resource.properties.display_name}</Link>
               </Stack.Item>
               <Stack.Item style={headerIconStyles}>
                 <Stack horizontal>
-                  <Stack.Item><IconButton iconProps={{ iconName: 'Info' }} id={`item-${props.itemId}`} onClick={() => setShowInfo(!showInfo)} /></Stack.Item>
                   <Stack.Item>
-                    <SecuredByRole allowedRoles={roles} element={
+                    <IconButton iconProps={{ iconName: 'Info' }} id={`item-${props.itemId}`} onClick={() => setShowInfo(!showInfo)} /></Stack.Item>
+                  <Stack.Item>
+                    <SecuredByRole allowedRoles={roles} workspaceAuth={wsAuth} element={
                       <IconButton iconProps={{ iconName: 'More' }} menuProps={menuProps} className="tre-hide-chevron" disabled={componentAction === ComponentAction.Lock} />
                     } />
                   </Stack.Item>
@@ -107,7 +124,7 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
               </Stack.Item>
             </Stack>
             <Stack.Item grow={3} style={bodyStyles}>
-              <Text>{resource.properties.description}</Text>
+              <Text>{props.resource.properties.description}</Text>
             </Stack.Item>
             <Stack.Item style={footerStyles}>
               {
@@ -121,7 +138,11 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
       }
       {
         showDisable &&
-        <ConfirmDisableEnableResource onDismiss={() => setShowDisable(false)} resource={resource} isEnabled={!resource.isEnabled} />
+        <ConfirmDisableEnableResource onDismiss={() => setShowDisable(false)} resource={props.resource} isEnabled={!props.resource.isEnabled} />
+      }
+      {
+        showDelete &&
+        <ConfirmDeleteResource onDismiss={() => setShowDelete(false)} resource={props.resource} />
       }
       {
         showInfo &&
@@ -136,18 +157,18 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
           setInitialFocus
         >
           <Text block variant="xLarge" className={styles.title} id={`item-${props.itemId}-label`}>
-            {resource.templateName} - ({resource.templateVersion})
+            {props.resource.templateName} - ({props.resource.templateVersion})
           </Text>
           <Text block variant="small" id={`item-${props.itemId}-description`}>
             <Stack>
               <Stack.Item>
                 <Stack horizontal tokens={{ childrenGap: 5 }}>
                   <Stack.Item style={calloutKeyStyles}>Last Modified By:</Stack.Item>
-                  <Stack.Item style={calloutValueStyles}>{resource.user.name}</Stack.Item>
+                  <Stack.Item style={calloutValueStyles}>{props.resource.user.name}</Stack.Item>
                 </Stack>
                 <Stack horizontal tokens={{ childrenGap: 5 }}>
                   <Stack.Item style={calloutKeyStyles}>Last Updated:</Stack.Item>
-                  <Stack.Item style={calloutValueStyles}>{moment.unix(resource.updatedWhen).toDate().toDateString()}</Stack.Item>
+                  <Stack.Item style={calloutValueStyles}>{moment.unix(props.resource.updatedWhen).toDate().toDateString()}</Stack.Item>
                 </Stack>
               </Stack.Item>
             </Stack>

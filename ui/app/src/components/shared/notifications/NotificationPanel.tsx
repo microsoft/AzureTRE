@@ -47,7 +47,7 @@ export const NotificationPanel: React.FunctionComponent = () => {
     }
 
     const addOp = async () => {
-      setIsOpen(true);
+      //setIsOpen(true); // <-- uncomment here to open the panel when a new notification is posted
       setLoadingNotification(true);
       let currentNotifications = [...notifications];
       let n = await setupNotification(opsContext.latestOperation);

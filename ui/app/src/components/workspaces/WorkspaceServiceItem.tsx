@@ -21,7 +21,7 @@ interface WorkspaceServiceItemProps {
 
 export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemProps> = (props: WorkspaceServiceItemProps) => {
   const { workspaceServiceId } = useParams();
-  const [userResources, setUserResources] = useState([{} as UserResource])
+  const [userResources, setUserResources] = useState([] as Array<UserResource>)
   const [workspaceService, setWorkspaceService] = useState({} as WorkspaceService)
   const [loadingState, setLoadingState] = useState('loading');
   const apiCall = useAuthApiCall();
@@ -48,6 +48,23 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
     getData();
   }, [apiCall, props.workspace.id, props.workspace.properties.app_id, props.workspaceService, workspaceServiceId]);
 
+  const updateUserResource = (u: UserResource) => {
+    let ur = [...userResources];
+    let i = ur.findIndex((f: UserResource) => f.id === u.id);
+    ur.splice(i, 1, u);
+    setUserResources(ur);
+  }
+
+  const removeUserResource = (u: UserResource) => {
+    let ur = [...userResources];
+    let i = ur.findIndex((f: UserResource) => f.id === u.id);
+   
+    console.log(ur[i]);
+    ur.splice(i, 1);
+    console.log(ur);
+    setUserResources(ur);
+  }
+
   switch (loadingState) {
     case 'ok':
       return (
@@ -59,6 +76,8 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
             <ResourceCardList
               resources={userResources}
               selectResource={(r: Resource) => props.setUserResource(r as UserResource)}
+              updateResource={(r: Resource) => updateUserResource(r as UserResource)}
+              removeResource={(r: Resource) => removeUserResource(r as UserResource)}
               emptyText="This workspace service contains no user resources." />
           }
           <ResourceDebug resource={workspaceService} />

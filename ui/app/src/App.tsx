@@ -59,8 +59,9 @@ export const App: React.FunctionComponent = () => {
                         <Route path="/workspaces/:workspaceId//*" element={
                           <WorkspaceContext.Provider value={{ 
                             roles: workspaceRoles, 
-                            setRoles: (roles: Array<string>) => {setWorkspaceRoles(roles)},
+                            setRoles: (roles: Array<string>) => setWorkspaceRoles(roles),
                             workspace: selectedWorkspace,
+                            setWorkspace: (w: Workspace) => setSelectedWorkspace(w),
                             workspaceClientId: selectedWorkspace.properties?.app_id}}>
                             <WorkspaceProvider workspace={selectedWorkspace} />
                           </WorkspaceContext.Provider>
