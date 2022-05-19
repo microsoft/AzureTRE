@@ -1,0 +1,37 @@
+version: '2'
+
+services:
+
+  broadsea-methods-library:
+    image: ohdsi/broadsea-methodslibrary
+    ports:
+      - "8787:8787"
+      - "6311:6311"
+
+  broadsea-webtools:
+    image: ohdsi/broadsea-webtools
+    ports:
+      - "8080:8080"
+    volumes:
+     - .:/tmp/drivers/:ro
+     - ./config-local.js:/usr/local/tomcat/webapps/atlas/js/config-local.js:ro
+    environment:
+     - WEBAPI_URL=http://192.168.99.100:8080
+     - env=webapi-mssql
+     - security_origin=*
+     - datasource.driverClassName=com.microsoft.sqlserver.jdbc.SQLServerDriver
+     - datasource.url=jdbc:sqlserver://192.168.99.100;databasename=secret-database-name
+     - datasource.cdm.schema=cdm
+     - datasource.ohdsi.schema=ohdsi
+     - datasource.username=secret-user-name
+     - datasource.password=secret-user-password
+     - spring.jpa.properties.hibernate.default_schema=ohdsi
+     - spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.SQLServer2012Dialect
+     - spring.batch.repository.tableprefix=secret-database-name.ohdsi.BATCH_
+     - flyway.datasource.driverClassName=com.microsoft.sqlserver.jdbc.SQLServerDriver
+     - flyway.datasource.url=jdbc:sqlserver://192.168.99.100;databasename=secret-database-name
+     - flyway.schemas=ohdsi
+     - flyway.placeholders.ohdsiSchema=ohdsi
+     - flyway.datasource.username=secret-user-name
+     - flyway.datasource.password=secret-user-password
+     - flyway.locations=classpath:db/migration/sqlserver

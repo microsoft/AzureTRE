@@ -41,9 +41,50 @@ parameters:
   - name: arm_use_msi
     env: ARM_USE_MSI
     default: false
+  # - name: mgmt_acr_name
+  #   type: string
+  #   env: mgmt_acr_name
+  #   description: "The devops ACR name"
+  - name: mgmt_resource_group_name
+    type: string
+    description: "Resource group containing the devops ACR"
+    env: MGMT_RESOURCE_GROUP_NAME
+    default: "marrobi-mgmt"
+  - name: image_tag
+    type: string
+    default: ""   # will use the value in the version.txt file unless provided
+    description: "The tag of the broadsea images"
+  # - name: tfstate_resource_group_name
+  #   type: string
+  #   description: "Resource group containing the Terraform state storage account"
+  # - name: tfstate_storage_account_name
+  #   type: string
+  #   description: "The name of the Terraform state storage account"
+  # - name: tfstate_container_name
+  #   env: tfstate_container_name
+  #   type: string
+  #   default: "tfstate"
+  #   description: "The name of the Terraform state storage container"
+  # - name: tfstate_resource_group_name
+  #   type: string
+  #   description: "Resource group containing the Terraform state storage account"
+  #   env: MGMT_RESOURCE_GROUP_NAME
+  # - name: tfstate_storage_account_name
+  #   type: string
+  #   description: "The name of the Terraform state storage account"
+  #   env: MGMT_STORAGE_ACCOUNT_NAME
+  # - name: tfstate_container_name
+  #   type: string
+  #   default: "tfstate"
+  #   description: "The name of the Terraform state storage container"
+  #   env: TERRAFORM_STATE_CONTAINER_NAME
+  - name: arm_use_msi
+    env: ARM_USE_MSI
+    default: false
+
 
 mixins:
-  # - az
+  - az
   - docker
   - terraform:
       clientVersion: 1.1.9
@@ -69,10 +110,14 @@ install:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
-        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
-        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
-        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
-        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
+        # arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
+        # arm_client_id: "{{ bundle.credentials.azure_client_id }}"
+        # arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
+        # arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
+        mgmt_acr_name: "{{ bundle.parameters.mgmt_acr_name }}"
+        mgmt_resource_group_name:
+          "{{ bundle.parameters.mgmt_resource_group_name }}"
+        image_tag: "{{ bundle.parameters.image_tag }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
@@ -80,6 +125,20 @@ install:
         key: "tre-service-ohdsi-{{ bundle.parameters.id }}"
       outputs:
         - name: azureml_compute_cluster_name
+
+docker_stuff:
+  - docker:
+      description: "Build Broadsea Methods"
+      build:
+        tag: broadsea-methods:latest
+        file: Dockerfile
+        path: ./broadsea/apps/broadsea-methods
+  - docker:
+      description: "Build Broadsea Webtools"
+      build:
+        tag: broadsea-webtools:latest
+        file: Dockerfile
+        path: ./broadsea/apps/broadsea-webtools
 
 upgrade:
   - exec:
