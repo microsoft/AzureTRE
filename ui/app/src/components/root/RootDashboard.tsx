@@ -3,6 +3,10 @@ import { Workspace } from '../../models/workspace';
 
 import { ResourceCardList } from '../shared/ResourceCardList';
 import { Resource } from '../../models/resource';
+import { PrimaryButton, Stack } from '@fluentui/react';
+import { CreateUpdateResource } from '../shared/CreateUpdateResource/CreateUpdateResource';
+import { ResourceType } from '../../models/resourceType';
+import { useBoolean } from '@fluentui/react-hooks';
 
 interface RootDashboardProps {
   selectWorkspace: (workspace: Workspace) => void,
@@ -12,10 +16,15 @@ interface RootDashboardProps {
 }
 
 export const RootDashboard: React.FunctionComponent<RootDashboardProps> = (props: RootDashboardProps) => {
-
+  const [createPanelOpen, { setTrue: createNew, setFalse: closeCreatePanel }] = useBoolean(false);
+  
   return (
     <>
-      <h1>Workspaces</h1>
+      <Stack horizontal horizontalAlign="space-between" style={{ padding: 10 }}>
+        <h1>Workspaces</h1>
+        <PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new" onClick={createNew}/>
+        <CreateUpdateResource isOpen={createPanelOpen} onClose={closeCreatePanel} resourceType={ResourceType.Workspace}/>
+      </Stack>
       <ResourceCardList
         resources={props.workspaces}
         selectResource={(r: Resource) => props.selectWorkspace(r as Workspace)}
