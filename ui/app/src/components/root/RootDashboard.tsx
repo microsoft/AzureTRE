@@ -17,12 +17,13 @@ interface RootDashboardProps {
 
 export const RootDashboard: React.FunctionComponent<RootDashboardProps> = (props: RootDashboardProps) => {
   const [createPanelOpen, { setTrue: createNew, setFalse: closeCreatePanel }] = useBoolean(false);
-  
+
   return (
     <>
       <Stack horizontal horizontalAlign="space-between" style={{ padding: 10 }}>
-        <h1>Workspaces</h1>
-        <PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new" onClick={createNew}/>
+        <Stack.Item><h1>Workspaces</h1></Stack.Item>
+        <Stack.Item style={{width:200, textAlign: 'right'}}><PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new" onClick={createNew}/></Stack.Item>
+        
         <CreateUpdateResource isOpen={createPanelOpen} onClose={closeCreatePanel} resourceType={ResourceType.Workspace}/>
       </Stack>
       <ResourceCardList

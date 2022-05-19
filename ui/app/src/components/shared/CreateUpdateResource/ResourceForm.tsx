@@ -34,7 +34,7 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
         if (!template) {
             getFullTemplate();
         }
-    });
+    }, [apiCall, props.templatePath, template]);
 
     const createResource = async (formData: {}) => {
         setDeployError(false);

@@ -128,12 +128,12 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
             <Stack.Item grow={3} style={bodyStyles}>
               <Text>{props.resource.properties.description}</Text>
             </Stack.Item>
-           
-            { 
-            connectUri &&
-            <Stack.Item style={bodyStyles}>
-                <PrimaryButton onClick={ () => window.open(connectUri) }>Connect</PrimaryButton>
-            </Stack.Item>
+
+            {
+              connectUri &&
+              <Stack.Item style={connectStyles}>
+                <PrimaryButton onClick={() => window.open(connectUri)}>Connect</PrimaryButton>
+              </Stack.Item>
             }
             <Stack.Item style={footerStyles}>
               {

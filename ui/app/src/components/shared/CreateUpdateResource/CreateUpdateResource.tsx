@@ -1,4 +1,4 @@
-import { DefaultButton, Icon, mergeStyles, Panel, PanelType, PrimaryButton } from '@fluentui/react';
+import { Icon, mergeStyles, Panel, PanelType, PrimaryButton } from '@fluentui/react';
 import React, { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ApiEndpoint } from '../../../models/apiEndpoints';
@@ -6,7 +6,7 @@ import { Operation } from '../../../models/operation';
 import { ResourceType } from '../../../models/resourceType';
 import { Workspace } from '../../../models/workspace';
 import { WorkspaceService } from '../../../models/workspaceService';
-import { NotificationsContext } from '../notifications/NotificationsContext';
+import { NotificationsContext } from '../../../contexts/NotificationsContext';
 import { ResourceForm } from './ResourceForm';
 import { SelectTemplate } from './SelectTemplate';
 
@@ -38,6 +38,19 @@ export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceP
   const [deployOperation, setDeployOperation] = useState({} as Operation);
   const opsContext = useContext(NotificationsContext);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const clearState = () => {
+      setPage('selectTemplate');
+      setDeployOperation({} as Operation);
+      setTemplate('');
+    }
+
+    // Clear state on panel close
+    if (!props.isOpen) {
+      clearState();
+    }
+  }, [props.isOpen]);
 
   // Render a panel title depending on sub-page
   const pageTitles: PageTitle = {
@@ -106,25 +119,11 @@ export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceP
     case 'creating':
       currentPage = <div style={{ textAlign: 'center', paddingTop: 100 }}>
         <Icon iconName="CloudAdd" className={creatingIconClass} />
-        <h1>Creating {props.resourceType}</h1>
+        <h1>Creating {props.resourceType}...</h1>
         <p>Check the notifications panel for deployment progress.</p>
         <PrimaryButton text="Go to resource" onClick={() => navigate(deployOperation.resourcePath)}/>
-        <DefaultButton text="Exit" onClick={props.onClose} style={{ marginTop: 25 }}/>
       </div>; break;
   }
-
-  useEffect(() => {
-    const clearState = () => {
-      setPage('selectTemplate');
-      setDeployOperation({} as Operation);
-      setTemplate('');
-    }
-
-    // Clear state on panel close
-    if (!props.isOpen) {
-      clearState();
-    }
-  });
 
   return (
     <>
