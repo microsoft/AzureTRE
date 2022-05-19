@@ -154,10 +154,14 @@ uninstall:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
-        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
-        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
-        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
-        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
+        # arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
+        # arm_client_id: "{{ bundle.credentials.azure_client_id }}"
+        # arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
+        # arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
+        mgmt_acr_name: "{{ bundle.parameters.mgmt_acr_name }}"
+        mgmt_resource_group_name:
+          "{{ bundle.parameters.mgmt_resource_group_name }}"
+        image_tag: "{{ bundle.parameters.image_tag }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"

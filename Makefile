@@ -17,7 +17,7 @@ build-and-push-resource-processor: build-resource-processor-vm-porter-image push
 build-and-push-gitea: build-gitea-image push-gitea-image
 build-and-push-guacamole: build-guacamole-image push-guacamole-image
 build-and-push-mlflow: build-mlflow-image push-mlflow-image
-build-and-push-ohdsi: build-ohdsi-broadsea-methods build-ohdsi-broadsea-webtools push-ohdsi-images
+build-and-push-ohdsi: build-ohdsi-broadsea-methods build-ohdsi-broadsea-webtools push-ohdsi-methods push-ohdsi-webtools
 tre-deploy: deploy-core deploy-shared-services db-migrate show-core-output
 deploy-shared-services:
 	$(MAKE) firewall-install \
@@ -146,10 +146,11 @@ push-guacamole-image:
 push-mlflow-image:
 	$(call push_image,"mlflow-server","${MAKEFILE_DIR}/templates/workspace_services/mlflow/mlflow-server/version.txt")
 
-push-ohdsi-images:
+push-ohdsi-methods:
 	$(call push_image,"broadsea-methods","${MAKEFILE_DIR}/templates/workspace_services/ohdsi/broadsea/apps/broadsea-methods/version.txt")
-	&& 	$(call push_image,"broadsea-webtools","${MAKEFILE_DIR}/templates/workspace_services/ohdsi/broadsea/apps/broadsea-webtools/version.txt")
 
+push-ohdsi-webtools:
+	$(call push_image,"broadsea-webtools","${MAKEFILE_DIR}/templates/workspace_services/ohdsi/broadsea/apps/broadsea-webtools/version.txt")
 
 # # These targets are for a graceful migration of Firewall
 # # from terraform state in Core to a Shared Service.
