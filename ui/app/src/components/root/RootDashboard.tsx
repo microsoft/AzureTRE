@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { ApiEndpoint } from '../../models/apiEndpoints';
 import { Workspace } from '../../models/workspace';
-
+import { useBoolean } from '@fluentui/react-hooks';
 import { RootRolesContext } from '../shared/RootRolesContext';
 import { PrimaryButton, Stack } from '@fluentui/react';
 import { SecuredByRole } from '../shared/SecuredByRole';
@@ -21,6 +21,7 @@ interface RootDashboardProps {
 
 export const RootDashboard: React.FunctionComponent<RootDashboardProps> = (props:RootDashboardProps) => {
   const rootRolesContext = useContext(RootRolesContext);
+  const [createPanelOpen, { setTrue: createNew, setFalse: closeCreatePanel }] = useBoolean(false);
 
   return (
     <>
@@ -53,7 +54,8 @@ export const RootDashboard: React.FunctionComponent<RootDashboardProps> = (props
 
       <Stack horizontal horizontalAlign="space-between" style={{ padding: 10 }}>
         <h1>Workspaces</h1>
-        <CreateUpdateResource resourceType={ResourceType.Workspace}></CreateUpdateResource>
+        <PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new" onClick={createNew}/>
+        <CreateUpdateResource isOpen={createPanelOpen} onClose={closeCreatePanel} resourceType={ResourceType.Workspace}/>
       </Stack>
 
       <ul>

@@ -1,14 +1,20 @@
 import { DefaultButton, Icon, mergeStyles, Panel, PanelType, PrimaryButton } from '@fluentui/react';
-import { useBoolean } from '@fluentui/react-hooks';
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ApiEndpoint } from '../../../models/apiEndpoints';
+import { Operation } from '../../../models/operation';
 import { ResourceType } from '../../../models/resourceType';
+import { Workspace } from '../../../models/workspace';
+import { WorkspaceService } from '../../../models/workspaceService';
+import { NotificationsContext } from '../notifications/NotificationsContext';
 import { ResourceForm } from './ResourceForm';
 import { SelectTemplate } from './SelectTemplate';
 
 interface CreateUpdateResourceProps {
+  isOpen: boolean,
+  onClose: () => void,
   resourceType: ResourceType,
-  serviceName?: string
+  parentResource?: Workspace | WorkspaceService
 }
 
 interface PageTitle {
@@ -27,9 +33,10 @@ const creatingIconClass = mergeStyles({
 });
 
 export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceProps> = (props: CreateUpdateResourceProps) => {
-  const [isOpen, { setTrue: openPanel, setFalse: dismissPanel }] = useBoolean(false);
   const [page, setPage] = useState('selectTemplate' as keyof PageTitle);
   const [selectedTemplate, setTemplate] = useState('');
+  const [deployOperation, setDeployOperation] = useState({} as Operation);
+  const opsContext = useContext(NotificationsContext);
 
   // Render a panel title depending on sub-page
   const pageTitles: PageTitle = {
@@ -41,18 +48,34 @@ export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceP
   // Construct API path for templates of specified resourceType
   let templatesPath;
   switch (props.resourceType) {
-      case ResourceType.Workspace:
-        templatesPath = ApiEndpoint.WorkspaceTemplates; break;
-      case ResourceType.WorkspaceService:
-        templatesPath = ApiEndpoint.WorkspaceServiceTemplates; break;
-      case ResourceType.UserResource:
-        if (props.serviceName) {
-          templatesPath = `${ApiEndpoint.WorkspaceServiceTemplates}/${props.serviceName}/${ApiEndpoint.UserResourceTemplates}`; break;
-        } else {
-          throw Error('serviceTemplateName must also be passed for workspace-service resourceType.');
-        }
-      default:
-        throw Error('Unsupported resource type.');
+    case ResourceType.Workspace:
+      templatesPath = ApiEndpoint.WorkspaceTemplates; break;
+    case ResourceType.WorkspaceService:
+      templatesPath = ApiEndpoint.WorkspaceServiceTemplates; break;
+    case ResourceType.SharedService:
+      templatesPath = ApiEndpoint.SharedServiceTemplates; break;
+    case ResourceType.UserResource:
+      if (props.parentResource) {
+        templatesPath = `${ApiEndpoint.WorkspaceServiceTemplates}/${props.parentResource.templateName}/${ApiEndpoint.UserResourceTemplates}`; break;
+      } else {
+        throw Error('Parent workspace service must be passed as prop when creating user resource.');
+      }
+    default:
+      throw Error('Unsupported resource type.');
+  }
+
+  // Construct API path for resource creation
+  let resourcePath;
+  switch (props.resourceType) {
+    case ResourceType.Workspace:
+      resourcePath = ApiEndpoint.Workspaces; break;
+    case ResourceType.SharedService:
+      resourcePath = ApiEndpoint.SharedServices; break;
+    default:
+      if (!props.parentResource) {
+        throw Error('A parentResource must be passed as prop if creating a workspace-service or user-resource');
+      }
+      resourcePath = `${props.parentResource.resourcePath}/${props.resourceType}`;
   }
 
   const selectTemplate = (templateName: string) => {
@@ -60,10 +83,14 @@ export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceP
     setPage('resourceForm');
   }
 
-  const createResource = (resource: {}) => {
-    console.log('Creating resource...', resource);
+  const resourceCreating = (operation: Operation) => {
+    setDeployOperation(operation);
     setPage('creating');
+    // Add deployment operation to notifications operation poller
+    opsContext.addOperation(operation);
   }
+
+  const navigate = useNavigate();
 
   // Render the current panel sub-page
   let currentPage;
@@ -71,35 +98,41 @@ export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceP
     case 'selectTemplate':
       currentPage = <SelectTemplate templatesPath={templatesPath} onSelectTemplate={selectTemplate}/>; break;
     case 'resourceForm':
-      currentPage = <ResourceForm templatePath={`${templatesPath}/${selectedTemplate}`} createResource={createResource}/>; break;
+      currentPage = <ResourceForm 
+        templateName={selectedTemplate}
+        templatePath={`${templatesPath}/${selectedTemplate}`}
+        resourcePath={resourcePath}
+        onCreateResource={resourceCreating}
+      />; break;
     case 'creating':
       currentPage = <div style={{ textAlign: 'center', paddingTop: 100 }}>
         <Icon iconName="CloudAdd" className={creatingIconClass} />
         <h1>Creating {props.resourceType}</h1>
         <p>Check the notifications panel for deployment progress.</p>
-        <DefaultButton text="Exit" onClick={dismissPanel} style={{ marginTop: 25 }}/>
+        <PrimaryButton text="Go to resource" onClick={() => navigate(deployOperation.resourcePath)}/>
+        <DefaultButton text="Exit" onClick={props.onClose} style={{ marginTop: 25 }}/>
       </div>; break;
   }
 
   useEffect(() => {
     const clearState = () => {
       setPage('selectTemplate');
+      setDeployOperation({} as Operation);
       setTemplate('');
     }
 
     // Clear state on panel close
-    if (!isOpen) {
+    if (!props.isOpen) {
       clearState();
     }
   });
 
   return (
     <>
-      <PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new" onClick={openPanel} />
       <Panel
         headerText={pageTitles[page]}
-        isOpen={isOpen}
-        onDismiss={dismissPanel}
+        isOpen={props.isOpen}
+        onDismiss={props.onClose}
         type={PanelType.medium}
         closeButtonAriaLabel="Close"
       >
