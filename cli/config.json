@@ -1,0 +1,6 @@
+{
+  "endpoint": "https://ocwtre32.northeurope.cloudapp.azure.com",
+  "clientId": "daa06e42-6e47-49c8-b748-7d93df8f1a4d",
+  "tenantId": "64bdc039-7c7f-4290-949e-d4ae71101008",
+  "scope": "api://88da88b4-32eb-4743-b828-b1b83edf481a/user_impersonation"
+}

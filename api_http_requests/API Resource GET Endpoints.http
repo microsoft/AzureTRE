@@ -1,7 +1,7 @@
 ### Get all workspaces (Workspace Owner or Researcher -- Get own Workspaces)
-GET {{baseUrl}}/workspaces
-Accept: {{contentType}}
-Authorization: Bearer {{token}}
+GET {{$dotenv baseUrl}}/workspaces
+Accept: application/json
+Authorization: Bearer {{$dotenv token}}
 
 ### Get workspace (Workspace Owner or Researcher -- Get own Workspace)
 GET {{baseUrl}}/workspaces/{{workspaceId}}

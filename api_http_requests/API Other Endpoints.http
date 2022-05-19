@@ -1,5 +1,5 @@
 ### Get health status (no auth)
 
-GET {{baseUrl}}/health
+GET {{$dotenv baseUrl}}/health
 Accept: application/json
 

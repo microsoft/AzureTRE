@@ -1,0 +1,53 @@
+#!/usr/bin/env python3
+
+import click
+import commands.auth
+import commands.workspaces
+
+VERSION = "0.0.1"
+
+
+@click.group()
+# @click.option('--output')  # , '-o', default='table', help='Output format', type=click.Choice(['table', 'json']))
+def cli():
+    pass
+
+
+@cli.command(help='Print the version')
+def version():
+    click.echo("📰 TRE CLI version: %s" % VERSION)
+
+
+@cli.command(help='Login to TRE')
+def login():
+    click.echo("🔐 Login...")
+    commands.auth.login()
+
+
+@cli.command(help='Logout from TRE')
+def logout():
+    click.echo("🔑 Logout...")
+    commands.auth.logout()
+
+
+@cli.group(help='Commands operate on workspaces')
+# @click.option('--output')  # , '-o', default='table', help='Output format', type=click.Choice(['table', 'json']))
+def workspace():
+    pass
+
+
+@workspace.command(name='list')
+@click.option('--output', '-o', default='text', help='Output format', type=click.Choice(['text', 'json']))
+def ws_list(output):
+    commands.workspaces.list(output)
+
+
+@workspace.command(name='show')
+@click.option('--output', '-o', default='text', help='Output format', type=click.Choice(['text', 'json']))
+@click.argument('workspace_id')
+def ws_show(workspace_id, output):
+    commands.workspaces.show(workspace_id, output)
+
+
+if __name__ == '__main__':
+    cli()
