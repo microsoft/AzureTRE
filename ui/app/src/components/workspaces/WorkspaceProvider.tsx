@@ -12,7 +12,7 @@ import { WorkspaceItem } from './WorkspaceItem';
 import { WorkspaceLeftNav } from './WorkspaceLeftNav';
 import { WorkspaceServiceItem } from './WorkspaceServiceItem';
 import config from '../../config.json';
-import { WorkspaceRolesContext } from './WorkspaceRolesContext';
+import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import { WorkspaceServices } from './WorkspaceServices';
 
 interface WorkspaceProviderProps {
@@ -25,7 +25,7 @@ export const WorkspaceProvider: React.FunctionComponent<WorkspaceProviderProps> 
   const [selectedWorkspaceService, setSelectedWorkspaceService] = useState({} as WorkspaceService);
   const [selectedUserResource, setSelectedUserResource] = useState({} as UserResource);
   const [workspaceServices, setWorkspaceServices] = useState([] as Array<WorkspaceService>)
-  const workspaceRoles = useRef(useContext(WorkspaceRolesContext));
+  const workspaceCtx = useRef(useContext(WorkspaceContext));
   const [loadingState, setLoadingState] = useState('loading');
   const { workspaceId } = useParams();
 
@@ -43,7 +43,7 @@ export const WorkspaceProvider: React.FunctionComponent<WorkspaceProviderProps> 
         // now 'authenticate' against the workspace - just get the roles for this workspace (tokenOnly = true)
         await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get, ws.properties.app_id, undefined, ResultType.None, (roles: Array<string>) => {
           config.debug && console.log(`Workspace roles for ${ws.properties?.display_name}`, roles);
-          workspaceRoles.current.roles = roles;
+          workspaceCtx.current.setRoles(roles);
           setLoadingState(roles && roles.length > 0 ? 'ok' : 'denied');
         }, true);
 

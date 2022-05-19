@@ -9,23 +9,45 @@ import { WorkspaceProvider } from './components/workspaces/WorkspaceProvider';
 import { MsalAuthenticationTemplate } from '@azure/msal-react';
 import { InteractionType } from '@azure/msal-browser';
 import { Workspace } from './models/workspace';
-import { RootRolesContext } from './components/shared/RootRolesContext';
-import { WorkspaceRolesContext } from './components/workspaces/WorkspaceRolesContext';
+import { AppRolesContext } from './contexts/AppRolesContext';
+import { WorkspaceContext } from './contexts/WorkspaceContext';
 import { GenericErrorBoundary } from './components/shared/GenericErrorBoundary';
-import { NotificationsContext } from './components/shared/notifications/NotificationsContext';
+import { NotificationsContext } from './contexts/NotificationsContext';
 import { Operation } from './models/operation';
+import { ResourceUpdate } from './models/resource';
 
 export const App: React.FunctionComponent = () => {
+  const [appRoles, setAppRoles] = useState([] as Array<string>);
   const [selectedWorkspace, setSelectedWorkspace] = useState({} as Workspace);
+  const [workspaceRoles, setWorkspaceRoles] = useState([] as Array<string>);
   const [latestOperation, setLatestOperation] = useState({} as Operation);
+  const [resourceUpdates, setResourceUpdates] = useState([] as Array<ResourceUpdate>);
 
   return (
     <>
       <Routes>
         <Route path="*" element={
           <MsalAuthenticationTemplate interactionType={InteractionType.Redirect}>
-            <NotificationsContext.Provider value={{ latestOperation: latestOperation, addOperation: (op: Operation) => {setLatestOperation(op);}}}>
-              <RootRolesContext.Provider value={{ roles: [] as Array<string> }}>
+            <NotificationsContext.Provider value={{ 
+                latestOperation: latestOperation, 
+                addOperation: (op: Operation) => {setLatestOperation(op)}, 
+                resourceUpdates: resourceUpdates, 
+                addResourceUpdate: (r: ResourceUpdate) => {
+                  let updates = [...resourceUpdates];
+                  let i = updates.findIndex((f: ResourceUpdate) => f.resourceId === r.resourceId);
+                  if (i > 0) { 
+                    updates.splice(i, 1, r);
+                  } else {
+                    updates.push(r); 
+                  }
+                  setResourceUpdates(updates);
+                },
+                clearUpdatesForResource: (resourceId: string) => {let updates = [...resourceUpdates].filter((r: ResourceUpdate) => r.resourceId !== resourceId); setResourceUpdates(updates);}
+              }}>
+              <AppRolesContext.Provider value={{ 
+                roles: appRoles,
+                setAppRoles: (roles: Array<string>) => {setAppRoles(roles)}
+              }}>
                 <Stack styles={stackStyles} className='tre-root'>
                   <Stack.Item grow className='tre-top-nav'>
                     <TopNav />
@@ -35,9 +57,13 @@ export const App: React.FunctionComponent = () => {
                       <Routes>
                         <Route path="*" element={<RootLayout selectWorkspace={(ws: Workspace) => setSelectedWorkspace(ws)} />} />
                         <Route path="/workspaces/:workspaceId//*" element={
-                          <WorkspaceRolesContext.Provider value={{ roles: [] as Array<string> }}>
+                          <WorkspaceContext.Provider value={{ 
+                            roles: workspaceRoles, 
+                            setRoles: (roles: Array<string>) => {setWorkspaceRoles(roles)},
+                            workspace: selectedWorkspace,
+                            workspaceClientId: selectedWorkspace.properties?.app_id}}>
                             <WorkspaceProvider workspace={selectedWorkspace} />
-                          </WorkspaceRolesContext.Provider>
+                          </WorkspaceContext.Provider>
                         } />
                       </Routes>
                     </GenericErrorBoundary>
@@ -46,7 +72,7 @@ export const App: React.FunctionComponent = () => {
                     <Footer />
                   </Stack.Item>
                 </Stack>
-              </RootRolesContext.Provider>
+              </AppRolesContext.Provider>
             </NotificationsContext.Provider>
           </MsalAuthenticationTemplate>
         } />

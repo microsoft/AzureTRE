@@ -5,7 +5,7 @@ import { Admin } from '../../App';
 import { ApiEndpoint } from '../../models/apiEndpoints';
 import { Workspace } from '../../models/workspace';
 import { useAuthApiCall, HttpMethod, ResultType } from '../../useAuthApiCall';
-import { RootRolesContext } from '../shared/RootRolesContext';
+import { AppRolesContext } from '../../contexts/AppRolesContext';
 import { RootDashboard } from './RootDashboard';
 import { LeftNav } from './LeftNav';
 import config from '../../config.json';
@@ -16,7 +16,7 @@ interface RootLayoutProps {
 
 export const RootLayout: React.FunctionComponent<RootLayoutProps> = (props: RootLayoutProps) => {
   const [workspaces, setWorkspaces] = useState([] as Array<Workspace>);
-  const rootRolesContext = useRef(useContext(RootRolesContext));
+  const appRolesContext = useRef(useContext(AppRolesContext));
   const [loadingState, setLoadingState] = useState('loading');
   const apiCall = useAuthApiCall();
 
@@ -25,7 +25,7 @@ export const RootLayout: React.FunctionComponent<RootLayoutProps> = (props: Root
       try {
         const r = await apiCall(ApiEndpoint.Workspaces, HttpMethod.Get, undefined, undefined, ResultType.JSON, (roles: Array<string>) => {
           config.debug && console.log("Root Roles", roles);
-          rootRolesContext.current.roles = roles;
+          appRolesContext.current.setAppRoles(roles);
           setLoadingState(roles && roles.length > 0 ? 'ok' : 'denied');
         });
 

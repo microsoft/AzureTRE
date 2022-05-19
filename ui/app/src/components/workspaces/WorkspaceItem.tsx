@@ -4,7 +4,7 @@ import { WorkspaceRoleName } from '../../models/roleNames';
 import { Workspace } from '../../models/workspace';
 import { SecuredByRole } from '../shared/SecuredByRole';
 import { ResourceDebug } from '../shared/ResourceDebug';
-import { WorkspaceRolesContext } from './WorkspaceRolesContext';
+import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 
 // TODO:
 // - commands for managing workspace
@@ -15,7 +15,7 @@ interface WorkspaceItemProps {
 }
 
 export const WorkspaceItem: React.FunctionComponent<WorkspaceItemProps> = (props: WorkspaceItemProps) => {
-  const workspaceRoles = useContext(WorkspaceRolesContext);
+  const workspaceCtx = useContext(WorkspaceContext);
 
   return (
     <>
@@ -32,8 +32,8 @@ export const WorkspaceItem: React.FunctionComponent<WorkspaceItemProps> = (props
           <h3>Roles:</h3>
           <ul>
             {
-              workspaceRoles.roles &&
-              workspaceRoles.roles.map((role: string, i: number) => {
+              workspaceCtx.roles &&
+              workspaceCtx.roles.map((role: string, i: number) => {
                 return (
                   <li key={i}>{role}</li>
                 )

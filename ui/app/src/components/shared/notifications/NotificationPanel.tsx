@@ -1,13 +1,14 @@
 import { Callout, DirectionalHint, FontWeights, Link, mergeStyleSets, MessageBar, MessageBarType, Panel, Shimmer, ShimmerElementType, Text } from '@fluentui/react';
 import React, { useContext, useEffect, useState } from 'react';
 import { completedStates, Operation } from '../../../models/operation';
-import { NotificationsContext } from './NotificationsContext';
+import { NotificationsContext } from '../../../contexts/NotificationsContext';
 import { NotificationItem } from './NotificationItem';
 import { IconButton } from '@fluentui/react/lib/Button';
 import { HttpMethod, useAuthApiCall } from '../../../useAuthApiCall';
 import { ApiEndpoint } from '../../../models/apiEndpoints';
 import { NotificationPoller } from './NotificationPoller';
 import { TRENotification } from '../../../models/treNotification';
+import { ComponentAction, getResourceFromResult } from '../../../models/resource';
 
 export const NotificationPanel: React.FunctionComponent = () => {
   const opsContext = useContext(NotificationsContext);
@@ -38,9 +39,7 @@ export const NotificationPanel: React.FunctionComponent = () => {
 
         if (!isWs) {
           let r = await apiCall(op.resourcePath, HttpMethod.Get, workspaceAuth ? ws.properties.app_id : null);
-          if (r['userResource']) resource = r.userResource;
-          if (r['workspaceService']) resource = r.workspaceService;
-          if (r['sharedService']) resource = r.sharedService;
+          resource = getResourceFromResult(r);
         }
       }
 
@@ -55,8 +54,14 @@ export const NotificationPanel: React.FunctionComponent = () => {
       currentNotifications.splice(0, 0, n); // push the new notification to the beginning of the array
       setNotifications(currentNotifications);
       setLoadingNotification(false);
+      opsContext.addResourceUpdate({
+        resourceId: n.resource.id,
+        operation: n.operation,
+        componentAction: ComponentAction.Lock 
+      });
     };
 
+    // latestOperation is something added to the context by another component, here we pick it up and bring it to our own state to manage
     if (opsContext.latestOperation && opsContext.latestOperation.id) addOp();
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -71,6 +76,12 @@ export const NotificationPanel: React.FunctionComponent = () => {
     updatedNotifications.splice(i, 1, n);
     setNotifications(updatedNotifications);
     if (completedStates.includes(n.operation.status) && !isOpen) setShowCallout(true);
+
+    opsContext.addResourceUpdate({
+      resourceId: n.resource.id,
+      operation: n.operation,
+      componentAction: completedStates.includes(n.operation.status) ? ComponentAction.Reload : ComponentAction.Lock
+    });    
   }
 
   const dismissCompleted = () => {
