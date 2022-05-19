@@ -1,5 +1,6 @@
 import { DefaultPalette, IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
 import React from "react";
+import { Link } from "react-router-dom";
 import { Resource } from "../../models/resource";
 
 interface ResourcePropertyPanelProps {
@@ -21,6 +22,13 @@ const ResourcePropertyPanelItem: React.FunctionComponent<ResourcePropertyPanelIt
         }
     }
 
+    function renderValue(val: String) {
+        if (val.startsWith('https://')) {
+            return (<a href={val.toString()} target='_blank' rel="noreferrer">{val}</a>)
+        }
+        return val;
+    }
+
     return(
         <>
             <Stack wrap horizontal>
@@ -28,7 +36,7 @@ const ResourcePropertyPanelItem: React.FunctionComponent<ResourcePropertyPanelIt
                     {props.header}
                 </Stack.Item>
                 <Stack.Item grow={3} styles={stackItemStyles}>
-                    : {props.val}
+                    : { renderValue(props.val)}
                 </Stack.Item>
             </Stack>
         </>
@@ -61,6 +69,7 @@ export const ResourcePropertyPanel: React.FunctionComponent<ResourcePropertyPane
                     <ResourcePropertyPanelItem header={'Is active'} val={props.resource.isActive.toString()} />
                     <ResourcePropertyPanelItem header={'Is enabled'} val={props.resource.isEnabled.toString()} />
                     <ResourcePropertyPanelItem header={'User'} val={props.resource.user.name} />
+                    <ResourcePropertyPanelItem header={'Last updated'} val={props.resource.updatedWhen.toString()} />
                 </Stack>    
                 <Stack grow styles={stackStyles}>
                 {
