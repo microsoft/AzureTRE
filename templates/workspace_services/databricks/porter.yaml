@@ -29,11 +29,11 @@ parameters:
     type: string
 
 
-# outputs:
-#   - name: databricksWorkspaceName
-#     type: string
-#     applyTo:
-#       - install
+#outputs:
+#  - name: databricksWorkspaceName
+#    type: string
+#    applyTo:
+#      - install
 
 mixins:
   - exec
@@ -60,6 +60,9 @@ install:
         location: "{{ bundle.parameters.azure_location }}"
         name: "{{ bundle.parameters.id }}"
         parameters: id={{ bundle.parameters.id }} workspaceId={{ bundle.parameters.workspace_id }} treId={{ bundle.parameters.tre_id }} hostSubnetAddressPrefix={{ bundle.parameters.hostSubnetAddressPrefix }} containerSubnetAddressPrefix={{ bundle.parameters.containerSubnetAddressPrefix }}
+#      outputs:
+#        - name: databricksWorkspaceName
+#          jsonPath: $.properties.outputs.databricksWorkspaceName.value
 
 uninstall:
   - exec:

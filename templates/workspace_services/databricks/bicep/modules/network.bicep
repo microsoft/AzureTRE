@@ -22,6 +22,12 @@ param hostSubnetAddressPrefix string
 @description('The IP space to use for the databricks container subnet.')
 param containerSubnetAddressPrefix string
 
+@description('The name of the route table.')
+param routeTableName string
+
+@description('The private IP address of the Azure Firewall.')
+param firewallIpAddress string
+
 @description('The tags to be applied to the provisioned resources.')
 param tags object
 
@@ -37,6 +43,27 @@ var subnetDetails = [
     delegationName: 'db-container-vnet-integration'
   }
 ]
+
+// TO-BE-UPDATED based on https://docs.microsoft.com/en-us/azure/databricks/administration-guide/cloud-configurations/azure/udr#control-plane-nat-and-webapp-ip-addresses
+var mapLocationUrlConfig = {
+  westeurope: {
+    webApp: [
+      '52.232.19.246/32'
+      '40.74.30.80/32'
+    ]
+    sccRelay: [
+      '23.97.201.41/32'
+      '51.138.96.158/32'
+    ]
+    controlPlaneNat: [
+      '23.100.0.135/32'
+      '40.74.30.81/32'
+    ]
+    extendedInfra: [
+      '20.73.215.48/28'
+    ]
+  }
+}
 
 resource dbNetworkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2021-02-01' = {
   name: networkSecurityGroupName
@@ -136,6 +163,34 @@ resource workspaceVirtualNetwork 'Microsoft.Network/virtualNetworks@2019-11-01' 
   name: vnetName
 }
 
+resource routeTable 'Microsoft.Network/routeTables@2021-08-01' = {
+  name: routeTableName
+  location: location
+  tags: tags
+  properties: {
+    disableBgpRoutePropagation: false
+    routes: [
+      {
+        name: 'to-firewall'
+        properties: {
+          addressPrefix: '0.0.0.0/0'
+          nextHopIpAddress: firewallIpAddress
+          nextHopType: 'VirtualAppliance'
+        }
+        type: 'string'
+      }
+      {
+        name: 'to-databricks-scc-relay-ip'
+        properties: {
+          addressPrefix: mapLocationUrlConfig[location].sccRelay[0]
+          nextHopType: 'Internet'
+        }
+        type: 'string'
+      }
+    ]
+  }
+}
+
 @batchSize(1)
 resource subnets 'Microsoft.Network/virtualNetworks/subnets@2020-11-01' = [for (sn, index) in subnetDetails: {
   name: sn.name
@@ -153,6 +208,9 @@ resource subnets 'Microsoft.Network/virtualNetworks/subnets@2020-11-01' = [for (
     ]
     networkSecurityGroup: {
       id: dbNetworkSecurityGroup.id
+    }
+    routeTable: {
+      id: routeTable.id
     }
   }
 }]
