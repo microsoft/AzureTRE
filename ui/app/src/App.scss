@@ -72,7 +72,9 @@ ul.tre-notifications-steps-list li{
 .ms-Persona-primaryText{
     color: #fff;
 }
-
+.tre-hide-chevron i[data-icon-name=ChevronDown] {
+    display:none;
+}
 .tre-body{
     height: 100%;
     overflow: hidden;

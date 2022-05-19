@@ -15,7 +15,7 @@ interface RootLayoutProps {
 }
 
 export const RootLayout: React.FunctionComponent<RootLayoutProps> = (props: RootLayoutProps) => {
-  const [workspaces, setWorkspaces] = useState([{} as Workspace]);
+  const [workspaces, setWorkspaces] = useState([] as Array<Workspace>);
   const rootRolesContext = useRef(useContext(RootRolesContext));
   const [loadingState, setLoadingState] = useState('loading');
   const apiCall = useAuthApiCall();
