@@ -35,12 +35,6 @@
       }
     },
     {
-      "name": "localAdminPassword",
-      "source": { 
-        "env": "LOCAL_ADMIN_PASSWORD"
-      }
-    },
-    {
       "name": "vmSize",
       "source": {
         "env": "VM_SIZE"
