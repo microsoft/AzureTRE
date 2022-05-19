@@ -37,6 +37,7 @@ export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceP
   const [selectedTemplate, setTemplate] = useState('');
   const [deployOperation, setDeployOperation] = useState({} as Operation);
   const opsContext = useContext(NotificationsContext);
+  const navigate = useNavigate();
 
   // Render a panel title depending on sub-page
   const pageTitles: PageTitle = {
@@ -89,8 +90,6 @@ export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceP
     // Add deployment operation to notifications operation poller
     opsContext.addOperation(operation);
   }
-
-  const navigate = useNavigate();
 
   // Render the current panel sub-page
   let currentPage;
