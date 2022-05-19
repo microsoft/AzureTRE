@@ -98,7 +98,7 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
             </Stack>
           </Stack.Item>
         </Stack>
-        <Stack.Item style={ (canConnect) ? bodyStylesWithConnect : bodyStyles}>
+        <Stack.Item grow={3} style={ (canConnect) ? bodyStylesWithConnect : bodyStyles}>
           <Text>{props.resource.properties.description}</Text>
         </Stack.Item>
         { canConnect &&
