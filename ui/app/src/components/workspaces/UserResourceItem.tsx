@@ -5,6 +5,7 @@ import { Workspace } from '../../models/workspace';
 import { useAuthApiCall, HttpMethod } from '../../useAuthApiCall';
 import { UserResource } from '../../models/userResource';
 import { ResourceDebug } from '../shared/ResourceDebug';
+import { ResourcePropertyPanel } from '../shared/ResourcePropertyPanel';
 
 // TODO:
 // - This 'page' might die in place of a card on the Workspace services page - leave it alone for now
@@ -35,7 +36,9 @@ export const UserResourceItem: React.FunctionComponent<UserResourceItemProps> = 
   return (
     <>
       <h1>User Resource: {userResource.properties?.display_name}</h1>
-
+      { userResource && userResource.id &&
+        <ResourcePropertyPanel resource={userResource}/>
+      }
       <ResourceDebug resource={userResource} />
     </>
   );

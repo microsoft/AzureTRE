@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { ComponentAction, getResourceFromResult, Resource, ResourceUpdate } from '../../models/resource';
-import { Callout, DefaultPalette, FontWeights, IconButton, IContextualMenuItem, IContextualMenuProps, mergeStyleSets, ProgressIndicator, Shimmer, Stack, Text } from '@fluentui/react';
+import { Callout, DefaultPalette, FontWeights, IconButton, IContextualMenuItem, IContextualMenuProps, mergeStyleSets, PrimaryButton, ProgressIndicator, Shimmer, Stack, Text } from '@fluentui/react';
 import { Link } from 'react-router-dom';
 import moment from 'moment';
 import { RoleName, WorkspaceRoleName } from '../../models/roleNames';
@@ -86,6 +86,8 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
     items: i,
   };
 
+  let connectUri = props.resource.properties && props.resource.properties.connection_uri;
+
   return (
     <>
       {
@@ -126,6 +128,13 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
             <Stack.Item grow={3} style={bodyStyles}>
               <Text>{props.resource.properties.description}</Text>
             </Stack.Item>
+           
+            { 
+            connectUri &&
+            <Stack.Item style={bodyStyles}>
+                <PrimaryButton onClick={ () => window.open(connectUri) }>Connect</PrimaryButton>
+            </Stack.Item>
+            }
             <Stack.Item style={footerStyles}>
               {
                 componentAction === ComponentAction.Lock &&
@@ -200,15 +209,19 @@ const headerLinkStyles: React.CSSProperties = {
 }
 
 const bodyStyles: React.CSSProperties = {
-  borderBottom: '1px #ccc solid',
   padding: '5px 10px',
-  minHeight: '70px'
+  minHeight: '40px'
+}
+
+const connectStyles: React.CSSProperties = {
+  padding: '5px 10px'
 }
 
 const footerStyles: React.CSSProperties = {
   backgroundColor: DefaultPalette.white,
   padding: '5px 10px',
-  minHeight: '30px'
+  minHeight: '30px',
+  borderTop: '1px #ccc solid',
 }
 
 const calloutKeyStyles: React.CSSProperties = {

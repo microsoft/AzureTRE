@@ -5,6 +5,7 @@ import { Workspace } from '../../models/workspace';
 import { SecuredByRole } from '../shared/SecuredByRole';
 import { ResourceDebug } from '../shared/ResourceDebug';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
+import { ResourcePropertyPanel } from '../shared/ResourcePropertyPanel';
 
 // TODO:
 // - commands for managing workspace
@@ -27,22 +28,8 @@ export const WorkspaceItem: React.FunctionComponent<WorkspaceItemProps> = (props
             'data-title': 'Overview',
           }}
         >
-          <h3>--Workspace details panel here--</h3>
 
-          <h3>Roles:</h3>
-          <ul>
-            {
-              workspaceCtx.roles &&
-              workspaceCtx.roles.map((role: string, i: number) => {
-                return (
-                  <li key={i}>{role}</li>
-                )
-              })
-            }
-          </ul>
-          <SecuredByRole allowedRoles={[WorkspaceRoleName.WorkspaceOwner]} workspaceAuth={true} element={
-            <PrimaryButton>Seen by workspace *owners* only</PrimaryButton>
-          } />
+          <ResourcePropertyPanel resource={props.workspace} />
           <ResourceDebug resource={props.workspace} />
 
         </PivotItem>
@@ -53,11 +40,6 @@ export const WorkspaceItem: React.FunctionComponent<WorkspaceItemProps> = (props
           <h3>--Operations Log here</h3>
         </PivotItem>
       </Pivot>
-
-
-
-
-
     </>
   );
 };

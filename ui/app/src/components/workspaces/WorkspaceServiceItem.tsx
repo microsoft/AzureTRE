@@ -7,6 +7,7 @@ import { UserResource } from '../../models/userResource';
 import { WorkspaceService } from '../../models/workspaceService';
 import { ResourceDebug } from '../shared/ResourceDebug';
 import { MessageBar, MessageBarType, Spinner, SpinnerSize } from '@fluentui/react';
+import { ResourcePropertyPanel } from '../shared/ResourcePropertyPanel';
 import { Resource } from '../../models/resource';
 import { ResourceCardList } from '../shared/ResourceCardList';
 
@@ -70,6 +71,7 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
       return (
         <>
           <h1>{workspaceService.properties?.display_name}</h1>
+          <ResourcePropertyPanel resource={workspaceService}/>
           <h2>User Resources:</h2>
           {
             userResources &&
