@@ -77,10 +77,12 @@ export const NotificationPanel: React.FunctionComponent = () => {
     setNotifications(updatedNotifications);
     if (completedStates.includes(n.operation.status) && !isOpen) setShowCallout(true);
 
+    // basic implementation for now, but this can be expanded to give more detailed info to subscribing components on operation changes
     opsContext.addResourceUpdate({
       resourceId: n.resource.id,
       operation: n.operation,
-      componentAction: completedStates.includes(n.operation.status) ? ComponentAction.Reload : ComponentAction.Lock
+      componentAction: completedStates.includes(n.operation.status) ? 
+        (n.operation.status === "deleted" ? ComponentAction.Remove : ComponentAction.Reload) : ComponentAction.Lock
     });    
   }
 
