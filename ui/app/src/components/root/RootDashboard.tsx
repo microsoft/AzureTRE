@@ -3,9 +3,12 @@ import { Workspace } from '../../models/workspace';
 
 import { ResourceCardList } from '../shared/ResourceCardList';
 import { Resource } from '../../models/resource';
-import { IconButton, IContextualMenuProps } from '@fluentui/react';
+import { IconButton, IContextualMenuProps, PrimaryButton, Stack } from '@fluentui/react';
 import { SecuredByRole } from '../shared/SecuredByRole';
 import { RoleName } from '../../models/roleNames';
+import { CreateUpdateResource } from '../shared/CreateUpdateResource/CreateUpdateResource';
+import { ResourceType } from '../../models/resourceType';
+import { useBoolean } from '@fluentui/react-hooks';
 
 interface RootDashboardProps {
   selectWorkspace: (workspace: Workspace) => void,
@@ -13,6 +16,8 @@ interface RootDashboardProps {
 }
 
 export const RootDashboard: React.FunctionComponent<RootDashboardProps> = (props: RootDashboardProps) => {
+
+  const [createPanelOpen, { setTrue: createNew, setFalse: closeCreatePanel }] = useBoolean(false);
 
   // context menu only seen by admins
   const menuProps: IContextualMenuProps = {
@@ -32,7 +37,11 @@ export const RootDashboard: React.FunctionComponent<RootDashboardProps> = (props
 
   return (
     <>
-      <h1>Workspaces</h1>
+      <Stack horizontal horizontalAlign="space-between" style={{ padding: 10 }}>
+        <h1>Workspaces</h1>
+        <PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new" onClick={createNew}/>
+        <CreateUpdateResource isOpen={createPanelOpen} onClose={closeCreatePanel} resourceType={ResourceType.Workspace}/>
+      </Stack>
       <ResourceCardList
         resources={props.workspaces}
         selectResource={(r: Resource) => { props.selectWorkspace(r as Workspace) }}
