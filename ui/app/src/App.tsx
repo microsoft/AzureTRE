@@ -20,7 +20,7 @@ export const App: React.FunctionComponent = () => {
   const [appRoles, setAppRoles] = useState([] as Array<string>);
   const [selectedWorkspace, setSelectedWorkspace] = useState({} as Workspace);
   const [workspaceRoles, setWorkspaceRoles] = useState([] as Array<string>);
-  const [latestOperation, setLatestOperation] = useState({} as Operation);
+  const [operations, setOperations] = useState([] as Array<Operation>);
   const [resourceUpdates, setResourceUpdates] = useState([] as Array<ResourceUpdate>);
 
   return (
@@ -29,8 +29,17 @@ export const App: React.FunctionComponent = () => {
         <Route path="*" element={
           <MsalAuthenticationTemplate interactionType={InteractionType.Redirect}>
             <NotificationsContext.Provider value={{ 
-                latestOperation: latestOperation, 
-                addOperation: (op: Operation) => {setLatestOperation(op)}, 
+                operations: operations, 
+                addOperation: (op: Operation) => {
+                  let ops = [...operations];
+                  let i = ops.findIndex((f: Operation) => f.id === op.id);
+                  if (i > 0) { 
+                    ops.splice(i, 1, op);
+                  } else {
+                    ops.push(op); 
+                  }
+                  setOperations(ops)
+                }, 
                 resourceUpdates: resourceUpdates, 
                 addResourceUpdate: (r: ResourceUpdate) => {
                   let updates = [...resourceUpdates];
