@@ -179,16 +179,14 @@ resource "azurerm_application_gateway" "agw" {
   }
 
   depends_on = [
-    azurerm_key_vault_access_policy.app_gw_managed_identity
+    azurerm_key_vault_access_policy.app_gw_managed_identity,
+    null_resource.az_login_sp,
+    null_resource.az_login_msi
   ]
 
   # Stop app gateway once provisioned to save cost until the generate custom action is invoked (which will start/stop as required)
   provisioner "local-exec" {
     command = "az network application-gateway stop -g ${data.azurerm_resource_group.rg.name} -n agw-certs-${var.tre_id}"
-    depends_on = [
-      null_resource.az_login_sp,
-      null_resource.az_login_msi
-    ]
   }
 
 }
