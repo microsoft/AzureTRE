@@ -10,15 +10,11 @@ import { RootDashboard } from './RootDashboard';
 import { LeftNav } from './LeftNav';
 import config from '../../config.json';
 import { LoadingState } from '../../models/loadingState';
-import { WorkspaceContext } from '../../contexts/WorkspaceContext';
-
-
 
 export const RootLayout: React.FunctionComponent = () => {
   const [workspaces, setWorkspaces] = useState([] as Array<Workspace>);
   const appRolesContext = useRef(useContext(AppRolesContext));
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
-  const workspaceCtx = useContext(WorkspaceContext);
   const apiCall = useAuthApiCall();
 
   useEffect(() => {
@@ -64,7 +60,6 @@ export const RootLayout: React.FunctionComponent = () => {
             <Routes>
               <Route path="/" element={
                 <RootDashboard 
-                  selectWorkspace={(w: Workspace) => workspaceCtx.setWorkspace(w)} 
                   workspaces={workspaces} 
                   updateWorkspace={(w: Workspace) => updateWorkspace(w)} 
                   removeWorkspace={(w: Workspace) => removeWorkspace(w)} />

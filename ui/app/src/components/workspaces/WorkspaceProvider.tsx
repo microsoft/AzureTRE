@@ -3,7 +3,6 @@ import React, { useContext, useEffect, useRef, useState } from 'react';
 import { Route, Routes, useParams } from 'react-router-dom';
 import { ApiEndpoint } from '../../models/apiEndpoints';
 import { UserResource } from '../../models/userResource';
-import { Workspace } from '../../models/workspace';
 import { WorkspaceService } from '../../models/workspaceService';
 import { HttpMethod, ResultType, useAuthApiCall } from '../../useAuthApiCall';
 import { UserResourceItem } from './UserResourceItem';
@@ -15,48 +14,40 @@ import config from '../../config.json';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import { WorkspaceServices } from './WorkspaceServices';
 
-interface WorkspaceProviderProps {
-  workspace?: Workspace
-}
-
-export const WorkspaceProvider: React.FunctionComponent<WorkspaceProviderProps> = (props: WorkspaceProviderProps) => {
+export const WorkspaceProvider: React.FunctionComponent = () => {
   const apiCall = useAuthApiCall();
   const [selectedWorkspaceService, setSelectedWorkspaceService] = useState({} as WorkspaceService);
   const [selectedUserResource, setSelectedUserResource] = useState({} as UserResource);
   const [workspaceServices, setWorkspaceServices] = useState([] as Array<WorkspaceService>)
-  const workspaceWriteCtx = useRef(useContext(WorkspaceContext));
-  const workspaceReadCtx = useContext(WorkspaceContext);
+  const workspaceCtx = useRef(useContext(WorkspaceContext));
   const [loadingState, setLoadingState] = useState('loading');
   const { workspaceId } = useParams();
 
+  // set workspace context from url
   useEffect(() => {
     const getWorkspace = async () => {
-      // have we been passed the workspace? use it if we have - else (it's a fresh load at this route) - load it before rendering the sub components
-      try {
-        let ws = props.workspace && props.workspace.id ?
-          props.workspace :
-          (await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get)).workspace;
+      try {      
+        // get the workspace + roles, and set the context
+        let wsRoles: Array<string> = [];
+        const ws = (await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get, undefined, undefined, ResultType.JSON, (roles: Array<string>) => {
+          config.debug && console.log(`Workspace roles for ${workspaceId}`, roles);
+          workspaceCtx.current.setRoles(roles);
+          wsRoles = roles;
+        })).workspace;
 
-        // now 'authenticate' against the workspace - just get the roles for this workspace (tokenOnly = true)
-        await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get, undefined, undefined, ResultType.None, (roles: Array<string>) => {
-          config.debug && console.log(`Workspace roles for ${ws.properties?.display_name}`, roles);
-          workspaceWriteCtx.current.setRoles(roles);
-          setLoadingState(roles && roles.length > 0 ? 'ok' : 'denied');
-        }, true);
-
-        workspaceWriteCtx.current.setWorkspace(ws);
+        workspaceCtx.current.setWorkspace(ws);
         const clientId = ws.properties.scope_id.replace("api://", ""); // need this locally as the context isn't necessarily inline
 
         // get workspace services to pass to nav + ws services page
         const workspaceServices = await apiCall(`${ApiEndpoint.Workspaces}/${ws.id}/${ApiEndpoint.WorkspaceServices}`, HttpMethod.Get, clientId);
         setWorkspaceServices(workspaceServices.workspaceServices);
-
+        setLoadingState(wsRoles && wsRoles.length > 0 ? 'ok' : 'denied');
       } catch {
         setLoadingState('error');
       }
     };
     getWorkspace();
-  }, [apiCall, props.workspace, workspaceId, workspaceReadCtx.workspaceClientId]);
+  }, [apiCall, workspaceId]);
 
   const updateWorkspaceService = (w: WorkspaceService) => {
     let i = workspaceServices.findIndex((f: WorkspaceService) => f.id === w.id);

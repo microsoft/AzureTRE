@@ -18,7 +18,7 @@ import { getActionIcon, ResourceTemplate, TemplateAction } from '../../models/re
 interface ResourceCardProps {
   resource: Resource,
   itemId: number,
-  selectResource: (resource: Resource) => void,
+  selectResource?: (resource: Resource) => void,
   onUpdate: (resource: Resource) => void,
   onDelete: (resource: Resource) => void
 }
@@ -159,7 +159,7 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
           <Stack style={cardStyles}>
             <Stack horizontal>
               <Stack.Item grow={5} style={headerStyles}>
-                <Link to={props.resource.resourcePath} onClick={() => { props.selectResource(props.resource); return false }} style={headerLinkStyles}>{props.resource.properties.display_name}</Link>
+                <Link to={props.resource.resourcePath} onClick={() => { props.selectResource && props.selectResource(props.resource); return false }} style={headerLinkStyles}>{props.resource.properties.display_name}</Link>
               </Stack.Item>
               <Stack.Item style={headerIconStyles}>
                 <Stack horizontal>
