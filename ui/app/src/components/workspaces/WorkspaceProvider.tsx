@@ -12,7 +12,7 @@ import { WorkspaceItem } from './WorkspaceItem';
 import { WorkspaceLeftNav } from './WorkspaceLeftNav';
 import { WorkspaceServiceItem } from './WorkspaceServiceItem';
 import config from '../../config.json';
-import { WorkspaceRolesContext } from './WorkspaceRolesContext';
+import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import { WorkspaceServices } from './WorkspaceServices';
 
 interface WorkspaceProviderProps {
@@ -25,7 +25,7 @@ export const WorkspaceProvider: React.FunctionComponent<WorkspaceProviderProps> 
   const [selectedWorkspaceService, setSelectedWorkspaceService] = useState({} as WorkspaceService);
   const [selectedUserResource, setSelectedUserResource] = useState({} as UserResource);
   const [workspaceServices, setWorkspaceServices] = useState([] as Array<WorkspaceService>)
-  const workspaceRoles = useRef(useContext(WorkspaceRolesContext));
+  const workspaceCtx = useRef(useContext(WorkspaceContext));
   const [loadingState, setLoadingState] = useState('loading');
   const { workspaceId } = useParams();
 
@@ -43,7 +43,8 @@ export const WorkspaceProvider: React.FunctionComponent<WorkspaceProviderProps> 
         // now 'authenticate' against the workspace - just get the roles for this workspace (tokenOnly = true)
         await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get, ws.properties.app_id, undefined, ResultType.None, (roles: Array<string>) => {
           config.debug && console.log(`Workspace roles for ${ws.properties?.display_name}`, roles);
-          workspaceRoles.current.roles = roles;
+          workspaceCtx.current.setRoles(roles);
+          workspaceCtx.current.setWorkspace(ws);
           setLoadingState(roles && roles.length > 0 ? 'ok' : 'denied');
         }, true);
 
@@ -58,6 +59,20 @@ export const WorkspaceProvider: React.FunctionComponent<WorkspaceProviderProps> 
     getWorkspace();
   }, [apiCall, props.workspace, workspaceId]);
 
+  const updateWorkspaceService = (w: WorkspaceService) => {
+    let i = workspaceServices.findIndex((f: WorkspaceService) => f.id === w.id);
+    let ws = [...workspaceServices]
+    ws.splice(i, 1, w);
+    setWorkspaceServices(ws);
+  }
+
+  const removeWorkspaceService = (w: WorkspaceService) => {
+    let i = workspaceServices.findIndex((f: WorkspaceService) => f.id === w.id);
+    let ws = [...workspaceServices];
+    ws.splice(i, 1);
+    setWorkspaceServices(ws);
+  }
+
   switch (loadingState) {
     case 'ok':
       return (
@@ -71,7 +86,13 @@ export const WorkspaceProvider: React.FunctionComponent<WorkspaceProviderProps> 
                 <Stack.Item grow={100}>
                   <Routes>
                     <Route path="/" element={<WorkspaceItem workspace={workspace} />} />
-                    <Route path="workspace-services" element={<WorkspaceServices workspace={workspace} workspaceServices={workspaceServices} setWorkspaceService={(ws: WorkspaceService) => setSelectedWorkspaceService(ws)}/>} />
+                    <Route path="workspace-services" element={
+                      <WorkspaceServices workspace={workspace} workspaceServices={workspaceServices} 
+                        setWorkspaceService={(ws: WorkspaceService) => setSelectedWorkspaceService(ws)}
+                        updateWorkspaceService={(ws: WorkspaceService) => updateWorkspaceService(ws)}
+                        removeWorkspaceService={(ws: WorkspaceService) => removeWorkspaceService(ws)}
+                      />
+                    } />
                     <Route path="workspace-services/:workspaceServiceId/*" element={<WorkspaceServiceItem workspace={workspace} workspaceService={selectedWorkspaceService} setUserResource={(userResource: UserResource) => setSelectedUserResource(userResource)} />} />
                     <Route path="workspace-services/:workspaceServiceId/user-resources/:userResourceId/*" element={<UserResourceItem workspace={workspace} userResource={selectedUserResource} />} />
                   </Routes>

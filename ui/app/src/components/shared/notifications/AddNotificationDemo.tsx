@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { Operation } from '../../../models/operation';
 import { PrimaryButton } from '@fluentui/react';
-import { NotificationsContext } from './NotificationsContext';
+import { NotificationsContext } from '../../../contexts/NotificationsContext';
 import dummyOp from './dummyOp.json';
 import dummyOpSteps from './dummyOpSteps.json';
 import { HttpMethod, ResultType, useAuthApiCall } from '../../../useAuthApiCall';

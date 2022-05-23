@@ -1,5 +1,6 @@
 export enum LoadingState {
     Ok = 'ok',
     Error = 'error',
-    Loading = 'loading'
+    Loading = 'loading',
+    AccessDenied = "access-denied"
 }
