@@ -7,5 +7,6 @@ export enum ApiEndpoint {
     WorkspaceServiceTemplates = 'workspace-service-templates',
     UserResourceTemplates = 'user-resource-templates',
     SharedServiceTemplates = 'shared-service-templates',
-    Operations = 'operations'
+    Operations = 'operations',
+    InvokeAction = 'invoke-action'
 }

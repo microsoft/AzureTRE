@@ -11,6 +11,9 @@ import { NotificationsContext } from '../../contexts/NotificationsContext';
 import { HttpMethod, useAuthApiCall } from '../../useAuthApiCall';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import { ConfirmDeleteResource } from './ConfirmDeleteResource';
+import { ApiEndpoint } from '../../models/apiEndpoints';
+import { UserResource } from '../../models/userResource';
+import { getActionIcon, ResourceTemplate, TemplateAction } from '../../models/resourceTemplate';
 
 interface ResourceCardProps {
   resource: Resource,
@@ -28,9 +31,38 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
   const [showDisable, setShowDisable] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [componentAction, setComponentAction] = useState(ComponentAction.None);
+  const [resourceTemplate, setResourceTemplate] = useState({} as ResourceTemplate);
 
   const opsReadContext = useContext(NotificationsContext);
   const opsWriteContext = useRef(useContext(NotificationsContext)); // useRef to avoid re-running a hook on context write
+
+  // get the resource template
+  useEffect(() => {
+    const getTemplate = async () => {
+      let templatesPath;
+  switch (props.resource.resourceType) {
+    case ResourceType.Workspace:
+      templatesPath = ApiEndpoint.WorkspaceTemplates; break;
+    case ResourceType.WorkspaceService:
+      templatesPath = ApiEndpoint.WorkspaceServiceTemplates; break;
+    case ResourceType.SharedService:
+      templatesPath = ApiEndpoint.SharedServiceTemplates; break;
+    case ResourceType.UserResource:
+        const ur = props.resource as UserResource;
+        const parentService = (await apiCall(
+          `${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}/${ur.parentWorkspaceServiceId}`, 
+          HttpMethod.Get, 
+          workspaceCtx.workspaceClientId))
+          .workspaceService;
+        templatesPath = `${ApiEndpoint.WorkspaceServiceTemplates}/${parentService.templateName}/${ApiEndpoint.UserResourceTemplates}`; break;
+    default:
+      throw Error('Unsupported resource type.');
+  }
+      const template = await apiCall(`${templatesPath}/${props.resource.templateName}`, HttpMethod.Get);
+      setResourceTemplate(template);
+    };
+    getTemplate();
+  }, [apiCall, props.resource, workspaceCtx.workspace.id, workspaceCtx.workspaceClientId]);
 
   // set the latest component action
   useEffect(() => {
@@ -58,6 +90,11 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
     checkForReload();
   }, [apiCall, componentAction, props, workspaceCtx.workspaceClientId]);
 
+  const doAction = async(actionName: string) => {
+    const action = await apiCall(`${props.resource.resourcePath}/${ApiEndpoint.InvokeAction}?action=${actionName}`, HttpMethod.Post, workspaceCtx.workspaceClientId);
+    action && action.operation && opsWriteContext.current.addOperation(action.operation);
+  }
+
   // context menu
   let menuItems: Array<IContextualMenuItem> = [];
   let roles: Array<string> = [];
@@ -66,8 +103,19 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
   menuItems = [
     { key: 'update', text: 'Update', iconProps: { iconName: 'WindowEdit' }, onClick: () => console.log('update') },
     { key: 'disable', text: props.resource.isEnabled ? 'Disable' : 'Enable', iconProps: { iconName: props.resource.isEnabled ? 'CirclePause' : 'PlayResume' }, onClick: () => setShowDisable(true) },
-    { key: 'delete', text: 'Delete', title: props.resource.isEnabled ? 'Must be disabled to delete' : 'Delete this resource', iconProps: { iconName: 'Delete' }, onClick: () => setShowDelete(true), disabled: props.resource.isEnabled }
+    { key: 'delete', text: 'Delete', title: props.resource.isEnabled ? 'Must be disabled to delete' : 'Delete this resource', iconProps: { iconName: 'Delete' }, onClick: () => setShowDelete(true), disabled: props.resource.isEnabled },
   ];
+
+  // add custom actions if we have any
+  if (resourceTemplate && resourceTemplate.customActions && resourceTemplate.customActions.length > 0) {
+    let customActions: Array<IContextualMenuItem> = [];
+    resourceTemplate.customActions.forEach((a: TemplateAction) => {
+      customActions.push(
+        { key: a.name, text: a.name, title: a.description, iconProps: { iconName: getActionIcon(a.name) }, className: 'tre-context-menu', onClick: () => { doAction(a.name) }}
+      );
+    });
+    menuItems.push({ key: 'custom-actions', text: 'Actions', iconProps: { iconName: 'Asterisk' }, subMenuProps: { items: customActions }} );
+  }
 
   switch (props.resource.resourceType) {
     case ResourceType.Workspace:
@@ -83,7 +131,7 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
 
   const menuProps: IContextualMenuProps = {
     shouldFocusOnMount: true,
-    items: menuItems,
+    items: menuItems
   };
 
   let connectUri = props.resource.properties && props.resource.properties.connection_uri;
@@ -132,7 +180,7 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
             {
               connectUri &&
               <Stack.Item style={connectStyles}>
-                <PrimaryButton onClick={() => window.open(connectUri)}>Connect</PrimaryButton>
+                <PrimaryButton onClick={() => window.open(connectUri)} disabled={!props.resource.isEnabled} title={!props.resource.isEnabled ? 'Enable resource to connect' : 'Connect to resource'}>Connect</PrimaryButton>
               </Stack.Item>
             }
             <Stack.Item style={footerStyles}>
@@ -242,10 +290,10 @@ const styles = mergeStyleSets({
   },
   title: {
     marginBottom: 12,
-    fontWeight: FontWeights.semilight,
+    fontWeight: FontWeights.semilight
   },
   link: {
     display: 'block',
     marginTop: 20,
-  },
+  }
 });

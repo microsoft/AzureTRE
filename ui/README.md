@@ -1,10 +1,3 @@
-# NOTE FOR OCW:
-All the config has been setup (so no manual steps are needed). Just do:
-- Open this folder (`ui`) in the devcontainer
-- `cd ./app`
-- `yarn start` 
-
-
 # TRE UI
 
 This is very much a work in progress.

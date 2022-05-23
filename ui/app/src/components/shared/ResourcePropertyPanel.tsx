@@ -23,7 +23,7 @@ const ResourcePropertyPanelItem: React.FunctionComponent<ResourcePropertyPanelIt
     }
 
     function renderValue(val: String) {
-        if (val.startsWith('https://')) {
+        if (val && val.startsWith('https://')) {
             return (<a href={val.toString()} target='_blank' rel="noreferrer">{val}</a>)
         }
         return val;
