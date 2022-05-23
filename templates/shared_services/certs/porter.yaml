@@ -52,6 +52,10 @@ install:
       input: false
       vars:
         tre_id: "{{ bundle.parameters.tre_id }}"
+        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
+        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
+        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
+        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
         domain_prefix: "{{ bundle.parameters.domain_prefix }}"
         cert_name: "{{ bundle.parameters.cert_name }}"
       backendConfig:
@@ -77,6 +81,10 @@ uninstall:
       input: false
       vars:
         tre_id: "{{ bundle.parameters.tre_id }}"
+        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
+        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
+        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
+        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
         domain_prefix: "{{ bundle.parameters.domain_prefix }}"
         cert_name: "{{ bundle.parameters.cert_name }}"
       backendConfig:
