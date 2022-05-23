@@ -1,15 +1,12 @@
 import { Pivot, PivotItem } from '@fluentui/react';
-import React from 'react';
-import { Workspace } from '../../models/workspace';
+import React, { useContext } from 'react';
+import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import { ResourceDebug } from '../shared/ResourceDebug';
 import { ResourcePropertyPanel } from '../shared/ResourcePropertyPanel';
 
-interface WorkspaceItemProps {
-  workspace: Workspace
-}
-
-export const WorkspaceItem: React.FunctionComponent<WorkspaceItemProps> = (props: WorkspaceItemProps) => {
-
+export const WorkspaceItem: React.FunctionComponent = () => {
+  const workspaceCtx = useContext(WorkspaceContext);
+  
   return (
     <>
       <Pivot aria-label="Basic Pivot Example">
@@ -21,8 +18,8 @@ export const WorkspaceItem: React.FunctionComponent<WorkspaceItemProps> = (props
           }}
         >
 
-          <ResourcePropertyPanel resource={props.workspace} />
-          <ResourceDebug resource={props.workspace} />
+          <ResourcePropertyPanel resource={workspaceCtx.workspace} />
+          <ResourceDebug resource={workspaceCtx.workspace} />
 
         </PivotItem>
         <PivotItem headerText="History">

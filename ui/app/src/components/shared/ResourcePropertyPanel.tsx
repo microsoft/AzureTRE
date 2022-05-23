@@ -58,6 +58,7 @@ export const ResourcePropertyPanel: React.FunctionComponent<ResourcePropertyPane
     }
 
     return (
+        props.resource && props.resource.id ? 
         <>
             <Stack wrap horizontal>
                 <Stack grow styles={stackStyles}>
@@ -82,6 +83,6 @@ export const ResourcePropertyPanel: React.FunctionComponent<ResourcePropertyPane
                 }
                 </Stack>
             </Stack>
-        </>
+        </> : <></>
     );
 };

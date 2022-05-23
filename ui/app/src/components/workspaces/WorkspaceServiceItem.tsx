@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { ApiEndpoint } from '../../models/apiEndpoints';
-import { Workspace } from '../../models/workspace';
 import { useAuthApiCall, HttpMethod } from '../../useAuthApiCall';
 import { UserResource } from '../../models/userResource';
 import { WorkspaceService } from '../../models/workspaceService';
@@ -11,12 +10,12 @@ import { ResourcePropertyPanel } from '../shared/ResourcePropertyPanel';
 import { Resource } from '../../models/resource';
 import { ResourceCardList } from '../shared/ResourceCardList';
 import { LoadingState } from '../../models/loadingState';
+import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 
 // TODO:
 // - separate loading placeholders for user resources instead of spinner
 
 interface WorkspaceServiceItemProps {
-  workspace: Workspace,
   workspaceService?: WorkspaceService,
   setUserResource: (userResource: UserResource) => void
 }
@@ -26,6 +25,7 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
   const [userResources, setUserResources] = useState([] as Array<UserResource>)
   const [workspaceService, setWorkspaceService] = useState({} as WorkspaceService)
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
+  const workspaceCtx = useContext(WorkspaceContext);
   const apiCall = useAuthApiCall();
 
   useEffect(() => {
@@ -35,12 +35,12 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
         if (props.workspaceService && props.workspaceService.id) {
           setWorkspaceService(props.workspaceService);
         } else {
-          let ws = await apiCall(`${ApiEndpoint.Workspaces}/${props.workspace.id}/${ApiEndpoint.WorkspaceServices}/${workspaceServiceId}`, HttpMethod.Get, props.workspace.properties.app_id);
+          let ws = await apiCall(`${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}/${workspaceServiceId}`, HttpMethod.Get, workspaceCtx.workspaceClientId);
           setWorkspaceService(ws.workspaceService);
         }
 
         // get the user resources
-        const u = await apiCall(`${ApiEndpoint.Workspaces}/${props.workspace.id}/${ApiEndpoint.WorkspaceServices}/${workspaceServiceId}/${ApiEndpoint.UserResources}`, HttpMethod.Get, props.workspace.properties.app_id)
+        const u = await apiCall(`${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}/${workspaceServiceId}/${ApiEndpoint.UserResources}`, HttpMethod.Get, workspaceCtx.workspaceClientId)
         setUserResources(u.userResources);
         setLoadingState(LoadingState.Ok);
       } catch {
@@ -48,7 +48,7 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
       }
     };
     getData();
-  }, [apiCall, props.workspace.id, props.workspace.properties.app_id, props.workspaceService, workspaceServiceId]);
+  }, [apiCall, props.workspaceService, workspaceCtx.workspace.id, workspaceCtx.workspaceClientId, workspaceServiceId]);
 
   const updateUserResource = (u: UserResource) => {
     let ur = [...userResources];

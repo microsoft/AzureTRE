@@ -1,18 +1,15 @@
 import { getTheme, mergeStyles, Stack } from '@fluentui/react';
-import React, {  } from 'react';
-import { Workspace } from '../../models/workspace';
+import React, { useContext } from 'react';
+import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 
-interface WorkspaceItemProps {
-  workspace: Workspace
-}
-
-export const WorkspaceHeader: React.FunctionComponent<WorkspaceItemProps> = (props:WorkspaceItemProps) => {
-
+export const WorkspaceHeader: React.FunctionComponent = () => {
+  const workspaceCtx = useContext(WorkspaceContext);
+  
   return (
     <>
       <Stack className={contentClass}>
         <Stack.Item className='tre-workspace-header'>
-        <h1>{props.workspace.properties.display_name}</h1>
+        <h1>{workspaceCtx.workspace?.properties?.display_name}</h1>
         </Stack.Item>
       </Stack>
     </>

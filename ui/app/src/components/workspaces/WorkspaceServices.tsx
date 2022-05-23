@@ -1,15 +1,14 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Resource } from '../../models/resource';
-import { Workspace } from '../../models/workspace';
 import { WorkspaceService } from '../../models/workspaceService';
 import { ResourceCardList } from '../shared/ResourceCardList';
 import { useBoolean } from '@fluentui/react-hooks';
 import { PrimaryButton, Stack } from '@fluentui/react';
 import { CreateUpdateResource } from '../shared/CreateUpdateResource/CreateUpdateResource';
 import { ResourceType } from '../../models/resourceType';
+import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 
 interface WorkspaceServicesProps {
-  workspace: Workspace,
   workspaceServices: Array<WorkspaceService>,
   setWorkspaceService: (workspaceService: WorkspaceService) => void,
   updateWorkspaceService: (workspaceService: WorkspaceService) => void,
@@ -17,7 +16,7 @@ interface WorkspaceServicesProps {
 }
 
 export const WorkspaceServices: React.FunctionComponent<WorkspaceServicesProps> = (props: WorkspaceServicesProps) => {
-
+  const workspaceCtx = useContext(WorkspaceContext);
   const [createPanelOpen, { setTrue: createNew, setFalse: closeCreatePanel }] = useBoolean(false);
 
   return (
@@ -29,7 +28,7 @@ export const WorkspaceServices: React.FunctionComponent<WorkspaceServicesProps> 
           isOpen={createPanelOpen}
           onClose={closeCreatePanel}
           resourceType={ResourceType.WorkspaceService}
-          parentResource={props.workspace}
+          parentResource={workspaceCtx.workspace}
         />
       </Stack>
       <ResourceCardList

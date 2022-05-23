@@ -41,11 +41,12 @@ export const NotificationPanel: React.FunctionComponent = () => {
       let workspaceList = (await apiCall(ApiEndpoint.Workspaces, HttpMethod.Get)).workspaces as Array<Resource>;
       workspaceList && workspaceList.length > 0 && await loadOpsFromResourceList(workspaceList);
       workspaceList.forEach(async (w: Resource) => {
-        let workspaceServicesList = (await apiCall(`${w.resourcePath}/${ApiEndpoint.WorkspaceServices}`, HttpMethod.Get, w.properties.app_id)).workspaceServices as Array<Resource>;
-        if (workspaceServicesList && workspaceServicesList.length > 0) await loadOpsFromResourceList(workspaceServicesList, w.properties.app_id);
+        let appId = w.properties.scope_id.replace("api://", "");
+        let workspaceServicesList = (await apiCall(`${w.resourcePath}/${ApiEndpoint.WorkspaceServices}`, HttpMethod.Get, appId)).workspaceServices as Array<Resource>;
+        if (workspaceServicesList && workspaceServicesList.length > 0) await loadOpsFromResourceList(workspaceServicesList, appId);
         workspaceServicesList.forEach(async (ws: Resource) => {
-          let userResourcesList = (await apiCall(`${ws.resourcePath}/${ApiEndpoint.UserResources}`, HttpMethod.Get, w.properties.app_id)).userResources as Array<Resource>;
-          if (userResourcesList && userResourcesList.length > 0) await loadOpsFromResourceList(userResourcesList, w.properties.app_id);
+          let userResourcesList = (await apiCall(`${ws.resourcePath}/${ApiEndpoint.UserResources}`, HttpMethod.Get, appId)).userResources as Array<Resource>;
+          if (userResourcesList && userResourcesList.length > 0) await loadOpsFromResourceList(userResourcesList, appId);
         });
       });
     };
@@ -72,7 +73,7 @@ export const NotificationPanel: React.FunctionComponent = () => {
         }
 
         if (!isWs) {
-          let r = await apiCall(op.resourcePath, HttpMethod.Get, workspaceAuth ? ws.properties.app_id : null);
+          let r = await apiCall(op.resourcePath, HttpMethod.Get, workspaceAuth ? ws.properties.scope_id.replace("api://", "") : null);
           resource = getResourceFromResult(r);
         }
       }

@@ -21,11 +21,11 @@ interface WorkspaceProviderProps {
 
 export const WorkspaceProvider: React.FunctionComponent<WorkspaceProviderProps> = (props: WorkspaceProviderProps) => {
   const apiCall = useAuthApiCall();
-  const [workspace, setWorkspace] = useState({} as Workspace);
   const [selectedWorkspaceService, setSelectedWorkspaceService] = useState({} as WorkspaceService);
   const [selectedUserResource, setSelectedUserResource] = useState({} as UserResource);
   const [workspaceServices, setWorkspaceServices] = useState([] as Array<WorkspaceService>)
-  const workspaceCtx = useRef(useContext(WorkspaceContext));
+  const workspaceWriteCtx = useRef(useContext(WorkspaceContext));
+  const workspaceReadCtx = useContext(WorkspaceContext);
   const [loadingState, setLoadingState] = useState('loading');
   const { workspaceId } = useParams();
 
@@ -37,19 +37,18 @@ export const WorkspaceProvider: React.FunctionComponent<WorkspaceProviderProps> 
           props.workspace :
           (await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get)).workspace;
 
-        // set the workspace, which is passed to all child components
-        setWorkspace(ws);
-
         // now 'authenticate' against the workspace - just get the roles for this workspace (tokenOnly = true)
-        await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get, ws.properties.app_id, undefined, ResultType.None, (roles: Array<string>) => {
+        await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get, undefined, undefined, ResultType.None, (roles: Array<string>) => {
           config.debug && console.log(`Workspace roles for ${ws.properties?.display_name}`, roles);
-          workspaceCtx.current.setRoles(roles);
-          workspaceCtx.current.setWorkspace(ws);
+          workspaceWriteCtx.current.setRoles(roles);
           setLoadingState(roles && roles.length > 0 ? 'ok' : 'denied');
         }, true);
 
+        workspaceWriteCtx.current.setWorkspace(ws);
+        const clientId = ws.properties.scope_id.replace("api://", ""); // need this locally as the context isn't necessarily inline
+
         // get workspace services to pass to nav + ws services page
-        const workspaceServices = await apiCall(`${ApiEndpoint.Workspaces}/${ws.id}/${ApiEndpoint.WorkspaceServices}`, HttpMethod.Get, ws.properties.app_id);
+        const workspaceServices = await apiCall(`${ApiEndpoint.Workspaces}/${ws.id}/${ApiEndpoint.WorkspaceServices}`, HttpMethod.Get, clientId);
         setWorkspaceServices(workspaceServices.workspaceServices);
 
       } catch {
@@ -57,7 +56,7 @@ export const WorkspaceProvider: React.FunctionComponent<WorkspaceProviderProps> 
       }
     };
     getWorkspace();
-  }, [apiCall, props.workspace, workspaceId]);
+  }, [apiCall, props.workspace, workspaceId, workspaceReadCtx.workspaceClientId]);
 
   const updateWorkspaceService = (w: WorkspaceService) => {
     let i = workspaceServices.findIndex((f: WorkspaceService) => f.id === w.id);
@@ -77,24 +76,24 @@ export const WorkspaceProvider: React.FunctionComponent<WorkspaceProviderProps> 
     case 'ok':
       return (
         <>
-          <WorkspaceHeader workspace={workspace} />
+          <WorkspaceHeader />
           <Stack horizontal className='tre-body-inner'>
             <Stack.Item className='tre-left-nav'>
-              <WorkspaceLeftNav workspace={workspace} workspaceServices={workspaceServices} setWorkspaceService={(ws: WorkspaceService) => setSelectedWorkspaceService(ws)} />
+              <WorkspaceLeftNav workspaceServices={workspaceServices} setWorkspaceService={(ws: WorkspaceService) => setSelectedWorkspaceService(ws)} />
             </Stack.Item><Stack.Item className='tre-body-content'>
               <Stack>
                 <Stack.Item grow={100}>
                   <Routes>
-                    <Route path="/" element={<WorkspaceItem workspace={workspace} />} />
+                    <Route path="/" element={<WorkspaceItem />} />
                     <Route path="workspace-services" element={
-                      <WorkspaceServices workspace={workspace} workspaceServices={workspaceServices} 
+                      <WorkspaceServices workspaceServices={workspaceServices} 
                         setWorkspaceService={(ws: WorkspaceService) => setSelectedWorkspaceService(ws)}
                         updateWorkspaceService={(ws: WorkspaceService) => updateWorkspaceService(ws)}
                         removeWorkspaceService={(ws: WorkspaceService) => removeWorkspaceService(ws)}
                       />
                     } />
-                    <Route path="workspace-services/:workspaceServiceId/*" element={<WorkspaceServiceItem workspace={workspace} workspaceService={selectedWorkspaceService} setUserResource={(userResource: UserResource) => setSelectedUserResource(userResource)} />} />
-                    <Route path="workspace-services/:workspaceServiceId/user-resources/:userResourceId/*" element={<UserResourceItem workspace={workspace} userResource={selectedUserResource} />} />
+                    <Route path="workspace-services/:workspaceServiceId/*" element={<WorkspaceServiceItem workspaceService={selectedWorkspaceService} setUserResource={(userResource: UserResource) => setSelectedUserResource(userResource)} />} />
+                    <Route path="workspace-services/:workspaceServiceId/user-resources/:userResourceId/*" element={<UserResourceItem userResource={selectedUserResource} />} />
                   </Routes>
                 </Stack.Item>
               </Stack>
