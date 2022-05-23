@@ -5,5 +5,5 @@
     "treUrl": "https://ocwtre32.northeurope.cloudapp.azure.com/api",
     "pollingDelayMilliseconds": 10000,
     "loadAllOpsOnStart": true,
-    "debug": false
+    "debug": true
 }
