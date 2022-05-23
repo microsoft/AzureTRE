@@ -11,7 +11,9 @@ import { ResourceType } from '../../models/resourceType';
 interface WorkspaceServicesProps {
   workspace: Workspace,
   workspaceServices: Array<WorkspaceService>,
-  setWorkspaceService: (workspaceService: WorkspaceService) => void
+  setWorkspaceService: (workspaceService: WorkspaceService) => void,
+  updateWorkspaceService: (workspaceService: WorkspaceService) => void,
+  removeWorkspaceService: (workspaceService: WorkspaceService) => void
 }
 
 export const WorkspaceServices: React.FunctionComponent<WorkspaceServicesProps> = (props: WorkspaceServicesProps) => {
@@ -33,6 +35,8 @@ export const WorkspaceServices: React.FunctionComponent<WorkspaceServicesProps> 
       <ResourceCardList
         resources={props.workspaceServices}
         selectResource={(r: Resource) => props.setWorkspaceService(r as WorkspaceService)}
+        updateResource={(r: Resource) => props.updateWorkspaceService(r as WorkspaceService)}
+        removeResource={(r: Resource) => props.removeWorkspaceService(r as WorkspaceService)}
         emptyText="This workspace has no workspace services." />
     </>
   );

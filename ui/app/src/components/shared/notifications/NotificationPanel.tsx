@@ -1,22 +1,57 @@
 import { Callout, DirectionalHint, FontWeights, Link, mergeStyleSets, MessageBar, MessageBarType, Panel, Shimmer, ShimmerElementType, Text } from '@fluentui/react';
-import React, { useContext, useEffect, useState } from 'react';
-import { completedStates, Operation } from '../../../models/operation';
-import { NotificationsContext } from './NotificationsContext';
+import React, { useContext, useEffect, useRef, useState } from 'react';
+import { completedStates, inProgressStates, Operation } from '../../../models/operation';
+import { NotificationsContext } from '../../../contexts/NotificationsContext';
 import { NotificationItem } from './NotificationItem';
 import { IconButton } from '@fluentui/react/lib/Button';
 import { HttpMethod, useAuthApiCall } from '../../../useAuthApiCall';
 import { ApiEndpoint } from '../../../models/apiEndpoints';
 import { NotificationPoller } from './NotificationPoller';
 import { TRENotification } from '../../../models/treNotification';
+import { ComponentAction, getResourceFromResult, Resource } from '../../../models/resource';
+import config from '../../../config.json';
 
 export const NotificationPanel: React.FunctionComponent = () => {
   const opsContext = useContext(NotificationsContext);
+  const opsWriteContext = useRef(useContext(NotificationsContext));
   const [isOpen, setIsOpen] = useState(false);
   const [showCallout, setShowCallout] = useState(false);
   const [loadingNotification, setLoadingNotification] = useState(false);
-  const [notifications, setNotifications] = useState([] as Array<TRENotification>)
+  const [notifications, setNotifications] = useState([] as Array<TRENotification>);
   const apiCall = useAuthApiCall();
 
+  // NOTE: this first useEffect() hook will walk the tree of the TRE and add any running notifications to the panel on page load. 
+  // It's very inefficient, and in future should be replaced by a single call to a new API Endpoint.
+  // For now, it's behind a feature flag. To turn off, see the config.json - loadAllOpsOnStart
+  useEffect(() => {
+    const loadOpsFromResourceList = async (resources: Array<Resource>, clientId?: string) => {
+      resources.forEach(async (r: Resource) => {
+        const result = await apiCall(`${r.resourcePath}/${ApiEndpoint.Operations}`, HttpMethod.Get, clientId);
+        if (result && result.operations) {
+          result.operations.forEach((o: Operation) => {
+            if (inProgressStates.includes(o.status)) opsWriteContext.current.addOperation(o);
+          });
+        }
+      });
+    };
+
+    const loadAllOps = async () => {
+      console.warn("LOADING ALL OPERATIONS...");
+      // get workspaces
+      let workspaceList = (await apiCall(ApiEndpoint.Workspaces, HttpMethod.Get)).workspaces as Array<Resource>;
+      workspaceList && workspaceList.length > 0 && await loadOpsFromResourceList(workspaceList);
+      workspaceList.forEach(async (w: Resource) => {
+        let workspaceServicesList = (await apiCall(`${w.resourcePath}/${ApiEndpoint.WorkspaceServices}`, HttpMethod.Get, w.properties.app_id)).workspaceServices as Array<Resource>;
+        if (workspaceServicesList && workspaceServicesList.length > 0) await loadOpsFromResourceList(workspaceServicesList, w.properties.app_id);
+        workspaceServicesList.forEach(async (ws: Resource) => {
+          let userResourcesList = (await apiCall(`${ws.resourcePath}/${ApiEndpoint.UserResources}`, HttpMethod.Get, w.properties.app_id)).userResources as Array<Resource>;
+          if (userResourcesList && userResourcesList.length > 0) await loadOpsFromResourceList(userResourcesList, w.properties.app_id);
+        });
+      });
+    };
+
+    config.loadAllOpsOnStart && loadAllOps();
+  }, [apiCall])
 
   useEffect(() => {
     const setupNotification = async (op: Operation) => {
@@ -38,29 +73,35 @@ export const NotificationPanel: React.FunctionComponent = () => {
 
         if (!isWs) {
           let r = await apiCall(op.resourcePath, HttpMethod.Get, workspaceAuth ? ws.properties.app_id : null);
-          if (r['userResource']) resource = r.userResource;
-          if (r['workspaceService']) resource = r.workspaceService;
-          if (r['sharedService']) resource = r.sharedService;
+          resource = getResourceFromResult(r);
         }
       }
 
       return { operation: op, resource: resource, workspace: ws };
     }
 
-    const addOp = async () => {
-      setIsOpen(true);
-      setLoadingNotification(true);
-      let currentNotifications = [...notifications];
-      let n = await setupNotification(opsContext.latestOperation);
-      currentNotifications.splice(0, 0, n); // push the new notification to the beginning of the array
-      setNotifications(currentNotifications);
-      setLoadingNotification(false);
+    const syncOpsWithContext = async () => {
+      opsContext.operations.forEach(async (ctxOp: Operation) => {
+        if (notifications.findIndex((n: TRENotification) => ctxOp.id === n.operation.id) === -1) {
+          setLoadingNotification(true);
+          let currentNotifications = [...notifications];
+          const n = await setupNotification(ctxOp);
+          currentNotifications.splice(0, 0, n); // push the new notification to the beginning of the array
+          setNotifications(currentNotifications);
+          setLoadingNotification(false);
+          opsContext.addResourceUpdate({
+            resourceId: n.resource.id,
+            operation: n.operation,
+            componentAction: ComponentAction.Lock
+          });
+        }
+      })
     };
 
-    if (opsContext.latestOperation && opsContext.latestOperation.id) addOp();
+    syncOpsWithContext();
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apiCall, opsContext.latestOperation]); // the linter wants to include notifications in the deps, but we are choosing _not_ to re-trigger this hook on state change
+  }, [apiCall, opsContext, opsContext.operations]); // the linter wants to include notifications in the deps, but we are choosing _not_ to re-trigger this hook on state change
 
   const updateNotification = (n: TRENotification) => {
     // splice the updated notification into the array
@@ -71,6 +112,15 @@ export const NotificationPanel: React.FunctionComponent = () => {
     updatedNotifications.splice(i, 1, n);
     setNotifications(updatedNotifications);
     if (completedStates.includes(n.operation.status) && !isOpen) setShowCallout(true);
+
+    // basic implementation for now, but this can be expanded to give more detailed info to subscribing components on operation changes
+    opsContext.addResourceUpdate({
+      resourceId: n.resource.id,
+      operation: n.operation,
+      componentAction: completedStates.includes(n.operation.status) ?
+        (n.operation.status === "deleted" ? ComponentAction.Remove : ComponentAction.Reload) 
+        : ComponentAction.Lock
+    });
   }
 
   const dismissCompleted = () => {
@@ -134,7 +184,7 @@ export const NotificationPanel: React.FunctionComponent = () => {
           <Text block variant="xLarge" id={'labelId'}>
             Resource operation completed
           </Text>
-          <br/>
+          <br />
           <Text block variant="medium" id={'descriptionId'}>
             See notifications panel for detail
           </Text>
@@ -171,11 +221,11 @@ export const NotificationPanel: React.FunctionComponent = () => {
           </div>
         }
         <ul className="tre-notifications-list">
-        {
+          {
             loadingNotification &&
             <li>
               <Shimmer shimmerElements={[{ type: ShimmerElementType.gap, width: '100%' },]} />
-              <Shimmer width="50%"/>
+              <Shimmer width="50%" />
               <Shimmer shimmerElements={[{ type: ShimmerElementType.gap, width: '100%' },]} />
               <Shimmer />
               <Shimmer shimmerElements={[{ type: ShimmerElementType.gap, width: '100%' },]} />
