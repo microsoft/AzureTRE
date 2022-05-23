@@ -30,15 +30,17 @@ export const App: React.FunctionComponent = () => {
           <MsalAuthenticationTemplate interactionType={InteractionType.Redirect}>
             <NotificationsContext.Provider value={{
               operations: operations,
-              addOperation: (op: Operation) => {
-                let ops = [...operations];
-                let i = ops.findIndex((f: Operation) => f.id === op.id);
-                if (i > 0) {
-                  ops.splice(i, 1, op);
-                } else {
-                  ops.push(op);
-                }
-                setOperations(ops)
+              addOperations: (ops: Array<Operation>) => {
+                let stateOps = [...operations];
+                ops.forEach((op: Operation) => {
+                  let i = stateOps.findIndex((f: Operation) => f.id === op.id);
+                  if (i > 0) {
+                    stateOps.splice(i, 1, op);
+                  } else {
+                    stateOps.push(op);
+                  }
+                });                
+                setOperations(stateOps);
               },
               resourceUpdates: resourceUpdates,
               addResourceUpdate: (r: ResourceUpdate) => {

@@ -24,31 +24,41 @@ export const NotificationPanel: React.FunctionComponent = () => {
   // It's very inefficient, and in future should be replaced by a single call to a new API Endpoint.
   // For now, it's behind a feature flag. To turn off, see the config.json - loadAllOpsOnStart
   useEffect(() => {
-    const loadOpsFromResourceList = async (resources: Array<Resource>, clientId?: string) => {
+    const getOpsFromResourceList = async (resources: Array<Resource>, clientId?: string) => {
+
+      let opsToAdd: Array<Operation> = [];
+      const tasks: Array<any> = [];
+
       resources.forEach(async (r: Resource) => {
-        const result = await apiCall(`${r.resourcePath}/${ApiEndpoint.Operations}`, HttpMethod.Get, clientId);
-        if (result && result.operations) {
-          result.operations.forEach((o: Operation) => {
-            if (inProgressStates.includes(o.status)) opsWriteContext.current.addOperation(o);
+        tasks.push(apiCall(`${r.resourcePath}/${ApiEndpoint.Operations}`, HttpMethod.Get, clientId));
+      });
+      const results = await Promise.all(tasks);
+      results.forEach((r: any) => {
+        if (r && r.operations) {
+          r.operations.forEach((o: Operation) => {
+            if (inProgressStates.includes(o.status)) { opsToAdd.push(o) }
           });
         }
       });
+      return opsToAdd;
     };
 
     const loadAllOps = async () => {
       console.warn("LOADING ALL OPERATIONS...");
+      let opsToAdd: Array<Operation> = [];
       // get workspaces
       let workspaceList = (await apiCall(ApiEndpoint.Workspaces, HttpMethod.Get)).workspaces as Array<Resource>;
-      workspaceList && workspaceList.length > 0 && await loadOpsFromResourceList(workspaceList);
+      workspaceList && workspaceList.length > 0 && (opsToAdd = opsToAdd.concat(await getOpsFromResourceList(workspaceList)));
       workspaceList.forEach(async (w: Resource) => {
         let appId = w.properties.scope_id.replace("api://", "");
         let workspaceServicesList = (await apiCall(`${w.resourcePath}/${ApiEndpoint.WorkspaceServices}`, HttpMethod.Get, appId)).workspaceServices as Array<Resource>;
-        if (workspaceServicesList && workspaceServicesList.length > 0) await loadOpsFromResourceList(workspaceServicesList, appId);
+        if (workspaceServicesList && workspaceServicesList.length > 0) (opsToAdd = opsToAdd.concat(await getOpsFromResourceList(workspaceServicesList, appId)));
         workspaceServicesList.forEach(async (ws: Resource) => {
           let userResourcesList = (await apiCall(`${ws.resourcePath}/${ApiEndpoint.UserResources}`, HttpMethod.Get, appId)).userResources as Array<Resource>;
-          if (userResourcesList && userResourcesList.length > 0) await loadOpsFromResourceList(userResourcesList, appId);
+          if (userResourcesList && userResourcesList.length > 0) (opsToAdd = opsToAdd.concat(await getOpsFromResourceList(userResourcesList, appId)));
         });
       });
+      opsWriteContext.current.addOperations(opsToAdd);
     };
 
     config.loadAllOpsOnStart && loadAllOps();
@@ -96,7 +106,7 @@ export const NotificationPanel: React.FunctionComponent = () => {
             componentAction: ComponentAction.Lock
           });
         }
-      })
+      });
     };
 
     syncOpsWithContext();

@@ -92,7 +92,7 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
 
   const doAction = async(actionName: string) => {
     const action = await apiCall(`${props.resource.resourcePath}/${ApiEndpoint.InvokeAction}?action=${actionName}`, HttpMethod.Post, workspaceCtx.workspaceClientId);
-    action && action.operation && opsWriteContext.current.addOperation(action.operation);
+    action && action.operation && opsWriteContext.current.addOperations([action.operation]);
   }
 
   // context menu
