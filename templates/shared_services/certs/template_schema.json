@@ -4,7 +4,10 @@
   "type": "object",
   "title": "Certs Service",
   "description": "Provides SSL Certs for a specified internal domain",
-  "required": [],
+  "required": [
+    "domain_prefix",
+    "cert_name"
+  ],
   "properties": {
     "domain_prefix": {
       "$id": "#/properties/domain_prefix",
