@@ -37,6 +37,11 @@ class WorkspaceRepository(ResourceRepository):
     def active_workspaces_query_string():
         return f'SELECT * FROM c WHERE c.resourceType = "{ResourceType.Workspace}" AND {IS_ACTIVE_CLAUSE}'
 
+    def get_workspaces(self) -> List[Workspace]:
+        query = WorkspaceRepository.workspaces_query_string()
+        workspaces = self.query(query=query)
+        return parse_obj_as(List[Workspace], workspaces)
+
     def get_active_workspaces(self) -> List[Workspace]:
         query = WorkspaceRepository.active_workspaces_query_string()
         workspaces = self.query(query=query)
@@ -107,11 +112,11 @@ class WorkspaceRepository(ResourceRepository):
         if (address_space is None):
             raise InvalidInput("Missing 'address_space' from properties.")
 
-        allocated_networks = [x.properties["address_space"] for x in self.get_active_workspaces()]
+        allocated_networks = [x.properties["address_space"] for x in self.get_workspaces()]
         return is_network_available(allocated_networks, address_space)
 
     def get_new_address_space(self, cidr_netmask: int = 24):
-        networks = [x.properties["address_space"] for x in self.get_active_workspaces()]
+        networks = [x.properties["address_space"] for x in self.get_workspaces()]
 
         new_address_space = generate_new_cidr(networks, cidr_netmask)
         return new_address_space
