@@ -49,8 +49,8 @@ export const ConfirmDisableEnableResource: React.FunctionComponent<ConfirmDisabl
     props.onDismiss();
   }
 
-  return (<>
-
+  return (
+  <>
     <Dialog
       hidden={false}
       onDismiss={() => props.onDismiss()}

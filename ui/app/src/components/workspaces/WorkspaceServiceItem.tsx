@@ -10,6 +10,7 @@ import { MessageBar, MessageBarType, Spinner, SpinnerSize } from '@fluentui/reac
 import { ResourcePropertyPanel } from '../shared/ResourcePropertyPanel';
 import { Resource } from '../../models/resource';
 import { ResourceCardList } from '../shared/ResourceCardList';
+import { LoadingState } from '../../models/loadingState';
 
 // TODO:
 // - separate loading placeholders for user resources instead of spinner
@@ -24,7 +25,7 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
   const { workspaceServiceId } = useParams();
   const [userResources, setUserResources] = useState([] as Array<UserResource>)
   const [workspaceService, setWorkspaceService] = useState({} as WorkspaceService)
-  const [loadingState, setLoadingState] = useState('loading');
+  const [loadingState, setLoadingState] = useState(LoadingState.Loading);
   const apiCall = useAuthApiCall();
 
   useEffect(() => {
@@ -41,9 +42,9 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
         // get the user resources
         const u = await apiCall(`${ApiEndpoint.Workspaces}/${props.workspace.id}/${ApiEndpoint.WorkspaceServices}/${workspaceServiceId}/${ApiEndpoint.UserResources}`, HttpMethod.Get, props.workspace.properties.app_id)
         setUserResources(u.userResources);
-        setLoadingState('ok');
+        setLoadingState(LoadingState.Ok);
       } catch {
-        setLoadingState('error');
+        setLoadingState(LoadingState.Error);
       }
     };
     getData();
@@ -59,15 +60,12 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
   const removeUserResource = (u: UserResource) => {
     let ur = [...userResources];
     let i = ur.findIndex((f: UserResource) => f.id === u.id);
-   
-    console.log(ur[i]);
     ur.splice(i, 1);
-    console.log(ur);
     setUserResources(ur);
   }
 
   switch (loadingState) {
-    case 'ok':
+    case LoadingState.Ok:
       return (
         <>
           <h1>{workspaceService.properties?.display_name}</h1>
@@ -85,7 +83,7 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
           <ResourceDebug resource={workspaceService} />
         </>
       );
-    case 'error':
+    case LoadingState.Error:
       return (
         <MessageBar
           messageBarType={MessageBarType.error}

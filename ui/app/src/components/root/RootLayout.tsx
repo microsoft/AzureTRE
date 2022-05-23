@@ -9,6 +9,7 @@ import { AppRolesContext } from '../../contexts/AppRolesContext';
 import { RootDashboard } from './RootDashboard';
 import { LeftNav } from './LeftNav';
 import config from '../../config.json';
+import { LoadingState } from '../../models/loadingState';
 
 interface RootLayoutProps {
   selectWorkspace: (workspace: Workspace) => void
@@ -17,7 +18,7 @@ interface RootLayoutProps {
 export const RootLayout: React.FunctionComponent<RootLayoutProps> = (props: RootLayoutProps) => {
   const [workspaces, setWorkspaces] = useState([] as Array<Workspace>);
   const appRolesContext = useRef(useContext(AppRolesContext));
-  const [loadingState, setLoadingState] = useState('loading');
+  const [loadingState, setLoadingState] = useState(LoadingState.Loading);
   const apiCall = useAuthApiCall();
 
   useEffect(() => {
@@ -26,12 +27,12 @@ export const RootLayout: React.FunctionComponent<RootLayoutProps> = (props: Root
         const r = await apiCall(ApiEndpoint.Workspaces, HttpMethod.Get, undefined, undefined, ResultType.JSON, (roles: Array<string>) => {
           config.debug && console.log("Root Roles", roles);
           appRolesContext.current.setAppRoles(roles);
-          setLoadingState(roles && roles.length > 0 ? 'ok' : 'denied');
+          setLoadingState(roles && roles.length > 0 ? LoadingState.Ok : LoadingState.AccessDenied);
         });
 
         r && r.workspaces && setWorkspaces(r.workspaces);
       } catch {
-        setLoadingState('error');
+        setLoadingState(LoadingState.Error);
       }
 
     };
@@ -54,20 +55,26 @@ export const RootLayout: React.FunctionComponent<RootLayoutProps> = (props: Root
 
   switch (loadingState) {
 
-    case 'ok':
+    case LoadingState.Ok:
       return (
         <Stack horizontal className='tre-body-inner'>
           <Stack.Item className='tre-left-nav'>
             <LeftNav />
           </Stack.Item><Stack.Item className='tre-body-content'>
             <Routes>
-              <Route path="/" element={<RootDashboard selectWorkspace={props.selectWorkspace} workspaces={workspaces} updateWorkspace={(w: Workspace) => updateWorkspace(w)} removeWorkspace={(w: Workspace) => removeWorkspace(w)} />} />
+              <Route path="/" element={
+                <RootDashboard 
+                  selectWorkspace={props.selectWorkspace} 
+                  workspaces={workspaces} 
+                  updateWorkspace={(w: Workspace) => updateWorkspace(w)} 
+                  removeWorkspace={(w: Workspace) => removeWorkspace(w)} />
+                } />
               <Route path="/admin" element={<Admin />} />
             </Routes>
           </Stack.Item>
         </Stack>
       );
-    case 'denied':
+    case LoadingState.AccessDenied:
       return (
         <MessageBar
           messageBarType={MessageBarType.warning}
@@ -79,7 +86,7 @@ export const RootLayout: React.FunctionComponent<RootLayoutProps> = (props: Root
             If you have recently been given access, you may need to clear you browser local storage and refresh.</p>
         </MessageBar>
       );
-    case 'error':
+    case LoadingState.Error:
       return (
         <MessageBar
           messageBarType={MessageBarType.error}

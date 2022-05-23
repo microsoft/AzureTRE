@@ -83,10 +83,9 @@ export const NotificationPanel: React.FunctionComponent = () => {
     const syncOpsWithContext = async () => {
       opsContext.operations.forEach(async (ctxOp: Operation) => {
         if (notifications.findIndex((n: TRENotification) => ctxOp.id === n.operation.id) === -1) {
-          //setIsOpen(true); // <-- uncomment here to open the panel when a new notification is posted
           setLoadingNotification(true);
           let currentNotifications = [...notifications];
-          let n = await setupNotification(ctxOp);
+          const n = await setupNotification(ctxOp);
           currentNotifications.splice(0, 0, n); // push the new notification to the beginning of the array
           setNotifications(currentNotifications);
           setLoadingNotification(false);
@@ -119,7 +118,8 @@ export const NotificationPanel: React.FunctionComponent = () => {
       resourceId: n.resource.id,
       operation: n.operation,
       componentAction: completedStates.includes(n.operation.status) ?
-        (n.operation.status === "deleted" ? ComponentAction.Remove : ComponentAction.Reload) : ComponentAction.Lock
+        (n.operation.status === "deleted" ? ComponentAction.Remove : ComponentAction.Reload) 
+        : ComponentAction.Lock
     });
   }
 

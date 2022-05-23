@@ -59,11 +59,11 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
   }, [apiCall, componentAction, props, workspaceCtx.workspaceClientId]);
 
   // context menu
-  let i: Array<IContextualMenuItem> = [];
+  let menuItems: Array<IContextualMenuItem> = [];
   let roles: Array<string> = [];
   let wsAuth = false;
 
-  i = [
+  menuItems = [
     { key: 'update', text: 'Update', iconProps: { iconName: 'WindowEdit' }, onClick: () => console.log('update') },
     { key: 'disable', text: props.resource.isEnabled ? 'Disable' : 'Enable', iconProps: { iconName: props.resource.isEnabled ? 'CirclePause' : 'PlayResume' }, onClick: () => setShowDisable(true) },
     { key: 'delete', text: 'Delete', title: props.resource.isEnabled ? 'Must be disabled to delete' : 'Delete this resource', iconProps: { iconName: 'Delete' }, onClick: () => setShowDelete(true), disabled: props.resource.isEnabled }
@@ -83,7 +83,7 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
 
   const menuProps: IContextualMenuProps = {
     shouldFocusOnMount: true,
-    items: i,
+    items: menuItems,
   };
 
   let connectUri = props.resource.properties && props.resource.properties.connection_uri;
