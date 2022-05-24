@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { DetailsList, DetailsListLayoutMode, IColumn, Text } from "@fluentui/react";
+import { DetailsList, DetailsListLayoutMode, initializeIcons, IColumn, Text } from "@fluentui/react";
+import { Icon } from '@fluentui/react/lib/Icon';
 import { CheckboxVisibility } from "@fluentui/react/lib/DetailsList";
 import { HistoryItem } from '../../models/resource';
 import { ResourcePropertyPanelItem } from './ResourcePropertyPanel';
@@ -11,9 +12,18 @@ interface IResourceHistoryProps {
 
 export const ResourceHistory: React.FunctionComponent<IResourceHistoryProps> = (props: IResourceHistoryProps) => {
 
+  initializeIcons()
+
+  const DisabledIcon = () => <Icon iconName="CirclePauseSolid" />;
+  const EnabledIcon = () => <Icon iconName="CompletedSolid" />;
+
   function userFriendlyKey(key: string){
     let friendlyKey = key.replaceAll('_', ' ');
     return friendlyKey.charAt(0).toUpperCase() + friendlyKey.slice(1).toLowerCase();
+  }
+
+  function sortHistoryDescending(items: HistoryItem[]){
+    return items.sort((a, b) => b.resourceVersion - a.resourceVersion);
   }
 
   const columns: IColumn[] = [
@@ -37,8 +47,8 @@ export const ResourceHistory: React.FunctionComponent<IResourceHistoryProps> = (
       key: 'column2',
       name: 'Name',
       fieldName: 'name',
-      minWidth: 100,
-      maxWidth: 150,
+      minWidth: 150,
+      maxWidth: 200,
       isResizable: true,
       isMultiline: true,
       data: 'number',
@@ -77,10 +87,11 @@ export const ResourceHistory: React.FunctionComponent<IResourceHistoryProps> = (
       key: 'column5',
       name: 'Date Modified',
       fieldName: 'updatedWhen',
-      minWidth: 70,
-      maxWidth: 90,
+      minWidth: 90,
+      maxWidth: 100,
       isResizable: true,
-      data: 'number',
+      isMultiline: true,
+      data: 'string',
       onRender: (item: HistoryItem) => {
         return <Text>{moment.unix(item.updatedWhen).toDate().toUTCString()}</Text>;
       },
@@ -90,13 +101,13 @@ export const ResourceHistory: React.FunctionComponent<IResourceHistoryProps> = (
       key: 'column6',
       name: 'Enabled',
       fieldName: 'isEnabled',
-      minWidth: 30,
-      maxWidth: 35,
+      minWidth: 20,
+      maxWidth: 25,
       isResizable: true,
       isCollapsible: true,
       data: 'boolean',
       onRender: (item: HistoryItem) => {
-        return <Text>{item.isEnabled.toString()}</Text>;
+        return item.isEnabled ? EnabledIcon() : DisabledIcon();
       },
       isPadded: true,
     }
@@ -104,7 +115,7 @@ export const ResourceHistory: React.FunctionComponent<IResourceHistoryProps> = (
 
   return (
     <DetailsList
-      items={props.history}
+      items={sortHistoryDescending(props.history)}
       checkboxVisibility={CheckboxVisibility.hidden}
       columns={columns}
       setKey="none"
