@@ -37,7 +37,7 @@
         "stepId": "6d2d7eb7-984e-4330-bd3c-c7ec98658402",
         "stepTitle": "Update the firewall the first time",
         "resourceTemplateName": "tre-shared-service-firewall",
-        "resourceType": "shared_service",
+        "resourceType": "shared-service",
         "resourceAction": "upgrade",
         "properties": [
         {
@@ -53,7 +53,7 @@
         "stepId": "2fe8a6a7-2c27-4c49-8773-127df8a48b4e",
         "stepTitle": "Update the firewall the second time",
         "resourceTemplateName": "tre-shared-service-firewall",
-        "resourceType": "shared_service",
+        "resourceType": "shared-service",
         "resourceAction": "upgrade",
         "properties": [
         {

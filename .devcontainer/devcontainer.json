@@ -25,11 +25,11 @@
   ],
   "remoteUser": "vscode",
   "containerEnv": {
-    "DOCKER_BUILDKIT": "1",
+    "DOCKER_BUILDKIT": "1"
   },
   "remoteEnv": {
     // this is used for SuperLinter
-    "LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}",
+    "LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}"
   },
   // Set *default* container specific settings.json values on container create.
   "settings": {
@@ -191,7 +191,7 @@
           },
           "command": "pytest",
           "args": [
-            "--ignore=e2e_tests",
+            "--ignore=e2e_tests"
           ]
         },
         {
@@ -205,7 +205,7 @@
             "-m",
             "pytest",
             "-m",
-            "smoke",
+            "smoke"
           ]
         }
       ]
@@ -223,6 +223,7 @@
     "mikestead.dotenv",
     "humao.rest-client",
     "timonwong.shellcheck",
+    "ms-azuretools.vscode-bicep"
   ],
   "forwardPorts": [
     8000

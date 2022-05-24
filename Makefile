@@ -319,6 +319,11 @@ shared_service_bundle = $(MAKE) bundle-build DIR=./templates/shared_services/$(1
 	&& $(MAKE) bundle-publish DIR=./templates/shared_services/$(1)/ \
 	&& $(MAKE) bundle-register DIR="./templates/shared_services/$(1)" BUNDLE_TYPE=shared_service
 
+user_resource_bundle = $(MAKE) bundle-build DIR=./templates/workspace_services/$(1)/user_resources/$(2)/ \
+	&& $(MAKE) bundle-publish DIR=./templates/workspace_services/$(1)/user_resources/$(2) \
+	&& $(MAKE) bundle-register DIR="./templates/workspace_services/$(1)/user_resources/$(2)" BUNDLE_TYPE=user_resource WORKSPACE_SERVICE_NAME=tre-service-$(1)
+
+
 deploy-shared-service:
 	@# NOTE: ACR_NAME below comes from the env files, so needs the double '$$'. Others are set on command execution and don't
 	$(call target_title, "Deploying ${DIR} shared service") \
@@ -352,7 +357,8 @@ prepare-for-e2e:
 	&& $(call workspace_service_bundle,gitea) \
 	&& $(call workspace_service_bundle,innereye) \
 	&& $(call shared_service_bundle,sonatype-nexus) \
-	&& $(call shared_service_bundle,gitea)
+	&& $(call shared_service_bundle,gitea) \
+	&& $(call user_resource_bundle,guacamole,guacamole-dev-vm)
 
 test-e2e-smoke:
 	$(call target_title, "Running E2E smoke tests") && \
