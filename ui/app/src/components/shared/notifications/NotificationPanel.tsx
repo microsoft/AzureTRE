@@ -46,18 +46,19 @@ export const NotificationPanel: React.FunctionComponent = () => {
     const loadAllOps = async () => {
       console.warn("LOADING ALL OPERATIONS...");
       let opsToAdd: Array<Operation> = [];
-      // get workspaces
       let workspaceList = (await apiCall(ApiEndpoint.Workspaces, HttpMethod.Get)).workspaces as Array<Resource>;
       workspaceList && workspaceList.length > 0 && (opsToAdd = opsToAdd.concat(await getOpsFromResourceList(workspaceList)));
-      workspaceList.forEach(async (w: Resource) => {
+      for (let i=0;i<workspaceList.length;i++){
+        let w = workspaceList[i];
         let appId = w.properties.scope_id.replace("api://", "");
         let workspaceServicesList = (await apiCall(`${w.resourcePath}/${ApiEndpoint.WorkspaceServices}`, HttpMethod.Get, appId)).workspaceServices as Array<Resource>;
         if (workspaceServicesList && workspaceServicesList.length > 0) (opsToAdd = opsToAdd.concat(await getOpsFromResourceList(workspaceServicesList, appId)));
-        workspaceServicesList.forEach(async (ws: Resource) => {
+        for(let n=0;n<workspaceServicesList.length;n++){
+          let ws = workspaceServicesList[n];
           let userResourcesList = (await apiCall(`${ws.resourcePath}/${ApiEndpoint.UserResources}`, HttpMethod.Get, appId)).userResources as Array<Resource>;
           if (userResourcesList && userResourcesList.length > 0) (opsToAdd = opsToAdd.concat(await getOpsFromResourceList(userResourcesList, appId)));
-        });
-      });
+        }
+      }
       opsWriteContext.current.addOperations(opsToAdd);
     };
 

@@ -13,6 +13,7 @@ import { WorkspaceServiceItem } from './WorkspaceServiceItem';
 import config from '../../config.json';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import { WorkspaceServices } from './WorkspaceServices';
+import { Workspace } from '../../models/workspace';
 
 export const WorkspaceProvider: React.FunctionComponent = () => {
   const apiCall = useAuthApiCall();
@@ -27,16 +28,18 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
   useEffect(() => {
     const getWorkspace = async () => {
       try {      
-        // get the workspace + roles, and set the context
+        // get the workspace
+        const ws = (await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get)).workspace;
+        workspaceCtx.current.setWorkspace(ws);
+        const clientId = ws.properties.scope_id.replace("api://", "");
+
+        // use the client ID to get a token against the workspace (tokenOnly), and set the workspace roles in the context
         let wsRoles: Array<string> = [];
-        const ws = (await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get, undefined, undefined, ResultType.JSON, (roles: Array<string>) => {
+        await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get, clientId, undefined, ResultType.JSON, (roles: Array<string>) => {
           config.debug && console.log(`Workspace roles for ${workspaceId}`, roles);
           workspaceCtx.current.setRoles(roles);
           wsRoles = roles;
-        })).workspace;
-
-        workspaceCtx.current.setWorkspace(ws);
-        const clientId = ws.properties.scope_id.replace("api://", ""); // need this locally as the context isn't necessarily inline
+        }, true);
 
         // get workspace services to pass to nav + ws services page
         const workspaceServices = await apiCall(`${ApiEndpoint.Workspaces}/${ws.id}/${ApiEndpoint.WorkspaceServices}`, HttpMethod.Get, clientId);
@@ -47,6 +50,14 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
       }
     };
     getWorkspace();
+
+    let ctx = workspaceCtx.current;
+
+    // run this on onmount - to clear the context
+    return (() => {
+      ctx.setRoles([]);
+      ctx.setWorkspace({} as Workspace);
+    });
   }, [apiCall, workspaceId]);
 
   const updateWorkspaceService = (w: WorkspaceService) => {
