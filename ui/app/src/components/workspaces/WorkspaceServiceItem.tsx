@@ -5,12 +5,15 @@ import { useAuthApiCall, HttpMethod } from '../../useAuthApiCall';
 import { UserResource } from '../../models/userResource';
 import { WorkspaceService } from '../../models/workspaceService';
 import { ResourceDebug } from '../shared/ResourceDebug';
-import { MessageBar, MessageBarType, Spinner, SpinnerSize } from '@fluentui/react';
+import { MessageBar, MessageBarType, PrimaryButton, Spinner, SpinnerSize, Stack } from '@fluentui/react';
 import { ResourcePropertyPanel } from '../shared/ResourcePropertyPanel';
 import { Resource } from '../../models/resource';
 import { ResourceCardList } from '../shared/ResourceCardList';
 import { LoadingState } from '../../models/loadingState';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
+import { CreateUpdateResource } from '../shared/CreateUpdateResource/CreateUpdateResource';
+import { ResourceType } from '../../models/resourceType';
+import { useBoolean } from '@fluentui/react-hooks';
 
 // TODO:
 // - separate loading placeholders for user resources instead of spinner
@@ -21,6 +24,7 @@ interface WorkspaceServiceItemProps {
 }
 
 export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemProps> = (props: WorkspaceServiceItemProps) => {
+  const [createPanelOpen, { setTrue: createNew, setFalse: closeCreatePanel }] = useBoolean(false);
   const { workspaceServiceId } = useParams();
   const [userResources, setUserResources] = useState([] as Array<UserResource>)
   const [workspaceService, setWorkspaceService] = useState({} as WorkspaceService)
@@ -50,6 +54,12 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
     getData();
   }, [apiCall, props.workspaceService, workspaceCtx.workspace.id, workspaceCtx.workspaceClientId, workspaceServiceId]);
 
+  const addUserResource = (u: UserResource) => {
+    let ur = [...userResources];
+    ur.push(u);
+    setUserResources(ur);
+  }
+
   const updateUserResource = (u: UserResource) => {
     let ur = [...userResources];
     let i = ur.findIndex((f: UserResource) => f.id === u.id);
@@ -69,8 +79,19 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
       return (
         <>
           <h1>{workspaceService.properties?.display_name}</h1>
-          <ResourcePropertyPanel resource={workspaceService}/>
-          <h2>User Resources:</h2>
+          <ResourcePropertyPanel resource={workspaceService} />
+          <hr/>
+          <Stack horizontal horizontalAlign="space-between" style={{ padding: 10 }}>
+            <h1>User Resources</h1>
+            <PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new" onClick={createNew} disabled={!props.workspaceService?.isEnabled} title={!props.workspaceService?.isEnabled ? 'Service must be enabled first': 'Create a User Resource'} />
+            <CreateUpdateResource
+              isOpen={createPanelOpen}
+              onClose={closeCreatePanel}
+              resourceType={ResourceType.UserResource}
+              parentResource={props.workspaceService}
+              onAddResource={(r: Resource) => addUserResource(r as UserResource)}
+            />
+          </Stack>
           {
             userResources &&
             <ResourceCardList

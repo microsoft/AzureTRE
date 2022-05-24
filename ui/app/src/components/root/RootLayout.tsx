@@ -10,6 +10,8 @@ import { RootDashboard } from './RootDashboard';
 import { LeftNav } from './LeftNav';
 import config from '../../config.json';
 import { LoadingState } from '../../models/loadingState';
+import { SharedServices } from '../shared/SharedServices';
+import { SharedServiceItem } from '../shared/SharedServiceItem';
 
 export const RootLayout: React.FunctionComponent = () => {
   const [workspaces, setWorkspaces] = useState([] as Array<Workspace>);
@@ -35,6 +37,12 @@ export const RootLayout: React.FunctionComponent = () => {
     getWorkspaces();
   }, [apiCall]);
 
+  const addWorkspace = (w: Workspace) => {
+    let ws = [...workspaces]
+    ws.push(w);
+    setWorkspaces(ws);
+  }
+
   const updateWorkspace = (w: Workspace) => {
     let i = workspaces.findIndex((f: Workspace) => f.id === w.id);
     let ws = [...workspaces]
@@ -59,12 +67,19 @@ export const RootLayout: React.FunctionComponent = () => {
           </Stack.Item><Stack.Item className='tre-body-content'>
             <Routes>
               <Route path="/" element={
-                <RootDashboard 
-                  workspaces={workspaces} 
-                  updateWorkspace={(w: Workspace) => updateWorkspace(w)} 
+                <RootDashboard
+                  workspaces={workspaces}
+                  addWorkspace={(w: Workspace) => addWorkspace(w)}
+                  updateWorkspace={(w: Workspace) => updateWorkspace(w)}
                   removeWorkspace={(w: Workspace) => removeWorkspace(w)} />
-                } />
+              } />
               <Route path="/admin" element={<Admin />} />
+              <Route path="/shared-services/*" element={
+                <Routes>
+                  <Route path="/" element={<SharedServices />} />
+                  <Route path=":sharedServiceId" element={<SharedServiceItem />} />
+                </Routes>
+              } />
             </Routes>
           </Stack.Item>
         </Stack>

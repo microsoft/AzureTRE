@@ -9,12 +9,16 @@ import { WorkspaceService } from '../../../models/workspaceService';
 import { NotificationsContext } from '../../../contexts/NotificationsContext';
 import { ResourceForm } from './ResourceForm';
 import { SelectTemplate } from './SelectTemplate';
+import { getResourceFromResult, Resource } from '../../../models/resource';
+import { HttpMethod, useAuthApiCall } from '../../../useAuthApiCall';
+import { WorkspaceContext } from '../../../contexts/WorkspaceContext';
 
 interface CreateUpdateResourceProps {
   isOpen: boolean,
   onClose: () => void,
   resourceType: ResourceType,
-  parentResource?: Workspace | WorkspaceService
+  parentResource?: Workspace | WorkspaceService,
+  onAddResource?: (r: Resource) => void
 }
 
 interface PageTitle {
@@ -37,7 +41,9 @@ export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceP
   const [selectedTemplate, setTemplate] = useState('');
   const [deployOperation, setDeployOperation] = useState({} as Operation);
   const opsContext = useContext(NotificationsContext);
+  const workspaceCtx = useContext(WorkspaceContext);
   const navigate = useNavigate();
+  const apiCall = useAuthApiCall();
 
   useEffect(() => {
     const clearState = () => {
@@ -89,7 +95,7 @@ export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceP
       if (!props.parentResource) {
         throw Error('A parentResource must be passed as prop if creating a workspace-service or user-resource');
       }
-      resourcePath = `${props.parentResource.resourcePath}/${props.resourceType}`;
+      resourcePath = `${props.parentResource.resourcePath}/${props.resourceType}s`;
   }
 
   const selectTemplate = (templateName: string) => {
@@ -97,20 +103,26 @@ export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceP
     setPage('resourceForm');
   }
 
-  const resourceCreating = (operation: Operation) => {
+  const resourceCreating = async (operation: Operation) => {
     setDeployOperation(operation);
     setPage('creating');
     // Add deployment operation to notifications operation poller
     opsContext.addOperations([operation]);
+
+    // if an onAdd callback has been given, get the resource we just created and pass it back
+    if (props.onAddResource) {
+      let resource = getResourceFromResult(await apiCall(operation.resourcePath, HttpMethod.Get, workspaceCtx.workspaceClientId));
+      props.onAddResource(resource);
+    }
   }
 
   // Render the current panel sub-page
   let currentPage;
-  switch(page) {
+  switch (page) {
     case 'selectTemplate':
-      currentPage = <SelectTemplate templatesPath={templatesPath} onSelectTemplate={selectTemplate}/>; break;
+      currentPage = <SelectTemplate templatesPath={templatesPath} onSelectTemplate={selectTemplate} />; break;
     case 'resourceForm':
-      currentPage = <ResourceForm 
+      currentPage = <ResourceForm
         templateName={selectedTemplate}
         templatePath={`${templatesPath}/${selectedTemplate}`}
         resourcePath={resourcePath}
@@ -121,7 +133,7 @@ export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceP
         <Icon iconName="CloudAdd" className={creatingIconClass} />
         <h1>Creating {props.resourceType}...</h1>
         <p>Check the notifications panel for deployment progress.</p>
-        <PrimaryButton text="Go to resource" onClick={() => navigate(deployOperation.resourcePath)}/>
+        <PrimaryButton text="Go to resource" onClick={() => navigate(deployOperation.resourcePath)} />
       </div>; break;
   }
 
@@ -134,7 +146,7 @@ export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceP
         type={PanelType.medium}
         closeButtonAriaLabel="Close"
       >
-        { currentPage }
+        {currentPage}
       </Panel>
     </>
   );

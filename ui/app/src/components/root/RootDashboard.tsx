@@ -12,7 +12,8 @@ interface RootDashboardProps {
   selectWorkspace?: (workspace: Workspace) => void,
   workspaces: Array<Workspace>,
   updateWorkspace: (w: Workspace) => void,
-  removeWorkspace: (w: Workspace) => void
+  removeWorkspace: (w: Workspace) => void,
+  addWorkspace: (w: Workspace) => void
 }
 
 export const RootDashboard: React.FunctionComponent<RootDashboardProps> = (props: RootDashboardProps) => {
@@ -24,7 +25,12 @@ export const RootDashboard: React.FunctionComponent<RootDashboardProps> = (props
         <Stack.Item><h1>Workspaces</h1></Stack.Item>
         <Stack.Item style={{width:200, textAlign: 'right'}}><PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new" onClick={createNew}/></Stack.Item>
         
-        <CreateUpdateResource isOpen={createPanelOpen} onClose={closeCreatePanel} resourceType={ResourceType.Workspace}/>
+        <CreateUpdateResource 
+          isOpen={createPanelOpen} 
+          onClose={closeCreatePanel} 
+          resourceType={ResourceType.Workspace}
+          onAddResource={(r: Resource) => props.addWorkspace(r as Workspace)}
+        />
       </Stack>
       <ResourceCardList
         resources={props.workspaces}
