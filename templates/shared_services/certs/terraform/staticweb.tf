@@ -7,7 +7,6 @@ resource "azurerm_storage_account" "staticweb" {
   account_tier              = "Standard"
   account_replication_type  = "LRS"
   enable_https_traffic_only = true
-  allow_blob_public_access  = true
 
   tags = {
     tre_id = var.tre_id
