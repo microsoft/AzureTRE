@@ -12,7 +12,7 @@ interface ResourcePropertyPanelItemProps {
     val: String
 }
 
-const ResourcePropertyPanelItem: React.FunctionComponent<ResourcePropertyPanelItemProps> = (props: ResourcePropertyPanelItemProps) => {
+export const ResourcePropertyPanelItem: React.FunctionComponent<ResourcePropertyPanelItemProps> = (props: ResourcePropertyPanelItemProps) => {
     
     const stackItemStyles: IStackItemStyles = {
         root: {

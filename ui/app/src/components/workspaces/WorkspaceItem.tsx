@@ -2,6 +2,7 @@ import { Pivot, PivotItem } from '@fluentui/react';
 import React, { useContext } from 'react';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import { ResourceDebug } from '../shared/ResourceDebug';
+import { ResourceHistory } from '../shared/ResourceHistory';
 import { ResourcePropertyPanel } from '../shared/ResourcePropertyPanel';
 
 export const WorkspaceItem: React.FunctionComponent = () => {
@@ -23,7 +24,7 @@ export const WorkspaceItem: React.FunctionComponent = () => {
 
         </PivotItem>
         <PivotItem headerText="History">
-          <h3>--History goes here--</h3>
+          <ResourceHistory history={props.workspace.history} />
         </PivotItem>
         <PivotItem headerText="Operations">
           <h3>--Operations Log here</h3>

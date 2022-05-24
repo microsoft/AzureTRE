@@ -18,7 +18,7 @@ export interface Resource {
     properties: any
 }
 
-interface HistoryItem {
+export interface HistoryItem {
     isEnabled: boolean,
     resourceVersion: number,
     updatedWhen: number,
