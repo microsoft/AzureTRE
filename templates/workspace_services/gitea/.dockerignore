@@ -4,3 +4,6 @@
 Dockerfile.tmpl
 terraform/deploy.sh
 terraform/destroy.sh
+
+# Local .terraform directories
+**/.terraform/*
