@@ -2,6 +2,7 @@ resource "azurerm_network_interface" "jumpbox_nic" {
   name                = "nic-vm-${var.tre_id}"
   resource_group_name = azurerm_resource_group.core.name
   location            = azurerm_resource_group.core.location
+  tags                = local.tre_core_tags
 
   ip_configuration {
     name                          = "internalIPConfig"
@@ -43,6 +44,8 @@ resource "azurerm_windows_virtual_machine" "jumpbox" {
   admin_username             = random_string.username.result
   admin_password             = random_password.password.result
 
+
+
   custom_data = base64encode(data.template_file.vm_config.rendered)
 
   source_image_reference {
@@ -61,9 +64,7 @@ resource "azurerm_windows_virtual_machine" "jumpbox" {
     type = "SystemAssigned"
   }
 
-  tags = {
-    environment = "staging"
-  }
+  tags = local.tre_core_tags
 }
 
 resource "azurerm_key_vault_secret" "jumpbox_credentials" {

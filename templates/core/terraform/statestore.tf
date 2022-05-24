@@ -6,6 +6,7 @@ resource "azurerm_cosmosdb_account" "tre-db-account" {
   kind                      = "GlobalDocumentDB"
   enable_automatic_failover = false
   ip_range_filter           = var.enable_local_debugging ? local.myip : null
+  tags                      = local.tre_core_tags
 
   consistency_policy {
     consistency_level       = "BoundedStaleness"
@@ -18,7 +19,7 @@ resource "azurerm_cosmosdb_account" "tre-db-account" {
     failover_priority = 0
   }
 
-  lifecycle { ignore_changes = [tags] }
+  #lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_cosmosdb_sql_database" "tre-db" {
@@ -39,8 +40,8 @@ resource "azurerm_management_lock" "tre-db" {
 resource "azurerm_private_dns_zone" "cosmos" {
   name                = "privatelink.documents.azure.com"
   resource_group_name = azurerm_resource_group.core.name
-
-  lifecycle { ignore_changes = [tags] }
+  tags                = local.tre_core_tags
+  #lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "cosmos_documents_dns_link" {
@@ -48,8 +49,8 @@ resource "azurerm_private_dns_zone_virtual_network_link" "cosmos_documents_dns_l
   resource_group_name   = azurerm_resource_group.core.name
   private_dns_zone_name = azurerm_private_dns_zone.cosmos.name
   virtual_network_id    = module.network.core_vnet_id
-
-  lifecycle { ignore_changes = [tags] }
+  tags                  = local.tre_core_tags
+  #lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_endpoint" "sspe" {
@@ -57,8 +58,8 @@ resource "azurerm_private_endpoint" "sspe" {
   location            = azurerm_resource_group.core.location
   resource_group_name = azurerm_resource_group.core.name
   subnet_id           = module.network.shared_subnet_id
-
-  lifecycle { ignore_changes = [tags] }
+  tags                = local.tre_core_tags
+  #lifecycle { ignore_changes = [tags] }
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group"

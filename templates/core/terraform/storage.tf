@@ -4,8 +4,8 @@ resource "azurerm_storage_account" "stg" {
   location                 = azurerm_resource_group.core.location
   account_tier             = "Standard"
   account_replication_type = "LRS"
-
-  lifecycle { ignore_changes = [tags] }
+  tags                     = local.tre_core_tags
+  #lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_storage_share" "storage_state_path" {
@@ -28,8 +28,8 @@ resource "azurerm_private_endpoint" "blobpe" {
   location            = azurerm_resource_group.core.location
   resource_group_name = azurerm_resource_group.core.name
   subnet_id           = module.network.shared_subnet_id
-
-  lifecycle { ignore_changes = [tags] }
+  tags                = local.tre_core_tags
+  #lifecycle { ignore_changes = [tags] }
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group-blobcore"

@@ -4,8 +4,9 @@ resource "azurerm_public_ip" "bastion" {
   location            = azurerm_resource_group.core.location
   allocation_method   = "Static"
   sku                 = "Standard"
+  tags                = local.tre_core_tags
 
-  lifecycle { ignore_changes = [tags] }
+  #lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_bastion_host" "bastion" {
@@ -19,6 +20,8 @@ resource "azurerm_bastion_host" "bastion" {
     public_ip_address_id = azurerm_public_ip.bastion.id
   }
 
-  lifecycle { ignore_changes = [tags] }
+  tags = local.tre_core_tags
+
+  #lifecycle { ignore_changes = [tags] }
 }
 

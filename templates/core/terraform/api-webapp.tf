@@ -12,8 +12,8 @@ resource "azurerm_app_service_plan" "core" {
   location            = azurerm_resource_group.core.location
   reserved            = true
   kind                = "linux"
-
-  lifecycle { ignore_changes = [tags] }
+  tags                = local.tre_core_tags
+  #lifecycle { ignore_changes = [tags] }
 
   sku {
     tier     = var.api_app_service_plan_sku_tier
@@ -29,6 +29,7 @@ resource "azurerm_app_service" "api" {
   app_service_plan_id             = azurerm_app_service_plan.core.id
   https_only                      = true
   key_vault_reference_identity_id = azurerm_user_assigned_identity.id.id
+  tags                            = local.tre_core_tags
 
   app_settings = {
     "APPLICATIONINSIGHTS_CONNECTION_STRING"      = module.azure_monitor.app_insights_connection_string
@@ -61,7 +62,7 @@ resource "azurerm_app_service" "api" {
     identity_ids = [azurerm_user_assigned_identity.id.id]
   }
 
-  lifecycle { ignore_changes = [tags] }
+  #lifecycle { ignore_changes = [tags] }
 
   site_config {
     linux_fx_version                     = "DOCKER|${var.docker_registry_server}/${var.api_image_repository}:${local.version}"
@@ -107,8 +108,9 @@ resource "azurerm_private_endpoint" "api_private_endpoint" {
   resource_group_name = azurerm_resource_group.core.name
   location            = azurerm_resource_group.core.location
   subnet_id           = module.network.shared_subnet_id
+  tags                = local.tre_core_tags
 
-  lifecycle { ignore_changes = [tags] }
+  #lifecycle { ignore_changes = [tags] }
 
   private_service_connection {
     private_connection_resource_id = azurerm_app_service.api.id

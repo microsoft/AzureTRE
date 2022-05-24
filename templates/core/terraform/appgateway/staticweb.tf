@@ -40,8 +40,9 @@ resource "azurerm_private_endpoint" "webpe" {
   location            = var.location
   resource_group_name = var.resource_group_name
   subnet_id           = var.shared_subnet
+  tags                = local.tre_core_tags
 
-  lifecycle { ignore_changes = [tags] }
+  #lifecycle { ignore_changes = [tags] }
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group-web"
