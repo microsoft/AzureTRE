@@ -118,7 +118,6 @@ export const ResourceHistory: React.FunctionComponent<IResourceHistoryProps> = (
       items={sortHistoryDescending(props.history)}
       checkboxVisibility={CheckboxVisibility.hidden}
       columns={columns}
-      setKey="none"
       layoutMode={DetailsListLayoutMode.justified}
       isHeaderVisible={true}            
     />

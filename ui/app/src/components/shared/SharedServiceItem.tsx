@@ -7,6 +7,7 @@ import { MessageBar, MessageBarType, Pivot, PivotItem, Spinner, SpinnerSize } fr
 import { ResourcePropertyPanel } from '../shared/ResourcePropertyPanel';
 import { LoadingState } from '../../models/loadingState';
 import { SharedService } from '../../models/sharedService';
+import { ResourceHistory } from './ResourceHistory';
 
 export const SharedServiceItem: React.FunctionComponent = () => {
   const { sharedServiceId } = useParams();
@@ -40,7 +41,7 @@ export const SharedServiceItem: React.FunctionComponent = () => {
               <ResourceDebug resource={sharedService} />
             </PivotItem>
             <PivotItem headerText="History">
-              <h3>--History goes here--</h3>
+              <ResourceHistory history={sharedService.history} />
             </PivotItem>
             <PivotItem headerText="Operations">
               <h3>--Operations Log here</h3>

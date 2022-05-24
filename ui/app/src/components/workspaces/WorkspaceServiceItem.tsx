@@ -5,7 +5,7 @@ import { useAuthApiCall, HttpMethod } from '../../useAuthApiCall';
 import { UserResource } from '../../models/userResource';
 import { WorkspaceService } from '../../models/workspaceService';
 import { ResourceDebug } from '../shared/ResourceDebug';
-import { MessageBar, MessageBarType, PrimaryButton, Spinner, SpinnerSize, Stack } from '@fluentui/react';
+import { MessageBar, MessageBarType, Pivot, PivotItem, PrimaryButton, Spinner, SpinnerSize, Stack } from '@fluentui/react';
 import { ResourcePropertyPanel } from '../shared/ResourcePropertyPanel';
 import { Resource } from '../../models/resource';
 import { ResourceCardList } from '../shared/ResourceCardList';
@@ -14,6 +14,7 @@ import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import { CreateUpdateResource } from '../shared/CreateUpdateResource/CreateUpdateResource';
 import { ResourceType } from '../../models/resourceType';
 import { useBoolean } from '@fluentui/react-hooks';
+import { ResourceHistory } from '../shared/ResourceHistory';
 
 // TODO:
 // - separate loading placeholders for user resources instead of spinner
@@ -79,29 +80,45 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
       return (
         <>
           <h1>{workspaceService.properties?.display_name}</h1>
-          <ResourcePropertyPanel resource={workspaceService} />
-          <hr/>
-          <Stack horizontal horizontalAlign="space-between" style={{ padding: 10 }}>
-            <h1>User Resources</h1>
-            <PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new" onClick={createNew} disabled={!props.workspaceService?.isEnabled} title={!props.workspaceService?.isEnabled ? 'Service must be enabled first': 'Create a User Resource'} />
-            <CreateUpdateResource
-              isOpen={createPanelOpen}
-              onClose={closeCreatePanel}
-              resourceType={ResourceType.UserResource}
-              parentResource={props.workspaceService}
-              onAddResource={(r: Resource) => addUserResource(r as UserResource)}
-            />
-          </Stack>
-          {
-            userResources &&
-            <ResourceCardList
-              resources={userResources}
-              selectResource={(r: Resource) => props.setUserResource(r as UserResource)}
-              updateResource={(r: Resource) => updateUserResource(r as UserResource)}
-              removeResource={(r: Resource) => removeUserResource(r as UserResource)}
-              emptyText="This workspace service contains no user resources." />
-          }
-          <ResourceDebug resource={workspaceService} />
+          <Pivot aria-label="User Resource Menu">
+            <PivotItem
+              headerText="Overview"
+              headerButtonProps={{
+                'data-order': 1,
+                'data-title': 'Overview',
+              }}
+            >
+              <ResourcePropertyPanel resource={workspaceService} />
+              <hr />
+              <Stack horizontal horizontalAlign="space-between" style={{ padding: 10 }}>
+                <h1>User Resources</h1>
+                <PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new" onClick={createNew} disabled={!props.workspaceService?.isEnabled} title={!props.workspaceService?.isEnabled ? 'Service must be enabled first' : 'Create a User Resource'} />
+                <CreateUpdateResource
+                  isOpen={createPanelOpen}
+                  onClose={closeCreatePanel}
+                  resourceType={ResourceType.UserResource}
+                  parentResource={props.workspaceService}
+                  onAddResource={(r: Resource) => addUserResource(r as UserResource)}
+                />
+              </Stack>
+              {
+                userResources &&
+                <ResourceCardList
+                  resources={userResources}
+                  selectResource={(r: Resource) => props.setUserResource(r as UserResource)}
+                  updateResource={(r: Resource) => updateUserResource(r as UserResource)}
+                  removeResource={(r: Resource) => removeUserResource(r as UserResource)}
+                  emptyText="This workspace service contains no user resources." />
+              }
+              <ResourceDebug resource={workspaceService} />
+            </PivotItem>
+            <PivotItem headerText="History">
+              <ResourceHistory history={workspaceService.history} />
+            </PivotItem>
+            <PivotItem headerText="Operations">
+              <h3>--Operations Log here</h3>
+            </PivotItem>
+          </Pivot>
         </>
       );
     case LoadingState.Error:

@@ -6,6 +6,8 @@ import { UserResource } from '../../models/userResource';
 import { ResourceDebug } from '../shared/ResourceDebug';
 import { ResourcePropertyPanel } from '../shared/ResourcePropertyPanel';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
+import { Pivot, PivotItem } from '@fluentui/react';
+import { ResourceHistory } from '../shared/ResourceHistory';
 
 // TODO:
 // - This 'page' might die in place of a card on the Workspace services page - leave it alone for now
@@ -36,10 +38,28 @@ export const UserResourceItem: React.FunctionComponent<UserResourceItemProps> = 
   return (
     <>
       <h1>User Resource: {userResource.properties?.display_name}</h1>
-      { userResource && userResource.id &&
-        <ResourcePropertyPanel resource={userResource}/>
+      {userResource && userResource.id &&
+        <Pivot aria-label="User Resource Menu">
+          <PivotItem
+            headerText="Overview"
+            headerButtonProps={{
+              'data-order': 1,
+              'data-title': 'Overview',
+            }}
+          >
+            <ResourcePropertyPanel resource={userResource} />
+            <ResourceDebug resource={userResource} />
+          </PivotItem>
+          <PivotItem headerText="History">
+            <ResourceHistory history={userResource.history} />
+          </PivotItem>
+          <PivotItem headerText="Operations">
+            <h3>--Operations Log here</h3>
+          </PivotItem>
+        </Pivot>
       }
-      <ResourceDebug resource={userResource} />
+
+
     </>
   );
 };
