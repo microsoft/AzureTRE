@@ -1,19 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Nav, INavLinkGroup } from '@fluentui/react/lib/Nav';
 import { useNavigate } from 'react-router-dom';
-import { Workspace } from '../../models/workspace';
 import { ApiEndpoint } from '../../models/apiEndpoints';
 import { WorkspaceService } from '../../models/workspaceService';
 import { CreateUpdateResource } from '../shared/CreateUpdateResource/CreateUpdateResource';
 import { ResourceType } from '../../models/resourceType';
 import { useBoolean } from '@fluentui/react-hooks';
+import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 
 // TODO:
 // - we lose the selected styling when navigating into a user resource. This may not matter as the user resource page might die away.
 // - loading placeholders / error content(?)
 
 interface WorkspaceLeftNavProps {
-  workspace: Workspace,
   workspaceServices: Array<WorkspaceService>,
   setWorkspaceService: (workspaceService: WorkspaceService) => void
 }
@@ -23,7 +22,8 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
   const emptyLinks: INavLinkGroup[] = [{links:[]}];
   const [serviceLinks, setServiceLinks] = useState(emptyLinks);
   const [createPanelOpen, { setTrue: createNew, setFalse: closeCreatePanel }] = useBoolean(false);
- 
+  const workspaceCtx = useContext(WorkspaceContext);
+  
   useEffect(() => {
     const getWorkspaceServices = async () => {
       // get the workspace services
@@ -51,7 +51,7 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
             {
               name: 'Overview',
               key: 'overview',
-              url: `/${ApiEndpoint.Workspaces}/${props.workspace.id}`,
+              url: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}`,
               isExpanded: true
             },
             {
@@ -68,7 +68,7 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
       setServiceLinks(seviceNavLinks);
     };
     getWorkspaceServices();
-  }, [props.workspace.id, props.workspace.properties.app_id, props.workspaceServices]);
+  }, [props.workspaceServices, workspaceCtx.workspace.id]);
 
   return (
     <>
@@ -89,7 +89,7 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
         isOpen={createPanelOpen}
         onClose={closeCreatePanel}
         resourceType={ResourceType.WorkspaceService}
-        parentResource={props.workspace}
+        parentResource={workspaceCtx.workspace}
       />
     </>
   );

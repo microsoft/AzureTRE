@@ -101,7 +101,7 @@ export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceP
     setDeployOperation(operation);
     setPage('creating');
     // Add deployment operation to notifications operation poller
-    opsContext.addOperation(operation);
+    opsContext.addOperations([operation]);
   }
 
   // Render the current panel sub-page

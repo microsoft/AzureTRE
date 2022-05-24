@@ -11,11 +11,7 @@ import { LeftNav } from './LeftNav';
 import config from '../../config.json';
 import { LoadingState } from '../../models/loadingState';
 
-interface RootLayoutProps {
-  selectWorkspace: (workspace: Workspace) => void
-}
-
-export const RootLayout: React.FunctionComponent<RootLayoutProps> = (props: RootLayoutProps) => {
+export const RootLayout: React.FunctionComponent = () => {
   const [workspaces, setWorkspaces] = useState([] as Array<Workspace>);
   const appRolesContext = useRef(useContext(AppRolesContext));
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
@@ -64,7 +60,6 @@ export const RootLayout: React.FunctionComponent<RootLayoutProps> = (props: Root
             <Routes>
               <Route path="/" element={
                 <RootDashboard 
-                  selectWorkspace={props.selectWorkspace} 
                   workspaces={workspaces} 
                   updateWorkspace={(w: Workspace) => updateWorkspace(w)} 
                   removeWorkspace={(w: Workspace) => removeWorkspace(w)} />

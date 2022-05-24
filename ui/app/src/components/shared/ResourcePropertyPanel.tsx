@@ -23,7 +23,7 @@ const ResourcePropertyPanelItem: React.FunctionComponent<ResourcePropertyPanelIt
     }
 
     function renderValue(val: String) {
-        if (val.startsWith('https://')) {
+        if (val && val.startsWith('https://')) {
             return (<a href={val.toString()} target='_blank' rel="noreferrer">{val}</a>)
         }
         return val;
@@ -58,6 +58,7 @@ export const ResourcePropertyPanel: React.FunctionComponent<ResourcePropertyPane
     }
 
     return (
+        props.resource && props.resource.id ? 
         <>
             <Stack wrap horizontal>
                 <Stack grow styles={stackStyles}>
@@ -82,6 +83,6 @@ export const ResourcePropertyPanel: React.FunctionComponent<ResourcePropertyPane
                 }
                 </Stack>
             </Stack>
-        </>
+        </> : <></>
     );
 };

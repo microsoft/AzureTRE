@@ -35,7 +35,7 @@ export const ConfirmDeleteResource: React.FunctionComponent<ConfirmDeleteProps> 
   const deleteCall = async () => {
     setIsSending(true);
     let op = await apiCall(props.resource.resourcePath, HttpMethod.Delete, workspaceCtx.workspaceClientId, undefined, ResultType.JSON);
-    opsCtx.addOperation(op.operation);
+    opsCtx.addOperations([op.operation]);
     setIsSending(false);
     props.onDismiss();
   }

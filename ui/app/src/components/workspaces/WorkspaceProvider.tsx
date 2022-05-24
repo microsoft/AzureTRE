@@ -3,7 +3,6 @@ import React, { useContext, useEffect, useRef, useState } from 'react';
 import { Route, Routes, useParams } from 'react-router-dom';
 import { ApiEndpoint } from '../../models/apiEndpoints';
 import { UserResource } from '../../models/userResource';
-import { Workspace } from '../../models/workspace';
 import { WorkspaceService } from '../../models/workspaceService';
 import { HttpMethod, ResultType, useAuthApiCall } from '../../useAuthApiCall';
 import { UserResourceItem } from './UserResourceItem';
@@ -14,14 +13,10 @@ import { WorkspaceServiceItem } from './WorkspaceServiceItem';
 import config from '../../config.json';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import { WorkspaceServices } from './WorkspaceServices';
+import { Workspace } from '../../models/workspace';
 
-interface WorkspaceProviderProps {
-  workspace?: Workspace
-}
-
-export const WorkspaceProvider: React.FunctionComponent<WorkspaceProviderProps> = (props: WorkspaceProviderProps) => {
+export const WorkspaceProvider: React.FunctionComponent = () => {
   const apiCall = useAuthApiCall();
-  const [workspace, setWorkspace] = useState({} as Workspace);
   const [selectedWorkspaceService, setSelectedWorkspaceService] = useState({} as WorkspaceService);
   const [selectedUserResource, setSelectedUserResource] = useState({} as UserResource);
   const [workspaceServices, setWorkspaceServices] = useState([] as Array<WorkspaceService>)
@@ -29,35 +24,41 @@ export const WorkspaceProvider: React.FunctionComponent<WorkspaceProviderProps> 
   const [loadingState, setLoadingState] = useState('loading');
   const { workspaceId } = useParams();
 
+  // set workspace context from url
   useEffect(() => {
     const getWorkspace = async () => {
-      // have we been passed the workspace? use it if we have - else (it's a fresh load at this route) - load it before rendering the sub components
-      try {
-        let ws = props.workspace && props.workspace.id ?
-          props.workspace :
-          (await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get)).workspace;
+      try {      
+        // get the workspace
+        const ws = (await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get)).workspace;
+        workspaceCtx.current.setWorkspace(ws);
+        const clientId = ws.properties.scope_id.replace("api://", "");
 
-        // set the workspace, which is passed to all child components
-        setWorkspace(ws);
-
-        // now 'authenticate' against the workspace - just get the roles for this workspace (tokenOnly = true)
-        await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get, ws.properties.app_id, undefined, ResultType.None, (roles: Array<string>) => {
-          config.debug && console.log(`Workspace roles for ${ws.properties?.display_name}`, roles);
+        // use the client ID to get a token against the workspace (tokenOnly), and set the workspace roles in the context
+        let wsRoles: Array<string> = [];
+        await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get, clientId, undefined, ResultType.JSON, (roles: Array<string>) => {
+          config.debug && console.log(`Workspace roles for ${workspaceId}`, roles);
           workspaceCtx.current.setRoles(roles);
-          workspaceCtx.current.setWorkspace(ws);
-          setLoadingState(roles && roles.length > 0 ? 'ok' : 'denied');
+          wsRoles = roles;
         }, true);
 
         // get workspace services to pass to nav + ws services page
-        const workspaceServices = await apiCall(`${ApiEndpoint.Workspaces}/${ws.id}/${ApiEndpoint.WorkspaceServices}`, HttpMethod.Get, ws.properties.app_id);
+        const workspaceServices = await apiCall(`${ApiEndpoint.Workspaces}/${ws.id}/${ApiEndpoint.WorkspaceServices}`, HttpMethod.Get, clientId);
         setWorkspaceServices(workspaceServices.workspaceServices);
-
+        setLoadingState(wsRoles && wsRoles.length > 0 ? 'ok' : 'denied');
       } catch {
         setLoadingState('error');
       }
     };
     getWorkspace();
-  }, [apiCall, props.workspace, workspaceId]);
+
+    let ctx = workspaceCtx.current;
+
+    // run this on onmount - to clear the context
+    return (() => {
+      ctx.setRoles([]);
+      ctx.setWorkspace({} as Workspace);
+    });
+  }, [apiCall, workspaceId]);
 
   const updateWorkspaceService = (w: WorkspaceService) => {
     let i = workspaceServices.findIndex((f: WorkspaceService) => f.id === w.id);
@@ -77,24 +78,24 @@ export const WorkspaceProvider: React.FunctionComponent<WorkspaceProviderProps> 
     case 'ok':
       return (
         <>
-          <WorkspaceHeader workspace={workspace} />
+          <WorkspaceHeader />
           <Stack horizontal className='tre-body-inner'>
             <Stack.Item className='tre-left-nav'>
-              <WorkspaceLeftNav workspace={workspace} workspaceServices={workspaceServices} setWorkspaceService={(ws: WorkspaceService) => setSelectedWorkspaceService(ws)} />
+              <WorkspaceLeftNav workspaceServices={workspaceServices} setWorkspaceService={(ws: WorkspaceService) => setSelectedWorkspaceService(ws)} />
             </Stack.Item><Stack.Item className='tre-body-content'>
               <Stack>
                 <Stack.Item grow={100}>
                   <Routes>
-                    <Route path="/" element={<WorkspaceItem workspace={workspace} />} />
+                    <Route path="/" element={<WorkspaceItem />} />
                     <Route path="workspace-services" element={
-                      <WorkspaceServices workspace={workspace} workspaceServices={workspaceServices} 
+                      <WorkspaceServices workspaceServices={workspaceServices} 
                         setWorkspaceService={(ws: WorkspaceService) => setSelectedWorkspaceService(ws)}
                         updateWorkspaceService={(ws: WorkspaceService) => updateWorkspaceService(ws)}
                         removeWorkspaceService={(ws: WorkspaceService) => removeWorkspaceService(ws)}
                       />
                     } />
-                    <Route path="workspace-services/:workspaceServiceId/*" element={<WorkspaceServiceItem workspace={workspace} workspaceService={selectedWorkspaceService} setUserResource={(userResource: UserResource) => setSelectedUserResource(userResource)} />} />
-                    <Route path="workspace-services/:workspaceServiceId/user-resources/:userResourceId/*" element={<UserResourceItem workspace={workspace} userResource={selectedUserResource} />} />
+                    <Route path="workspace-services/:workspaceServiceId/*" element={<WorkspaceServiceItem workspaceService={selectedWorkspaceService} setUserResource={(userResource: UserResource) => setSelectedUserResource(userResource)} />} />
+                    <Route path="workspace-services/:workspaceServiceId/user-resources/:userResourceId/*" element={<UserResourceItem userResource={selectedUserResource} />} />
                   </Routes>
                 </Stack.Item>
               </Stack>

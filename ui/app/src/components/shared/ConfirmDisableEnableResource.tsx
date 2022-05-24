@@ -44,7 +44,7 @@ export const ConfirmDisableEnableResource: React.FunctionComponent<ConfirmDisabl
     setIsSending(true);
     let body = { isEnabled: props.isEnabled }
     let op = await apiCall(props.resource.resourcePath, HttpMethod.Patch, workspaceCtx.workspaceClientId, body, ResultType.JSON, undefined, undefined, props.resource._etag);
-    opsCtx.addOperation(op.operation);
+    opsCtx.addOperations([op.operation]);
     setIsSending(false);
     props.onDismiss();
   }

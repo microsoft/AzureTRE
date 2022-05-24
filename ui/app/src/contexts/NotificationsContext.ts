@@ -4,7 +4,7 @@ import { ResourceUpdate } from "../models/resource";
 
 export const NotificationsContext = React.createContext({
   operations: [] as Array<Operation>,
-  addOperation: (op: Operation) => {},
+  addOperations: (ops: Array<Operation>) => {},
   resourceUpdates: [] as Array<ResourceUpdate>,
   addResourceUpdate: (r: ResourceUpdate) => {},
   clearUpdatesForResource: (resourceId: string) => {}

@@ -6,7 +6,7 @@ import { Resource } from '../../models/resource';
 
 interface ResourceCardListProps {
   resources: Array<Resource>,
-  selectResource: (resource: Resource) => void,
+  selectResource?: (resource: Resource) => void,
   updateResource: (resource: Resource) => void,
   removeResource: (resource: Resource) => void
   emptyText: string,
@@ -25,7 +25,7 @@ export const ResourceCardList: React.FunctionComponent<ResourceCardListProps> = 
                   <Stack.Item key={i} style={gridItemStyles} >
                     <ResourceCard 
                       resource={r} 
-                      selectResource={(resource: Resource) => props.selectResource(resource)} 
+                      selectResource={(resource: Resource) => props.selectResource && props.selectResource(resource)} 
                       onUpdate={(resource: Resource) => props.updateResource(resource)} 
                       onDelete={(resource: Resource) => props.removeResource(resource)} 
                       itemId={i} />

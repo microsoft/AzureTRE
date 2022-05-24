@@ -28,34 +28,36 @@ export const App: React.FunctionComponent = () => {
       <Routes>
         <Route path="*" element={
           <MsalAuthenticationTemplate interactionType={InteractionType.Redirect}>
-            <NotificationsContext.Provider value={{ 
-                operations: operations, 
-                addOperation: (op: Operation) => {
-                  let ops = [...operations];
-                  let i = ops.findIndex((f: Operation) => f.id === op.id);
-                  if (i > 0) { 
-                    ops.splice(i, 1, op);
+            <NotificationsContext.Provider value={{
+              operations: operations,
+              addOperations: (ops: Array<Operation>) => {
+                let stateOps = [...operations];
+                ops.forEach((op: Operation) => {
+                  let i = stateOps.findIndex((f: Operation) => f.id === op.id);
+                  if (i > 0) {
+                    stateOps.splice(i, 1, op);
                   } else {
-                    ops.push(op); 
+                    stateOps.push(op);
                   }
-                  setOperations(ops)
-                }, 
-                resourceUpdates: resourceUpdates, 
-                addResourceUpdate: (r: ResourceUpdate) => {
-                  let updates = [...resourceUpdates];
-                  let i = updates.findIndex((f: ResourceUpdate) => f.resourceId === r.resourceId);
-                  if (i > 0) { 
-                    updates.splice(i, 1, r);
-                  } else {
-                    updates.push(r); 
-                  }
-                  setResourceUpdates(updates);
-                },
-                clearUpdatesForResource: (resourceId: string) => {let updates = [...resourceUpdates].filter((r: ResourceUpdate) => r.resourceId !== resourceId); setResourceUpdates(updates);}
-              }}>
-              <AppRolesContext.Provider value={{ 
+                });                
+                setOperations(stateOps);
+              },
+              resourceUpdates: resourceUpdates,
+              addResourceUpdate: (r: ResourceUpdate) => {
+                let updates = [...resourceUpdates];
+                let i = updates.findIndex((f: ResourceUpdate) => f.resourceId === r.resourceId);
+                if (i > 0) {
+                  updates.splice(i, 1, r);
+                } else {
+                  updates.push(r);
+                }
+                setResourceUpdates(updates);
+              },
+              clearUpdatesForResource: (resourceId: string) => { let updates = [...resourceUpdates].filter((r: ResourceUpdate) => r.resourceId !== resourceId); setResourceUpdates(updates); }
+            }}>
+              <AppRolesContext.Provider value={{
                 roles: appRoles,
-                setAppRoles: (roles: Array<string>) => {setAppRoles(roles)}
+                setAppRoles: (roles: Array<string>) => { setAppRoles(roles) }
               }}>
                 <Stack styles={stackStyles} className='tre-root'>
                   <Stack.Item grow className='tre-top-nav'>
@@ -64,15 +66,16 @@ export const App: React.FunctionComponent = () => {
                   <Stack.Item grow={100} className='tre-body'>
                     <GenericErrorBoundary>
                       <Routes>
-                        <Route path="*" element={<RootLayout selectWorkspace={(ws: Workspace) => setSelectedWorkspace(ws)} />} />
+                        <Route path="*" element={<RootLayout />} />
                         <Route path="/workspaces/:workspaceId//*" element={
-                          <WorkspaceContext.Provider value={{ 
-                            roles: workspaceRoles, 
+                          <WorkspaceContext.Provider value={{
+                            roles: workspaceRoles,
                             setRoles: (roles: Array<string>) => setWorkspaceRoles(roles),
                             workspace: selectedWorkspace,
-                            setWorkspace: (w: Workspace) => setSelectedWorkspace(w),
-                            workspaceClientId: selectedWorkspace.properties?.app_id}}>
-                            <WorkspaceProvider workspace={selectedWorkspace} />
+                            setWorkspace: (w: Workspace) => { console.warn("Workspace set", w); setSelectedWorkspace(w) },
+                            workspaceClientId: selectedWorkspace.properties?.scope_id.replace("api://", "")
+                          }}>
+                            <WorkspaceProvider />
                           </WorkspaceContext.Provider>
                         } />
                       </Routes>

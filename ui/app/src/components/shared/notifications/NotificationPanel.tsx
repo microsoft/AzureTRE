@@ -24,30 +24,42 @@ export const NotificationPanel: React.FunctionComponent = () => {
   // It's very inefficient, and in future should be replaced by a single call to a new API Endpoint.
   // For now, it's behind a feature flag. To turn off, see the config.json - loadAllOpsOnStart
   useEffect(() => {
-    const loadOpsFromResourceList = async (resources: Array<Resource>, clientId?: string) => {
+    const getOpsFromResourceList = async (resources: Array<Resource>, clientId?: string) => {
+
+      let opsToAdd: Array<Operation> = [];
+      const tasks: Array<any> = [];
+
       resources.forEach(async (r: Resource) => {
-        const result = await apiCall(`${r.resourcePath}/${ApiEndpoint.Operations}`, HttpMethod.Get, clientId);
-        if (result && result.operations) {
-          result.operations.forEach((o: Operation) => {
-            if (inProgressStates.includes(o.status)) opsWriteContext.current.addOperation(o);
+        tasks.push(apiCall(`${r.resourcePath}/${ApiEndpoint.Operations}`, HttpMethod.Get, clientId));
+      });
+      const results = await Promise.all(tasks);
+      results.forEach((r: any) => {
+        if (r && r.operations) {
+          r.operations.forEach((o: Operation) => {
+            if (inProgressStates.includes(o.status)) { opsToAdd.push(o) }
           });
         }
       });
+      return opsToAdd;
     };
 
     const loadAllOps = async () => {
       console.warn("LOADING ALL OPERATIONS...");
-      // get workspaces
+      let opsToAdd: Array<Operation> = [];
       let workspaceList = (await apiCall(ApiEndpoint.Workspaces, HttpMethod.Get)).workspaces as Array<Resource>;
-      workspaceList && workspaceList.length > 0 && await loadOpsFromResourceList(workspaceList);
-      workspaceList.forEach(async (w: Resource) => {
-        let workspaceServicesList = (await apiCall(`${w.resourcePath}/${ApiEndpoint.WorkspaceServices}`, HttpMethod.Get, w.properties.app_id)).workspaceServices as Array<Resource>;
-        if (workspaceServicesList && workspaceServicesList.length > 0) await loadOpsFromResourceList(workspaceServicesList, w.properties.app_id);
-        workspaceServicesList.forEach(async (ws: Resource) => {
-          let userResourcesList = (await apiCall(`${ws.resourcePath}/${ApiEndpoint.UserResources}`, HttpMethod.Get, w.properties.app_id)).userResources as Array<Resource>;
-          if (userResourcesList && userResourcesList.length > 0) await loadOpsFromResourceList(userResourcesList, w.properties.app_id);
-        });
-      });
+      workspaceList && workspaceList.length > 0 && (opsToAdd = opsToAdd.concat(await getOpsFromResourceList(workspaceList)));
+      for (let i=0;i<workspaceList.length;i++){
+        let w = workspaceList[i];
+        let appId = w.properties.scope_id.replace("api://", "");
+        let workspaceServicesList = (await apiCall(`${w.resourcePath}/${ApiEndpoint.WorkspaceServices}`, HttpMethod.Get, appId)).workspaceServices as Array<Resource>;
+        if (workspaceServicesList && workspaceServicesList.length > 0) (opsToAdd = opsToAdd.concat(await getOpsFromResourceList(workspaceServicesList, appId)));
+        for(let n=0;n<workspaceServicesList.length;n++){
+          let ws = workspaceServicesList[n];
+          let userResourcesList = (await apiCall(`${ws.resourcePath}/${ApiEndpoint.UserResources}`, HttpMethod.Get, appId)).userResources as Array<Resource>;
+          if (userResourcesList && userResourcesList.length > 0) (opsToAdd = opsToAdd.concat(await getOpsFromResourceList(userResourcesList, appId)));
+        }
+      }
+      opsWriteContext.current.addOperations(opsToAdd);
     };
 
     config.loadAllOpsOnStart && loadAllOps();
@@ -72,7 +84,7 @@ export const NotificationPanel: React.FunctionComponent = () => {
         }
 
         if (!isWs) {
-          let r = await apiCall(op.resourcePath, HttpMethod.Get, workspaceAuth ? ws.properties.app_id : null);
+          let r = await apiCall(op.resourcePath, HttpMethod.Get, workspaceAuth ? ws.properties.scope_id.replace("api://", "") : null);
           resource = getResourceFromResult(r);
         }
       }
@@ -95,13 +107,13 @@ export const NotificationPanel: React.FunctionComponent = () => {
             componentAction: ComponentAction.Lock
           });
         }
-      })
+      });
     };
 
     syncOpsWithContext();
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apiCall, opsContext, opsContext.operations]); // the linter wants to include notifications in the deps, but we are choosing _not_ to re-trigger this hook on state change
+  }, [apiCall, opsContext.operations]); // the linter wants to include notifications in the deps, but we are choosing _not_ to re-trigger this hook on state change
 
   const updateNotification = (n: TRENotification) => {
     // splice the updated notification into the array
@@ -130,36 +142,6 @@ export const NotificationPanel: React.FunctionComponent = () => {
     });
     setNotifications(inProgressNotifications);
   }
-
-  const styles = mergeStyleSets({
-    buttonArea: {
-      verticalAlign: 'top',
-      display: 'inline-block',
-      textAlign: 'center',
-      margin: '0 100px',
-      minWidth: 130,
-      height: 32,
-    },
-    configArea: {
-      width: 300,
-      display: 'inline-block',
-    },
-    button: {
-      width: 130,
-    },
-    callout: {
-      width: 320,
-      padding: '20px 24px',
-    },
-    title: {
-      marginBottom: 12,
-      fontWeight: FontWeights.semilight,
-    },
-    link: {
-      display: 'block',
-      marginTop: 20,
-    },
-  });
 
   // We had to separate out the polling logic from the notification item display as when the panel is collapsed the items are 
   // unmounted. We want to keep polling in the background, so NotificationPoller is a component without display, outside of the panel.
@@ -244,3 +226,33 @@ export const NotificationPanel: React.FunctionComponent = () => {
     </>
   );
 };
+
+const styles = mergeStyleSets({
+  buttonArea: {
+    verticalAlign: 'top',
+    display: 'inline-block',
+    textAlign: 'center',
+    margin: '0 100px',
+    minWidth: 130,
+    height: 32,
+  },
+  configArea: {
+    width: 300,
+    display: 'inline-block',
+  },
+  button: {
+    width: 130,
+  },
+  callout: {
+    width: 320,
+    padding: '20px 24px',
+  },
+  title: {
+    marginBottom: 12,
+    fontWeight: FontWeights.semilight,
+  },
+  link: {
+    display: 'block',
+    marginTop: 20,
+  },
+});
