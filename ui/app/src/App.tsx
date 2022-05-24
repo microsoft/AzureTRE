@@ -77,7 +77,7 @@ export const App: React.FunctionComponent = () => {
                           }}>
                             <WorkspaceProvider />
                           </WorkspaceContext.Provider>
-                        } />
+                        } />                       
                       </Routes>
                     </GenericErrorBoundary>
                   </Stack.Item>

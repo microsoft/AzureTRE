@@ -60,6 +60,12 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
     });
   }, [apiCall, workspaceId]);
 
+  const addWorkspaceService = (w: WorkspaceService) => {
+    let ws = [...workspaceServices]
+    ws.push(w);
+    setWorkspaceServices(ws);
+  }
+
   const updateWorkspaceService = (w: WorkspaceService) => {
     let i = workspaceServices.findIndex((f: WorkspaceService) => f.id === w.id);
     let ws = [...workspaceServices]
@@ -90,6 +96,7 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
                     <Route path="workspace-services" element={
                       <WorkspaceServices workspaceServices={workspaceServices} 
                         setWorkspaceService={(ws: WorkspaceService) => setSelectedWorkspaceService(ws)}
+                        addWorkspaceService={(ws: WorkspaceService) => addWorkspaceService(ws)}
                         updateWorkspaceService={(ws: WorkspaceService) => updateWorkspaceService(ws)}
                         removeWorkspaceService={(ws: WorkspaceService) => removeWorkspaceService(ws)}
                       />

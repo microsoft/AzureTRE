@@ -1,9 +1,10 @@
 import { MessageBar, MessageBarType, Spinner, SpinnerSize } from "@fluentui/react";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { LoadingState } from "../../../models/loadingState";
 import { HttpMethod, ResultType, useAuthApiCall } from "../../../useAuthApiCall";
 import Form from "@rjsf/fluent-ui";
 import { Operation } from "../../../models/operation";
+import { WorkspaceContext } from "../../../contexts/WorkspaceContext";
 
 interface ResourceFormProps {
     templateName: string,
@@ -17,6 +18,7 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
     const [loading, setLoading] = useState(LoadingState.Loading as LoadingState);
     const [deployError, setDeployError] = useState(false);
     const apiCall = useAuthApiCall();
+    const workspaceCtx = useContext(WorkspaceContext);
 
     useEffect(() => {
         const getFullTemplate = async () => {
@@ -40,7 +42,7 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
         setDeployError(false);
         const resource = { templateName: props.templateName, properties: formData };
         console.log(resource);
-        const response = await apiCall(props.resourcePath, HttpMethod.Post, undefined, resource, ResultType.JSON);
+        const response = await apiCall(props.resourcePath, HttpMethod.Post, workspaceCtx.workspaceClientId, resource, ResultType.JSON);
         if (response) {
             props.onCreateResource(response.operation);
         } else {

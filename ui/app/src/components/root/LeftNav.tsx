@@ -1,6 +1,5 @@
 import React from 'react';
 import { Nav, INavLinkGroup } from '@fluentui/react/lib/Nav';
-import { initializeIcons } from '@fluentui/react';
 import { useNavigate } from 'react-router-dom';
 
 const navLinkGroups: INavLinkGroup[] = [
@@ -9,28 +8,32 @@ const navLinkGroups: INavLinkGroup[] = [
       {
         name: 'Workspaces',
         url: '/',
-        key: 'key1',
+        key: '/',
         icon: 'WebAppBuilderFragment'
+      },
+      {
+        name: 'Shared Services',
+        url: '/shared-services',
+        key: 'shared-services',
+        icon: 'Puzzle'
       },
       {
         name: 'Settings',
         url: '/settings',
-        key: 'key2',
+        key: 'settings',
         disabled: true,
         icon: 'Settings'
       },
       {
         name: 'Admin',
         url: '/admin',
-        key: 'key3',
+        key: 'admin',
         disabled: false,
         icon: 'AdminALogoFill32'
       },
     ],
   },
 ];
-
-initializeIcons()
 
 export const LeftNav: React.FunctionComponent = () => {
   const navigate = useNavigate();

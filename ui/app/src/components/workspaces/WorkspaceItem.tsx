@@ -18,13 +18,11 @@ export const WorkspaceItem: React.FunctionComponent = () => {
             'data-title': 'Overview',
           }}
         >
-
           <ResourcePropertyPanel resource={workspaceCtx.workspace} />
           <ResourceDebug resource={workspaceCtx.workspace} />
-
         </PivotItem>
         <PivotItem headerText="History">
-          <ResourceHistory history={props.workspace.history} />
+          <ResourceHistory history={workspaceCtx.workspace.history} />
         </PivotItem>
         <PivotItem headerText="Operations">
           <h3>--Operations Log here</h3>

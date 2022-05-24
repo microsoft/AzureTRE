@@ -11,6 +11,7 @@ import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 interface WorkspaceServicesProps {
   workspaceServices: Array<WorkspaceService>,
   setWorkspaceService: (workspaceService: WorkspaceService) => void,
+  addWorkspaceService: (workspaceService: WorkspaceService) => void,
   updateWorkspaceService: (workspaceService: WorkspaceService) => void,
   removeWorkspaceService: (workspaceService: WorkspaceService) => void
 }
@@ -29,6 +30,7 @@ export const WorkspaceServices: React.FunctionComponent<WorkspaceServicesProps> 
           onClose={closeCreatePanel}
           resourceType={ResourceType.WorkspaceService}
           parentResource={workspaceCtx.workspace}
+          onAddResource={(r: Resource) => props.addWorkspaceService(r as WorkspaceService)}
         />
       </Stack>
       <ResourceCardList

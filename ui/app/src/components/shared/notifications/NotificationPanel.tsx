@@ -46,6 +46,8 @@ export const NotificationPanel: React.FunctionComponent = () => {
     const loadAllOps = async () => {
       console.warn("LOADING ALL OPERATIONS...");
       let opsToAdd: Array<Operation> = [];
+      let sharedServiceList = (await apiCall(ApiEndpoint.SharedServices, HttpMethod.Get)).sharedServices as Array<Resource>;
+      sharedServiceList && sharedServiceList.length > 0 && (opsToAdd = opsToAdd.concat(await getOpsFromResourceList(sharedServiceList)));
       let workspaceList = (await apiCall(ApiEndpoint.Workspaces, HttpMethod.Get)).workspaces as Array<Resource>;
       workspaceList && workspaceList.length > 0 && (opsToAdd = opsToAdd.concat(await getOpsFromResourceList(workspaceList)));
       for (let i=0;i<workspaceList.length;i++){
@@ -67,14 +69,12 @@ export const NotificationPanel: React.FunctionComponent = () => {
 
   useEffect(() => {
     const setupNotification = async (op: Operation) => {
-      let workspaceAuth = false;
       let isWs = false;
       let ws = null;
       let resource = null;
 
       if (op.resourcePath.indexOf(ApiEndpoint.Workspaces) !== -1) {
         // we need the workspace to get auth details
-        workspaceAuth = true;
         const wsId = op.resourcePath.split('/')[2];
         ws = (await apiCall(`${ApiEndpoint.Workspaces}/${wsId}`, HttpMethod.Get)).workspace;
 
@@ -84,9 +84,12 @@ export const NotificationPanel: React.FunctionComponent = () => {
         }
 
         if (!isWs) {
-          let r = await apiCall(op.resourcePath, HttpMethod.Get, workspaceAuth ? ws.properties.scope_id.replace("api://", "") : null);
+          let r = await apiCall(op.resourcePath, HttpMethod.Get, ws.properties.scope_id.replace("api://", ""));
           resource = getResourceFromResult(r);
         }
+      } else {
+        let r = await apiCall(op.resourcePath, HttpMethod.Get);
+        resource = getResourceFromResult(r);
       }
 
       return { operation: op, resource: resource, workspace: ws };
