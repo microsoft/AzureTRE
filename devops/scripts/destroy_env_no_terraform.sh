@@ -121,7 +121,7 @@ if [[ $(az keyvault list --resource-group "${core_tre_rg}" --query "[?properties
   echo "Purging keyvault: ${keyvault_name}"
   az keyvault purge --name "${keyvault_name}" ${no_wait_option}
 else
-  echo "Resource group ${core_tre_rg} doesn't have a keyvault without pruge protection."
+  echo "Resource group ${core_tre_rg} doesn't have a keyvault without purge protection."
 fi
 
 # this will find the mgmt, core resource groups as well as any workspace ones
