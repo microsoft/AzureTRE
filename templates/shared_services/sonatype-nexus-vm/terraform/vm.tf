@@ -10,23 +10,16 @@ resource "azurerm_network_interface" "nexus" {
   }
 }
 
-resource "azurerm_private_dns_zone" "nexus" {
-  name                = "nexus-${var.tre_id}.${data.azurerm_resource_group.rg.location}.cloudapp.azure.com"
-  resource_group_name = local.core_resource_group_name
-
-  lifecycle { ignore_changes = [tags] }
-}
-
 resource "azurerm_private_dns_zone_virtual_network_link" "nexus_core_vnet" {
   name                  = "nexuslink-core"
   resource_group_name   = local.core_resource_group_name
-  private_dns_zone_name = azurerm_private_dns_zone.nexus.name
+  private_dns_zone_name = data.azurerm_private_dns_zone.nexus.name
   virtual_network_id    = data.azurerm_virtual_network.core.id
 }
 
 resource "azurerm_private_dns_a_record" "nexus_vm" {
   name                = "@"
-  zone_name           = azurerm_private_dns_zone.nexus.name
+  zone_name           = data.azurerm_private_dns_zone.nexus.name
   resource_group_name = local.core_resource_group_name
   ttl                 = 300
   records             = [azurerm_linux_virtual_machine.nexus.private_ip_address]
