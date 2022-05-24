@@ -113,7 +113,7 @@ export const NotificationPanel: React.FunctionComponent = () => {
     syncOpsWithContext();
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apiCall, opsContext, opsContext.operations]); // the linter wants to include notifications in the deps, but we are choosing _not_ to re-trigger this hook on state change
+  }, [apiCall, opsContext.operations]); // the linter wants to include notifications in the deps, but we are choosing _not_ to re-trigger this hook on state change
 
   const updateNotification = (n: TRENotification) => {
     // splice the updated notification into the array
@@ -142,36 +142,6 @@ export const NotificationPanel: React.FunctionComponent = () => {
     });
     setNotifications(inProgressNotifications);
   }
-
-  const styles = mergeStyleSets({
-    buttonArea: {
-      verticalAlign: 'top',
-      display: 'inline-block',
-      textAlign: 'center',
-      margin: '0 100px',
-      minWidth: 130,
-      height: 32,
-    },
-    configArea: {
-      width: 300,
-      display: 'inline-block',
-    },
-    button: {
-      width: 130,
-    },
-    callout: {
-      width: 320,
-      padding: '20px 24px',
-    },
-    title: {
-      marginBottom: 12,
-      fontWeight: FontWeights.semilight,
-    },
-    link: {
-      display: 'block',
-      marginTop: 20,
-    },
-  });
 
   // We had to separate out the polling logic from the notification item display as when the panel is collapsed the items are 
   // unmounted. We want to keep polling in the background, so NotificationPoller is a component without display, outside of the panel.
@@ -256,3 +226,33 @@ export const NotificationPanel: React.FunctionComponent = () => {
     </>
   );
 };
+
+const styles = mergeStyleSets({
+  buttonArea: {
+    verticalAlign: 'top',
+    display: 'inline-block',
+    textAlign: 'center',
+    margin: '0 100px',
+    minWidth: 130,
+    height: 32,
+  },
+  configArea: {
+    width: 300,
+    display: 'inline-block',
+  },
+  button: {
+    width: 130,
+  },
+  callout: {
+    width: 320,
+    padding: '20px 24px',
+  },
+  title: {
+    marginBottom: 12,
+    fontWeight: FontWeights.semilight,
+  },
+  link: {
+    display: 'block',
+    marginTop: 20,
+  },
+});
