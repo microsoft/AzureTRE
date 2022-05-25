@@ -48,7 +48,7 @@ resource "random_password" "nexus_admin_password" {
   min_numeric      = 1
   special          = true
   min_special      = 1
-  override_special = "_%@"
+  override_special = "_%"
 }
 
 resource "azurerm_key_vault_secret" "nexus_vm_password" {
