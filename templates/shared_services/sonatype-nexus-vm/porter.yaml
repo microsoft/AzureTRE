@@ -1,6 +1,6 @@
 ---
 name: tre-shared-service-sonatype-nexus
-version: 1.0.2
+version: 1.0.3
 description: "A Sonatype Nexus shared service"
 registry: azuretre
 credentials:
@@ -52,7 +52,7 @@ install:
         storage_account_name:
           "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.tre_id }}-shared-service-sonatype-nexus"
+        key: "{{ bundle.parameters.tre_id }}-shared-service-sonatype-nexus-vm"
 upgrade:
   - exec:
       description: "Upgrade shared service"
