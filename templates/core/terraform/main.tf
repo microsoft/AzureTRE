@@ -3,7 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=2.97.0"
+      version = "=3.5.0"
     }
   }
 
@@ -13,8 +13,9 @@ terraform {
 provider "azurerm" {
   features {
     key_vault {
-      purge_soft_delete_on_destroy    = var.keyvault_purge_protection_enabled ? false : true
-      recover_soft_deleted_key_vaults = false
+      purge_soft_delete_on_destroy      = false
+      recover_soft_deleted_secrets      = true
+      recover_soft_deleted_certificates = true
     }
   }
 }
