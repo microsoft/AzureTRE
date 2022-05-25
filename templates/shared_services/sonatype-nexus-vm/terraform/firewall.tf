@@ -1,8 +1,8 @@
-resource "azurerm_firewall_application_rule_collection" "shared_subnet_nexus" {
-  name                = "shared_subnet_nexus"
+resource "azurerm_firewall_application_rule_collection" "shared_subnet_sonatype_nexus" {
+  name                = "shared_subnet_sonatype_nexus"
   azure_firewall_name = data.azurerm_firewall.fw.name
   resource_group_name = data.azurerm_firewall.fw.resource_group_name
-  priority            = 104
+  priority            = 105
   action              = "Allow"
 
   rule {
