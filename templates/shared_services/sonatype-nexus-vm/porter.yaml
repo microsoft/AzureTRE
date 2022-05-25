@@ -72,4 +72,4 @@ uninstall:
         storage_account_name:
           "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.tre_id }}-shared-service-sonatype-nexus"
+        key: "{{ bundle.parameters.tre_id }}-shared-service-sonatype-nexus-vm"
