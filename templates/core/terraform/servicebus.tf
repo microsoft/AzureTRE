@@ -6,7 +6,7 @@ resource "azurerm_servicebus_namespace" "sb" {
   capacity            = "1"
   tags                = local.tre_core_tags
 
-  #lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_servicebus_queue" "workspacequeue" {
@@ -32,7 +32,7 @@ resource "azurerm_private_dns_zone" "servicebus" {
   name                = "privatelink.servicebus.windows.net"
   resource_group_name = azurerm_resource_group.core.name
   tags                = local.tre_core_tags
-  #lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "servicebuslink" {
@@ -42,7 +42,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "servicebuslink" {
   virtual_network_id    = module.network.core_vnet_id
   tags                  = local.tre_core_tags
 
-  #lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_endpoint" "sbpe" {
@@ -52,7 +52,7 @@ resource "azurerm_private_endpoint" "sbpe" {
   subnet_id           = module.network.resource_processor_subnet_id
   tags                = local.tre_core_tags
 
-  #lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [tags] }
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group"

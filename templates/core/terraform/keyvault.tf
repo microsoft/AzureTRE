@@ -7,7 +7,7 @@ resource "azurerm_key_vault" "kv" {
   purge_protection_enabled = var.keyvault_purge_protection_enabled
   tags                     = local.tre_core_tags
 
-  lifecycle { ignore_changes = [access_policy] } #, tags] }
+  lifecycle { ignore_changes = [access_policy, tags] }
 }
 
 resource "azurerm_key_vault_access_policy" "deployer" {
@@ -47,7 +47,7 @@ resource "azurerm_private_endpoint" "kvpe" {
   subnet_id           = module.network.shared_subnet_id
   tags                = local.tre_core_tags
 
-  #lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [tags] }
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group"

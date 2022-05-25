@@ -57,7 +57,7 @@ resource "azurerm_user_assigned_identity" "vmss_msi" {
   location            = var.location
   resource_group_name = var.resource_group_name
   tags                = local.tre_core_tags
-  #lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_linux_virtual_machine_scale_set" "vm_linux" {

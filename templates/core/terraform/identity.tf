@@ -5,7 +5,7 @@ resource "azurerm_user_assigned_identity" "id" {
 
   name = "id-api-${var.tre_id}"
 
-  #lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_role_assignment" "vm_contributor" {

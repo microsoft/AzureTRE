@@ -6,7 +6,7 @@ resource "azurerm_public_ip" "bastion" {
   sku                 = "Standard"
   tags                = local.tre_core_tags
 
-  #lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_bastion_host" "bastion" {
@@ -22,6 +22,6 @@ resource "azurerm_bastion_host" "bastion" {
 
   tags = local.tre_core_tags
 
-  #lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [tags] }
 }
 

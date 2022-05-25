@@ -17,7 +17,7 @@ resource "azurerm_storage_account" "staticweb" {
     error_404_document = "404.html"
   }
 
-  #lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [tags] }
 
   network_rules {
     bypass         = ["AzureServices"]
@@ -39,7 +39,7 @@ resource "azurerm_private_endpoint" "webpe" {
   subnet_id           = var.shared_subnet
   tags                = local.tre_core_tags
 
-  #lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [tags] }
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group-web"
