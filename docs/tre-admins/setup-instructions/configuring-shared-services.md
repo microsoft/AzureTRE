@@ -5,7 +5,7 @@
 If you're deploying a brand new environment you should deploy the VM-based service (read section `A`). If you wish to migrate from an existing App Service Nexus service to the VM-based service, first deploy the new service (section `A`) then proceed to section `B`.
 
 !!! info
-    The Makefile commands for deploying shared services temporarily target the App Service based Nexus service so that existing environments won't have a new Nexus service deployed automatically by CICD and introduce breaking changes. The VM-based Nexus service will need to be deployed manually using the steps detailed below.
+    The Makefile commands for deploying shared services temporarily target the App Service Nexus service so that existing environments won't have a new Nexus service deployed automatically by CICD and introduce breaking changes. The VM-based Nexus service will need to be deployed manually using the steps below and is required when deploying new Guacamole user resources of version `0.2.0` or higher.
 
 ### A. Deploy & configure Nexus service (hosted on VM)
 
