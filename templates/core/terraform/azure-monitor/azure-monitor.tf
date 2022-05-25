@@ -56,10 +56,6 @@ resource "azurerm_resource_group_template_deployment" "app_insights_core" {
       value = local.tre_core_tags
     }
   })
-
-  # "tre_id" = {
-  #     value = var.tre_id
-  #   }
 }
 
 data "local_file" "ampls_arm_template" {
