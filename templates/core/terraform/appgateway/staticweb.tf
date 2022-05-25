@@ -10,17 +10,14 @@ resource "azurerm_storage_account" "staticweb" {
   account_replication_type  = "LRS"
   enable_https_traffic_only = true
   allow_blob_public_access  = false
-
-  tags = {
-    tre_id = var.tre_id
-  }
+  tags                      = local.tre_core_tags
 
   static_website {
     index_document     = "index.html"
     error_404_document = "404.html"
   }
 
-  lifecycle { ignore_changes = [tags] }
+  #lifecycle { ignore_changes = [tags] }
 
   network_rules {
     bypass         = ["AzureServices"]

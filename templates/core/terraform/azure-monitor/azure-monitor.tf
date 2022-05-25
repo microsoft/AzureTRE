@@ -6,7 +6,7 @@ resource "azurerm_log_analytics_workspace" "core" {
   sku                 = "pergb2018"
   tags                = local.tre_core_tags
 
-  lifecycle { ignore_changes = [tags] }
+  #lifecycle { ignore_changes = [tags] }
 }
 
 # Storage account for Application Insights
@@ -21,7 +21,7 @@ resource "azurerm_storage_account" "app_insights" {
   allow_blob_public_access = false
   tags                     = local.tre_core_tags
 
-  lifecycle { ignore_changes = [tags] }
+  #lifecycle { ignore_changes = [tags] }
 }
 
 data "local_file" "app_insights_arm_template" {

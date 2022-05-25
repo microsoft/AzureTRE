@@ -43,7 +43,7 @@ resource "azurerm_windows_virtual_machine" "jumpbox" {
   allow_extension_operations = true
   admin_username             = random_string.username.result
   admin_password             = random_password.password.result
-
+  tags                       = local.tre_core_tags
 
 
   custom_data = base64encode(data.template_file.vm_config.rendered)
@@ -64,7 +64,7 @@ resource "azurerm_windows_virtual_machine" "jumpbox" {
     type = "SystemAssigned"
   }
 
-  tags = local.tre_core_tags
+
 }
 
 resource "azurerm_key_vault_secret" "jumpbox_credentials" {
