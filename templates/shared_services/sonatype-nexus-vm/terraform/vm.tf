@@ -116,7 +116,7 @@ resource "azurerm_linux_virtual_machine" "nexus" {
 
   depends_on = [
     azurerm_key_vault_access_policy.nexus_msi,
-    azurerm_firewall_application_rule_collection.shared_subnet_nexus
+    azurerm_firewall_application_rule_collection.shared_subnet_sonatype_nexus
   ]
 
   connection {
