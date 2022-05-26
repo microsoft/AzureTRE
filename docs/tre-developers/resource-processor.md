@@ -62,11 +62,11 @@ To SSH to this instance, use Bastion.
 
 1. Find a keyvault with a name `kv-${TRE_ID}` in your resource group.
 1. Copy a secret named `resource-processor-vmss-password`
-     
+
     ![VMSS Password](../assets/vmss_password.png)
-    
+
     If you don't have permissions to see the secret, add yourself to the Access Policy of this keyvault with a permission to read secrets:
-     
+
     [![Keyvault access policy](../assets/rp_kv_access_policy.png)](../assets/rp_kv_access_policy.png)
 1. Connect to the instance using Bastion. Use the username `adminuser` and the password you just copied.
 
