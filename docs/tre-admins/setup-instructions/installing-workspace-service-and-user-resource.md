@@ -96,6 +96,9 @@ You can also follow the progress in Azure portal as various resources come up.
 
 Once the workspace service has been created, we can use the workspace API to create a user resource in our workspace.
 
+!!! caution
+    Before deploying Guacamole user resources, you will want to make sure you have a Nexus shared service deployed in the workspace so that your VMs can access package repositories through a proxy (as they can't access public repositories directly). See [Configuring shared services](./configuring-shared-services.md).
+
 1. Navigate to the Swagger UI at `https://<azure_tre_fqdn>/api/workspaces/<workspace_id>/docs` . Where `<workspace_id>` is the workspace ID of your workspace.
 
 1. Click `Try it out` on the `POST` `/api/workspaces/<workspace_id>/workspace-services/<service_id>/user_resources` operation. Where `<workspace_id>` and `<service_id>` are the workspace ID of your workspace and workspace service ID of your workspace service.
@@ -110,12 +113,13 @@ Once the workspace service has been created, we can use the workspace API to cre
       "properties": {
         "display_name": "My VM",
         "description": "Will be using this VM for my research",
-        "os_image": "Server 2019 Data Science VM"
+        "os_image": "Server 2019 Data Science VM",
+        "nexus_version": "V2"
       }
     }
     ```
 
-    > Note: You can also specify "Windows 10" for a standard Windows 10 image
+    > Note: You can also specify "Windows 10" in "os_image" for a standard Windows 10 image. The "nexus_version" property also accepts "V1" if you have a V1 Nexus shared service deployed instead of the V2 service described in [Configuring shared services](./configuring-shared-services.md).
 
 The API will return an `operation` object with a `Location` header to query the operation status, as well as the `resourceId` and `resourcePath` properties to query the resource under creation.
 
