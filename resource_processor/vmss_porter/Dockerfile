@@ -1,7 +1,7 @@
 FROM python:3.8-slim-buster
 
 # Install Azure CLI
-ARG AZURE_CLI_VERSION=2.29.2-1~buster
+ARG AZURE_CLI_VERSION=2.36.0-1~buster
 COPY scripts/azure-cli.sh /tmp/
 RUN export AZURE_CLI_VERSION=${AZURE_CLI_VERSION} \
     && /tmp/azure-cli.sh
