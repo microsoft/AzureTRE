@@ -2,15 +2,15 @@
 
 ## Deploy/configure Nexus
 
-If you're deploying a brand new environment you should deploy the VM-based service (read section `A`). If you wish to migrate from an existing App Service Nexus service to the VM-based service, first deploy the new service (section `A`) then proceed to section `B`.
+If you're deploying a brand new environment you should deploy the VM-based (V2) service (read section `A`). If you wish to migrate from an existing App Service Nexus service (V1) to the VM-based service, first deploy the new service (section `A`) then proceed to section `B`.
 
 !!! info
-    The Makefile commands for deploying shared services temporarily target the App Service Nexus service so that existing environments won't have a new Nexus service deployed automatically by CICD and introduce breaking changes. The VM-based Nexus service will need to be deployed manually using the steps below and is required when deploying new Guacamole user resources of version `0.2.0` or higher.
+    The Makefile commands for deploying shared services temporarily target the V1 service so that existing environments won't have a new V2 Nexus service deployed automatically by CICD and introduce breaking changes. The V2 Nexus service will need to be deployed manually using the steps below.
 
-### A. Deploy & configure Nexus service (hosted on VM)
+### A. Deploy & configure V2 Nexus service (hosted on VM)
 
 !!! caution
-    Before deploying the VM-based Nexus service, you will need workspaces of version `0.2.14` or above due to a dependency on a DNS zone link for the workspace(s) to connect to the Nexus VM.
+    Before deploying the V2 Nexus service, you will need workspaces of version `0.3.2` or above due to a dependency on a DNS zone link for the workspace(s) to connect to the Nexus VM.
 
 Before deploying the Nexus shared service, you need to make sure that it will have access to a certificate to configure serving secure proxies. By default, the Nexus service will serve proxies from `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/`, and thus it requires a certificate that validates ownership of this domain to use for SSL.
 
@@ -83,13 +83,13 @@ You can optionally go to the Nexus web interface by visiting `https://nexus-{TRE
 
 Just bear in mind that if this service is redeployed any changes in the UI won't be persisted. If you wish to add new repositories or alter existing ones, use the JSON files within the `./nexus_repos_config` directory.
 
-### B. Migrate from an existing Nexus service (hosted on App Service)
+### B. Migrate from an existing V1 Nexus service (hosted on App Service)
 
-Once you've created the new VM-based Nexus service by following section `A`, you can migrate from the old App Service Nexus service by following these steps:
+Once you've created the new V2 (VM-based) Nexus service by following section `A`, you can migrate from the V1 Nexus service by following these steps:
 
-1. Identify any existing Guacamole user resources that are using the old proxy URL (`https://nexus-{TRE_ID}.azurewebsites.net/`). These will be any VMs with bundle versions < `0.2.0`.
+1. Identify any existing Guacamole user resources that are using the old proxy URL (`https://nexus-{TRE_ID}.azurewebsites.net/`). These will be any VMs with bundle versions < `0.3.2`.
 
-1. These will need to be either **re-deployed** with the new template versions `0.2.0` or later (which target the new proxy URL format of `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/`), or manually have their proxy URLs updated by remoting into the VMs and updating the various configuration files of required package managers with the new URL.
+1. These will need to be either **re-deployed** with the new template versions `0.3.2` or later and specifying an additional template parameter `"nexus_version"` with the value of `"V2"`, or manually have their proxy URLs updated by remoting into the VMs and updating the various configuration files of required package managers with the new URL (`https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/`).
 
    1. For example, pip will need the `index`, `index-url` and `trusted-host` values in the global `pip.conf` file to be modified to use the new URL.
 
@@ -97,7 +97,7 @@ Once you've created the new VM-based Nexus service by following section `A`, you
 
 ### Upgrade notes
 
-The new Nexus shared service can be located in the `./templates/shared_services/sonatype-nexus-vm` directory, with the bundle name `tre-shared-service-sonatype-nexus`, which is now hosted using a VM to enable additional configuration required for proxying certain repositories.
+The new V2 Nexus shared service can be located in the `./templates/shared_services/sonatype-nexus-vm` directory, with the bundle name `tre-shared-service-sonatype-nexus`, which is now hosted using a VM to enable additional configuration required for proxying certain repositories.
 
 This has been created as a separate service as the domain name exposed for proxies will be different to the one used by the original Nexus service and thus will break any user resources configured with the old proxy URL.
 
