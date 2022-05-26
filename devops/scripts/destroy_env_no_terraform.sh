@@ -111,10 +111,20 @@ if [[ -n ${SHOW_KEYVAULT_DEBUG_ON_DESTROY:-} ]]; then
 fi
 # DEBUG END
 
-if [[ $(az keyvault list --resource-group "${core_tre_rg}" --query "[?properties.enablePurgeProtection==``null``] | length (@)") != 0 ]]; then
-  tre_id=${core_tre_rg#"rg-"}
-  keyvault_name="kv-${tre_id}"
+tre_id=${core_tre_rg#"rg-"}
+keyvault_name="kv-${tre_id}"
+accessPolicies=$(az keyvault show --name "${keyvault_name}" --resource-group "${core_tre_rg}" || echo 0)
+if [ "${accessPolicies}" != "0" ]; then
+  echo "Removing access policies so if the vault is recovered there are not there"
+  objectIds=$(echo "$accessPolicies" | jq '.properties.accessPolicies[].objectId' )
+  for objectId in "${objectIds[@]}"; do
+    echo "$objectId"
+    az keyvault delete-policy --name "${keyvault_name}" --resource-group "${core_tre_rg}" --object-id "$objectId" || echo "Not deleting access policy for {$objectId}."
+  done
+fi
 
+# Delete the vault if purge protection is not on.
+if [[ $(az keyvault list --resource-group "${core_tre_rg}" --query "[?properties.enablePurgeProtection==``null``] | length (@)") != 0 ]]; then
   echo "Deleting keyvault: ${keyvault_name}"
   az keyvault delete --name "${keyvault_name}" --resource-group "${core_tre_rg}"
 
