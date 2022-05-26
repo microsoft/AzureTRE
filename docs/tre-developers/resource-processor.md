@@ -12,7 +12,7 @@ Read [how a workspace is provisioned using Porter](./../azure-tre-overview/archi
 
 ## Local debugging
 
-To set up local debugging, first run (if you haven't done so already):
+To set up local debugging, first run, if you haven't done so already (make sure `ENABLE_LOCAL_DEBUGGING` is set to `true` in your `.env` file):
 
 ```cmd
 az login
@@ -61,13 +61,13 @@ The processor runs in a VNET, and you cannot connect to it directly.
 To SSH to this instance, use Bastion.
 
 1. Find a keyvault with a name `kv-${TRE_ID}` in your resource group.
-1. Add yourself to the Access Policy of this keyvault with a permission to read secrets:
-
-  [![Keyvault access policy](../assets/rp_kv_access_policy.png)](../assets/rp_kv_access_policy.png)
-
 1. Copy a secret named `resource-processor-vmss-password`
 
   ![VMSS Password](../assets/vmss_password.png)
+
+  If you don't have permissions to see the secret, add yourself to the Access Policy of this keyvault with a permission to read secrets:
+
+  [![Keyvault access policy](../assets/rp_kv_access_policy.png)](../assets/rp_kv_access_policy.png)
 
 1. Connect to the instance using Bastion. Use the username `adminuser` and the password you just copied.
 
@@ -80,7 +80,7 @@ To SSH to this instance, use Bastion.
 
   If you see nothing (and the container was pulled) then the processor has either not started yet or it has crashed.
 
-1. Get the logs from the container using `docker logs <container_id>` command.
+1. Get the logs from the container using `sudo docker logs <container_id>` command.
 
 ### Starting container manually
 
@@ -88,7 +88,7 @@ To SSH to this instance, use Bastion.
 1. Execute the following command from the root (/) of the file system
 
   ```cmd
-  docker run -v /var/run/docker.sock:/var/run/docker.sock --env-file .env --name resource_processor_vmss_porter_debug [runner_image:tag]
+  sudo docker run -v /var/run/docker.sock:/var/run/docker.sock --env-file .env --name resource_processor_vmss_porter_debug [runner_image:tag]
   ```
 
 !!! info
