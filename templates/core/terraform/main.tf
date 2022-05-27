@@ -13,10 +13,12 @@ terraform {
 provider "azurerm" {
   features {
     key_vault {
-      purge_soft_delete_on_destroy = false
+      purge_soft_delete_on_destroy    = var.keyvault_purge_protection_enabled ? false : true
+      recover_soft_deleted_key_vaults = false
     }
   }
 }
+
 
 resource "azurerm_resource_group" "core" {
   location = var.location
