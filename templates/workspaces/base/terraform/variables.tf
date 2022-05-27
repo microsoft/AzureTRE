@@ -32,7 +32,7 @@ variable "deploy_app_service_plan" {
 
 variable "app_service_plan_sku" {
   type        = string
-  default     = "P1v3"
+  default     = "P1v2"
   description = "App Service Plan SKU"
 }
 
@@ -77,6 +77,11 @@ variable "client_id" {
   type        = string
   default     = ""
   description = "The client id of the workspace in the identity provider, this is passed in so that we may return it as an output."
+}
+variable "client_secret" {
+  type        = string
+  default     = ""
+  description = "The client secret of the workspace in the identity provider, this is passed in so that we may return it as an output."
 }
 variable "sp_id" {
   type        = string
