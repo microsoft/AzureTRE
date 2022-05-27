@@ -88,8 +88,8 @@ moved {
 
 # Api-webapp
 moved {
-  from = module.api-webapp.azurerm_service_plan.core
-  to   = azurerm_service_plan.core
+  from = module.api-webapp.azurerm_app_service_plan.core
+  to   = azurerm_app_service_plan.core
 }
 
 moved {
