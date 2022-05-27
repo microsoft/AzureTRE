@@ -6,7 +6,7 @@ locals {
   version = replace(replace(replace(data.local_file.api_app_version.content, "__version__ = \"", ""), "\"", ""), "\n", "")
 }
 
-resource "azurerm_app_service_plan" "core" {
+resource "azurerm_service_plan" "core" {
   name                = "plan-${var.tre_id}"
   resource_group_name = azurerm_resource_group.core.name
   location            = azurerm_resource_group.core.location
@@ -26,7 +26,7 @@ resource "azurerm_app_service" "api" {
   name                            = "api-${var.tre_id}"
   resource_group_name             = azurerm_resource_group.core.name
   location                        = azurerm_resource_group.core.location
-  app_service_plan_id             = azurerm_app_service_plan.core.id
+  app_service_plan_id             = azurerm_service_plan.core.id
   https_only                      = true
   key_vault_reference_identity_id = azurerm_user_assigned_identity.id.id
 

@@ -20,7 +20,7 @@ resource "azurerm_app_service" "gitea" {
   name                            = local.webapp_name
   resource_group_name             = local.core_resource_group_name
   location                        = data.azurerm_resource_group.rg.location
-  app_service_plan_id             = data.azurerm_app_service_plan.core.id
+  app_service_plan_id             = data.azurerm_service_plan.core.id
   https_only                      = true
   key_vault_reference_identity_id = azurerm_user_assigned_identity.gitea_id.id
 
