@@ -287,7 +287,6 @@ jobs:
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
           TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
-          TF_VAR_keyvault_purge_protection_enabled: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
           TF_VAR_stateful_resources_locked: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
 
   deploy_tre:
@@ -336,7 +335,6 @@ jobs:
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
           TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
-          TF_VAR_keyvault_purge_protection_enabled: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
           TF_VAR_stateful_resources_locked: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
 
       - name: API Healthcheck
@@ -371,7 +369,6 @@ jobs:
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
           TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
-          TF_VAR_keyvault_purge_protection_enabled: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
           TF_VAR_stateful_resources_locked: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
 
   publish_bundles:
@@ -591,7 +588,6 @@ jobs:
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
           TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
-          TF_VAR_keyvault_purge_protection_enabled: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
           TF_VAR_stateful_resources_locked: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
 
   e2e_tests_smoke:

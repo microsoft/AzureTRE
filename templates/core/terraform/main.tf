@@ -13,12 +13,13 @@ terraform {
 provider "azurerm" {
   features {
     key_vault {
-      purge_soft_delete_on_destroy    = var.keyvault_purge_protection_enabled ? false : true
-      recover_soft_deleted_key_vaults = false
+      # Don't purge secrets on destroy (this would fail due to purge protection being enabled on keyvault)
+      purge_soft_deleted_secrets_on_destroy = false
+      # When recreating an environment, recover any previously soft deleted secrets
+      recover_soft_deleted_secrets = true
     }
   }
 }
-
 
 resource "azurerm_resource_group" "core" {
   location = var.location

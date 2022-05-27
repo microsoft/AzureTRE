@@ -88,7 +88,7 @@ resource "azurerm_network_security_rule" "allow-Outbound_Storage_445" {
   name                        = "${local.short_service_id}-allow-Outbound_Storage_445"
   network_security_group_name = data.azurerm_network_security_group.ws.name
   priority                    = data.external.nsg_rule_priorities_outbound.result.nsg_rule_priority
-  protocol                    = "TCP"
+  protocol                    = "Tcp"
   resource_group_name         = data.azurerm_resource_group.ws.name
   source_port_range           = "*"
 }
