@@ -16,7 +16,7 @@ resource "azurerm_user_assigned_identity" "gitea_id" {
   lifecycle { ignore_changes = [tags] }
 }
 
-data "azurerm_app_service_plan" "workspace" {
+data "azurerm_service_plan" "workspace" {
   name                = "plan-${var.workspace_id}"
   resource_group_name = data.azurerm_resource_group.ws.name
 }
@@ -25,7 +25,7 @@ resource "azurerm_app_service" "gitea" {
   name                            = local.webapp_name
   location                        = data.azurerm_resource_group.ws.location
   resource_group_name             = data.azurerm_resource_group.ws.name
-  app_service_plan_id             = data.azurerm_app_service_plan.workspace.id
+  app_service_plan_id             = data.azurerm_service_plan.workspace.id
   https_only                      = true
   key_vault_reference_identity_id = azurerm_user_assigned_identity.gitea_id.id
 
