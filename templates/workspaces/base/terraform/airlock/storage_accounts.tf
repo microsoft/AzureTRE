@@ -97,7 +97,7 @@ resource "azurerm_storage_account" "sa_export_inprogress" {
 
 
 resource "azurerm_private_endpoint" "export_inprogress_pe" {
-  name                = "stg-ip-export-blob-${var.tre_id}"
+  name                = "pe-sa-ip-export-blob-${var.tre_id}"
   location            = var.location
   resource_group_name = var.ws_resource_group_name
   subnet_id           = var.services_subnet_id
@@ -105,12 +105,12 @@ resource "azurerm_private_endpoint" "export_inprogress_pe" {
   lifecycle { ignore_changes = [tags] }
 
   private_dns_zone_group {
-    name                 = "private-dns-zone-group-stg-export-ip"
+    name                 = "private-dns-zone-group-sa-export-ip"
     private_dns_zone_ids = [data.azurerm_private_dns_zone.blobcore.id]
   }
 
   private_service_connection {
-    name                           = "psc-stg-export-ip-${var.tre_id}"
+    name                           = "psc-sa-export-ip-${var.tre_id}"
     private_connection_resource_id = azurerm_storage_account.sa_export_inprogress.id
     is_manual_connection           = false
     subresource_names              = ["Blob"]
@@ -135,7 +135,7 @@ resource "azurerm_storage_account" "sa_export_rejected" {
 
 
 resource "azurerm_private_endpoint" "export_rejected_pe" {
-  name                = "stg-export-rej-blob-${var.tre_id}"
+  name                = "pe-sa-export-rej-blob-${var.tre_id}"
   location            = var.location
   resource_group_name = var.ws_resource_group_name
   subnet_id           = var.services_subnet_id
@@ -143,12 +143,12 @@ resource "azurerm_private_endpoint" "export_rejected_pe" {
   lifecycle { ignore_changes = [tags] }
 
   private_dns_zone_group {
-    name                 = "private-dns-zone-group-stg-export-rej"
+    name                 = "private-dns-zone-group-sa-export-rej"
     private_dns_zone_ids = [data.azurerm_private_dns_zone.blobcore.id]
   }
 
   private_service_connection {
-    name                           = "psc-stg-export-rej-${var.tre_id}"
+    name                           = "psc-sa-export-rej-${var.tre_id}"
     private_connection_resource_id = azurerm_storage_account.sa_export_rejected.id
     is_manual_connection           = false
     subresource_names              = ["Blob"]
