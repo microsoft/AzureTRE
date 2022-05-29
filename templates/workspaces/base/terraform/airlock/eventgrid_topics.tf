@@ -101,7 +101,7 @@ resource "azurerm_eventgrid_event_subscription" "export_inprogress_blob_created"
 }
 
 resource "azurerm_eventgrid_event_subscription" "export_rejected_blob_created" {
-  name  = "export_rejected_blob_created-${var.short_workspace_id}"
+  name  = "export-rejected-blob-created-${var.short_workspace_id}"
   scope = azurerm_storage_account.sa_export_rejected.id
 
   service_bus_queue_endpoint_id = data.azurerm_servicebus_queue.export_rejected_blob_created.id
