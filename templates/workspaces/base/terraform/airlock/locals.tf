@@ -7,11 +7,11 @@ locals {
   export_rejected_sys_topic_name   = "evgt-airlock-export-rejected-${local.workspace_resource_name_suffix}"
 
   # STorage AirLock APProved IMport
-  import_approved_storage_name = lower(replace("stalimapp${local.workspace_resource_name_suffix}", "-", ""))
+  import_approved_storage_name = lower(replace("stalimapp${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
   # STorage AirLock INTernal EXport
-  export_internal_storage_name = lower(replace("stalexint${local.workspace_resource_name_suffix}", "-", ""))
+  export_internal_storage_name = lower(replace("stalexint${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
   # STorage AirLock InProgress EXport
-  export_inprogress_storage_name = lower(replace("stalexip${local.workspace_resource_name_suffix}", "-", ""))
+  export_inprogress_storage_name = lower(replace("stalexip${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
   # STorage AirLock REJected EXport
-  export_rejected_storage_name = lower(replace("stalexrej${local.workspace_resource_name_suffix}", "-", ""))
+  export_rejected_storage_name = lower(replace("stalexrej${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
 }
