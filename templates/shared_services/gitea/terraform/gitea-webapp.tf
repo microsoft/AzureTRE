@@ -63,16 +63,16 @@ resource "azurerm_app_service" "gitea" {
     scm_use_main_ip_restriction          = true
     acr_use_managed_identity_credentials = true
     acr_user_managed_identity_client_id  = azurerm_user_assigned_identity.gitea_id.client_id
-
+    ftps_state                           = "Disabled"
+    websockets_enabled                   = false
+    always_on                            = true
+    min_tls_version                      = "1.2"
+    vnet_route_all_enabled               = true
 
     cors {
       allowed_origins     = []
       support_credentials = false
     }
-
-    always_on              = true
-    min_tls_version        = "1.2"
-    vnet_route_all_enabled = true
 
     ip_restriction {
       action     = "Deny"
@@ -80,8 +80,6 @@ resource "azurerm_app_service" "gitea" {
       name       = "Deny all"
       priority   = 2147483647
     }
-
-    websockets_enabled = false
   }
 
   storage_account {

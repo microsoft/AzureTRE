@@ -25,11 +25,12 @@ resource "azurerm_app_service" "guacamole" {
     http2_enabled                        = true
     acr_use_managed_identity_credentials = true
     acr_user_managed_identity_client_id  = azurerm_user_assigned_identity.guacamole_id.client_id
+    ftps_state                           = "Disabled"
+    vnet_route_all_enabled               = true
   }
 
   app_settings = {
     WEBSITES_PORT                  = "8085"
-    WEBSITE_VNET_ROUTE_ALL         = "1"
     WEBSITE_DNS_SERVER             = "168.63.129.16"
     SCM_DO_BUILD_DURING_DEPLOYMENT = "True"
 
