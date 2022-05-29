@@ -9,6 +9,10 @@ resource "azurerm_storage_account" "sa_external_import" {
   # Don't allow anonymous access (unrelated to the 'public' networking rules)
   allow_blob_public_access = false
 
+  # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
+  # This is true ONLY when Hierarchical Namespace is DISABLED
+  is_hns_enabled = false
+
   tags = {
     description = "airlock;import;external"
   }
@@ -27,6 +31,10 @@ resource "azurerm_storage_account" "sa_export_approved" {
   # Don't allow anonymous access (unrelated to the 'public' networking rules)
   allow_blob_public_access = false
 
+  # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
+  # This is true ONLY when Hierarchical Namespace is DISABLED
+  is_hns_enabled = false
+
   tags = {
     description = "airlock;export;approved"
   }
@@ -42,6 +50,10 @@ resource "azurerm_storage_account" "sa_import_in_progress" {
   account_tier             = "Standard"
   account_replication_type = "GRS"
   allow_blob_public_access = false
+
+  # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
+  # This is true ONLY when Hierarchical Namespace is DISABLED
+  is_hns_enabled = false
 
   tags = {
     description = "airlock;import;in-progress"
@@ -90,6 +102,10 @@ resource "azurerm_storage_account" "sa_import_rejected" {
   account_tier             = "Standard"
   account_replication_type = "GRS"
   allow_blob_public_access = false
+
+  # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
+  # This is true ONLY when Hierarchical Namespace is DISABLED
+  is_hns_enabled = false
 
   tags = {
     description = "airlock;import;rejected"

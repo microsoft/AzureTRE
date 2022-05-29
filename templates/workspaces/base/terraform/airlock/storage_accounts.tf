@@ -7,6 +7,10 @@ resource "azurerm_storage_account" "sa_import_approved" {
   account_replication_type        = "GRS"
   allow_nested_items_to_be_public = false
 
+  # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
+  # This is true ONLY when Hierarchical Namespace is DISABLED
+  is_hns_enabled = false
+
   tags = {
     description = "airlock;import;approved"
   }
@@ -50,6 +54,10 @@ resource "azurerm_storage_account" "sa_export_internal" {
   account_replication_type        = "GRS"
   allow_nested_items_to_be_public = false
 
+  # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
+  # This is true ONLY when Hierarchical Namespace is DISABLED
+  is_hns_enabled = false
+
   tags = {
     description = "airlock;export;internal"
   }
@@ -88,6 +96,10 @@ resource "azurerm_storage_account" "sa_export_inprogress" {
   account_replication_type        = "GRS"
   allow_nested_items_to_be_public = false
 
+  # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
+  # This is true ONLY when Hierarchical Namespace is DISABLED
+  is_hns_enabled = false
+
   tags = {
     description = "airlock;export;inprogress"
   }
@@ -125,6 +137,10 @@ resource "azurerm_storage_account" "sa_export_rejected" {
   account_tier                    = "Standard"
   account_replication_type        = "GRS"
   allow_nested_items_to_be_public = false
+
+  # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
+  # This is true ONLY when Hierarchical Namespace is DISABLED
+  is_hns_enabled = false
 
   tags = {
     description = "airlock;export;rejected"
