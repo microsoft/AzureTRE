@@ -31,6 +31,6 @@ module "aad" {
   depends_on = [
     azurerm_key_vault_access_policy.deployer,
     azurerm_key_vault_access_policy.resource_processor,
-    azurerm_private_endpoint.kvpe
+    null_resource.wait_for_dns_vault
   ]
 }
