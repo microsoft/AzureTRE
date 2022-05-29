@@ -97,7 +97,7 @@ data "template_file" "vm_config" {
     storage_account_key   = data.azurerm_storage_account.stg.primary_access_key
     http_endpoint         = data.azurerm_storage_account.stg.primary_file_endpoint
     fileshare_name        = data.azurerm_storage_share.shared_storage.name
-    nexus_proxy_url       = local.nexus_proxy_url
+    nexus_proxy_url       = local.nexus_proxy_url[var.nexus_version]
     conda_config          = local.image_ref[var.image].conda_config ? 1 : 0
   }
 }
@@ -105,14 +105,14 @@ data "template_file" "vm_config" {
 data "template_file" "pypi_sources_config" {
   template = file("${path.module}/pypi_sources_config.sh")
   vars = {
-    nexus_proxy_url = local.nexus_proxy_url
+    nexus_proxy_url = local.nexus_proxy_url[var.nexus_version]
   }
 }
 
 data "template_file" "apt_sources_config" {
   template = file("${path.module}/apt_sources_config.yml")
   vars = {
-    nexus_proxy_url = local.nexus_proxy_url
+    nexus_proxy_url = local.nexus_proxy_url[var.nexus_version]
   }
 }
 
