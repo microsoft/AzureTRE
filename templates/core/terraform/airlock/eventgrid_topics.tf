@@ -1,6 +1,6 @@
 # Event grid topics
-resource "azurerm_eventgrid_topic" "egt_update_status_topic" {
-  name                = local.egt_update_status_topic_name
+resource "azurerm_eventgrid_topic" "update_status" {
+  name                = local.update_status_topic_name
   location            = var.location
   resource_group_name = var.resource_group_name
 
@@ -9,8 +9,8 @@ resource "azurerm_eventgrid_topic" "egt_update_status_topic" {
   }
 }
 
-resource "azurerm_eventgrid_topic" "egt_status_changed_topic" {
-  name                = local.egt_status_changed_topic_name
+resource "azurerm_eventgrid_topic" "status_changed" {
+  name                = local.status_changed_topic_name
   location            = var.location
   resource_group_name = var.resource_group_name
 
@@ -20,56 +20,56 @@ resource "azurerm_eventgrid_topic" "egt_status_changed_topic" {
 }
 
 # System topic
-resource "azurerm_eventgrid_system_topic" "inprogress_import_system_topic" {
-  name                   = local.egst_inprogress_import_sys_topic_name
+resource "azurerm_eventgrid_system_topic" "import_inprogress_blob_created" {
+  name                   = local.import_inprogress_sys_topic_name
   location               = var.location
   resource_group_name    = var.resource_group_name
-  source_arm_resource_id = azurerm_storage_account.sa_in_progress_import.id
+  source_arm_resource_id = azurerm_storage_account.sa_import_in_progress.id
   topic_type             = "Microsoft.Storage.StorageAccounts"
 
   tags = {
-    Publishers = "airlock;in-progress-import-sa"
+    Publishers = "airlock;import-in-progress-sa"
   }
 
   depends_on = [
-    azurerm_storage_account.sa_in_progress_import
+    azurerm_storage_account.sa_import_in_progress
   ]
 
   lifecycle { ignore_changes = [tags] }
 }
 
 
-resource "azurerm_eventgrid_system_topic" "rejected_import_system_topic" {
-  name                   = local.egst_rejected_import_sys_topic_name
+resource "azurerm_eventgrid_system_topic" "import_rejected_blob_created" {
+  name                   = local.import_rejected_sys_topic_name
   location               = var.location
   resource_group_name    = var.resource_group_name
-  source_arm_resource_id = azurerm_storage_account.sa_rejected_import.id
+  source_arm_resource_id = azurerm_storage_account.sa_import_rejected.id
   topic_type             = "Microsoft.Storage.StorageAccounts"
 
   tags = {
-    Publishers = "airlock;rejected-import-sa"
+    Publishers = "airlock;import-rejected-sa"
   }
 
   depends_on = [
-    azurerm_storage_account.sa_rejected_import
+    azurerm_storage_account.sa_import_rejected
   ]
 
   lifecycle { ignore_changes = [tags] }
 }
 
-resource "azurerm_eventgrid_system_topic" "accepted_export_system_topic" {
-  name                   = local.egst_accepted_export_sys_topic_name
+resource "azurerm_eventgrid_system_topic" "export_approved_blob_created" {
+  name                   = local.export_approved_sys_topic_name
   location               = var.location
   resource_group_name    = var.resource_group_name
-  source_arm_resource_id = azurerm_storage_account.sa_accepted_export.id
+  source_arm_resource_id = azurerm_storage_account.sa_export_approved.id
   topic_type             = "Microsoft.Storage.StorageAccounts"
 
   tags = {
-    Publishers = "airlock;accepted-export-sa"
+    Publishers = "airlock;export-approved-sa"
   }
 
   depends_on = [
-    azurerm_storage_account.sa_accepted_export
+    azurerm_storage_account.sa_export_approved
   ]
 
   lifecycle { ignore_changes = [tags] }
@@ -77,8 +77,8 @@ resource "azurerm_eventgrid_system_topic" "accepted_export_system_topic" {
 
 
 # Custom topic (for scanning)
-resource "azurerm_eventgrid_topic" "scan_result_topic" {
-  name                = local.egt_scan_result_topic_name
+resource "azurerm_eventgrid_topic" "scan_result" {
+  name                = local.scan_result_topic_name
   location            = var.location
   resource_group_name = var.resource_group_name
 
@@ -91,38 +91,38 @@ resource "azurerm_eventgrid_topic" "scan_result_topic" {
 
 ## Subscriptions
 
-resource "azurerm_eventgrid_event_subscription" "updated-status-subscription" {
-  name  = "update-status"
-  scope = azurerm_eventgrid_topic.egt_update_status_topic.id
+resource "azurerm_eventgrid_event_subscription" "updated_status" {
+  name  = local.update_status_eventgrid_subscription_name
+  scope = azurerm_eventgrid_topic.update_status.id
 
-  service_bus_queue_endpoint_id = azurerm_servicebus_queue.update_status_queue.id
+  service_bus_queue_endpoint_id = azurerm_servicebus_queue.update_status.id
 }
 
-resource "azurerm_eventgrid_event_subscription" "status-changed-subscription" {
-  name  = "status-changed"
-  scope = azurerm_eventgrid_topic.egt_status_changed_topic.id
+resource "azurerm_eventgrid_event_subscription" "status_changed" {
+  name  = local.status_changed_eventgrid_subscription_name
+  scope = azurerm_eventgrid_topic.status_changed.id
 
-  service_bus_queue_endpoint_id = azurerm_servicebus_queue.status_changed_queue.id
+  service_bus_queue_endpoint_id = azurerm_servicebus_queue.status_changed.id
 }
 
-resource "azurerm_eventgrid_event_subscription" "inprogress-import-blob-created-subscription" {
-  name  = "in-prog-import-blob-created"
-  scope = azurerm_storage_account.sa_in_progress_import.id
+resource "azurerm_eventgrid_event_subscription" "import_inprogress_blob_created" {
+  name  = local.import_inprogress_eventgrid_subscription_name
+  scope = azurerm_storage_account.sa_import_in_progress.id
 
-  service_bus_queue_endpoint_id = azurerm_servicebus_queue.in_progress_import_blob_created_queue.id
+  service_bus_queue_endpoint_id = azurerm_servicebus_queue.import_in_progress_blob_created.id
 }
 
-resource "azurerm_eventgrid_event_subscription" "rejected-import-blob-created-subscription" {
-  name  = "rejected-import-blob-created"
-  scope = azurerm_storage_account.sa_rejected_import.id
+resource "azurerm_eventgrid_event_subscription" "import_rejected_blob_created" {
+  name  = local.import_rejected_eventgrid_subscription_name
+  scope = azurerm_storage_account.sa_import_rejected.id
 
-  service_bus_queue_endpoint_id = azurerm_servicebus_queue.rejected_import_blob_created_queue.id
+  service_bus_queue_endpoint_id = azurerm_servicebus_queue.import_rejected_blob_created.id
 }
 
-resource "azurerm_eventgrid_event_subscription" "accepted-export-blob-created-subscription" {
-  name  = "accepted-export-blob-created"
-  scope = azurerm_storage_account.sa_accepted_export.id
+resource "azurerm_eventgrid_event_subscription" "export_approved_blob_created" {
+  name  = local.export_approved_eventgrid_subscription_name
+  scope = azurerm_storage_account.sa_export_approved.id
 
-  service_bus_queue_endpoint_id = azurerm_servicebus_queue.accepted_export_blob_created_queue.id
+  service_bus_queue_endpoint_id = azurerm_servicebus_queue.export_approved_blob_created.id
 }
 

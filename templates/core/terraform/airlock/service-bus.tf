@@ -5,68 +5,68 @@ data "azurerm_servicebus_namespace" "airlock_sb" {
 
 }
 
-resource "azurerm_servicebus_queue" "update_status_queue" {
-  name         = "update_status"
+resource "azurerm_servicebus_queue" "update_status" {
+  name         = local.update_status_queue_name
   namespace_id = data.azurerm_servicebus_namespace.airlock_sb.id
 
   enable_partitioning = false
 }
 
-resource "azurerm_servicebus_queue" "status_changed_queue" {
-  name         = "status_changed"
-  namespace_id = data.azurerm_servicebus_namespace.airlock_sb.id
-
-  enable_partitioning = false
-}
-
-
-resource "azurerm_servicebus_queue" "in_progress_import_blob_created_queue" {
-  name         = "in_progress_import_blob_created"
+resource "azurerm_servicebus_queue" "status_changed" {
+  name         = local.status_changed_queue_name
   namespace_id = data.azurerm_servicebus_namespace.airlock_sb.id
 
   enable_partitioning = false
 }
 
 
-resource "azurerm_servicebus_queue" "rejected_import_blob_created_queue" {
-  name         = "rejected_import_blob_created"
+resource "azurerm_servicebus_queue" "import_in_progress_blob_created" {
+  name         = local.import_inprogress_queue_name
   namespace_id = data.azurerm_servicebus_namespace.airlock_sb.id
 
   enable_partitioning = false
 }
 
 
-resource "azurerm_servicebus_queue" "scan_result_queue" {
-  name         = "scan_result_queue"
+resource "azurerm_servicebus_queue" "import_rejected_blob_created" {
+  name         = local.import_rejected_queue_name
   namespace_id = data.azurerm_servicebus_namespace.airlock_sb.id
 
   enable_partitioning = false
 }
 
-resource "azurerm_servicebus_queue" "accepted_import_blob_created_queue" {
-  name         = "accepted_import_blob_created"
+
+resource "azurerm_servicebus_queue" "scan_result" {
+  name         = local.scan_result_queue_name
   namespace_id = data.azurerm_servicebus_namespace.airlock_sb.id
 
   enable_partitioning = false
 }
 
-resource "azurerm_servicebus_queue" "in_progress_export_blob_created_queue" {
-  name         = "inprogress_export_blob_created"
+resource "azurerm_servicebus_queue" "import_approved_blob_created" {
+  name         = local.import_approved_queue_name
   namespace_id = data.azurerm_servicebus_namespace.airlock_sb.id
 
   enable_partitioning = false
 }
 
-resource "azurerm_servicebus_queue" "rejected_export_blob_created_queue" {
-  name         = "rejected_export_blob_created"
+resource "azurerm_servicebus_queue" "export_in_progress_blob_created" {
+  name         = local.export_inprogress_queue_name
   namespace_id = data.azurerm_servicebus_namespace.airlock_sb.id
 
   enable_partitioning = false
 }
 
-# Accepted export
-resource "azurerm_servicebus_queue" "accepted_export_blob_created_queue" {
-  name         = "accepted_export_blob_created"
+resource "azurerm_servicebus_queue" "export_rejected_blob_created" {
+  name         = local.export_rejected_queue_name
+  namespace_id = data.azurerm_servicebus_namespace.airlock_sb.id
+
+  enable_partitioning = false
+}
+
+# Approved export
+resource "azurerm_servicebus_queue" "export_approved_blob_created" {
+  name         = local.export_approved_queue_name
   namespace_id = data.azurerm_servicebus_namespace.airlock_sb.id
 
   enable_partitioning = false
