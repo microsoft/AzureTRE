@@ -60,19 +60,19 @@ data "azurerm_servicebus_namespace" "airlock_sb" {
 }
 
 data "azurerm_servicebus_queue" "import_approved_blob_created" {
-  name                = "import_approved_blob_created"
+  name                = local.import_approved_queue_name
   resource_group_name = local.core_resource_group_name
   namespace_name      = "sb-${var.tre_id}"
 }
 
 data "azurerm_servicebus_queue" "export_in_progress_blob_created" {
-  name                = "export_inprogress_blob_created"
+  name                = local.export_inprogress_queue_name
   resource_group_name = local.core_resource_group_name
   namespace_name      = "sb-${var.tre_id}"
 }
 
 data "azurerm_servicebus_queue" "export_rejected_blob_created" {
-  name                = "export_rejected_blob_created"
+  name                = local.export_rejected_queue_name
   resource_group_name = local.core_resource_group_name
   namespace_name      = "sb-${var.tre_id}"
 }
