@@ -31,7 +31,7 @@ RUN JAVA_ARCHIVE=java.tar.gz && \
 
 ENV CATALINA_BASE=/usr/share/tomcat9/
 RUN TOMCAT_ARCHIVE=tomcat.tar.gz && \
-    TOMCAT_VER=`curl --silent http://mirror.vorboss.net/apache/tomcat/tomcat-9/ | grep v9 -m 1 | awk '{split($5,c,">v") ; split(c[2],d,"/") ; print d[1]}'` && \
+    TOMCAT_VER=9.0.62 && \
     wget -O "$TOMCAT_ARCHIVE" -N http://mirror.vorboss.net/apache/tomcat/tomcat-9/v${TOMCAT_VER}/bin/apache-tomcat-${TOMCAT_VER}.tar.gz && \
     tar xzf "$TOMCAT_ARCHIVE" && \
     rm -f "$TOMCAT_ARCHIVE" && \
