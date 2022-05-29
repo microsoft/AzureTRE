@@ -27,10 +27,10 @@ locals {
   export_rejected_queue_name   = "airlock-export-rejected-blob-created"
   export_approved_queue_name   = "airlock-export-approved-blob-created"
 
-  airlock_step_result_eventgrid_subscription_name    = "evgs-airlock-update-status"
-  airlock_status_changed_eventgrid_subscription_name = "evgs-airlock-status-changed"
-  import_inprogress_eventgrid_subscription_name      = "evgs-airlock-import-in-progress-blob-created"
-  import_rejected_eventgrid_subscription_name        = "evgs-airlock-import-rejected-blob-created"
-  export_approved_eventgrid_subscription_name        = "evgs-airlock-export-approved-blob-created"
+  step_result_eventgrid_subscription_name       = "evgs-airlock-update-status"
+  status_changed_eventgrid_subscription_name    = "evgs-airlock-status-changed"
+  import_inprogress_eventgrid_subscription_name = "evgs-airlock-import-in-progress-blob-created"
+  import_rejected_eventgrid_subscription_name   = "evgs-airlock-import-rejected-blob-created"
+  export_approved_eventgrid_subscription_name   = "evgs-airlock-export-approved-blob-created"
 
 }
