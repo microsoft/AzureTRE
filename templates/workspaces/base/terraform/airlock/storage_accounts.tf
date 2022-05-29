@@ -20,7 +20,7 @@ data "azurerm_private_dns_zone" "blobcore" {
 }
 
 resource "azurerm_private_endpoint" "import_approved_pe" {
-  name                = "stg-import-approved-blob-${var.tre_id}"
+  name                = "pe-sa-import-approved-blob-${var.tre_id}"
   location            = var.location
   resource_group_name = var.ws_resource_group_name
   subnet_id           = var.services_subnet_id
@@ -28,12 +28,12 @@ resource "azurerm_private_endpoint" "import_approved_pe" {
   lifecycle { ignore_changes = [tags] }
 
   private_dns_zone_group {
-    name                 = "private-dns-zone-group-stg-import-approved"
+    name                 = "private-dns-zone-group-sa-import-approved"
     private_dns_zone_ids = [data.azurerm_private_dns_zone.blobcore.id]
   }
 
   private_service_connection {
-    name                           = "psc-stg-import-approved-${var.tre_id}"
+    name                           = "psc-sa-import-approved-${var.tre_id}"
     private_connection_resource_id = azurerm_storage_account.sa_import_approved.id
     is_manual_connection           = false
     subresource_names              = ["Blob"]
@@ -59,7 +59,7 @@ resource "azurerm_storage_account" "sa_export_internal" {
 
 
 resource "azurerm_private_endpoint" "export_internal_pe" {
-  name                = "stg-export-int-blob-${var.tre_id}"
+  name                = "pe-sa-export-int-blob-${var.tre_id}"
   location            = var.location
   resource_group_name = var.ws_resource_group_name
   subnet_id           = var.services_subnet_id
@@ -67,12 +67,12 @@ resource "azurerm_private_endpoint" "export_internal_pe" {
   lifecycle { ignore_changes = [tags] }
 
   private_dns_zone_group {
-    name                 = "private-dns-zone-group-stg-export-int"
+    name                 = "private-dns-zone-group-sa-export-int"
     private_dns_zone_ids = [data.azurerm_private_dns_zone.blobcore.id]
   }
 
   private_service_connection {
-    name                           = "psc-stg-export-int-${var.tre_id}"
+    name                           = "psc-sa-export-int-${var.tre_id}"
     private_connection_resource_id = azurerm_storage_account.sa_export_internal.id
     is_manual_connection           = false
     subresource_names              = ["Blob"]
