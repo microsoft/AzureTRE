@@ -96,6 +96,10 @@ resource "azurerm_eventgrid_event_subscription" "updated_status" {
   scope = azurerm_eventgrid_topic.update_status.id
 
   service_bus_queue_endpoint_id = azurerm_servicebus_queue.update_status.id
+
+  depends_on = [
+    azurerm_eventgrid_topic.update_status
+  ]
 }
 
 resource "azurerm_eventgrid_event_subscription" "status_changed" {
@@ -103,6 +107,10 @@ resource "azurerm_eventgrid_event_subscription" "status_changed" {
   scope = azurerm_eventgrid_topic.status_changed.id
 
   service_bus_queue_endpoint_id = azurerm_servicebus_queue.status_changed.id
+
+  depends_on = [
+    azurerm_eventgrid_topic.status_changed
+  ]
 }
 
 resource "azurerm_eventgrid_event_subscription" "import_inprogress_blob_created" {
@@ -110,6 +118,10 @@ resource "azurerm_eventgrid_event_subscription" "import_inprogress_blob_created"
   scope = azurerm_storage_account.sa_import_in_progress.id
 
   service_bus_queue_endpoint_id = azurerm_servicebus_queue.import_in_progress_blob_created.id
+
+  depends_on = [
+    azurerm_eventgrid_system_topic.import_inprogress_blob_created
+  ]
 }
 
 resource "azurerm_eventgrid_event_subscription" "import_rejected_blob_created" {
@@ -117,6 +129,10 @@ resource "azurerm_eventgrid_event_subscription" "import_rejected_blob_created" {
   scope = azurerm_storage_account.sa_import_rejected.id
 
   service_bus_queue_endpoint_id = azurerm_servicebus_queue.import_rejected_blob_created.id
+
+  depends_on = [
+    azurerm_eventgrid_system_topic.import_rejected_blob_created
+  ]
 }
 
 resource "azurerm_eventgrid_event_subscription" "export_approved_blob_created" {
@@ -124,5 +140,9 @@ resource "azurerm_eventgrid_event_subscription" "export_approved_blob_created" {
   scope = azurerm_storage_account.sa_export_approved.id
 
   service_bus_queue_endpoint_id = azurerm_servicebus_queue.export_approved_blob_created.id
+
+  depends_on = [
+    azurerm_eventgrid_system_topic.export_approved_blob_created
+  ]
 }
 

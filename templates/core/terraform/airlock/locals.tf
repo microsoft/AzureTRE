@@ -29,7 +29,7 @@ locals {
 
   update_status_eventgrid_subscription_name     = "airlock-update-status"
   status_changed_eventgrid_subscription_name    = "airlock-status-changed"
-  import_inprogress_eventgrid_subscription_name = "airlock-import-in_progress-blob-created"
+  import_inprogress_eventgrid_subscription_name = "airlock-import-in-progress-blob-created"
   import_rejected_eventgrid_subscription_name   = "airlock-import-rejected-blob-created"
   export_approved_eventgrid_subscription_name   = "airlock-export-approved-blob-created"
 
