@@ -79,7 +79,7 @@ data "azurerm_servicebus_queue" "export_rejected_blob_created" {
 
 ## Subscriptions
 resource "azurerm_eventgrid_event_subscription" "import_approved_blob_created" {
-  name  = "import-approved-blob-created-${local.workspace_resource_name_suffix}"
+  name  = "import-approved-blob-created-${var.short_workspace_id}"
   scope = azurerm_storage_account.sa_import_approved.id
 
   service_bus_queue_endpoint_id = data.azurerm_servicebus_queue.import_approved_blob_created.id
@@ -90,7 +90,7 @@ resource "azurerm_eventgrid_event_subscription" "import_approved_blob_created" {
 }
 
 resource "azurerm_eventgrid_event_subscription" "export_inprogress_blob_created" {
-  name  = "export-inprogress-blob-created-${local.workspace_resource_name_suffix}"
+  name  = "export-inprogress-blob-created-${var.short_workspace_id}"
   scope = azurerm_storage_account.sa_export_inprogress.id
 
   service_bus_queue_endpoint_id = data.azurerm_servicebus_queue.export_in_progress_blob_created.id
@@ -101,7 +101,7 @@ resource "azurerm_eventgrid_event_subscription" "export_inprogress_blob_created"
 }
 
 resource "azurerm_eventgrid_event_subscription" "export_rejected_blob_created" {
-  name  = "export_rejected_blob_created-${local.workspace_resource_name_suffix}"
+  name  = "export_rejected_blob_created-${var.short_workspace_id}"
   scope = azurerm_storage_account.sa_export_rejected.id
 
   service_bus_queue_endpoint_id = data.azurerm_servicebus_queue.export_rejected_blob_created.id

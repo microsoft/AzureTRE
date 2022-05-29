@@ -24,7 +24,7 @@ data "azurerm_private_dns_zone" "blobcore" {
 }
 
 resource "azurerm_private_endpoint" "import_approved_pe" {
-  name                = "pe-sa-import-approved-blob-${var.tre_id}"
+  name                = "pe-sa-import-approved-blob-${var.short_workspace_id}"
   location            = var.location
   resource_group_name = var.ws_resource_group_name
   subnet_id           = var.services_subnet_id
@@ -37,7 +37,7 @@ resource "azurerm_private_endpoint" "import_approved_pe" {
   }
 
   private_service_connection {
-    name                           = "psc-sa-import-approved-${var.tre_id}"
+    name                           = "psc-sa-import-approved-${var.short_workspace_id}"
     private_connection_resource_id = azurerm_storage_account.sa_import_approved.id
     is_manual_connection           = false
     subresource_names              = ["Blob"]
@@ -67,7 +67,7 @@ resource "azurerm_storage_account" "sa_export_internal" {
 
 
 resource "azurerm_private_endpoint" "export_internal_pe" {
-  name                = "pe-sa-export-int-blob-${var.tre_id}"
+  name                = "pe-sa-export-int-blob-${var.short_workspace_id}"
   location            = var.location
   resource_group_name = var.ws_resource_group_name
   subnet_id           = var.services_subnet_id
@@ -80,7 +80,7 @@ resource "azurerm_private_endpoint" "export_internal_pe" {
   }
 
   private_service_connection {
-    name                           = "psc-sa-export-int-${var.tre_id}"
+    name                           = "psc-sa-export-int-${var.short_workspace_id}"
     private_connection_resource_id = azurerm_storage_account.sa_export_internal.id
     is_manual_connection           = false
     subresource_names              = ["Blob"]
@@ -109,7 +109,7 @@ resource "azurerm_storage_account" "sa_export_inprogress" {
 
 
 resource "azurerm_private_endpoint" "export_inprogress_pe" {
-  name                = "pe-sa-ip-export-blob-${var.tre_id}"
+  name                = "pe-sa-ip-export-blob-${var.short_workspace_id}"
   location            = var.location
   resource_group_name = var.ws_resource_group_name
   subnet_id           = var.services_subnet_id
@@ -122,7 +122,7 @@ resource "azurerm_private_endpoint" "export_inprogress_pe" {
   }
 
   private_service_connection {
-    name                           = "psc-sa-export-ip-${var.tre_id}"
+    name                           = "psc-sa-export-ip-${var.short_workspace_id}"
     private_connection_resource_id = azurerm_storage_account.sa_export_inprogress.id
     is_manual_connection           = false
     subresource_names              = ["Blob"]
@@ -151,7 +151,7 @@ resource "azurerm_storage_account" "sa_export_rejected" {
 
 
 resource "azurerm_private_endpoint" "export_rejected_pe" {
-  name                = "pe-sa-export-rej-blob-${var.tre_id}"
+  name                = "pe-sa-export-rej-blob-${var.short_workspace_id}"
   location            = var.location
   resource_group_name = var.ws_resource_group_name
   subnet_id           = var.services_subnet_id
@@ -164,7 +164,7 @@ resource "azurerm_private_endpoint" "export_rejected_pe" {
   }
 
   private_service_connection {
-    name                           = "psc-sa-export-rej-${var.tre_id}"
+    name                           = "psc-sa-export-rej-${var.short_workspace_id}"
     private_connection_resource_id = azurerm_storage_account.sa_export_rejected.id
     is_manual_connection           = false
     subresource_names              = ["Blob"]
