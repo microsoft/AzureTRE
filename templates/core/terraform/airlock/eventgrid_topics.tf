@@ -1,6 +1,6 @@
 # Event grid topics
-resource "azurerm_eventgrid_topic" "update_status" {
-  name                = local.update_status_topic_name
+resource "azurerm_eventgrid_topic" "step_result" {
+  name                = local.step_result_topic_name
   location            = var.location
   resource_group_name = var.resource_group_name
 
@@ -91,14 +91,14 @@ resource "azurerm_eventgrid_topic" "scan_result" {
 
 ## Subscriptions
 
-resource "azurerm_eventgrid_event_subscription" "updated_status" {
-  name  = local.update_status_eventgrid_subscription_name
-  scope = azurerm_eventgrid_topic.update_status.id
+resource "azurerm_eventgrid_event_subscription" "step_result" {
+  name  = local.step_result_eventgrid_subscription_name
+  scope = azurerm_eventgrid_topic.step_result.id
 
-  service_bus_queue_endpoint_id = azurerm_servicebus_queue.update_status.id
+  service_bus_queue_endpoint_id = azurerm_servicebus_queue.step_result.id
 
   depends_on = [
-    azurerm_eventgrid_topic.update_status
+    azurerm_eventgrid_topic.step_result
   ]
 }
 

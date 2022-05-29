@@ -5,8 +5,8 @@ data "azurerm_servicebus_namespace" "airlock_sb" {
 
 }
 
-resource "azurerm_servicebus_queue" "update_status" {
-  name         = local.update_status_queue_name
+resource "azurerm_servicebus_queue" "step_result" {
+  name         = local.step_result_queue_name
   namespace_id = data.azurerm_servicebus_namespace.airlock_sb.id
 
   enable_partitioning = false
