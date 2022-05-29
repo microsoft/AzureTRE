@@ -22,7 +22,6 @@ RUN apt-get update && apt-get install wget curl openssh-server apt-transport-htt
     apt-get autoclean && apt-get autoremove && rm -rf /var/lib/apt/lists/*
 
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
-# ARG JAVA_ARCHIVE=java.tar.gz
 RUN JAVA_ARCHIVE=java.tar.gz && \
     wget -O "$JAVA_ARCHIVE" https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.15%2B10/OpenJDK11U-jre_x64_linux_hotspot_11.0.15_10.tar.gz && \
     mkdir -p "$JAVA_HOME" && \
@@ -31,7 +30,6 @@ RUN JAVA_ARCHIVE=java.tar.gz && \
     export PATH="$JAVA_HOME"/bin:$PATH && java -version
 
 ENV CATALINA_BASE=/usr/share/tomcat9/
-# ARG TOMCAT_ARCHIVE=tomcat.tar.gz
 RUN TOMCAT_ARCHIVE=tomcat.tar.gz && \
     TOMCAT_VER=`curl --silent http://mirror.vorboss.net/apache/tomcat/tomcat-9/ | grep v9 -m 1 | awk '{split($5,c,">v") ; split(c[2],d,"/") ; print d[1]}'` && \
     wget -O "$TOMCAT_ARCHIVE" -N http://mirror.vorboss.net/apache/tomcat/tomcat-9/v${TOMCAT_VER}/bin/apache-tomcat-${TOMCAT_VER}.tar.gz && \
@@ -47,7 +45,6 @@ RUN mkdir /guac-transfer
 
 COPY ./docker/guacamole/ ${GUACAMOLE_HOME}
 
-# ARG S6_ARCHIVE=s6-overlay.tar.gz
 RUN S6_ARCHIVE=s6-overlay.tar.gz && \
     wget -O "$S6_ARCHIVE" https://github.com/just-containers/s6-overlay/releases/download/v2.2.0.3/s6-overlay-amd64.tar.gz && \
     tar xzvf "$S6_ARCHIVE" -C / && \
@@ -65,7 +62,6 @@ RUN wget -O ${GUACAMOLE_HOME}/guacamole.war 'http://apache.org/dyn/closer.cgi?ac
 
 
 ENV OAUTH2_PROXY_HOME=/etc/oauth2-proxy
-# ARG OAUTH2_PROXY_ARCHIVE=oauth2-proxy.tar.gz
 RUN OAUTH2_PROXY_ARCHIVE=oauth2-proxy.tar.gz && \
     wget -O "$OAUTH2_PROXY_ARCHIVE" 'https://github.com/oauth2-proxy/oauth2-proxy/releases/download/v7.2.1/oauth2-proxy-v7.2.1.linux-amd64.tar.gz' && \
     mkdir -p "$OAUTH2_PROXY_HOME" && \
