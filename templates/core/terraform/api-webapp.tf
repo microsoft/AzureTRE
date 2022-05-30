@@ -12,7 +12,7 @@ resource "azurerm_app_service_plan" "core" {
   location            = azurerm_resource_group.core.location
   reserved            = true
   kind                = "linux"
-
+  tags                = local.tre_core_tags
   lifecycle { ignore_changes = [tags] }
 
   sku {
@@ -29,6 +29,7 @@ resource "azurerm_app_service" "api" {
   app_service_plan_id             = azurerm_app_service_plan.core.id
   https_only                      = true
   key_vault_reference_identity_id = azurerm_user_assigned_identity.id.id
+  tags                            = local.tre_core_tags
 
   app_settings = {
     "APPLICATIONINSIGHTS_CONNECTION_STRING"      = module.azure_monitor.app_insights_connection_string
@@ -107,6 +108,7 @@ resource "azurerm_private_endpoint" "api_private_endpoint" {
   resource_group_name = azurerm_resource_group.core.name
   location            = azurerm_resource_group.core.location
   subnet_id           = module.network.shared_subnet_id
+  tags                = local.tre_core_tags
 
   lifecycle { ignore_changes = [tags] }
 
