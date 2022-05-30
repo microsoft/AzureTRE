@@ -1,5 +1,5 @@
 import asyncio
-from typing import Optional
+from typing import Optional, Tuple
 from contextlib import asynccontextmanager
 from httpx import AsyncClient, Timeout
 import logging
@@ -220,7 +220,7 @@ async def get_identifier_uri(client, workspace_id: str, auth_headers) -> str:
     return f"api://{workspace['properties']['scope_id'].lstrip('api://')}"
 
 
-async def get_workspace_owner_token(admin_token, workspace_id, verify) -> Optional[str]:
+async def get_workspace_auth_details(admin_token, workspace_id, verify) -> Tuple[str, str]:
     async with AsyncClient(verify=verify) as client:
         auth_headers = get_auth_header(admin_token)
         scope_uri = await get_identifier_uri(client, workspace_id, auth_headers)
@@ -246,4 +246,4 @@ async def get_workspace_owner_token(admin_token, workspace_id, verify) -> Option
 
         token = responseJson["access_token"]
 
-        return token if (response.status_code == status.HTTP_200_OK) else None
+        return token, scope_uri
