@@ -1,0 +1,236 @@
+{
+  "australiacentral": {
+    "webApp": ["13.75.218.172/32"],
+    "sccRelay": ["13.75.164.249/32"],
+    "controlPlaneNat": ["13.70.105.50/32"],
+    "extendedInfra": ["20.53.145.128/28"]
+  },
+  "australiacentral2": {
+    "webApp": ["13.75.218.172/32"],
+    "sccRelay": ["13.75.164.249/32"],
+    "controlPlaneNat": ["13.70.105.50/32"],
+    "extendedInfra": ["20.53.145.128/28"]
+  },
+  "australiaeast": {
+    "webApp": ["13.75.218.172/32"],
+    "sccRelay": ["13.75.164.249/32"],
+    "controlPlaneNat": ["13.70.105.50/32"],
+    "extendedInfra": ["20.53.145.128/28"]
+  },
+  "australiasoutheast": {
+    "webApp": ["13.75.218.172/32"],
+    "sccRelay": ["13.75.164.249/32"],
+    "controlPlaneNat": ["13.70.105.50/32"],
+    "extendedInfra": ["20.53.145.128/28"]
+  },
+  "brazilsouth": {
+    "webApp": ["104.41.54.118/32"],
+    "sccRelay": ["23.97.106.142/32"],
+    "controlPlaneNat": ["191.232.53.223/32"],
+    "extendedInfra": ["20.197.222.144/28"]
+  },
+  "canadacentral": {
+    "webApp": ["13.71.184.74/32"],
+    "sccRelay": ["13.88.249.244/32"],
+    "controlPlaneNat": ["40.85.223.25/32"],
+    "extendedInfra": ["52.139.4.160/28"]
+  },
+  "canadaeast": {
+    "webApp": ["13.71.184.74/32"],
+    "sccRelay": ["13.88.249.244/32"],
+    "controlPlaneNat": ["40.85.223.25/32"],
+    "extendedInfra": ["52.139.4.160/28"]
+  },
+  "centralindia": {
+    "webApp": ["104.211.89.81/32"],
+    "sccRelay": ["52.172.133.58/32"],
+    "controlPlaneNat": ["104.211.101.14/32"],
+    "extendedInfra": ["20.193.246.208/28"]
+  },
+  "centralus": {
+    "webApp": ["40.70.58.221/32", "20.37.156.209/32"],
+    "sccRelay": ["13.86.58.215/32", "52.247.0.200/32"],
+    "controlPlaneNat": ["23.101.152.95/32", "20.37.156.208/32"],
+    "extendedInfra": ["20.57.106.0/28"]
+  },
+  "chinaeast2": {
+    "webApp": ["52.130.1.64/32"],
+    "sccRelay": ["52.130.1.65/32"],
+    "controlPlaneNat": ["52.130.1.65/32"],
+    "extendedInfra": []
+  },
+  "chinanorth2": {
+    "webApp": ["52.130.16.113/32"],
+    "sccRelay": ["52.130.16.112/32"],
+    "controlPlaneNat": ["52.130.16.112/32"],
+    "extendedInfra": []
+  },
+  "eastasia": {
+    "webApp": ["52.187.145.107/32"],
+    "sccRelay": ["102.37.41.3/32"],
+    "controlPlaneNat": ["52.187.0.85/32"],
+    "extendedInfra": ["20.195.104.64/28"]
+  },
+  "eastus": {
+    "webApp": ["40.70.58.221/32", "20.42.4.209/32", "20.42.4.211/32"],
+    "sccRelay": ["52.247.0.200/32", "52.146.50.16/32"],
+    "controlPlaneNat": ["23.101.152.95/32", "20.42.4.208/32", "20.42.4.210/32"],
+    "extendedInfra": ["20.57.106.0/28"]
+  },
+  "eastus2": {
+    "webApp": ["40.70.58.221/32", "20.41.4.113/32"],
+    "sccRelay": ["52.247.0.200/32", "20.186.83.56/32"],
+    "controlPlaneNat": ["23.101.152.95/32", "20.41.4.112/32"],
+    "extendedInfra": ["20.57.106.0/28"]
+  },
+  "francecentral": {
+    "webApp": ["40.89.168.225/32"],
+    "sccRelay": ["51.103.18.111/32"],
+    "controlPlaneNat": ["40.89.171.101/32"],
+    "extendedInfra": ["20.74.69.128/28"]
+  },
+  "germanywestcentral": {
+    "webApp": ["20.52.93.41/32"],
+    "sccRelay": ["20.52.93.40/32"],
+    "controlPlaneNat": ["20.52.93.42/32"],
+    "extendedInfra": ["20.52.93.40/29"]
+  },
+  "japaneast": {
+    "webApp": ["52.246.160.72/32"],
+    "sccRelay": ["20.46.121.76/32"],
+    "controlPlaneNat": ["13.78.19.235/32"],
+    "extendedInfra": ["20.78.226.176/28"]
+  },
+  "japanwest": {
+    "webApp": ["52.246.160.72/32"],
+    "sccRelay": ["20.46.121.76/32"],
+    "controlPlaneNat": ["13.78.19.235/32"],
+    "extendedInfra": ["20.78.226.176/28"]
+  },
+  "koreacentral": {
+    "webApp": ["52.141.22.164/32"],
+    "sccRelay": ["20.194.4.102/32"],
+    "controlPlaneNat": ["52.141.6.181/32"],
+    "extendedInfra": ["20.194.107.48/28"]
+  },
+  "northcentralus": {
+    "webApp": ["40.70.58.221/32", "40.80.188.0/32"],
+    "sccRelay": ["52.247.0.200/32", "23.100.226.13/32"],
+    "controlPlaneNat": ["23.101.152.95/32","40.80.188.1/32"],
+    "extendedInfra": ["20.57.106.0/28"]
+  },
+  "northeurope": {
+    "webApp": ["52.232.19.246/32", "20.38.84.81/32"],
+    "sccRelay": ["23.97.201.41/32", "40.127.147.196/32"],
+    "controlPlaneNat": ["23.100.0.135/32", "20.38.84.80/32"],
+    "extendedInfra": ["20.73.215.48/28"]
+  },
+  "norwayeast": {
+    "webApp": ["51.120.40.120/32"],
+    "sccRelay": ["51.120.40.122/32"],
+    "controlPlaneNat": ["51.120.40.121/32"],
+    "extendedInfra": ["51.13.86.224/28"]
+  },
+  "southafricanorth": {
+    "webApp": ["102.133.224.24/32"],
+    "sccRelay": ["102.37.41.3/32"],
+    "controlPlaneNat": ["40.127.5.82/32"],
+    "extendedInfra": ["102.133.192.48/28"]
+  },
+  "southcentralus": {
+    "webApp": ["40.118.174.12/32", "40.119.9.208/32"],
+    "sccRelay": ["40.86.167.110/32"],
+    "controlPlaneNat": ["40.83.178.242/32", "40.119.9.209/32"],
+    "extendedInfra": ["13.91.84.96/28"]
+  },
+  "southindia": {
+    "webApp": ["104.211.89.81/32"],
+    "sccRelay": ["52.172.133.58/32"],
+    "controlPlaneNat": ["104.211.101.14/32"],
+    "extendedInfra": ["20.193.246.208/28"]
+  },
+  "southeastasia": {
+    "webApp": ["52.187.145.107/32"],
+    "sccRelay": ["52.230.27.216/32"],
+    "controlPlaneNat": ["52.187.0.85/32"],
+    "extendedInfra": ["20.195.104.64/28"]
+  },
+  "swedencentral": {
+    "webApp": ["51.12.41.16/32"],
+    "sccRelay": ["51.12.41.18/32"],
+    "controlPlaneNat": ["51.12.41.17/32"],
+    "extendedInfra": ["20.91.164.16/28"]
+  },
+  "switzerlandnorth": {
+    "webApp": ["51.107.48.120/32"],
+    "sccRelay": ["51.107.203.195/32"],
+    "controlPlaneNat": ["51.107.48.121/32"],
+    "extendedInfra": ["51.103.172.176/28"]
+  },
+  "switzerlandwest": {
+    "webApp": ["51.107.144.68/32"],
+    "sccRelay": ["51.107.144.70/32"],
+    "controlPlaneNat": ["51.107.144.69/32"],
+    "extendedInfra": ["51.107.233.80/28"]
+  },
+  "uaenorth": {
+    "webApp": ["40.123.212.253/32"],
+    "sccRelay": ["40.123.225.135/32"],
+    "controlPlaneNat": ["40.123.218.63/32"],
+    "extendedInfra": ["40.120.89.0/28"]
+  },
+  "uksouth": {
+    "webApp": ["51.140.204.4/32"],
+    "sccRelay": ["51.141.103.193/32"],
+    "controlPlaneNat": ["51.140.203.27/32"],
+    "extendedInfra": ["51.141.64.128/28"]
+  },
+  "ukwest": {
+    "webApp": ["51.140.204.4/32"],
+    "sccRelay": ["51.141.103.193/32"],
+    "controlPlaneNat": ["51.140.203.27/32"],
+    "extendedInfra": ["51.141.64.128/28"]
+  },
+  "usgovarizona": {
+    "webApp": ["52.244.37.5/32"],
+    "sccRelay": ["52.244.38.231/32"],
+    "controlPlaneNat": ["20.140.48.120/32"],
+    "extendedInfra": []
+  },
+  "usgovvirginia": {
+    "webApp": ["52.227.227.164/32"],
+    "sccRelay": ["52.227.226.255/32"],
+    "controlPlaneNat": ["52.127.49.73/32"],
+    "extendedInfra": []
+  },
+  "westcentralus": {
+    "webApp": ["52.150.136.68/32"],
+    "sccRelay": ["52.150.136.70/32"],
+    "controlPlaneNat": ["52.150.136.69/32"],
+    "extendedInfra": ["52.161.34.0/28"]
+  },
+  "westeurope": {
+    "webApp": ["52.232.19.246/32", "40.74.30.80/32"],
+    "sccRelay": ["23.97.201.41/32", "51.138.96.158/32"],
+    "controlPlaneNat": ["23.100.0.135/32", "40.74.30.81/32"],
+    "extendedInfra": ["20.73.215.48/28"]
+  },
+  "westindia": {
+    "webApp": ["104.211.89.81/32"],
+    "sccRelay": ["52.172.133.58/32"],
+    "controlPlaneNat": ["104.211.101.14/32"],
+    "extendedInfra": ["20.193.246.208/28"]
+  },
+  "westus": {
+    "webApp": ["40.118.174.12/32", "20.42.129.160/32"],
+    "sccRelay": ["40.86.167.110/32"],
+    "controlPlaneNat": ["40.83.178.242/32", "20.42.129.161/32"],
+    "extendedInfra": ["13.91.84.96/28"]
+  },
+  "westus2": {
+    "webApp": ["40.118.174.12/32"],
+    "sccRelay": ["40.86.167.110/32"],
+    "controlPlaneNat": ["40.83.178.242/32"],
+    "extendedInfra": ["13.91.84.96/28"]
+  }
+}

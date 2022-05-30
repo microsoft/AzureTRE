@@ -44,26 +44,8 @@ var subnetDetails = [
   }
 ]
 
-// TO-BE-UPDATED based on https://docs.microsoft.com/en-us/azure/databricks/administration-guide/cloud-configurations/azure/udr#control-plane-nat-and-webapp-ip-addresses
-var mapLocationUrlConfig = {
-  westeurope: {
-    webApp: [
-      '52.232.19.246/32'
-      '40.74.30.80/32'
-    ]
-    sccRelay: [
-      '23.97.201.41/32'
-      '51.138.96.158/32'
-    ]
-    controlPlaneNat: [
-      '23.100.0.135/32'
-      '40.74.30.81/32'
-    ]
-    extendedInfra: [
-      '20.73.215.48/28'
-    ]
-  }
-}
+// Based on https://docs.microsoft.com/en-us/azure/databricks/administration-guide/cloud-configurations/azure/udr#control-plane-nat-and-webapp-ip-addresses
+var mapLocationUrlConfig = json(loadTextContent('./databricks-udr.json'))
 
 resource dbNetworkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2021-02-01' = {
   name: networkSecurityGroupName
