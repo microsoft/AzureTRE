@@ -80,6 +80,10 @@ jq -r '
         {
             "path": "ui_api_key",
             "env_var": "UI_API_KEY"
+        },
+        {
+            "path": "ui_host_name",
+            "env_var": "UI_HOST_NAME"
         }
     ]
         as $env_vars_to_extract

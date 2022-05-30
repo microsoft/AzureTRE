@@ -558,7 +558,7 @@ JSON
 
   swaggerUIApp=$(jq -c . << JSON
 {
-    "displayName": "${appName} Swagger UI",
+    "displayName": "${appName} Client Apps",
     "signInAudience": "AzureADMyOrg",
     "requiredResourceAccess": ${swaggerRequiredResourceAccess},
     "spa": {
@@ -571,7 +571,7 @@ JSON
 )
 
   # Is the Swagger UI app already registered?
-  existingSwaggerUIApp=$(get_existing_app --name "${appName} Swagger UI")
+  existingSwaggerUIApp=$(get_existing_app --name "${appName} Client Apps")
 
   if [[ -n ${existingSwaggerUIApp} ]]; then
       swaggerUIAppObjectId=$(echo "${existingSwaggerUIApp}" | jq -r '.objectId')
