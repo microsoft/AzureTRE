@@ -49,7 +49,7 @@ resource "random_password" "password" {
 resource "azurerm_key_vault_secret" "resource_processor_vmss_password" {
   name         = "resource-processor-vmss-password"
   value        = random_password.password.result
-  key_vault_id = data.azurerm_key_vault.kv.id
+  key_vault_id = var.key_vault_id
 }
 
 resource "azurerm_user_assigned_identity" "vmss_msi" {
@@ -172,7 +172,7 @@ resource "azurerm_role_assignment" "subscription_contributor" {
 }
 
 resource "azurerm_key_vault_access_policy" "resource_processor" {
-  key_vault_id = data.azurerm_key_vault.kv.id
+  key_vault_id = var.key_vault_id
   tenant_id    = azurerm_user_assigned_identity.vmss_msi.tenant_id
   object_id    = azurerm_user_assigned_identity.vmss_msi.principal_id
 
