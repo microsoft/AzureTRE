@@ -71,8 +71,6 @@ RUN OAUTH2_PROXY_ARCHIVE=oauth2-proxy.tar.gz && \
 
 COPY ./docker/index.jsp "$CATALINA_BASE"/webapps/ROOT/index.jsp
 
-USER guacd
-
 ENTRYPOINT [ "/init" ]
 
 EXPOSE 80 2222
