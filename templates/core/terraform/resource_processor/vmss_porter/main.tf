@@ -72,7 +72,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "vm_linux" {
   custom_data                     = data.template_cloudinit_config.config.rendered
   encryption_at_host_enabled      = false
   upgrade_mode                    = "Automatic"
-  tags                = local.tre_core_tags
+  tags                            = local.tre_core_tags
 
   extension {
     auto_upgrade_minor_version = false
