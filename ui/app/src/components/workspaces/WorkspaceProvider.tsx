@@ -87,7 +87,10 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
           <WorkspaceHeader />
           <Stack horizontal className='tre-body-inner'>
             <Stack.Item className='tre-left-nav'>
-              <WorkspaceLeftNav workspaceServices={workspaceServices} setWorkspaceService={(ws: WorkspaceService) => setSelectedWorkspaceService(ws)} />
+              <WorkspaceLeftNav 
+                workspaceServices={workspaceServices} 
+                setWorkspaceService={(ws: WorkspaceService) => setSelectedWorkspaceService(ws)} 
+                addWorkspaceService={(ws: WorkspaceService) => addWorkspaceService(ws)} />
             </Stack.Item><Stack.Item className='tre-body-content'>
               <Stack>
                 <Stack.Item grow={100}>

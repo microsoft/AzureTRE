@@ -7,6 +7,7 @@ import { CreateUpdateResource } from '../shared/CreateUpdateResource/CreateUpdat
 import { ResourceType } from '../../models/resourceType';
 import { useBoolean } from '@fluentui/react-hooks';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
+import { Resource } from '../../models/resource';
 
 // TODO:
 // - we lose the selected styling when navigating into a user resource. This may not matter as the user resource page might die away.
@@ -14,7 +15,8 @@ import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 
 interface WorkspaceLeftNavProps {
   workspaceServices: Array<WorkspaceService>,
-  setWorkspaceService: (workspaceService: WorkspaceService) => void
+  setWorkspaceService: (workspaceService: WorkspaceService) => void,
+  addWorkspaceService: (w: WorkspaceService) => void
 }
 
 export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = (props:WorkspaceLeftNavProps) => {
@@ -90,6 +92,7 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
         onClose={closeCreatePanel}
         resourceType={ResourceType.WorkspaceService}
         parentResource={workspaceCtx.workspace}
+        onAddResource={(r: Resource) => props.addWorkspaceService(r as WorkspaceService)}
       />
     </>
   );
