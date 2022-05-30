@@ -1,5 +1,6 @@
 data "azurerm_client_config" "deployer" {}
 
+# See https://microsoft.github.io/AzureTRE/tre-developers/letsencrypt/
 resource "azurerm_storage_account" "staticweb" {
   name                      = local.staticweb_storage_name
   resource_group_name       = var.resource_group_name
@@ -48,7 +49,7 @@ resource "azurerm_private_endpoint" "webpe" {
   }
 
   private_service_connection {
-    name                           = "psc-web--${local.staticweb_storage_name}"
+    name                           = "psc-web-${local.staticweb_storage_name}"
     private_connection_resource_id = azurerm_storage_account.staticweb.id
     is_manual_connection           = false
     subresource_names              = ["web"]

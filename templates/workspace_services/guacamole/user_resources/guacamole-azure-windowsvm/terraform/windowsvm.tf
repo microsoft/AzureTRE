@@ -68,7 +68,7 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
 }
 
 resource "azurerm_virtual_machine_extension" "config_script" {
-  name                 = "${azurerm_windows_virtual_machine.windowsvm.name}-vmextention"
+  name                 = "${azurerm_windows_virtual_machine.windowsvm.name}-vmextension"
   virtual_machine_id   = azurerm_windows_virtual_machine.windowsvm.id
   publisher            = "Microsoft.Compute"
   type                 = "CustomScriptExtension"
@@ -90,7 +90,7 @@ resource "azurerm_key_vault_secret" "windowsvm_password" {
 data "template_file" "vm_config" {
   template = file("${path.module}/vm_config.ps1")
   vars = {
-    nexus_proxy_url     = local.nexus_proxy_url
+    nexus_proxy_url     = local.nexus_proxy_url[var.nexus_version]
     SharedStorageAccess = tobool(var.shared_storage_access) ? 1 : 0
     StorageAccountName  = data.azurerm_storage_account.stg.name
     StorageAccountKey   = data.azurerm_storage_account.stg.primary_access_key

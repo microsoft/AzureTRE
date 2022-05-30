@@ -60,11 +60,17 @@ resource "azurerm_user_assigned_identity" "vmss_msi" {
 }
 
 resource "azurerm_linux_virtual_machine_scale_set" "vm_linux" {
-
-  name                = "vmss-rp-porter-${var.tre_id}"
-  location            = var.location
-  resource_group_name = var.resource_group_name
-  upgrade_mode        = "Automatic"
+  name                            = "vmss-rp-porter-${var.tre_id}"
+  location                        = var.location
+  resource_group_name             = var.resource_group_name
+  sku                             = "Standard_B2s"
+  instances                       = 1
+  admin_username                  = "adminuser"
+  disable_password_authentication = false
+  admin_password                  = random_password.password.result
+  custom_data                     = data.template_cloudinit_config.config.rendered
+  encryption_at_host_enabled      = false
+  upgrade_mode                    = "Automatic"
 
   extension {
     auto_upgrade_minor_version = false
@@ -96,22 +102,10 @@ resource "azurerm_linux_virtual_machine_scale_set" "vm_linux" {
 
   }
 
-  encryption_at_host_enabled = false
-
   identity {
     type         = "UserAssigned"
     identity_ids = [azurerm_user_assigned_identity.vmss_msi.id]
   }
-
-
-  sku       = "Standard_B2s"
-  instances = 1
-
-  admin_username                  = "adminuser"
-  disable_password_authentication = false
-
-  admin_password = random_password.password.result
-  custom_data    = data.template_cloudinit_config.config.rendered
 
   source_image_reference {
     publisher = "Canonical"
@@ -136,7 +130,26 @@ resource "azurerm_linux_virtual_machine_scale_set" "vm_linux" {
     }
   }
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle {
+    ignore_changes = [tags]
+  }
+}
+
+# CustomData (e.g. image tag to run) changes will only take affect after vmss instances are reimaged.
+# https://docs.microsoft.com/en-us/azure/virtual-machines/custom-data#can-i-update-custom-data-after-the-vm-has-been-created
+resource "null_resource" "vm_linux_reimage" {
+  provisioner "local-exec" {
+    command = "az vmss reimage --name ${azurerm_linux_virtual_machine_scale_set.vm_linux.name} --resource-group ${var.resource_group_name}"
+  }
+
+  triggers = {
+    # although we mainly want to catch image tag changes, this covers any custom data change.
+    custom_data_hash = sha256(data.template_cloudinit_config.config.rendered)
+  }
+
+  depends_on = [
+    azurerm_linux_virtual_machine_scale_set.vm_linux
+  ]
 }
 
 resource "azurerm_role_assignment" "vmss_acr_pull" {
@@ -160,7 +173,14 @@ resource "azurerm_role_assignment" "vmss_sb_receiver" {
 resource "azurerm_role_assignment" "subscription_administrator" {
   # Below is a workaround TF replacing this resource when using the data object.
   scope                = var.subscription_id != "" ? "/subscriptions/${var.subscription_id}" : data.azurerm_subscription.current.id
-  role_definition_name = "Owner"
+  role_definition_name = "User Access Administrator"
+  principal_id         = azurerm_user_assigned_identity.vmss_msi.principal_id
+}
+
+resource "azurerm_role_assignment" "subscription_contributor" {
+  # Below is a workaround TF replacing this resource when using the data object.
+  scope                = var.subscription_id != "" ? "/subscriptions/${var.subscription_id}" : data.azurerm_subscription.current.id
+  role_definition_name = "Contributor"
   principal_id         = azurerm_user_assigned_identity.vmss_msi.principal_id
 }
 
@@ -169,5 +189,6 @@ resource "azurerm_key_vault_access_policy" "resource_processor" {
   tenant_id    = azurerm_user_assigned_identity.vmss_msi.tenant_id
   object_id    = azurerm_user_assigned_identity.vmss_msi.principal_id
 
-  secret_permissions = ["Get", "List", "Set", "Delete", "Purge", "Recover"]
+  secret_permissions      = ["Get", "List", "Set", "Delete", "Purge", "Recover"]
+  certificate_permissions = ["Get", "Recover", "Import", "Delete", "Purge"]
 }
