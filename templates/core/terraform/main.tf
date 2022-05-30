@@ -116,3 +116,9 @@ module "resource_processor_vmss_porter" {
     azurerm_key_vault_access_policy.deployer
   ]
 }
+
+resource "azurerm_static_site" "tre-ui" {
+  name                = "${var.tre_id}-ui"
+  resource_group_name = azurerm_resource_group.core.name
+  location            = var.location
+}
