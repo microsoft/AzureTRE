@@ -1,8 +1,4 @@
 #!/usr/bin/with-contenv sh
-set -o errexit
-set -o pipefail
-set -o nounset
-
 set -x
 echo >&2 "starting oauth2-proxy"
 

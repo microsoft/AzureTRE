@@ -60,7 +60,6 @@ COPY --from=client_build "/target/guacamole-auth-tre-${GUACAMOLE_AZURE_VERSION}.
 
 RUN wget -O "${GUACAMOLE_HOME}/guacamole.war" "http://apache.org/dyn/closer.cgi?action=download&filename=guacamole/1.4.0/binary/guacamole-1.4.0.war" --progress=dot:giga
 
-
 ENV OAUTH2_PROXY_HOME=/etc/oauth2-proxy
 RUN OAUTH2_PROXY_ARCHIVE=oauth2-proxy.tar.gz && \
     wget -O "$OAUTH2_PROXY_ARCHIVE" "https://github.com/oauth2-proxy/oauth2-proxy/releases/download/v7.2.1/oauth2-proxy-v7.2.1.linux-amd64.tar.gz" --progress=dot:giga && \
