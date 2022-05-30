@@ -23,6 +23,15 @@ packages:
   - gnupg2
   - pass
 
+# create the docker group
+groups:
+  - docker
+
+# add default auto created user to docker group
+system_info:
+  default_user:
+    groups: [docker]
+
 write_files:
   - path: .env
     content: |

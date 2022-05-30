@@ -63,7 +63,8 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(admin_toke
                 "display_name": "E2E test guacamole service",
                 "description": "",
                 "address_space_size": "small",
-                "client_id": f"{config.TEST_WORKSPACE_APP_ID}"
+                "client_id": f"{config.TEST_WORKSPACE_APP_ID}",
+                "client_secret": f"{config.TEST_WORKSPACE_APP_SECRET}"
             }
         }
 
@@ -79,9 +80,7 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(admin_toke
             "templateName": "tre-service-guacamole",
             "properties": {
                 "display_name": "Workspace service test",
-                "description": "",
-                "ws_client_id": f"{config.TEST_WORKSPACE_APP_ID}",
-                "ws_client_secret": f"{config.TEST_WORKSPACE_APP_SECRET}"
+                "description": ""
             }
         }
 
