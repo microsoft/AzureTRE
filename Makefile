@@ -241,6 +241,7 @@ lint:
 		-e VALIDATE_BASH=true \
 		-e VALIDATE_BASH_EXEC=true \
 		-e VALIDATE_GITHUB_ACTIONS=true \
+		-e VALIDATE_DOCKERFILE_HADOLINT=true \
 		-v $${LOCAL_WORKSPACE_FOLDER}:/tmp/lint \
 		github/super-linter:slim-v4
 
