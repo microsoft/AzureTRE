@@ -164,7 +164,7 @@ resource routeTable 'Microsoft.Network/routeTables@2021-08-01' = {
       {
         name: 'to-databricks-scc-relay-ip'
         properties: {
-          addressPrefix: mapLocationUrlConfig[location].sccRelay[0]
+          addressPrefix: mapLocationUrlConfig[location].sccRelayDestinationAddresses[0]
           nextHopType: 'Internet'
         }
         type: 'string'
