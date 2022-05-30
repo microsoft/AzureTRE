@@ -14,6 +14,8 @@ ARG GUACAMOLE_AZURE_VERSION=0.1.1
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# https://github.com/microsoft/AzureTRE/issues/1937
+# hadolint ignore=DL3002
 USER root
 
 # dependencies
@@ -68,6 +70,8 @@ RUN OAUTH2_PROXY_ARCHIVE=oauth2-proxy.tar.gz && \
     rm -f "$OAUTH2_PROXY_ARCHIVE"
 
 COPY ./docker/index.jsp "$CATALINA_BASE"/webapps/ROOT/index.jsp
+
+USER guacd
 
 ENTRYPOINT [ "/init" ]
 
