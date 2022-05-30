@@ -76,6 +76,10 @@ jq -r '
         {
             "path": "registry_server",
             "env_var": "REGISTRY_SERVER"
+        },
+        {
+            "path": "ui_api_key",
+            "env_var": "UI_API_KEY"
         }
     ]
         as $env_vars_to_extract
