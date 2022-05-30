@@ -74,8 +74,6 @@ Now that we have published and registered both workspace service and user resour
       "properties": {
         "display_name":"Virtual Desktop",
         "description":"Create virtual desktops for running research workloads",
-        "ws_client_id":"<WORKSPACE_API_CLIENT_ID>",
-        "ws_client_secret":"<WORKSPACE_API_CLIENT_SECRET>",
         "is_exposed_externally":true,
         "guac_disable_copy":true,
         "guac_disable_paste":true

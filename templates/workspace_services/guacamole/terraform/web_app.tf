@@ -25,11 +25,12 @@ resource "azurerm_app_service" "guacamole" {
     http2_enabled                        = true
     acr_use_managed_identity_credentials = true
     acr_user_managed_identity_client_id  = azurerm_user_assigned_identity.guacamole_id.client_id
+    ftps_state                           = "Disabled"
+    vnet_route_all_enabled               = true
   }
 
   app_settings = {
     WEBSITES_PORT                  = "8085"
-    WEBSITE_VNET_ROUTE_ALL         = "1"
     WEBSITE_DNS_SERVER             = "168.63.129.16"
     SCM_DO_BUILD_DURING_DEPLOYMENT = "True"
 
@@ -47,11 +48,11 @@ resource "azurerm_app_service" "guacamole" {
     GUAC_DRIVE_NAME       = "${var.guac_drive_name}"
     GUAC_DRIVE_PATH       = "${var.guac_drive_path}"
     GUAC_DISABLE_DOWNLOAD = "${var.guac_disable_download}"
-    AUDIENCE              = "${var.ws_client_id}"
+    AUDIENCE              = "@Microsoft.KeyVault(SecretUri=${data.azurerm_key_vault_secret.workspace_client_id.id})"
     ISSUER                = local.issuer
 
-    OAUTH2_PROXY_CLIENT_ID       = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.workspace_client_id.id})"
-    OAUTH2_PROXY_CLIENT_SECRET   = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.workspace_client_secret.id})"
+    OAUTH2_PROXY_CLIENT_ID       = "@Microsoft.KeyVault(SecretUri=${data.azurerm_key_vault_secret.workspace_client_id.id})"
+    OAUTH2_PROXY_CLIENT_SECRET   = "@Microsoft.KeyVault(SecretUri=${data.azurerm_key_vault_secret.workspace_client_secret.id})"
     OAUTH2_PROXY_REDIRECT_URI    = "https://${local.webapp_name}.azurewebsites.net/oauth2/callback"
     OAUTH2_PROXY_EMAIL_DOMAIN    = "\"*\"" # oauth proxy will allow all email domains only when the value is "*"
     OAUTH2_PROXY_OIDC_ISSUER_URL = "https://login.microsoftonline.com/${local.aad_tenant_id}/v2.0"
@@ -80,11 +81,6 @@ resource "azurerm_app_service" "guacamole" {
     type         = "UserAssigned"
     identity_ids = [azurerm_user_assigned_identity.guacamole_id.id]
   }
-
-  depends_on = [
-    azurerm_key_vault_secret.workspace_client_id,
-    azurerm_key_vault_secret.workspace_client_secret
-  ]
 }
 
 resource "azurerm_monitor_diagnostic_setting" "guacamole" {
@@ -222,22 +218,3 @@ resource "azurerm_key_vault_access_policy" "guacamole_policy" {
 
   secret_permissions = ["Get", "List", ]
 }
-
-resource "azurerm_key_vault_secret" "workspace_client_id" {
-  name         = "workspace-client-id"
-  value        = var.ws_client_id
-  key_vault_id = data.azurerm_key_vault.ws.id
-  depends_on = [
-    azurerm_key_vault_access_policy.guacamole_policy
-  ]
-}
-
-resource "azurerm_key_vault_secret" "workspace_client_secret" {
-  name         = "workspace-client-secret"
-  value        = var.ws_client_secret
-  key_vault_id = data.azurerm_key_vault.ws.id
-  depends_on = [
-    azurerm_key_vault_access_policy.guacamole_policy
-  ]
-}
-

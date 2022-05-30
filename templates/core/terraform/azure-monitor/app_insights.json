@@ -16,6 +16,9 @@
     },
     "storage_account_name": {
       "type": "String"
+    },
+    "tre_core_tags": {
+      "type": "Object"
     }
   },
   "variables": {},
@@ -26,6 +29,7 @@
       "name": "[parameters('app_insights_name')]",
       "location": "[parameters('location')]",
       "kind": "web",
+      "tags": "[parameters('tre_core_tags')]",
       "properties": {
           "Application_Type": "[parameters('application_type')]",
           "SamplingPercentage": 100,

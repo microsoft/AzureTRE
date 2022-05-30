@@ -75,6 +75,7 @@ resource "azurerm_app_service" "gitea" {
     min_tls_version                      = "1.2"
     vnet_route_all_enabled               = true
     websockets_enabled                   = false
+    ftps_state                           = "Disabled"
   }
 
   storage_account {
