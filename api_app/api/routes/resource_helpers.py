@@ -91,11 +91,6 @@ async def send_custom_action_message(resource: Resource, resource_repo: Resource
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
 
 
-def check_for_etag(etag: str):
-    if etag is None or len(etag) == 0:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.ETAG_REQUIRED)
-
-
 def get_current_template_by_name(template_name: str, template_repo: ResourceTemplateRepository, resource_type: ResourceType, parent_service_template_name: str = "", is_update: bool = False) -> dict:
     try:
         template = template_repo.get_current_template(template_name, resource_type, parent_service_template_name)

@@ -49,7 +49,7 @@ resource "azurerm_private_endpoint" "webpe" {
   }
 
   private_service_connection {
-    name                           = "psc-web--${local.staticweb_storage_name}"
+    name                           = "psc-web-${local.staticweb_storage_name}"
     private_connection_resource_id = azurerm_storage_account.staticweb.id
     is_manual_connection           = false
     subresource_names              = ["web"]

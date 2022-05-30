@@ -358,12 +358,12 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     # [PATCH] /workspaces/{workspace_id}
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @ patch("api.routes.workspaces.WorkspaceRepository.patch_workspace", return_value=None)
-    async def test_patch_workspaces_400_when_etag_not_present(self, patch_workspace_mock, get_workspace_mock, app, client):
+    async def test_patch_workspaces_422_when_etag_not_present(self, patch_workspace_mock, get_workspace_mock, app, client):
         workspace_patch = {"isEnabled": True}
 
         response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=WORKSPACE_ID), json=workspace_patch)
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert response.text == strings.ETAG_REQUIRED
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert ("header -> etag" in response.text and "field required" in response.text)
 
     # [PATCH] /workspaces/{workspace_id}
     @ patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", side_effect=EntityDoesNotExist)
