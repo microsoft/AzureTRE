@@ -1,5 +1,5 @@
-from pydantic import BaseModel
-from api_app.models.domain.airlock_resource import AirlockResourceType
+from pydantic import BaseModel, Field
+from models.domain.airlock_resource import AirlockResourceType
 from models.domain.airlock_request import AirlockRequest
 
 
@@ -32,5 +32,19 @@ class AirlockRequestInResponse(BaseModel):
         schema_extra = {
             "example": {
                 "airlock_request": get_sample_airlock_request("933ad738-7265-4b5f-9eae-a1a62928772e", "121e921f-a4aa-44b3-90a9-e8da030495ef")
+            }
+        }
+
+
+class AirlockRequestInCreate(BaseModel):
+    properties: dict = Field({}, title="Airlock request parameters", description="Values for the parameters required by the Airlock request specification")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "properties": {
+                    "type": "import",
+                    "business_justification": "some business justification",
+                }
             }
         }

@@ -1,7 +1,7 @@
-from ast import List
+from typing import List
 from enum import Enum
 from pydantic import Field
-from api_app.resources import strings
+from resources import strings
 from models.domain.airlock_resource import AirlockResource, AirlockResourceType
 
 
