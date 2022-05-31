@@ -19,7 +19,7 @@ resource "azurerm_storage_account" "app_insights" {
   account_tier                    = "Standard"
   account_replication_type        = "LRS"
   allow_nested_items_to_be_public = false
-  tags                     = local.tre_core_tags
+  tags                            = local.tre_core_tags
 
   lifecycle { ignore_changes = [tags] }
 }

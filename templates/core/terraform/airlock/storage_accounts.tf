@@ -44,11 +44,11 @@ resource "azurerm_storage_account" "sa_export_approved" {
 
 # 'In-Progress' storage account
 resource "azurerm_storage_account" "sa_import_in_progress" {
-  name                     = local.import_in_progress_storage_name
-  location                 = var.location
-  resource_group_name      = var.resource_group_name
-  account_tier             = "Standard"
-  account_replication_type = "GRS"
+  name                            = local.import_in_progress_storage_name
+  location                        = var.location
+  resource_group_name             = var.resource_group_name
+  account_tier                    = "Standard"
+  account_replication_type        = "GRS"
   allow_nested_items_to_be_public = false
 
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
@@ -96,11 +96,11 @@ resource "azurerm_private_endpoint" "stg_ip_import_pe" {
 
 # 'Rejected' storage account
 resource "azurerm_storage_account" "sa_import_rejected" {
-  name                     = local.import_rejected_storage_name
-  location                 = var.location
-  resource_group_name      = var.resource_group_name
-  account_tier             = "Standard"
-  account_replication_type = "GRS"
+  name                            = local.import_rejected_storage_name
+  location                        = var.location
+  resource_group_name             = var.resource_group_name
+  account_tier                    = "Standard"
+  account_replication_type        = "GRS"
   allow_nested_items_to_be_public = false
 
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
