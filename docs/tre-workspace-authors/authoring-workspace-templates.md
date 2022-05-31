@@ -11,21 +11,7 @@ This document describes the requirements, and the process to author a template.
 
 To create a bundle from scratch follow the Porter [Quickstart Guide](https://porter.sh/quickstart/) ([`porter create` CLI command](https://porter.sh/cli/porter_create/) will generate a new bundle in the current directory).
 
-## Background
-
-Azure TRE needed a solution for implementing and deploying workspaces and workspace services with the following properties:
-
-* Means for packaging and versioning workspaces and workspace services
-* Providing unified structure for deployment definitions (scripts, pipelines) so that the process can be easily automated
-* Solid developer experience - easy to use and learn
-
-Porter meets all these requirements well. Porter packages cloud application into a versioned, self-contained Docker container called a Porter bundle.
-
-<!-- markdownlint-disable MD013 -->
-CNAB spec defines actions that Porter [implements](https://porter.sh/author-bundles/#bundle-actions): **install, upgrade and uninstall**. The developer has practically complete freedom on how to implement logic for these actions. The deployment pipeline definition is created in YAML - something that is very familiar to anyone that have experience in creating continuous integration/deployment (CI/CD) pipelines with [GitHub Actions](https://github.com/features/actions) (workflows) or in [Azure DevOps](https://azure.microsoft.com/services/devops/pipelines/). The YAML file is called [Porter manifest](https://porter.sh/author-bundles/) and in additon to the actions, it contains the name, version, description of the bundle and defines the input parameters, possible credentials and output.
-
-Furthermore, Porter provides a set of [mixins](https://porter.sh/mixins/) - analogous to the concrete actions in GitHub workflows and tasks in Azure DevOps pipelines - which simplify and reduce the development cost when implementing deployment logic. For example, Terraform mixin installs the required tools and provides a clean step in the pipeline to execute Terraform deployments. [Exec mixin](https://porter.sh/mixins/exec/) allows running any command or script; especially useful, if no suitable mixin for a specific technology is available. Implementing custom mixins is possible too.
-<!-- markdownlint-enable MD013 -->
+Read more about Porter in [Resource Processor doc](../tre-developers/resource-processor.md#porter).
 
 ## Prerequisites
 
