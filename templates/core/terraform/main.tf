@@ -3,7 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=2.97.0"
+      version = "=3.4.0"
     }
   }
 
@@ -79,6 +79,7 @@ module "airlock_resources" {
   resource_group_name    = azurerm_resource_group.core.name
   shared_subnet_id       = module.network.shared_subnet_id
   enable_local_debugging = var.enable_local_debugging
+  docker_registry_server = var.docker_registry_server
 
   depends_on = [
     azurerm_servicebus_namespace.sb,
