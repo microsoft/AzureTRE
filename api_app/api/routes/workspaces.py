@@ -387,7 +387,7 @@ async def retrieve_user_resource_operations_by_user_resource_id(user_resource=De
 
 
 @user_resources_workspace_router.get("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}/operations/{operation_id}", response_model=OperationInResponse, name=strings.API_GET_RESOURCE_OPERATION_BY_ID, dependencies=[Depends(get_workspace_by_id_from_path)])
-async def retrieve_user_resosurce_operations_by_user_resource_id_and_operation_id(user_resource=Depends(get_user_resource_by_id_from_path), user=Depends(get_current_workspace_owner_or_researcher_user), operation=Depends(get_operation_by_id_from_path)) -> OperationInList:
+async def retrieve_user_resource_operations_by_user_resource_id_and_operation_id(user_resource=Depends(get_user_resource_by_id_from_path), user=Depends(get_current_workspace_owner_or_researcher_user), operation=Depends(get_operation_by_id_from_path)) -> OperationInList:
     validate_user_is_workspace_owner_or_resource_owner(user, user_resource)
     return OperationInResponse(operation=operation)
 

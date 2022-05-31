@@ -13,7 +13,7 @@ def get_sample_airlock_request(workspace_id: str, airlock_request_id: str) -> di
         "business_justification": "some business justification",
         "status": "draft",
         "properties": {
-            "display_name": "my workspace service",
+            "display_name": "some property",
             "description": "some description",
         },
         "container": [{
