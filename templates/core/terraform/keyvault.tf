@@ -5,7 +5,6 @@ resource "azurerm_key_vault" "kv" {
   resource_group_name      = azurerm_resource_group.core.name
   sku_name                 = "standard"
   purge_protection_enabled = var.keyvault_purge_protection_enabled
-  tags                     = local.tre_core_tags
 
   lifecycle { ignore_changes = [access_policy, tags] }
 }
