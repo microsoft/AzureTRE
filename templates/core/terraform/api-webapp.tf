@@ -11,7 +11,6 @@ resource "azurerm_app_service_plan" "core" {
   resource_group_name = azurerm_resource_group.core.name
   location            = azurerm_resource_group.core.location
   kind                = "linux"
-  sku_name            = var.api_app_service_plan_sku_size
   reserved            = true
   tags                = local.tre_core_tags
   lifecycle { ignore_changes = [tags] }
