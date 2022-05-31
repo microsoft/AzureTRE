@@ -236,10 +236,3 @@ resource "azurerm_private_dns_zone" "nexus" {
 
   lifecycle { ignore_changes = [tags] }
 }
-
-resource "azurerm_private_dns_zone" "nexus" {
-  name                = "nexus-${var.tre_id}.${var.location}.cloudapp.azure.com"
-  resource_group_name = var.resource_group_name
-
-  lifecycle { ignore_changes = [tags] }
-}
