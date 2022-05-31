@@ -27,6 +27,9 @@ API_DELETE_USER_RESOURCE = "Delete user resource"
 API_UPDATE_USER_RESOURCE = "Update an existing user resource"
 API_INVOKE_ACTION_ON_USER_RESOURCE = "Invoke action on a user resource"
 
+API_CREATE_AIRLOCK_REQUEST = "Create an airlock request"
+API_UPDATE_AIRLOCK_REQUEST = "Update an airlock request"
+
 API_CREATE_WORKSPACE_TEMPLATES = "Register workspace template"
 API_GET_WORKSPACE_TEMPLATES = "Get workspace templates"
 API_GET_WORKSPACE_TEMPLATE_BY_NAME = "Get workspace template by name"
@@ -139,6 +142,22 @@ RESOURCE_TYPE_WORKSPACE = "workspace"
 RESOURCE_TYPE_WORKSPACE_SERVICE = "workspace-service"
 USER_RESOURCE = "user-resource"
 RESOURCE_TYPE_SHARED_SERVICE = "shared-service"
+
+# Airlock Resource Type
+AIRLOCK_RESOURCE_TYPE_REQUEST = "airlock-request"
+
+# Airlock Resource Status
+AIRLOCK_RESOURCE_STATUS_DRAFT = "draft"
+AIRLOCK_RESOURCE_STATUS_SUBMITTED = "submitted"
+AIRLOCK_RESOURCE_STATUS_INREVIEW = "in_review"
+AIRLOCK_RESOURCE_STATUS_APPROVED = "approved"
+AIRLOCK_RESOURCE_STATUS_REJECTED = "rejected"
+AIRLOCK_RESOURCE_STATUS_CANCELLED = "cancelled"
+AIRLOCK_RESOURCE_STATUS_BLOCKED = "blocked"
+
+# Airlock Request Types
+AIRLOCK_REQUEST_TYPE_IMPORT = "import"
+AIRLOCK_REQUEST_TYPE_EXPORT = "export"
 
 # Deployments
 RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE = "This resource has not yet been deployed"
