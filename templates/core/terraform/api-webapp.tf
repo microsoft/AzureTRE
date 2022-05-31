@@ -10,8 +10,8 @@ resource "azurerm_app_service_plan" "core" {
   name                = "plan-${var.tre_id}"
   resource_group_name = azurerm_resource_group.core.name
   location            = azurerm_resource_group.core.location
-  reserved            = true
   kind                = "linux"
+  reserved            = true
   tags                = local.tre_core_tags
   lifecycle { ignore_changes = [tags] }
 
