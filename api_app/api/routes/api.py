@@ -89,6 +89,7 @@ workspace_router = APIRouter(prefix=config.API_PREFIX)
 workspace_router.include_router(workspaces.workspaces_shared_router, tags=["workspaces"])
 workspace_router.include_router(workspaces.workspace_services_workspace_router, tags=["workspace services"])
 workspace_router.include_router(workspaces.user_resources_workspace_router, tags=["user resources"])
+workspace_router.include_router(workspaces.airlock_workspace_router, tags=["airlock"])
 
 workspace_swagger_router = APIRouter()
 

@@ -28,7 +28,7 @@ API_UPDATE_USER_RESOURCE = "Update an existing user resource"
 API_INVOKE_ACTION_ON_USER_RESOURCE = "Invoke action on a user resource"
 
 API_CREATE_AIRLOCK_REQUEST = "Create an airlock request"
-API_UPDATE_AIRLOCK_REQUEST = "Update an airlock request"
+API_SUBMIT_AIRLOCK_REQUEST = "Submit an airlock request"
 
 API_CREATE_WORKSPACE_TEMPLATES = "Register workspace template"
 API_GET_WORKSPACE_TEMPLATES = "Get workspace templates"

@@ -401,6 +401,6 @@ async def create_draft_request(response: Response, airlock_request_input: Airloc
     return
 
 
-@airlock_workspace_router.post("/api/workspaces/{workspace_id}/requests/{request_id}/submit", status_code=status.HTTP_200_OK, response_model=AirlockRequestInResponse, name=strings.API_UPDATE_AIRLOCK_REQUEST, dependencies=[Depends(get_current_workspace_owner_user)])
+@airlock_workspace_router.post("/workspaces/{workspace_id}/requests/{request_id}/submit", status_code=status.HTTP_200_OK, response_model=AirlockRequestInResponse, name=strings.API_SUBMIT_AIRLOCK_REQUEST, dependencies=[Depends(get_current_workspace_owner_user)])
 async def create_submit_request(response: Response, airlock_request_input: AirlockRequestInCreate, user=Depends(get_current_workspace_owner_or_researcher_user), airlock_request_repo=Depends(get_repository(AirlockRequestRepository)), workspace=Depends(get_deployed_workspace_by_id_from_path)) -> AirlockRequestInResponse:
     return
