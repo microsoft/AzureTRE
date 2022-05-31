@@ -64,6 +64,7 @@ jobs:
           JAVA_FILE_NAME: checkstyle.xml
           VALIDATE_BASH: true
           VALIDATE_BASH_EXEC: true
+          VALIDATE_DOCKERFILE_HADOLINT: true
           # https://github.com/microsoft/AzureTRE/issues/1723 tracks re-instating VALIDATE_GITHUB_ACTIONS
           # Note: in the meantime, the `.github/scripts/run-test.sh` script includes the `actionlint` checks)
           # VALIDATE_GITHUB_ACTIONS: true
