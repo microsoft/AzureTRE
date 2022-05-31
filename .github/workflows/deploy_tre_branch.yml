@@ -50,7 +50,7 @@ jobs:
     uses: ./.github/workflows/deploy_tre_reusable.yml
     with:
       ciGitRef: ${{ github.ref }}
-      e2eTestsCustomSelector: $${{ github.event.inputs.e2eTestsCustomSelector }}
+      e2eTestsCustomSelector: ${{ github.event.inputs.e2eTestsCustomSelector }}
     secrets:
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
       ACR_NAME: ${{ format('tre{0}', needs.prepare-not-main.outputs.refid) }}
