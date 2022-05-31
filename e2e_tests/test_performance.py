@@ -1,7 +1,7 @@
 import asyncio
 import pytest
 import config
-from helpers import disable_and_delete_resource, get_workspace_owner_token, post_resource
+from helpers import disable_and_delete_resource, get_workspace_auth_details, post_resource
 from resources import strings
 
 pytestmark = pytest.mark.asyncio
@@ -72,7 +72,7 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(admin_toke
     else:
         workspace_path = f"/workspaces/{config.PERF_TEST_WORKSPACE_ID}"
 
-    workspace_owner_token = await get_workspace_owner_token(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
+    workspace_owner_token, scope_uri = await get_workspace_auth_details(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
 
     if config.PERF_TEST_WORKSPACE_SERVICE_ID == "":
         # create a guac service
@@ -80,7 +80,8 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(admin_toke
             "templateName": "tre-service-guacamole",
             "properties": {
                 "display_name": "Workspace service test",
-                "description": ""
+                "description": "",
+                "workspace_identifier_uri": scope_uri
             }
         }
 
