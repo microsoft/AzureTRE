@@ -66,17 +66,18 @@ Now that we have published and registered both workspace service and user resour
 
 4. Enter the workspace_id in the `workspace_id` field.
 
-5. Paste the following payload json into the `Request body` field, update `<WORKSPACE_API_CLIENT_ID>` with the client ID of the app registration for the base workspace you created previously, then click `Execute`. Review the server response.
+5. Paste the following payload json into the `Request body` field. Update `<WORKSPACE_SCOPE_URI>` with the Workspace AAD Application URI for the base workspace you created previously, this will be in the format `api://<GUID>` or `api://<TRE_ID>_ws_<WORKSPACE_SHORT_ID>`. Then click `Execute`. Review the server response.
 
     ```json
     {
-      "templateName":"tre-service-guacamole",
+      "templateName": "tre-service-guacamole",
       "properties": {
-        "display_name":"Virtual Desktop",
-        "description":"Create virtual desktops for running research workloads",
-        "is_exposed_externally":true,
-        "guac_disable_copy":true,
-        "guac_disable_paste":true
+        "display_name": "Virtual Desktop",
+        "description": "Create virtual desktops for running research workloads",
+        "workspace_identifier_uri": "<WORKSPACE_SCOPE_URI>",
+        "is_exposed_externally": true,
+        "guac_disable_copy": true,
+        "guac_disable_paste": true
       }
     }
     ```
@@ -88,7 +89,7 @@ You can also follow the progress in Azure portal as various resources come up.
 !!! info
     There is currently a bug where the redirect URI isn't automatically set up correctly in the Workspace API app registration.
     Until this is fixed, you need to head to the app registration in the Azure portal, click on **Add a redirect URI** > **Add a platform** > **Web** > then paste in the Guacamole URI in the redirect URI box.
-    You can find this in the Guacamole app service properties and append `/guacamole/` to the end - it should look like this: `https://guacamole-{TRE_ID}-ws-XXXX-svc-XXXX.azurewebsites.net/guacamole/`). Finally, make sure you check the **ID tokens** checkbox and click **Configure**.
+    You can find this in the Guacamole app service properties and append `/oauth2/callback` to the end - it should look like this: `https://guacamole-{TRE_ID}-ws-XXXX-svc-XXXX.azurewebsites.net/oauth2/callback/`). Finally, make sure you check the **ID tokens** checkbox and click **Configure**.
 
 ## Creating a user resource
 

@@ -212,7 +212,7 @@ def test_workspace_owner_is_set_if_not_present_in_workspace_properties(workspace
     assert workspace_repo.get_workspace_owner(dictToTest, expected_object_id) is expected_object_id
 
 
-def test_workspace_owner_is_not_overwritten_if_not_present_in_workspace_properties(workspace_repo):
+def test_workspace_owner_is_not_overwritten_if_present_in_workspace_properties(workspace_repo):
     dictToTest = {"workspace_owner_object_id": "Expected"}
     not_expected_object_id = "Not Expected"
 
