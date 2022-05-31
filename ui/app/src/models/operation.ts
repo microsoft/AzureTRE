@@ -1,6 +1,8 @@
+import { ResourceType } from "./resourceType";
 import { User } from "./user";
 
 export interface Operation {
+    id: string,
     resourceId: string,
     resourcePath: string,
     resourceVersion: number,

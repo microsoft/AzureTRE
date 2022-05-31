@@ -8,6 +8,7 @@ import { ApiEndpoint } from '../../models/apiEndpoints';
 import { ResourceOperationListItem } from './ResourceOperationListItem';
 import config from '../../config.json';
 
+
 interface ResourceOperationsListProps {
     resource: Resource
 }   
@@ -57,7 +58,7 @@ export const ResourceOperationsList: React.FunctionComponent<ResourceOperationsL
                                     <Stack grow styles={stackStyles}>
                                         <ResourceOperationListItem header={'Resource Id'} val={op.resourceId} />
                                         <ResourceOperationListItem header={'Resource Path'} val={op.resourcePath} />
-                                        <ResourceOperationListItem header={'Resource Version'} val={op.resourceVersion} />
+                                        <ResourceOperationListItem header={'Resource Version'} val={op.resourceVersion.toString()} />
                                         <ResourceOperationListItem header={'Status'} val={op.status} />
                                         <ResourceOperationListItem header={'Action'} val={op.action} />
                                         <ResourceOperationListItem header={'Message'} val={op.message} />
