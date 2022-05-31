@@ -50,27 +50,25 @@ async def test_create_guacamole_service_into_base_workspace(admin_token, verify)
 
     await post_resource(patch_payload, f'/api{workspace_service_path}', workspace_owner_token, verify, method="PATCH")
 
-    # Currently we cannot delete the VM because of the Purge Protection Settings.
-    # https://github.com/microsoft/AzureTRE/issues/1951
-    # user_resource_payload = {
-    #     "templateName": "tre-service-guacamole-windowsvm",
-    #     "properties": {
-    #         "display_name": "My VM",
-    #         "description": "Will be using this VM for my research",
-    #         "os_image": "Windows 10"
-    #     }
-    # }
+    user_resource_payload = {
+        "templateName": "tre-service-guacamole-windowsvm",
+        "properties": {
+            "display_name": "My VM",
+            "description": "Will be using this VM for my research",
+            "os_image": "Windows 10"
+        }
+    }
 
-    # user_resource_path, user_resource_id = await post_resource(user_resource_payload, f'/api{workspace_service_path}/{strings.API_USER_RESOURCES}', workspace_owner_token, verify, method="POST")
+    user_resource_path, user_resource_id = await post_resource(user_resource_payload, f'/api{workspace_service_path}/{strings.API_USER_RESOURCES}', workspace_owner_token, verify, method="POST")
 
-    # await disable_and_delete_resource(f'/api{user_resource_path}', workspace_owner_token, verify)
+    await disable_and_delete_resource(f'/api{user_resource_path}', workspace_owner_token, verify)
 
     await disable_and_delete_resource(f'/api{workspace_service_path}', workspace_owner_token, verify)
 
     await disable_and_delete_resource(f'/api{workspace_path}', admin_token, verify)
 
 
-@pytest.mark.extended_aad
+@pytest.mark.extended
 @pytest.mark.timeout(3000)
 async def test_create_guacamole_service_into_aad_workspace(admin_token, verify) -> None:
     """This test will create a Guacamole service but will create a workspace and automatically register the AAD Application"""
@@ -112,20 +110,18 @@ async def test_create_guacamole_service_into_aad_workspace(admin_token, verify) 
 
     await post_resource(patch_payload, f'/api{workspace_service_path}', workspace_owner_token, verify, method="PATCH")
 
-    # Currently we cannot delete the VM because of the Purge Protection Settings.
-    # https://github.com/microsoft/AzureTRE/issues/1951
-    # user_resource_payload = {
-    #     "templateName": "tre-service-guacamole-windowsvm",
-    #     "properties": {
-    #         "display_name": "My VM",
-    #         "description": "Will be using this VM for my research",
-    #         "os_image": "Windows 10"
-    #     }
-    # }
+    user_resource_payload = {
+        "templateName": "tre-service-guacamole-windowsvm",
+        "properties": {
+            "display_name": "My VM",
+            "description": "Will be using this VM for my research",
+            "os_image": "Windows 10"
+        }
+    }
 
-    # user_resource_path, user_resource_id = await post_resource(user_resource_payload, f'/api{workspace_service_path}/{strings.API_USER_RESOURCES}', workspace_owner_token, verify, method="POST")
+    user_resource_path, user_resource_id = await post_resource(user_resource_payload, f'/api{workspace_service_path}/{strings.API_USER_RESOURCES}', workspace_owner_token, verify, method="POST")
 
-    # await disable_and_delete_resource(f'/api{user_resource_path}', workspace_owner_token, verify)
+    await disable_and_delete_resource(f'/api{user_resource_path}', workspace_owner_token, verify)
 
     await disable_and_delete_resource(f'/api{workspace_service_path}', workspace_owner_token, verify)
 
