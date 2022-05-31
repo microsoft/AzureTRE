@@ -1,0 +1,9 @@
+{
+    "rootClientId": "",
+    "rootTenantId": "",
+    "treApiClientId": "",
+    "treUrl": "https://my-tre.northeurope.cloudapp.azure.com/api",
+    "pollingDelayMilliseconds": 10000,
+    "loadAllOpsOnStart": true,
+    "debug": true
+}

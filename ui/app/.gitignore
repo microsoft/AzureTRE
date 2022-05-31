@@ -23,4 +23,6 @@ yarn-debug.log*
 yarn-error.log*
 .eslintcache
 
+config.json
+
 !public/index.html

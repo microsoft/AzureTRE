@@ -6,6 +6,13 @@ locals {
   version = replace(replace(replace(data.local_file.api_app_version.content, "__version__ = \"", ""), "\"", ""), "\n", "")
 }
 
+resource "azurerm_static_site" "tre-ui" {
+  count               = var.deploy_ui ? 1 : 0
+  name                = "ui-${var.tre_id}"
+  resource_group_name = azurerm_resource_group.core.name
+  location            = var.ui_location
+}
+
 resource "azurerm_app_service_plan" "core" {
   name                = "plan-${var.tre_id}"
   resource_group_name = azurerm_resource_group.core.name
@@ -77,7 +84,10 @@ resource "azurerm_app_service" "api" {
     websockets_enabled                   = false
 
     cors {
-      allowed_origins     = []
+      allowed_origins = [
+        var.deploy_ui ? "https://${azurerm_static_site.tre-ui[0].default_host_name}" : "",
+        var.enable_local_debugging ? "http://localhost:3000" : ""
+      ]
       support_credentials = false
     }
 

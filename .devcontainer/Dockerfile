@@ -18,10 +18,9 @@ RUN bash /tmp/non-root-user.sh "${USERNAME}" "${USER_UID}" "${USER_GID}"
 # Set env for tracking that we're running in a devcontainer
 ENV DEVCONTAINER=true
 
-# [Option] Install Node.js for GH actions tests and UI
-ARG INSTALL_NODE="true"
+# Install Node.js
 ARG NODE_VERSION="lts/*"
-RUN if [ "${INSTALL_NODE}" = "true" ]; then su $USERNAME -c "umask 0002 && . /usr/local/share/nvm/nvm.sh && nvm install ${NODE_VERSION} 2>&1"; fi
+RUN su $USERNAME -c "umask 0002 && . /usr/local/share/nvm/nvm.sh && nvm install ${NODE_VERSION} 2>&1"
 
 # Install terraform
 ARG TERRAFORM_VERSION="1.1.5"
@@ -97,4 +96,4 @@ COPY ./.devcontainer/scripts/gh.sh /tmp/
 RUN if [ "${INTERACTIVE}" = "true" ]; then /tmp/gh.sh; fi
 
 # install SWA CLI
-RUN if [ "${INSTALL_NODE}" = "true" ]; then npm install -g @azure/static-web-apps-cli; fi
+RUN npm install -g @azure/static-web-apps-cli

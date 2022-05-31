@@ -12,6 +12,18 @@ variable "location" {
   description = "Azure region for deployment of core TRE services"
 }
 
+variable "ui_location" {
+  type        = string
+  description = "Azure region for the UI Static Web App. Options are: 'westus2,centralus,eastus2,westeurope,eastasia'"
+  default     = "westeurope"
+}
+
+variable "deploy_ui" {
+  type        = bool
+  description = "Feature flag to determine whether to deploy the inbuilt TRE UI or not"
+  default     = false
+}
+
 variable "acr_name" {
   type        = string
   description = "Management ACR name"
