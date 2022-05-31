@@ -78,7 +78,7 @@ output "registry_server" {
 }
 
 output "ui_api_key" {
-  value = azurerm_static_site.tre-ui.api_key
+  value     = azurerm_static_site.tre-ui.api_key
   sensitive = true
 }
 

@@ -13,8 +13,9 @@ variable "location" {
 }
 
 variable "ui_location" {
-  type = string
+  type        = string
   description = "Azure region for the UI Static Web App. Options are: 'westus2,centralus,eastus2,westeurope,eastasia'"
+  default     = "westeurope"
 }
 
 variable "acr_name" {
