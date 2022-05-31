@@ -60,7 +60,7 @@ resource "azurerm_network_security_rule" "allow-batch-inbound" {
   name                        = "${local.short_service_id}-Batch-inbound"
   network_security_group_name = data.azurerm_network_security_group.ws.name
   priority                    = tonumber(data.external.nsg_batch_rule_priorities_inbound.result.nsg_rule_priority)
-  protocol                    = "Tcp"
+  protocol                    = "TCP"
   resource_group_name         = data.azurerm_resource_group.ws.name
   source_port_range           = "*"
 }
@@ -74,7 +74,7 @@ resource "azurerm_network_security_rule" "allow-aml-inbound" {
   name                        = "${local.short_service_id}-AzureML-inbound"
   network_security_group_name = data.azurerm_network_security_group.ws.name
   priority                    = tonumber(data.external.nsg_AML_rule_priorities_inbound.result.nsg_rule_priority)
-  protocol                    = "Tcp"
+  protocol                    = "TCP"
   resource_group_name         = data.azurerm_resource_group.ws.name
   source_port_range           = "*"
 }
@@ -88,7 +88,7 @@ resource "azurerm_network_security_rule" "allow-Outbound_Storage_445" {
   name                        = "${local.short_service_id}-allow-Outbound_Storage_445"
   network_security_group_name = data.azurerm_network_security_group.ws.name
   priority                    = data.external.nsg_rule_priorities_outbound.result.nsg_rule_priority
-  protocol                    = "Tcp"
+  protocol                    = "TCP"
   resource_group_name         = data.azurerm_resource_group.ws.name
   source_port_range           = "*"
 }

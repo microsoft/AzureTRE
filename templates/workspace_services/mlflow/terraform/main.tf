@@ -2,7 +2,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=3.5.0"
+      version = "=2.97.0"
     }
   }
 
@@ -47,7 +47,7 @@ data "azurerm_key_vault" "ws" {
   resource_group_name = data.azurerm_resource_group.ws.name
 }
 
-data "azurerm_service_plan" "workspace" {
+data "azurerm_app_service_plan" "workspace" {
   name                = "plan-${var.workspace_id}"
   resource_group_name = data.azurerm_resource_group.ws.name
 }
