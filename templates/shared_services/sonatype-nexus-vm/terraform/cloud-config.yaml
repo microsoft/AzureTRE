@@ -1,0 +1,53 @@
+---
+#cloud-config
+package_upgrade: true
+apt:
+  sources:
+    docker.list:
+      source: deb [arch=amd64]
+        https://download.docker.com/linux/ubuntu $RELEASE stable
+      keyid: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
+      keyserver: hkp://keyserver.ubuntu.com:80
+    azure-cli.list:
+      source: deb [arch=amd64]
+        https://packages.microsoft.com/repos/azure-cli/ $RELEASE main
+      keyid: BC528686B50D79E339D3721CEB3E94ADBE1229CF
+      keyserver: hkp://keyserver.ubuntu.com:80
+
+packages:
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  - docker-compose
+  - gnupg2
+  - pass
+  - azure-cli
+  - default-jre
+  - xmlstarlet
+  - jq
+
+# create the docker group
+groups:
+  - docker
+
+# Add default auto created user to docker group
+system_info:
+  default_user:
+    groups: [docker]
+
+runcmd:
+  - export DEBIAN_FRONTEND=noninteractive
+  # Give the Nexus process write permissions on the folder mounted as persistent volume
+  - chown -R 200 /etc/nexus-data
+  # Run the nexus container with mapped volume for nexus config
+  - docker run -d -p 80:8081 -p 443:8443 -v /etc/nexus-data:/nexus-data
+    --restart always
+    --name nexus
+    --log-driver local
+    sonatype/nexus3
+  # Reset the admin password of Nexus to the one created by TF and stored in KeyVault
+  - bash /tmp/reset_nexus_password.sh "${NEXUS_ADMIN_PASSWORD}"
+  # Invoke Nexus SSL configuration (which will also be ran as CRON daily to renew cert)
+  - bash /etc/cron.daily/configure_nexus_ssl.sh
+  # Configure Nexus repositories
+  - bash /tmp/configure_nexus_repos.sh "${NEXUS_ADMIN_PASSWORD}"

@@ -208,4 +208,4 @@ pytest_api_unit.xml
 pytest_api_unit_failed
 validation.txt
 
-index.html
+/index.html

@@ -53,27 +53,49 @@ describe('getCommandFromComment', () => {
   }
 
   describe('with non-contributor', () => {
-    test(`for '/test' should return 'none'`, async () => {
-      const context = createCommentContext({
-        username: 'non-contributor',
-        body: '/test',
+    describe(`for '/test`, () => {
+      test(`should return 'none'`, async () => {
+        const context = createCommentContext({
+          username: 'non-contributor',
+          body: '/test',
+        });
+        const command = await getCommandFromComment({ core, context, github });
+        expect(outputFor(mockCoreSetOutput, 'command')).toBe('none');
       });
-      const command = await getCommandFromComment({ core, context, github });
-      expect(outputFor(mockCoreSetOutput, 'command')).toBe('none');
-    });
 
-    test(`should add a comment indicating that the user cannot run commands`, async () => {
-      const context = createCommentContext({
-        username: 'non-contributor',
-        body: '/test',
-        pullRequestNumber: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+      test(`should add a comment indicating that the user cannot run commands`, async () => {
+        const context = createCommentContext({
+          username: 'non-contributor',
+          body: '/test',
+          pullRequestNumber: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+        });
+        await getCommandFromComment({ core, context, github });
+        expect(mockGithubRestIssuesCreateComment).toHaveComment({
+          owner: 'someOwner',
+          repo: 'someRepo',
+          issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+          bodyMatcher: /Sorry, @non-contributor, only users with write access to the repo can run pr-bot commands./
+        });
       });
-      await getCommandFromComment({ core, context, github });
-      expect(mockGithubRestIssuesCreateComment).toHaveComment({
-        owner: 'someOwner',
-        repo: 'someRepo',
-        issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
-        bodyMatcher: /Sorry, @non-contributor, only users with write access to the repo can run pr-bot commands./
+    });
+    describe(`for 'non-command`, () => {
+      test(`should return 'none'`, async () => {
+        const context = createCommentContext({
+          username: 'non-contributor',
+          body: 'non-command',
+        });
+        const command = await getCommandFromComment({ core, context, github });
+        expect(outputFor(mockCoreSetOutput, 'command')).toBe('none');
+      });
+
+      test(`should not add a comment`, async () => {
+        const context = createCommentContext({
+          username: 'non-contributor',
+          body: 'non-command',
+          pullRequestNumber: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+        });
+        await getCommandFromComment({ core, context, github });
+        expect(mockGithubRestIssuesCreateComment).not.toHaveBeenCalled();
       });
     });
 
@@ -360,6 +382,32 @@ describe('getCommandFromComment', () => {
             repo: 'someRepo',
             issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
             bodyMatcher: /Running extended tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `cbce50da`\)/,
+          });
+        });
+      });
+
+      describe(`for '/test-shared-services'`, () => {
+        test(`should set command to 'run-tests-shared-services'`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test-shared-services',
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('run-tests-shared-services');
+        });
+
+        test(`should add comment with run link`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test-shared-services',
+            pullRequestNumber: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(mockGithubRestIssuesCreateComment).toHaveComment({
+            owner: 'someOwner',
+            repo: 'someRepo',
+            issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+            bodyMatcher: /Running shared service tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `cbce50da`\)/,
           });
         });
       });
