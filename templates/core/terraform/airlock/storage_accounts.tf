@@ -7,7 +7,7 @@ resource "azurerm_storage_account" "sa_external_import" {
   account_replication_type = "GRS"
 
   # Don't allow anonymous access (unrelated to the 'public' networking rules)
-  allow_blob_public_access = false
+  allow_nested_items_to_be_public = false
 
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
   # This is true ONLY when Hierarchical Namespace is DISABLED
@@ -29,7 +29,7 @@ resource "azurerm_storage_account" "sa_export_approved" {
   account_replication_type = "GRS"
 
   # Don't allow anonymous access (unrelated to the 'public' networking rules)
-  allow_blob_public_access = false
+  allow_nested_items_to_be_public = false
 
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
   # This is true ONLY when Hierarchical Namespace is DISABLED
@@ -49,7 +49,7 @@ resource "azurerm_storage_account" "sa_import_in_progress" {
   resource_group_name      = var.resource_group_name
   account_tier             = "Standard"
   account_replication_type = "GRS"
-  allow_blob_public_access = false
+  allow_nested_items_to_be_public = false
 
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
   # This is true ONLY when Hierarchical Namespace is DISABLED
@@ -101,7 +101,7 @@ resource "azurerm_storage_account" "sa_import_rejected" {
   resource_group_name      = var.resource_group_name
   account_tier             = "Standard"
   account_replication_type = "GRS"
-  allow_blob_public_access = false
+  allow_nested_items_to_be_public = false
 
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
   # This is true ONLY when Hierarchical Namespace is DISABLED
