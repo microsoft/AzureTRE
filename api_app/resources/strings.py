@@ -115,7 +115,6 @@ SHARED_SERVICE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION = "Shared service needs to b
 SHARED_SERVICE_TEMPLATE_DOES_NOT_EXIST = "Could not retrieve the workspace service template specified"
 SHARED_SERVICE_TEMPLATE_VERSION_EXISTS = "A template with this version already exists"
 
-ETAG_REQUIRED = "A valid etag must be supplied in the header of this request"
 ETAG_CONFLICT = "This document has been modified by another user or process since you last retrieved it. Please get the document again and retry."
 
 # Resource Status

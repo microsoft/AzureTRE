@@ -1,7 +1,7 @@
 import asyncio
 import pytest
 import config
-from helpers import disable_and_delete_resource, get_workspace_owner_token, post_resource
+from helpers import disable_and_delete_resource, get_workspace_auth_details, post_resource
 from resources import strings
 
 pytestmark = pytest.mark.asyncio
@@ -63,7 +63,8 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(admin_toke
                 "display_name": "E2E test guacamole service",
                 "description": "",
                 "address_space_size": "small",
-                "client_id": f"{config.TEST_WORKSPACE_APP_ID}"
+                "client_id": f"{config.TEST_WORKSPACE_APP_ID}",
+                "client_secret": f"{config.TEST_WORKSPACE_APP_SECRET}"
             }
         }
 
@@ -71,7 +72,7 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(admin_toke
     else:
         workspace_path = f"/workspaces/{config.PERF_TEST_WORKSPACE_ID}"
 
-    workspace_owner_token = await get_workspace_owner_token(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
+    workspace_owner_token, scope_uri = await get_workspace_auth_details(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
 
     if config.PERF_TEST_WORKSPACE_SERVICE_ID == "":
         # create a guac service
@@ -80,8 +81,7 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(admin_toke
             "properties": {
                 "display_name": "Workspace service test",
                 "description": "",
-                "ws_client_id": f"{config.TEST_WORKSPACE_APP_ID}",
-                "ws_client_secret": f"{config.TEST_WORKSPACE_APP_SECRET}"
+                "workspace_identifier_uri": scope_uri
             }
         }
 

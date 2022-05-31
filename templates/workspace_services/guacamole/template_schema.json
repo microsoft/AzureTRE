@@ -40,17 +40,11 @@
       "title": "Expose externally",
       "description": "Is the Guacamole service exposed outside of the vnet"
     },
-    "ws_client_id": {
-      "$id": "#/properties/ws_client_id",
+    "workspace_identifier_uri": {
+      "$id": "#/properties/workspace_identifier_uri",
       "type": "string",
-      "title": "workspace app client id",
-      "description": "The workspace app client ID which should be submitted to the OpenID service when necessary. This value is typically provided to you by the OpenID service when OpenID credentials are generated for your application."
-    },
-    "ws_client_secret": {
-      "$id": "#/properties/ws_client_secret",
-      "type": "string",
-      "title": "workspace app client secret",
-      "description": "The workspace app client secret which should be submitted to the OpenID service when necessary. This value is typically provided to you by the OpenID service when OpenID credentials are generated for your application."
+      "title": "Workspace Identifier URI (Scope)",
+      "description": "The audience/scope/identifier uri of the workspace in AAD"
     }
   }
 }
