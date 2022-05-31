@@ -89,18 +89,19 @@ def test_get_workspace_by_id_queries_db(workspace_repo, workspace):
 @patch('core.config.TRE_ID', "9876")
 def test_create_workspace_item_creates_a_workspace_with_the_right_values(validate_input_mock, new_cidr_mock, workspace_repo, basic_workspace_request, basic_resource_template):
     workspace_to_create = basic_workspace_request
-    # make sure the input doesn't include an address_space so that one will be generated
+    # make sure the input has 'None' for values that we expect to be set
     workspace_to_create.properties.pop("address_space", None)
+    workspace_to_create.properties.pop("workspace_owner_object_id", None)
 
     validate_input_mock.return_value = basic_resource_template
     new_cidr_mock.return_value = "1.2.3.4/24"
 
-    workspace, _ = workspace_repo.create_workspace_item(workspace_to_create, {})
+    workspace, _ = workspace_repo.create_workspace_item(workspace_to_create, {}, "test_object_id")
 
     assert workspace.templateName == workspace_to_create.templateName
     assert workspace.resourceType == ResourceType.Workspace
 
-    for key in ["display_name", "description", "azure_location", "workspace_id", "tre_id", "address_space"]:
+    for key in ["display_name", "description", "azure_location", "workspace_id", "tre_id", "address_space", "workspace_owner_object_id"]:
         assert key in workspace.properties
         assert len(workspace.properties[key]) > 0
 
@@ -108,6 +109,7 @@ def test_create_workspace_item_creates_a_workspace_with_the_right_values(validat
     assert workspace.properties["tre_id"] != workspace_to_create.properties["tre_id"]
     # a new CIDR was allocated
     assert workspace.properties["address_space"] == "1.2.3.4/24"
+    assert workspace.properties["workspace_owner_object_id"] == "test_object_id"
 
 
 @patch('core.config.RESOURCE_LOCATION', "useast2")
@@ -153,7 +155,7 @@ def test_create_workspace_item_creates_a_workspace_with_custom_address_space(val
     workspace_to_create.properties["address_space"] = "10.2.4.0/24"
     validate_input_mock.return_value = basic_resource_template
 
-    workspace, _ = workspace_repo.create_workspace_item(workspace_to_create, {})
+    workspace, _ = workspace_repo.create_workspace_item(workspace_to_create, {}, "test_object_id")
 
     assert workspace.properties["address_space"] == workspace_to_create.properties["address_space"]
 
@@ -170,7 +172,7 @@ def test_create_workspace_item_throws_exception_with_bad_custom_address_space(va
     validate_input_mock.return_value = basic_resource_template
 
     with pytest.raises(InvalidInput):
-        workspace_repo.create_workspace_item(workspace_to_create, {})
+        workspace_repo.create_workspace_item(workspace_to_create, {}, "test_object_id")
 
 
 def test_get_address_space_based_on_size_with_custom_address_space_and_missing_address(workspace_repo, basic_workspace_request):
@@ -188,7 +190,7 @@ def test_create_workspace_item_raises_value_error_if_template_is_invalid(validat
     validate_input_mock.side_effect = ValueError
 
     with pytest.raises(ValueError):
-        workspace_repo.create_workspace_item(workspace_input, {})
+        workspace_repo.create_workspace_item(workspace_input, {}, "test_object_id")
 
 
 def test_automatically_create_application_registration_returns_true(workspace_repo):
@@ -201,3 +203,17 @@ def test_automatically_create_application_registration_returns_false(workspace_r
     dictToTest = {"client_id": "12345"}
 
     assert workspace_repo.automatically_create_application_registration(dictToTest) is False
+
+
+def test_workspace_owner_is_set_if_not_present_in_workspace_properties(workspace_repo):
+    dictToTest = {}
+    expected_object_id = "Expected"
+
+    assert workspace_repo.get_workspace_owner(dictToTest, expected_object_id) is expected_object_id
+
+
+def test_workspace_owner_is_not_overwritten_if_present_in_workspace_properties(workspace_repo):
+    dictToTest = {"workspace_owner_object_id": "Expected"}
+    not_expected_object_id = "Not Expected"
+
+    assert workspace_repo.get_workspace_owner(dictToTest, not_expected_object_id) == "Expected"
