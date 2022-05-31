@@ -10,6 +10,7 @@ resource "random_password" "gitea_passwd" {
 resource "azurerm_user_assigned_identity" "gitea_id" {
   resource_group_name = local.core_resource_group_name
   location            = data.azurerm_resource_group.rg.location
+  tags                = local.tre_core_tags
 
   name = "id-gitea-${var.tre_id}"
 
@@ -23,6 +24,7 @@ resource "azurerm_app_service" "gitea" {
   app_service_plan_id             = data.azurerm_app_service_plan.core.id
   https_only                      = true
   key_vault_reference_identity_id = azurerm_user_assigned_identity.gitea_id.id
+  tags                            = local.tre_core_tags
 
   app_settings = {
     APPINSIGHTS_INSTRUMENTATIONKEY      = data.azurerm_application_insights.core.instrumentation_key
