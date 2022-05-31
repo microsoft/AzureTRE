@@ -33,5 +33,5 @@ locals {
   import_rejected_eventgrid_subscription_name   = "evgs-airlock-import-rejected-blob-created"
   export_approved_eventgrid_subscription_name   = "evgs-airlock-export-approved-blob-created"
 
-  airlock_function_app_name = "func-alp-${var.tre_id}"
+  airlock_function_app_name = "funcal${var.tre_id}"
 }
