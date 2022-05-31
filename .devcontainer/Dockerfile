@@ -75,7 +75,7 @@ COPY ["e2e_tests/requirements.txt", "/tmp/pip-tmp/e2e_tests/"]
 RUN pip3 --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requirements.txt && rm -rf /tmp/pip-tmp
 
 # Install azure-cli
-ARG AZURE_CLI_VERSION=2.29.2-1~buster
+ARG AZURE_CLI_VERSION=2.36.0-1~buster
 COPY .devcontainer/scripts/azure-cli.sh /tmp/
 RUN export AZURE_CLI_VERSION=${AZURE_CLI_VERSION} \
     && /tmp/azure-cli.sh

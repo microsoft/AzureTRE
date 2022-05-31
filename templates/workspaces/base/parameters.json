@@ -59,12 +59,6 @@
       }
     },
     {
-      "name": "keyvault_purge_protection_enabled",
-      "source": {
-        "env": "KEYVAULT_PURGE_PROTECTION_ENABLED"
-      }
-    },
-    {
       "name": "register_aad_application",
       "source": {
         "env": "REGISTER_AAD_APPLICATION"

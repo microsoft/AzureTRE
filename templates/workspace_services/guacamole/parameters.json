@@ -34,18 +34,6 @@
       }
     },
     {
-      "name": "ws_client_id",
-      "source": {
-        "env": "WS_CLIENT_ID"
-      }
-    },
-    {
-      "name": "ws_client_secret",
-      "source": {
-        "env": "WS_CLIENT_SECRET"
-      }
-    },
-    {
       "name": "tfstate_container_name",
       "source": {
         "env": "TERRAFORM_STATE_CONTAINER_NAME"

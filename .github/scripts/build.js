@@ -17,19 +17,6 @@ async function getCommandFromComment({ core, context, github }) {
   const runId = context.runId;
   const prAuthorUsername = context.payload.issue.user.login;
 
-  // only allow actions for users with write access
-  if (!await userHasWriteAccessToRepo({ core, github }, commentUsername, repoOwner, repoName)) {
-    core.notice("Command: none - user doesn't have write permission]");
-    await github.rest.issues.createComment({
-      owner: repoOwner,
-      repo: repoName,
-      issue_number: prNumber,
-      body: `Sorry, @${commentUsername}, only users with write access to the repo can run pr-bot commands.`
-    });
-    logAndSetOutput(core, "command", "none");
-    return "none";
-  }
-
   // Determine PR SHA etc
   const ciGitRef = getRefForPr(prNumber);
   logAndSetOutput(core, "ciGitRef", ciGitRef);
@@ -65,7 +52,20 @@ async function getCommandFromComment({ core, context, github }) {
   let command = "none";
   const trimmedFirstLine = commentFirstLine.trim();
   if (trimmedFirstLine[0] === "/") {
-    const parts = trimmedFirstLine.split(' ').filter(p=>p !== '');
+    // only allow actions for users with write access
+    if (!await userHasWriteAccessToRepo({ core, github }, commentUsername, repoOwner, repoName)) {
+      core.notice("Command: none - user doesn't have write permission]");
+      await github.rest.issues.createComment({
+        owner: repoOwner,
+        repo: repoName,
+        issue_number: prNumber,
+        body: `Sorry, @${commentUsername}, only users with write access to the repo can run pr-bot commands.`
+      });
+      logAndSetOutput(core, "command", "none");
+      return "none";
+    }
+
+    const parts = trimmedFirstLine.split(' ').filter(p => p !== '');
     const commandText = parts[0];
     switch (commandText) {
       case "/test":
@@ -91,6 +91,15 @@ async function getCommandFromComment({ core, context, github }) {
           const runTests = await handleTestCommand({ core, github }, parts, "extended tests", runId, { number: prNumber, authorUsername: prAuthorUsername, repoOwner, repoName, headSha: prHeadSha, refId: prRefId, details: pr }, { username: commentUsername, link: commentLink });
           if (runTests) {
             command = "run-tests-extended";
+          }
+          break;
+        }
+
+      case "/test-shared-services":
+        {
+          const runTests = await handleTestCommand({ core, github }, parts, "shared service tests", runId, { number: prNumber, authorUsername: prAuthorUsername, repoOwner, repoName, headSha: prHeadSha, refId: prRefId, details: pr }, { username: commentUsername, link: commentLink });
+          if (runTests) {
+            command = "run-tests-shared-services";
           }
           break;
         }
@@ -229,6 +238,7 @@ async function showHelp({ github }, repoOwner, repoName, prNumber, commentUser, 
 You can use the following commands:
 &nbsp;&nbsp;&nbsp;&nbsp;/test - build, deploy and run smoke tests on a PR
 &nbsp;&nbsp;&nbsp;&nbsp;/test-extended - build, deploy and run smoke & extended tests on a PR
+&nbsp;&nbsp;&nbsp;&nbsp;/test-shared-services - test the deployment of shared services on a PR build
 &nbsp;&nbsp;&nbsp;&nbsp;/test-force-approve - force approval of the PR tests (i.e. skip the deployment checks)
 &nbsp;&nbsp;&nbsp;&nbsp;/test-destroy-env - delete the validation environment for a PR (e.g. to enable testing a deployment from a clean start after previous tests)
 &nbsp;&nbsp;&nbsp;&nbsp;/help - show this help`;
