@@ -12,7 +12,7 @@ from resources import strings
 LOGGER = logging.getLogger(__name__)
 
 
-@pytest.mark.extended
+@pytest.mark.shared_services
 async def test_patch_firewall(admin_token, verify):
     template_name = strings.FIREWALL_SHARED_SERVICE
 
@@ -79,12 +79,10 @@ async def test_patch_firewall(admin_token, verify):
     shared_service_path = f'/shared-services/{shared_service_firewall["id"]}'
 
     await post_resource(
-        patch_payload,
-        f"/api{shared_service_path}",
-        "shared_service",
-        admin_token,
-        None,
-        verify,
+        payload=patch_payload,
+        endpoint=f"/api{shared_service_path}",
+        access_token=admin_token,
+        verify=verify,
         method="PATCH",
     )
 
@@ -95,7 +93,7 @@ shared_service_templates_to_create = [
 ]
 
 
-@pytest.mark.extended
+@pytest.mark.shared_services
 @pytest.mark.timeout(30 * 60)
 @pytest.mark.parametrize("template_name", shared_service_templates_to_create)
 async def test_create_shared_service(template_name, admin_token, verify) -> None:
@@ -109,7 +107,7 @@ async def test_create_shared_service(template_name, admin_token, verify) -> None
             f"Shared service {template_name} already exists (id {id}), deleting it first..."
         )
         await disable_and_delete_resource(
-            f"/api/shared-services/{id}", "shared_service", admin_token, None, verify
+            f"/api/shared-services/{id}", admin_token, verify
         )
 
     post_payload = {
@@ -121,14 +119,12 @@ async def test_create_shared_service(template_name, admin_token, verify) -> None
     }
 
     shared_service_path, _ = await post_resource(
-        post_payload,
-        "/api/shared-services",
-        "shared_service",
-        admin_token,
-        None,
-        verify,
+        payload=post_payload,
+        endpoint="/api/shared-services",
+        access_token=admin_token,
+        verify=verify,
     )
 
     await disable_and_delete_resource(
-        f"/api{shared_service_path}", "shared_service", admin_token, None, verify
+        f"/api{shared_service_path}", admin_token, verify
     )

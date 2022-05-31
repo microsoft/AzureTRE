@@ -134,7 +134,7 @@ jobs:
   run_test:
     # Run the tests with the re-usable workflow
     needs: [pr_comment]
-    if: ${{ needs.pr_comment.outputs.command == 'run-tests' || needs.pr_comment.outputs.command == 'run-tests-extended' }}
+    if: ${{ needs.pr_comment.outputs.command == 'run-tests' || needs.pr_comment.outputs.command == 'run-tests-extended' || needs.pr_comment.outputs.command == 'run-tests-shared-services' }}
     name: Deploy PR
     uses: ./.github/workflows/deploy_tre_reusable.yml
     with:
@@ -142,6 +142,7 @@ jobs:
       prHeadSha: ${{ needs.pr_comment.outputs.prHeadSha }}
       ciGitRef: ${{ needs.pr_comment.outputs.ciGitRef }}
       runExtendedTests: ${{ needs.pr_comment.outputs.command == 'run-tests-extended' }}
+      runSharedServicesTests: ${{ needs.pr_comment.outputs.command == 'run-tests-shared-services' }}
     secrets:
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
       ACR_NAME: ${{ format('tre{0}', needs.pr_comment.outputs.prRefId) }}

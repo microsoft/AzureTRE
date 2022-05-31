@@ -192,7 +192,9 @@ Same as [TRE API](#authentication-tre-api).
 | API/permission name | Type | Description | Admin consent required |
 | ------------------- | ---- | ----------- | ---------------------- |
 | Microsoft Graph/User.Read (`https://graph.microsoft.com/User.Read`) | Delegated | Allows users to sign-in to the app, and allows the app to read the profile of signed-in users. It also allows the app to read basic company information of signed-in users. | No |
-| Workspace API/user_impersonation (`api://<Workspace API Application (client) ID>/user_impersonation`) | Delegated* | Allows the app to access the workspace API on behalf of the user | No | Granted for *[directory name]* |
+| Workspace API/user_impersonation (`api://<Workspace Scope ID>/user_impersonation`) | Delegated* | Allows the app to access the workspace API on behalf of the user | No | Granted for *[directory name]* |
+
+When the Workspace AAD app is registered by the aad-app-reg.sh, the `Workspace Scope Id` is the same as the Client Id. When the Workspace AAD app is created by the base workspace, the `Workspace Scope Id` will be in this format `api://<TRE_ID>_ws_<WORKSPACE_SHORT_IDENTIFIER>`
 
 #### App roles
 

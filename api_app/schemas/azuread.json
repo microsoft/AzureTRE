@@ -12,6 +12,11 @@
             "type": "string",
             "title": "Application (Client) ID",
             "description": "AAD App registration of the workspace"
-        }
+        },
+        "client_secret": {
+          "type": "string",
+          "title": "Application (Client) Secret",
+          "description": "AAD App registration of the workspace. This value will be copied into Key Vault."
+      }
     }
 }

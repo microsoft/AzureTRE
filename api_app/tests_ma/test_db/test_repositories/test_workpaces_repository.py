@@ -40,6 +40,14 @@ def workspace():
     return workspace
 
 
+def test_get_workspaces_queries_db(workspace_repo):
+    workspace_repo.container.query_items = MagicMock()
+    expected_query = workspace_repo.workspaces_query_string()
+
+    workspace_repo.get_workspaces()
+    workspace_repo.container.query_items.assert_called_once_with(query=expected_query, enable_cross_partition_query=True)
+
+
 def test_get_active_workspaces_queries_db(workspace_repo):
     workspace_repo.container.query_items = MagicMock()
     expected_query = workspace_repo.active_workspaces_query_string()

@@ -72,7 +72,8 @@ class WorkspaceInCreate(BaseModel):
                 "properties": {
                     "display_name": "the workspace display name",
                     "description": "workspace description",
-                    "client_id": "9d52b04f-89cf-47b4-868a-e12be7133b36",
+                    "client_id": "<WORKSPACE_CLIENT_ID>",
+                    "client_secret": "<WORKSPACE_CLIENT_SECRET>",
                     "address_space_size": "small"
                 }
             }
