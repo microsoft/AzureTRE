@@ -1,43 +1,16 @@
-import { DefaultPalette, IStackItemStyles, IStackStyles, MessageBar, MessageBarType, Spinner, SpinnerSize, Stack } from "@fluentui/react";
+import { IStackStyles, MessageBar, MessageBarType, Spinner, SpinnerSize, Stack } from "@fluentui/react";
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { HttpMethod, useAuthApiCall } from '../../useAuthApiCall';
 import { Operation } from '../../models/operation';
 import { Resource } from '../../models/resource';
 import { ApiEndpoint } from '../../models/apiEndpoints';
+import { ResourceOperationListItem } from './ResourceOperationListItem';
 import config from '../../config.json';
 
 interface ResourceOperationsListProps {
     resource: Resource
 }   
-
-interface ResourceOperationsListItemProps {
-    header: String,
-    val: String
-}
-
-const ResourceOperationsListItem: React.FunctionComponent<ResourceOperationsListItemProps> = (props: ResourceOperationsListItemProps) => {
-
-    const stackItemStyles: IStackItemStyles = {
-        root: {
-            padding: 5,
-            width: 150,
-            color: DefaultPalette.neutralSecondary
-        }
-    }
-    return(
-        <>
-            <Stack wrap horizontal>
-                <Stack.Item grow styles={stackItemStyles}>
-                    {props.header}
-                </Stack.Item>
-                <Stack.Item grow styles={stackItemStyles}>
-                    : {props.val}
-                </Stack.Item>
-            </Stack>
-        </>
-    );
-}
 
 export const ResourceOperationsList: React.FunctionComponent<ResourceOperationsListProps> = (props: ResourceOperationsListProps) => {
     const apiCall = useAuthApiCall();
@@ -82,15 +55,15 @@ export const ResourceOperationsList: React.FunctionComponent<ResourceOperationsL
                             return (
                                 <Stack wrap horizontal>
                                     <Stack grow styles={stackStyles}>
-                                        <ResourceOperationsListItem header={'Resource Id'} val={op.resourceId} />
-                                        <ResourceOperationsListItem header={'Resource Path'} val={op.resourcePath} />
-                                        <ResourceOperationsListItem header={'Resource Version'} val={op.resourceVersion} />
-                                        <ResourceOperationsListItem header={'Status'} val={op.status} />
-                                        <ResourceOperationsListItem header={'Action'} val={op.action} />
-                                        <ResourceOperationsListItem header={'Message'} val={op.message} />
-                                        <ResourceOperationsListItem header={'Created'} val={new Date(op.createdWhen).toTimeString()} />
-                                        <ResourceOperationsListItem header={'Updated'} val={new Date(op.updatedWhen).toTimeString()} />
-                                        <ResourceOperationsListItem header={'User'} val={op.user.name} />
+                                        <ResourceOperationListItem header={'Resource Id'} val={op.resourceId} />
+                                        <ResourceOperationListItem header={'Resource Path'} val={op.resourcePath} />
+                                        <ResourceOperationListItem header={'Resource Version'} val={op.resourceVersion} />
+                                        <ResourceOperationListItem header={'Status'} val={op.status} />
+                                        <ResourceOperationListItem header={'Action'} val={op.action} />
+                                        <ResourceOperationListItem header={'Message'} val={op.message} />
+                                        <ResourceOperationListItem header={'Created'} val={new Date(op.createdWhen).toTimeString()} />
+                                        <ResourceOperationListItem header={'Updated'} val={new Date(op.updatedWhen).toTimeString()} />
+                                        <ResourceOperationListItem header={'User'} val={op.user.name} />
                                     </Stack>    
                                 </Stack>
                             )
