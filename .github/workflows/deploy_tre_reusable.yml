@@ -9,7 +9,9 @@ on:  # yamllint disable-line rule:truthy
         type: string
         required: false
       prHeadSha:
-        description: For PR builds where GITHUB_REF isn't set to the PR (e.g. comment trigger), pass the PR's head SHA commit here
+        description: >-
+          For PR builds where GITHUB_REF isn't set to the PR (e.g. comment trigger),
+          pass the PR's head SHA commit here
         type: string
         required: false
       ciGitRef:
@@ -269,18 +271,18 @@ jobs:
           TRE_ID: "${{ secrets.TRE_ID }}"
           LOCATION: ${{ secrets.LOCATION }}
           ACR_NAME: ${{ secrets.ACR_NAME }}
-          TF_VAR_terraform_state_container_name:
-            ${{ secrets.TF_STATE_CONTAINER }}
+          TF_VAR_terraform_state_container_name: ${{ secrets.TF_STATE_CONTAINER }}
           TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
-          TF_VAR_mgmt_storage_account_name:
-            ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+          TF_VAR_mgmt_storage_account_name: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
           TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
           TF_VAR_tre_address_space: ${{ secrets.TRE_ADDRESS_SPACE }}
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
           TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
-          TF_VAR_keyvault_purge_protection_enabled: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
-          TF_VAR_stateful_resources_locked: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
+          TF_VAR_keyvault_purge_protection_enabled:
+            "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
+          TF_VAR_stateful_resources_locked:
+            "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
 
   deploy_tre:
     name: Deploy TRE
@@ -318,18 +320,18 @@ jobs:
           TRE_ID: "${{ secrets.TRE_ID }}"
           LOCATION: ${{ secrets.LOCATION }}
           ACR_NAME: ${{ secrets.ACR_NAME }}
-          TF_VAR_terraform_state_container_name:
-            ${{ secrets.TF_STATE_CONTAINER }}
+          TF_VAR_terraform_state_container_name: ${{ secrets.TF_STATE_CONTAINER }}
           TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
-          TF_VAR_mgmt_storage_account_name:
-            ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+          TF_VAR_mgmt_storage_account_name: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
           TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
           TF_VAR_tre_address_space: ${{ secrets.TRE_ADDRESS_SPACE }}
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
           TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
-          TF_VAR_keyvault_purge_protection_enabled: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
-          TF_VAR_stateful_resources_locked: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
+          TF_VAR_keyvault_purge_protection_enabled:
+            "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
+          TF_VAR_stateful_resources_locked:
+            "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
 
       - name: API Healthcheck
         uses: ./.github/actions/devcontainer_run_command
@@ -353,18 +355,18 @@ jobs:
           TRE_ID: "${{ secrets.TRE_ID }}"
           LOCATION: ${{ secrets.LOCATION }}
           ACR_NAME: ${{ secrets.ACR_NAME }}
-          TF_VAR_terraform_state_container_name:
-            ${{ secrets.TF_STATE_CONTAINER }}
+          TF_VAR_terraform_state_container_name: ${{ secrets.TF_STATE_CONTAINER }}
           TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
-          TF_VAR_mgmt_storage_account_name:
-            ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+          TF_VAR_mgmt_storage_account_name: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
           TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
           TF_VAR_tre_address_space: ${{ secrets.TRE_ADDRESS_SPACE }}
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
           TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
-          TF_VAR_keyvault_purge_protection_enabled: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
-          TF_VAR_stateful_resources_locked: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
+          TF_VAR_keyvault_purge_protection_enabled:
+            "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
+          TF_VAR_stateful_resources_locked:
+            "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
 
   publish_bundles:
     name: Publish Bundles
@@ -573,18 +575,18 @@ jobs:
           TRE_ID: "${{ secrets.TRE_ID }}"
           LOCATION: ${{ secrets.LOCATION }}
           ACR_NAME: ${{ secrets.ACR_NAME }}
-          TF_VAR_terraform_state_container_name:
-            ${{ secrets.TF_STATE_CONTAINER }}
+          TF_VAR_terraform_state_container_name: ${{ secrets.TF_STATE_CONTAINER }}
           TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP }}
-          TF_VAR_mgmt_storage_account_name:
-            ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+          TF_VAR_mgmt_storage_account_name: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
           TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
           TF_VAR_tre_address_space: ${{ secrets.TRE_ADDRESS_SPACE }}
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
           TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
-          TF_VAR_keyvault_purge_protection_enabled: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
-          TF_VAR_stateful_resources_locked: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
+          TF_VAR_keyvault_purge_protection_enabled:
+            "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
+          TF_VAR_stateful_resources_locked:
+            "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
 
   e2e_tests_smoke:
     name: "Run E2E Tests (Smoke)"
