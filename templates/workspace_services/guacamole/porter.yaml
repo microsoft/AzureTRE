@@ -73,6 +73,11 @@ parameters:
     description:
       "Determines if the web app will be available over public/internet
       or private networks"
+  - name: workspace_identifier_uri
+    type: string
+    env: WORKSPACE_IDENTIFIER_URI
+    description:
+      "This is used to define the scope of the oauth2 redirection (e.g. api://treid_ws_wsid)"
   # the following are added automatically by the resource processor
   - name: id
     type: string
@@ -128,6 +133,7 @@ install:
         guac_disable_download: "{{ bundle.parameters.guac_disable_download }}"
         is_exposed_externally: "{{ bundle.parameters.is_exposed_externally }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
+        workspace_identifier_uri: "{{ bundle.parameters.workspace_identifier_uri }}"
       backendConfig:
         resource_group_name:
           "{{ bundle.parameters.tfstate_resource_group_name }}"
@@ -168,6 +174,7 @@ uninstall:
         guac_disable_download: "{{ bundle.parameters.guac_disable_download }}"
         is_exposed_externally: "{{ bundle.parameters.is_exposed_externally }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
+        workspace_identifier_uri: "{{ bundle.parameters.workspace_identifier_uri }}"
       backendConfig:
         resource_group_name:
           "{{ bundle.parameters.tfstate_resource_group_name }}"
