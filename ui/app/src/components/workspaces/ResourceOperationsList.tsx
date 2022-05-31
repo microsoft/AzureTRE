@@ -1,11 +1,12 @@
 import { IStackStyles, MessageBar, MessageBarType, Spinner, SpinnerSize, Stack } from "@fluentui/react";
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useContext, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { HttpMethod, useAuthApiCall } from '../../useAuthApiCall';
 import { Operation } from '../../models/operation';
 import { Resource } from '../../models/resource';
 import { ApiEndpoint } from '../../models/apiEndpoints';
 import { ResourceOperationListItem } from './ResourceOperationListItem';
+import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import config from '../../config.json';
 
 
@@ -15,7 +16,7 @@ interface ResourceOperationsListProps {
 
 export const ResourceOperationsList: React.FunctionComponent<ResourceOperationsListProps> = (props: ResourceOperationsListProps) => {
     const apiCall = useAuthApiCall();
-    // const { workspaceId } = useParams();
+    const workspaceCtx = useContext(WorkspaceContext);
     const { resourceId } = useParams();
     const [resourceOperations, setResourceOperations] = useState([] as Array<Operation>)
     const [loadingState, setLoadingState] = useState('loading');
@@ -23,12 +24,8 @@ export const ResourceOperationsList: React.FunctionComponent<ResourceOperationsL
     useEffect(() => {
         const getOperations = async () => {
             try {
-                let ws = props.resource && props.resource.id ?
-                props.resource :
-                (await apiCall(`/${props.resource.resourcePath}`, HttpMethod.Get)).workspace;
-                
                 // get resource operations 
-                const resourceOperations = await apiCall(`${ApiEndpoint.Workspaces}/${ws.id}/${ApiEndpoint.Operations}`, HttpMethod.Get, ws.properties.app_id);
+                const resourceOperations = await apiCall(`${ApiEndpoint.Workspaces}/${props.resource.id}/${ApiEndpoint.Operations}`, HttpMethod.Get, workspaceCtx.workspaceClientId);
                 config.debug && console.log(`Got resource operations, for resource:${props.resource.id}: ${resourceOperations.operations}`);
                 setResourceOperations(resourceOperations.operations);
                 setLoadingState(resourceOperations && resourceOperations.operations.length > 0 ? 'ok' : 'error');
