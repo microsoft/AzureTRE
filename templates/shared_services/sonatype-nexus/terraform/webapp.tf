@@ -7,9 +7,8 @@ resource "azurerm_app_service" "nexus" {
 
   app_settings = {
     APPINSIGHTS_INSTRUMENTATIONKEY      = data.azurerm_application_insights.core.instrumentation_key
-    WEBSITES_PORT                       = "8081" # nexus web-ui listens here
-    WEBSITES_CONTAINER_START_TIME_LIMIT = "900"  # nexus takes a while to start-up
-    WEBSITE_VNET_ROUTE_ALL              = 1
+    WEBSITES_PORT                       = "8081"          # nexus web-ui listens here
+    WEBSITES_CONTAINER_START_TIME_LIMIT = "900"           # nexus takes a while to start-up
     WEBSITE_DNS_SERVER                  = "168.63.129.16" # required to access storage over private endpoints
     WEBSITES_ENABLE_APP_SERVICE_STORAGE = false
     DOCKER_REGISTRY_SERVER_URL          = "https://index.docker.io/v1"
@@ -21,9 +20,11 @@ resource "azurerm_app_service" "nexus" {
     linux_fx_version            = "DOCKER|sonatype/nexus3"
     remote_debugging_enabled    = false
     scm_use_main_ip_restriction = true
-
-    always_on       = true
-    min_tls_version = "1.2"
+    ftps_state                  = "Disabled"
+    always_on                   = true
+    min_tls_version             = "1.2"
+    websockets_enabled          = false
+    vnet_route_all_enabled      = true
 
     ip_restriction {
       action     = "Deny"
@@ -31,8 +32,6 @@ resource "azurerm_app_service" "nexus" {
       name       = "Deny all"
       priority   = 2147483647
     }
-
-    websockets_enabled = false
   }
 
   storage_account {

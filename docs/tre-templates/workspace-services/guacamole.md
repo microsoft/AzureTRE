@@ -18,13 +18,6 @@ Service Tags:
 
 When deploying a Guacamole service into a workspace the following properties need to be configured.
 
-### Required Properties
-
-| Property | Options | Description |
-| -------- | ------- | ----------- |
-| `ws_client_id` | Valid client ID of the Workspace App Registration. | The OpenID client ID which should be submitted to the OpenID service when necessary. This value is typically provided to you by the OpenID service when OpenID credentials are generated for your application. |
-| `ws_client_secret` | Valid client secret. |
-
 ### Optional Properties
 
 | Property | Options | Description |

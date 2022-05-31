@@ -61,6 +61,7 @@ resource "azurerm_app_service" "mlflow" {
     http2_enabled                        = true
     acr_use_managed_identity_credentials = true
     vnet_route_all_enabled               = true
+    ftps_state                           = "Disabled"
   }
 
   app_settings = {
