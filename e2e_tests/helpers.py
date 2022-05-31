@@ -241,9 +241,7 @@ async def get_workspace_auth_details(admin_token, workspace_id, verify) -> Tuple
         except JSONDecodeError:
             raise Exception("Failed to parse response as JSON: {}".format(response.content))
 
-        if "access_token" not in responseJson:
+        if "access_token" not in responseJson or response.status_code != status.HTTP_200_OK:
             raise Exception("Failed to get access_token: {}".format(response.content))
 
-        token = responseJson["access_token"]
-
-        return token, scope_uri
+        return responseJson["access_token"], scope_uri
