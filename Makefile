@@ -319,6 +319,11 @@ shared_service_bundle = $(MAKE) bundle-build DIR=./templates/shared_services/$(1
 	&& $(MAKE) bundle-publish DIR=./templates/shared_services/$(1)/ \
 	&& $(MAKE) bundle-register DIR="./templates/shared_services/$(1)" BUNDLE_TYPE=shared_service
 
+user_resource_bundle = $(MAKE) bundle-build DIR=./templates/workspace_services/$(1)/user_resources/$(2)/ \
+	&& $(MAKE) bundle-publish DIR=./templates/workspace_services/$(1)/user_resources/$(2) \
+	&& $(MAKE) bundle-register DIR="./templates/workspace_services/$(1)/user_resources/$(2)" BUNDLE_TYPE=user_resource WORKSPACE_SERVICE_NAME=tre-service-$(1)
+
+
 deploy-shared-service:
 	@# NOTE: ACR_NAME below comes from the env files, so needs the double '$$'. Others are set on command execution and don't
 	$(call target_title, "Deploying ${DIR} shared service") \
@@ -329,6 +334,9 @@ deploy-shared-service:
 	&& cd ${DIR} \
 	&& ${MAKEFILE_DIR}/devops/scripts/deploy_shared_service.sh --insecure --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}"
 
+temp-do-upload:
+	$(MAKE) static-web-upload DIR=${MAKEFILE_DIR}/dummy
+
 static-web-upload:
 	$(call target_title, "Uploading to static website") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker \
@@ -336,7 +344,7 @@ static-web-upload:
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ./templates/core/.env \
-	&& pushd ${MAKEFILE_DIR}/templates/core/terraform/ > /dev/null && . ${MAKEFILE_DIR}/outputs.sh && popd > /dev/null \
+	&& pushd ${MAKEFILE_DIR}/templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/templates/core/private.env \
 	&& ${MAKEFILE_DIR}/templates/core/terraform/scripts/upload_static_web.sh
 
@@ -349,7 +357,8 @@ prepare-for-e2e:
 	&& $(call workspace_service_bundle,gitea) \
 	&& $(call workspace_service_bundle,innereye) \
 	&& $(call shared_service_bundle,sonatype-nexus) \
-	&& $(call shared_service_bundle,gitea)
+	&& $(call shared_service_bundle,gitea) \
+	&& $(call user_resource_bundle,guacamole,guacamole-dev-vm)
 
 test-e2e-smoke:
 	$(call target_title, "Running E2E smoke tests") && \
@@ -360,6 +369,11 @@ test-e2e-extended:
 	$(call target_title, "Running E2E extended tests") && \
 	cd e2e_tests && \
 	python -m pytest -m extended --verify $${IS_API_SECURED:-true} --junit-xml pytest_e2e_extended.xml
+
+test-e2e-shared-services:
+	$(call target_title, "Running E2E shared service tests") && \
+	cd e2e_tests && \
+	python -m pytest -m shared_services --verify $${IS_API_SECURED:-true} --junit-xml pytest_e2e_shared_services.xml
 
 setup-local-debugging:
 	$(call target_title,"Setting up the ability to debug the API and Resource Processor") \

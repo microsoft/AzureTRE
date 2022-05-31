@@ -30,7 +30,15 @@ export const useAuthApiCall = () => {
         return JSON.parse(jsonPayload);
     }
 
-    return useCallback(async (endpoint: string, method: HttpMethod, clientId?: string, body?: any, resultType?: ResultType, setRoles?: (roles: Array<string>) => void, tokenOnly?: boolean) => {
+    return useCallback(async (
+        endpoint: string,
+        method: HttpMethod,
+        clientId?: string,
+        body?: any,
+        resultType?: ResultType,
+        setRoles?: (roles: Array<string>) => void,
+        tokenOnly?: boolean,
+        etag?: string) => {
 
         if (!account) {
             console.error("No account object found, please refresh.");
@@ -79,7 +87,9 @@ export const useAuthApiCall = () => {
         const opts: RequestInit = {
             mode: "cors",
             headers: {
-                Authorization: `Bearer ${tokenResponse.accessToken}`
+                Authorization: `Bearer ${tokenResponse.accessToken}`,
+                'Content-Type': 'application/json',
+                'etag': etag ? etag : ""
             },
             method: method
         }
@@ -108,6 +118,8 @@ export const useAuthApiCall = () => {
                     return;
             }
         } catch (err: any) {
+            // TODO: this is currently hiding errors, we should either rethrow to be handled in components
+            // or hook this up to user-facing alerts
             console.error("Error calling API", err);
         }
     }, [account, instance]);

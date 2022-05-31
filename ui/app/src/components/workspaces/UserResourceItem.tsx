@@ -1,16 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { ApiEndpoint } from '../../models/apiEndpoints';
-import { Workspace } from '../../models/workspace';
 import { useAuthApiCall, HttpMethod } from '../../useAuthApiCall';
 import { UserResource } from '../../models/userResource';
 import { ResourceDebug } from '../shared/ResourceDebug';
+import { ResourcePropertyPanel } from '../shared/ResourcePropertyPanel';
+import { WorkspaceContext } from '../../contexts/WorkspaceContext';
+import { Pivot, PivotItem } from '@fluentui/react';
+import { ResourceHistory } from '../shared/ResourceHistory';
 
 // TODO:
 // - This 'page' might die in place of a card on the Workspace services page - leave it alone for now
 
 interface UserResourceItemProps {
-  workspace: Workspace,
   userResource?: UserResource
 }
 
@@ -18,6 +20,7 @@ export const UserResourceItem: React.FunctionComponent<UserResourceItemProps> = 
   const { workspaceServiceId, userResourceId } = useParams();
   const [userResource, setUserResource] = useState({} as UserResource)
   const apiCall = useAuthApiCall();
+  const workspaceCtx = useContext(WorkspaceContext);
 
   useEffect(() => {
     const getData = async () => {
@@ -25,18 +28,38 @@ export const UserResourceItem: React.FunctionComponent<UserResourceItemProps> = 
       if (props.userResource && props.userResource.id) {
         setUserResource(props.userResource);
       } else {
-        let ur = await apiCall(`${ApiEndpoint.Workspaces}/${props.workspace.id}/${ApiEndpoint.WorkspaceServices}/${workspaceServiceId}/${ApiEndpoint.UserResources}/${userResourceId}`, HttpMethod.Get, props.workspace.properties.app_id);
+        let ur = await apiCall(`${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}/${workspaceServiceId}/${ApiEndpoint.UserResources}/${userResourceId}`, HttpMethod.Get, workspaceCtx.workspaceClientId);
         setUserResource(ur.userResource);
       }
     };
     getData();
-  }, [apiCall, props.userResource, props.workspace.id, props.workspace.properties.app_id, userResourceId, workspaceServiceId]);
+  }, [apiCall, props.userResource, workspaceCtx.workspaceClientId, userResourceId, workspaceServiceId, workspaceCtx.workspace.id]);
 
   return (
     <>
       <h1>User Resource: {userResource.properties?.display_name}</h1>
+      {userResource && userResource.id &&
+        <Pivot aria-label="User Resource Menu">
+          <PivotItem
+            headerText="Overview"
+            headerButtonProps={{
+              'data-order': 1,
+              'data-title': 'Overview',
+            }}
+          >
+            <ResourcePropertyPanel resource={userResource} />
+            <ResourceDebug resource={userResource} />
+          </PivotItem>
+          <PivotItem headerText="History">
+            <ResourceHistory history={userResource.history} />
+          </PivotItem>
+          <PivotItem headerText="Operations">
+            <h3>--Operations Log here</h3>
+          </PivotItem>
+        </Pivot>
+      }
 
-      <ResourceDebug resource={userResource} />
+
     </>
   );
 };

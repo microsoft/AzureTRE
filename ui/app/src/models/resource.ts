@@ -1,3 +1,4 @@
+import { Operation } from "./operation";
 import { ResourceType } from "./resourceType";
 import { User } from "./user";
 
@@ -17,10 +18,30 @@ export interface Resource {
     properties: any
 }
 
-interface HistoryItem {
+export interface HistoryItem {
     isEnabled: boolean,
     resourceVersion: number,
     updatedWhen: number,
     user: User,
     properties: any
+}
+
+export enum ComponentAction {
+    None,
+    Reload,
+    Remove,
+    Lock
+}
+
+export interface ResourceUpdate {
+    resourceId: string,
+    operation?: Operation,
+    componentAction: ComponentAction
+}
+
+export const getResourceFromResult = (r: any) => {
+    if (r['userResource']) return r.userResource;
+    if (r['workspaceService']) return r.workspaceService;
+    if (r['workspace']) return r.workspace;
+    if (r['sharedService']) return r.sharedService;
 }

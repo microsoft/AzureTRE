@@ -4,7 +4,7 @@ import com.auth0.jwk.UrlJwkProvider;
 import org.apache.guacamole.GuacamoleException;
 import org.apache.guacamole.auth.azuretre.connection.ConnectionService;
 import org.apache.guacamole.auth.azuretre.user.AzureTREAuthenticatedUser;
-import org.apache.guacamole.auth.azuretre.user.UserContext;
+import org.apache.guacamole.auth.azuretre.user.TreUserContext;
 import org.apache.guacamole.net.auth.AuthenticatedUser;
 import org.apache.guacamole.net.auth.Connection;
 import org.apache.guacamole.net.auth.Credentials;
@@ -89,9 +89,10 @@ public class AzureTREAuthenticationProviderTest {
                 .thenReturn(new HashMap<String, Connection>());
             when(authenticatedUser.getAccessToken()).thenReturn(MOCKED_TOKEN);
 
-            UserContext userContext = azureTREAuthenticationProvider.getUserContext(authenticatedUser);
+            TreUserContext treUserContext =
+                (TreUserContext) azureTREAuthenticationProvider.getUserContext(authenticatedUser);
             verify(authenticationProviderService).validateToken(anyString(), any(UrlJwkProvider.class));
-            assertNotNull(userContext);
+            assertNotNull(treUserContext);
         }
     }
 

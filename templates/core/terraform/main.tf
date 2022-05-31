@@ -72,6 +72,20 @@ module "appgateway" {
   ]
 }
 
+module "airlock_resources" {
+  source                 = "./airlock"
+  tre_id                 = var.tre_id
+  location               = var.location
+  resource_group_name    = azurerm_resource_group.core.name
+  shared_subnet_id       = module.network.shared_subnet_id
+  enable_local_debugging = var.enable_local_debugging
+
+  depends_on = [
+    azurerm_servicebus_namespace.sb,
+    module.network
+  ]
+}
+
 module "resource_processor_vmss_porter" {
   count                                            = var.resource_processor_type == "vmss_porter" ? 1 : 0
   source                                           = "./resource_processor/vmss_porter"
@@ -98,4 +112,10 @@ module "resource_processor_vmss_porter" {
     azurerm_key_vault.kv,
     azurerm_key_vault_access_policy.deployer
   ]
+}
+
+resource "azurerm_static_site" "tre-ui" {
+  name                = "${var.tre_id}-ui"
+  resource_group_name = azurerm_resource_group.core.name
+  location            = var.location
 }

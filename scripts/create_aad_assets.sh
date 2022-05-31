@@ -19,11 +19,12 @@ if [ "${LOGGED_IN_TENANT_ID}" != "${AAD_TENANT_ID}" ]; then
   CHANGED_TENANT=1
 fi
 
-# Then register an App
+# Then register an App. DO NOT put quotes around ${api_app_can_create_other_applications} as this
+# will break the aad-app-reg.dh script.
 ./scripts/aad/aad-app-reg.sh \
   --name "${TRE_ID}" \
   --swaggerui-redirecturl "https://${TRE_ID}.${LOCATION}.cloudapp.azure.com/api/docs/oauth2-redirect" \
-  --admin-consent --automation-account "${api_app_can_create_other_applications}"
+  --admin-consent --automation-account ${api_app_can_create_other_applications}
 
 echo "Please copy the values above into your /templates/core/.env."
 read -p "Please confirm you have done this? (y/N) " -n 1 -r

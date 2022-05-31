@@ -130,10 +130,25 @@ public class ConnectionService {
             LOGGER.error("Connection failed", ex);
             throw new GuacamoleException("Connection failed: " + ex.getMessage());
         }
-        if (!response.body().isBlank()) {
-            final JSONObject result = new JSONObject(response.body());
+
+        var statusCode = response.statusCode();
+        var resBody = response.body();
+        if (statusCode >= 300) {
+            var errorMsg = "Failed getting VMs with status code. statusCode: " + statusCode;
+            LOGGER.error(errorMsg);
+            if (!resBody.isBlank()) {
+                LOGGER.error("response: " + resBody);
+            }
+            throw new GuacamoleException(errorMsg);
+        }
+
+        LOGGER.debug("Got VMs list");
+
+        if (!resBody.isBlank()) {
+            final JSONObject result = new JSONObject(resBody);
             virtualMachines = result.getJSONArray("userResources");
         } else {
+            LOGGER.debug("Got an empty response");
             virtualMachines = new JSONArray();
         }
 

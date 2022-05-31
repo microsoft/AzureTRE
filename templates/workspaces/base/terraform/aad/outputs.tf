@@ -10,6 +10,10 @@ output "client_id" {
   value = azuread_application.workspace.application_id
 }
 
+output "scope_id" {
+  value = "api://${var.workspace_resource_name_suffix}"
+}
+
 output "sp_id" {
   value = azuread_service_principal.workspace.object_id
 }

@@ -76,3 +76,7 @@ output "terraform_state_container_name" {
 output "registry_server" {
   value = var.docker_registry_server
 }
+
+output "ui_api_key" {
+  value = azurerm_static_site.tre-ui.api_key
+}

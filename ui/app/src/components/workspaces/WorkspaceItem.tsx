@@ -1,23 +1,13 @@
-import { Pivot, PivotItem, PrimaryButton } from '@fluentui/react';
+import { Pivot, PivotItem } from '@fluentui/react';
 import React, { useContext } from 'react';
-import { WorkspaceRoleName } from '../../models/roleNames';
-import { Workspace } from '../../models/workspace';
-import { SecuredByRole } from '../shared/SecuredByRole';
+import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import { ResourceDebug } from '../shared/ResourceDebug';
-import { WorkspaceRolesContext } from './WorkspaceRolesContext';
-import { ResourceOperationsList } from './ResourceOperationsList';
+import { ResourceHistory } from '../shared/ResourceHistory';
+import { ResourcePropertyPanel } from '../shared/ResourcePropertyPanel';
 
-// TODO:
-// - commands for managing workspace
-// - nicer display of key properties
-
-interface WorkspaceItemProps {
-  workspace: Workspace
-}
-
-export const WorkspaceItem: React.FunctionComponent<WorkspaceItemProps> = (props: WorkspaceItemProps) => {
-  const workspaceRoles = useContext(WorkspaceRolesContext);
-
+export const WorkspaceItem: React.FunctionComponent = () => {
+  const workspaceCtx = useContext(WorkspaceContext);
+  
   return (
     <>
       <Pivot aria-label="Basic Pivot Example">
@@ -28,28 +18,11 @@ export const WorkspaceItem: React.FunctionComponent<WorkspaceItemProps> = (props
             'data-title': 'Overview',
           }}
         >
-          <h3>--Workspace details panel here--</h3>
-
-          <h3>Roles:</h3>
-          <ul>
-            {
-              workspaceRoles.roles &&
-              workspaceRoles.roles.map((role: string, i: number) => {
-                return (
-                  <li key={i}>{role}</li>
-                )
-              })
-            }
-          </ul>
-          <SecuredByRole allowedRoles={[WorkspaceRoleName.WorkspaceOwner]} workspaceAuth={true} element={
-            <PrimaryButton>Seen by workspace *owners* only</PrimaryButton>
-          } />
-          <ResourceDebug resource={props.workspace} />
-
+          <ResourcePropertyPanel resource={workspaceCtx.workspace} />
+          <ResourceDebug resource={workspaceCtx.workspace} />
         </PivotItem>
         <PivotItem headerText="History">
-          <h3>--History goes here--</h3>
-
+          <ResourceHistory history={workspaceCtx.workspace.history} />
         </PivotItem>
         <PivotItem headerText="Operations">
             <ResourceOperationsList resource={props.workspace} />

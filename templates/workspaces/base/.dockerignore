@@ -5,4 +5,5 @@
 **/*_backend.tf
 
 Dockerfile.tmpl
-debug.sh
+terraform/deploy.sh
+terraform/destroy.sh

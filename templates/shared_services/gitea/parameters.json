@@ -11,6 +11,12 @@
       }
     },
     {
+      "name": "id",
+      "source": {
+        "env": "ID"
+      }
+    },
+    {
       "name": "acr_name",
       "source": {
         "env": "MGMT_ACR_NAME"

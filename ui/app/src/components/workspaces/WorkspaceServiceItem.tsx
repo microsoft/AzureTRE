@@ -1,28 +1,36 @@
-import React, { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import React, { useContext, useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { ApiEndpoint } from '../../models/apiEndpoints';
-import { Workspace } from '../../models/workspace';
 import { useAuthApiCall, HttpMethod } from '../../useAuthApiCall';
 import { UserResource } from '../../models/userResource';
 import { WorkspaceService } from '../../models/workspaceService';
 import { ResourceDebug } from '../shared/ResourceDebug';
-import { MessageBar, MessageBarType, Spinner, SpinnerSize } from '@fluentui/react';
+import { MessageBar, MessageBarType, Pivot, PivotItem, PrimaryButton, Spinner, SpinnerSize, Stack } from '@fluentui/react';
+import { ResourcePropertyPanel } from '../shared/ResourcePropertyPanel';
+import { Resource } from '../../models/resource';
+import { ResourceCardList } from '../shared/ResourceCardList';
+import { LoadingState } from '../../models/loadingState';
+import { WorkspaceContext } from '../../contexts/WorkspaceContext';
+import { CreateUpdateResource } from '../shared/CreateUpdateResource/CreateUpdateResource';
+import { ResourceType } from '../../models/resourceType';
+import { useBoolean } from '@fluentui/react-hooks';
+import { ResourceHistory } from '../shared/ResourceHistory';
 
 // TODO:
-// - replace list of user resources with cards
 // - separate loading placeholders for user resources instead of spinner
 
 interface WorkspaceServiceItemProps {
-  workspace: Workspace,
   workspaceService?: WorkspaceService,
   setUserResource: (userResource: UserResource) => void
 }
 
 export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemProps> = (props: WorkspaceServiceItemProps) => {
+  const [createPanelOpen, { setTrue: createNew, setFalse: closeCreatePanel }] = useBoolean(false);
   const { workspaceServiceId } = useParams();
-  const [userResources, setUserResources] = useState([{} as UserResource])
+  const [userResources, setUserResources] = useState([] as Array<UserResource>)
   const [workspaceService, setWorkspaceService] = useState({} as WorkspaceService)
-  const [loadingState, setLoadingState] = useState('loading');
+  const [loadingState, setLoadingState] = useState(LoadingState.Loading);
+  const workspaceCtx = useContext(WorkspaceContext);
   const apiCall = useAuthApiCall();
 
   useEffect(() => {
@@ -32,45 +40,88 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
         if (props.workspaceService && props.workspaceService.id) {
           setWorkspaceService(props.workspaceService);
         } else {
-          let ws = await apiCall(`${ApiEndpoint.Workspaces}/${props.workspace.id}/${ApiEndpoint.WorkspaceServices}/${workspaceServiceId}`, HttpMethod.Get, props.workspace.properties.app_id);
+          let ws = await apiCall(`${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}/${workspaceServiceId}`, HttpMethod.Get, workspaceCtx.workspaceClientId);
           setWorkspaceService(ws.workspaceService);
         }
 
         // get the user resources
-        const u = await apiCall(`${ApiEndpoint.Workspaces}/${props.workspace.id}/${ApiEndpoint.WorkspaceServices}/${workspaceServiceId}/${ApiEndpoint.UserResources}`, HttpMethod.Get, props.workspace.properties.app_id)
+        const u = await apiCall(`${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}/${workspaceServiceId}/${ApiEndpoint.UserResources}`, HttpMethod.Get, workspaceCtx.workspaceClientId)
         setUserResources(u.userResources);
-        setLoadingState('ok');
+        setLoadingState(LoadingState.Ok);
       } catch {
-        setLoadingState('error');
+        setLoadingState(LoadingState.Error);
       }
     };
     getData();
-  }, [apiCall, props.workspace.id, props.workspace.properties.app_id, props.workspaceService, workspaceServiceId]);
+  }, [apiCall, props.workspaceService, workspaceCtx.workspace.id, workspaceCtx.workspaceClientId, workspaceServiceId]);
+
+  const addUserResource = (u: UserResource) => {
+    let ur = [...userResources];
+    ur.push(u);
+    setUserResources(ur);
+  }
+
+  const updateUserResource = (u: UserResource) => {
+    let ur = [...userResources];
+    let i = ur.findIndex((f: UserResource) => f.id === u.id);
+    ur.splice(i, 1, u);
+    setUserResources(ur);
+  }
+
+  const removeUserResource = (u: UserResource) => {
+    let ur = [...userResources];
+    let i = ur.findIndex((f: UserResource) => f.id === u.id);
+    ur.splice(i, 1);
+    setUserResources(ur);
+  }
 
   switch (loadingState) {
-    case 'ok':
+    case LoadingState.Ok:
       return (
         <>
           <h1>{workspaceService.properties?.display_name}</h1>
-          <h2>User Resources:</h2>
-          {
-            userResources &&
-            <ul>
+          <Pivot aria-label="User Resource Menu">
+            <PivotItem
+              headerText="Overview"
+              headerButtonProps={{
+                'data-order': 1,
+                'data-title': 'Overview',
+              }}
+            >
+              <ResourcePropertyPanel resource={workspaceService} />
+              <hr />
+              <Stack horizontal horizontalAlign="space-between" style={{ padding: 10 }}>
+                <h1>User Resources</h1>
+                <PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new" onClick={createNew} disabled={!props.workspaceService?.isEnabled} title={!props.workspaceService?.isEnabled ? 'Service must be enabled first' : 'Create a User Resource'} />
+                <CreateUpdateResource
+                  isOpen={createPanelOpen}
+                  onClose={closeCreatePanel}
+                  resourceType={ResourceType.UserResource}
+                  parentResource={props.workspaceService}
+                  onAddResource={(r: Resource) => addUserResource(r as UserResource)}
+                />
+              </Stack>
               {
-                userResources.map((userResource, i) => {
-                  return (
-                    <li key={i}>
-                      <Link to={`user-resources/${userResource.id}`} onClick={() => props.setUserResource(userResource)}>{userResource.properties?.display_name}</Link>
-                    </li>
-                  )
-                })
+                userResources &&
+                <ResourceCardList
+                  resources={userResources}
+                  selectResource={(r: Resource) => props.setUserResource(r as UserResource)}
+                  updateResource={(r: Resource) => updateUserResource(r as UserResource)}
+                  removeResource={(r: Resource) => removeUserResource(r as UserResource)}
+                  emptyText="This workspace service contains no user resources." />
               }
-            </ul>
-          }
-          <ResourceDebug resource={workspaceService} />
+              <ResourceDebug resource={workspaceService} />
+            </PivotItem>
+            <PivotItem headerText="History">
+              <ResourceHistory history={workspaceService.history} />
+            </PivotItem>
+            <PivotItem headerText="Operations">
+              <h3>--Operations Log here</h3>
+            </PivotItem>
+          </Pivot>
         </>
       );
-    case 'error':
+    case LoadingState.Error:
       return (
         <MessageBar
           messageBarType={MessageBarType.error}

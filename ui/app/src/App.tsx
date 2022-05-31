@@ -9,40 +9,84 @@ import { WorkspaceProvider } from './components/workspaces/WorkspaceProvider';
 import { MsalAuthenticationTemplate } from '@azure/msal-react';
 import { InteractionType } from '@azure/msal-browser';
 import { Workspace } from './models/workspace';
-import { RootRolesContext } from './components/shared/RootRolesContext';
-import { WorkspaceRolesContext } from './components/workspaces/WorkspaceRolesContext';
+import { AppRolesContext } from './contexts/AppRolesContext';
+import { WorkspaceContext } from './contexts/WorkspaceContext';
 import { GenericErrorBoundary } from './components/shared/GenericErrorBoundary';
+import { NotificationsContext } from './contexts/NotificationsContext';
+import { Operation } from './models/operation';
+import { ResourceUpdate } from './models/resource';
 
 export const App: React.FunctionComponent = () => {
+  const [appRoles, setAppRoles] = useState([] as Array<string>);
   const [selectedWorkspace, setSelectedWorkspace] = useState({} as Workspace);
+  const [workspaceRoles, setWorkspaceRoles] = useState([] as Array<string>);
+  const [operations, setOperations] = useState([] as Array<Operation>);
+  const [resourceUpdates, setResourceUpdates] = useState([] as Array<ResourceUpdate>);
 
   return (
     <>
       <Routes>
         <Route path="*" element={
           <MsalAuthenticationTemplate interactionType={InteractionType.Redirect}>
-            <RootRolesContext.Provider value={{ roles: [] as Array<string> }}>
-              <Stack styles={stackStyles} className='tre-root'>
-                <Stack.Item grow className='tre-top-nav'>
-                  <TopNav />
-                </Stack.Item>
-                <Stack.Item grow={100} className='tre-body'>
-                  <GenericErrorBoundary>
-                    <Routes>
-                      <Route path="*" element={<RootLayout selectWorkspace={(ws: Workspace) => setSelectedWorkspace(ws)} />} />
-                      <Route path="/workspaces/:workspaceId//*" element={
-                        <WorkspaceRolesContext.Provider value={{ roles: [] as Array<string> }}>
-                          <WorkspaceProvider workspace={selectedWorkspace} />
-                        </WorkspaceRolesContext.Provider>
-                      } />
-                    </Routes>
-                  </GenericErrorBoundary>
-                </Stack.Item>
-                <Stack.Item grow>
-                  <Footer />
-                </Stack.Item>
-              </Stack>
-            </RootRolesContext.Provider>
+            <NotificationsContext.Provider value={{
+              operations: operations,
+              addOperations: (ops: Array<Operation>) => {
+                let stateOps = [...operations];
+                ops.forEach((op: Operation) => {
+                  let i = stateOps.findIndex((f: Operation) => f.id === op.id);
+                  if (i > 0) {
+                    stateOps.splice(i, 1, op);
+                  } else {
+                    stateOps.push(op);
+                  }
+                });                
+                setOperations(stateOps);
+              },
+              resourceUpdates: resourceUpdates,
+              addResourceUpdate: (r: ResourceUpdate) => {
+                let updates = [...resourceUpdates];
+                let i = updates.findIndex((f: ResourceUpdate) => f.resourceId === r.resourceId);
+                if (i > 0) {
+                  updates.splice(i, 1, r);
+                } else {
+                  updates.push(r);
+                }
+                setResourceUpdates(updates);
+              },
+              clearUpdatesForResource: (resourceId: string) => { let updates = [...resourceUpdates].filter((r: ResourceUpdate) => r.resourceId !== resourceId); setResourceUpdates(updates); }
+            }}>
+              <AppRolesContext.Provider value={{
+                roles: appRoles,
+                setAppRoles: (roles: Array<string>) => { setAppRoles(roles) }
+              }}>
+                <Stack styles={stackStyles} className='tre-root'>
+                  <Stack.Item grow className='tre-top-nav'>
+                    <TopNav />
+                  </Stack.Item>
+                  <Stack.Item grow={100} className='tre-body'>
+                    <GenericErrorBoundary>
+                      <Routes>
+                        <Route path="*" element={<RootLayout />} />
+                        <Route path="/workspaces/:workspaceId//*" element={
+                          <WorkspaceContext.Provider value={{
+                            roles: workspaceRoles,
+                            setRoles: (roles: Array<string>) => setWorkspaceRoles(roles),
+                            workspace: selectedWorkspace,
+                            setWorkspace: (w: Workspace) => { console.warn("Workspace set", w); setSelectedWorkspace(w) },
+                            workspaceClientId: selectedWorkspace.properties?.scope_id.replace("api://", "")
+                          }}>
+                            <WorkspaceProvider />
+                          </WorkspaceContext.Provider>
+                        } />                       
+                      </Routes>
+                    </GenericErrorBoundary>
+                  </Stack.Item>
+                  <Stack.Item grow>
+                    <Footer />
+                  </Stack.Item>
+                </Stack>
+              </AppRolesContext.Provider>
+            </NotificationsContext.Provider>
           </MsalAuthenticationTemplate>
         } />
         <Route path='/logout' element={
