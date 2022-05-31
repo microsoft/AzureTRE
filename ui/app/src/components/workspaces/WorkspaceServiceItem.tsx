@@ -15,6 +15,7 @@ import { CreateUpdateResource } from '../shared/CreateUpdateResource/CreateUpdat
 import { ResourceType } from '../../models/resourceType';
 import { useBoolean } from '@fluentui/react-hooks';
 import { ResourceHistory } from '../shared/ResourceHistory';
+import { ResourceContextMenu } from '../shared/ResourceContextMenu';
 
 // TODO:
 // - separate loading placeholders for user resources instead of spinner
@@ -36,7 +37,7 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
   useEffect(() => {
     const getData = async () => {
       try {
-        // did we get passed the workspace service, or shall we get it from the api? 
+        // did we get passed the workspace service, or shall we get it from the api?
         if (props.workspaceService && props.workspaceService.id) {
           setWorkspaceService(props.workspaceService);
         } else {
@@ -79,46 +80,53 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
     case LoadingState.Ok:
       return (
         <>
-          <h1>{workspaceService.properties?.display_name}</h1>
-          <Pivot aria-label="User Resource Menu">
-            <PivotItem
-              headerText="Overview"
-              headerButtonProps={{
-                'data-order': 1,
-                'data-title': 'Overview',
-              }}
-            >
-              <ResourcePropertyPanel resource={workspaceService} />
-              <hr />
-              <Stack horizontal horizontalAlign="space-between" style={{ padding: 10 }}>
-                <h1>User Resources</h1>
-                <PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new" onClick={createNew} disabled={!props.workspaceService?.isEnabled} title={!props.workspaceService?.isEnabled ? 'Service must be enabled first' : 'Create a User Resource'} />
-                <CreateUpdateResource
-                  isOpen={createPanelOpen}
-                  onClose={closeCreatePanel}
-                  resourceType={ResourceType.UserResource}
-                  parentResource={props.workspaceService}
-                  onAddResource={(r: Resource) => addUserResource(r as UserResource)}
-                />
-              </Stack>
-              {
-                userResources &&
-                <ResourceCardList
-                  resources={userResources}
-                  selectResource={(r: Resource) => props.setUserResource(r as UserResource)}
-                  updateResource={(r: Resource) => updateUserResource(r as UserResource)}
-                  removeResource={(r: Resource) => removeUserResource(r as UserResource)}
-                  emptyText="This workspace service contains no user resources." />
-              }
-              <ResourceDebug resource={workspaceService} />
-            </PivotItem>
-            <PivotItem headerText="History">
-              <ResourceHistory history={workspaceService.history} />
-            </PivotItem>
-            <PivotItem headerText="Operations">
-              <h3>--Operations Log here</h3>
-            </PivotItem>
-          </Pivot>
+          <Stack horizontal>
+            <Stack.Item grow={1}>
+              <h1>{workspaceService.properties?.display_name}</h1>
+              <Pivot aria-label="User Resource Menu">
+                <PivotItem
+                  headerText="Overview"
+                  headerButtonProps={{
+                    'data-order': 1,
+                    'data-title': 'Overview',
+                  }}
+                >
+                  <ResourcePropertyPanel resource={workspaceService} />
+                  <hr />
+                  <Stack horizontal horizontalAlign="space-between" style={{ padding: 10 }}>
+                    <h1>User Resources</h1>
+                    <PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new" onClick={createNew} disabled={!props.workspaceService?.isEnabled} title={!props.workspaceService?.isEnabled ? 'Service must be enabled first' : 'Create a User Resource'} />
+                    <CreateUpdateResource
+                      isOpen={createPanelOpen}
+                      onClose={closeCreatePanel}
+                      resourceType={ResourceType.UserResource}
+                      parentResource={props.workspaceService}
+                      onAddResource={(r: Resource) => addUserResource(r as UserResource)}
+                    />
+                  </Stack>
+                  {
+                    userResources &&
+                    <ResourceCardList
+                      resources={userResources}
+                      selectResource={(r: Resource) => props.setUserResource(r as UserResource)}
+                      updateResource={(r: Resource) => updateUserResource(r as UserResource)}
+                      removeResource={(r: Resource) => removeUserResource(r as UserResource)}
+                      emptyText="This workspace service contains no user resources." />
+                  }
+                  <ResourceDebug resource={workspaceService} />
+                </PivotItem>
+                <PivotItem headerText="History">
+                  <ResourceHistory history={workspaceService.history} />
+                </PivotItem>
+                <PivotItem headerText="Operations">
+                  <h3>--Operations Log here</h3>
+                </PivotItem>
+              </Pivot>
+            </Stack.Item>
+            <Stack.Item>
+              <ResourceContextMenu resource={workspaceService} />
+            </Stack.Item>
+          </Stack>
         </>
       );
     case LoadingState.Error:

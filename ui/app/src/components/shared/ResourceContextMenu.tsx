@@ -108,7 +108,6 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
     items: menuItems
   };
 
-
   return (
     <>
       <SecuredByRole allowedRoles={roles} workspaceAuth={wsAuth} element={
@@ -122,7 +121,6 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
         showDelete &&
         <ConfirmDeleteResource onDismiss={() => setShowDelete(false)} resource={props.resource} />
       }
-
     </>
   )
 };

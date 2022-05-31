@@ -6,8 +6,9 @@ import { UserResource } from '../../models/userResource';
 import { ResourceDebug } from '../shared/ResourceDebug';
 import { ResourcePropertyPanel } from '../shared/ResourcePropertyPanel';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
-import { Pivot, PivotItem } from '@fluentui/react';
+import { Pivot, PivotItem, Stack } from '@fluentui/react';
 import { ResourceHistory } from '../shared/ResourceHistory';
+import { ResourceContextMenu } from '../shared/ResourceContextMenu';
 
 // TODO:
 // - This 'page' might die in place of a card on the Workspace services page - leave it alone for now
@@ -24,7 +25,7 @@ export const UserResourceItem: React.FunctionComponent<UserResourceItemProps> = 
 
   useEffect(() => {
     const getData = async () => {
-      // did we get passed the workspace service, or shall we get it from the api? 
+      // did we get passed the workspace service, or shall we get it from the api?
       if (props.userResource && props.userResource.id) {
         setUserResource(props.userResource);
       } else {
@@ -37,29 +38,34 @@ export const UserResourceItem: React.FunctionComponent<UserResourceItemProps> = 
 
   return (
     <>
-      <h1>User Resource: {userResource.properties?.display_name}</h1>
       {userResource && userResource.id &&
-        <Pivot aria-label="User Resource Menu">
-          <PivotItem
-            headerText="Overview"
-            headerButtonProps={{
-              'data-order': 1,
-              'data-title': 'Overview',
-            }}
-          >
-            <ResourcePropertyPanel resource={userResource} />
-            <ResourceDebug resource={userResource} />
-          </PivotItem>
-          <PivotItem headerText="History">
-            <ResourceHistory history={userResource.history} />
-          </PivotItem>
-          <PivotItem headerText="Operations">
-            <h3>--Operations Log here</h3>
-          </PivotItem>
-        </Pivot>
+        <Stack horizontal>
+          <Stack.Item grow={1}>
+            <h1>User Resource: {userResource.properties?.display_name}</h1>
+            <Pivot aria-label="User Resource Menu">
+              <PivotItem
+                headerText="Overview"
+                headerButtonProps={{
+                  'data-order': 1,
+                  'data-title': 'Overview',
+                }}
+              >
+                <ResourcePropertyPanel resource={userResource} />
+                <ResourceDebug resource={userResource} />
+              </PivotItem>
+              <PivotItem headerText="History">
+                <ResourceHistory history={userResource.history} />
+              </PivotItem>
+              <PivotItem headerText="Operations">
+                <h3>--Operations Log here</h3>
+              </PivotItem>
+            </Pivot>
+          </Stack.Item>
+          <Stack.Item>
+            <ResourceContextMenu resource={userResource} />
+          </Stack.Item>
+        </Stack>
       }
-
-
     </>
   );
 };

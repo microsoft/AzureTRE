@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { DefaultPalette, IStackStyles, MessageBar, MessageBarType, Stack } from '@fluentui/react';
 import './App.scss';
 import { TopNav } from './components/shared/TopNav';
@@ -15,6 +15,8 @@ import { GenericErrorBoundary } from './components/shared/GenericErrorBoundary';
 import { NotificationsContext } from './contexts/NotificationsContext';
 import { Operation } from './models/operation';
 import { ResourceUpdate } from './models/resource';
+import { HttpMethod, ResultType, useAuthApiCall } from './useAuthApiCall';
+import { ApiEndpoint } from './models/apiEndpoints';
 
 export const App: React.FunctionComponent = () => {
   const [appRoles, setAppRoles] = useState([] as Array<string>);
@@ -22,6 +24,17 @@ export const App: React.FunctionComponent = () => {
   const [workspaceRoles, setWorkspaceRoles] = useState([] as Array<string>);
   const [operations, setOperations] = useState([] as Array<Operation>);
   const [resourceUpdates, setResourceUpdates] = useState([] as Array<ResourceUpdate>);
+  const apiCall = useAuthApiCall();
+
+  // set the app roles
+  useEffect(() => {
+    const setAppRolesOnLoad = async () => {
+      await apiCall(ApiEndpoint.Workspaces, HttpMethod.Get, undefined, undefined, ResultType.JSON, (roles: Array<string>) => {
+        setAppRoles(roles);
+      }, true);
+    };
+   setAppRolesOnLoad();
+  }, [apiCall]);
 
   return (
     <>
@@ -39,7 +52,7 @@ export const App: React.FunctionComponent = () => {
                   } else {
                     stateOps.push(op);
                   }
-                });                
+                });
                 setOperations(stateOps);
               },
               resourceUpdates: resourceUpdates,
@@ -70,14 +83,14 @@ export const App: React.FunctionComponent = () => {
                         <Route path="/workspaces/:workspaceId//*" element={
                           <WorkspaceContext.Provider value={{
                             roles: workspaceRoles,
-                            setRoles: (roles: Array<string>) => setWorkspaceRoles(roles),
+                            setRoles: (roles: Array<string>) => { console.warn("Workspace roles", roles); setWorkspaceRoles(roles) },
                             workspace: selectedWorkspace,
                             setWorkspace: (w: Workspace) => { console.warn("Workspace set", w); setSelectedWorkspace(w) },
                             workspaceClientId: selectedWorkspace.properties?.scope_id.replace("api://", "")
                           }}>
                             <WorkspaceProvider />
                           </WorkspaceContext.Provider>
-                        } />                       
+                        } />
                       </Routes>
                     </GenericErrorBoundary>
                   </Stack.Item>

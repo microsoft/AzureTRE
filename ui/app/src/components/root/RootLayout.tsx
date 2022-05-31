@@ -1,21 +1,18 @@
 import { MessageBar, MessageBarType, Spinner, SpinnerSize, Stack } from '@fluentui/react';
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { Admin } from '../../App';
 import { ApiEndpoint } from '../../models/apiEndpoints';
 import { Workspace } from '../../models/workspace';
 import { useAuthApiCall, HttpMethod, ResultType } from '../../useAuthApiCall';
-import { AppRolesContext } from '../../contexts/AppRolesContext';
 import { RootDashboard } from './RootDashboard';
 import { LeftNav } from './LeftNav';
-import config from '../../config.json';
 import { LoadingState } from '../../models/loadingState';
 import { SharedServices } from '../shared/SharedServices';
 import { SharedServiceItem } from '../shared/SharedServiceItem';
 
 export const RootLayout: React.FunctionComponent = () => {
   const [workspaces, setWorkspaces] = useState([] as Array<Workspace>);
-  const appRolesContext = useRef(useContext(AppRolesContext));
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
   const apiCall = useAuthApiCall();
 
@@ -23,8 +20,6 @@ export const RootLayout: React.FunctionComponent = () => {
     const getWorkspaces = async () => {
       try {
         const r = await apiCall(ApiEndpoint.Workspaces, HttpMethod.Get, undefined, undefined, ResultType.JSON, (roles: Array<string>) => {
-          config.debug && console.log("Root Roles", roles);
-          appRolesContext.current.setAppRoles(roles);
           setLoadingState(roles && roles.length > 0 ? LoadingState.Ok : LoadingState.AccessDenied);
         });
 

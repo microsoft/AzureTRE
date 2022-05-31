@@ -4,6 +4,7 @@ import { Resource } from '../../models/resource';
 import { HttpMethod, ResultType, useAuthApiCall } from '../../useAuthApiCall';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import { NotificationsContext } from '../../contexts/NotificationsContext';
+import { ResourceType } from '../../models/resourceType';
 
 interface ConfirmDeleteProps {
   resource: Resource,
@@ -32,9 +33,11 @@ export const ConfirmDeleteResource: React.FunctionComponent<ConfirmDeleteProps> 
     styles: dialogStyles
   };
 
+  const wsAuth = (props.resource.resourceType === ResourceType.WorkspaceService || props.resource.resourceType === ResourceType.UserResource);
+
   const deleteCall = async () => {
     setIsSending(true);
-    let op = await apiCall(props.resource.resourcePath, HttpMethod.Delete, workspaceCtx.workspaceClientId, undefined, ResultType.JSON);
+    let op = await apiCall(props.resource.resourcePath, HttpMethod.Delete, wsAuth ? workspaceCtx.workspaceClientId : undefined, undefined, ResultType.JSON);
     opsCtx.addOperations([op.operation]);
     setIsSending(false);
     props.onDismiss();
