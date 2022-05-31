@@ -3,7 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=2.97.0"
+      version = "=3.5.0"
     }
   }
   backend "azurerm" {
@@ -36,6 +36,16 @@ data "azurerm_key_vault" "ws" {
 
 data "azurerm_key_vault_secret" "aad_tenant_id" {
   name         = "auth-tenant-id"
+  key_vault_id = data.azurerm_key_vault.ws.id
+}
+
+data "azurerm_key_vault_secret" "workspace_client_id" {
+  name         = "workspace-client-id"
+  key_vault_id = data.azurerm_key_vault.ws.id
+}
+
+data "azurerm_key_vault_secret" "workspace_client_secret" {
+  name         = "workspace-client-secret"
   key_vault_id = data.azurerm_key_vault.ws.id
 }
 

@@ -3,7 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=2.97.0"
+      version = "=3.5.0"
     }
   }
 
@@ -72,6 +72,20 @@ module "appgateway" {
   ]
 }
 
+module "airlock_resources" {
+  source                 = "./airlock"
+  tre_id                 = var.tre_id
+  location               = var.location
+  resource_group_name    = azurerm_resource_group.core.name
+  shared_subnet_id       = module.network.shared_subnet_id
+  enable_local_debugging = var.enable_local_debugging
+
+  depends_on = [
+    azurerm_servicebus_namespace.sb,
+    module.network
+  ]
+}
+
 module "resource_processor_vmss_porter" {
   count                                            = var.resource_processor_type == "vmss_porter" ? 1 : 0
   source                                           = "./resource_processor/vmss_porter"
@@ -90,6 +104,7 @@ module "resource_processor_vmss_porter" {
   mgmt_resource_group_name                         = var.mgmt_resource_group_name
   terraform_state_container_name                   = var.terraform_state_container_name
   key_vault_name                                   = azurerm_key_vault.kv.name
+  key_vault_id                                     = azurerm_key_vault.kv.id
   subscription_id                                  = var.arm_subscription_id
   resource_processor_number_processes_per_instance = var.resource_processor_number_processes_per_instance
 

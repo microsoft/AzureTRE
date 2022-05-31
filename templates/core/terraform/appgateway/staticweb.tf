@@ -1,18 +1,17 @@
 data "azurerm_client_config" "deployer" {}
 
+# See https://microsoft.github.io/AzureTRE/tre-developers/letsencrypt/
 resource "azurerm_storage_account" "staticweb" {
-  name                      = local.staticweb_storage_name
-  resource_group_name       = var.resource_group_name
-  location                  = var.location
-  account_kind              = "StorageV2"
-  account_tier              = "Standard"
-  account_replication_type  = "LRS"
-  enable_https_traffic_only = true
-  allow_blob_public_access  = false
+  name                            = local.staticweb_storage_name
+  resource_group_name             = var.resource_group_name
+  location                        = var.location
+  account_kind                    = "StorageV2"
+  account_tier                    = "Standard"
+  account_replication_type        = "LRS"
+  enable_https_traffic_only       = true
+  allow_nested_items_to_be_public = false
 
-  tags = {
-    tre_id = var.tre_id
-  }
+  tags = local.tre_core_tags
 
   static_website {
     index_document     = "index.html"
@@ -39,6 +38,7 @@ resource "azurerm_private_endpoint" "webpe" {
   location            = var.location
   resource_group_name = var.resource_group_name
   subnet_id           = var.shared_subnet
+  tags                = local.tre_core_tags
 
   lifecycle { ignore_changes = [tags] }
 
@@ -48,7 +48,7 @@ resource "azurerm_private_endpoint" "webpe" {
   }
 
   private_service_connection {
-    name                           = "psc-web--${local.staticweb_storage_name}"
+    name                           = "psc-web-${local.staticweb_storage_name}"
     private_connection_resource_id = azurerm_storage_account.staticweb.id
     is_manual_connection           = false
     subresource_names              = ["web"]

@@ -14,7 +14,7 @@ from models.schemas.operation import OperationInList, OperationInResponse
 from models.schemas.shared_service import SharedServiceInCreate, SharedServicesInList, SharedServiceInResponse
 from models.schemas.resource import ResourcePatch
 from resources import strings
-from .workspaces import save_and_deploy_resource, check_for_etag, construct_location_header
+from .workspaces import save_and_deploy_resource, construct_location_header
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 from .resource_helpers import send_custom_action_message, send_uninstall_message, send_resource_request_message
 from services.authentication import get_current_admin_user, get_current_tre_user_or_tre_admin
@@ -63,8 +63,7 @@ async def create_shared_service(response: Response, shared_service_input: Shared
                               response_model=OperationInResponse,
                               name=strings.API_UPDATE_SHARED_SERVICE,
                               dependencies=[Depends(get_current_admin_user), Depends(get_shared_service_by_id_from_path)])
-async def patch_shared_service(shared_service_patch: ResourcePatch, response: Response, user=Depends(get_current_admin_user), shared_service_repo=Depends(get_repository(SharedServiceRepository)), shared_service=Depends(get_shared_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), etag: str = Header(None)) -> SharedServiceInResponse:
-    check_for_etag(etag)
+async def patch_shared_service(shared_service_patch: ResourcePatch, response: Response, user=Depends(get_current_admin_user), shared_service_repo=Depends(get_repository(SharedServiceRepository)), shared_service=Depends(get_shared_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), etag: str = Header(...)) -> SharedServiceInResponse:
     try:
         patched_shared_service, resource_template = shared_service_repo.patch_shared_service(shared_service, shared_service_patch, etag, resource_template_repo, user)
         operation = await send_resource_request_message(

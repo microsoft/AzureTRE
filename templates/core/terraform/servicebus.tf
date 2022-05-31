@@ -4,6 +4,7 @@ resource "azurerm_servicebus_namespace" "sb" {
   resource_group_name = azurerm_resource_group.core.name
   sku                 = "Premium"
   capacity            = "1"
+  tags                = local.tre_core_tags
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -30,7 +31,7 @@ resource "azurerm_servicebus_queue" "service_bus_deployment_status_update_queue"
 resource "azurerm_private_dns_zone" "servicebus" {
   name                = "privatelink.servicebus.windows.net"
   resource_group_name = azurerm_resource_group.core.name
-
+  tags                = local.tre_core_tags
   lifecycle { ignore_changes = [tags] }
 }
 
@@ -39,6 +40,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "servicebuslink" {
   resource_group_name   = azurerm_resource_group.core.name
   private_dns_zone_name = azurerm_private_dns_zone.servicebus.name
   virtual_network_id    = module.network.core_vnet_id
+  tags                  = local.tre_core_tags
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -48,6 +50,7 @@ resource "azurerm_private_endpoint" "sbpe" {
   location            = azurerm_resource_group.core.location
   resource_group_name = azurerm_resource_group.core.name
   subnet_id           = module.network.resource_processor_subnet_id
+  tags                = local.tre_core_tags
 
   lifecycle { ignore_changes = [tags] }
 
