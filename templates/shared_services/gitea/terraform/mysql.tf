@@ -7,13 +7,13 @@ resource "random_password" "password" {
 }
 
 resource "azurerm_mysql_server" "gitea" {
-  name                              = "mysql-${var.tre_id}"
-  resource_group_name               = local.core_resource_group_name
-  location                          = data.azurerm_resource_group.rg.location
-  administrator_login               = "mysqladmin"
-  administrator_login_password      = random_password.password.result
-  sku_name                          = "GP_Gen5_2"
-  storage_mb                        = 5120
+  name                         = "mysql-${var.tre_id}"
+  resource_group_name          = local.core_resource_group_name
+  location                     = data.azurerm_resource_group.rg.location
+  administrator_login          = "mysqladmin"
+  administrator_login_password = random_password.password.result
+  sku_name                     = "GP_Gen5_2"
+  storage_mb                   = 5120
   # Ignoring tflint due to a bug in it.
   # TODO: https://github.com/microsoft/AzureTRE/issues/1944
   # tflint-ignore: azurerm_mysql_server_invalid_version
