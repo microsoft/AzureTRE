@@ -1,5 +1,5 @@
 # API
-httpx~=0.22.0
+httpx~=0.23.0
 pytest==7.1.1
 pytest-asyncio==0.18.2
 starlette==0.17.1

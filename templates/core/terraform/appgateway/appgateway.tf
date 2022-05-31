@@ -5,14 +5,16 @@ resource "azurerm_public_ip" "appgwpip" {
   allocation_method   = "Static" # Static IPs are allocated immediately
   sku                 = "Standard"
   domain_name_label   = var.tre_id
+  tags                = local.tre_core_tags
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [tags, zones] }
 }
 
 resource "azurerm_user_assigned_identity" "agw_id" {
   resource_group_name = var.resource_group_name
   location            = var.location
   name                = "id-agw-${var.tre_id}"
+  tags                = local.tre_core_tags
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -21,6 +23,7 @@ resource "azurerm_application_gateway" "agw" {
   name                = "agw-${var.tre_id}"
   resource_group_name = var.resource_group_name
   location            = var.location
+  tags                = local.tre_core_tags
 
   sku {
     name     = "Standard_v2"
@@ -180,12 +183,7 @@ resource "azurerm_application_gateway" "agw" {
   }
 
   # We don't want Terraform to revert certificate cycle changes. We assume the certificate will be renewed in keyvault.
-  lifecycle {
-    ignore_changes = [
-      ssl_certificate,
-      tags
-    ]
-  }
+  lifecycle { ignore_changes = [ssl_certificate, tags] }
 
 }
 

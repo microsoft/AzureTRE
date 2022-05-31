@@ -1,6 +1,6 @@
 ---
 name: tre-service-guacamole
-version: 0.1.15
+version: 0.3.5
 description: "An Azure TRE service for Guacamole"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -73,18 +73,11 @@ parameters:
     description:
       "Determines if the web app will be available over public/internet
       or private networks"
-  - name: ws_client_id
+  - name: workspace_identifier_uri
     type: string
-    env: WS_CLIENT_ID
+    env: WORKSPACE_IDENTIFIER_URI
     description:
-      "The WS client ID which should be submitted to the OpenID
-       service when necessary. This value is typically provided to you
-       when you create the ws application"
-  - name: ws_client_secret
-    type: string
-    env: WS_CLIENT_SECRET
-    description:
-      "The WS client secret"
+      "This is used to define the scope of the oauth2 redirection (e.g. api://treid_ws_wsid)"
   # the following are added automatically by the resource processor
   - name: id
     type: string
@@ -139,9 +132,8 @@ install:
         guac_drive_path: "{{ bundle.parameters.guac_drive_path }}"
         guac_disable_download: "{{ bundle.parameters.guac_disable_download }}"
         is_exposed_externally: "{{ bundle.parameters.is_exposed_externally }}"
-        ws_client_id: "{{ bundle.parameters.ws_client_id }}"
-        ws_client_secret: "{{ bundle.parameters.ws_client_secret }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
+        workspace_identifier_uri: "{{ bundle.parameters.workspace_identifier_uri }}"
       backendConfig:
         resource_group_name:
           "{{ bundle.parameters.tfstate_resource_group_name }}"
@@ -181,9 +173,8 @@ uninstall:
         guac_drive_path: "{{ bundle.parameters.guac_drive_path }}"
         guac_disable_download: "{{ bundle.parameters.guac_disable_download }}"
         is_exposed_externally: "{{ bundle.parameters.is_exposed_externally }}"
-        ws_client_id: "{{ bundle.parameters.ws_client_id }}"
-        ws_client_secret: "{{ bundle.parameters.ws_client_secret }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
+        workspace_identifier_uri: "{{ bundle.parameters.workspace_identifier_uri }}"
       backendConfig:
         resource_group_name:
           "{{ bundle.parameters.tfstate_resource_group_name }}"

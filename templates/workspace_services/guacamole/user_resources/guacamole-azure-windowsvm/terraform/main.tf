@@ -3,7 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=2.97.0"
+      version = "=3.5.0"
     }
   }
   backend "azurerm" {
@@ -19,6 +19,10 @@ data "azurerm_client_config" "current" {}
 
 data "azurerm_resource_group" "ws" {
   name = "rg-${var.tre_id}-ws-${local.short_workspace_id}"
+}
+
+data "azurerm_resource_group" "core" {
+  name = "rg-${var.tre_id}"
 }
 
 data "azurerm_virtual_network" "ws" {
