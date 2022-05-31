@@ -16,3 +16,4 @@ variable "guac_drive_path" {}
 variable "guac_disable_download" {}
 variable "is_exposed_externally" {}
 variable "tre_resource_id" {}
+variable "workspace_identifier_uri" {}
