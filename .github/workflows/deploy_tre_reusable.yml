@@ -660,7 +660,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: CICD
     needs: [deploy_shared_services, build_additional_images]
-    timeout-minutes: 90
+    timeout-minutes: 120
     steps:
       - name: Checkout
         uses: actions/checkout@v2
