@@ -17,6 +17,7 @@ import { useBoolean } from '@fluentui/react-hooks';
 import { ResourceHistory } from '../shared/ResourceHistory';
 import { ResourceHeader } from '../shared/ResourceHeader';
 import { useComponentManager } from '../../hooks/useComponentManager';
+import { ResourceOperationsList } from '../shared/ResourceOperationsList';
 
 interface WorkspaceServiceItemProps {
   workspaceService?: WorkspaceService,
@@ -96,7 +97,7 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
               <ResourceHistory history={workspaceService.history} />
             </PivotItem>
             <PivotItem headerText="Operations">
-              <h3>--Operations Log here</h3>
+              <ResourceOperationsList resource={workspaceService} />
             </PivotItem>
           </Pivot>
 

@@ -10,6 +10,7 @@ import { SharedService } from '../../models/sharedService';
 import { ResourceHistory } from './ResourceHistory';
 import { ResourceHeader } from './ResourceHeader';
 import { ComponentAction } from '../../models/resource';
+import { ResourceOperationsList } from './ResourceOperationsList';
 
 export const SharedServiceItem: React.FunctionComponent = () => {
   const { sharedServiceId } = useParams();
@@ -46,7 +47,7 @@ export const SharedServiceItem: React.FunctionComponent = () => {
               <ResourceHistory history={sharedService.history} />
             </PivotItem>
             <PivotItem headerText="Operations">
-              <h3>--Operations Log here</h3>
+              <ResourceOperationsList resource={sharedService} />
             </PivotItem>
           </Pivot>
         </>

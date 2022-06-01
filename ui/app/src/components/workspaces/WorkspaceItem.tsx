@@ -8,7 +8,7 @@ import { ResourceDebug } from '../shared/ResourceDebug';
 import { ResourceHeader } from '../shared/ResourceHeader';
 import { ResourceHistory } from '../shared/ResourceHistory';
 import { ResourcePropertyPanel } from '../shared/ResourcePropertyPanel';
-import { ResourceOperationsList } from './ResourceOperationsList';
+import { ResourceOperationsList } from '../shared/ResourceOperationsList';
 
 
 export const WorkspaceItem: React.FunctionComponent = () => {

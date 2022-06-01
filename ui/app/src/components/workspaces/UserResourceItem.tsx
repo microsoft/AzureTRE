@@ -11,6 +11,7 @@ import { ResourceHistory } from '../shared/ResourceHistory';
 import { ResourceHeader } from '../shared/ResourceHeader';
 import { Resource } from '../../models/resource';
 import { useComponentManager } from '../../hooks/useComponentManager';
+import { ResourceOperationsList } from '../shared/ResourceOperationsList';
 
 interface UserResourceItemProps {
   userResource?: UserResource
@@ -55,7 +56,7 @@ export const UserResourceItem: React.FunctionComponent<UserResourceItemProps> = 
             <ResourceHistory history={userResource.history} />
           </PivotItem>
           <PivotItem headerText="Operations">
-            <h3>--Operations Log here</h3>
+            <ResourceOperationsList resource={userResource} />
           </PivotItem>
         </Pivot>
       </>
