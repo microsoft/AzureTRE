@@ -2,11 +2,10 @@ import React, { useContext } from 'react';
 import { Resource } from '../../models/resource';
 import { WorkspaceService } from '../../models/workspaceService';
 import { ResourceCardList } from '../shared/ResourceCardList';
-import { useBoolean } from '@fluentui/react-hooks';
 import { PrimaryButton, Stack } from '@fluentui/react';
-import { CreateUpdateResource } from '../shared/CreateUpdateResource/CreateUpdateResource';
 import { ResourceType } from '../../models/resourceType';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
+import { CreateUpdateResourceContext } from '../../contexts/CreateUpdateResourceContext';
 
 interface WorkspaceServicesProps {
   workspaceServices: Array<WorkspaceService>,
@@ -18,7 +17,7 @@ interface WorkspaceServicesProps {
 
 export const WorkspaceServices: React.FunctionComponent<WorkspaceServicesProps> = (props: WorkspaceServicesProps) => {
   const workspaceCtx = useContext(WorkspaceContext);
-  const [createPanelOpen, { setTrue: createNew, setFalse: closeCreatePanel }] = useBoolean(false);
+  const createFormCtx = useContext(CreateUpdateResourceContext);
 
   return (
     <>
@@ -26,14 +25,14 @@ export const WorkspaceServices: React.FunctionComponent<WorkspaceServicesProps> 
         <Stack.Item>
           <Stack horizontal horizontalAlign="space-between">
             <h1>Workspace Services</h1>
-            <PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new" onClick={createNew} />
-            <CreateUpdateResource
-              isOpen={createPanelOpen}
-              onClose={closeCreatePanel}
-              resourceType={ResourceType.WorkspaceService}
-              parentResource={workspaceCtx.workspace}
-              onAddResource={(r: Resource) => props.addWorkspaceService(r as WorkspaceService)}
-            />
+            <PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new" onClick={() => {
+              createFormCtx.openCreateForm({
+                resourceType: ResourceType.WorkspaceService,
+                resourceParent: workspaceCtx.workspace,
+                onAdd: (r: Resource) => props.addWorkspaceService(r as WorkspaceService),
+                workspaceClientId: workspaceCtx.workspaceClientId
+              });
+            }} />
           </Stack>
         </Stack.Item>
         <Stack.Item>

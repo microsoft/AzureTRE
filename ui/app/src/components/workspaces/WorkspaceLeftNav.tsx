@@ -3,11 +3,11 @@ import { Nav, INavLinkGroup } from '@fluentui/react/lib/Nav';
 import { useNavigate } from 'react-router-dom';
 import { ApiEndpoint } from '../../models/apiEndpoints';
 import { WorkspaceService } from '../../models/workspaceService';
-import { CreateUpdateResource } from '../shared/CreateUpdateResource/CreateUpdateResource';
 import { ResourceType } from '../../models/resourceType';
 import { useBoolean } from '@fluentui/react-hooks';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import { Resource } from '../../models/resource';
+import { CreateUpdateResourceContext } from '../../contexts/CreateUpdateResourceContext';
 
 // TODO:
 // - we lose the selected styling when navigating into a user resource. This may not matter as the user resource page might die away.
@@ -23,9 +23,9 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
   const navigate = useNavigate();
   const emptyLinks: INavLinkGroup[] = [{links:[]}];
   const [serviceLinks, setServiceLinks] = useState(emptyLinks);
-  const [createPanelOpen, { setTrue: createNew, setFalse: closeCreatePanel }] = useBoolean(false);
   const workspaceCtx = useContext(WorkspaceContext);
-  
+  const createFormCtx = useContext(CreateUpdateResourceContext);
+
   useEffect(() => {
     const getWorkspaceServices = async () => {
       // get the workspace services
@@ -77,7 +77,14 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
       <Nav
         onLinkClick={(e, item) => {
           e?.preventDefault();
-          if (item?.key === "create") createNew();
+          if (item?.key === "create") {
+            createFormCtx.openCreateForm({
+              resourceType: ResourceType.WorkspaceService,
+              resourceParent: workspaceCtx.workspace,
+              onAdd: (r: Resource) => props.addWorkspaceService(r as WorkspaceService),
+              workspaceClientId: workspaceCtx.workspaceClientId
+            })
+          };
           if (!item || !item.url) return;
           let selectedService = props.workspaceServices.find((w) => item.key?.indexOf(w.id.toString()) !== -1);
           if (selectedService) {
@@ -86,13 +93,6 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
           navigate(item.url)}}
         ariaLabel="TRE Workspace Left Navigation"
         groups={serviceLinks}
-      />
-      <CreateUpdateResource
-        isOpen={createPanelOpen}
-        onClose={closeCreatePanel}
-        resourceType={ResourceType.WorkspaceService}
-        parentResource={workspaceCtx.workspace}
-        onAddResource={(r: Resource) => props.addWorkspaceService(r as WorkspaceService)}
       />
     </>
   );

@@ -11,13 +11,13 @@ import { ComponentAction, Resource } from '../../models/resource';
 import { ResourceCardList } from '../shared/ResourceCardList';
 import { LoadingState } from '../../models/loadingState';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
-import { CreateUpdateResource } from '../shared/CreateUpdateResource/CreateUpdateResource';
 import { ResourceType } from '../../models/resourceType';
 import { useBoolean } from '@fluentui/react-hooks';
 import { ResourceHistory } from '../shared/ResourceHistory';
 import { ResourceHeader } from '../shared/ResourceHeader';
 import { useComponentManager } from '../../hooks/useComponentManager';
 import { ResourceOperationsList } from '../shared/ResourceOperationsList';
+import { CreateUpdateResourceContext } from '../../contexts/CreateUpdateResourceContext';
 
 interface WorkspaceServiceItemProps {
   workspaceService?: WorkspaceService,
@@ -25,12 +25,12 @@ interface WorkspaceServiceItemProps {
 }
 
 export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemProps> = (props: WorkspaceServiceItemProps) => {
-  const [createPanelOpen, { setTrue: createNew, setFalse: closeCreatePanel }] = useBoolean(false);
   const { workspaceServiceId } = useParams();
   const [userResources, setUserResources] = useState([] as Array<UserResource>)
   const [workspaceService, setWorkspaceService] = useState({} as WorkspaceService)
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
   const workspaceCtx = useContext(WorkspaceContext);
+  const createFormCtx = useContext(CreateUpdateResourceContext);
   const navigate = useNavigate();
   const apiCall = useAuthApiCall();
   const componentAction = useComponentManager(
@@ -110,14 +110,15 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
             <Stack.Item>
               <Stack horizontal horizontalAlign="space-between">
                 <h1>User Resources</h1>
-                <PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new" onClick={createNew} disabled={!workspaceService.isEnabled || componentAction === ComponentAction.Lock} title={!workspaceService.isEnabled ? 'Service must be enabled first' : 'Create a User Resource'} />
-                <CreateUpdateResource
-                  isOpen={createPanelOpen}
-                  onClose={closeCreatePanel}
-                  resourceType={ResourceType.UserResource}
-                  parentResource={props.workspaceService}
-                  onAddResource={(r: Resource) => addUserResource(r as UserResource)}
-                />
+                <PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new" disabled={!workspaceService.isEnabled || componentAction === ComponentAction.Lock} title={!workspaceService.isEnabled ? 'Service must be enabled first' : 'Create a User Resource'}
+                  onClick={() => {
+                    createFormCtx.openCreateForm({
+                      resourceType: ResourceType.UserResource,
+                      resourceParent: props.workspaceService,
+                      onAdd: (r: Resource) => addUserResource(r as UserResource),
+                      workspaceClientId: workspaceCtx.workspaceClientId
+                    })
+                  }} />
               </Stack>
             </Stack.Item>
             <Stack.Item>

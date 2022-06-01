@@ -11,11 +11,11 @@ import { ResourceForm } from './ResourceForm';
 import { SelectTemplate } from './SelectTemplate';
 import { getResourceFromResult, Resource } from '../../../models/resource';
 import { HttpMethod, useAuthApiCall } from '../../../hooks/useAuthApiCall';
-import { WorkspaceContext } from '../../../contexts/WorkspaceContext';
 
 interface CreateUpdateResourceProps {
   isOpen: boolean,
   onClose: () => void,
+  workspaceClientId?: string,
   resourceType: ResourceType,
   parentResource?: Workspace | WorkspaceService,
   onAddResource?: (r: Resource) => void
@@ -41,7 +41,6 @@ export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceP
   const [selectedTemplate, setTemplate] = useState('');
   const [deployOperation, setDeployOperation] = useState({} as Operation);
   const opsContext = useContext(NotificationsContext);
-  const workspaceCtx = useContext(WorkspaceContext);
   const navigate = useNavigate();
   const apiCall = useAuthApiCall();
 
@@ -111,7 +110,7 @@ export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceP
 
     // if an onAdd callback has been given, get the resource we just created and pass it back
     if (props.onAddResource) {
-      let resource = getResourceFromResult(await apiCall(operation.resourcePath, HttpMethod.Get, workspaceCtx.workspaceClientId));
+      let resource = getResourceFromResult(await apiCall(operation.resourcePath, HttpMethod.Get, props.workspaceClientId));
       props.onAddResource(resource);
     }
   }
@@ -127,6 +126,7 @@ export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceP
         templatePath={`${templatesPath}/${selectedTemplate}`}
         resourcePath={resourcePath}
         onCreateResource={resourceCreating}
+        workspaceClientId={props.workspaceClientId}
       />; break;
     case 'creating':
       currentPage = <div style={{ textAlign: 'center', paddingTop: 100 }}>
