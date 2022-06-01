@@ -4,6 +4,8 @@ import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import { ResourceDebug } from '../shared/ResourceDebug';
 import { ResourceHistory } from '../shared/ResourceHistory';
 import { ResourcePropertyPanel } from '../shared/ResourcePropertyPanel';
+import { ResourceOperationsList } from './ResourceOperationsList';
+
 
 export const WorkspaceItem: React.FunctionComponent = () => {
   const workspaceCtx = useContext(WorkspaceContext);
@@ -25,7 +27,7 @@ export const WorkspaceItem: React.FunctionComponent = () => {
           <ResourceHistory history={workspaceCtx.workspace.history} />
         </PivotItem>
         <PivotItem headerText="Operations">
-          <h3>--Operations Log here</h3>
+            <ResourceOperationsList resource={workspaceCtx.workspace} />
         </PivotItem>
       </Pivot>
     </>
