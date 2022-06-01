@@ -19,7 +19,7 @@ data "azurerm_application_insights" "core" {
 
 
 resource "azurerm_storage_account" "sa_airlock_processor_func_app" {
-  name                     = local.airlock_function_app_name
+  name                     = local.airlock_function_sa_name
   resource_group_name      = var.resource_group_name
   location                 = var.location
   account_tier             = "Standard"
