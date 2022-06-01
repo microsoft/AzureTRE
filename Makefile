@@ -243,7 +243,7 @@ lint:
 		-e VALIDATE_GITHUB_ACTIONS=true \
 		-e VALIDATE_DOCKERFILE_HADOLINT=true \
 		-v $${LOCAL_WORKSPACE_FOLDER}:/tmp/lint \
-		github/super-linter:slim-v4
+		github/super-linter:slim-v4.9.4
 
 bundle-build:
 	$(call target_title, "Building ${DIR} bundle with Porter") \
@@ -375,6 +375,11 @@ test-e2e-shared-services:
 	$(call target_title, "Running E2E shared service tests") && \
 	cd e2e_tests && \
 	python -m pytest -m shared_services --verify $${IS_API_SECURED:-true} --junit-xml pytest_e2e_shared_services.xml
+
+test-e2e-custom:
+	$(call target_title, "Running E2E shared service tests") && \
+	cd e2e_tests && \
+	python -m pytest -m "${SELECTOR}" --verify $${IS_API_SECURED:-true} --junit-xml pytest_e2e_custom.xml
 
 setup-local-debugging:
 	$(call target_title,"Setting up the ability to debug the API and Resource Processor") \
