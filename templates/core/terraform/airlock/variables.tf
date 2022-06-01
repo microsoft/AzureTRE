@@ -14,3 +14,13 @@ variable "airlock_processor_image_repository" {
   description = "Repository for Airlock processor image"
   default     = "microsoft/azuretre/airlock-processor"
 }
+
+variable "mgmt_resource_group_name" {
+  type        = string
+  description = "Shared management resource group"
+}
+
+variable "mgmt_acr_name" {
+  type        = string
+  description = "Management ACR name"
+}

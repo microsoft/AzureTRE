@@ -5,7 +5,7 @@
       "name": "msg",
       "type": "serviceBusTrigger",
       "direction": "in",
-      "queueName": "airlock-status-changed",
+      "queueName": "%AIRLOCK_STATUS_CHANGED_QUEUE_NAME%",
       "connection": "SB_CONNECTION_STRING"
     },
     {
