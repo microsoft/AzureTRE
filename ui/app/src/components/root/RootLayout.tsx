@@ -4,7 +4,7 @@ import { Route, Routes } from 'react-router-dom';
 import { Admin } from '../../App';
 import { ApiEndpoint } from '../../models/apiEndpoints';
 import { Workspace } from '../../models/workspace';
-import { useAuthApiCall, HttpMethod, ResultType } from '../../useAuthApiCall';
+import { useAuthApiCall, HttpMethod, ResultType } from '../../hooks/useAuthApiCall';
 import { RootDashboard } from './RootDashboard';
 import { LeftNav } from './LeftNav';
 import { LoadingState } from '../../models/loadingState';

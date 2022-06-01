@@ -1,11 +1,11 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import { ComponentAction, Resource, ResourceUpdate } from '../../models/resource';
-import { IconButton, IContextualMenuItem, IContextualMenuProps } from '@fluentui/react';
+import { ComponentAction, Resource } from '../../models/resource';
+import { CommandBar, IconButton, IContextualMenuItem, IContextualMenuProps } from '@fluentui/react';
 import { RoleName, WorkspaceRoleName } from '../../models/roleNames';
 import { SecuredByRole } from './SecuredByRole';
 import { ResourceType } from '../../models/resourceType';
 import { NotificationsContext } from '../../contexts/NotificationsContext';
-import { HttpMethod, useAuthApiCall } from '../../useAuthApiCall';
+import { HttpMethod, useAuthApiCall } from '../../hooks/useAuthApiCall';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import { ApiEndpoint } from '../../models/apiEndpoints';
 import { UserResource } from '../../models/userResource';
@@ -14,7 +14,9 @@ import { ConfirmDeleteResource } from './ConfirmDeleteResource';
 import { ConfirmDisableEnableResource } from './ConfirmDisableEnableResource';
 
 interface ResourceContextMenuProps {
-  resource: Resource
+  resource: Resource,
+  componentAction: ComponentAction,
+  commandBar?: boolean
 }
 
 export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuProps> = (props: ResourceContextMenuProps) => {
@@ -22,15 +24,13 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
   const workspaceCtx = useContext(WorkspaceContext);
   const [showDisable, setShowDisable] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
-  const [componentAction, setComponentAction] = useState(ComponentAction.None);
   const [resourceTemplate, setResourceTemplate] = useState({} as ResourceTemplate);
-
-  const opsReadContext = useContext(NotificationsContext);
   const opsWriteContext = useRef(useContext(NotificationsContext)); // useRef to avoid re-running a hook on context write
 
   // get the resource template
   useEffect(() => {
     const getTemplate = async () => {
+      if (!props.resource || !props.resource.id) return;
       let templatesPath;
       switch (props.resource.resourceType) {
         case ResourceType.Workspace:
@@ -56,28 +56,20 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
     getTemplate();
   }, [apiCall, props.resource, workspaceCtx.workspace.id, workspaceCtx.workspaceClientId]);
 
-  // set the latest component action
-  useEffect(() => {
-    let updates = opsReadContext.resourceUpdates.filter((r: ResourceUpdate) => { return r.resourceId === props.resource.id });
-    setComponentAction((updates && updates.length > 0) ?
-      updates[updates.length - 1].componentAction :
-      ComponentAction.None);
-  }, [opsReadContext.resourceUpdates, props.resource.id])
-
   const doAction = async (actionName: string) => {
     const action = await apiCall(`${props.resource.resourcePath}/${ApiEndpoint.InvokeAction}?action=${actionName}`, HttpMethod.Post, workspaceCtx.workspaceClientId);
     action && action.operation && opsWriteContext.current.addOperations([action.operation]);
   }
 
   // context menu
-  let menuItems: Array<IContextualMenuItem> = [];
+  let menuItems: Array<any> = [];
   let roles: Array<string> = [];
   let wsAuth = false;
 
   menuItems = [
-    { key: 'update', text: 'Update', iconProps: { iconName: 'WindowEdit' }, onClick: () => console.log('update') },
-    { key: 'disable', text: props.resource.isEnabled ? 'Disable' : 'Enable', iconProps: { iconName: props.resource.isEnabled ? 'CirclePause' : 'PlayResume' }, onClick: () => setShowDisable(true) },
-    { key: 'delete', text: 'Delete', title: props.resource.isEnabled ? 'Must be disabled to delete' : 'Delete this resource', iconProps: { iconName: 'Delete' }, onClick: () => setShowDelete(true), disabled: props.resource.isEnabled },
+    { key: 'update', text: 'Update', iconProps: { iconName: 'WindowEdit' }, onClick: () => console.log('update'), disabled:(props.componentAction === ComponentAction.Lock) },
+    { key: 'disable', text: props.resource.isEnabled ? 'Disable' : 'Enable', iconProps: { iconName: props.resource.isEnabled ? 'CirclePause' : 'PlayResume' }, onClick: () => setShowDisable(true), disabled:(props.componentAction === ComponentAction.Lock) },
+    { key: 'delete', text: 'Delete', title: props.resource.isEnabled ? 'Must be disabled to delete' : 'Delete this resource', iconProps: { iconName: 'Delete' }, onClick: () => setShowDelete(true), disabled: (props.resource.isEnabled || props.componentAction === ComponentAction.Lock) },
   ];
 
   // add custom actions if we have any
@@ -88,7 +80,7 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
         { key: a.name, text: a.name, title: a.description, iconProps: { iconName: getActionIcon(a.name) }, className: 'tre-context-menu', onClick: () => { doAction(a.name) } }
       );
     });
-    menuItems.push({ key: 'custom-actions', text: 'Actions', iconProps: { iconName: 'Asterisk' }, subMenuProps: { items: customActions } });
+    menuItems.push({ key: 'custom-actions', text: 'Actions', iconProps: { iconName: 'Asterisk' }, disabled:props.componentAction === ComponentAction.Lock, subMenuProps: { items: customActions } });
   }
 
   switch (props.resource.resourceType) {
@@ -111,7 +103,13 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
   return (
     <>
       <SecuredByRole allowedRoles={roles} workspaceAuth={wsAuth} element={
-        <IconButton iconProps={{ iconName: 'More' }} menuProps={menuProps} className="tre-hide-chevron" disabled={componentAction === ComponentAction.Lock} />
+        props.commandBar ?
+        <CommandBar
+          items={menuItems}
+          ariaLabel="Resource actions"
+      />
+        :
+        <IconButton iconProps={{ iconName: 'More' }} menuProps={menuProps} className="tre-hide-chevron" disabled={props.componentAction === ComponentAction.Lock} />
       } />
       {
         showDisable &&

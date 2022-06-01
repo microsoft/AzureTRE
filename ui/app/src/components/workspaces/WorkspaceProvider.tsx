@@ -4,7 +4,7 @@ import { Route, Routes, useParams } from 'react-router-dom';
 import { ApiEndpoint } from '../../models/apiEndpoints';
 import { UserResource } from '../../models/userResource';
 import { WorkspaceService } from '../../models/workspaceService';
-import { HttpMethod, ResultType, useAuthApiCall } from '../../useAuthApiCall';
+import { HttpMethod, ResultType, useAuthApiCall } from '../../hooks/useAuthApiCall';
 import { UserResourceItem } from './UserResourceItem';
 import { WorkspaceHeader } from './WorkspaceHeader';
 import { WorkspaceItem } from './WorkspaceItem';

@@ -15,7 +15,7 @@ import { GenericErrorBoundary } from './components/shared/GenericErrorBoundary';
 import { NotificationsContext } from './contexts/NotificationsContext';
 import { Operation } from './models/operation';
 import { ResourceUpdate } from './models/resource';
-import { HttpMethod, ResultType, useAuthApiCall } from './useAuthApiCall';
+import { HttpMethod, ResultType, useAuthApiCall } from './hooks/useAuthApiCall';
 import { ApiEndpoint } from './models/apiEndpoints';
 
 export const App: React.FunctionComponent = () => {

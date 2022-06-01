@@ -1,12 +1,10 @@
-import React, { useContext, useEffect, useRef, useState } from 'react';
-import { ComponentAction, getResourceFromResult, Resource, ResourceUpdate } from '../../models/resource';
+import React, { useState } from 'react';
+import { ComponentAction, Resource } from '../../models/resource';
 import { Callout, DefaultPalette, FontWeights, IconButton, mergeStyleSets, PrimaryButton, ProgressIndicator, Shimmer, Stack, Text } from '@fluentui/react';
 import { Link } from 'react-router-dom';
 import moment from 'moment';
-import { NotificationsContext } from '../../contexts/NotificationsContext';
-import { HttpMethod, useAuthApiCall } from '../../useAuthApiCall';
-import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import { ResourceContextMenu } from './ResourceContextMenu';
+import { useComponentManager } from '../../hooks/useComponentManager';
 
 interface ResourceCardProps {
   resource: Resource,
@@ -17,40 +15,9 @@ interface ResourceCardProps {
 }
 
 export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: ResourceCardProps) => {
-  const apiCall = useAuthApiCall();
-  const workspaceCtx = useContext(WorkspaceContext);
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
-  const [componentAction, setComponentAction] = useState(ComponentAction.None);
-
-  const opsReadContext = useContext(NotificationsContext);
-  const opsWriteContext = useRef(useContext(NotificationsContext)); // useRef to avoid re-running a hook on context write
-
-  // set the latest component action
-  useEffect(() => {
-    let updates = opsReadContext.resourceUpdates.filter((r: ResourceUpdate) => { return r.resourceId === props.resource.id });
-    setComponentAction((updates && updates.length > 0) ?
-      updates[updates.length - 1].componentAction :
-      ComponentAction.None);
-  }, [opsReadContext.resourceUpdates, props.resource.id])
-
-  // act on component action changes
-  useEffect(() => {
-    const checkForReload = async () => {
-      if (componentAction === ComponentAction.Reload) {
-        setLoading(true);
-        let result = await apiCall(props.resource.resourcePath, HttpMethod.Get, workspaceCtx.workspaceClientId);
-        let r = getResourceFromResult(result);
-        setLoading(false);
-        opsWriteContext.current.clearUpdatesForResource(props.resource.id);
-        props.onUpdate(r);
-      } else if (componentAction === ComponentAction.Remove) {
-        opsWriteContext.current.clearUpdatesForResource(props.resource.id);
-        props.onDelete(props.resource);
-      }
-    }
-    checkForReload();
-  }, [apiCall, componentAction, props, workspaceCtx.workspaceClientId]);
+  const componentAction = useComponentManager(props.resource, (r: Resource) => {props.onUpdate(r)});
 
   let connectUri = props.resource.properties && props.resource.properties.connection_uri;
 
@@ -85,7 +52,8 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
                     <IconButton iconProps={{ iconName: 'Info' }} id={`item-${props.itemId}`} onClick={() => setShowInfo(!showInfo)} /></Stack.Item>
                   <Stack.Item>
                     <ResourceContextMenu
-                      resource={props.resource} />
+                      resource={props.resource}
+                      componentAction={componentAction} />
                   </Stack.Item>
                 </Stack>
               </Stack.Item>
@@ -147,7 +115,8 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
 const cardStyles: React.CSSProperties = {
   width: '100%',
   borderRadius: '2px',
-  border: '1px #ccc solid'
+  border: '1px #ccc solid',
+//  boxShadow: '1px 0px 4px 0px #dddddd'
 }
 
 const headerStyles: React.CSSProperties = {

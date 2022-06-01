@@ -4,7 +4,7 @@ import { completedStates, inProgressStates, Operation } from '../../../models/op
 import { NotificationsContext } from '../../../contexts/NotificationsContext';
 import { NotificationItem } from './NotificationItem';
 import { IconButton } from '@fluentui/react/lib/Button';
-import { HttpMethod, useAuthApiCall } from '../../../useAuthApiCall';
+import { HttpMethod, useAuthApiCall } from '../../../hooks/useAuthApiCall';
 import { ApiEndpoint } from '../../../models/apiEndpoints';
 import { NotificationPoller } from './NotificationPoller';
 import { TRENotification } from '../../../models/treNotification';
@@ -20,7 +20,7 @@ export const NotificationPanel: React.FunctionComponent = () => {
   const [notifications, setNotifications] = useState([] as Array<TRENotification>);
   const apiCall = useAuthApiCall();
 
-  // NOTE: this first useEffect() hook will walk the tree of the TRE and add any running notifications to the panel on page load. 
+  // NOTE: this first useEffect() hook will walk the tree of the TRE and add any running notifications to the panel on page load.
   // It's very inefficient, and in future should be replaced by a single call to a new API Endpoint.
   // For now, it's behind a feature flag. To turn off, see the config.json - loadAllOpsOnStart
   useEffect(() => {
@@ -133,7 +133,7 @@ export const NotificationPanel: React.FunctionComponent = () => {
       resourceId: n.resource.id,
       operation: n.operation,
       componentAction: completedStates.includes(n.operation.status) ?
-        (n.operation.status === "deleted" ? ComponentAction.Remove : ComponentAction.Reload) 
+        (n.operation.status === "deleted" ? ComponentAction.Remove : ComponentAction.Reload)
         : ComponentAction.Lock
     });
   }
@@ -146,7 +146,7 @@ export const NotificationPanel: React.FunctionComponent = () => {
     setNotifications(inProgressNotifications);
   }
 
-  // We had to separate out the polling logic from the notification item display as when the panel is collapsed the items are 
+  // We had to separate out the polling logic from the notification item display as when the panel is collapsed the items are
   // unmounted. We want to keep polling in the background, so NotificationPoller is a component without display, outside of the panel.
   return (
     <>

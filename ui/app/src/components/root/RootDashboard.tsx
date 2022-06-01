@@ -21,22 +21,28 @@ export const RootDashboard: React.FunctionComponent<RootDashboardProps> = (props
 
   return (
     <>
-      <Stack horizontal horizontalAlign="space-between" style={{ padding: 10 }}>
-        <Stack.Item><h1>Workspaces</h1></Stack.Item>
-        <Stack.Item style={{width:200, textAlign: 'right'}}><PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new" onClick={createNew}/></Stack.Item>
-        
-        <CreateUpdateResource 
-          isOpen={createPanelOpen} 
-          onClose={closeCreatePanel} 
-          resourceType={ResourceType.Workspace}
-          onAddResource={(r: Resource) => props.addWorkspace(r as Workspace)}
-        />
+      <Stack className="tre-panel">
+        <Stack.Item>
+          <Stack horizontal horizontalAlign="space-between">
+            <Stack.Item><h1>Workspaces</h1></Stack.Item>
+            <Stack.Item style={{ width: 200, textAlign: 'right' }}><PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new" onClick={createNew} /></Stack.Item>
+
+            <CreateUpdateResource
+              isOpen={createPanelOpen}
+              onClose={closeCreatePanel}
+              resourceType={ResourceType.Workspace}
+              onAddResource={(r: Resource) => props.addWorkspace(r as Workspace)}
+            />
+          </Stack>
+        </Stack.Item>
+        <Stack.Item>
+          <ResourceCardList
+            resources={props.workspaces}
+            updateResource={(r: Resource) => props.updateWorkspace(r as Workspace)}
+            removeResource={(r: Resource) => props.removeWorkspace(r as Workspace)}
+            emptyText="No workspaces to display. Create one to get started." />
+        </Stack.Item>
       </Stack>
-      <ResourceCardList
-        resources={props.workspaces}
-        updateResource={(r: Resource) => props.updateWorkspace(r as Workspace)}
-        removeResource={(r: Resource) => props.removeWorkspace(r as Workspace)}
-        emptyText="No workspaces to display. Create one to get started." />
     </>
   );
 };

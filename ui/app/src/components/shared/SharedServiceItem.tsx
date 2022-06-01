@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { ApiEndpoint } from '../../models/apiEndpoints';
-import { useAuthApiCall, HttpMethod } from '../../useAuthApiCall';
+import { useAuthApiCall, HttpMethod } from '../../hooks/useAuthApiCall';
 import { ResourceDebug } from '../shared/ResourceDebug';
-import { MessageBar, MessageBarType, Pivot, PivotItem, Spinner, SpinnerSize, Stack } from '@fluentui/react';
+import { MessageBar, MessageBarType, Pivot, PivotItem, Spinner, SpinnerSize } from '@fluentui/react';
 import { ResourcePropertyPanel } from '../shared/ResourcePropertyPanel';
 import { LoadingState } from '../../models/loadingState';
 import { SharedService } from '../../models/sharedService';
 import { ResourceHistory } from './ResourceHistory';
-import { ResourceContextMenu } from './ResourceContextMenu';
+import { ResourceHeader } from './ResourceHeader';
+import { ComponentAction } from '../../models/resource';
 
 export const SharedServiceItem: React.FunctionComponent = () => {
   const { sharedServiceId } = useParams();
@@ -29,32 +30,25 @@ export const SharedServiceItem: React.FunctionComponent = () => {
     case LoadingState.Ok:
       return (
         <>
-          <Stack horizontal>
-            <Stack.Item grow={1}>
-              <h1>{sharedService.properties?.display_name}</h1>
-              <Pivot aria-label="Basic Pivot Example">
-                <PivotItem
-                  headerText="Overview"
-                  headerButtonProps={{
-                    'data-order': 1,
-                    'data-title': 'Overview',
-                  }}
-                >
-                  <ResourcePropertyPanel resource={sharedService} />
-                  <ResourceDebug resource={sharedService} />
-                </PivotItem>
-                <PivotItem headerText="History">
-                  <ResourceHistory history={sharedService.history} />
-                </PivotItem>
-                <PivotItem headerText="Operations">
-                  <h3>--Operations Log here</h3>
-                </PivotItem>
-              </Pivot>
-            </Stack.Item>
-            <Stack.Item>
-              <ResourceContextMenu resource={sharedService} />
-            </Stack.Item>
-          </Stack>
+          <ResourceHeader resource={sharedService} componentAction={ComponentAction.None} />
+          <Pivot aria-label="Basic Pivot Example" className='tre-panel'>
+            <PivotItem
+              headerText="Overview"
+              headerButtonProps={{
+                'data-order': 1,
+                'data-title': 'Overview',
+              }}
+            >
+              <ResourcePropertyPanel resource={sharedService} />
+              <ResourceDebug resource={sharedService} />
+            </PivotItem>
+            <PivotItem headerText="History">
+              <ResourceHistory history={sharedService.history} />
+            </PivotItem>
+            <PivotItem headerText="Operations">
+              <h3>--Operations Log here</h3>
+            </PivotItem>
+          </Pivot>
         </>
       );
     case LoadingState.Error:

@@ -1,103 +1,144 @@
 body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans',
-      'Droid Sans', 'Helvetica Neue', sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans',
+    'Droid Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
-h1{
-    margin-top:0;
-    font-weight: normal;
+
+h1 {
+  margin-top: 0;
+  font-weight: normal;
 }
-h2{
-    font-weight: normal;
+
+h2 {
+  font-weight: normal;
 }
+
 code {
-font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
-.tre-logout-message{
-    margin: 40px auto;
-    width: 70%;
+
+.tre-logout-message {
+  margin: 40px auto;
+  width: 70%;
 }
-#root{
-   
+
+#root {}
+
+.tre-root {}
+
+.tre-top-nav {
+  box-shadow: 0 1px 2px 0px #033d68;
+  z-index: 100;
 }
-.tre-root{ 
+
+.tre-notifications-button {
+  position: relative;
+  top: 7px;
+  color: #fff;
 }
-.tre-top-nav{
-    box-shadow: 0 1px 2px 0px #033d68;
-    z-index: 100;
+
+.tre-notifications-button i {
+  font-size: 24px;
 }
-.tre-notifications-button{
-    position: relative;
-    top: 7px;
-    color: #fff;
+
+.tre-notifications-dismiss {
+  text-align: right;
 }
-.tre-notifications-button i{
-    font-size: 24px;
+
+ul.tre-notifications-list {
+  margin: 0;
+  padding: 0;
 }
-.tre-notifications-dismiss{
-    text-align: right;
+
+.tre-notifications-list li {
+  list-style: none;
+  margin-top: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px #ccc solid;
 }
-ul.tre-notifications-list{
-    margin: 0;
-    padding: 0;
-}
-.tre-notifications-list li{
-    list-style: none;
-    margin-top: 20px;
-    padding-bottom: 10px;
-    border-bottom: 1px #ccc solid;
-}
-ul.tre-notifications-steps-list{
+
+ul.tre-notifications-steps-list {
   padding: 5px 15px 15px 15px;
   background-color: #f9f9f9;
-  margin: 10px 0 0 0;  
+  margin: 10px 0 0 0;
 }
-ul.tre-notifications-steps-list li{
-    border: none;
+
+ul.tre-notifications-steps-list li {
+  border: none;
 }
-.tre-notification-time{
-    font-style: italic;
-    text-align: right;
-    font-size: 12px;
+
+.tre-notification-time {
+  font-style: italic;
+  text-align: right;
+  font-size: 12px;
 }
-.tre-home-link{
-    color: #fff;
-    text-decoration: none;
+
+.tre-home-link {
+  color: #fff;
+  text-decoration: none;
 }
-.tre-user-menu .ms-Persona-primaryText:hover{
-    color:#fff;
+
+.tre-user-menu .ms-Persona-primaryText:hover {
+  color: #fff;
 }
-.ms-Persona-primaryText{
-    color: #fff;
+
+.ms-Persona-primaryText {
+  color: #fff;
 }
+
 .tre-hide-chevron i[data-icon-name=ChevronDown] {
-    display:none;
+  display: none;
 }
-.tre-body{
-    height: 100%;
-    overflow: hidden;
+
+.tre-body {
+  height: 100%;
+  overflow: hidden;
 }
-.tre-body-inner{
-    height:100%;
-    overflow:hidden;
+
+.tre-body-inner {
+  height: 100%;
+  overflow: hidden;
 }
-.tre-body-content{
-    padding-left:10px;
+
+.tre-body-content {
+  padding-left: 10px;
 }
-.tre-left-nav{
-    width:200px;
-    overflow-y: scroll;
-    box-shadow: 1px 0 8px 0px #ccc;
+
+.tre-left-nav {
+  width: 200px;
+  overflow-y: scroll;
+  box-shadow: 1px 0 8px 0px #ccc;
+  z-index: 100;
 }
-.tre-body-content{
-    width: calc(100% - 200px);
-    overflow-y: scroll;
+
+.tre-body-content {
+  width: calc(100% - 200px);
+  overflow-y: scroll;
+  background-color: #faf9f8;
+  padding-bottom: 80px;
 }
-.tre-workspace-header h1{
-    margin:10px 0 10px 0;
+
+.tre-workspace-header h1 {
+  margin: 10px 0 10px 0;
 }
-.tre-context-menu button{
-    text-transform: capitalize;
+
+.tre-context-menu button {
+  text-transform: capitalize;
+}
+
+.tre-panel {
+  box-shadow: 1px 0px 5px 0px #ccc;
+  margin: 10px 15px 10px 10px;
+  padding: 10px;
+  background-color: #fff;
+}
+
+.ms-CommandBar {
+  padding-left: 0;
+}
+
+.ms-Pivot {
+  margin-bottom: 10px;
 }

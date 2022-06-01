@@ -1,7 +1,7 @@
 import { Dialog, DialogFooter, PrimaryButton, DefaultButton, DialogType, Spinner } from '@fluentui/react';
 import React, { useContext, useState } from 'react';
 import { Resource } from '../../models/resource';
-import { HttpMethod, ResultType, useAuthApiCall } from '../../useAuthApiCall';
+import { HttpMethod, ResultType, useAuthApiCall } from '../../hooks/useAuthApiCall';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import { NotificationsContext } from '../../contexts/NotificationsContext';
 import { ResourceType } from '../../models/resourceType';

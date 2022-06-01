@@ -22,23 +22,29 @@ export const WorkspaceServices: React.FunctionComponent<WorkspaceServicesProps> 
 
   return (
     <>
-      <Stack horizontal horizontalAlign="space-between" style={{ padding: 10 }}>
-        <h1>Workspace Services</h1>
-        <PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new" onClick={createNew}/>
-        <CreateUpdateResource 
-          isOpen={createPanelOpen}
-          onClose={closeCreatePanel}
-          resourceType={ResourceType.WorkspaceService}
-          parentResource={workspaceCtx.workspace}
-          onAddResource={(r: Resource) => props.addWorkspaceService(r as WorkspaceService)}
-        />
+      <Stack className="tre-panel">
+        <Stack.Item>
+          <Stack horizontal horizontalAlign="space-between">
+            <h1>Workspace Services</h1>
+            <PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new" onClick={createNew} />
+            <CreateUpdateResource
+              isOpen={createPanelOpen}
+              onClose={closeCreatePanel}
+              resourceType={ResourceType.WorkspaceService}
+              parentResource={workspaceCtx.workspace}
+              onAddResource={(r: Resource) => props.addWorkspaceService(r as WorkspaceService)}
+            />
+          </Stack>
+        </Stack.Item>
+        <Stack.Item>
+          <ResourceCardList
+            resources={props.workspaceServices}
+            selectResource={(r: Resource) => props.setWorkspaceService(r as WorkspaceService)}
+            updateResource={(r: Resource) => props.updateWorkspaceService(r as WorkspaceService)}
+            removeResource={(r: Resource) => props.removeWorkspaceService(r as WorkspaceService)}
+            emptyText="This workspace has no workspace services." />
+        </Stack.Item>
       </Stack>
-      <ResourceCardList
-        resources={props.workspaceServices}
-        selectResource={(r: Resource) => props.setWorkspaceService(r as WorkspaceService)}
-        updateResource={(r: Resource) => props.updateWorkspaceService(r as WorkspaceService)}
-        removeResource={(r: Resource) => props.removeWorkspaceService(r as WorkspaceService)}
-        emptyText="This workspace has no workspace services." />
     </>
   );
 };

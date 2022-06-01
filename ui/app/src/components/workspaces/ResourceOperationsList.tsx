@@ -1,7 +1,7 @@
 import { IStackStyles, MessageBar, MessageBarType, Spinner, SpinnerSize, Stack } from "@fluentui/react";
 import React, { useEffect, useContext, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { HttpMethod, useAuthApiCall } from '../../useAuthApiCall';
+import { HttpMethod, useAuthApiCall } from '../../hooks/useAuthApiCall';
 import { Operation } from '../../models/operation';
 import { Resource } from '../../models/resource';
 import { ApiEndpoint } from '../../models/apiEndpoints';
@@ -12,7 +12,7 @@ import config from '../../config.json';
 
 interface ResourceOperationsListProps {
     resource: Resource
-}   
+}
 
 export const ResourceOperationsList: React.FunctionComponent<ResourceOperationsListProps> = (props: ResourceOperationsListProps) => {
     const apiCall = useAuthApiCall();
@@ -24,7 +24,7 @@ export const ResourceOperationsList: React.FunctionComponent<ResourceOperationsL
     useEffect(() => {
         const getOperations = async () => {
             try {
-                // get resource operations 
+                // get resource operations
                 const resourceOperations = await apiCall(`${ApiEndpoint.Workspaces}/${props.resource.id}/${ApiEndpoint.Operations}`, HttpMethod.Get, workspaceCtx.workspaceClientId);
                 config.debug && console.log(`Got resource operations, for resource:${props.resource.id}: ${resourceOperations.operations}`);
                 setResourceOperations(resourceOperations.operations);
@@ -34,9 +34,9 @@ export const ResourceOperationsList: React.FunctionComponent<ResourceOperationsL
             }
         };
         getOperations();
-    }, [apiCall, props.resource, resourceId]);
+    }, [apiCall, props.resource, resourceId, workspaceCtx.workspaceClientId]);
 
-    
+
     const stackStyles: IStackStyles = {
         root: {
             padding: 0,
@@ -62,7 +62,7 @@ export const ResourceOperationsList: React.FunctionComponent<ResourceOperationsL
                                         <ResourceOperationListItem header={'Created'} val={new Date(op.createdWhen).toTimeString()} />
                                         <ResourceOperationListItem header={'Updated'} val={new Date(op.updatedWhen).toTimeString()} />
                                         <ResourceOperationListItem header={'User'} val={op.user.name} />
-                                    </Stack>    
+                                    </Stack>
                                 </Stack>
                             )
                         })
@@ -87,4 +87,3 @@ export const ResourceOperationsList: React.FunctionComponent<ResourceOperationsL
             )
         }
     };
-    

@@ -1,17 +1,16 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { ApiEndpoint } from '../../models/apiEndpoints';
-import { useAuthApiCall, HttpMethod } from '../../useAuthApiCall';
+import { useAuthApiCall, HttpMethod } from '../../hooks/useAuthApiCall';
 import { UserResource } from '../../models/userResource';
 import { ResourceDebug } from '../shared/ResourceDebug';
 import { ResourcePropertyPanel } from '../shared/ResourcePropertyPanel';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
-import { Pivot, PivotItem, Stack } from '@fluentui/react';
+import { Pivot, PivotItem } from '@fluentui/react';
 import { ResourceHistory } from '../shared/ResourceHistory';
-import { ResourceContextMenu } from '../shared/ResourceContextMenu';
-
-// TODO:
-// - This 'page' might die in place of a card on the Workspace services page - leave it alone for now
+import { ResourceHeader } from '../shared/ResourceHeader';
+import { Resource } from '../../models/resource';
+import { useComponentManager } from '../../hooks/useComponentManager';
 
 interface UserResourceItemProps {
   userResource?: UserResource
@@ -22,6 +21,7 @@ export const UserResourceItem: React.FunctionComponent<UserResourceItemProps> = 
   const [userResource, setUserResource] = useState({} as UserResource)
   const apiCall = useAuthApiCall();
   const workspaceCtx = useContext(WorkspaceContext);
+  const componentAction = useComponentManager(userResource, (r: Resource) => setUserResource(r as UserResource));
 
   useEffect(() => {
     const getData = async () => {
@@ -37,35 +37,28 @@ export const UserResourceItem: React.FunctionComponent<UserResourceItemProps> = 
   }, [apiCall, props.userResource, workspaceCtx.workspaceClientId, userResourceId, workspaceServiceId, workspaceCtx.workspace.id]);
 
   return (
-    <>
-      {userResource && userResource.id &&
-        <Stack horizontal>
-          <Stack.Item grow={1}>
-            <h1>User Resource: {userResource.properties?.display_name}</h1>
-            <Pivot aria-label="User Resource Menu">
-              <PivotItem
-                headerText="Overview"
-                headerButtonProps={{
-                  'data-order': 1,
-                  'data-title': 'Overview',
-                }}
-              >
-                <ResourcePropertyPanel resource={userResource} />
-                <ResourceDebug resource={userResource} />
-              </PivotItem>
-              <PivotItem headerText="History">
-                <ResourceHistory history={userResource.history} />
-              </PivotItem>
-              <PivotItem headerText="Operations">
-                <h3>--Operations Log here</h3>
-              </PivotItem>
-            </Pivot>
-          </Stack.Item>
-          <Stack.Item>
-            <ResourceContextMenu resource={userResource} />
-          </Stack.Item>
-        </Stack>
-      }
-    </>
+    userResource && userResource.id ?
+      <>
+        <ResourceHeader resource={userResource} componentAction={componentAction} />
+        <Pivot aria-label="User Resource Menu" className='tre-panel'>
+          <PivotItem
+            headerText="Overview"
+            headerButtonProps={{
+              'data-order': 1,
+              'data-title': 'Overview',
+            }}
+          >
+            <ResourcePropertyPanel resource={userResource} />
+            <ResourceDebug resource={userResource} />
+          </PivotItem>
+          <PivotItem headerText="History">
+            <ResourceHistory history={userResource.history} />
+          </PivotItem>
+          <PivotItem headerText="Operations">
+            <h3>--Operations Log here</h3>
+          </PivotItem>
+        </Pivot>
+      </>
+      : <></>
   );
 };

@@ -10,7 +10,7 @@ import { NotificationsContext } from '../../../contexts/NotificationsContext';
 import { ResourceForm } from './ResourceForm';
 import { SelectTemplate } from './SelectTemplate';
 import { getResourceFromResult, Resource } from '../../../models/resource';
-import { HttpMethod, useAuthApiCall } from '../../../useAuthApiCall';
+import { HttpMethod, useAuthApiCall } from '../../../hooks/useAuthApiCall';
 import { WorkspaceContext } from '../../../contexts/WorkspaceContext';
 
 interface CreateUpdateResourceProps {

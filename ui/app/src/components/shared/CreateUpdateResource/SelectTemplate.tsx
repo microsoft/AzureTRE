@@ -1,7 +1,7 @@
 import { DefaultButton, MessageBar, MessageBarType, Spinner, SpinnerSize, Stack } from "@fluentui/react";
 import { useEffect, useState } from "react";
 import { LoadingState } from "../../../models/loadingState";
-import { HttpMethod, useAuthApiCall } from "../../../useAuthApiCall";
+import { HttpMethod, useAuthApiCall } from "../../../hooks/useAuthApiCall";
 
 interface SelectTemplateProps {
     templatesPath: string,

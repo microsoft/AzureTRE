@@ -1,7 +1,7 @@
 import { MessageBar, MessageBarType, Spinner, SpinnerSize } from "@fluentui/react";
 import { useContext, useEffect, useState } from "react";
 import { LoadingState } from "../../../models/loadingState";
-import { HttpMethod, ResultType, useAuthApiCall } from "../../../useAuthApiCall";
+import { HttpMethod, ResultType, useAuthApiCall } from "../../../hooks/useAuthApiCall";
 import Form from "@rjsf/fluent-ui";
 import { Operation } from "../../../models/operation";
 import { WorkspaceContext } from "../../../contexts/WorkspaceContext";
@@ -55,10 +55,10 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
             return (
                 template ? <div style={{ marginTop: 20 }}>
                     <Form schema={template} onSubmit={(e: any) => createResource(e.formData)}/>
-                    { 
+                    {
                         deployError ? <MessageBar messageBarType={MessageBarType.error}>
                             <p>The API returned an error. Check the console for details or retry.</p>
-                        </MessageBar> : null 
+                        </MessageBar> : null
                     }
                 </div> : null
             )
