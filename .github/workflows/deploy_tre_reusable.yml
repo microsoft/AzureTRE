@@ -673,7 +673,7 @@ jobs:
       - name: Run E2E Tests
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: "make test-e2e-custom SELECTOR=\"${{ inputs.e2eTestsCustomSelector }}\""
+          COMMAND: "make test-e2e-custom SELECTOR='${{ inputs.e2eTestsCustomSelector }}'"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
