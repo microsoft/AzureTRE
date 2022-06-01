@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { ApiEndpoint } from '../../models/apiEndpoints';
 import { WorkspaceService } from '../../models/workspaceService';
 import { ResourceType } from '../../models/resourceType';
-import { useBoolean } from '@fluentui/react-hooks';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import { Resource } from '../../models/resource';
 import { CreateUpdateResourceContext } from '../../contexts/CreateUpdateResourceContext';

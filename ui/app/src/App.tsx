@@ -85,14 +85,15 @@ export const App: React.FunctionComponent = () => {
                   roles: appRoles,
                   setAppRoles: (roles: Array<string>) => { setAppRoles(roles) }
                 }}>
-                    <CreateUpdateResource
-                                isOpen={createFormOpen}
-                                onClose={() => setCreateFormOpen(false)}
-                                resourceType={createFormResource.resourceType}
-                                parentResource={createFormResource.resourceParent}
-                                onAddResource={createFormResource.onAdd}
-                                workspaceClientId={createFormResource.workspaceClientId}
-                              />
+                  <CreateUpdateResource
+                    isOpen={createFormOpen}
+                    onClose={() => setCreateFormOpen(false)}
+                    resourceType={createFormResource.resourceType}
+                    parentResource={createFormResource.resourceParent}
+                    onAddResource={createFormResource.onAdd}
+                    workspaceClientId={createFormResource.workspaceClientId}
+                    updateResource={createFormResource.updateResource}
+                  />
                   <Stack styles={stackStyles} className='tre-root'>
                     <Stack.Item grow className='tre-top-nav'>
                       <TopNav />

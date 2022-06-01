@@ -18,7 +18,8 @@ interface CreateUpdateResourceProps {
   workspaceClientId?: string,
   resourceType: ResourceType,
   parentResource?: Workspace | WorkspaceService,
-  onAddResource?: (r: Resource) => void
+  onAddResource?: (r: Resource) => void,
+  updateResource?: Resource
 }
 
 interface PageTitle {
@@ -38,7 +39,7 @@ const creatingIconClass = mergeStyles({
 
 export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceProps> = (props: CreateUpdateResourceProps) => {
   const [page, setPage] = useState('selectTemplate' as keyof PageTitle);
-  const [selectedTemplate, setTemplate] = useState('');
+  const [selectedTemplate, setTemplate] = useState(props.updateResource?.templateName || '');
   const [deployOperation, setDeployOperation] = useState({} as Operation);
   const opsContext = useContext(NotificationsContext);
   const navigate = useNavigate();
@@ -57,10 +58,14 @@ export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceP
     }
   }, [props.isOpen]);
 
+  useEffect(() => {
+    props.updateResource && selectTemplate(props.updateResource.templateName);
+  }, [props.updateResource])
+
   // Render a panel title depending on sub-page
   const pageTitles: PageTitle = {
     selectTemplate: 'Choose a template',
-    resourceForm: 'Create a new ' + props.resourceType,
+    resourceForm: 'Create / Update a ' + props.resourceType,
     creating: ''
   }
 
@@ -127,11 +132,12 @@ export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceP
         resourcePath={resourcePath}
         onCreateResource={resourceCreating}
         workspaceClientId={props.workspaceClientId}
+        updateResource={props.updateResource}
       />; break;
     case 'creating':
       currentPage = <div style={{ textAlign: 'center', paddingTop: 100 }}>
         <Icon iconName="CloudAdd" className={creatingIconClass} />
-        <h1>Creating {props.resourceType}...</h1>
+        <h1>{props.updateResource?.id ? 'Updating' : 'Creating'} {props.resourceType}...</h1>
         <p>Check the notifications panel for deployment progress.</p>
         <PrimaryButton text="Go to resource" onClick={() => navigate(deployOperation.resourcePath)} />
       </div>; break;
@@ -145,6 +151,7 @@ export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceP
         onDismiss={props.onClose}
         type={PanelType.medium}
         closeButtonAriaLabel="Close"
+        isLightDismiss
       >
         {currentPage}
       </Panel>

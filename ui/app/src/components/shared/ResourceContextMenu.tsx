@@ -12,6 +12,9 @@ import { UserResource } from '../../models/userResource';
 import { getActionIcon, ResourceTemplate, TemplateAction } from '../../models/resourceTemplate';
 import { ConfirmDeleteResource } from './ConfirmDeleteResource';
 import { ConfirmDisableEnableResource } from './ConfirmDisableEnableResource';
+import { CreateUpdateResourceContext } from '../../contexts/CreateUpdateResourceContext';
+import { Workspace } from '../../models/workspace';
+import { WorkspaceService } from '../../models/workspaceService';
 
 interface ResourceContextMenuProps {
   resource: Resource,
@@ -25,7 +28,9 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
   const [showDisable, setShowDisable] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [resourceTemplate, setResourceTemplate] = useState({} as ResourceTemplate);
+  const createFormCtx = useContext(CreateUpdateResourceContext);
   const opsWriteContext = useRef(useContext(NotificationsContext)); // useRef to avoid re-running a hook on context write
+  const [parentResource, setParentResource] = useState({} as WorkspaceService | Workspace);
 
   // get the resource template
   useEffect(() => {
@@ -46,6 +51,7 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
             HttpMethod.Get,
             workspaceCtx.workspaceClientId))
             .workspaceService;
+            setParentResource(parentService);
           templatesPath = `${ApiEndpoint.WorkspaceServiceTemplates}/${parentService.templateName}/${ApiEndpoint.UserResourceTemplates}`; break;
         default:
           throw Error('Unsupported resource type.');
@@ -67,7 +73,12 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
   let wsAuth = false;
 
   menuItems = [
-    { key: 'update', text: 'Update', iconProps: { iconName: 'WindowEdit' }, onClick: () => console.log('update'), disabled:(props.componentAction === ComponentAction.Lock) },
+    { key: 'update', text: 'Update', iconProps: { iconName: 'WindowEdit' }, onClick: () => createFormCtx.openCreateForm({
+      resourceType: props.resource.resourceType,
+      updateResource: props.resource,
+      resourceParent: parentResource,
+      workspaceClientId: workspaceCtx.workspaceClientId,
+    }), disabled:(props.componentAction === ComponentAction.Lock) },
     { key: 'disable', text: props.resource.isEnabled ? 'Disable' : 'Enable', iconProps: { iconName: props.resource.isEnabled ? 'CirclePause' : 'PlayResume' }, onClick: () => setShowDisable(true), disabled:(props.componentAction === ComponentAction.Lock) },
     { key: 'delete', text: 'Delete', title: props.resource.isEnabled ? 'Must be disabled to delete' : 'Delete this resource', iconProps: { iconName: 'Delete' }, onClick: () => setShowDelete(true), disabled: (props.resource.isEnabled || props.componentAction === ComponentAction.Lock) },
   ];
