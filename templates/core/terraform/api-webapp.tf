@@ -14,6 +14,8 @@ resource "azurerm_service_plan" "core" {
   sku_name            = var.api_app_service_plan_sku_size
   tags                = local.tre_core_tags
   worker_count        = 1
+  
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_app_service" "api" {
