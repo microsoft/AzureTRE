@@ -9,11 +9,18 @@ import { ResourceHeader } from '../shared/ResourceHeader';
 import { ResourceHistory } from '../shared/ResourceHistory';
 import { ResourcePropertyPanel } from '../shared/ResourcePropertyPanel';
 import { ResourceOperationsList } from '../shared/ResourceOperationsList';
+import { useNavigate } from 'react-router-dom';
 
 
 export const WorkspaceItem: React.FunctionComponent = () => {
   const workspaceCtx = useRef(useContext(WorkspaceContext));
-  const componentAction = useComponentManager(workspaceCtx.current.workspace, (r: Resource) => workspaceCtx.current.setWorkspace(r as Workspace));
+  const navigate = useNavigate();
+
+  const componentAction = useComponentManager(
+    workspaceCtx.current.workspace,
+    (r: Resource) => workspaceCtx.current.setWorkspace(r as Workspace),
+    (r: Resource) => navigate(`/`)
+  );
 
   return (
     <>

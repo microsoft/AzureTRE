@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ApiEndpoint } from '../../models/apiEndpoints';
 import { useAuthApiCall, HttpMethod } from '../../hooks/useAuthApiCall';
 import { UserResource } from '../../models/userResource';
@@ -22,7 +22,13 @@ export const UserResourceItem: React.FunctionComponent<UserResourceItemProps> = 
   const [userResource, setUserResource] = useState({} as UserResource)
   const apiCall = useAuthApiCall();
   const workspaceCtx = useContext(WorkspaceContext);
-  const componentAction = useComponentManager(userResource, (r: Resource) => setUserResource(r as UserResource));
+  const navigate = useNavigate();
+
+  const componentAction = useComponentManager(
+    userResource,
+    (r: Resource) => setUserResource(r as UserResource),
+    (r: Resource) => navigate(`/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}/${workspaceServiceId}`)
+  );
 
   useEffect(() => {
     const getData = async () => {

@@ -4,7 +4,7 @@ import { WorkspaceContext } from "../contexts/WorkspaceContext";
 import { ResourceUpdate, ComponentAction, getResourceFromResult, Resource } from "../models/resource";
 import { HttpMethod, useAuthApiCall } from "./useAuthApiCall";
 
-export const useComponentManager = (resource: Resource, onUpdate: (r: Resource) => void) => {
+export const useComponentManager = (resource: Resource, onUpdate: (r: Resource) => void, onRemove: (r: Resource) => void) => {
   const opsReadContext = useContext(NotificationsContext);
   const opsWriteContext = useRef(useContext(NotificationsContext));
   const [componentAction, setComponentAction] = useState(ComponentAction.None);
@@ -24,14 +24,15 @@ export const useComponentManager = (resource: Resource, onUpdate: (r: Resource) 
     const checkForReload = async () => {
       if (componentAction === ComponentAction.Reload) {
         let result = await apiCall(resource.resourcePath, HttpMethod.Get, workspaceCtx.workspaceClientId);
-        onUpdate(getResourceFromResult(result));
         opsWriteContext.current.clearUpdatesForResource(resource.id);
+        onUpdate(getResourceFromResult(result));
       } else if (componentAction === ComponentAction.Remove) {
         opsWriteContext.current.clearUpdatesForResource(resource.id);
+        onRemove(resource);
       }
     }
     checkForReload();
-  }, [apiCall, componentAction, workspaceCtx.workspaceClientId, resource.id, onUpdate, resource.resourcePath]);
+  }, [apiCall, componentAction, workspaceCtx.workspaceClientId, resource, onUpdate, onRemove, resource.resourcePath]);
 
   return componentAction;
 }

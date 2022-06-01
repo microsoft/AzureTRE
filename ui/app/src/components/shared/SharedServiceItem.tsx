@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ApiEndpoint } from '../../models/apiEndpoints';
 import { useAuthApiCall, HttpMethod } from '../../hooks/useAuthApiCall';
 import { ResourceDebug } from '../shared/ResourceDebug';
@@ -9,13 +9,21 @@ import { LoadingState } from '../../models/loadingState';
 import { SharedService } from '../../models/sharedService';
 import { ResourceHistory } from './ResourceHistory';
 import { ResourceHeader } from './ResourceHeader';
-import { ComponentAction } from '../../models/resource';
 import { ResourceOperationsList } from './ResourceOperationsList';
+import { useComponentManager } from '../../hooks/useComponentManager';
+import { Resource } from '../../models/resource';
 
 export const SharedServiceItem: React.FunctionComponent = () => {
   const { sharedServiceId } = useParams();
   const [sharedService, setSharedService] = useState({} as SharedService);
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
+  const navigate = useNavigate();
+
+  const componentAction = useComponentManager(
+    sharedService,
+    (r: Resource) => setSharedService(r as SharedService),
+    (r: Resource) => navigate(`/${ApiEndpoint.SharedServices}`)
+  );
   const apiCall = useAuthApiCall();
 
   useEffect(() => {
@@ -31,7 +39,7 @@ export const SharedServiceItem: React.FunctionComponent = () => {
     case LoadingState.Ok:
       return (
         <>
-          <ResourceHeader resource={sharedService} componentAction={ComponentAction.None} />
+          <ResourceHeader resource={sharedService} componentAction={componentAction} />
           <Pivot aria-label="Basic Pivot Example" className='tre-panel'>
             <PivotItem
               headerText="Overview"

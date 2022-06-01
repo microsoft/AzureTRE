@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ApiEndpoint } from '../../models/apiEndpoints';
 import { useAuthApiCall, HttpMethod } from '../../hooks/useAuthApiCall';
 import { UserResource } from '../../models/userResource';
@@ -7,7 +7,7 @@ import { WorkspaceService } from '../../models/workspaceService';
 import { ResourceDebug } from '../shared/ResourceDebug';
 import { MessageBar, MessageBarType, Pivot, PivotItem, PrimaryButton, Spinner, SpinnerSize, Stack } from '@fluentui/react';
 import { ResourcePropertyPanel } from '../shared/ResourcePropertyPanel';
-import { Resource } from '../../models/resource';
+import { ComponentAction, Resource } from '../../models/resource';
 import { ResourceCardList } from '../shared/ResourceCardList';
 import { LoadingState } from '../../models/loadingState';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
@@ -31,8 +31,13 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
   const [workspaceService, setWorkspaceService] = useState({} as WorkspaceService)
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
   const workspaceCtx = useContext(WorkspaceContext);
+  const navigate = useNavigate();
   const apiCall = useAuthApiCall();
-  const componentAction = useComponentManager(workspaceService, (r: Resource) => setWorkspaceService(r as WorkspaceService));
+  const componentAction = useComponentManager(
+    workspaceService,
+    (r: Resource) => setWorkspaceService(r as WorkspaceService),
+    (r: Resource) => navigate(`/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}`)
+  );
 
   useEffect(() => {
     const getData = async () => {
@@ -105,7 +110,7 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
             <Stack.Item>
               <Stack horizontal horizontalAlign="space-between">
                 <h1>User Resources</h1>
-                <PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new" onClick={createNew} disabled={!props.workspaceService?.isEnabled} title={!props.workspaceService?.isEnabled ? 'Service must be enabled first' : 'Create a User Resource'} />
+                <PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new" onClick={createNew} disabled={!workspaceService.isEnabled || componentAction === ComponentAction.Lock} title={!workspaceService.isEnabled ? 'Service must be enabled first' : 'Create a User Resource'} />
                 <CreateUpdateResource
                   isOpen={createPanelOpen}
                   onClose={closeCreatePanel}
