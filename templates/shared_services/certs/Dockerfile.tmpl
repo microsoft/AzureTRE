@@ -2,10 +2,6 @@ FROM python:3.8
 
 ARG BUNDLE_DIR
 
-RUN apt-get update \
-    && apt-get install -y ca-certificates \
-    && apt-get clean -y && rm -rf /var/lib/apt/lists/*
-
 # Install Azure CLI
 RUN apt-get update \
     && apt-get install -y ca-certificates jq curl apt-transport-https lsb-release gnupg \
