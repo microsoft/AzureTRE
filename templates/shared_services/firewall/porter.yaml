@@ -38,7 +38,7 @@ parameters:
     default: false
   - name: rule_collections
     type: string
-    default: "W10=" #b64 for []
+    default: "W10=" # b64 for []
 
 mixins:
   - exec

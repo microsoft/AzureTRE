@@ -32,7 +32,7 @@ variable "deploy_app_service_plan" {
 
 variable "app_service_plan_sku" {
   type        = string
-  default     = "P1v2"
+  default     = "P1v3"
   description = "App Service Plan SKU"
 }
 
