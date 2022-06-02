@@ -50,7 +50,7 @@ resource "azurerm_firewall_network_rule_collection" "networkrulecollection" {
   action              = "Allow"
 
   rule {
-    name = "allowStorage"
+    name = "AllowAzureAD"
 
     source_addresses = data.azurerm_virtual_network.ws.address_space
 
