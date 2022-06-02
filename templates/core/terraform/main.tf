@@ -73,13 +73,15 @@ module "appgateway" {
 }
 
 module "airlock_resources" {
-  source                 = "./airlock"
-  tre_id                 = var.tre_id
-  location               = var.location
-  resource_group_name    = azurerm_resource_group.core.name
-  shared_subnet_id       = module.network.shared_subnet_id
-  enable_local_debugging = var.enable_local_debugging
-
+  source                   = "./airlock"
+  tre_id                   = var.tre_id
+  location                 = var.location
+  resource_group_name      = azurerm_resource_group.core.name
+  shared_subnet_id         = module.network.shared_subnet_id
+  enable_local_debugging   = var.enable_local_debugging
+  docker_registry_server   = var.docker_registry_server
+  mgmt_resource_group_name = var.mgmt_resource_group_name
+  mgmt_acr_name            = var.acr_name
   depends_on = [
     azurerm_servicebus_namespace.sb,
     module.network
