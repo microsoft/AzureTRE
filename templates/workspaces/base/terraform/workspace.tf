@@ -4,6 +4,7 @@ resource "azurerm_resource_group" "ws" {
   tags = {
     project = "Azure Trusted Research Environment"
     tre_id  = var.tre_id
+    tre_workspace_id = var.tre_resource_id
     source  = "https://github.com/microsoft/AzureTRE/"
   }
 

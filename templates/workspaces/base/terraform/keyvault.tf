@@ -5,7 +5,7 @@ resource "azurerm_key_vault" "kv" {
   sku_name                 = "standard"
   purge_protection_enabled = true
   tenant_id                = data.azurerm_client_config.current.tenant_id
-  tags                = local.tre_core_tags
+  tags                     = local.tre_core_tags
 
   network_acls {
     bypass         = "AzureServices"
@@ -82,7 +82,7 @@ resource "azurerm_key_vault_secret" "aad_tenant_id" {
   name         = "auth-tenant-id"
   value        = var.auth_tenant_id
   key_vault_id = azurerm_key_vault.kv.id
-  tags                = local.tre_core_tags
+  tags         = local.tre_core_tags
   depends_on = [
     azurerm_key_vault_access_policy.deployer,
     azurerm_key_vault_access_policy.resource_processor,
@@ -97,7 +97,7 @@ resource "azurerm_key_vault_secret" "client_id" {
   value        = var.client_id
   key_vault_id = azurerm_key_vault.kv.id
   count        = var.register_aad_application ? 0 : 1
-  tags                = local.tre_core_tags
+  tags         = local.tre_core_tags
   depends_on = [
     azurerm_key_vault_access_policy.deployer,
     azurerm_key_vault_access_policy.resource_processor,

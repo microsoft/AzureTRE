@@ -112,6 +112,6 @@ locals {
   webapps_subnet_address_prefix  = local.vnet_subnets[1]
   tre_shared_service_tags = {
     tre_id           = var.tre_id
-    tre_workspace_id = var.tre_id
+    tre_workspace_id = var.tre_resource_id
   }
 }
