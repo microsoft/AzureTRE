@@ -113,14 +113,30 @@ fi
 
 tre_id=${core_tre_rg#"rg-"}
 keyvault_name="kv-${tre_id}"
-accessPolicies=$(az keyvault show --name "${keyvault_name}" --resource-group "${core_tre_rg}" || echo 0)
-if [ "${accessPolicies}" != "0" ]; then
-  echo "Removing access policies so if the vault is recovered there are not there"
-  objectIds=$(echo "$accessPolicies" | jq '.properties.accessPolicies[].objectId' )
-  for objectId in "${objectIds[@]}"; do
-    echo "$objectId"
-    az keyvault delete-policy --name "${keyvault_name}" --resource-group "${core_tre_rg}" --object-id "$objectId" || echo "Not deleting access policy for {$objectId}."
+keyvault=$(az keyvault show --name "${keyvault_name}" --resource-group "${core_tre_rg}" || echo 0)
+if [ "${keyvault}" != "0" ]; then
+  secrets=$(az keyvault secret list --vault-name "${keyvault_name}" | jq -r '.[].id')
+  for secret_id in ${secrets}; do
+    az keyvault secret delete --id "${secret_id}"
   done
+
+  keys=$(az keyvault key list --vault-name "${keyvault_name}" | jq -r '.[].id')
+  for key_id in ${keys}; do
+    az keyvault key delete --id "${key_id}"
+  done
+
+  certificates=$(az keyvault certificate list --vault-name "${keyvault_name}" | jq -r '.[].id')
+  for certificate_id in ${certificates}; do
+    az keyvault certificate delete --id "${certificate_id}"
+  done
+
+  echo "Removing access policies so if the vault is recovered there are not there"
+  access_policies=$(echo "$keyvault" | jq -r '.properties.accessPolicies[].objectId' )
+  for access_policy_id in ${access_policies}; do
+    az keyvault delete-policy --name "${keyvault_name}" --resource-group "${core_tre_rg}" --object-id "${access_policy_id}" || echo "Not deleting access policy for ${access_policy_id}."
+    echo "Access policy ${access_policy_id} deleted"
+  done
+
 fi
 
 # Delete the vault if purge protection is not on.
