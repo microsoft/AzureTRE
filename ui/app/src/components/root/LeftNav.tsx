@@ -16,7 +16,7 @@ const navLinkGroups: INavLinkGroup[] = [
         url: '/shared-services',
         key: 'shared-services',
         icon: 'Puzzle'
-      },
+      }/*,
       {
         name: 'Settings',
         url: '/settings',
@@ -30,7 +30,7 @@ const navLinkGroups: INavLinkGroup[] = [
         key: 'admin',
         disabled: false,
         icon: 'AdminALogoFill32'
-      },
+      },*/
     ],
   },
 ];

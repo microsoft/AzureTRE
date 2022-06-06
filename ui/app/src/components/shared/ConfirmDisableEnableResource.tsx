@@ -1,9 +1,10 @@
 import { Dialog, DialogFooter, PrimaryButton, DefaultButton, DialogType, Spinner } from '@fluentui/react';
 import React, { useContext, useState } from 'react';
 import { Resource } from '../../models/resource';
-import { HttpMethod, ResultType, useAuthApiCall } from '../../useAuthApiCall';
+import { HttpMethod, ResultType, useAuthApiCall } from '../../hooks/useAuthApiCall';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import { NotificationsContext } from '../../contexts/NotificationsContext';
+import { ResourceType } from '../../models/resourceType';
 
 interface ConfirmDisableEnableResourceProps {
   resource: Resource,
@@ -40,10 +41,12 @@ export const ConfirmDisableEnableResource: React.FunctionComponent<ConfirmDisabl
     styles: dialogStyles
   };
 
+  const wsAuth = (props.resource.resourceType === ResourceType.WorkspaceService || props.resource.resourceType === ResourceType.UserResource);
+
   const toggleDisableCall = async () => {
     setIsSending(true);
     let body = { isEnabled: props.isEnabled }
-    let op = await apiCall(props.resource.resourcePath, HttpMethod.Patch, workspaceCtx.workspaceClientId, body, ResultType.JSON, undefined, undefined, props.resource._etag);
+    let op = await apiCall(props.resource.resourcePath, HttpMethod.Patch, wsAuth ? workspaceCtx.workspaceClientId : undefined, body, ResultType.JSON, undefined, undefined, props.resource._etag);
     opsCtx.addOperations([op.operation]);
     setIsSending(false);
     props.onDismiss();

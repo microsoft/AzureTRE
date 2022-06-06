@@ -23,6 +23,6 @@ export const SecuredByRole: React.FunctionComponent<SecuredByRoleProps> = (props
       return props.element
     }
   }
-  
+
   return (<></>);
 };

@@ -1,16 +1,17 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ApiEndpoint } from '../../models/apiEndpoints';
-import { useAuthApiCall, HttpMethod } from '../../useAuthApiCall';
+import { useAuthApiCall, HttpMethod } from '../../hooks/useAuthApiCall';
 import { UserResource } from '../../models/userResource';
 import { ResourceDebug } from '../shared/ResourceDebug';
 import { ResourcePropertyPanel } from '../shared/ResourcePropertyPanel';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import { Pivot, PivotItem } from '@fluentui/react';
 import { ResourceHistory } from '../shared/ResourceHistory';
-
-// TODO:
-// - This 'page' might die in place of a card on the Workspace services page - leave it alone for now
+import { ResourceHeader } from '../shared/ResourceHeader';
+import { Resource } from '../../models/resource';
+import { useComponentManager } from '../../hooks/useComponentManager';
+import { ResourceOperationsList } from '../shared/ResourceOperationsList';
 
 interface UserResourceItemProps {
   userResource?: UserResource
@@ -21,10 +22,17 @@ export const UserResourceItem: React.FunctionComponent<UserResourceItemProps> = 
   const [userResource, setUserResource] = useState({} as UserResource)
   const apiCall = useAuthApiCall();
   const workspaceCtx = useContext(WorkspaceContext);
+  const navigate = useNavigate();
+
+  const componentAction = useComponentManager(
+    userResource,
+    (r: Resource) => setUserResource(r as UserResource),
+    (r: Resource) => navigate(`/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}/${workspaceServiceId}`)
+  );
 
   useEffect(() => {
     const getData = async () => {
-      // did we get passed the workspace service, or shall we get it from the api? 
+      // did we get passed the workspace service, or shall we get it from the api?
       if (props.userResource && props.userResource.id) {
         setUserResource(props.userResource);
       } else {
@@ -36,10 +44,10 @@ export const UserResourceItem: React.FunctionComponent<UserResourceItemProps> = 
   }, [apiCall, props.userResource, workspaceCtx.workspaceClientId, userResourceId, workspaceServiceId, workspaceCtx.workspace.id]);
 
   return (
-    <>
-      <h1>User Resource: {userResource.properties?.display_name}</h1>
-      {userResource && userResource.id &&
-        <Pivot aria-label="User Resource Menu">
+    userResource && userResource.id ?
+      <>
+        <ResourceHeader resource={userResource} componentAction={componentAction} />
+        <Pivot aria-label="User Resource Menu" className='tre-panel'>
           <PivotItem
             headerText="Overview"
             headerButtonProps={{
@@ -54,12 +62,10 @@ export const UserResourceItem: React.FunctionComponent<UserResourceItemProps> = 
             <ResourceHistory history={userResource.history} />
           </PivotItem>
           <PivotItem headerText="Operations">
-            <h3>--Operations Log here</h3>
+            <ResourceOperationsList resource={userResource} />
           </PivotItem>
         </Pivot>
-      }
-
-
-    </>
+      </>
+      : <></>
   );
 };

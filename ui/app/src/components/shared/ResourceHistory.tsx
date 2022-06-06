@@ -74,9 +74,9 @@ export const ResourceHistory: React.FunctionComponent<IResourceHistoryProps> = (
 
         return <Text>
           {
-            Object.keys(propertyBag).map((key) => {
+            Object.keys(propertyBag).map((key:any, i:number) => {
               let val = (propertyBag as any)[key].toString();
-              return <ResourcePropertyPanelItem header={userFriendlyKey(key)} val={val} />
+              return <ResourcePropertyPanelItem header={userFriendlyKey(key)} val={val} key={i}/>
             })
           }
           </Text>
@@ -93,7 +93,7 @@ export const ResourceHistory: React.FunctionComponent<IResourceHistoryProps> = (
       isMultiline: true,
       data: 'string',
       onRender: (item: HistoryItem) => {
-        return <Text>{moment.unix(item.updatedWhen).toDate().toUTCString()}</Text>;
+        return <Text>{`${moment.unix(item.updatedWhen).toLocaleString()} (${moment.unix(item.updatedWhen).fromNow()})`}</Text>;
       },
       isPadded: true,
     },
@@ -119,7 +119,7 @@ export const ResourceHistory: React.FunctionComponent<IResourceHistoryProps> = (
       checkboxVisibility={CheckboxVisibility.hidden}
       columns={columns}
       layoutMode={DetailsListLayoutMode.justified}
-      isHeaderVisible={true}            
+      isHeaderVisible={true}
     />
   )
 };

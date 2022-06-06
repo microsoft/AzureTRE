@@ -4,7 +4,7 @@ import { Route, Routes, useParams } from 'react-router-dom';
 import { ApiEndpoint } from '../../models/apiEndpoints';
 import { UserResource } from '../../models/userResource';
 import { WorkspaceService } from '../../models/workspaceService';
-import { HttpMethod, ResultType, useAuthApiCall } from '../../useAuthApiCall';
+import { HttpMethod, ResultType, useAuthApiCall } from '../../hooks/useAuthApiCall';
 import { UserResourceItem } from './UserResourceItem';
 import { WorkspaceHeader } from './WorkspaceHeader';
 import { WorkspaceItem } from './WorkspaceItem';
@@ -27,7 +27,7 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
   // set workspace context from url
   useEffect(() => {
     const getWorkspace = async () => {
-      try {      
+      try {
         // get the workspace
         const ws = (await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get)).workspace;
         workspaceCtx.current.setWorkspace(ws);
@@ -87,9 +87,9 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
           <WorkspaceHeader />
           <Stack horizontal className='tre-body-inner'>
             <Stack.Item className='tre-left-nav'>
-              <WorkspaceLeftNav 
-                workspaceServices={workspaceServices} 
-                setWorkspaceService={(ws: WorkspaceService) => setSelectedWorkspaceService(ws)} 
+              <WorkspaceLeftNav
+                workspaceServices={workspaceServices}
+                setWorkspaceService={(ws: WorkspaceService) => setSelectedWorkspaceService(ws)}
                 addWorkspaceService={(ws: WorkspaceService) => addWorkspaceService(ws)} />
             </Stack.Item><Stack.Item className='tre-body-content'>
               <Stack>
@@ -97,7 +97,7 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
                   <Routes>
                     <Route path="/" element={<WorkspaceItem />} />
                     <Route path="workspace-services" element={
-                      <WorkspaceServices workspaceServices={workspaceServices} 
+                      <WorkspaceServices workspaceServices={workspaceServices}
                         setWorkspaceService={(ws: WorkspaceService) => setSelectedWorkspaceService(ws)}
                         addWorkspaceService={(ws: WorkspaceService) => addWorkspaceService(ws)}
                         updateWorkspaceService={(ws: WorkspaceService) => updateWorkspaceService(ws)}

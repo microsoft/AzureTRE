@@ -9,18 +9,17 @@ export const ResourceOperationListItem: React.FunctionComponent<ResourceOperatio
 
     const stackItemStyles: IStackItemStyles = {
         root: {
-            padding: 5,
-            width: 150,
+            padding: '5px 0',
             color: DefaultPalette.neutralSecondary
         }
     }
     return(
         <>
             <Stack wrap horizontal>
-                <Stack.Item grow styles={stackItemStyles}>
+                <Stack.Item styles={stackItemStyles} style={{width:'20%'}}>
                     {props.header}
                 </Stack.Item>
-                <Stack.Item grow styles={stackItemStyles}>
+                <Stack.Item styles={stackItemStyles} style={{width:'80%'}}>
                     : {props.val}
                 </Stack.Item>
             </Stack>
