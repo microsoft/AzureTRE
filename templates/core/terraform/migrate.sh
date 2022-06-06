@@ -14,12 +14,15 @@ terraform init -input=false -backend=true -reconfigure -upgrade \
     -backend-config="key=${TRE_ID}"
 
 echo "*** Migrating TF Resources ***"
-# 1. Grab the Resource ID
-# 2. Delete the old resource from state
-# 3. Import the new resource in using the Azure Resource ID
+# 1. Check we have a root_module in state
+# 2. Grab the Resource ID
+# 3. Delete the old resource from state
+# 4. Import the new resource type in using the existing Azure Resource ID
 
 # azurerm_app_service_plan -> azurerm_service_plan
-core_app_service_plan_id=$(terraform show -json | jq -r '.values.root_module.resources[] | select(.address=="azurerm_app_service_plan.core") | .values.id' || null)
+core_app_service_plan_id=$(terraform show -json \
+  | jq -r 'select(.values.root_module) | .values.root_module.resources[] | select(.address=="azurerm_app_service_plan.core") | .values.id' \
+  || null)
 if [ -n "${core_app_service_plan_id}" ]; then
   echo "Migrating ${core_app_service_plan_id}"
   terraform state rm azurerm_app_service_plan.core
@@ -27,7 +30,9 @@ if [ -n "${core_app_service_plan_id}" ]; then
 fi
 
 # azurerm_app_service -> azurerm_linux_web_app
-api_app_service_id=$(terraform show -json | jq -r '.values.root_module.resources[] | select(.address=="azurerm_app_service.api") | .values.id' || null)
+api_app_service_id=$(terraform show -json \
+  | jq -r 'select(.values.root_module) | .values.root_module.resources[] | select(.address=="azurerm_app_service.api") | .values.id' \
+  || null)
 if [ -n "${api_app_service_id}" ]; then
   echo "Migrating ${api_app_service_id}. (Phase 2)"
   #terraform state rm azurerm_app_service.api
