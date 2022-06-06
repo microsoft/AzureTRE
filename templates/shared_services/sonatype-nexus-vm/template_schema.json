@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/shared_services/sonatype-nexus-vm/template_schema.json",
+  "type": "object",
+  "title": "Nexus Shared Service",
+  "description": "Provides Nexus shared service",
+  "required": [
+    "ssl_cert_name"
+  ],
+  "properties": {
+    "ssl_cert_name": {
+      "type": "string",
+      "title": "SSL certificate name",
+      "description": "The name of the certificate to use (located in the core KeyVault) for configuring Nexus SSL"
+    }
+  }
+}

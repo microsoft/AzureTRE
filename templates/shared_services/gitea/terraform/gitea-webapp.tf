@@ -10,6 +10,7 @@ resource "random_password" "gitea_passwd" {
 resource "azurerm_user_assigned_identity" "gitea_id" {
   resource_group_name = local.core_resource_group_name
   location            = data.azurerm_resource_group.rg.location
+  tags                = local.tre_shared_service_tags
 
   name = "id-gitea-${var.tre_id}"
 
@@ -23,6 +24,7 @@ resource "azurerm_app_service" "gitea" {
   app_service_plan_id             = data.azurerm_app_service_plan.core.id
   https_only                      = true
   key_vault_reference_identity_id = azurerm_user_assigned_identity.gitea_id.id
+  tags                            = local.tre_shared_service_tags
 
   app_settings = {
     APPINSIGHTS_INSTRUMENTATIONKEY      = data.azurerm_application_insights.core.instrumentation_key
@@ -63,16 +65,16 @@ resource "azurerm_app_service" "gitea" {
     scm_use_main_ip_restriction          = true
     acr_use_managed_identity_credentials = true
     acr_user_managed_identity_client_id  = azurerm_user_assigned_identity.gitea_id.client_id
-
+    ftps_state                           = "Disabled"
+    websockets_enabled                   = false
+    always_on                            = true
+    min_tls_version                      = "1.2"
+    vnet_route_all_enabled               = true
 
     cors {
       allowed_origins     = []
       support_credentials = false
     }
-
-    always_on              = true
-    min_tls_version        = "1.2"
-    vnet_route_all_enabled = true
 
     ip_restriction {
       action     = "Deny"
@@ -80,8 +82,6 @@ resource "azurerm_app_service" "gitea" {
       name       = "Deny all"
       priority   = 2147483647
     }
-
-    websockets_enabled = false
   }
 
   storage_account {
