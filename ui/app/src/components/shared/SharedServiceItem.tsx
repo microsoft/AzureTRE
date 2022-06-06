@@ -1,18 +1,29 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ApiEndpoint } from '../../models/apiEndpoints';
-import { useAuthApiCall, HttpMethod } from '../../useAuthApiCall';
+import { useAuthApiCall, HttpMethod } from '../../hooks/useAuthApiCall';
 import { ResourceDebug } from '../shared/ResourceDebug';
 import { MessageBar, MessageBarType, Pivot, PivotItem, Spinner, SpinnerSize } from '@fluentui/react';
 import { ResourcePropertyPanel } from '../shared/ResourcePropertyPanel';
 import { LoadingState } from '../../models/loadingState';
 import { SharedService } from '../../models/sharedService';
 import { ResourceHistory } from './ResourceHistory';
+import { ResourceHeader } from './ResourceHeader';
+import { ResourceOperationsList } from './ResourceOperationsList';
+import { useComponentManager } from '../../hooks/useComponentManager';
+import { Resource } from '../../models/resource';
 
 export const SharedServiceItem: React.FunctionComponent = () => {
   const { sharedServiceId } = useParams();
   const [sharedService, setSharedService] = useState({} as SharedService);
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
+  const navigate = useNavigate();
+
+  const componentAction = useComponentManager(
+    sharedService,
+    (r: Resource) => setSharedService(r as SharedService),
+    (r: Resource) => navigate(`/${ApiEndpoint.SharedServices}`)
+  );
   const apiCall = useAuthApiCall();
 
   useEffect(() => {
@@ -28,8 +39,8 @@ export const SharedServiceItem: React.FunctionComponent = () => {
     case LoadingState.Ok:
       return (
         <>
-          <h1>{sharedService.properties?.display_name}</h1>
-          <Pivot aria-label="Basic Pivot Example">
+          <ResourceHeader resource={sharedService} componentAction={componentAction} />
+          <Pivot aria-label="Basic Pivot Example" className='tre-panel'>
             <PivotItem
               headerText="Overview"
               headerButtonProps={{
@@ -44,7 +55,7 @@ export const SharedServiceItem: React.FunctionComponent = () => {
               <ResourceHistory history={sharedService.history} />
             </PivotItem>
             <PivotItem headerText="Operations">
-              <h3>--Operations Log here</h3>
+              <ResourceOperationsList resource={sharedService} />
             </PivotItem>
           </Pivot>
         </>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { DefaultPalette, IStackStyles, MessageBar, MessageBarType, Stack } from '@fluentui/react';
 import './App.scss';
 import { TopNav } from './components/shared/TopNav';
@@ -15,6 +15,11 @@ import { GenericErrorBoundary } from './components/shared/GenericErrorBoundary';
 import { NotificationsContext } from './contexts/NotificationsContext';
 import { Operation } from './models/operation';
 import { ResourceUpdate } from './models/resource';
+import { HttpMethod, ResultType, useAuthApiCall } from './hooks/useAuthApiCall';
+import { ApiEndpoint } from './models/apiEndpoints';
+import { CreateUpdateResource } from './components/shared/CreateUpdateResource/CreateUpdateResource';
+import { CreateUpdateResourceContext } from './contexts/CreateUpdateResourceContext';
+import { CreateFormResource, ResourceType } from './models/resourceType';
 
 export const App: React.FunctionComponent = () => {
   const [appRoles, setAppRoles] = useState([] as Array<string>);
@@ -23,70 +28,102 @@ export const App: React.FunctionComponent = () => {
   const [operations, setOperations] = useState([] as Array<Operation>);
   const [resourceUpdates, setResourceUpdates] = useState([] as Array<ResourceUpdate>);
 
+  const [createFormOpen, setCreateFormOpen] = useState(false);
+  const [createFormResource, setCreateFormResource] = useState({ resourceType: ResourceType.Workspace } as CreateFormResource);
+
+  const apiCall = useAuthApiCall();
+
+  // set the app roles
+  useEffect(() => {
+    const setAppRolesOnLoad = async () => {
+      await apiCall(ApiEndpoint.Workspaces, HttpMethod.Get, undefined, undefined, ResultType.JSON, (roles: Array<string>) => {
+        setAppRoles(roles);
+      }, true);
+    };
+    setAppRolesOnLoad();
+  }, [apiCall]);
+
   return (
     <>
       <Routes>
         <Route path="*" element={
           <MsalAuthenticationTemplate interactionType={InteractionType.Redirect}>
-            <NotificationsContext.Provider value={{
-              operations: operations,
-              addOperations: (ops: Array<Operation>) => {
-                let stateOps = [...operations];
-                ops.forEach((op: Operation) => {
-                  let i = stateOps.findIndex((f: Operation) => f.id === op.id);
+            <CreateUpdateResourceContext.Provider value={{
+              openCreateForm: (createFormResource: CreateFormResource) => {
+                setCreateFormResource(createFormResource);
+                setCreateFormOpen(true);
+              }
+            }} >
+              <NotificationsContext.Provider value={{
+                operations: operations,
+                addOperations: (ops: Array<Operation>) => {
+                  let stateOps = [...operations];
+                  ops.forEach((op: Operation) => {
+                    let i = stateOps.findIndex((f: Operation) => f.id === op.id);
+                    if (i > 0) {
+                      stateOps.splice(i, 1, op);
+                    } else {
+                      stateOps.push(op);
+                    }
+                  });
+                  setOperations(stateOps);
+                },
+                resourceUpdates: resourceUpdates,
+                addResourceUpdate: (r: ResourceUpdate) => {
+                  let updates = [...resourceUpdates];
+                  let i = updates.findIndex((f: ResourceUpdate) => f.resourceId === r.resourceId);
                   if (i > 0) {
-                    stateOps.splice(i, 1, op);
+                    updates.splice(i, 1, r);
                   } else {
-                    stateOps.push(op);
+                    updates.push(r);
                   }
-                });                
-                setOperations(stateOps);
-              },
-              resourceUpdates: resourceUpdates,
-              addResourceUpdate: (r: ResourceUpdate) => {
-                let updates = [...resourceUpdates];
-                let i = updates.findIndex((f: ResourceUpdate) => f.resourceId === r.resourceId);
-                if (i > 0) {
-                  updates.splice(i, 1, r);
-                } else {
-                  updates.push(r);
-                }
-                setResourceUpdates(updates);
-              },
-              clearUpdatesForResource: (resourceId: string) => { let updates = [...resourceUpdates].filter((r: ResourceUpdate) => r.resourceId !== resourceId); setResourceUpdates(updates); }
-            }}>
-              <AppRolesContext.Provider value={{
-                roles: appRoles,
-                setAppRoles: (roles: Array<string>) => { setAppRoles(roles) }
+                  setResourceUpdates(updates);
+                },
+                clearUpdatesForResource: (resourceId: string) => { let updates = [...resourceUpdates].filter((r: ResourceUpdate) => r.resourceId !== resourceId); setResourceUpdates(updates); }
               }}>
-                <Stack styles={stackStyles} className='tre-root'>
-                  <Stack.Item grow className='tre-top-nav'>
-                    <TopNav />
-                  </Stack.Item>
-                  <Stack.Item grow={100} className='tre-body'>
-                    <GenericErrorBoundary>
-                      <Routes>
-                        <Route path="*" element={<RootLayout />} />
-                        <Route path="/workspaces/:workspaceId//*" element={
-                          <WorkspaceContext.Provider value={{
-                            roles: workspaceRoles,
-                            setRoles: (roles: Array<string>) => setWorkspaceRoles(roles),
-                            workspace: selectedWorkspace,
-                            setWorkspace: (w: Workspace) => { console.warn("Workspace set", w); setSelectedWorkspace(w) },
-                            workspaceClientId: selectedWorkspace.properties?.scope_id.replace("api://", "")
-                          }}>
-                            <WorkspaceProvider />
-                          </WorkspaceContext.Provider>
-                        } />                       
-                      </Routes>
-                    </GenericErrorBoundary>
-                  </Stack.Item>
-                  <Stack.Item grow>
-                    <Footer />
-                  </Stack.Item>
-                </Stack>
-              </AppRolesContext.Provider>
-            </NotificationsContext.Provider>
+                <AppRolesContext.Provider value={{
+                  roles: appRoles,
+                  setAppRoles: (roles: Array<string>) => { setAppRoles(roles) }
+                }}>
+                  <CreateUpdateResource
+                    isOpen={createFormOpen}
+                    onClose={() => setCreateFormOpen(false)}
+                    resourceType={createFormResource.resourceType}
+                    parentResource={createFormResource.resourceParent}
+                    onAddResource={createFormResource.onAdd}
+                    workspaceClientId={createFormResource.workspaceClientId}
+                    updateResource={createFormResource.updateResource}
+                  />
+                  <Stack styles={stackStyles} className='tre-root'>
+                    <Stack.Item grow className='tre-top-nav'>
+                      <TopNav />
+                    </Stack.Item>
+                    <Stack.Item grow={100} className='tre-body'>
+                      <GenericErrorBoundary>
+                        <Routes>
+                          <Route path="*" element={<RootLayout />} />
+                          <Route path="/workspaces/:workspaceId//*" element={
+                            <WorkspaceContext.Provider value={{
+                              roles: workspaceRoles,
+                              setRoles: (roles: Array<string>) => { console.warn("Workspace roles", roles); setWorkspaceRoles(roles) },
+                              workspace: selectedWorkspace,
+                              setWorkspace: (w: Workspace) => { console.warn("Workspace set", w); setSelectedWorkspace(w) },
+                              workspaceClientId: selectedWorkspace.properties?.scope_id.replace("api://", "")
+                            }}>
+
+                              <WorkspaceProvider />
+                            </WorkspaceContext.Provider>
+                          } />
+                        </Routes>
+                      </GenericErrorBoundary>
+                    </Stack.Item>
+                    <Stack.Item grow>
+                      <Footer />
+                    </Stack.Item>
+                  </Stack>
+                </AppRolesContext.Provider>
+              </NotificationsContext.Provider>
+            </CreateUpdateResourceContext.Provider>
           </MsalAuthenticationTemplate>
         } />
         <Route path='/logout' element={

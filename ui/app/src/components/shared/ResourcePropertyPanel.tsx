@@ -13,12 +13,13 @@ interface ResourcePropertyPanelItemProps {
 }
 
 export const ResourcePropertyPanelItem: React.FunctionComponent<ResourcePropertyPanelItemProps> = (props: ResourcePropertyPanelItemProps) => {
-    
+
     const stackItemStyles: IStackItemStyles = {
         root: {
             padding: 5,
             width: 150,
-            color: DefaultPalette.neutralSecondary
+            color: DefaultPalette.neutralSecondary,
+            wordBreak: 'break-all'
         }
     }
 
@@ -44,7 +45,7 @@ export const ResourcePropertyPanelItem: React.FunctionComponent<ResourceProperty
 }
 
 export const ResourcePropertyPanel: React.FunctionComponent<ResourcePropertyPanelProps> = (props: ResourcePropertyPanelProps) => {
-    
+
     const stackStyles: IStackStyles = {
         root: {
             padding: 0,
@@ -58,7 +59,7 @@ export const ResourcePropertyPanel: React.FunctionComponent<ResourcePropertyPane
     }
 
     return (
-        props.resource && props.resource.id ? 
+        props.resource && props.resource.id ?
         <>
             <Stack wrap horizontal>
                 <Stack grow styles={stackStyles}>
@@ -71,7 +72,7 @@ export const ResourcePropertyPanel: React.FunctionComponent<ResourcePropertyPane
                     <ResourcePropertyPanelItem header={'Is enabled'} val={props.resource.isEnabled.toString()} />
                     <ResourcePropertyPanelItem header={'User'} val={props.resource.user.name} />
                     <ResourcePropertyPanelItem header={'Last updated'} val={moment.unix(props.resource.updatedWhen).toDate().toDateString()} />
-                </Stack>    
+                </Stack>
                 <Stack grow styles={stackStyles}>
                 {
                     Object.keys(props.resource.properties).map((key) => {

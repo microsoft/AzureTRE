@@ -1,23 +1,22 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ApiEndpoint } from '../../models/apiEndpoints';
-import { useAuthApiCall, HttpMethod } from '../../useAuthApiCall';
+import { useAuthApiCall, HttpMethod } from '../../hooks/useAuthApiCall';
 import { UserResource } from '../../models/userResource';
 import { WorkspaceService } from '../../models/workspaceService';
 import { ResourceDebug } from '../shared/ResourceDebug';
 import { MessageBar, MessageBarType, Pivot, PivotItem, PrimaryButton, Spinner, SpinnerSize, Stack } from '@fluentui/react';
 import { ResourcePropertyPanel } from '../shared/ResourcePropertyPanel';
-import { Resource } from '../../models/resource';
+import { ComponentAction, Resource } from '../../models/resource';
 import { ResourceCardList } from '../shared/ResourceCardList';
 import { LoadingState } from '../../models/loadingState';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
-import { CreateUpdateResource } from '../shared/CreateUpdateResource/CreateUpdateResource';
 import { ResourceType } from '../../models/resourceType';
-import { useBoolean } from '@fluentui/react-hooks';
 import { ResourceHistory } from '../shared/ResourceHistory';
-
-// TODO:
-// - separate loading placeholders for user resources instead of spinner
+import { ResourceHeader } from '../shared/ResourceHeader';
+import { useComponentManager } from '../../hooks/useComponentManager';
+import { ResourceOperationsList } from '../shared/ResourceOperationsList';
+import { CreateUpdateResourceContext } from '../../contexts/CreateUpdateResourceContext';
 
 interface WorkspaceServiceItemProps {
   workspaceService?: WorkspaceService,
@@ -25,18 +24,24 @@ interface WorkspaceServiceItemProps {
 }
 
 export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemProps> = (props: WorkspaceServiceItemProps) => {
-  const [createPanelOpen, { setTrue: createNew, setFalse: closeCreatePanel }] = useBoolean(false);
   const { workspaceServiceId } = useParams();
   const [userResources, setUserResources] = useState([] as Array<UserResource>)
   const [workspaceService, setWorkspaceService] = useState({} as WorkspaceService)
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
   const workspaceCtx = useContext(WorkspaceContext);
+  const createFormCtx = useContext(CreateUpdateResourceContext);
+  const navigate = useNavigate();
   const apiCall = useAuthApiCall();
+  const componentAction = useComponentManager(
+    workspaceService,
+    (r: Resource) => setWorkspaceService(r as WorkspaceService),
+    (r: Resource) => navigate(`/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}`)
+  );
 
   useEffect(() => {
     const getData = async () => {
       try {
-        // did we get passed the workspace service, or shall we get it from the api? 
+        // did we get passed the workspace service, or shall we get it from the api?
         if (props.workspaceService && props.workspaceService.id) {
           setWorkspaceService(props.workspaceService);
         } else {
@@ -79,8 +84,8 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
     case LoadingState.Ok:
       return (
         <>
-          <h1>{workspaceService.properties?.display_name}</h1>
-          <Pivot aria-label="User Resource Menu">
+          <ResourceHeader resource={workspaceService} componentAction={componentAction} />
+          <Pivot aria-label="User Resource Menu" className='tre-panel'>
             <PivotItem
               headerText="Overview"
               headerButtonProps={{
@@ -89,18 +94,33 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
               }}
             >
               <ResourcePropertyPanel resource={workspaceService} />
-              <hr />
-              <Stack horizontal horizontalAlign="space-between" style={{ padding: 10 }}>
+
+              <ResourceDebug resource={workspaceService} />
+            </PivotItem>
+            <PivotItem headerText="History">
+              <ResourceHistory history={workspaceService.history} />
+            </PivotItem>
+            <PivotItem headerText="Operations">
+              <ResourceOperationsList resource={workspaceService} />
+            </PivotItem>
+          </Pivot>
+
+          <Stack className="tre-panel">
+            <Stack.Item>
+              <Stack horizontal horizontalAlign="space-between">
                 <h1>User Resources</h1>
-                <PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new" onClick={createNew} disabled={!props.workspaceService?.isEnabled} title={!props.workspaceService?.isEnabled ? 'Service must be enabled first' : 'Create a User Resource'} />
-                <CreateUpdateResource
-                  isOpen={createPanelOpen}
-                  onClose={closeCreatePanel}
-                  resourceType={ResourceType.UserResource}
-                  parentResource={props.workspaceService}
-                  onAddResource={(r: Resource) => addUserResource(r as UserResource)}
-                />
+                <PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new" disabled={!workspaceService.isEnabled || componentAction === ComponentAction.Lock} title={!workspaceService.isEnabled ? 'Service must be enabled first' : 'Create a User Resource'}
+                  onClick={() => {
+                    createFormCtx.openCreateForm({
+                      resourceType: ResourceType.UserResource,
+                      resourceParent: props.workspaceService,
+                      onAdd: (r: Resource) => addUserResource(r as UserResource),
+                      workspaceClientId: workspaceCtx.workspaceClientId
+                    })
+                  }} />
               </Stack>
+            </Stack.Item>
+            <Stack.Item>
               {
                 userResources &&
                 <ResourceCardList
@@ -110,15 +130,8 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
                   removeResource={(r: Resource) => removeUserResource(r as UserResource)}
                   emptyText="This workspace service contains no user resources." />
               }
-              <ResourceDebug resource={workspaceService} />
-            </PivotItem>
-            <PivotItem headerText="History">
-              <ResourceHistory history={workspaceService.history} />
-            </PivotItem>
-            <PivotItem headerText="Operations">
-              <h3>--Operations Log here</h3>
-            </PivotItem>
-          </Pivot>
+            </Stack.Item>
+          </Stack>
         </>
       );
     case LoadingState.Error:

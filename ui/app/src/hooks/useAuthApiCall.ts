@@ -1,7 +1,7 @@
 import { AuthenticationResult, InteractionRequiredAuthError } from "@azure/msal-browser";
 import { useMsal, useAccount } from "@azure/msal-react";
 import { useCallback } from "react";
-import config from "./config.json";
+import config from "../config.json";
 
 export enum ResultType {
     JSON = "JSON",

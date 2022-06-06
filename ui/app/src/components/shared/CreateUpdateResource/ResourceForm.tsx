@@ -1,30 +1,42 @@
 import { MessageBar, MessageBarType, Spinner, SpinnerSize } from "@fluentui/react";
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { LoadingState } from "../../../models/loadingState";
-import { HttpMethod, ResultType, useAuthApiCall } from "../../../useAuthApiCall";
+import { HttpMethod, ResultType, useAuthApiCall } from "../../../hooks/useAuthApiCall";
 import Form from "@rjsf/fluent-ui";
 import { Operation } from "../../../models/operation";
-import { WorkspaceContext } from "../../../contexts/WorkspaceContext";
+import { Resource } from "../../../models/resource";
 
 interface ResourceFormProps {
     templateName: string,
     templatePath: string,
     resourcePath: string,
-    onCreateResource: (operation: Operation) => void
+    updateResource?: Resource,
+    onCreateResource: (operation: Operation) => void,
+    workspaceClientId?: string
 }
 
 export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: ResourceFormProps) => {
     const [template, setTemplate] = useState<any | null>(null);
+    const [formData, setFormData] = useState({});
     const [loading, setLoading] = useState(LoadingState.Loading as LoadingState);
     const [deployError, setDeployError] = useState(false);
     const apiCall = useAuthApiCall();
-    const workspaceCtx = useContext(WorkspaceContext);
 
     useEffect(() => {
         const getFullTemplate = async () => {
             try {
                 // Get the full resource template containing the required parameters
-                const templateResponse = await apiCall(props.templatePath, HttpMethod.Get);
+                const templateResponse = await apiCall(props.updateResource ? `${props.templatePath}?is_update=true` : props.templatePath, HttpMethod.Get);
+
+                // if it's an update, populate the form with the props that are available in the template
+                if (props.updateResource) {
+                  let d:any = {};
+                  for(let prop in templateResponse.properties){
+                    d[prop] = props.updateResource?.properties[prop];
+                  }
+                  setFormData(d);
+                }
+
                 setTemplate(templateResponse);
                 setLoading(LoadingState.Ok);
             } catch {
@@ -36,13 +48,25 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
         if (!template) {
             getFullTemplate();
         }
-    }, [apiCall, props.templatePath, template]);
+    }, [apiCall, props.templatePath, template, props.updateResource]);
 
-    const createResource = async (formData: {}) => {
+    const createUpdateResource = async (formData: any) => {
         setDeployError(false);
-        const resource = { templateName: props.templateName, properties: formData };
-        console.log(resource);
-        const response = await apiCall(props.resourcePath, HttpMethod.Post, workspaceCtx.workspaceClientId, resource, ResultType.JSON);
+        let response;
+        if(props.updateResource) {
+          // only send the properties we're allowed to send
+          let d:any = {}
+          for(let prop in template.properties) {
+            if (!template.properties[prop].readOnly) d[prop] = formData[prop];
+          }
+          console.log("patching d", d);
+          response = await apiCall(props.updateResource.resourcePath, HttpMethod.Patch, props.workspaceClientId, { properties: d }, ResultType.JSON, undefined, undefined, props.updateResource._etag);
+        } else {
+          const resource = { templateName: props.templateName, properties: formData };
+          console.log(resource);
+          response = await apiCall(props.resourcePath, HttpMethod.Post, props.workspaceClientId, resource, ResultType.JSON);
+        }
+
         if (response) {
             props.onCreateResource(response.operation);
         } else {
@@ -54,11 +78,11 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
         case LoadingState.Ok:
             return (
                 template ? <div style={{ marginTop: 20 }}>
-                    <Form schema={template} onSubmit={(e: any) => createResource(e.formData)}/>
-                    { 
+                    <Form schema={template} formData={formData} onSubmit={(e: any) => createUpdateResource(e.formData)}/>
+                    {
                         deployError ? <MessageBar messageBarType={MessageBarType.error}>
                             <p>The API returned an error. Check the console for details or retry.</p>
-                        </MessageBar> : null 
+                        </MessageBar> : null
                     }
                 </div> : null
             )
