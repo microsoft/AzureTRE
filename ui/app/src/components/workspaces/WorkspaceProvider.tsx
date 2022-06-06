@@ -2,10 +2,8 @@ import { MessageBar, MessageBarType, Spinner, SpinnerSize, Stack } from '@fluent
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { Route, Routes, useParams } from 'react-router-dom';
 import { ApiEndpoint } from '../../models/apiEndpoints';
-import { UserResource } from '../../models/userResource';
 import { WorkspaceService } from '../../models/workspaceService';
 import { HttpMethod, ResultType, useAuthApiCall } from '../../hooks/useAuthApiCall';
-import { UserResourceItem } from './UserResourceItem';
 import { WorkspaceHeader } from './WorkspaceHeader';
 import { WorkspaceItem } from './WorkspaceItem';
 import { WorkspaceLeftNav } from './WorkspaceLeftNav';
@@ -18,7 +16,6 @@ import { Workspace } from '../../models/workspace';
 export const WorkspaceProvider: React.FunctionComponent = () => {
   const apiCall = useAuthApiCall();
   const [selectedWorkspaceService, setSelectedWorkspaceService] = useState({} as WorkspaceService);
-  const [selectedUserResource, setSelectedUserResource] = useState({} as UserResource);
   const [workspaceServices, setWorkspaceServices] = useState([] as Array<WorkspaceService>)
   const workspaceCtx = useRef(useContext(WorkspaceContext));
   const [loadingState, setLoadingState] = useState('loading');
@@ -76,6 +73,7 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
   const removeWorkspaceService = (w: WorkspaceService) => {
     let i = workspaceServices.findIndex((f: WorkspaceService) => f.id === w.id);
     let ws = [...workspaceServices];
+    console.log("removing WS...", ws[i]);
     ws.splice(i, 1);
     setWorkspaceServices(ws);
   }
@@ -104,8 +102,13 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
                         removeWorkspaceService={(ws: WorkspaceService) => removeWorkspaceService(ws)}
                       />
                     } />
-                    <Route path="workspace-services/:workspaceServiceId/*" element={<WorkspaceServiceItem workspaceService={selectedWorkspaceService} setUserResource={(userResource: UserResource) => setSelectedUserResource(userResource)} />} />
-                    <Route path="workspace-services/:workspaceServiceId/user-resources/:userResourceId/*" element={<UserResourceItem userResource={selectedUserResource} />} />
+                    <Route path="workspace-services/:workspaceServiceId/*" element={
+                      <WorkspaceServiceItem
+                        workspaceService={selectedWorkspaceService}
+                        updateWorkspaceService={(ws: WorkspaceService) => updateWorkspaceService(ws) }
+                        removeWorkspaceService={(ws: WorkspaceService) => removeWorkspaceService(ws) } />
+                    } />
+
                   </Routes>
                 </Stack.Item>
               </Stack>

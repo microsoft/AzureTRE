@@ -19,7 +19,7 @@ export const SharedServiceItem: React.FunctionComponent = () => {
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
   const navigate = useNavigate();
 
-  const componentAction = useComponentManager(
+  const latestUpdate = useComponentManager(
     sharedService,
     (r: Resource) => setSharedService(r as SharedService),
     (r: Resource) => navigate(`/${ApiEndpoint.SharedServices}`)
@@ -39,7 +39,7 @@ export const SharedServiceItem: React.FunctionComponent = () => {
     case LoadingState.Ok:
       return (
         <>
-          <ResourceHeader resource={sharedService} componentAction={componentAction} />
+          <ResourceHeader resource={sharedService} latestUpdate={latestUpdate} />
           <Pivot aria-label="Basic Pivot Example" className='tre-panel'>
             <PivotItem
               headerText="Overview"

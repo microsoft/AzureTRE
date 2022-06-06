@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Route, Routes, useNavigate, useParams } from 'react-router-dom';
 import { ApiEndpoint } from '../../models/apiEndpoints';
 import { useAuthApiCall, HttpMethod } from '../../hooks/useAuthApiCall';
 import { UserResource } from '../../models/userResource';
@@ -17,10 +17,13 @@ import { ResourceHeader } from '../shared/ResourceHeader';
 import { useComponentManager } from '../../hooks/useComponentManager';
 import { ResourceOperationsList } from '../shared/ResourceOperationsList';
 import { CreateUpdateResourceContext } from '../../contexts/CreateUpdateResourceContext';
+import { successStates } from '../../models/operation';
+import { UserResourceItem } from './UserResourceItem';
 
 interface WorkspaceServiceItemProps {
   workspaceService?: WorkspaceService,
-  setUserResource: (userResource: UserResource) => void
+  updateWorkspaceService: (ws: WorkspaceService) => void,
+  removeWorkspaceService: (ws: WorkspaceService) => void
 }
 
 export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemProps> = (props: WorkspaceServiceItemProps) => {
@@ -28,21 +31,22 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
   const [userResources, setUserResources] = useState([] as Array<UserResource>)
   const [workspaceService, setWorkspaceService] = useState({} as WorkspaceService)
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
+  const [selectedUserResource, setSelectedUserResource] = useState({} as UserResource);
   const workspaceCtx = useContext(WorkspaceContext);
   const createFormCtx = useContext(CreateUpdateResourceContext);
   const navigate = useNavigate();
   const apiCall = useAuthApiCall();
-  const componentAction = useComponentManager(
+  const latestUpdate = useComponentManager(
     workspaceService,
-    (r: Resource) => setWorkspaceService(r as WorkspaceService),
-    (r: Resource) => navigate(`/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}`)
+    (r: Resource) => { props.updateWorkspaceService(r as WorkspaceService); setWorkspaceService(r as WorkspaceService) },
+    (r: Resource) => { props.removeWorkspaceService(r as WorkspaceService); navigate(`/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}`) }
   );
 
   useEffect(() => {
     const getData = async () => {
       try {
         // did we get passed the workspace service, or shall we get it from the api?
-        if (props.workspaceService && props.workspaceService.id) {
+        if (props.workspaceService && props.workspaceService.id && props.workspaceService.id === workspaceServiceId) {
           setWorkspaceService(props.workspaceService);
         } else {
           let ws = await apiCall(`${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}/${workspaceServiceId}`, HttpMethod.Get, workspaceCtx.workspaceClientId);
@@ -84,54 +88,68 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
     case LoadingState.Ok:
       return (
         <>
-          <ResourceHeader resource={workspaceService} componentAction={componentAction} />
-          <Pivot aria-label="User Resource Menu" className='tre-panel'>
-            <PivotItem
-              headerText="Overview"
-              headerButtonProps={{
-                'data-order': 1,
-                'data-title': 'Overview',
-              }}
-            >
-              <ResourcePropertyPanel resource={workspaceService} />
+          <Routes>
+            <Route path="*" element={
+              <>
+                <ResourceHeader resource={workspaceService} latestUpdate={latestUpdate} />
+                <Pivot aria-label="User Resource Menu" className='tre-panel'>
+                  <PivotItem
+                    headerText="Overview"
+                    headerButtonProps={{
+                      'data-order': 1,
+                      'data-title': 'Overview',
+                    }}
+                  >
+                    <ResourcePropertyPanel resource={workspaceService} />
 
-              <ResourceDebug resource={workspaceService} />
-            </PivotItem>
-            <PivotItem headerText="History">
-              <ResourceHistory history={workspaceService.history} />
-            </PivotItem>
-            <PivotItem headerText="Operations">
-              <ResourceOperationsList resource={workspaceService} />
-            </PivotItem>
-          </Pivot>
+                    <ResourceDebug resource={workspaceService} />
+                  </PivotItem>
+                  <PivotItem headerText="History">
+                    <ResourceHistory history={workspaceService.history} />
+                  </PivotItem>
+                  <PivotItem headerText="Operations">
+                    <ResourceOperationsList resource={workspaceService} />
+                  </PivotItem>
+                </Pivot>
 
-          <Stack className="tre-panel">
-            <Stack.Item>
-              <Stack horizontal horizontalAlign="space-between">
-                <h1>User Resources</h1>
-                <PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new" disabled={!workspaceService.isEnabled || componentAction === ComponentAction.Lock} title={!workspaceService.isEnabled ? 'Service must be enabled first' : 'Create a User Resource'}
-                  onClick={() => {
-                    createFormCtx.openCreateForm({
-                      resourceType: ResourceType.UserResource,
-                      resourceParent: props.workspaceService,
-                      onAdd: (r: Resource) => addUserResource(r as UserResource),
-                      workspaceClientId: workspaceCtx.workspaceClientId
-                    })
-                  }} />
-              </Stack>
-            </Stack.Item>
-            <Stack.Item>
-              {
-                userResources &&
-                <ResourceCardList
-                  resources={userResources}
-                  selectResource={(r: Resource) => props.setUserResource(r as UserResource)}
-                  updateResource={(r: Resource) => updateUserResource(r as UserResource)}
-                  removeResource={(r: Resource) => removeUserResource(r as UserResource)}
-                  emptyText="This workspace service contains no user resources." />
-              }
-            </Stack.Item>
-          </Stack>
+                <Stack className="tre-panel">
+                  <Stack.Item>
+                    <Stack horizontal horizontalAlign="space-between">
+                      <h1>User Resources</h1>
+                      <PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new" disabled={!workspaceService.isEnabled || latestUpdate.componentAction === ComponentAction.Lock || successStates.indexOf(workspaceService.deploymentStatus) === -1} title={!workspaceService.isEnabled ? 'Service must be enabled first' : 'Create a User Resource'}
+                        onClick={() => {
+                          createFormCtx.openCreateForm({
+                            resourceType: ResourceType.UserResource,
+                            resourceParent: workspaceService,
+                            onAdd: (r: Resource) => addUserResource(r as UserResource),
+                            workspaceClientId: workspaceCtx.workspaceClientId
+                          })
+                        }} />
+                    </Stack>
+                  </Stack.Item>
+                  <Stack.Item>
+                    {
+                      userResources &&
+                      <ResourceCardList
+                        resources={userResources}
+                        selectResource={(r: Resource) => setSelectedUserResource(r as UserResource)}
+                        updateResource={(r: Resource) => updateUserResource(r as UserResource)}
+                        removeResource={(r: Resource) => removeUserResource(r as UserResource)}
+                        emptyText="This workspace service contains no user resources." />
+                    }
+                  </Stack.Item>
+                </Stack>
+              </>
+            } />
+            <Route path="user-resources/:userResourceId/*" element={
+              <UserResourceItem
+                userResource={selectedUserResource}
+                updateUserResource={(u: UserResource) => updateUserResource(u)}
+                removeUserResource={(u: UserResource) => removeUserResource(u)}
+              />
+            } />
+          </Routes>
+
         </>
       );
     case LoadingState.Error:

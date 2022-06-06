@@ -139,7 +139,7 @@ export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceP
         <Icon iconName="CloudAdd" className={creatingIconClass} />
         <h1>{props.updateResource?.id ? 'Updating' : 'Creating'} {props.resourceType}...</h1>
         <p>Check the notifications panel for deployment progress.</p>
-        <PrimaryButton text="Go to resource" onClick={() => navigate(deployOperation.resourcePath)} />
+        <PrimaryButton text="Go to resource" onClick={() => {navigate(deployOperation.resourcePath); props.onClose();}} />
       </div>; break;
   }
 
