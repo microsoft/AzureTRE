@@ -19,6 +19,7 @@ resource "azurerm_app_service" "guacamole" {
   app_service_plan_id             = data.azurerm_app_service_plan.workspace.id
   https_only                      = true
   key_vault_reference_identity_id = azurerm_user_assigned_identity.guacamole_id.id
+  tags                            = local.workspace_service_tags
 
   site_config {
     linux_fx_version                     = "DOCKER|${data.azurerm_container_registry.mgmt_acr.login_server}/microsoft/azuretre/${var.image_name}:${local.image_tag}"
@@ -37,18 +38,18 @@ resource "azurerm_app_service" "guacamole" {
     TENANT_ID                  = data.azurerm_client_config.current.tenant_id
     KEYVAULT_URL               = data.azurerm_key_vault.ws.vault_uri
     API_URL                    = local.api_url
-    SERVICE_ID                 = var.tre_resource_id
-    WORKSPACE_ID               = var.workspace_id
+    SERVICE_ID                 = "${var.tre_resource_id}"
+    WORKSPACE_ID               = "${var.workspace_id}"
     MANAGED_IDENTITY_CLIENT_ID = azurerm_user_assigned_identity.guacamole_id.client_id
 
     # Guacmole configuration
-    GUAC_DISABLE_COPY     = var.guac_disable_copy
-    GUAC_DISABLE_PASTE    = var.guac_disable_paste
-    GUAC_ENABLE_DRIVE     = var.guac_enable_drive
-    GUAC_DRIVE_NAME       = var.guac_drive_name
-    GUAC_DRIVE_PATH       = var.guac_drive_path
-    GUAC_DISABLE_DOWNLOAD = var.guac_disable_download
-    AUDIENCE              = var.workspace_identifier_uri
+    GUAC_DISABLE_COPY     = "${var.guac_disable_copy}"
+    GUAC_DISABLE_PASTE    = "${var.guac_disable_paste}"
+    GUAC_ENABLE_DRIVE     = "${var.guac_enable_drive}"
+    GUAC_DRIVE_NAME       = "${var.guac_drive_name}"
+    GUAC_DRIVE_PATH       = "${var.guac_drive_path}"
+    GUAC_DISABLE_DOWNLOAD = "${var.guac_disable_download}"
+    AUDIENCE              = "@Microsoft.KeyVault(SecretUri=${data.azurerm_key_vault_secret.workspace_client_id.id})"
     ISSUER                = local.issuer
 
     OAUTH2_PROXY_CLIENT_ID       = "@Microsoft.KeyVault(SecretUri=${data.azurerm_key_vault_secret.workspace_client_id.id})"
@@ -197,6 +198,7 @@ resource "azurerm_private_endpoint" "guacamole" {
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
   subnet_id           = data.azurerm_subnet.services.id
+  tags                = local.workspace_service_tags
 
   private_service_connection {
     private_connection_resource_id = azurerm_app_service.guacamole.id
