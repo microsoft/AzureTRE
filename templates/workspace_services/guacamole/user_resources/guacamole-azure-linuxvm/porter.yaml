@@ -59,7 +59,9 @@ parameters:
   - name: nexus_version
     type: string
     default: "V1"
-    description: "Which Nexus proxy service to use, i.e. V1 for the App Service-based Nexus or V2 for the VM-based service"
+    description: >-
+      "Which Nexus proxy service to use, i.e. V1 for the App Service-based
+      Nexus or V2 for the VM-based service"
 
 outputs:
   - name: ip

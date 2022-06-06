@@ -37,7 +37,6 @@ parameters:
 
 mixins:
   - exec
-  - az
   - terraform:
       clientVersion: 1.1.5
 install:
