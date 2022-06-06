@@ -2,7 +2,6 @@
 data "azurerm_servicebus_namespace" "airlock_sb" {
   name                = "sb-${var.tre_id}"
   resource_group_name = var.resource_group_name
-
 }
 
 resource "azurerm_servicebus_queue" "step_result" {
