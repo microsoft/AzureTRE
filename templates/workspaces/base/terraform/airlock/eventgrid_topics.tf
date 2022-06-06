@@ -6,9 +6,12 @@ resource "azurerm_eventgrid_system_topic" "import_approved_blob_created" {
   source_arm_resource_id = azurerm_storage_account.sa_import_approved.id
   topic_type             = "Microsoft.Storage.StorageAccounts"
 
-  tags = {
-    Publishers = "airlock;accepted-import-sa"
-  }
+  tags = merge(
+    local.tre_workspace_tags,
+    {
+      Publishers = "airlock;accepted-import-sa"
+    }
+  )
 
   depends_on = [
     azurerm_storage_account.sa_import_approved
@@ -24,9 +27,12 @@ resource "azurerm_eventgrid_system_topic" "export_inprogress_blob_created" {
   source_arm_resource_id = azurerm_storage_account.sa_export_inprogress.id
   topic_type             = "Microsoft.Storage.StorageAccounts"
 
-  tags = {
-    Publishers = "airlock;inprogress-export-sa"
-  }
+  tags = merge(
+    local.tre_workspace_tags,
+    {
+      Publishers = "airlock;inprogress-export-sa"
+    }
+  )
 
   depends_on = [
     azurerm_storage_account.sa_export_inprogress
@@ -43,9 +49,12 @@ resource "azurerm_eventgrid_system_topic" "export_rejected_blob_created" {
   source_arm_resource_id = azurerm_storage_account.sa_export_rejected.id
   topic_type             = "Microsoft.Storage.StorageAccounts"
 
-  tags = {
-    Publishers = "airlock;rejected-export-sa"
-  }
+  tags = merge(
+    local.tre_workspace_tags,
+    {
+      Publishers = "airlock;rejected-export-sa"
+    }
+  )
 
   depends_on = [
     azurerm_storage_account.sa_export_rejected

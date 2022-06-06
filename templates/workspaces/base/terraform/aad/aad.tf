@@ -95,12 +95,14 @@ resource "azurerm_key_vault_secret" "client_id" {
   name         = "workspace-client-id"
   value        = azuread_application.workspace.application_id
   key_vault_id = var.key_vault_id
+  tags         = local.tre_workspace_tags
 }
 
 resource "azurerm_key_vault_secret" "client_secret" {
   name         = "workspace-client-secret"
   value        = azuread_service_principal_password.workspace.value
   key_vault_id = var.key_vault_id
+  tags         = local.tre_workspace_tags
 }
 
 resource "azuread_app_role_assignment" "workspace_owner" {

@@ -1,12 +1,13 @@
 resource "azurerm_resource_group" "ws" {
   location = var.location
   name     = "rg-${local.workspace_resource_name_suffix}"
-  tags = {
-    project = "Azure Trusted Research Environment"
-    tre_id  = var.tre_id
-    tre_workspace_id = var.tre_resource_id
-    source  = "https://github.com/microsoft/AzureTRE/"
-  }
+  tags = merge(
+    local.tre_workspace_tags,
+    {
+      project = "Azure Trusted Research Environment",
+      source  = "https://github.com/microsoft/AzureTRE/"
+    },
+  )
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -26,6 +27,8 @@ module "network" {
 
 module "aad" {
   source                         = "./aad"
+  tre_id                         = var.tre_id
+  tre_resource_id                = var.tre_resource_id
   count                          = var.register_aad_application ? 1 : 0
   key_vault_id                   = azurerm_key_vault.kv.id
   workspace_resource_name_suffix = local.workspace_resource_name_suffix
@@ -41,6 +44,7 @@ module "airlock" {
   source                 = "./airlock"
   location               = var.location
   tre_id                 = var.tre_id
+  tre_resource_id        = var.tre_resource_id
   ws_resource_group_name = azurerm_resource_group.ws.name
   enable_local_debugging = true
   services_subnet_id     = module.network.services_subnet_id

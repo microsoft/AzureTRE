@@ -11,9 +11,12 @@ resource "azurerm_storage_account" "sa_import_approved" {
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
 
-  tags = {
-    description = "airlock;import;approved"
-  }
+  tags = merge(
+    local.tre_workspace_tags,
+    {
+      description = "airlock;import;approved"
+    }
+  )
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -58,9 +61,12 @@ resource "azurerm_storage_account" "sa_export_internal" {
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
 
-  tags = {
-    description = "airlock;export;internal"
-  }
+  tags = merge(
+    local.tre_workspace_tags,
+    {
+      description = "airlock;export;internal"
+    }
+  )
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -100,9 +106,12 @@ resource "azurerm_storage_account" "sa_export_inprogress" {
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
 
-  tags = {
-    description = "airlock;export;inprogress"
-  }
+  tags = merge(
+    local.tre_workspace_tags,
+    {
+      description = "airlock;export;inprogress"
+    }
+  )
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -142,9 +151,12 @@ resource "azurerm_storage_account" "sa_export_rejected" {
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
 
-  tags = {
-    description = "airlock;export;rejected"
-  }
+  tags = merge(
+    local.tre_workspace_tags,
+    {
+      description = "airlock;export;rejected"
+    }
+  )
 
   lifecycle { ignore_changes = [tags] }
 }

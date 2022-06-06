@@ -4,7 +4,7 @@ resource "azurerm_storage_account" "stg" {
   location                 = azurerm_resource_group.ws.location
   account_tier             = "Standard"
   account_replication_type = "GRS"
-  tags                     = local.tre_core_tags
+  tags                     = local.tre_workspace_tags
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -33,7 +33,7 @@ resource "azurerm_private_endpoint" "stgfilepe" {
   location            = azurerm_resource_group.ws.location
   resource_group_name = azurerm_resource_group.ws.name
   subnet_id           = module.network.services_subnet_id
-  tags                = local.tre_core_tags
+  tags                = local.tre_workspace_tags
 
   depends_on = [
     module.network,
@@ -59,7 +59,7 @@ resource "azurerm_private_endpoint" "stgblobpe" {
   location            = azurerm_resource_group.ws.location
   resource_group_name = azurerm_resource_group.ws.name
   subnet_id           = module.network.services_subnet_id
-  tags                = local.tre_core_tags
+  tags                = local.tre_workspace_tags
 
   depends_on = [
     module.network,
