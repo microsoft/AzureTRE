@@ -125,8 +125,6 @@ resource "azurerm_private_endpoint" "stgipimportpe" {
   resource_group_name = var.resource_group_name
   subnet_id           = var.shared_subnet_id
 
-  lifecycle { ignore_changes = [tags] }
-
   private_dns_zone_group {
     name                 = "private-dns-zone-group-stg-import-rej"
     private_dns_zone_ids = [data.azurerm_private_dns_zone.blobcore.id]
@@ -138,4 +136,8 @@ resource "azurerm_private_endpoint" "stgipimportpe" {
     is_manual_connection           = false
     subresource_names              = ["Blob"]
   }
+
+  tags = local.tre_core_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
