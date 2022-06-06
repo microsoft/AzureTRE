@@ -15,6 +15,8 @@ import { ResourceOperationsList } from '../shared/ResourceOperationsList';
 
 interface UserResourceItemProps {
   userResource?: UserResource
+  updateUserResource: (u: UserResource) => void,
+  removeUserResource: (u: UserResource) => void
 }
 
 export const UserResourceItem: React.FunctionComponent<UserResourceItemProps> = (props: UserResourceItemProps) => {
@@ -24,10 +26,10 @@ export const UserResourceItem: React.FunctionComponent<UserResourceItemProps> = 
   const workspaceCtx = useContext(WorkspaceContext);
   const navigate = useNavigate();
 
-  const componentAction = useComponentManager(
+  const latestUpdate = useComponentManager(
     userResource,
-    (r: Resource) => setUserResource(r as UserResource),
-    (r: Resource) => navigate(`/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}/${workspaceServiceId}`)
+    (r: Resource) => { props.updateUserResource(r as UserResource); setUserResource(r as UserResource) },
+    (r: Resource) => { props.removeUserResource(r as UserResource); navigate(`/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}/${workspaceServiceId}`); }
   );
 
   useEffect(() => {
@@ -46,7 +48,7 @@ export const UserResourceItem: React.FunctionComponent<UserResourceItemProps> = 
   return (
     userResource && userResource.id ?
       <>
-        <ResourceHeader resource={userResource} componentAction={componentAction} />
+        <ResourceHeader resource={userResource} latestUpdate={latestUpdate} />
         <Pivot aria-label="User Resource Menu" className='tre-panel'>
           <PivotItem
             headerText="Overview"

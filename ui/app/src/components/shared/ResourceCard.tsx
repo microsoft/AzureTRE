@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import moment from 'moment';
 import { ResourceContextMenu } from './ResourceContextMenu';
 import { useComponentManager } from '../../hooks/useComponentManager';
+import { StatusBadge } from './StatusBadge';
 
 interface ResourceCardProps {
   resource: Resource,
@@ -17,10 +18,10 @@ interface ResourceCardProps {
 export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: ResourceCardProps) => {
   const [loading] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
-  const componentAction = useComponentManager(
+  const latestUpdate = useComponentManager(
     props.resource,
-    (r: Resource) => {props.onUpdate(r)},
-    (r: Resource) => {props.onDelete(r)}
+    (r: Resource) => { props.onUpdate(r) },
+    (r: Resource) => { props.onDelete(r) }
   );
 
   let connectUri = props.resource.properties && props.resource.properties.connection_uri;
@@ -57,7 +58,7 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
                   <Stack.Item>
                     <ResourceContextMenu
                       resource={props.resource}
-                      componentAction={componentAction} />
+                      componentAction={latestUpdate.componentAction} />
                   </Stack.Item>
                 </Stack>
               </Stack.Item>
@@ -72,12 +73,19 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
               </Stack.Item>
             }
             <Stack.Item style={footerStyles}>
-              {
-                componentAction === ComponentAction.Lock &&
-                <ProgressIndicator
-                  barHeight={4}
-                  description='Resource is locked for changes whilst it updates.' />
-              }
+              <Stack horizontal>
+                <Stack.Item grow={1}>
+                  {
+                    latestUpdate.componentAction === ComponentAction.Lock &&
+                    <ProgressIndicator
+                      barHeight={4}
+                      description='Resource is locked for changes whilst it updates.' />
+                  }
+                </Stack.Item>
+                <Stack.Item style={{paddingTop: 5, paddingLeft:10}}>
+                  <StatusBadge status={latestUpdate.operation ? latestUpdate.operation?.status : props.resource.deploymentStatus} />
+                </Stack.Item>
+              </Stack>
             </Stack.Item>
           </Stack>
       }
@@ -120,7 +128,7 @@ const cardStyles: React.CSSProperties = {
   width: '100%',
   borderRadius: '2px',
   border: '1px #ccc solid',
-//  boxShadow: '1px 0px 4px 0px #dddddd'
+  //  boxShadow: '1px 0px 4px 0px #dddddd'
 }
 
 const headerStyles: React.CSSProperties = {

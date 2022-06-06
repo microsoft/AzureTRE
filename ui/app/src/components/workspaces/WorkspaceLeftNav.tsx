@@ -7,6 +7,7 @@ import { ResourceType } from '../../models/resourceType';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import { Resource } from '../../models/resource';
 import { CreateUpdateResourceContext } from '../../contexts/CreateUpdateResourceContext';
+import { successStates } from '../../models/operation';
 
 // TODO:
 // - we lose the selected styling when navigating into a user resource. This may not matter as the user resource page might die away.
@@ -43,7 +44,8 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
       serviceLinkArray.push({
         name: "Create new",
         icon: "Add",
-        key: "create"
+        key: "create",
+        disabled: successStates.indexOf(workspaceCtx.workspace.deploymentStatus) === -1 || !workspaceCtx.workspace.isEnabled
       });
 
       const seviceNavLinks: INavLinkGroup[] = [
@@ -69,7 +71,7 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
       setServiceLinks(seviceNavLinks);
     };
     getWorkspaceServices();
-  }, [props.workspaceServices, workspaceCtx.workspace.id]);
+  }, [props.workspaceServices, workspaceCtx.workspace]);
 
   return (
     <>

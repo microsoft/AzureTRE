@@ -15,6 +15,7 @@ import { ConfirmDisableEnableResource } from './ConfirmDisableEnableResource';
 import { CreateUpdateResourceContext } from '../../contexts/CreateUpdateResourceContext';
 import { Workspace } from '../../models/workspace';
 import { WorkspaceService } from '../../models/workspaceService';
+import { successStates } from '../../models/operation';
 
 interface ResourceContextMenuProps {
   resource: Resource,
@@ -91,7 +92,7 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
         { key: a.name, text: a.name, title: a.description, iconProps: { iconName: getActionIcon(a.name) }, className: 'tre-context-menu', onClick: () => { doAction(a.name) } }
       );
     });
-    menuItems.push({ key: 'custom-actions', text: 'Actions', iconProps: { iconName: 'Asterisk' }, disabled:props.componentAction === ComponentAction.Lock, subMenuProps: { items: customActions } });
+    menuItems.push({ key: 'custom-actions', text: 'Actions', iconProps: { iconName: 'Asterisk' }, disabled:props.componentAction === ComponentAction.Lock || successStates.indexOf(props.resource.deploymentStatus) === -1 || !props.resource.isEnabled, subMenuProps: { items: customActions } });
   }
 
   switch (props.resource.resourceType) {
