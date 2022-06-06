@@ -11,6 +11,7 @@ export interface Resource {
     resourceType: ResourceType
     templateName: string,
     templateVersion: string,
+    deploymentStatus: string,
     updatedWhen: number,
     user: User,
     history: Array<HistoryItem>,

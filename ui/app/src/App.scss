@@ -146,3 +146,24 @@ ul.tre-notifications-steps-list li {
 input[readonly]{
   background-color:#efefef;
 }
+
+.tre-badge{
+  border-radius:4px;
+  background-color: #efefef;
+  padding:2px 6px;
+  text-transform: capitalize;
+  display:inline-block;
+  font-size:12px;
+}
+.tre-badge-in-progress{
+  background-color: #ce7b00;
+  color: #fff;
+}
+.tre-badge-failed{
+  background-color: #990000;
+  color: #fff;
+}
+.tre-badge-success{
+  background-color: #006600;
+  color: #fff;
+}

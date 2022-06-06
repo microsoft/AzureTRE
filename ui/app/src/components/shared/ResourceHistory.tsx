@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { DetailsList, DetailsListLayoutMode, initializeIcons, IColumn, Text } from "@fluentui/react";
+import { DetailsList, DetailsListLayoutMode, IColumn, Text } from "@fluentui/react";
 import { Icon } from '@fluentui/react/lib/Icon';
 import { CheckboxVisibility } from "@fluentui/react/lib/DetailsList";
 import { HistoryItem } from '../../models/resource';
@@ -11,8 +11,6 @@ interface IResourceHistoryProps {
 }
 
 export const ResourceHistory: React.FunctionComponent<IResourceHistoryProps> = (props: IResourceHistoryProps) => {
-
-  initializeIcons()
 
   const DisabledIcon = () => <Icon iconName="CirclePauseSolid" />;
   const EnabledIcon = () => <Icon iconName="CompletedSolid" />;

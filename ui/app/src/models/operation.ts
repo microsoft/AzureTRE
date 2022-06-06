@@ -52,3 +52,10 @@ export const failedStates = [
     "action_failed",
     "pipeline_failed",
 ]
+
+export const successStates = [
+  "deployed",
+  "deleted",
+  "action_succeeded",
+  "pipeline_succeeded"
+]
