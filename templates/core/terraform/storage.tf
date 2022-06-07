@@ -58,6 +58,7 @@ resource "azurerm_private_endpoint" "filepe" {
   location            = azurerm_resource_group.core.location
   resource_group_name = azurerm_resource_group.core.name
   subnet_id           = module.network.shared_subnet_id
+  tags                = local.tre_core_tags
 
   lifecycle { ignore_changes = [tags] }
 
