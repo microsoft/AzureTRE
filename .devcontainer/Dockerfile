@@ -94,6 +94,3 @@ RUN echo "export HISTFILE=$HOME/commandhistory/.bash_history" >> "$HOME/.bashrc"
 # Install github-cli
 COPY ./.devcontainer/scripts/gh.sh /tmp/
 RUN if [ "${INTERACTIVE}" = "true" ]; then /tmp/gh.sh; fi
-
-# install SWA CLI
-RUN npm install -g @azure/static-web-apps-cli

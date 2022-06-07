@@ -19,8 +19,7 @@ jq --arg rootClientId "${SWAGGER_UI_CLIENT_ID}" \
 # build and deploy the app
 yarn install
 yarn build
-SWA_CLI_DEPLOYMENT_TOKEN="${UI_API_KEY}" swa deploy -a ./build -n "${TRE_ID}"-ui --env "" -w ./
-echo "TRE UI deployed. Please add the above URI as a Redirect URI in the AAD 'TRE Client Apps (swagger app)' app. This is currently a manual step."
 
 popd
 
+DIR=./ui/app/build ./templates/core/terraform/scripts/upload_static_web.sh
