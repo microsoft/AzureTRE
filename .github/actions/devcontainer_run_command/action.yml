@@ -177,6 +177,7 @@ runs:
           -e TF_IN_AUTOMATION="${{ inputs.TF_IN_AUTOMATION }}" \
           -e USE_ENV_VARS_NOT_FILES="${{ inputs.USE_ENV_VARS_NOT_FILES }}" \
           -e BUNDLE_TYPE="${{ inputs.BUNDLE_TYPE }}" \
+          -e WORKSPACE_SERVICE_NAME="${{ inputs.WORKSPACE_SERVICE_NAME }}" \
           -e LOCATION="${{ inputs.LOCATION }}" \
           -e TF_VAR_location="${{ inputs.LOCATION }}" \
           -e RESOURCE_LOCATION="${{ inputs.LOCATION }}" \
