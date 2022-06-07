@@ -50,8 +50,10 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
     "EVENT_GRID_TOPIC_URI_SETTING"        = azurerm_eventgrid_topic.step_result.endpoint
     "EVENT_GRID_TOPIC_KEY_SETTING"        = azurerm_eventgrid_topic.step_result.primary_access_key
     "WEBSITES_ENABLE_APP_SERVICE_STORAGE" = false
-    "AIRLOCK_STATUS_CHANGED_QUEUE_NAME"   = "airlock-status-changed"
+    "AIRLOCK_STATUS_CHANGED_QUEUE_NAME"   = local.status_changed_queue_name
     "APPINSIGHTS_INSTRUMENTATIONKEY"      = data.azurerm_application_insights.core.instrumentation_key
+    "MANAGED_IDENTITY_CLIENT_ID"          = azurerm_user_assigned_identity.airlock_id.client_id
+    "AZURE_SUBSCRIPTION_ID"               = var.arm_subscription_id
   }
 
   site_config {

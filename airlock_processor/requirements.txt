@@ -1,3 +1,7 @@
 # Do not include azure-functions-worker as it may conflict with the Azure Functions platform
 
 azure-functions
+azure-storage-blob
+azure-identity 
+azure-mgmt-storage
+azure-mgmt-resource
