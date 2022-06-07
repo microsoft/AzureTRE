@@ -3,15 +3,11 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ApiEndpoint } from '../../models/apiEndpoints';
 import { useAuthApiCall, HttpMethod } from '../../hooks/useAuthApiCall';
 import { UserResource } from '../../models/userResource';
-import { ResourceDebug } from '../shared/ResourceDebug';
-import { ResourcePropertyPanel } from '../shared/ResourcePropertyPanel';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
-import { Pivot, PivotItem } from '@fluentui/react';
-import { ResourceHistory } from '../shared/ResourceHistory';
 import { ResourceHeader } from '../shared/ResourceHeader';
 import { Resource } from '../../models/resource';
 import { useComponentManager } from '../../hooks/useComponentManager';
-import { ResourceOperationsList } from '../shared/ResourceOperationsList';
+import { ResourceBody } from '../shared/ResourceBody';
 
 interface UserResourceItemProps {
   userResource?: UserResource
@@ -49,24 +45,7 @@ export const UserResourceItem: React.FunctionComponent<UserResourceItemProps> = 
     userResource && userResource.id ?
       <>
         <ResourceHeader resource={userResource} latestUpdate={latestUpdate} />
-        <Pivot aria-label="User Resource Menu" className='tre-panel'>
-          <PivotItem
-            headerText="Overview"
-            headerButtonProps={{
-              'data-order': 1,
-              'data-title': 'Overview',
-            }}
-          >
-            <ResourcePropertyPanel resource={userResource} />
-            <ResourceDebug resource={userResource} />
-          </PivotItem>
-          <PivotItem headerText="History">
-            <ResourceHistory history={userResource.history} />
-          </PivotItem>
-          <PivotItem headerText="Operations">
-            <ResourceOperationsList resource={userResource} />
-          </PivotItem>
-        </Pivot>
+        <ResourceBody resource={userResource} />
       </>
       : <></>
   );

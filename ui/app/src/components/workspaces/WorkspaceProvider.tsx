@@ -93,7 +93,14 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
               <Stack>
                 <Stack.Item grow={100}>
                   <Routes>
-                    <Route path="/" element={<WorkspaceItem />} />
+                    <Route path="/" element={<>
+                      <WorkspaceItem />
+                      <WorkspaceServices workspaceServices={workspaceServices}
+                        setWorkspaceService={(ws: WorkspaceService) => setSelectedWorkspaceService(ws)}
+                        addWorkspaceService={(ws: WorkspaceService) => addWorkspaceService(ws)}
+                        updateWorkspaceService={(ws: WorkspaceService) => updateWorkspaceService(ws)}
+                        removeWorkspaceService={(ws: WorkspaceService) => removeWorkspaceService(ws)} />
+                    </>} />
                     <Route path="workspace-services" element={
                       <WorkspaceServices workspaceServices={workspaceServices}
                         setWorkspaceService={(ws: WorkspaceService) => setSelectedWorkspaceService(ws)}
@@ -105,10 +112,9 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
                     <Route path="workspace-services/:workspaceServiceId/*" element={
                       <WorkspaceServiceItem
                         workspaceService={selectedWorkspaceService}
-                        updateWorkspaceService={(ws: WorkspaceService) => updateWorkspaceService(ws) }
-                        removeWorkspaceService={(ws: WorkspaceService) => removeWorkspaceService(ws) } />
+                        updateWorkspaceService={(ws: WorkspaceService) => updateWorkspaceService(ws)}
+                        removeWorkspaceService={(ws: WorkspaceService) => removeWorkspaceService(ws)} />
                     } />
-
                   </Routes>
                 </Stack.Item>
               </Stack>
