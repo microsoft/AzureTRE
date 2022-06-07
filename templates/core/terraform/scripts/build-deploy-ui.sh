@@ -22,3 +22,4 @@ yarn build
 
 popd
 
+DIR=./ui/app/build ./templates/core/terraform/scripts/upload_static_web.sh
