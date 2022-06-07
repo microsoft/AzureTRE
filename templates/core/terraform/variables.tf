@@ -109,14 +109,12 @@ variable "api_client_secret" {
 variable "application_admin_client_id" {
   type        = string
   description = "The client id (app id) of the registration in Azure AD for creating AAD Applications."
-  default     = "FeatureNotEnabled"
   sensitive   = true
 }
 
 variable "application_admin_client_secret" {
   type        = string
   description = "A client secret used by the Resource Processor to authenticate with Azure AD to create AAD Applications."
-  default     = "FeatureNotEnabled"
   sensitive   = true
 }
 
