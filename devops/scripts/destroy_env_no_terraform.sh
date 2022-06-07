@@ -125,10 +125,10 @@ if [ "${keyvault}" != "0" ]; then
     az keyvault key delete --id "${key_id}"
   done
 
-  certificates=$(az keyvault certificate list --vault-name "${keyvault_name}" | jq -r '.[].id')
-  for certificate_id in ${certificates}; do
-    az keyvault certificate delete --id "${certificate_id}"
-  done
+  # certificates=$(az keyvault certificate list --vault-name "${keyvault_name}" | jq -r '.[].id')
+  # for certificate_id in ${certificates}; do
+  #   az keyvault certificate delete --id "${certificate_id}"
+  # done
 
   echo "Removing access policies so if the vault is recovered there are not there"
   access_policies=$(echo "$keyvault" | jq -r '.properties.accessPolicies[].objectId' )
