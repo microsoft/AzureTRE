@@ -52,14 +52,11 @@ export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceP
       setTemplate('');
     }
 
-    // Clear state on panel close
-    if (!props.isOpen) {
-      clearState();
-    }
+    !props.isOpen && clearState();
   }, [props.isOpen]);
 
   useEffect(() => {
-    props.updateResource && selectTemplate(props.updateResource.templateName);
+    props.updateResource && props.updateResource.templateName && selectTemplate(props.updateResource.templateName);
   }, [props.updateResource])
 
   // Render a panel title depending on sub-page

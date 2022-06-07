@@ -2,16 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ApiEndpoint } from '../../models/apiEndpoints';
 import { useAuthApiCall, HttpMethod } from '../../hooks/useAuthApiCall';
-import { ResourceDebug } from '../shared/ResourceDebug';
-import { MessageBar, MessageBarType, Pivot, PivotItem, Spinner, SpinnerSize } from '@fluentui/react';
-import { ResourcePropertyPanel } from '../shared/ResourcePropertyPanel';
+import { MessageBar, MessageBarType, Spinner, SpinnerSize } from '@fluentui/react';
 import { LoadingState } from '../../models/loadingState';
 import { SharedService } from '../../models/sharedService';
-import { ResourceHistory } from './ResourceHistory';
 import { ResourceHeader } from './ResourceHeader';
-import { ResourceOperationsList } from './ResourceOperationsList';
 import { useComponentManager } from '../../hooks/useComponentManager';
 import { Resource } from '../../models/resource';
+import { ResourceBody } from './ResourceBody';
 
 export const SharedServiceItem: React.FunctionComponent = () => {
   const { sharedServiceId } = useParams();
@@ -40,24 +37,7 @@ export const SharedServiceItem: React.FunctionComponent = () => {
       return (
         <>
           <ResourceHeader resource={sharedService} latestUpdate={latestUpdate} />
-          <Pivot aria-label="Basic Pivot Example" className='tre-panel'>
-            <PivotItem
-              headerText="Overview"
-              headerButtonProps={{
-                'data-order': 1,
-                'data-title': 'Overview',
-              }}
-            >
-              <ResourcePropertyPanel resource={sharedService} />
-              <ResourceDebug resource={sharedService} />
-            </PivotItem>
-            <PivotItem headerText="History">
-              <ResourceHistory history={sharedService.history} />
-            </PivotItem>
-            <PivotItem headerText="Operations">
-              <ResourceOperationsList resource={sharedService} />
-            </PivotItem>
-          </Pivot>
+          <ResourceBody resource={sharedService} />
         </>
       );
     case LoadingState.Error:

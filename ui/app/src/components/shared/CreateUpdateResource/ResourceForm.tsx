@@ -79,6 +79,13 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
     }
   }
 
+  // TODO - proper UI schema json to be fed from API
+  const uiSchema = {
+    overview: {
+      "ui:widget": "textarea"
+    }
+  }
+
   switch (loading) {
     case LoadingState.Ok:
       return (
@@ -88,7 +95,7 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
             sendingData ?
               <Spinner label="Sending request" ariaLive="assertive" labelPosition="bottom" size={SpinnerSize.large} />
               :
-              <Form schema={template} formData={formData} onSubmit={(e: any) => createUpdateResource(e.formData)} />
+              <Form schema={template} formData={formData} uiSchema={uiSchema} onSubmit={(e: any) => createUpdateResource(e.formData)} />
           }
           {
             deployError &&

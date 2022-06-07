@@ -33,7 +33,8 @@ az storage blob upload-batch \
     --destination '$web' \
     --source ${DIR} \
     --no-progress \
-    --only-show-errors
+    --only-show-errors \
+    --overwrite
 
 echo "Removing network rule on storage account"
 az storage account network-rule remove \
