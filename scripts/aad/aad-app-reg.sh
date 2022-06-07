@@ -21,7 +21,7 @@ Options:
     -a,--admin-consent          Optional, but recommended. Grants admin consent for the app registrations, when this flag is set.
                                 Requires directory admin privileges to the Azure AD in question.
     -s,--swaggerui-clientid     Optional, when -w and -a are specified the client ID of the swagger app must be provided.
-    -r,--swaggerui-redirecturl  Reply/redirect URL, for the Swagger UI app, where the auth server sends the user after authorization.
+    -r,--tre-url                TRE URL, used to construct auth redirection URLs for the UI and Swagger app.
     --automation-account        Create an app registration for automation (e.g. CI/CD) to use for registering bundles etc
                                 Can be used with -a to apply admin consent
     --automation-clientid       Optional, when --workspace is specified the client ID of the automation account can be added to the TRE workspace.
@@ -29,12 +29,12 @@ Options:
                                 This is used when you wish TRE to be able to automatically create workspace app registrations.
 
 Examples:
-    1. $0 -n TRE -r https://mytre.region.cloudapp.azure.com/api/docs/oauth2-redirect -a
+    1. $0 -n TRE -r https://mytre.region.cloudapp.azure.com -a
 
-    2. $0 --name 'Workspace One' --swaggerui-redirecturl https://mytre.region.cloudapp.azure.com/api/docs/oauth2-redirect --workspace
+    2. $0 --name 'Workspace One' --tre-url https://mytre.region.cloudapp.azure.com --workspace
 
     Using an Automation account
-    3. $0 --name 'TRE' --swaggerui-redirecturl https://mytre.region.cloudapp.azure.com/api/docs/oauth2-redirect --admin-consent --automation-account
+    3. $0 --name 'TRE' --tre-url https://mytre.region.cloudapp.azure.com --admin-consent --automation-account
     4. $0 --name 'TRE - workspace 1' --workspace --admin-consent --swaggerui-clientid 7xxxxx-ccd8-4740-xxxx-a6ec01e10ab8 --automation-clientid 4xxxx-7dc5-xxxxx-bcff-xxxxx
 
     The GUIDS in example 4 are the outputs from example 3.
@@ -56,7 +56,7 @@ declare grantAdminConsent=0
 declare swaggerAppId=""
 declare workspace=0
 declare appName=""
-declare replyUrl=""
+declare treUrl=""
 declare currentUserId=""
 declare spId=""
 declare createAutomationAccount=0
@@ -83,8 +83,8 @@ while [[ $# -gt 0 ]]; do
             swaggerAppId=$2
             shift 2
         ;;
-        -r|--swaggerui-redirecturl)
-            replyUrl=$2
+        -r|--tre-url)
+            treUrl=$2
             shift 2
         ;;
         --automation-account)
@@ -471,7 +471,7 @@ if [[ "$workspace" -ne 0 ]]; then
   existingResourceAccess=$(az rest \
     --method GET \
     --uri "${msGraphUri}/applications/${swaggerObjectId}" \
-    --headers Content-Type=application/json \
+    --headers Content-Type=application/json -o json \
     | jq -r --arg apiAppId "${apiAppId}" \
     'del(.requiredResourceAccess[] | select(.resourceAppId==$apiAppId)) | .requiredResourceAccess' \
     )
@@ -551,9 +551,9 @@ JSON
 
   redirectUris="\"http://localhost:8000/api/docs/oauth2-redirect\""
 
-  if [[ -n ${replyUrl} ]]; then
-      echo "Adding reply/redirect URL \"${replyUrl}\" to ${appName} Swagger UI app"
-      redirectUris="${redirectUris}, \"${replyUrl}\""
+  if [[ -n ${treUrl} ]]; then
+      echo "Adding reply/redirect URL \"${treUrl}\" to ${appName} Swagger UI app"
+      redirectUris="${redirectUris}, \"${treUrl}\", \"${treUrl}/api/docs/oauth2-redirect\""
   fi
 
   swaggerUIApp=$(jq -c . << JSON
@@ -570,6 +570,7 @@ JSON
 JSON
 )
 
+  echo "$swaggerUIApp"
   # Is the Swagger UI app already registered?
   existingSwaggerUIApp=$(get_existing_app --name "${appName} Client Apps")
 
@@ -646,7 +647,7 @@ if [[ -n ${automationAppId} ]]; then
     existingResourceAccess=$(az rest \
       --method GET \
       --uri "${msGraphUri}/applications/${automationAppObjectId}" \
-      --headers Content-Type=application/json \
+      --headers Content-Type=application/json -o json \
       | jq -r --arg apiAppId "${apiAppId}" \
       'del(.requiredResourceAccess[] | select(.resourceAppId==$apiAppId)) | .requiredResourceAccess' \
       )

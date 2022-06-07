@@ -23,7 +23,7 @@ fi
 # will break the aad-app-reg.dh script.
 ./scripts/aad/aad-app-reg.sh \
   --name "${TRE_ID}" \
-  --swaggerui-redirecturl "https://${TRE_ID}.${LOCATION}.cloudapp.azure.com/api/docs/oauth2-redirect" \
+  --tre-url "https://${TRE_ID}.${LOCATION}.cloudapp.azure.com" \
   --admin-consent --automation-account ${api_app_can_create_other_applications}
 
 echo "Please copy the values above into your /templates/core/.env."

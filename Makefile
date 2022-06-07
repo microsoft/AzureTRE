@@ -349,7 +349,7 @@ static-web-upload:
 	&& ${MAKEFILE_DIR}/templates/core/terraform/scripts/upload_static_web.sh
 
 build-and-deploy-ui:
-	$(call target_title, "Use Static Web App CLI to deploy UI") \
+	$(call target_title, "Build and deploy UI") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
@@ -357,7 +357,8 @@ build-and-deploy-ui:
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ./templates/core/.env \
 	&& pushd ${MAKEFILE_DIR}/templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/templates/core/private.env \
-	&& ${MAKEFILE_DIR}/templates/core/terraform/scripts/build-deploy-ui.sh
+	&& ${MAKEFILE_DIR}/templates/core/terraform/scripts/build-deploy-ui.sh \
+	&& $(MAKE) static-web-upload DIR=./ui/app/build
 
 prepare-for-e2e:
 	$(call workspace_bundle,base) \
