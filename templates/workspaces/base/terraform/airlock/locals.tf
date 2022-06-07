@@ -18,8 +18,4 @@ locals {
   export_inprogress_storage_name = lower(replace("stalexip${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
   # STorage AirLock REJected EXport
   export_rejected_storage_name = lower(replace("stalexrej${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
-  tre_workspace_tags = {
-    tre_id           = var.tre_id
-    tre_workspace_id = var.tre_resource_id
-  }
 }

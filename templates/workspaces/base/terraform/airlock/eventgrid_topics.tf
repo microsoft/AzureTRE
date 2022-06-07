@@ -7,7 +7,7 @@ resource "azurerm_eventgrid_system_topic" "import_approved_blob_created" {
   topic_type             = "Microsoft.Storage.StorageAccounts"
 
   tags = merge(
-    local.tre_workspace_tags,
+    var.tre_workspace_tags,
     {
       Publishers = "airlock;accepted-import-sa"
     }
@@ -28,7 +28,7 @@ resource "azurerm_eventgrid_system_topic" "export_inprogress_blob_created" {
   topic_type             = "Microsoft.Storage.StorageAccounts"
 
   tags = merge(
-    local.tre_workspace_tags,
+    var.tre_workspace_tags,
     {
       Publishers = "airlock;inprogress-export-sa"
     }
@@ -50,7 +50,7 @@ resource "azurerm_eventgrid_system_topic" "export_rejected_blob_created" {
   topic_type             = "Microsoft.Storage.StorageAccounts"
 
   tags = merge(
-    local.tre_workspace_tags,
+    var.tre_workspace_tags,
     {
       Publishers = "airlock;rejected-export-sa"
     }

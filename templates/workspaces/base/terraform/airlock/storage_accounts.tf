@@ -12,7 +12,7 @@ resource "azurerm_storage_account" "sa_import_approved" {
   is_hns_enabled = false
 
   tags = merge(
-    local.tre_workspace_tags,
+    var.tre_workspace_tags,
     {
       description = "airlock;import;approved"
     }
@@ -62,7 +62,7 @@ resource "azurerm_storage_account" "sa_export_internal" {
   is_hns_enabled = false
 
   tags = merge(
-    local.tre_workspace_tags,
+    var.tre_workspace_tags,
     {
       description = "airlock;export;internal"
     }
@@ -107,7 +107,7 @@ resource "azurerm_storage_account" "sa_export_inprogress" {
   is_hns_enabled = false
 
   tags = merge(
-    local.tre_workspace_tags,
+    var.tre_workspace_tags,
     {
       description = "airlock;export;inprogress"
     }
@@ -152,7 +152,7 @@ resource "azurerm_storage_account" "sa_export_rejected" {
   is_hns_enabled = false
 
   tags = merge(
-    local.tre_workspace_tags,
+    var.tre_workspace_tags,
     {
       description = "airlock;export;rejected"
     }
