@@ -11,7 +11,7 @@ resource "azurerm_key_vault_access_policy" "app_gw_managed_identity" {
     "Get",
   ]
 }
-
+/*
 resource "azurerm_key_vault_certificate" "tlscert" {
   name         = "letsencrypt"
   key_vault_id = var.keyvault_id
@@ -41,4 +41,4 @@ resource "azurerm_key_vault_certificate" "tlscert" {
   lifecycle {
     ignore_changes = all
   }
-}
+} */

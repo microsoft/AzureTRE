@@ -80,11 +80,11 @@ resource "azurerm_application_gateway" "agw" {
     public_ip_address_id = azurerm_public_ip.appgwpip.id
   }
 
-  # Primary SSL cert linked to KeyVault
+  /* # Primary SSL cert linked to KeyVault
   ssl_certificate {
     name                = "cert-primary"
     key_vault_secret_id = azurerm_key_vault_certificate.tlscert.secret_id
-  }
+  } */
 
   # Backend pool with the static website in storage account.
   backend_address_pool {
@@ -108,7 +108,7 @@ resource "azurerm_application_gateway" "agw" {
     frontend_ip_configuration_name = local.frontend_ip_configuration_name
     frontend_port_name             = local.secure_frontend_port_name
     protocol                       = "Https"
-    ssl_certificate_name           = "cert-primary"
+    /* ssl_certificate_name           = "cert-primary" */
   }
 
   # Public HTTP listener
