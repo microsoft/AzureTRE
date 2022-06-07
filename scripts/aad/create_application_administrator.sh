@@ -16,6 +16,7 @@ You must be logged in using Azure CLI with sufficient privileges to modify Azure
 Usage: $0 [--admin-consent]
 
 Options:
+    -n,--name                   Required. The prefix for the app (registration) names e.g., "TRE".
     -a,--admin-consent          Optional, but recommended. Grants admin consent for the app registrations, when this flag is set.
                                 Requires directory admin privileges to the Azure AD in question.
 
@@ -35,11 +36,15 @@ declare grantAdminConsent=0
 declare currentUserId=""
 declare spId=""
 declare msGraphUri="https://graph.microsoft.com/v1.0"
-declare appName="sp_application_admin"
+declare appName=""
 
 # Initialize parameters specified from command line
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        -n|--name)
+            appName=$2
+            shift 2
+        ;;
         -a|--admin-consent)
             grantAdminConsent=1
             shift 1
@@ -55,16 +60,16 @@ done
 ###################################
 # CHECK INCOMMING PARAMETERS      #
 ###################################
-if [[ -z "$appName" ]]; then
-    echo "Please specify the application name" 1>&2
-    show_usage
-fi
-
 if [[ $(az account list --only-show-errors -o json | jq 'length') -eq 0 ]]; then
     echo "Please run az login -t <tenant> --allow-no-subscriptions"
     exit 1
 fi
 
+if [[ -z "$appName" ]]; then
+    echo "Please specify the application name" 1>&2
+    show_usage
+fi
+appName="$appName Application Admin"
 currentUserId=$(az ad signed-in-user show --query 'objectId' --output tsv)
 tenant=$(az rest -m get -u "${msGraphUri}/domains" -o json | jq -r '.value[] | select(.isDefault == true) | .id')
 

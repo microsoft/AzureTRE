@@ -19,7 +19,8 @@ fi
 
 # Create the identity that is able to create other applications
 if [ "${AUTO_WORKSPACE_APP_REGISTRATION}" == true ]; then
-  ./scripts/aad/create_application_administrator.sh --admin-consent
+  ./scripts/aad/create_application_administrator.sh \
+  --name "${TRE_ID}" --admin-consent
 
   echo "Please copy the values above into your /templates/core/.env."
   read -p "Please confirm you have done this? (y/N) " -n 1 -r
