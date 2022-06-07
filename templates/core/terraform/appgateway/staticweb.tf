@@ -14,7 +14,7 @@ resource "azurerm_storage_account" "staticweb" {
 
   static_website {
     index_document     = "index.html"
-    error_404_document = "404.html"
+    error_404_document = "index.html"
   }
 
   lifecycle { ignore_changes = [tags] }
