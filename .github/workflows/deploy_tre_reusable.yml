@@ -487,6 +487,8 @@ jobs:
              BUNDLE_DIR: "./templates/shared_services/sonatype-nexus"}
           - {BUNDLE_TYPE: "shared_service",
              BUNDLE_DIR: "./templates/shared_services/gitea"}
+          - {BUNDLE_TYPE: "user_resource",
+             BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm"}
     environment: CICD
     steps:
       - name: Checkout
