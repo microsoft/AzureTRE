@@ -6,29 +6,25 @@ locals {
   version = replace(replace(replace(data.local_file.api_app_version.content, "__version__ = \"", ""), "\"", ""), "\n", "")
 }
 
-resource "azurerm_app_service_plan" "core" {
+resource "azurerm_service_plan" "core" {
   name                = "plan-${var.tre_id}"
   resource_group_name = azurerm_resource_group.core.name
   location            = azurerm_resource_group.core.location
-  reserved            = true
-  kind                = "linux"
-
+  os_type             = "Linux"
+  sku_name            = var.api_app_service_plan_sku_size
+  tags                = local.tre_core_tags
+  worker_count        = 1
   lifecycle { ignore_changes = [tags] }
-
-  sku {
-    tier     = var.api_app_service_plan_sku_tier
-    capacity = 1
-    size     = var.api_app_service_plan_sku_size
-  }
 }
 
 resource "azurerm_app_service" "api" {
   name                            = "api-${var.tre_id}"
   resource_group_name             = azurerm_resource_group.core.name
   location                        = azurerm_resource_group.core.location
-  app_service_plan_id             = azurerm_app_service_plan.core.id
+  app_service_plan_id             = azurerm_service_plan.core.id
   https_only                      = true
   key_vault_reference_identity_id = azurerm_user_assigned_identity.id.id
+  tags                            = local.tre_core_tags
 
   app_settings = {
     "APPLICATIONINSIGHTS_CONNECTION_STRING"      = module.azure_monitor.app_insights_connection_string
@@ -37,7 +33,6 @@ resource "azurerm_app_service" "api" {
     "ApplicationInsightsAgent_EXTENSION_VERSION" = "~3"
     "XDT_MicrosoftApplicationInsights_Mode"      = "default"
     "WEBSITES_PORT"                              = "8000"
-    "WEBSITE_VNET_ROUTE_ALL"                     = 1
     "DOCKER_REGISTRY_SERVER_URL"                 = "https://${var.docker_registry_server}"
     "STATE_STORE_ENDPOINT"                       = azurerm_cosmosdb_account.tre-db-account.endpoint
     "COSMOSDB_ACCOUNT_NAME"                      = azurerm_cosmosdb_account.tre-db-account.name
@@ -66,18 +61,20 @@ resource "azurerm_app_service" "api" {
 
   site_config {
     linux_fx_version                     = "DOCKER|${var.docker_registry_server}/${var.api_image_repository}:${local.version}"
+    vnet_route_all_enabled               = true
     remote_debugging_enabled             = false
     scm_use_main_ip_restriction          = true
     acr_use_managed_identity_credentials = true
     acr_user_managed_identity_client_id  = azurerm_user_assigned_identity.id.client_id
+    always_on                            = true
+    min_tls_version                      = "1.2"
+    ftps_state                           = "Disabled"
+    websockets_enabled                   = false
 
     cors {
       allowed_origins     = []
       support_credentials = false
     }
-
-    always_on       = true
-    min_tls_version = "1.2"
 
     ip_restriction {
       action     = "Deny"
@@ -85,9 +82,6 @@ resource "azurerm_app_service" "api" {
       name       = "Deny all"
       priority   = 2147483647
     }
-
-    ftps_state         = "FtpsOnly"
-    websockets_enabled = false
   }
 
   logs {
@@ -109,6 +103,7 @@ resource "azurerm_private_endpoint" "api_private_endpoint" {
   resource_group_name = azurerm_resource_group.core.name
   location            = azurerm_resource_group.core.location
   subnet_id           = module.network.shared_subnet_id
+  tags                = local.tre_core_tags
 
   lifecycle { ignore_changes = [tags] }
 

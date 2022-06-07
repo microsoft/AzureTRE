@@ -10,13 +10,14 @@ FULL_IMAGE_NAME_PREFIX:=`echo "${FULL_CONTAINER_REGISTRY_NAME}/${IMAGE_NAME_PREF
 target_title = @echo -e "\n\e[34m»»» 🧩 \e[96m$(1)\e[0m..."
 
 all: bootstrap mgmt-deploy images tre-deploy
-images: build-and-push-api build-and-push-resource-processor build-and-push-gitea build-and-push-guacamole build-and-push-mlflow
+images: build-and-push-api build-and-push-resource-processor build-and-push-gitea build-and-push-guacamole build-and-push-mlflow build-and-push-airlock-processor
 
 build-and-push-api: build-api-image push-api-image
 build-and-push-resource-processor: build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image
 build-and-push-gitea: build-gitea-image push-gitea-image
 build-and-push-guacamole: build-guacamole-image push-guacamole-image
 build-and-push-mlflow: build-mlflow-image push-mlflow-image
+build-and-push-airlock-processor: build-airlock-processor push-airlock-processor
 tre-deploy: deploy-core deploy-shared-services db-migrate show-core-output
 deploy-shared-services:
 	$(MAKE) firewall-install \
@@ -88,6 +89,9 @@ build-guacamole-image:
 build-mlflow-image:
 	$(call build_image,"mlflow-server","${MAKEFILE_DIR}/templates/workspace_services/mlflow/mlflow-server/version.txt","${MAKEFILE_DIR}/templates/workspace_services/mlflow/mlflow-server/docker/Dockerfile","${MAKEFILE_DIR}/templates/workspace_services/mlflow/mlflow-server")
 
+build-airlock-processor:
+	$(call build_image,"airlock-processor","${MAKEFILE_DIR}/airlock_processor/_version.py","${MAKEFILE_DIR}/airlock_processor/Dockerfile","${MAKEFILE_DIR}/airlock_processor/")
+
 firewall-install:
 	$(MAKE) bundle-build DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ \
 	&& $(MAKE) bundle-publish DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ \
@@ -137,6 +141,9 @@ push-guacamole-image:
 
 push-mlflow-image:
 	$(call push_image,"mlflow-server","${MAKEFILE_DIR}/templates/workspace_services/mlflow/mlflow-server/version.txt")
+
+push-airlock-processor:
+	$(call push_image,"airlock-processor","${MAKEFILE_DIR}/airlock_processor/_version.py")
 
 # # These targets are for a graceful migration of Firewall
 # # from terraform state in Core to a Shared Service.
@@ -241,8 +248,9 @@ lint:
 		-e VALIDATE_BASH=true \
 		-e VALIDATE_BASH_EXEC=true \
 		-e VALIDATE_GITHUB_ACTIONS=true \
+		-e VALIDATE_DOCKERFILE_HADOLINT=true \
 		-v $${LOCAL_WORKSPACE_FOLDER}:/tmp/lint \
-		github/super-linter:slim-v4
+		github/super-linter:slim-v4.9.4
 
 bundle-build:
 	$(call target_title, "Building ${DIR} bundle with Porter") \
@@ -319,6 +327,11 @@ shared_service_bundle = $(MAKE) bundle-build DIR=./templates/shared_services/$(1
 	&& $(MAKE) bundle-publish DIR=./templates/shared_services/$(1)/ \
 	&& $(MAKE) bundle-register DIR="./templates/shared_services/$(1)" BUNDLE_TYPE=shared_service
 
+user_resource_bundle = $(MAKE) bundle-build DIR=./templates/workspace_services/$(1)/user_resources/$(2)/ \
+	&& $(MAKE) bundle-publish DIR=./templates/workspace_services/$(1)/user_resources/$(2) \
+	&& $(MAKE) bundle-register DIR="./templates/workspace_services/$(1)/user_resources/$(2)" BUNDLE_TYPE=user_resource WORKSPACE_SERVICE_NAME=tre-service-$(1)
+
+
 deploy-shared-service:
 	@# NOTE: ACR_NAME below comes from the env files, so needs the double '$$'. Others are set on command execution and don't
 	$(call target_title, "Deploying ${DIR} shared service") \
@@ -352,7 +365,8 @@ prepare-for-e2e:
 	&& $(call workspace_service_bundle,gitea) \
 	&& $(call workspace_service_bundle,innereye) \
 	&& $(call shared_service_bundle,sonatype-nexus) \
-	&& $(call shared_service_bundle,gitea)
+	&& $(call shared_service_bundle,gitea) \
+	&& $(call user_resource_bundle,guacamole,guacamole-dev-vm)
 
 test-e2e-smoke:
 	$(call target_title, "Running E2E smoke tests") && \
@@ -368,6 +382,11 @@ test-e2e-shared-services:
 	$(call target_title, "Running E2E shared service tests") && \
 	cd e2e_tests && \
 	python -m pytest -m shared_services --verify $${IS_API_SECURED:-true} --junit-xml pytest_e2e_shared_services.xml
+
+test-e2e-custom:
+	$(call target_title, "Running E2E shared service tests") && \
+	cd e2e_tests && \
+	python -m pytest -m "${SELECTOR}" --verify $${IS_API_SECURED:-true} --junit-xml pytest_e2e_custom.xml
 
 setup-local-debugging:
 	$(call target_title,"Setting up the ability to debug the API and Resource Processor") \

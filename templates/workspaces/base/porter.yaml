@@ -1,6 +1,6 @@
 ---
 name: tre-workspace-base
-version: 0.3.0
+version: 0.3.5
 description: "A base Azure TRE workspace"
 registry: azuretre
 
@@ -58,9 +58,18 @@ parameters:
     type: boolean
     default: false
     description: "Whether this bundle should register the workspace in AAD"
+  - name: workspace_owner_object_id
+    type: string
+    description: "The object id of the user that will be granted WorkspaceOwner after it is created."
   - name: client_id
     type: string
-    description: "The client id of the workspace in the identity provider."
+    description: "The client id of the workspace in the identity provider. This value is typically provided to you
+       when you create the ws application"
+  - name: client_secret
+    type: string
+    description: "The client secret of the workspace in the identity provider. This value is typically provided to you
+       when you create the ws application"
+    default: ""
   - name: scope_id
     type: string
     default: ""
@@ -126,7 +135,9 @@ install:
         auth_client_id: "{{ bundle.credentials.auth_client_id }}"
         auth_client_secret: "{{ bundle.credentials.auth_client_secret }}"
         auth_tenant_id: "{{ bundle.credentials.auth_tenant_id }}"
+        workspace_owner_object_id: "{{ bundle.parameters.workspace_owner_object_id }}"
         client_id: "{{ bundle.parameters.client_id }}"
+        client_secret: "{{ bundle.parameters.client_secret }}"
         scope_id: "{{ bundle.parameters.scope_id }}"
         sp_id: "{{ bundle.parameters.sp_id }}"
         app_role_id_workspace_owner: "{{ bundle.parameters.app_role_id_workspace_owner }}"
@@ -168,6 +179,12 @@ uninstall:
         auth_client_id: "{{ bundle.credentials.auth_client_id }}"
         auth_client_secret: "{{ bundle.credentials.auth_client_secret }}"
         auth_tenant_id: "{{ bundle.credentials.auth_tenant_id }}"
+        workspace_owner_object_id: "{{ bundle.parameters.workspace_owner_object_id }}"
+        client_id: "{{ bundle.parameters.client_id }}"
+        scope_id: "{{ bundle.parameters.scope_id }}"
+        sp_id: "{{ bundle.parameters.sp_id }}"
+        app_role_id_workspace_owner: "{{ bundle.parameters.app_role_id_workspace_owner }}"
+        app_role_id_workspace_researcher: "{{ bundle.parameters.app_role_id_workspace_researcher }}"
       backendConfig:
         resource_group_name:
           "{{ bundle.parameters.tfstate_resource_group_name }}"
@@ -175,3 +192,9 @@ uninstall:
           "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.id }}"
+      outputs:
+        - name: app_role_id_workspace_owner
+        - name: app_role_id_workspace_researcher
+        - name: client_id
+        - name: scope_id
+        - name: sp_id

@@ -4,8 +4,9 @@ resource "azurerm_public_ip" "fwpip" {
   location            = data.azurerm_resource_group.rg.location
   allocation_method   = "Static"
   sku                 = "Standard"
+  tags                = local.tre_shared_service_tags
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [tags, zones] }
 }
 
 resource "azurerm_firewall" "fw" {
@@ -13,6 +14,9 @@ resource "azurerm_firewall" "fw" {
   name                = "fw-${var.tre_id}"
   resource_group_name = local.core_resource_group_name
   location            = data.azurerm_resource_group.rg.location
+  sku_tier            = "Standard"
+  sku_name            = "AZFW_VNet"
+  tags                = local.tre_shared_service_tags
   ip_configuration {
     name                 = "fw-ip-configuration"
     subnet_id            = data.azurerm_subnet.firewall.id
@@ -31,10 +35,10 @@ resource "azurerm_management_lock" "fw" {
 }
 
 resource "azurerm_monitor_diagnostic_setting" "firewall" {
-  name                           = "diagnostics-firewall-${var.tre_id}"
-  target_resource_id             = azurerm_firewall.fw.id
-  log_analytics_workspace_id     = data.azurerm_log_analytics_workspace.tre.id
-  log_analytics_destination_type = "Dedicated"
+  name                       = "diagnostics-fw-${var.tre_id}"
+  target_resource_id         = azurerm_firewall.fw.id
+  log_analytics_workspace_id = data.azurerm_log_analytics_workspace.tre.id
+  #log_analytics_destination_type = "Dedicated"
 
   log {
     category = "AzureFirewallApplicationRule"

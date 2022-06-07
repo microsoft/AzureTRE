@@ -56,7 +56,8 @@ Go to `https://<azure_tre_fqdn>/api/docs` and use POST `/api/workspaces` with th
   "properties": {
     "display_name": "manual-from-swagger",
     "description": "workspace for team X",
-    "client_id": "WORKSPACE_API_CLIENT_ID",
+    "client_id":"<WORKSPACE_API_CLIENT_ID>",
+    "client_secret":"<WORKSPACE_API_CLIENT_SECRET>",
     "address_space_size": "medium"
   }
 }
@@ -70,4 +71,5 @@ Workspace level operations can now be carried out using the workspace API, at `/
 
 ## Next steps
 
-* [Installing a workspace service](./installing-workspace-service-and-user-resource.md)
+* [Configuring shared services](./configuring-shared-services.md)
+* [Installing a workspace service & user resources](./installing-workspace-service-and-user-resource.md)

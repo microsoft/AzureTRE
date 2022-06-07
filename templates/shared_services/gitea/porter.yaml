@@ -1,6 +1,6 @@
 ---
 name: tre-shared-service-gitea
-version: 0.3.0
+version: 0.3.5
 description: "A Gitea shared service"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -18,6 +18,9 @@ parameters:
   - name: tre_id
     type: string
     description: "The ID of the parent TRE instance e.g., mytre-dev-3142"
+  - name: id
+    type: string
+    description: "Resource ID"
   - name: mgmt_acr_name
     type: string
     description: "The name of the Azure Container Registry"
@@ -45,6 +48,7 @@ install:
       input: false
       vars:
         tre_id: "{{ bundle.parameters.tre_id }}"
+        tre_resource_id: "{{ bundle.parameters.id }}"
         mgmt_resource_group_name:
           "{{ bundle.parameters.tfstate_resource_group_name }}"
         acr_name: "{{ bundle.parameters.mgmt_acr_name }}"
@@ -67,6 +71,7 @@ uninstall:
       input: false
       vars:
         tre_id: "{{ bundle.parameters.tre_id }}"
+        tre_resource_id: "{{ bundle.parameters.id }}"
         mgmt_resource_group_name:
           "{{ bundle.parameters.tfstate_resource_group_name }}"
         acr_name: "{{ bundle.parameters.mgmt_acr_name }}"

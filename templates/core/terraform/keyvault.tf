@@ -5,6 +5,7 @@ resource "azurerm_key_vault" "kv" {
   resource_group_name      = azurerm_resource_group.core.name
   sku_name                 = "standard"
   purge_protection_enabled = var.keyvault_purge_protection_enabled
+  tags                     = local.tre_core_tags
 
   lifecycle { ignore_changes = [access_policy, tags] }
 }
@@ -44,6 +45,7 @@ resource "azurerm_private_endpoint" "kvpe" {
   location            = azurerm_resource_group.core.location
   resource_group_name = azurerm_resource_group.core.name
   subnet_id           = module.network.shared_subnet_id
+  tags                = local.tre_core_tags
 
   lifecycle { ignore_changes = [tags] }
 
