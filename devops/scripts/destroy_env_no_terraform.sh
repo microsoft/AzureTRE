@@ -9,7 +9,7 @@
 
 set -o errexit
 set -o pipefail
-# set -o xtrace
+set -o xtrace
 
 function usage() {
     cat <<USAGE
@@ -72,7 +72,7 @@ if [[ "$group_show_result" !=  "0" ]]; then
   exit 0
 fi
 
-locks=$(az group lock list -g "${core_tre_rg}" --query [].id -o tsv)
+locks=$(az group lock list -g "${core_tre_rg}" --query [].id -o tsv | tr -d \')
 if [ -n "${locks:-}" ]
 then
   echo "Deleting locks..."
@@ -125,10 +125,10 @@ if [ "${keyvault}" != "0" ]; then
     az keyvault key delete --id "${key_id}"
   done
 
-  # certificates=$(az keyvault certificate list --vault-name "${keyvault_name}" | jq -r '.[].id')
-  # for certificate_id in ${certificates}; do
-  #   az keyvault certificate delete --id "${certificate_id}"
-  # done
+  certificates=$(az keyvault certificate list --vault-name "${keyvault_name}" | jq -r '.[].id')
+  for certificate_id in ${certificates}; do
+    az keyvault certificate delete --id "${certificate_id}"
+  done
 
   echo "Removing access policies so if the vault is recovered there are not there"
   access_policies=$(echo "$keyvault" | jq -r '.properties.accessPolicies[].objectId' )
