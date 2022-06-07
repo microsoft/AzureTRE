@@ -222,7 +222,8 @@
     "github.vscode-pull-request-github",
     "mikestead.dotenv",
     "humao.rest-client",
-    "timonwong.shellcheck"
+    "timonwong.shellcheck",
+    "ms-azuretools.vscode-bicep"
   ],
   "forwardPorts": [
     8000
