@@ -76,12 +76,3 @@ output "terraform_state_container_name" {
 output "registry_server" {
   value = var.docker_registry_server
 }
-
-output "ui_api_key" {
-  value     = var.deploy_ui ? azurerm_static_site.tre-ui[0].api_key : ""
-  sensitive = true
-}
-
-output "ui_host_name" {
-  value = var.deploy_ui ? azurerm_static_site.tre-ui[0].default_host_name : ""
-}
