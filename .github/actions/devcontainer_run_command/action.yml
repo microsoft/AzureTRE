@@ -104,6 +104,9 @@ inputs:
   BUNDLE_TYPE:
     description: "The Bundle type (workspace / Workspace-service / User Resource)."
     required: false
+  WORKSPACE_SERVICE_NAME:
+    description: "The workspace service name for the bundle you are registering."
+    required: false
   IS_API_SECURED:
     description: "Indicates if the API endpoint has valid TLS certificate and if we validate it during E2E."
     required: false
@@ -174,6 +177,7 @@ runs:
           -e TF_IN_AUTOMATION="${{ inputs.TF_IN_AUTOMATION }}" \
           -e USE_ENV_VARS_NOT_FILES="${{ inputs.USE_ENV_VARS_NOT_FILES }}" \
           -e BUNDLE_TYPE="${{ inputs.BUNDLE_TYPE }}" \
+          -e WORKSPACE_SERVICE_NAME="${{ inputs.WORKSPACE_SERVICE_NAME }}" \
           -e LOCATION="${{ inputs.LOCATION }}" \
           -e TF_VAR_location="${{ inputs.LOCATION }}" \
           -e RESOURCE_LOCATION="${{ inputs.LOCATION }}" \
