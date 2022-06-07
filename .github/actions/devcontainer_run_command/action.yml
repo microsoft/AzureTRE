@@ -104,6 +104,9 @@ inputs:
   BUNDLE_TYPE:
     description: "The Bundle type (workspace / Workspace-service / User Resource)."
     required: false
+  WORKSPACE_SERVICE_NAME:
+    description: "The workspace service name for the bundle you are registering."
+    required: false
   IS_API_SECURED:
     description: "Indicates if the API endpoint has valid TLS certificate and if we validate it during E2E."
     required: false
