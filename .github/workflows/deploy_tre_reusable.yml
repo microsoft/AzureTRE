@@ -328,6 +328,8 @@ jobs:
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
           TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
+          TF_VAR_application_admin_client_id: "${{ secrets.API_CLIENT_ID }}"
+          TF_VAR_application_admin_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
           TF_VAR_keyvault_purge_protection_enabled:
             "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
           TF_VAR_stateful_resources_locked:
@@ -398,6 +400,8 @@ jobs:
              BUNDLE_DIR: "./templates/shared_services/sonatype-nexus/"}
           - {BUNDLE_TYPE: "shared_service",
              BUNDLE_DIR: "./templates/shared_services/gitea/"}
+          - {BUNDLE_TYPE: "user_resource",
+             BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm"}
     environment: CICD
     steps:
       - name: Checkout
@@ -487,6 +491,8 @@ jobs:
              BUNDLE_DIR: "./templates/shared_services/sonatype-nexus"}
           - {BUNDLE_TYPE: "shared_service",
              BUNDLE_DIR: "./templates/shared_services/gitea"}
+          - {BUNDLE_TYPE: "user_resource",
+             BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm"}
     environment: CICD
     steps:
       - name: Checkout
