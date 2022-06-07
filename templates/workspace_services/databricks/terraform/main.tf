@@ -6,11 +6,11 @@ terraform {
       version = "=3.0.0"
     }
     databricks = {
-      source = "databrickslabs/databricks"
+      source  = "databrickslabs/databricks"
       version = "0.5.9"
     }
     http = {
-      source = "hashicorp/http"
+      source  = "hashicorp/http"
       version = "2.2.0"
     }
   }

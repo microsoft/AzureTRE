@@ -11,7 +11,7 @@ resource "azurerm_firewall_network_rule_collection" "networkrulecollection" {
   action              = "Allow"
 
   rule {
-    name = "databricks-webapp"
+    name             = "databricks-webapp"
     source_addresses = concat(azurerm_subnet.public.address_prefixes, azurerm_subnet.private.address_prefixes)
     destination_ports = [
       "80",
@@ -25,7 +25,7 @@ resource "azurerm_firewall_network_rule_collection" "networkrulecollection" {
   }
 
   rule {
-    name = "databricks-extended-infrastructure-ip"
+    name             = "databricks-extended-infrastructure-ip"
     source_addresses = concat(azurerm_subnet.public.address_prefixes, azurerm_subnet.private.address_prefixes)
     destination_ports = [
       "80",
@@ -39,7 +39,7 @@ resource "azurerm_firewall_network_rule_collection" "networkrulecollection" {
   }
 
   rule {
-    name = "databricks-sql-metastore"
+    name             = "databricks-sql-metastore"
     source_addresses = concat(azurerm_subnet.public.address_prefixes, azurerm_subnet.private.address_prefixes)
     destination_ports = [
       "3306"
@@ -52,7 +52,7 @@ resource "azurerm_firewall_network_rule_collection" "networkrulecollection" {
   }
 
   rule {
-    name = "databricks-observability-eventhub"
+    name             = "databricks-observability-eventhub"
     source_addresses = concat(azurerm_subnet.public.address_prefixes, azurerm_subnet.private.address_prefixes)
     destination_ports = [
       "9093"
@@ -73,9 +73,9 @@ resource "azurerm_firewall_application_rule_collection" "apprulecollection" {
   action              = "Allow"
 
   rule {
-    name = "databricks-spark-log-blob-storage"
+    name             = "databricks-spark-log-blob-storage"
     source_addresses = concat(azurerm_subnet.public.address_prefixes, azurerm_subnet.private.address_prefixes)
-    target_fqdns = local.mapLocationUrlConfig[local.location].logBlobstorageDomains
+    target_fqdns     = local.mapLocationUrlConfig[local.location].logBlobstorageDomains
     protocol {
       port = "443"
       type = "Https"
@@ -88,9 +88,9 @@ resource "azurerm_firewall_application_rule_collection" "apprulecollection" {
   }
 
   rule {
-    name = "databricks-artifact-blob-storage"
+    name             = "databricks-artifact-blob-storage"
     source_addresses = concat(azurerm_subnet.public.address_prefixes, azurerm_subnet.private.address_prefixes)
-    target_fqdns = concat(local.mapLocationUrlConfig[local.location].artifactBlobStoragePrimaryDomains, local.mapLocationUrlConfig[local.location].artifactBlobStorageSecondaryDomains)
+    target_fqdns     = concat(local.mapLocationUrlConfig[local.location].artifactBlobStoragePrimaryDomains, local.mapLocationUrlConfig[local.location].artifactBlobStorageSecondaryDomains)
     protocol {
       port = "443"
       type = "Https"
@@ -103,9 +103,9 @@ resource "azurerm_firewall_application_rule_collection" "apprulecollection" {
   }
 
   rule {
-    name = "databricks-dbfs"
+    name             = "databricks-dbfs"
     source_addresses = concat(azurerm_subnet.public.address_prefixes, azurerm_subnet.private.address_prefixes)
-    target_fqdns = local.dbfsBlobStrageDomain
+    target_fqdns     = local.dbfsBlobStrageDomain
     protocol {
       port = "443"
       type = "Https"
@@ -118,7 +118,7 @@ resource "azurerm_firewall_application_rule_collection" "apprulecollection" {
   }
 
   rule {
-    name = "databricks-public-repo"
+    name             = "databricks-public-repo"
     source_addresses = concat(azurerm_subnet.public.address_prefixes, azurerm_subnet.private.address_prefixes)
     target_fqdns = [
       "*.pypi.org",
@@ -137,9 +137,9 @@ resource "azurerm_firewall_application_rule_collection" "apprulecollection" {
   }
 
   rule {
-    name = "databricks-scc-relay"
+    name             = "databricks-scc-relay"
     source_addresses = concat(azurerm_subnet.public.address_prefixes, azurerm_subnet.private.address_prefixes)
-    target_fqdns = local.mapLocationUrlConfig[local.location].sccRelayDomains
+    target_fqdns     = local.mapLocationUrlConfig[local.location].sccRelayDomains
     protocol {
       port = "443"
       type = "Https"

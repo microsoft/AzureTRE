@@ -1,25 +1,23 @@
 name: tre-service-databricks
 version: 0.1.0
-description: "An Azure TRE service for Azure Databricks"
+description: "An Azure TRE service for Azure Databricks."
 registry: azuretre
 dockerfile: Dockerfile.tmpl
 
 credentials:
   - name: azure_tenant_id
-    env: TENANT_ID
+    env: ARM_TENANT_ID
   - name: azure_subscription_id
-    env: SUBSCRIPTION_ID
+    env: ARM_SUBSCRIPTION_ID
   - name: azure_client_id
-    env: CLIENT_ID
+    env: ARM_CLIENT_ID
   - name: azure_client_secret
-    env: CLIENT_SECRET
+    env: ARM_CLIENT_SECRET
 
 parameters:
   - name: workspace_id
     type: string
   - name: tre_id
-    type: string
-  - name: id
     type: string
   - name: azure_location
     type: string
@@ -27,17 +25,28 @@ parameters:
     type: string
   - name: containerSubnetAddressPrefix
     type: string
-
-
-#outputs:
-#  - name: databricksWorkspaceName
-#    type: string
-#    applyTo:
-#      - install
+  - name: tfstate_resource_group_name
+    type: string
+    description: "Resource group containing the Terraform state storage account"
+    env: MGMT_RESOURCE_GROUP_NAME
+  - name: tfstate_storage_account_name
+    type: string
+    description: "The name of the Terraform state storage account"
+    env: MGMT_STORAGE_ACCOUNT_NAME
+  - name: tfstate_container_name
+    type: string
+    default: "tfstate"
+    description: "The name of the Terraform state storage container"
+    env: TERRAFORM_STATE_CONTAINER_NAME
+  - name: arm_use_msi
+    env: ARM_USE_MSI
+    default: false
 
 mixins:
   - exec
   - az
+  - terraform:
+      clientVersion: 1.0.5
 
 install:
   - az:
@@ -49,24 +58,39 @@ install:
         username: "{{ bundle.credentials.azure_client_id}}"
         password: "{{ bundle.credentials.azure_client_secret}}"
         tenant: "{{ bundle.credentials.azure_tenant_id}}"
-  - az:
-      description: "Deploy Azure Databricks service."
-      arguments:
-        - deployment
-        - sub
-        - create
-      flags:
-        template-file: main.json
+  - terraform:
+      description: "Deploy service"
+      vars:
+        tre_id: "{{ bundle.parameters.tre_id }}"
+        workspace_id: "{{ bundle.parameters.workspace_id }}"
         location: "{{ bundle.parameters.azure_location }}"
-        name: "{{ bundle.parameters.id }}"
-        parameters: id={{ bundle.parameters.id }} workspaceId={{ bundle.parameters.workspace_id }} treId={{ bundle.parameters.tre_id }} hostSubnetAddressPrefix={{ bundle.parameters.hostSubnetAddressPrefix }} containerSubnetAddressPrefix={{ bundle.parameters.containerSubnetAddressPrefix }}
-#      outputs:
-#        - name: databricksWorkspaceName
-#          jsonPath: $.properties.outputs.databricksWorkspaceName.value
+        host_subnet_address_space: "{{ bundle.parameters.hostSubnetAddressPrefix }}"
+        container_subnet_address_space: "{{ bundle.parameters.containerSubnetAddressPrefix }}"
+      backendConfig:
+        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
+        container_name: "{{ bundle.parameters.tfstate_container_name }}"
+      outputs:
+        - name: databricks_workspace_url
+        - name: databricks_workspace_name
 
-uninstall:
+upgrade:
   - exec:
-      description: "Uninstall Azure Databricks Service"
+      description: "Upgrade service"
       command: echo
       arguments:
-        - "This service does not implement uninstall action"
+        - "This workspace does not implement upgrade action"
+
+uninstall:
+  - terraform:
+      description: "Uninstall Azure Databricks Service"
+      vars:
+        tre_id: "{{ bundle.parameters.tre_id }}"
+        workspace_id: "{{ bundle.parameters.workspace_id }}"
+        location: "{{ bundle.parameters.azure_location }}"
+        host_subnet_address_space: "{{ bundle.parameters.hostSubnetAddressPrefix }}"
+        container_subnet_address_space: "{{ bundle.parameters.containerSubnetAddressPrefix }}"
+      backendConfig:
+        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
+        container_name: "{{ bundle.parameters.tfstate_container_name }}"
