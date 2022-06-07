@@ -89,6 +89,12 @@ inputs:
   TF_VAR_api_client_secret:
     description: "The API Client Secret."
     required: false
+  TF_VAR_application_admin_client_id:
+    description: "The Client ID of an identity that can manage the AAD Applications."
+    required: false
+  TF_VAR_application_admin_client_secret:
+    description: "The Client secret of an identity that can manage the AAD Applications."
+    required: false
   ACR_NAME:
     description: "The Container Registry that holds our Research images."
     required: false
