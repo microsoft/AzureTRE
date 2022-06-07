@@ -492,6 +492,7 @@ jobs:
           - {BUNDLE_TYPE: "shared_service",
              BUNDLE_DIR: "./templates/shared_services/gitea"}
           - {BUNDLE_TYPE: "user_resource",
+             WORKSPACE_SERVICE_NAME: "tre-service-guacamole",
              BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm"}
     environment: CICD
     steps:
@@ -523,6 +524,7 @@ jobs:
           TRE_ID: "${{ secrets.TRE_ID }}"
           LOCATION: "${{ secrets.LOCATION }}"
           BUNDLE_TYPE: ${{ matrix.BUNDLE_TYPE }}
+          WORKSPACE_SERVICE_NAME: ${{ matrix.WORKSPACE_SERVICE_NAME }}
 
   deploy_shared_services:
     name: Deploy shared services
