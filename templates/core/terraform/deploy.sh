@@ -14,7 +14,7 @@ export TF_VAR_docker_registry_password
 
 # This is where we can migrate any Terraform before we plan and apply
 # For instance deprecated Terraform resources
-./migrate.sh
+#./migrate.sh
 
 PLAN_FILE="tfplan$$"
 TS=$(date +"%s")
