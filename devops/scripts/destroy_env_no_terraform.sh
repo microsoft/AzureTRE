@@ -9,7 +9,7 @@
 
 set -o errexit
 set -o pipefail
-set -o xtrace
+# set -o xtrace
 
 function usage() {
     cat <<USAGE
@@ -125,10 +125,10 @@ if [ "${keyvault}" != "0" ]; then
     az keyvault key delete --id "${key_id}"
   done
 
-  certificates=$(az keyvault certificate list --vault-name "${keyvault_name}" | jq -r '.[].id')
-  for certificate_id in ${certificates}; do
-    az keyvault certificate delete --id "${certificate_id}"
-  done
+  # certificates=$(az keyvault certificate list --vault-name "${keyvault_name}" | jq -r '.[].id')
+  # for certificate_id in ${certificates}; do
+  #   az keyvault certificate delete --id "${certificate_id}"
+  # done
 
   echo "Removing access policies so if the vault is recovered there are not there"
   access_policies=$(echo "$keyvault" | jq -r '.properties.accessPolicies[].objectId' )
@@ -148,18 +148,13 @@ if [[ $(az keyvault list --resource-group "${core_tre_rg}" --query "[?properties
   az keyvault purge --name "${keyvault_name}" ${no_wait_option}
 else
   echo "Resource group ${core_tre_rg} doesn't have a keyvault without purge protection."
-
-  echo "Deleting keyvault: ${keyvault_name}"
-  az keyvault delete --name "${keyvault_name}" --resource-group "${core_tre_rg}"
 fi
 
 # this will find the mgmt, core resource groups as well as any workspace ones
 # we are reverse-sorting to first delete the workspace groups (might not be
 # good enough because we use no-wait sometimes)
-echo "NOT deleting resource group"
-
-# az group list --query "[?starts_with(name, '${core_tre_rg}')].[name]" -o tsv | sort -r |
-# while read -r rg_item; do
-#   echo "Deleting resource group: ${rg_item}"
-#   az group delete --resource-group "${rg_item}" --yes ${no_wait_option}
-# done
+az group list --query "[?starts_with(name, '${core_tre_rg}')].[name]" -o tsv | sort -r |
+while read -r rg_item; do
+  echo "Deleting resource group: ${rg_item}"
+  az group delete --resource-group "${rg_item}" --yes ${no_wait_option}
+done
