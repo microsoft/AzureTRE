@@ -78,7 +78,6 @@ resource "azurerm_app_service" "api" {
 
     cors {
       allowed_origins = [
-        var.deploy_ui ? "https://${azurerm_static_site.tre-ui[0].default_host_name}" : "",
         var.enable_local_debugging ? "http://localhost:3000" : ""
       ]
       support_credentials = false
