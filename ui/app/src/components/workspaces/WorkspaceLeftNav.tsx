@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Nav, INavLinkGroup } from '@fluentui/react/lib/Nav';
+import { Nav, INavLinkGroup, INavStyles } from '@fluentui/react/lib/Nav';
 import { useNavigate } from 'react-router-dom';
 import { ApiEndpoint } from '../../models/apiEndpoints';
 import { WorkspaceService } from '../../models/workspaceService';
@@ -94,7 +94,23 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
           navigate(item.url)}}
         ariaLabel="TRE Workspace Left Navigation"
         groups={serviceLinks}
+        styles={navStyles}
       />
     </>
   );
+};
+
+const navStyles: Partial<INavStyles> = {
+  root: {
+    width: 208,
+    height: 350,
+    boxSizing: 'border-box',
+    border: '1px solid #eee',
+    overflowY: 'auto',
+  },
+  // these link styles override the default truncation behavior
+  link: {
+    whiteSpace: 'normal',
+    lineHeight: 'inherit',
+  },
 };
