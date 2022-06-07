@@ -118,6 +118,7 @@ resource "azurerm_private_endpoint" "gitea_private_endpoint" {
   resource_group_name = local.core_resource_group_name
   location            = data.azurerm_resource_group.rg.location
   subnet_id           = data.azurerm_subnet.shared.id
+  tags                = local.tre_shared_service_tags
 
   private_service_connection {
     private_connection_resource_id = azurerm_app_service.gitea.id

@@ -16,6 +16,9 @@ parameters:
   - name: tre_id
     type: string
     description: "The ID of the parent TRE instance e.g., mytre-dev-3142"
+  - name: id
+    type: string
+    description: "Resource ID"
   - name: tfstate_resource_group_name
     type: string
     description: "Resource group containing the Terraform state storage account"
@@ -45,6 +48,7 @@ install:
       input: false
       vars:
         tre_id: "{{ bundle.parameters.tre_id }}"
+        tre_resource_id: "{{ bundle.parameters.id }}"
         ssl_cert_name: "{{ bundle.parameters.ssl_cert_name }}"
       backendConfig:
         resource_group_name:
@@ -65,6 +69,7 @@ uninstall:
       input: false
       vars:
         tre_id: "{{ bundle.parameters.tre_id }}"
+        tre_resource_id: "{{ bundle.parameters.id }}"
         ssl_cert_name: "{{ bundle.parameters.ssl_cert_name }}"
       backendConfig:
         resource_group_name:
