@@ -5,4 +5,8 @@ locals {
   nexus_allowed_fqdns      = "*pypi.org,files.pythonhosted.org,security.ubuntu.com,archive.ubuntu.com,keyserver.ubuntu.com,repo.anaconda.com,*.docker.com,*.docker.io,conda.anaconda.org,azure.archive.ubuntu.com, packages.microsoft.com"
   nexus_allowed_fqdns_list = distinct(compact(split(",", replace(local.nexus_allowed_fqdns, " ", ""))))
   storage_account_name     = lower(replace("stg-${var.tre_id}", "-", ""))
+  tre_shared_service_tags = {
+    tre_id                = var.tre_id
+    tre_shared_service_id = var.tre_resource_id
+  }
 }
