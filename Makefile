@@ -367,6 +367,7 @@ prepare-for-e2e:
 	&& $(call shared_service_bundle,sonatype-nexus) \
 	&& $(call shared_service_bundle,gitea) \
 	&& $(call user_resource_bundle,guacamole,guacamole-dev-vm)
+	&& $(call user_resource_bundle,guacamole,guacamole-azure-windowsvm)
 
 test-e2e-smoke:
 	$(call target_title, "Running E2E smoke tests") && \

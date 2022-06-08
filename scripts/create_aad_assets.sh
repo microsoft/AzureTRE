@@ -1,12 +1,10 @@
 #!/bin/bash
-set -e
+set -o errexit
+set -o pipefail
+set -o nounset
+# set -o xtrace
 
 : "${AAD_TENANT_ID?'You have not set your AAD_TENANT_ID in ./templates/core/.env'}"
-
-api_app_can_create_other_applications=""
-if [ "${AUTO_WORKSPACE_APP_REGISTRATION}" == true ]; then
-  api_app_can_create_other_applications="--read-write-all-permission"
-fi
 
 LOGGED_IN_TENANT_ID=$(az account show --query tenantId -o tsv)
 CHANGED_TENANT=0
@@ -19,12 +17,24 @@ if [ "${LOGGED_IN_TENANT_ID}" != "${AAD_TENANT_ID}" ]; then
   CHANGED_TENANT=1
 fi
 
-# Then register an App. DO NOT put quotes around ${api_app_can_create_other_applications} as this
-# will break the aad-app-reg.dh script.
+# Create the identity that is able to create other applications
+if [ "${AUTO_WORKSPACE_APP_REGISTRATION}" == true ]; then
+  ./scripts/aad/create_application_administrator.sh \
+  --name "${TRE_ID}" --admin-consent
+
+  echo "Please copy the values above into your /templates/core/.env."
+  read -p "Please confirm you have done this? (y/N) " -n 1 -r
+  echo
+  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    exit 0
+  fi
+fi
+
+# Then register an App for the TRE Core.
 ./scripts/aad/aad-app-reg.sh \
   --name "${TRE_ID}" \
   --swaggerui-redirecturl "https://${TRE_ID}.${LOCATION}.cloudapp.azure.com/api/docs/oauth2-redirect" \
-  --admin-consent --automation-account ${api_app_can_create_other_applications}
+  --admin-consent --automation-account
 
 echo "Please copy the values above into your /templates/core/.env."
 read -p "Please confirm you have done this? (y/N) " -n 1 -r
@@ -39,7 +49,7 @@ set -a
 # shellcheck disable=SC1091
 . ./templates/core/.env
 
-echo "Please check that the following value is the same as above to check you have copied yoru keys."
+echo "Please check that the following value is the same as above to check you have copied your keys."
 echo "API client id is : ${API_CLIENT_ID}"
 
 ./scripts/aad/aad-app-reg.sh \

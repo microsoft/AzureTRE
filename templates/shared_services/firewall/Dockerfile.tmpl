@@ -2,15 +2,16 @@ FROM debian:stretch-slim
 
 ARG BUNDLE_DIR
 
-RUN apt-get update && apt-get install -y ca-certificates
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Install Azure CLI
 RUN apt-get update \
-    && apt-get install -y ca-certificates jq curl apt-transport-https lsb-release gnupg \
+    && apt-get install -y ca-certificates="20200601~deb9u2" curl="7.52.1-5+deb9u16" apt-transport-https="1.4.11" lsb-release="9.20161125" gnupg="2.1.18-8~deb9u4" \
     && curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null \
     && AZ_REPO=$(lsb_release -cs) \
     && echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | tee /etc/apt/sources.list.d/azure-cli.list \
-    && apt-get update && apt-get -y install azure-cli
+    && apt-get update && apt-get -y install azure-cli="2.36.0-1~stretch" \
+    && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 # This is a template Dockerfile for the bundle's invocation image
 # You can customize it to use different base images, install tools and copy configuration files.
