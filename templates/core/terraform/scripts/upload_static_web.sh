@@ -25,6 +25,7 @@ echo "Created network rule on storage account"
 
 echo "Uploading ${DIR} to static web storage"
 
+# shellcheck disable=SC2016
 az storage blob upload-batch \
     --account-name "${STORAGE_ACCOUNT}" \
     --auth-mode login \
