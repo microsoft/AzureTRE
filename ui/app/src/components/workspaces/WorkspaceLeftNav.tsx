@@ -3,15 +3,10 @@ import { Nav, INavLinkGroup, INavStyles } from '@fluentui/react/lib/Nav';
 import { useNavigate } from 'react-router-dom';
 import { ApiEndpoint } from '../../models/apiEndpoints';
 import { WorkspaceService } from '../../models/workspaceService';
-import { ResourceType } from '../../models/resourceType';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
-import { Resource } from '../../models/resource';
-import { CreateUpdateResourceContext } from '../../contexts/CreateUpdateResourceContext';
-import { successStates } from '../../models/operation';
 
 // TODO:
-// - we lose the selected styling when navigating into a user resource. This may not matter as the user resource page might die away.
-// - loading placeholders / error content(?)
+// - active item is sometimes lost
 
 interface WorkspaceLeftNavProps {
   workspaceServices: Array<WorkspaceService>,
@@ -24,7 +19,6 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
   const emptyLinks: INavLinkGroup[] = [{links:[]}];
   const [serviceLinks, setServiceLinks] = useState(emptyLinks);
   const workspaceCtx = useContext(WorkspaceContext);
-  const createFormCtx = useContext(CreateUpdateResourceContext);
 
   useEffect(() => {
     const getWorkspaceServices = async () => {
@@ -38,14 +32,6 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
             url: `${ApiEndpoint.WorkspaceServices}/${service.id}`,
             key: service.id
           });
-      });
-
-      // Add Create New link at the bottom of services links
-      serviceLinkArray.push({
-        name: "Create new",
-        icon: "Add",
-        key: "create",
-        disabled: successStates.indexOf(workspaceCtx.workspace.deploymentStatus) === -1 || !workspaceCtx.workspace.isEnabled
       });
 
       const seviceNavLinks: INavLinkGroup[] = [
@@ -78,14 +64,6 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
       <Nav
         onLinkClick={(e, item) => {
           e?.preventDefault();
-          if (item?.key === "create") {
-            createFormCtx.openCreateForm({
-              resourceType: ResourceType.WorkspaceService,
-              resourceParent: workspaceCtx.workspace,
-              onAdd: (r: Resource) => props.addWorkspaceService(r as WorkspaceService),
-              workspaceClientId: workspaceCtx.workspaceClientId
-            })
-          };
           if (!item || !item.url) return;
           let selectedService = props.workspaceServices.find((w) => item.key?.indexOf(w.id.toString()) !== -1);
           if (selectedService) {
