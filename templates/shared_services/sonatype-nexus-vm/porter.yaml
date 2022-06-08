@@ -1,8 +1,10 @@
 ---
 name: tre-shared-service-sonatype-nexus
-version: 2.0.1
+version: 2.0.2
 description: "A Sonatype Nexus shared service"
 registry: azuretre
+dockerfile: Dockerfile.tmpl
+
 credentials:
   - name: azure_tenant_id
     env: ARM_TENANT_ID
