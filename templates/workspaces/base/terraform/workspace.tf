@@ -28,8 +28,6 @@ module "network" {
 
 module "aad" {
   source                         = "./aad"
-  tre_id                         = var.tre_id
-  tre_resource_id                = var.tre_resource_id
   tre_workspace_tags             = local.tre_workspace_tags
   count                          = var.register_aad_application ? 1 : 0
   key_vault_id                   = azurerm_key_vault.kv.id
@@ -46,7 +44,6 @@ module "airlock" {
   source                 = "./airlock"
   location               = var.location
   tre_id                 = var.tre_id
-  tre_resource_id        = var.tre_resource_id
   tre_workspace_tags     = local.tre_workspace_tags
   ws_resource_group_name = azurerm_resource_group.ws.name
   enable_local_debugging = true
