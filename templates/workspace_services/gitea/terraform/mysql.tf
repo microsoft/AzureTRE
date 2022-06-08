@@ -14,7 +14,7 @@ resource "azurerm_mysql_server" "gitea" {
   administrator_login_password      = random_password.password.result
   sku_name                          = "GP_Gen5_2"
   storage_mb                        = 5120
-  version                           = "8.0.21"
+  version                           = "8.0"
   auto_grow_enabled                 = true
   backup_retention_days             = 7
   geo_redundant_backup_enabled      = false
