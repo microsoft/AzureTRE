@@ -20,7 +20,7 @@ class CostsQueryParams:
         self,
         from_date: date = Query(default=(date.today().replace(day=1)), description="The start date to pull data from, default value first day of month (iso-8601, UTC)."),
         to_date: date = Query(default=(date.today() + timedelta(days=1)), description="The end date to pull data to, default value tomorrow (iso-8601, UTC)."),
-        granularity: GranularityEnum = Query(default="None", description="The granularity of rows in the query.'")
+        granularity: GranularityEnum = Query(default="None", description="The granularity of rows in the query.")
     ):
         self.from_date = from_date
         self.to_date = to_date
