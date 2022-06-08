@@ -135,9 +135,9 @@ jobs:
     # Run the tests with the re-usable workflow
     needs: [pr_comment]
     if: |
-      ${{ needs.pr_comment.outputs.command == 'run-tests' ||
+      needs.pr_comment.outputs.command == 'run-tests' ||
       needs.pr_comment.outputs.command == 'run-tests-extended' ||
-      needs.pr_comment.outputs.command == 'run-tests-shared-services' }}
+      needs.pr_comment.outputs.command == 'run-tests-shared-services'
     name: Deploy PR
     uses: ./.github/workflows/deploy_tre_reusable.yml
     with:
