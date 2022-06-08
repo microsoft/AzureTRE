@@ -261,7 +261,7 @@ bundle-build:
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/set_docker_sock_permission.sh \
-	&& cd ${DIR} && porter build --debug \
+	&& cd ${DIR} && porter build --debug
 	$(MAKE) bundle-check-params
 
 bundle-install: bundle-check-params
