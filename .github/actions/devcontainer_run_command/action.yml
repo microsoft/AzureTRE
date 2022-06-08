@@ -165,6 +165,8 @@ runs:
         TF_VAR_aad_tenant_id: "${{ inputs.AAD_TENANT_ID }}"
         TF_VAR_api_client_id: "${{ inputs.TF_VAR_api_client_id }}"
         TF_VAR_api_client_secret: "${{ inputs.TF_VAR_api_client_secret }}"
+        TF_VAR_application_admin_client_id: "${{ inputs.TF_VAR_application_admin_client_id }}"
+        TF_VAR_application_admin_client_secret: "${{ inputs.TF_VAR_application_admin_client_secret }}"
         TF_VAR_acr_name: ${{ inputs.ACR_NAME }}
         IS_API_SECURED: ${{ inputs.IS_API_SECURED }}
       run: |
@@ -193,6 +195,8 @@ runs:
           -e TF_VAR_aad_tenant_id \
           -e TF_VAR_api_client_id \
           -e TF_VAR_api_client_secret \
+          -e TF_VAR_application_admin_client_id \
+          -e TF_VAR_application_admin_client_secret \
           -e TF_VAR_arm_subscription_id="${{ inputs.ARM_SUBSCRIPTION_ID }}" \
           -e TF_VAR_swagger_ui_client_id \
           -e TF_VAR_core_address_space \
