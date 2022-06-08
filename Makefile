@@ -277,7 +277,7 @@ bundle-install: bundle-check-params
 
 # Validates that the parameters file is synced with the bundle.
 # The file is used when installing the bundle from a local machine.
-# We remove arm_use_msi on both sides since it should take effect locally anyway.
+# We remove arm_use_msi on both sides since it shouldn't take effect locally anyway.
 bundle-check-params:
 	$(call target_title, "Checking bundle parameters in ${DIR}") \
 	&& . ./devops/scripts/check_dependencies.sh nodocker,porter \
