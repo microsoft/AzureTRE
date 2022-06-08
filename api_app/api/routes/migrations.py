@@ -48,8 +48,8 @@ async def migrate_database(resources_repo=Depends(get_repository(ResourceReposit
         migrations.append(Migration(issueNumber="PR 1726", status=migration_status))
 
         logging.info("#1406 - Extra field to support UI")
-        resource_migration.add_deployment_status_field(operations_repo)
-        migrations.append(Migration(issueNumber="1406", status="Executed"))
+        num_rows = resource_migration.add_deployment_status_field(operations_repo)
+        migrations.append(Migration(issueNumber="1406", status=f'Updated {num_rows} resource objects'))
 
         return MigrationOutList(migrations=migrations)
     except Exception as e:
