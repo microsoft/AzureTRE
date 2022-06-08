@@ -1,6 +1,6 @@
 ---
 name: tre-workspace-base
-version: 0.3.4
+version: 0.3.5
 description: "A base Azure TRE workspace"
 registry: azuretre
 
@@ -58,6 +58,9 @@ parameters:
     type: boolean
     default: false
     description: "Whether this bundle should register the workspace in AAD"
+  - name: workspace_owner_object_id
+    type: string
+    description: "The object id of the user that will be granted WorkspaceOwner after it is created."
   - name: client_id
     type: string
     description: "The client id of the workspace in the identity provider. This value is typically provided to you
@@ -132,6 +135,7 @@ install:
         auth_client_id: "{{ bundle.credentials.auth_client_id }}"
         auth_client_secret: "{{ bundle.credentials.auth_client_secret }}"
         auth_tenant_id: "{{ bundle.credentials.auth_tenant_id }}"
+        workspace_owner_object_id: "{{ bundle.parameters.workspace_owner_object_id }}"
         client_id: "{{ bundle.parameters.client_id }}"
         client_secret: "{{ bundle.parameters.client_secret }}"
         scope_id: "{{ bundle.parameters.scope_id }}"
@@ -175,6 +179,7 @@ uninstall:
         auth_client_id: "{{ bundle.credentials.auth_client_id }}"
         auth_client_secret: "{{ bundle.credentials.auth_client_secret }}"
         auth_tenant_id: "{{ bundle.credentials.auth_tenant_id }}"
+        workspace_owner_object_id: "{{ bundle.parameters.workspace_owner_object_id }}"
         client_id: "{{ bundle.parameters.client_id }}"
         scope_id: "{{ bundle.parameters.scope_id }}"
         sp_id: "{{ bundle.parameters.sp_id }}"

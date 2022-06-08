@@ -1,6 +1,6 @@
 ---
 name: tre-service-azureml
-version: 0.3.0
+version: 0.3.1
 description: "An Azure TRE service for Azure Machine Learning"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -64,10 +64,8 @@ install:
         arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
         arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
       backendConfig:
-        resource_group_name:
-          "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name:
-          "{{ bundle.parameters.tfstate_storage_account_name }}"
+        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "tre-service-azureml-{{ bundle.parameters.id }}"
       outputs:
@@ -94,9 +92,7 @@ uninstall:
         arm_client_id: "{{ bundle.credentials.azure_client_id }}"
         arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
       backendConfig:
-        resource_group_name:
-          "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name:
-          "{{ bundle.parameters.tfstate_storage_account_name }}"
+        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "tre-service-azureml-{{ bundle.parameters.id }}"

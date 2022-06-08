@@ -2,8 +2,9 @@ resource "azurerm_app_service" "nexus" {
   name                = "nexus-${var.tre_id}"
   resource_group_name = local.core_resource_group_name
   location            = data.azurerm_resource_group.rg.location
-  app_service_plan_id = data.azurerm_app_service_plan.core.id
+  app_service_plan_id = data.azurerm_service_plan.core.id
   https_only          = true
+  tags                = local.tre_shared_service_tags
 
   app_settings = {
     APPINSIGHTS_INSTRUMENTATIONKEY      = data.azurerm_application_insights.core.instrumentation_key
@@ -68,6 +69,7 @@ resource "azurerm_private_endpoint" "nexus_private_endpoint" {
   resource_group_name = local.core_resource_group_name
   location            = data.azurerm_resource_group.rg.location
   subnet_id           = data.azurerm_subnet.shared.id
+  tags                = local.tre_shared_service_tags
 
   private_service_connection {
     private_connection_resource_id = azurerm_app_service.nexus.id

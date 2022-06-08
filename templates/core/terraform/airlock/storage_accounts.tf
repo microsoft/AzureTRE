@@ -7,7 +7,7 @@ resource "azurerm_storage_account" "sa_external_import" {
   account_replication_type = "GRS"
 
   # Don't allow anonymous access (unrelated to the 'public' networking rules)
-  allow_blob_public_access = false
+  allow_nested_items_to_be_public = false
 
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
   # This is true ONLY when Hierarchical Namespace is DISABLED
@@ -29,7 +29,7 @@ resource "azurerm_storage_account" "sa_export_approved" {
   account_replication_type = "GRS"
 
   # Don't allow anonymous access (unrelated to the 'public' networking rules)
-  allow_blob_public_access = false
+  allow_nested_items_to_be_public = false
 
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
   # This is true ONLY when Hierarchical Namespace is DISABLED
@@ -44,12 +44,12 @@ resource "azurerm_storage_account" "sa_export_approved" {
 
 # 'In-Progress' storage account
 resource "azurerm_storage_account" "sa_import_in_progress" {
-  name                     = local.import_in_progress_storage_name
-  location                 = var.location
-  resource_group_name      = var.resource_group_name
-  account_tier             = "Standard"
-  account_replication_type = "GRS"
-  allow_blob_public_access = false
+  name                            = local.import_in_progress_storage_name
+  location                        = var.location
+  resource_group_name             = var.resource_group_name
+  account_tier                    = "Standard"
+  account_replication_type        = "GRS"
+  allow_nested_items_to_be_public = false
 
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
   # This is true ONLY when Hierarchical Namespace is DISABLED
@@ -96,12 +96,12 @@ resource "azurerm_private_endpoint" "stg_ip_import_pe" {
 
 # 'Rejected' storage account
 resource "azurerm_storage_account" "sa_import_rejected" {
-  name                     = local.import_rejected_storage_name
-  location                 = var.location
-  resource_group_name      = var.resource_group_name
-  account_tier             = "Standard"
-  account_replication_type = "GRS"
-  allow_blob_public_access = false
+  name                            = local.import_rejected_storage_name
+  location                        = var.location
+  resource_group_name             = var.resource_group_name
+  account_tier                    = "Standard"
+  account_replication_type        = "GRS"
+  allow_nested_items_to_be_public = false
 
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
   # This is true ONLY when Hierarchical Namespace is DISABLED
@@ -125,8 +125,6 @@ resource "azurerm_private_endpoint" "stgipimportpe" {
   resource_group_name = var.resource_group_name
   subnet_id           = var.shared_subnet_id
 
-  lifecycle { ignore_changes = [tags] }
-
   private_dns_zone_group {
     name                 = "private-dns-zone-group-stg-import-rej"
     private_dns_zone_ids = [data.azurerm_private_dns_zone.blobcore.id]
@@ -138,4 +136,8 @@ resource "azurerm_private_endpoint" "stgipimportpe" {
     is_manual_connection           = false
     subresource_names              = ["Blob"]
   }
+
+  tags = local.tre_core_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
