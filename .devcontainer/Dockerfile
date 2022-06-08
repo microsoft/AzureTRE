@@ -18,8 +18,7 @@ RUN bash /tmp/non-root-user.sh "${USERNAME}" "${USER_UID}" "${USER_GID}"
 # Set env for tracking that we're running in a devcontainer
 ENV DEVCONTAINER=true
 
-# [Option] Install Node.js for GH actions tests and UI
-ARG INSTALL_NODE="true"
+# Install Node.js
 ARG NODE_VERSION="lts/*"
 RUN su $USERNAME -c "umask 0002 && . /usr/local/share/nvm/nvm.sh && nvm install ${NODE_VERSION} 2>&1"
 
