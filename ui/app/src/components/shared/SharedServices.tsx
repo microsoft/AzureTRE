@@ -7,6 +7,8 @@ import { SharedService } from '../../models/sharedService';
 import { HttpMethod, useAuthApiCall } from '../../hooks/useAuthApiCall';
 import { ApiEndpoint } from '../../models/apiEndpoints';
 import { CreateUpdateResourceContext } from '../../contexts/CreateUpdateResourceContext';
+import { RoleName } from '../../models/roleNames';
+import { SecuredByRole } from './SecuredByRole';
 
 export const SharedServices: React.FunctionComponent = () => {
   const createFormCtx = useContext(CreateUpdateResourceContext);
@@ -47,12 +49,14 @@ export const SharedServices: React.FunctionComponent = () => {
         <Stack.Item>
           <Stack horizontal horizontalAlign="space-between">
             <h1>Shared Services</h1>
-            <PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new" onClick={() => {
-              createFormCtx.openCreateForm({
-                resourceType: ResourceType.SharedService,
-                onAdd: (r: Resource) => addSharedService(r as SharedService)
-              })
-            }} />
+            <SecuredByRole allowedRoles={[RoleName.TREAdmin]} workspaceAuth={false} element={
+              <PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new" onClick={() => {
+                createFormCtx.openCreateForm({
+                  resourceType: ResourceType.SharedService,
+                  onAdd: (r: Resource) => addSharedService(r as SharedService)
+                })
+              }} />
+            } />
           </Stack>
         </Stack.Item>
         <Stack.Item>

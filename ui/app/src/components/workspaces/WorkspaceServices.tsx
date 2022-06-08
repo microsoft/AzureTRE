@@ -7,6 +7,8 @@ import { ResourceType } from '../../models/resourceType';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import { CreateUpdateResourceContext } from '../../contexts/CreateUpdateResourceContext';
 import { successStates } from '../../models/operation';
+import { WorkspaceRoleName } from '../../models/roleNames';
+import { SecuredByRole } from '../shared/SecuredByRole';
 
 interface WorkspaceServicesProps {
   workspaceServices: Array<WorkspaceService>,
@@ -26,14 +28,16 @@ export const WorkspaceServices: React.FunctionComponent<WorkspaceServicesProps> 
         <Stack.Item>
           <Stack horizontal horizontalAlign="space-between">
             <h1>Workspace Services</h1>
-            <PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new" disabled={successStates.indexOf(workspaceCtx.workspace.deploymentStatus) === -1 || !workspaceCtx.workspace.isEnabled} onClick={() => {
-              createFormCtx.openCreateForm({
-                resourceType: ResourceType.WorkspaceService,
-                resourceParent: workspaceCtx.workspace,
-                onAdd: (r: Resource) => props.addWorkspaceService(r as WorkspaceService),
-                workspaceClientId: workspaceCtx.workspaceClientId
-              });
-            }} />
+            <SecuredByRole allowedRoles={[WorkspaceRoleName.WorkspaceOwner]} workspaceAuth={true} element={
+              <PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new" disabled={successStates.indexOf(workspaceCtx.workspace.deploymentStatus) === -1 || !workspaceCtx.workspace.isEnabled} onClick={() => {
+                createFormCtx.openCreateForm({
+                  resourceType: ResourceType.WorkspaceService,
+                  resourceParent: workspaceCtx.workspace,
+                  onAdd: (r: Resource) => props.addWorkspaceService(r as WorkspaceService),
+                  workspaceClientId: workspaceCtx.workspaceClientId
+                });
+              }} />
+            } />
           </Stack>
         </Stack.Item>
         <Stack.Item>

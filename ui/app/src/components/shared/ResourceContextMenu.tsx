@@ -68,6 +68,10 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
     action && action.operation && opsWriteContext.current.addOperations([action.operation]);
   }
 
+  const shouldDisable = () => {
+    return props.componentAction === ComponentAction.Lock || successStates.indexOf(props.resource.deploymentStatus) === -1 || !props.resource.isEnabled;
+  }
+
   // context menu
   let menuItems: Array<any> = [];
   let roles: Array<string> = [];
@@ -81,8 +85,20 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
       workspaceClientId: workspaceCtx.workspaceClientId,
     }), disabled:(props.componentAction === ComponentAction.Lock) },
     { key: 'disable', text: props.resource.isEnabled ? 'Disable' : 'Enable', iconProps: { iconName: props.resource.isEnabled ? 'CirclePause' : 'PlayResume' }, onClick: () => setShowDisable(true), disabled:(props.componentAction === ComponentAction.Lock) },
-    { key: 'delete', text: 'Delete', title: props.resource.isEnabled ? 'Must be disabled to delete' : 'Delete this resource', iconProps: { iconName: 'Delete' }, onClick: () => setShowDelete(true), disabled: (props.resource.isEnabled || props.componentAction === ComponentAction.Lock) },
+    { key: 'delete', text: 'Delete', title: props.resource.isEnabled ? 'Resource must be disabled before deleting' : 'Delete this resource', iconProps: { iconName: 'Delete' }, onClick: () => setShowDelete(true), disabled: (props.resource.isEnabled || props.componentAction === ComponentAction.Lock) },
   ];
+
+  // add 'connect' button if we have a URL to connect to
+  if (props.resource.properties.connection_uri) {
+    menuItems.push({
+      key: 'connect',
+      text: 'Connect',
+      title: shouldDisable() ? 'Resource must be deployed and enabled to connect' : 'Connect to resource',
+      iconProps: { iconName: 'PlugConnected' },
+      onClick: () => { window.open(props.resource.properties.connection_uri, '_blank') },
+      disabled: shouldDisable()
+    })
+  }
 
   // add custom actions if we have any
   if (resourceTemplate && resourceTemplate.customActions && resourceTemplate.customActions.length > 0) {
@@ -92,7 +108,7 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
         { key: a.name, text: a.name, title: a.description, iconProps: { iconName: getActionIcon(a.name) }, className: 'tre-context-menu', onClick: () => { doAction(a.name) } }
       );
     });
-    menuItems.push({ key: 'custom-actions', text: 'Actions', iconProps: { iconName: 'Asterisk' }, disabled:props.componentAction === ComponentAction.Lock || successStates.indexOf(props.resource.deploymentStatus) === -1 || !props.resource.isEnabled, subMenuProps: { items: customActions } });
+    menuItems.push({ key: 'custom-actions', text: 'Actions', title: shouldDisable() ? 'Resource must be deployed and enabled to perform actions': 'Custom Actions', iconProps: { iconName: 'Asterisk' }, disabled:shouldDisable(), subMenuProps: { items: customActions } });
   }
 
   switch (props.resource.resourceType) {

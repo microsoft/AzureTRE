@@ -53,11 +53,8 @@ export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceP
     }
 
     !props.isOpen && clearState();
-  }, [props.isOpen]);
-
-  useEffect(() => {
-    props.updateResource && props.updateResource.templateName && selectTemplate(props.updateResource.templateName);
-  }, [props.updateResource])
+    props.isOpen && props.updateResource && props.updateResource.templateName && selectTemplate(props.updateResource.templateName);
+  }, [props.isOpen, props.updateResource]);
 
   // Render a panel title depending on sub-page
   const pageTitles: PageTitle = {

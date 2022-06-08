@@ -50,7 +50,7 @@ export const App: React.FunctionComponent = () => {
           <MsalAuthenticationTemplate interactionType={InteractionType.Redirect}>
             <CreateUpdateResourceContext.Provider value={{
               openCreateForm: (createFormResource: CreateFormResource) => {
-                setCreateFormResource(JSON.parse(JSON.stringify(createFormResource)));
+                setCreateFormResource(createFormResource);
                 setCreateFormOpen(true);
               }
             }} >

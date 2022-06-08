@@ -6,6 +6,7 @@ import moment from 'moment';
 import { ResourceContextMenu } from './ResourceContextMenu';
 import { useComponentManager } from '../../hooks/useComponentManager';
 import { StatusBadge } from './StatusBadge';
+import { successStates } from '../../models/operation';
 
 interface ResourceCardProps {
   resource: Resource,
@@ -69,7 +70,7 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
             {
               connectUri &&
               <Stack.Item style={connectStyles}>
-                <PrimaryButton onClick={() => window.open(connectUri)} disabled={!props.resource.isEnabled} title={!props.resource.isEnabled ? 'Enable resource to connect' : 'Connect to resource'}>Connect</PrimaryButton>
+                <PrimaryButton onClick={() => window.open(connectUri)} disabled={!props.resource.isEnabled || successStates.indexOf(props.resource.deploymentStatus) === -1} title={!props.resource.isEnabled || successStates.indexOf(props.resource.deploymentStatus) === -1 ? 'Resource must be enabled and successfully deployed to connect' : 'Connect to resource'}>Connect</PrimaryButton>
               </Stack.Item>
             }
             <Stack.Item style={footerStyles}>
