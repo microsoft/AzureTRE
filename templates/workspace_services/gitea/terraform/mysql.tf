@@ -33,7 +33,6 @@ resource "azurerm_mysql_database" "gitea" {
   server_name         = azurerm_mysql_server.gitea.name
   charset             = "utf8"
   collation           = "utf8_unicode_ci"
-  tags                = local.workspace_service_tags
 }
 
 resource "azurerm_private_endpoint" "private-endpoint" {

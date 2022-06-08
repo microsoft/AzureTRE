@@ -11,3 +11,4 @@ variable "gitea_storage_limit" {
 variable "openid_client_id" {}
 variable "openid_client_secret" {}
 variable "openid_authority" {}
+variable "tre_resource_id" {}
