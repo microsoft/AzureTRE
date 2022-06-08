@@ -29,7 +29,9 @@ As stated above, AAD is used for Authentication and Authorization. There are 3 A
 - **TRE Client Apps** (formerly Swagger App). This is the app that the user authenticates against. Once authenticated, the client will request an access token for the `TRE Api App`.
 - **TRE Api**. In the access token response from this app we get the user's role membership for TRE-level roles (`TREAdmin` / `TREUser`). Based on these role memberships, aspects of the UI will be made available. If the user is in a `TREAdmin` role, they will see buttons to create workspaces for instance.
 When the user navigates into a Workspace, the client will request an access token for that `Workspace App`.
-- **Workspace App(s)**. A TRE may have a number of Workspace Apps. The ClientId for each workspace app is stored in the Workspace resource object in Cosmos, and the client uses this ID to gain an access token for that particular workspace.
+- **Workspace App(s)**. Each TRE workspace will have a workspace app registration. The ClientId for each workspace app is stored in the Workspace resource object in Cosmos, and the client uses this ID to gain an access token for that particular workspace.
+
+Workspace app registrations may be reused across multiple workspaces in development scenarios. 
 From this access token we can find the Workspace-level roles the user is in (`WorkspaceOwner` / `WorkspaceResearcher`). These are in turn used to show/hide features of the UI.
 
 ### React Contexts
