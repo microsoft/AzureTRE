@@ -14,11 +14,6 @@ on:  # yamllint disable-line rule:truthy
         type: string
         default: ""
         required: false
-      runSharedServicesTests:
-        description: Run the shared services tests as part of the deployment?
-        type: boolean
-        default: false
-        required: false
 
 
 # This will prevent multiple runs of this entire workflow.
