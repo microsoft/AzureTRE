@@ -33,7 +33,7 @@ As stated above, AAD is used for Authentication and Authorization. There are 3 A
 When the user navigates into a Workspace, the client will request an access token for that `Workspace App`.
 - **Workspace App(s)**. Each TRE workspace will have a workspace app registration. The ClientId for each workspace app is stored in the Workspace resource object in Cosmos, and the client uses this ID to gain an access token for that particular workspace.
 
-Workspace app registrations may be reused across multiple workspaces in development scenarios. 
+Workspace app registrations may be reused across multiple workspaces in development scenarios.
 From this access token we can find the Workspace-level roles the user is in (`WorkspaceOwner` / `WorkspaceResearcher`). These are in turn used to show/hide features of the UI.
 
 ### React Contexts
