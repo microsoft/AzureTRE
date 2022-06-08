@@ -13,6 +13,7 @@ resource "azurerm_app_service" "inference" {
   resource_group_name = data.azurerm_resource_group.ws.name
   app_service_plan_id = data.azurerm_app_service_plan.workspace.id
   https_only          = true
+  tags                = var.tre_workspace_tags
 
   site_config {
     always_on     = true
@@ -63,6 +64,7 @@ resource "azurerm_private_endpoint" "inference" {
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
   subnet_id           = data.azurerm_subnet.services.id
+  tags                = var.tre_workspace_tags
 
   private_service_connection {
     private_connection_resource_id = azurerm_app_service.inference.id
