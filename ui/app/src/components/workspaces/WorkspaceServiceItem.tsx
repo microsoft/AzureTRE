@@ -16,6 +16,8 @@ import { CreateUpdateResourceContext } from '../../contexts/CreateUpdateResource
 import { successStates } from '../../models/operation';
 import { UserResourceItem } from './UserResourceItem';
 import { ResourceBody } from '../shared/ResourceBody';
+import { SecuredByRole } from '../shared/SecuredByRole';
+import { WorkspaceRoleName } from '../../models/roleNames';
 
 interface WorkspaceServiceItemProps {
   workspaceService?: WorkspaceService,
@@ -105,15 +107,17 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
                     <Stack.Item>
                       <Stack horizontal horizontalAlign="space-between">
                         <h1>User Resources</h1>
-                        <PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new" disabled={!workspaceService.isEnabled || latestUpdate.componentAction === ComponentAction.Lock || successStates.indexOf(workspaceService.deploymentStatus) === -1} title={!workspaceService.isEnabled ? 'Service must be enabled first' : 'Create a User Resource'}
-                          onClick={() => {
-                            createFormCtx.openCreateForm({
-                              resourceType: ResourceType.UserResource,
-                              resourceParent: workspaceService,
-                              onAdd: (r: Resource) => addUserResource(r as UserResource),
-                              workspaceClientId: workspaceCtx.workspaceClientId
-                            })
-                          }} />
+                        <SecuredByRole allowedRoles={[WorkspaceRoleName.WorkspaceOwner, WorkspaceRoleName.WorkspaceResearcher]} workspaceAuth={true} element={
+                          <PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new" disabled={!workspaceService.isEnabled || latestUpdate.componentAction === ComponentAction.Lock || successStates.indexOf(workspaceService.deploymentStatus) === -1} title={!workspaceService.isEnabled ? 'Service must be enabled first' : 'Create a User Resource'}
+                            onClick={() => {
+                              createFormCtx.openCreateForm({
+                                resourceType: ResourceType.UserResource,
+                                resourceParent: workspaceService,
+                                onAdd: (r: Resource) => addUserResource(r as UserResource),
+                                workspaceClientId: workspaceCtx.workspaceClientId
+                              })
+                            }} />
+                        } />
                       </Stack>
                     </Stack.Item>
                     <Stack.Item>
