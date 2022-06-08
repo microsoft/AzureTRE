@@ -252,6 +252,8 @@ lint:
 		-v $${LOCAL_WORKSPACE_FOLDER}:/tmp/lint \
 		github/super-linter:slim-v4.9.4
 
+# check-params is called at the end since it needs the bundle image,
+# so we build it first and then run the check.
 bundle-build:
 	$(call target_title, "Building ${DIR} bundle with Porter") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter \
@@ -260,8 +262,9 @@ bundle-build:
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/set_docker_sock_permission.sh \
 	&& cd ${DIR} && porter build --debug
+	$(MAKE) bundle-check-params
 
-bundle-install:
+bundle-install: bundle-check-params
 	$(call target_title, "Deploying ${DIR} with Porter") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
@@ -271,6 +274,20 @@ bundle-install:
 		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
 		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
 		--allow-docker-host-access --debug
+
+# Validates that the parameters file is synced with the bundle.
+# The file is used when installing the bundle from a local machine.
+# We remove arm_use_msi on both sides since it shouldn't take effect locally anyway.
+bundle-check-params:
+	$(call target_title, "Checking bundle parameters in ${DIR}") \
+	&& . ./devops/scripts/check_dependencies.sh nodocker,porter \
+	&& cd ${DIR} \
+	&& if [ ! -f "parameters.json" ]; then echo "Error - please create a parameters.json file."; exit 1; fi \
+	&& if ! porter explain -ojson > /dev/null; then echo "Error - porter explain issue!"; exit 1; fi \
+	&& comm_output=$$(set -o pipefail && comm -3 --output-delimiter=: <(porter explain -ojson | jq -r '.parameters[].name | select (. != "arm_use_msi")' | sort) <(jq -r '.parameters[].name | select(. != "arm_use_msi")' parameters.json | sort)) \
+	&& if [ ! -z "$${comm_output}" ]; \
+		then echo -e "*** Add to params ***:*** Remove from params ***\n$$comm_output" | column -t -s ":" -n; exit 1; \
+		else echo "parameters.json file up-to-date."; fi
 
 bundle-uninstall:
 	$(call target_title, "Uninstalling ${DIR} with Porter") \

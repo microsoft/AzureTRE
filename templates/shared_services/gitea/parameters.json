@@ -17,9 +17,9 @@
       }
     },
     {
-      "name": "acr_name",
+      "name": "mgmt_acr_name",
       "source": {
-        "env": "MGMT_ACR_NAME"
+        "env": "ACR_NAME"
       }
     },
     {
