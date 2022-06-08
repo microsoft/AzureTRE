@@ -87,6 +87,24 @@
       "source": {
         "env": "APP_ROLE_ID_WORKSPACE_RESEARCHER"
       }
+    },
+    {
+      "name": "client_secret",
+      "source": {
+        "env": "CLIENT_SECRET"
+      }
+    },
+    {
+      "name": "scope_id",
+      "source": {
+        "env": "SCOPE_ID"
+      }
+    },
+    {
+      "name": "workspace_owner_object_id",
+      "source": {
+        "env": "WORKSPACE_OWNER_OBJECT_ID"
+      }
     }
   ]
 }
