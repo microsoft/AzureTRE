@@ -1,8 +1,6 @@
 #!/bin/bash
 set -e
 
-script_dir=$(realpath $(dirname "${BASH_SOURCE[0]}"))
-
 if [[ -z ${STORAGE_ACCOUNT} ]]; then
   echo "STORAGE_ACCOUNT not set"
   exit 1
@@ -20,25 +18,26 @@ echo "Creating network rule on storage account ${STORAGE_ACCOUNT} for $IPADDR"
 az storage account network-rule add \
   --account-name "${STORAGE_ACCOUNT}" \
   --resource-group "${RESOURCE_GROUP_NAME}" \
-  --ip-address $IPADDR
+  --ip-address "${IPADDR}"
 echo "Waiting for network rule to take effect"
 sleep 30s
 echo "Created network rule on storage account"
 
 echo "Uploading ${DIR} to static web storage"
 
+# shellcheck disable=SC2016
 az storage blob upload-batch \
     --account-name "${STORAGE_ACCOUNT}" \
     --auth-mode login \
     --destination '$web' \
-    --source ${DIR} \
+    --source "${DIR}" \
     --no-progress \
     --only-show-errors \
     --overwrite
 
 echo "Removing network rule on storage account"
 az storage account network-rule remove \
-  --account-name ${STORAGE_ACCOUNT} \
+  --account-name "${STORAGE_ACCOUNT}" \
   --resource-group "${RESOURCE_GROUP_NAME}" \
-  --ip-address ${IPADDR}
+  --ip-address "${IPADDR}"
 echo "Removed network rule on storage account"
