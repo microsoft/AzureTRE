@@ -7,8 +7,4 @@ locals {
   shared_services_subnet_address_prefix    = local.core_services_vnet_subnets[4] # .0 - .254
   aci_subnet_address_prefix                = local.core_services_vnet_subnets[5] # .0 - .254
   resource_processor_subnet_address_prefix = local.core_services_vnet_subnets[6] # .0 - .254
-  tre_core_tags = {
-    tre_id              = var.tre_id
-    tre_core_service_id = var.tre_id
-  }
 }

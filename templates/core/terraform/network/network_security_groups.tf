@@ -4,7 +4,7 @@ resource "azurerm_network_security_group" "bastion" {
   name                = "nsg-bastion-subnet"
   location            = var.location
   resource_group_name = var.resource_group_name
-  tags                = local.tre_core_tags
+  tags                = var.tre_core_tags
 
   security_rule {
     name                       = "AllowInboundInternet"
@@ -114,7 +114,7 @@ resource "azurerm_network_security_group" "app_gw" {
   name                = "nsg-app-gw"
   location            = var.location
   resource_group_name = var.resource_group_name
-  tags                = local.tre_core_tags
+  tags                = var.tre_core_tags
 
   security_rule {
     name                       = "AllowInboundGatewayManager"
@@ -152,7 +152,7 @@ resource "azurerm_network_security_group" "default_rules" {
   name                = "nsg-default-rules"
   location            = var.location
   resource_group_name = var.resource_group_name
-  tags                = local.tre_core_tags
+  tags                = var.tre_core_tags
 }
 
 resource "azurerm_subnet_network_security_group_association" "shared" {

@@ -4,7 +4,7 @@ resource "azurerm_log_analytics_workspace" "core" {
   location            = var.location
   retention_in_days   = 30
   sku                 = "PerGB2018"
-  tags                = local.tre_core_tags
+  tags                = var.tre_core_tags
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -19,7 +19,7 @@ resource "azurerm_storage_account" "app_insights" {
   account_tier                    = "Standard"
   account_replication_type        = "LRS"
   allow_nested_items_to_be_public = false
-  tags                            = local.tre_core_tags
+  tags                            = var.tre_core_tags
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -53,7 +53,7 @@ resource "azurerm_resource_group_template_deployment" "app_insights_core" {
       value = azurerm_storage_account.app_insights.name
     }
     "tre_core_tags" = {
-      value = local.tre_core_tags
+      value = var.tre_core_tags
     }
   })
 }
@@ -82,7 +82,7 @@ resource "azurerm_resource_group_template_deployment" "ampls_core" {
       value = local.app_insights_name
     }
     "tre_core_tags" = {
-      value = local.tre_core_tags
+      value = var.tre_core_tags
     }
   })
 
@@ -97,7 +97,7 @@ resource "azurerm_private_endpoint" "azure_monitor_private_endpoint" {
   resource_group_name = var.resource_group_name
   location            = var.location
   subnet_id           = var.shared_subnet_id
-  tags                = local.tre_core_tags
+  tags                = var.tre_core_tags
 
   lifecycle { ignore_changes = [tags] }
 

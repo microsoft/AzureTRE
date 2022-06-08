@@ -20,3 +20,4 @@ variable "subscription_id" {
   type        = string
   default     = ""
 }
+variable "tre_core_tags" {}
