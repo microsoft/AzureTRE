@@ -25,6 +25,8 @@ ui
 ```
 
 ### AuthN + AuthZ
+For further details on the auth setup, see [Auth](../tre-admins/auth.md).
+
 As stated above, AAD is used for Authentication and Authorization. There are 3 AAD apps involved here:
 - **TRE Client Apps** (formerly Swagger App). This is the app that the user authenticates against. Once authenticated, the client will request an access token for the `TRE Api App`.
 - **TRE Api**. In the access token response from this app we get the user's role membership for TRE-level roles (`TREAdmin` / `TREUser`). Based on these role memberships, aspects of the UI will be made available. If the user is in a `TREAdmin` role, they will see buttons to create workspaces for instance.
