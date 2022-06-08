@@ -8,13 +8,14 @@ from shared_code import blob_operations
 from azure.identity import DefaultAzureCredential
 from azure.mgmt.storage import StorageManagementClient
 
+
 def main(msg: func.ServiceBusMessage):
 
     body = msg.get_body().decode('utf-8')
     logging.info('Python ServiceBus queue trigger processed message: %s', body)
 
     try:
-        req_id, new_status, request_type, workspace_id = extract_properties(body)
+        req_id, new_status, request_type, tre_id, workspace_id = extract_properties(body)
     except Exception:
         logging.error('Failed processing request - invalid message: %s', body)
         raise()
@@ -23,7 +24,7 @@ def main(msg: func.ServiceBusMessage):
 
     if (is_require_data_copy(new_status)):
         logging.info('Request with id %s. requires data copy between storage accounts', req_id)
-        source_account_name, source_account_key, sa_source_connection_string, sa_dest_connection_string = get_source_dest_env_vars(new_status, request_type, workspace_id)
+        source_account_name, source_account_key, sa_source_connection_string, sa_dest_connection_string = get_source_dest_env_vars(new_status, request_type, tre_id, workspace_id)
         blob_operations.copy_data(source_account_name, source_account_key, sa_source_connection_string, sa_dest_connection_string, req_id)
         return
 
@@ -36,13 +37,14 @@ def extract_properties(body: str):
         req_id = json_body["request_id"]
         new_status = json_body["new_status"]
         request_type = json_body["type"]
+        tre_id = json_body["tre_id"]
         workspace_id = json_body["workspace_id"]
     except KeyError:
         raise
     except json.decoder.JSONDecodeError:
         raise
 
-    return req_id, new_status, request_type, workspace_id
+    return req_id, new_status, request_type, tre_id, workspace_id
 
 
 def is_require_data_copy(new_status: str):
@@ -51,7 +53,7 @@ def is_require_data_copy(new_status: str):
     return False
 
 
-def get_source_dest_env_vars(new_status: str, request_type: str, workspace_id: str):
+def get_source_dest_env_vars(new_status: str, request_type: str, tre_id: str, workspace_id: str):
     # sanity
     if is_require_data_copy(new_status) is False:
         raise Exception("Given new status is not supported")
@@ -60,11 +62,10 @@ def get_source_dest_env_vars(new_status: str, request_type: str, workspace_id: s
     if request_type != "import" and request_type != "export":
         raise Exception("Request type must be either import or export")
 
-    tre_id="el28"
     if new_status == 'submitted' and request_type == 'import':
         source_account_name = "stalexim{}".format(tre_id)
         dest_account_name = "stalipim{}".format(tre_id)
-        source_account_rg =  "rg-{}".format(tre_id)
+        source_account_rg = "rg-{}".format(tre_id)
         dest_account_rg = source_account_rg
         logging.info("source account [%s rg: %s]. dest account [%s rg: %s]", source_account_name, source_account_rg, dest_account_name, dest_account_rg)
     elif new_status == 'submitted' and request_type == 'export':
@@ -86,16 +87,14 @@ def get_source_dest_env_vars(new_status: str, request_type: str, workspace_id: s
         # https://github.com/microsoft/AzureTRE/issues/1842
         pass
 
-
     subscription_id = os.environ["AZURE_SUBSCRIPTION_ID"]
-        
+
     if os.environ.get('ENABLE_LOCAL_DEBUG', NONE) is not NONE:
         # Using the logged-in user
-        credential = DefaultAzureCredential()    
+        credential = DefaultAzureCredential()
     else:
         logging.info("using the Airlock processor's managed identity to get build storage management client")
-        credential = DefaultAzureCredential(managed_identity_client_id=os.environ["MANAGED_IDENTITY_CLIENT_ID"], exclude_shared_token_cache_credential=True)    
-    
+        credential = DefaultAzureCredential(managed_identity_client_id=os.environ["MANAGED_IDENTITY_CLIENT_ID"], exclude_shared_token_cache_credential=True)
 
     storage_client = StorageManagementClient(credential, subscription_id)
     source_storage_keys = storage_client.storage_accounts.list_keys(source_account_rg, source_account_name)

@@ -26,3 +26,9 @@ variable "mgmt_acr_name" {
   type        = string
   description = "Management ACR name"
 }
+
+variable "arm_subscription_id" {
+  description = "The subscription id to create the resource processor permission/role. If not supplied will use the TF context."
+  type        = string
+  default     = ""
+}
