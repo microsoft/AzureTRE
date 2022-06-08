@@ -89,6 +89,12 @@ inputs:
   TF_VAR_api_client_secret:
     description: "The API Client Secret."
     required: false
+  TF_VAR_application_admin_client_id:
+    description: "The Client ID of an identity that can manage the AAD Applications."
+    required: false
+  TF_VAR_application_admin_client_secret:
+    description: "The Client secret of an identity that can manage the AAD Applications."
+    required: false
   ACR_NAME:
     description: "The Container Registry that holds our Research images."
     required: false
@@ -97,6 +103,9 @@ inputs:
     required: false
   BUNDLE_TYPE:
     description: "The Bundle type (workspace / Workspace-service / User Resource)."
+    required: false
+  WORKSPACE_SERVICE_NAME:
+    description: "The workspace service name for the bundle you are registering."
     required: false
   IS_API_SECURED:
     description: "Indicates if the API endpoint has valid TLS certificate and if we validate it during E2E."
@@ -156,6 +165,8 @@ runs:
         TF_VAR_aad_tenant_id: "${{ inputs.AAD_TENANT_ID }}"
         TF_VAR_api_client_id: "${{ inputs.TF_VAR_api_client_id }}"
         TF_VAR_api_client_secret: "${{ inputs.TF_VAR_api_client_secret }}"
+        TF_VAR_application_admin_client_id: "${{ inputs.TF_VAR_application_admin_client_id }}"
+        TF_VAR_application_admin_client_secret: "${{ inputs.TF_VAR_application_admin_client_secret }}"
         TF_VAR_acr_name: ${{ inputs.ACR_NAME }}
         IS_API_SECURED: ${{ inputs.IS_API_SECURED }}
       run: |
@@ -168,6 +179,7 @@ runs:
           -e TF_IN_AUTOMATION="${{ inputs.TF_IN_AUTOMATION }}" \
           -e USE_ENV_VARS_NOT_FILES="${{ inputs.USE_ENV_VARS_NOT_FILES }}" \
           -e BUNDLE_TYPE="${{ inputs.BUNDLE_TYPE }}" \
+          -e WORKSPACE_SERVICE_NAME="${{ inputs.WORKSPACE_SERVICE_NAME }}" \
           -e LOCATION="${{ inputs.LOCATION }}" \
           -e TF_VAR_location="${{ inputs.LOCATION }}" \
           -e RESOURCE_LOCATION="${{ inputs.LOCATION }}" \
@@ -183,6 +195,8 @@ runs:
           -e TF_VAR_aad_tenant_id \
           -e TF_VAR_api_client_id \
           -e TF_VAR_api_client_secret \
+          -e TF_VAR_application_admin_client_id \
+          -e TF_VAR_application_admin_client_secret \
           -e TF_VAR_arm_subscription_id="${{ inputs.ARM_SUBSCRIPTION_ID }}" \
           -e TF_VAR_swagger_ui_client_id \
           -e TF_VAR_core_address_space \

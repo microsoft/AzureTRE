@@ -53,6 +53,7 @@ parameters:
     env: TERRAFORM_STATE_CONTAINER_NAME
   - name: arm_use_msi
     env: ARM_USE_MSI
+    type: boolean
     default: false
 
 mixins:
