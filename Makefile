@@ -382,7 +382,7 @@ build-and-deploy-ui:
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ./templates/core/.env \
 	&& pushd ${MAKEFILE_DIR}/templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/templates/core/private.env \
-	&& ${MAKEFILE_DIR}/devops/scripts/build_deploy_ui.sh
+	&& if [ "$${DEPLOY_UI}" == "true" ]; then ${MAKEFILE_DIR}/devops/scripts/build_deploy_ui.sh; else echo "UI Deploy skipped as DEPLOY_UI not true"; fi \
 
 prepare-for-e2e:
 	$(call workspace_bundle,base) \
