@@ -160,6 +160,7 @@ AIRLOCK_REQUEST_TYPE_EXPORT = "export"
 
 # Airlock Messages
 AIRLOCK_REQUEST_DOES_NOT_EXIST = "Airlock request does not exist"
+AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE = "Airlock request status changes was illegal"
 
 # Deployments
 RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE = "This resource has not yet been deployed"

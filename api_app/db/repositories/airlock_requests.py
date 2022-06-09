@@ -1,22 +1,39 @@
 import copy
 import uuid
 from azure.cosmos import CosmosClient
+from starlette import status
+from fastapi import HTTPException
 from pydantic import parse_obj_as
 from models.domain.authentication import User
 from db.errors import EntityDoesNotExist
-from models.domain.airlock_resource import AirlockResourceType
+from models.domain.airlock_resource import AirlockRequestStatus
 from db.repositories.airlock_resources import AirlockResourceRepository
-from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus
+from models.domain.airlock_request import AirlockRequest
 from models.schemas.airlock_request import AirlockRequestInCreate
+from resources import strings
 
 
 class AirlockRequestRepository(AirlockResourceRepository):
     def __init__(self, client: CosmosClient):
         super().__init__(client)
 
-    @staticmethod
-    def airlock_request_query_string():
-        return f'SELECT * FROM c WHERE c.resourceType = "{AirlockResourceType.AirlockRequest}"'
+    def validate_status_update(current_status: AirlockRequestStatus, new_status: AirlockRequestStatus):
+        # Cancel can be done within any stage
+        cancel_condition = new_status == AirlockRequestStatus.Cancelled
+        # Cannot change status from block
+        blocked_condition = current_status != AirlockRequestStatus.Blocked
+        # Cannot change status from approved
+        approved_condition = current_status != AirlockRequestStatus.Approved
+        # If draft can only be changed to submitted
+        draft_condition = current_status == AirlockRequestStatus.Draft and new_status == AirlockRequestStatus.Submitted
+        # If submitted needs to get a review first
+        submit_condition = current_status == AirlockRequestStatus.Submitted and new_status == AirlockRequestStatus.InReview
+        # If in review can only be changed to either approve or rejected
+        in_review_condition = current_status == AirlockRequestStatus.InReview and new_status == AirlockRequestStatus.Approved or new_status == AirlockRequestStatus.Rejected
+        # If rejected can only return to in review or be blocked
+        rejected_condition = current_status == AirlockRequestStatus.Rejected and new_status == AirlockRequestStatus.InReview or new_status == AirlockRequestStatus.Blocked
+
+        return cancel_condition and blocked_condition and approved_condition and draft_condition and submit_condition and in_review_condition and rejected_condition
 
     def create_airlock_request_item(self, airlock_request_input: AirlockRequestInCreate, workspace_id: str) -> AirlockRequest:
         full_airlock_request_id = str(uuid.uuid4())
@@ -27,7 +44,7 @@ class AirlockRequestRepository(AirlockResourceRepository):
         airlock_request = AirlockRequest(
             id=full_airlock_request_id,
             workspaceId=workspace_id,
-            business_justification=airlock_request_input.business_justification,
+            businessJustification=airlock_request_input.businessJustification,
             requestType=airlock_request_input.requestType,
             properties=resource_spec_parameters
         )
@@ -35,17 +52,19 @@ class AirlockRequestRepository(AirlockResourceRepository):
         return airlock_request
 
     def get_airlock_request_by_id(self, airlock_request_id: str) -> AirlockRequest:
-        query = self.airlock_request_query_string() + f' AND c.id = "{airlock_request_id}"'
-        airlock_requests = self.query(query=query)
+        airlock_requests = self.read_item_by_id(airlock_request_id)
         if not airlock_requests:
             raise EntityDoesNotExist
         return parse_obj_as(AirlockRequest, airlock_requests[0])
 
-    def update_airlock_request_status(self, airlock_request: AirlockRequest, status: AirlockRequestStatus, user: User) -> AirlockRequest:
-        updated_request = copy.deepcopy(airlock_request)
-        updated_request.status = status
-
-        return self.update_airlock_resource_item(airlock_request, updated_request, user)
+    def update_airlock_request_status(self, airlock_request: AirlockRequest, new_status: AirlockRequestStatus, user: User) -> AirlockRequest:
+        current_status = airlock_request.status
+        if self.validate_status_update(current_status, new_status):
+            updated_request = copy.deepcopy(airlock_request)
+            updated_request.status = new_status
+            return self.update_airlock_resource_item(airlock_request, updated_request, user)
+        else:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE)
 
     def get_airlock_request_spec_params(self):
         return self.get_resource_base_spec_params()

@@ -24,6 +24,34 @@ resource "azurerm_eventgrid_topic" "status_changed" {
   }
 }
 
+# Event grid status_changed private endpoint
+resource "azurerm_private_dns_zone" "status_changed" {
+  name                = "privatelink.eventgrid.azure.net"
+  resource_group_name = var.resource_group_name
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_private_endpoint" "sspe" {
+  name                = "pe-ss-${var.tre_id}"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  subnet_id           = var.shared_subnet_id
+  lifecycle { ignore_changes = [tags] }
+
+  private_dns_zone_group {
+    name                 = "private-dns-zone-group"
+    private_dns_zone_ids = [azurerm_private_dns_zone.status_changed.id]
+  }
+
+  private_service_connection {
+    name                           = "psc-ss-${var.tre_id}"
+    private_connection_resource_id = azurerm_eventgrid_topic.status_changed.id
+    is_manual_connection           = false
+    subresource_names              = ["EventGrid"]
+  }
+}
+
+
 resource "azurerm_key_vault_secret" "eventgrid_status_changed_access_key" {
   name         = "eventgrid-status-changed-access-key"
   value        = azurerm_eventgrid_topic.status_changed.primary_access_key

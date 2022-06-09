@@ -7,11 +7,10 @@ def get_sample_airlock_request(workspace_id: str, airlock_request_id: str) -> di
     return {
         "requestId": airlock_request_id,
         "workspaceId": workspace_id,
-        "isActive": True,
         "status": "draft",
         "requestType": "import",
         "files": [],
-        "business_justification": "some business justification",
+        "businessJustification": "some business justification",
         "resourceType": AirlockResourceType.AirlockRequest
     }
 
@@ -29,13 +28,13 @@ class AirlockRequestInResponse(BaseModel):
 
 class AirlockRequestInCreate(BaseModel):
     requestType: AirlockRequestType = Field("", title="Airlock request type", description="Values for the parameters required by the Airlock request specification")
-    business_justification: str = Field("Business Justifications", title="Explanation that will be provided to the request reviewer")
+    businessJustification: str = Field("Business Justifications", title="Explanation that will be provided to the request reviewer")
     properties: dict = Field({}, title="Airlock request parameters", description="Values for the parameters required by the Airlock request specification")
 
     class Config:
         schema_extra = {
             "example": {
                 "requestType": "import",
-                "business_justification": "some business justification"
+                "businessJustification": "some business justification"
             }
         }

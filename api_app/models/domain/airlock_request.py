@@ -2,20 +2,7 @@ from typing import List
 from enum import Enum
 from pydantic import Field
 from resources import strings
-from models.domain.airlock_resource import AirlockResource, AirlockResourceType
-
-
-class AirlockRequestStatus(str, Enum):
-    """
-    Airlock Request status
-    """
-    Draft = strings.AIRLOCK_RESOURCE_STATUS_DRAFT
-    Submitted = strings.AIRLOCK_RESOURCE_STATUS_SUBMITTED
-    InReview = strings.AIRLOCK_RESOURCE_STATUS_INREVIEW
-    Approved = strings.AIRLOCK_RESOURCE_STATUS_APPROVED
-    Rejected = strings.AIRLOCK_RESOURCE_STATUS_REJECTED
-    Cancelled = strings.AIRLOCK_RESOURCE_STATUS_CANCELLED
-    Blocked = strings.AIRLOCK_RESOURCE_STATUS_BLOCKED
+from models.domain.airlock_resource import AirlockRequestStatus, AirlockResource, AirlockResourceType
 
 
 class AirlockRequestType(str, Enum):
@@ -31,5 +18,5 @@ class AirlockRequest(AirlockResource):
     resourceType = AirlockResourceType.AirlockRequest
     requestType: AirlockRequestType = Field("", title="Airlock request type")
     files: List[str] = Field([], title="Files of the request")
-    business_justification: str = Field("Business Justifications", title="Explanation that will be provided to the request reviewer")
-    status: AirlockRequestStatus = Field(AirlockRequestStatus.Draft, title="Airlock request status")
+    businessJustification: str = Field("Business Justifications", title="Explanation that will be provided to the request reviewer"),
+    status = AirlockRequestStatus.Draft

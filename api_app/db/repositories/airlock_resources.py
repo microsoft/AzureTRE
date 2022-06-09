@@ -21,7 +21,8 @@ class AirlockResourceRepository(BaseRepository):
         history_item = AirlockResourceHistoryItem(
             resourceVersion=original_resource.resourceVersion,
             updatedWhen=original_resource.updatedWhen,
-            user=original_resource.user
+            user=original_resource.user,
+            previousStatus=original_resource.status
         )
         new_resource.history.append(history_item)
 
