@@ -46,11 +46,12 @@ resource "azurerm_key_vault_certificate" "tlscert" {
         "keyEncipherment",
       ]
 
+      subject            = "CN=${var.tre_id}.${var.location}.cloudapp.azure.com"
+
       subject_alternative_names {
-        dns_names = ["internal.contoso.com", "domain.hello.world"]
+        dns_names = ["${var.tre_id}.${var.location}.cloudapp.azure.com"]
       }
 
-      subject            = "CN=hello-world"
       validity_in_months = 12
     }
   }
