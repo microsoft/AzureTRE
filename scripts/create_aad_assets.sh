@@ -17,17 +17,20 @@ if [ "${LOGGED_IN_TENANT_ID}" != "${AAD_TENANT_ID}" ]; then
   CHANGED_TENANT=1
 fi
 
-# Create the identity that is able to create other applications
+APPLICATION_PERMISSION="Application.ReadWrite.OwnedBy"
 if [ "${AUTO_WORKSPACE_APP_REGISTRATION}" == true ]; then
-  ./scripts/aad/create_application_administrator.sh \
-  --name "${TRE_ID}" --admin-consent
+  APPLICATION_PERMISSION="Application.ReadWrite.All"
+fi
 
-  echo "Please copy the values above into your /templates/core/.env."
-  read -p "Please confirm you have done this? (y/N) " -n 1 -r
-  echo
-  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    exit 0
-  fi
+# Create the identity that is able to administer other applications
+./scripts/aad/create_application_administrator.sh \
+--name "${TRE_ID}" --admin-consent --application-permission "${APPLICATION_PERMISSION}"
+
+echo "Please copy the values above into your /templates/core/.env."
+read -p "Please confirm you have done this? (y/N) " -n 1 -r
+echo
+if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+  exit 0
 fi
 
 # Then register an App for the TRE Core.
