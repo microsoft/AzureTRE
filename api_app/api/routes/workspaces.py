@@ -401,7 +401,7 @@ async def create_draft_request(airlock_request_input: AirlockRequestInCreate, us
     try:
         airlock_request = airlock_request_repo.create_airlock_request_item(airlock_request_input, workspace.id)
     except (ValidationError, ValueError) as e:
-        logging.error(f"Failed create air lock request model instance: {e}")
+        logging.error(f"Failed to create air lock request model instance: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     await save_and_publish_event_airlock_request(airlock_request, airlock_request_repo, user)
     return AirlockRequestInResponse(airlock_request=airlock_request)
