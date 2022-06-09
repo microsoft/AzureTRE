@@ -409,7 +409,8 @@ jobs:
       - name: Publish bundle
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: "make bundle-publish DIR=${{ matrix.BUNDLE_DIR }}"
+          # Although porter publish will build automatically, our makefile build target includes logic that should run
+          COMMAND: "make bundle-build DIR=${{ matrix.BUNDLE_DIR }} && make bundle-publish DIR=${{ matrix.BUNDLE_DIR }}"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}

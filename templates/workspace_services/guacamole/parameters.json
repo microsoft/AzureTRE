@@ -50,6 +50,67 @@
       "source": {
         "env": "MGMT_STORAGE_ACCOUNT_NAME"
       }
+    },
+
+    {
+      "name": "guac_disable_copy",
+      "source": {
+        "env": "GUAC_DISABLE_COPY"
+      }
+    },
+    {
+      "name": "guac_disable_download",
+      "source": {
+        "env": "GUAC_DISABLE_DOWNLOAD"
+      }
+    },
+    {
+      "name": "guac_disable_paste",
+      "source": {
+        "env": "GUAC_DISABLE_PASTE"
+      }
+    },
+    {
+      "name": "guac_drive_name",
+      "source": {
+        "env": "GUAC_DRIVE_NAME"
+      }
+    },
+    {
+      "name": "guac_drive_path",
+      "source": {
+        "env": "GUAC_DRIVE_PATH"
+      }
+    },
+    {
+      "name": "guac_enable_drive",
+      "source": {
+        "env": "GUAC_ENABLE_DRIVE"
+      }
+    },
+    {
+      "name": "image_name",
+      "source": {
+        "env": "IMAGE_NAME"
+      }
+    },
+    {
+      "name": "image_tag",
+      "source": {
+        "env": "IMAGE_TAG"
+      }
+    },
+    {
+      "name": "is_exposed_externally",
+      "source": {
+        "env": "IS_EXPOSED_EXTERNALLY"
+      }
+    },
+    {
+      "name": "workspace_identifier_uri",
+      "source": {
+        "env": "WORKSPACE_IDENTIFIER_URI"
+      }
     }
   ]
 }

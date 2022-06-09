@@ -19,6 +19,7 @@ Options:
     -n,--name                   Required. The prefix for the app (registration) names e.g., "TRE".
     -a,--admin-consent          Optional, but recommended. Grants admin consent for the app registrations, when this flag is set.
                                 Requires directory admin privileges to the Azure AD in question.
+    -p,--application-permission The API Permission that this identity will be granted.
 
 USAGE
     exit 1
@@ -37,6 +38,7 @@ declare currentUserId=""
 declare spId=""
 declare msGraphUri="https://graph.microsoft.com/v1.0"
 declare appName=""
+declare applicationPermission="Application.ReadWrite.OwnedBy"
 
 # Initialize parameters specified from command line
 while [[ $# -gt 0 ]]; do
@@ -48,6 +50,10 @@ while [[ $# -gt 0 ]]; do
         -a|--admin-consent)
             grantAdminConsent=1
             shift 1
+        ;;
+        -p|--application-permission)
+            applicationPermission=$2
+            shift 2
         ;;
         *)
             echo "Invalid option: $1."
@@ -97,9 +103,9 @@ fi
 # Get the Required Resource Scope/Role
 msGraphAppId="00000003-0000-0000-c000-000000000000"
 msGraphObjectId=$(az ad sp show --id ${msGraphAppId} --query "objectId" --output tsv)
-applicationReadWriteAllId=$(az ad sp show --id ${msGraphAppId} --query "appRoles[?value=='Application.ReadWrite.All'].id" --output tsv)
 
-roleApplicationReadWriteAll="$(get_msgraph_role 'Application.ReadWrite.All' )"
+applicationPermissionId=$(az ad sp show --id ${msGraphAppId} --query "appRoles[?value=='${applicationPermission}'].id" --output tsv)
+roleApplicationPermission=$(get_msgraph_role "${applicationPermission}")
 
 appDefinition=$(jq -c . << JSON
 {
@@ -109,7 +115,7 @@ appDefinition=$(jq -c . << JSON
     {
         "resourceAppId": "${msGraphAppId}",
         "resourceAccess": [
-            ${roleApplicationReadWriteAll}
+            ${roleApplicationPermission}
         ]
     }]
 }
@@ -175,7 +181,7 @@ az ad app permission grant --id "${appId}" --api "${msGraphAppId}"
 if [[ $grantAdminConsent -eq 1 ]]; then
     echo "Granting admin consent for '${appName} app (service principal ID ${spId}) - NOTE: Directory admin privileges required for this step"
     wait_for_new_service_principal "${spId}"
-    grant_admin_consent "${spId}" "$msGraphObjectId" "${applicationReadWriteAllId}"
+    grant_admin_consent "${spId}" "$msGraphObjectId" "${applicationPermissionId}"
 fi
 
 cat << ENV_VARS
