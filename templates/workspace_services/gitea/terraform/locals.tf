@@ -14,6 +14,6 @@ locals {
   workspace_service_tags = {
     tre_id                   = var.tre_id
     tre_workspace_id         = var.workspace_id
-    tre_workspace_service_id = var.parent_service_id
+    tre_workspace_service_id = var.id
   }
 }

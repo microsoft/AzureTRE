@@ -18,10 +18,6 @@ parameters:
     type: string
   - name: tre_id
     type: string
-  - name: parent_service_id
-    type: string
-    description: "Resource group containing the shared ACR"
-    env: PARENT_SERVICE_ID
   - name: mgmt_acr_name
     type: string
     env: mgmt_acr_name
@@ -81,7 +77,6 @@ install:
       vars:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
-        parent_service_id: "{{ bundle.parameters.parent_service_id }}"
         id: "{{ bundle.parameters.id }}"
         mgmt_acr_name: "{{ bundle.parameters.mgmt_acr_name }}"
         mgmt_resource_group_name: "{{ bundle.parameters.mgmt_resource_group_name }}"
@@ -109,7 +104,6 @@ uninstall:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
         id: "{{ bundle.parameters.id }}"
-        parent_service_id: "{{ bundle.parameters.parent_service_id }}"
         mgmt_acr_name: "{{ bundle.parameters.mgmt_acr_name }}"
         mgmt_resource_group_name: "{{ bundle.parameters.mgmt_resource_group_name }}"
         openid_client_id: "{{ bundle.parameters.openid_client_id }}"
