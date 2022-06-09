@@ -17,8 +17,8 @@ build-and-push-resource-processor: build-resource-processor-vm-porter-image push
 build-and-push-gitea: build-gitea-image push-gitea-image
 build-and-push-guacamole: build-guacamole-image push-guacamole-image
 build-and-push-mlflow: build-mlflow-image push-mlflow-image
+tre-deploy: deploy-core build-and-deploy-ui deploy-shared-services db-migrate show-core-output
 build-and-push-airlock-processor: build-airlock-processor push-airlock-processor
-tre-deploy: deploy-core deploy-shared-services db-migrate show-core-output
 deploy-shared-services:
 	$(MAKE) firewall-install \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
@@ -371,7 +371,18 @@ static-web-upload:
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ./templates/core/.env \
 	&& pushd ${MAKEFILE_DIR}/templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/templates/core/private.env \
-	&& ${MAKEFILE_DIR}/templates/core/terraform/scripts/upload_static_web.sh
+	&& ${MAKEFILE_DIR}/devops/scripts/upload_static_web.sh
+
+build-and-deploy-ui:
+	$(call target_title, "Build and deploy UI") \
+	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ./devops/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ./templates/core/.env \
+	&& pushd ${MAKEFILE_DIR}/templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/templates/core/private.env \
+	&& if [ "$${DEPLOY_UI}" == "true" ]; then ${MAKEFILE_DIR}/devops/scripts/build_deploy_ui.sh; else echo "UI Deploy skipped as DEPLOY_UI not true"; fi \
 
 prepare-for-e2e:
 	$(call workspace_bundle,base) \
