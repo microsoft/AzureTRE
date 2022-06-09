@@ -52,6 +52,7 @@ module "network" {
   location            = var.location
   resource_group_name = azurerm_resource_group.core.name
   core_address_space  = var.core_address_space
+  tre_core_tags       = local.tre_core_tags
 }
 
 module "appgateway" {
@@ -65,6 +66,7 @@ module "appgateway" {
   keyvault_id                = azurerm_key_vault.kv.id
   static_web_dns_zone_id     = module.network.static_web_dns_zone_id
   log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
+  tre_core_tags              = local.tre_core_tags
 
   depends_on = [
     azurerm_key_vault.kv,
@@ -115,4 +117,19 @@ module "resource_processor_vmss_porter" {
     azurerm_key_vault.kv,
     azurerm_key_vault_access_policy.deployer
   ]
+}
+
+module "airlock" {
+  source        = "./airlock"
+  tre_core_tags = local.tre_core_tags
+}
+
+module "azure-monitor" {
+  source        = "./azure-monitor"
+  tre_core_tags = local.tre_core_tags
+}
+
+module "vmss_porter" {
+  source        = "./resource_processor/vmss_porter"
+  tre_core_tags = local.tre_core_tags
 }
