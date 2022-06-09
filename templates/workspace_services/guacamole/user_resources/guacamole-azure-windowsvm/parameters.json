@@ -39,6 +39,42 @@
       "source": {
         "env": "MGMT_STORAGE_ACCOUNT_NAME"
       }
+    },
+    {
+      "name": "id",
+      "source": {
+        "env": "ID"
+      }
+    },
+    {
+      "name": "nexus_version",
+      "source": {
+        "env": "NEXUS_VERSION"
+      }
+    },
+    {
+      "name": "os_image",
+      "source": {
+        "env": "OS_IMAGE"
+      }
+    },
+    {
+      "name": "shared_storage_access",
+      "source": {
+        "env": "SHARED_STORAGE_ACCESS"
+      }
+    },
+    {
+      "name": "shared_storage_name",
+      "source": {
+        "env": "SHARED_STORAGE_NAME"
+      }
+    },
+    {
+      "name": "vm_size",
+      "source": {
+        "env": "VM_SIZE"
+      }
     }
   ]
 }
