@@ -89,6 +89,24 @@ resource "azurerm_key_vault_secret" "auth_tenant_id" {
   ]
 }
 
+resource "azurerm_key_vault_secret" "application_admin_client_id" {
+  name         = "application-admin-client-id"
+  value        = var.application_admin_client_id
+  key_vault_id = azurerm_key_vault.kv.id
+  depends_on = [
+    azurerm_key_vault_access_policy.deployer
+  ]
+}
+
+resource "azurerm_key_vault_secret" "application_admin_client_secret" {
+  name         = "application-admin-client-secret"
+  value        = var.application_admin_client_secret
+  key_vault_id = azurerm_key_vault.kv.id
+  depends_on = [
+    azurerm_key_vault_access_policy.deployer
+  ]
+}
+
 resource "azurerm_monitor_diagnostic_setting" "kv" {
   name                       = "diagnostics-kv-${var.tre_id}"
   target_resource_id         = azurerm_key_vault.kv.id
