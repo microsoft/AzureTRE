@@ -60,7 +60,7 @@ Example on how to run the script:
 ```bash
 ./scripts/aad/aad-app-reg.sh \
     --name <TRE_ID> \
-    --swaggerui-redirecturl https://<TRE_ID>.<Azure location>.cloudapp.azure.com/api/docs/oauth2-redirect \
+    --tre-url https://<TRE_ID>.<Azure location>.cloudapp.azure.com \
     --read-write-all-permission \
     --admin-consent \
     --automation-account \
@@ -69,14 +69,14 @@ Example on how to run the script:
 Below is a sample where `TRE_ID` has value `mytre` and the Azure location is `westeurope`:
 
   ```bash
-  ./scripts/aad/aad-app-reg.sh --name TRE --swaggerui-redirecturl https://mytre.westeurope.cloudapp.azure.com/api/docs/oauth2-redirect --admin-consent
+  ./scripts/aad/aad-app-reg.sh --name TRE --tre-url https://mytre.westeurope.cloudapp.azure.com/api/docs/oauth2-redirect --admin-consent
   --automation-account
   ```
 
 | Argument | Description |
 | -------- | ----------- |
 | `--name` | The prefix of the name of the app registrations. `TRE` will give you `TRE API` and `TRE Swagger UI`. |
-| `--swaggerui-redirecturl` | The reply URL for the Swagger UI app. Use the values of the [environment variables](./environment-variables.md) `TRE_ID` and `LOCATION` in the URL. Reply URL for the localhost, `http://localhost:8000/api/docs/oauth2-redirect`, will be added by default. |
+| `--tre-url` | Used to construct auth redirection URLs for the UI and Swagger app. Use the values of the [environment variables](./environment-variables.md) `TRE_ID` and `LOCATION` in the URL. Reply URL for the localhost, `http://localhost:8000/api/docs/oauth2-redirect`, will be added by default. |
 | `--admin-consent` | Grants admin consent for the app registrations. This is required for them to function properly, but requires AAD admin privileges. |
 | `--automation-account` | This is an optional parameter but will create an application with test users with permission to use the `TRE API` and `TRE Swagger UI` |
 | `--read-write-all-permission` | This is an optional parameter that if present will grant the Read/Write All permission to the Application. This allows it to create other applications (such as workspaces).
