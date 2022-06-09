@@ -11,12 +11,6 @@
       }
     },
     {
-      "name": "azure_location",
-      "source": {
-        "env": "LOCATION"
-      }
-    },
-    {
       "name": "tfstate_container_name",
       "source": {
         "env": "TERRAFORM_STATE_CONTAINER_NAME"
@@ -32,6 +26,18 @@
       "name": "tfstate_storage_account_name",
       "source": {
         "env": "MGMT_STORAGE_ACCOUNT_NAME"
+      }
+    },
+    {
+      "name": "cert_name",
+      "source": {
+        "env": "CERT_NAME"
+      }
+    },
+    {
+      "name": "domain_prefix",
+      "source": {
+        "env": "DOMAIN_PREFIX"
       }
     }
   ]
