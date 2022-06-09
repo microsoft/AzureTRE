@@ -33,7 +33,7 @@ async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest
 
 async def update_status_and_publish_event_airlock_request(airlock_request: AirlockRequest, airlock_request_repo: AirlockRequestRepository, user: User, status: AirlockRequestStatus):
     try:
-        logging.debug(f"Saving airlock request item: {airlock_request.id}")
+        logging.debug(f"Updating airlock request item: {airlock_request.id}")
         updated_airlock_request = airlock_request_repo.update_airlock_request_status(airlock_request, status, user)
     except Exception as e:
         logging.error(f'Failed updating airlock_request item {airlock_request}: {e}')

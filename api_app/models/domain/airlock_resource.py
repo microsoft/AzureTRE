@@ -23,7 +23,7 @@ class AirlockResourceType(str, Enum):
     Type of resource to create
     """
     AirlockRequest = strings.AIRLOCK_RESOURCE_TYPE_REQUEST
-    # TBD Airlock review
+    # TODO Airlock review type - https://github.com/microsoft/AzureTRE/issues/1840
 
 
 class AirlockResourceHistoryItem(AzureTREModel):

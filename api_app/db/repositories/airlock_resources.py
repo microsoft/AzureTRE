@@ -31,6 +31,6 @@ class AirlockResourceRepository(BaseRepository):
         new_resource.user = user
         new_resource.updatedWhen = self.get_timestamp()
 
-        # TODO add validation
+        # TODO https://github.com/microsoft/AzureTRE/issues/2016
         self.update_item(new_resource)
         return new_resource
