@@ -12,12 +12,6 @@ variable "location" {
   description = "Azure region for deployment of core TRE services"
 }
 
-variable "deploy_ui" {
-  type        = bool
-  description = "Feature flag to determine whether to deploy the inbuilt TRE UI or not"
-  default     = false
-}
-
 variable "acr_name" {
   type        = string
   description = "Management ACR name"

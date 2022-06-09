@@ -1,5 +1,7 @@
 #!/bin/bash
-set -e
+set -o errexit
+set -o pipefail
+set -o nounset
 
 # skip if feature flag not set to true
 if [ ! "${DEPLOY_UI}" == "true" ]; then
@@ -22,4 +24,4 @@ yarn build
 
 popd
 
-DIR=./ui/app/build ./templates/core/terraform/scripts/upload_static_web.sh
+DIR=./ui/app/build ./devops/scripts/upload_static_web.sh
