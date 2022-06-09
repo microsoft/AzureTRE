@@ -9,7 +9,7 @@
 
 set -o errexit
 set -o pipefail
-set -o xtrace
+# set -o xtrace
 
 function usage() {
     cat <<USAGE
@@ -133,8 +133,8 @@ if [ "${keyvault}" != "0" ]; then
   echo "Removing access policies so if the vault is recovered there are not there"
   access_policies=$(echo "$keyvault" | jq -r '.properties.accessPolicies[].objectId' )
   for access_policy_id in ${access_policies}; do
+    echo "Attempting to delete access policy ${access_policy_id}"
     az keyvault delete-policy --name "${keyvault_name}" --resource-group "${core_tre_rg}" --object-id "${access_policy_id}" || echo "Not deleting access policy for ${access_policy_id}."
-    echo "Access policy ${access_policy_id} deleted"
   done
 
 fi
