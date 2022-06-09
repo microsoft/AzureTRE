@@ -72,7 +72,9 @@ resource "azurerm_app_service" "api" {
     websockets_enabled                   = false
 
     cors {
-      allowed_origins     = []
+      allowed_origins = [
+        var.enable_local_debugging ? "http://localhost:3000" : ""
+      ]
       support_credentials = false
     }
 

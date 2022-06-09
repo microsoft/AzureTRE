@@ -64,6 +64,7 @@ nav:
   - TRE Developers:
       - 'tre-developers/index.md'
       - API: 'tre-developers/api.md'
+      - UI: 'tre-developers/ui.md'
       - Resource Processor: 'tre-developers/resource-processor.md'
       - End to End Tests: 'tre-developers/end-to-end-tests.md'
       - Letsencrypt: 'tre-developers/letsencrypt.md'
@@ -86,4 +87,4 @@ nav:
           - Guacamole Linux VM: 'tre-templates/user-resources/guacamole-linux-vm.md'
       - Pipeline Templates:
           - Overview: 'tre-templates/pipeline-templates/overview.md'
-          - Pipeline Schema: 'tre-templates/pipeline-templates/template-schema.md'
+          - Pipeline Schema: 'tre-templates/pipeline-templates/pipeline-schema.md'
