@@ -146,7 +146,8 @@ jobs:
       ciGitRef: ${{ needs.pr_comment.outputs.ciGitRef }}
       e2eTestsCustomSelector: >-
         ${{ (needs.pr_comment.outputs.command == 'run-tests-extended' && 'extended') ||
-        (needs.pr_comment.outputs.command == 'run-tests-shared-services' && 'shared_sevices') }}
+        (needs.pr_comment.outputs.command == 'run-tests-shared-services' && 'shared_sevices') ||
+        (needs.pr_comment.outputs.command == 'run-tests' && '') }}
     secrets:
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
       ACR_NAME: ${{ format('tre{0}', needs.pr_comment.outputs.prRefId) }}
