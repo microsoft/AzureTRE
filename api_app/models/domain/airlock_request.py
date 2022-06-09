@@ -18,5 +18,5 @@ class AirlockRequest(AirlockResource):
     resourceType = AirlockResourceType.AirlockRequest
     requestType: AirlockRequestType = Field("", title="Airlock request type")
     files: List[str] = Field([], title="Files of the request")
-    businessJustification: str = Field("Business Justifications", title="Explanation that will be provided to the request reviewer"),
+    businessJustification: str = Field("Business Justifications", title="Explanation that will be provided to the request reviewer")
     status = AirlockRequestStatus.Draft

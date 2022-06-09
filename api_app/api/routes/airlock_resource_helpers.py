@@ -31,10 +31,10 @@ async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.EVENT_GRID_GENERAL_ERROR_MESSAGE)
 
 
-async def update_status_and_publish_event_airlock_request(airlock_request: AirlockRequest, airlock_request_repo: AirlockRequestRepository, user: User, status: AirlockRequestStatus):
+async def update_status_and_publish_event_airlock_request(airlock_request: AirlockRequest, airlock_request_repo: AirlockRequestRepository, user: User, new_status: AirlockRequestStatus):
     try:
         logging.debug(f"Updating airlock request item: {airlock_request.id}")
-        updated_airlock_request = airlock_request_repo.update_airlock_request_status(airlock_request, status, user)
+        updated_airlock_request = airlock_request_repo.update_airlock_request_status(airlock_request, new_status, user)
     except Exception as e:
         logging.error(f'Failed updating airlock_request item {airlock_request}: {e}')
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
