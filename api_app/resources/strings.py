@@ -158,6 +158,9 @@ AIRLOCK_RESOURCE_STATUS_BLOCKED = "blocked"
 AIRLOCK_REQUEST_TYPE_IMPORT = "import"
 AIRLOCK_REQUEST_TYPE_EXPORT = "export"
 
+# Airlock Messages
+AIRLOCK_REQUEST_DOES_NOT_EXIST = "Airlock request does not exist"
+
 # Deployments
 RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE = "This resource has not yet been deployed"
 RESOURCE_STATUS_UPGRADE_NOT_STARTED_MESSAGE = "The upgrade for this resource has not yet started"
@@ -166,6 +169,9 @@ RESOURCE_STATUS_UPGRADE_NOT_STARTED_MESSAGE = "The upgrade for this resource has
 SERVICE_BUS_GENERAL_ERROR_MESSAGE = "Service bus failure"
 DEPLOYMENT_STATUS_MESSAGE_FORMAT_INCORRECT = "Service bus message is not formatted correctly"
 DEPLOYMENT_STATUS_ID_NOT_FOUND = "Service bus message refers to resource id = {} which does not exist"
+
+# Event grid
+EVENT_GRID_GENERAL_ERROR_MESSAGE = "Event grid failure"
 
 # Workspace creation validation
 MISSING_REQUIRED_PARAMETERS = "Missing required parameters"

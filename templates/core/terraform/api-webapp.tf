@@ -2,31 +2,42 @@ data "local_file" "api_app_version" {
   filename = "${path.root}/../../../api_app/_version.py"
 }
 
+data "azurerm_eventgrid_topic" "status_changed" {
+  name                = "evgt-airlock-status-changed-${var.tre_id}"
+  resource_group_name = azurerm_resource_group.core.name
+  depends_on = [
+    module.airlock_resources
+  ]
+}
+
+data "azurerm_key_vault_secret" "eventgrid_status_changed_access_key" {
+  name         = "eventgrid-status-changed-access-key"
+  key_vault_id = azurerm_key_vault.kv.id
+  depends_on = [
+    module.airlock_resources
+  ]
+}
+
 locals {
   version = replace(replace(replace(data.local_file.api_app_version.content, "__version__ = \"", ""), "\"", ""), "\n", "")
 }
 
-resource "azurerm_app_service_plan" "core" {
+resource "azurerm_service_plan" "core" {
   name                = "plan-${var.tre_id}"
   resource_group_name = azurerm_resource_group.core.name
   location            = azurerm_resource_group.core.location
-  kind                = "linux"
-  reserved            = true
+  os_type             = "Linux"
+  sku_name            = var.api_app_service_plan_sku_size
   tags                = local.tre_core_tags
+  worker_count        = 1
   lifecycle { ignore_changes = [tags] }
-
-  sku {
-    tier     = var.api_app_service_plan_sku_tier
-    capacity = 1
-    size     = var.api_app_service_plan_sku_size
-  }
 }
 
 resource "azurerm_app_service" "api" {
   name                            = "api-${var.tre_id}"
   resource_group_name             = azurerm_resource_group.core.name
   location                        = azurerm_resource_group.core.location
-  app_service_plan_id             = azurerm_app_service_plan.core.id
+  app_service_plan_id             = azurerm_service_plan.core.id
   https_only                      = true
   key_vault_reference_identity_id = azurerm_user_assigned_identity.id.id
   tags                            = local.tre_core_tags
@@ -42,6 +53,8 @@ resource "azurerm_app_service" "api" {
     "STATE_STORE_ENDPOINT"                       = azurerm_cosmosdb_account.tre-db-account.endpoint
     "COSMOSDB_ACCOUNT_NAME"                      = azurerm_cosmosdb_account.tre-db-account.name
     "SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE"      = "sb-${var.tre_id}.servicebus.windows.net"
+    "EVENT_GRID_TOPIC_ENDPOINT"                  = data.azurerm_eventgrid_topic.status_changed.endpoint
+    "EVENT_GRID_ACCESS_KEY"                      = "@Microsoft.KeyVault(SecretUri=${data.azurerm_key_vault_secret.eventgrid_status_changed_access_key.id})"
     "SERVICE_BUS_RESOURCE_REQUEST_QUEUE"         = azurerm_servicebus_queue.workspacequeue.name
     "SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE" = azurerm_servicebus_queue.service_bus_deployment_status_update_queue.name
     "MANAGED_IDENTITY_CLIENT_ID"                 = azurerm_user_assigned_identity.id.client_id
@@ -101,6 +114,9 @@ resource "azurerm_app_service" "api" {
       }
     }
   }
+  depends_on = [
+    module.airlock_resources
+  ]
 }
 
 resource "azurerm_private_endpoint" "api_private_endpoint" {

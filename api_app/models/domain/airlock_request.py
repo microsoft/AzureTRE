@@ -18,12 +18,6 @@ class AirlockRequestStatus(str, Enum):
     Blocked = strings.AIRLOCK_RESOURCE_STATUS_BLOCKED
 
 
-class AirlockContainer(str, Enum):
-    containerId: str = Field("", title="Container ID")
-    type: AirlockRequestStatus = Field("", title="Container type")
-    connectionString: str = Field("", title="Container connection string")
-
-
 class AirlockRequestType(str, Enum):
     Import = strings.AIRLOCK_REQUEST_TYPE_IMPORT
     Export = strings.AIRLOCK_REQUEST_TYPE_EXPORT
@@ -39,4 +33,3 @@ class AirlockRequest(AirlockResource):
     files: List[str] = Field([], title="Files of the request")
     business_justification: str = Field("Business Justifications", title="Explanation that will be provided to the request reviewer")
     status: AirlockRequestStatus = Field(AirlockRequestStatus.Draft, title="Airlock request status")
-    container: List[AirlockContainer] = Field([], title="Containers of the request")

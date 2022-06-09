@@ -1,3 +1,8 @@
+data "azurerm_key_vault" "kv" {
+  name                = "kv-${var.tre_id}"
+  resource_group_name = var.resource_group_name
+}
+
 # Event grid topics
 resource "azurerm_eventgrid_topic" "step_result" {
   name                = local.step_result_topic_name
@@ -17,6 +22,15 @@ resource "azurerm_eventgrid_topic" "status_changed" {
   tags = {
     Publishers = "TRE API;"
   }
+}
+
+resource "azurerm_key_vault_secret" "eventgrid_status_changed_access_key" {
+  name         = "eventgrid-status-changed-access-key"
+  value        = azurerm_eventgrid_topic.status_changed.primary_access_key
+  key_vault_id = data.azurerm_key_vault.kv.id
+  depends_on = [
+    azurerm_eventgrid_topic.status_changed
+  ]
 }
 
 # System topic

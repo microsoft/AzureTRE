@@ -17,8 +17,6 @@ class AirlockResourceHistoryItem(AzureTREModel):
     """
     Resource History Item - to preserve history of resource properties
     """
-    properties: dict = {}
-    isEnabled: bool
     resourceVersion: int
     updatedWhen: float
     user: dict = {}

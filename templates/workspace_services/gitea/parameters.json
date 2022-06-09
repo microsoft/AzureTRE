@@ -5,9 +5,9 @@
   "modified": "2021-06-04T13:37:29.5071039+03:00",
   "parameters": [
     {
-      "name": "tre_resource_id",
+      "name": "id",
       "source": {
-        "env": "TRE_RESOURCE_ID"
+        "env": "ID"
       }
     },
     {
@@ -23,9 +23,15 @@
       }
     },
     {
-      "name": "acr_name",
+      "name": "mgmt_acr_name",
       "source": {
         "env": "ACR_NAME"
+      }
+    },
+    {
+      "name": "mgmt_resource_group_name",
+      "source": {
+        "env": "MGMT_RESOURCE_GROUP_NAME"
       }
     },
     {

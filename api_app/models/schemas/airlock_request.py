@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from models.domain.airlock_resource import AirlockResourceType
-from models.domain.airlock_request import AirlockRequest
+from models.domain.airlock_request import AirlockRequest, AirlockRequestType
 
 
 def get_sample_airlock_request(workspace_id: str, airlock_request_id: str) -> dict:
@@ -8,25 +8,16 @@ def get_sample_airlock_request(workspace_id: str, airlock_request_id: str) -> di
         "requestId": airlock_request_id,
         "workspaceId": workspace_id,
         "isActive": True,
+        "status": "draft",
         "requestType": "import",
         "files": [],
         "business_justification": "some business justification",
-        "status": "draft",
-        "properties": {
-            "display_name": "some property",
-            "description": "some description",
-        },
-        "container": [{
-            "id": "containerid",
-            "type": "external",
-            "connectionstring": "https://externalstoragexyz.blob.core.windows.net/<ws_id>?sp=...XYZ"
-        }],
         "resourceType": AirlockResourceType.AirlockRequest
     }
 
 
 class AirlockRequestInResponse(BaseModel):
-    AirlockRequest: AirlockRequest
+    airlock_request: AirlockRequest
 
     class Config:
         schema_extra = {
@@ -37,14 +28,14 @@ class AirlockRequestInResponse(BaseModel):
 
 
 class AirlockRequestInCreate(BaseModel):
+    requestType: AirlockRequestType = Field("", title="Airlock request type", description="Values for the parameters required by the Airlock request specification")
+    business_justification: str = Field("Business Justifications", title="Explanation that will be provided to the request reviewer")
     properties: dict = Field({}, title="Airlock request parameters", description="Values for the parameters required by the Airlock request specification")
 
     class Config:
         schema_extra = {
             "example": {
-                "properties": {
-                    "type": "import",
-                    "business_justification": "some business justification",
-                }
+                "requestType": "import",
+                "business_justification": "some business justification"
             }
         }

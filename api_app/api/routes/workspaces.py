@@ -6,13 +6,15 @@ from jsonschema.exceptions import ValidationError
 
 from api.dependencies.database import get_repository
 from api.dependencies.workspaces import get_operation_by_id_from_path, get_workspace_by_id_from_path, get_deployed_workspace_by_id_from_path, get_deployed_workspace_service_by_id_from_path, get_workspace_service_by_id_from_path, get_user_resource_by_id_from_path
+from api.dependencies.airlock import get_airlock_request_by_id_from_path
+from models.domain.airlock_request import AirlockRequestStatus
 
 from db.repositories.operations import OperationRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.user_resources import UserResourceRepository
 from db.repositories.workspaces import WorkspaceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
-from db.repositories.airlock_requets import AirlockRequestRepository
+from db.repositories.airlock_requests import AirlockRequestRepository
 from models.domain.resource import ResourceType
 from models.domain.workspace import WorkspaceRole
 from models.schemas.operation import OperationInList, OperationInResponse
@@ -29,6 +31,7 @@ from services.azure_resource_status import get_azure_resource_status
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 from .resource_helpers import get_user_role_assignments, save_and_deploy_resource, construct_location_header, send_uninstall_message, \
     send_custom_action_message, send_resource_request_message
+from .airlock_resource_helpers import save_and_publish_event_airlock_request, update_status_and_publish_event_airlock_request
 from models.domain.request_action import RequestAction
 
 workspaces_core_router = APIRouter(dependencies=[Depends(get_current_tre_user_or_tre_admin)])
@@ -394,10 +397,17 @@ async def retrieve_user_resource_operations_by_user_resource_id_and_operation_id
 
 # airlock
 @airlock_workspace_router.post("/workspaces/{workspace_id}/requests", status_code=status.HTTP_201_CREATED, response_model=AirlockRequestInResponse, name=strings.API_CREATE_AIRLOCK_REQUEST, dependencies=[Depends(get_workspace_by_id_from_path)])
-async def create_draft_request(response: Response, airlock_request_input: AirlockRequestInCreate, user=Depends(get_current_workspace_owner_or_researcher_user), airlock_request_repo=Depends(get_repository(AirlockRequestRepository)), workspace=Depends(get_deployed_workspace_by_id_from_path)) -> AirlockRequestInResponse:
-    return
+async def create_draft_request(airlock_request_input: AirlockRequestInCreate, user=Depends(get_current_workspace_owner_or_researcher_user), airlock_request_repo=Depends(get_repository(AirlockRequestRepository)), workspace=Depends(get_deployed_workspace_by_id_from_path)) -> AirlockRequestInResponse:
+    try:
+        airlock_request = airlock_request_repo.create_airlock_request_item(airlock_request_input, workspace.id)
+    except (ValidationError, ValueError) as e:
+        logging.error(f"Failed create air lock request model instance: {e}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    await save_and_publish_event_airlock_request(airlock_request, airlock_request_repo, user)
+    return AirlockRequestInResponse(airlock_request=airlock_request)
 
 
-@airlock_workspace_router.post("/workspaces/{workspace_id}/requests/{request_id}/submit", status_code=status.HTTP_200_OK, response_model=AirlockRequestInResponse, name=strings.API_SUBMIT_AIRLOCK_REQUEST, dependencies=[Depends(get_current_workspace_owner_user)])
-async def create_submit_request(response: Response, airlock_request_input: AirlockRequestInCreate, user=Depends(get_current_workspace_owner_or_researcher_user), airlock_request_repo=Depends(get_repository(AirlockRequestRepository)), workspace=Depends(get_deployed_workspace_by_id_from_path)) -> AirlockRequestInResponse:
-    return
+@airlock_workspace_router.post("/workspaces/{workspace_id}/requests/{airlock_request_id}/submit", status_code=status.HTTP_200_OK, response_model=AirlockRequestInResponse, name=strings.API_SUBMIT_AIRLOCK_REQUEST, dependencies=[Depends(get_workspace_by_id_from_path)])
+async def create_submit_request(airlock_request=Depends(get_airlock_request_by_id_from_path), user=Depends(get_current_workspace_owner_or_researcher_user), airlock_request_repo=Depends(get_repository(AirlockRequestRepository))) -> AirlockRequestInResponse:
+    updated_resource = await update_status_and_publish_event_airlock_request(airlock_request, airlock_request_repo, user, AirlockRequestStatus.Submitted)
+    return AirlockRequestInResponse(airlock_request=updated_resource)
