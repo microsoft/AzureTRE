@@ -7,7 +7,7 @@ resource "azurerm_eventgrid_system_topic" "import_approved_blob_created" {
   topic_type             = "Microsoft.Storage.StorageAccounts"
 
   tags = {
-    Publishers = "airlock;accepted-import-sa"
+    Publishers = "airlock;approved-import-sa"
   }
 
   depends_on = [
