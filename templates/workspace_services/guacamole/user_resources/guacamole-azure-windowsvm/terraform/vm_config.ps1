@@ -36,7 +36,7 @@ if( ${CondaConfig} -eq 1 )
 # Docker proxy config
 $DaemonConfig = @"
 {
-"registry-mirrors": "${nexus_proxy_url}:8083"
+"registry-mirrors": ["${nexus_proxy_url}:8083"]
 }
 "@
-$DaemonConfig | Out-File ( New-Item -Path $env:ProgramData\docker\config\daemon.json -Force )
+$DaemonConfig | Out-File -Encoding Ascii ( New-Item -Path $env:ProgramData\docker\config\daemon.json -Force )
