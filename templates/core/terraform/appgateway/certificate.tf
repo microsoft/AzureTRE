@@ -46,7 +46,7 @@ resource "azurerm_key_vault_certificate" "tlscert" {
         "keyEncipherment",
       ]
 
-      subject            = "CN=${var.tre_id}.${var.location}.cloudapp.azure.com"
+      subject = "CN=${var.tre_id}.${var.location}.cloudapp.azure.com"
 
       subject_alternative_names {
         dns_names = ["${var.tre_id}.${var.location}.cloudapp.azure.com"]
