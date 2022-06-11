@@ -314,21 +314,21 @@ bundle-register:
 	&& cd ${DIR} \
 	&& ${MAKEFILE_DIR}/devops/scripts/register_bundle_with_api.sh --acr-name "$${ACR_NAME}" --bundle-type "$${BUNDLE_TYPE}" --current --insecure --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}" --verify --workspace-service-name "$${WORKSPACE_SERVICE_NAME}"
 
-workspace_bundle = $(MAKE) bundle-build DIR=./templates/workspaces/$(1)/ \
-	&& $(MAKE) bundle-publish DIR=./templates/workspaces/$(1)/ \
-	&& $(MAKE) bundle-register DIR="./templates/workspaces/$(1)" BUNDLE_TYPE=workspace
+workspace_bundle = $(MAKE) bundle-build DIR=${MAKEFILE_DIR}/templates/workspaces/$(1)/ \
+	&& $(MAKE) bundle-publish DIR=${MAKEFILE_DIR}/templates/workspaces/$(1)/ \
+	&& $(MAKE) bundle-register DIR="${MAKEFILE_DIR}/templates/workspaces/$(1)" BUNDLE_TYPE=workspace
 
-workspace_service_bundle = $(MAKE) bundle-build DIR=./templates/workspace_services/$(1)/ \
-	&& $(MAKE) bundle-publish DIR=./templates/workspace_services/$(1)/ \
-	&& $(MAKE) bundle-register DIR="./templates/workspace_services/$(1)" BUNDLE_TYPE=workspace_service
+workspace_service_bundle = $(MAKE) bundle-build DIR=${MAKEFILE_DIR}/templates/workspace_services/$(1)/ \
+	&& $(MAKE) bundle-publish DIR=${MAKEFILE_DIR}/templates/workspace_services/$(1)/ \
+	&& $(MAKE) bundle-register DIR="${MAKEFILE_DIR}/templates/workspace_services/$(1)" BUNDLE_TYPE=workspace_service
 
-shared_service_bundle = $(MAKE) bundle-build DIR=./templates/shared_services/$(1)/ \
-	&& $(MAKE) bundle-publish DIR=./templates/shared_services/$(1)/ \
-	&& $(MAKE) bundle-register DIR="./templates/shared_services/$(1)" BUNDLE_TYPE=shared_service
+shared_service_bundle = $(MAKE) bundle-build DIR=${MAKEFILE_DIR}/templates/shared_services/$(1)/ \
+	&& $(MAKE) bundle-publish DIR=${MAKEFILE_DIR}/templates/shared_services/$(1)/ \
+	&& $(MAKE) bundle-register DIR="${MAKEFILE_DIR}/templates/shared_services/$(1)" BUNDLE_TYPE=shared_service
 
-user_resource_bundle = $(MAKE) bundle-build DIR=./templates/workspace_services/$(1)/user_resources/$(2)/ \
-	&& $(MAKE) bundle-publish DIR=./templates/workspace_services/$(1)/user_resources/$(2) \
-	&& $(MAKE) bundle-register DIR="./templates/workspace_services/$(1)/user_resources/$(2)" BUNDLE_TYPE=user_resource WORKSPACE_SERVICE_NAME=tre-service-$(1)
+user_resource_bundle = $(MAKE) bundle-build DIR=${MAKEFILE_DIR}/templates/workspace_services/$(1)/user_resources/$(2)/ \
+	&& $(MAKE) bundle-publish DIR=${MAKEFILE_DIR}/templates/workspace_services/$(1)/user_resources/$(2) \
+	&& $(MAKE) bundle-register DIR="${MAKEFILE_DIR}/templates/workspace_services/$(1)/user_resources/$(2)" BUNDLE_TYPE=user_resource WORKSPACE_SERVICE_NAME=tre-service-$(1)
 
 deploy-shared-service:
 	@# NOTE: ACR_NAME below comes from the env files, so needs the double '$$'. Others are set on command execution and don't
