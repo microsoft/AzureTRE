@@ -43,6 +43,7 @@ if [ "${shared_storage_access}" -eq 1 ]; then
   credentialRoot="/etc/smbcredentials"
 
   mntPath="$mntRoot/$fileShareName"
+  # shellcheck disable=SC2308
   smbPath=$(echo "$httpEndpoint" | cut -c7-"$(expr length "$httpEndpoint")")$fileShareName
   smbCredentialFile="$credentialRoot/$storageAccountName.cred"
 
