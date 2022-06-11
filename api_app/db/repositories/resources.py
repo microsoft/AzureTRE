@@ -5,7 +5,7 @@ from jsonschema import validate
 from pydantic import UUID4, parse_obj_as
 import copy
 from models.domain.authentication import User
-
+from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from core import config
 from db.errors import EntityDoesNotExist
 from db.repositories.base import BaseRepository
@@ -55,12 +55,11 @@ class ResourceRepository(BaseRepository):
         return resources[0]
 
     def get_resource_by_id(self, resource_id: UUID4) -> Resource:
-        query = self._active_resources_by_id_query(str(resource_id))
-        resources = self.query(query=query)
-        if not resources:
+        try:
+            resource = self.read_item_by_id(str(resource_id))
+        except CosmosResourceNotFoundError:
             raise EntityDoesNotExist
 
-        resource = resources[0]
         if resource["resourceType"] == ResourceType.SharedService:
             return parse_obj_as(SharedService, resource)
         if resource["resourceType"] == ResourceType.Workspace:

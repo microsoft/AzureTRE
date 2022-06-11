@@ -17,8 +17,8 @@ build-and-push-resource-processor: build-resource-processor-vm-porter-image push
 build-and-push-gitea: build-gitea-image push-gitea-image
 build-and-push-guacamole: build-guacamole-image push-guacamole-image
 build-and-push-mlflow: build-mlflow-image push-mlflow-image
+tre-deploy: deploy-core build-and-deploy-ui deploy-shared-services db-migrate show-core-output
 build-and-push-airlock-processor: build-airlock-processor push-airlock-processor
-tre-deploy: deploy-core deploy-shared-services db-migrate show-core-output
 deploy-shared-services:
 	$(MAKE) firewall-install \
 	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
@@ -252,6 +252,8 @@ lint:
 		-v $${LOCAL_WORKSPACE_FOLDER}:/tmp/lint \
 		github/super-linter:slim-v4.9.4
 
+# check-params is called at the end since it needs the bundle image,
+# so we build it first and then run the check.
 bundle-build:
 	$(call target_title, "Building ${DIR} bundle with Porter") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter \
@@ -260,8 +262,9 @@ bundle-build:
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/set_docker_sock_permission.sh \
 	&& cd ${DIR} && porter build --debug
+	$(MAKE) bundle-check-params
 
-bundle-install:
+bundle-install: bundle-check-params
 	$(call target_title, "Deploying ${DIR} with Porter") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
@@ -271,6 +274,20 @@ bundle-install:
 		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
 		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
 		--allow-docker-host-access --debug
+
+# Validates that the parameters file is synced with the bundle.
+# The file is used when installing the bundle from a local machine.
+# We remove arm_use_msi on both sides since it shouldn't take effect locally anyway.
+bundle-check-params:
+	$(call target_title, "Checking bundle parameters in ${DIR}") \
+	&& . ./devops/scripts/check_dependencies.sh nodocker,porter \
+	&& cd ${DIR} \
+	&& if [ ! -f "parameters.json" ]; then echo "Error - please create a parameters.json file."; exit 1; fi \
+	&& if ! porter explain -ojson > /dev/null; then echo "Error - porter explain issue!"; exit 1; fi \
+	&& comm_output=$$(set -o pipefail && comm -3 --output-delimiter=: <(porter explain -ojson | jq -r '.parameters[].name | select (. != "arm_use_msi")' | sort) <(jq -r '.parameters[].name | select(. != "arm_use_msi")' parameters.json | sort)) \
+	&& if [ ! -z "$${comm_output}" ]; \
+		then echo -e "*** Add to params ***:*** Remove from params ***\n$$comm_output" | column -t -s ":" -n; exit 1; \
+		else echo "parameters.json file up-to-date."; fi
 
 bundle-uninstall:
 	$(call target_title, "Uninstalling ${DIR} with Porter") \
@@ -354,7 +371,18 @@ static-web-upload:
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ./templates/core/.env \
 	&& pushd ${MAKEFILE_DIR}/templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/templates/core/private.env \
-	&& ${MAKEFILE_DIR}/templates/core/terraform/scripts/upload_static_web.sh
+	&& ${MAKEFILE_DIR}/devops/scripts/upload_static_web.sh
+
+build-and-deploy-ui:
+	$(call target_title, "Build and deploy UI") \
+	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ./devops/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ./templates/core/.env \
+	&& pushd ${MAKEFILE_DIR}/templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/templates/core/private.env \
+	&& if [ "$${DEPLOY_UI}" == "true" ]; then ${MAKEFILE_DIR}/devops/scripts/build_deploy_ui.sh; else echo "UI Deploy skipped as DEPLOY_UI not true"; fi \
 
 prepare-for-e2e:
 	$(call workspace_bundle,base) \
@@ -367,6 +395,7 @@ prepare-for-e2e:
 	&& $(call shared_service_bundle,sonatype-nexus) \
 	&& $(call shared_service_bundle,gitea) \
 	&& $(call user_resource_bundle,guacamole,guacamole-dev-vm)
+	&& $(call user_resource_bundle,guacamole,guacamole-azure-windowsvm)
 
 test-e2e-smoke:
 	$(call target_title, "Running E2E smoke tests") && \

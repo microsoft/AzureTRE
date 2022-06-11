@@ -1,6 +1,6 @@
 ---
 name: tre-service-guacamole
-version: 0.3.5
+version: 0.3.6
 description: "An Azure TRE service for Guacamole"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -70,14 +70,11 @@ parameters:
     type: boolean
     default: false
     env: IS_EXPOSED_EXTERNALLY
-    description:
-      "Determines if the web app will be available over public/internet
-      or private networks"
+    description: "Determines if the web app will be available over public/internet or private networks"
   - name: workspace_identifier_uri
     type: string
     env: WORKSPACE_IDENTIFIER_URI
-    description:
-      "This is used to define the scope of the oauth2 redirection (e.g. api://treid_ws_wsid)"
+    description: "This is used to define the scope of the oauth2 redirection (e.g. api://treid_ws_wsid)"
   # the following are added automatically by the resource processor
   - name: id
     type: string
@@ -119,8 +116,7 @@ install:
         image_name: "{{ bundle.parameters.image_name }}"
         image_tag: "{{ bundle.parameters.image_tag }}"
         mgmt_acr_name: "{{ bundle.parameters.mgmt_acr_name }}"
-        mgmt_resource_group_name:
-          "{{ bundle.parameters.mgmt_resource_group_name }}"
+        mgmt_resource_group_name: "{{ bundle.parameters.mgmt_resource_group_name }}"
         arm_client_id: "{{ bundle.credentials.azure_client_id }}"
         arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
         arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
@@ -135,10 +131,8 @@ install:
         tre_resource_id: "{{ bundle.parameters.id }}"
         workspace_identifier_uri: "{{ bundle.parameters.workspace_identifier_uri }}"
       backendConfig:
-        resource_group_name:
-          "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name:
-          "{{ bundle.parameters.tfstate_storage_account_name }}"
+        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "tre-service-guacamole-{{ bundle.parameters.id }}"
       outputs:
@@ -160,8 +154,7 @@ uninstall:
         image_name: "{{ bundle.parameters.image_name }}"
         image_tag: "{{ bundle.parameters.image_tag }}"
         mgmt_acr_name: "{{ bundle.parameters.mgmt_acr_name }}"
-        mgmt_resource_group_name:
-          "{{ bundle.parameters.mgmt_resource_group_name }}"
+        mgmt_resource_group_name: "{{ bundle.parameters.mgmt_resource_group_name }}"
         arm_client_id: "{{ bundle.credentials.azure_client_id }}"
         arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
         arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
@@ -176,9 +169,7 @@ uninstall:
         tre_resource_id: "{{ bundle.parameters.id }}"
         workspace_identifier_uri: "{{ bundle.parameters.workspace_identifier_uri }}"
       backendConfig:
-        resource_group_name:
-          "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name:
-          "{{ bundle.parameters.tfstate_storage_account_name }}"
+        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "tre-service-guacamole-{{ bundle.parameters.id }}"

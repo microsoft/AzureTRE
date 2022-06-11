@@ -21,20 +21,18 @@ Options:
     -a,--admin-consent          Optional, but recommended. Grants admin consent for the app registrations, when this flag is set.
                                 Requires directory admin privileges to the Azure AD in question.
     -s,--swaggerui-clientid     Optional, when -w and -a are specified the client ID of the swagger app must be provided.
-    -r,--swaggerui-redirecturl  Reply/redirect URL, for the Swagger UI app, where the auth server sends the user after authorization.
+    -r,--tre-url                TRE URL, used to construct auth redirection URLs for the UI and Swagger app.
     --automation-account        Create an app registration for automation (e.g. CI/CD) to use for registering bundles etc
                                 Can be used with -a to apply admin consent
     --automation-clientid       Optional, when --workspace is specified the client ID of the automation account can be added to the TRE workspace.
-    --read-write-all-permission Optional, Whether to grant the application "Application.ReadWrite.All" permission.
-                                This is used when you wish TRE to be able to automatically create workspace app registrations.
 
 Examples:
-    1. $0 -n TRE -r https://mytre.region.cloudapp.azure.com/api/docs/oauth2-redirect -a
+    1. $0 -n TRE -r https://mytre.region.cloudapp.azure.com -a
 
-    2. $0 --name 'Workspace One' --swaggerui-redirecturl https://mytre.region.cloudapp.azure.com/api/docs/oauth2-redirect --workspace
+    2. $0 --name 'Workspace One' --tre-url https://mytre.region.cloudapp.azure.com --workspace
 
     Using an Automation account
-    3. $0 --name 'TRE' --swaggerui-redirecturl https://mytre.region.cloudapp.azure.com/api/docs/oauth2-redirect --admin-consent --automation-account
+    3. $0 --name 'TRE' --tre-url https://mytre.region.cloudapp.azure.com --admin-consent --automation-account
     4. $0 --name 'TRE - workspace 1' --workspace --admin-consent --swaggerui-clientid 7xxxxx-ccd8-4740-xxxx-a6ec01e10ab8 --automation-clientid 4xxxx-7dc5-xxxxx-bcff-xxxxx
 
     The GUIDS in example 4 are the outputs from example 3.
@@ -51,17 +49,15 @@ fi
 # Get the directory that this script is in
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-
 declare grantAdminConsent=0
 declare swaggerAppId=""
 declare workspace=0
 declare appName=""
-declare replyUrl=""
+declare treUrl=""
 declare currentUserId=""
 declare spId=""
 declare createAutomationAccount=0
 declare automationAppId=""
-declare applicationReadWriteAll=0
 declare msGraphUri="https://graph.microsoft.com/v1.0"
 
 # Initialize parameters specified from command line
@@ -83,8 +79,8 @@ while [[ $# -gt 0 ]]; do
             swaggerAppId=$2
             shift 2
         ;;
-        -r|--swaggerui-redirecturl)
-            replyUrl=$2
+        -r|--tre-url)
+            treUrl=$2
             shift 2
         ;;
         --automation-account)
@@ -94,10 +90,6 @@ while [[ $# -gt 0 ]]; do
         --automation-clientid)
             automationAppId=$2
             shift 2
-        ;;
-        --read-write-all-permission)
-            applicationReadWriteAll=1
-            shift 1
         ;;
         *)
             echo "Invalid option: $1."
@@ -130,12 +122,6 @@ currentUserId=$(az ad signed-in-user show --query 'objectId' --output tsv)
 tenant=$(az rest -m get -u "${msGraphUri}/domains" -o json | jq -r '.value[] | select(.isDefault == true) | .id')
 
 echo "You are about to create app registrations in the Azure AD tenant \"${tenant}\"."
-read -p "Do you want to continue? (y/N) " -n 1 -r
-echo
-if [[ ! $REPLY =~ ^[Yy]$ ]]
-then
-    exit 0
-fi
 
 # Load in helper functions
 # shellcheck disable=SC1091
@@ -146,6 +132,8 @@ source "${DIR}/grant_admin_consent.sh"
 source "${DIR}/wait_for_new_app_registration.sh"
 # shellcheck disable=SC1091
 source "${DIR}/wait_for_new_service_principal.sh"
+# shellcheck disable=SC1091
+source "${DIR}/get_msgraph_access.sh"
 
 # Generate GUIDS
 userRoleId=$(cat /proc/sys/kernel/random/uuid)
@@ -264,46 +252,17 @@ msGraphProfileScopeId="14dad69e-099b-42c9-810b-d002981feec1"
 msGraphObjectId=$(az ad sp show --id ${msGraphAppId} --query "objectId" --output tsv)
 directoryReadAllId=$(az ad sp show --id ${msGraphAppId} --query "appRoles[?value=='Directory.Read.All'].id" --output tsv)
 userReadAllId=$(az ad sp show --id ${msGraphAppId} --query "appRoles[?value=='User.Read.All'].id" --output tsv)
-applicationReadWriteAllId=$(az ad sp show --id ${msGraphAppId} --query "appRoles[?value=='Application.ReadWrite.All'].id" --output tsv)
 applicationReadWriteOwnedById=$(az ad sp show --id ${msGraphAppId} --query "appRoles[?value=='Application.ReadWrite.OwnedBy'].id" --output tsv)
-
-function get_msgraph_scope() {
-    oauthScope=$(az ad sp show --id ${msGraphAppId} --query "oauth2Permissions[?value=='$1'].id | [0]" --output tsv)
-    jq -c . <<- JSON
-    {
-        "id": "${oauthScope}",
-        "type": "Scope"
-    }
-JSON
-}
-
-function get_msgraph_role() {
-    appRoleScope=$(az ad sp show --id ${msGraphAppId} --query "appRoles[?value=='$1'].id | [0]" --output tsv)
-    jq -c . <<- JSON
-    {
-        "id": "${appRoleScope}",
-        "type": "Role"
-    }
-JSON
-}
 
 roleUserReadAll=$(get_msgraph_role "User.Read.All" )
 roleDirectoryReadAll=$(get_msgraph_role "Directory.Read.All" )
 roleApplicationReadWriteOwnedBy=$(get_msgraph_role "Application.ReadWrite.OwnedBy" )
-roleApplicationReadWriteAll=""
-
-# Conditionally set whether this app can create other applications. Note the comma
-# at the end of roleApplicationReadWriteAll so that the array is maintained if present.
-if [ "$applicationReadWriteAll" -eq 1 ]; then
-  roleApplicationReadWriteAll="$(get_msgraph_role 'Application.ReadWrite.All' ),"
-fi
 
 apiRequiredResourceAccess=$(jq -c . << JSON
 [
     {
         "resourceAppId": "${msGraphAppId}",
         "resourceAccess": [
-            ${roleApplicationReadWriteAll}
             ${roleUserReadAll},
             ${roleDirectoryReadAll}
         ]
@@ -450,7 +409,7 @@ az ad sp update --id "$spId" --set tags="['WindowsAzureActiveDirectoryIntegrated
 echo "running 'az ad app permission grant' to make changes effective"
 az ad app permission grant --id "${apiAppId}" --api "${msGraphAppId}"
 
-# If a TRE core app reg
+# If a workspace
 if [[ "$workspace" -ne 0 ]]; then
   # Grant admin consent for the delegated workspace scopes
   if [[ "$grantAdminConsent" -eq 1 ]]; then
@@ -471,7 +430,7 @@ if [[ "$workspace" -ne 0 ]]; then
   existingResourceAccess=$(az rest \
     --method GET \
     --uri "${msGraphUri}/applications/${swaggerObjectId}" \
-    --headers Content-Type=application/json \
+    --headers Content-Type=application/json -o json \
     | jq -r --arg apiAppId "${apiAppId}" \
     'del(.requiredResourceAccess[] | select(.resourceAppId==$apiAppId)) | .requiredResourceAccess' \
     )
@@ -515,12 +474,6 @@ else
       grant_admin_consent "${spId}" "$msGraphObjectId" "${directoryReadAllId}"
       wait_for_new_service_principal "${spId}"
       grant_admin_consent "${spId}" "${msGraphObjectId}" "${userReadAllId}"
-
-      # Global Admin permission is not given by default.
-      if [ "$applicationReadWriteAll" -eq 1 ]; then
-        wait_for_new_service_principal "$spId"
-        grant_admin_consent "$spId" "$msGraphObjectId" "$applicationReadWriteAllId"
-      fi
   fi
 
   # Now create the app for the Swagger UI
@@ -551,9 +504,9 @@ JSON
 
   redirectUris="\"http://localhost:8000/api/docs/oauth2-redirect\""
 
-  if [[ -n ${replyUrl} ]]; then
-      echo "Adding reply/redirect URL \"${replyUrl}\" to ${appName} Swagger UI app"
-      redirectUris="${redirectUris}, \"${replyUrl}\""
+  if [[ -n ${treUrl} ]]; then
+      echo "Adding reply/redirect URL \"${treUrl}\" to ${appName} Swagger UI app"
+      redirectUris="${redirectUris}, \"${treUrl}\", \"${treUrl}/api/docs/oauth2-redirect\""
   fi
 
   swaggerUIApp=$(jq -c . << JSON
@@ -570,6 +523,7 @@ JSON
 JSON
 )
 
+  echo "$swaggerUIApp"
   # Is the Swagger UI app already registered?
   existingSwaggerUIApp=$(get_existing_app --name "${appName} Swagger UI")
 
@@ -646,7 +600,7 @@ if [[ -n ${automationAppId} ]]; then
     existingResourceAccess=$(az rest \
       --method GET \
       --uri "${msGraphUri}/applications/${automationAppObjectId}" \
-      --headers Content-Type=application/json \
+      --headers Content-Type=application/json -o json \
       | jq -r --arg apiAppId "${apiAppId}" \
       'del(.requiredResourceAccess[] | select(.resourceAppId==$apiAppId)) | .requiredResourceAccess' \
       )
@@ -756,6 +710,8 @@ if [[ $createAutomationAccount -ne 0 ]]; then
       echo "Granting admin consent for ${appName} Automation Admin App (ClientID ${automationAppId})"
       wait_for_new_app_registration "${automationAppId}"
       adminConsentResponse=$(az ad app permission admin-consent --id "${automationAppId}")
+      echo "Response:"
+      echo "${adminConsentResponse}"
       if [ -z "${adminConsentResponse}" ]; then
           echo "Admin consent failed, trying once more: ${adminConsentResponse}"
           az ad app permission admin-consent --id "${automationAppId}"
@@ -787,7 +743,6 @@ AAD_TENANT_ID="$(az account show --output json | jq -r '.tenantId')"
 
 ** Please copy the following variables to /templates/core/.env **
 
-WORKSPACE_API_OBJECT_ID=$(az ad app show --id "${apiAppId}" --query objectId)
 WORKSPACE_API_CLIENT_ID="${apiAppId}"
 WORKSPACE_API_CLIENT_SECRET="${spPassword}"
 
