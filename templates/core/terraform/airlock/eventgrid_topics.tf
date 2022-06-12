@@ -15,9 +15,10 @@ resource "azurerm_eventgrid_topic" "step_result" {
 }
 
 resource "azurerm_eventgrid_topic" "status_changed" {
-  name                = local.status_changed_topic_name
-  location            = var.location
-  resource_group_name = var.resource_group_name
+  name                          = local.status_changed_topic_name
+  location                      = var.location
+  resource_group_name           = var.resource_group_name
+  public_network_access_enabled = false
 
   tags = {
     Publishers = "TRE API;"
