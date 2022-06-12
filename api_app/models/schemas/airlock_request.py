@@ -27,7 +27,7 @@ class AirlockRequestInResponse(BaseModel):
 
 
 class AirlockRequestInCreate(BaseModel):
-    requestType: AirlockRequestType = Field("", title="Airlock request type", description="Values for the parameters required by the Airlock request specification")
+    requestType: AirlockRequestType = Field("", title="Airlock request type", description="Specifies if this is an import or an export request")
     businessJustification: str = Field("Business Justifications", title="Explanation that will be provided to the request reviewer")
     properties: dict = Field({}, title="Airlock request parameters", description="Values for the parameters required by the Airlock request specification")
 
