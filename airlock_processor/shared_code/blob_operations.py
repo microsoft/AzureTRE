@@ -39,6 +39,6 @@ def copy_data(source_account_name: str, source_account_key: str, sa_source_conne
         raise()
 
     source_blob = source_container_client.get_blob_client(blob_name)
-    source_url = source_blob.url + '?' + sas_token
+    source_url = f'{source_blob.url}?{sas_token}'
 
     dest_blob_service_client.get_blob_client(container_name, source_blob.blob_name).start_copy_from_url(source_url)
