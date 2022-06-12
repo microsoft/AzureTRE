@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List
+from typing import List, Optional
 from pydantic import Field
 from models.domain.azuretremodel import AzureTREModel
 from models.domain.request_action import RequestAction
@@ -38,6 +38,7 @@ class Resource(AzureTREModel):
     isActive: bool = True  # When False, hides resource document from list views
     isEnabled: bool = True  # Must be set before a resource can be deleted
     resourceType: ResourceType
+    deploymentStatus: Optional[str] = Field(title="Deployment Status", description="Overall deployment status of the resource")
     etag: str = Field(title="_etag", description="eTag of the document", alias="_etag")
     resourcePath: str = ""
     resourceVersion: int = 0
