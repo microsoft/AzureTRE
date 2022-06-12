@@ -56,6 +56,7 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
     "APPINSIGHTS_INSTRUMENTATIONKEY"      = data.azurerm_application_insights.core.instrumentation_key
     "MANAGED_IDENTITY_CLIENT_ID"          = azurerm_user_assigned_identity.airlock_id.client_id
     "AZURE_SUBSCRIPTION_ID"               = var.arm_subscription_id
+    "TRE_ID"                              = var.tre_id
   }
 
   site_config {

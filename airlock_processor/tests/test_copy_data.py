@@ -6,36 +6,31 @@ from StatusChangedQueueTrigger import extract_properties, get_source_dest_env_va
 
 class TestPropertiesExtraction(unittest.TestCase):
     def test_extract_prop_valid_body_return_all_values(self):
-        msg = "{ \"request_id\":\"123\",\"new_status\":\"456\" , \"type\":\"789\", \"workspace_id\":\"ws1\", \"tre_id\":\"123\"  }"
-        req_id, req_status, req_type, tre_id, ws_id = extract_properties(msg)
-        self.assertEqual(req_id, "123")
-        self.assertEqual(req_status, "456")
-        self.assertEqual(req_type, "789")
-        self.assertEqual(tre_id, "123")
-        self.assertEqual(ws_id, "ws1")
+        msg = "{ \"data\": { \"request_id\":\"123\",\"status\":\"456\" , \"type\":\"789\", \"workspace_id\":\"ws1\"  }}"
+        req_prop = extract_properties(msg)
+        self.assertEqual(req_prop.data.request_id, "123")
+        self.assertEqual(req_prop.data.status, "456")
+        self.assertEqual(req_prop.data.type, "789")
+        self.assertEqual(req_prop.data.workspace_id, "ws1")
 
-        msg = "{ \"new_status\":\"456\" , \"type\":\"789\"  }"
-        self.assertRaises(KeyError, extract_properties, msg)
-
-        msg = "{ \"request_id\":\"123\", \"type\":\"789\"  }"
-        self.assertRaises(KeyError, extract_properties, msg)
-
-        msg = "{ \"request_id\":\"123\",\"new_status\":\"456\" }"
-        self.assertRaises(KeyError, extract_properties, msg)
 
     def test_extract_prop_missing_arg_throws(self):
-        msg = "{ \"new_status\":\"456\" , \"type\":\"789\"  }"
-        self.assertRaises(KeyError, extract_properties, msg)
+        msg = "{ \"data\": { \"status\":\"456\" , \"type\":\"789\", \"workspace_id\":\"ws1\"  }}"
+        self.assertRaises(Exception, extract_properties, msg)
 
-        msg = "{ \"request_id\":\"123\", \"type\":\"789\"  }"
-        self.assertRaises(KeyError, extract_properties, msg)
+        msg = "{ \"data\": { \"request_id\":\"123\", \"type\":\"789\", \"workspace_id\":\"ws1\"  }}"
+        self.assertRaises(Exception, extract_properties, msg)
 
-        msg = "{ \"request_id\":\"123\",\"new_status\":\"456\" }"
-        self.assertRaises(KeyError, extract_properties, msg)
+        msg = "{ \"data\": { \"request_id\":\"123\",\"status\":\"456\" ,  \"workspace_id\":\"ws1\"  }}"
+        self.assertRaises(Exception, extract_properties, msg)
+
+        msg = "{ \"data\": { \"request_id\":\"123\",\"status\":\"456\" , \"type\":\"789\"  }}"
+        self.assertRaises(Exception, extract_properties, msg)
+
 
     def test_extract_prop_invalid_json_throws(self):
-        msg = "Hi"
-        self.assertRaises(JSONDecodeError, extract_properties, msg)
+       msg = "Hi"
+       self.assertRaises(JSONDecodeError, extract_properties, msg)
 
 
 class TestDataCopyProperties(unittest.TestCase):

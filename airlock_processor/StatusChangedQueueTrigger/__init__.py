@@ -7,6 +7,18 @@ import json
 from shared_code import blob_operations
 from azure.identity import DefaultAzureCredential
 from azure.mgmt.storage import StorageManagementClient
+from pydantic import BaseModel, parse_obj_as
+
+
+class RequestPropertiesData(BaseModel):
+    request_id: str
+    status: str
+    type: str
+    workspace_id: str
+
+
+class RequestProperties(BaseModel):
+    data: RequestPropertiesData
 
 
 def main(msg: func.ServiceBusMessage):
@@ -15,36 +27,41 @@ def main(msg: func.ServiceBusMessage):
     logging.info('Python ServiceBus queue trigger processed message: %s', body)
 
     try:
-        req_id, new_status, request_type, tre_id, workspace_id = extract_properties(body)
+        request_properties = extract_properties(body)
+
+        new_status = request_properties.data.status
+        req_id = request_properties.data.request_id
+        ws_id = request_properties.data.workspace_id
+        request_type = request_properties.data.type
     except Exception:
         logging.error('Failed processing request - invalid message: %s', body)
-        raise()
+        raise
 
     logging.info('Processing request with id %s. new status is "%s", type is "%s"', req_id, new_status, type)
 
     if (is_require_data_copy(new_status)):
         logging.info('Request with id %s. requires data copy between storage accounts', req_id)
-        source_account_name, source_account_key, sa_source_connection_string, sa_dest_connection_string = get_source_dest_env_vars(new_status, request_type, tre_id, workspace_id)
+        source_account_name, source_account_key, sa_source_connection_string, sa_dest_connection_string = get_source_dest_env_vars(new_status, request_type, ws_id)
         blob_operations.copy_data(source_account_name, source_account_key, sa_source_connection_string, sa_dest_connection_string, req_id)
         return
 
     # Todo: handle other cases...
 
 
-def extract_properties(body: str):
+def extract_properties(body: str) -> RequestProperties:
     try:
         json_body = json.loads(body)
-        req_id = json_body["request_id"]
-        new_status = json_body["new_status"]
-        request_type = json_body["type"]
-        tre_id = json_body["tre_id"]
-        workspace_id = json_body["workspace_id"]
-    except KeyError:
-        raise
+        result = parse_obj_as(RequestProperties, json_body)
+        if not result:
+            raise Exception("Failed parsing request properties")
     except json.decoder.JSONDecodeError:
+        logging.error(f'Error decoding object: {body}')
+        raise
+    except Exception as e:
+        logging.error(f'Error extracting properties: {e}')
         raise
 
-    return req_id, new_status, request_type, tre_id, workspace_id
+    return result
 
 
 def is_require_data_copy(new_status: str):
@@ -53,10 +70,18 @@ def is_require_data_copy(new_status: str):
     return False
 
 
-def get_source_dest_env_vars(new_status: str, request_type: str, tre_id: str, workspace_id: str):
+def get_source_dest_env_vars(new_status: str, request_type: str, workspace_id: str):
+
     # sanity
     if is_require_data_copy(new_status) is False:
         raise Exception("Given new status is not supported")
+
+    try:
+        tre_id = os.environ["TRE_ID"]
+        subscription_id = os.environ["AZURE_SUBSCRIPTION_ID"]
+    except KeyError as e:
+        logging.error(f'Missing environment variable: {e}')
+        raise
 
     request_type = request_type.lower()
     if request_type != "import" and request_type != "export":
@@ -87,7 +112,6 @@ def get_source_dest_env_vars(new_status: str, request_type: str, tre_id: str, wo
         # https://github.com/microsoft/AzureTRE/issues/1842
         pass
 
-    subscription_id = os.environ["AZURE_SUBSCRIPTION_ID"]
 
     if os.environ.get('ENABLE_LOCAL_DEBUG', NONE) is not NONE:
         # Using the logged-in user
