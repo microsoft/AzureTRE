@@ -157,6 +157,11 @@ async def update_status_in_database(resource_repo: ResourceRepository, operation
         # save the operation
         operations_repo.update_item(operation)
 
+        # copy the step status to the resource item, for convenience
+        resource = resource_repo.get_resource_by_id(uuid.UUID(step_to_update.resourceId))
+        resource.deploymentStatus = step_to_update.status
+        resource_repo.update_item(resource)
+
         # if the step failed, or this queue message is an intermediary ("now deploying..."), return here.
         if not step_to_update.is_success():
             return True
