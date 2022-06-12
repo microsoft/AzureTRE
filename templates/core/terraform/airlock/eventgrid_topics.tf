@@ -52,6 +52,14 @@ resource "azurerm_private_endpoint" "egpe" {
   }
 }
 
+resource "azurerm_private_dns_zone_virtual_network_link" "eg_topic_dns_link" {
+  name                  = "eg_topic_dns_link"
+  resource_group_name   = var.resource_group_name
+  private_dns_zone_name = azurerm_private_dns_zone.eventgrid.name
+  virtual_network_id    = var.virtual_network_id
+  lifecycle { ignore_changes = [tags] }
+}
+
 
 resource "azurerm_key_vault_secret" "eventgrid_status_changed_access_key" {
   name         = "eventgrid-status-changed-access-key"
