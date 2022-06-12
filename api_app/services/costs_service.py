@@ -19,6 +19,13 @@ class CostService:
         self.scope = "/subscriptions/{}".format(os.getenv("SUBSCRIPTION_ID"))
         self.client = CostManagementClient(DefaultAzureCredential())
 
+    def query_tre_costs(self, granularity: GranularityEnum, from_date: date, to_date: date) -> QueryResult:
+        return self.query_costs("tre_id", os.getenv("TRE_ID"), granularity, from_date, to_date)
+
+    def query_tre_workspace_costs(self, workspace_id: str, granularity: GranularityEnum, from_date: date,
+                                  to_date: date) -> QueryResult:
+        return self.query_costs("tre_workspace_id", workspace_id, granularity, from_date, to_date)
+
     def query_costs(self, tag_name: str, tag_value: str,
                     granularity: GranularityEnum, from_date: date, to_date: date) -> QueryResult:
         query_definition = self.build_query_definition(from_date, granularity, tag_name, tag_value, to_date)
