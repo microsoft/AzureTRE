@@ -13,7 +13,6 @@ class TestPropertiesExtraction(unittest.TestCase):
         self.assertEqual(req_prop.data.type, "789")
         self.assertEqual(req_prop.data.workspace_id, "ws1")
 
-
     def test_extract_prop_missing_arg_throws(self):
         msg = "{ \"data\": { \"status\":\"456\" , \"type\":\"789\", \"workspace_id\":\"ws1\"  }}"
         self.assertRaises(Exception, extract_properties, msg)
@@ -27,10 +26,9 @@ class TestPropertiesExtraction(unittest.TestCase):
         msg = "{ \"data\": { \"request_id\":\"123\",\"status\":\"456\" , \"type\":\"789\"  }}"
         self.assertRaises(Exception, extract_properties, msg)
 
-
     def test_extract_prop_invalid_json_throws(self):
-       msg = "Hi"
-       self.assertRaises(JSONDecodeError, extract_properties, msg)
+        msg = "Hi"
+        self.assertRaises(JSONDecodeError, extract_properties, msg)
 
 
 class TestDataCopyProperties(unittest.TestCase):

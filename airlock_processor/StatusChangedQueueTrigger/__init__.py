@@ -112,7 +112,6 @@ def get_source_dest_env_vars(new_status: str, request_type: str, workspace_id: s
         # https://github.com/microsoft/AzureTRE/issues/1842
         pass
 
-
     if os.environ.get('ENABLE_LOCAL_DEBUG', NONE) is not NONE:
         # Using the logged-in user
         credential = DefaultAzureCredential()
