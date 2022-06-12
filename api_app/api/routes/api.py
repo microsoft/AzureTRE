@@ -40,6 +40,7 @@ core_router.include_router(workspaces.workspaces_core_router, tags=["workspaces"
 core_router.include_router(workspaces.workspaces_shared_router, tags=["workspaces"])
 core_router.include_router(migrations.migrations_core_router, tags=["migrations"])
 core_router.include_router(costs.costs_core_router, tags=["costs"])
+core_router.include_router(costs.costs_workspace_router, tags=["costs"])
 
 core_swagger_router = APIRouter()
 
