@@ -76,6 +76,14 @@ jq -r '
         {
             "path": "registry_server",
             "env_var": "REGISTRY_SERVER"
+        },
+        {
+            "path": "event_grid_topic_endpoint",
+            "env_var": "EVENT_GRID_TOPIC_ENDPOINT"
+        },
+        {
+            "path": "event_grid_access_key",
+            "env_var": "EVENT_GRID_ACCESS_KEY"
         }
     ]
         as $env_vars_to_extract
