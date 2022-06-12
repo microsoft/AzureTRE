@@ -35,7 +35,6 @@ SERVICE_BUS_RESOURCE_REQUEST_QUEUE: str = config("SERVICE_BUS_RESOURCE_REQUEST_Q
 SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE: str = config("SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE", default="")
 
 # Event grid configuration
-EVENT_GRID_ACCESS_KEY: str = config("EVENT_GRID_ACCESS_KEY", default="")
 EVENT_GRID_TOPIC_ENDPOINT: str = config("EVENT_GRID_TOPIC_ENDPOINT", default="")
 
 # Managed identity configuration

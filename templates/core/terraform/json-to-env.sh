@@ -82,8 +82,8 @@ jq -r '
             "env_var": "EVENT_GRID_TOPIC_ENDPOINT"
         },
         {
-            "path": "event_grid_access_key",
-            "env_var": "EVENT_GRID_ACCESS_KEY"
+            "path": "event_grid_topic_resource_id",
+            "env_var": "EVENT_GRID_TOPIC_RESOURCE_ID"
         }
     ]
         as $env_vars_to_extract

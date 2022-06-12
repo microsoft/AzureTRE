@@ -46,7 +46,7 @@ resource "azurerm_role_assignment" "cosmos_contributor" {
 
 resource "azurerm_role_assignment" "eventgrid_data_sender" {
   scope                = data.azurerm_eventgrid_topic.status_changed.id
-  role_definition_name = "Event Grid Data Sender"
+  role_definition_name = "EventGrid Data Sender"
   principal_id         = azurerm_user_assigned_identity.id.principal_id
   depends_on = [
     module.airlock_resources

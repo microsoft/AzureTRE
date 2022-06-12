@@ -1,16 +1,27 @@
 import logging
 from azure.eventgrid import EventGridEvent
 from azure.eventgrid.aio import EventGridPublisherClient
-from azure.core.credentials import AzureKeyCredential
+from azure.identity.aio import DefaultAzureCredential
 from models.domain.airlock_request import AirlockRequest
 from core import config
+from contextlib import asynccontextmanager
 
 
-async def _publish_event(event: EventGridEvent, topic_key: str, topic_endpoint: str):
-    credential = AzureKeyCredential(topic_key)
-    client = EventGridPublisherClient(topic_endpoint, credential)
+@asynccontextmanager
+async def default_credentials():
+    """
+    Yields the default credentials.
+    """
+    credential = DefaultAzureCredential(managed_identity_client_id=config.MANAGED_IDENTITY_CLIENT_ID)
+    yield credential
+    await credential.close()
 
-    await client.send([event])
+
+async def _publish_event(event: EventGridEvent, topic_endpoint: str):
+    async with default_credentials() as credential:
+        client = EventGridPublisherClient(topic_endpoint, credential)
+        async with client:
+            await client.send([event])
 
 
 async def send_status_changed_event(airlock_request: AirlockRequest):
@@ -31,4 +42,4 @@ async def send_status_changed_event(airlock_request: AirlockRequest):
         data_version="2.0"
     )
     logging.info(f"Sending status changed event with request ID {request_id}, status: {status}")
-    await _publish_event(status_changed_event, config.EVENT_GRID_ACCESS_KEY, config.EVENT_GRID_TOPIC_ENDPOINT)
+    await _publish_event(status_changed_event, config.EVENT_GRID_TOPIC_ENDPOINT)
