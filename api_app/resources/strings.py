@@ -53,6 +53,9 @@ API_CREATE_USER_RESOURCE_TEMPLATES = "Register user resource template"
 API_GET_USER_RESOURCE_TEMPLATES = "Get user resource templates applicable to the workspace service template"
 API_GET_USER_RESOURCE_TEMPLATE_BY_NAME = "Get user resource template by name and workspace service"
 
+API_GET_COSTS = "Get overall costs"
+API_GET_WORKSPACE_COSTS = "Get workspace costs"
+
 # State store status
 OK = "OK"
 NOT_OK = "Not OK"
