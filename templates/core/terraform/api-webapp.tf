@@ -2,6 +2,14 @@ data "local_file" "api_app_version" {
   filename = "${path.root}/../../../api_app/_version.py"
 }
 
+data "azurerm_eventgrid_topic" "status_changed" {
+  name                = "evgt-airlock-status-changed-${var.tre_id}"
+  resource_group_name = azurerm_resource_group.core.name
+  depends_on = [
+    module.airlock_resources
+  ]
+}
+
 locals {
   version = replace(replace(replace(data.local_file.api_app_version.content, "__version__ = \"", ""), "\"", ""), "\n", "")
 }
@@ -37,6 +45,7 @@ resource "azurerm_app_service" "api" {
     "STATE_STORE_ENDPOINT"                       = azurerm_cosmosdb_account.tre-db-account.endpoint
     "COSMOSDB_ACCOUNT_NAME"                      = azurerm_cosmosdb_account.tre-db-account.name
     "SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE"      = "sb-${var.tre_id}.servicebus.windows.net"
+    "EVENT_GRID_STATUS_CHANGED_TOPIC_ENDPOINT"   = data.azurerm_eventgrid_topic.status_changed.endpoint
     "SERVICE_BUS_RESOURCE_REQUEST_QUEUE"         = azurerm_servicebus_queue.workspacequeue.name
     "SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE" = azurerm_servicebus_queue.service_bus_deployment_status_update_queue.name
     "MANAGED_IDENTITY_CLIENT_ID"                 = azurerm_user_assigned_identity.id.client_id
@@ -98,6 +107,9 @@ resource "azurerm_app_service" "api" {
       }
     }
   }
+  depends_on = [
+    module.airlock_resources
+  ]
 }
 
 resource "azurerm_private_endpoint" "api_private_endpoint" {

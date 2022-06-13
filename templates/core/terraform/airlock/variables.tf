@@ -3,6 +3,8 @@ variable "location" {}
 variable "resource_group_name" {}
 variable "shared_subnet_id" {}
 variable "enable_local_debugging" {}
+variable "virtual_network_id" {}
+variable "api_principal_id" {}
 
 variable "docker_registry_server" {
   type        = string
