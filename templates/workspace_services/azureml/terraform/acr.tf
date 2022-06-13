@@ -6,6 +6,7 @@ resource "azurerm_container_registry" "acr" {
   resource_group_name = data.azurerm_resource_group.ws.name
   sku                 = "Premium"
   admin_enabled       = false
+  tags                = var.tre_workspace_tags
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -20,6 +21,7 @@ resource "azurerm_private_endpoint" "acrpe" {
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
   subnet_id           = data.azurerm_subnet.services.id
+  tags                = var.tre_workspace_tags
 
   lifecycle { ignore_changes = [tags] }
 

@@ -16,4 +16,9 @@ locals {
   acr_name                       = lower(replace("acr${substr(local.service_resource_name_suffix, -8, -1)}", "-", ""))
   keyvault_name                  = lower("kv-${substr(local.workspace_resource_name_suffix, -20, -1)}")
   storage_name                   = lower(replace("stg${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
+  tre_workspace_tags = {
+    tre_id                   = var.tre_id
+    tre_workspace_id         = var.tre_resource_id
+    tre_workspace_service_id = var.workspace_id
+  }
 }

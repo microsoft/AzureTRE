@@ -1,5 +1,7 @@
 variable "workspace_id" {}
 variable "tre_id" {}
+variable "tre_workspace_tags" {}
+variable "tre_resource_id" {}
 
 variable "resource_id" {}
 
