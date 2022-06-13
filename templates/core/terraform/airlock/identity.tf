@@ -41,3 +41,9 @@ resource "azurerm_role_assignment" "cosmos_contributor" {
   role_definition_name = "Contributor"
   principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
 }
+
+resource "azurerm_role_assignment" "eventgrid_data_sender" {
+  scope                = azurerm_eventgrid_topic.status_changed.id
+  role_definition_name = "EventGrid Data Sender"
+  principal_id         = var.api_principal_id
+}
