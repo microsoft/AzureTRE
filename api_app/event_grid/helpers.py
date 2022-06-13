@@ -42,4 +42,4 @@ async def send_status_changed_event(airlock_request: AirlockRequest):
         data_version="2.0"
     )
     logging.info(f"Sending status changed event with request ID {request_id}, status: {status}")
-    await _publish_event(status_changed_event, config.EVENT_GRID_TOPIC_ENDPOINT)
+    await _publish_event(status_changed_event, config.EVENT_GRID_STATUS_CHANGED_TOPIC_ENDPOINT)

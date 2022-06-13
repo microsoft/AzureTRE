@@ -5,10 +5,10 @@ set -e
 : "${RESOURCE_GROUP_NAME?"Check RESOURCE_GROUP_NAME is defined in ./templates/core/private.env"}"
 : "${SERVICE_BUS_RESOURCE_ID?"Check SERVICE_BUS_RESOURCE_ID is defined in ./templates/core/private.env"}"
 : "${STATE_STORE_RESOURCE_ID?"Check STATE_STORE_RESOURCE_ID is defined in ./templates/core/private.env"}"
-: "${EVENT_GRID_TOPIC_RESOURCE_ID?"Check EVENT_GRID_TOPIC_RESOURCE_ID is defined in ./templates/core/private.env"}"
 : "${COSMOSDB_ACCOUNT_NAME?"Check COSMOSDB_ACCOUNT_NAME is defined in ./templates/core/private.env"}"
 : "${AZURE_SUBSCRIPTION_ID?"Check AZURE_SUBSCRIPTION_ID is defined in ./templates/core/private.env"}"
-: "${EVENT_GRID_TOPIC_ENDPOINT?"Check EVENT_GRID_TOPIC_ENDPOINT is defined in ./templates/core/private.env"}"
+: "${EVENT_GRID_STATUS_CHANGED_TOPIC_RESOURCE_ID?"Check EVENT_GRID_STATUS_CHANGED_TOPIC_RESOURCE_ID is defined in ./templates/core/private.env"}"
+: "${EVENT_GRID_STATUS_CHANGED_TOPIC_ENDPOINT?"Check EVENT_GRID_STATUS_CHANGED_TOPIC_ENDPOINT is defined in ./templates/core/private.env"}"
 
 set -o pipefail
 set -o nounset
@@ -22,7 +22,7 @@ else
 fi
 
 # extract eventgrid topic name from endpoint
-EVENT_GRID_TOPIC_NAME=$(echo "$EVENT_GRID_TOPIC_ENDPOINT" | sed 's/https\?:\/\///'| awk -F"." '{print $1}')
+EVENT_GRID_STATUS_CHANGED_TOPIC_NAME=$(echo "$EVENT_GRID_STATUS_CHANGED_TOPIC_ENDPOINT" | sed 's/https\?:\/\///'| awk -F"." '{print $1}')
 
 echo "Adding local IP Address to ${COSMOSDB_ACCOUNT_NAME}. This may take a while . . . "
 az cosmosdb update \
@@ -37,15 +37,15 @@ az servicebus namespace network-rule add \
   --ip-address "${IPADDR}" \
   --action Allow
 
-echo "Adding local IP Address to ${EVENT_GRID_TOPIC_NAME}."
+echo "Adding local IP Address to ${EVENT_GRID_STATUS_CHANGED_TOPIC_NAME}."
 az eventgrid topic update \
   --resource-group "${RESOURCE_GROUP_NAME}" \
-  --name "${EVENT_GRID_TOPIC_NAME}" \
+  --name "${EVENT_GRID_STATUS_CHANGED_TOPIC_NAME}" \
   --public-network-access enabled \
   --inbound-ip-rules "${IPADDR}" allow
 
 # Get the object id of the currently logged-in identity
-if [[ ! -z ${ARM_CLIENT_ID:-} ]]; then
+if [[ -n ${ARM_CLIENT_ID:-} ]]; then
   # if environment includes a SP with subscription access, then we should use that.
   LOGGED_IN_OBJECT_ID=$(az ad sp show --id "${ARM_CLIENT_ID}" --query objectId -o tsv)
 else
@@ -94,7 +94,7 @@ az role assignment create \
 az role assignment create \
     --role "EventGrid Data Sender" \
     --assignee "${RP_TESTING_SP_APP_ID}" \
-    --scope "${EVENT_GRID_TOPIC_RESOURCE_ID}"
+    --scope "${EVENT_GRID_STATUS_CHANGED_TOPIC_RESOURCE_ID}"
 
 # Write the appId and secret to the private.env file which is used for RP debugging
 # First check if the env vars are there already and delete them

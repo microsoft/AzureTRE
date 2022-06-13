@@ -77,10 +77,10 @@ output "registry_server" {
   value = var.docker_registry_server
 }
 
-output "event_grid_topic_endpoint" {
-  value = module.airlock_resources.event_grid_topic_endpoint
+output "event_grid_status_changed_topic_endpoint" {
+  value = module.airlock_resources.event_grid_status_changed_topic_endpoint
 }
 
-output "event_grid_topic_resource_id" {
-  value = module.airlock_resources.event_grid_topic_resource_id
+output "event_grid_status_changed_topic_resource_id" {
+  value = module.airlock_resources.event_grid_status_changed_topic_resource_id
 }
