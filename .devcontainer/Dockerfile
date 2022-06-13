@@ -13,15 +13,15 @@ ARG USER_GID=$USER_UID
 
 # Set up non-root user
 COPY .devcontainer/scripts/non-root-user.sh /tmp/
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN bash /tmp/non-root-user.sh "${USERNAME}" "${USER_UID}" "${USER_GID}"
 
 # Set env for tracking that we're running in a devcontainer
 ENV DEVCONTAINER=true
 
-# [Option] Install Node.js
-ARG INSTALL_NODE="false"
+# Install Node.js for GH actions tests and UI
 ARG NODE_VERSION="lts/*"
-RUN if [ "${INSTALL_NODE}" = "true" ]; then su $USERNAME -c "umask 0002 && . /usr/local/share/nvm/nvm.sh && nvm install ${NODE_VERSION} 2>&1"; fi
+RUN su $USERNAME -c "umask 0002 && . /usr/local/share/nvm/nvm.sh && nvm install ${NODE_VERSION} 2>&1"
 
 # Install terraform
 ARG TERRAFORM_VERSION="1.1.5"
@@ -33,6 +33,7 @@ COPY .devcontainer/scripts/docker-client.sh /tmp/
 RUN /tmp/docker-client.sh $USERNAME
 
 # Install Docker
+# hadolint ignore=DL3008,DL3004
 RUN apt-get update && sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release \
     && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
     && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" \
@@ -41,9 +42,11 @@ RUN apt-get update && sudo apt-get install -y apt-transport-https ca-certificate
     && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 # Install nekos act - run GitHub workflows locally https://github.com/nektos/act
+# hadolint ignore=DL3004
 RUN if [ "${INTERACTIVE}" = "true" ]; then curl https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash; fi
 
 # Install Certbot
+# hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y python3 python3-venv libaugeas0 \
     && python3 -m venv /opt/certbot/ \
     && /opt/certbot/bin/pip install --no-cache-dir --upgrade pip \
@@ -81,7 +84,7 @@ RUN export AZURE_CLI_VERSION=${AZURE_CLI_VERSION} \
     && /tmp/azure-cli.sh
 
 ARG YQ_VERSION="v4.13.0"
-RUN wget -O /usr/local/bin/yq "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64" \
+RUN curl -L --fail -o /usr/local/bin/yq "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64" \
     && chmod +x /usr/local/bin/yq
 
 USER $USERNAME

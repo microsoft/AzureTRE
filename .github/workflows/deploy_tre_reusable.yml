@@ -48,6 +48,12 @@ on:  # yamllint disable-line rule:truthy
       API_CLIENT_SECRET:
         description: ""
         required: true
+      APPLICATION_ADMIN_CLIENT_ID:
+        description: ""
+        required: true
+      APPLICATION_ADMIN_CLIENT_SECRET:
+        description: ""
+        required: true
       ARM_CLIENT_ID:
         description: ""
         required: true
@@ -279,8 +285,6 @@ jobs:
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
           TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
-          TF_VAR_keyvault_purge_protection_enabled:
-            "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
           TF_VAR_stateful_resources_locked:
             "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
 
@@ -328,10 +332,8 @@ jobs:
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
           TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
-          TF_VAR_application_admin_client_id: "${{ secrets.API_CLIENT_ID }}"
-          TF_VAR_application_admin_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
-          TF_VAR_keyvault_purge_protection_enabled:
-            "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
+          TF_VAR_application_admin_client_id: "${{ secrets.APPLICATION_ADMIN_CLIENT_ID }}"
+          TF_VAR_application_admin_client_secret: "${{ secrets.APPLICATION_ADMIN_CLIENT_SECRET }}"
           TF_VAR_stateful_resources_locked:
             "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
 
@@ -365,8 +367,6 @@ jobs:
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
           TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
-          TF_VAR_keyvault_purge_protection_enabled:
-            "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
           TF_VAR_stateful_resources_locked:
             "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
 
@@ -415,7 +415,8 @@ jobs:
       - name: Publish bundle
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: "make bundle-publish DIR=${{ matrix.BUNDLE_DIR }}"
+          # Although porter publish will build automatically, our makefile build target includes logic that should run
+          COMMAND: "make bundle-build DIR=${{ matrix.BUNDLE_DIR }} && make bundle-publish DIR=${{ matrix.BUNDLE_DIR }}"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
@@ -591,8 +592,6 @@ jobs:
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
           TF_VAR_api_client_id: "${{ secrets.API_CLIENT_ID }}"
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
-          TF_VAR_keyvault_purge_protection_enabled:
-            "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
           TF_VAR_stateful_resources_locked:
             "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
 

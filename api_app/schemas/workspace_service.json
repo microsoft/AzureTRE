@@ -5,21 +5,27 @@
   "title": "Workspace Service Default Parameters",
   "description": "These parameters are required for all workspaces services",
   "required": [
-      "display_name",
-      "description"
+    "display_name",
+    "description"
   ],
   "properties": {
-      "display_name": {
-          "type": "string",
-          "title": "Name for the workspace service",
-          "description": "The name of the workspace service to be displayed to users",
-          "updateable": true
-      },
-      "description": {
-          "type": "string",
-          "title": "Description of the workspace service",
-          "description": "Description of the workspace service",
-          "updateable": true
-      }
+    "display_name": {
+      "type": "string",
+      "title": "Name for the workspace service",
+      "description": "The name of the workspace service to be displayed to users",
+      "updateable": true
+    },
+    "description": {
+      "type": "string",
+      "title": "Description of the workspace service",
+      "description": "Description of the workspace service",
+      "updateable": true
+    },
+    "overview": {
+      "type": "string",
+      "title": "Workspace Service Overview",
+      "description": "Long form description of the workspace service, in markdown syntax",
+      "updateable": true
+    }
   }
 }

@@ -33,6 +33,12 @@
       "source": {
         "env": "MGMT_STORAGE_ACCOUNT_NAME"
       }
+    },
+    {
+      "name": "ssl_cert_name",
+      "source": {
+        "env": "SSL_CERT_NAME"
+      }
     }
   ]
 }
