@@ -111,11 +111,11 @@ async def test_create_guacamole_service_into_aad_workspace(admin_token, verify) 
     await post_resource(patch_payload, f'/api{workspace_service_path}', workspace_owner_token, verify, method="PATCH")
 
     user_resource_payload = {
-        "templateName": "tre-service-guacamole-windowsvm",
+        "templateName": "tre-service-guacamole-linuxvm",
         "properties": {
-            "display_name": "My VM",
-            "description": "Will be using this VM for my research",
-            "os_image": "Windows 10"
+            "display_name": "Linux VM",
+            "description": "Extended Tests for Linux",
+            "os_image": "Ubuntu 18.04"
         }
     }
 
