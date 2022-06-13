@@ -1,7 +1,7 @@
-output "event_grid_topic_endpoint" {
+output "event_grid_status_changed_topic_endpoint" {
   value = azurerm_eventgrid_topic.status_changed.endpoint
 }
 
-output "event_grid_access_key" {
-  value = azurerm_eventgrid_topic.status_changed.primary_access_key
+output "event_grid_status_changed_topic_resource_id" {
+  value = azurerm_eventgrid_topic.status_changed.id
 }
