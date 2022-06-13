@@ -1,7 +1,8 @@
 import pytest
 
 import config
-from helpers import disable_and_delete_resource, get_workspace_auth_details, post_resource
+from resources.resource import disable_and_delete_resource, post_resource
+from helpers import get_workspace_auth_details
 from resources import strings
 
 
