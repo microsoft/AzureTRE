@@ -1,8 +1,3 @@
-data "azurerm_key_vault" "kv" {
-  name                = "kv-${var.tre_id}"
-  resource_group_name = var.resource_group_name
-}
-
 # Event grid topics
 resource "azurerm_eventgrid_topic" "step_result" {
   name                = local.step_result_topic_name
@@ -58,16 +53,6 @@ resource "azurerm_private_dns_zone_virtual_network_link" "eg_topic_dns_link" {
   private_dns_zone_name = azurerm_private_dns_zone.eventgrid.name
   virtual_network_id    = var.virtual_network_id
   lifecycle { ignore_changes = [tags] }
-}
-
-
-resource "azurerm_key_vault_secret" "eventgrid_status_changed_access_key" {
-  name         = "eventgrid-status-changed-access-key"
-  value        = azurerm_eventgrid_topic.status_changed.primary_access_key
-  key_vault_id = data.azurerm_key_vault.kv.id
-  depends_on = [
-    azurerm_eventgrid_topic.status_changed
-  ]
 }
 
 # System topic
