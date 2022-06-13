@@ -93,3 +93,8 @@ if [ "${conda_config}" -eq 1 ]; then
   conda config --remove channels defaults --system
   conda config --set channel_alias "${nexus_proxy_url}"/repository/conda/  --system
 fi
+
+# Docker proxy config
+jq -n --arg proxy "${nexus_proxy_url}:8083" '{"registry-mirrors": [$proxy]}' > /etc/docker/daemon.json
+sudo systemctl daemon-reload
+sudo systemctl restart docker
