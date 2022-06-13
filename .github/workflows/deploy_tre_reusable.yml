@@ -121,7 +121,6 @@ concurrency: "deploy-${{ inputs.ciGitRef }}"
 
 jobs:
   deploy_management:
-    if: "false"
     name: Deploy Management
     runs-on: ubuntu-latest
     environment: CICD
@@ -760,6 +759,7 @@ jobs:
   e2e_tests_aad:
     name: "Run E2E Tests (AAD)"
     runs-on: ubuntu-latest
+    needs: [e2e_tests_custom]
     environment: CICD
     timeout-minutes: 40
     steps:
