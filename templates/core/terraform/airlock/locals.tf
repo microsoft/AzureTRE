@@ -1,12 +1,12 @@
 locals {
   # STorage AirLock EXternal
-  import_external_storage_name = lower(replace("stalexim${var.tre_id}", "-", ""))
+  import_external_storage_name = lower(replace("stalimex${var.tre_id}", "-", ""))
   # STorage AirLock InProgress IMport
-  import_in_progress_storage_name = lower(replace("stalipim${var.tre_id}", "-", ""))
+  import_in_progress_storage_name = lower(replace("stalimip${var.tre_id}", "-", ""))
   # STorage AirLock REJected IMport
-  import_rejected_storage_name = lower(replace("stalrejim${var.tre_id}", "-", ""))
+  import_rejected_storage_name = lower(replace("stalimrej${var.tre_id}", "-", ""))
   # STorage AirLock APProved EXPort
-  export_approved_storage_name = lower(replace("stalappexp${var.tre_id}", "-", ""))
+  export_approved_storage_name = lower(replace("stalexapp${var.tre_id}", "-", ""))
 
   import_inprogress_sys_topic_name = "evgt-airlock-import-in-progress-${var.tre_id}"
   import_rejected_sys_topic_name   = "evgt-airlock-import-rejected-${var.tre_id}"

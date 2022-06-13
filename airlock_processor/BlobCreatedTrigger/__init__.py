@@ -16,7 +16,7 @@ def main(msg: func.ServiceBusMessage,
 
     json_body = json.loads(body)
     # message is due to blob creation in an 'in-progress' blob
-    if "stalipim" in json_body["topic"]:
+    if "stalimip" in json_body["topic"]:
         completed_step = "submitted"
         new_status = "in-progress"
         request_id = re.search(r'/blobServices/default/containers/(.*?)/blobs', json_body["subject"]).group(1)
