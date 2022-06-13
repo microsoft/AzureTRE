@@ -45,7 +45,7 @@ resource "azurerm_app_service" "api" {
     "STATE_STORE_ENDPOINT"                       = azurerm_cosmosdb_account.tre-db-account.endpoint
     "COSMOSDB_ACCOUNT_NAME"                      = azurerm_cosmosdb_account.tre-db-account.name
     "SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE"      = "sb-${var.tre_id}.servicebus.windows.net"
-    "EVENT_GRID_TOPIC_ENDPOINT"                  = data.azurerm_eventgrid_topic.status_changed.endpoint
+    "EVENT_GRID_STATUS_CHANGED_TOPIC_ENDPOINT"   = data.azurerm_eventgrid_topic.status_changed.endpoint
     "SERVICE_BUS_RESOURCE_REQUEST_QUEUE"         = azurerm_servicebus_queue.workspacequeue.name
     "SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE" = azurerm_servicebus_queue.service_bus_deployment_status_update_queue.name
     "MANAGED_IDENTITY_CLIENT_ID"                 = azurerm_user_assigned_identity.id.client_id

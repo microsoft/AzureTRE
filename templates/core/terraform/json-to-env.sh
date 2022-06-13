@@ -78,12 +78,12 @@ jq -r '
             "env_var": "REGISTRY_SERVER"
         },
         {
-            "path": "event_grid_topic_endpoint",
-            "env_var": "EVENT_GRID_TOPIC_ENDPOINT"
+            "path": "event_grid_status_changed_topic_endpoint",
+            "env_var": "EVENT_GRID_STATUS_CHANGED_TOPIC_ENDPOINT"
         },
         {
-            "path": "event_grid_topic_resource_id",
-            "env_var": "EVENT_GRID_TOPIC_RESOURCE_ID"
+            "path": "event_grid_status_changed_topic_resource_id",
+            "env_var": "EVENT_GRID_STATUS_CHANGED_TOPIC_RESOURCE_ID"
         }
     ]
         as $env_vars_to_extract
