@@ -13,12 +13,19 @@ terraform {
 provider "azurerm" {
   features {
     key_vault {
-      purge_soft_delete_on_destroy    = var.keyvault_purge_protection_enabled ? false : true
-      recover_soft_deleted_key_vaults = false
+      # Don't purge on destroy (this would fail due to purge protection being enabled on keyvault)
+      purge_soft_delete_on_destroy               = false
+      purge_soft_deleted_secrets_on_destroy      = false
+      purge_soft_deleted_certificates_on_destroy = false
+      purge_soft_deleted_keys_on_destroy         = false
+      # When recreating an environment, recover any previously soft deleted secrets - set to true by default
+      recover_soft_deleted_key_vaults   = true
+      recover_soft_deleted_secrets      = true
+      recover_soft_deleted_certificates = true
+      recover_soft_deleted_keys         = true
     }
   }
 }
-
 
 resource "azurerm_resource_group" "core" {
   location = var.location
@@ -83,6 +90,7 @@ module "airlock_resources" {
   docker_registry_server   = var.docker_registry_server
   mgmt_resource_group_name = var.mgmt_resource_group_name
   mgmt_acr_name            = var.acr_name
+  api_principal_id         = azurerm_user_assigned_identity.id.principal_id
   depends_on = [
     azurerm_servicebus_namespace.sb,
     module.network
