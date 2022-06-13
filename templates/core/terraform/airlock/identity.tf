@@ -46,7 +46,4 @@ resource "azurerm_role_assignment" "eventgrid_data_sender" {
   scope                = azurerm_eventgrid_topic.status_changed.id
   role_definition_name = "EventGrid Data Sender"
   principal_id         = var.api_principal_id
-  depends_on = [
-    module.airlock_resources
-  ]
 }
