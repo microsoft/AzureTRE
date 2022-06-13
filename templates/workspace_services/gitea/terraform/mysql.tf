@@ -7,13 +7,16 @@ resource "random_password" "password" {
 }
 
 resource "azurerm_mysql_server" "gitea" {
-  name                              = "mysql-${local.service_resource_name_suffix}"
-  resource_group_name               = data.azurerm_resource_group.ws.name
-  location                          = data.azurerm_resource_group.ws.location
-  administrator_login               = "mysqladmin"
-  administrator_login_password      = random_password.password.result
-  sku_name                          = "GP_Gen5_2"
-  storage_mb                        = 5120
+  name                         = "mysql-${local.service_resource_name_suffix}"
+  resource_group_name          = data.azurerm_resource_group.ws.name
+  location                     = data.azurerm_resource_group.ws.location
+  administrator_login          = "mysqladmin"
+  administrator_login_password = random_password.password.result
+  sku_name                     = "GP_Gen5_2"
+  storage_mb                   = 5120
+  # Ignoring tflint due to a bug in it.
+  # TODO: https://github.com/microsoft/AzureTRE/issues/1944
+  # tflint-ignore: azurerm_mysql_server_invalid_version
   version                           = "8.0"
   auto_grow_enabled                 = true
   backup_retention_days             = 7
@@ -22,6 +25,7 @@ resource "azurerm_mysql_server" "gitea" {
   public_network_access_enabled     = false
   ssl_enforcement_enabled           = true
   ssl_minimal_tls_version_enforced  = "TLS1_2"
+  tags                              = local.workspace_service_tags
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -39,6 +43,7 @@ resource "azurerm_private_endpoint" "private-endpoint" {
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
   subnet_id           = data.azurerm_subnet.services.id
+  tags                = local.workspace_service_tags
 
   private_service_connection {
     private_connection_resource_id = azurerm_mysql_server.gitea.id
