@@ -160,6 +160,11 @@ data "template_cloudinit_config" "nexus_config" {
           permissions = "0744"
         },
         {
+          content     = file("${path.module}/../scripts/nexus_realms_config.json")
+          path        = "/tmp/nexus_realms_config.json"
+          permissions = "0744"
+        },
+        {
           content     = data.template_file.configure_nexus_ssl.rendered
           path        = "/etc/cron.daily/configure_nexus_ssl.sh"
           permissions = "0755"
