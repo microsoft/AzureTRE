@@ -1,5 +1,5 @@
 import asyncio
-from typing import Optional, Tuple
+from typing import Optional
 from contextlib import asynccontextmanager
 from httpx import AsyncClient, Timeout
 import logging
@@ -39,12 +39,12 @@ def get_full_endpoint(endpoint: str) -> str:
 
 
 @asynccontextmanager
-async def get_template(template_name, endpoint, admin_token, verify):
+async def get_template(template_name, endpoint, token, verify):
     async with AsyncClient(verify=verify) as client:
-        headers = {'Authorization': f'Bearer {admin_token}'}
+        auth_headers = get_auth_header(token)
         full_endpoint = get_full_endpoint(endpoint)
 
-        response = await client.get(f"{full_endpoint}/{template_name}", headers=headers, timeout=TIMEOUT)
+        response = await client.get(f"{full_endpoint}/{template_name}", headers=auth_headers, timeout=TIMEOUT)
         yield response
 
 
