@@ -83,6 +83,7 @@ module "airlock_resources" {
   docker_registry_server   = var.docker_registry_server
   mgmt_resource_group_name = var.mgmt_resource_group_name
   mgmt_acr_name            = var.acr_name
+  api_principal_id         = azurerm_user_assigned_identity.id.principal_id
   depends_on = [
     azurerm_servicebus_namespace.sb,
     module.network
