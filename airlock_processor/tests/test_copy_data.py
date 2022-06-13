@@ -8,10 +8,10 @@ class TestPropertiesExtraction(unittest.TestCase):
     def test_extract_prop_valid_body_return_all_values(self):
         msg = "{ \"data\": { \"request_id\":\"123\",\"status\":\"456\" , \"type\":\"789\", \"workspace_id\":\"ws1\"  }}"
         req_prop = extract_properties(msg)
-        self.assertEqual(req_prop.data.request_id, "123")
-        self.assertEqual(req_prop.data.status, "456")
-        self.assertEqual(req_prop.data.type, "789")
-        self.assertEqual(req_prop.data.workspace_id, "ws1")
+        self.assertEqual(req_prop.request_id, "123")
+        self.assertEqual(req_prop.status, "456")
+        self.assertEqual(req_prop.type, "789")
+        self.assertEqual(req_prop.workspace_id, "ws1")
 
     def test_extract_prop_missing_arg_throws(self):
         msg = "{ \"data\": { \"status\":\"456\" , \"type\":\"789\", \"workspace_id\":\"ws1\"  }}"
