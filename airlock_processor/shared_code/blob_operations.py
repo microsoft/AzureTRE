@@ -41,4 +41,6 @@ def copy_data(source_account_name: str, source_account_key: str, sa_source_conne
     source_blob = source_container_client.get_blob_client(blob_name)
     source_url = f'{source_blob.url}?{sas_token}'
 
-    dest_blob_service_client.get_blob_client(container_name, source_blob.blob_name).start_copy_from_url(source_url)
+    copied_blob = dest_blob_service_client.get_blob_client(container_name, source_blob.blob_name)
+    copy = copied_blob.start_copy_from_url(source_url)
+    logging.info("Copy operation returned copy_id: %s, copy_status: %s", copy.copy_id, copy.copy_status)
