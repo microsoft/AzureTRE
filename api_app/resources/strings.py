@@ -27,6 +27,9 @@ API_DELETE_USER_RESOURCE = "Delete user resource"
 API_UPDATE_USER_RESOURCE = "Update an existing user resource"
 API_INVOKE_ACTION_ON_USER_RESOURCE = "Invoke action on a user resource"
 
+API_CREATE_AIRLOCK_REQUEST = "Create an airlock request"
+API_SUBMIT_AIRLOCK_REQUEST = "Submit an airlock request"
+
 API_CREATE_WORKSPACE_TEMPLATES = "Register workspace template"
 API_GET_WORKSPACE_TEMPLATES = "Get workspace templates"
 API_GET_WORKSPACE_TEMPLATE_BY_NAME = "Get workspace template by name"
@@ -139,6 +142,26 @@ RESOURCE_TYPE_WORKSPACE_SERVICE = "workspace-service"
 USER_RESOURCE = "user-resource"
 RESOURCE_TYPE_SHARED_SERVICE = "shared-service"
 
+# Airlock Resource Type
+AIRLOCK_RESOURCE_TYPE_REQUEST = "airlock-request"
+
+# Airlock Resource Status
+AIRLOCK_RESOURCE_STATUS_DRAFT = "draft"
+AIRLOCK_RESOURCE_STATUS_SUBMITTED = "submitted"
+AIRLOCK_RESOURCE_STATUS_INREVIEW = "in_review"
+AIRLOCK_RESOURCE_STATUS_APPROVED = "approved"
+AIRLOCK_RESOURCE_STATUS_REJECTED = "rejected"
+AIRLOCK_RESOURCE_STATUS_CANCELLED = "cancelled"
+AIRLOCK_RESOURCE_STATUS_BLOCKED = "blocked"
+
+# Airlock Request Types
+AIRLOCK_REQUEST_TYPE_IMPORT = "import"
+AIRLOCK_REQUEST_TYPE_EXPORT = "export"
+
+# Airlock Messages
+AIRLOCK_REQUEST_DOES_NOT_EXIST = "Airlock request does not exist"
+AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE = "Airlock request status changes was illegal"
+
 # Deployments
 RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE = "This resource has not yet been deployed"
 RESOURCE_STATUS_UPGRADE_NOT_STARTED_MESSAGE = "The upgrade for this resource has not yet started"
@@ -147,6 +170,9 @@ RESOURCE_STATUS_UPGRADE_NOT_STARTED_MESSAGE = "The upgrade for this resource has
 SERVICE_BUS_GENERAL_ERROR_MESSAGE = "Service bus failure"
 DEPLOYMENT_STATUS_MESSAGE_FORMAT_INCORRECT = "Service bus message is not formatted correctly"
 DEPLOYMENT_STATUS_ID_NOT_FOUND = "Service bus message refers to resource id = {} which does not exist"
+
+# Event grid
+EVENT_GRID_GENERAL_ERROR_MESSAGE = "Event grid failure"
 
 # Workspace creation validation
 MISSING_REQUIRED_PARAMETERS = "Missing required parameters"
