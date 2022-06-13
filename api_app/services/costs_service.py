@@ -8,7 +8,7 @@ from azure.mgmt.costmanagement import CostManagementClient
 from azure.mgmt.costmanagement.models import QueryGrouping, QueryAggregation, QueryDataset, QueryDefinition, \
     TimeframeType, ExportType, QueryTimePeriod, QueryFilter, QueryComparisonExpression, QueryResult
 
-from api_app.models.domain.costs import GranularityEnum
+from models.domain.costs import GranularityEnum
 
 
 class CostService:
