@@ -47,8 +47,8 @@ def copy_data(source_account_name: str, source_account_key: str, sa_source_conne
 
     copied_blob = dest_blob_service_client.get_blob_client(container_name, source_blob.blob_name)
     copy = copied_blob.start_copy_from_url(source_url)
-    
+
     try:
-      logging.info("Copy operation returned 'copy_id': '%s', 'copy_status': '%s'", copy["copy_id"], copy["copy_status"])
+        logging.info("Copy operation returned 'copy_id': '%s', 'copy_status': '%s'", copy["copy_id"], copy["copy_status"])
     except KeyError as e:
-      logging.error(f"Failed getting operation id and status {e}")
+        logging.error(f"Failed getting operation id and status {e}")

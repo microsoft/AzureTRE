@@ -1,5 +1,4 @@
 import logging
-from pickle import NONE
 
 import azure.functions as func
 import os
@@ -30,6 +29,7 @@ class ContainersCopyMetadata:
         self.sa_dest_connection_string = sa_dest_connection_string
 
 def main(msg: func.ServiceBusMessage):
+
 
     body = msg.get_body().decode('utf-8')
     logging.info('Python ServiceBus queue trigger processed message: %s', body)
@@ -73,7 +73,7 @@ def extract_properties(body: str) -> RequestProperties:
 
 
 def is_require_data_copy(new_status: str):
-    if new_status.lower() in [constants.STAGE_SUBMITTED, constants.STAGE_APPROVED,  constants.STAGE_REJECTED,  constants.STAGE_BLOCKED]:
+    if new_status.lower() in [constants.STAGE_SUBMITTED, constants.STAGE_APPROVED, constants.STAGE_REJECTED, constants.STAGE_BLOCKED]:
         return True
     return False
 
