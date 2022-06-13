@@ -10,14 +10,6 @@ data "azurerm_eventgrid_topic" "status_changed" {
   ]
 }
 
-data "azurerm_key_vault_secret" "eventgrid_status_changed_access_key" {
-  name         = "eventgrid-status-changed-access-key"
-  key_vault_id = azurerm_key_vault.kv.id
-  depends_on = [
-    module.airlock_resources
-  ]
-}
-
 locals {
   version = replace(replace(replace(data.local_file.api_app_version.content, "__version__ = \"", ""), "\"", ""), "\n", "")
 }
@@ -53,8 +45,7 @@ resource "azurerm_app_service" "api" {
     "STATE_STORE_ENDPOINT"                       = azurerm_cosmosdb_account.tre-db-account.endpoint
     "COSMOSDB_ACCOUNT_NAME"                      = azurerm_cosmosdb_account.tre-db-account.name
     "SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE"      = "sb-${var.tre_id}.servicebus.windows.net"
-    "EVENT_GRID_TOPIC_ENDPOINT"                  = data.azurerm_eventgrid_topic.status_changed.endpoint
-    "EVENT_GRID_ACCESS_KEY"                      = "@Microsoft.KeyVault(SecretUri=${data.azurerm_key_vault_secret.eventgrid_status_changed_access_key.id})"
+    "EVENT_GRID_STATUS_CHANGED_TOPIC_ENDPOINT"   = data.azurerm_eventgrid_topic.status_changed.endpoint
     "SERVICE_BUS_RESOURCE_REQUEST_QUEUE"         = azurerm_servicebus_queue.workspacequeue.name
     "SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE" = azurerm_servicebus_queue.service_bus_deployment_status_update_queue.name
     "MANAGED_IDENTITY_CLIENT_ID"                 = azurerm_user_assigned_identity.id.client_id
