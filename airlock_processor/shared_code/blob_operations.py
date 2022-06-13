@@ -10,6 +10,7 @@ def copy_data(source_account_name: str, source_account_key: str, sa_source_conne
     container_name = request_id
 
     # token geneation with expiry of 1 hour. since its not shared, we can leave it to expire (no need to track/delete)
+    # Remove sas token if not needed: https://github.com/microsoft/AzureTRE/issues/2034
     sas_token = generate_container_sas(account_name=source_account_name,
                                        container_name=container_name,
                                        account_key=source_account_key,
