@@ -10,18 +10,18 @@ FULL_IMAGE_NAME_PREFIX:=`echo "${FULL_CONTAINER_REGISTRY_NAME}/${IMAGE_NAME_PREF
 target_title = @echo -e "\n\e[34m»»» 🧩 \e[96m$(1)\e[0m..."
 
 all: bootstrap mgmt-deploy images tre-deploy
-images: build-and-push-api build-and-push-resource-processor build-and-push-gitea build-and-push-guacamole build-and-push-mlflow build-and-push-airlock-processor
+tre-deploy: deploy-core build-and-deploy-ui deploy-shared-services db-migrate show-core-output
 
+images: build-and-push-api build-and-push-resource-processor build-and-push-gitea build-and-push-guacamole build-and-push-mlflow build-and-push-airlock-processor
 build-and-push-api: build-api-image push-api-image
 build-and-push-resource-processor: build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image
 build-and-push-gitea: build-gitea-image push-gitea-image
 build-and-push-guacamole: build-guacamole-image push-guacamole-image
 build-and-push-mlflow: build-mlflow-image push-mlflow-image
-tre-deploy: deploy-core build-and-deploy-ui deploy-shared-services db-migrate show-core-output
 build-and-push-airlock-processor: build-airlock-processor push-airlock-processor
-deploy-shared-services:
-	$(MAKE) firewall-install \
-	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
+
+deploy-shared-services: firewall-install
+	. ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
 	&& if [ "$${DEPLOY_GITEA}" == "true" ]; then $(MAKE) gitea-install; fi \
 	&& if [ "$${DEPLOY_NEXUS}" == "true" ]; then $(MAKE) nexus-install; fi
 
@@ -92,24 +92,6 @@ build-mlflow-image:
 build-airlock-processor:
 	$(call build_image,"airlock-processor","${MAKEFILE_DIR}/airlock_processor/_version.py","${MAKEFILE_DIR}/airlock_processor/Dockerfile","${MAKEFILE_DIR}/airlock_processor/")
 
-firewall-install:
-	$(MAKE) bundle-build DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ \
-	&& $(MAKE) bundle-publish DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ \
-	&& $(MAKE) bundle-register DIR="${MAKEFILE_DIR}/templates/shared_services/firewall" BUNDLE_TYPE=shared_service \
-	&& $(MAKE) deploy-shared-service DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ BUNDLE_TYPE=shared_service
-
-nexus-install:
-	$(MAKE) bundle-build DIR=${MAKEFILE_DIR}/templates/shared_services/sonatype-nexus/ \
-	&& $(MAKE) bundle-publish DIR=${MAKEFILE_DIR}/templates/shared_services/sonatype-nexus/ \
-	&& $(MAKE) bundle-register DIR="${MAKEFILE_DIR}/templates/shared_services/sonatype-nexus" BUNDLE_TYPE=shared_service \
-	&& $(MAKE) deploy-shared-service DIR=${MAKEFILE_DIR}/templates/shared_services/sonatype-nexus/ BUNDLE_TYPE=shared_service
-
-gitea-install:
-	$(MAKE) bundle-build DIR=${MAKEFILE_DIR}/templates/shared_services/gitea/ \
-	&& $(MAKE) bundle-publish DIR=${MAKEFILE_DIR}/templates/shared_services/gitea/ \
-	&& $(MAKE) bundle-register DIR="${MAKEFILE_DIR}/templates/shared_services/gitea" BUNDLE_TYPE=shared_service \
-	&& $(MAKE) deploy-shared-service DIR=${MAKEFILE_DIR}/templates/shared_services/gitea/ BUNDLE_TYPE=shared_service
-
 # A recipe for pushing images. Parameters:
 # 1. Image name suffix
 # 2. Version file path
@@ -176,7 +158,7 @@ letsencrypt:
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ./templates/core/.env \
 	&& pushd ${MAKEFILE_DIR}/templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
-	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/private.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/templates/core/private.env \
 	&& ${MAKEFILE_DIR}/templates/core/terraform/scripts/letsencrypt.sh
 
 tre-start:
@@ -332,22 +314,21 @@ bundle-register:
 	&& cd ${DIR} \
 	&& ${MAKEFILE_DIR}/devops/scripts/register_bundle_with_api.sh --acr-name "$${ACR_NAME}" --bundle-type "$${BUNDLE_TYPE}" --current --insecure --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}" --verify --workspace-service-name "$${WORKSPACE_SERVICE_NAME}"
 
-workspace_bundle = $(MAKE) bundle-build DIR=./templates/workspaces/$(1)/ \
-	&& $(MAKE) bundle-publish DIR=./templates/workspaces/$(1)/ \
-	&& $(MAKE) bundle-register DIR="./templates/workspaces/$(1)" BUNDLE_TYPE=workspace
+workspace_bundle = $(MAKE) bundle-build DIR=${MAKEFILE_DIR}/templates/workspaces/$(1)/ \
+	&& $(MAKE) bundle-publish DIR=${MAKEFILE_DIR}/templates/workspaces/$(1)/ \
+	&& $(MAKE) bundle-register DIR="${MAKEFILE_DIR}/templates/workspaces/$(1)" BUNDLE_TYPE=workspace
 
-workspace_service_bundle = $(MAKE) bundle-build DIR=./templates/workspace_services/$(1)/ \
-	&& $(MAKE) bundle-publish DIR=./templates/workspace_services/$(1)/ \
-	&& $(MAKE) bundle-register DIR="./templates/workspace_services/$(1)" BUNDLE_TYPE=workspace_service
+workspace_service_bundle = $(MAKE) bundle-build DIR=${MAKEFILE_DIR}/templates/workspace_services/$(1)/ \
+	&& $(MAKE) bundle-publish DIR=${MAKEFILE_DIR}/templates/workspace_services/$(1)/ \
+	&& $(MAKE) bundle-register DIR="${MAKEFILE_DIR}/templates/workspace_services/$(1)" BUNDLE_TYPE=workspace_service
 
-shared_service_bundle = $(MAKE) bundle-build DIR=./templates/shared_services/$(1)/ \
-	&& $(MAKE) bundle-publish DIR=./templates/shared_services/$(1)/ \
-	&& $(MAKE) bundle-register DIR="./templates/shared_services/$(1)" BUNDLE_TYPE=shared_service
+shared_service_bundle = $(MAKE) bundle-build DIR=${MAKEFILE_DIR}/templates/shared_services/$(1)/ \
+	&& $(MAKE) bundle-publish DIR=${MAKEFILE_DIR}/templates/shared_services/$(1)/ \
+	&& $(MAKE) bundle-register DIR="${MAKEFILE_DIR}/templates/shared_services/$(1)" BUNDLE_TYPE=shared_service
 
-user_resource_bundle = $(MAKE) bundle-build DIR=./templates/workspace_services/$(1)/user_resources/$(2)/ \
-	&& $(MAKE) bundle-publish DIR=./templates/workspace_services/$(1)/user_resources/$(2) \
-	&& $(MAKE) bundle-register DIR="./templates/workspace_services/$(1)/user_resources/$(2)" BUNDLE_TYPE=user_resource WORKSPACE_SERVICE_NAME=tre-service-$(1)
-
+user_resource_bundle = $(MAKE) bundle-build DIR=${MAKEFILE_DIR}/templates/workspace_services/$(1)/user_resources/$(2)/ \
+	&& $(MAKE) bundle-publish DIR=${MAKEFILE_DIR}/templates/workspace_services/$(1)/user_resources/$(2) \
+	&& $(MAKE) bundle-register DIR="${MAKEFILE_DIR}/templates/workspace_services/$(1)/user_resources/$(2)" BUNDLE_TYPE=user_resource WORKSPACE_SERVICE_NAME=tre-service-$(1)
 
 deploy-shared-service:
 	@# NOTE: ACR_NAME below comes from the env files, so needs the double '$$'. Others are set on command execution and don't
@@ -358,6 +339,24 @@ deploy-shared-service:
 	&& . ${MAKEFILE_DIR}/devops/scripts/get_access_token.sh \
 	&& cd ${DIR} \
 	&& ${MAKEFILE_DIR}/devops/scripts/deploy_shared_service.sh --insecure --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}"
+
+firewall-install:
+	$(MAKE) bundle-build DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ \
+	&& $(MAKE) bundle-publish DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ \
+	&& $(MAKE) bundle-register DIR="${MAKEFILE_DIR}/templates/shared_services/firewall" BUNDLE_TYPE=shared_service \
+	&& $(MAKE) deploy-shared-service DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ BUNDLE_TYPE=shared_service
+
+nexus-install:
+	$(MAKE) bundle-build DIR=${MAKEFILE_DIR}/templates/shared_services/sonatype-nexus/ \
+	&& $(MAKE) bundle-publish DIR=${MAKEFILE_DIR}/templates/shared_services/sonatype-nexus/ \
+	&& $(MAKE) bundle-register DIR="${MAKEFILE_DIR}/templates/shared_services/sonatype-nexus" BUNDLE_TYPE=shared_service \
+	&& $(MAKE) deploy-shared-service DIR=${MAKEFILE_DIR}/templates/shared_services/sonatype-nexus/ BUNDLE_TYPE=shared_service
+
+gitea-install:
+	$(MAKE) bundle-build DIR=${MAKEFILE_DIR}/templates/shared_services/gitea/ \
+	&& $(MAKE) bundle-publish DIR=${MAKEFILE_DIR}/templates/shared_services/gitea/ \
+	&& $(MAKE) bundle-register DIR="${MAKEFILE_DIR}/templates/shared_services/gitea" BUNDLE_TYPE=shared_service \
+	&& $(MAKE) deploy-shared-service DIR=${MAKEFILE_DIR}/templates/shared_services/gitea/ BUNDLE_TYPE=shared_service
 
 temp-do-upload:
 	$(MAKE) static-web-upload DIR=${MAKEFILE_DIR}/dummy
@@ -423,7 +422,7 @@ setup-local-debugging:
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
 	&& pushd ${MAKEFILE_DIR}/templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
-	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/private.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/templates/core/private.env \
 	&& . ${MAKEFILE_DIR}/scripts/setup_local_debugging.sh
 
 auth:
@@ -442,7 +441,7 @@ api-healthcheck:
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
-	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/private.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/templates/core/private.env \
 	&& ${MAKEFILE_DIR}/devops/scripts/api_healthcheck.sh
 
 db-migrate:
@@ -450,5 +449,5 @@ db-migrate:
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker \
 	&& pushd ${MAKEFILE_DIR}/templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
-	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/private.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/templates/core/private.env \
 	&& python ${MAKEFILE_DIR}/scripts/db_migrations.py
