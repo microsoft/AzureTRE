@@ -28,8 +28,8 @@ class ContainersCopyMetadata:
         self.sa_source_connection_string = sa_source_connection_string
         self.sa_dest_connection_string = sa_dest_connection_string
 
-def main(msg: func.ServiceBusMessage):
 
+def main(msg: func.ServiceBusMessage):
 
     body = msg.get_body().decode('utf-8')
     logging.info('Python ServiceBus queue trigger processed message: %s', body)
