@@ -190,3 +190,33 @@ resource "azurerm_private_endpoint" "export_rejected_pe" {
     subresource_names              = ["Blob"]
   }
 }
+
+data "azurerm_user_assigned_identity" "airlock_id" {
+  name                = "id-airlock-${var.tre_id}"
+  resource_group_name = "rg-${var.tre_id}"
+}
+
+resource "azurerm_role_assignment" "sa_import_approved" {
+  scope                = azurerm_storage_account.sa_import_approved.id
+  role_definition_name = "Contributor"
+  principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
+}
+
+
+resource "azurerm_role_assignment" "sa_export_internal" {
+  scope                = azurerm_storage_account.sa_export_internal.id
+  role_definition_name = "Contributor"
+  principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
+}
+
+resource "azurerm_role_assignment" "sa_export_inprogress" {
+  scope                = azurerm_storage_account.sa_export_inprogress.id
+  role_definition_name = "Contributor"
+  principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
+}
+
+resource "azurerm_role_assignment" "sa_export_rejected" {
+  scope                = azurerm_storage_account.sa_export_rejected.id
+  role_definition_name = "Contributor"
+  principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
+}

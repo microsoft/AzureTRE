@@ -1,6 +1,6 @@
 ---
 name: tre-workspace-base
-version: 0.3.6
+version: 0.3.8
 description: "A base Azure TRE workspace"
 registry: azuretre
 
@@ -90,26 +90,21 @@ parameters:
 outputs:
   - name: app_role_id_workspace_owner
     type: string
-    default: "{{ bundle.parameters.app_role_id_workspace_owner }}"
     applyTo:
       - install
   - name: app_role_id_workspace_researcher
     type: string
-    default: "{{ bundle.parameters.app_role_id_workspace_researcher }}"
     applyTo:
       - install
   - name: client_id
     type: string
-    default: "{{ bundle.parameters.client_id }}"
     applyTo:
       - install
   - name: scope_id
     type: string
-    default: "{{ bundle.parameters.scope_id }}"
     applyTo:
       - install
   - name: sp_id
-    default: "{{ bundle.parameters.sp_id }}"
     type: string
     applyTo:
       - install
@@ -192,9 +187,3 @@ uninstall:
           "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.id }}"
-      outputs:
-        - name: app_role_id_workspace_owner
-        - name: app_role_id_workspace_researcher
-        - name: client_id
-        - name: scope_id
-        - name: sp_id

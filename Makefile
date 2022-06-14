@@ -393,8 +393,9 @@ prepare-for-e2e:
 	&& $(call workspace_service_bundle,innereye) \
 	&& $(call shared_service_bundle,sonatype-nexus) \
 	&& $(call shared_service_bundle,gitea) \
-	&& $(call user_resource_bundle,guacamole,guacamole-dev-vm)
-	&& $(call user_resource_bundle,guacamole,guacamole-azure-windowsvm)
+	&& $(call user_resource_bundle,guacamole,guacamole-dev-vm) \
+	&& $(call user_resource_bundle,guacamole,guacamole-azure-windowsvm) \
+	&& $(call user_resource_bundle,guacamole,guacamole-azure-linuxvm)
 
 test-e2e-smoke:
 	$(call target_title, "Running E2E smoke tests") && \
@@ -405,6 +406,11 @@ test-e2e-extended:
 	$(call target_title, "Running E2E extended tests") && \
 	cd e2e_tests && \
 	python -m pytest -m extended --verify $${IS_API_SECURED:-true} --junit-xml pytest_e2e_extended.xml
+
+test-e2e-extended-aad:
+	$(call target_title, "Running E2E extended AAD tests") && \
+	cd e2e_tests && \
+	python -m pytest -m extended_aad --verify $${IS_API_SECURED:-true} --junit-xml pytest_e2e_extended_aad.xml
 
 test-e2e-shared-services:
 	$(call target_title, "Running E2E shared service tests") && \
