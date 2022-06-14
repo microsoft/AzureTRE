@@ -5,5 +5,38 @@
   "title": "Nexus Shared Service",
   "description": "Provides Nexus shared service",
   "required": [],
-  "properties": {}
+  "properties": {},
+  "pipeline": {
+    "upgrade": [
+      {
+        "stepId": "main"
+      },
+      {
+        "stepId": "a60421b3-7308-491f-b531-e007cdc0ff46",
+        "stepTitle": "Update the Firewall",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+        {
+          "name": "rule_collections",
+          "type": "array",
+          "substitutionAction": "overwrite",
+          "value": {
+            "name": "arc-web_app_subnet_nexus_api",
+            "action": "Allow",
+            "rules": [
+                {
+                    "name": "nexus-package-sources-api",
+                    "description": "Nexus Package Sources",
+                    "protocols": [{"port": "443", "type": "Https"}, {"port": "80", "type": "Http"}],
+                    "target_fqdns": "{{ resource.properties.nexus_allowed_fqdns_list }}",
+                    "source_addresses": "{{ resource.properties.address_prefixes }}"
+                }
+            ]
+          }
+        }]
+      }
+    ]
+  }
 }

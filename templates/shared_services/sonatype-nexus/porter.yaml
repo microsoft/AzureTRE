@@ -1,6 +1,6 @@
 ---
 name: tre-shared-service-nexus
-version: 0.3.3
+version: 0.3.4
 description: "A Sonatype Nexus shared service"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -35,6 +35,19 @@ parameters:
     env: ARM_USE_MSI
     type: boolean
     default: false
+outputs:
+  - name: nexus_allowed_fqdns_list
+    type: string
+    default: ""
+    applyTo:
+      - install
+      - upgrade
+  - name: address_prefixes
+    type: string
+    default: ""
+    applyTo:
+      - install
+      - upgrade
 mixins:
   - exec
   - terraform:
@@ -51,12 +64,24 @@ install:
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.tre_id }}-shared-service-sonatype-nexus"
+      outputs:
+        - name: nexus_allowed_fqdns_list
+        - name: address_prefixes
 upgrade:
-  - exec:
+  - terraform:
       description: "Upgrade shared service"
-      command: echo
-      arguments:
-        - "This shared service does not implement upgrade action"
+      input: false
+      vars:
+        tre_id: "{{ bundle.parameters.tre_id }}"
+        tre_resource_id: "{{ bundle.parameters.id }}"
+      backendConfig:
+        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
+        container_name: "{{ bundle.parameters.tfstate_container_name }}"
+        key: "{{ bundle.parameters.tre_id }}-shared-service-sonatype-nexus"
+      outputs:
+        - name: nexus_allowed_fqdns_list
+        - name: address_prefixes
 uninstall:
   - terraform:
       description: "Tear down shared service"

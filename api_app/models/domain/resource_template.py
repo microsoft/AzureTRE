@@ -34,7 +34,8 @@ class CustomAction(AzureTREModel):
 class PipelineStepProperty(AzureTREModel):
     name: str = Field(title="name", description="name of the property to update")
     type: str = Field(title="type", description="data type of the property to update")
-    value: str = Field(title="value", description="value to use in substitution for the property to update")
+    value: dict = Field({}, title="value", description="value to use in substitution for the property to update")
+    substitutionAction: str = Field("", title="Substitution Action", description="How to treat existing values of this property [overwrite | append | remove]")
 
 
 class PipelineStep(AzureTREModel):
