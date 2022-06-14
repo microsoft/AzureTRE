@@ -98,8 +98,8 @@ az role assignment create \
 
 az role assignment create \
     --role "EventGrid Data Sender" \
-    --assignee ${RP_TESTING_SP_APP_ID} \
-    --scope ${EVENT_GRID_TOPIC_RESOURCE_ID}
+    --assignee "${RP_TESTING_SP_APP_ID}" \
+    --scope "${EVENT_GRID_STATUS_CHANGED_TOPIC_RESOURCE_ID}"
 
 # Write the appId and secret to the private.env file which is used for RP debugging
 # First check if the env vars are there already and delete them

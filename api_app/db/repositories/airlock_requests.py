@@ -38,14 +38,12 @@ class AirlockRequestRepository(AirlockResourceRepository):
         full_airlock_request_id = str(uuid.uuid4())
 
         # TODO - validate the request https://github.com/microsoft/AzureTRE/issues/2016
-        resource_spec_parameters = {**self.get_airlock_request_spec_params()}
 
         airlock_request = AirlockRequest(
             id=full_airlock_request_id,
             workspaceId=workspace_id,
             businessJustification=airlock_request_input.businessJustification,
             requestType=airlock_request_input.requestType,
-            properties=resource_spec_parameters
         )
 
         return airlock_request
@@ -64,6 +62,3 @@ class AirlockRequestRepository(AirlockResourceRepository):
             return self.update_airlock_resource_item(airlock_request, updated_request, user)
         else:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE)
-
-    def get_airlock_request_spec_params(self):
-        return self.get_resource_base_spec_params()

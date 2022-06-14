@@ -10,10 +10,6 @@ class AirlockResourceRepository(BaseRepository):
     def __init__(self, client: CosmosClient):
         super().__init__(client, config.STATE_STORE_AIRLOCK_RESOURCES_CONTAINER)
 
-    @staticmethod
-    def get_resource_base_spec_params():
-        return {"tre_id": config.TRE_ID}
-
     def get_timestamp(self) -> float:
         return datetime.utcnow().timestamp()
 
