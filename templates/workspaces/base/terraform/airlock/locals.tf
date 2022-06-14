@@ -6,9 +6,7 @@ locals {
   export_inprogress_sys_topic_name = "evgt-airlock-export-inprog-${local.workspace_resource_name_suffix}"
   export_rejected_sys_topic_name   = "evgt-airlock-export-rejected-${local.workspace_resource_name_suffix}"
 
-  export_rejected_queue_name   = "airlock-export-rejected-blob-created"
-  import_approved_queue_name   = "airlock-import-approved-blob-created"
-  export_inprogress_queue_name = "airlock-export-inprogress-blob-created"
+  blob_created_topic_name = "airlock-blob-created"
 
   # STorage AirLock APProved IMport
   import_approved_storage_name = lower(replace("stalimapp${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
