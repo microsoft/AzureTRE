@@ -1,6 +1,6 @@
 ---
 name: tre-shared-service-gitea
-version: 0.3.6
+version: 0.3.8
 description: "A Gitea shared service"
 registry: azuretre
 
@@ -42,6 +42,20 @@ mixins:
   - terraform:
       clientVersion: 1.1.5
 
+outputs:
+  - name: gitea_allowed_fqdns_list
+    type: string
+    default: ""
+    applyTo:
+      - install
+      - upgrade
+  - name: address_prefixes
+    type: string
+    default: ""
+    applyTo:
+      - install
+      - upgrade
+
 install:
   - terraform:
       description: "Deploy shared service"
@@ -56,12 +70,28 @@ install:
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.tre_id }}-shared-service-gitea"
+      outputs:
+        - name: gitea_allowed_fqdns_list
+        - name: address_prefixes
+
 upgrade:
-  - exec:
+  - terraform:
       description: "Upgrade shared service"
-      command: echo
-      arguments:
-        - "This shared service does not implement upgrade action"
+      input: false
+      vars:
+        tre_id: "{{ bundle.parameters.tre_id }}"
+        tre_resource_id: "{{ bundle.parameters.id }}"
+        mgmt_resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        acr_name: "{{ bundle.parameters.mgmt_acr_name }}"
+      backendConfig:
+        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
+        container_name: "{{ bundle.parameters.tfstate_container_name }}"
+        key: "{{ bundle.parameters.tre_id }}-shared-service-gitea"
+      outputs:
+        - name: gitea_allowed_fqdns_list
+        - name: address_prefixes
+
 uninstall:
   - terraform:
       description: "Tear down shared service"
