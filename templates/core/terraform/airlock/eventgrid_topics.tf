@@ -5,7 +5,7 @@ resource "azurerm_eventgrid_topic" "step_result" {
   resource_group_name = var.resource_group_name
 
   tags = {
-    Publishers = "Airlock Orchestrator;"
+    Publishers = "Airlock Processor;"
   }
 }
 
@@ -31,7 +31,7 @@ resource "azurerm_private_endpoint" "egpe" {
   name                = "pe-eg-${var.tre_id}"
   location            = var.location
   resource_group_name = var.resource_group_name
-  subnet_id           = var.shared_subnet_id
+  subnet_id           = var.airlock_storage_subnet_id
   lifecycle { ignore_changes = [tags] }
 
   private_dns_zone_group {
