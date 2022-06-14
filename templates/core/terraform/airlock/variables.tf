@@ -32,3 +32,10 @@ variable "arm_subscription_id" {
   type        = string
   default     = ""
 }
+
+variable "airlock_app_service_plan_sku_size" {
+  type    = string
+  default = "P1v3"
+}
+
+variable "airlock_processor_subnet_id" {}
