@@ -1,5 +1,4 @@
 from datetime import date, timedelta
-from xmlrpc.client import boolean
 from fastapi import APIRouter, Depends, Query
 
 from resources import strings
