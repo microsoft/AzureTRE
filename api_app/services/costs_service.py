@@ -8,6 +8,7 @@ from azure.mgmt.costmanagement import CostManagementClient
 from azure.mgmt.costmanagement.models import QueryGrouping, QueryAggregation, QueryDataset, QueryDefinition, \
     TimeframeType, ExportType, QueryTimePeriod, QueryFilter, QueryComparisonExpression, QueryResult
 
+from core import config
 from models.domain.costs import GranularityEnum
 
 
@@ -17,7 +18,7 @@ class CostService:
 
     def __init__(self):
         self.scope = "/subscriptions/{}".format(os.getenv("SUBSCRIPTION_ID"))
-        self.client = CostManagementClient(DefaultAzureCredential())
+        self.client = CostManagementClient(DefaultAzureCredential(managed_identity_client_id=config.MANAGED_IDENTITY_CLIENT_ID))
 
     def query_tre_costs(self, granularity: GranularityEnum, from_date: date, to_date: date) -> QueryResult:
         return self.query_costs("tre_id", os.getenv("TRE_ID"), granularity, from_date, to_date)

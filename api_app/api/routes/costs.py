@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from xmlrpc.client import boolean
 from fastapi import APIRouter, Depends, Query
 
 from resources import strings
@@ -18,10 +19,12 @@ costs_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_o
 class CostsQueryParams:
     def __init__(
         self,
+        call_service: bool = Query(default=False),
         from_date: date = Query(default=(date.today().replace(day=1)), description="The start date to pull data from, default value first day of month (iso-8601, UTC)."),
         to_date: date = Query(default=(date.today() + timedelta(days=1)), description="The end date to pull data to, default value tomorrow (iso-8601, UTC)."),
         granularity: GranularityEnum = Query(default="None", description="The granularity of rows in the query.")
     ):
+        self.call_service = call_service
         self.from_date = from_date
         self.to_date = to_date
         self.granularity = granularity
@@ -33,8 +36,9 @@ async def costs(
         workspace_repo=Depends(get_repository(WorkspaceRepository)),
         shared_services_repo=Depends(get_repository(SharedServiceRepository))) -> CostReport:
 
-    cost_service = CostService()
-    cost_service.query_tre_costs(params.granularity, params.from_date, params.to_date)
+    if params.call_service:
+        cost_service = CostService()
+        cost_service.query_tre_costs(params.granularity, params.from_date, params.to_date)
 
     return generate_cost_report_stub(params.granularity)
 
@@ -45,7 +49,8 @@ async def workspace_costs(
         workspace=Depends(get_workspace_by_id_from_path),
         workspace_services_repo=Depends(get_repository(WorkspaceServiceRepository))) -> WorkspaceCostReport:
 
-    cost_service = CostService()
-    cost_service.query_tre_workspace_costs(workspace_id, params.granularity, params.from_date, params.to_date)
+    if params.call_service:
+        cost_service = CostService()
+        cost_service.query_tre_workspace_costs(workspace_id, params.granularity, params.from_date, params.to_date)
 
     return generate_workspace_cost_report_stub("Workspace 1", params.granularity)
