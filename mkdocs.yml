@@ -46,6 +46,8 @@ nav:
       - Shared Services:
           - Gitea (Source Mirror): 'azure-tre-overview/shared-services/gitea.md'
           - Nexus (Package Mirror): 'azure-tre-overview/shared-services/nexus.md'
+  - Azure TRE Features:
+      - Airlock: 'azure-tre-features/airlock.md'
   - TRE Admins:
       - Setup Instructions:
           - 1. Getting Started: 'tre-admins/setup-instructions/getting-started.md'
