@@ -11,4 +11,9 @@ locals {
   issuer                         = "https://login.microsoftonline.com/${local.aad_tenant_id}/v2.0"
   keyvault_name                  = lower("kv-${substr(local.workspace_resource_name_suffix, -20, -1)}")
   version                        = replace(replace(replace(data.local_file.version.content, "__version__ = \"", ""), "\"", ""), "\n", "")
+  workspace_service_tags = {
+    tre_id                   = var.tre_id
+    tre_workspace_id         = var.workspace_id
+    tre_workspace_service_id = var.id
+  }
 }

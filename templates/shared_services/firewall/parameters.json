@@ -39,6 +39,12 @@
       "source": {
         "env": "RULE_COLLECTIONS"
       }
+    },
+    {
+      "name": "stateful_resources_locked",
+      "source": {
+        "env": "STATEFUL_RESOURCES_LOCKED"
+      }
     }
   ]
 }
