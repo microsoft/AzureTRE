@@ -26,3 +26,9 @@ variable "mgmt_acr_name" {
   type        = string
   description = "Management ACR name"
 }
+
+variable "arm_subscription_id" {
+  description = "The TRE subscription id."
+  type        = string
+  default     = ""
+}

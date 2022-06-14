@@ -237,7 +237,8 @@
     "mikestead.dotenv",
     "humao.rest-client",
     "timonwong.shellcheck",
-    "ms-azuretools.vscode-bicep"
+    "ms-azuretools.vscode-bicep",
+    "ms-azuretools.vscode-azurefunctions"
   ],
   "forwardPorts": [
     8000
