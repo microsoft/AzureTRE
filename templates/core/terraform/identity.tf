@@ -43,3 +43,4 @@ resource "azurerm_role_assignment" "cosmos_contributor" {
   role_definition_name = "Contributor"
   principal_id         = azurerm_user_assigned_identity.id.principal_id
 }
+
