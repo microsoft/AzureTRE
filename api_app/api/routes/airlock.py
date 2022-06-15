@@ -47,7 +47,7 @@ async def create_airlock_review(airlock_review_input: AirlockReviewInCreate, air
     except (ValidationError, ValueError) as e:
         logging.error(f"Failed create airlock review model instance: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    await save_airlock_review(airlock_review, airlock_review_repo, user)
     # Update the airlock request in cosmos, send a status_changed event
     await update_status_and_publish_event_airlock_request(airlock_request, airlock_request_repo, user, airlock_review.reviewDecision)
+    await save_airlock_review(airlock_review, airlock_review_repo, user)
     return AirlockReviewInResponse(airlock_review=airlock_review)

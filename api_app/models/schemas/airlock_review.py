@@ -10,10 +10,6 @@ def get_sample_airlock_review(workspace_id: str, airlock_request_id: str, airloc
         "workspaceId": workspace_id,
         "reviewDecision": "Describe why the request was approved/rejected",
         "decisionExplanation": "Describe why the request was approved/rejected",
-        "override": "false",
-        "overrideJustification": "explanation",
-        "allowBlockeContent": "false",
-        "allowBlockedJustification": "explanation",
         "resourceType": AirlockResourceType.AirlockReview
     }
 

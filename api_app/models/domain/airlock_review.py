@@ -17,7 +17,3 @@ class AirlockReview(AirlockResource):
     resourceType = AirlockResourceType.AirlockReview
     reviewDecision: AirlockReviewDecision = Field("", title="Airlock review decision")
     decisionExplanation: str = Field(False, title="Explanation why the request was approved/rejected")
-    override: bool = Field(False, title="Override a review")
-    overrideJustification: str = Field("", title="Explanation why we allow overriding a review")
-    allowBlockedContent: bool = Field(False, title="Allowing blocked content")
-    allowBlockedJustification: str = Field("", title="Explanation why we allow block content")
