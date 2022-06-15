@@ -1,18 +1,6 @@
-
-# Event grid status_changed private endpoint
-resource "azurerm_private_dns_zone" "eventgrid" {
+data "azurerm_private_dns_zone" "eventgrid" {
   name                = "privatelink.eventgrid.azure.net"
   resource_group_name = var.resource_group_name
-  lifecycle { ignore_changes = [tags] }
-}
-
-
-resource "azurerm_private_dns_zone_virtual_network_link" "eg_topic_dns_link" {
-  name                  = "eg_topic_dns_link"
-  resource_group_name   = var.resource_group_name
-  private_dns_zone_name = azurerm_private_dns_zone.eventgrid.name
-  virtual_network_id    = var.virtual_network_id
-  lifecycle { ignore_changes = [tags] }
 }
 
 # Event grid topics
@@ -37,7 +25,7 @@ resource "azurerm_private_endpoint" "eg_step_result" {
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group"
-    private_dns_zone_ids = [azurerm_private_dns_zone.eventgrid.id]
+    private_dns_zone_ids = [data.azurerm_private_dns_zone.eventgrid.id]
   }
 
   private_service_connection {
@@ -70,7 +58,7 @@ resource "azurerm_private_endpoint" "eg_status_changed" {
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group"
-    private_dns_zone_ids = [azurerm_private_dns_zone.eventgrid.id]
+    private_dns_zone_ids = [data.azurerm_private_dns_zone.eventgrid.id]
   }
 
   private_service_connection {
@@ -164,7 +152,7 @@ resource "azurerm_private_endpoint" "eg_scan_result" {
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group"
-    private_dns_zone_ids = [azurerm_private_dns_zone.eventgrid.id]
+    private_dns_zone_ids = [data.azurerm_private_dns_zone.eventgrid.id]
   }
 
   private_service_connection {
