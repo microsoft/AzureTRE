@@ -19,7 +19,7 @@ resource "azurerm_storage_account" "sa_import_approved" {
   tags = merge(
     var.tre_workspace_tags,
     {
-    description = "airlock;import;approved"
+      description = "airlock;import;approved"
     }
   )
 
@@ -74,9 +74,9 @@ resource "azurerm_storage_account" "sa_export_internal" {
   tags = merge(
     var.tre_workspace_tags,
     {
-    description = "airlock;export;internal"
+      description = "airlock;export;internal"
     }
-   )
+  )
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -124,7 +124,7 @@ resource "azurerm_storage_account" "sa_export_inprogress" {
   tags = merge(
     var.tre_workspace_tags,
     {
-     description = "airlock;export;inprogress"
+      description = "airlock;export;inprogress"
     }
   )
 
@@ -174,7 +174,7 @@ resource "azurerm_storage_account" "sa_export_rejected" {
   tags = merge(
     var.tre_workspace_tags,
     {
-    description = "airlock;export;rejected"
+      description = "airlock;export;rejected"
     }
   )
 
