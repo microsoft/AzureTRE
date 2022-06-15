@@ -10,7 +10,7 @@ locals {
   core_resource_group_name       = "rg-${var.tre_id}"
   workspace_resource_name_suffix = "${var.tre_id}-ws-${local.short_workspace_id}"
   service_resource_name_suffix   = "${var.tre_id}-ws-${local.short_workspace_id}-svc-${local.short_service_id}"
-  allowed_urls                   = ["aadcdn.msftauth.net","ml.azure.com"],
+  allowed_urls                   = ["aadcdn.msftauth.net","ml.azure.com"]
   allowed_service_tags           = ["AzureActiveDirectory","AzureResourceManager","AzureMachineLearning","${data.azurerm_network_service_tags.storage.id}", "MicrosoftContainerRegistry"]
   workspace_name                 = lower("ml-${substr(local.service_resource_name_suffix, -30, -1)}")
   acr_name                       = lower(replace("acr${substr(local.service_resource_name_suffix, -8, -1)}", "-", ""))
