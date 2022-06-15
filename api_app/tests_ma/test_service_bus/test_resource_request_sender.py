@@ -1,3 +1,4 @@
+import copy
 import json
 import pytest
 import uuid
@@ -195,12 +196,25 @@ resource = Resource(
 )
 
 
+resource_to_update = Resource(
+    id="123",
+    name="Firewall",
+    isEnabled=True,
+    templateName="template name",
+    templateVersion="7",
+    resourceType="workspace",
+    _etag="",
+    properties={},
+)
+
+
 pipeline_step = PipelineStep(
     properties=[
         PipelineStepProperty(
             name="rule_collections",
             type="array",
             substitutionAction="overwrite",
+            arrayMatchField="name",
             value={
                 "name": "arc-web_app_subnet_nexus_api",
                 "action": "Allow",
@@ -247,9 +261,45 @@ def test_substitution():
 
 
 def test_substitution_props():
-    obj = substitute_properties(pipeline_step, resource)
+    obj = substitute_properties(pipeline_step, resource, resource_to_update)
 
-    assert obj["rule_collections"]["rules"][0]["target_fqdns"] == ["*pypi.org", "files.pythonhosted.org", "security.ubuntu.com"]
-    assert obj["rule_collections"]["rules"][0]["source_addresses"] == ["172.0.0.1", "192.168.0.1"]
-    assert obj["rule_collections"]["rules"][0]["protocols"][1]["type"] == "MyCoolProtocol"
-    assert obj["rule_collections"]["rules"][0]["description"] == "Deployed by 123"
+    assert obj["rule_collections"][0]["rules"][0]["target_fqdns"] == ["*pypi.org", "files.pythonhosted.org", "security.ubuntu.com"]
+    assert obj["rule_collections"][0]["rules"][0]["source_addresses"] == ["172.0.0.1", "192.168.0.1"]
+    assert obj["rule_collections"][0]["rules"][0]["protocols"][1]["type"] == "MyCoolProtocol"
+    assert obj["rule_collections"][0]["rules"][0]["description"] == "Deployed by 123"
+
+
+def test_substitution_array_append_remove_replace():
+
+    # do the first substitution, and assert there's a single rule collection
+    step = copy.deepcopy(pipeline_step)
+    step.properties[0].substitutionAction = "append"
+    obj = substitute_properties(step, resource, resource_to_update)
+    assert len(obj["rule_collections"]) == 1
+
+    # in effect the RP will do this:
+    resource_to_update.properties = obj
+
+    # now append another substitution, and check we've got both rules
+    step = copy.deepcopy(pipeline_step)
+    step.properties[0].substitutionAction = "append"
+    obj = substitute_properties(step, resource, resource_to_update)
+    assert len(obj["rule_collections"]) == 2
+
+    # the RP makes the change again...
+    resource_to_update.properties = obj
+
+    # now append another substitution, and check we've got all 3 rules
+    step = copy.deepcopy(pipeline_step)
+    step.properties[0].substitutionAction = "append"
+    obj = substitute_properties(step, resource, resource_to_update)
+    assert len(obj["rule_collections"]) == 3
+
+    # the RP makes the change again...
+    resource_to_update.properties = obj
+
+    # now remove one...
+    step = copy.deepcopy(pipeline_step)
+    step.properties[0].substitutionAction = "append"
+    obj = substitute_properties(step, resource, resource_to_update)
+    assert len(obj["rule_collections"]) == 3

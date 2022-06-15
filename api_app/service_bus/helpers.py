@@ -1,7 +1,10 @@
+from typing import Union
+from attr import ib
 from azure.identity.aio import DefaultAzureCredential
 from azure.servicebus import ServiceBusMessage
 from azure.servicebus.aio import ServiceBusClient
 from contextlib import asynccontextmanager
+from httpcore import ProxyError
 
 from pydantic import parse_obj_as
 from models.domain.resource_template import PipelineStep
@@ -88,7 +91,7 @@ def update_resource_for_step(
         raise f"Cannot find step with id of {operation_step.stepId} in template {primary_resource.templateName} for action {primary_action}"
 
     # substitute values into new property bag for update
-    properties = substitute_properties(template_step, primary_resource)
+    properties = substitute_properties(template_step, primary_resource, resource_to_update)
 
     if template_step.resourceAction == "upgrade":
         resource_to_send = try_upgrade_with_retries(
@@ -107,20 +110,46 @@ def update_resource_for_step(
         raise Exception("Only upgrade is currently supported for pipeline steps")
 
 
-def substitute_properties(template_step: PipelineStep, primary_resource: Resource) -> dict:
+def substitute_properties(template_step: PipelineStep, primary_resource: Resource, resource_to_update: Resource) -> dict:
     properties = {}
+    primary_resource_dict = primary_resource.dict()
+
     for prop in template_step.properties:
         val = prop.value
         if isinstance(prop.value, dict):
-            val = recurse_object(prop.value, primary_resource.dict())
-        else:
-            val = substitute_value(val, primary_resource.dict())
+            val = recurse_object(prop.value, primary_resource_dict)
 
-        if prop.substitutionAction == 'overwrite':
             if prop.type == 'array':
-                properties[prop.name] = [val]
+                if prop.name in resource_to_update.properties:
+                    existing_arr = resource_to_update.properties[prop.name]
+                else:
+                    existing_arr = []
+
+                if prop.substitutionAction == 'overwrite':
+                    properties[prop.name] = [val]
+
+                if prop.substitutionAction == 'append':
+                    properties[prop.name] = existing_arr
+                    properties[prop.name].append(val)
+
+                if prop.substitutionAction == 'remove' or prop.substitutionAction == 'replace':
+                    m = -1
+                    for i in range(0, len(existing_arr)):
+                        if existing_arr[i][prop.arrayMatchField] == val[prop.arrayMatchField]:
+                            m = i
+                            break
+                    if m > -1:
+                        del existing_arr[m]
+                        if prop.substitutionAction == 'replace':
+                            existing_arr.append(val)
+                        properties[prop.name] = existing_arr
+
             else:
                 properties[prop.name] = val
+
+        else:
+            val = substitute_value(val, primary_resource_dict)
+            properties[prop.name] = val
 
     return properties
 
@@ -138,7 +167,7 @@ def recurse_object(obj: dict, primary_resource_dict: dict) -> dict:
     return obj
 
 
-def substitute_value(val: str, primary_resource_dict: dict):
+def substitute_value(val: str, primary_resource_dict: dict) -> Union[dict, list, str]:
     if "{{" not in val:
         return val
 

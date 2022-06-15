@@ -36,6 +36,7 @@ class PipelineStepProperty(AzureTREModel):
     type: str = Field(title="type", description="data type of the property to update")
     value: dict = Field({}, title="value", description="value to use in substitution for the property to update")
     substitutionAction: str = Field("", title="Substitution Action", description="How to treat existing values of this property [overwrite | append | remove]")
+    arrayMatchField: str = Field("", title="Array match field", description="Name of the field to use for finding an item in an array - to replace/remove it")
 
 
 class PipelineStep(AzureTREModel):
