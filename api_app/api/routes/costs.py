@@ -8,8 +8,9 @@ from services.authentication import get_current_admin_user, get_current_workspac
 from db.repositories.workspaces import WorkspaceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
 from db.repositories.shared_services import SharedServiceRepository
+from db.repositories.user_resources import UserResourceRepository
 from models.domain.costs import CostReport, GranularityEnum, WorkspaceCostReport, generate_cost_report_stub, generate_workspace_cost_report_stub
-from services.costs_service import CostService
+from services.cost_service import CostService
 
 costs_core_router = APIRouter(dependencies=[Depends(get_current_admin_user)])
 costs_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_tre_admin)])
@@ -37,7 +38,8 @@ async def costs(
 
     if params.call_service:
         cost_service = CostService()
-        cost_service.query_tre_costs(params.granularity, params.from_date, params.to_date)
+        cost_service.query_tre_costs(
+            params.granularity, params.from_date, params.to_date, workspace_repo, shared_services_repo)
 
     return generate_cost_report_stub(params.granularity)
 
@@ -45,11 +47,14 @@ async def costs(
 @costs_workspace_router.get("/workspaces/{workspace_id}/costs", response_model=WorkspaceCostReport, name=strings.API_GET_WORKSPACE_COSTS, dependencies=[Depends(get_current_workspace_owner_or_tre_admin)])
 async def workspace_costs(
         workspace_id, params: CostsQueryParams = Depends(),
-        workspace=Depends(get_workspace_by_id_from_path),
-        workspace_services_repo=Depends(get_repository(WorkspaceServiceRepository))) -> WorkspaceCostReport:
+        workspace_repo=Depends(get_repository(WorkspaceRepository)),
+        workspace_services_repo=Depends(get_repository(WorkspaceServiceRepository)),
+        user_resource_repo=Depends(get_repository(UserResourceRepository))) -> WorkspaceCostReport:
 
     if params.call_service:
         cost_service = CostService()
-        cost_service.query_tre_workspace_costs(workspace_id, params.granularity, params.from_date, params.to_date)
+        cost_service.query_tre_workspace_costs(
+            workspace_id, params.granularity, params.from_date, params.to_date,
+            workspace_repo, workspace_services_repo, user_resource_repo)
 
     return generate_workspace_cost_report_stub("Workspace 1", params.granularity)
