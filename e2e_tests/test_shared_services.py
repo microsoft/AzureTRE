@@ -1,11 +1,8 @@
 import pytest
 import logging
 
-from helpers import (
-    disable_and_delete_resource,
-    post_resource,
-    get_shared_service_id_by_name,
-)
+from resources.resource import disable_and_delete_resource, post_resource
+from helpers import get_shared_service_id_by_name
 from resources import strings
 
 

@@ -47,11 +47,16 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
 
   app_settings = {
     "SB_CONNECTION_STRING"                = data.azurerm_servicebus_namespace.airlock_sb.default_primary_connection_string
+    "BLOB_CREATED_TOPIC_NAME"             = azurerm_servicebus_topic.blob_created.name
+    "TOPIC_SUBSCRIPTION_NAME"             = azurerm_servicebus_subscription.airlock_processor.name
     "EVENT_GRID_TOPIC_URI_SETTING"        = azurerm_eventgrid_topic.step_result.endpoint
     "EVENT_GRID_TOPIC_KEY_SETTING"        = azurerm_eventgrid_topic.step_result.primary_access_key
     "WEBSITES_ENABLE_APP_SERVICE_STORAGE" = false
-    "AIRLOCK_STATUS_CHANGED_QUEUE_NAME"   = "airlock-status-changed"
+    "AIRLOCK_STATUS_CHANGED_QUEUE_NAME"   = local.status_changed_queue_name
     "APPINSIGHTS_INSTRUMENTATIONKEY"      = data.azurerm_application_insights.core.instrumentation_key
+    "MANAGED_IDENTITY_CLIENT_ID"          = azurerm_user_assigned_identity.airlock_id.client_id
+    "AZURE_SUBSCRIPTION_ID"               = var.arm_subscription_id
+    "TRE_ID"                              = var.tre_id
   }
 
   site_config {

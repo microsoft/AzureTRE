@@ -18,23 +18,6 @@ resource "azurerm_servicebus_queue" "status_changed" {
   enable_partitioning = false
 }
 
-
-resource "azurerm_servicebus_queue" "import_in_progress_blob_created" {
-  name         = local.import_inprogress_queue_name
-  namespace_id = data.azurerm_servicebus_namespace.airlock_sb.id
-
-  enable_partitioning = false
-}
-
-
-resource "azurerm_servicebus_queue" "import_rejected_blob_created" {
-  name         = local.import_rejected_queue_name
-  namespace_id = data.azurerm_servicebus_namespace.airlock_sb.id
-
-  enable_partitioning = false
-}
-
-
 resource "azurerm_servicebus_queue" "scan_result" {
   name         = local.scan_result_queue_name
   namespace_id = data.azurerm_servicebus_namespace.airlock_sb.id
@@ -42,33 +25,23 @@ resource "azurerm_servicebus_queue" "scan_result" {
   enable_partitioning = false
 }
 
-resource "azurerm_servicebus_queue" "import_approved_blob_created" {
-  name         = local.import_approved_queue_name
+resource "azurerm_servicebus_topic" "blob_created" {
+  name         = local.blob_created_topic_name
   namespace_id = data.azurerm_servicebus_namespace.airlock_sb.id
 
   enable_partitioning = false
 }
 
-resource "azurerm_servicebus_queue" "export_in_progress_blob_created" {
-  name         = local.export_inprogress_queue_name
-  namespace_id = data.azurerm_servicebus_namespace.airlock_sb.id
-
-  enable_partitioning = false
+resource "azurerm_servicebus_subscription" "airlock_processor" {
+  name               = local.blob_created_al_processor_subscription_name
+  topic_id           = azurerm_servicebus_topic.blob_created.id
+  max_delivery_count = 1
 }
 
-resource "azurerm_servicebus_queue" "export_rejected_blob_created" {
-  name         = local.export_rejected_queue_name
-  namespace_id = data.azurerm_servicebus_namespace.airlock_sb.id
-
-  enable_partitioning = false
-}
-
-# Approved export
-resource "azurerm_servicebus_queue" "export_approved_blob_created" {
-  name         = local.export_approved_queue_name
-  namespace_id = data.azurerm_servicebus_namespace.airlock_sb.id
-
-  enable_partitioning = false
+resource "azurerm_servicebus_subscription" "malware_scanner" {
+  name               = local.blob_created_malware_subscription_name
+  topic_id           = azurerm_servicebus_topic.blob_created.id
+  max_delivery_count = 1
 }
 
 
