@@ -11,6 +11,11 @@ resource "azurerm_storage_account" "sa_import_approved" {
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
 
+  network_rules {
+    default_action = var.enable_local_debugging ? "Allow" : "Deny"
+    bypass         = ["AzureServices"]
+  }
+
   tags = merge(
     var.tre_workspace_tags,
     {
@@ -61,6 +66,11 @@ resource "azurerm_storage_account" "sa_export_internal" {
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
 
+  network_rules {
+    default_action = var.enable_local_debugging ? "Allow" : "Deny"
+    bypass         = ["AzureServices"]
+  }
+
   tags = merge(
     var.tre_workspace_tags,
     {
@@ -106,6 +116,10 @@ resource "azurerm_storage_account" "sa_export_inprogress" {
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
 
+  network_rules {
+    default_action = var.enable_local_debugging ? "Allow" : "Deny"
+    bypass         = ["AzureServices"]
+  }
   tags = merge(
     var.tre_workspace_tags,
     {
@@ -150,6 +164,11 @@ resource "azurerm_storage_account" "sa_export_rejected" {
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
+
+  network_rules {
+    default_action = var.enable_local_debugging ? "Allow" : "Deny"
+    bypass         = ["AzureServices"]
+  }
 
   tags = merge(
     var.tre_workspace_tags,

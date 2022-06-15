@@ -9,7 +9,7 @@ resource "azurerm_eventgrid_system_topic" "import_approved_blob_created" {
   tags = merge(
     var.tre_workspace_tags,
     {
-      Publishers = "airlock;accepted-import-sa"
+      Publishers = "airlock;approved-import-sa"
     }
   )
 
