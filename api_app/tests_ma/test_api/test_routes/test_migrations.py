@@ -34,15 +34,18 @@ class TestMigrationRoutesThatRequireAdminRights:
 
     # [POST] /migrations/
     @ patch("api.routes.migrations.logging.info")
+    @ patch("api.routes.migrations.OperationRepository")
+    @ patch("api.routes.migrations.ResourceMigration.add_deployment_status_field")
     @ patch("api.routes.migrations.ResourceRepository.rename_field_name")
     @ patch("api.routes.migrations.SharedServiceMigration.deleteDuplicatedSharedServices")
     @ patch("api.routes.migrations.WorkspaceMigration.moveAuthInformationToProperties")
-    async def test_post_migrations_returns_202_on_successful(self, workspace_migration, shared_services_migration, resources_repo, logging, client, app):
+    async def test_post_migrations_returns_202_on_successful(self, workspace_migration, shared_services_migration, rename_field, add_deployment_field, _, logging, client, app):
         response = await client.post(app.url_path_for(strings.API_MIGRATE_DATABASE))
 
         shared_services_migration.assert_called_once()
         workspace_migration.assert_called_once()
-        resources_repo.assert_called()
+        rename_field.assert_called()
+        add_deployment_field.assert_called()
         logging.assert_called()
         assert response.status_code == status.HTTP_202_ACCEPTED
 

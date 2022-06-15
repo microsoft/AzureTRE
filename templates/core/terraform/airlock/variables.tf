@@ -3,6 +3,8 @@ variable "location" {}
 variable "resource_group_name" {}
 variable "shared_subnet_id" {}
 variable "enable_local_debugging" {}
+variable "virtual_network_id" {}
+variable "api_principal_id" {}
 
 variable "docker_registry_server" {
   type        = string
@@ -23,4 +25,10 @@ variable "mgmt_resource_group_name" {
 variable "mgmt_acr_name" {
   type        = string
   description = "Management ACR name"
+}
+
+variable "arm_subscription_id" {
+  description = "The TRE subscription id."
+  type        = string
+  default     = ""
 }

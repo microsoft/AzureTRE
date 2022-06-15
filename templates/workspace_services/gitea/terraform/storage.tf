@@ -4,6 +4,7 @@ resource "azurerm_storage_account" "gitea" {
   location                 = data.azurerm_resource_group.ws.location
   account_tier             = "Standard"
   account_replication_type = "GRS"
+  tags                     = local.workspace_service_tags
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -20,6 +21,7 @@ resource "azurerm_private_endpoint" "stgfilepe" {
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
   subnet_id           = data.azurerm_subnet.services.id
+  tags                = local.workspace_service_tags
 
   lifecycle { ignore_changes = [tags] }
 

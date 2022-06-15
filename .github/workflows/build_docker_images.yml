@@ -43,6 +43,10 @@ jobs:
               - 'templates/shared_services/gitea/**/*'
             gitea_version:
               - 'templates/shared_services/gitea/version.txt'
+            airlock_processor:
+              - 'airlock_processor/**/*'
+            airlock_processor_version:
+              - 'airlock_processor/_version.py'
 
       - name: "Stale version: api"
         if: ${{ steps.filter.outputs.api == 'true' &&
@@ -62,6 +66,11 @@ jobs:
       - name: "Stale version: gitea"
         if: ${{ steps.filter.outputs.gitea == 'true' &&
           steps.filter.outputs.gitea_version == 'false' }}
+        run: echo "::error::Code update without version change" && exit 1
+
+      - name: "Stale version: airlock_processor"
+        if: ${{ steps.filter.outputs.airlock_processor == 'true' &&
+          steps.filter.outputs.airlock_processor_version == 'false' }}
         run: echo "::error::Code update without version change" && exit 1
 
       - name: Set up Docker Buildx
@@ -155,6 +164,17 @@ jobs:
         with:
           context: ./templates/shared_services/gitea
           file: ./templates/shared_services/gitea/Dockerfile
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: "Build image: airlock_processor"
+        if: |
+          (steps.filter.outputs.airlock_processor == 'true'
+          || github.event_name == 'workflow_dispatch')
+        uses: docker/build-push-action@v2
+        with:
+          context: ./airlock_processor/
+          file: ./airlock_processor/Dockerfile
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

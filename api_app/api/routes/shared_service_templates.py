@@ -22,9 +22,9 @@ async def get_shared_service_templates(template_repo=Depends(get_repository(Reso
 
 
 @shared_service_templates_core_router.get("/shared-service-templates/{shared_service_template_name}", response_model=SharedServiceTemplateInResponse, response_model_exclude_none=True, name=strings.API_GET_SHARED_SERVICE_TEMPLATE_BY_NAME, dependencies=[Depends(get_current_tre_user_or_tre_admin)])
-async def get_current_shared_service_template_by_name(shared_service_template_name: str, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> SharedServiceTemplateInResponse:
+async def get_current_shared_service_template_by_name(shared_service_template_name: str, is_update: bool = False, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> SharedServiceTemplateInResponse:
     try:
-        template = get_current_template_by_name(shared_service_template_name, template_repo, ResourceType.SharedService)
+        template = get_current_template_by_name(shared_service_template_name, template_repo, ResourceType.SharedService, is_update=is_update)
         return parse_obj_as(SharedServiceTemplateInResponse, template)
     except EntityDoesNotExist:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.SHARED_SERVICE_TEMPLATE_DOES_NOT_EXIST)

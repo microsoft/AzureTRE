@@ -11,10 +11,15 @@ resource "azurerm_storage_account" "sa_import_approved" {
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
 
+  network_rules {
+    default_action = var.enable_local_debugging ? "Allow" : "Deny"
+    bypass         = ["AzureServices"]
+  }
+
   tags = merge(
     var.tre_workspace_tags,
     {
-      description = "airlock;import;approved"
+    description = "airlock;import;approved"
     }
   )
 
@@ -61,12 +66,17 @@ resource "azurerm_storage_account" "sa_export_internal" {
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
 
+  network_rules {
+    default_action = var.enable_local_debugging ? "Allow" : "Deny"
+    bypass         = ["AzureServices"]
+  }
+
   tags = merge(
     var.tre_workspace_tags,
     {
-      description = "airlock;export;internal"
+    description = "airlock;export;internal"
     }
-  )
+   )
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -106,10 +116,15 @@ resource "azurerm_storage_account" "sa_export_inprogress" {
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
 
+  network_rules {
+    default_action = var.enable_local_debugging ? "Allow" : "Deny"
+    bypass         = ["AzureServices"]
+  }
+
   tags = merge(
     var.tre_workspace_tags,
     {
-      description = "airlock;export;inprogress"
+    description = "airlock;export;inprogress"
     }
   )
 
@@ -151,10 +166,15 @@ resource "azurerm_storage_account" "sa_export_rejected" {
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
 
+  network_rules {
+    default_action = var.enable_local_debugging ? "Allow" : "Deny"
+    bypass         = ["AzureServices"]
+  }
+
   tags = merge(
     var.tre_workspace_tags,
     {
-      description = "airlock;export;rejected"
+    description = "airlock;export;rejected"
     }
   )
 
@@ -181,4 +201,34 @@ resource "azurerm_private_endpoint" "export_rejected_pe" {
     is_manual_connection           = false
     subresource_names              = ["Blob"]
   }
+}
+
+data "azurerm_user_assigned_identity" "airlock_id" {
+  name                = "id-airlock-${var.tre_id}"
+  resource_group_name = "rg-${var.tre_id}"
+}
+
+resource "azurerm_role_assignment" "sa_import_approved" {
+  scope                = azurerm_storage_account.sa_import_approved.id
+  role_definition_name = "Contributor"
+  principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
+}
+
+
+resource "azurerm_role_assignment" "sa_export_internal" {
+  scope                = azurerm_storage_account.sa_export_internal.id
+  role_definition_name = "Contributor"
+  principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
+}
+
+resource "azurerm_role_assignment" "sa_export_inprogress" {
+  scope                = azurerm_storage_account.sa_export_inprogress.id
+  role_definition_name = "Contributor"
+  principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
+}
+
+resource "azurerm_role_assignment" "sa_export_rejected" {
+  scope                = azurerm_storage_account.sa_export_rejected.id
+  role_definition_name = "Contributor"
+  principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
 }
