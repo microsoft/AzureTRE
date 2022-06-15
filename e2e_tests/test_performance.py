@@ -1,7 +1,8 @@
 import asyncio
 import pytest
 import config
-from helpers import disable_and_delete_resource, get_workspace_auth_details, post_resource
+from resources.workspace import get_workspace_auth_details
+from resources.resource import disable_and_delete_resource, post_resource
 from resources import strings
 
 pytestmark = pytest.mark.asyncio
