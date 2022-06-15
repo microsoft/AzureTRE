@@ -56,6 +56,9 @@ API_GET_USER_RESOURCE_TEMPLATE_BY_NAME = "Get user resource template by name and
 API_GET_COSTS = "Get overall costs"
 API_GET_WORKSPACE_COSTS = "Get workspace costs"
 
+API_CREATE_AIRLOCK_REQUEST = "Create an airlock request"
+API_SUBMIT_AIRLOCK_REQUEST = "Submit an airlock request"
+
 # State store status
 OK = "OK"
 NOT_OK = "Not OK"
