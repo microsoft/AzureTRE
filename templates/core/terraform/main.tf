@@ -92,7 +92,7 @@ module "airlock_resources" {
   mgmt_acr_name                     = var.acr_name
   api_principal_id                  = azurerm_user_assigned_identity.id.principal_id
   arm_subscription_id               = var.arm_subscription_id
-  airlock_app_service_plan_sku_size = var.api_app_service_plan_sku_size
+  airlock_app_service_plan_sku_size = var.core_app_service_plan_sku_size
   airlock_processor_subnet_id       = module.network.airlock_processor_subnet_id
   depends_on = [
     azurerm_servicebus_namespace.sb,
