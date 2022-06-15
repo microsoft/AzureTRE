@@ -1,0 +1,12 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "FUNCTIONS_WORKER_RUNTIME": "python",
+    "AIRLOCK_STATUS_CHANGED_QUEUE_NAME": "status_changed",
+    "SB_CONNECTION_STRING": "Endpoint=sb://XXXX.servicebus.windows.net/;SharedAccessKeyName=.....",
+    "AZURE_SUBSCRIPTION_ID": "",
+    "BLOB_CREATED_TOPIC_NAME": "",
+    "TOPIC_SUBSCRIPTION_NAME":"",
+    "TRE_ID": ""
+  }
+}
