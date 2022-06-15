@@ -38,7 +38,7 @@ resource "azurerm_application_insights" "ai" {
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
   application_type    = "web"
-  tags                = var.tre_workspace_tags
+  tags                = local.tre_workspace_tags
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -60,7 +60,7 @@ resource "azurerm_machine_learning_workspace" "ml" {
   application_insights_id = azurerm_application_insights.ai.id
   key_vault_id            = data.azurerm_key_vault.ws.id
   storage_account_id      = data.azurerm_storage_account.ws.id
-  tags                    = var.tre_workspace_tags
+  tags                    = local.tre_workspace_tags
   identity {
     type = "SystemAssigned"
   }
@@ -88,7 +88,7 @@ resource "azurerm_private_endpoint" "mlpe" {
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
   subnet_id           = data.azurerm_subnet.services.id
-  tags                = var.tre_workspace_tags
+  tags                = local.tre_workspace_tags
 
   lifecycle { ignore_changes = [tags] }
 
