@@ -1,5 +1,5 @@
 # 'External' storage account - drop location for import
-resource "azurerm_storage_account" "sa_external_import" {
+resource "azurerm_storage_account" "sa_import_external" {
   name                     = local.import_external_storage_name
   location                 = var.location
   resource_group_name      = var.resource_group_name
@@ -119,7 +119,7 @@ resource "azurerm_storage_account" "sa_import_rejected" {
   lifecycle { ignore_changes = [tags] }
 }
 
-resource "azurerm_private_endpoint" "stgipimportpe" {
+resource "azurerm_private_endpoint" "stg_import_rejected_pe" {
   name                = "stg-import-rej-blob-${var.tre_id}"
   location            = var.location
   resource_group_name = var.resource_group_name

@@ -77,7 +77,6 @@ def is_require_data_copy(new_status: str):
         return True
     return False
 
-
 def get_source_dest_env_vars(new_status: str, request_type: str, short_workspace_id: str) -> ContainersCopyMetadata:
 
     # sanity
