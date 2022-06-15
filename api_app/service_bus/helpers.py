@@ -115,7 +115,12 @@ def substitute_properties(template_step: PipelineStep, primary_resource: Resourc
             val = recurse_object(prop.value, primary_resource.dict())
         else:
             val = substitute_value(val, primary_resource.dict())
-        properties[prop.name] = val
+
+        if prop.substitutionAction == 'overwrite':
+            if prop.type == 'array':
+                properties[prop.name] = [val]
+            else:
+                properties[prop.name] = val
 
     return properties
 
