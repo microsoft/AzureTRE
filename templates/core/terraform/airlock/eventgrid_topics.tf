@@ -32,7 +32,7 @@ resource "azurerm_private_endpoint" "eg_step_result" {
   name                = "pe-eg-${var.tre_id}"
   location            = var.location
   resource_group_name = var.resource_group_name
-  subnet_id           = var.airlock_storage_subnet_id
+  subnet_id           = var.airlock_events_subnet_id
   lifecycle { ignore_changes = [tags] }
 
   private_dns_zone_group {
@@ -65,7 +65,7 @@ resource "azurerm_private_endpoint" "eg_status_changed" {
   name                = "pe-eg-${var.tre_id}"
   location            = var.location
   resource_group_name = var.resource_group_name
-  subnet_id           = var.airlock_storage_subnet_id
+  subnet_id           = var.airlock_events_subnet_id
   lifecycle { ignore_changes = [tags] }
 
   private_dns_zone_group {
@@ -159,7 +159,7 @@ resource "azurerm_private_endpoint" "eg_scan_result" {
   name                = "pe-eg-${var.tre_id}"
   location            = var.location
   resource_group_name = var.resource_group_name
-  subnet_id           = var.airlock_storage_subnet_id
+  subnet_id           = var.airlock_events_subnet_id
   lifecycle { ignore_changes = [tags] }
 
   private_dns_zone_group {

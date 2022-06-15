@@ -2,6 +2,7 @@ variable "tre_id" {}
 variable "location" {}
 variable "resource_group_name" {}
 variable "airlock_storage_subnet_id" {}
+variable "airlock_events_subnet_id" {}
 variable "enable_local_debugging" {}
 variable "virtual_network_id" {}
 variable "api_principal_id" {}

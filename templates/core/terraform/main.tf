@@ -85,6 +85,7 @@ module "airlock_resources" {
   location                          = var.location
   resource_group_name               = azurerm_resource_group.core.name
   airlock_storage_subnet_id         = module.network.airlock_storage_subnet_id
+  airlock_events_subnet_id          = module.network.airlock_events_subnet_id
   virtual_network_id                = module.network.core_vnet_id
   enable_local_debugging            = var.enable_local_debugging
   docker_registry_server            = var.docker_registry_server
