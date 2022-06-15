@@ -1,8 +1,10 @@
 ---
 name: tre-shared-service-sonatype-nexus
-version: 2.0.0
+version: 2.1.2
 description: "A Sonatype Nexus shared service"
 registry: azuretre
+dockerfile: Dockerfile.tmpl
+
 credentials:
   - name: azure_tenant_id
     env: ARM_TENANT_ID
@@ -16,6 +18,9 @@ parameters:
   - name: tre_id
     type: string
     description: "The ID of the parent TRE instance e.g., mytre-dev-3142"
+  - name: id
+    type: string
+    description: "Resource ID"
   - name: tfstate_resource_group_name
     type: string
     description: "Resource group containing the Terraform state storage account"
@@ -28,6 +33,7 @@ parameters:
     description: "The name of the Terraform state storage container"
   - name: arm_use_msi
     env: ARM_USE_MSI
+    type: boolean
     default: false
   - name: ssl_cert_name
     type: string
@@ -36,7 +42,6 @@ parameters:
 
 mixins:
   - exec
-  - az
   - terraform:
       clientVersion: 1.1.5
 install:
@@ -45,6 +50,7 @@ install:
       input: false
       vars:
         tre_id: "{{ bundle.parameters.tre_id }}"
+        tre_resource_id: "{{ bundle.parameters.id }}"
         ssl_cert_name: "{{ bundle.parameters.ssl_cert_name }}"
       backendConfig:
         resource_group_name:
@@ -65,6 +71,7 @@ uninstall:
       input: false
       vars:
         tre_id: "{{ bundle.parameters.tre_id }}"
+        tre_resource_id: "{{ bundle.parameters.id }}"
         ssl_cert_name: "{{ bundle.parameters.ssl_cert_name }}"
       backendConfig:
         resource_group_name:

@@ -1,7 +1,8 @@
 import pytest
 
 import config
-from helpers import disable_and_delete_resource, get_workspace_auth_details, post_resource
+from resources.workspace import get_workspace_auth_details
+from resources.resource import disable_and_delete_resource, post_resource
 from resources import strings
 
 
@@ -50,6 +51,19 @@ async def test_create_guacamole_service_into_base_workspace(admin_token, verify)
 
     await post_resource(patch_payload, f'/api{workspace_service_path}', workspace_owner_token, verify, method="PATCH")
 
+    user_resource_payload = {
+        "templateName": "tre-service-guacamole-windowsvm",
+        "properties": {
+            "display_name": "My VM",
+            "description": "Will be using this VM for my research",
+            "os_image": "Windows 10"
+        }
+    }
+
+    user_resource_path, user_resource_id = await post_resource(user_resource_payload, f'/api{workspace_service_path}/{strings.API_USER_RESOURCES}', workspace_owner_token, verify, method="POST")
+
+    await disable_and_delete_resource(f'/api{user_resource_path}', workspace_owner_token, verify)
+
     await disable_and_delete_resource(f'/api{workspace_service_path}', workspace_owner_token, verify)
 
     await disable_and_delete_resource(f'/api{workspace_path}', admin_token, verify)
@@ -96,6 +110,19 @@ async def test_create_guacamole_service_into_aad_workspace(admin_token, verify) 
     }
 
     await post_resource(patch_payload, f'/api{workspace_service_path}', workspace_owner_token, verify, method="PATCH")
+
+    user_resource_payload = {
+        "templateName": "tre-service-guacamole-linuxvm",
+        "properties": {
+            "display_name": "Linux VM",
+            "description": "Extended Tests for Linux",
+            "os_image": "Ubuntu 18.04"
+        }
+    }
+
+    user_resource_path, user_resource_id = await post_resource(user_resource_payload, f'/api{workspace_service_path}/{strings.API_USER_RESOURCES}', workspace_owner_token, verify, method="POST")
+
+    await disable_and_delete_resource(f'/api{user_resource_path}', workspace_owner_token, verify)
 
     await disable_and_delete_resource(f'/api{workspace_service_path}', workspace_owner_token, verify)
 

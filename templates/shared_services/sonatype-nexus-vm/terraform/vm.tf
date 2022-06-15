@@ -2,6 +2,7 @@ resource "azurerm_network_interface" "nexus" {
   name                = "nic-nexus-${var.tre_id}"
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = local.core_resource_group_name
+  tags                = local.tre_shared_service_tags
 
   ip_configuration {
     name                          = "primary"
@@ -15,6 +16,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "nexus_core_vnet" {
   resource_group_name   = local.core_resource_group_name
   private_dns_zone_name = data.azurerm_private_dns_zone.nexus.name
   virtual_network_id    = data.azurerm_virtual_network.core.id
+  tags                  = local.tre_shared_service_tags
 }
 
 resource "azurerm_private_dns_a_record" "nexus_vm" {
@@ -23,6 +25,7 @@ resource "azurerm_private_dns_a_record" "nexus_vm" {
   resource_group_name = local.core_resource_group_name
   ttl                 = 300
   records             = [azurerm_linux_virtual_machine.nexus.private_ip_address]
+  tags                = local.tre_shared_service_tags
 }
 
 resource "random_password" "nexus_vm_password" {
@@ -55,18 +58,21 @@ resource "azurerm_key_vault_secret" "nexus_vm_password" {
   name         = "nexus-vm-password"
   value        = random_password.nexus_vm_password.result
   key_vault_id = data.azurerm_key_vault.kv.id
+  tags         = local.tre_shared_service_tags
 }
 
 resource "azurerm_key_vault_secret" "nexus_admin_password" {
   name         = "nexus-admin-password"
   value        = random_password.nexus_admin_password.result
   key_vault_id = data.azurerm_key_vault.kv.id
+  tags         = local.tre_shared_service_tags
 }
 
 resource "azurerm_user_assigned_identity" "nexus_msi" {
   name                = "id-nexus-${var.tre_id}"
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = local.core_resource_group_name
+  tags                = local.tre_shared_service_tags
   lifecycle { ignore_changes = [tags] }
 }
 
@@ -87,6 +93,7 @@ resource "azurerm_linux_virtual_machine" "nexus" {
   disable_password_authentication = false
   admin_username                  = "adminuser"
   admin_password                  = random_password.nexus_vm_password.result
+  tags                            = local.tre_shared_service_tags
 
   custom_data = data.template_cloudinit_config.nexus_config.rendered
 
@@ -150,6 +157,11 @@ data "template_cloudinit_config" "nexus_config" {
         {
           content     = file("${path.module}/../scripts/configure_nexus_repos.sh")
           path        = "/tmp/configure_nexus_repos.sh"
+          permissions = "0744"
+        },
+        {
+          content     = file("${path.module}/../scripts/nexus_realms_config.json")
+          path        = "/tmp/nexus_realms_config.json"
           permissions = "0744"
         },
         {

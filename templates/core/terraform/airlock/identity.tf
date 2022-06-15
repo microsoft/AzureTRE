@@ -41,3 +41,33 @@ resource "azurerm_role_assignment" "cosmos_contributor" {
   role_definition_name = "Contributor"
   principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
 }
+
+resource "azurerm_role_assignment" "eventgrid_data_sender" {
+  scope                = azurerm_eventgrid_topic.status_changed.id
+  role_definition_name = "EventGrid Data Sender"
+  principal_id         = var.api_principal_id
+}
+
+resource "azurerm_role_assignment" "sa_import_external" {
+  scope                = azurerm_storage_account.sa_external_import.id
+  role_definition_name = "Contributor"
+  principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
+}
+
+resource "azurerm_role_assignment" "sa_import_in_progress" {
+  scope                = azurerm_storage_account.sa_import_in_progress.id
+  role_definition_name = "Contributor"
+  principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
+}
+
+resource "azurerm_role_assignment" "sa_import_rejected" {
+  scope                = azurerm_storage_account.sa_import_rejected.id
+  role_definition_name = "Contributor"
+  principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
+}
+
+resource "azurerm_role_assignment" "sa_export_approved" {
+  scope                = azurerm_storage_account.sa_export_approved.id
+  role_definition_name = "Contributor"
+  principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
+}

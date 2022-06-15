@@ -56,6 +56,7 @@ Next, you will set the configuration variables for the specific Azure TRE instan
 
 1. Open the `/templates/core/.env.sample` file and then save it without the .sample extension. You should now have a file called `.env` located in the `/templates/core` folder.
 1. Set the first one of the variables, `TRE_ID`, which is the alphanumeric, with underscores and hyphens allowed, ID for the Azure TRE instance. The value will be used in various Azure resources, and **needs to be globally unique and less than 12 characters in length**. Use only lowercase letters. Choose wisely!
+1. Choose whether or not to deploy the built-in web UI (`./ui`). By default this will _not_ be deployed. To deploy the UI, ensure you set `DEPLOY_UI=true` in the .env file.
 1. Run `make auth` script to create 4 different AAD Applications that are used for TRE. The details of the script are covered in the [auth document](../auth.md).
 
   !!! note

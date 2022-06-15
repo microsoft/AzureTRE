@@ -1,6 +1,6 @@
 ---
 name: tre-shared-service-certs
-version: 0.0.11
+version: 0.0.13
 description: "An Azure TRE shared service to generate certificates for a specified internal domain using Letsencrypt"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -59,14 +59,10 @@ install:
         domain_prefix: "{{ bundle.parameters.domain_prefix }}"
         cert_name: "{{ bundle.parameters.cert_name }}"
       backendConfig:
-        resource_group_name:
-          "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name:
-          "{{ bundle.parameters.tfstate_storage_account_name }}"
-        container_name:
-          "{{ bundle.parameters.tfstate_container_name }}"
-        key:
-          "{{ bundle.parameters.tre_id }}-shared-service-certs"
+        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
+        container_name: "{{ bundle.parameters.tfstate_container_name }}"
+        key: "{{ bundle.parameters.tre_id }}-shared-service-certs"
 
 upgrade:
   - exec:
@@ -88,14 +84,10 @@ uninstall:
         domain_prefix: "{{ bundle.parameters.domain_prefix }}"
         cert_name: "{{ bundle.parameters.cert_name }}"
       backendConfig:
-        resource_group_name:
-          "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name:
-          "{{ bundle.parameters.tfstate_storage_account_name }}"
-        container_name:
-          "{{ bundle.parameters.tfstate_container_name }}"
-        key:
-          "{{ bundle.parameters.tre_id }}-shared-service-certs"
+        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
+        container_name: "{{ bundle.parameters.tfstate_container_name }}"
+        key: "{{ bundle.parameters.tre_id }}-shared-service-certs"
 
 generate:
   - terraform:
@@ -103,10 +95,8 @@ generate:
         - "output"
       description: "Get Terraform output variables"
       backendConfig:
-        resource_group_name:
-          "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name:
-          "{{ bundle.parameters.tfstate_storage_account_name }}"
+        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.tre_id }}-shared-service-certs"
       outputs:
@@ -116,8 +106,7 @@ generate:
         - name: resource_group_name
         - name: keyvault_name
   - az:
-      description:
-        "Login to Azure"
+      description: "Login to Azure"
       arguments:
         - login
       flags:

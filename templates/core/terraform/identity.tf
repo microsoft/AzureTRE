@@ -14,6 +14,12 @@ resource "azurerm_role_assignment" "vm_contributor" {
   principal_id         = azurerm_user_assigned_identity.id.principal_id
 }
 
+resource "azurerm_role_assignment" "billing_reader" {
+  scope                = data.azurerm_subscription.current.id
+  role_definition_name = "Billing Reader"
+  principal_id         = azurerm_user_assigned_identity.id.principal_id
+}
+
 resource "azurerm_role_assignment" "acrpull_role" {
   scope                = data.azurerm_container_registry.mgmt_acr.id
   role_definition_name = "AcrPull"
@@ -37,3 +43,4 @@ resource "azurerm_role_assignment" "cosmos_contributor" {
   role_definition_name = "Contributor"
   principal_id         = azurerm_user_assigned_identity.id.principal_id
 }
+

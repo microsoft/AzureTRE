@@ -58,6 +58,13 @@ class OperationStep(AzureTREModel):
             Status.Failed
         )
 
+    def is_action(self) -> bool:
+        return self.status in (
+            Status.ActionSucceeded,
+            Status.ActionFailed,
+            Status.InvokingAction
+        )
+
 
 class Operation(AzureTREModel):
     """
