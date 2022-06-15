@@ -33,6 +33,18 @@
       "source": {
         "env": "MGMT_STORAGE_ACCOUNT_NAME"
       }
+    },
+    {
+      "name": "rule_collections",
+      "source": {
+        "env": "RULE_COLLECTIONS"
+      }
+    },
+    {
+      "name": "stateful_resources_locked",
+      "source": {
+        "env": "STATEFUL_RESOURCES_LOCKED"
+      }
     }
   ]
 }
