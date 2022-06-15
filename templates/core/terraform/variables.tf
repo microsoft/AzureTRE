@@ -33,7 +33,7 @@ variable "api_image_repository" {
   default     = "microsoft/azuretre/api"
 }
 
-variable "core_app_service_plan_sku_size" {
+variable "api_app_service_plan_sku_size" {
   type    = string
   default = "P1v3"
 }
