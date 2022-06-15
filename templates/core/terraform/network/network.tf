@@ -67,7 +67,7 @@ resource "azurerm_subnet" "resource_processor" {
 }
 
 resource "azurerm_subnet" "airlock_processor" {
-  name                 = "AirlockSubnet"
+  name                 = "AirlockProcessorSubnet"
   virtual_network_name = azurerm_virtual_network.core.name
   resource_group_name  = var.resource_group_name
   address_prefixes     = [local.airlock_processor_subnet_address_prefix]
