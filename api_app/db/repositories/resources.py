@@ -1,22 +1,23 @@
-from typing import Tuple
-from azure.cosmos import CosmosClient
-from datetime import datetime
-from jsonschema import validate
-from pydantic import UUID4, parse_obj_as
 import copy
-from models.domain.authentication import User
+from datetime import datetime
+from typing import Any, Dict, Tuple
+
+from azure.cosmos import CosmosClient
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from core import config
 from db.errors import EntityDoesNotExist
 from db.repositories.base import BaseRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
+from jsonschema import validate
+from models.domain.authentication import User
 from models.domain.resource import Resource, ResourceHistoryItem, ResourceType
 from models.domain.resource_template import ResourceTemplate
-from models.schemas.resource import ResourcePatch
 from models.domain.shared_service import SharedService
+from models.domain.user_resource import UserResource
 from models.domain.workspace import Workspace
 from models.domain.workspace_service import WorkspaceService
-from models.domain.user_resource import UserResource
+from models.schemas.resource import ResourcePatch
+from pydantic import UUID4, parse_obj_as
 
 
 class ResourceRepository(BaseRepository):
@@ -90,6 +91,17 @@ class ResourceRepository(BaseRepository):
         self._validate_resource_parameters(resource_input.dict(), template)
 
         return parse_obj_as(ResourceTemplate, template)
+
+    # TODO: assumes the template has already been validated
+    def mask_sensitive_values(self, template: ResourceTemplate, resource_parameters: Dict[str, Any]) -> dict:
+        updated_resource_parameters = {**resource_parameters}
+
+        for prop_name, prop in template.properties.items():
+            if prop.sensitive is True:
+                assert prop_name in resource_parameters, \
+                    f"No property {prop_name} in template, resource is invalid against the template"
+                updated_resource_parameters[prop_name] = "REDACTED"
+        return updated_resource_parameters
 
     def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository, user: User) -> Tuple[Resource, ResourceTemplate]:
         # create a deep copy of the resource to use for history, create the history item + add to history list

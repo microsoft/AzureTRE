@@ -37,6 +37,11 @@ def input_workspace_template():
                     "type": "string",
                     "title": "Test fixed property",
                     "updateable": False
+                },
+                "secret": {
+                    "type": "string",
+                    "title": "Secret",
+                    "sensitive": True
                 }
             }
         },
