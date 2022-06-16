@@ -65,3 +65,39 @@ resource "azurerm_subnet" "resource_processor" {
   # notice that private endpoints do not adhere to NSG rules
   enforce_private_link_endpoint_network_policies = true
 }
+
+resource "azurerm_subnet" "airlock_processor" {
+  name                 = "AirlockProcessorSubnet"
+  virtual_network_name = azurerm_virtual_network.core.name
+  resource_group_name  = var.resource_group_name
+  address_prefixes     = [local.airlock_processor_subnet_address_prefix]
+  # notice that private endpoints do not adhere to NSG rules
+  enforce_private_link_endpoint_network_policies = true
+
+  delegation {
+    name = "delegation"
+
+    service_delegation {
+      name    = "Microsoft.Web/serverFarms"
+      actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
+    }
+  }
+}
+
+resource "azurerm_subnet" "airlock_storage" {
+  name                 = "AirlockStorageSubnet"
+  virtual_network_name = azurerm_virtual_network.core.name
+  resource_group_name  = var.resource_group_name
+  address_prefixes     = [local.airlock_storage_subnet_address_prefix]
+  # notice that private endpoints do not adhere to NSG rules
+  enforce_private_link_endpoint_network_policies = true
+}
+
+resource "azurerm_subnet" "airlock_events" {
+  name                 = "AirlockEventsSubnet"
+  virtual_network_name = azurerm_virtual_network.core.name
+  resource_group_name  = var.resource_group_name
+  address_prefixes     = [local.airlock_events_subnet_address_prefix]
+  # notice that private endpoints do not adhere to NSG rules
+  enforce_private_link_endpoint_network_policies = true
+}
