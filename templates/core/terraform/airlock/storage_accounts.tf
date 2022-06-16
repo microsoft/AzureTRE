@@ -1,5 +1,5 @@
 # 'External' storage account - drop location for import
-resource "azurerm_storage_account" "sa_external_import" {
+resource "azurerm_storage_account" "sa_import_external" {
   name                     = local.import_external_storage_name
   location                 = var.location
   resource_group_name      = var.resource_group_name
@@ -72,11 +72,11 @@ data "azurerm_private_dns_zone" "blobcore" {
   resource_group_name = var.resource_group_name
 }
 
-resource "azurerm_private_endpoint" "stg_ip_import_pe" {
+resource "azurerm_private_endpoint" "stg_import_inprogress_pe" {
   name                = "stg-ip-import-blob-${var.tre_id}"
   location            = var.location
   resource_group_name = var.resource_group_name
-  subnet_id           = var.shared_subnet_id
+  subnet_id           = var.airlock_storage_subnet_id
 
   lifecycle { ignore_changes = [tags] }
 
@@ -119,11 +119,11 @@ resource "azurerm_storage_account" "sa_import_rejected" {
   lifecycle { ignore_changes = [tags] }
 }
 
-resource "azurerm_private_endpoint" "stgipimportpe" {
+resource "azurerm_private_endpoint" "stg_import_rejected_pe" {
   name                = "stg-import-rej-blob-${var.tre_id}"
   location            = var.location
   resource_group_name = var.resource_group_name
-  subnet_id           = var.shared_subnet_id
+  subnet_id           = var.airlock_storage_subnet_id
 
   private_dns_zone_group {
     name                 = "private-dns-zone-group-stg-import-rej"
