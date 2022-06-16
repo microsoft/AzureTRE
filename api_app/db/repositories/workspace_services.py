@@ -62,6 +62,9 @@ class WorkspaceServiceRepository(ResourceRepository):
         # we don't want something in the input to overwrite the system parameters, so dict.update can't work.
         resource_spec_parameters = {**workspace_service_input.properties, **self.get_workspace_service_spec_params()}
 
+        # making sure any secrets are masked
+        resource_spec_parameters = self.mask_sensitive_values(template, resource_spec_parameters)
+
         workspace_service = WorkspaceService(
             id=full_workspace_service_id,
             workspaceId=workspace_id,
