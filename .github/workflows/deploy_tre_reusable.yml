@@ -563,6 +563,47 @@ jobs:
              BUNDLE_DIR: "./templates/workspace_services/gitea"}
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/mlflow"}
+
+    environment: CICD
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+          # if the following values are missing (i.e. not triggered via comment workflow)
+          # then the default checkout will apply
+          ref: ${{ inputs.prRef }}
+      - name: Register bundle
+        uses: ./.github/actions/devcontainer_run_command
+        with:
+          COMMAND: "make bundle-register DIR=${{ matrix.BUNDLE_DIR }}"
+          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
+          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
+          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
+          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
+          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
+          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
+          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
+          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+          API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
+          AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
+          TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
+          TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
+          TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
+          TRE_ID: "${{ secrets.TRE_ID }}"
+          LOCATION: "${{ secrets.LOCATION }}"
+          BUNDLE_TYPE: ${{ matrix.BUNDLE_TYPE }}
+          WORKSPACE_SERVICE_NAME: ${{ matrix.WORKSPACE_SERVICE_NAME }}
+
+  register_user_resource_bundles:
+    name: Register User Resource Bundles
+    runs-on: ubuntu-latest
+    # user resource bundles need to wait for their parent resource to be registered.
+    needs: [register_bundles, publish_bundles, deploy_tre]
+    strategy:
+      matrix:
+        include:
           - {BUNDLE_TYPE: "user_resource",
              BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm",
              WORKSPACE_SERVICE_NAME: "tre-service-guacamole"}
@@ -739,7 +780,7 @@ jobs:
     if: ${{ inputs.e2eTestsCustomSelector != '' }}
     runs-on: ubuntu-latest
     environment: CICD
-    needs: [deploy_shared_services, register_bundles, build_additional_images]
+    needs: [deploy_shared_services, register_bundles, register_user_resource_bundles, build_additional_images]
     timeout-minutes: 120
     steps:
       - name: Checkout
