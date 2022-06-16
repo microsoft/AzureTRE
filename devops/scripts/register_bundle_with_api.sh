@@ -148,7 +148,9 @@ case "${bundle_type}" in
   ("shared_service") tre_get_path="api/shared-service-templates";;
 esac
 
-register_result=$(curl -i -X "POST" "${tre_url}/${tre_get_path}" -H "accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer ${access_token}" -d "${payload}" "${options}")
+curl_settings="--retry 7 --retry-max-time 300 --max-time 90"
+
+register_result=$(curl -i "${curl_settings}" -X "POST" "${tre_url}/${tre_get_path}" -H "accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer ${access_token}" -d "${payload}" "${options}")
 get_http_code "${register_result}"
 if [[ ${http_code} == 409 ]]; then
   echo "Template with this version already exists"
@@ -161,7 +163,7 @@ fi
 if [[ "${verify}" = "true" ]]; then
   # Check that the template got registered
   template_name=$(yq eval '.name' porter.yaml)
-  status_code=$(curl -X "GET" "${tre_url}/${tre_get_path}/${template_name}" -H "accept: application/json" -H "Authorization: Bearer ""${access_token}""" "${options}" -s -w "%{http_code}" -o /dev/null)
+  status_code=$(curl "${curl_settings}" -X "GET" "${tre_url}/${tre_get_path}/${template_name}" -H "accept: application/json" -H "Authorization: Bearer ""${access_token}""" "${options}" -s -w "%{http_code}" -o /dev/null)
 
   if [[ ${status_code} != 200 ]]; then
     echo "::warning ::Template API check for ${bundle_type} ${template_name} returned http status: ${status_code}"
