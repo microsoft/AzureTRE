@@ -182,11 +182,9 @@ def test_create_workspace_item_throws_exception_with_bad_custom_address_space(va
 
 
 @patch('db.repositories.workspaces.WorkspaceRepository.validate_input_against_template')
-@patch('core.config.RESOURCE_LOCATION', "useast2")
-@patch('core.config.TRE_ID', "9876")
 @patch('core.config.CORE_ADDRESS_SPACE', "10.1.0.0/22")
 @patch('core.config.TRE_ADDRESS_SPACE', "10.0.0.0/12")
-def test_create_worksapce_item_with_secret_gets_masked(validate_input_mock, workspace_repo, basic_workspace_request, basic_resource_template):
+def test_create_workspace_item_with_secret_gets_masked(validate_input_mock, workspace_repo, basic_workspace_request, basic_resource_template):
     workspace_to_create = basic_workspace_request
     workspace_to_create.properties["secret"] = "iamsecret"
 
