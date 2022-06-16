@@ -5,25 +5,12 @@ from models.domain.azuretremodel import AzureTREModel
 from resources import strings
 
 
-class AirlockRequestStatus(str, Enum):
-    """
-    Airlock Request status
-    """
-    Draft = strings.AIRLOCK_RESOURCE_STATUS_DRAFT
-    Submitted = strings.AIRLOCK_RESOURCE_STATUS_SUBMITTED
-    InReview = strings.AIRLOCK_RESOURCE_STATUS_INREVIEW
-    Approved = strings.AIRLOCK_RESOURCE_STATUS_APPROVED
-    Rejected = strings.AIRLOCK_RESOURCE_STATUS_REJECTED
-    Cancelled = strings.AIRLOCK_RESOURCE_STATUS_CANCELLED
-    Blocked = strings.AIRLOCK_RESOURCE_STATUS_BLOCKED
-
-
 class AirlockResourceType(str, Enum):
     """
     Type of resource to create
     """
     AirlockRequest = strings.AIRLOCK_RESOURCE_TYPE_REQUEST
-    # TODO Airlock review type - https://github.com/microsoft/AzureTRE/issues/1840
+    AirlockReview = strings.AIRLOCK_RESOURCE_TYPE_REVIEW
 
 
 class AirlockResourceHistoryItem(AzureTREModel):
@@ -33,7 +20,7 @@ class AirlockResourceHistoryItem(AzureTREModel):
     resourceVersion: int
     updatedWhen: float
     user: dict = {}
-    previousStatus: AirlockRequestStatus
+    properties: dict = {}
 
 
 class AirlockResource(AzureTREModel):
@@ -46,4 +33,3 @@ class AirlockResource(AzureTREModel):
     user: dict = {}
     updatedWhen: float = 0
     history: List[AirlockResourceHistoryItem] = []
-    status: AirlockRequestStatus
