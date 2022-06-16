@@ -23,8 +23,8 @@ async def health_check() -> HealthCheck:
     #     logging.error(f'Service Bus Status: {sb_status}, message: {sb_message}')
     #     logging.error(f'Resource Processor Status: {rp_status}, message: {rp_message}')
 
-    services = [ServiceStatus(service=strings.COSMOS_DB, status=StatusEnum.ok, message="SKIPPED"),
-                ServiceStatus(service=strings.SERVICE_BUS, status=StatusEnum.ok, message="SKIPPED"),
-                ServiceStatus(service=strings.RESOURCE_PROCESSOR, status=StatusEnum.ok, message="SKIPPED")]
+    services = [ServiceStatus(service=strings.COSMOS_DB, status=StatusEnum.ok, message=""),
+                ServiceStatus(service=strings.SERVICE_BUS, status=StatusEnum.ok, message=""),
+                ServiceStatus(service=strings.RESOURCE_PROCESSOR, status=StatusEnum.ok, message="")]
 
     return HealthCheck(services=services)
