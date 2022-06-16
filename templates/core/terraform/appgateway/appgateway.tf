@@ -135,6 +135,7 @@ resource "azurerm_application_gateway" "agw" {
     rule_type          = "PathBasedRouting"
     http_listener_name = local.secure_listener_name
     url_path_map_name  = local.app_path_map_name
+    priority           = 20
   }
 
   # Routing rule to redirect non-secure traffic to HTTPS
@@ -143,6 +144,7 @@ resource "azurerm_application_gateway" "agw" {
     rule_type          = "PathBasedRouting"
     http_listener_name = local.insecure_listener_name
     url_path_map_name  = local.redirect_path_map_name
+    priority           = 10
   }
 
   # Default traffic is routed to the static website. Exception is API.
