@@ -9,7 +9,7 @@ resource "azurerm_eventgrid_system_topic" "import_approved_blob_created" {
   tags = merge(
     var.tre_workspace_tags,
     {
-      Publishers = "airlock;accepted-import-sa"
+      Publishers = "airlock;approved-import-sa"
     }
   )
 
@@ -68,22 +68,10 @@ data "azurerm_servicebus_namespace" "airlock_sb" {
   resource_group_name = local.core_resource_group_name
 }
 
-data "azurerm_servicebus_queue" "import_approved_blob_created" {
-  name                = local.import_approved_queue_name
+data "azurerm_servicebus_topic" "blob_created" {
+  name                = local.blob_created_topic_name
   resource_group_name = local.core_resource_group_name
-  namespace_name      = "sb-${var.tre_id}"
-}
-
-data "azurerm_servicebus_queue" "export_in_progress_blob_created" {
-  name                = local.export_inprogress_queue_name
-  resource_group_name = local.core_resource_group_name
-  namespace_name      = "sb-${var.tre_id}"
-}
-
-data "azurerm_servicebus_queue" "export_rejected_blob_created" {
-  name                = local.export_rejected_queue_name
-  resource_group_name = local.core_resource_group_name
-  namespace_name      = "sb-${var.tre_id}"
+  namespace_name      = data.azurerm_servicebus_namespace.airlock_sb.name
 }
 
 ## Subscriptions
