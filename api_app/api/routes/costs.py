@@ -11,6 +11,7 @@ from db.repositories.shared_services import SharedServiceRepository
 from db.repositories.user_resources import UserResourceRepository
 from models.domain.costs import CostReport, GranularityEnum, WorkspaceCostReport, generate_cost_report_stub, generate_workspace_cost_report_stub
 from services.cost_service import CostService
+from core import config
 
 costs_core_router = APIRouter(dependencies=[Depends(get_current_admin_user)])
 costs_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_tre_admin)])
@@ -38,10 +39,10 @@ async def costs(
 
     if params.call_service:
         cost_service = CostService()
-        cost_service.query_tre_costs(
-            params.granularity, params.from_date, params.to_date, workspace_repo, shared_services_repo)
-
-    return generate_cost_report_stub(params.granularity)
+        return cost_service.query_tre_costs(
+            config.TRE_ID, params.granularity, params.from_date, params.to_date, workspace_repo, shared_services_repo)
+    else:
+        return generate_cost_report_stub(params.granularity)
 
 
 @costs_workspace_router.get("/workspaces/{workspace_id}/costs", response_model=WorkspaceCostReport, name=strings.API_GET_WORKSPACE_COSTS, dependencies=[Depends(get_current_workspace_owner_or_tre_admin)])
