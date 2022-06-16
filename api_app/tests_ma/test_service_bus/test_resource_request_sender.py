@@ -117,6 +117,10 @@ async def test_multi_step_document_sends_first_step(
         return_value=(basic_shared_service, basic_shared_service_template)
     )
 
+    resource_repo.get_resource_by_id = MagicMock(
+        return_value=basic_shared_service
+    )
+
     _ = update_resource_for_step(
         operation_step=multi_step_operation.steps[0],
         resource_repo=resource_repo,
@@ -179,65 +183,8 @@ async def test_multi_step_document_retries(
     assert len(resource_repo.get_resource_by_id.mock_calls) == (num_retries + 1)
 
 
-resource = Resource(
-    id="123",
-    name="test resource",
-    isEnabled=True,
-    templateName="template name",
-    templateVersion="7",
-    resourceType="workspace",
-    _etag="",
-    properties={
-        "display_name": "test_resource name",
-        "address_prefix": ["172.0.0.1", "192.168.0.1"],
-        "fqdn": ["*pypi.org", "files.pythonhosted.org", "security.ubuntu.com"],
-        "my_protocol": "MyCoolProtocol"
-    },
-)
-
-
-resource_to_update = Resource(
-    id="123",
-    name="Firewall",
-    isEnabled=True,
-    templateName="template name",
-    templateVersion="7",
-    resourceType="workspace",
-    _etag="",
-    properties={},
-)
-
-
-pipeline_step = PipelineStep(
-    properties=[
-        PipelineStepProperty(
-            name="rule_collections",
-            type="array",
-            substitutionAction="overwrite",
-            arrayMatchField="name",
-            value={
-                "name": "arc-web_app_subnet_nexus_api",
-                "action": "Allow",
-                "rules": [
-                    {
-                        "name": "nexus-package-sources-api",
-                        "description": "Deployed by {{ resource.id }}",
-                        "protocols": [
-                            {"port": "443", "type": "Https"},
-                            {"port": "80", "type": "{{ resource.properties.my_protocol }}"},
-                        ],
-                        "target_fqdns": "{{ resource.properties.fqdn }}",
-                        "source_addresses": "{{ resource.properties.address_prefix }}",
-                    }
-                ]
-            }
-        )
-    ]
-)
-
-
-def test_substitution():
-    resource_dict = resource.dict()
+def test_substitution(primary_resource):
+    resource_dict = primary_resource.dict()
 
     # single array val
     val_to_sub = "{{ resource.properties.address_prefix }}"
@@ -260,8 +207,16 @@ def test_substitution():
     assert val == "I think template name is the best template, and 7 is a good version!"
 
 
-def test_substitution_props():
-    obj = substitute_properties(pipeline_step, resource, resource_to_update)
+def test_simple_substitution(simple_pipeline_step, primary_resource, resource_to_update):
+    obj = substitute_properties(simple_pipeline_step, primary_resource, resource_to_update)
+
+    assert obj['just_text'] == 'Updated by 123'
+    assert obj['just_text_2'] == 'No substitution, just a fixed string here'
+    assert obj['just_text_3'] == 'Multiple substitutions -> 123 and template name'
+
+
+def test_substitution_props(pipeline_step, primary_resource, resource_to_update):
+    obj = substitute_properties(pipeline_step, primary_resource, resource_to_update)
 
     assert obj["rule_collections"][0]["rules"][0]["target_fqdns"] == ["*pypi.org", "files.pythonhosted.org", "security.ubuntu.com"]
     assert obj["rule_collections"][0]["rules"][0]["source_addresses"] == ["172.0.0.1", "192.168.0.1"]
@@ -269,12 +224,13 @@ def test_substitution_props():
     assert obj["rule_collections"][0]["rules"][0]["description"] == "Deployed by 123"
 
 
-def test_substitution_array_append_remove_replace():
+def test_substitution_array_append_remove(pipeline_step, primary_resource, resource_to_update):
 
     # do the first substitution, and assert there's a single rule collection
     step = copy.deepcopy(pipeline_step)
-    step.properties[0].substitutionAction = "append"
-    obj = substitute_properties(step, resource, resource_to_update)
+    step.properties[0].arraySubstitutionAction = "append"
+    step.properties[0].value['name'] = "object 1"
+    obj = substitute_properties(step, primary_resource, resource_to_update)
     assert len(obj["rule_collections"]) == 1
 
     # in effect the RP will do this:
@@ -282,8 +238,9 @@ def test_substitution_array_append_remove_replace():
 
     # now append another substitution, and check we've got both rules
     step = copy.deepcopy(pipeline_step)
-    step.properties[0].substitutionAction = "append"
-    obj = substitute_properties(step, resource, resource_to_update)
+    step.properties[0].arraySubstitutionAction = "append"
+    step.properties[0].value['name'] = "object 2"
+    obj = substitute_properties(step, primary_resource, resource_to_update)
     assert len(obj["rule_collections"]) == 2
 
     # the RP makes the change again...
@@ -291,15 +248,107 @@ def test_substitution_array_append_remove_replace():
 
     # now append another substitution, and check we've got all 3 rules
     step = copy.deepcopy(pipeline_step)
-    step.properties[0].substitutionAction = "append"
-    obj = substitute_properties(step, resource, resource_to_update)
+    step.properties[0].arraySubstitutionAction = "append"
+    step.properties[0].value['name'] = "object 3"
+    obj = substitute_properties(step, primary_resource, resource_to_update)
     assert len(obj["rule_collections"]) == 3
 
     # the RP makes the change again...
     resource_to_update.properties = obj
 
-    # now remove one...
+    # now remove object 2...
     step = copy.deepcopy(pipeline_step)
-    step.properties[0].substitutionAction = "append"
-    obj = substitute_properties(step, resource, resource_to_update)
-    assert len(obj["rule_collections"]) == 3
+    step.properties[0].arraySubstitutionAction = "remove"
+    step.properties[0].value['name'] = "object 2"
+    obj = substitute_properties(step, primary_resource, resource_to_update)
+    assert len(obj["rule_collections"]) == 2
+    assert obj['rule_collections'][0]['name'] == "object 1"
+    assert obj['rule_collections'][1]['name'] == "object 3"
+
+    # the RP makes the change again...
+    resource_to_update.properties = obj
+
+    # now remove object 1...
+    step = copy.deepcopy(pipeline_step)
+    step.properties[0].arraySubstitutionAction = "remove"
+    step.properties[0].value['name'] = "object 1"
+    obj = substitute_properties(step, primary_resource, resource_to_update)
+    assert len(obj["rule_collections"]) == 1
+    assert obj['rule_collections'][0]['name'] == "object 3"
+
+    # the RP makes the change again...
+    resource_to_update.properties = obj
+
+    # now remove object 3...
+    step = copy.deepcopy(pipeline_step)
+    step.properties[0].arraySubstitutionAction = "remove"
+    step.properties[0].value['name'] = "object 3"
+    obj = substitute_properties(step, primary_resource, resource_to_update)
+    assert len(obj["rule_collections"]) == 0
+
+    # the RP makes the change again...
+    resource_to_update.properties = obj
+
+    # now remove another one, even though the array is empty...
+    step = copy.deepcopy(pipeline_step)
+    step.properties[0].arraySubstitutionAction = "remove"
+    step.properties[0].value['name'] = "object 1"
+    obj = substitute_properties(step, primary_resource, resource_to_update)
+    assert len(obj["rule_collections"]) == 0
+
+
+def test_substitution_array_append_replace(pipeline_step, primary_resource, resource_to_update):
+
+    # add object 1
+    step = copy.deepcopy(pipeline_step)
+    step.properties[0].arraySubstitutionAction = "append"
+    step.properties[0].value['name'] = "Object 1"
+    obj = substitute_properties(step, primary_resource, resource_to_update)
+    assert len(obj["rule_collections"]) == 1
+    assert obj["rule_collections"][0]["name"] == "Object 1"
+
+    # the RP does this:
+    resource_to_update.properties = obj
+
+    # add object 2
+    step = copy.deepcopy(pipeline_step)
+    step.properties[0].arraySubstitutionAction = "append"
+    step.properties[0].value['name'] = "Object 2"
+    obj = substitute_properties(step, primary_resource, resource_to_update)
+    assert len(obj["rule_collections"]) == 2
+    assert obj["rule_collections"][1]["name"] == "Object 2"
+
+    # the RP does this:
+    resource_to_update.properties = obj
+
+    # replace object 1
+    step = copy.deepcopy(pipeline_step)
+    step.properties[0].arraySubstitutionAction = "replace"
+    step.properties[0].value['name'] = "Object 1"
+    step.properties[0].value['action'] = "Deny Object 1"
+    obj = substitute_properties(step, primary_resource, resource_to_update)
+    assert len(obj["rule_collections"]) == 2
+    assert obj["rule_collections"][0]["action"] == "Deny Object 1"
+
+    # the RP does this:
+    resource_to_update.properties = obj
+
+    # replace the next one
+    step = copy.deepcopy(pipeline_step)
+    step.properties[0].arraySubstitutionAction = "replace"
+    step.properties[0].value['name'] = "Object 2"
+    step.properties[0].value['action'] = "Deny Object 2"
+    obj = substitute_properties(step, primary_resource, resource_to_update)
+    assert len(obj["rule_collections"]) == 2
+    assert obj["rule_collections"][1]["action"] == "Deny Object 2"
+
+
+def test_substitution_array_replace_not_found(pipeline_step, primary_resource, resource_to_update):
+
+    # try to replace an item not there - it should just append
+    step = copy.deepcopy(pipeline_step)
+    step.properties[0].arraySubstitutionAction = "replace"
+    step.properties[0].value['name'] = "Object 1"
+    obj = substitute_properties(step, primary_resource, resource_to_update)
+    assert len(obj["rule_collections"]) == 1
+    assert obj["rule_collections"][0]["name"] == "Object 1"

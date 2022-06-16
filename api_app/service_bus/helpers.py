@@ -1,11 +1,8 @@
 from typing import Union
-from attr import ib
 from azure.identity.aio import DefaultAzureCredential
 from azure.servicebus import ServiceBusMessage
 from azure.servicebus.aio import ServiceBusClient
 from contextlib import asynccontextmanager
-from httpcore import ProxyError
-
 from pydantic import parse_obj_as
 from models.domain.resource_template import PipelineStep
 from models.domain.operation import OperationStep
@@ -125,24 +122,25 @@ def substitute_properties(template_step: PipelineStep, primary_resource: Resourc
                 else:
                     existing_arr = []
 
-                if prop.substitutionAction == 'overwrite':
-                    properties[prop.name] = [val]
+                if prop.arraySubstitutionAction == 'overwrite':
+                    existing_arr = [val]
 
-                if prop.substitutionAction == 'append':
-                    properties[prop.name] = existing_arr
-                    properties[prop.name].append(val)
+                if prop.arraySubstitutionAction == 'append':
+                    existing_arr.append(val)
 
-                if prop.substitutionAction == 'remove' or prop.substitutionAction == 'replace':
-                    m = -1
-                    for i in range(0, len(existing_arr)):
-                        if existing_arr[i][prop.arrayMatchField] == val[prop.arrayMatchField]:
-                            m = i
-                            break
-                    if m > -1:
-                        del existing_arr[m]
-                        if prop.substitutionAction == 'replace':
-                            existing_arr.append(val)
-                        properties[prop.name] = existing_arr
+                if prop.arraySubstitutionAction == 'remove':
+                    item_index = find_item_index(existing_arr, prop.arrayMatchField, val)
+                    if item_index > -1:
+                        del existing_arr[item_index]
+
+                if prop.arraySubstitutionAction == 'replace':
+                    item_index = find_item_index(existing_arr, prop.arrayMatchField, val)
+                    if item_index > -1:
+                        existing_arr[item_index] = val
+                    else:
+                        existing_arr.append(val)
+
+                properties[prop.name] = existing_arr
 
             else:
                 properties[prop.name] = val
@@ -152,6 +150,13 @@ def substitute_properties(template_step: PipelineStep, primary_resource: Resourc
             properties[prop.name] = val
 
     return properties
+
+
+def find_item_index(array: list, arrayMatchField: str, val: dict) -> int:
+    for i in range(0, len(array)):
+        if array[i][arrayMatchField] == val[arrayMatchField]:
+            return i
+    return -1
 
 
 def recurse_object(obj: dict, primary_resource_dict: dict) -> dict:
