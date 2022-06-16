@@ -193,7 +193,7 @@ def user_resource_template_in_response(input_user_resource_template):
 
 
 @pytest.fixture
-def multi_step_resource_template(basic_shared_service_template):
+def multi_step_resource_template(basic_shared_service_template) -> ResourceTemplate:
     return ResourceTemplate(
         id="123",
         name="template1",

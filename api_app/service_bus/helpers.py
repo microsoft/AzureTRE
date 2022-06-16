@@ -1,9 +1,9 @@
-from typing import Union
 from azure.identity.aio import DefaultAzureCredential
 from azure.servicebus import ServiceBusMessage
 from azure.servicebus.aio import ServiceBusClient
 from contextlib import asynccontextmanager
 from pydantic import parse_obj_as
+from service_bus.substitutions import substitute_properties
 from models.domain.resource_template import PipelineStep
 from models.domain.operation import OperationStep
 from models.domain.resource import Resource, ResourceType
@@ -51,20 +51,10 @@ async def send_deployment_message(content, correlation_id, session_id, action):
     await _send_message(resource_request_message, config.SERVICE_BUS_RESOURCE_REQUEST_QUEUE)
 
 
-def update_resource_for_step(
-    operation_step: OperationStep,
-    resource_repo: ResourceRepository,
-    resource_template_repo: ResourceTemplateRepository,
-    primary_resource_id: str,
-    resource_to_update_id: str,
-    primary_action: str,
-    user: User) -> Resource:
+def update_resource_for_step(operation_step: OperationStep, resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, primary_resource_id: str, resource_to_update_id: str, primary_action: str, user: User) -> Resource:
 
     # get primary resource to use in substitutions
     primary_resource = resource_repo.get_resource_by_id(primary_resource_id)
-
-    # get secondary resource to be updated
-    resource_to_update = resource_repo.get_resource_by_id(resource_to_update_id)
 
     # if this is main, just leave it alone and return it
     if operation_step.stepId == "main":
@@ -87,18 +77,16 @@ def update_resource_for_step(
     if template_step is None:
         raise f"Cannot find step with id of {operation_step.stepId} in template {primary_resource.templateName} for action {primary_action}"
 
-    # substitute values into new property bag for update
-    properties = substitute_properties(template_step, primary_resource, resource_to_update)
-
     if template_step.resourceAction == "upgrade":
         resource_to_send = try_upgrade_with_retries(
             num_retries=3,
             attempt_count=0,
             resource_repo=resource_repo,
             resource_template_repo=resource_template_repo,
-            properties=properties,
             user=user,
-            resource_to_update_id=resource_to_update_id
+            resource_to_update_id=resource_to_update_id,
+            template_step=template_step,
+            primary_resource=primary_resource
         )
 
         return resource_to_send
@@ -107,114 +95,15 @@ def update_resource_for_step(
         raise Exception("Only upgrade is currently supported for pipeline steps")
 
 
-def substitute_properties(template_step: PipelineStep, primary_resource: Resource, resource_to_update: Resource) -> dict:
-    properties = {}
-    primary_resource_dict = primary_resource.dict()
-
-    for prop in template_step.properties:
-        val = prop.value
-        if isinstance(prop.value, dict):
-            val = recurse_object(prop.value, primary_resource_dict)
-
-            if prop.type == 'array':
-                if prop.name in resource_to_update.properties:
-                    existing_arr = resource_to_update.properties[prop.name]
-                else:
-                    existing_arr = []
-
-                if prop.arraySubstitutionAction == 'overwrite':
-                    existing_arr = [val]
-
-                if prop.arraySubstitutionAction == 'append':
-                    existing_arr.append(val)
-
-                if prop.arraySubstitutionAction == 'remove':
-                    item_index = find_item_index(existing_arr, prop.arrayMatchField, val)
-                    if item_index > -1:
-                        del existing_arr[item_index]
-
-                if prop.arraySubstitutionAction == 'replace':
-                    item_index = find_item_index(existing_arr, prop.arrayMatchField, val)
-                    if item_index > -1:
-                        existing_arr[item_index] = val
-                    else:
-                        existing_arr.append(val)
-
-                properties[prop.name] = existing_arr
-
-            else:
-                properties[prop.name] = val
-
-        else:
-            val = substitute_value(val, primary_resource_dict)
-            properties[prop.name] = val
-
-    return properties
-
-
-def find_item_index(array: list, arrayMatchField: str, val: dict) -> int:
-    for i in range(0, len(array)):
-        if array[i][arrayMatchField] == val[arrayMatchField]:
-            return i
-    return -1
-
-
-def recurse_object(obj: dict, primary_resource_dict: dict) -> dict:
-    for prop in obj:
-        if isinstance(obj[prop], list):
-            for i in range(0, len(obj[prop])):
-                obj[prop][i] = recurse_object(obj[prop][i], primary_resource_dict)
-        if isinstance(obj[prop], dict):
-            obj[prop] = recurse_object(obj[prop])
-        else:
-            obj[prop] = substitute_value(obj[prop], primary_resource_dict)
-
-    return obj
-
-
-def substitute_value(val: str, primary_resource_dict: dict) -> Union[dict, list, str]:
-    if "{{" not in val:
-        return val
-
-    val = val.replace("{{ ", "{{").replace(" }}", "}}")
-
-    # if the value being substituted in is a simple type, we can return it in the string, to allow for concatenation
-    # like "This was deployed by {{ resource.id }}"
-    # else if the value being injected in is a dict/list - we shouldn't try to concatenate that, we'll return the true value and drop any surrounding text
-
-    # extract the tokens to replace
-    tokens = []
-    parts = val.split("{{")
-    for p in parts:
-        if len(p) > 0 and "}}" in p:
-            t = p[0:p.index("}}")]
-            tokens.append(t)
-
-    for t in tokens:
-        # t = "resource.properties.prop_1"
-        p = t.split(".")
-        if p[0] == "resource":
-            prop_to_get = primary_resource_dict
-            for i in range(1, len(p)):
-                prop_to_get = prop_to_get[p[i]]
-
-            # if the value to inject is actually an object / list - just return it, else replace the value in the string
-            if isinstance(prop_to_get, dict) or isinstance(prop_to_get, list):
-                return prop_to_get
-            else:
-                val = val.replace("{{" + t + "}}", str(prop_to_get))
-
-    return val
-
-
-def try_upgrade_with_retries(num_retries: int, attempt_count: int, resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, properties: dict, user: User, resource_to_update_id: str) -> Resource:
+def try_upgrade_with_retries(num_retries: int, attempt_count: int, resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, user: User, resource_to_update_id: str, template_step: PipelineStep, primary_resource: Resource) -> Resource:
     try:
         return try_upgrade(
             resource_repo=resource_repo,
             resource_template_repo=resource_template_repo,
-            properties=properties,
             user=user,
-            resource_to_update_id=resource_to_update_id
+            resource_to_update_id=resource_to_update_id,
+            template_step=template_step,
+            primary_resource=primary_resource
         )
     except CosmosAccessConditionFailedError as e:
         logging.warn(f"Etag mismatch for {resource_to_update_id}. Retrying.")
@@ -224,16 +113,20 @@ def try_upgrade_with_retries(num_retries: int, attempt_count: int, resource_repo
                 attempt_count=(attempt_count + 1),
                 resource_repo=resource_repo,
                 resource_template_repo=resource_template_repo,
-                properties=properties,
                 user=user,
-                resource_to_update_id=resource_to_update_id
+                resource_to_update_id=resource_to_update_id,
+                template_step=template_step,
+                primary_resource=primary_resource
             )
         else:
             raise e
 
 
-def try_upgrade(resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, properties: dict, user: User, resource_to_update_id: str) -> Resource:
+def try_upgrade(resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, user: User, resource_to_update_id: str, template_step: PipelineStep, primary_resource: Resource) -> Resource:
     resource_to_update = resource_repo.get_resource_by_id(resource_to_update_id)
+
+    # substitute values into new property bag for update
+    properties = substitute_properties(template_step, primary_resource, resource_to_update)
 
     # get the template for the resource to upgrade
     parent_service_name = ""
