@@ -71,6 +71,9 @@ class SharedServiceRepository(ResourceRepository):
 
         resource_spec_parameters = {**shared_service_input.properties, **self.get_shared_service_spec_params()}
 
+        # making sure any secrets are masked
+        resource_spec_parameters = self.mask_sensitive_values(template, resource_spec_parameters)
+
         shared_service = SharedService(
             id=shared_service_id,
             templateName=shared_service_input.templateName,
