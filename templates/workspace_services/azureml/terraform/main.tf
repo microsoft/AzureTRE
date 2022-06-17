@@ -29,11 +29,11 @@ data "azurerm_key_vault" "ws" {
 
 # Using AzAPI due to https://github.com/hashicorp/terraform-provider-azurerm/issues/16177
 resource "azapi_resource" "aml_workspace" {
-  name      = local.workspace_name
-  parent_id = data.azurerm_resource_group.ws.id
-  type      = "Microsoft.MachineLearningServices/workspaces@2022-05-01"
+  name                      = local.workspace_name
+  parent_id                 = data.azurerm_resource_group.ws.id
+  type                      = "Microsoft.MachineLearningServices/workspaces@2022-05-01"
   schema_validation_enabled = false
-  location = data.azurerm_resource_group.ws.location
+  location                  = data.azurerm_resource_group.ws.location
 
   body = jsonencode({
     properties = {
