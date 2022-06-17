@@ -36,6 +36,7 @@ fi
 # Then register an App for the TRE Core.
 ./scripts/aad/aad-app-reg.sh \
   --name "${TRE_ID}" \
+  --tre-url "https://${TRE_ID}.${LOCATION}.cloudapp.azure.com" \
   --admin-consent --automation-account
 
 echo "Please copy the values above into your /templates/core/.env."
