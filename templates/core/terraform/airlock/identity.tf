@@ -49,7 +49,7 @@ resource "azurerm_role_assignment" "eventgrid_data_sender" {
 }
 
 resource "azurerm_role_assignment" "sa_import_external" {
-  scope                = azurerm_storage_account.sa_external_import.id
+  scope                = azurerm_storage_account.sa_import_external.id
   role_definition_name = "Contributor"
   principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
 }

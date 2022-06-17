@@ -22,6 +22,18 @@ output "shared_subnet_id" {
   value = azurerm_subnet.shared.id
 }
 
+output "airlock_processor_subnet_id" {
+  value = azurerm_subnet.airlock_processor.id
+}
+
+output "airlock_storage_subnet_id" {
+  value = azurerm_subnet.airlock_storage.id
+}
+
+output "airlock_events_subnet_id" {
+  value = azurerm_subnet.airlock_events.id
+}
+
 output "private_dns_zone_azurewebsites_id" {
   value = azurerm_private_dns_zone.azurewebsites.id
 }
