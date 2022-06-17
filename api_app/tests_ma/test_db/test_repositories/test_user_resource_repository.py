@@ -62,6 +62,20 @@ def test_create_user_resource_item_raises_value_error_if_template_is_invalid(_, 
         user_resource_repo.create_user_resource_item(basic_user_resource_request, WORKSPACE_ID, SERVICE_ID, "parent-service-type", USER_ID)
 
 
+@patch('db.repositories.user_resources.UserResourceRepository.validate_input_against_template')
+def test_create_user_resource_item_with_secret_gets_masked(validate_input_mock, user_resource_repo, basic_user_resource_request, basic_resource_template):
+    user_resource_to_create = basic_user_resource_request
+    user_resource_to_create.properties["secret"] = "iamsecret"
+
+    validate_input_mock.return_value = basic_resource_template
+
+    user_resource, _ = user_resource_repo.create_user_resource_item(user_resource_to_create, WORKSPACE_ID, SERVICE_ID, "parent-service-type", USER_ID)
+
+    # making sure the secret is masked in the created item
+    assert user_resource.properties["secret"] != "iamsecret"
+    assert user_resource.properties["secret"] == "REDACTED"
+
+
 @patch('db.repositories.user_resources.UserResourceRepository.query', return_value=[])
 def test_get_user_resources_for_workspace_queries_db(query_mock, user_resource_repo):
     expected_query = f'SELECT * FROM c WHERE c.isActive != false AND c.resourceType = "user-resource" AND c.parentWorkspaceServiceId = "{SERVICE_ID}" AND c.workspaceId = "{WORKSPACE_ID}"'

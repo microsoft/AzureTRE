@@ -35,6 +35,9 @@ class UserResourceRepository(ResourceRepository):
         # we don't want something in the input to overwrite the system parameters, so dict.update can't work.
         resource_spec_parameters = {**user_resource_input.properties, **self.get_user_resource_spec_params()}
 
+        # making sure any secrets are masked
+        resource_spec_parameters = self.mask_sensitive_values(template, resource_spec_parameters)
+
         user_resource = UserResource(
             id=full_user_resource_id,
             workspaceId=workspace_id,
