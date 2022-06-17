@@ -68,7 +68,7 @@ It's possible that a resource property would actually be an array. As an example
 an array of objects. Since the values inside this array may have been sourced from different resources, it's important to leave other values in tact when modifying the property.
 To do so, the `arraySubstitutionAction` field supports the following values:
 - `append` - just append this object into the array
-- `replace` - find this object in the the array (usign the `arrayMatchField` value), and replace it with this value
+- `replace` - find this object in the array (using the `arrayMatchField` value), and replace it with this value
 - `remove` - remove this property from the array (useful for `uninstall` actions)
 
 ## Notes
