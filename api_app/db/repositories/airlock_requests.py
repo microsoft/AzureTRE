@@ -7,9 +7,8 @@ from fastapi import HTTPException
 from pydantic import parse_obj_as
 from models.domain.authentication import User
 from db.errors import EntityDoesNotExist
-from models.domain.airlock_resource import AirlockRequestStatus
 from db.repositories.airlock_resources import AirlockResourceRepository
-from models.domain.airlock_request import AirlockRequest
+from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus
 from models.schemas.airlock_request import AirlockRequestInCreate
 from resources import strings
 
@@ -61,7 +60,7 @@ class AirlockRequestRepository(AirlockResourceRepository):
         if self._validate_status_update(current_status, new_status):
             updated_request = copy.deepcopy(airlock_request)
             updated_request.status = new_status
-            return self.update_airlock_resource_item(airlock_request, updated_request, user)
+            return self.update_airlock_resource_item(airlock_request, updated_request, user, {"previousStatus": current_status})
         else:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE)
 
