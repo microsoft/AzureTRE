@@ -29,6 +29,7 @@ API_INVOKE_ACTION_ON_USER_RESOURCE = "Invoke action on a user resource"
 
 API_CREATE_AIRLOCK_REQUEST = "Create an airlock request"
 API_SUBMIT_AIRLOCK_REQUEST = "Submit an airlock request"
+API_REVIEW_AIRLOCK_REQUEST = "Review an airlock request"
 
 API_CREATE_WORKSPACE_TEMPLATES = "Register workspace template"
 API_GET_WORKSPACE_TEMPLATES = "Get workspace templates"
@@ -147,6 +148,7 @@ RESOURCE_TYPE_SHARED_SERVICE = "shared-service"
 
 # Airlock Resource Type
 AIRLOCK_RESOURCE_TYPE_REQUEST = "airlock-request"
+AIRLOCK_RESOURCE_TYPE_REVIEW = "airlock-review"
 
 # Airlock Resource Status
 AIRLOCK_RESOURCE_STATUS_DRAFT = "draft"
@@ -163,7 +165,7 @@ AIRLOCK_REQUEST_TYPE_EXPORT = "export"
 
 # Airlock Messages
 AIRLOCK_REQUEST_DOES_NOT_EXIST = "Airlock request does not exist"
-AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE = "Airlock request status changes was illegal"
+AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE = "Airlock request status change was illegal"
 
 # Deployments
 RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE = "This resource has not yet been deployed"

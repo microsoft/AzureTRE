@@ -2,6 +2,7 @@ resource "azurerm_network_security_group" "ws" {
   location            = var.location
   name                = "nsg-ws"
   resource_group_name = var.ws_resource_group_name
+  tags                = var.tre_workspace_tags
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -168,6 +169,23 @@ resource "azurerm_network_security_rule" "allow-inbound-from-resourceprocessor" 
   resource_group_name          = var.ws_resource_group_name
   source_address_prefixes = [
     data.azurerm_subnet.resourceprocessor.address_prefix
+  ]
+  source_port_range = "*"
+}
+
+
+resource "azurerm_network_security_rule" "allow-inbound-from-airlockprocessor" {
+  access                       = "Allow"
+  destination_address_prefixes = azurerm_subnet.services.address_prefixes
+  destination_port_range       = "443"
+  direction                    = "Inbound"
+  name                         = "allow-inbound-from-airlockprocessor"
+  network_security_group_name  = azurerm_network_security_group.ws.name
+  priority                     = 140
+  protocol                     = "Tcp"
+  resource_group_name          = var.ws_resource_group_name
+  source_address_prefixes = [
+    data.azurerm_subnet.airlockprocessor.address_prefix
   ]
   source_port_range = "*"
 }
