@@ -137,7 +137,7 @@ async def test_multi_step_document_sends_first_step(
         resource_template=basic_shared_service_template,
         etag=basic_shared_service.etag,
         resource_template_repo=resource_template_repo,
-        user=test_user,
+        user=test_user
     )
 
 
