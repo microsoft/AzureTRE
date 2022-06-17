@@ -66,7 +66,7 @@ async def test_resource_request_message_generated_correctly(
         user=create_test_user(),
         resource_template=template,
         resource_template_repo=resource_template_repo,
-        action=request_action,
+        action=request_action
     )
 
     args = service_bus_client_mock().get_queue_sender().send_messages.call_args.args
