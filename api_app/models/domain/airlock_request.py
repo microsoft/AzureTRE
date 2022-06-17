@@ -2,7 +2,20 @@ from typing import List
 from enum import Enum
 from pydantic import Field
 from resources import strings
-from models.domain.airlock_resource import AirlockRequestStatus, AirlockResource, AirlockResourceType
+from models.domain.airlock_resource import AirlockResource, AirlockResourceType
+
+
+class AirlockRequestStatus(str, Enum):
+    """
+    Airlock Resource status
+    """
+    Draft = strings.AIRLOCK_RESOURCE_STATUS_DRAFT
+    Submitted = strings.AIRLOCK_RESOURCE_STATUS_SUBMITTED
+    InReview = strings.AIRLOCK_RESOURCE_STATUS_INREVIEW
+    Approved = strings.AIRLOCK_RESOURCE_STATUS_APPROVED
+    Rejected = strings.AIRLOCK_RESOURCE_STATUS_REJECTED
+    Cancelled = strings.AIRLOCK_RESOURCE_STATUS_CANCELLED
+    Blocked = strings.AIRLOCK_RESOURCE_STATUS_BLOCKED
 
 
 class AirlockRequestType(str, Enum):
