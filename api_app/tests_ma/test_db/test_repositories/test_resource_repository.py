@@ -131,7 +131,7 @@ def sample_resource_template_with_sensitive_value() -> ResourceTemplate:
                                     'sensitive': True,
                                 },
                             },
-                            actions=[]).dict(exclude_none=True)
+                            actions=[])
 
 
 def sample_nested_template() -> ResourceTemplate:
@@ -395,5 +395,7 @@ def test_sensitive_values_get_masked(resource_repo):
     template = sample_resource_template_with_sensitive_value()
     resource = sample_resource_with_sensitive_value()
 
-    masked_resource = resource_repo.mask_sensitive_values(template, resource)
-    assert masked_resource.dict()["properties"]["secret"] == "REDACTED"
+    properties = resource.properties
+    print(type(template))
+    masked_resource = resource_repo.mask_sensitive_values(template, properties)
+    assert masked_resource["secret"] == "REDACTED"

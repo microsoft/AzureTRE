@@ -92,14 +92,12 @@ class ResourceRepository(BaseRepository):
 
         return parse_obj_as(ResourceTemplate, template)
 
-    # TODO: assumes the template has already been validated
     def mask_sensitive_values(self, template: ResourceTemplate, resource_parameters: Dict[str, Any]) -> dict:
-        updated_resource_parameters = {**resource_parameters}
+        updated_resource_parameters = resource_parameters
 
         for prop_name, prop in template.properties.items():
-            if prop.sensitive is True:
-                assert prop_name in resource_parameters, \
-                    f"No property {prop_name} in template, resource is invalid against the template"
+            if prop.sensitive is True and prop_name in resource_parameters:
+                updated_resource_parameters = {**resource_parameters}
                 updated_resource_parameters[prop_name] = "REDACTED"
         return updated_resource_parameters
 
