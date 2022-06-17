@@ -2,6 +2,7 @@ resource "azurerm_network_security_group" "ws" {
   location            = var.location
   name                = "nsg-ws"
   resource_group_name = var.ws_resource_group_name
+  tags                = var.tre_workspace_tags
 
   lifecycle { ignore_changes = [tags] }
 }
