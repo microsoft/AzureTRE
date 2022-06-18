@@ -100,25 +100,33 @@ def get_source_dest_env_vars(new_status: str, request_type: str, short_workspace
         dest_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS.format(tre_id)
         source_account_rg = constants.CORE_RG_NAME.format(tre_id)
         dest_account_rg = source_account_rg
-        logging.info("source account [%s rg: %s]. dest account [%s rg: %s]", source_account_name, source_account_rg, dest_account_name, dest_account_rg)
     elif new_status == 'submitted' and request_type == 'export':
         source_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INTERNAL.format(short_workspace_id)
         dest_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS.format(short_workspace_id)
-        source_account_rg = constants.CORE_RG_NAME.format(tre_id, short_workspace_id)
+        source_account_rg = constants.WS_RG_NAME.format(tre_id, short_workspace_id)
         dest_account_rg = source_account_rg
-        logging.info("source account [%s rg: %s]. dest account [%s rg: %s]", source_account_name, source_account_rg, dest_account_name, dest_account_rg)
     elif new_status == 'approved' and request_type == 'import':
-        # https://github.com/microsoft/AzureTRE/issues/1841
-        pass
+        source_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS.format(tre_id)
+        dest_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_APPROVED.format(short_workspace_id)
+        source_account_rg = constants.CORE_RG_NAME.format(tre_id)
+        dest_account_rg = constants.WS_RG_NAME.format(tre_id, short_workspace_id)
     elif new_status == 'approved' and request_type == 'export':
-        # https://github.com/microsoft/AzureTRE/issues/1841
-        pass
+        source_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS.format(short_workspace_id)
+        dest_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_APPROVED.format(tre_id)
+        source_account_rg = constants.WS_RG_NAME.format(tre_id, short_workspace_id)
+        dest_account_rg = constants.CORE_RG_NAME.format(tre_id)
     elif new_status == 'rejected' and request_type == 'import':
-        # https://github.com/microsoft/AzureTRE/issues/1842
-        pass
+        source_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS.format(tre_id)
+        dest_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_REJECTED.format(tre_id)
+        source_account_rg = constants.CORE_RG_NAME.format(tre_id)
+        dest_account_rg = source_account_rg
     elif new_status == 'rejected' and request_type == 'export':
-        # https://github.com/microsoft/AzureTRE/issues/1842
-        pass
+        source_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS.format(short_workspace_id)
+        dest_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_REJECTED.format(short_workspace_id)
+        source_account_rg = constants.WS_RG_NAME.format(tre_id, short_workspace_id)
+        dest_account_rg = source_account_rg
+
+    logging.info("source [account: '%s', rg: '%s']. dest [account: '%s', rg: '%s']", source_account_name, source_account_rg, dest_account_name, dest_account_rg)
 
     managed_identity = os.environ.get("MANAGED_IDENTITY_CLIENT_ID")
     if managed_identity:
