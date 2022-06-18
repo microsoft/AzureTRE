@@ -215,7 +215,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        target: [build-and-push-api, build-and-push-resource-processor]
+        target: [build-and-push-api, build-and-push-resource-processor, build-and-push-airlock-processor]
 
     steps:
       - name: Checkout
