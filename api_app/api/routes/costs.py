@@ -1,5 +1,5 @@
 from datetime import date, timedelta
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException, status
 
 from resources import strings
 from api.dependencies.database import get_repository
@@ -31,6 +31,11 @@ class CostsQueryParams:
         self.granularity = granularity
 
 
+def check_time_period(from_date: date, to_date: date):
+    if (to_date - from_date).days > 365:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.API_GET_COSTS_INVALID_TIME_PERIOD)
+
+
 @costs_core_router.get("/costs", response_model=CostReport, name=strings.API_GET_COSTS)
 async def costs(
         params: CostsQueryParams = Depends(),
@@ -38,6 +43,7 @@ async def costs(
         shared_services_repo=Depends(get_repository(SharedServiceRepository))) -> CostReport:
 
     if params.call_service:
+        check_time_period(params.from_date, params.to_date)
         cost_service = CostService()
         return cost_service.query_tre_costs(
             config.TRE_ID, params.granularity, params.from_date, params.to_date, workspace_repo, shared_services_repo)
@@ -53,6 +59,7 @@ async def workspace_costs(
         user_resource_repo=Depends(get_repository(UserResourceRepository))) -> WorkspaceCostReport:
 
     if params.call_service:
+        check_time_period(params.from_date, params.to_date)
         cost_service = CostService()
         cost_service.query_tre_workspace_costs(
             workspace_id, params.granularity, params.from_date, params.to_date,
