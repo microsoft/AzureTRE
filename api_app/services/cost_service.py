@@ -1,20 +1,19 @@
-from typing import Dict
 from datetime import date, datetime
-import pytz
 from enum import Enum
+from typing import Dict
+
+import pytz
 from azure.identity import DefaultAzureCredential
 from azure.mgmt.costmanagement import CostManagementClient
 from azure.mgmt.costmanagement.models import QueryGrouping, QueryAggregation, QueryDataset, QueryDefinition, \
     TimeframeType, ExportType, QueryTimePeriod, QueryFilter, QueryComparisonExpression, QueryResult
 
-from db.repositories.workspaces import WorkspaceRepository
+from core import config
 from db.repositories.shared_services import SharedServiceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
-from db.repositories.user_resources import UserResourceRepository
+from db.repositories.workspaces import WorkspaceRepository
+from models.domain.costs import GranularityEnum, CostReport, CostItem, CostRow
 from models.domain.resource import Resource
-from models.domain.costs import GranularityEnum, WorkspaceCostReport, WorkspaceServiceCostItem, CostReport, \
-    CostItem, CostRow
-from core import config
 
 
 class ResultColumnDaily(Enum):

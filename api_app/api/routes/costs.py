@@ -1,17 +1,18 @@
 from datetime import date, timedelta
+
 from fastapi import APIRouter, Depends, Query, HTTPException, status
 
-from resources import strings
 from api.dependencies.database import get_repository
-from api.dependencies.workspaces import get_workspace_by_id_from_path
-from services.authentication import get_current_admin_user, get_current_workspace_owner_or_tre_admin
-from db.repositories.workspaces import WorkspaceRepository
-from db.repositories.workspace_services import WorkspaceServiceRepository
+from core import config
 from db.repositories.shared_services import SharedServiceRepository
 from db.repositories.user_resources import UserResourceRepository
-from models.domain.costs import CostReport, GranularityEnum, WorkspaceCostReport, generate_cost_report_stub, generate_workspace_cost_report_stub
+from db.repositories.workspace_services import WorkspaceServiceRepository
+from db.repositories.workspaces import WorkspaceRepository
+from models.domain.costs import CostReport, GranularityEnum, WorkspaceCostReport, generate_cost_report_stub, \
+    generate_workspace_cost_report_stub
+from resources import strings
+from services.authentication import get_current_admin_user, get_current_workspace_owner_or_tre_admin
 from services.cost_service import CostService
-from core import config
 
 costs_core_router = APIRouter(dependencies=[Depends(get_current_admin_user)])
 costs_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_tre_admin)])
