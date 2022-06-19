@@ -75,7 +75,7 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
     container_registry_managed_identity_client_id = azurerm_user_assigned_identity.airlock_id.client_id
     container_registry_use_managed_identity       = true
     vnet_route_all_enabled                        = true
-    ftps_state                                    = "disabled"
+    ftps_state                                    = "Disabled"
 
     application_stack {
       docker {
