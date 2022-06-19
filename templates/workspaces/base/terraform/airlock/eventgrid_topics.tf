@@ -63,23 +63,22 @@ resource "azurerm_eventgrid_system_topic" "export_rejected_blob_created" {
   lifecycle { ignore_changes = [tags] }
 }
 
-data "azurerm_servicebus_namespace" "airlock_sb" {
-  name                = "sb-${var.tre_id}"
-  resource_group_name = local.core_resource_group_name
-}
-
-data "azurerm_servicebus_topic" "blob_created" {
-  name                = local.blob_created_topic_name
-  resource_group_name = local.core_resource_group_name
-  namespace_name      = data.azurerm_servicebus_namespace.airlock_sb.name
-}
-
 ## Subscriptions
 resource "azurerm_eventgrid_event_subscription" "import_approved_blob_created" {
   name  = "import-approved-blob-created-${var.short_workspace_id}"
   scope = azurerm_storage_account.sa_import_approved.id
 
   service_bus_topic_endpoint_id = data.azurerm_servicebus_topic.blob_created.id
+
+  delivery_identity {
+    type                   = "UserAssigned"
+    user_assigned_identity = data.azurerm_user_assigned_identity.airlock_id
+  }
+
+  dead_letter_identity {
+    type                   = "UserAssigned"
+    user_assigned_identity = data.azurerm_user_assigned_identity.airlock_id
+  }
 
   depends_on = [
     azurerm_eventgrid_system_topic.import_approved_blob_created
@@ -92,6 +91,16 @@ resource "azurerm_eventgrid_event_subscription" "export_inprogress_blob_created"
 
   service_bus_topic_endpoint_id = data.azurerm_servicebus_topic.blob_created.id
 
+  delivery_identity {
+    type                   = "UserAssigned"
+    user_assigned_identity = data.azurerm_user_assigned_identity.airlock_id
+  }
+
+  dead_letter_identity {
+    type                   = "UserAssigned"
+    user_assigned_identity = data.azurerm_user_assigned_identity.airlock_id
+  }
+
   depends_on = [
     azurerm_eventgrid_system_topic.export_inprogress_blob_created
   ]
@@ -102,6 +111,16 @@ resource "azurerm_eventgrid_event_subscription" "export_rejected_blob_created" {
   scope = azurerm_storage_account.sa_export_rejected.id
 
   service_bus_topic_endpoint_id = data.azurerm_servicebus_topic.blob_created.id
+
+  delivery_identity {
+    type                   = "UserAssigned"
+    user_assigned_identity = data.azurerm_user_assigned_identity.airlock_id
+  }
+
+  dead_letter_identity {
+    type                   = "UserAssigned"
+    user_assigned_identity = data.azurerm_user_assigned_identity.airlock_id
+  }
 
   depends_on = [
     azurerm_eventgrid_system_topic.export_rejected_blob_created

@@ -26,11 +26,6 @@ resource "azurerm_storage_account" "sa_import_approved" {
   lifecycle { ignore_changes = [tags] }
 }
 
-data "azurerm_private_dns_zone" "blobcore" {
-  name                = "privatelink.blob.core.windows.net"
-  resource_group_name = local.core_resource_group_name
-}
-
 resource "azurerm_private_endpoint" "import_approved_pe" {
   name                = "pe-sa-import-approved-blob-${var.short_workspace_id}"
   location            = var.location
@@ -201,11 +196,6 @@ resource "azurerm_private_endpoint" "export_rejected_pe" {
     is_manual_connection           = false
     subresource_names              = ["Blob"]
   }
-}
-
-data "azurerm_user_assigned_identity" "airlock_id" {
-  name                = "id-airlock-${var.tre_id}"
-  resource_group_name = "rg-${var.tre_id}"
 }
 
 resource "azurerm_role_assignment" "sa_import_approved" {

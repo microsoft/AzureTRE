@@ -73,6 +73,20 @@ resource "azurerm_servicebus_namespace_network_rule_set" "servicebus_network_rul
   namespace_id                  = azurerm_servicebus_namespace.sb.id
   public_network_access_enabled = var.enable_local_debugging
   ip_rules                      = var.enable_local_debugging ? ["${local.myip}"] : null
+
+  # We must enable the Airlock events subnet to access the SB, as the Eventgrid topics can't send messages over PE
+  # https://docs.microsoft.com/en-us/azure/event-grid/consume-private-endpoints
+  network_rules {
+    subnet_id                            = module.network.airlock_events_subnet_id
+    ignore_missing_vnet_service_endpoint = false
+  }
+
+  # Allows the Eventgrid to access the SB
+  trusted_services_allowed = true
+
+  depends_on = [
+    module.network
+  ]
 }
 
 resource "azurerm_monitor_diagnostic_setting" "sb" {
