@@ -1,11 +1,12 @@
 from pydantic import Field
-from models.domain.airlock_request import AirlockRequestStatus
+from enum import Enum
 from models.domain.airlock_resource import AirlockResource, AirlockResourceType
+from resources import strings
 
 
-class AirlockReviewDecision(str):
-    Approved = AirlockRequestStatus.Approved
-    Rejected = AirlockRequestStatus.Rejected
+class AirlockReviewDecision(str, Enum):
+    Approved = strings.AIRLOCK_RESOURCE_STATUS_APPROVED
+    Rejected = strings.AIRLOCK_RESOURCE_STATUS_REJECTED
 
 
 class AirlockReview(AirlockResource):
