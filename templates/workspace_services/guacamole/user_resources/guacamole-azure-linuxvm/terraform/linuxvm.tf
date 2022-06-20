@@ -65,7 +65,7 @@ resource "azurerm_linux_virtual_machine" "linuxvm" {
   tags = merge(
     local.tre_user_resources_tags,
     {
-    parent_service_id = var.parent_service_id
+      parent_service_id = var.parent_service_id
     }
   )
 }

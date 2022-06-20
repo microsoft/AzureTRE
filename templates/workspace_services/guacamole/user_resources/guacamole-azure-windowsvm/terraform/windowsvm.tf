@@ -66,7 +66,7 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
   tags = merge(
     local.tre_user_resources_tags,
     {
-    parent_service_id = var.parent_service_id
+      parent_service_id = var.parent_service_id
     }
   )
 }
@@ -77,7 +77,7 @@ resource "azurerm_virtual_machine_extension" "config_script" {
   publisher            = "Microsoft.Compute"
   type                 = "CustomScriptExtension"
   type_handler_version = "1.10"
-  tags                = local.tre_user_resources_tags
+  tags                 = local.tre_user_resources_tags
 
   protected_settings = <<PROT
     {
@@ -90,7 +90,7 @@ resource "azurerm_key_vault_secret" "windowsvm_password" {
   name         = "${local.vm_name}-admin-credentials"
   value        = "${random_string.username.result}\n${random_password.password.result}"
   key_vault_id = data.azurerm_key_vault.ws.id
-  tags                = local.tre_user_resources_tags
+  tags         = local.tre_user_resources_tags
 }
 
 data "template_file" "vm_config" {

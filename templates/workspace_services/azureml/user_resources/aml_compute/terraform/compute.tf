@@ -6,7 +6,7 @@ resource "azurerm_resource_group_template_deployment" "deploy_compute_instance" 
   name                = "dpl-${local.user_resource_name_suffix}"
   resource_group_name = data.azurerm_resource_group.ws.name
   tags                = local.tre_user_resources_tags
-  template_content = data.local_file.deploypl_compute_instance.content
+  template_content    = data.local_file.deploypl_compute_instance.content
 
   # these key-value pairs are passed into the ARM Template's `parameters` block
   parameters_content = jsonencode({
