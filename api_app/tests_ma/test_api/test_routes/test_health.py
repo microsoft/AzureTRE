@@ -8,6 +8,7 @@ from resources import strings
 pytestmark = pytest.mark.asyncio
 
 
+@pytest.mark.skip(reason="disabled service logic")
 @patch("api.routes.health.create_service_bus_status")
 @patch("api.routes.health.create_state_store_status")
 async def test_health_response_contains_cosmos_status(health_check_cosmos_mock, health_check_service_bus_mock, app,
@@ -20,6 +21,7 @@ async def test_health_response_contains_cosmos_status(health_check_cosmos_mock, 
     assert {"message": message, "service": strings.COSMOS_DB, "status": strings.OK} in response.json()["services"]
 
 
+@pytest.mark.skip(reason="disabled service logic")
 @patch("api.routes.health.create_service_bus_status")
 @patch("api.routes.health.create_state_store_status")
 async def test_health_response_contains_service_bus_status(health_check_cosmos_mock, health_check_service_bus_mock, app,

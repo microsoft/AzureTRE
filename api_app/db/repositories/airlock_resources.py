@@ -17,12 +17,12 @@ class AirlockResourceRepository(BaseRepository):
     def get_timestamp(self) -> float:
         return datetime.utcnow().timestamp()
 
-    def update_airlock_resource_item(self, original_resource: AirlockResource, new_resource: AirlockResource, user: User) -> AirlockResource:
+    def update_airlock_resource_item(self, original_resource: AirlockResource, new_resource: AirlockResource, user: User, resource_properties: dict) -> AirlockResource:
         history_item = AirlockResourceHistoryItem(
             resourceVersion=original_resource.resourceVersion,
             updatedWhen=original_resource.updatedWhen,
             user=original_resource.user,
-            previousStatus=original_resource.status
+            properties=resource_properties
         )
         new_resource.history.append(history_item)
 
