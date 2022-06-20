@@ -1,5 +1,6 @@
 from datetime import datetime
 import logging
+from copy import deepcopy
 
 from fastapi import HTTPException
 from starlette import status
@@ -21,7 +22,11 @@ async def save_and_deploy_resource(resource: Resource, resource_repo: ResourceRe
     try:
         resource.user = user
         resource.updatedWhen = get_timestamp()
-        resource_repo.save_item(resource)
+
+        # Making a copy to save with secrets masked
+        masked_resource = deepcopy(resource)
+        masked_resource.properties = resource_repo.mask_sensitive_properties(resource_template, resource.properties)
+        resource_repo.save_item(masked_resource)
     except Exception as e:
         logging.error(f'Failed saving resource item {resource}: {e}')
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)

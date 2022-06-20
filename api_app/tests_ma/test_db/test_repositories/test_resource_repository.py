@@ -396,6 +396,5 @@ def test_sensitive_values_get_masked(resource_repo):
     resource = sample_resource_with_sensitive_value()
 
     properties = resource.properties
-    print(type(template))
     masked_resource = resource_repo.mask_sensitive_values(template, properties)
     assert masked_resource["secret"] == "REDACTED"
