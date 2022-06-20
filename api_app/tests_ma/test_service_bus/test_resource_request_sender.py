@@ -66,7 +66,7 @@ async def test_resource_request_message_generated_correctly(
         user=create_test_user(),
         resource_template=template,
         resource_template_repo=resource_template_repo,
-        action=request_action,
+        action=request_action
     )
 
     args = service_bus_client_mock().get_queue_sender().send_messages.call_args.args
@@ -137,7 +137,7 @@ async def test_multi_step_document_sends_first_step(
         resource_template=basic_shared_service_template,
         etag=basic_shared_service.etag,
         resource_template_repo=resource_template_repo,
-        user=test_user,
+        user=test_user
     )
 
 
