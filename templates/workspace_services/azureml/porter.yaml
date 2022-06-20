@@ -1,6 +1,6 @@
 ---
 name: tre-service-azureml
-version: 0.3.1
+version: 0.4.1
 description: "An Azure TRE service for Azure Machine Learning"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -23,6 +23,10 @@ parameters:
   - name: id
     type: string
     description: "Resource ID"
+  - name: display_name
+    description: "Display name for the workspace"
+  - name: description
+    description: "Description for the workspace"
   - name: tfstate_resource_group_name
     type: string
     description: "Resource group containing the Terraform state storage account"
@@ -46,6 +50,8 @@ outputs:
     type: string
   - name: azureml_storage_account_id
     type: string
+  - name: connection_uri
+    type: string
 
 mixins:
   - exec
@@ -59,6 +65,8 @@ install:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
+        display_name: "{{ bundle.parameters.display_name }}"
+        description: "{{ bundle.parameters.description }}"
         arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
         arm_client_id: "{{ bundle.credentials.azure_client_id }}"
         arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
@@ -72,13 +80,31 @@ install:
         - name: azureml_workspace_name
         - name: azureml_acr_id
         - name: azureml_storage_account_id
+        - name: connection_uri
 
 upgrade:
-  - exec:
+  - terraform:
       description: "Upgrade Azure ML Service"
-      command: echo
-      arguments:
-        - "This workspace service does not implement upgrade action"
+      vars:
+        workspace_id: "{{ bundle.parameters.workspace_id }}"
+        tre_id: "{{ bundle.parameters.tre_id }}"
+        tre_resource_id: "{{ bundle.parameters.id }}"
+        display_name: "{{ bundle.parameters.display_name }}"
+        description: "{{ bundle.parameters.description }}"
+        arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
+        arm_client_id: "{{ bundle.credentials.azure_client_id }}"
+        arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
+        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
+      backendConfig:
+        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
+        container_name: "{{ bundle.parameters.tfstate_container_name }}"
+        key: "tre-service-azureml-{{ bundle.parameters.id }}"
+      outputs:
+        - name: azureml_workspace_name
+        - name: azureml_acr_id
+        - name: azureml_storage_account_id
+        - name: connection_uri
 
 uninstall:
   - terraform:
@@ -87,6 +113,8 @@ uninstall:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
+        display_name: "{{ bundle.parameters.display_name }}"
+        description: "{{ bundle.parameters.description }}"
         arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
         arm_tenant_id: "{{ bundle.credentials.azure_tenant_id }}"
         arm_client_id: "{{ bundle.credentials.azure_client_id }}"

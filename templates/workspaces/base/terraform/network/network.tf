@@ -3,6 +3,7 @@ resource "azurerm_virtual_network" "ws" {
   location            = var.location
   resource_group_name = var.ws_resource_group_name
   address_space       = [var.address_space]
+  tags                = var.tre_workspace_tags
 
   lifecycle { ignore_changes = [tags] }
 }

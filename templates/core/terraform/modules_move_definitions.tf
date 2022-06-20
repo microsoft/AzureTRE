@@ -226,3 +226,8 @@ moved {
   from = module.bastion.azurerm_bastion_host.bastion
   to   = azurerm_bastion_host.bastion
 }
+
+moved {
+  from = module.airlock.azurerm_private_dns_zone.eventgrid
+  to   = module.network.azurerm_private_dns_zone.eventgrid
+}

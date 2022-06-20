@@ -16,9 +16,12 @@ resource "azurerm_storage_account" "sa_import_approved" {
     bypass         = ["AzureServices"]
   }
 
-  tags = {
-    description = "airlock;import;approved"
-  }
+  tags = merge(
+    var.tre_workspace_tags,
+    {
+      description = "airlock;import;approved"
+    }
+  )
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -68,9 +71,12 @@ resource "azurerm_storage_account" "sa_export_internal" {
     bypass         = ["AzureServices"]
   }
 
-  tags = {
-    description = "airlock;export;internal"
-  }
+  tags = merge(
+    var.tre_workspace_tags,
+    {
+      description = "airlock;export;internal"
+    }
+  )
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -115,9 +121,12 @@ resource "azurerm_storage_account" "sa_export_inprogress" {
     bypass         = ["AzureServices"]
   }
 
-  tags = {
-    description = "airlock;export;inprogress"
-  }
+  tags = merge(
+    var.tre_workspace_tags,
+    {
+      description = "airlock;export;inprogress"
+    }
+  )
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -162,9 +171,12 @@ resource "azurerm_storage_account" "sa_export_rejected" {
     bypass         = ["AzureServices"]
   }
 
-  tags = {
-    description = "airlock;export;rejected"
-  }
+  tags = merge(
+    var.tre_workspace_tags,
+    {
+      description = "airlock;export;rejected"
+    }
+  )
 
   lifecycle { ignore_changes = [tags] }
 }
