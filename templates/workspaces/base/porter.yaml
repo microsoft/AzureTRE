@@ -157,8 +157,6 @@ upgrade:
       command: echo
       arguments:
         - "This workspace does not implement upgrade action"
-        - "Please be aware that parameter client_secret and auth_client_secret are redacted"
-        - "when passed in here from the API"
 
 uninstall:
   - terraform:
