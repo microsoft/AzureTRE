@@ -125,17 +125,3 @@ def test_create_shared_item_raises_value_error_if_template_is_invalid(_, shared_
 
     with pytest.raises(ValueError):
         shared_service_repo.create_shared_service_item(shared_service_to_create)
-
-
-@patch('db.repositories.shared_services.SharedServiceRepository.validate_input_against_template')
-def test_create_shared_service_item_with_secret_gets_masked(validate_input_mock, shared_service_repo, basic_shared_service_request, basic_resource_template):
-    shared_service_to_create = basic_shared_service_request
-    shared_service_to_create.properties["secret"] = "iamsecret"
-
-    validate_input_mock.return_value = basic_resource_template
-
-    shared_service, _ = shared_service_repo.create_shared_service_item(shared_service_to_create)
-
-    # making sure the secret is masked in the created item
-    assert shared_service.properties["secret"] != "iamsecret"
-    assert shared_service.properties["secret"] == "REDACTED"

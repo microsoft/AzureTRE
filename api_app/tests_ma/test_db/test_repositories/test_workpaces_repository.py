@@ -12,13 +12,7 @@ from models.schemas.workspace import WorkspaceInCreate
 
 @pytest.fixture
 def basic_workspace_request():
-    return WorkspaceInCreate(
-        templateName="base-tre",
-        properties={
-            "display_name": "test",
-            "description": "test",
-            "client_id": "123",
-            "tre_id": "test"})
+    return WorkspaceInCreate(templateName="base-tre", properties={"display_name": "test", "description": "test", "client_id": "123", "tre_id": "test"})
 
 
 @pytest.fixture
@@ -179,22 +173,6 @@ def test_create_workspace_item_throws_exception_with_bad_custom_address_space(va
 
     with pytest.raises(InvalidInput):
         workspace_repo.create_workspace_item(workspace_to_create, {}, "test_object_id")
-
-
-@patch('db.repositories.workspaces.WorkspaceRepository.validate_input_against_template')
-@patch('core.config.CORE_ADDRESS_SPACE', "10.1.0.0/22")
-@patch('core.config.TRE_ADDRESS_SPACE', "10.0.0.0/12")
-def test_create_workspace_item_with_secret_gets_masked(validate_input_mock, workspace_repo, basic_workspace_request, basic_resource_template):
-    workspace_to_create = basic_workspace_request
-    workspace_to_create.properties["secret"] = "iamsecret"
-
-    validate_input_mock.return_value = basic_resource_template
-
-    workspace, _ = workspace_repo.create_workspace_item(workspace_to_create, {}, "test_object_id")
-
-    # making sure the secret is masked in the created item
-    assert workspace.properties["secret"] != "iamsecret"
-    assert workspace.properties["secret"] == "REDACTED"
 
 
 def test_get_address_space_based_on_size_with_custom_address_space_and_missing_address(workspace_repo, basic_workspace_request):

@@ -19,7 +19,6 @@ def get_sample_workspace_template_object(template_name: str = "tre-workspace-bas
             "description": Property(type="string"),
             "client_id": Property(type="string"),
             "client_secret": Property(type="string"),
-            "dummy": Property(type="SecretStr"),
             "address_space_size": Property(
                 type="string",
                 default="small",

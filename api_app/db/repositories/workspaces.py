@@ -80,9 +80,6 @@ class WorkspaceRepository(ResourceRepository):
                                     **auth_info,
                                     **self.get_workspace_spec_params(full_workspace_id)}
 
-        # making sure any secrets are masked
-        resource_spec_parameters = self.mask_sensitive_values(template, resource_spec_parameters)
-
         workspace = Workspace(
             id=full_workspace_id,
             templateName=workspace_input.templateName,

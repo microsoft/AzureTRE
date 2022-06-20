@@ -112,22 +112,8 @@ def test_create_workspace_service_item_creates_a_workspace_with_the_right_values
 
 
 @patch('db.repositories.workspace_services.WorkspaceServiceRepository.validate_input_against_template', side_effect=ValueError)
-def test_create_workspace_service_item_raises_value_error_if_template_is_invalid(_, workspace_service_repo, basic_workspace_service_request):
+def test_create_workspace_item_raises_value_error_if_template_is_invalid(_, workspace_service_repo, basic_workspace_service_request):
     workspace_service_to_create = basic_workspace_service_request
 
     with pytest.raises(ValueError):
         workspace_service_repo.create_workspace_service_item(workspace_service_to_create, WORKSPACE_ID)
-
-
-@patch('db.repositories.workspace_services.WorkspaceServiceRepository.validate_input_against_template')
-def test_create_workspace_item_with_secret_gets_masked(validate_input_mock, workspace_service_repo, basic_workspace_service_request, basic_resource_template):
-    workspace_service_to_create = basic_workspace_service_request
-    workspace_service_to_create.properties["secret"] = "iamsecret"
-
-    validate_input_mock.return_value = basic_resource_template
-
-    workspace_service, _ = workspace_service_repo.create_workspace_service_item(workspace_service_to_create, WORKSPACE_ID)
-
-    # making sure the secret is masked in the created item
-    assert workspace_service.properties["secret"] != "iamsecret"
-    assert workspace_service.properties["secret"] == "REDACTED"
