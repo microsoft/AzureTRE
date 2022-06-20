@@ -25,7 +25,7 @@ This identity should only be used by the API Application.
 ## How to create
 There are two mechanisms for creating Workspace Applications
 - Manually by your AAD Tenant Admin (default)
-- Automatically by TRE. Please see this [guide](./application_admin.md) if you wish this to be automatic 
+- Automatically by TRE. Please see this [guide](./application_admin.md) if you wish this to be automatic.
 
 !!! caution
     By default, the app registration for a workspace is not created by the [API](../tre-developers/api.md). One needs to be present before using the API to provision a new workspace. If you ran `make auth`, a workspace AD application was created for you. If you wish to create another, the same script can be used to create the **Workspace Application**.
