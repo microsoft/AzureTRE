@@ -24,7 +24,7 @@ resource "azurerm_eventgrid_system_topic" "import_approved_blob_created" {
   lifecycle { ignore_changes = [tags] }
 }
 
-resource "azurerm_role_assignment" "servicebus_sender" {
+resource "azurerm_role_assignment" "servicebus_sender_import_approved_blob_created" {
   scope                = data.azurerm_servicebus_namespace.airlock_sb.id
   role_definition_name = "Azure Service Bus Data Sender"
   principal_id         = azurerm_eventgrid_system_topic.import_approved_blob_created.principal_id
@@ -55,7 +55,7 @@ resource "azurerm_eventgrid_system_topic" "export_inprogress_blob_created" {
   lifecycle { ignore_changes = [tags] }
 }
 
-resource "azurerm_role_assignment" "servicebus_sender" {
+resource "azurerm_role_assignment" "servicebus_sender_export_inprogress_blob_created" {
   scope                = data.azurerm_servicebus_namespace.airlock_sb.id
   role_definition_name = "Azure Service Bus Data Sender"
   principal_id         = azurerm_eventgrid_system_topic.export_inprogress_blob_created.principal_id
@@ -86,7 +86,7 @@ resource "azurerm_eventgrid_system_topic" "export_rejected_blob_created" {
   lifecycle { ignore_changes = [tags] }
 }
 
-resource "azurerm_role_assignment" "servicebus_sender" {
+resource "azurerm_role_assignment" "servicebus_sender_export_rejected_blob_created" {
   scope                = data.azurerm_servicebus_namespace.airlock_sb.id
   role_definition_name = "Azure Service Bus Data Sender"
   principal_id         = azurerm_eventgrid_system_topic.export_rejected_blob_created.principal_id
