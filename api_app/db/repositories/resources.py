@@ -92,15 +92,6 @@ class ResourceRepository(BaseRepository):
 
         return parse_obj_as(ResourceTemplate, template)
 
-    def mask_sensitive_properties(self, properties: Dict[str, Any], template: ResourceTemplate) -> dict:
-        updated_resource_parameters = properties
-
-        for prop_name, prop in template.properties.items():
-            if prop.sensitive is True and prop_name in properties:
-                updated_resource_parameters = {**properties}
-                updated_resource_parameters[prop_name] = "REDACTED"
-        return updated_resource_parameters
-
     def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository, user: User) -> Tuple[Resource, ResourceTemplate]:
         # create a deep copy of the resource to use for history, create the history item + add to history list
         resource_copy = copy.deepcopy(resource)

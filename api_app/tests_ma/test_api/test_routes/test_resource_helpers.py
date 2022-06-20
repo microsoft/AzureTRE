@@ -5,7 +5,7 @@ from mock import patch, MagicMock
 
 from fastapi import HTTPException, status
 
-from api.routes.resource_helpers import save_and_deploy_resource, send_uninstall_message
+from api.routes.resource_helpers import save_and_deploy_resource, send_uninstall_message, mask_sensitive_properties
 from tests_ma.test_api.conftest import create_test_user
 
 from db.repositories.resources import ResourceRepository
@@ -52,10 +52,7 @@ def sample_resource(workspace_id=WORKSPACE_ID):
     )
 
 
-def sample_resource_with_secret(masked_secret: bool = False):
-    secret = "youcantseeme"
-    if masked_secret:
-        secret = "REDACTED"
+def sample_resource_with_secret():
     return Workspace(
         id=WORKSPACE_ID,
         templateName="tre-workspace-base",
@@ -63,7 +60,7 @@ def sample_resource_with_secret(masked_secret: bool = False):
         etag="",
         properties={
             "client_id": "12345",
-            "secret": secret
+            "secret": "iamsecret"
         },
         resourcePath=f'/workspaces/{WORKSPACE_ID}',
         user=create_test_user(),
@@ -260,3 +257,10 @@ class TestResourceHelpers:
         # Checking that the item saved had a secret redacted
         resource.properties["secret"] = "REDACTED"
         resource_repo.save_item.assert_called_once_with(resource)
+
+    def test_sensitive_properties_get_masked(basic_resource_template):
+        resource = sample_resource_with_secret()
+
+        properties = resource.properties
+        masked_resource = mask_sensitive_properties(properties, basic_resource_template)
+        assert masked_resource["secret"] == "REDACTED"
