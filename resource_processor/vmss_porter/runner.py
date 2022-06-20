@@ -202,6 +202,12 @@ async def get_porter_outputs(msg_body: dict, message_logger_adapter: logging.Log
         outputs_json = {}
         try:
             outputs_json = json.loads(stdout)
+
+            # loop props individually to try to deserialise to dict/list, as all TF outputs are strings, but we want the pure value
+            for i in range(0, len(outputs_json)):
+                if "{" in outputs_json[i]['Value'] or "[" in outputs_json[i]['Value']:
+                    outputs_json[i]['Value'] = json.loads(outputs_json[i]['Value'])
+
             message_logger_adapter.info(f"Got outputs as json: {outputs_json}")
         except ValueError:
             message_logger_adapter.error(f"Got outputs invalid json: {stdout}")
