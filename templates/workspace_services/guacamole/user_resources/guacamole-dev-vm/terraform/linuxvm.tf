@@ -2,6 +2,7 @@ resource "azurerm_network_interface" "internal" {
   name                = "internal-nic-${local.service_resource_name_suffix}"
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
+  tags                = local.tre_user_resources_tags
 
   ip_configuration {
     name                          = "primary"
@@ -62,9 +63,12 @@ resource "azurerm_linux_virtual_machine" "linuxvm" {
     type = "SystemAssigned"
   }
 
-  tags = {
+  tags = merge(
+    local.tre_user_resources_tags,
+    {
     parent_service_id = var.parent_service_id
-  }
+   }
+  )
 }
 
 data "template_cloudinit_config" "config" {
@@ -120,6 +124,7 @@ resource "azurerm_key_vault_secret" "linuxvm_password" {
   name         = "${local.vm_name}-admin-credentials"
   value        = "${random_string.username.result}\n${random_password.password.result}"
   key_vault_id = data.azurerm_key_vault.ws.id
+  tags                = local.tre_user_resources_tags
 }
 data "azurerm_storage_account" "stg" {
   name                = local.storage_name

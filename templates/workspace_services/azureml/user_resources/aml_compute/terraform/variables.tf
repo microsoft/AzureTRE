@@ -13,3 +13,4 @@ variable "arm_client_secret" {}
 variable "arm_use_msi" {
   type = bool
 }
+variable "tre_user_resources_tags" {}
