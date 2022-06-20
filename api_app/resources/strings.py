@@ -57,7 +57,7 @@ API_GET_USER_RESOURCE_TEMPLATE_BY_NAME = "Get user resource template by name and
 # cost report
 API_GET_COSTS = "Get overall costs"
 API_GET_WORKSPACE_COSTS = "Get workspace costs"
-API_GET_COSTS_INVALID_TIME_PERIOD = "The time period for pulling the data cannot exceed 1 year(s)"
+API_GET_COSTS_INVALID_TIME_PERIOD = "The time period for pulling the data cannot exceed 1 year"
 
 # State store status
 OK = "OK"

@@ -21,7 +21,7 @@ costs_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_o
 class CostsQueryParams:
     def __init__(
         self,
-        call_service: bool = Query(default=False),
+        call_service: bool = Query(default=False, description="A feature flag which will get removed as soon as the feature is implemented"),
         from_date: date = Query(default=(date.today().replace(day=1)), description="The start date to pull data from, default value first day of month (iso-8601, UTC)."),
         to_date: date = Query(default=(date.today() + timedelta(days=1)), description="The end date to pull data to, default value tomorrow (iso-8601, UTC)."),
         granularity: GranularityEnum = Query(default="None", description="The granularity of rows in the query.")
@@ -43,6 +43,7 @@ async def costs(
         workspace_repo=Depends(get_repository(WorkspaceRepository)),
         shared_services_repo=Depends(get_repository(SharedServiceRepository))) -> CostReport:
 
+    # todo - remove this flag and stubs when the feature is done
     if params.call_service:
         check_time_period(params.from_date, params.to_date)
         cost_service = CostService()
@@ -59,6 +60,7 @@ async def workspace_costs(
         workspace_services_repo=Depends(get_repository(WorkspaceServiceRepository)),
         user_resource_repo=Depends(get_repository(UserResourceRepository))) -> WorkspaceCostReport:
 
+    # todo - remove this flag and stubs when the feature is done
     if params.call_service:
         check_time_period(params.from_date, params.to_date)
         cost_service = CostService()
