@@ -70,8 +70,8 @@ resource "azurerm_private_endpoint" "sbpe" {
 # Block public access
 # See https://docs.microsoft.com/azure/service-bus-messaging/service-bus-service-endpoints
 resource "azurerm_servicebus_namespace_network_rule_set" "servicebus_network_rule_set" {
-  namespace_id                  = azurerm_servicebus_namespace.sb.id
-  ip_rules                      = var.enable_local_debugging ? ["${local.myip}"] : null
+  namespace_id = azurerm_servicebus_namespace.sb.id
+  ip_rules     = var.enable_local_debugging ? ["${local.myip}"] : null
 
 
   # We must enable the Airlock events subnet to access the SB, as the Eventgrid topics can't send messages over PE

@@ -7,8 +7,7 @@ resource "azurerm_eventgrid_system_topic" "import_approved_blob_created" {
   topic_type             = "Microsoft.Storage.StorageAccounts"
 
   identity {
-    type         = "UserAssigned"
-    identity_ids = [data.azurerm_user_assigned_identity.airlock_id.id]
+    type = "SystemAssigned"
   }
 
   tags = merge(
@@ -23,6 +22,12 @@ resource "azurerm_eventgrid_system_topic" "import_approved_blob_created" {
   ]
 
   lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_role_assignment" "servicebus_sender" {
+  scope                = data.azurerm_servicebus_namespace.airlock_sb.id
+  role_definition_name = "Azure Service Bus Data Sender"
+  principal_id         = azurerm_eventgrid_system_topic.import_approved_blob_created.principal_id
 }
 
 resource "azurerm_eventgrid_system_topic" "export_inprogress_blob_created" {
@@ -40,8 +45,7 @@ resource "azurerm_eventgrid_system_topic" "export_inprogress_blob_created" {
   )
 
   identity {
-    type         = "UserAssigned"
-    identity_ids = [data.azurerm_user_assigned_identity.airlock_id.id]
+    type = "SystemAssigned"
   }
 
   depends_on = [
@@ -51,6 +55,11 @@ resource "azurerm_eventgrid_system_topic" "export_inprogress_blob_created" {
   lifecycle { ignore_changes = [tags] }
 }
 
+resource "azurerm_role_assignment" "servicebus_sender" {
+  scope                = data.azurerm_servicebus_namespace.airlock_sb.id
+  role_definition_name = "Azure Service Bus Data Sender"
+  principal_id         = azurerm_eventgrid_system_topic.export_inprogress_blob_created.principal_id
+}
 
 resource "azurerm_eventgrid_system_topic" "export_rejected_blob_created" {
   name                   = local.export_rejected_sys_topic_name
@@ -67,8 +76,7 @@ resource "azurerm_eventgrid_system_topic" "export_rejected_blob_created" {
   )
 
   identity {
-    type         = "UserAssigned"
-    identity_ids = [data.azurerm_user_assigned_identity.airlock_id.id]
+    type = "SystemAssigned"
   }
 
   depends_on = [
@@ -76,6 +84,12 @@ resource "azurerm_eventgrid_system_topic" "export_rejected_blob_created" {
   ]
 
   lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_role_assignment" "servicebus_sender" {
+  scope                = data.azurerm_servicebus_namespace.airlock_sb.id
+  role_definition_name = "Azure Service Bus Data Sender"
+  principal_id         = azurerm_eventgrid_system_topic.export_rejected_blob_created.principal_id
 }
 
 ## Subscriptions
@@ -86,8 +100,7 @@ resource "azurerm_eventgrid_event_subscription" "import_approved_blob_created" {
   service_bus_topic_endpoint_id = data.azurerm_servicebus_topic.blob_created.id
 
   delivery_identity {
-    type                   = "UserAssigned"
-    user_assigned_identity = data.azurerm_user_assigned_identity.airlock_id
+    type = "SystemAssigned"
   }
 
   depends_on = [
@@ -102,8 +115,7 @@ resource "azurerm_eventgrid_event_subscription" "export_inprogress_blob_created"
   service_bus_topic_endpoint_id = data.azurerm_servicebus_topic.blob_created.id
 
   delivery_identity {
-    type                   = "UserAssigned"
-    user_assigned_identity = data.azurerm_user_assigned_identity.airlock_id
+    type = "SystemAssigned"
   }
 
   depends_on = [
@@ -118,8 +130,7 @@ resource "azurerm_eventgrid_event_subscription" "export_rejected_blob_created" {
   service_bus_topic_endpoint_id = data.azurerm_servicebus_topic.blob_created.id
 
   delivery_identity {
-    type                   = "UserAssigned"
-    user_assigned_identity = data.azurerm_user_assigned_identity.airlock_id
+    type = "SystemAssigned"
   }
 
   depends_on = [
