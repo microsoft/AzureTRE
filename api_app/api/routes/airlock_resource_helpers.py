@@ -45,7 +45,7 @@ async def update_status_and_publish_event_airlock_request(airlock_request: Airlo
 
     try:
         logging.debug(f"Sending status changed event for airlock request item: {airlock_request.id}")
-        await send_status_changed_event(airlock_request)
+        await send_status_changed_event(updated_airlock_request)
         return updated_airlock_request
     except Exception as e:
         logging.error(f"Failed send airlock_request request message: {e}")
