@@ -6,6 +6,11 @@ resource "azurerm_eventgrid_system_topic" "import_approved_blob_created" {
   source_arm_resource_id = azurerm_storage_account.sa_import_approved.id
   topic_type             = "Microsoft.Storage.StorageAccounts"
 
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [data.azurerm_user_assigned_identity.airlock_id.id]
+  }
+
   tags = merge(
     var.tre_workspace_tags,
     {
@@ -34,6 +39,11 @@ resource "azurerm_eventgrid_system_topic" "export_inprogress_blob_created" {
     }
   )
 
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [data.azurerm_user_assigned_identity.airlock_id.id]
+  }
+
   depends_on = [
     azurerm_storage_account.sa_export_inprogress
   ]
@@ -55,6 +65,11 @@ resource "azurerm_eventgrid_system_topic" "export_rejected_blob_created" {
       Publishers = "airlock;rejected-export-sa"
     }
   )
+
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [data.azurerm_user_assigned_identity.airlock_id.id]
+  }
 
   depends_on = [
     azurerm_storage_account.sa_export_rejected

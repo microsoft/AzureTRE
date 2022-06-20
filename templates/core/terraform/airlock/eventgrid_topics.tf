@@ -10,6 +10,11 @@ resource "azurerm_eventgrid_topic" "step_result" {
   resource_group_name           = var.resource_group_name
   public_network_access_enabled = false
 
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.airlock_id.id]
+  }
+
   tags = {
     Publishers = "Airlock Processor;"
   }
@@ -42,6 +47,11 @@ resource "azurerm_eventgrid_topic" "status_changed" {
   location                      = var.location
   resource_group_name           = var.resource_group_name
   public_network_access_enabled = false
+
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.airlock_id.id]
+  }
 
   tags = {
     Publishers = "TRE API;"
@@ -78,6 +88,11 @@ resource "azurerm_eventgrid_system_topic" "import_inprogress_blob_created" {
   source_arm_resource_id = azurerm_storage_account.sa_import_in_progress.id
   topic_type             = "Microsoft.Storage.StorageAccounts"
 
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.airlock_id.id]
+  }
+
   tags = {
     Publishers = "airlock;import-in-progress-sa"
   }
@@ -97,6 +112,11 @@ resource "azurerm_eventgrid_system_topic" "import_rejected_blob_created" {
   source_arm_resource_id = azurerm_storage_account.sa_import_rejected.id
   topic_type             = "Microsoft.Storage.StorageAccounts"
 
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.airlock_id.id]
+  }
+
   tags = {
     Publishers = "airlock;import-rejected-sa"
   }
@@ -114,6 +134,11 @@ resource "azurerm_eventgrid_system_topic" "export_approved_blob_created" {
   resource_group_name    = var.resource_group_name
   source_arm_resource_id = azurerm_storage_account.sa_export_approved.id
   topic_type             = "Microsoft.Storage.StorageAccounts"
+
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.airlock_id.id]
+  }
 
   tags = {
     Publishers = "airlock;export-approved-sa"
@@ -134,6 +159,10 @@ resource "azurerm_eventgrid_topic" "scan_result" {
   resource_group_name           = var.resource_group_name
   public_network_access_enabled = false
 
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.airlock_id.id]
+  }
 
   tags = {
     Publishers = "airlock;custom scanning service;"
@@ -175,7 +204,6 @@ resource "azurerm_eventgrid_event_subscription" "step_result" {
     type                   = "UserAssigned"
     user_assigned_identity = azurerm_user_assigned_identity.airlock_id.id
   }
-
 
   depends_on = [
     azurerm_eventgrid_topic.step_result
