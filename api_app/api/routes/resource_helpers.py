@@ -29,7 +29,7 @@ async def save_and_deploy_resource(resource: Resource, resource_repo: ResourceRe
         masked_resource.properties = mask_sensitive_properties(resource.properties, resource_template)
         resource_repo.save_item(masked_resource)
     except Exception as e:
-        logging.error(f'Failed saving resource item {resource}: {e}')
+        logging.error(f'Failed saving resource item {resource.id}: {e}')
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
 
     try:
