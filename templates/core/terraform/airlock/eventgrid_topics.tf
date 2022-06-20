@@ -176,10 +176,6 @@ resource "azurerm_eventgrid_event_subscription" "step_result" {
     user_assigned_identity = azurerm_user_assigned_identity.airlock_id.id
   }
 
-  dead_letter_identity {
-    type                   = "UserAssigned"
-    user_assigned_identity = azurerm_user_assigned_identity.airlock_id.id
-  }
 
   depends_on = [
     azurerm_eventgrid_topic.step_result
@@ -193,11 +189,6 @@ resource "azurerm_eventgrid_event_subscription" "status_changed" {
   service_bus_queue_endpoint_id = azurerm_servicebus_queue.status_changed.id
 
   delivery_identity {
-    type                   = "UserAssigned"
-    user_assigned_identity = azurerm_user_assigned_identity.airlock_id.id
-  }
-
-  dead_letter_identity {
     type                   = "UserAssigned"
     user_assigned_identity = azurerm_user_assigned_identity.airlock_id.id
   }
@@ -218,11 +209,6 @@ resource "azurerm_eventgrid_event_subscription" "import_inprogress_blob_created"
     user_assigned_identity = azurerm_user_assigned_identity.airlock_id.id
   }
 
-  dead_letter_identity {
-    type                   = "UserAssigned"
-    user_assigned_identity = azurerm_user_assigned_identity.airlock_id.id
-  }
-
   depends_on = [
     azurerm_eventgrid_system_topic.import_inprogress_blob_created
   ]
@@ -239,10 +225,7 @@ resource "azurerm_eventgrid_event_subscription" "import_rejected_blob_created" {
     user_assigned_identity = azurerm_user_assigned_identity.airlock_id.id
   }
 
-  dead_letter_identity {
-    type                   = "UserAssigned"
-    user_assigned_identity = azurerm_user_assigned_identity.airlock_id.id
-  }
+  # Todo add Dead_letter
 
   depends_on = [
     azurerm_eventgrid_system_topic.import_rejected_blob_created
@@ -256,11 +239,6 @@ resource "azurerm_eventgrid_event_subscription" "export_approved_blob_created" {
   service_bus_topic_endpoint_id = azurerm_servicebus_topic.blob_created.id
 
   delivery_identity {
-    type                   = "UserAssigned"
-    user_assigned_identity = azurerm_user_assigned_identity.airlock_id.id
-  }
-
-  dead_letter_identity {
     type                   = "UserAssigned"
     user_assigned_identity = azurerm_user_assigned_identity.airlock_id.id
   }
