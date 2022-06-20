@@ -8,22 +8,19 @@ This service installs the following resources into an existing virtual network w
 
 ## Firewall Rules
 
-Please be aware that the following Firewall rules are opened for the workspace when this service is deployed:
-
-URLs:
-
-- graph.windows.net
-- ml.azure.com
-- login.microsoftonline.com
-- aadcdn.msftauth.net
-- graph.microsoft.com
-- management.azure.com
-- viennaglobal.azurecr.io
+Please be aware that the following outbound Firewall rules are opened for the workspace when this service is deployed, including to Azure Storage. This does open the possibility to extract data from a workspace if the user is determined to do so. Work is ongoing to remove some of these requirements:
 
 Service Tags:
-
+- AzureActiveDirectory
+- AzureResourceManager
+- AzureMachineLearning"
 - Storage.`{AzureRegion}`
-- AzureContainerRegistry
+- MicrosoftContainerRegistry
+
+URLs:
+- aadcdn.msftauth.net
+- ml.azure.com
+
 
 ## Prerequisites
 

@@ -2,8 +2,8 @@ from azure.identity.aio import DefaultAzureCredential
 from azure.servicebus import ServiceBusMessage
 from azure.servicebus.aio import ServiceBusClient
 from contextlib import asynccontextmanager
-
 from pydantic import parse_obj_as
+from service_bus.substitutions import substitute_properties
 from models.domain.resource_template import PipelineStep
 from models.domain.operation import OperationStep
 from models.domain.resource import Resource, ResourceType
@@ -52,7 +52,7 @@ async def send_deployment_message(content, correlation_id, session_id, action):
 
 
 def update_resource_for_step(operation_step: OperationStep, resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, primary_resource_id: str, resource_to_update_id: str, primary_action: str, user: User) -> Resource:
-    # create properties dict - for now we create a basic, string only dict to use as a patch
+
     # get primary resource to use in substitutions
     primary_resource = resource_repo.get_resource_by_id(primary_resource_id)
 
@@ -77,20 +77,16 @@ def update_resource_for_step(operation_step: OperationStep, resource_repo: Resou
     if template_step is None:
         raise f"Cannot find step with id of {operation_step.stepId} in template {primary_resource.templateName} for action {primary_action}"
 
-    # TODO: actual substitution logic #1679
-    properties = {}
-    for prop in template_step.properties:
-        properties[prop.name] = prop.value
-
     if template_step.resourceAction == "upgrade":
         resource_to_send = try_upgrade_with_retries(
             num_retries=3,
             attempt_count=0,
             resource_repo=resource_repo,
             resource_template_repo=resource_template_repo,
-            properties=properties,
             user=user,
-            resource_to_update_id=resource_to_update_id
+            resource_to_update_id=resource_to_update_id,
+            template_step=template_step,
+            primary_resource=primary_resource
         )
 
         return resource_to_send
@@ -99,14 +95,15 @@ def update_resource_for_step(operation_step: OperationStep, resource_repo: Resou
         raise Exception("Only upgrade is currently supported for pipeline steps")
 
 
-def try_upgrade_with_retries(num_retries: int, attempt_count: int, resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, properties: dict, user: User, resource_to_update_id: str) -> Resource:
+def try_upgrade_with_retries(num_retries: int, attempt_count: int, resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, user: User, resource_to_update_id: str, template_step: PipelineStep, primary_resource: Resource) -> Resource:
     try:
         return try_upgrade(
             resource_repo=resource_repo,
             resource_template_repo=resource_template_repo,
-            properties=properties,
             user=user,
-            resource_to_update_id=resource_to_update_id
+            resource_to_update_id=resource_to_update_id,
+            template_step=template_step,
+            primary_resource=primary_resource
         )
     except CosmosAccessConditionFailedError as e:
         logging.warn(f"Etag mismatch for {resource_to_update_id}. Retrying.")
@@ -116,16 +113,20 @@ def try_upgrade_with_retries(num_retries: int, attempt_count: int, resource_repo
                 attempt_count=(attempt_count + 1),
                 resource_repo=resource_repo,
                 resource_template_repo=resource_template_repo,
-                properties=properties,
                 user=user,
-                resource_to_update_id=resource_to_update_id
+                resource_to_update_id=resource_to_update_id,
+                template_step=template_step,
+                primary_resource=primary_resource
             )
         else:
             raise e
 
 
-def try_upgrade(resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, properties: dict, user: User, resource_to_update_id: str) -> Resource:
+def try_upgrade(resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, user: User, resource_to_update_id: str, template_step: PipelineStep, primary_resource: Resource) -> Resource:
     resource_to_update = resource_repo.get_resource_by_id(resource_to_update_id)
+
+    # substitute values into new property bag for update
+    properties = substitute_properties(template_step, primary_resource, resource_to_update)
 
     # get the template for the resource to upgrade
     parent_service_name = ""

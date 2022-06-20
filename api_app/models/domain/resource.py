@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Union
 from pydantic import Field
 from models.domain.azuretremodel import AzureTREModel
 from models.domain.request_action import RequestAction
@@ -70,4 +70,4 @@ class Resource(AzureTREModel):
 
 class Output(AzureTREModel):
     Name: str = Field(title="", description="")
-    Value: str = Field(title="", description="")
+    Value: Union[list, dict, str] = Field(None, title="", description="")
