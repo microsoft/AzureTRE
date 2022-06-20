@@ -258,7 +258,7 @@ class TestResourceHelpers:
         resource.properties["secret"] = "REDACTED"
         resource_repo.save_item.assert_called_once_with(resource)
 
-    def test_sensitive_properties_get_masked(basic_resource_template):
+    def test_sensitive_properties_get_masked(self, basic_resource_template):
         resource = sample_resource_with_secret()
 
         properties = resource.properties

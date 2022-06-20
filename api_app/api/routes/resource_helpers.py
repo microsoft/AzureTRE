@@ -48,7 +48,7 @@ async def save_and_deploy_resource(resource: Resource, resource_repo: ResourceRe
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
 
 
-def mask_sensitive_properties(self, properties: Dict[str, Any], template: ResourceTemplate) -> dict:
+def mask_sensitive_properties(properties: Dict[str, Any], template: ResourceTemplate) -> dict:
     updated_resource_parameters = properties
 
     for prop_name, prop in template.properties.items():
