@@ -23,6 +23,18 @@
       }
     },
     {
+      "name": "display_name",
+      "source": {
+        "env": "DISPLAY_NAME"
+      }
+    },
+    {
+      "name": "description",
+      "source": {
+        "env": "DESCRIPTION"
+      }
+    },
+    {
       "name": "tfstate_container_name",
       "source": {
         "env": "TERRAFORM_STATE_CONTAINER_NAME"

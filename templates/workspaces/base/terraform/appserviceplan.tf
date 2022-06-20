@@ -6,4 +6,5 @@ resource "azurerm_service_plan" "workspace" {
   resource_group_name = azurerm_resource_group.ws.name
   os_type             = "Linux"
   sku_name            = var.app_service_plan_sku
+  tags                = local.tre_workspace_tags
 }
