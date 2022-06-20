@@ -25,7 +25,7 @@ async def save_and_deploy_resource(resource: Resource, resource_repo: ResourceRe
 
         # Making a copy to save with secrets masked
         masked_resource = deepcopy(resource)
-        masked_resource.properties = resource_repo.mask_sensitive_properties(resource_template, resource.properties)
+        masked_resource.properties = resource_repo.mask_sensitive_properties(resource.properties, resource_template)
         resource_repo.save_item(masked_resource)
     except Exception as e:
         logging.error(f'Failed saving resource item {resource}: {e}')

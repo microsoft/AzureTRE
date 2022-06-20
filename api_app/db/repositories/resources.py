@@ -92,7 +92,7 @@ class ResourceRepository(BaseRepository):
 
         return parse_obj_as(ResourceTemplate, template)
 
-    def mask_sensitive_properties(self, template: ResourceTemplate, properties: Dict[str, Any]) -> dict:
+    def mask_sensitive_properties(self, properties: Dict[str, Any], template: ResourceTemplate) -> dict:
         updated_resource_parameters = properties
 
         for prop_name, prop in template.properties.items():
