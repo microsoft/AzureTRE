@@ -101,33 +101,33 @@ def get_source_dest_env_vars(new_status: str, request_type: str, short_workspace
         if new_status == 'submitted':
             source_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_EXTERNAL.format(tre_id)
             dest_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS.format(tre_id)
-            source_account_rg = constants.CORE_RG_NAME.format(tre_id)
+            source_account_rg = constants.CORE_RESOURCE_GROUP_NAME.format(tre_id)
             dest_account_rg = source_account_rg
         elif new_status == 'approved':
             source_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS.format(tre_id)
             dest_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_APPROVED.format(short_workspace_id)
-            source_account_rg = constants.CORE_RG_NAME.format(tre_id)
-            dest_account_rg = constants.WS_RG_NAME.format(tre_id, short_workspace_id)
+            source_account_rg = constants.CORE_RESOURCE_GROUP_NAME.format(tre_id)
+            dest_account_rg = constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, short_workspace_id)
         elif new_status == 'rejected':
             source_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS.format(tre_id)
             dest_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_REJECTED.format(tre_id)
-            source_account_rg = constants.CORE_RG_NAME.format(tre_id)
+            source_account_rg = constants.CORE_RESOURCE_GROUP_NAME.format(tre_id)
             dest_account_rg = source_account_rg
     else:
         if new_status == 'submitted':
             source_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INTERNAL.format(short_workspace_id)
             dest_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS.format(short_workspace_id)
-            source_account_rg = constants.WS_RG_NAME.format(tre_id, short_workspace_id)
+            source_account_rg = constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, short_workspace_id)
             dest_account_rg = source_account_rg
         elif new_status == 'approved':
             source_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS.format(short_workspace_id)
             dest_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_APPROVED.format(tre_id)
-            source_account_rg = constants.WS_RG_NAME.format(tre_id, short_workspace_id)
-            dest_account_rg = constants.CORE_RG_NAME.format(tre_id)
+            source_account_rg = constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, short_workspace_id)
+            dest_account_rg = constants.CORE_RESOURCE_GROUP_NAME.format(tre_id)
         elif new_status == 'rejected':
             source_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS.format(short_workspace_id)
             dest_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_REJECTED.format(short_workspace_id)
-            source_account_rg = constants.WS_RG_NAME.format(tre_id, short_workspace_id)
+            source_account_rg = constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, short_workspace_id)
             dest_account_rg = source_account_rg
 
     logging.info("source [account: '%s', rg: '%s']. dest [account: '%s', rg: '%s']", source_account_name, source_account_rg, dest_account_name, dest_account_rg)
