@@ -52,27 +52,6 @@ def sample_resource() -> Resource:
     )
 
 
-def sample_resource_with_sensitive_value() -> Resource:
-    return Resource(
-        id=RESOURCE_ID,
-        isActive=True,
-        isEnabled=True,
-        resourcePath="/resource/path",
-        templateName="template_name",
-        templateVersion="template_version",
-        properties={
-            'display_name': 'initial display name',
-            'description': 'initial description',
-            'secret': 'iamsecretvalue'
-        },
-        resourceType=ResourceType.Workspace,
-        etag="some-etag-value",
-        resourceVersion=0,
-        updatedWhen=FAKE_CREATE_TIMESTAMP,
-        user=create_test_user()
-    )
-
-
 def sample_resource_template() -> ResourceTemplate:
     return ResourceTemplate(id="123",
                             name="tre-user-resource",
@@ -108,30 +87,6 @@ def sample_resource_template() -> ResourceTemplate:
                                 }
                             },
                             actions=[]).dict(exclude_none=True)
-
-
-def sample_resource_template_with_sensitive_value() -> ResourceTemplate:
-    return ResourceTemplate(id="123",
-                            name="tre-resource-with-secret",
-                            description="description",
-                            version="0.1.0",
-                            resourceType=ResourceType.UserResource,
-                            current=True,
-                            required=['os_image', 'title'],
-                            properties={
-                                'title': {
-                                    'type': 'string',
-                                    'title': 'Title of the resource'
-                                },
-                                'secret': {
-                                    'type': 'string',
-                                    'title': 'Secret',
-                                    'description': 'Secret',
-                                    'updateable': False,
-                                    'sensitive': True,
-                                },
-                            },
-                            actions=[])
 
 
 def sample_nested_template() -> ResourceTemplate:
@@ -389,12 +344,3 @@ def test_validate_patch_with_bad_fields_fails(template_repo, resource_repo):
     patch = ResourcePatch(isEnabled=True, properties={'vm_size': 'large', 'os_image': 'linux'})
     with pytest.raises(ValidationError):
         resource_repo.validate_patch(patch, template_repo, template)
-
-
-def test_sensitive_values_get_masked(resource_repo):
-    template = sample_resource_template_with_sensitive_value()
-    resource = sample_resource_with_sensitive_value()
-
-    properties = resource.properties
-    masked_resource = resource_repo.mask_sensitive_properties(properties, template)
-    assert masked_resource["secret"] == "REDACTED"
