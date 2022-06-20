@@ -49,5 +49,6 @@ async def create_airlock_review(airlock_review_input: AirlockReviewInCreate, air
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     # Update the airlock request in cosmos, send a status_changed event
     await save_airlock_review(airlock_review, airlock_review_repo, user)
-    await update_status_and_publish_event_airlock_request(airlock_request, airlock_request_repo, user, airlock_review.reviewDecision)
+    review_status = AirlockRequestStatus(airlock_review.reviewDecision.value)
+    await update_status_and_publish_event_airlock_request(airlock_request, airlock_request_repo, user, review_status)
     return AirlockReviewInResponse(airlock_review=airlock_review)
