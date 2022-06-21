@@ -4,6 +4,7 @@ from typing import List
 
 from azure.cosmos import CosmosClient
 from pydantic import parse_obj_as
+from api_app.models.domain.request_action import RequestAction
 from models.domain.resource import ResourceType
 from db.repositories.resources import ResourceRepository
 from models.domain.resource_template import ResourceTemplate
@@ -153,6 +154,6 @@ class OperationRepository(BaseRepository):
         """
         checks whether this resource has a successful "deployed" operation
         """
-        query = self.operations_query() + f' c.resourceId = "{resource_id}" AND c.status in ("{Status.Deployed}", "{Status.PipelineSucceeded})'
+        query = self.operations_query() + f' c.resourceId = "{resource_id}" AND c.action = "{RequestAction.Install}" AND c.status in ("{Status.Deployed}", "{Status.PipelineSucceeded}")'
         operations = self.query(query=query)
         return len(operations) > 0
