@@ -62,7 +62,7 @@ then
 fi
 
 
-if [ -z $token ] || [ "$token" = "null" ]
+if [ -z "$token" ] || [ "$token" = "null" ]
 then
   # Get admin password from keyvault
   response=$(az keyvault secret show --vault-name "$keyVaultName" --name "$pwdSecretName")
