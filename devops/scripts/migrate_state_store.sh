@@ -16,7 +16,6 @@ function usage() {
     Options:
         -u, --tre_url                 URL for the TRE
         -a, --access-token            Azure access token to automatically post to the API
-        -v, --verify                  Verify registration with the API
 USAGE
     exit 1
 }
@@ -31,8 +30,6 @@ if [ $# -eq 0 ]; then
     usage # run usage function
 fi
 
-verify="false"
-
 while [ "$1" != "" ]; do
     case $1 in
     -u | --tre_url)
@@ -42,9 +39,6 @@ while [ "$1" != "" ]; do
     -a | --access-token)
         shift
         access_token=$1
-        ;;
-    -v| --verify)
-        verify="true"
         ;;
     *)
         echo "Unexpected argument: '$1'"
