@@ -1,5 +1,6 @@
-from datetime import date, timedelta
-
+from datetime import date, datetime
+from dateutil.relativedelta import relativedelta
+import pytz
 from fastapi import APIRouter, Depends, Query, HTTPException, status
 
 from api.dependencies.database import get_repository
@@ -18,23 +19,39 @@ costs_core_router = APIRouter(dependencies=[Depends(get_current_admin_user)])
 costs_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_tre_admin)])
 
 
+def get_first_day_of_month():
+    return date_to_datetime(date.today().replace(day=1))
+
+
+def get_eod_datetime():
+    return datetime.now().replace(hour=23, minute=59, second=59)
+
+
+def date_to_datetime(date_to_covert: date):
+    converted_datetime = datetime.combine(date_to_covert, datetime.min.time())
+    converted_datetime.replace(tzinfo=pytz.UTC)
+    return converted_datetime
+
+
+def check_time_period(from_date: datetime, to_date: datetime):
+    if relativedelta(to_date, from_date).years > 0:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.API_GET_COSTS_MAX_TIME_PERIOD)
+    elif from_date >= to_date:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.API_GET_COSTS_TO_DATE_NEED_TO_BE_LATER_THEN_FROM_DATE)
+
+
 class CostsQueryParams:
     def __init__(
         self,
         call_service: bool = Query(default=False, description="A feature flag which will get removed as soon as the feature is implemented"),
-        from_date: date = Query(default=(date.today().replace(day=1)), description="The start date to pull data from, default value first day of month (iso-8601, UTC)."),
-        to_date: date = Query(default=(date.today() + timedelta(days=1)), description="The end date to pull data to, default value tomorrow (iso-8601, UTC)."),
+        from_date: datetime = Query(default=get_first_day_of_month(), description="The start date to pull data from, default value first day of month (iso-8601, UTC)."),
+        to_date: datetime = Query(default=get_eod_datetime(), description="The end date to pull data to, default end of day (iso-8601, UTC)."),
         granularity: GranularityEnum = Query(default="None", description="The granularity of rows in the query.")
     ):
         self.call_service = call_service
         self.from_date = from_date
         self.to_date = to_date
         self.granularity = granularity
-
-
-def check_time_period(from_date: date, to_date: date):
-    if (to_date - from_date).days > 365:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.API_GET_COSTS_INVALID_TIME_PERIOD)
 
 
 @costs_core_router.get("/costs", response_model=CostReport, name=strings.API_GET_COSTS)
@@ -69,3 +86,5 @@ async def workspace_costs(
             workspace_repo, workspace_services_repo, user_resource_repo)
 
     return generate_workspace_cost_report_stub("Workspace 1", params.granularity)
+
+

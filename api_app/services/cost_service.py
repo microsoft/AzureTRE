@@ -42,7 +42,7 @@ class CostService:
         self.client = CostManagementClient(
             DefaultAzureCredential(managed_identity_client_id=config.MANAGED_IDENTITY_CLIENT_ID))
 
-    def query_tre_costs(self, tre_id, granularity: GranularityEnum, from_date: date, to_date: date,
+    def query_tre_costs(self, tre_id, granularity: GranularityEnum, from_date: datetime, to_date: datetime,
                         workspace_repo: WorkspaceRepository,
                         shared_services_repo: SharedServiceRepository) -> CostReport:
 
@@ -120,15 +120,15 @@ class CostService:
 
         return cost_rows
 
-    def query_tre_workspace_costs(self, workspace_id: str, granularity: GranularityEnum, from_date: date,
-                                  to_date: date,
+    def query_tre_workspace_costs(self, workspace_id: str, granularity: GranularityEnum, from_date: datetime,
+                                  to_date: datetime,
                                   workspace_repo: WorkspaceRepository,
                                   workspace_services_repo: WorkspaceServiceRepository,
                                   user_resource_repo) -> QueryResult:
         return self.query_costs(CostService.TRE_WORKSPACE_ID_TAG, workspace_id, granularity, from_date, to_date)
 
     def query_costs(self, tag_name: str, tag_value: str,
-                    granularity: GranularityEnum, from_date: date, to_date: date) -> QueryResult:
+                    granularity: GranularityEnum, from_date: datetime, to_date: datetime) -> QueryResult:
         query_definition = self.build_query_definition(from_date, granularity, tag_name, tag_value, to_date)
 
         return self.client.query.usage(self.scope, query_definition)
@@ -146,16 +146,11 @@ class CostService:
             granularity=granularity, aggregation=query_aggregation_dict,
             grouping=query_grouping_list, filter=query_filter)
         query_time_period: QueryTimePeriod = QueryTimePeriod(
-            from_property=self.__date_to_datetime(from_date), to=self.__date_to_datetime(to_date))
+            from_property=from_date, to=to_date)
         query_definition: QueryDefinition = QueryDefinition(
             type=ExportType.actual_cost, timeframe=TimeframeType.CUSTOM,
             time_period=query_time_period, dataset=query_dataset)
         return query_definition
-
-    def __date_to_datetime(self, date_to_covert: date):
-        converted_datetime = datetime.combine(date_to_covert, datetime.min.time())
-        converted_datetime.replace(tzinfo=pytz.UTC)
-        return converted_datetime
 
     def __query_result_to_dict(self, query_result: QueryResult, granularity: GranularityEnum):
         query_result_dict = dict()
