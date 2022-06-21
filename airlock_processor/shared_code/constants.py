@@ -1,7 +1,9 @@
 # RG
-CORE_RG_NAME = "rg-{}"
-WS_RG_NAME = "rg-{}-ws-{}"
+CORE_RESOURCE_GROUP_NAME = "rg-{}"
+WORKSPACE_RESOURCE_GROUP_NAME = "rg-{}-ws-{}"
 
+IMPORT_TYPE = "import"
+EXPORT_TYPE = "export"
 # Import
 STORAGE_ACCOUNT_NAME_IMPORT_EXTERNAL = "stalimex{}"
 STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS = "stalimip{}"
