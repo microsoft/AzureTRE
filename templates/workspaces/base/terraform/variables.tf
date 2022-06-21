@@ -41,3 +41,62 @@ variable "enable_local_debugging" {
   default     = false
   description = "This will allow storage account access over the internet. Set to true to allow deploying this from a local machine."
 }
+
+variable "register_aad_application" {
+  type        = bool
+  default     = false
+  description = "Create an AAD application automatically for the Workspace."
+}
+
+variable "auth_tenant_id" {
+  type        = string
+  description = "Used to authenticate into the AAD Tenant to create the AAD App"
+}
+variable "auth_client_id" {
+  type        = string
+  description = "Used to authenticate into the AAD Tenant to create the AAD App"
+}
+variable "auth_client_secret" {
+  type        = string
+  description = "Used to authenticate into the AAD Tenant to create the AAD App"
+}
+
+# These variables are only passed in if you are not registering an AAD
+# application as they need passing back out
+variable "app_role_id_workspace_owner" {
+  type        = string
+  default     = ""
+  description = "The id of the application role WorkspaceOwner in the identity provider, this is passed in so that we may return it as an output."
+}
+variable "app_role_id_workspace_researcher" {
+  type        = string
+  default     = ""
+  description = "The id of the application role WorkspaceResearcher in the identity provider, this is passed in so that we may return it as an output."
+}
+variable "client_id" {
+  type        = string
+  default     = ""
+  description = "The client id of the workspace in the identity provider, this is passed in so that we may return it as an output."
+}
+variable "client_secret" {
+  type        = string
+  default     = ""
+  description = "The client secret of the workspace in the identity provider, this is passed in so that we may return it as an output."
+}
+variable "sp_id" {
+  type        = string
+  default     = ""
+  description = "The Service Principal in the Identity provider to be able to get claims, this is passed in so that we may return it as an output."
+}
+variable "scope_id" {
+  type        = string
+  default     = ""
+  description = "The Service Principal Name or Identifier URI, this is passed in so that we may return it as an output."
+}
+variable "workspace_owner_object_id" {
+  type        = string
+  default     = ""
+  description = "The Object Id of the user that you wish to be the Workspace Owner. E.g. the TEST_AUTOMATION_ACCOUNT."
+}
+
+

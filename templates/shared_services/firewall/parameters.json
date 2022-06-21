@@ -11,6 +11,12 @@
       }
     },
     {
+      "name": "id",
+      "source": {
+        "env": "ID"
+      }
+    },
+    {
       "name": "tfstate_container_name",
       "source": {
         "env": "TERRAFORM_STATE_CONTAINER_NAME"
@@ -26,6 +32,18 @@
       "name": "tfstate_storage_account_name",
       "source": {
         "env": "MGMT_STORAGE_ACCOUNT_NAME"
+      }
+    },
+    {
+      "name": "rule_collections",
+      "source": {
+        "env": "RULE_COLLECTIONS"
+      }
+    },
+    {
+      "name": "stateful_resources_locked",
+      "source": {
+        "env": "STATEFUL_RESOURCES_LOCKED"
       }
     }
   ]

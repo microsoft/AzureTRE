@@ -20,13 +20,12 @@ jobs:
     if: ${{ github.event.issue.pull_request }}
     runs-on: ubuntu-latest
     outputs:
-      command: ${{ steps.check_command.outputs.result }}
-      prRef: ${{ steps.get_pr_details.outputs.prRef }}
-      prHeadSha: ${{ steps.get_pr_details.outputs.prHeadSha }}
-      refid: ${{ steps.get_pr_details.outputs.refid }}
-      branchRefid: ${{ steps.get_pr_details.outputs.branchRefid }}
-      ciGitRef: ${{ steps.get_pr_details.outputs.ciGitRef }}
-      not-md: ${{ steps.filter.outputs.not-md }}
+      command: ${{ steps.check_command.outputs.command }}
+      prRef: ${{ steps.check_command.outputs.prRef }}
+      prHeadSha: ${{ steps.check_command.outputs.prHeadSha }}
+      prRefId: ${{ steps.check_command.outputs.prRefId }}
+      branchRefId: ${{ steps.check_command.outputs.branchRefid }}
+      ciGitRef: ${{ steps.check_command.outputs.ciGitRef }}
     steps:
       # Ensure we have the script file for the github-script action to use
       - name: Checkout
@@ -39,133 +38,32 @@ jobs:
         name: Check for a command using GitHub script
         uses: actions/github-script@v6
         with:
-          result-encoding: string
           script: |
             const script = require('./.github/scripts/build.js')
-            const result = script.getCommandFromComment({core, context, github});
-            console.log(result);
-            return result;
-
-      # Add comment with help text in response to help command
-      - name: Show Help
-        if: ${{ steps.check_command.outputs.result == 'show-help' }}
-        env:
-          PR_NUMBER: ${{ github.event.issue.number }}
-          REPO: ${{ github.event.repository.full_name }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo "Showing help on PR ${PR_NUMBER}"
-          gh pr comment "${PR_NUMBER}" --repo "$REPO" --body "Hello<br/><br/>You can use the following commands:<br/>    /test - build, deploy and run smoke tests on a PR<br/>    /test-extended - build, deploy and run somke & extended tests on a PR<br/>    /test-force-approve - force approval of the PR tests (i.e. skip the deployment checks)<br/>    /test-destroy-env - delete the validation environment for a PR (e.g. to enable testing a deployment from a clean start after previous tests)    /help - show this help"
-
-      # Get PR commit details for running tests
-      - id: get_pr_details
-        name: Get PR details
-        if: ${{ steps.check_command.outputs.result == 'run-tests' || steps.check_command.outputs.result == 'run-tests-extended' || steps.check_command.outputs.result == 'test-force-approve' || steps.check_command.outputs.result == 'test-destroy-env' }}
-        env:
-          PR_NUMBER: ${{ github.event.issue.number }}
-          REPO: ${{ github.event.repository.full_name }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Leaving this as bash script as GitHub Script doesn't seem to support multiple output values
-
-          echo "Getting PR ref..."
-          ref=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json commits | jq -r ".[] | last | .oid")
-          echo -e "\tLatest commit ref: $ref"
-          # Get the prMergeCommit as this is what the pull_request trigger would build
-          prMergeRef=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json potentialMergeCommit | jq -r .potentialMergeCommit.oid)
-          echo -e "\tprMergeRef: $prMergeRef"
-          echo
-
-          echo "Setting outputs"
-          echo "::set-output name=prRef::${prMergeRef}"
-
-          # REFID is the basis for the TRE_ID for the PR
-          github_pr_ref="refs/pull/${PR_NUMBER}/merge"
-          echo "::set-output name=ciGitRef::${github_pr_ref}"
-
-          REFID=$(echo "${github_pr_ref}" | shasum | cut -c1-8)
-          echo "using refid of: ${REFID} for GitHub Ref: ${github_pr_ref} (RG base name)"
-          echo "::set-output name=refid::${REFID}"
-
-          # Also generate the REFID for the branch, but only if the headRepo is matches $REPO
-          # This is used later in the destroy to destroy for the PR + branch
-          pr_head_json=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json headRefName,headRepositoryOwner,headRepository)
-          pr_head_repo=$(echo "$pr_head_json" | jq -r '"\(.headRepositoryOwner.login)/\(.headRepository.name)"')
-          if [[ "$pr_head_repo" == "$REPO" ]]; then
-            github_branch_ref="refs/heads/$(echo "$pr_head_json" | jq -r '.headRefName')"
-            BRANCH_REFID=$(echo "${github_branch_ref}" | shasum | cut -c1-8)
-            echo "Using branch refid of $BRANCH_REFID for branch $github_branch_ref"
-          else
-            echo "Head repo is '$pr_head_repo' - skipping BRANCH_REFID"
-            BRANCH_REFID=""
-          fi
-          echo "::set-output name=branchRefid::${BRANCH_REFID}"
-
-          # Get PR HEAD SHA for checks status
-          echo "Getting PR head SHA"
-          PR_HEAD_SHA=$(gh api "/repos/$REPO/pulls/$PR_NUMBER" --jq .head.sha)
-          echo "PR_HEAD_SHA: ${PR_HEAD_SHA}"
-          echo "::set-output name=prHeadSha::${PR_HEAD_SHA}"
+            await script.getCommandFromComment({core, context, github});
 
       - name: Output PR details
         run: |
           echo "PR Details"
           echo "=========="
-          echo "prRef    : ${{ steps.get_pr_details.outputs.prRef }}"
-          echo "prHeadSha: ${{ steps.get_pr_details.outputs.prHeadSha }}"
-          echo "refid    : ${{ steps.get_pr_details.outputs.refid }}"
-          echo "ciGitRef : ${{ steps.get_pr_details.outputs.ciGitRef }}"
+          echo "prRef       : ${{ steps.check_command.outputs.prRef }}"
+          echo "prHeadSha   : ${{ steps.check_command.outputs.prHeadSha }}"
+          echo "prRefId     : ${{ steps.check_command.outputs.prRefId }}"
+          echo "ciGitRef    : ${{ steps.check_command.outputs.ciGitRef }}"
+          echo "branchRefId : ${{ steps.check_command.outputs.prRefId }}"
 
-      # Check if the PR build/test needs to run
-      - name: Checkout
-        if: ${{ steps.check_command.outputs.result == 'run-tests' || steps.check_command.outputs.result == 'test-force-approve' || steps.check_command.outputs.result == 'test-destroy-env' }}
-        uses: actions/checkout@v2
-        with:
-          ref: ${{ steps.get_pr_details.outputs.prRef }}
-          persist-credentials: false
-
-      - uses: dorny/paths-filter@v2
-        id: filter
-        if: ${{ steps.check_command.outputs.result == 'run-tests' }}
-        with:
-          base: main
-          ref: ${{ steps.get_pr_details.outputs.prRef }}
-          filters: |
-            not-md:
-              # we need to check for changes in files other than *.md
-              - '**/!(*.md)'
-
-      # If we don't run the actual deploy (below) we won't receive a check-run status,
+      # If we don't run the actual deploy (see the run_test job below) we won't receive a check-run status,
       # and will have to send it "manually"
       - name: Bypass E2E check-runs status
-        if: ${{ (steps.check_command.outputs.result == 'run-tests' && steps.filter.outputs.not-md == 'false' ) || steps.check_command.outputs.result == 'test-force-approve' }}
+        if: ${{ steps.check_command.outputs.command == 'test-force-approve' }}
         uses: LouisBrunner/checks-action@v1.1.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           # the name must be identical to the one received by the real job
-          sha: ${{ steps.get_pr_details.outputs.prHeadSha }}
+          sha: ${{ steps.check_command.outputs.prHeadSha }}
           name: "Deploy PR / Run E2E Tests (Smoke)"
           status: "completed"
           conclusion: "success"
-
-      - name: Comment with link to run
-        if: ${{ steps.check_command.outputs.result == 'run-tests' || steps.check_command.outputs.result == 'run-tests-extended' }}
-        env:
-          PR_NUMBER: ${{ github.event.issue.number }}
-          REPO: ${{ github.event.repository.full_name }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RUN_ID: ${{ github.run_id }}
-        run: |
-          echo "Adding comment with link to run on PR ${PR_NUMBER}"
-          gh pr comment "${PR_NUMBER}" --repo "$REPO" --body "Running tests: https://github.com/${REPO}/actions/runs/${RUN_ID}"
-
-      # Perform az login for destroy env script to be able to run
-      - name: Azure Login
-        if: ${{ steps.check_command.outputs.result == 'test-destroy-env' }}
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
 
   destroy_pr_env:
     needs: [pr_comment]
@@ -190,7 +88,7 @@ jobs:
         env:
           PR_NUMBER: ${{ github.event.issue.number }}
           REPO: ${{ github.event.repository.full_name }}
-          RG_NAME: ${{ format('rg-tre{0}', needs.pr_comment.outputs.refid) }}
+          RG_NAME: ${{ format('rg-tre{0}', needs.pr_comment.outputs.prRefId) }}
           RUN_ID: ${{ github.run_id }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SHOW_KEYVAULT_DEBUG_ON_DESTROY: ${{ secrets.SHOW_KEYVAULT_DEBUG_ON_DESTROY }}
@@ -202,7 +100,7 @@ jobs:
 
   destroy_branch_env:
     needs: [pr_comment]
-    if: ${{ needs.pr_comment.outputs.command == 'test-destroy-env' && needs.pr_comment.outputs.branchRefid != '' }}
+    if: ${{ needs.pr_comment.outputs.command == 'test-destroy-env' && needs.pr_comment.outputs.branchRefId != '' }}
     runs-on: ubuntu-latest
     environment: CICD
     name: Destroy branch env
@@ -223,7 +121,7 @@ jobs:
         env:
           PR_NUMBER: ${{ github.event.issue.number }}
           REPO: ${{ github.event.repository.full_name }}
-          RG_NAME: ${{ format('rg-tre{0}', needs.pr_comment.outputs.branchRefid) }}
+          RG_NAME: ${{ format('rg-tre{0}', needs.pr_comment.outputs.branchRefId) }}
           RUN_ID: ${{ github.run_id }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SHOW_KEYVAULT_DEBUG_ON_DESTROY: ${{ secrets.SHOW_KEYVAULT_DEBUG_ON_DESTROY }}
@@ -236,32 +134,40 @@ jobs:
   run_test:
     # Run the tests with the re-usable workflow
     needs: [pr_comment]
-    if: ${{ (needs.pr_comment.outputs.command == 'run-tests' && needs.pr_comment.outputs.not-md == 'true') || needs.pr_comment.outputs.command == 'run-tests-extended' }}
+    if: |
+      needs.pr_comment.outputs.command == 'run-tests' ||
+      needs.pr_comment.outputs.command == 'run-tests-extended' ||
+      needs.pr_comment.outputs.command == 'run-tests-shared-services'
     name: Deploy PR
     uses: ./.github/workflows/deploy_tre_reusable.yml
     with:
       prRef: ${{ needs.pr_comment.outputs.prRef }}
       prHeadSha: ${{ needs.pr_comment.outputs.prHeadSha }}
       ciGitRef: ${{ needs.pr_comment.outputs.ciGitRef }}
-      runExtendedTests: ${{ needs.pr_comment.outputs.command == 'run-tests-extended' }}
+      e2eTestsCustomSelector: >-
+        ${{ (needs.pr_comment.outputs.command == 'run-tests-extended' && 'extended') ||
+        (needs.pr_comment.outputs.command == 'run-tests-shared-services' && 'shared_sevices') ||
+        (needs.pr_comment.outputs.command == 'run-tests' && '') }}
     secrets:
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
-      ACR_NAME: ${{ format('tre{0}', needs.pr_comment.outputs.refid) }}
+      ACR_NAME: ${{ format('tre{0}', needs.pr_comment.outputs.prRefId) }}
       ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
       ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_NAME }}.azurecr.io/
       ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-      ACTIONS_DEVCONTAINER_TAG: ${{ needs.pr_comment.outputs.refid }}
+      ACTIONS_DEVCONTAINER_TAG: ${{ needs.pr_comment.outputs.prRefId }}
       API_CLIENT_ID: ${{ secrets.API_CLIENT_ID }}
       API_CLIENT_SECRET: ${{ secrets.API_CLIENT_SECRET }}
+      APPLICATION_ADMIN_CLIENT_ID: ${{ secrets.APPLICATION_ADMIN_CLIENT_ID }}
+      APPLICATION_ADMIN_CLIENT_SECRET: ${{ secrets.APPLICATION_ADMIN_CLIENT_SECRET }}
       ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
       ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
       ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
       ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
       CORE_ADDRESS_SPACE: ${{ secrets.CORE_ADDRESS_SPACE }}
       LOCATION: ${{ secrets.LOCATION }}
-      MGMT_RESOURCE_GROUP: ${{ format('rg-tre{0}-mgmt', needs.pr_comment.outputs.refid) }}
+      MGMT_RESOURCE_GROUP: ${{ format('rg-tre{0}-mgmt', needs.pr_comment.outputs.prRefId) }}
       MS_TEAMS_WEBHOOK_URI: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-      STATE_STORAGE_ACCOUNT_NAME: ${{ format('tre{0}mgmt', needs.pr_comment.outputs.refid) }}
+      STATE_STORAGE_ACCOUNT_NAME: ${{ format('tre{0}mgmt', needs.pr_comment.outputs.prRefId) }}
       SWAGGER_UI_CLIENT_ID: ${{ secrets.SWAGGER_UI_CLIENT_ID }}
       TEST_APP_ID: ${{ secrets.TEST_APP_ID }}
       TEST_WORKSPACE_APP_ID: ${{ secrets.TEST_WORKSPACE_APP_ID }}
@@ -270,6 +176,6 @@ jobs:
       TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
       TF_STATE_CONTAINER: ${{ secrets.TF_STATE_CONTAINER }}
       TRE_ADDRESS_SPACE: ${{ secrets.TRE_ADDRESS_SPACE }}
-      TRE_ID: ${{ format('tre{0}', needs.pr_comment.outputs.refid) }}
+      TRE_ID: ${{ format('tre{0}', needs.pr_comment.outputs.prRefId) }}
       CI_CACHE_ACR_NAME: ${{ secrets.ACR_NAME }}
       TF_LOG: ${{ secrets.TF_LOG }}

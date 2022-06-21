@@ -1,6 +1,7 @@
 resource "azurerm_user_assigned_identity" "id" {
   resource_group_name = azurerm_resource_group.core.name
   location            = azurerm_resource_group.core.location
+  tags                = local.tre_core_tags
 
   name = "id-api-${var.tre_id}"
 
@@ -10,6 +11,12 @@ resource "azurerm_user_assigned_identity" "id" {
 resource "azurerm_role_assignment" "vm_contributor" {
   scope                = data.azurerm_subscription.current.id
   role_definition_name = "Virtual Machine Contributor"
+  principal_id         = azurerm_user_assigned_identity.id.principal_id
+}
+
+resource "azurerm_role_assignment" "billing_reader" {
+  scope                = data.azurerm_subscription.current.id
+  role_definition_name = "Billing Reader"
   principal_id         = azurerm_user_assigned_identity.id.principal_id
 }
 
@@ -36,3 +43,4 @@ resource "azurerm_role_assignment" "cosmos_contributor" {
   role_definition_name = "Contributor"
   principal_id         = azurerm_user_assigned_identity.id.principal_id
 }
+

@@ -20,7 +20,7 @@ package org.apache.guacamole.auth.azuretre.connection;
 
 import com.azure.core.http.HttpClient;
 import com.azure.core.http.netty.NettyAsyncHttpClientBuilder;
-import com.azure.identity.ManagedIdentityCredentialBuilder;
+import com.azure.identity.DefaultAzureCredentialBuilder;
 import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.SecretClientBuilder;
 import org.apache.guacamole.GuacamoleException;
@@ -64,11 +64,14 @@ public class TokenInjectingConnection extends SimpleConnection {
         try {
             LOGGER.info("Loading credentials from Azure Key Vault for secret {}", resourceName);
             final String keyVaultUri = System.getenv("KEYVAULT_URL");
+            final String managedIdentityClientId = System.getenv("MANAGED_IDENTITY_CLIENT_ID");
             /// Create an HttpClient manually as the class loader was unable to find the class to create a default one.
             final HttpClient httpClient = new NettyAsyncHttpClientBuilder().build();
             final SecretClient secretClient = new SecretClientBuilder()
                 .vaultUrl(keyVaultUri)
-                .credential(new ManagedIdentityCredentialBuilder().httpClient(httpClient).build())
+                .credential(new DefaultAzureCredentialBuilder()
+                    .managedIdentityClientId(managedIdentityClientId)
+                    .httpClient(httpClient).build())
                 .httpClient(httpClient)
                 .buildClient();
 

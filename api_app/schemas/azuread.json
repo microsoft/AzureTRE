@@ -5,13 +5,19 @@
     "title": "Azure AD Authorisation Schema",
     "default": {},
     "required": [
-        "app_id"
+        "client_id"
     ],
     "properties": {
-        "app_id": {
+        "client_id": {
             "type": "string",
-            "title": "App Registration ID",
+            "title": "Application (Client) ID",
             "description": "AAD App registration of the workspace"
-        }
+        },
+        "client_secret": {
+          "type": "string",
+          "title": "Application (Client) Secret",
+          "description": "AAD App registration of the workspace. This value will be copied into the Workspace Key Vault.",
+          "sensitive": true
+      }
     }
 }

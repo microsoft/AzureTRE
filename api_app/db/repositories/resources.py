@@ -1,17 +1,23 @@
-from azure.cosmos import CosmosClient
-from datetime import datetime
-from jsonschema import validate
-from pydantic import UUID4
 import copy
-from models.domain.authentication import User
+from datetime import datetime
+from typing import Tuple
 
+from azure.cosmos import CosmosClient
+from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from core import config
 from db.errors import EntityDoesNotExist
 from db.repositories.base import BaseRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
+from jsonschema import validate
+from models.domain.authentication import User
 from models.domain.resource import Resource, ResourceHistoryItem, ResourceType
 from models.domain.resource_template import ResourceTemplate
+from models.domain.shared_service import SharedService
+from models.domain.user_resource import UserResource
+from models.domain.workspace import Workspace
+from models.domain.workspace_service import WorkspaceService
 from models.schemas.resource import ResourcePatch
+from pydantic import UUID4, parse_obj_as
 
 
 class ResourceRepository(BaseRepository):
@@ -33,7 +39,7 @@ class ResourceRepository(BaseRepository):
     def _validate_resource_parameters(resource_input, resource_template):
         validate(instance=resource_input["properties"], schema=resource_template)
 
-    def _get_enriched_template(self, template_name: str, resource_type: ResourceType, parent_template_name: str = ""):
+    def _get_enriched_template(self, template_name: str, resource_type: ResourceType, parent_template_name: str = "") -> dict:
         template_repo = ResourceTemplateRepository(self._client)
         template = template_repo.get_current_template(template_name, resource_type, parent_template_name)
         return template_repo.enrich_template(template)
@@ -49,10 +55,33 @@ class ResourceRepository(BaseRepository):
             raise EntityDoesNotExist
         return resources[0]
 
-    def validate_input_against_template(self, template_name: str, resource_input, resource_type: ResourceType, parent_template_name: str = "") -> str:
+    def get_resource_by_id(self, resource_id: UUID4) -> Resource:
+        try:
+            resource = self.read_item_by_id(str(resource_id))
+        except CosmosResourceNotFoundError:
+            raise EntityDoesNotExist
+
+        if resource["resourceType"] == ResourceType.SharedService:
+            return parse_obj_as(SharedService, resource)
+        if resource["resourceType"] == ResourceType.Workspace:
+            return parse_obj_as(Workspace, resource)
+        if resource["resourceType"] == ResourceType.WorkspaceService:
+            return parse_obj_as(WorkspaceService, resource)
+        if resource["resourceType"] == ResourceType.UserResource:
+            return parse_obj_as(UserResource, resource)
+
+        return parse_obj_as(Resource, resource)
+
+    def get_resource_by_template_name(self, template_name: str) -> Resource:
+        query = f"SELECT TOP 1 * FROM c WHERE c.templateName = '{template_name}'"
+        resources = self.query(query=query)
+        if not resources:
+            raise EntityDoesNotExist
+        return parse_obj_as(Resource, resources[0])
+
+    def validate_input_against_template(self, template_name: str, resource_input, resource_type: ResourceType, parent_template_name: str = "") -> ResourceTemplate:
         try:
             template = self._get_enriched_template(template_name, resource_type, parent_template_name)
-            template_version = template["version"]
         except EntityDoesNotExist:
             if resource_type == ResourceType.UserResource:
                 raise ValueError(f'The template "{template_name}" does not exist or is not valid for the workspace service type "{parent_template_name}"')
@@ -61,10 +90,9 @@ class ResourceRepository(BaseRepository):
 
         self._validate_resource_parameters(resource_input.dict(), template)
 
-        return template_version
+        return parse_obj_as(ResourceTemplate, template)
 
-    def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository, user: User) -> Resource:
-
+    def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository, user: User) -> Tuple[Resource, ResourceTemplate]:
         # create a deep copy of the resource to use for history, create the history item + add to history list
         resource_copy = copy.deepcopy(resource)
         history_item = ResourceHistoryItem(
@@ -91,7 +119,7 @@ class ResourceRepository(BaseRepository):
             resource.properties.update(resource_patch.properties)
 
         self.update_item_with_etag(resource, etag)
-        return resource
+        return resource, resource_template
 
     def validate_patch(self, resource_patch: ResourcePatch, resource_template_repo: ResourceTemplateRepository, resource_template: ResourceTemplate):
         # get the enriched (combined) template

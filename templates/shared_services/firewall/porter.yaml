@@ -1,6 +1,6 @@
 ---
 name: tre-shared-service-firewall
-version: 0.0.7
+version: 0.3.2
 description: "An Azure TRE Firewall shared service"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -19,6 +19,9 @@ parameters:
   - name: tre_id
     type: string
     description: "The ID of the parent TRE instance e.g., mytre-dev-3142"
+  - name: id
+    type: string
+    description: "Resource ID"
   - name: tfstate_resource_group_name
     type: string
     description: "Resource group containing the Terraform state storage account"
@@ -33,6 +36,13 @@ parameters:
     env: ARM_USE_MSI
     type: boolean
     default: false
+  - name: rule_collections
+    type: string
+    default: "W10=" # b64 for []
+  - name: stateful_resources_locked
+    env: STATEFUL_RESOURCES_LOCKED
+    type: boolean
+    default: true
 
 mixins:
   - exec
@@ -45,22 +55,29 @@ install:
       input: false
       vars:
         tre_id: "{{ bundle.parameters.tre_id }}"
+        tre_resource_id: "{{ bundle.parameters.id }}"
+        api_driven_rule_collections_b64: "{{ bundle.parameters.rule_collections }}"
+        stateful_resources_locked: "{{ bundle.parameters.stateful_resources_locked }}"
       backendConfig:
-        resource_group_name:
-          "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name:
-          "{{ bundle.parameters.tfstate_storage_account_name }}"
-        container_name:
-          "{{ bundle.parameters.tfstate_container_name }}"
-        key:
-          "{{ bundle.parameters.tre_id }}-shared-service-firewall"
+        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
+        container_name: "{{ bundle.parameters.tfstate_container_name }}"
+        key: "{{ bundle.parameters.tre_id }}-shared-service-firewall"
 
 upgrade:
-  - exec:
+  - terraform:
       description: "Upgrade shared service"
-      command: echo
-      arguments:
-        - "This shared service does not implement upgrade action"
+      input: false
+      vars:
+        tre_id: "{{ bundle.parameters.tre_id }}"
+        tre_resource_id: "{{ bundle.parameters.id }}"
+        api_driven_rule_collections_b64: "{{ bundle.parameters.rule_collections }}"
+        stateful_resources_locked: "{{ bundle.parameters.stateful_resources_locked }}"
+      backendConfig:
+        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
+        container_name: "{{ bundle.parameters.tfstate_container_name }}"
+        key: "{{ bundle.parameters.tre_id }}-shared-service-firewall"
 
 uninstall:
   - terraform:
@@ -68,12 +85,11 @@ uninstall:
       input: false
       vars:
         tre_id: "{{ bundle.parameters.tre_id }}"
+        tre_resource_id: "{{ bundle.parameters.id }}"
+        api_driven_rule_collections_b64: "{{ bundle.parameters.rule_collections }}"
+        stateful_resources_locked: "{{ bundle.parameters.stateful_resources_locked }}"
       backendConfig:
-        resource_group_name:
-          "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name:
-          "{{ bundle.parameters.tfstate_storage_account_name }}"
-        container_name:
-          "{{ bundle.parameters.tfstate_container_name }}"
-        key:
-          "{{ bundle.parameters.tre_id }}-shared-service-firewall"
+        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
+        container_name: "{{ bundle.parameters.tfstate_container_name }}"
+        key: "{{ bundle.parameters.tre_id }}-shared-service-firewall"

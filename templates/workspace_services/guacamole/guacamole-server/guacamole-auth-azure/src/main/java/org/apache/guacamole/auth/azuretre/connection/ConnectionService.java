@@ -49,8 +49,12 @@ public class ConnectionService {
         final Map<String, GuacamoleConfiguration> configs = getConfigurations(user);
 
         for (final Map.Entry<String, GuacamoleConfiguration> config : configs.entrySet()) {
-            final Connection connection = new TokenInjectingConnection(config.getKey(), config.getKey(),
-                config.getValue(), true);
+            final Connection connection =
+                  new TokenInjectingConnection(
+                      config.getValue().getParameter("display_name"),
+                      config.getKey(),
+                      config.getValue(),
+                      true);
             connection.setParentIdentifier(AzureTREAuthenticationProvider.ROOT_CONNECTION_GROUP);
             connections.putIfAbsent(config.getKey(), connection);
         }
@@ -71,20 +75,10 @@ public class ConnectionService {
                     if (templateParameters.has("hostname") && templateParameters.has("ip")) {
                         final String azureResourceId = templateParameters.getString("hostname");
                         final String ip = templateParameters.getString("ip");
-                        config.setProtocol("rdp");
-                        config.setParameter("hostname", ip);
-                        config.setParameter("resize-method", "display-update");
-                        config.setParameter("azure-resource-id", azureResourceId);
-                        config.setParameter("port", "3389");
-                        config.setParameter("ignore-cert", "true");
-                        config.setParameter("disable-copy", System.getenv("GUAC_DISABLE_COPY"));
-                        config.setParameter("disable-paste", System.getenv("GUAC_DISABLE_PASTE"));
-                        config.setParameter("enable-drive", System.getenv("GUAC_ENABLE_DRIVE"));
-                        config.setParameter("drive-name", System.getenv("GUAC_DRIVE_NAME"));
-                        config.setParameter("drive-path", System.getenv("GUAC_DRIVE_PATH"));
-                        config.setParameter("disable-download", System.getenv("GUAC_DISABLE_DOWNLOAD"));
-                        LOGGER.info("Adding a VM: {}", ip);
-                        configs.putIfAbsent(config.getParameter("hostname"), config);
+                        final String displayName = templateParameters.getString("display_name");
+                        setConfig(config, azureResourceId, ip, displayName);
+                        LOGGER.info("Adding a VM, ID: {} IP: {}, Name:{}", azureResourceId, ip, displayName);
+                        configs.putIfAbsent(templateParameters.getString("hostname"), config);
                     } else {
                         LOGGER.info("Missing ip or hostname, skipping...");
                     }
@@ -96,6 +90,26 @@ public class ConnectionService {
         }
 
         return configs;
+    }
+
+    private static void setConfig(
+        final GuacamoleConfiguration config,
+        final String azureResourceId,
+        final String ip,
+        final String displayName) {
+        config.setProtocol("rdp");
+        config.setParameter("hostname", ip);
+        config.setParameter("display_name", displayName);
+        config.setParameter("resize-method", "display-update");
+        config.setParameter("azure-resource-id", azureResourceId);
+        config.setParameter("port", "3389");
+        config.setParameter("ignore-cert", "true");
+        config.setParameter("disable-copy", System.getenv("GUAC_DISABLE_COPY"));
+        config.setParameter("disable-paste", System.getenv("GUAC_DISABLE_PASTE"));
+        config.setParameter("enable-drive", System.getenv("GUAC_ENABLE_DRIVE"));
+        config.setParameter("drive-name", System.getenv("GUAC_DRIVE_NAME"));
+        config.setParameter("drive-path", System.getenv("GUAC_DRIVE_PATH"));
+        config.setParameter("disable-download", System.getenv("GUAC_DISABLE_DOWNLOAD"));
     }
 
     private static JSONArray getVMsFromProjectAPI(final AzureTREAuthenticatedUser user) throws GuacamoleException {
@@ -116,10 +130,25 @@ public class ConnectionService {
             LOGGER.error("Connection failed", ex);
             throw new GuacamoleException("Connection failed: " + ex.getMessage());
         }
-        if (!response.body().isBlank()) {
-            final JSONObject result = new JSONObject(response.body());
+
+        var statusCode = response.statusCode();
+        var resBody = response.body();
+        if (statusCode >= 300) {
+            var errorMsg = "Failed getting VMs with status code. statusCode: " + statusCode;
+            LOGGER.error(errorMsg);
+            if (!resBody.isBlank()) {
+                LOGGER.error("response: " + resBody);
+            }
+            throw new GuacamoleException(errorMsg);
+        }
+
+        LOGGER.debug("Got VMs list");
+
+        if (!resBody.isBlank()) {
+            final JSONObject result = new JSONObject(resBody);
             virtualMachines = result.getJSONArray("userResources");
         } else {
+            LOGGER.debug("Got an empty response");
             virtualMachines = new JSONArray();
         }
 

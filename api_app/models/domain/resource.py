@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List
+from typing import List, Optional, Union
 from pydantic import Field
 from models.domain.azuretremodel import AzureTREModel
 from models.domain.request_action import RequestAction
@@ -38,6 +38,7 @@ class Resource(AzureTREModel):
     isActive: bool = True  # When False, hides resource document from list views
     isEnabled: bool = True  # Must be set before a resource can be deleted
     resourceType: ResourceType
+    deploymentStatus: Optional[str] = Field(title="Deployment Status", description="Overall deployment status of the resource")
     etag: str = Field(title="_etag", description="eTag of the document", alias="_etag")
     resourcePath: str = ""
     resourceVersion: int = 0
@@ -45,9 +46,10 @@ class Resource(AzureTREModel):
     updatedWhen: float = 0
     history: List[ResourceHistoryItem] = []
 
-    def get_resource_request_message_payload(self, operation_id: str, action: RequestAction) -> dict:
-        return {
+    def get_resource_request_message_payload(self, operation_id: str, step_id: str, action: RequestAction) -> dict:
+        payload = {
             "operationId": operation_id,
+            "stepId": step_id,
             "action": action,
             "id": self.id,
             "name": self.templateName,
@@ -55,7 +57,17 @@ class Resource(AzureTREModel):
             "parameters": self.properties
         }
 
+        if self.resourceType == ResourceType.WorkspaceService:
+            payload["workspaceId"] = self.workspaceId
+
+        if self.resourceType == ResourceType.UserResource:
+            payload["workspaceId"] = self.workspaceId
+            payload["ownerId"] = self.ownerId
+            payload["parentWorkspaceServiceId"] = self.parentWorkspaceServiceId
+
+        return payload
+
 
 class Output(AzureTREModel):
     Name: str = Field(title="", description="")
-    Value: str = Field(title="", description="")
+    Value: Union[list, dict, str] = Field(None, title="", description="")

@@ -10,7 +10,7 @@ Content-Type: {{contentType}}
   "properties": {
     "display_name": "my workspace",
     "description": "my workspace",
-    "app_id": "{{appId}}",
+    "client_id": "{{clientId}}",
     "vm_size": "Standard_A1",
     "no_of_vms": 2
   }

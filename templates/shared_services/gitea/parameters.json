@@ -11,9 +11,15 @@
       }
     },
     {
-      "name": "acr_name",
+      "name": "id",
       "source": {
-        "env": "MGMT_ACR_NAME"
+        "env": "ID"
+      }
+    },
+    {
+      "name": "mgmt_acr_name",
+      "source": {
+        "env": "ACR_NAME"
       }
     },
     {

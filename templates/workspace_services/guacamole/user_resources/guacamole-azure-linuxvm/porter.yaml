@@ -1,9 +1,8 @@
 ---
 name: tre-service-guacamole-linuxvm
-version: 0.1.10
+version: 0.3.4
 description: "An Azure TRE User Resource Template for Guacamole (Linux)"
 registry: azuretre
-dockerfile: Dockerfile.tmpl
 
 credentials:
   - name: azure_tenant_id
@@ -43,6 +42,7 @@ parameters:
     description: "The name of the Terraform state storage container"
   - name: arm_use_msi
     env: ARM_USE_MSI
+    type: boolean
     default: false
   - name: os_image
     type: string
@@ -56,6 +56,12 @@ parameters:
   - name: shared_storage_name
     type: string
     default: "vm-shared-storage"
+  - name: nexus_version
+    type: string
+    default: "V1"
+    description: >-
+      "Which Nexus proxy service to use, i.e. V1 for the App Service-based
+      Nexus or V2 for the VM-based service"
 
 outputs:
   - name: ip
@@ -98,11 +104,10 @@ install:
         vm_size: "{{ bundle.parameters.vm_size }}"
         shared_storage_access: "{{ bundle.parameters.shared_storage_access }}"
         shared_storage_name: "{{ bundle.parameters.shared_storage_name }}"
+        nexus_version: "{{ bundle.parameters.nexus_version }}"
       backendConfig:
-        resource_group_name:
-          "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name:
-          "{{ bundle.parameters.tfstate_storage_account_name }}"
+        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.id }}"
       outputs:
@@ -126,11 +131,10 @@ upgrade:
         vm_size: "{{ bundle.parameters.vm_size }}"
         shared_storage_access: "{{ bundle.parameters.shared_storage_access }}"
         shared_storage_name: "{{ bundle.parameters.shared_storage_name }}"
+        nexus_version: "{{ bundle.parameters.nexus_version }}"
       backendConfig:
-        resource_group_name:
-          "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name:
-          "{{ bundle.parameters.tfstate_storage_account_name }}"
+        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.id }}"
       outputs:
@@ -154,11 +158,10 @@ uninstall:
         vm_size: "{{ bundle.parameters.vm_size }}"
         shared_storage_access: "{{ bundle.parameters.shared_storage_access }}"
         shared_storage_name: "{{ bundle.parameters.shared_storage_name }}"
+        nexus_version: "{{ bundle.parameters.nexus_version }}"
       backendConfig:
-        resource_group_name:
-          "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name:
-          "{{ bundle.parameters.tfstate_storage_account_name }}"
+        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.id }}"
 
@@ -168,25 +171,21 @@ start:
         - "output"
       description: "Get resource ID from Terraform outputs"
       backendConfig:
-        resource_group_name:
-          "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name:
-          "{{ bundle.parameters.tfstate_storage_account_name }}"
+        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.id }}"
       outputs:
         - name: azure_resource_id
   - az:
-      description:
-        "Login to Azure"
+      description: "Login to Azure"
       arguments:
         - login
       flags:
         identity:
         username: "{{ bundle.credentials.azure_client_id }}"
   - az:
-      description:
-        "Start the VM"
+      description: "Start the VM"
       arguments:
         - vm
         - start
@@ -199,25 +198,21 @@ stop:
         - "output"
       description: "Get VM hostname and rg from Terraform outputs"
       backendConfig:
-        resource_group_name:
-          "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name:
-          "{{ bundle.parameters.tfstate_storage_account_name }}"
+        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.id }}"
       outputs:
         - name: azure_resource_id
   - az:
-      description:
-        "Login to Azure"
+      description: "Login to Azure"
       arguments:
         - login
       flags:
         identity:
         username: "{{ bundle.credentials.azure_client_id }}"
   - az:
-      description:
-        "Stop the VM"
+      description: "Stop the VM"
       arguments:
         - vm
         - stop

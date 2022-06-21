@@ -29,15 +29,27 @@
         "16 CPU | 64GB RAM"
       ],
       "updateable": true
+    },
+    "nexus_version": {
+      "$id": "#/properties/nexus_version",
+      "type": "string",
+      "title": "Nexus",
+      "description": "Which Nexus proxy service to use, i.e. V1 for the App Service-based Nexus or V2 for the VM-based service",
+      "enum": [
+        "V1",
+        "V2"
+      ],
+      "default": "V1"
     }
   },
   "pipeline": {
     "install": [
       {
-        "step_id": "6d2d7eb7-984e-4330-bd3c-c7ec98658402",
-        "resource_template_name": "tre-shared-service-firewall",
-        "resource_type": "shared_service",
-        "resource_action": "upgrade",
+        "stepId": "6d2d7eb7-984e-4330-bd3c-c7ec98658402",
+        "stepTitle": "Update the firewall the first time",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
         "properties": [
         {
           "name": "display_name",
@@ -46,13 +58,14 @@
         }]
       },
       {
-        "step_id": "main"
+        "stepId": "main"
       },
       {
-        "step_id": "2fe8a6a7-2c27-4c49-8773-127df8a48b4e",
-        "resource_template_name": "tre-shared-service-firewall",
-        "resource_type": "shared_service",
-        "resource_action": "upgrade",
+        "stepId": "2fe8a6a7-2c27-4c49-8773-127df8a48b4e",
+        "stepTitle": "Update the firewall the second time",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
         "properties": [
         {
           "name": "display_name",

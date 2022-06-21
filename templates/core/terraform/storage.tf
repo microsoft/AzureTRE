@@ -4,7 +4,7 @@ resource "azurerm_storage_account" "stg" {
   location                 = azurerm_resource_group.core.location
   account_tier             = "Standard"
   account_replication_type = "LRS"
-
+  tags                     = local.tre_core_tags
   lifecycle { ignore_changes = [tags] }
 }
 
@@ -28,7 +28,7 @@ resource "azurerm_private_endpoint" "blobpe" {
   location            = azurerm_resource_group.core.location
   resource_group_name = azurerm_resource_group.core.name
   subnet_id           = module.network.shared_subnet_id
-
+  tags                = local.tre_core_tags
   lifecycle { ignore_changes = [tags] }
 
   private_dns_zone_group {
@@ -58,6 +58,7 @@ resource "azurerm_private_endpoint" "filepe" {
   location            = azurerm_resource_group.core.location
   resource_group_name = azurerm_resource_group.core.name
   subnet_id           = module.network.shared_subnet_id
+  tags                = local.tre_core_tags
 
   lifecycle { ignore_changes = [tags] }
 

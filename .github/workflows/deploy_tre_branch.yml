@@ -9,11 +9,12 @@ name: Deploy Azure TRE (branch)
 on:  # yamllint disable-line rule:truthy
   workflow_dispatch:
     inputs:
-      runExtendedTests:
-        description: Run the extended tests as part of the deployment?
-        type: boolean
-        default: false
+      e2eTestsCustomSelector:
+        description: A pytest marker selector for the e2e tests to be run
+        type: string
+        default: ""
         required: false
+
 
 # This will prevent multiple runs of this entire workflow.
 # We should NOT cancel in progress runs as that can destabilize the environment.
@@ -49,8 +50,7 @@ jobs:
     uses: ./.github/workflows/deploy_tre_reusable.yml
     with:
       ciGitRef: ${{ github.ref }}
-      # testing input against string 'true' - see https://github.com/actions/runner/issues/1483
-      runExtendedTests: ${{ github.event.inputs.runExtendedTests == 'true' }}
+      e2eTestsCustomSelector: ${{ github.event.inputs.e2eTestsCustomSelector }}
     secrets:
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
       ACR_NAME: ${{ format('tre{0}', needs.prepare-not-main.outputs.refid) }}
@@ -60,6 +60,8 @@ jobs:
       ACTIONS_DEVCONTAINER_TAG: ${{ needs.prepare-not-main.outputs.refid }}
       API_CLIENT_ID: ${{ secrets.API_CLIENT_ID }}
       API_CLIENT_SECRET: ${{ secrets.API_CLIENT_SECRET }}
+      APPLICATION_ADMIN_CLIENT_ID: ${{ secrets.APPLICATION_ADMIN_CLIENT_ID }}
+      APPLICATION_ADMIN_CLIENT_SECRET: ${{ secrets.APPLICATION_ADMIN_CLIENT_SECRET }}
       ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
       ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
       ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}

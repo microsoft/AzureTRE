@@ -33,11 +33,6 @@ variable "api_image_repository" {
   default     = "microsoft/azuretre/api"
 }
 
-variable "api_app_service_plan_sku_tier" {
-  type    = string
-  default = "PremiumV3"
-}
-
 variable "api_app_service_plan_sku_size" {
   type    = string
   default = "P1v3"
@@ -107,7 +102,19 @@ variable "api_client_id" {
 
 variable "api_client_secret" {
   type        = string
-  description = "A client secret use by the API to authenticate with Azure AD for access to Microsoft Graph."
+  description = "A client secret used by the API to authenticate with Azure AD for access to Microsoft Graph."
+  sensitive   = true
+}
+
+variable "application_admin_client_id" {
+  type        = string
+  description = "The client id (app id) of the registration in Azure AD for creating AAD Applications."
+  sensitive   = true
+}
+
+variable "application_admin_client_secret" {
+  type        = string
+  description = "A client secret used by the Resource Processor to authenticate with Azure AD to create AAD Applications."
   sensitive   = true
 }
 
@@ -127,12 +134,6 @@ variable "resource_processor_type" {
   default     = "vmss_porter"
   description = "Which resource processor to deploy."
   type        = string
-}
-
-variable "keyvault_purge_protection_enabled" {
-  type        = bool
-  default     = true
-  description = "Used to turn Keyvault purge protection"
 }
 
 variable "stateful_resources_locked" {

@@ -5,21 +5,27 @@
   "title": "Shared Service Default Parameters",
   "description": "These parameters are required for all shared services",
   "required": [
-      "display_name",
-      "description"
+    "display_name",
+    "description"
   ],
   "properties": {
-      "display_name": {
-          "type": "string",
-          "title": "Name for the shared service",
-          "description": "The name of the shared service to be displayed to users",
-          "updateable": true
-      },
-      "description": {
-          "type": "string",
-          "title": "Description of the shared service",
-          "description": "Description of the shared service",
-          "updateable": true
-      }
+    "display_name": {
+      "type": "string",
+      "title": "Name for the shared service",
+      "description": "The name of the shared service to be displayed to users",
+      "updateable": true
+    },
+    "description": {
+      "type": "string",
+      "title": "Description of the shared service",
+      "description": "Description of the shared service",
+      "updateable": true
+    },
+    "overview": {
+      "type": "string",
+      "title": "Shared Service Overview",
+      "description": "Long form description of the shared service, in markdown syntax",
+      "updateable": true
+    }
   }
 }

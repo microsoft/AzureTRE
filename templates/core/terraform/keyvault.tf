@@ -4,7 +4,8 @@ resource "azurerm_key_vault" "kv" {
   location                 = azurerm_resource_group.core.location
   resource_group_name      = azurerm_resource_group.core.name
   sku_name                 = "standard"
-  purge_protection_enabled = var.keyvault_purge_protection_enabled
+  purge_protection_enabled = true
+  tags                     = local.tre_core_tags
 
   lifecycle { ignore_changes = [access_policy, tags] }
 }
@@ -44,6 +45,7 @@ resource "azurerm_private_endpoint" "kvpe" {
   location            = azurerm_resource_group.core.location
   resource_group_name = azurerm_resource_group.core.name
   subnet_id           = module.network.shared_subnet_id
+  tags                = local.tre_core_tags
 
   lifecycle { ignore_changes = [tags] }
 
@@ -60,8 +62,8 @@ resource "azurerm_private_endpoint" "kvpe" {
   }
 }
 
-resource "azurerm_key_vault_secret" "api_app_id" {
-  name         = "api-app-id"
+resource "azurerm_key_vault_secret" "api_client_id" {
+  name         = "api-client-id"
   value        = var.api_client_id
   key_vault_id = azurerm_key_vault.kv.id
   depends_on = [
@@ -69,8 +71,8 @@ resource "azurerm_key_vault_secret" "api_app_id" {
   ]
 }
 
-resource "azurerm_key_vault_secret" "api_app_secret" {
-  name         = "api-app-secret"
+resource "azurerm_key_vault_secret" "api_client_secret" {
+  name         = "api-client-secret"
   value        = var.api_client_secret
   key_vault_id = azurerm_key_vault.kv.id
   depends_on = [
@@ -85,4 +87,52 @@ resource "azurerm_key_vault_secret" "auth_tenant_id" {
   depends_on = [
     azurerm_key_vault_access_policy.deployer
   ]
+}
+
+resource "azurerm_key_vault_secret" "application_admin_client_id" {
+  name         = "application-admin-client-id"
+  value        = var.application_admin_client_id
+  key_vault_id = azurerm_key_vault.kv.id
+  depends_on = [
+    azurerm_key_vault_access_policy.deployer
+  ]
+}
+
+resource "azurerm_key_vault_secret" "application_admin_client_secret" {
+  name         = "application-admin-client-secret"
+  value        = var.application_admin_client_secret
+  key_vault_id = azurerm_key_vault.kv.id
+  depends_on = [
+    azurerm_key_vault_access_policy.deployer
+  ]
+}
+
+resource "azurerm_monitor_diagnostic_setting" "kv" {
+  name                       = "diagnostics-kv-${var.tre_id}"
+  target_resource_id         = azurerm_key_vault.kv.id
+  log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
+  # log_analytics_destination_type = "Dedicated"
+
+  dynamic "log" {
+    for_each = toset(["AuditEvent", "AzurePolicyEvaluationDetails"])
+    content {
+      category = log.value
+      enabled  = true
+
+      retention_policy {
+        enabled = true
+        days    = 365
+      }
+    }
+  }
+
+  metric {
+    category = "AllMetrics"
+    enabled  = true
+
+    retention_policy {
+      enabled = true
+      days    = 365
+    }
+  }
 }

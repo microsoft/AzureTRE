@@ -2,6 +2,7 @@ resource "azurerm_network_interface" "jumpbox_nic" {
   name                = "nic-vm-${var.tre_id}"
   resource_group_name = azurerm_resource_group.core.name
   location            = azurerm_resource_group.core.location
+  tags                = local.tre_core_tags
 
   ip_configuration {
     name                          = "internalIPConfig"
@@ -33,48 +34,61 @@ resource "random_password" "password" {
   override_special = "_%@"
 }
 
-resource "azurerm_virtual_machine" "jumpbox" {
-  name                  = "vm-${var.tre_id}"
-  resource_group_name   = azurerm_resource_group.core.name
-  location              = azurerm_resource_group.core.location
-  network_interface_ids = [azurerm_network_interface.jumpbox_nic.id]
-  vm_size               = "Standard_B2s"
+resource "azurerm_windows_virtual_machine" "jumpbox" {
+  name                       = "vm-${var.tre_id}"
+  resource_group_name        = azurerm_resource_group.core.name
+  location                   = azurerm_resource_group.core.location
+  network_interface_ids      = [azurerm_network_interface.jumpbox_nic.id]
+  size                       = "Standard_B2s"
+  allow_extension_operations = true
+  admin_username             = random_string.username.result
+  admin_password             = random_password.password.result
+  tags                       = local.tre_core_tags
 
-  delete_os_disk_on_termination = true
 
-  delete_data_disks_on_termination = true
+  custom_data = base64encode(data.template_file.vm_config.rendered)
 
-  storage_image_reference {
+  source_image_reference {
     publisher = "MicrosoftWindowsDesktop"
     offer     = "windows-10"
     sku       = "20h2-pro-g2"
     version   = "latest"
   }
-  storage_os_disk {
-    name              = "vm-dsk-${var.tre_id}"
-    caching           = "ReadWrite"
-    create_option     = "FromImage"
-    managed_disk_type = "Standard_LRS"
-  }
-  os_profile {
-    computer_name  = "vm-${var.tre_id}"
-    admin_username = random_string.username.result
-    admin_password = random_password.password.result
+  os_disk {
+    name                 = "vm-dsk-${var.tre_id}"
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
   }
 
-  os_profile_windows_config {
+  identity {
+    type = "SystemAssigned"
   }
 
-  tags = {
-    environment = "staging"
-  }
+
 }
 
 resource "azurerm_key_vault_secret" "jumpbox_credentials" {
-  name         = "${azurerm_virtual_machine.jumpbox.name}-jumpbox-admin-credentials"
+  name         = "${azurerm_windows_virtual_machine.jumpbox.name}-jumpbox-admin-credentials"
   value        = "${random_string.username.result}\n${random_password.password.result}"
   key_vault_id = azurerm_key_vault.kv.id
   depends_on = [
     azurerm_key_vault_access_policy.deployer
   ]
+}
+resource "azurerm_virtual_machine_extension" "config_script" {
+  name                 = "${azurerm_windows_virtual_machine.jumpbox.name}-vmextension"
+  virtual_machine_id   = azurerm_windows_virtual_machine.jumpbox.id
+  publisher            = "Microsoft.Compute"
+  type                 = "CustomScriptExtension"
+  type_handler_version = "1.10"
+
+  settings = <<SETTINGS
+    {
+      "commandToExecute": "powershell -ExecutionPolicy Unrestricted -NoProfile -NonInteractive -command \"cp c:/azuredata/customdata.bin c:/azuredata/configure.ps1; c:/azuredata/configure.ps1 \""
+    }
+SETTINGS
+}
+
+data "template_file" "vm_config" {
+  template = file("${path.module}/admin-jumpbox-configure.ps1")
 }

@@ -47,8 +47,9 @@ jobs:
 
       - name: Lint code base
         # the slim image is 2GB smaller and we don't use the extra stuff
-        # Moved this after the Terraform checks above due something similar to this issue: https://github.com/github/super-linter/issues/2433
-        uses: github/super-linter/slim@v4
+        # Moved this after the Terraform checks above due something similar to this issue:
+        # https://github.com/github/super-linter/issues/2433
+        uses: github/super-linter/slim@v4.9.4
         env:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: main
@@ -62,3 +63,4 @@ jobs:
           VALIDATE_BASH: true
           VALIDATE_BASH_EXEC: true
           VALIDATE_GITHUB_ACTIONS: true
+          VALIDATE_DOCKERFILE_HADOLINT: true

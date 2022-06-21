@@ -66,8 +66,10 @@ nav:
   - TRE Developers:
       - 'tre-developers/index.md'
       - API: 'tre-developers/api.md'
+      - UI: 'tre-developers/ui.md'
       - Resource Processor: 'tre-developers/resource-processor.md'
       - End to End Tests: 'tre-developers/end-to-end-tests.md'
+      - Letsencrypt: 'tre-developers/letsencrypt.md'
   - TRE Workspace Authors:
       - Authoring Workspace Templates: 'tre-workspace-authors/authoring-workspace-templates.md'
       - Firewall Rules: 'tre-workspace-authors/firewall-rules.md'
@@ -85,3 +87,6 @@ nav:
       - User Resources:
           - Guacamole Windows VM: 'tre-templates/user-resources/guacamole-windows-vm.md'
           - Guacamole Linux VM: 'tre-templates/user-resources/guacamole-linux-vm.md'
+      - Pipeline Templates:
+          - Overview: 'tre-templates/pipeline-templates/overview.md'
+          - Pipeline Schema: 'tre-templates/pipeline-templates/pipeline-schema.md'

@@ -4,8 +4,9 @@ resource "azurerm_public_ip" "fwpip" {
   location            = data.azurerm_resource_group.rg.location
   allocation_method   = "Static"
   sku                 = "Standard"
+  tags                = local.tre_shared_service_tags
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [tags, zones] }
 }
 
 resource "azurerm_firewall" "fw" {
@@ -13,6 +14,9 @@ resource "azurerm_firewall" "fw" {
   name                = "fw-${var.tre_id}"
   resource_group_name = local.core_resource_group_name
   location            = data.azurerm_resource_group.rg.location
+  sku_tier            = "Standard"
+  sku_name            = "AZFW_VNet"
+  tags                = local.tre_shared_service_tags
   ip_configuration {
     name                 = "fw-ip-configuration"
     subnet_id            = data.azurerm_subnet.firewall.id
@@ -31,10 +35,10 @@ resource "azurerm_management_lock" "fw" {
 }
 
 resource "azurerm_monitor_diagnostic_setting" "firewall" {
-  name                           = "diagnostics-firewall-${var.tre_id}"
-  target_resource_id             = azurerm_firewall.fw.id
-  log_analytics_workspace_id     = data.azurerm_log_analytics_workspace.tre.id
-  log_analytics_destination_type = "Dedicated"
+  name                       = "diagnostics-fw-${var.tre_id}"
+  target_resource_id         = azurerm_firewall.fw.id
+  log_analytics_workspace_id = data.azurerm_log_analytics_workspace.tre.id
+  #log_analytics_destination_type = "Dedicated"
 
   log {
     category = "AzureFirewallApplicationRule"
@@ -287,4 +291,32 @@ resource "azurerm_firewall_application_rule_collection" "web_app_subnet" {
   depends_on = [
     azurerm_firewall_network_rule_collection.web_app_subnet
   ]
+}
+
+# these rule collections are driven by the API, through resource properties
+resource "azurerm_firewall_application_rule_collection" "api_driven_rules" {
+  for_each            = { for i, v in jsondecode(base64decode(var.api_driven_rule_collections_b64)) : i => v }
+  name                = each.value.name
+  azure_firewall_name = azurerm_firewall.fw.name
+  resource_group_name = azurerm_firewall.fw.resource_group_name
+  priority            = try(each.value.priority, (200 + each.key))
+  action              = each.value.action
+
+  dynamic "rule" {
+    for_each = each.value.rules
+    content {
+      name        = rule.value.name
+      description = rule.value.description
+      dynamic "protocol" {
+        for_each = rule.value.protocols
+        content {
+          port = protocol.value.port
+          type = protocol.value.type
+        }
+      }
+      target_fqdns     = try(rule.value.target_fqdns, [])
+      source_addresses = try(rule.value.source_addresses, [])
+      fqdn_tags        = try(rule.value.fqdn_tags, [])
+    }
+  }
 }

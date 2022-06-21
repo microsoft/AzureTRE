@@ -2,6 +2,7 @@ PONG = "pong"
 
 # API Descriptions
 API_GET_HEALTH_STATUS = "Get health status"
+API_MIGRATE_DATABASE = "Migrate documents in the database"
 
 API_GET_ALL_WORKSPACES = "Get all workspaces"
 API_GET_WORKSPACE_BY_ID = "Get workspace by Id"
@@ -26,6 +27,10 @@ API_DELETE_USER_RESOURCE = "Delete user resource"
 API_UPDATE_USER_RESOURCE = "Update an existing user resource"
 API_INVOKE_ACTION_ON_USER_RESOURCE = "Invoke action on a user resource"
 
+API_CREATE_AIRLOCK_REQUEST = "Create an airlock request"
+API_SUBMIT_AIRLOCK_REQUEST = "Submit an airlock request"
+API_REVIEW_AIRLOCK_REQUEST = "Review an airlock request"
+
 API_CREATE_WORKSPACE_TEMPLATES = "Register workspace template"
 API_GET_WORKSPACE_TEMPLATES = "Get workspace templates"
 API_GET_WORKSPACE_TEMPLATE_BY_NAME = "Get workspace template by name"
@@ -39,7 +44,7 @@ API_GET_SHARED_SERVICE_TEMPLATES = "Get shared service templates"
 API_GET_SHARED_SERVICE_TEMPLATE_BY_NAME = "Get shared service template by name"
 
 API_GET_ALL_SHARED_SERVICES = "Get all shared services"
-API_GET_SHARED_SERVICE_BY_ID = "Get shared service by Id"
+API_GET_SHARED_SERVICE_BY_ID = "Get shared service by ID"
 API_CREATE_SHARED_SERVICE = "Create a shared service"
 API_UPDATE_SHARED_SERVICE = "Update an existing shared service"
 API_DELETE_SHARED_SERVICE = "Delete shared service"
@@ -48,6 +53,9 @@ API_INVOKE_ACTION_ON_SHARED_SERVICE = "Invoke action on a shared service"
 API_CREATE_USER_RESOURCE_TEMPLATES = "Register user resource template"
 API_GET_USER_RESOURCE_TEMPLATES = "Get user resource templates applicable to the workspace service template"
 API_GET_USER_RESOURCE_TEMPLATE_BY_NAME = "Get user resource template by name and workspace service"
+
+API_GET_COSTS = "Get overall costs"
+API_GET_WORKSPACE_COSTS = "Get workspace costs"
 
 # State store status
 OK = "OK"
@@ -67,7 +75,7 @@ RESOURCE_PROCESSOR_HEALTHY_MESSAGE = "HealthState/healthy"
 
 # Error strings
 ACCESS_APP_IS_MISSING_ROLE = "The App is missing role"
-ACCESS_PLEASE_SUPPLY_APP_ID = "Please supply the app_id for the AAD application"
+ACCESS_PLEASE_SUPPLY_CLIENT_ID = "Please supply the client_id for the AAD application"
 ACCESS_UNABLE_TO_GET_INFO_FOR_APP = "Unable to get app info for app:"
 ACCESS_UNABLE_TO_GET_ROLE_ASSIGNMENTS_FOR_USER = "Unable to get role assignments for user"
 
@@ -106,11 +114,11 @@ TEMPLATE_DOES_NOT_EXIST = "Could not retrieve the 'current' template with this n
 NO_UNIQUE_CURRENT_FOR_TEMPLATE = "The template has multiple 'current' versions"
 
 SHARED_SERVICE_DOES_NOT_EXIST = "Shared service does not exist"
+SHARED_SERVICE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION = "Shared service needs to be disabled before you can delete it"
 
 SHARED_SERVICE_TEMPLATE_DOES_NOT_EXIST = "Could not retrieve the workspace service template specified"
 SHARED_SERVICE_TEMPLATE_VERSION_EXISTS = "A template with this version already exists"
 
-ETAG_REQUIRED = "A valid etag must be supplied in the header of this request"
 ETAG_CONFLICT = "This document has been modified by another user or process since you last retrieved it. Please get the document again and retry."
 
 # Resource Status
@@ -127,11 +135,37 @@ RESOURCE_ACTION_STATUS_INVOKING = "invoking_action"
 RESOURCE_ACTION_STATUS_SUCCEEDED = "action_succeeded"
 RESOURCE_ACTION_STATUS_FAILED = "action_failed"
 
+# Pipeline (multi-step) deployments
+RESOURCE_ACTION_STATUS_PIPELINE_DEPLOYING = "pipeline_deploying"
+RESOURCE_ACTION_STATUS_PIPELINE_FAILED = "pipeline_failed"
+RESOURCE_ACTION_STATUS_PIPELINE_SUCCEEDED = "pipeline_succeeded"
+
 # Resource Type
 RESOURCE_TYPE_WORKSPACE = "workspace"
 RESOURCE_TYPE_WORKSPACE_SERVICE = "workspace-service"
 USER_RESOURCE = "user-resource"
 RESOURCE_TYPE_SHARED_SERVICE = "shared-service"
+
+# Airlock Resource Type
+AIRLOCK_RESOURCE_TYPE_REQUEST = "airlock-request"
+AIRLOCK_RESOURCE_TYPE_REVIEW = "airlock-review"
+
+# Airlock Resource Status
+AIRLOCK_RESOURCE_STATUS_DRAFT = "draft"
+AIRLOCK_RESOURCE_STATUS_SUBMITTED = "submitted"
+AIRLOCK_RESOURCE_STATUS_INREVIEW = "in_review"
+AIRLOCK_RESOURCE_STATUS_APPROVED = "approved"
+AIRLOCK_RESOURCE_STATUS_REJECTED = "rejected"
+AIRLOCK_RESOURCE_STATUS_CANCELLED = "cancelled"
+AIRLOCK_RESOURCE_STATUS_BLOCKED = "blocked"
+
+# Airlock Request Types
+AIRLOCK_REQUEST_TYPE_IMPORT = "import"
+AIRLOCK_REQUEST_TYPE_EXPORT = "export"
+
+# Airlock Messages
+AIRLOCK_REQUEST_DOES_NOT_EXIST = "Airlock request does not exist"
+AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE = "Airlock request status change was illegal"
 
 # Deployments
 RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE = "This resource has not yet been deployed"
@@ -142,7 +176,13 @@ SERVICE_BUS_GENERAL_ERROR_MESSAGE = "Service bus failure"
 DEPLOYMENT_STATUS_MESSAGE_FORMAT_INCORRECT = "Service bus message is not formatted correctly"
 DEPLOYMENT_STATUS_ID_NOT_FOUND = "Service bus message refers to resource id = {} which does not exist"
 
+# Event grid
+EVENT_GRID_GENERAL_ERROR_MESSAGE = "Event grid failure"
+
 # Workspace creation validation
 MISSING_REQUIRED_PARAMETERS = "Missing required parameters"
 INVALID_EXTRA_PARAMETER = "Invalid extra parameters"
 PARAMETERS_WITH_WRONG_TYPE = "Parameters with wrong type"
+
+# Value that a sensitive is replaced with in Cosmos
+REDACTED_SENSITIVE_VALUE = "REDACTED"

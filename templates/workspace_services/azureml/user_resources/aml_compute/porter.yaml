@@ -1,6 +1,6 @@
 ---
 name: tre-user-resource-aml-compute-instance
-version: 0.1.1
+version: 0.3.1
 description: "Azure Machine Learning Compute Instance"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -26,7 +26,7 @@ parameters:
     type: string
   - name: vm_size
     type: string
-    default: 'Standard_DS2_v3'
+    default: "Standard_DS2_v3"
   - name: auth_tenant_id
     type: string
   - name: user_object_id
@@ -46,6 +46,7 @@ parameters:
     env: TERRAFORM_STATE_CONTAINER_NAME
   - name: arm_use_msi
     env: ARM_USE_MSI
+    type: boolean
     default: false
 
 mixins:
@@ -53,7 +54,6 @@ mixins:
   - az
   - terraform:
       clientVersion: 1.0.5
-
 
 install:
   - terraform:
@@ -71,13 +71,10 @@ install:
         arm_client_secret: "{{ bundle.credentials.azure_client_secret }}"
         arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
       backendConfig:
-        resource_group_name:
-          "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name:
-          "{{ bundle.parameters.tfstate_storage_account_name }}"
+        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "tre-user-resource-aml-compute-instance-{{ bundle.parameters.id }}"
-
 
 uninstall:
   - exec:

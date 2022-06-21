@@ -1,6 +1,6 @@
 ---
 name: tre-service-innereye
-version: 0.1.6
+version: 0.3.1
 description: "An Azure TRE service for InnerEye Deep Learning"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -44,6 +44,7 @@ parameters:
     env: TERRAFORM_STATE_CONTAINER_NAME
   - name: arm_use_msi
     env: ARM_USE_MSI
+    type: boolean
     default: false
 
 mixins:

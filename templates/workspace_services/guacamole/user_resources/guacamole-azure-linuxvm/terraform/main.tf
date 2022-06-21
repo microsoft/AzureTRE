@@ -3,7 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=2.97.0"
+      version = "=3.5.0"
     }
   }
   backend "azurerm" {
@@ -12,13 +12,30 @@ terraform {
 
 
 provider "azurerm" {
-  features {}
+  features {
+    key_vault {
+      # Don't purge on destroy (this would fail due to purge protection being enabled on keyvault)
+      purge_soft_delete_on_destroy               = false
+      purge_soft_deleted_secrets_on_destroy      = false
+      purge_soft_deleted_certificates_on_destroy = false
+      purge_soft_deleted_keys_on_destroy         = false
+      # When recreating an environment, recover any previously soft deleted secrets - set to true by default
+      recover_soft_deleted_key_vaults   = true
+      recover_soft_deleted_secrets      = true
+      recover_soft_deleted_certificates = true
+      recover_soft_deleted_keys         = true
+    }
+  }
 }
 
 data "azurerm_client_config" "current" {}
 
 data "azurerm_resource_group" "ws" {
   name = "rg-${var.tre_id}-ws-${local.short_workspace_id}"
+}
+
+data "azurerm_resource_group" "core" {
+  name = "rg-${var.tre_id}"
 }
 
 data "azurerm_virtual_network" "ws" {
@@ -60,5 +77,5 @@ output "azure_resource_id" {
 }
 
 output "connection_uri" {
-  value = "https://${data.azurerm_app_service.guacamole.default_site_hostname}/guacamole/#/client/${textencodebase64("${azurerm_network_interface.internal.private_ip_address}\u0000c\u0000azuretre", "UTF-8")}"
+  value = "https://${data.azurerm_app_service.guacamole.default_site_hostname}/?/client/${textencodebase64("${azurerm_linux_virtual_machine.linuxvm.name}\u0000c\u0000azuretre", "UTF-8")}"
 }

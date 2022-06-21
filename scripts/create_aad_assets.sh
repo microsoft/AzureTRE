@@ -1,5 +1,8 @@
 #!/bin/bash
-set -e
+set -o errexit
+set -o pipefail
+set -o nounset
+# set -o xtrace
 
 : "${AAD_TENANT_ID?'You have not set your AAD_TENANT_ID in ./templates/core/.env'}"
 
@@ -14,10 +17,26 @@ if [ "${LOGGED_IN_TENANT_ID}" != "${AAD_TENANT_ID}" ]; then
   CHANGED_TENANT=1
 fi
 
-# Then register an App
+APPLICATION_PERMISSION="Application.ReadWrite.OwnedBy"
+if [ "${AUTO_WORKSPACE_APP_REGISTRATION}" == true ]; then
+  APPLICATION_PERMISSION="Application.ReadWrite.All"
+fi
+
+# Create the identity that is able to administer other applications
+./scripts/aad/create_application_administrator.sh \
+--name "${TRE_ID}" --admin-consent --application-permission "${APPLICATION_PERMISSION}"
+
+echo "Please copy the values above into your /templates/core/.env."
+read -p "Please confirm you have done this? (y/N) " -n 1 -r
+echo
+if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+  exit 0
+fi
+
+# Then register an App for the TRE Core.
 ./scripts/aad/aad-app-reg.sh \
   --name "${TRE_ID}" \
-  --swaggerui-redirecturl "https://${TRE_ID}.${LOCATION}.cloudapp.azure.com/api/docs/oauth2-redirect" \
+  --tre-url "https://${TRE_ID}.${LOCATION}.cloudapp.azure.com" \
   --admin-consent --automation-account
 
 echo "Please copy the values above into your /templates/core/.env."
@@ -33,7 +52,7 @@ set -a
 # shellcheck disable=SC1091
 . ./templates/core/.env
 
-echo "Please check that the following value is the same as above to check you have copied yoru keys."
+echo "Please check that the following value is the same as above to check you have copied your keys."
 echo "API client id is : ${API_CLIENT_ID}"
 
 ./scripts/aad/aad-app-reg.sh \

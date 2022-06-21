@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0.0-DRAFT+b6c701f",
+  "name": "aad_auth",
+  "created": "2022-03-29T20:35:53.517982Z",
+  "modified": "2022-03-29T20:35:53.517982Z",
+  "credentials": [
+    {
+      "name": "auth_tenant_id",
+      "source": {
+        "secret": "auth-tenant-id"
+      }
+    },
+    {
+      "name": "auth_client_id",
+      "source": {
+        "secret": "application-admin-client-id"
+      }
+    },
+    {
+      "name": "auth_client_secret",
+      "source": {
+        "secret": "application-admin-client-secret"
+      }
+    }
+  ]
+}

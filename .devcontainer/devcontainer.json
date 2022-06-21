@@ -25,11 +25,11 @@
   ],
   "remoteUser": "vscode",
   "containerEnv": {
-    "DOCKER_BUILDKIT": "1",
+    "DOCKER_BUILDKIT": "1"
   },
   "remoteEnv": {
     // this is used for SuperLinter
-    "LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}",
+    "LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}"
   },
   // Set *default* container specific settings.json values on container create.
   "settings": {
@@ -92,6 +92,22 @@
           ]
         },
         {
+          "name": "E2E Shared Services",
+          "type": "python",
+          "request": "launch",
+          "module": "pytest",
+          "justMyCode": true,
+          "cwd": "${workspaceFolder}/e2e_tests/",
+          "preLaunchTask": "Copy_env_file_for_e2e_debug",
+          "envFile": "${workspaceFolder}/templates/core/private.env",
+          "args": [
+            "-m",
+            "shared_services",
+            "--verify",
+            "false"
+          ]
+        },
+        {
           "name": "E2E Performance",
           "type": "python",
           "request": "launch",
@@ -145,6 +161,20 @@
           "purpose": [
             "debug-test"
           ]
+        },
+        {
+          "name": "Launch Edge (localhost)",
+          "type": "pwa-msedge",
+          "request": "launch",
+          "url": "http://localhost:3000",
+          "webRoot": "${workspaceFolder}/ui/app"
+        },
+        {
+          "name": "Launch Chrome (localhost)",
+          "type": "pwa-chrome",
+          "request": "launch",
+          "url": "http://localhost:3000",
+          "webRoot": "${workspaceFolder}/ui/app"
         }
       ],
       "compounds": []
@@ -175,7 +205,7 @@
           },
           "command": "pytest",
           "args": [
-            "--ignore=e2e_tests",
+            "--ignore=e2e_tests"
           ]
         },
         {
@@ -189,7 +219,7 @@
             "-m",
             "pytest",
             "-m",
-            "smoke",
+            "smoke"
           ]
         }
       ]
@@ -207,6 +237,8 @@
     "mikestead.dotenv",
     "humao.rest-client",
     "timonwong.shellcheck",
+    "ms-azuretools.vscode-bicep",
+    "ms-azuretools.vscode-azurefunctions"
   ],
   "forwardPorts": [
     8000

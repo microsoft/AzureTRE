@@ -4,6 +4,7 @@ resource "azurerm_network_security_group" "bastion" {
   name                = "nsg-bastion-subnet"
   location            = var.location
   resource_group_name = var.resource_group_name
+  tags                = local.tre_core_tags
 
   security_rule {
     name                       = "AllowInboundInternet"
@@ -113,6 +114,7 @@ resource "azurerm_network_security_group" "app_gw" {
   name                = "nsg-app-gw"
   location            = var.location
   resource_group_name = var.resource_group_name
+  tags                = local.tre_core_tags
 
   security_rule {
     name                       = "AllowInboundGatewayManager"
@@ -150,6 +152,7 @@ resource "azurerm_network_security_group" "default_rules" {
   name                = "nsg-default-rules"
   location            = var.location
   resource_group_name = var.resource_group_name
+  tags                = local.tre_core_tags
 }
 
 resource "azurerm_subnet_network_security_group_association" "shared" {
@@ -166,3 +169,22 @@ resource "azurerm_subnet_network_security_group_association" "resource_processor
   subnet_id                 = azurerm_subnet.resource_processor.id
   network_security_group_id = azurerm_network_security_group.default_rules.id
 }
+
+
+resource "azurerm_subnet_network_security_group_association" "airlock_processor" {
+  subnet_id                 = azurerm_subnet.airlock_processor.id
+  network_security_group_id = azurerm_network_security_group.default_rules.id
+}
+
+
+resource "azurerm_subnet_network_security_group_association" "airlock_storage" {
+  subnet_id                 = azurerm_subnet.airlock_storage.id
+  network_security_group_id = azurerm_network_security_group.default_rules.id
+}
+
+
+resource "azurerm_subnet_network_security_group_association" "airlock_events" {
+  subnet_id                 = azurerm_subnet.airlock_events.id
+  network_security_group_id = azurerm_network_security_group.default_rules.id
+}
+

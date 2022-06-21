@@ -28,6 +28,7 @@ resource "azurerm_app_service" "gitea" {
   app_service_plan_id             = data.azurerm_app_service_plan.workspace.id
   https_only                      = true
   key_vault_reference_identity_id = azurerm_user_assigned_identity.gitea_id.id
+  tags                            = local.workspace_service_tags
 
   app_settings = {
     WEBSITES_PORT                                    = "3000"
@@ -75,6 +76,7 @@ resource "azurerm_app_service" "gitea" {
     min_tls_version                      = "1.2"
     vnet_route_all_enabled               = true
     websockets_enabled                   = false
+    ftps_state                           = "Disabled"
   }
 
   storage_account {
@@ -109,6 +111,7 @@ resource "azurerm_private_endpoint" "gitea_private_endpoint" {
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
   subnet_id           = data.azurerm_subnet.services.id
+  tags                = local.workspace_service_tags
 
   private_service_connection {
     private_connection_resource_id = azurerm_app_service.gitea.id

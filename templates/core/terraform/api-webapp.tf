@@ -2,33 +2,37 @@ data "local_file" "api_app_version" {
   filename = "${path.root}/../../../api_app/_version.py"
 }
 
+data "azurerm_eventgrid_topic" "status_changed" {
+  name                = "evgt-airlock-status-changed-${var.tre_id}"
+  resource_group_name = azurerm_resource_group.core.name
+  depends_on = [
+    module.airlock_resources
+  ]
+}
+
 locals {
   version = replace(replace(replace(data.local_file.api_app_version.content, "__version__ = \"", ""), "\"", ""), "\n", "")
 }
 
-resource "azurerm_app_service_plan" "core" {
+resource "azurerm_service_plan" "core" {
   name                = "plan-${var.tre_id}"
   resource_group_name = azurerm_resource_group.core.name
   location            = azurerm_resource_group.core.location
-  reserved            = true
-  kind                = "linux"
-
+  os_type             = "Linux"
+  sku_name            = var.api_app_service_plan_sku_size
+  tags                = local.tre_core_tags
+  worker_count        = 1
   lifecycle { ignore_changes = [tags] }
-
-  sku {
-    tier     = var.api_app_service_plan_sku_tier
-    capacity = 1
-    size     = var.api_app_service_plan_sku_size
-  }
 }
 
 resource "azurerm_app_service" "api" {
   name                            = "api-${var.tre_id}"
   resource_group_name             = azurerm_resource_group.core.name
   location                        = azurerm_resource_group.core.location
-  app_service_plan_id             = azurerm_app_service_plan.core.id
+  app_service_plan_id             = azurerm_service_plan.core.id
   https_only                      = true
   key_vault_reference_identity_id = azurerm_user_assigned_identity.id.id
+  tags                            = local.tre_core_tags
 
   app_settings = {
     "APPLICATIONINSIGHTS_CONNECTION_STRING"      = module.azure_monitor.app_insights_connection_string
@@ -37,11 +41,11 @@ resource "azurerm_app_service" "api" {
     "ApplicationInsightsAgent_EXTENSION_VERSION" = "~3"
     "XDT_MicrosoftApplicationInsights_Mode"      = "default"
     "WEBSITES_PORT"                              = "8000"
-    "WEBSITE_VNET_ROUTE_ALL"                     = 1
     "DOCKER_REGISTRY_SERVER_URL"                 = "https://${var.docker_registry_server}"
     "STATE_STORE_ENDPOINT"                       = azurerm_cosmosdb_account.tre-db-account.endpoint
     "COSMOSDB_ACCOUNT_NAME"                      = azurerm_cosmosdb_account.tre-db-account.name
     "SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE"      = "sb-${var.tre_id}.servicebus.windows.net"
+    "EVENT_GRID_STATUS_CHANGED_TOPIC_ENDPOINT"   = data.azurerm_eventgrid_topic.status_changed.endpoint
     "SERVICE_BUS_RESOURCE_REQUEST_QUEUE"         = azurerm_servicebus_queue.workspacequeue.name
     "SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE" = azurerm_servicebus_queue.service_bus_deployment_status_update_queue.name
     "MANAGED_IDENTITY_CLIENT_ID"                 = azurerm_user_assigned_identity.id.client_id
@@ -49,8 +53,8 @@ resource "azurerm_app_service" "api" {
     "RESOURCE_LOCATION"                          = azurerm_resource_group.core.location
     "SWAGGER_UI_CLIENT_ID"                       = var.swagger_ui_client_id
     "AAD_TENANT_ID"                              = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.auth_tenant_id.id})"
-    "API_CLIENT_ID"                              = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.api_app_id.id})"
-    "API_CLIENT_SECRET"                          = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.api_app_secret.id})"
+    "API_CLIENT_ID"                              = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.api_client_id.id})"
+    "API_CLIENT_SECRET"                          = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.api_client_secret.id})"
     "RESOURCE_GROUP_NAME"                        = azurerm_resource_group.core.name
     "SUBSCRIPTION_ID"                            = data.azurerm_subscription.current.subscription_id
     CORE_ADDRESS_SPACE                           = var.core_address_space
@@ -66,18 +70,22 @@ resource "azurerm_app_service" "api" {
 
   site_config {
     linux_fx_version                     = "DOCKER|${var.docker_registry_server}/${var.api_image_repository}:${local.version}"
+    vnet_route_all_enabled               = true
     remote_debugging_enabled             = false
     scm_use_main_ip_restriction          = true
     acr_use_managed_identity_credentials = true
     acr_user_managed_identity_client_id  = azurerm_user_assigned_identity.id.client_id
+    always_on                            = true
+    min_tls_version                      = "1.2"
+    ftps_state                           = "Disabled"
+    websockets_enabled                   = false
 
     cors {
-      allowed_origins     = []
+      allowed_origins = [
+        var.enable_local_debugging ? "http://localhost:3000" : ""
+      ]
       support_credentials = false
     }
-
-    always_on       = true
-    min_tls_version = "1.2"
 
     ip_restriction {
       action     = "Deny"
@@ -85,9 +93,6 @@ resource "azurerm_app_service" "api" {
       name       = "Deny all"
       priority   = 2147483647
     }
-
-    ftps_state         = "FtpsOnly"
-    websockets_enabled = false
   }
 
   logs {
@@ -102,6 +107,9 @@ resource "azurerm_app_service" "api" {
       }
     }
   }
+  depends_on = [
+    module.airlock_resources
+  ]
 }
 
 resource "azurerm_private_endpoint" "api_private_endpoint" {
@@ -109,6 +117,7 @@ resource "azurerm_private_endpoint" "api_private_endpoint" {
   resource_group_name = azurerm_resource_group.core.name
   location            = azurerm_resource_group.core.location
   subnet_id           = module.network.shared_subnet_id
+  tags                = local.tre_core_tags
 
   lifecycle { ignore_changes = [tags] }
 

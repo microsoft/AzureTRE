@@ -2,14 +2,16 @@
 
 ## Publishing and registering the base workspace bundle
 
-1. Run:
+Run the following in a terminal: -
 
-    ```cmd
-    make bundle-publish DIR=./templates/workspaces/base BUNDLE_TYPE=workspace
-    make bundle-register DIR=./templates/workspaces/base BUNDLE_TYPE=workspace
-    ```
+  ```cmd
+  make bundle-publish DIR=./templates/workspaces/base
+  make bundle-register DIR=./templates/workspaces/base BUNDLE_TYPE=workspace
+  ```
 
-    Copy the resulting JSON payload.
+If you have setup the TEST_ACCOUNT_CLIENT_ID in the [Pre-deployment steps](./pre-deployment-steps.md), then your bundle will automatically publish and you can skip to 'Creating a base workspace'. Otherwise continue with these steps: -
+
+1. Copy the resulting JSON payload.
 
 1. Navigate to the Swagger UI at `https://<azure_tre_fqdn>/api/docs`
 
@@ -54,7 +56,8 @@ Go to `https://<azure_tre_fqdn>/api/docs` and use POST `/api/workspaces` with th
   "properties": {
     "display_name": "manual-from-swagger",
     "description": "workspace for team X",
-    "app_id": "WORKSPACE_API_CLIENT_ID",
+    "client_id":"<WORKSPACE_API_CLIENT_ID>",
+    "client_secret":"<WORKSPACE_API_CLIENT_SECRET>",
     "address_space_size": "medium"
   }
 }
@@ -68,4 +71,5 @@ Workspace level operations can now be carried out using the workspace API, at `/
 
 ## Next steps
 
-* [Installing a workspace service](./installing-workspace-service-and-user-resource.md)
+* [Configuring shared services](./configuring-shared-services.md)
+* [Installing a workspace service & user resources](./installing-workspace-service-and-user-resource.md)

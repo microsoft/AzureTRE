@@ -19,7 +19,7 @@ USER_RESOURCE_ID = 'abcad738-7265-4b5f-9eae-a1a62928772e'
 
 
 def sample_workspace():
-    return Workspace(id=WORKSPACE_ID, templateName='template name', templateVersion='1.0', etag='', properties={"app_id": "12345"}, resourcePath="test")
+    return Workspace(id=WORKSPACE_ID, templateName='template name', templateVersion='1.0', etag='', properties={"client_id": "12345"}, resourcePath="test")
 
 
 def sample_workspace_service():
@@ -92,7 +92,7 @@ class TestWorkspaceServiceOwnerRoutesAccess:
             "templateName": "test-workspace-service",
             "properties": {
                 "display_name": "display",
-                "app_id": "f0acf127-a672-a672-a672-a15e5bf9f127"
+                "client_id": "f0acf127-a672-a672-a672-a15e5bf9f127"
             }
         }
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID), json=workspace_service_input)
@@ -194,11 +194,16 @@ class TestUserResourcesRoutesOwnerOrResourceOwnerAccess:
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
     # [DELETE] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
+    @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
+    @patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version")
     @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id")
-    async def test_delete_user_resource_raises_403_if_user_is_researcher_and_not_owner_of_resource(self, get_user_resource_mock, app, client):
+    async def test_delete_user_resource_raises_403_if_user_is_researcher_and_not_owner_of_resource(self, get_user_resource_mock, resource_template_repo_mock, get_workspace_service_mock, app, client, basic_resource_template):
         user_resource = sample_user_resource()
         user_resource.ownerId = "11111"  # not users id
         get_user_resource_mock.return_value = user_resource
+
+        get_workspace_service_mock.return_value = sample_workspace_service()
+        resource_template_repo_mock.return_value = basic_resource_template
 
         response = await client.delete(app.url_path_for(strings.API_DELETE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID))
 
