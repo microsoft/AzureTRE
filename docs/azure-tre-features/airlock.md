@@ -84,10 +84,17 @@ When the state changes to `In-progress` the Workspace Onwer (Data Steward) gets 
 The Airlock feature is supported by infrastructure at the TRE and workspace level.
 
 TRE:
+<<<<<<< HEAD
 * `stalexapp` - storage (st) airlock (al) export (ex) approved (app)
 * `stalimex` - storage (st) airlock (al) import (im) external (ex)
 * `stalimip` - storage (st) airlock (al) import (im) in-progress (ip)
 * `stalimrej` - storage (st) airlock (al) import (im) rejected (rej)
+=======
+* `stalexapp` - storage (st) airlock (al) approved (app) export (ex)
+* `stalimex` - storage (st) airlock (al) external (ex) import (im)
+* `stalimip` - storage (st) airlock (al) import (im) in-progress (ip)
+* `stalimrej` - storage (st) airlock (al) rejected (rej) import (im)
+>>>>>>> Linter review + stg names
 
 Workspace
 * `stalexint` - workspace storage (st) airlock (al) export (ex) internal (int)
