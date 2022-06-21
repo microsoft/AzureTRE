@@ -153,6 +153,6 @@ class OperationRepository(BaseRepository):
         """
         checks whether this resource has a successful "deployed" operation
         """
-        query = self.operations_query() + f' c.resourceId = "{resource_id}" AND c.status = "{Status.Deployed}"'
+        query = self.operations_query() + f' c.resourceId = "{resource_id}" AND c.status in ("{Status.Deployed}", "{Status.PipelineSucceeded})'
         operations = self.query(query=query)
         return len(operations) > 0
