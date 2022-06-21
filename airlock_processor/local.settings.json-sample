@@ -3,10 +3,10 @@
   "Values": {
     "FUNCTIONS_WORKER_RUNTIME": "python",
     "AIRLOCK_STATUS_CHANGED_QUEUE_NAME": "status_changed",
-    "SB_CONNECTION_STRING": "Endpoint=sb://XXXX.servicebus.windows.net/;SharedAccessKeyName=.....",
-    "AZURE_SUBSCRIPTION_ID": "",
-    "BLOB_CREATED_TOPIC_NAME": "",
-    "TOPIC_SUBSCRIPTION_NAME":"",
-    "TRE_ID": ""
+    "SB_CONNECTION_STRING": "Endpoint=sb://sb-anatbal17.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=Uuje7J6t1EPpguCxk7807HhqanB6QtaZSonUlUXWdEw=",
+    "AZURE_SUBSCRIPTION_ID": "73a4ea93-d914-424d-9e64-28adf397e8e3",
+    "BLOB_CREATED_TOPIC_NAME": "airlock-blob-created",
+    "TOPIC_SUBSCRIPTION_NAME":"airlock-blob-created-airlock-processor",
+    "TRE_ID": "anatbal17"
   }
 }
