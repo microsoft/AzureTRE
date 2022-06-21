@@ -9,3 +9,4 @@ variable "arm_use_msi" {
 }
 variable "inference_sp_client_id" {}
 variable "inference_sp_client_secret" {}
+variable "tre_workspace_service_tags" {}
