@@ -183,3 +183,6 @@ EVENT_GRID_GENERAL_ERROR_MESSAGE = "Event grid failure"
 MISSING_REQUIRED_PARAMETERS = "Missing required parameters"
 INVALID_EXTRA_PARAMETER = "Invalid extra parameters"
 PARAMETERS_WITH_WRONG_TYPE = "Parameters with wrong type"
+
+# Value that a sensitive is replaced with in Cosmos
+REDACTED_SENSITIVE_VALUE = "REDACTED"

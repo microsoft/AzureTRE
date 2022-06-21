@@ -1,5 +1,7 @@
 from datetime import datetime
 import logging
+from copy import deepcopy
+from typing import Dict, Any
 
 from fastapi import HTTPException
 from starlette import status
@@ -21,9 +23,13 @@ async def save_and_deploy_resource(resource: Resource, resource_repo: ResourceRe
     try:
         resource.user = user
         resource.updatedWhen = get_timestamp()
-        resource_repo.save_item(resource)
+
+        # Making a copy to save with secrets masked
+        masked_resource = deepcopy(resource)
+        masked_resource.properties = mask_sensitive_properties(resource.properties, resource_template)
+        resource_repo.save_item(masked_resource)
     except Exception as e:
-        logging.error(f'Failed saving resource item {resource}: {e}')
+        logging.error(f'Failed saving resource item {resource.id}: {e}')
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
 
     try:
@@ -40,6 +46,16 @@ async def save_and_deploy_resource(resource: Resource, resource_repo: ResourceRe
         resource_repo.delete_item(resource.id)
         logging.error(f"Failed send resource request message: {e}")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE)
+
+
+def mask_sensitive_properties(properties: Dict[str, Any], template: ResourceTemplate) -> dict:
+    updated_resource_parameters = properties
+
+    for prop_name, prop in template.properties.items():
+        if prop.sensitive is True and prop_name in properties:
+            updated_resource_parameters = {**properties}
+            updated_resource_parameters[prop_name] = strings.REDACTED_SENSITIVE_VALUE
+    return updated_resource_parameters
 
 
 def construct_location_header(operation: Operation) -> str:
