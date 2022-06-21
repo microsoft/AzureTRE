@@ -1,6 +1,7 @@
-## Airlock
+# Airlock
 
-In a Trusted Research Environment (TRE) the workspaces represent a security boundary that enables researchers to access data, execute analysis, apply algorithms and collect reports. The airlock capability brings the only mechanisme that allows users to `import` or `export` data and tools in a secure fashion with a manual approval. This constitutes the mechanism focused in preventing malware inside TRE and/or TRE workspaces and preventing data exfiltration, while allowing researchers to execute their tasks. 
+In a Trusted Research Environment (TRE) the workspaces represent a security boundary that enables researchers to access data, execute analysis, apply algorithms and collect reports. The airlock capability brings the only mechanisme that allows users to `import` or `export` data and tools in a secure fashion with a manual approval.
+This constitutes the mechanism focused in preventing malware inside TRE and/or TRE workspaces and preventing data exfiltration, while allowing researchers to execute their tasks.
 The airlock feature brings several actions: ingress/egress Mechanism; Data movement ; Security gates; Approval mechanism; Notifications. And as part of TRE's Safe settings all activity must be tracked for auditiing purpose.
 
 The Airlock feature aims to address these goals:
@@ -24,28 +25,30 @@ a. **Draft**: An import/export process has been created but has not yet started.
 b. **Submitted**: The request was submitted by the ressearcher (not yet processed).
 b. **In-progress**: The import/export process has now started and is in-progress.
 c. **Approved**: The import/export process has been approved. At this state, data has been securely verified and manually reviewed. The data is now in its final location. For an import process the data is now available in the TRE workspace. It can be accessed by the requestor from within the workspace.
-d. **Rejected**: The import/export process has been rejected. Either the data in the process was rejected manually be the Workspace Owner or the security analysis found issues, hence quarantining the data.
-e. **Blocked**:
-f. **Cancelled**:
-, submitted, in-progress, approved, rejected, blocked (failed scans), done, cancelled 
+d. **Rejected**: The import/export process has been rejected. The data in the process was rejected manually by the Airlock Manager.
+e. **Blocked**: The import/export process has been blocked. The security analysis found issues in the submitted data, and consequently quarantined the data.
+f. **Cancelled**: The import/export process was manually cancelled by the requestor TRE user, a Workspace owner or a TRE administrator.
 
-When an airlock process is created the state is `Draft` and the user gets a storage location (storage account -> SAS token + URL) he can use to place the date to be processed (import or export). This storage location is external for import (`stalexim`) or internal for export (`stalexint`), however only accessible to the requestor (ex: a TRE user/researcher). The user will be able to upload a file to the provided storage location.
+When an airlock process is created the state is `Draft` and the user gets a storage location (storage account -> SAS token + URL) he can use to place the date to be processed (import or export). This storage location is external for import (`stalimex`) or internal for export (`stalexint`), however only accessible to the requestor (ex: a TRE user/researcher).
+The user will be able to upload a file to the provided storage location.
 
-The user Submits the request (TRE API call) starting the data movement (to the `stalipim` - import in-progress or `stalexip` - export in-progress). If enabled, the Security Scanning is started wither identifying security flaws or not.
+The user Submits the request (TRE API call) starting the data movement (to the `stalimip` - import in-progress or `stalexip` - export in-progress). If enabled, the Security Scanning is started wither identifying security flaws or not.
 When the process is concluded, if no security flaws were identified, a notification is sent to the Data workspace Steward users providing the access to data (SAS token + URL with READ permission).
-In case security flaws are found, the data is moved to storage rejected (either rejected import `stalrejim` or rejected export `stalexrej`). 
+In case security flaws are found, the data is moved to storage rejected (either rejected import `stalimrej` or rejected export `stalexrej`).
 
-The Data Stewards will manually review the data using the tools of their choice available in the TRE workspace. Once review is completed, the Data Stewards will have to **approve** or **reject** the airlock proces, though a TRE API call. This call will start the data movement to the final storage destination: `stalappexp` - external approved export or `stalimapp` - internal approved import. There is also a state update, which will trigger a notification to the requestor including a SAS token + URL for the containers holding the data. 
+The Data Stewards will manually review the data using the tools of their choice available in the TRE workspace. Once review is completed, the Data Stewards will have to **approve** or **reject** the airlock proces, though a TRE API call. This call will start the data movement to the final storage destination: `stalexapp` - external approved export or `stalimapp` - internal approved import.
+There is also a state update, which will trigger a notification to the requestor including a SAS token + URL for the containers holding the data.
 
 ## Data movement
 
-For any airlock process there is data movement either **into** a TRE workspace (in import process) or **from** a TRE workspace (in export process). Being the TRE a Workspace boundary, there are networking configurations designed to achieve this goal. The Data movement will guarantee that the data is automatically verified for securty flaws and manually reviewed, before introducing data inside the TRE Workspace. Also, the process guarantees that data is not tampered with through out the process.
+For any airlock process there is data movement either **into** a TRE workspace (in import process) or **from** a TRE workspace (in export process). Being the TRE a Workspace boundary, there are networking configurations designed to achieve this goal. The data movement will guarantee that the data is automatically verified for securty flaws and manually reviewed, before placing data inside the TRE Workspace.
+Also, the process guarantees that data is not tampered with through out the process.
 
 In an import process, data will transition from more public locations (yet confined to the requestor) to TRE workspace storage, after guaranteeding security automatically and by manual review.
 
 In an export process data will transition from internal locations (available to the requetor) to public locations in the TRE, after going through a manual review.
 
-> The data movement mechanism is data-driven, allowing an organization to extend how request data transitions between 
+> The data movement mechanism is data-driven, allowing an organization to extend how request data transitions between
 
 ## Security Scan
 
@@ -61,7 +64,7 @@ The approval mechanism, is bundled with any airlock process, providing a specifi
 
 The only responsability of the Approval mechanism is to support a cycle of revision, approval or rejection, while tracking the decision.
 
-This mechanism will provice access to the data in the airlock process, and will be able to use a VM in TRE workspace. The data review will be the Data Steward responsability 
+This mechanism will provice access to the data in the airlock process, and will be able to use a VM in TRE workspace. The data review will be the Data Steward responsability
 
 > * It is envisioned that this mechanism to be more flexible and extensible.
 > * The `Data Steward` is a role defined at workspace instance level and assigned to identities. Initially the `Owner` role will be used.
@@ -80,11 +83,11 @@ When the state changes to `In-progress` the Workspace Onwer (Data Steward) gets 
 
 The Airlock feature is supported by infrastructure at the TRE and workspace level.
 
-TRE: 
-* `stalappexp` - storage (st) airlock (al) approved (app) export (ex)
-* `stalexim` - storage (st) airlock (al) external (ex) import (im)
-* `stalimip` - storage (st) airlock (al) import (im) in-progress (ip) import
-* `stalrejim` - storage (st) airlock (al) rejected (rej) import (im)
+TRE:
+* `stalexapp` - storage (st) airlock (al) export (ex) approved (app)
+* `stalimex` - storage (st) airlock (al) import (im) external (ex)
+* `stalimip` - storage (st) airlock (al) import (im) in-progress (ip)
+* `stalimrej` - storage (st) airlock (al) import (im) rejected (rej)
 
 Workspace
 * `stalexint` - workspace storage (st) airlock (al) export (ex) internal (int)
@@ -92,10 +95,10 @@ Workspace
 * `stalexrej` - workspace storage (st) airlock (al) export (ex) rejected (rej)
 * `stalimapp` - workspace storage (st) airlock (al) import (im) approved (app)
 
-> * The external storage accounts (`stalexim`, `stalappexp`), are not bound to any vnet and accessible (with SAS token) via internet.
+> * The external storage accounts (`stalimex`, `stalexapp`), are not bound to any vnet and accessible (with SAS token) via internet.
 > * The internal storage account (`stalexint`) is bound to the workspace vnet, so ONLY TRE Users/Researchers on that workspace can access it
-> * The (import) in-progress storage account (`stalipim`) is bound to the TRE CORE vnet
+> * The (import) in-progress storage account (`stalimip`) is bound to the TRE CORE vnet
 > * The (export) in-progress storage account (`stalexip`) is bound to the workspace vnet
-> * The (import) rejected storage account (`stalrejim`) is bound to the TRE CORE vnet
+> * The (import) rejected storage account (`stalimrej`) is bound to the TRE CORE vnet
 > * The (export) rejected storage account (`stalexrej`) is bound to the TRE CORE vnet
 > * The (import) approved storage account (`stalimapp`) is bound to the workspace vnet
