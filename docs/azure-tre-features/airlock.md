@@ -6,7 +6,7 @@ The airlock feature brings several actions: ingress/egress Mechanism; Data movem
 The Airlock feature aims to address these goals:
 * Prevent unauthorised data export (or import).
 * Provide a process to allow approved data into the security boundary of a TRE Workspace.
-* TRE provides functionality to track requests and decisions, supporting cycles of revision, approval and rejection.
+* TRE provides functionality to track requests and decisions, supporting cycle of revision, approval or rejection.
 * Data being imported with an airlock import process must be automatically scanned for security purpose.
 * Data bein exported or imported must ne manually reviewed bu the Workspace Owner.
 * Notify the involved users of the process progress and/or required actions
@@ -21,7 +21,7 @@ The Airlock feature will create events on every miningful step of the processes.
 The Ingress/Egress Mechanism allows a TRE user to start `import` or `export` process to a given workspace. The mechanism provides a set of milestones that must be reached in order to execute a process end to end. This milestones end up to be states:
 
 a. **Draft**: An import/export process has been created but has not yet started. The TRE User/Researcher has now access to a storage location and he must identify the data to be processed. At this point the airlock import/export processes allow a single file to be processed. However a compressed file may be used (zip).
-b. **Submitted**:
+b. **Submitted**: The request was submitted by the ressearcher (not yet processed).
 b. **In-progress**: The import/export process has now started and is in-progress.
 c. **Approved**: The import/export process has been approved. At this state, data has been securely verified and manually reviewed. The data is now in its final location. For an import process the data is now available in the TRE workspace. It can be accessed by the requestor from within the workspace.
 d. **Rejected**: The import/export process has been rejected. Either the data in the process was rejected manually be the Workspace Owner or the security analysis found issues, hence quarantining the data.
@@ -83,7 +83,7 @@ The Airlock feature is supported by infrastructure at the TRE and workspace leve
 TRE: 
 * `stalappexp` - storage (st) airlock (al) approved (app) export (ex)
 * `stalexim` - storage (st) airlock (al) external (ex) import (im)
-* `stalipim` - storage (st) airlock (al) in-progress (ip) import (im)
+* `stalimip` - storage (st) airlock (al) import (im) in-progress (ip) import
 * `stalrejim` - storage (st) airlock (al) rejected (rej) import (im)
 
 Workspace
@@ -92,8 +92,10 @@ Workspace
 * `stalexrej` - workspace storage (st) airlock (al) export (ex) rejected (rej)
 * `stalimapp` - workspace storage (st) airlock (al) import (im) approved (app)
 
-> * The external storage account (`stalexim`), is not bound to any vnet and accessible (with SAS token) via internet.
+> * The external storage accounts (`stalexim`, `stalappexp`), are not bound to any vnet and accessible (with SAS token) via internet.
 > * The internal storage account (`stalexint`) is bound to the workspace vnet, so ONLY TRE Users/Researchers on that workspace can access it
 > * The (import) in-progress storage account (`stalipim`) is bound to the TRE CORE vnet
 > * The (export) in-progress storage account (`stalexip`) is bound to the workspace vnet
-
+> * The (import) rejected storage account (`stalrejim`) is bound to the TRE CORE vnet
+> * The (export) rejected storage account (`stalexrej`) is bound to the TRE CORE vnet
+> * The (import) approved storage account (`stalimapp`) is bound to the workspace vnet
