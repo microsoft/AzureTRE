@@ -12,5 +12,3 @@ do
     dir=$(dirname $i)
     ( cd "$dir" && terraform init -upgrade=true -backend=false )
 done
-
-

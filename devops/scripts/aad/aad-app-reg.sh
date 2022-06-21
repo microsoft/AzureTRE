@@ -709,9 +709,7 @@ if [[ $createAutomationAccount -ne 0 ]]; then
   if [[ $grantAdminConsent -eq 1 ]]; then
       echo "Granting admin consent for ${appName} Automation Admin App (ClientID ${automationAppId})"
       wait_for_new_app_registration "${automationAppId}"
-      adminConsentResponse=$(az ad app permission admin-consent --id "${automationAppId}")
-      echo "Response:"
-      echo "${adminConsentResponse}"
+      adminConsentResponse=$(az ad app permission admin-consent --id "${automationAppId}") || null
       if [ -z "${adminConsentResponse}" ]; then
           echo "Admin consent failed, trying once more: ${adminConsentResponse}"
           az ad app permission admin-consent --id "${automationAppId}"
