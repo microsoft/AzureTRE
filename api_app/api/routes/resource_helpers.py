@@ -54,7 +54,7 @@ def mask_sensitive_properties(properties: Dict[str, Any], template: ResourceTemp
     for prop_name, prop in template.properties.items():
         if prop.sensitive is True and prop_name in properties:
             updated_resource_parameters = {**properties}
-            updated_resource_parameters[prop_name] = "REDACTED"
+            updated_resource_parameters[prop_name] = strings.REDACTED_SENSITIVE_VALUE
     return updated_resource_parameters
 
 

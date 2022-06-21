@@ -7,6 +7,7 @@ from fastapi import HTTPException, status
 
 from api.routes.resource_helpers import save_and_deploy_resource, send_uninstall_message, mask_sensitive_properties
 from tests_ma.test_api.conftest import create_test_user
+from resources import strings
 
 from db.repositories.resources import ResourceRepository
 from db.repositories.operations import OperationRepository
@@ -255,7 +256,7 @@ class TestResourceHelpers:
             action=RequestAction.Install)
 
         # Checking that the item saved had a secret redacted
-        resource.properties["secret"] = "REDACTED"
+        resource.properties["secret"] = strings.REDACTED_SENSITIVE_VALUE
         resource_repo.save_item.assert_called_once_with(resource)
 
     def test_sensitive_properties_get_masked(self, basic_resource_template):
@@ -263,4 +264,4 @@ class TestResourceHelpers:
 
         properties = resource.properties
         masked_resource = mask_sensitive_properties(properties, basic_resource_template)
-        assert masked_resource["secret"] == "REDACTED"
+        assert masked_resource["secret"] == strings.REDACTED_SENSITIVE_VALUE
