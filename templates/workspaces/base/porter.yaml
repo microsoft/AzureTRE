@@ -1,6 +1,6 @@
 ---
 name: tre-workspace-base
-version: 0.3.8
+version: 0.3.9
 description: "A base Azure TRE workspace"
 registry: azuretre
 
@@ -157,6 +157,8 @@ upgrade:
       command: echo
       arguments:
         - "This workspace does not implement upgrade action"
+        - "Please be aware that parameter client_secret are redacted"
+        - "when passed in here from the API"
 
 uninstall:
   - terraform:
