@@ -4,7 +4,7 @@ from typing import List
 
 from azure.cosmos import CosmosClient
 from pydantic import parse_obj_as
-from api_app.models.domain.request_action import RequestAction
+from models.domain.request_action import RequestAction
 from models.domain.resource import ResourceType
 from db.repositories.resources import ResourceRepository
 from models.domain.resource_template import ResourceTemplate
