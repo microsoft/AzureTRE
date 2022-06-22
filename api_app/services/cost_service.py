@@ -103,18 +103,18 @@ class CostService:
         if cost_key in query_result_dict.keys():
             costs = query_result_dict[cost_key]
             if granularity == GranularityEnum.none:
-                core_service_cost = costs[0]
-                cost_rows.append(CostRow(**dict({
-                    "cost": core_service_cost[ResultColumn.Cost.value],
-                    "currency": core_service_cost[ResultColumn.Currency.value],
-                    "date": None
-                })))
-            else:
-                for core_service_cost in costs:
+                for cost in costs:
                     cost_rows.append(CostRow(**dict({
-                        "cost": core_service_cost[ResultColumnDaily.Cost.value],
-                        "currency": core_service_cost[ResultColumnDaily.Currency.value],
-                        "date": self.__parse_cost_management_date_value(core_service_cost[ResultColumnDaily.Date.value])
+                        "cost": cost[ResultColumn.Cost.value],
+                        "currency": cost[ResultColumn.Currency.value],
+                        "date": None
+                    })))
+            else:
+                for cost in costs:
+                    cost_rows.append(CostRow(**dict({
+                        "cost": cost[ResultColumnDaily.Cost.value],
+                        "currency": cost[ResultColumnDaily.Currency.value],
+                        "date": self.__parse_cost_management_date_value(cost[ResultColumnDaily.Date.value])
                     })))
 
         return cost_rows

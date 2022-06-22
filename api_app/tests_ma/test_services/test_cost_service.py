@@ -20,6 +20,7 @@ def test_query_tre_costs_with_granularity_none_returns_correct_cost_report(clien
         [4.8, '"tre_shared_service_id":"f16d0324-9027-4448-b69b-2d48d925e6c0"', 'USD'],
         [1.8, '"tre_workspace_id":"19b7ce24-aa35-438c-adf6-37e6762911a6"', 'USD'],
         [2.8, '"tre_workspace_id":"d680d6b7-d1d9-411c-9101-0793da980c81"', 'USD'],
+        [5.8, '"tre_workspace_id":"d680d6b7-d1d9-411c-9101-0793da980c81"', 'ILS'],
     ]
 
     client_mock.return_value.query.usage.return_value = query_result
@@ -50,8 +51,12 @@ def test_query_tre_costs_with_granularity_none_returns_correct_cost_report(clien
     assert cost_report.workspaces[0].costs[0].cost == 1.8
     assert cost_report.workspaces[1].id == "d680d6b7-d1d9-411c-9101-0793da980c81"
     assert cost_report.workspaces[1].name == "the workspace display name2"
-    assert len(cost_report.workspaces[1].costs) == 1
+    assert len(cost_report.workspaces[1].costs) == 2
     assert cost_report.workspaces[1].costs[0].cost == 2.8
+    assert cost_report.workspaces[1].costs[0].currency == "USD"
+    assert cost_report.workspaces[1].costs[1].cost == 5.8
+    assert cost_report.workspaces[1].costs[1].currency == "ILS"
+
 
 
 @patch('db.repositories.workspaces.WorkspaceRepository')
@@ -68,6 +73,7 @@ def test_query_tre_costs_with_granularity_daily_returns_correct_cost_report(clie
         [44.5, 20220501, '"tre_id":"guy22"', 'USD'],
         [44.5, 20220502, '"tre_id":"guy22"', 'USD'],
         [44.5, 20220503, '"tre_id":"guy22"', 'USD'],
+        [12.5, 20220503, '"tre_id":"guy22"', 'ILS'],
 
         [3.8, 20220501, '"tre_shared_service_id":"848e8eb5-0df6-4d0f-9162-afd9a3fa0631"', 'USD'],
         [4.8, 20220502, '"tre_shared_service_id":"848e8eb5-0df6-4d0f-9162-afd9a3fa0631"', 'USD'],
@@ -204,10 +210,13 @@ def test_query_tre_costs_with_granularity_none_and_display_name_data_returns_tem
     query_result.rows = [
         [37.6, '"tre_core_service_id":"guy22"', 'USD'],
         [44.5, '"tre_id":"guy22"', 'USD'],
+        [144.5, '"tre_id":"guy22"', 'ILS'],
         [6.8, '"tre_shared_service_id":"848e8eb5-0df6-4d0f-9162-afd9a3fa0631"', 'USD'],
         [4.8, '"tre_shared_service_id":"f16d0324-9027-4448-b69b-2d48d925e6c0"', 'USD'],
+        [14.8, '"tre_shared_service_id":"f16d0324-9027-4448-b69b-2d48d925e6c0"', 'ILS'],
         [1.8, '"tre_workspace_id":"19b7ce24-aa35-438c-adf6-37e6762911a6"', 'USD'],
         [2.8, '"tre_workspace_id":"d680d6b7-d1d9-411c-9101-0793da980c81"', 'USD'],
+        [62.8, '"tre_workspace_id":"d680d6b7-d1d9-411c-9101-0793da980c81"', 'ILS'],
     ]
 
     client_mock.return_value.query.usage.return_value = query_result
@@ -229,8 +238,11 @@ def test_query_tre_costs_with_granularity_none_and_display_name_data_returns_tem
     assert cost_report.shared_services[0].costs[0].cost == 6.8
     assert cost_report.shared_services[1].id == "f16d0324-9027-4448-b69b-2d48d925e6c0"
     assert cost_report.shared_services[1].name == "tre-shared-service-gitea"
-    assert len(cost_report.shared_services[1].costs) == 1
+    assert len(cost_report.shared_services[1].costs) == 2
     assert cost_report.shared_services[1].costs[0].cost == 4.8
+    assert cost_report.shared_services[1].costs[0].currency == "USD"
+    assert cost_report.shared_services[1].costs[1].cost == 14.8
+    assert cost_report.shared_services[1].costs[1].currency == "ILS"
     assert len(cost_report.workspaces) == 2
     assert cost_report.workspaces[0].id == "19b7ce24-aa35-438c-adf6-37e6762911a6"
     assert cost_report.workspaces[0].name == "tre-workspace-base"
@@ -238,8 +250,12 @@ def test_query_tre_costs_with_granularity_none_and_display_name_data_returns_tem
     assert cost_report.workspaces[0].costs[0].cost == 1.8
     assert cost_report.workspaces[1].id == "d680d6b7-d1d9-411c-9101-0793da980c81"
     assert cost_report.workspaces[1].name == "tre-workspace-base"
-    assert len(cost_report.workspaces[1].costs) == 1
+    assert len(cost_report.workspaces[1].costs) == 2
     assert cost_report.workspaces[1].costs[0].cost == 2.8
+    assert cost_report.workspaces[1].costs[0].currency == "USD"
+    assert cost_report.workspaces[1].costs[1].cost == 62.8
+    assert cost_report.workspaces[1].costs[1].currency == "ILS"
+
 
 
 def __set_workspace_repo_mock_return_value(workspace_repo_mock):
