@@ -1,9 +1,59 @@
+import os
+import datetime
 import logging
 
-import datetime
+from azure.core.exceptions import ResourceExistsError
+from azure.identity import DefaultAzureCredential
+from azure.mgmt.storage import StorageManagementClient
 from azure.storage.blob import ContainerSasPermissions, generate_container_sas, BlobServiceClient
 
 from exceptions.AirlockInvalidContainerException import AirlockInvalidContainerException
+
+
+class StorageConnectionMetadata:
+    account_name: str
+    account_key: str
+    connection_string: str
+
+    def __init__(self, account_name: str, account_key: str, connection_string: str):
+        self.account_name = account_name
+        self.account_key = account_key
+        self.connection_string = connection_string
+
+
+def create_container(blob_service_client: BlobServiceClient, request_id: str):
+    try:
+        container_name = request_id
+        blob_service_client.create_container(container_name)
+        logging.info(f'Container created for request id: {request_id}.')
+    except ResourceExistsError as e:
+        logging.info(f'Did not create a new container. Container already exists for request id: {request_id}.')
+
+
+def get_storage_connection_string(sa_name: str, resource_group: str, storage_client: StorageManagementClient):
+    storage_keys = storage_client.storage_accounts.list_keys(resource_group, sa_name)
+    storage_keys = {v.key_name: v.value for v in storage_keys.keys}
+    storage_account_key = storage_keys['key1']
+
+    conn_string_base = "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName={};AccountKey={}"
+    sa_connection_string = conn_string_base.format(sa_name, storage_account_key)
+
+    return StorageConnectionMetadata(sa_name, storage_account_key, sa_connection_string)
+
+
+def get_storage_management_client():
+    try:
+        subscription_id = os.environ["AZURE_SUBSCRIPTION_ID"]
+    except KeyError as e:
+        logging.error(f'Missing environment variable: {e}')
+        raise
+
+    managed_identity = os.environ.get("MANAGED_IDENTITY_CLIENT_ID")
+    if managed_identity:
+        logging.info("using the Airlock processor's managed identity to get build storage management client")
+    credential = DefaultAzureCredential(managed_identity_client_id=os.environ["MANAGED_IDENTITY_CLIENT_ID"], exclude_shared_token_cache_credential=True) if managed_identity else DefaultAzureCredential()
+
+    return StorageManagementClient(credential, subscription_id)
 
 
 def copy_data(source_account_name: str, source_account_key: str, sa_source_connection_string: str, sa_dest_connection_string: str, request_id: str):
