@@ -11,9 +11,14 @@ class GranularityEnum(str, Enum):
     none = "None"
 
 
-def generate_cost_row_dict_example(granularity: GranularityEnum):
+class CurrencyEnum(str, Enum):
+    USD = "USD"
+    ILS = "ILS"
+
+
+def generate_cost_row_dict_example(granularity: GranularityEnum, currency: CurrencyEnum):
     return dict({
-        "cost": random.uniform(0, 365), "currency": "USD", "date":
+        "cost": random.uniform(0, 365), "currency": currency, "date":
             (datetime.today() - timedelta(
                 days=-1 * random.randint(0, 1000))).date() if granularity == GranularityEnum.daily else None
     })
@@ -23,18 +28,19 @@ def generate_cost_item_dict_example(name: str, granularity: GranularityEnum):
     cost_item_dict = dict(
         id=str(uuid.uuid4()),
         name=name,
-        costs=[generate_cost_row_dict_example(granularity)]
+        costs=[generate_cost_row_dict_example(granularity, CurrencyEnum.USD), generate_cost_row_dict_example(granularity, CurrencyEnum.ILS)]
     )
 
     if granularity == GranularityEnum.daily:
-        cost_item_dict["costs"].append(generate_cost_row_dict_example(granularity))
-        cost_item_dict["costs"].append(generate_cost_row_dict_example(granularity))
+        cost_item_dict["costs"].append(generate_cost_row_dict_example(granularity, CurrencyEnum.USD))
+        cost_item_dict["costs"].append(generate_cost_row_dict_example(granularity, CurrencyEnum.USD))
+        cost_item_dict["costs"].append(generate_cost_row_dict_example(granularity, CurrencyEnum.ILS))
 
     return cost_item_dict
 
 
 def generate_cost_row_stub(granularity: GranularityEnum):
-    return CostRow(**generate_cost_row_dict_example(granularity))
+    return CostRow(**generate_cost_row_dict_example(granularity, CurrencyEnum.USD))
 
 
 def generate_cost_item_stub(name: str, granularity: GranularityEnum):
@@ -53,7 +59,7 @@ def generate_cost_item_stub(name: str, granularity: GranularityEnum):
 
 def generate_cost_report_dict_example(granularity: GranularityEnum):
     cost_report = dict(
-        core_services=[generate_cost_row_dict_example(granularity)],
+        core_services=[generate_cost_row_dict_example(granularity, CurrencyEnum.USD)],
         shared_services=[generate_cost_item_dict_example("Gitea", granularity),
                          generate_cost_item_dict_example("Nexus", granularity),
                          generate_cost_item_dict_example("Firewall", granularity)],
@@ -63,8 +69,8 @@ def generate_cost_report_dict_example(granularity: GranularityEnum):
     )
 
     if granularity == GranularityEnum.daily:
-        cost_report["core_services"].append(generate_cost_row_dict_example(granularity))
-        cost_report["core_services"].append(generate_cost_row_dict_example(granularity))
+        cost_report["core_services"].append(generate_cost_row_dict_example(granularity, CurrencyEnum.USD))
+        cost_report["core_services"].append(generate_cost_row_dict_example(granularity, CurrencyEnum.ILS))
 
     return cost_report
 
@@ -91,15 +97,15 @@ def generate_workspace_service_cost_report_dict_example(name: str, granularity: 
     cost_report = dict(
         id=str(uuid.uuid4()),
         name=name,
-        costs=[generate_cost_row_dict_example(granularity)],
+        costs=[generate_cost_row_dict_example(granularity, CurrencyEnum.USD)],
         user_resources=[generate_cost_item_dict_example("VM1", granularity),
                         generate_cost_item_dict_example("VM2", granularity),
                         generate_cost_item_dict_example("VM3", granularity)]
     )
 
     if granularity == GranularityEnum.daily:
-        cost_report["costs"].append(generate_cost_row_dict_example(granularity))
-        cost_report["costs"].append(generate_cost_row_dict_example(granularity))
+        cost_report["costs"].append(generate_cost_row_dict_example(granularity, CurrencyEnum.USD))
+        cost_report["costs"].append(generate_cost_row_dict_example(granularity, CurrencyEnum.ILS))
 
     return cost_report
 
@@ -108,13 +114,13 @@ def generate_workspace_cost_report_dict_example(name: str, granularity: Granular
     cost_report = dict(
         id=str(uuid.uuid4()),
         name=name,
-        costs=[generate_cost_row_dict_example(granularity)],
+        costs=[generate_cost_row_dict_example(granularity, CurrencyEnum.USD)],
         workspace_services=[generate_workspace_service_cost_report_dict_example("Guacamole", granularity)]
     )
 
     if granularity == GranularityEnum.daily:
-        cost_report["costs"].append(generate_cost_row_dict_example(granularity))
-        cost_report["costs"].append(generate_cost_row_dict_example(granularity))
+        cost_report["costs"].append(generate_cost_row_dict_example(granularity, CurrencyEnum.USD))
+        cost_report["costs"].append(generate_cost_row_dict_example(granularity, CurrencyEnum.ILS))
 
     return cost_report
 
