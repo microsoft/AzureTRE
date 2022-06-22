@@ -9,12 +9,11 @@ FROM base as test
 COPY requirements-dev.txt .
 RUN pip install --no-cache-dir -r /requirements-dev.txt
 COPY . /app
-WORKDIR /app
-RUN ./run_tests_and_exit_succesfully.sh
+RUN /app/run_tests_and_exit_succesfully.sh
 
 
 FROM scratch as test-results
-COPY --from=test /test-results/* .
+COPY --from=test /test-results/* /
 
 
 FROM base as runtime
