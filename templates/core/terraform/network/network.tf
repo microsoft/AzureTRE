@@ -83,7 +83,7 @@ resource "azurerm_subnet" "airlock_processor" {
     }
   }
 
-  service_endpoints = ["Microsoft.ServiceBus"]
+  service_endpoints = ["Microsoft.Storage"]
 
 }
 

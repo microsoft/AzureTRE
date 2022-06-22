@@ -19,9 +19,3 @@ data "azurerm_servicebus_topic" "blob_created" {
   resource_group_name = local.core_resource_group_name
   namespace_name      = data.azurerm_servicebus_namespace.airlock_sb.name
 }
-
-data "azurerm_subnet" "airlockprocessor" {
-  resource_group_name  = local.core_resource_group_name
-  virtual_network_name = local.core_vnet
-  name                 = "AirlockProcessorSubnet"
-}
