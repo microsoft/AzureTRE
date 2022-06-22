@@ -77,4 +77,4 @@ Open your browser and navigate to the `/api/docs` route of the API:  `https://<a
 * Deploy a new workspace for Azure Machine Learning
 * [Enable users to access the Azure TRE instance](../auth.md#enabling-users)
 * [Create a new workspace template](../../tre-workspace-authors/authoring-workspace-templates.md)
-* [Tear-down Azure TRE](tear-down.md)
+* [Tear-down Azure TRE](../tear-down.md)
