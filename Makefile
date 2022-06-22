@@ -429,14 +429,14 @@ setup-local-debugging:
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
 	&& pushd ${MAKEFILE_DIR}/templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/templates/core/private.env \
-	&& . ${MAKEFILE_DIR}/scripts/setup_local_debugging.sh
+	&& . ${MAKEFILE_DIR}/devops/scripts/setup_local_debugging.sh
 
 auth:
 	$(call target_title,"Setting up Azure Active Directory") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
-	&& . ${MAKEFILE_DIR}/scripts/create_aad_assets.sh
+	&& . ${MAKEFILE_DIR}/devops/scripts/create_aad_assets.sh
 
 show-core-output:
 	$(call target_title,"Display TRE core output") \
@@ -450,10 +450,12 @@ api-healthcheck:
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/templates/core/private.env \
 	&& ${MAKEFILE_DIR}/devops/scripts/api_healthcheck.sh
 
-db-migrate:
+db-migrate: api-healthcheck
 	$(call target_title,"Migrating Cosmos Data") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker \
 	&& pushd ${MAKEFILE_DIR}/templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/templates/core/private.env \
-	&& python ${MAKEFILE_DIR}/scripts/db_migrations.py
+	&& . ${MAKEFILE_DIR}/devops/scripts/get_access_token.sh \
+	&& . ${MAKEFILE_DIR}/devops/scripts/migrate_state_store.sh --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}"

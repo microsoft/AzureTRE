@@ -33,7 +33,7 @@ There are two mechanisms for creating Workspace Applications
 Example on how to run the script:
 
 ```bash
-./scripts/aad/aad-app-reg.sh \
+./devops/scripts/aad/aad-app-reg.sh \
     --name '<TRE_ID> - Workspace 2' \
     --workspace \
     --swaggerui-clientid <SWAGGER_UI_CLIENT_ID> \
