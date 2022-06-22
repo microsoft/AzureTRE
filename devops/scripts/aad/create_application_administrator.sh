@@ -89,9 +89,9 @@ source "${DIR}/grant_admin_consent.sh"
 # shellcheck disable=SC1091
 source "${DIR}/wait_for_new_app_registration.sh"
 # shellcheck disable=SC1091
-source "${DIR}/wait_for_new_service_principal.sh"
-# shellcheck disable=SC1091
 source "${DIR}/get_msgraph_access.sh"
+# shellcheck disable=SC1091
+source "${DIR}/create_or_update_service_principal.sh"
 
 # Get an existing object if it's been created before.
 appObjectId=""
@@ -124,12 +124,12 @@ JSON
 
 # Is the app already registered?
 if [[ -n ${appObjectId} ]]; then
-    echo "Updating app registration with ID ${appObjectId}"
+    echo "Updating \"${appName}\" with ObjectId \"${appObjectId}\""
     az rest --method PATCH --uri "${msGraphUri}/applications/${appObjectId}" --headers Content-Type=application/json --body "${appDefinition}"
     appId=$(az ad app show --id "${appObjectId}" --query "appId" --output tsv --only-show-errors)
-    echo "App registration with ID ${appId} updated"
+    echo "App registration with ID \"${appId}\" updated"
 else
-    echo "Creating a new app registration, ${appName}"
+    echo "Creating a new app registration, \"${appName}\""
     appId=$(az rest --method POST --uri "${msGraphUri}/applications" --headers Content-Type=application/json --body "${appDefinition}" --output tsv --query "appId")
 
     # Poll until the app registration is found in the listing.
@@ -139,47 +139,17 @@ fi
 # Make the current user an owner of the application.
 az ad app owner add --id "${appId}" --owner-object-id "$currentUserId" --only-show-errors
 
-# See if a service principal already exists
+# Create a Service Principal for the app.
+spPassword=$(create_or_update_service_principal "${appId}" "${appName}")
 spId=$(az ad sp list --filter "appId eq '${appId}'" --query '[0].objectId' --output tsv --only-show-errors)
 
-resetPassword=0
-
-# If not, create a new service principal
-if [[ -z "$spId" ]]; then
-    spId=$(az ad sp create --id "${appId}" --query 'objectId' --output tsv --only-show-errors)
-    echo "Creating a new service principal, for '${appName}' app, with ID ${spId}"
-    wait_for_new_service_principal "${spId}"
-    az ad app owner add --id "${appId}" --owner-object-id "${spId}"
-    resetPassword=1
-else
-    echo "Service principal for the app already exists."
-    echo "Existing passwords (client secrets) cannot be queried. To view the password it needs to be reset."
-    read -p "Do you wish to reset the ${appName} app password (y/N)? " -n 1 -r
-    echo
-
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        resetPassword=1
-    fi
-fi
-
-spPassword=""
-
-if [[ "$resetPassword" == 1 ]]; then
-    # Reset the app password (client secret) and display it
-    spPassword=$(az ad sp credential reset --name "${appId}" --query 'password' --output tsv --only-show-errors)
-    echo "'${appName}' app password (client secret): ${spPassword}"
-fi
-
-# This tag ensures the app is listed in "Enterprise applications"
-az ad sp update --id "$spId" --set tags="['WindowsAzureActiveDirectoryIntegratedApp']" --only-show-errors
-
 # needed to make the API permissions change effective, this must be done after SP creation...
-echo "running 'az ad app permission grant' to make changes effective"
+echo "Running 'az ad app permission grant' to make changes effective."
 az ad app permission grant --id "${appId}" --api "${msGraphAppId}" --only-show-errors
 
 # Grant admin consent on the required resource accesses (Graph API)
 if [[ $grantAdminConsent -eq 1 ]]; then
-    echo "Granting admin consent for '${appName} app (service principal ID ${spId}) - NOTE: Directory admin privileges required for this step"
+    echo "Granting admin consent for '${appName}' app (service principal ID ${spId}) - NOTE: Directory admin privileges required for this step"
     wait_for_new_service_principal "${spId}"
     grant_admin_consent "${spId}" "$msGraphObjectId" "${applicationPermissionId}"
 fi

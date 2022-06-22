@@ -23,5 +23,5 @@ function wait_for_new_app_registration()
       exit 1
   fi
 
-  echo "App registration with ID ${appId} found"
+  echo "App registration with ID \"${appId}\" found"
 }

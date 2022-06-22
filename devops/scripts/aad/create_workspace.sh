@@ -33,6 +33,8 @@ fi
 # Get the directory that this script is in
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
+declare resetPassword=0
+declare spPassword=""
 declare grantAdminConsent=0
 declare currentUserId=""
 declare swaggerClientId=""
@@ -94,7 +96,7 @@ source "${DIR}/grant_admin_consent.sh"
 # shellcheck disable=SC1091
 source "${DIR}/wait_for_new_app_registration.sh"
 # shellcheck disable=SC1091
-source "${DIR}/wait_for_new_service_principal.sh"
+source "${DIR}/create_or_update_service_principal.sh"
 # shellcheck disable=SC1091
 source "${DIR}/get_msgraph_access.sh"
 
@@ -210,63 +212,30 @@ JSON
 
 # Is the API app already registered?
 if [[ -n ${appObjectId} ]]; then
-    echo "Updating API app registration with ID ${appObjectId}"
-    az rest --method PATCH --uri "${msGraphUri}/applications/${appObjectId}" --headers Content-Type=application/json --body "${apiApp}"
-    apiAppId=$(az ad app show --id "${appObjectId}" --query "appId" --output tsv --only-show-errors)
-    echo "API app registration with ID ${apiAppId} updated"
+  echo "Updating \"${appName}\" with ObjectId \"${appObjectId}\"."
+  az rest --method PATCH --uri "${msGraphUri}/applications/${appObjectId}" --headers Content-Type=application/json --body "${apiApp}"
+  workspaceAppId=$(az ad app show --id "${appObjectId}" --query "appId" --output tsv --only-show-errors)
+  echo "Workspace app registration with ID \"${workspaceAppId}\" updated."
 else
-    echo "Creating a new API app registration, ${appName}"
-    apiAppId=$(az rest --method POST --uri "${msGraphUri}/applications" --headers Content-Type=application/json --body "${apiApp}" --output tsv --query "appId")
-    echo "AppId: ${apiAppId}"
+  echo "Creating \"${appName}\" app registration."
+  workspaceAppId=$(az rest --method POST --uri "${msGraphUri}/applications" --headers Content-Type=application/json --body "${apiApp}" --output tsv --query "appId")
 
-    # Poll until the app registration is found in the listing.
-    wait_for_new_app_registration "${apiAppId}"
+  # Poll until the app registration is found in the listing.
+  wait_for_new_app_registration "${workspaceAppId}"
 
-    # Update to set the identifier URI.
-    echo "Updating identifier URI 'api://${apiAppId}'"
-    az ad app update --id "${apiAppId}" --identifier-uris "api://${apiAppId}" --only-show-errors
+  # Update to set the identifier URI.
+  az ad app update --id "${workspaceAppId}" --identifier-uris "api://${workspaceAppId}" --only-show-errors
 fi
 
 # Make the current user an owner of the application.
-az ad app owner add --id "${apiAppId}" --owner-object-id "$currentUserId" --only-show-errors
+az ad app owner add --id "${workspaceAppId}" --owner-object-id "$currentUserId" --only-show-errors
 
-# See if a service principal already exists
-spId=$(az ad sp list --filter "appId eq '${apiAppId}'" --query '[0].objectId' --output tsv --only-show-errors)
-
-resetPassword=0
-
-# If not, create a new service principal
-if [[ -z "$spId" ]]; then
-    spId=$(az ad sp create --id "${apiAppId}" --query 'objectId' --output tsv --only-show-errors)
-    echo "Creating a new service principal, for '${appName}' app, with ID ${spId}"
-    wait_for_new_service_principal "${spId}"
-    az ad app owner add --id "${apiAppId}" --owner-object-id "${spId}" --only-show-errors
-    resetPassword=1
-else
-    echo "Service principal for the app already exists."
-    echo "Existing passwords (client secrets) cannot be queried. To view the password it needs to be reset."
-    read -p "Do you wish to reset the ${appName} app password (y/N)? " -n 1 -r
-    echo
-
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        resetPassword=1
-    fi
-fi
-
-spPassword=""
-
-if [[ "$resetPassword" == 1 ]]; then
-    # Reset the app password (client secret) and display it
-    spPassword=$(az ad sp credential reset --name "${apiAppId}" --query 'password' --output tsv --only-show-errors)
-    echo "'${appName}' app password (client secret): ${spPassword}"
-fi
-
-# This tag ensures the app is listed in "Enterprise applications"
-az ad sp update --id "$spId" --set tags="['WindowsAzureActiveDirectoryIntegratedApp']" --only-show-errors
+# Create a Service Principal for the app.
+spPassword=$(create_or_update_service_principal "${workspaceAppId}" "${appName}")
 
 # needed to make the API permissions change effective, this must be done after SP creation...
-echo "running 'az ad app permission grant' to make changes effective"
-az ad app permission grant --id "${apiAppId}" --api "${msGraphAppId}" --only-show-errors
+echo "Running 'az ad app permission grant' to make changes effective."
+az ad app permission grant --id "${workspaceAppId}" --api "${msGraphAppId}" --only-show-errors
 
 # The Swagger UI (which was created as part of the API) needs to also have access to this Workspace
 echo "Searching for existing Swagger application (${swaggerClientId})."
@@ -281,8 +250,8 @@ existingResourceAccess=$(az rest \
   --method GET \
   --uri "${msGraphUri}/applications/${swaggerObjectId}" \
   --headers Content-Type=application/json -o json \
-  | jq -r --arg apiAppId "${apiAppId}" \
-  'del(.requiredResourceAccess[] | select(.resourceAppId==$apiAppId)) | .requiredResourceAccess' \
+  | jq -r --arg workspaceAppId "${workspaceAppId}" \
+  'del(.requiredResourceAccess[] | select(.resourceAppId==$workspaceAppId)) | .requiredResourceAccess' \
   )
 
 # Add the existing resource access so we don't remove any existing permissions.
@@ -296,7 +265,7 @@ swaggerWorkspaceAccess=$(jq -c . << JSON
             "type": "Scope"
         }
     ],
-    "resourceAppId": "${apiAppId}"
+    "resourceAppId": "${workspaceAppId}"
   }],
   "existingAccess": ${existingResourceAccess}
 }
@@ -313,7 +282,7 @@ az rest --method PATCH \
   --body "${requiredResourceAccess}"
 
 echo "Grant Swagger UI delegated access '${appName}' (Client ID ${swaggerClientId})"
-az ad app permission grant --id "${swaggerClientId}" --api "${apiAppId}" --scope "user_impersonation" --only-show-errors
+az ad app permission grant --id "${swaggerClientId}" --api "${workspaceAppId}" --scope "user_impersonation" --only-show-errors
 
 if [[ -n ${automationClientId} ]]; then
   echo "Searching for existing Automation application (${automationClientId})."
@@ -331,8 +300,8 @@ if [[ -n ${automationClientId} ]]; then
     --method GET \
     --uri "${msGraphUri}/applications/${automationAppObjectId}" \
     --headers Content-Type=application/json -o json \
-    | jq -r --arg apiAppId "${apiAppId}" \
-    'del(.requiredResourceAccess[] | select(.resourceAppId==$apiAppId)) | .requiredResourceAccess' \
+    | jq -r --arg workspaceAppId "${workspaceAppId}" \
+    'del(.requiredResourceAccess[] | select(.resourceAppId==$workspaceAppId)) | .requiredResourceAccess' \
     )
 
   # Add the existing resource access so we don't remove any existing permissions.
@@ -350,7 +319,7 @@ if [[ -n ${automationClientId} ]]; then
                 "type": "Role"
             }
         ],
-        "resourceAppId": "${apiAppId}"
+        "resourceAppId": "${workspaceAppId}"
     }
   ],
   "existingAccess": ${existingResourceAccess}
@@ -374,6 +343,7 @@ JSON
   if [[ $grantAdminConsent -eq 1 ]]; then
       echo "Granting admin consent for ${automationAppName} (Client ID ${automationClientId})"
       az ad app permission admin-consent --id "${automationClientId}" --only-show-errors
+      # We call this twice as there is a bug in the Azure CLI where the first call doesn't work.
       az ad app permission list --id "${automationClientId}" --only-show-errors
       az ad app permission admin-consent --id "${automationClientId}" --only-show-errors
   fi
@@ -385,7 +355,7 @@ AAD_TENANT_ID="$(az account show --output json | jq -r '.tenantId')"
 
 ** Please copy the following variables to /templates/core/.env **
 
-WORKSPACE_API_CLIENT_ID="${apiAppId}"
+WORKSPACE_API_CLIENT_ID="${workspaceAppId}"
 WORKSPACE_API_CLIENT_SECRET="${spPassword}"
 
 ENV_VARS
