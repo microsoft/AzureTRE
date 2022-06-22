@@ -111,11 +111,6 @@ resource "azurerm_storage_account" "sa_export_inprogress" {
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
 
-  network_rules {
-    default_action = var.enable_local_debugging ? "Allow" : "Deny"
-    bypass         = ["AzureServices"]
-  }
-
   tags = merge(
     var.tre_workspace_tags,
     {
@@ -124,6 +119,16 @@ resource "azurerm_storage_account" "sa_export_inprogress" {
   )
 
   lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_storage_account_network_rules" "sa_export_inprogress_rules" {
+  storage_account_id = azurerm_storage_account.sa_export_inprogress.id
+
+  # When the Airlock procssor tried to copy data from the export in-progress SA to the Export approved SA, its not using the PE, as the destination is public, hence, allowing this subnet is mandatory
+  virtual_network_subnet_ids = data.azurerm_subnet.airlockprocessor.id
+
+  default_action = var.enable_local_debugging ? "Allow" : "Deny"
+  bypass         = ["AzureServices"]
 }
 
 
