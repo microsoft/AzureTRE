@@ -676,10 +676,10 @@ jobs:
           TRE_ID: "${{ secrets.TRE_ID }}"
           LOCATION: "${{ secrets.LOCATION }}"
 
-      - name: Migrate State Store
+      - name: API Healthcheck
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: "make db-migrate"
+          COMMAND: "make api-healthcheck"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
