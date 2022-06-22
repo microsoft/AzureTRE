@@ -8,7 +8,7 @@ list="$(find . -type f -name "*.hcl")"
 for i in $list
 do
     rm "$i"
-    echo "Updating lock file" + "$i"
+    echo "Updating lock file $i"
     dir=$(dirname "$i")
     ( cd "$dir" && terraform init -upgrade=true -backend=false )
 done
