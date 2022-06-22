@@ -1,8 +1,7 @@
-from datetime import date, datetime
+from datetime import datetime
 from enum import Enum
 from typing import Dict
 
-import pytz
 from azure.identity import DefaultAzureCredential
 from azure.mgmt.costmanagement import CostManagementClient
 from azure.mgmt.costmanagement.models import QueryGrouping, QueryAggregation, QueryDataset, QueryDefinition, \

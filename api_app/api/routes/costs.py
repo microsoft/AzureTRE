@@ -86,5 +86,3 @@ async def workspace_costs(
             workspace_repo, workspace_services_repo, user_resource_repo)
 
     return generate_workspace_cost_report_stub("Workspace 1", params.granularity)
-
-
