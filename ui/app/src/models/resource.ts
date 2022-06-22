@@ -17,6 +17,7 @@ export interface Resource {
     history: Array<HistoryItem>,
     _etag: string,
     properties: any
+    azureStatus?: any
 }
 
 export interface HistoryItem {
@@ -39,6 +40,15 @@ export interface ResourceUpdate {
     operation?: Operation,
     componentAction: ComponentAction
 }
+
+export const powerStates = [
+  "VM running",
+  "VM starting",
+  "VM stopping",
+  "VM stopped",
+  "VM deallocating",
+  "VM deallocated"
+]
 
 export const getResourceFromResult = (r: any) => {
     if (r['userResource']) return r.userResource;

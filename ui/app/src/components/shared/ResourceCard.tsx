@@ -7,6 +7,7 @@ import { ResourceContextMenu } from './ResourceContextMenu';
 import { useComponentManager } from '../../hooks/useComponentManager';
 import { StatusBadge } from './StatusBadge';
 import { successStates } from '../../models/operation';
+import { PowerStateBadge } from './PowerStateBadge';
 
 interface ResourceCardProps {
   resource: Resource,
@@ -70,17 +71,28 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
             {
               connectUri &&
               <Stack.Item style={connectStyles}>
-                <PrimaryButton onClick={() => window.open(connectUri)} disabled={!props.resource.isEnabled || successStates.indexOf(props.resource.deploymentStatus) === -1} title={!props.resource.isEnabled || successStates.indexOf(props.resource.deploymentStatus) === -1 ? 'Resource must be enabled and successfully deployed to connect' : 'Connect to resource'}>Connect</PrimaryButton>
+                <PrimaryButton
+                  onClick={() => window.open(connectUri)}
+                  disabled={!props.resource.isEnabled || successStates.indexOf(props.resource.deploymentStatus) === -1 || (props.resource.azureStatus?.powerState && props.resource.azureStatus.powerState !== "VM running")}
+                  title={!props.resource.isEnabled || successStates.indexOf(props.resource.deploymentStatus) === -1 || (props.resource.azureStatus?.powerState && props.resource.azureStatus.powerState !== "VM running") ? 'Resource must be enabled, successfully deployed & powered on to connect' : 'Connect to resource'}>
+                  Connect
+                </PrimaryButton>
               </Stack.Item>
             }
             <Stack.Item style={footerStyles}>
               <Stack horizontal>
-                <Stack.Item grow={1}>
+                <Stack.Item grow={1} align="center">
                   {
                     latestUpdate.componentAction === ComponentAction.Lock &&
                     <ProgressIndicator
                       barHeight={4}
                       description='Resource is locked for changes whilst it updates.' />
+                  }
+                  {
+                    (props.resource.azureStatus?.powerState && latestUpdate.componentAction !== ComponentAction.Lock) &&
+                    <div style={{ marginTop: 5 }}>
+                      <PowerStateBadge state={props.resource.azureStatus.powerState} />
+                    </div>
                   }
                 </Stack.Item>
                 <Stack.Item style={{paddingTop: 5, paddingLeft:10}}>

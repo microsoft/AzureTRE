@@ -68,36 +68,64 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
     action && action.operation && opsWriteContext.current.addOperations([action.operation]);
   }
 
-  const shouldDisable = () => {
-    return props.componentAction === ComponentAction.Lock || successStates.indexOf(props.resource.deploymentStatus) === -1 || !props.resource.isEnabled;
-  }
-
   // context menu
   let menuItems: Array<any> = [];
   let roles: Array<string> = [];
   let wsAuth = false;
 
   menuItems = [
-    { key: 'update', text: 'Update', iconProps: { iconName: 'WindowEdit' }, onClick: () => createFormCtx.openCreateForm({
-      resourceType: props.resource.resourceType,
-      updateResource: props.resource,
-      resourceParent: parentResource,
-      workspaceClientId: workspaceCtx.workspaceClientId,
-    }), disabled:(props.componentAction === ComponentAction.Lock) },
-    { key: 'disable', text: props.resource.isEnabled ? 'Disable' : 'Enable', iconProps: { iconName: props.resource.isEnabled ? 'CirclePause' : 'PlayResume' }, onClick: () => setShowDisable(true), disabled:(props.componentAction === ComponentAction.Lock) },
-    { key: 'delete', text: 'Delete', title: props.resource.isEnabled ? 'Resource must be disabled before deleting' : 'Delete this resource', iconProps: { iconName: 'Delete' }, onClick: () => setShowDelete(true), disabled: (props.resource.isEnabled || props.componentAction === ComponentAction.Lock) },
+    {
+      key: 'update',
+      text: 'Update',
+      iconProps: { iconName: 'WindowEdit' },
+      onClick: () => createFormCtx.openCreateForm({
+        resourceType: props.resource.resourceType,
+        updateResource: props.resource,
+        resourceParent: parentResource,
+        workspaceClientId: workspaceCtx.workspaceClientId,
+      }),
+      disabled: (props.componentAction === ComponentAction.Lock)
+    },
+    {
+      key: 'disable',
+      text: props.resource.isEnabled ? 'Disable' : 'Enable',
+      iconProps: { iconName: props.resource.isEnabled ? 'CirclePause' : 'PlayResume' },
+      onClick: () => setShowDisable(true),
+      disabled: (props.componentAction === ComponentAction.Lock)
+    },
+    {
+      key: 'delete',
+      text: 'Delete',
+      title: props.resource.isEnabled ? 'Resource must be disabled before deleting' : 'Delete this resource',
+      iconProps: { iconName: 'Delete' },
+      onClick: () => setShowDelete(true),
+      disabled: (props.resource.isEnabled || props.componentAction === ComponentAction.Lock)
+    },
   ];
+
+  const shouldDisableConnect = () => {
+    return props.componentAction === ComponentAction.Lock
+      || successStates.indexOf(props.resource.deploymentStatus) === -1
+      || !props.resource.isEnabled
+      || (props.resource.azureStatus?.powerState && props.resource.azureStatus.powerState !== "VM running");
+  }
 
   // add 'connect' button if we have a URL to connect to
   if (props.resource.properties.connection_uri) {
     menuItems.push({
       key: 'connect',
       text: 'Connect',
-      title: shouldDisable() ? 'Resource must be deployed and enabled to connect' : 'Connect to resource',
+      title: shouldDisableConnect() ? 'Resource must be deployed, enabled & powered on to connect' : 'Connect to resource',
       iconProps: { iconName: 'PlugConnected' },
       onClick: () => { window.open(props.resource.properties.connection_uri, '_blank') },
-      disabled: shouldDisable()
+      disabled: shouldDisableConnect()
     })
+  }
+
+  const shouldDisableActions = () => {
+    return props.componentAction === ComponentAction.Lock
+      || successStates.indexOf(props.resource.deploymentStatus) === -1
+      || !props.resource.isEnabled;
   }
 
   // add custom actions if we have any
@@ -105,10 +133,24 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
     let customActions: Array<IContextualMenuItem> = [];
     resourceTemplate.customActions.forEach((a: TemplateAction) => {
       customActions.push(
-        { key: a.name, text: a.name, title: a.description, iconProps: { iconName: getActionIcon(a.name) }, className: 'tre-context-menu', onClick: () => { doAction(a.name) } }
+        {
+          key: a.name,
+          text: a.name,
+          title: a.description,
+          iconProps: { iconName: getActionIcon(a.name) },
+          className: 'tre-context-menu',
+          onClick: () => { doAction(a.name) }
+        }
       );
     });
-    menuItems.push({ key: 'custom-actions', text: 'Actions', title: shouldDisable() ? 'Resource must be deployed and enabled to perform actions': 'Custom Actions', iconProps: { iconName: 'Asterisk' }, disabled:shouldDisable(), subMenuProps: { items: customActions } });
+    menuItems.push({
+      key: 'custom-actions',
+      text: 'Actions',
+      title: shouldDisableActions() ? 'Resource must be deployed and enabled to perform actions': 'Custom Actions',
+      iconProps: { iconName: 'Asterisk' },
+      disabled: shouldDisableActions(),
+      subMenuProps: { items: customActions }
+    });
   }
 
   switch (props.resource.resourceType) {
