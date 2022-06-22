@@ -18,6 +18,7 @@ resource "azurerm_application_insights" "ai" {
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
   application_type    = "web"
+  tags                = local.tre_workspace_service_tags
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -77,6 +78,7 @@ resource "azurerm_private_endpoint" "mlpe" {
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
   subnet_id           = data.azurerm_subnet.services.id
+  tags                = local.tre_workspace_service_tags
 
   lifecycle { ignore_changes = [tags] }
 

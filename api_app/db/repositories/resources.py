@@ -1,22 +1,23 @@
-from typing import Tuple
-from azure.cosmos import CosmosClient
-from datetime import datetime
-from jsonschema import validate
-from pydantic import UUID4, parse_obj_as
 import copy
-from models.domain.authentication import User
+from datetime import datetime
+from typing import Tuple
+
+from azure.cosmos import CosmosClient
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from core import config
 from db.errors import EntityDoesNotExist
 from db.repositories.base import BaseRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
+from jsonschema import validate
+from models.domain.authentication import User
 from models.domain.resource import Resource, ResourceHistoryItem, ResourceType
 from models.domain.resource_template import ResourceTemplate
-from models.schemas.resource import ResourcePatch
 from models.domain.shared_service import SharedService
+from models.domain.user_resource import UserResource
 from models.domain.workspace import Workspace
 from models.domain.workspace_service import WorkspaceService
-from models.domain.user_resource import UserResource
+from models.schemas.resource import ResourcePatch
+from pydantic import UUID4, parse_obj_as
 
 
 class ResourceRepository(BaseRepository):

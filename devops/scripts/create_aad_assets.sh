@@ -23,7 +23,7 @@ if [ "${AUTO_WORKSPACE_APP_REGISTRATION}" == true ]; then
 fi
 
 # Create the identity that is able to administer other applications
-./scripts/aad/create_application_administrator.sh \
+./devops/scripts/aad/create_application_administrator.sh \
 --name "${TRE_ID}" --admin-consent --application-permission "${APPLICATION_PERMISSION}"
 
 echo "Please copy the values above into your /templates/core/.env."
@@ -34,7 +34,7 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
 fi
 
 # Then register an App for the TRE Core.
-./scripts/aad/aad-app-reg.sh \
+./devops/scripts/aad/aad-app-reg.sh \
   --name "${TRE_ID}" \
   --tre-url "https://${TRE_ID}.${LOCATION}.cloudapp.azure.com" \
   --admin-consent --automation-account
@@ -55,7 +55,7 @@ set -a
 echo "Please check that the following value is the same as above to check you have copied your keys."
 echo "API client id is : ${API_CLIENT_ID}"
 
-./scripts/aad/aad-app-reg.sh \
+./devops/scripts/aad/aad-app-reg.sh \
   --name "${TRE_ID} - workspace 1" \
   --workspace --admin-consent \
   --swaggerui-clientid "${SWAGGER_UI_CLIENT_ID}" \
