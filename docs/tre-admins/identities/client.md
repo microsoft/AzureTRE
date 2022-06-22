@@ -26,7 +26,7 @@ This identity should only be used by client applications. Currently this is the 
 Example on how to run the script:
 
 ```bash
-./scripts/aad/aad-app-reg.sh \
+./devops/scripts/aad/aad-app-reg.sh \
   --name "${TRE_ID}" \
   --tre-url "https://${TRE_ID}.${LOCATION}.cloudapp.azure.com" \
   --admin-consent
