@@ -1,6 +1,6 @@
 ---
 name: tre-service-dev-vm
-version: 0.3.4
+version: 0.3.5
 description: "An Azure TRE User Resource Template for a Dev VM"
 registry: azuretre
 
@@ -79,6 +79,7 @@ outputs:
   - name: azure_resource_id
     type: string
     applyTo:
+      - install
       - start
       - stop
 
@@ -114,6 +115,7 @@ install:
         - name: ip
         - name: hostname
         - name: connection_uri
+        - name: azure_resource_id
 
 upgrade:
   - terraform:
@@ -141,6 +143,7 @@ upgrade:
         - name: ip
         - name: hostname
         - name: connection_uri
+        - name: azure_resource_id
 
 uninstall:
   - terraform:
