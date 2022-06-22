@@ -58,7 +58,6 @@ def test_query_tre_costs_with_granularity_none_returns_correct_cost_report(clien
     assert cost_report.workspaces[1].costs[1].currency == "ILS"
 
 
-
 @patch('db.repositories.workspaces.WorkspaceRepository')
 @patch('db.repositories.shared_services.SharedServiceRepository')
 @patch('services.cost_service.CostManagementClient')
@@ -255,7 +254,6 @@ def test_query_tre_costs_with_granularity_none_and_display_name_data_returns_tem
     assert cost_report.workspaces[1].costs[0].currency == "USD"
     assert cost_report.workspaces[1].costs[1].cost == 62.8
     assert cost_report.workspaces[1].costs[1].currency == "ILS"
-
 
 
 def __set_workspace_repo_mock_return_value(workspace_repo_mock):
