@@ -34,7 +34,6 @@ def workspace_input():
 def sample_resource() -> Resource:
     return Resource(
         id=RESOURCE_ID,
-        isActive=True,
         isEnabled=True,
         resourcePath="/resource/path",
         templateName="template_name",
@@ -244,7 +243,7 @@ def test_get_resource_dict_by_id_queries_db(resource_repo):
 
     resource_repo.get_resource_dict_by_id(item_id)
 
-    resource_repo.query.assert_called_once_with(query='SELECT * FROM c WHERE c.isActive != false AND c.id = "123"')
+    resource_repo.query.assert_called_once_with(query='SELECT * FROM c WHERE c.deploymentStatus != "deleted" AND c.id = "123"')
 
 
 def test_get_resource_dict_by_id_raises_entity_does_not_exist_if_no_resources_come_back(resource_repo):

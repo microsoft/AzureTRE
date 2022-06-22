@@ -26,7 +26,7 @@ class ResourceRepository(BaseRepository):
     @staticmethod
     def _active_resources_query():
         # get active docs (not deleted)
-        return f'SELECT * FROM c WHERE {IS_ACTIVE_CLAUSE}'
+        return f'SELECT * FROM c WHERE {IS_NOT_DELETED_CLAUSE}'
 
     def _active_resources_by_type_query(self, resource_type: ResourceType):
         return self._active_resources_query() + f' AND c.resourceType = "{resource_type}"'
@@ -139,4 +139,4 @@ class ResourceRepository(BaseRepository):
 
 
 # Cosmos query consts
-IS_ACTIVE_CLAUSE = 'c.isActive != false'
+IS_NOT_DELETED_CLAUSE = 'c.deploymentStatus != "deleted"'

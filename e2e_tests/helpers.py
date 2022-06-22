@@ -54,14 +54,16 @@ async def get_shared_service_id_by_name(template_name: str, verify, token) -> Op
         auth_headers = get_auth_header(token)
 
         response = await client.get(full_endpoint, headers=auth_headers, timeout=TIMEOUT)
-        LOGGER.info(f'RESPONSE: {response} {response.json()}')
+        LOGGER.info(f'RESPONSE: {response}')
         assert (response.status_code == status.HTTP_200_OK), "Request to get shared services failed"
 
         shared_service_list = response.json()["sharedServices"]
-        matching_shared_services = [service for service in shared_service_list if service["templateName"] == template_name and service["isActive"]]
+        matching_shared_services = [
+            service for service in shared_service_list
+            if service["templateName"] == template_name and service["deploymentStatus"] == "deployed"]
         if len(matching_shared_services) == 0:
             return None
-        assert len(matching_shared_services) == 1, f"There can be at most one active shared service with template name {template_name}"
+        assert len(matching_shared_services) == 1, f"There can be at most one deployed shared service with template name {template_name}"
         return matching_shared_services[0]
 
 
