@@ -43,9 +43,6 @@ nav:
       - Architecture: 'azure-tre-overview/architecture.md'
       - Network Architecture: 'azure-tre-overview/networking.md'
       - Azure Resource Breakdown: 'azure-tre-overview/tre-resources-breakdown.md'
-      - Shared Services:
-          - Gitea (Source Mirror): 'azure-tre-overview/shared-services/gitea.md'
-          - Nexus (Package Mirror): 'azure-tre-overview/shared-services/nexus.md'
   - TRE Admins:
       - Setup Instructions:
           - 1. Getting Started: 'tre-admins/setup-instructions/getting-started.md'
@@ -82,6 +79,9 @@ nav:
           - Guacamole: 'tre-templates/workspace-services/guacamole.md'
           - InnerEye: 'tre-templates/workspace-services/inner-eye.md'
           - MLFlow: 'tre-templates/workspace-services/mlflow.md'
+      - Shared Services:
+          - Gitea (Source Mirror): 'tre-templates/shared-services/gitea.md'
+          - Nexus (Package Mirror): 'tre-templates/shared-services/nexus.md'
       - User Resources:
           - Guacamole Windows VM: 'tre-templates/user-resources/guacamole-windows-vm.md'
           - Guacamole Linux VM: 'tre-templates/user-resources/guacamole-linux-vm.md'
