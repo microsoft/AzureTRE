@@ -109,7 +109,7 @@ class OperationRepository(BaseRepository):
                             resource_for_step = resource_repo.get_resource_by_id(uuid.UUID(primary_resource.parentWorkspaceServiceId))
 
                         if resource_for_step is None:
-                            raise Exception("Error finding resource to update")
+                            raise Exception(f"Error finding resource to update, triggered by resource ID {resource_id}")
 
                         steps.append(OperationStep(
                             stepId=step["stepId"],
