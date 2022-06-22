@@ -56,14 +56,14 @@ nav:
       - Tear-down: 'tre-admins/tear-down.md'
       - Environment Variables: 'tre-admins/environment-variables.md'
       - Authentication and Authorization:
-        - Introduction: 'tre-admins/auth.md'
-        - Manual Setup: tre-admins/identities/auth-manual.md
-        - Identities:
-          - Application Admin: tre-admins/identities/application_admin.md
-          - API: tre-admins/identities/api.md
-          - Client: tre-admins/identities/client.md
-          - Automation Test Account: tre-admins/identities/test-account.md
-          - Workspaces: tre-admins/identities/workspace.md
+          - Introduction: 'tre-admins/auth.md'
+          - Manual Setup: tre-admins/identities/auth-manual.md
+          - Identities:
+              - Application Admin: tre-admins/identities/application_admin.md
+              - API: tre-admins/identities/api.md
+              - Client: tre-admins/identities/client.md
+              - Automation Test Account: tre-admins/identities/test-account.md
+              - Workspaces: tre-admins/identities/workspace.md
       - Registering Templates: 'tre-admins/registering-templates.md'
       - Troubleshooting Guide: 'tre-admins/troubleshooting-guide.md'
   - TRE Developers:
