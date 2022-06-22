@@ -33,12 +33,10 @@ fi
 # Get the directory that this script is in
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-declare resetPassword=0
 declare spPassword=""
 declare grantAdminConsent=0
 declare currentUserId=""
 declare swaggerClientId=""
-declare spId=""
 declare msGraphUri="https://graph.microsoft.com/v1.0"
 declare appName=""
 declare automationClientId=""
