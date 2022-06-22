@@ -81,8 +81,8 @@ async def workspace_costs(
     if params.call_service:
         check_time_period(params.from_date, params.to_date)
         cost_service = CostService()
-        cost_service.query_tre_workspace_costs(
+        return cost_service.query_tre_workspace_costs(
             workspace_id, params.granularity, params.from_date, params.to_date,
             workspace_repo, workspace_services_repo, user_resource_repo)
-
-    return generate_workspace_cost_report_stub("Workspace 1", params.granularity)
+    else:
+        return generate_workspace_cost_report_stub("Workspace 1", params.granularity)

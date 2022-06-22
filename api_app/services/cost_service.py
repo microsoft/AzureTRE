@@ -9,9 +9,11 @@ from azure.mgmt.costmanagement.models import QueryGrouping, QueryAggregation, Qu
 
 from core import config
 from db.repositories.shared_services import SharedServiceRepository
+from db.repositories.user_resources import UserResourceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
 from db.repositories.workspaces import WorkspaceRepository
-from models.domain.costs import GranularityEnum, CostReport, CostItem, CostRow
+from models.domain.costs import GranularityEnum, CostReport, WorkspaceCostReport, CostItem, WorkspaceServiceCostItem, \
+    CostRow
 from models.domain.resource import Resource
 
 
@@ -35,6 +37,8 @@ class CostService:
     TRE_CORE_SERVICE_ID_TAG: str = "tre_core_service_id"
     TRE_WORKSPACE_ID_TAG: str = "tre_workspace_id"
     TRE_SHARED_SERVICE_ID_TAG: str = "tre_shared_service_id"
+    TRE_WORKSPACE_SERVICE_ID_TAG: str = "tre_workspace_service_id"
+    TRE_USER_RESOURCE_ID_TAG: str = "tre_user_resource_id"
 
     def __init__(self):
         self.scope = "/subscriptions/{}".format(config.SUBSCRIPTION_ID)
@@ -63,6 +67,30 @@ class CostService:
         cost_report.workspaces = self.__get_workspaces_costs(granularity, query_result_dict, workspace_repo)
 
         return cost_report
+
+    def query_tre_workspace_costs(self, workspace_id: str, granularity: GranularityEnum, from_date: datetime,
+                                  to_date: datetime,
+                                  workspace_repo: WorkspaceRepository,
+                                  workspace_services_repo: WorkspaceServiceRepository,
+                                  user_resource_repo) -> WorkspaceCostReport:
+
+        query_result = self.query_costs(CostService.TRE_WORKSPACE_ID_TAG, workspace_id, granularity, from_date, to_date)
+        query_result_dict = self.__query_result_to_dict(query_result, granularity)
+
+        workspace = workspace_repo.get_workspace_by_id(workspace_id)
+
+        workspace_cost_report: WorkspaceCostReport = WorkspaceCostReport(**dict(
+            id=workspace_id,
+            name=self.__get_resource_name(workspace),
+            costs=self.__extract_cost_rows(granularity, query_result_dict, CostService.TRE_WORKSPACE_ID_TAG,
+                                           workspace_id),
+            workspace_services=self.__get_workspace_services_costs(granularity, query_result_dict,
+                                                                   workspace_services_repo,
+                                                                   user_resource_repo,
+                                                                   workspace_id)
+        ))
+
+        return workspace_cost_report
 
     def __get_resource_name(self, resource: Resource):
         key = "display_name"
@@ -97,6 +125,34 @@ class CostService:
             shared_services_costs.append(shared_service_cost_item)
         return shared_services_costs
 
+    def __get_workspace_services_costs(self, granularity, query_result_dict,
+                                       workspace_services_repo: WorkspaceServiceRepository,
+                                       user_resource_repo: UserResourceRepository, workspace_id: str):
+        workspace_services_costs = []
+        workspace_services_list = workspace_services_repo.get_active_workspace_services_for_workspace(workspace_id)
+        for workspace_service in workspace_services_list:
+
+            workspace_service_cost_item = WorkspaceServiceCostItem(**dict(
+                id=workspace_service.id,
+                name=self.__get_resource_name(workspace_service),
+                costs=self.__extract_cost_rows(granularity, query_result_dict, CostService.TRE_WORKSPACE_SERVICE_ID_TAG,
+                                               workspace_service.id),
+                user_resources=[]
+            ))
+
+            user_resources_list = user_resource_repo.get_user_resources_for_workspace_service(workspace_id,
+                                                                                              workspace_service.id)
+            for user_resource in user_resources_list:
+                user_resource_cost_item = CostItem(**dict(
+                    id=user_resource.id,
+                    name=self.__get_resource_name(user_resource),
+                    costs=self.__extract_cost_rows(granularity, query_result_dict, CostService.TRE_USER_RESOURCE_ID_TAG,
+                                                   user_resource.id)
+                ))
+                workspace_service_cost_item.user_resources.append(user_resource_cost_item)
+            workspace_services_costs.append(workspace_service_cost_item)
+        return workspace_services_costs
+
     def __extract_cost_rows(self, granularity, query_result_dict, tag_name, tag_value):
         cost_rows = []
         cost_key = f'"{tag_name}":"{tag_value}"'
@@ -118,13 +174,6 @@ class CostService:
                     })))
 
         return cost_rows
-
-    def query_tre_workspace_costs(self, workspace_id: str, granularity: GranularityEnum, from_date: datetime,
-                                  to_date: datetime,
-                                  workspace_repo: WorkspaceRepository,
-                                  workspace_services_repo: WorkspaceServiceRepository,
-                                  user_resource_repo) -> QueryResult:
-        return self.query_costs(CostService.TRE_WORKSPACE_ID_TAG, workspace_id, granularity, from_date, to_date)
 
     def query_costs(self, tag_name: str, tag_value: str,
                     granularity: GranularityEnum, from_date: datetime, to_date: datetime) -> QueryResult:
