@@ -56,3 +56,21 @@ module "airlock" {
     module.network,
   ]
 }
+
+
+module "azure_monitor" {
+  source                                   = "./azure-monitor"
+  tre_id                                   = var.tre_id
+  location                                 = var.location
+  resource_group_name                      = azurerm_resource_group.ws.name
+  tre_resource_id                          = var.tre_resource_id
+  shared_subnet_id                         = module.network.services_subnet_id
+  azure_monitor_dns_zone_id                = module.network.azure_monitor_dns_zone_id
+  azure_monitor_oms_opinsights_dns_zone_id = module.network.azure_monitor_oms_opinsights_dns_zone_id
+  azure_monitor_ods_opinsights_dns_zone_id = module.network.azure_monitor_ods_opinsights_dns_zone_id
+  azure_monitor_agentsvc_dns_zone_id       = module.network.azure_monitor_agentsvc_dns_zone_id
+  blob_core_dns_zone_id                    = module.network.blobcore_zone_id
+  depends_on = [
+    module.network,
+  ]
+}
