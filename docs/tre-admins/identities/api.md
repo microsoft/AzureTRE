@@ -32,14 +32,14 @@ This identity should only be used by the API Application.
 Example on how to run the script:
 
 ```bash
-./scripts/aad/aad-app-reg.sh \
+./devops/scripts/aad/aad-app-reg.sh \
     --name <TRE_ID> \
     --admin-consent
 ```
 Below is a sample where `TRE_ID` has value `mytre`:
 
   ```bash
-  ./scripts/aad/aad-app-reg.sh --name mytre --admin-consent
+  ./devops/scripts/aad/aad-app-reg.sh --name mytre --admin-consent
   ```
 
 | Argument | Description |

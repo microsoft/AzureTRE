@@ -339,7 +339,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     @ patch("api.routes.workspaces.WorkspaceRepository.delete_item")
     @ patch("api.routes.resource_helpers.send_resource_request_message", side_effect=Exception)
     @ patch("api.routes.workspaces.WorkspaceRepository.save_item")
-    @ patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item", return_value=[sample_workspace(), None])
+    @ patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item", return_value=[sample_workspace(), sample_resource_template()])
     @ patch("api.routes.workspaces.WorkspaceRepository._validate_resource_parameters")
     @ patch("api.routes.workspaces.extract_auth_information")
     async def test_post_workspaces_returns_503_if_service_bus_call_fails(self, _, __, ___, ____, _____, delete_item_mock, resource_template_repo, app, client, workspace_input, basic_resource_template):
@@ -480,7 +480,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     @ patch("api.routes.resource_helpers.send_resource_request_message", return_value=sample_resource_operation(resource_id=SERVICE_ID, operation_id=OPERATION_ID))
     @ patch("api.routes.workspaces.WorkspaceServiceRepository.save_item")
     @ patch("api.routes.workspaces.OperationRepository.resource_has_deployed_operation", return_value=True)
-    @ patch("api.routes.workspaces.WorkspaceServiceRepository.create_workspace_service_item", return_value=[sample_workspace_service(), None])
+    @ patch("api.routes.workspaces.WorkspaceServiceRepository.create_workspace_service_item", return_value=[sample_workspace_service(), sample_resource_template()])
     async def test_post_workspace_services_creates_workspace_service(self, _, __, ___, ____, get_workspace_mock, resource_template_repo, app, client, workspace_service_input, basic_workspace_service_template):
         auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'roles': {'WorkspaceOwner': 'ab124', 'WorkspaceResearcher': 'ab125'}}
         workspace = sample_workspace(auth_info=auth_info_user_in_workspace_owner_role)
@@ -890,7 +890,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
         auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'roles': {'WorkspaceOwner': 'ab124', 'WorkspaceResearcher': 'ab125'}}
         get_workspace_mock.return_value = sample_workspace(auth_info=auth_info_user_in_workspace_owner_role)
         resource_template_repo.return_value = basic_user_resource_template
-        create_user_resource_item_mock.return_value = [sample_user_resource_object(), None]
+        create_user_resource_item_mock.return_value = [sample_user_resource_object(), sample_resource_template()]
 
         response = await client.post(app.url_path_for(strings.API_CREATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID), json=sample_user_resource_input_data)
 

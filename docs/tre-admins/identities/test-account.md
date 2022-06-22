@@ -34,7 +34,7 @@ This application is used locally to automatically register bundles against the A
 Example on how to run the script:
 
 ```bash
-./scripts/aad/aad-app-reg.sh \
+./devops/scripts/aad/aad-app-reg.sh \
   --name "${TRE_ID}" \
   --tre-url "https://${TRE_ID}.${LOCATION}.cloudapp.azure.com" \
   --admin-consent --automation-account

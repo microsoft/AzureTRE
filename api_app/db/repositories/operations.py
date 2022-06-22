@@ -4,6 +4,8 @@ from typing import List
 
 from azure.cosmos import CosmosClient
 from pydantic import parse_obj_as
+from models.domain.request_action import RequestAction
+from models.domain.resource import ResourceType
 from db.repositories.resources import ResourceRepository
 from models.domain.resource_template import ResourceTemplate
 from models.domain.authentication import User
@@ -86,7 +88,29 @@ class OperationRepository(BaseRepository):
                     if step["stepId"] == "main":
                         steps.append(self.create_main_step(resource_template=resource_template_dict, action=action, resource_id=resource_id, status=status, message=message))
                     else:
-                        resource_for_step = resource_repo.get_resource_by_template_name(step["resourceTemplateName"])
+                        resource_for_step = None
+
+                        # if it's a shared service, should be a singleton across the TRE, get it by template name
+                        if step["resourceType"] == ResourceType.SharedService:
+                            resource_for_step = resource_repo.get_resource_by_template_name(step["resourceTemplateName"])
+
+                        # if it's a workspace, find the parent workspace of where we are
+                        if step["resourceType"] == ResourceType.Workspace:
+                            primary_resource = resource_repo.get_resource_by_id(uuid.UUID(resource_id))
+                            if primary_resource.resourceType == ResourceType.SharedService or primary_resource.resourceType == ResourceType.Workspace:
+                                raise Exception("You can only reference a workspace from a workspace service or user resource")
+                            resource_for_step = resource_repo.get_resource_by_id(uuid.UUID(primary_resource.workspaceId))
+
+                        # if it's a workspace service, we must be a user-resource - find the parent
+                        if step["resourceType"] == ResourceType.WorkspaceService:
+                            primary_resource = resource_repo.get_resource_by_id(uuid.UUID(resource_id))
+                            if primary_resource.resourceType != ResourceType.UserResource:
+                                raise Exception("Only user resources can update their parent workspace services")
+                            resource_for_step = resource_repo.get_resource_by_id(uuid.UUID(primary_resource.parentWorkspaceServiceId))
+
+                        if resource_for_step is None:
+                            raise Exception(f"Error finding resource to update, triggered by resource ID {resource_id}")
+
                         steps.append(OperationStep(
                             stepId=step["stepId"],
                             stepTitle=step["stepTitle"],
@@ -130,6 +154,6 @@ class OperationRepository(BaseRepository):
         """
         checks whether this resource has a successful "deployed" operation
         """
-        query = self.operations_query() + f' c.resourceId = "{resource_id}" AND c.status = "{Status.Deployed}"'
+        query = self.operations_query() + f' c.resourceId = "{resource_id}" AND c.action = "{RequestAction.Install}" AND c.status in ("{Status.Deployed}", "{Status.PipelineSucceeded}")'
         operations = self.query(query=query)
         return len(operations) > 0
