@@ -112,7 +112,7 @@ def create_updated_resource_document(resource: dict, message: DeploymentStatusUp
 
     # although outputs are likely to be relevant when resources are moving to "deployed" status,
     # lets not limit when we update them and have the resource process make that decision.
-    output_dict = {output.Name: output.Value.strip("'").strip('"') for output in message.outputs}
+    output_dict = {output.Name: output.Value.strip("'").strip('"') if isinstance(output.Value, str) else output.Value for output in message.outputs}
     resource["properties"].update(output_dict)
 
     # if deleted - mark as isActive = False

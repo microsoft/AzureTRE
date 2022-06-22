@@ -1,7 +1,5 @@
 # Pipeline Templates
 
-> NOTE: This feature is under development, and not currently functional. These documents will be updated alongside the code.
-
 Occasionally there will be a need for the deployment / update of one resource to affect a change in another. This section outlines how that can be achieved with Pipeline Templates.
 
 ## Overview
@@ -44,16 +42,14 @@ Consider the following `template_schema.json`:
 ```
 
 When a user deploys this resource, the API will read the `install: []` array within the `pipeline: {}` block, and will:
-- Orchestrate the `upgrade` of the `tre-shared-service-firewall`.
+- Orchestrate the `upgrade` of the `tre-shared-service-firewall`, changing the `display_name` property to `A new name here!`.
 - Run the `main` (primary resource) install
 - Complete the next step
 
 A single `Operation` document will be used to keep track of which steps in the deployment chain have completed.
 
 ## Current Limitations
-This feature is very much a work in progress, and is currently limited in the following ways:
-- Only statically addressable resources can be referred to - such as `shared_services`, as these are singletons and can be referenced by a template name.
-- Only the `upgrade` action for each secondary resource is supported. Support for `install` / `uninstall` is planned.
-- Properties only accept static values. Runtime value substitution is planned.
-- Only `install` is supported for the 'trigger' for the primary resource. `upgrade` and `uninstall` support is planned.
+This feature is undergoing active development, and is currently limited in the following ways:
+- Only statically addressable resources can be referred to - `shared_services`, as these are singletons and can be referenced by a template name.
+- Only the `upgrade` action for each secondary resource is supported. Support for `install` / `uninstall` of secondary resources is planned.
 - No current planned support for `customActions`.

@@ -8,3 +8,4 @@ semantic-version==2.9.0
 -r resource_processor/vmss_porter/requirements.txt
 -r docs/requirements.txt
 -r e2e_tests/requirements.txt
+-r airlock_processor/requirements.txt
