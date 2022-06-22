@@ -76,7 +76,7 @@ if [[ -z "$appName" ]]; then
     show_usage
 fi
 appName="$appName Application Admin"
-currentUserId=$(az ad signed-in-user show --query 'objectId' --output tsv)
+currentUserId=$(az ad signed-in-user show --query 'objectId' --output tsv --only-show-errors)
 tenant=$(az rest -m get -u "${msGraphUri}/domains" -o json | jq -r '.value[] | select(.isDefault == true) | .id')
 
 echo "You are about to create app registrations in the Azure AD tenant \"${tenant}\"."
@@ -102,9 +102,9 @@ fi
 
 # Get the Required Resource Scope/Role
 msGraphAppId="00000003-0000-0000-c000-000000000000"
-msGraphObjectId=$(az ad sp show --id ${msGraphAppId} --query "objectId" --output tsv)
+msGraphObjectId=$(az ad sp show --id ${msGraphAppId} --query "objectId" --output tsv --only-show-errors)
 
-applicationPermissionId=$(az ad sp show --id ${msGraphAppId} --query "appRoles[?value=='${applicationPermission}'].id" --output tsv)
+applicationPermissionId=$(az ad sp show --id ${msGraphAppId} --query "appRoles[?value=='${applicationPermission}'].id" --output tsv --only-show-errors)
 roleApplicationPermission=$(get_msgraph_role "${applicationPermission}")
 
 appDefinition=$(jq -c . << JSON
@@ -126,7 +126,7 @@ JSON
 if [[ -n ${appObjectId} ]]; then
     echo "Updating app registration with ID ${appObjectId}"
     az rest --method PATCH --uri "${msGraphUri}/applications/${appObjectId}" --headers Content-Type=application/json --body "${appDefinition}"
-    appId=$(az ad app show --id "${appObjectId}" --query "appId" --output tsv)
+    appId=$(az ad app show --id "${appObjectId}" --query "appId" --output tsv --only-show-errors)
     echo "App registration with ID ${appId} updated"
 else
     echo "Creating a new app registration, ${appName}"
@@ -137,16 +137,16 @@ else
 fi
 
 # Make the current user an owner of the application.
-az ad app owner add --id "${appId}" --owner-object-id "$currentUserId"
+az ad app owner add --id "${appId}" --owner-object-id "$currentUserId" --only-show-errors
 
 # See if a service principal already exists
-spId=$(az ad sp list --filter "appId eq '${appId}'" --query '[0].objectId' --output tsv)
+spId=$(az ad sp list --filter "appId eq '${appId}'" --query '[0].objectId' --output tsv --only-show-errors)
 
 resetPassword=0
 
 # If not, create a new service principal
 if [[ -z "$spId" ]]; then
-    spId=$(az ad sp create --id "${appId}" --query 'objectId' --output tsv)
+    spId=$(az ad sp create --id "${appId}" --query 'objectId' --output tsv --only-show-errors)
     echo "Creating a new service principal, for '${appName}' app, with ID ${spId}"
     wait_for_new_service_principal "${spId}"
     az ad app owner add --id "${appId}" --owner-object-id "${spId}"
@@ -166,16 +166,16 @@ spPassword=""
 
 if [[ "$resetPassword" == 1 ]]; then
     # Reset the app password (client secret) and display it
-    spPassword=$(az ad sp credential reset --name "${appId}" --query 'password' --output tsv)
+    spPassword=$(az ad sp credential reset --name "${appId}" --query 'password' --output tsv --only-show-errors)
     echo "'${appName}' app password (client secret): ${spPassword}"
 fi
 
 # This tag ensures the app is listed in "Enterprise applications"
-az ad sp update --id "$spId" --set tags="['WindowsAzureActiveDirectoryIntegratedApp']"
+az ad sp update --id "$spId" --set tags="['WindowsAzureActiveDirectoryIntegratedApp']" --only-show-errors
 
 # needed to make the API permissions change effective, this must be done after SP creation...
 echo "running 'az ad app permission grant' to make changes effective"
-az ad app permission grant --id "${appId}" --api "${msGraphAppId}"
+az ad app permission grant --id "${appId}" --api "${msGraphAppId}" --only-show-errors
 
 # Grant admin consent on the required resource accesses (Graph API)
 if [[ $grantAdminConsent -eq 1 ]]; then

@@ -55,9 +55,9 @@ set -a
 echo "Please check that the following value is the same as above to check you have copied your keys."
 echo "API client id is : ${API_CLIENT_ID}"
 
-./devops/scripts/aad/aad-app-reg.sh \
+./devops/scripts/aad/create_workspace.sh \
   --name "${TRE_ID} - workspace 1" \
-  --workspace --admin-consent \
+  --admin-consent \
   --swaggerui-clientid "${SWAGGER_UI_CLIENT_ID}" \
   --automation-clientid "${TEST_ACCOUNT_CLIENT_ID}"
 
