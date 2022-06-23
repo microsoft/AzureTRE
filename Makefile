@@ -6,6 +6,7 @@ MAKEFILE_DIR := $(dir $(MAKEFILE_FULLPATH))
 IMAGE_NAME_PREFIX?="microsoft/azuretre"
 FULL_CONTAINER_REGISTRY_NAME?="$${ACR_NAME}.azurecr.io"
 FULL_IMAGE_NAME_PREFIX:=`echo "${FULL_CONTAINER_REGISTRY_NAME}/${IMAGE_NAME_PREFIX}" | tr A-Z a-z`
+LINTER_REGEX_INCLUDE?=all # regular expression used to specify which files to include in local linting (defaults to "all")
 
 target_title = @echo -e "\n\e[34m»»» 🧩 \e[96m$(1)\e[0m..."
 
@@ -231,8 +232,12 @@ lint:
 		-e VALIDATE_BASH_EXEC=true \
 		-e VALIDATE_GITHUB_ACTIONS=true \
 		-e VALIDATE_DOCKERFILE_HADOLINT=true \
+		-e FILTER_REGEX_INCLUDE=${LINTER_REGEX_INCLUDE} \
 		-v $${LOCAL_WORKSPACE_FOLDER}:/tmp/lint \
 		github/super-linter:slim-v4.9.4
+
+lint-docs:
+	LINTER_REGEX_INCLUDE=.*docs/.* $(MAKE) lint
 
 # check-params is called at the end since it needs the bundle image,
 # so we build it first and then run the check.
