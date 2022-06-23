@@ -1,4 +1,7 @@
 # System topics
+
+# Below we assign a SYSTEM-assigned identity for the topics. note that a user-assigned identity will not work.
+
 resource "azurerm_eventgrid_system_topic" "import_approved_blob_created" {
   name                   = local.import_approved_sys_topic_name
   location               = var.location

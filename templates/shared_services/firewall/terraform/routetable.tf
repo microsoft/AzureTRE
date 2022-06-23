@@ -35,6 +35,7 @@ resource "azurerm_subnet_route_table_association" "rt_web_app_subnet_association
   route_table_id = azurerm_route_table.rt.id
 }
 
+# Todo: Uncomment Issue: https://github.com/microsoft/AzureTRE/issues/2097
 # resource "azurerm_subnet_route_table_association" "rt_airlock_processor_subnet_association" {
 #   subnet_id      = data.azurerm_subnet.airlock_processor.id
 #   route_table_id = azurerm_route_table.rt.id

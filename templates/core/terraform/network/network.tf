@@ -83,6 +83,8 @@ resource "azurerm_subnet" "airlock_processor" {
     }
   }
 
+  # Todo: needed as we want to open the fw for this subnet in some of the airlock storages (export inprogress)
+  # https://github.com/microsoft/AzureTRE/issues/2098
   service_endpoints = ["Microsoft.Storage"]
 
 }

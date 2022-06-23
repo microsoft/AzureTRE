@@ -3,6 +3,8 @@ data "azurerm_private_dns_zone" "eventgrid" {
   resource_group_name = var.resource_group_name
 }
 
+# Below we assign a SYSTEM-assigned identity for the topics. note that a user-assigned identity will not work.
+
 # Event grid topics
 resource "azurerm_eventgrid_topic" "step_result" {
   name                          = local.step_result_topic_name
