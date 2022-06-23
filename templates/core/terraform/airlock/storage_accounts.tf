@@ -73,7 +73,7 @@ data "azurerm_private_dns_zone" "blobcore" {
 }
 
 resource "azurerm_private_endpoint" "stg_import_inprogress_pe" {
-  name                = "stg-import-inprogress-blob-${var.tre_id}"
+  name                = "stg-ip-import-blob-${var.tre_id}"
   location            = var.location
   resource_group_name = var.resource_group_name
   subnet_id           = var.airlock_storage_subnet_id
