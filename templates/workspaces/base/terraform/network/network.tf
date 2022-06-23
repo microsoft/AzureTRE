@@ -16,6 +16,11 @@ resource "azurerm_subnet" "services" {
   # notice that private endpoints do not adhere to NSG rules
   enforce_private_link_endpoint_network_policies = true
   enforce_private_link_service_network_policies  = true
+
+  # Eventgrid CAN'T send messages over private endpoints, hence we need to allow service endpoints to the service bus
+  # We are using service endpoints + managed identity to send these messaages
+  # https://docs.microsoft.com/en-us/azure/event-grid/consume-private-endpoints
+  service_endpoints = ["Microsoft.ServiceBus"]
 }
 
 resource "azurerm_subnet" "webapps" {
