@@ -35,7 +35,7 @@ Example on how to run the script:
 | Argument | Description |
 | -------- | ----------- |
 | `--name` | The prefix of the name of the app registrations. `TRE` will give you `TRE API`. |
-| `--tre-url` | Used to construct auth redirection URLs for the UI and Swagger app. Use the values of the [environment variables](./environment-variables.md) `TRE_ID` and `LOCATION` in the URL. Reply URL for the localhost, `http://localhost:8000/api/docs/oauth2-redirect`, will be added by default. |
+| `--tre-url` | Used to construct auth redirection URLs for the UI and Swagger app. Use the values of the [environment variables](../environment-variables.md) `TRE_ID` and `LOCATION` in the URL. Reply URL for the localhost, `http://localhost:8000/api/docs/oauth2-redirect`, will be added by default. |
 | `--admin-consent` | Grants admin consent for the app registrations. This is required for them to function properly, but requires AAD admin privileges. |
 | `--automation-account` | This is an optional parameter but will create an application with test users with permission to use the `TRE API` and `TRE Swagger UI` |
 

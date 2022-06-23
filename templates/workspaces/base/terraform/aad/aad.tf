@@ -75,6 +75,10 @@ resource "azuread_application" "workspace" {
       type = "Scope"                                # Delegated
     }
   }
+
+  web {
+    redirect_uris = jsondecode(base64decode(var.aad_redirect_uris_b64))[*].value
+  }
 }
 
 resource "azuread_service_principal" "workspace" {
