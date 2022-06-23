@@ -45,37 +45,37 @@ done
 
 username=giteaadmin
 
-keyVaultName="kv-"$tre_id
-tokenSecretName="gitea-"$tre_id"-admin-token"
-pwdSecretName="gitea-"$tre_id"-administrator-password"
+keyVaultName="kv-$tre_id"
+tokenSecretName="gitea-$tre_id-admin-token"
+pwdSecretName="gitea-$tre_id-administrator-password"
 
 giteaUrl="https://gitea-$tre_id.azurewebsites.net"
 
 # Check if access token exists
-tokenExists=$(az keyvault secret list --vault-name $keyVaultName --query "contains([].id, 'https://$keyVaultName.vault.azure.net/secrets/$tokenSecretName')")
+tokenExists=$(az keyvault secret list --vault-name "$keyVaultName" --query "contains([].id, 'https://$keyVaultName.vault.azure.net/secrets/$tokenSecretName')")
 
 
 if $tokenExists
 then
-  response=$(az keyvault secret show --vault-name $keyVaultName --name $tokenSecretName)
+  response=$(az keyvault secret show --vault-name "$keyVaultName" --name "$tokenSecretName")
   token=$(jq -r '.value' <<< "$response")
 fi
 
 
-if [ -z $token ] || [ "$token" = "null" ]
+if [ -z "$token" ] || [ "$token" = "null" ]
 then
   # Get admin password from keyvault
-  response=$(az keyvault secret show --vault-name $keyVaultName --name $pwdSecretName)
+  response=$(az keyvault secret show --vault-name "$keyVaultName" --name "$pwdSecretName")
   password=$(jq -r '.value' <<< "$response")
 
   credentials=$username:$password
   data='{"name": "'${username}'"}'
   url=${giteaUrl}/api/v1/users/${username}/tokens
   # Create new access token
-  response=$(curl -X POST -H "Content-Type: application/json" -k -d "${data}" -u ${credentials} ${url})
+  response=$(curl -X POST -H "Content-Type: application/json" -k -d "${data}" -u "${credentials}" "${url}")
   token=$(jq -r '.sha1' <<< "$response")
   # Store access token to keyvault
-  az keyvault secret set --name $tokenSecretName --vault-name $keyVaultName --value $token > /dev/null
+  az keyvault secret set --name "$tokenSecretName" --vault-name "$keyVaultName" --value "$token" > /dev/null
 fi
 
 # Repository migration parameters
@@ -96,10 +96,10 @@ repo='{
 }'
 
 # Mirror repository
-url=${giteaUrl}/api/v1/repos/migrate?access_token=${token}
+url="${giteaUrl}/api/v1/repos/migrate?access_token=${token}"
 
-response=$(curl -X POST ${url} -H "accept: application/json" -H "Content-Type: application/json" -k -d "${repo}")
-echo $response
+response=$(curl -X POST "${url}" -H "accept: application/json" -H "Content-Type: application/json" -k -d "${repo}")
+echo "$response"
 
 # Additional settings
 repo_settings='{
@@ -111,7 +111,7 @@ repo_settings='{
 }'
 
 # Set additional repository parameters
-url=${giteaUrl}/api/v1/repos/${username}/${github_repo##*/}?access_token=${token}
+url="${giteaUrl}/api/v1/repos/${username}/${github_repo##*/}?access_token=${token}"
 
-response=$(curl -X PATCH ${url} -H "accept: application/json" -H "Content-Type: application/json" -k -d "${repo_settings}")
-echo $response
+response=$(curl -X PATCH "${url}" -H "accept: application/json" -H "Content-Type: application/json" -k -d "${repo_settings}")
+echo "$response"

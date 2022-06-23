@@ -12,6 +12,41 @@
         "type": "integer",
         "title": "Shared Storage Quota",
         "description": "Quota (in GB) to set for the VM Shared Storage."
+      },
+      "aad_redirect_uris": {
+        "$id": "#/properties/aad_redirect_uris",
+        "type": "array",
+        "title": "AAD Redirect URIs",
+        "description": "Redirect URIs for the AAD app in auto_create mode",
+        "updateable": true,
+        "default": [],
+        "items":{
+          "title": "items",
+          "type": "object",
+          "required": [
+            "name",
+            "value"
+          ],
+          "properties": {
+            "name": {
+              "title": "name",
+              "type": "string",
+              "description": "Redirect URI Name",
+              "examples": [
+                "My Redirect URI"
+              ],
+              "pattern": "^.*$"
+            },
+            "value": {
+              "title": "value",
+              "type": "string",
+              "description": "Redirect URI Value",
+              "examples": [
+                "https://a-domain-name.com/oauth/"
+              ]
+            }
+          }
+        }
       }
     }
 }

@@ -114,7 +114,7 @@ By default, this Gitea instance does not have any repositories configured. You c
 Make sure you run the following commands using git bash and set your current directory as C:/AzureTRE.
 
 1. On the jumbox, run:
-```./scripts/gitea_migrate_repo.sh -t <tre_id> -g <URL_of_github_repo_to_migrate>```
+```./templates/workspace_services/gitea/gitea_migrate_repo.sh -t <tre_id> -g <URL_of_github_repo_to_migrate>```
 1. If you have issues with token or token doesn't work, you can reset the token by setting it's value to null in Key Vault:
 ```az keyvault secret set --name gitea-<tre-id>-admin-token --vault-name kv-<tre-id> --value null```
 
