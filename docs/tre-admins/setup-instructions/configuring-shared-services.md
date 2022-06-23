@@ -2,12 +2,12 @@
 
 ## Deploy/configure Nexus
 
-If you're deploying a brand new environment you should deploy the VM-based (V2) service (read section `A`). If you wish to migrate from an existing App Service Nexus service (V1) to the VM-based service, first deploy the new service (section `A`) then proceed to section `B`.
+If you're deploying a brand new environment and you didn't flag Nexus to be installed automatically with `make all`/`make deploy-shared-services`, you should deploy the VM-based (V2) service (read section `A`). If you wish to migrate from an existing App Service Nexus service (V1) to the VM-based service, first manually deploy the new service (section `A`) then proceed to section `B`.
 
 !!! info
-    The Makefile commands for deploying shared services temporarily target the V1 service so that existing environments won't have a new V2 Nexus service deployed automatically by CICD and introduce breaking changes. The V2 Nexus service will need to be deployed manually using the steps below.
+    Guacamole user resources of version `0.3.6` or higher target Nexus V2 by default, but have the option to manually specify V1 as a `nexus_version` parameter if you have an instance of the Nexus V1 service that you wish to use. When you're readu to migrate to the new service, you can do so manually by following section `B`.
 
-### A. Deploy & configure V2 Nexus service (hosted on VM)
+### A. Manually deploy & configure V2 Nexus service (hosted on VM)
 
 !!! caution
     Before deploying the V2 Nexus service, you will need workspaces of version `0.3.2` or above due to a dependency on a DNS zone link for the workspace(s) to connect to the Nexus VM.

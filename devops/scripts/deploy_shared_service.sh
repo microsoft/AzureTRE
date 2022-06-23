@@ -3,17 +3,18 @@
 set -o errexit
 set -o pipefail
 # Uncomment this line to see each command for debugging (careful: this will show secrets!)
-# set -o xtrace
+set -o xtrace
 
 function usage() {
     cat <<USAGE
 
-    Usage: $0 [-u --tre_url]  [-c --current] [-i --insecure]
+    Usage: $0 [-u --tre_url]  [-c --current] [-i --insecure] [-p --properties]
 
     Options:
         -u, --tre_url                 URL for the TRE (required for automatic registration)
         -a, --access-token            Azure access token to automatically post to the API (required for automatic registration)
         -i, --insecure                Bypass SSL certificate checks
+        -p, --properties              Additional bundle proeprties to pass
 USAGE
     exit 1
 }
@@ -30,6 +31,10 @@ while [ "$1" != "" ]; do
     -a | --access-token)
         shift
         access_token=$1
+        ;;
+    -p | --properties)
+        shift
+        properties=$1
         ;;
     *)
         echo "Unexpected argument: '$1'"
@@ -65,6 +70,11 @@ if [ -z "${access_token:-}" ]; then
     exit 1
   fi
   access_token=${ACCESS_TOKEN}
+fi
+
+if [ -n "${properties:-}" ]; then
+  # If properties are passed, prepend with a comma so we can add to the payload proeprties
+  properties=", $properties"
 fi
 
 template_name=$(yq eval '.name' porter.yaml)
@@ -139,7 +149,9 @@ if [[ -n "${deployed_shared_service}" ]]; then
   fi
 fi
 
-payload="{ \"templateName\": \"""${template_name}""\", \"properties\": { \"display_name\": \"Shared service ""${template_name}""\", \"description\": \"Automatically deployed ""${template_name}""\" } }"
+payload="{ \"templateName\": \"""${template_name}""\", \"properties\": { \"display_name\": \"Shared service ""${template_name}""\", \"description\": \"Automatically deployed ""${template_name}""\" ${properties}} }"
+echo "$payload"
+
 deploy_result=$(curl -i -X "POST" "${tre_url}/api/shared-services" \
                 -H "accept: application/json" \
                 -H "Content-Type: application/json" \
