@@ -205,6 +205,7 @@ upgrade:
       flags:
         workspace-api-client-id: "{{ bundle.parameters.client_id }}"
         aad-redirect-uris-b64: "{{ bundle.parameters.aad_redirect_uris }}"
+        register-aad-application: "{{ bundle.parameters.register_aad_application }}"
 
 uninstall:
   - terraform:
