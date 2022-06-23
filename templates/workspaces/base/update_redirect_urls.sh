@@ -70,7 +70,12 @@ echo "end of urls."
 # single line, trim end.
 updated_uris=$(echo "${aad_redirect_uris_b64}" | base64 --decode | jq -r '.[].value' | tr '\n' ' ' | sed 's/ *$//g')
 
-echo "Going to update application: ${workspace_api_client_id} with URIs: ${updated_uris}"
+if [ -z "${updated_uris}" ]; then
+  # the azure cli command doesn't accept empty strings, so using a dummy value which will be overwriten next time
+  updated_uris="http://localhost:8080/dummy"
+fi
+
+echo "Going to update application: ${workspace_api_client_id} with URIs: '${updated_uris}'"
 
 # web-redirect-uris param doesn't like any type of quotes
 # shellcheck disable=SC2086
