@@ -35,8 +35,8 @@ The explicitly allowed egress traffic is described here:
 
 - [Resource Processor](../tre-developers/resource-processor.md#network-requirements)
 - [TRE API](../tre-developers/api.md#network-requirements)
-- [Gitea Shared Service](shared-services/gitea.md#network-requirements)
-- [Nexus Shared Service](shared-services/nexus.md#network-requirements)
+- [Gitea Shared Service](../tre-templates/shared-services/gitea.md#network-requirements)
+- [Nexus Shared Service](../tre-templates/shared-services/nexus.md#network-requirements)
 
 ## Azure Monitor
 
