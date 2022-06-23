@@ -1,6 +1,8 @@
 # Manually creating AAD identities
 
-This guide is here if you wanted to create these Applications manually. These should be created in order (if applicable) as some applications are granted permission to other applications.
+This guide is here if you wanted to create these Application Registrations manually.
+
+These should be created in order (if applicable) as some applications are then granted permission to other applications.
 
 ## Manual Creation Guides
 | Application | Comments |

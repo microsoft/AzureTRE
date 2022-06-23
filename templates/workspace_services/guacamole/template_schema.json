@@ -46,5 +46,78 @@
       "title": "Workspace Identifier URI (Scope)",
       "description": "The audience/scope/identifier uri of the workspace in AAD"
     }
+  },
+  "pipeline": {
+    "install": [
+      {
+        "stepId": "main"
+      },
+      {
+        "stepId": "12ba0dad-ea6c-4d0d-9255-d316212f5ffa",
+        "stepTitle": "Add Guacamole URI as AAD redirect URI",
+        "resourceTemplateName": "tre-workspace-base",
+        "resourceType": "workspace",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "aad_redirect_uris",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "{{ resource.id }}",
+              "value": "{{ resource.properties.connection_uri }}"
+            }
+          }
+        ]
+      }
+    ],
+    "upgrade": [
+      {
+        "stepId": "main"
+      },
+      {
+        "stepId": "741c7ff2-eff5-47b2-bf62-2b410d65c96b",
+        "stepTitle": "Update Guacamole URI in AAD",
+        "resourceTemplateName": "tre-workspace-base",
+        "resourceType": "workspace",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "aad_redirect_uris",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "{{ resource.id }}",
+              "value": "{{ resource.properties.connection_uri }}"
+            }
+          }
+        ]
+      }
+    ],
+    "uninstall": [
+      {
+        "stepId": "9a1d6b95-26c8-4165-8010-573dd4e2b45c",
+        "stepTitle": "Update guacamole URI to AAD redirect URI",
+        "resourceTemplateName": "tre-workspace-base",
+        "resourceType": "workspace",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "aad_redirect_uris",
+            "type": "array",
+            "arraySubstitutionAction": "remove",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "{{ resource.id }}"
+            }
+          }
+        ]
+      },
+      {
+        "stepId": "main"
+      }
+    ]
   }
 }
