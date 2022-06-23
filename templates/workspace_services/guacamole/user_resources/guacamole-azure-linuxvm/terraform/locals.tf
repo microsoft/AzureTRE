@@ -11,8 +11,8 @@ locals {
   storage_name                   = lower(replace("stg${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
   tre_user_resources_tags = {
     tre_id                   = var.tre_id
-    tre_workspace_id         = var.tre_resource_id
-    tre_workspace_service_id = var.workspace_id
+    tre_workspace_id         = var.workspace_id
+    tre_workspace_service_id = var.parent_service_id
     tre_user_resource_id     = var.tre_resource_id
   }
   nexus_proxy_url = {
