@@ -1,4 +1,4 @@
-# Authentication and authorization
+# Introduction to Authentication and Authorization
 
 [Azure Active Directory (AAD)](https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-whatis) is the backbone of Authentication and Authorization in the Trusted Research Environment. AAD holds the identities of all the TRE/workspace users, including administrators, and connects the identities with applications which define the permissions for each user role.
 
