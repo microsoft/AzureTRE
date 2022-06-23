@@ -20,4 +20,4 @@ ARG BUNDLE_DIR
 COPY . $BUNDLE_DIR
 
 # Install jq
-RUN apt-get update && apt-get install -y jq && apt-get clean -y && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y jq="1.5+dfsg-2+b1" && apt-get clean -y && rm -rf /var/lib/apt/lists/*
