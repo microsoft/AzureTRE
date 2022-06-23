@@ -1,0 +1,65 @@
+#!/bin/bash
+
+set -o errexit
+set -o pipefail
+# Uncomment this line to see each command for debugging (careful: this will show secrets!)
+# set -o xtrace
+
+function usage() {
+    cat <<USAGE
+
+    Usage: $0 --workspace-api-client-id some_guid --aad-redirect-uris-b64 json_array_of_urls_in_base64
+
+    Options:
+        --workspace-api-client-id     The workspace api AAD application registration client Id
+        --aad-redirect-uris-b64       The allowed redirect urls for the application
+USAGE
+    exit 1
+}
+
+# if no arguments are provided, return usage function
+if [ $# -eq 0 ]; then
+    usage # run usage function
+fi
+
+while [ "$1" != "" ]; do
+    case $1 in
+    --workspace-api-client-id)
+        shift
+        workspace_api_client_id=$1
+        ;;
+    --aad-redirect-uris-b64)
+        shift
+        aad_redirect_uris_b64=$1
+        ;;
+    *)
+        echo "Unexpected argument: '$1'"
+        usage
+        ;;
+    esac
+
+    if [[ -z "$2" ]]; then
+      # if no more args then stop processing
+      break
+    fi
+
+    shift # remove the current value for `$1` and use the next
+done
+
+# done with processing args and can set this
+set -o nounset
+
+az ad app show --id "${workspace_api_client_id}" --query web.redirectUris --only-show-errors | jq -r '. | join(" ")'
+
+echo "urls:"
+echo "${aad_redirect_uris_b64}"
+echo "end of urls."
+
+# web-redirect-uris param doesn't like any type of quotes, hence jq -r
+updated_uris=$(echo "${aad_redirect_uris_b64}" | base64 --decode | jq -r '.[].value' | tr '\n' ' ' | sed 's/ *$//g')
+
+echo "Going to update application: ${workspace_api_client_id} with URIs: ${updated_uris}"
+
+# web-redirect-uris param doesn't like any type of quotes
+# shellcheck disable=SC2086
+az ad app update --id "${workspace_api_client_id}" --web-redirect-uris ${updated_uris} --only-show-errors
