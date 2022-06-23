@@ -66,6 +66,8 @@ echo "${aad_redirect_uris_b64}"
 echo "end of urls."
 
 # web-redirect-uris param doesn't like any type of quotes, hence jq -r
+# decode the string and read as json, then take just the values inside the object, concat lines into a space-separated
+# single line, trim end.
 updated_uris=$(echo "${aad_redirect_uris_b64}" | base64 --decode | jq -r '.[].value' | tr '\n' ' ' | sed 's/ *$//g')
 
 echo "Going to update application: ${workspace_api_client_id} with URIs: ${updated_uris}"
