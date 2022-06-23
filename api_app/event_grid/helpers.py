@@ -26,9 +26,9 @@ async def _publish_event(event: EventGridEvent, topic_endpoint: str):
 
 async def send_status_changed_event(airlock_request: AirlockRequest):
     request_id = airlock_request.id
-    status = airlock_request.status
-    request_type = airlock_request.requestType
-    workspace_id = airlock_request.workspaceId
+    status = airlock_request.status.value
+    request_type = airlock_request.requestType.value
+    short_workspace_id = airlock_request.workspaceId[-4:]
 
     status_changed_event = EventGridEvent(
         event_type="statusChanged",
@@ -36,7 +36,7 @@ async def send_status_changed_event(airlock_request: AirlockRequest):
             "request_id": request_id,
             "status": status,
             "type": request_type,
-            "workspace_id": workspace_id
+            "workspace_id": short_workspace_id
         },
         subject=f"{request_id}/statusChanged",
         data_version="2.0"

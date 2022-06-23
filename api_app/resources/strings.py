@@ -29,6 +29,7 @@ API_INVOKE_ACTION_ON_USER_RESOURCE = "Invoke action on a user resource"
 
 API_CREATE_AIRLOCK_REQUEST = "Create an airlock request"
 API_SUBMIT_AIRLOCK_REQUEST = "Submit an airlock request"
+API_REVIEW_AIRLOCK_REQUEST = "Review an airlock request"
 
 API_CREATE_WORKSPACE_TEMPLATES = "Register workspace template"
 API_GET_WORKSPACE_TEMPLATES = "Get workspace templates"
@@ -53,8 +54,11 @@ API_CREATE_USER_RESOURCE_TEMPLATES = "Register user resource template"
 API_GET_USER_RESOURCE_TEMPLATES = "Get user resource templates applicable to the workspace service template"
 API_GET_USER_RESOURCE_TEMPLATE_BY_NAME = "Get user resource template by name and workspace service"
 
+# cost report
 API_GET_COSTS = "Get overall costs"
 API_GET_WORKSPACE_COSTS = "Get workspace costs"
+API_GET_COSTS_MAX_TIME_PERIOD = "The time period for pulling the data cannot exceed 1 year"
+API_GET_COSTS_TO_DATE_NEED_TO_BE_LATER_THEN_FROM_DATE = "to_date needs to be later than from_date"
 
 # State store status
 OK = "OK"
@@ -147,6 +151,7 @@ RESOURCE_TYPE_SHARED_SERVICE = "shared-service"
 
 # Airlock Resource Type
 AIRLOCK_RESOURCE_TYPE_REQUEST = "airlock-request"
+AIRLOCK_RESOURCE_TYPE_REVIEW = "airlock-review"
 
 # Airlock Resource Status
 AIRLOCK_RESOURCE_STATUS_DRAFT = "draft"
@@ -163,7 +168,7 @@ AIRLOCK_REQUEST_TYPE_EXPORT = "export"
 
 # Airlock Messages
 AIRLOCK_REQUEST_DOES_NOT_EXIST = "Airlock request does not exist"
-AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE = "Airlock request status changes was illegal"
+AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE = "Airlock request status change was illegal"
 
 # Deployments
 RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE = "This resource has not yet been deployed"
@@ -181,3 +186,6 @@ EVENT_GRID_GENERAL_ERROR_MESSAGE = "Event grid failure"
 MISSING_REQUIRED_PARAMETERS = "Missing required parameters"
 INVALID_EXTRA_PARAMETER = "Invalid extra parameters"
 PARAMETERS_WITH_WRONG_TYPE = "Parameters with wrong type"
+
+# Value that a sensitive is replaced with in Cosmos
+REDACTED_SENSITIVE_VALUE = "REDACTED"

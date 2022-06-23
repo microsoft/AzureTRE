@@ -43,9 +43,6 @@ nav:
       - Architecture: 'azure-tre-overview/architecture.md'
       - Network Architecture: 'azure-tre-overview/networking.md'
       - Azure Resource Breakdown: 'azure-tre-overview/tre-resources-breakdown.md'
-      - Shared Services:
-          - Gitea (Source Mirror): 'azure-tre-overview/shared-services/gitea.md'
-          - Nexus (Package Mirror): 'azure-tre-overview/shared-services/nexus.md'
   - TRE Admins:
       - Setup Instructions:
           - 1. Getting Started: 'tre-admins/setup-instructions/getting-started.md'
@@ -58,7 +55,15 @@ nav:
       - Start-stop: 'tre-admins/start-stop.md'
       - Tear-down: 'tre-admins/tear-down.md'
       - Environment Variables: 'tre-admins/environment-variables.md'
-      - Authentication and Authorization: 'tre-admins/auth.md'
+      - Authentication and Authorization:
+          - Introduction: 'tre-admins/auth.md'
+          - Manual Setup: tre-admins/identities/auth-manual.md
+          - Identities:
+              - Application Admin: tre-admins/identities/application_admin.md
+              - API: tre-admins/identities/api.md
+              - Client: tre-admins/identities/client.md
+              - Automation Test Account: tre-admins/identities/test-account.md
+              - Workspaces: tre-admins/identities/workspace.md
       - Registering Templates: 'tre-admins/registering-templates.md'
       - Troubleshooting Guide: 'tre-admins/troubleshooting-guide.md'
   - TRE Developers:
@@ -82,6 +87,9 @@ nav:
           - Guacamole: 'tre-templates/workspace-services/guacamole.md'
           - InnerEye: 'tre-templates/workspace-services/inner-eye.md'
           - MLFlow: 'tre-templates/workspace-services/mlflow.md'
+      - Shared Services:
+          - Gitea (Source Mirror): 'tre-templates/shared-services/gitea.md'
+          - Nexus (Package Mirror): 'tre-templates/shared-services/nexus.md'
       - User Resources:
           - Guacamole Windows VM: 'tre-templates/user-resources/guacamole-windows-vm.md'
           - Guacamole Linux VM: 'tre-templates/user-resources/guacamole-linux-vm.md'

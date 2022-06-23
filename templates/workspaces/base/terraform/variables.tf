@@ -48,6 +48,11 @@ variable "register_aad_application" {
   description = "Create an AAD application automatically for the Workspace."
 }
 
+variable "aad_redirect_uris_b64" {
+  type    = string # B64 encoded list of objects like [{"name": "my uri 1", "value": "https://..."}, {}]
+  default = "W10=" #b64 for []
+}
+
 variable "auth_tenant_id" {
   type        = string
   description = "Used to authenticate into the AAD Tenant to create the AAD App"
@@ -100,14 +105,3 @@ variable "workspace_owner_object_id" {
 }
 
 
-locals {
-  core_vnet                      = "vnet-${var.tre_id}"
-  short_workspace_id             = substr(var.tre_resource_id, -4, -1)
-  core_resource_group_name       = "rg-${var.tre_id}"
-  workspace_resource_name_suffix = "${var.tre_id}-ws-${local.short_workspace_id}"
-  storage_name                   = lower(replace("stg${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
-  keyvault_name                  = lower("kv-${substr(local.workspace_resource_name_suffix, -20, -1)}")
-  vnet_subnets                   = cidrsubnets(var.address_space, 1, 1)
-  services_subnet_address_prefix = local.vnet_subnets[0]
-  webapps_subnet_address_prefix  = local.vnet_subnets[1]
-}

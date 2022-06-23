@@ -1,11 +1,13 @@
 resource "azurerm_resource_group" "ws" {
   location = var.location
   name     = "rg-${local.workspace_resource_name_suffix}"
-  tags = {
-    project = "Azure Trusted Research Environment"
-    tre_id  = var.tre_id
-    source  = "https://github.com/microsoft/AzureTRE/"
-  }
+  tags = merge(
+    local.tre_workspace_tags,
+    {
+      project = "Azure Trusted Research Environment",
+      source  = "https://github.com/microsoft/AzureTRE/"
+    },
+  )
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -21,14 +23,17 @@ module "network" {
   address_space          = var.address_space
   ws_resource_group_name = azurerm_resource_group.ws.name
   tre_resource_id        = var.tre_resource_id
+  tre_workspace_tags     = local.tre_workspace_tags
 }
 
 module "aad" {
   source                         = "./aad"
+  tre_workspace_tags             = local.tre_workspace_tags
   count                          = var.register_aad_application ? 1 : 0
   key_vault_id                   = azurerm_key_vault.kv.id
   workspace_resource_name_suffix = local.workspace_resource_name_suffix
   workspace_owner_object_id      = var.workspace_owner_object_id
+  aad_redirect_uris_b64          = var.aad_redirect_uris_b64
   depends_on = [
     azurerm_key_vault_access_policy.deployer,
     azurerm_key_vault_access_policy.resource_processor,
@@ -37,14 +42,15 @@ module "aad" {
 }
 
 module "airlock" {
-  source                 = "./airlock"
-  location               = var.location
-  tre_id                 = var.tre_id
-  ws_resource_group_name = azurerm_resource_group.ws.name
-  enable_local_debugging = var.enable_local_debugging
-  services_subnet_id     = module.network.services_subnet_id
-  short_workspace_id     = local.short_workspace_id
-
+  source                      = "./airlock"
+  location                    = var.location
+  tre_id                      = var.tre_id
+  tre_workspace_tags          = local.tre_workspace_tags
+  ws_resource_group_name      = azurerm_resource_group.ws.name
+  enable_local_debugging      = var.enable_local_debugging
+  services_subnet_id          = module.network.services_subnet_id
+  short_workspace_id          = local.short_workspace_id
+  airlock_processor_subnet_id = module.network.airlock_processor_subnet_id
   depends_on = [
     module.network,
   ]

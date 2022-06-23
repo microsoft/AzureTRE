@@ -16,16 +16,14 @@ resource "azurerm_storage_account" "sa_import_approved" {
     bypass         = ["AzureServices"]
   }
 
-  tags = {
-    description = "airlock;import;approved"
-  }
+  tags = merge(
+    var.tre_workspace_tags,
+    {
+      description = "airlock;import;approved"
+    }
+  )
 
   lifecycle { ignore_changes = [tags] }
-}
-
-data "azurerm_private_dns_zone" "blobcore" {
-  name                = "privatelink.blob.core.windows.net"
-  resource_group_name = local.core_resource_group_name
 }
 
 resource "azurerm_private_endpoint" "import_approved_pe" {
@@ -68,9 +66,12 @@ resource "azurerm_storage_account" "sa_export_internal" {
     bypass         = ["AzureServices"]
   }
 
-  tags = {
-    description = "airlock;export;internal"
-  }
+  tags = merge(
+    var.tre_workspace_tags,
+    {
+      description = "airlock;export;internal"
+    }
+  )
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -110,16 +111,25 @@ resource "azurerm_storage_account" "sa_export_inprogress" {
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
 
-  network_rules {
-    default_action = var.enable_local_debugging ? "Allow" : "Deny"
-    bypass         = ["AzureServices"]
-  }
-
-  tags = {
-    description = "airlock;export;inprogress"
-  }
+  tags = merge(
+    var.tre_workspace_tags,
+    {
+      description = "airlock;export;inprogress"
+    }
+  )
 
   lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_storage_account_network_rules" "sa_export_inprogress_rules" {
+  storage_account_id = azurerm_storage_account.sa_export_inprogress.id
+
+  # When the Airlock procssor tried to copy data from the export in-progress SA to the Export approved SA, its not using the PE, as the destination is public, hence, allowing this subnet is mandatory
+  # It might be possible to add PE to this storage instead of opening the fw to this subnet: https://github.com/microsoft/AzureTRE/issues/2098
+  virtual_network_subnet_ids = [var.airlock_processor_subnet_id]
+
+  default_action = var.enable_local_debugging ? "Allow" : "Deny"
+  bypass         = ["AzureServices"]
 }
 
 
@@ -162,9 +172,12 @@ resource "azurerm_storage_account" "sa_export_rejected" {
     bypass         = ["AzureServices"]
   }
 
-  tags = {
-    description = "airlock;export;rejected"
-  }
+  tags = merge(
+    var.tre_workspace_tags,
+    {
+      description = "airlock;export;rejected"
+    }
+  )
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -189,11 +202,6 @@ resource "azurerm_private_endpoint" "export_rejected_pe" {
     is_manual_connection           = false
     subresource_names              = ["Blob"]
   }
-}
-
-data "azurerm_user_assigned_identity" "airlock_id" {
-  name                = "id-airlock-${var.tre_id}"
-  resource_group_name = "rg-${var.tre_id}"
 }
 
 resource "azurerm_role_assignment" "sa_import_approved" {
