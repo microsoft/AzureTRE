@@ -13,3 +13,7 @@ output "filecore_zone_id" {
 output "blobcore_zone_id" {
   value = data.azurerm_private_dns_zone.blobcore.id
 }
+
+output "airlock_processor_subnet_id" {
+  value = data.azurerm_subnet.airlockprocessor.id
+}
