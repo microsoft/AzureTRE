@@ -112,8 +112,10 @@ function wait_for_operation_result() {
   fi
 }
 
+curl_settings=(--retry 7 --retry-max-time 300 --max-time 90)
+
 # Get shared services and determine if the given shared service has already been deployed
-get_shared_services_result=$(curl -i -X "GET" "${tre_url}"/api/shared-services \
+get_shared_services_result=$(curl -i "${curl_settings[@]}" -X "GET" "${tre_url}"/api/shared-services \
                              -H "accept: application/json" \
                              -H "Content-Type: application/json" \
                              -H "Authorization: Bearer ""${access_token}""" "${options}" -s)
@@ -140,7 +142,7 @@ if [[ -n "${deployed_shared_service}" ]]; then
 fi
 
 payload="{ \"templateName\": \"""${template_name}""\", \"properties\": { \"display_name\": \"Shared service ""${template_name}""\", \"description\": \"Automatically deployed ""${template_name}""\" } }"
-deploy_result=$(curl -i -X "POST" "${tre_url}/api/shared-services" \
+deploy_result=$(curl -i "${curl_settings[@]}" -X "POST" "${tre_url}/api/shared-services" \
                 -H "accept: application/json" \
                 -H "Content-Type: application/json" \
                 -H "Authorization: Bearer ""${access_token}""" -d "${payload}" "${options}" -s)
