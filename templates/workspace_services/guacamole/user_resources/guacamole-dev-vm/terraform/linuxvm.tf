@@ -63,12 +63,7 @@ resource "azurerm_linux_virtual_machine" "linuxvm" {
     type = "SystemAssigned"
   }
 
-  tags = merge(
-    local.tre_user_resources_tags,
-    {
-      parent_service_id = var.parent_service_id
-    }
-  )
+  tags = local.tre_user_resources_tags
 }
 
 data "template_cloudinit_config" "config" {

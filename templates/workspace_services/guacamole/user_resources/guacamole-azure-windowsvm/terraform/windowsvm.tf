@@ -63,12 +63,7 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
     type = "SystemAssigned"
   }
 
-  tags = merge(
-    local.tre_user_resources_tags,
-    {
-      parent_service_id = var.parent_service_id
-    }
-  )
+  tags = local.tre_user_resources_tags
 }
 
 resource "azurerm_virtual_machine_extension" "config_script" {
