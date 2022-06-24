@@ -9,7 +9,12 @@ locals {
   vm_name                        = "linuxvm${local.short_service_id}"
   keyvault_name                  = lower("kv-${substr(local.workspace_resource_name_suffix, -20, -1)}")
   storage_name                   = lower(replace("stg${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
-
+  tre_user_resources_tags = {
+    tre_id                   = var.tre_id
+    tre_workspace_id         = var.workspace_id
+    tre_workspace_service_id = var.parent_service_id
+    tre_user_resource_id     = var.tre_resource_id
+  }
   nexus_proxy_url = {
     "V1" = "https://nexus-${var.tre_id}.azurewebsites.net",
     "V2" = "https://nexus-${var.tre_id}.${data.azurerm_resource_group.core.location}.cloudapp.azure.com"
