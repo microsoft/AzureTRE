@@ -20,6 +20,16 @@ PLAN_FILE="tfplan$$"
 TS=$(date +"%s")
 LOG_FILE="${TS}-tre-core.log"
 
+# As a temporary mitigation to issue #2106 (https://github.com/microsoft/AzureTRE/issues/2106), we force the redeployment of all the airlock's topics
+# can be removed when upgrades are done
+FORCE_REPLACE=" -replace=module.airlock_resources.azurerm_eventgrid_topic.step_result \
+   -replace=module.airlock_resources.azurerm_eventgrid_topic.status_changed \
+   -replace=module.airlock_resources.azurerm_eventgrid_system_topic.import_inprogress_blob_created \
+   -replace=module.airlock_resources.azurerm_eventgrid_system_topic.import_rejected_blob_created \
+   -replace=module.airlock_resources.azurerm_eventgrid_system_topic.export_approved_blob_created \
+   -replace=module.airlock_resources.azurerm_eventgrid_topic.scan_result"
+
+
 # This variables are loaded in for us
 # shellcheck disable=SC2154
 ../../../devops/scripts/terraform_wrapper.sh \
@@ -28,6 +38,6 @@ LOG_FILE="${TS}-tre-core.log"
   -n "${TF_VAR_terraform_state_container_name}" \
   -k "${TRE_ID}" \
   -l "${LOG_FILE}" \
-  -c "terraform plan -out ${PLAN_FILE} && \
+  -c "terraform plan ${FORCE_REPLACE} -out ${PLAN_FILE} && \
   terraform apply -input=false -auto-approve ${PLAN_FILE} && \
   terraform output -json > ../tre_output.json"
