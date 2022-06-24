@@ -61,7 +61,8 @@ class SharedServiceRepository(ResourceRepository):
         shared_service_id = str(uuid.uuid4())
 
         existing_shared_services = self.query(self.deployed_shared_service_with_template_name_query(shared_service_input.templateName))
-        # Duplicate is same template (=id), same version and active
+
+        # Duplicate is same template (=id), same version and deployed
         if existing_shared_services:
             if len(existing_shared_services) > 1:
                 raise InternalError(f"More than one active shared service exists with the same id {shared_service_id}")
