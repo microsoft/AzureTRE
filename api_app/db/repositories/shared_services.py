@@ -7,7 +7,7 @@ from pydantic import parse_obj_as
 from models.domain.resource_template import ResourceTemplate
 from models.domain.authentication import User
 from db.repositories.resource_templates import ResourceTemplateRepository
-from db.repositories.resources import ResourceRepository, IS_NOT_DELETED_CLAUSE
+from db.repositories.resources import ResourceRepository, IS_NOT_DELETED_CLAUSE, IS_DEPLOYED_CLAUSE
 from db.repositories.operations import OperationRepository
 from db.errors import DuplicateEntity, ResourceIsNotDeployed, EntityDoesNotExist
 from models.domain.shared_service import SharedService
@@ -30,7 +30,7 @@ class SharedServiceRepository(ResourceRepository):
 
     @staticmethod
     def deployed_shared_service_with_template_name_query(template_name: str):
-        return f'SELECT * FROM c WHERE c.deploymentStatus = "deployed" AND c.resourceType = "{ResourceType.SharedService}" AND c.templateName = "{template_name}"'
+        return f'SELECT * FROM c WHERE {IS_DEPLOYED_CLAUSE} AND c.resourceType = "{ResourceType.SharedService}" AND c.templateName = "{template_name}"'
 
     def get_shared_service_by_id(self, shared_service_id: str):
         shared_services = self.query(self.shared_service_query(shared_service_id))
