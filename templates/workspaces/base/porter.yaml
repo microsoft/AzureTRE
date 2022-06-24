@@ -1,7 +1,8 @@
 ---
 name: tre-workspace-base
-version: 0.3.9
+version: 0.3.10
 description: "A base Azure TRE workspace"
+dockerfile: Dockerfile.tmpl
 registry: azuretre
 
 credentials:
@@ -119,6 +120,7 @@ mixins:
   - exec
   - terraform:
       clientVersion: 1.1.7
+  - az
 
 install:
   - terraform:
@@ -187,6 +189,23 @@ upgrade:
         - name: client_id
         - name: scope_id
         - name: sp_id
+  - az:
+      description: "AAD Application Admin Login"
+      arguments:
+        - login
+      flags:
+        service-principal: ""
+        username: "'{{bundle.credentials.auth_client_id}}'"
+        password: "'{{bundle.credentials.auth_client_secret}}'"
+        tenant: "'{{bundle.credentials.auth_tenant_id}}'"
+        allow-no-subscriptions: ""
+  - exec:
+      description: "Update workspace app redirect urls"
+      command: ./update_redirect_urls.sh
+      flags:
+        workspace-api-client-id: "{{ bundle.parameters.client_id }}"
+        aad-redirect-uris-b64: "{{ bundle.parameters.aad_redirect_uris }}"
+        register-aad-application: "{{ bundle.parameters.register_aad_application }}"
 
 uninstall:
   - terraform:
