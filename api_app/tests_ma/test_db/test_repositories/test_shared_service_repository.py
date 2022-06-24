@@ -1,6 +1,5 @@
 import pytest
 from mock import patch, MagicMock
-import copy
 
 from db.errors import DuplicateEntity, EntityDoesNotExist, ResourceIsNotDeployed
 from db.repositories.shared_services import SharedServiceRepository
@@ -108,27 +107,14 @@ def test_create_shared_service_item_creates_a_shared_with_the_right_values(valid
 def test_create_shared_service_item_with_the_same_name_twice_fails(validate_input_mock, shared_service_repo, basic_shared_service_request, basic_shared_service_template):
     validate_input_mock.return_value = basic_shared_service_template
 
-    failed_shared_service, _ = shared_service_repo.create_shared_service_item(basic_shared_service_request)
-    failed_shared_service.deploymentStatus = "failed"
-    shared_service_repo.save_item(failed_shared_service)
+    shared_service, _ = shared_service_repo.create_shared_service_item(basic_shared_service_request)
+    shared_service_repo.save_item(shared_service)
 
-    # shared_service_repo.query = MagicMock()
-    # shared_service_repo.container = MagicMock()
-    shared_service_repo.container.query_items = MagicMock()
-    shared_service_repo.container.query_items.return_value = [failed_shared_service.__dict__]
+    shared_service_repo.query = MagicMock()
+    shared_service_repo.query.return_value = [shared_service.__dict__]
 
-    # Check that does not raise
-    new_shared_service, _ = shared_service_repo.create_shared_service_item(basic_shared_service_request)
-    assert new_shared_service.deploymentStatus == "deployed"
-
-    # Check that if exisitng item is deployed, creating new one will raise
-
-    # failed_shared_service = copy.deepcopy(shared_service)
-    # shared_service_repo.query.return_value = [failed_shared_service.__dict__]
-
-    # with pytest.raises(DuplicateEntity):
-    #     shared_service = shared_service_repo.create_shared_service_item(basic_shared_service_request)
-
+    with pytest.raises(DuplicateEntity):
+        shared_service = shared_service_repo.create_shared_service_item(basic_shared_service_request)
 
 
 @patch('db.repositories.shared_services.SharedServiceRepository.validate_input_against_template', side_effect=ValueError)
