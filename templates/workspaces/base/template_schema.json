@@ -47,6 +47,14 @@
             }
           }
         }
+      },
+      "app_service_plan_sku": {
+        "$id": "#/properties/app_service_plan_sku",
+        "type": "string",
+        "enum": ["P1v3", "P1v2"],
+        "default": "P1v3",
+        "title": "App Service Plan SKU",
+        "description": "The SKU that will be used when deploying an Azure App Service Plan."
       }
     }
 }
