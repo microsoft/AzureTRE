@@ -21,7 +21,8 @@ class StorageConnectionMetadata:
         self.connection_string = connection_string
 
 
-def create_container(resource_group: str, storage_account: str, request_id: str, storage_client: StorageManagementClient ):
+def create_container(resource_group: str, storage_account: str, request_id: str,
+                     storage_client: StorageManagementClient):
     try:
         container_name = request_id
         blob_service_client = get_blob_client_by_rg_and_account(resource_group, storage_account, storage_client)
@@ -31,7 +32,8 @@ def create_container(resource_group: str, storage_account: str, request_id: str,
         logging.info(f'Did not create a new container. Container already exists for request id: {request_id}.')
 
 
-def get_blob_client_by_rg_and_account(resource_group: str, storage_account: str, storage_client: StorageManagementClient):
+def get_blob_client_by_rg_and_account(resource_group: str, storage_account: str,
+                                      storage_client: StorageManagementClient):
     sa_connection = get_storage_connection_string(storage_account, resource_group, storage_client)
     return BlobServiceClient.from_connection_string(sa_connection.connection_string)
 
@@ -56,13 +58,15 @@ def get_storage_management_client():
 
     managed_identity = os.environ.get("MANAGED_IDENTITY_CLIENT_ID")
     if managed_identity:
-        logging.info("using the Airlock processor's managed identity to get build storage management client")
-    credential = DefaultAzureCredential(managed_identity_client_id=os.environ["MANAGED_IDENTITY_CLIENT_ID"], exclude_shared_token_cache_credential=True) if managed_identity else DefaultAzureCredential()
+        logging.info("using the Airlock processor's managed identity to get storage management client")
+    credential = DefaultAzureCredential(managed_identity_client_id=os.environ["MANAGED_IDENTITY_CLIENT_ID"],
+                                        exclude_shared_token_cache_credential=True) if managed_identity else DefaultAzureCredential()
 
     return StorageManagementClient(credential, subscription_id)
 
 
-def copy_data(source_account_name: str, source_account_key: str, sa_source_connection_string: str, sa_dest_connection_string: str, request_id: str):
+def copy_data(source_account_name: str, source_account_key: str, sa_source_connection_string: str,
+              sa_dest_connection_string: str, request_id: str):
     container_name = request_id
 
     # token geneation with expiry of 1 hour. since its not shared, we can leave it to expire (no need to track/delete)
@@ -95,7 +99,7 @@ def copy_data(source_account_name: str, source_account_key: str, sa_source_conne
 
     except Exception:
         logging.error('Request with id %s failed.', request_id)
-        raise()
+        raise ()
 
     source_blob = source_container_client.get_blob_client(blob_name)
 
@@ -106,6 +110,7 @@ def copy_data(source_account_name: str, source_account_key: str, sa_source_conne
     copy = copied_blob.start_copy_from_url(source_url)
 
     try:
-        logging.info("Copy operation returned 'copy_id': '%s', 'copy_status': '%s'", copy["copy_id"], copy["copy_status"])
+        logging.info("Copy operation returned 'copy_id': '%s', 'copy_status': '%s'", copy["copy_id"],
+                     copy["copy_status"])
     except KeyError as e:
         logging.error(f"Failed getting operation id and status {e}")
