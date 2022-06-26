@@ -287,6 +287,7 @@ jobs:
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
           TF_VAR_stateful_resources_locked:
             "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
+          TF_VAR_enable_airlock_malware_scanning:  "${{ secrets.ENABLE_AIRLOCK_MALWARE_SCANNING }}"
 
   deploy_tre:
     name: Deploy TRE
@@ -336,6 +337,7 @@ jobs:
           TF_VAR_application_admin_client_secret: "${{ secrets.APPLICATION_ADMIN_CLIENT_SECRET }}"
           TF_VAR_stateful_resources_locked:
             "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
+          TF_VAR_enable_airlock_malware_scanning:  "${{ secrets.ENABLE_AIRLOCK_MALWARE_SCANNING }}"
 
       - name: API Healthcheck
         uses: ./.github/actions/devcontainer_run_command
@@ -369,6 +371,7 @@ jobs:
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
           TF_VAR_stateful_resources_locked:
             "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
+          TF_VAR_enable_airlock_malware_scanning:  "${{ secrets.ENABLE_AIRLOCK_MALWARE_SCANNING }}"
 
   publish_bundles:
     name: Publish Bundles
@@ -708,6 +711,7 @@ jobs:
           TF_VAR_api_client_secret: "${{ secrets.API_CLIENT_SECRET }}"
           TF_VAR_stateful_resources_locked:
             "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
+          TF_VAR_enable_airlock_malware_scanning:  "${{ secrets.ENABLE_AIRLOCK_MALWARE_SCANNING }}"
 
   e2e_tests_smoke:
     name: "Run E2E Tests (Smoke)"

@@ -59,15 +59,17 @@ def main(msg: func.ServiceBusMessage):
         logging.error(f'Missing environment variable: {e}')
         raise
 
-    if new_status == "draft" and request_type == constants.IMPORT_TYPE:
-        account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_EXTERNAL.format(tre_id)
+    if new_status == constants.STAGE_DRAFT and request_type == constants.IMPORT_TYPE:
+        account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_EXTERNAL + tre_id
         account_rg = constants.CORE_RESOURCE_GROUP_NAME.format(tre_id)
         blob_operations.create_container(account_rg, account_name, req_id, storage_client)
+        return
 
-    if new_status == "draft" and request_type == constants.EXPORT_TYPE:
-        account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INTERNAL.format(ws_id)
+    if new_status == constants.STAGE_DRAFT and request_type == constants.EXPORT_TYPE:
+        account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INTERNAL + ws_id
         account_rg = constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, ws_id)
         blob_operations.create_container(account_rg, account_name, req_id, storage_client)
+        return
 
     if (is_require_data_copy(new_status)):
         logging.info('Request with id %s. requires data copy between storage accounts', req_id)
@@ -79,7 +81,7 @@ def main(msg: func.ServiceBusMessage):
                                   containers_metadata.sa_dest_connection_string, req_id)
         return
 
-    # Todo: handle other cases...
+    # In-review, In-scan, ready, failed and declined are not processed as we don't need to do anything...
 
 
 def extract_properties(body: str) -> RequestProperties:
@@ -126,34 +128,44 @@ def get_source_dest_env_vars(new_status: str, request_type: str, short_workspace
 
     if request_type == constants.IMPORT_TYPE:
         if new_status == 'submitted':
-            source_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_EXTERNAL.format(tre_id)
-            dest_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS.format(tre_id)
+            source_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_EXTERNAL + tre_id
+            dest_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS + tre_id
             source_account_rg = constants.CORE_RESOURCE_GROUP_NAME.format(tre_id)
             dest_account_rg = source_account_rg
         elif new_status == 'approved':
-            source_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS.format(tre_id)
-            dest_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_APPROVED.format(short_workspace_id)
+            source_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS + tre_id
+            dest_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_APPROVED + short_workspace_id
             source_account_rg = constants.CORE_RESOURCE_GROUP_NAME.format(tre_id)
             dest_account_rg = constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, short_workspace_id)
         elif new_status == 'rejected':
-            source_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS.format(tre_id)
-            dest_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_REJECTED.format(tre_id)
+            source_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS + tre_id
+            dest_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_REJECTED + tre_id
+            source_account_rg = constants.CORE_RESOURCE_GROUP_NAME.format(tre_id)
+            dest_account_rg = source_account_rg
+        elif new_status == 'blocked':
+            source_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS + tre_id
+            dest_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_BLOCKED + tre_id
             source_account_rg = constants.CORE_RESOURCE_GROUP_NAME.format(tre_id)
             dest_account_rg = source_account_rg
     else:
         if new_status == 'submitted':
-            source_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INTERNAL.format(short_workspace_id)
-            dest_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS.format(short_workspace_id)
+            source_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INTERNAL + short_workspace_id
+            dest_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS + short_workspace_id
             source_account_rg = constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, short_workspace_id)
             dest_account_rg = source_account_rg
         elif new_status == 'approved':
-            source_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS.format(short_workspace_id)
-            dest_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_APPROVED.format(tre_id)
+            source_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS + short_workspace_id
+            dest_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_APPROVED + tre_id
             source_account_rg = constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, short_workspace_id)
             dest_account_rg = constants.CORE_RESOURCE_GROUP_NAME.format(tre_id)
         elif new_status == 'rejected':
-            source_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS.format(short_workspace_id)
-            dest_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_REJECTED.format(short_workspace_id)
+            source_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS + short_workspace_id
+            dest_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_REJECTED + short_workspace_id
+            source_account_rg = constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, short_workspace_id)
+            dest_account_rg = source_account_rg
+        elif new_status == 'blocked':
+            source_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS + short_workspace_id
+            dest_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_BLOCKED + short_workspace_id
             source_account_rg = constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, short_workspace_id)
             dest_account_rg = source_account_rg
 

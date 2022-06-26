@@ -166,3 +166,12 @@ variable "public_deployment_ip_address" {
   type        = string
   default     = ""
 }
+
+# Important note: it is NOT enough to simply enable the malware scanning on. Further, manual, steps are required
+# in order to actually set up the scanner. Setting this property to True without supplying a scanner will result
+# in airlock requests being stuck in the in-progress stage.
+variable "enable_airlock_malware_scanning" {
+  type        = bool
+  default     = false
+  description = "If False, Airlock requests will skip the malware scanning stage"
+}

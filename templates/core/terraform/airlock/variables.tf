@@ -40,3 +40,8 @@ variable "airlock_app_service_plan_sku_size" {
 }
 
 variable "airlock_processor_subnet_id" {}
+
+variable "enable_malware_scanning" {
+  type        = bool
+  description = "If False, Airlock requests will skip the malware scanning stage"
+}

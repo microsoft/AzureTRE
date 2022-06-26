@@ -95,6 +95,8 @@ module "airlock_resources" {
   arm_subscription_id               = var.arm_subscription_id
   airlock_app_service_plan_sku_size = var.api_app_service_plan_sku_size
   airlock_processor_subnet_id       = module.network.airlock_processor_subnet_id
+  enable_malware_scanning           = var.enable_airlock_malware_scanning
+
   depends_on = [
     azurerm_servicebus_namespace.sb,
     module.network
