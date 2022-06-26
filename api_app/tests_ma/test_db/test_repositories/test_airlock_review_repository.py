@@ -1,8 +1,7 @@
-from unittest.mock import MagicMock
 from mock import patch
 import pytest
 from db.repositories.airlock_reviews import AirlockReviewRepository
-from models.domain.airlock_review import AirlockReview, AirlockReviewDecision
+from models.domain.airlock_review import AirlockReviewDecision
 from models.schemas.airlock_review import AirlockReviewInCreate
 from models.domain.airlock_resource import AirlockResourceType
 
@@ -18,29 +17,8 @@ def airlock_review_repo():
 
 
 @pytest.fixture
-def sample_airlock_review_mock():
-    airlock_review = AirlockReview(
-        id=AIRLOCK_REVIEW_ID,
-        resourceType=AirlockResourceType.AirlockReview,
-        workspaceId=WORKSPACE_ID,
-        requestId=AIRLOCK_REQUEST_ID,
-        reviewDecision=AirlockReviewDecision.Approved,
-        decisionExplanation="test explaination"
-    )
-    return airlock_review
-
-
-@pytest.fixture
 def sample_airlock_review_input():
     return AirlockReviewInCreate(reviewDecision=AirlockReviewDecision.Approved, decisionExplanation="some decision")
-
-
-@pytest.fixture
-def sample_airlock_review_input_malformed():
-    airlock_review_input_mock = MagicMock()
-    airlock_review_input_mock.reviewDecision = "not sure"
-    airlock_review_input_mock.decisionExplanation = "test explnation"
-    return airlock_review_input_mock
 
 
 def test_create_airlock_review_item_with_the_right_values(sample_airlock_review_input, airlock_review_repo):
@@ -49,3 +27,5 @@ def test_create_airlock_review_item_with_the_right_values(sample_airlock_review_
     assert airlock__review.resourceType == AirlockResourceType.AirlockReview
     assert airlock__review.workspaceId == WORKSPACE_ID
     assert airlock__review.requestId == AIRLOCK_REQUEST_ID
+    assert airlock__review.reviewDecision == AirlockReviewDecision.Approved
+    assert airlock__review.decisionExplanation == "some decision"
