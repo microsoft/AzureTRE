@@ -25,12 +25,16 @@ class ContainersCopyMetadata:
     source_account_key: str
     sa_source_connection_string: str
     sa_dest_connection_string: str
+    sa_dest_account_name: str
+    sa_dest_resource_group: str
 
-    def __init__(self, source_account_name: str, source_account_key: str, sa_source_connection_string: str, sa_dest_connection_string: str):
+    def __init__(self, source_account_name: str, source_account_key: str, sa_source_connection_string: str, sa_dest_connection_string: str, sa_dest_account_name: str, sa_dest_resource_group: str):
         self.source_account_name = source_account_name
         self.source_account_key = source_account_key
         self.sa_source_connection_string = sa_source_connection_string
         self.sa_dest_connection_string = sa_dest_connection_string
+        self.sa_dest_account_name = sa_dest_account_name
+        self.sa_dest_resource_group = sa_dest_resource_group
 
 
 def main(msg: func.ServiceBusMessage):
@@ -61,22 +65,18 @@ def main(msg: func.ServiceBusMessage):
     if new_status == "draft" and request_type == constants.IMPORT_TYPE:
         account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_EXTERNAL.format(tre_id)
         account_rg = constants.CORE_RESOURCE_GROUP_NAME.format(tre_id)
-        sa_connection = blob_operations.get_storage_connection_string(account_name, account_rg, storage_client)
-        blob_service_client = BlobServiceClient.from_connection_string(sa_connection.connection_string)
-        blob_operations.create_container(blob_service_client, req_id)
+        blob_operations.create_container(account_rg, account_name, req_id, storage_client)
 
     if new_status == "draft" and request_type == constants.EXPORT_TYPE:
         account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INTERNAL.format(ws_id)
         account_rg = constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, ws_id)
-        sa_connection = blob_operations.get_storage_connection_string(account_name, account_rg, storage_client)
-        blob_service_client = BlobServiceClient.from_connection_string(sa_connection.connection_string)
-        blob_operations.create_container(blob_service_client, req_id)
+        blob_operations.create_container(account_rg, account_name, req_id, storage_client)
+
 
     if (is_require_data_copy(new_status)):
         logging.info('Request with id %s. requires data copy between storage accounts', req_id)
         containers_metadata = get_source_dest_env_vars(new_status, request_type, ws_id, storage_client)
-        blob_service_client = BlobServiceClient.from_connection_string(containers_metadata.sa_dest_connection_string)
-        blob_operations.create_container(blob_service_client, req_id)
+        blob_operations.create_container(containers_metadata.sa_dest_resource_group, containers_metadata.sa_dest_account_name, req_id, storage_client)
         blob_operations.copy_data(containers_metadata.source_account_name, containers_metadata.source_account_key, containers_metadata.sa_source_connection_string, containers_metadata.sa_dest_connection_string, req_id)
         return
 
@@ -161,4 +161,9 @@ def get_source_dest_env_vars(new_status: str, request_type: str, short_workspace
     sa_source = blob_operations.get_storage_connection_string(source_account_name, source_account_rg, storage_client)
     sa_dest = blob_operations.get_storage_connection_string(dest_account_name, dest_account_rg, storage_client)
 
-    return ContainersCopyMetadata(sa_source.account_name, sa_source.account_key, sa_source.connection_string, sa_dest.connection_string)
+    return ContainersCopyMetadata(sa_source.account_name,
+                                  sa_source.account_key,
+                                  sa_source.connection_string,
+                                  sa_dest.connection_string,
+                                  sa_dest.account_name,
+                                  dest_account_rg)

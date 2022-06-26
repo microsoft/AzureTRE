@@ -21,13 +21,19 @@ class StorageConnectionMetadata:
         self.connection_string = connection_string
 
 
-def create_container(blob_service_client: BlobServiceClient, request_id: str):
+def create_container(resource_group: str, storage_account: str, request_id: str, storage_client: StorageManagementClient ):
     try:
         container_name = request_id
+        blob_service_client = get_blob_client_by_rg_and_account(resource_group, storage_account, storage_client)
         blob_service_client.create_container(container_name)
         logging.info(f'Container created for request id: {request_id}.')
     except ResourceExistsError as e:
         logging.info(f'Did not create a new container. Container already exists for request id: {request_id}.')
+
+
+def get_blob_client_by_rg_and_account(resource_group: str, storage_account: str, storage_client: StorageManagementClient):
+    sa_connection = get_storage_connection_string(storage_account, resource_group, storage_client)
+    return BlobServiceClient.from_connection_string(sa_connection.connection_string)
 
 
 def get_storage_connection_string(sa_name: str, resource_group: str, storage_client: StorageManagementClient):
