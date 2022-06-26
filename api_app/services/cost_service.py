@@ -1,4 +1,5 @@
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 from enum import Enum
 from typing import Dict
 
@@ -194,7 +195,7 @@ class CostService:
             granularity=granularity, aggregation=query_aggregation_dict,
             grouping=query_grouping_list, filter=query_filter)
         query_time_period: QueryTimePeriod = QueryTimePeriod(
-            from_property=from_date, to=to_date)
+            from_property=from_date, to=to_date - relativedelta(microseconds=1))
         query_definition: QueryDefinition = QueryDefinition(
             type=ExportType.actual_cost, timeframe=TimeframeType.CUSTOM,
             time_period=query_time_period, dataset=query_dataset)
