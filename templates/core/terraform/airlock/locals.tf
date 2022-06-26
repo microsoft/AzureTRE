@@ -8,13 +8,17 @@ locals {
   # STorage AirLock APProved EXPort
   export_approved_storage_name = lower(replace("stalexapp${var.tre_id}", "-", ""))
 
-  import_inprogress_sys_topic_name = "evgt-airlock-import-in-progress-${var.tre_id}"
-  import_rejected_sys_topic_name   = "evgt-airlock-import-rejected-${var.tre_id}"
-  export_approved_sys_topic_name   = "evgt-airlock-export-approved-${var.tre_id}"
+  # Due to the following issue and Azure not liking delete and immediate recreate under the same name,
+  # we had to change the resource names. https://github.com/hashicorp/terraform-provider-azurerm/issues/17389
+  topic_name_suffix="v2-${var.tre_id}"
 
-  scan_result_topic_name    = "evgt-airlock-scan-result-${var.tre_id}"
-  step_result_topic_name    = "evgt-airlock-step-result-${var.tre_id}"
-  status_changed_topic_name = "evgt-airlock-status-changed-${var.tre_id}"
+  import_inprogress_sys_topic_name = "evgt-airlock-import-in-progress-${local.topic_name_suffix}"
+  import_rejected_sys_topic_name   = "evgt-airlock-import-rejected-${local.topic_name_suffix}"
+  export_approved_sys_topic_name   = "evgt-airlock-export-approved-${local.topic_name_suffix}"
+
+  scan_result_topic_name    = "evgt-airlock-scan-result-${local.topic_name_suffix}"
+  step_result_topic_name    = "evgt-airlock-step-result-${local.topic_name_suffix}"
+  status_changed_topic_name = "evgt-airlock-status-changed-${local.topic_name_suffix}"
 
   step_result_queue_name    = "airlock-step-result"
   status_changed_queue_name = "airlock-status-changed"
