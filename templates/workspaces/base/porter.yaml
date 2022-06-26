@@ -1,6 +1,6 @@
 ---
 name: tre-workspace-base
-version: 0.3.10
+version: 0.3.11
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -93,6 +93,10 @@ parameters:
     type: string
     description: "List of redirect URIs in {name:value} format"
     default: "W10=" # b64 for []
+  - name: app_service_plan_sku
+    type: string
+    description: "The SKU used when deploying an Azure App Service Plan"
+    default: "P1v3"
 
 outputs:
   - name: app_role_id_workspace_owner
@@ -144,6 +148,7 @@ install:
         app_role_id_workspace_owner: "{{ bundle.parameters.app_role_id_workspace_owner }}"
         app_role_id_workspace_researcher: "{{ bundle.parameters.app_role_id_workspace_researcher }}"
         aad_redirect_uris_b64: "{{ bundle.parameters.aad_redirect_uris }}"
+        app_service_plan_sku: "{{ bundle.parameters.app_service_plan_sku }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
@@ -178,6 +183,7 @@ upgrade:
         app_role_id_workspace_owner: "{{ bundle.parameters.app_role_id_workspace_owner }}"
         app_role_id_workspace_researcher: "{{ bundle.parameters.app_role_id_workspace_researcher }}"
         aad_redirect_uris_b64: "{{ bundle.parameters.aad_redirect_uris }}"
+        app_service_plan_sku: "{{ bundle.parameters.app_service_plan_sku }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
@@ -228,6 +234,7 @@ uninstall:
         app_role_id_workspace_owner: "{{ bundle.parameters.app_role_id_workspace_owner }}"
         app_role_id_workspace_researcher: "{{ bundle.parameters.app_role_id_workspace_researcher }}"
         aad_redirect_uris_b64: "{{ bundle.parameters.aad_redirect_uris }}"
+        app_service_plan_sku: "{{ bundle.parameters.app_service_plan_sku }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
