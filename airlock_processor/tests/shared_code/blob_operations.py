@@ -1,7 +1,7 @@
 import os
 import unittest
 from unittest.mock import Mock, MagicMock, patch
-from unittest.mock import create_autospec
+
 from azure.mgmt.storage import StorageManagementClient
 from azure.mgmt.storage.v2021_09_01.aio.operations import StorageAccountsOperations
 from azure.mgmt.storage.v2021_09_01.models import StorageAccountListKeysResult, StorageAccountKey
@@ -16,14 +16,14 @@ class TestBlobOperations(unittest.TestCase):
         self.assertRaises(KeyError, get_storage_management_client)
 
     def test_get_storage_management_client_returns_as_expected(self):
-        os.environ.setdefault("AZURE_SUBSCRIPTION_ID", "asss")
+        os.environ.setdefault("AZURE_SUBSCRIPTION_ID", "subscription_id")
         self.assertIsInstance(get_storage_management_client(), StorageManagementClient)
 
     def test_get_storage_connection_string_has_access_key_as_expected(self):
         storage_management_client = Mock(StorageManagementClient)
         storage_management_client.storage_accounts = Mock(StorageAccountsOperations)
 
-        sa_keys_result= StorageAccountListKeysResult()
+        sa_keys_result = StorageAccountListKeysResult()
         key1 = StorageAccountKey()
         key1.key_name = "key1"
         key1.value = "accountKey1"
@@ -35,7 +35,7 @@ class TestBlobOperations(unittest.TestCase):
         sa_keys_result.keys = [key1, key2]
         storage_management_client.storage_accounts.list_keys = MagicMock(return_value=sa_keys_result)
 
-        self.assertEquals(get_storage_connection_string("sa_name","rg1", storage_management_client).connection_string,
+        self.assertEquals(get_storage_connection_string("sa_name", "rg1", storage_management_client).connection_string,
                           "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=sa_name;AccountKey=accountKey1")
 
     @patch('shared_code.blob_operations.get_blob_client_by_rg_and_account', return_value=Mock(BlobServiceClient))
@@ -53,11 +53,14 @@ class TestBlobOperations(unittest.TestCase):
         sa_keys_result.keys = [key1]
         storage_management_client.storage_accounts.list_keys = MagicMock(return_value=sa_keys_result)
 
-        blob_service_client_mock = get_blob_client_by_rg_and_account_mock("sa_rg_name", "sa_account_name", storage_management_client)
+        blob_service_client_mock = get_blob_client_by_rg_and_account_mock("sa_rg_name", "sa_account_name",
+                                                                          storage_management_client)
         create_container("sa_rg_name", "sa_account_name", request_id, storage_management_client)
         blob_service_client_mock.create_container.assert_called_with(request_id)
 
-    @patch('shared_code.blob_operations.get_storage_connection_string', return_value=StorageConnectionMetadata("sa", "rg", "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=sa;AccountKey=accountKey1"))
+    @patch('shared_code.blob_operations.get_storage_connection_string',
+           return_value=StorageConnectionMetadata("sa", "rg",
+                                                  "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=sa;AccountKey=accountKey1"))
     def test_get_blob_client_by_rg_and_account(self, get_storage_connection_string_mock):
         account_name = "sa"
         account_rg = "rg"

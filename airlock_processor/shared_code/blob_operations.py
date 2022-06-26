@@ -28,7 +28,7 @@ def create_container(resource_group: str, storage_account: str, request_id: str,
         blob_service_client = get_blob_client_by_rg_and_account(resource_group, storage_account, storage_client)
         blob_service_client.create_container(container_name)
         logging.info(f'Container created for request id: {request_id}.')
-    except ResourceExistsError as e:
+    except ResourceExistsError:
         logging.info(f'Did not create a new container. Container already exists for request id: {request_id}.')
 
 
