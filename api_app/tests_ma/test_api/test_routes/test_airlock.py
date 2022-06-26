@@ -3,10 +3,7 @@ from mock import patch
 from fastapi import status
 from models.domain.airlock_review import AirlockReview, AirlockReviewDecision
 from db.errors import EntityDoesNotExist, UnableToAccessDatabase
-from models.domain.workspace import Workspace
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus
-from tests_ma.test_api.test_routes.test_resource_helpers import FAKE_CREATE_TIMESTAMP
-from tests_ma.test_api.conftest import create_admin_user
 from azure.core.exceptions import HttpResponseError
 from resources import strings
 from services.authentication import get_current_workspace_owner_or_researcher_user_or_tre_admin, get_current_workspace_owner_or_researcher_user, get_current_workspace_owner_user
@@ -52,24 +49,6 @@ def sample_airlock_review_object():
         decisionExplanation="test explaination"
     )
     return airlock_review
-
-
-def sample_workspace(workspace_id=WORKSPACE_ID, auth_info: dict = {}) -> Workspace:
-    workspace = Workspace(
-        id=workspace_id,
-        templateName="tre-workspace-base",
-        templateVersion="0.1.0",
-        etag="",
-        properties={
-            "client_id": "12345"
-        },
-        resourcePath=f'/workspaces/{workspace_id}',
-        updatedWhen=FAKE_CREATE_TIMESTAMP,
-        user=create_admin_user()
-    )
-    if auth_info:
-        workspace.properties = {**auth_info}
-    return workspace
 
 
 class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
