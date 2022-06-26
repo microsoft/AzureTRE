@@ -5,8 +5,9 @@ from mock import patch, MagicMock
 
 from fastapi import HTTPException, status
 
-from api.routes.resource_helpers import save_and_deploy_resource, send_uninstall_message
+from api.routes.resource_helpers import save_and_deploy_resource, send_uninstall_message, mask_sensitive_properties
 from tests_ma.test_api.conftest import create_test_user
+from resources import strings
 
 from db.repositories.resources import ResourceRepository
 from db.repositories.operations import OperationRepository
@@ -38,7 +39,7 @@ def operations_repo() -> OperationRepository:
 
 
 def sample_resource(workspace_id=WORKSPACE_ID):
-    workspace = Workspace(
+    return Workspace(
         id=workspace_id,
         templateName="tre-workspace-base",
         templateVersion="0.1.0",
@@ -50,7 +51,22 @@ def sample_resource(workspace_id=WORKSPACE_ID):
         user=create_test_user(),
         updatedWhen=FAKE_CREATE_TIMESTAMP
     )
-    return workspace
+
+
+def sample_resource_with_secret():
+    return Workspace(
+        id=WORKSPACE_ID,
+        templateName="tre-workspace-base",
+        templateVersion="0.1.0",
+        etag="",
+        properties={
+            "client_id": "12345",
+            "secret": "iamsecret"
+        },
+        resourcePath=f'/workspaces/{WORKSPACE_ID}',
+        user=create_test_user(),
+        updatedWhen=FAKE_CREATE_TIMESTAMP
+    )
 
 
 def sample_resource_operation(resource_id: str, operation_id: str):
@@ -210,3 +226,42 @@ class TestResourceHelpers:
                 resource_template=basic_resource_template)
 
         assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+
+    @patch("api.routes.workspaces.ResourceTemplateRepository")
+    @patch("api.routes.resource_helpers.send_resource_request_message")
+    async def test_save_and_deploy_masks_secrets(self, send_resource_request_mock, resource_template_repo, resource_repo, operations_repo, basic_resource_template):
+        resource = sample_resource_with_secret()
+        operation = sample_resource_operation(resource_id=resource.id, operation_id=str(uuid.uuid4()))
+
+        resource_repo.save_item = MagicMock(return_value=None)
+        operations_repo.create_operation_item = MagicMock(return_value=operation)
+        user = create_test_user()
+
+        await save_and_deploy_resource(
+            resource=resource,
+            resource_repo=resource_repo,
+            operations_repo=operations_repo,
+            resource_template_repo=resource_template_repo,
+            user=user,
+            resource_template=basic_resource_template)
+
+        # Checking that the resource sent to ServiceBus was the same as the one created
+        send_resource_request_mock.assert_called_once_with(
+            resource=resource,
+            operations_repo=operations_repo,
+            resource_repo=resource_repo,
+            user=user,
+            resource_template_repo=resource_template_repo,
+            resource_template=basic_resource_template,
+            action=RequestAction.Install)
+
+        # Checking that the item saved had a secret redacted
+        resource.properties["secret"] = strings.REDACTED_SENSITIVE_VALUE
+        resource_repo.save_item.assert_called_once_with(resource)
+
+    def test_sensitive_properties_get_masked(self, basic_resource_template):
+        resource = sample_resource_with_secret()
+
+        properties = resource.properties
+        masked_resource = mask_sensitive_properties(properties, basic_resource_template)
+        assert masked_resource["secret"] == strings.REDACTED_SENSITIVE_VALUE

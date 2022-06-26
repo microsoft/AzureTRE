@@ -75,6 +75,7 @@ COPY ["api_app/requirements.txt", "api_app/requirements-dev.txt", "/tmp/pip-tmp/
 COPY ["resource_processor/vmss_porter/requirements.txt", "/tmp/pip-tmp/resource_processor/vmss_porter/" ]
 COPY ["docs/requirements.txt", "/tmp/pip-tmp/docs/"]
 COPY ["e2e_tests/requirements.txt", "/tmp/pip-tmp/e2e_tests/"]
+COPY ["airlock_processor/requirements.txt", "/tmp/pip-tmp/airlock_processor/"]
 RUN pip3 --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requirements.txt && rm -rf /tmp/pip-tmp
 
 # Install azure-cli

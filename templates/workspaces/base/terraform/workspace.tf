@@ -33,6 +33,7 @@ module "aad" {
   key_vault_id                   = azurerm_key_vault.kv.id
   workspace_resource_name_suffix = local.workspace_resource_name_suffix
   workspace_owner_object_id      = var.workspace_owner_object_id
+  aad_redirect_uris_b64          = var.aad_redirect_uris_b64
   depends_on = [
     azurerm_key_vault_access_policy.deployer,
     azurerm_key_vault_access_policy.resource_processor,
@@ -41,15 +42,15 @@ module "aad" {
 }
 
 module "airlock" {
-  source                 = "./airlock"
-  location               = var.location
-  tre_id                 = var.tre_id
-  tre_workspace_tags     = local.tre_workspace_tags
-  ws_resource_group_name = azurerm_resource_group.ws.name
-  enable_local_debugging = var.enable_local_debugging
-  services_subnet_id     = module.network.services_subnet_id
-  short_workspace_id     = local.short_workspace_id
-
+  source                      = "./airlock"
+  location                    = var.location
+  tre_id                      = var.tre_id
+  tre_workspace_tags          = local.tre_workspace_tags
+  ws_resource_group_name      = azurerm_resource_group.ws.name
+  enable_local_debugging      = var.enable_local_debugging
+  services_subnet_id          = module.network.services_subnet_id
+  short_workspace_id          = local.short_workspace_id
+  airlock_processor_subnet_id = module.network.airlock_processor_subnet_id
   depends_on = [
     module.network,
   ]
