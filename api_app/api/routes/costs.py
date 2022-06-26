@@ -59,11 +59,11 @@ class CostsQueryParams:
                        responses=get_cost_report_responses())
 async def costs(
         params: CostsQueryParams = Depends(),
+        cost_service=Depends(CostService),
         workspace_repo=Depends(get_repository(WorkspaceRepository)),
         shared_services_repo=Depends(get_repository(SharedServiceRepository))) -> CostReport:
 
     validate_report_period(params.from_date, params.to_date)
-    cost_service = CostService()
     return cost_service.query_tre_costs(
         config.TRE_ID, params.granularity, params.from_date, params.to_date, workspace_repo, shared_services_repo)
 
@@ -73,12 +73,12 @@ async def costs(
                             dependencies=[Depends(get_current_workspace_owner_or_tre_admin)],
                             responses=get_workspace_cost_report_responses())
 async def workspace_costs(workspace_id, params: CostsQueryParams = Depends(),
+                          cost_service=Depends(CostService),
                           workspace_repo=Depends(get_repository(WorkspaceRepository)),
                           workspace_services_repo=Depends(get_repository(WorkspaceServiceRepository)),
                           user_resource_repo=Depends(get_repository(UserResourceRepository))) -> WorkspaceCostReport:
 
     validate_report_period(params.from_date, params.to_date)
-    cost_service = CostService()
     return cost_service.query_tre_workspace_costs(
         workspace_id, params.granularity, params.from_date, params.to_date,
         workspace_repo, workspace_services_repo, user_resource_repo)
