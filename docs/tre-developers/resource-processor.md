@@ -132,7 +132,7 @@ Resource Processor uses [Porter Azure plugin](https://github.com/getporter/azure
 
 ### Porter bundle inputs
 
-When Porter runs bundle actions, it passes input parameters. Full set of inputs that Porter passes can be found in [config.py](../../resource_processor/shared/config.py).
+When Porter runs bundle actions, it passes input parameters. Full set of inputs that Porter passes can be found in [config.py](https://github.com/microsoft/AzureTRE/blob/main/resource_processor/shared/config.py).
 
 !!! info
     Note that Resource Processor does not pass any location-related attributes when running bundle actions. Instead, a `location` attribute is passed from the API. This is so that different TRE resources could be potentially deployed to different regions.

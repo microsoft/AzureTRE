@@ -48,6 +48,11 @@ variable "register_aad_application" {
   description = "Create an AAD application automatically for the Workspace."
 }
 
+variable "aad_redirect_uris_b64" {
+  type    = string # B64 encoded list of objects like [{"name": "my uri 1", "value": "https://..."}, {}]
+  default = "W10=" #b64 for []
+}
+
 variable "auth_tenant_id" {
   type        = string
   description = "Used to authenticate into the AAD Tenant to create the AAD App"
