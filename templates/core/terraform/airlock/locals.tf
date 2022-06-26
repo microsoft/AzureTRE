@@ -36,9 +36,4 @@ locals {
 
   airlock_function_app_name = "func-airlock-processor-${var.tre_id}"
   airlock_function_sa_name  = "saairlockp${var.tre_id}"
-
-  tre_core_tags = {
-    tre_id              = var.tre_id
-    tre_core_service_id = var.tre_id
-  }
 }
