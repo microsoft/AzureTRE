@@ -33,7 +33,7 @@ def date_to_datetime(date_to_covert: date):
     return converted_datetime
 
 
-def check_time_period(from_date: datetime, to_date: datetime):
+def validate_report_period(from_date: datetime, to_date: datetime):
     if relativedelta(to_date, from_date).years > 0:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.API_GET_COSTS_MAX_TIME_PERIOD)
     elif from_date >= to_date:
@@ -58,10 +58,11 @@ class CostsQueryParams:
 @costs_core_router.get("/costs", response_model=CostReport, name=strings.API_GET_COSTS,
                        responses=get_cost_report_responses())
 async def costs(
-    params: CostsQueryParams = Depends(),
-    workspace_repo=Depends(get_repository(WorkspaceRepository)),
-    shared_services_repo=Depends(get_repository(SharedServiceRepository))) -> CostReport:
-    check_time_period(params.from_date, params.to_date)
+        params: CostsQueryParams = Depends(),
+        workspace_repo=Depends(get_repository(WorkspaceRepository)),
+        shared_services_repo=Depends(get_repository(SharedServiceRepository))) -> CostReport:
+
+    validate_report_period(params.from_date, params.to_date)
     cost_service = CostService()
     return cost_service.query_tre_costs(
         config.TRE_ID, params.granularity, params.from_date, params.to_date, workspace_repo, shared_services_repo)
@@ -75,7 +76,8 @@ async def workspace_costs(workspace_id, params: CostsQueryParams = Depends(),
                           workspace_repo=Depends(get_repository(WorkspaceRepository)),
                           workspace_services_repo=Depends(get_repository(WorkspaceServiceRepository)),
                           user_resource_repo=Depends(get_repository(UserResourceRepository))) -> WorkspaceCostReport:
-    check_time_period(params.from_date, params.to_date)
+
+    validate_report_period(params.from_date, params.to_date)
     cost_service = CostService()
     return cost_service.query_tre_workspace_costs(
         workspace_id, params.granularity, params.from_date, params.to_date,
