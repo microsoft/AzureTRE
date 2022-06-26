@@ -10,7 +10,7 @@ locals {
 
   # Due to the following issue and Azure not liking delete and immediate recreate under the same name,
   # we had to change the resource names. https://github.com/hashicorp/terraform-provider-azurerm/issues/17389
-  topic_name_suffix="v2-${var.tre_id}"
+  topic_name_suffix = "v2-${var.tre_id}"
 
   import_inprogress_sys_topic_name = "evgt-airlock-import-in-progress-${local.topic_name_suffix}"
   import_rejected_sys_topic_name   = "evgt-airlock-import-rejected-${local.topic_name_suffix}"
