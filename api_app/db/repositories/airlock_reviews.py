@@ -12,7 +12,6 @@ class AirlockReviewRepository(AirlockResourceRepository):
     def create_airlock_review_item(self, airlock_review_input: AirlockReviewInCreate, workspace_id: str, request_id: str) -> AirlockReview:
         full_airlock_review_id = str(uuid.uuid4())
 
-        # TODO - validate the review https://github.com/microsoft/AzureTRE/issues/2016
         airlock_review = AirlockReview(
             id=full_airlock_review_id,
             workspaceId=workspace_id,
