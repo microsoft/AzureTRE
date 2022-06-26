@@ -28,7 +28,8 @@ def generate_cost_item_dict_example(name: str, granularity: GranularityEnum):
     cost_item_dict = dict(
         id=str(uuid.uuid4()),
         name=name,
-        costs=[generate_cost_row_dict_example(granularity, CurrencyEnum.USD), generate_cost_row_dict_example(granularity, CurrencyEnum.ILS)]
+        costs=[generate_cost_row_dict_example(granularity, CurrencyEnum.USD),
+               generate_cost_row_dict_example(granularity, CurrencyEnum.ILS)]
     )
 
     if granularity == GranularityEnum.daily:
@@ -37,24 +38,6 @@ def generate_cost_item_dict_example(name: str, granularity: GranularityEnum):
         cost_item_dict["costs"].append(generate_cost_row_dict_example(granularity, CurrencyEnum.ILS))
 
     return cost_item_dict
-
-
-def generate_cost_row_stub(granularity: GranularityEnum):
-    return CostRow(**generate_cost_row_dict_example(granularity, CurrencyEnum.USD))
-
-
-def generate_cost_item_stub(name: str, granularity: GranularityEnum):
-    cost_item = CostItem(**dict(
-        id=str(uuid.uuid4()),
-        name=name,
-        costs=[generate_cost_row_stub(granularity)]
-    ))
-
-    if granularity == GranularityEnum.daily:
-        cost_item.costs.append(generate_cost_row_stub(granularity))
-        cost_item.costs.append(generate_cost_row_stub(granularity))
-
-    return cost_item
 
 
 def generate_cost_report_dict_example(granularity: GranularityEnum):
@@ -71,24 +54,6 @@ def generate_cost_report_dict_example(granularity: GranularityEnum):
     if granularity == GranularityEnum.daily:
         cost_report["core_services"].append(generate_cost_row_dict_example(granularity, CurrencyEnum.USD))
         cost_report["core_services"].append(generate_cost_row_dict_example(granularity, CurrencyEnum.ILS))
-
-    return cost_report
-
-
-def generate_cost_report_stub(granularity: GranularityEnum):
-    cost_report = CostReport(**dict(
-        core_services=[generate_cost_row_stub(granularity)],
-        shared_services=[generate_cost_item_stub("Gitea", granularity),
-                         generate_cost_item_stub("Nexus", granularity),
-                         generate_cost_item_stub("Firewall", granularity)],
-        workspaces=[generate_cost_item_stub("Workspace 1", granularity),
-                    generate_cost_item_stub("Workspace 2", granularity),
-                    generate_cost_item_stub("Workspace 3", granularity)]
-    ))
-
-    if granularity == GranularityEnum.daily:
-        cost_report.core_services.append(generate_cost_row_stub(granularity))
-        cost_report.core_services.append(generate_cost_row_stub(granularity))
 
     return cost_report
 
@@ -125,38 +90,6 @@ def generate_workspace_cost_report_dict_example(name: str, granularity: Granular
     return cost_report
 
 
-def generate_workspace_service_cost_report_stub(name: str, granularity: GranularityEnum):
-    cost_item = WorkspaceServiceCostItem(**dict(
-        id=str(uuid.uuid4()),
-        name=name,
-        costs=[generate_cost_row_stub(granularity)],
-        user_resources=[generate_cost_item_stub("VM1", granularity),
-                        generate_cost_item_stub("VM2", granularity),
-                        generate_cost_item_stub("VM3", granularity)]
-    ))
-
-    if granularity == GranularityEnum.daily:
-        cost_item.costs.append(generate_cost_row_stub(granularity))
-        cost_item.costs.append(generate_cost_row_stub(granularity))
-
-    return cost_item
-
-
-def generate_workspace_cost_report_stub(name: str, granularity: GranularityEnum):
-    cost_report = WorkspaceCostReport(**dict(
-        id=str(uuid.uuid4()),
-        name=name,
-        costs=[generate_cost_row_stub(granularity)],
-        workspace_services=[generate_workspace_service_cost_report_stub("Guacamole", granularity)]
-    ))
-
-    if granularity == GranularityEnum.daily:
-        cost_report.costs.append(generate_cost_row_stub(granularity))
-        cost_report.costs.append(generate_cost_row_stub(granularity))
-
-    return cost_report
-
-
 class CostRow(BaseModel):
     cost: float
     currency: str
@@ -174,11 +107,6 @@ class CostReport(BaseModel):
     shared_services: List[CostItem]
     workspaces: List[CostItem]
 
-    class Config:
-        schema_extra = {
-            "example": generate_cost_report_dict_example(GranularityEnum.daily),
-        }
-
 
 class WorkspaceServiceCostItem(CostItem):
     user_resources: List[CostItem]
@@ -186,8 +114,3 @@ class WorkspaceServiceCostItem(CostItem):
 
 class WorkspaceCostReport(CostItem):
     workspace_services: List[WorkspaceServiceCostItem]
-
-    class Config:
-        schema_extra = {
-            "example": generate_workspace_cost_report_dict_example("Workspace 1", GranularityEnum.daily)
-        }
