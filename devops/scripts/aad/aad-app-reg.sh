@@ -361,15 +361,14 @@ echo "Setting API permissions (email / profile / ipaddr)"
 az ad app permission add --id "${apiAppId}" --api "${msGraphAppId}" \
   --api-permissions ${msGraphEmailScopeId}=Scope ${msGraphOpenIdScopeId}=Scope ${msGraphProfileScopeId}=Scope
 
-# todo: [Issue 1352](https://github.com/microsoft/AzureTRE/issues/1352)
-# echo "Updating redirect uri"
-# Update app registration with redirect urls (SPA)
-# az rest --method PATCH --uri "${msGraphUri}/applications/${apiAppObjectId}" \
-#     --headers 'Content-Type=application/json' \
-#     --body '{"spa":{"redirectUris":["https://localhost:8080"]}}'
-
 # Make the current user an owner of the application.
 az ad app owner add --id "${apiAppId}" --owner-object-id "$currentUserId"
+
+# Add the application admin service principal as an owner of the workspace app
+if [[ $workspace -eq 1 ]]; then
+  application_admin_object_id=$(az ad sp show --id "${APPLICATION_ADMIN_CLIENT_ID}" --query objectId -o tsv)
+  az ad app owner add --id "${apiAppId}" --owner-object-id "${application_admin_object_id}"
+fi
 
 # See if a service principal already exists
 spId=$(az ad sp list --filter "appId eq '${apiAppId}'" --query '[0].objectId' --output tsv)
@@ -703,15 +702,12 @@ if [[ $createAutomationAccount -ne 0 ]]; then
     az ad sp update --id "${automationSpId}" --set tags="['WindowsAzureActiveDirectoryIntegratedApp']"
 
   # Grant admin consent for the delegated workspace scopes
-  # https://github.com/microsoft/AzureTRE/issues/1513
-  # I've noticed that there can sometimes be a delay in the app having the permissions set
-  # before we give admin-consent. If this occurs - rerun and it will work.
   if [[ $grantAdminConsent -eq 1 ]]; then
       echo "Granting admin consent for ${appName} Automation Admin App (ClientID ${automationAppId})"
       wait_for_new_app_registration "${automationAppId}"
-      adminConsentResponse=$(az ad app permission admin-consent --id "${automationAppId}")
-      if [ -z "${adminConsentResponse}" ]; then
-          echo "Admin consent failed, trying once more: ${adminConsentResponse}"
+      if  ! az ad app permission admin-consent --id "${automationAppId}"; then
+          echo "Admin consent failed. Trying once more..."
+          sleep 10
           az ad app permission admin-consent --id "${automationAppId}"
       fi
   fi
