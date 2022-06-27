@@ -45,7 +45,7 @@ def main(msg: func.ServiceBusMessage,
 
     # If clean, we can continue and move the request to the review stage
     # Otherwise, move the request to the blocked stage
-    completed_step = constants.STAGE_WAITING_FOR_SCAN
+    completed_step = constants.STAGE_SUBMITTED
     if verdict == constants.NO_THREATS:
         logging.info('No malware were found in request id %s, moving to %s stage', request_id, constants.STAGE_IN_REVIEW)
         new_status = constants.STAGE_IN_REVIEW

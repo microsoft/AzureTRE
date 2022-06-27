@@ -24,25 +24,24 @@ class AirlockRequestRepository(AirlockResourceRepository):
         rejected_condition = current_status != AirlockRequestStatus.Rejected
         # Cannot change status from blocked
         blocked_condition = current_status != AirlockRequestStatus.Blocked
-        # If approved in progress can only be changed to approved
+
+        # If approved-in-progress can only be changed to approved
         approved_in_progress_condition = current_status == AirlockRequestStatus.ApprovalInProgress and new_status == AirlockRequestStatus.Approved
-        # If rejection in progress can only be changed to rejected
+        # If rejection-in-progress can only be changed to rejected
         rejected_in_progress_condition = current_status == AirlockRequestStatus.RejectionInProgress and new_status == AirlockRequestStatus.Rejected
-        # If blocking in progress can only be changed to blocked
+        # If blocking-in-progress can only be changed to blocked
         blocking_in_progress_condition = current_status == AirlockRequestStatus.BlockingInProgress and new_status == AirlockRequestStatus.Blocked
+
         # If draft can only be changed to submitted
         draft_condition = current_status == AirlockRequestStatus.Draft and new_status == AirlockRequestStatus.Submitted
-        # If submitted needs to get scanned first, but if scanner is disabled, it can go straight to in review
-        # Note: since the scanner and the blob created triggers might race, it is possible that we skip the wait for scan status.
-        submit_condition = current_status == AirlockRequestStatus.Submitted and (new_status == AirlockRequestStatus.InReview or new_status == AirlockRequestStatus.WaitForScan or new_status == AirlockRequestStatus.ScanInProgress)
+        # If submitted needs to get scanned first, which will change the status to either in-review or blocking-in-progress. but if scanner is disabled, it can go straight to in review
+        submit_condition = current_status == AirlockRequestStatus.Submitted and (new_status == AirlockRequestStatus.InReview or new_status == AirlockRequestStatus.BlockingInProgress)
         # If in review can only be changed to either approve in progress or rejected in progress
-        in_review_condition = current_status == AirlockRequestStatus.InReview and new_status == AirlockRequestStatus.ApprovalInProgress or new_status == AirlockRequestStatus.RejectionInProgress
-        # If in scan-in-progress can only be changed to either in review or blocking in progress
-        scan_in_progress_condition = current_status == AirlockRequestStatus.ScanInProgress and new_status == AirlockRequestStatus.InReview or new_status == AirlockRequestStatus.BlockingInProgress
+        in_review_condition = current_status == AirlockRequestStatus.InReview and (new_status == AirlockRequestStatus.ApprovalInProgress or new_status == AirlockRequestStatus.RejectionInProgress)
         # Cancel is allowed only if the request is not actively changing, i.e. it is currently in draft or in review
         cancel_condition = (current_status == AirlockRequestStatus.Draft or current_status == AirlockRequestStatus.InReview) and new_status == AirlockRequestStatus.Cancelled
 
-        return approved_condition and rejected_condition and blocked_condition and (approved_in_progress_condition or rejected_in_progress_condition or blocking_in_progress_condition or draft_condition or submit_condition or in_review_condition or scan_in_progress_condition or cancel_condition)
+        return approved_condition and rejected_condition and blocked_condition and (approved_in_progress_condition or rejected_in_progress_condition or blocking_in_progress_condition or draft_condition or submit_condition or in_review_condition or cancel_condition)
 
     def create_airlock_request_item(self, airlock_request_input: AirlockRequestInCreate, workspace_id: str) -> AirlockRequest:
         full_airlock_request_id = str(uuid.uuid4())

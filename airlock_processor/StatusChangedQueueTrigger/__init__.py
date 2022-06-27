@@ -81,7 +81,7 @@ def main(msg: func.ServiceBusMessage):
                                   containers_metadata.sa_dest_connection_string, req_id)
         return
 
-    # In-review, In-scan, ready, failed and declined are not processed as we don't need to do anything...
+    # Other statuses which do not require data copy are dismissed as we don't need to do anything...
 
 
 def extract_properties(body: str) -> RequestProperties:
@@ -101,8 +101,7 @@ def extract_properties(body: str) -> RequestProperties:
 
 
 def is_require_data_copy(new_status: str):
-    if new_status.lower() in [constants.STAGE_SUBMITTED, constants.STAGE_APPROVAL_INPROGRESS, constants.STAGE_REJECTION_INPROGRESS,
-                              constants.STAGE_SCAN_INROGRESS]:
+    if new_status.lower() in [constants.STAGE_SUBMITTED, constants.STAGE_APPROVAL_INPROGRESS, constants.STAGE_REJECTION_INPROGRESS]:
         return True
     return False
 
