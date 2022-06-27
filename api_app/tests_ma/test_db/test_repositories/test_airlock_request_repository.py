@@ -83,6 +83,7 @@ def test_update_airlock_request_status_updates_airlock_request_with_the_right_st
 
 # Todo: Create the matrix of all forbidden status changes...
 
+
 @pytest.mark.parametrize("airlock_request_repo, current_status, new_status", [(airlock_request_repo, BLOCKED, APPROVED), (airlock_request_repo, APPROVED, IN_REVIEW), (airlock_request_repo, REJECTED, APPROVED), (airlock_request_repo, APPROVED, REJECTED), (airlock_request_repo, DRAFT, IN_REVIEW), (airlock_request_repo, SUBMITTED, APPROVED), (airlock_request_repo, IN_REVIEW, SUBMITTED), (airlock_request_repo, BLOCKED, APPROVED)], indirect=['airlock_request_repo'])
 def test_update_airlock_request_status_fails_on_validation_wrong_status(airlock_request_repo, current_status, new_status):
     airlock_request_item_to_create = airlock_request_mock(status=current_status)

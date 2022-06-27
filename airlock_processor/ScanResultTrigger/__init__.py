@@ -9,7 +9,6 @@ import os
 from shared_code import constants
 
 
-
 def main(msg: func.ServiceBusMessage,
          outputEvent: func.Out[func.EventGridOutputEvent]):
 
