@@ -1,6 +1,7 @@
 import copy
 import uuid
 from pydantic import UUID4
+from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from azure.cosmos import CosmosClient
 from starlette import status
 from fastapi import HTTPException
@@ -36,7 +37,6 @@ class AirlockRequestRepository(AirlockResourceRepository):
     def create_airlock_request_item(self, airlock_request_input: AirlockRequestInCreate, workspace_id: str) -> AirlockRequest:
         full_airlock_request_id = str(uuid.uuid4())
 
-        # TODO - validate the request https://github.com/microsoft/AzureTRE/issues/2016
         resource_spec_parameters = {**self.get_airlock_request_spec_params()}
 
         airlock_request = AirlockRequest(
@@ -50,8 +50,9 @@ class AirlockRequestRepository(AirlockResourceRepository):
         return airlock_request
 
     def get_airlock_request_by_id(self, airlock_request_id: UUID4) -> AirlockRequest:
-        airlock_requests = self.read_item_by_id(str(airlock_request_id))
-        if not airlock_requests:
+        try:
+            airlock_requests = self.read_item_by_id(str(airlock_request_id))
+        except CosmosResourceNotFoundError:
             raise EntityDoesNotExist
         return parse_obj_as(AirlockRequest, airlock_requests)
 
