@@ -12,10 +12,9 @@ from resources import strings
 
 from db.repositories.resources import ResourceRepository
 from db.repositories.operations import OperationRepository
-from models.domain.operation import Operation, Status
+from models.domain.operation import Status, Operation, OperationStep
 from models.domain.resource import RequestAction, ResourceType
 from models.domain.workspace import Workspace
-from models.domain.operation import Operation, OperationStep
 
 
 pytestmark = pytest.mark.asyncio
