@@ -8,12 +8,12 @@ function show_usage()
 {
     cat << USAGE
 
-Utility script for creating an application administrator for TRE. This is optional and is normal
-if you want to delegate Application creation to TRE.
-This script is trigger by the environment variable AUTO_WORKSPACE_APP_REGISTRATION.
+Utility script for creating an application administrator for TRE. This is mandatory and is used
+to manage AAD Application creation within TRE. This script is called when you run "make auth" and
+the environment variable AUTO_WORKSPACE_APP_REGISTRATION determines the permission this identity has.
 You must be logged in using Azure CLI with sufficient privileges to modify Azure Active Directory to run this script.
 
-Usage: $0 [--admin-consent]
+Usage: $0 --name "MYTRE" --application-permission "Application.ReadWrite.OwnedBy" [--admin-consent]
 
 Options:
     -n,--name                   Required. The prefix for the app (registration) names e.g., "TRE".
@@ -144,6 +144,7 @@ spPassword=$(create_or_update_service_principal "${appId}" "${appName}")
 spId=$(az ad sp list --filter "appId eq '${appId}'" --query '[0].objectId' --output tsv --only-show-errors)
 
 # needed to make the API permissions change effective, this must be done after SP creation...
+echo
 echo "Running 'az ad app permission grant' to make changes effective."
 az ad app permission grant --id "${appId}" --api "${msGraphAppId}" --only-show-errors
 

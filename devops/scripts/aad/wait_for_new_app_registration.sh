@@ -5,17 +5,17 @@ set -e
 # If after the number of retries no app registration is found, the function exits.
 function wait_for_new_app_registration()
 {
-  appId=$1
-  retries=10
-  counter=0
+  local clientId=$1
+  local retries=10
+  local counter=0
 
-  objectId=$(az ad app list --filter "appId eq '${appId}'" --query '[0].objectId' --output tsv --only-show-errors)
+  objectId=$(az ad app list --filter "appId eq '${clientId}'" --query '[0].objectId' --output tsv --only-show-errors)
 
   while [[ -z $objectId && $counter -lt $retries ]]; do
       counter=$((counter+1))
-      echo "Waiting for app registration with ID ${appId} to show up (${counter}/${retries})..."
+      echo "Waiting for app registration with ID ${clientId} to show up (${counter}/${retries})..."
       sleep 5
-      objectId=$(az ad app list --filter "appId eq '${appId}'" --query '[0].objectId' --output tsv --only-show-errors)
+      objectId=$(az ad app list --filter "appId eq '${clientId}'" --query '[0].objectId' --output tsv --only-show-errors)
   done
 
   if [[ -z $objectId ]]; then
@@ -23,5 +23,5 @@ function wait_for_new_app_registration()
       exit 1
   fi
 
-  echo "App registration with ID \"${appId}\" found"
+  echo "App registration \"${clientId}\" found."
 }

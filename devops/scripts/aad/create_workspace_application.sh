@@ -15,11 +15,13 @@ You must be logged in using Azure CLI with sufficient privileges to modify Azure
 Usage: $0 [--admin-consent]
 
 Options:
-    -n,--name                   Required. The prefix for the app (registration) names e.g., "TRE".
-    -s,--swaggerui-clientid     Required. The client ID of the UX must be provided.
-    -a,--admin-consent          Optional, but recommended. Grants admin consent for the app registrations, when this flag is set.
-                                Requires directory admin privileges to the Azure AD in question.
-    -z,--automation-clientid    Optional, the client ID of the automation account can be added to the TRE workspace.
+    -n,--name                       Required. The prefix for the app (registration) names e.g., "TRE".
+    -u,--ux-clientid                Required. The client ID of the UX must be provided.
+    -y,--application-admin-clientid Required. The client ID of the Application Administrator that will be able to update this application.
+                                    e.g. updating a redirect URI.
+    -a,--admin-consent              Optional, but recommended. Grants admin consent for the app registrations, when this flag is set.
+                                    Requires directory admin privileges to the Azure AD in question.
+    -z,--automation-clientid        Optional, the client ID of the automation account can be added to the TRE workspace.
 
 USAGE
     exit 1
@@ -30,16 +32,23 @@ if ! command -v az &> /dev/null; then
     exit 1
 fi
 
+if [[ $(az account list --only-show-errors -o json | jq 'length') -eq 0 ]]; then
+    echo "Please run az login -t <tenant> --allow-no-subscriptions"
+    exit 1
+fi
+
 # Get the directory that this script is in
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 declare spPassword=""
 declare grantAdminConsent=0
 declare currentUserId=""
-declare swaggerClientId=""
+declare uxClientId=""
 declare msGraphUri="https://graph.microsoft.com/v1.0"
 declare appName=""
 declare automationClientId=""
+declare applicationAdminClientId=""
+declare applicationAdminObjectId=""
 
 # Initialize parameters specified from command line
 while [[ $# -gt 0 ]]; do
@@ -52,11 +61,15 @@ while [[ $# -gt 0 ]]; do
             grantAdminConsent=1
             shift 1
         ;;
-        -s|--swaggerui-clientid)
-            swaggerClientId=$2
+        -y|--application-admin-clientid)
+            applicationAdminClientId=$2
             shift 2
         ;;
-        --automation-clientid)
+        -u|--ux-clientid)
+            uxClientId=$2
+            shift 2
+        ;;
+        -z|--automation-clientid)
             automationClientId=$2
             shift 2
         ;;
@@ -71,16 +84,16 @@ done
 ###################################
 # CHECK INCOMMING PARAMETERS      #
 ###################################
-if [[ $(az account list --only-show-errors -o json | jq 'length') -eq 0 ]]; then
-    echo "Please run az login -t <tenant> --allow-no-subscriptions"
-    exit 1
-fi
-
 if [[ -z "$appName" ]]; then
-    echo "Please specify the application name" 1>&2
+    echo "Please specify the application name." 1>&2
     show_usage
 fi
 appName="$appName API"
+if [[ -z "$applicationAdminClientId" ]]; then
+    echo "Please specify the client id of the Application Admin." 1>&2
+    show_usage
+fi
+applicationAdminObjectId=$(az ad sp show --id "${applicationAdminClientId}" --query objectId -o tsv --only-show-errors)
 currentUserId=$(az ad signed-in-user show --query 'objectId' --output tsv --only-show-errors)
 tenant=$(az rest -m get -u "${msGraphUri}/domains" -o json | jq -r '.value[] | select(.isDefault == true) | .id')
 
@@ -111,26 +124,26 @@ if [ -n "${existingApp}" ]; then
 
     researcherRoleId=$(echo "$existingApp" | jq -r '.appRoles[] | select(.value == "WorkspaceResearcher").id')
     ownerRoleId=$(echo "$existingApp" | jq -r '.appRoles[] | select(.value == "WorkspaceOwner").id')
+    userImpersonationScopeId=$(echo "$existingApp" | jq -r '.oauth2Permissions[] | select(.value == "user_impersonation").id')
     if [[ -z "${researcherRoleId}" ]]; then researcherRoleId=$(cat /proc/sys/kernel/random/uuid); fi
     if [[ -z "${ownerRoleId}" ]]; then ownerRoleId=$(cat /proc/sys/kernel/random/uuid); fi
-    userImpersonationScopeId=$(echo "$existingApp" | jq -r '.oauth2Permissions[] | select(.value == "user_impersonation").id')
-
     if [[ -z "${userImpersonationScopeId}" ]]; then userImpersonationScopeId=$(cat /proc/sys/kernel/random/uuid); fi
 fi
 
 # Get the Required Resource Scope/Role
 msGraphAppId="00000003-0000-0000-c000-000000000000"
+msGraphObjectId=$(az ad sp show --id ${msGraphAppId} --query "objectId" --output tsv --only-show-errors)
 msGraphEmailScopeId="64a6cdd6-aab1-4aaf-94b8-3cc8405e90d0"
 msGraphOpenIdScopeId="37f7f235-527c-4136-accd-4a02d197296e"
 msGraphProfileScopeId="14dad69e-099b-42c9-810b-d002981feec1"
 
-apiApp=$(jq -c . << JSON
+appDefinition=$(jq -c . << JSON
 {
     "displayName": "${appName}",
     "api": {
         "requestedAccessTokenVersion": 2,
         "oauth2PermissionScopes": [
-        {
+          {
             "adminConsentDescription": "Allow the app to access the Workspace API on behalf of the signed-in user.",
             "adminConsentDisplayName": "Access the Workspace API on behalf of signed-in user",
             "id": "${userImpersonationScopeId}",
@@ -139,7 +152,8 @@ apiApp=$(jq -c . << JSON
             "userConsentDescription": "Allow the app to access the Workspace API on your behalf.",
             "userConsentDisplayName": "Access the Workspace API",
             "value": "user_impersonation"
-        }]
+          }
+        ]
     },
     "appRoles": [
     {
@@ -208,15 +222,15 @@ apiApp=$(jq -c . << JSON
 JSON
 )
 
-# Is the API app already registered?
+# Is the Workspace app already registered?
 if [[ -n ${appObjectId} ]]; then
   echo "Updating \"${appName}\" with ObjectId \"${appObjectId}\"."
-  az rest --method PATCH --uri "${msGraphUri}/applications/${appObjectId}" --headers Content-Type=application/json --body "${apiApp}"
+  az rest --method PATCH --uri "${msGraphUri}/applications/${appObjectId}" --headers Content-Type=application/json --body "${appDefinition}"
   workspaceAppId=$(az ad app show --id "${appObjectId}" --query "appId" --output tsv --only-show-errors)
-  echo "Workspace app registration with ID \"${workspaceAppId}\" updated."
+  echo "Workspace app registration with AppId \"${workspaceAppId}\" updated."
 else
   echo "Creating \"${appName}\" app registration."
-  workspaceAppId=$(az rest --method POST --uri "${msGraphUri}/applications" --headers Content-Type=application/json --body "${apiApp}" --output tsv --query "appId")
+  workspaceAppId=$(az rest --method POST --uri "${msGraphUri}/applications" --headers Content-Type=application/json --body "${appDefinition}" --output tsv --query "appId")
 
   # Poll until the app registration is found in the listing.
   wait_for_new_app_registration "${workspaceAppId}"
@@ -227,33 +241,36 @@ fi
 
 # Make the current user an owner of the application.
 az ad app owner add --id "${workspaceAppId}" --owner-object-id "$currentUserId" --only-show-errors
+az ad app owner add --id "${workspaceAppId}" --owner-object-id "$applicationAdminObjectId" --only-show-errors
 
 # Create a Service Principal for the app.
 spPassword=$(create_or_update_service_principal "${workspaceAppId}" "${appName}")
+workspaceSpId=$(az ad sp list --filter "appId eq '${workspaceAppId}'" --query '[0].objectId' --output tsv --only-show-errors)
 
 # needed to make the API permissions change effective, this must be done after SP creation...
+echo
 echo "Running 'az ad app permission grant' to make changes effective."
-az ad app permission grant --id "${workspaceAppId}" --api "${msGraphAppId}" --only-show-errors
+az ad app permission grant --id "$workspaceSpId" --api "$msGraphObjectId" --scope "email openid profile"  --only-show-errors
 
-# The Swagger UI (which was created as part of the API) needs to also have access to this Workspace
-echo "Searching for existing Swagger application (${swaggerClientId})."
-existingSwaggerApp=$(get_existing_app --id "${swaggerClientId}")
-swaggerObjectId=$(echo "${existingSwaggerApp}" | jq -r .objectId)
+# The UX (which was created as part of the API) needs to also have access to this Workspace
+echo "Searching for existing UX application (${uxClientId})."
+existingUXApp=$(get_existing_app --id "${uxClientId}")
+uxObjectId=$(echo "${existingUXApp}" | jq -r .objectId)
 
-# Get the existing required resource access from the swagger app,
+# Get the existing required resource access from the UX app,
 # but remove the access that we are about to add for idempotency. We cant use
 # the response from az cli as it returns an 'AdditionalProperties' element in
 # the json
 existingResourceAccess=$(az rest \
   --method GET \
-  --uri "${msGraphUri}/applications/${swaggerObjectId}" \
+  --uri "${msGraphUri}/applications/${uxObjectId}" \
   --headers Content-Type=application/json -o json \
   | jq -r --arg workspaceAppId "${workspaceAppId}" \
   'del(.requiredResourceAccess[] | select(.resourceAppId==$workspaceAppId)) | .requiredResourceAccess' \
   )
 
 # Add the existing resource access so we don't remove any existing permissions.
-swaggerWorkspaceAccess=$(jq -c . << JSON
+uxWorkspaceAccess=$(jq -c . << JSON
 {
   "requiredResourceAccess": [
   {
@@ -271,16 +288,16 @@ JSON
 )
 
 # Manipulate the json (add existingAccess into requiredResourceAccess and then remove it)
-requiredResourceAccess=$(echo "${swaggerWorkspaceAccess}" | \
+requiredResourceAccess=$(echo "${uxWorkspaceAccess}" | \
   jq '.requiredResourceAccess += .existingAccess | {requiredResourceAccess}')
 
 az rest --method PATCH \
-  --uri "${msGraphUri}/applications/${swaggerObjectId}" \
+  --uri "${msGraphUri}/applications/${uxObjectId}" \
   --headers Content-Type=application/json \
   --body "${requiredResourceAccess}"
 
-echo "Grant Swagger UI delegated access '${appName}' (Client ID ${swaggerClientId})"
-az ad app permission grant --id "${swaggerClientId}" --api "${workspaceAppId}" --scope "user_impersonation" --only-show-errors
+echo "Grant UX delegated access '${appName}' (Client ID ${uxClientId})"
+az ad app permission grant --id "${uxClientId}" --api "${workspaceAppId}" --scope "user_impersonation" --only-show-errors
 
 if [[ -n ${automationClientId} ]]; then
   echo "Searching for existing Automation application (${automationClientId})."
@@ -334,16 +351,14 @@ JSON
     --headers Content-Type=application/json \
     --body "${requiredResourceAccess}"
 
-  # We've just updated a required resource. Wait for the update to complete.
-  wait_for_new_app_registration "${automationClientId}"
-
   # Grant admin consent for the delegated workspace scopes
   if [[ $grantAdminConsent -eq 1 ]]; then
-      echo "Granting admin consent for ${automationAppName} (Client ID ${automationClientId})"
-      az ad app permission admin-consent --id "${automationClientId}" --only-show-errors
-      # We call this twice as there is a bug in the Azure CLI where the first call doesn't work.
-      az ad app permission list --id "${automationClientId}" --only-show-errors
-      az ad app permission admin-consent --id "${automationClientId}" --only-show-errors
+      echo "Granting admin consent for \"${automationAppName}\" (Client ID ${automationClientId})"
+      automationSpId=$(az ad sp list --filter "appId eq '${automationClientId}'" --query '[0].objectId' --output tsv --only-show-errors)
+      echo "Found Service Principal \"$automationSpId\" for \"${automationAppName}\"."
+
+      grant_admin_consent "${automationSpId}" "${workspaceSpId}" "${ownerRoleId}"
+      az ad app permission grant --id "$automationSpId" --api "$workspaceAppId" --scope "user_impersonation" --only-show-errors
   fi
 fi
 

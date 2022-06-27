@@ -1,7 +1,7 @@
 # TRE Client UX
 
 ## Name
-The Client Identity is typically called `<TRE_ID> Swagger UI` within the AAD Portal. This may be renamed in the future.
+The Client Identity is typically called `<TRE_ID> UX` within the AAD Portal.
 
 ## Purpose
 This identity is used by any public facing client application so that user impersonation can occur to the Core API and any Workspace Applications.
@@ -23,13 +23,15 @@ This application does not have any roles defined.
 This identity should only be used by client applications. Currently this is the React UI and the Swagger UI.
 
 ## How to create
+This identity is created when you create the API. For completeness, you can run the following script
 Example on how to run the script:
 
 ```bash
-./devops/scripts/aad/aad-app-reg.sh \
-  --name "${TRE_ID}" \
-  --tre-url "https://${TRE_ID}.${LOCATION}.cloudapp.azure.com" \
-  --admin-consent
+./devops/scripts/aad/create_api_application.sh \
+    --name <TRE_ID> \
+    --tre-url "https://<TRE_ID>.<LOCATION>.cloudapp.azure.com" \
+    --admin-consent \
+    --automation-clientid <TEST_ACCOUNT_CLIENT_ID>
 ```
 
 | Argument | Description |
@@ -37,7 +39,7 @@ Example on how to run the script:
 | `--name` | The prefix of the name of the app registrations. `TRE` will give you `TRE API`. |
 | `--tre-url` | Used to construct auth redirection URLs for the UI and Swagger app. Use the values of the [environment variables](../environment-variables.md) `TRE_ID` and `LOCATION` in the URL. Reply URL for the localhost, `http://localhost:8000/api/docs/oauth2-redirect`, will be added by default. |
 | `--admin-consent` | Grants admin consent for the app registrations. This is required for them to function properly, but requires AAD admin privileges. |
-| `--automation-account` | This is an optional parameter but will create an application with test users with permission to use the `TRE API` and `TRE Swagger UI` |
+| `--automation-clientid` | This is an optional parameter but will create an application with test users with permission to use the `TRE API` and `TRE Swagger UI` |
 
 ## Redirect URLs
 The following Redirect URIs will be added to the application
