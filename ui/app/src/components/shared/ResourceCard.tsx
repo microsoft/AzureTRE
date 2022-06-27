@@ -27,6 +27,12 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
   );
 
   let connectUri = props.resource.properties && props.resource.properties.connection_uri;
+  const shouldDisable = () => {
+    return latestUpdate.componentAction === ComponentAction.Lock
+      || successStates.indexOf(props.resource.deploymentStatus) === -1
+      || !props.resource.isEnabled
+      || (props.resource.azureStatus?.powerState && props.resource.azureStatus.powerState !== "VM running")
+  }
 
   return (
     <>
@@ -73,8 +79,8 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
               <Stack.Item style={connectStyles}>
                 <PrimaryButton
                   onClick={() => window.open(connectUri)}
-                  disabled={!props.resource.isEnabled || successStates.indexOf(props.resource.deploymentStatus) === -1 || (props.resource.azureStatus?.powerState && props.resource.azureStatus.powerState !== "VM running")}
-                  title={!props.resource.isEnabled || successStates.indexOf(props.resource.deploymentStatus) === -1 || (props.resource.azureStatus?.powerState && props.resource.azureStatus.powerState !== "VM running") ? 'Resource must be enabled, successfully deployed & powered on to connect' : 'Connect to resource'}>
+                  disabled={shouldDisable()}
+                  title={shouldDisable() ? 'Resource must be enabled, successfully deployed & powered on to connect' : 'Connect to resource'}>
                   Connect
                 </PrimaryButton>
               </Stack.Item>
