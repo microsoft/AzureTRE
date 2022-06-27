@@ -126,21 +126,29 @@ SHARED_SERVICE_TEMPLATE_VERSION_EXISTS = "A template with this version already e
 ETAG_CONFLICT = "This document has been modified by another user or process since you last retrieved it. Please get the document again and retry."
 
 # Resource Status
-RESOURCE_STATUS_NOT_DEPLOYED = "not_deployed"
+RESOURCE_STATUS_AWAITING_DEPLOYMENT = "awaiting_deployment"
 RESOURCE_STATUS_DEPLOYING = "deploying"
 RESOURCE_STATUS_DEPLOYED = "deployed"
+RESOURCE_STATUS_DEPLOYMENT_FAILED = "deployment_failed"
+
+RESOURCE_STATUS_AWAITING_DELETION = "awaiting_deletion"
 RESOURCE_STATUS_DELETING = "deleting"
 RESOURCE_STATUS_DELETED = "deleted"
-RESOURCE_STATUS_FAILED = "failed"
 RESOURCE_STATUS_DELETING_FAILED = "deleting_failed"
 
+RESOURCE_STATUS_AWAITING_UPDATE = "awaiting_update"
+RESOURCE_STATUS_UPDATING = "updating"
+RESOURCE_STATUS_UPDATED = "updated"
+RESOURCE_STATUS_UPDATING_FAILED = "updating_failed"
+
 # Resource Action Status
+RESOURCE_STATUS_AWAITING_ACTION = "awaiting_action"
 RESOURCE_ACTION_STATUS_INVOKING = "invoking_action"
 RESOURCE_ACTION_STATUS_SUCCEEDED = "action_succeeded"
 RESOURCE_ACTION_STATUS_FAILED = "action_failed"
 
 # Pipeline (multi-step) deployments
-RESOURCE_ACTION_STATUS_PIPELINE_DEPLOYING = "pipeline_deploying"
+RESOURCE_ACTION_STATUS_PIPELINE_RUNNING = "pipeline_running"
 RESOURCE_ACTION_STATUS_PIPELINE_FAILED = "pipeline_failed"
 RESOURCE_ACTION_STATUS_PIPELINE_SUCCEEDED = "pipeline_succeeded"
 
@@ -172,8 +180,10 @@ AIRLOCK_REQUEST_DOES_NOT_EXIST = "Airlock request does not exist"
 AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE = "Airlock request status change was illegal"
 
 # Deployments
-RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE = "This resource has not yet been deployed"
-RESOURCE_STATUS_UPGRADE_NOT_STARTED_MESSAGE = "The upgrade for this resource has not yet started"
+RESOURCE_STATUS_AWAITING_DEPLOYMENT_MESSAGE = "This resource is waiting to be deployed"
+RESOURCE_STATUS_AWAITING_UPDATE_MESSAGE = "This resource is waiting to be updated"
+RESOURCE_STATUS_AWAITING_DELETION_MESSAGE = "This resource is waiting to be deleted"
+RESOURCE_STATUS_AWAITING_ACTION_MESSAGE = "This resource is waiting for an action to be invoked"
 
 # Service bus
 SERVICE_BUS_GENERAL_ERROR_MESSAGE = "Service bus failure"

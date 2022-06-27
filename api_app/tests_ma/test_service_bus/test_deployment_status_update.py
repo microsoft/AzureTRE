@@ -49,7 +49,7 @@ test_sb_message_multi_step_1_complete = {
     "operationId": OPERATION_ID,
     "stepId": "pre-step-1",
     "id": "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76",
-    "status": Status.Deployed,
+    "status": Status.Updated,
     "message": "upgrade succeeded"
 }
 
@@ -57,7 +57,7 @@ test_sb_message_multi_step_3_complete = {
     "operationId": OPERATION_ID,
     "stepId": "post-step-1",
     "id": "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76",
-    "status": Status.Deployed,
+    "status": Status.Updated,
     "message": "upgrade succeeded"
 }
 
@@ -332,7 +332,7 @@ async def test_multi_step_operation_sends_next_step(app, sb_client, sb_sender_cl
 
     # check the operation is updated as expected
     expected_operation = copy.deepcopy(multi_step_operation)
-    expected_operation.status = Status.PipelineDeploying
+    expected_operation.status = Status.PipelineRunning
     expected_operation.message = "Multi step pipeline deploying. See steps for details."
     expected_operation.steps[0].status = Status.Deployed
     expected_operation.steps[0].message = "upgrade succeeded"
@@ -349,7 +349,7 @@ async def test_multi_step_operation_sends_next_step(app, sb_client, sb_sender_cl
 @patch('fastapi.FastAPI')
 async def test_multi_step_operation_ends_at_last_step(app, sb_client, sb_sender_client, repo, operations_repo, multi_step_operation, user_resource_multi, basic_shared_service):
     received_message = test_sb_message_multi_step_3_complete
-    received_message["status"] = Status.Deployed
+    received_message["status"] = Status.Updated
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(received_message)
     sb_client().get_queue_receiver().receive_messages = AsyncMock(return_value=[service_bus_received_message_mock])
     sb_client().get_queue_receiver().complete_message = AsyncMock()
@@ -366,22 +366,22 @@ async def test_multi_step_operation_ends_at_last_step(app, sb_client, sb_sender_
     # get the multi-step operation and process it
     # simulate what the op would look like after step 2
     in_flight_op = copy.deepcopy(multi_step_operation)
-    in_flight_op.status = Status.PipelineDeploying
-    in_flight_op.message = "Multi step pipeline deploying. See steps for details."
-    in_flight_op.steps[0].status = Status.Deployed
+    in_flight_op.status = Status.PipelineRunning
+    in_flight_op.message = "Multi step pipeline running. See steps for details."
+    in_flight_op.steps[0].status = Status.Updated
     in_flight_op.steps[0].message = "upgrade succeeded"
     in_flight_op.steps[1].status = Status.Deployed
     in_flight_op.steps[1].message = "install succeeded"
-    in_flight_op.steps[2].status = Status.Deploying
+    in_flight_op.steps[2].status = Status.Updating
 
     operations_repo().get_operation_by_id.return_value = in_flight_op
     await receive_message_and_update_deployment(app)
 
     # check the operation is updated as expected - both step and overall status
     expected_operation = copy.deepcopy(in_flight_op)
-    expected_operation.status = Status.PipelineSucceeded
-    expected_operation.message = "Pipeline deployment completed successfully"
-    expected_operation.steps[2].status = Status.Deployed
+    expected_operation.status = Status.Deployed
+    expected_operation.message = "Multi step pipeline completed successfully"
+    expected_operation.steps[2].status = Status.Updated
     expected_operation.steps[2].message = "upgrade succeeded"
     operations_repo().update_item.assert_called_once_with(expected_operation)
 
