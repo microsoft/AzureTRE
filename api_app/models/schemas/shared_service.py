@@ -10,7 +10,6 @@ from models.domain.shared_service import SharedService
 def get_sample_shared_service(shared_service_id: str) -> dict:
     return {
         "id": shared_service_id,
-        "isActive": True,
         "templateName": "tre-shared-service-firewall",
         "templateVersion": "0.1.0",
         "properties": {
