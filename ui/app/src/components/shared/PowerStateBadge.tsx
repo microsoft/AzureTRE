@@ -2,13 +2,13 @@ import React from 'react';
 import { powerStates } from '../../models/resource';
 
 interface PowerStateBadgeProps {
-  state: typeof powerStates[number]
+  state: powerStates
 }
 
 export const PowerStateBadge: React.FunctionComponent<PowerStateBadgeProps> = (props: PowerStateBadgeProps) => {
 
   let stateClass = "tre-power-off";
-  if (props.state === "VM running") stateClass = " tre-power-on";
+  if (props.state === powerStates.Running) stateClass = " tre-power-on";
 
   return (
     <>

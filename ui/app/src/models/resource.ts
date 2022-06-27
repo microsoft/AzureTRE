@@ -40,14 +40,14 @@ export interface ResourceUpdate {
     componentAction: ComponentAction
 }
 
-export const powerStates = [
-  "VM running",
-  "VM starting",
-  "VM stopping",
-  "VM stopped",
-  "VM deallocating",
-  "VM deallocated"
-]
+export enum powerStates {
+  Running = "VM running",
+  Starting = "VM starting",
+  Stopping = "VM stopping",
+  Stopped = "VM stopped",
+  Deallocating = "VM deallocating",
+  Deallocated = "VM deallocated"
+}
 
 export const getResourceFromResult = (r: any) => {
     if (r['userResource']) return r.userResource;
