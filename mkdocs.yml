@@ -44,15 +44,7 @@ nav:
           - System Architecture: "azure-tre-overview/architecture.md"
           - Network Architecture: "azure-tre-overview/networking.md"
           - Azure Resources: "azure-tre-overview/tre-resources-breakdown.md"
-
-  - Setup: # Setup steps for anyone performing an initial deployment of the AzureTRE for eval purposes
-      - Introduction: "coming-soon.md"
-      - 1. Getting Started: "tre-admins/setup-instructions/getting-started.md"
-      - 2. Pre-deployment Steps: "tre-admins/setup-instructions/pre-deployment-steps.md"
-      - 3. Deploying Azure TRE: "tre-admins/setup-instructions/deploying-azure-tre.md"
-      - 4. Configuring Shared Services: "tre-admins/setup-instructions/configuring-shared-services.md"
-      - 5. Installing Base Workspace: "tre-admins/setup-instructions/installing-base-workspace.md"
-      - 6. Installing Workspace Service and User Resource: "tre-admins/setup-instructions/installing-workspace-service-and-user-resource.md"
+      - Getting Started: "coming-soon.md"
 
   - Using the TRE for Research: # Documentation for users of the TRE
       - Introduction: "coming-soon.md"
@@ -82,6 +74,15 @@ nav:
           - Guacamole Linux VM: "tre-templates/user-resources/guacamole-linux-vm.md"
 
   - Technical Guide: # All Technical Documentation (Admin, Development)
+      - Setup: # Setup steps for anyone performing an initial deployment of the AzureTRE for eval purposes
+          - Introduction: "coming-soon.md"
+          - 1. Getting Started: "tre-admins/setup-instructions/getting-started.md"
+          - 2. Pre-deployment Steps: "tre-admins/setup-instructions/pre-deployment-steps.md"
+          - 3. Deploying Azure TRE: "tre-admins/setup-instructions/deploying-azure-tre.md"
+          - 4. Configuring Shared Services: "tre-admins/setup-instructions/configuring-shared-services.md"
+          - 5. Installing Base Workspace: "tre-admins/setup-instructions/installing-base-workspace.md"
+          - 6. Installing Workspace Service and User Resource: "tre-admins/setup-instructions/installing-workspace-service-and-user-resource.md"
+
       - Administration: # Docs related to the deployment and operation of AzureTRE infrastructure
           - Starting and Stopping Azure TRE Services: "tre-admins/start-stop.md"
           - Environment Variables: "tre-admins/environment-variables.md"
