@@ -13,9 +13,9 @@ resource "azurerm_storage_account" "sa_import_external" {
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
 
-  tags = {
+  tags = merge(var.tre_core_tags, {
     description = "airlock;import;external"
-  }
+  })
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -35,9 +35,9 @@ resource "azurerm_storage_account" "sa_export_approved" {
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
 
-  tags = {
+  tags = merge(var.tre_core_tags, {
     description = "airlock;export;approved"
-  }
+  })
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -55,9 +55,9 @@ resource "azurerm_storage_account" "sa_import_in_progress" {
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
 
-  tags = {
+  tags = merge(var.tre_core_tags, {
     description = "airlock;import;in-progress"
-  }
+  })
 
   network_rules {
     default_action = var.enable_local_debugging ? "Allow" : "Deny"
@@ -107,9 +107,9 @@ resource "azurerm_storage_account" "sa_import_rejected" {
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
 
-  tags = {
+  tags = merge(var.tre_core_tags, {
     description = "airlock;import;rejected"
-  }
+  })
 
   network_rules {
     default_action = var.enable_local_debugging ? "Allow" : "Deny"
@@ -137,7 +137,7 @@ resource "azurerm_private_endpoint" "stg_import_rejected_pe" {
     subresource_names              = ["Blob"]
   }
 
-  tags = local.tre_core_tags
+  tags = var.tre_core_tags
 
   lifecycle { ignore_changes = [tags] }
 }
