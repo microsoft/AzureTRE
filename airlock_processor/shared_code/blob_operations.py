@@ -1,12 +1,72 @@
+import os
+import datetime
 import logging
 
-import datetime
+from azure.core.exceptions import ResourceExistsError
+from azure.identity import DefaultAzureCredential
+from azure.mgmt.storage import StorageManagementClient
 from azure.storage.blob import ContainerSasPermissions, generate_container_sas, BlobServiceClient
 
 from exceptions.AirlockInvalidContainerException import AirlockInvalidContainerException
 
 
-def copy_data(source_account_name: str, source_account_key: str, sa_source_connection_string: str, sa_dest_connection_string: str, request_id: str):
+class StorageConnectionMetadata:
+    account_name: str
+    account_key: str
+    connection_string: str
+
+    def __init__(self, account_name: str, account_key: str, connection_string: str):
+        self.account_name = account_name
+        self.account_key = account_key
+        self.connection_string = connection_string
+
+
+def create_container(resource_group: str, storage_account: str, request_id: str,
+                     storage_client: StorageManagementClient):
+    try:
+        container_name = request_id
+        blob_service_client = get_blob_client_by_rg_and_account(resource_group, storage_account, storage_client)
+        blob_service_client.create_container(container_name)
+        logging.info(f'Container created for request id: {request_id}.')
+    except ResourceExistsError:
+        logging.info(f'Did not create a new container. Container already exists for request id: {request_id}.')
+
+
+def get_blob_client_by_rg_and_account(resource_group: str, storage_account: str,
+                                      storage_client: StorageManagementClient):
+    sa_connection = get_storage_connection_string(storage_account, resource_group, storage_client)
+    return BlobServiceClient.from_connection_string(sa_connection.connection_string)
+
+
+def get_storage_connection_string(sa_name: str, resource_group: str, storage_client: StorageManagementClient):
+    storage_keys = storage_client.storage_accounts.list_keys(resource_group, sa_name)
+    storage_keys = {v.key_name: v.value for v in storage_keys.keys}
+    storage_account_key = storage_keys['key1']
+
+    conn_string_base = "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName={};AccountKey={}"
+    sa_connection_string = conn_string_base.format(sa_name, storage_account_key)
+
+    return StorageConnectionMetadata(sa_name, storage_account_key, sa_connection_string)
+
+
+def get_storage_management_client():
+    try:
+        subscription_id = os.environ["AZURE_SUBSCRIPTION_ID"]
+    except KeyError as e:
+        logging.error(f'Missing environment variable: {e}')
+        raise
+
+    managed_identity = os.environ.get("MANAGED_IDENTITY_CLIENT_ID")
+    if managed_identity:
+        logging.info("using the Airlock processor's managed identity to get storage management client")
+    credential = DefaultAzureCredential(managed_identity_client_id=os.environ["MANAGED_IDENTITY_CLIENT_ID"],
+                                        exclude_shared_token_cache_credential=True) if managed_identity else DefaultAzureCredential()
+
+    return StorageManagementClient(credential, subscription_id)
+
+
+def copy_data(source_account_name: str, source_account_key: str, sa_source_connection_string: str,
+              sa_dest_connection_string: str, request_id: str):
     container_name = request_id
 
     # token geneation with expiry of 1 hour. since its not shared, we can leave it to expire (no need to track/delete)
@@ -39,7 +99,7 @@ def copy_data(source_account_name: str, source_account_key: str, sa_source_conne
 
     except Exception:
         logging.error('Request with id %s failed.', request_id)
-        raise()
+        raise ()
 
     source_blob = source_container_client.get_blob_client(blob_name)
 
@@ -50,6 +110,7 @@ def copy_data(source_account_name: str, source_account_key: str, sa_source_conne
     copy = copied_blob.start_copy_from_url(source_url)
 
     try:
-        logging.info("Copy operation returned 'copy_id': '%s', 'copy_status': '%s'", copy["copy_id"], copy["copy_status"])
+        logging.info("Copy operation returned 'copy_id': '%s', 'copy_status': '%s'", copy["copy_id"],
+                     copy["copy_status"])
     except KeyError as e:
         logging.error(f"Failed getting operation id and status {e}")

@@ -1,6 +1,6 @@
 ---
 name: tre-service-guacamole-windowsvm
-version: 0.3.5
+version: 0.3.7
 description: "An Azure TRE User Resource Template for Guacamole (Windows 10)"
 registry: azuretre
 
@@ -58,7 +58,7 @@ parameters:
     default: "vm-shared-storage"
   - name: nexus_version
     type: string
-    default: "V1"
+    default: "V2"
     description: >-
       "Which Nexus proxy service to use, i.e. V1 for the App Service-based
       Nexus or V2 for the VM-based service"

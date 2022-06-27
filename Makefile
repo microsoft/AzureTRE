@@ -339,14 +339,18 @@ deploy-shared-service:
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/get_access_token.sh \
 	&& cd ${DIR} \
-	&& ${MAKEFILE_DIR}/devops/scripts/deploy_shared_service.sh --insecure --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}"
+	&& ${MAKEFILE_DIR}/devops/scripts/deploy_shared_service.sh --insecure --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}" $${PROPS}
 
 firewall-install:
 	$(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
 	DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ BUNDLE_TYPE=shared_service
 
 nexus-install:
-	$(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service DIR=${MAKEFILE_DIR}/templates/shared_services/sonatype-nexus/ BUNDLE_TYPE=shared_service
+	$(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
+	DIR="${MAKEFILE_DIR}/templates/shared_services/certs" BUNDLE_TYPE=shared_service PROPS="--domain_prefix nexus --cert_name nexus-ssl" \
+	&& $(MAKE) bundle-custom-action DIR=${MAKEFILE_DIR}/templates/shared_services/certs/ ACTION=generate \
+	&& $(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
+  DIR=${MAKEFILE_DIR}/templates/shared_services/sonatype-nexus-vm/ BUNDLE_TYPE=shared_service
 
 gitea-install:
 	$(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service DIR=${MAKEFILE_DIR}/templates/shared_services/gitea/ BUNDLE_TYPE=shared_service

@@ -4,7 +4,6 @@ import { User } from "./user";
 
 export interface Resource {
     id: string,
-    isActive: boolean,
     isEnabled: boolean,
     resourcePath: string,
     resourceVersion: number,

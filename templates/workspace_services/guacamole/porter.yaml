@@ -1,6 +1,6 @@
 ---
 name: tre-service-guacamole
-version: 0.3.7
+version: 0.3.8
 description: "An Azure TRE service for Guacamole"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -101,11 +101,16 @@ outputs:
     type: string
     applyTo:
       - install
+  - name: authentication_callback_uri
+    type: string
+    applyTo:
+      - install
 
 mixins:
   - exec
   - terraform:
       clientVersion: 1.1.7
+      initFile: providers.tf
 
 install:
   - terraform:
@@ -137,6 +142,7 @@ install:
         key: "tre-service-guacamole-{{ bundle.parameters.id }}"
       outputs:
         - name: connection_uri
+        - name: authentication_callback_uri
 
 upgrade:
   - exec:

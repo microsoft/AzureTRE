@@ -16,7 +16,7 @@ def get_sample_airlock_request(workspace_id: str, airlock_request_id: str) -> di
 
 
 class AirlockRequestInResponse(BaseModel):
-    airlock_request: AirlockRequest
+    airlockRequest: AirlockRequest
 
     class Config:
         schema_extra = {
