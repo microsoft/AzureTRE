@@ -3,6 +3,8 @@ data "azurerm_private_dns_zone" "eventgrid" {
   resource_group_name = var.resource_group_name
 }
 
+# Below we assign a SYSTEM-assigned identity for the topics. note that a user-assigned identity will not work.
+
 # Event grid topics
 resource "azurerm_eventgrid_topic" "step_result" {
   name                          = local.step_result_topic_name
@@ -10,11 +12,26 @@ resource "azurerm_eventgrid_topic" "step_result" {
   resource_group_name           = var.resource_group_name
   public_network_access_enabled = false
 
-  tags = {
-    Publishers = "Airlock Processor;"
+  identity {
+    type = "SystemAssigned"
   }
+
+  tags = merge(var.tre_core_tags, {
+    Publishers = "Airlock Processor;"
+  })
+
+  lifecycle { ignore_changes = [tags] }
 }
 
+resource "azurerm_role_assignment" "servicebus_sender_step_result" {
+  scope                = var.airlock_servicebus.id
+  role_definition_name = "Azure Service Bus Data Sender"
+  principal_id         = azurerm_eventgrid_topic.step_result.identity.0.principal_id
+
+  depends_on = [
+    azurerm_eventgrid_topic.step_result
+  ]
+}
 
 resource "azurerm_private_endpoint" "eg_step_result" {
   name                = "pe-eg-step-result-${var.tre_id}"
@@ -43,11 +60,26 @@ resource "azurerm_eventgrid_topic" "status_changed" {
   resource_group_name           = var.resource_group_name
   public_network_access_enabled = false
 
-  tags = {
-    Publishers = "TRE API;"
+  identity {
+    type = "SystemAssigned"
   }
+
+  tags = merge(var.tre_core_tags, {
+    Publishers = "TRE API;"
+  })
+
+  lifecycle { ignore_changes = [tags] }
 }
 
+resource "azurerm_role_assignment" "servicebus_sender_status_changed" {
+  scope                = var.airlock_servicebus.id
+  role_definition_name = "Azure Service Bus Data Sender"
+  principal_id         = azurerm_eventgrid_topic.status_changed.identity.0.principal_id
+
+  depends_on = [
+    azurerm_eventgrid_topic.status_changed
+  ]
+}
 
 resource "azurerm_private_endpoint" "eg_status_changed" {
   name                = "pe-eg-status-changed-${var.tre_id}"
@@ -78,15 +110,29 @@ resource "azurerm_eventgrid_system_topic" "import_inprogress_blob_created" {
   source_arm_resource_id = azurerm_storage_account.sa_import_in_progress.id
   topic_type             = "Microsoft.Storage.StorageAccounts"
 
-  tags = {
-    Publishers = "airlock;import-in-progress-sa"
+  identity {
+    type = "SystemAssigned"
   }
+
+  tags = merge(var.tre_core_tags, {
+    Publishers = "airlock;import-in-progress-sa"
+  })
 
   depends_on = [
     azurerm_storage_account.sa_import_in_progress
   ]
 
   lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_role_assignment" "servicebus_sender_import_inprogress_blob_created" {
+  scope                = var.airlock_servicebus.id
+  role_definition_name = "Azure Service Bus Data Sender"
+  principal_id         = azurerm_eventgrid_system_topic.import_inprogress_blob_created.identity.0.principal_id
+
+  depends_on = [
+    azurerm_eventgrid_system_topic.import_inprogress_blob_created
+  ]
 }
 
 
@@ -97,9 +143,13 @@ resource "azurerm_eventgrid_system_topic" "import_rejected_blob_created" {
   source_arm_resource_id = azurerm_storage_account.sa_import_rejected.id
   topic_type             = "Microsoft.Storage.StorageAccounts"
 
-  tags = {
-    Publishers = "airlock;import-rejected-sa"
+  identity {
+    type = "SystemAssigned"
   }
+
+  tags = merge(var.tre_core_tags, {
+    Publishers = "airlock;import-rejected-sa"
+  })
 
   depends_on = [
     azurerm_storage_account.sa_import_rejected
@@ -108,6 +158,17 @@ resource "azurerm_eventgrid_system_topic" "import_rejected_blob_created" {
   lifecycle { ignore_changes = [tags] }
 }
 
+resource "azurerm_role_assignment" "servicebus_sender_import_rejected_blob_created" {
+  scope                = var.airlock_servicebus.id
+  role_definition_name = "Azure Service Bus Data Sender"
+  principal_id         = azurerm_eventgrid_system_topic.import_rejected_blob_created.identity.0.principal_id
+
+  depends_on = [
+    azurerm_eventgrid_system_topic.import_rejected_blob_created
+  ]
+}
+
+
 resource "azurerm_eventgrid_system_topic" "export_approved_blob_created" {
   name                   = local.export_approved_sys_topic_name
   location               = var.location
@@ -115,15 +176,29 @@ resource "azurerm_eventgrid_system_topic" "export_approved_blob_created" {
   source_arm_resource_id = azurerm_storage_account.sa_export_approved.id
   topic_type             = "Microsoft.Storage.StorageAccounts"
 
-  tags = {
-    Publishers = "airlock;export-approved-sa"
+  identity {
+    type = "SystemAssigned"
   }
+
+  tags = merge(var.tre_core_tags, {
+    Publishers = "airlock;export-approved-sa"
+  })
 
   depends_on = [
     azurerm_storage_account.sa_export_approved
   ]
 
   lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_role_assignment" "servicebus_sender_export_approved_blob_created" {
+  scope                = var.airlock_servicebus.id
+  role_definition_name = "Azure Service Bus Data Sender"
+  principal_id         = azurerm_eventgrid_system_topic.export_approved_blob_created.identity.0.principal_id
+
+  depends_on = [
+    azurerm_eventgrid_system_topic.export_approved_blob_created
+  ]
 }
 
 
@@ -134,14 +209,26 @@ resource "azurerm_eventgrid_topic" "scan_result" {
   resource_group_name           = var.resource_group_name
   public_network_access_enabled = false
 
-
-  tags = {
-    Publishers = "airlock;custom scanning service;"
+  identity {
+    type = "SystemAssigned"
   }
+
+  tags = merge(var.tre_core_tags, {
+    Publishers = "airlock;custom scanning service;"
+  })
 
   lifecycle { ignore_changes = [tags] }
 }
 
+resource "azurerm_role_assignment" "servicebus_sender_scan_result" {
+  scope                = var.airlock_servicebus.id
+  role_definition_name = "Azure Service Bus Data Sender"
+  principal_id         = azurerm_eventgrid_topic.scan_result.identity.0.principal_id
+
+  depends_on = [
+    azurerm_eventgrid_topic.scan_result
+  ]
+}
 
 resource "azurerm_private_endpoint" "eg_scan_result" {
   name                = "pe-eg-scan-result-${var.tre_id}"
@@ -171,8 +258,13 @@ resource "azurerm_eventgrid_event_subscription" "step_result" {
 
   service_bus_queue_endpoint_id = azurerm_servicebus_queue.step_result.id
 
+  delivery_identity {
+    type = "SystemAssigned"
+  }
+
   depends_on = [
-    azurerm_eventgrid_topic.step_result
+    azurerm_eventgrid_topic.step_result,
+    azurerm_role_assignment.servicebus_sender_step_result
   ]
 }
 
@@ -182,8 +274,13 @@ resource "azurerm_eventgrid_event_subscription" "status_changed" {
 
   service_bus_queue_endpoint_id = azurerm_servicebus_queue.status_changed.id
 
+  delivery_identity {
+    type = "SystemAssigned"
+  }
+
   depends_on = [
-    azurerm_eventgrid_topic.status_changed
+    azurerm_eventgrid_topic.status_changed,
+    azurerm_role_assignment.servicebus_sender_status_changed
   ]
 }
 
@@ -193,8 +290,13 @@ resource "azurerm_eventgrid_event_subscription" "import_inprogress_blob_created"
 
   service_bus_topic_endpoint_id = azurerm_servicebus_topic.blob_created.id
 
+  delivery_identity {
+    type = "SystemAssigned"
+  }
+
   depends_on = [
-    azurerm_eventgrid_system_topic.import_inprogress_blob_created
+    azurerm_eventgrid_system_topic.import_inprogress_blob_created,
+    azurerm_role_assignment.servicebus_sender_import_inprogress_blob_created
   ]
 }
 
@@ -204,8 +306,15 @@ resource "azurerm_eventgrid_event_subscription" "import_rejected_blob_created" {
 
   service_bus_topic_endpoint_id = azurerm_servicebus_topic.blob_created.id
 
+  delivery_identity {
+    type = "SystemAssigned"
+  }
+
+  # Todo add Dead_letter
+
   depends_on = [
-    azurerm_eventgrid_system_topic.import_rejected_blob_created
+    azurerm_eventgrid_system_topic.import_rejected_blob_created,
+    azurerm_role_assignment.servicebus_sender_import_rejected_blob_created
   ]
 }
 
@@ -215,8 +324,13 @@ resource "azurerm_eventgrid_event_subscription" "export_approved_blob_created" {
 
   service_bus_topic_endpoint_id = azurerm_servicebus_topic.blob_created.id
 
+  delivery_identity {
+    type = "SystemAssigned"
+  }
+
   depends_on = [
-    azurerm_eventgrid_system_topic.export_approved_blob_created
+    azurerm_eventgrid_system_topic.export_approved_blob_created,
+    azurerm_role_assignment.servicebus_sender_export_approved_blob_created
   ]
 }
 

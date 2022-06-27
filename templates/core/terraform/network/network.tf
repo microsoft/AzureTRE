@@ -82,6 +82,11 @@ resource "azurerm_subnet" "airlock_processor" {
       actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
     }
   }
+
+  # Todo: needed as we want to open the fw for this subnet in some of the airlock storages (export inprogress)
+  # https://github.com/microsoft/AzureTRE/issues/2098
+  service_endpoints = ["Microsoft.Storage"]
+
 }
 
 resource "azurerm_subnet" "airlock_storage" {
@@ -100,4 +105,9 @@ resource "azurerm_subnet" "airlock_events" {
   address_prefixes     = [local.airlock_events_subnet_address_prefix]
   # notice that private endpoints do not adhere to NSG rules
   enforce_private_link_endpoint_network_policies = true
+
+  # Eventgrid CAN'T send messages over private endpoints, hence we need to allow service endpoints to the service bus
+  # We are using service endpoints + managed identity to send these messaages
+  # https://docs.microsoft.com/en-us/azure/event-grid/consume-private-endpoints
+  service_endpoints = ["Microsoft.ServiceBus"]
 }

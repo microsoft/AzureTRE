@@ -319,21 +319,17 @@ bundle-register:
 	&& cd ${DIR} \
 	&& ${MAKEFILE_DIR}/devops/scripts/register_bundle_with_api.sh --acr-name "$${ACR_NAME}" --bundle-type "$${BUNDLE_TYPE}" --current --insecure --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}" --verify --workspace-service-name "$${WORKSPACE_SERVICE_NAME}"
 
-workspace_bundle = $(MAKE) bundle-build DIR=${MAKEFILE_DIR}/templates/workspaces/$(1)/ \
-	&& $(MAKE) bundle-publish DIR=${MAKEFILE_DIR}/templates/workspaces/$(1)/ \
-	&& $(MAKE) bundle-register DIR="${MAKEFILE_DIR}/templates/workspaces/$(1)" BUNDLE_TYPE=workspace
+workspace_bundle = $(MAKE) bundle-build bundle-publish bundle-register \
+	DIR="${MAKEFILE_DIR}/templates/workspaces/$(1)" BUNDLE_TYPE=workspace
 
-workspace_service_bundle = $(MAKE) bundle-build DIR=${MAKEFILE_DIR}/templates/workspace_services/$(1)/ \
-	&& $(MAKE) bundle-publish DIR=${MAKEFILE_DIR}/templates/workspace_services/$(1)/ \
-	&& $(MAKE) bundle-register DIR="${MAKEFILE_DIR}/templates/workspace_services/$(1)" BUNDLE_TYPE=workspace_service
+workspace_service_bundle = $(MAKE) bundle-build bundle-publish bundle-register \
+	DIR="${MAKEFILE_DIR}/templates/workspace_services/$(1)" BUNDLE_TYPE=workspace_service
 
-shared_service_bundle = $(MAKE) bundle-build DIR=${MAKEFILE_DIR}/templates/shared_services/$(1)/ \
-	&& $(MAKE) bundle-publish DIR=${MAKEFILE_DIR}/templates/shared_services/$(1)/ \
-	&& $(MAKE) bundle-register DIR="${MAKEFILE_DIR}/templates/shared_services/$(1)" BUNDLE_TYPE=shared_service
+shared_service_bundle = $(MAKE) bundle-build bundle-publish bundle-register \
+	DIR="${MAKEFILE_DIR}/templates/shared_services/$(1)" BUNDLE_TYPE=shared_service
 
-user_resource_bundle = $(MAKE) bundle-build DIR=${MAKEFILE_DIR}/templates/workspace_services/$(1)/user_resources/$(2)/ \
-	&& $(MAKE) bundle-publish DIR=${MAKEFILE_DIR}/templates/workspace_services/$(1)/user_resources/$(2) \
-	&& $(MAKE) bundle-register DIR="${MAKEFILE_DIR}/templates/workspace_services/$(1)/user_resources/$(2)" BUNDLE_TYPE=user_resource WORKSPACE_SERVICE_NAME=tre-service-$(1)
+user_resource_bundle = $(MAKE) bundle-build bundle-publish bundle-register \
+	DIR="${MAKEFILE_DIR}/templates/workspace_services/$(1)/user_resources/$(2)" BUNDLE_TYPE=user_resource WORKSPACE_SERVICE_NAME=tre-service-$(1)
 
 deploy-shared-service:
 	@# NOTE: ACR_NAME below comes from the env files, so needs the double '$$'. Others are set on command execution and don't
@@ -346,22 +342,14 @@ deploy-shared-service:
 	&& ${MAKEFILE_DIR}/devops/scripts/deploy_shared_service.sh --insecure --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}"
 
 firewall-install:
-	$(MAKE) bundle-build DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ \
-	&& $(MAKE) bundle-publish DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ \
-	&& $(MAKE) bundle-register DIR="${MAKEFILE_DIR}/templates/shared_services/firewall" BUNDLE_TYPE=shared_service \
-	&& $(MAKE) deploy-shared-service DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ BUNDLE_TYPE=shared_service
+	$(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
+	DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ BUNDLE_TYPE=shared_service
 
 nexus-install:
-	$(MAKE) bundle-build DIR=${MAKEFILE_DIR}/templates/shared_services/sonatype-nexus/ \
-	&& $(MAKE) bundle-publish DIR=${MAKEFILE_DIR}/templates/shared_services/sonatype-nexus/ \
-	&& $(MAKE) bundle-register DIR="${MAKEFILE_DIR}/templates/shared_services/sonatype-nexus" BUNDLE_TYPE=shared_service \
-	&& $(MAKE) deploy-shared-service DIR=${MAKEFILE_DIR}/templates/shared_services/sonatype-nexus/ BUNDLE_TYPE=shared_service
+	$(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service DIR=${MAKEFILE_DIR}/templates/shared_services/sonatype-nexus/ BUNDLE_TYPE=shared_service
 
 gitea-install:
-	$(MAKE) bundle-build DIR=${MAKEFILE_DIR}/templates/shared_services/gitea/ \
-	&& $(MAKE) bundle-publish DIR=${MAKEFILE_DIR}/templates/shared_services/gitea/ \
-	&& $(MAKE) bundle-register DIR="${MAKEFILE_DIR}/templates/shared_services/gitea" BUNDLE_TYPE=shared_service \
-	&& $(MAKE) deploy-shared-service DIR=${MAKEFILE_DIR}/templates/shared_services/gitea/ BUNDLE_TYPE=shared_service
+	$(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service DIR=${MAKEFILE_DIR}/templates/shared_services/gitea/ BUNDLE_TYPE=shared_service
 
 temp-do-upload:
 	$(MAKE) static-web-upload DIR=${MAKEFILE_DIR}/dummy
