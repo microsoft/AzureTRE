@@ -40,7 +40,7 @@ export interface ResourceUpdate {
     componentAction: ComponentAction
 }
 
-export enum powerStates {
+export enum VMPowerStates {
   Running = "VM running",
   Starting = "VM starting",
   Stopping = "VM stopping",

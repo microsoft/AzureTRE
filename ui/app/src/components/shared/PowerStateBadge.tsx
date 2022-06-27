@@ -1,14 +1,14 @@
 import React from 'react';
-import { powerStates } from '../../models/resource';
+import { VMPowerStates } from '../../models/resource';
 
 interface PowerStateBadgeProps {
-  state: powerStates
+  state: VMPowerStates
 }
 
 export const PowerStateBadge: React.FunctionComponent<PowerStateBadgeProps> = (props: PowerStateBadgeProps) => {
 
   let stateClass = "tre-power-off";
-  if (props.state === powerStates.Running) stateClass = " tre-power-on";
+  if (props.state === VMPowerStates.Running) stateClass = " tre-power-on";
 
   return (
     <>

@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import { ComponentAction, powerStates, Resource } from '../../models/resource';
+import { ComponentAction, VMPowerStates, Resource } from '../../models/resource';
 import { CommandBar, IconButton, IContextualMenuItem, IContextualMenuProps } from '@fluentui/react';
 import { RoleName, WorkspaceRoleName } from '../../models/roleNames';
 import { SecuredByRole } from './SecuredByRole';
@@ -107,7 +107,7 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
     return props.componentAction === ComponentAction.Lock
       || successStates.indexOf(props.resource.deploymentStatus) === -1
       || !props.resource.isEnabled
-      || (props.resource.azureStatus?.powerState && props.resource.azureStatus.powerState !== powerStates.Running);
+      || (props.resource.azureStatus?.powerState && props.resource.azureStatus.powerState !== VMPowerStates.Running);
   }
 
   // add 'connect' button if we have a URL to connect to

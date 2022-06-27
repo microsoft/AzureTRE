@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ComponentAction, powerStates, Resource } from '../../models/resource';
+import { ComponentAction, VMPowerStates, Resource } from '../../models/resource';
 import { Callout, DefaultPalette, FontWeights, IconButton, mergeStyleSets, PrimaryButton, ProgressIndicator, Shimmer, Stack, Text } from '@fluentui/react';
 import { Link } from 'react-router-dom';
 import moment from 'moment';
@@ -31,7 +31,7 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
     return latestUpdate.componentAction === ComponentAction.Lock
       || successStates.indexOf(props.resource.deploymentStatus) === -1
       || !props.resource.isEnabled
-      || (props.resource.azureStatus?.powerState && props.resource.azureStatus.powerState !== powerStates.Running)
+      || (props.resource.azureStatus?.powerState && props.resource.azureStatus.powerState !== VMPowerStates.Running)
   }
 
   return (
