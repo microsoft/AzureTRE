@@ -111,6 +111,12 @@
       "source": {
         "env": "AAD_REDIRECT_URIS"
       }
+    },
+    {
+      "name": "app_service_plan_sku",
+      "source": {
+        "env": "APP_SERVICE_PLAN_SKU"
+      }
     }
   ]
 }

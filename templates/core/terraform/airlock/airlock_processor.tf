@@ -6,18 +6,13 @@ locals {
   version = replace(replace(replace(data.local_file.airlock_processor_version.content, "__version__ = \"", ""), "\"", ""), "\n", "")
 }
 
-data "azurerm_application_insights" "core" {
-  name                = "appi-${var.tre_id}"
-  resource_group_name = var.resource_group_name
-}
-
 resource "azurerm_service_plan" "airlock_plan" {
   name                = "plan-airlock-${var.tre_id}"
   resource_group_name = var.resource_group_name
   location            = var.location
   os_type             = "Linux"
   sku_name            = var.airlock_app_service_plan_sku_size
-  tags                = local.tre_core_tags
+  tags                = var.tre_core_tags
   worker_count        = 1
 
   lifecycle { ignore_changes = [tags] }
@@ -34,7 +29,7 @@ resource "azurerm_storage_account" "sa_airlock_processor_func_app" {
   location                 = var.location
   account_tier             = "Standard"
   account_replication_type = "LRS"
-  tags                     = local.tre_core_tags
+  tags                     = var.tre_core_tags
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -48,7 +43,7 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
   service_plan_id      = azurerm_service_plan.airlock_plan.id
 
   storage_account_access_key = azurerm_storage_account.sa_airlock_processor_func_app.primary_access_key
-  tags                       = local.tre_core_tags
+  tags                       = var.tre_core_tags
 
   identity {
     type         = "UserAssigned"
@@ -56,14 +51,14 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
   }
 
   app_settings = {
-    "SB_CONNECTION_STRING"                  = data.azurerm_servicebus_namespace.airlock_sb.default_primary_connection_string
+    "SB_CONNECTION_STRING"                  = var.airlock_servicebus.default_primary_connection_string
     "BLOB_CREATED_TOPIC_NAME"               = azurerm_servicebus_topic.blob_created.name
     "TOPIC_SUBSCRIPTION_NAME"               = azurerm_servicebus_subscription.airlock_processor.name
     "EVENT_GRID_TOPIC_URI_SETTING"          = azurerm_eventgrid_topic.step_result.endpoint
     "EVENT_GRID_TOPIC_KEY_SETTING"          = azurerm_eventgrid_topic.step_result.primary_access_key
     "WEBSITES_ENABLE_APP_SERVICE_STORAGE"   = false
     "AIRLOCK_STATUS_CHANGED_QUEUE_NAME"     = local.status_changed_queue_name
-    "APPLICATIONINSIGHTS_CONNECTION_STRING" = data.azurerm_application_insights.core.connection_string
+    "APPLICATIONINSIGHTS_CONNECTION_STRING" = var.applicationinsights_connection_string
     "MANAGED_IDENTITY_CLIENT_ID"            = azurerm_user_assigned_identity.airlock_id.client_id
     "AZURE_SUBSCRIPTION_ID"                 = var.arm_subscription_id
     "TRE_ID"                                = var.tre_id
@@ -86,8 +81,8 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
     }
 
     # This is added automatically (by Azure?) when the equivalent is set in app_settings.
-    # Setting it here to save TF from updating every apply.
-    application_insights_connection_string = data.azurerm_application_insights.core.connection_string
+    # Setting it here to save TF from updating on every apply.
+    application_insights_connection_string = var.applicationinsights_connection_string
   }
 
   lifecycle { ignore_changes = [tags] }
