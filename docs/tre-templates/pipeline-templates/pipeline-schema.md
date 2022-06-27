@@ -10,8 +10,8 @@ This document will help you write a valid `pipeline: {}` block in your template.
       {
         "stepId": "a unique string value here",
         "stepTitle": "Friendly description of the step here - will be displayed in the UI",
-        "resourceTemplateName": "name of the resource template to update",
-        "resourceType": "shared_service", // <-- currently only shared_service types supported
+        "resourceTemplateName": "name of the resource template to update", // only required for shared_service targets
+        "resourceType": "shared_service", // [ shared_service | user_resource | workspace_service | workspace ]
         "resourceAction": "upgrade", // <-- currently only upgrade supported
         "properties": [
         {
