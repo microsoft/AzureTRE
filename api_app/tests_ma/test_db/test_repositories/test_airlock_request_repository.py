@@ -8,6 +8,7 @@ from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, 
 from db.repositories.airlock_requests import AirlockRequestRepository
 
 from db.errors import EntityDoesNotExist
+from azure.cosmos.exceptions import CosmosResourceNotFoundError
 
 
 WORKSPACE_ID = "abc000d3-82da-4bfc-b6e9-9a7853ef753e"
@@ -56,9 +57,9 @@ def test_get_airlock_request_by_id(airlock_request_repo):
     assert actual_service == airlock_request
 
 
-def test_get_airlock_request_by_id_raises_entity_does_not_exist_if_no_available_services(airlock_request_repo):
+def test_get_airlock_request_by_id_raises_entity_does_not_exist_if_no_such_request_id(airlock_request_repo):
     airlock_request_repo.read_item_by_id = MagicMock()
-    airlock_request_repo.read_item_by_id.return_value = []
+    airlock_request_repo.read_item_by_id.side_effect = CosmosResourceNotFoundError
 
     with pytest.raises(EntityDoesNotExist):
         airlock_request_repo.get_airlock_request_by_id(AIRLOCK_REQUEST_ID)

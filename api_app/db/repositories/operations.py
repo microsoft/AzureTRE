@@ -115,8 +115,8 @@ class OperationRepository(BaseRepository):
                             stepId=step["stepId"],
                             stepTitle=step["stepTitle"],
                             resourceId=resource_for_step.id,
-                            resourceTemplateName=step["resourceTemplateName"],
-                            resourceType=step["resourceType"],
+                            resourceTemplateName=resource_for_step.templateName,
+                            resourceType=resource_for_step.resourceType,
                             resourceAction=step["resourceAction"],
                             updatedWhen=self.get_timestamp()
                         ))
