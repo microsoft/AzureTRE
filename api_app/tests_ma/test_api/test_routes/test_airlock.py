@@ -3,6 +3,7 @@ from mock import patch
 from fastapi import status
 from models.domain.airlock_review import AirlockReview, AirlockReviewDecision
 from db.errors import EntityDoesNotExist, UnableToAccessDatabase
+from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus
 from azure.core.exceptions import HttpResponseError
 from resources import strings
@@ -69,7 +70,7 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
     async def test_post_airlock_request_creates_airlock_request_returns_201(self, _, app, client, sample_airlock_request_input_data):
         response = await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID), json=sample_airlock_request_input_data)
         assert response.status_code == status.HTTP_201_CREATED
-        assert response.json()["airlock_request"]["id"] == AIRLOCK_REQUEST_ID
+        assert response.json()["airlockRequest"]["id"] == AIRLOCK_REQUEST_ID
 
     @patch("api.routes.airlock.AirlockRequestRepository.create_airlock_request_item", side_effect=ValueError)
     async def test_post_airlock_request_input_is_malformed_returns_400(self, _, app, client, sample_airlock_request_input_data):
@@ -92,14 +93,32 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
         response = await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID), json=sample_airlock_request_input_data)
         assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
+    # [GET] /workspaces/{workspace_id}/requests/{airock_request_id}
+    @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object())
+    async def test_get_airlock_request_returns_200(self, _, app, client):
+        airlock_request = sample_airlock_request_object()
+        response = await client.get(app.url_path_for(strings.API_GET_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["airlockRequest"]["id"] == airlock_request.id
+
+    @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", side_effect=CosmosResourceNotFoundError)
+    async def test_get_airlock_request_no_airlock_request_found_returns_404(self, _, app, client):
+        response = await client.get(app.url_path_for(strings.API_GET_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", side_effect=UnableToAccessDatabase)
+    async def test_get_airlock_request_state_store_endpoint_not_responding_returns_503(self, _, app, client):
+        response = await client.get(app.url_path_for(strings.API_GET_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
+        assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+
     # [POST] /workspaces/{workspace_id}/requests/{airlock_request_id}/submit
     @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object())
     @patch("api.routes.airlock.update_status_and_publish_event_airlock_request", return_value=sample_airlock_request_object(status=AirlockRequestStatus.Submitted))
     async def test_post_submit_airlock_request_submitts_airlock_request_returns_200(self, _, __, app, client):
         response = await client.post(app.url_path_for(strings.API_SUBMIT_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
         assert response.status_code == status.HTTP_200_OK
-        assert response.json()["airlock_request"]["id"] == AIRLOCK_REQUEST_ID
-        assert response.json()["airlock_request"]["status"] == AirlockRequestStatus.Submitted
+        assert response.json()["airlockRequest"]["id"] == AIRLOCK_REQUEST_ID
+        assert response.json()["airlockRequest"]["status"] == AirlockRequestStatus.Submitted
 
     @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", side_effect=EntityDoesNotExist)
     async def test_post_submit_airlock_request_if_request_not_found_returns_404(self, _, app, client):
