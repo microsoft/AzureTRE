@@ -190,31 +190,6 @@ async def test_when_updating_and_state_store_exception(app, sb_client, logging_m
     sb_client().get_queue_receiver().complete_message.assert_not_called()
 
 
-@patch('service_bus.deployment_status_update.OperationRepository')
-@patch('service_bus.deployment_status_update.ResourceRepository')
-@patch('logging.error')
-@patch('service_bus.deployment_status_update.ServiceBusClient')
-@patch('fastapi.FastAPI')
-async def test_state_transitions_from_deployed_to_deploying_does_not_transition(app, sb_client, logging_mock, repo, operation_repo):
-    updated_message = test_sb_message
-    updated_message["status"] = Status.Deploying
-    service_bus_received_message_mock = ServiceBusReceivedMessageMock(updated_message)
-
-    sb_client().get_queue_receiver().receive_messages = AsyncMock(return_value=[service_bus_received_message_mock])
-    sb_client().get_queue_receiver().complete_message = AsyncMock()
-
-    expected_workspace = create_sample_workspace_object(test_sb_message["id"])
-    operation = create_sample_operation(test_sb_message["id"], RequestAction.Install)
-    operation.steps[0].status = Status.Deployed
-    operation_repo().get_operation_by_id.return_value = operation
-
-    repo().get_resource_dict_by_id.return_value = expected_workspace.dict()
-
-    await receive_message_and_update_deployment(app)
-
-    repo().update_item_dict.assert_called_once_with(expected_workspace)
-
-
 @patch("service_bus.deployment_status_update.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
 @patch('service_bus.deployment_status_update.OperationRepository')
 @patch('service_bus.deployment_status_update.ResourceRepository')
@@ -312,7 +287,7 @@ async def test_properties_dont_change_with_no_outputs(app, sb_client, logging_mo
 @patch('fastapi.FastAPI')
 async def test_multi_step_operation_sends_next_step(app, sb_client, sb_sender_client, repo, operations_repo, multi_step_operation, user_resource_multi, basic_shared_service):
     received_message = test_sb_message_multi_step_1_complete
-    received_message["status"] = Status.Deployed
+    received_message["status"] = Status.Updated
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(received_message)
     sb_client().get_queue_receiver().receive_messages = AsyncMock(return_value=[service_bus_received_message_mock])
     sb_client().get_queue_receiver().complete_message = AsyncMock()
@@ -333,8 +308,8 @@ async def test_multi_step_operation_sends_next_step(app, sb_client, sb_sender_cl
     # check the operation is updated as expected
     expected_operation = copy.deepcopy(multi_step_operation)
     expected_operation.status = Status.PipelineRunning
-    expected_operation.message = "Multi step pipeline deploying. See steps for details."
-    expected_operation.steps[0].status = Status.Deployed
+    expected_operation.message = "Multi step pipeline running. See steps for details."
+    expected_operation.steps[0].status = Status.Updated
     expected_operation.steps[0].message = "upgrade succeeded"
     operations_repo().update_item.assert_called_once_with(expected_operation)
 

@@ -1,5 +1,6 @@
 import uuid
 import pytest
+from models.domain.request_action import RequestAction
 from models.domain.resource import Resource
 from models.domain.user_resource import UserResource
 from models.domain.shared_service import SharedService
@@ -287,7 +288,7 @@ def multi_step_operation(test_user, basic_shared_service_template, basic_shared_
     return Operation(
         id="op-guid-here",
         resourceId="resource-id",
-        action="install",
+        action=RequestAction.Install,
         user=test_user,
         resourcePath="/workspaces/resource-id",
         createdWhen=FAKE_CREATE_TIMESTAMP,

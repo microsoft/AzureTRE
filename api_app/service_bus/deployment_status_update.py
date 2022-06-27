@@ -70,7 +70,7 @@ def update_overall_operation_status(operation: Operation, step: OperationStep, i
         operation.message = "Multi step pipeline completed successfully"
 
 
-def get_success_status_for_action(self, action: RequestAction):
+def get_success_status_for_action(action: RequestAction):
     status = Status.ActionSucceeded
 
     if action == RequestAction.Install:
@@ -83,7 +83,7 @@ def get_success_status_for_action(self, action: RequestAction):
     return status
 
 
-def get_failure_status_for_action(self, action: RequestAction):
+def get_failure_status_for_action(action: RequestAction):
     status = Status.ActionFailed
 
     if action == RequestAction.Install:
