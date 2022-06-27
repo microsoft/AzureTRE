@@ -101,8 +101,8 @@ def extract_properties(body: str) -> RequestProperties:
 
 
 def is_require_data_copy(new_status: str):
-    if new_status.lower() in [constants.STAGE_SUBMITTED, constants.STAGE_APPROVED, constants.STAGE_REJECTED,
-                              constants.STAGE_BLOCKED]:
+    if new_status.lower() in [constants.STAGE_SUBMITTED, constants.STAGE_APPROVAL_INPROGRESS, constants.STAGE_REJECTION_INPROGRESS,
+                              constants.STAGE_SCAN_INROGRESS]:
         return True
     return False
 
@@ -127,43 +127,43 @@ def get_source_dest_env_vars(new_status: str, request_type: str, short_workspace
         raise Exception(msg)
 
     if request_type == constants.IMPORT_TYPE:
-        if new_status == 'submitted':
+        if new_status == constants.STAGE_SUBMITTED:
             source_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_EXTERNAL + tre_id
             dest_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS + tre_id
             source_account_rg = constants.CORE_RESOURCE_GROUP_NAME.format(tre_id)
             dest_account_rg = source_account_rg
-        elif new_status == 'approved':
+        elif new_status == constants.STAGE_APPROVAL_INPROGRESS:
             source_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS + tre_id
             dest_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_APPROVED + short_workspace_id
             source_account_rg = constants.CORE_RESOURCE_GROUP_NAME.format(tre_id)
             dest_account_rg = constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, short_workspace_id)
-        elif new_status == 'rejected':
+        elif new_status == constants.STAGE_REJECTION_INPROGRESS:
             source_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS + tre_id
             dest_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_REJECTED + tre_id
             source_account_rg = constants.CORE_RESOURCE_GROUP_NAME.format(tre_id)
             dest_account_rg = source_account_rg
-        elif new_status == 'blocked':
+        elif new_status == constants.STAGE_BLOCKING_INPROGRESS:
             source_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS + tre_id
             dest_account_name = constants.STORAGE_ACCOUNT_NAME_IMPORT_BLOCKED + tre_id
             source_account_rg = constants.CORE_RESOURCE_GROUP_NAME.format(tre_id)
             dest_account_rg = source_account_rg
     else:
-        if new_status == 'submitted':
+        if new_status == constants.STAGE_SUBMITTED:
             source_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INTERNAL + short_workspace_id
             dest_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS + short_workspace_id
             source_account_rg = constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, short_workspace_id)
             dest_account_rg = source_account_rg
-        elif new_status == 'approved':
+        elif new_status == constants.STAGE_APPROVAL_INPROGRESS:
             source_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS + short_workspace_id
             dest_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_APPROVED + tre_id
             source_account_rg = constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, short_workspace_id)
             dest_account_rg = constants.CORE_RESOURCE_GROUP_NAME.format(tre_id)
-        elif new_status == 'rejected':
+        elif new_status == constants.STAGE_REJECTION_INPROGRESS:
             source_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS + short_workspace_id
             dest_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_REJECTED + short_workspace_id
             source_account_rg = constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, short_workspace_id)
             dest_account_rg = source_account_rg
-        elif new_status == 'blocked':
+        elif new_status == constants.STAGE_BLOCKING_INPROGRESS:
             source_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS + short_workspace_id
             dest_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_BLOCKED + short_workspace_id
             source_account_rg = constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, short_workspace_id)

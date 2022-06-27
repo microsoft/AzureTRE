@@ -45,13 +45,13 @@ def main(msg: func.ServiceBusMessage,
 
     # If clean, we can continue and move the request to the review stage
     # Otherwise, move the request to the blocked stage
-    completed_step = constants.STAGE_IN_SCAN
+    completed_step = constants.STAGE_WAITING_FOR_SCAN
     if verdict == constants.NO_THREATS:
         logging.info('No malware were found in request id %s, moving to %s stage', request_id, constants.STAGE_IN_REVIEW)
         new_status = constants.STAGE_IN_REVIEW
     else:
-        logging.info('Malware was found in request id %s, moving to %s stage', request_id, constants.STAGE_BLOCKED)
-        new_status = constants.STAGE_BLOCKED
+        logging.info('Malware was found in request id %s, moving to %s stage', request_id, constants.STAGE_BLOCKING_INPROGRESS)
+        new_status = constants.STAGE_BLOCKING_INPROGRESS
 
     # Send the event to indicate this step is done (and to request a new status change)
     outputEvent.set(

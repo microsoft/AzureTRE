@@ -15,10 +15,15 @@ AIRLOCK_REQUEST_ID = "ce45d43a-e734-469a-88a0-109faf4a611f"
 DRAFT = AirlockRequestStatus.Draft
 SUBMITTED = AirlockRequestStatus.Submitted
 IN_REVIEW = AirlockRequestStatus.InReview
+APPROVED_IN_PROGRESS = AirlockRequestStatus.ApprovalInProgress
 APPROVED = AirlockRequestStatus.Approved
+REJECTION_IN_PROGRESS = AirlockRequestStatus.RejectionInProgress
 REJECTED = AirlockRequestStatus.Rejected
 CANCELLED = AirlockRequestStatus.Cancelled
+BLOCKING_IN_PROGRESS = AirlockRequestStatus.Blocked
 BLOCKED = AirlockRequestStatus.Blocked
+WAIT_FOR_SCAN = AirlockRequestStatus.WaitForScan
+SCAN_IN_PROGRESS = AirlockRequestStatus.ScanInProgress
 
 
 @pytest.fixture
@@ -69,7 +74,7 @@ def test_create_airlock_request_item_creates_an_airlock_request_with_the_right_v
     assert airlock_request.workspaceId == WORKSPACE_ID
 
 
-@pytest.mark.parametrize("airlock_request_repo, current_status, new_status", [(airlock_request_repo, DRAFT, SUBMITTED), (airlock_request_repo, SUBMITTED, IN_REVIEW), (airlock_request_repo, IN_REVIEW, APPROVED), (airlock_request_repo, IN_REVIEW, REJECTED)], indirect=['airlock_request_repo'])
+@pytest.mark.parametrize("airlock_request_repo, current_status, new_status", [(airlock_request_repo, DRAFT, SUBMITTED), (airlock_request_repo, SUBMITTED, IN_REVIEW), (airlock_request_repo, IN_REVIEW, APPROVED_IN_PROGRESS), (airlock_request_repo, IN_REVIEW, REJECTION_IN_PROGRESS), (airlock_request_repo, REJECTION_IN_PROGRESS, REJECTED), (airlock_request_repo, APPROVED_IN_PROGRESS, APPROVED), (airlock_request_repo, BLOCKING_IN_PROGRESS, BLOCKED), (airlock_request_repo, SUBMITTED, WAIT_FOR_SCAN), (airlock_request_repo, SUBMITTED, SCAN_IN_PROGRESS), (airlock_request_repo, SCAN_IN_PROGRESS, IN_REVIEW), (airlock_request_repo, SCAN_IN_PROGRESS, BLOCKING_IN_PROGRESS)], indirect=['airlock_request_repo'])
 def test_update_airlock_request_status_updates_airlock_request_with_the_right_status(airlock_request_repo, current_status, new_status):
     airlock_request_item_to_create = airlock_request_mock(status=current_status)
     user = create_test_user()

@@ -35,7 +35,7 @@ def main(msg: func.ServiceBusMessage,
 
             # Malware scanning is enabled, set the stage to in_scan
             completed_step = constants.STAGE_SUBMITTED
-            new_status = constants.STAGE_IN_SCAN
+            new_status = constants.STAGE_WAITING_FOR_SCAN
         else:
             logging.info('Malware scanning is disabled. Completing the submitted stage (moving to in-review).')
             # Malware scanning is disabled, so we skip the in-progress stage
@@ -44,16 +44,16 @@ def main(msg: func.ServiceBusMessage,
 
     # blob created in the approved storage, meaning its ready (success)
     elif constants.STORAGE_ACCOUNT_NAME_IMPORT_APPROVED in topic or constants.STORAGE_ACCOUNT_NAME_EXPORT_APPROVED in topic:
-        completed_step = constants.STAGE_APPROVED
-        new_status = constants.STAGE_READY
+        completed_step = constants.STAGE_APPROVAL_INPROGRESS
+        new_status = constants.STAGE_APPROVED
     # blob created in the rejected storage, meaning its ready (declined)
     elif constants.STORAGE_ACCOUNT_NAME_IMPORT_REJECTED in topic or constants.STORAGE_ACCOUNT_NAME_EXPORT_REJECTED in topic:
-        completed_step = constants.STAGE_REJECTED
-        new_status = constants.STAGE_DECLINED
+        completed_step = constants.STAGE_REJECTION_INPROGRESS
+        new_status = constants.STAGE_REJECTED
     # blob created in the blocked storage, meaning its ready (failed)
     elif constants.STORAGE_ACCOUNT_NAME_IMPORT_BLOCKED in topic or constants.STORAGE_ACCOUNT_NAME_EXPORT_BLOCKED in topic:
-        completed_step = constants.STAGE_IN_SCAN
-        new_status = constants.STAGE_FAILED
+        completed_step = constants.STAGE_BLOCKING_INPROGRESS
+        new_status = constants.STAGE_BLOCKED_BY_SCAN
 
     # Todo: Once the copy process is done, we can delete the old container here
     # https://github.com/microsoft/AzureTRE/issues/1963

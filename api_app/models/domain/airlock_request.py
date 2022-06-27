@@ -11,15 +11,16 @@ class AirlockRequestStatus(str, Enum):
     """
     Draft = strings.AIRLOCK_RESOURCE_STATUS_DRAFT
     Submitted = strings.AIRLOCK_RESOURCE_STATUS_SUBMITTED
-    InScan = strings.AIRLOCK_RESOURCE_STATUS_INSCAN
+    WaitForScan = strings.AIRLOCK_RESOURCE_STATUS_WAITING_FOR_SCAN
     InReview = strings.AIRLOCK_RESOURCE_STATUS_INREVIEW
+    ApprovalInProgress = strings.AIRLOCK_RESOURCE_STATUS_APPROVAL_INPROGRESS
     Approved = strings.AIRLOCK_RESOURCE_STATUS_APPROVED
+    RejectionInProgress = strings.AIRLOCK_RESOURCE_STATUS_REJECTION_INPROGRESS
     Rejected = strings.AIRLOCK_RESOURCE_STATUS_REJECTED
     Cancelled = strings.AIRLOCK_RESOURCE_STATUS_CANCELLED
+    ScanInProgress = strings.AIRLOCK_RESOURCE_STATUS_SCAN_INPROGRESS
+    BlockingInProgress = strings.AIRLOCK_RESOURCE_STATUS_BLOCKING_INPROGRESS
     Blocked = strings.AIRLOCK_RESOURCE_STATUS_BLOCKED
-    Ready = strings.AIRLOCK_RESOURCE_STATUS_READY
-    Declined = strings.AIRLOCK_RESOURCE_STATUS_DECLINED
-    Failed = strings.AIRLOCK_RESOURCE_STATUS_FAILED
 
 
 class AirlockRequestType(str, Enum):
