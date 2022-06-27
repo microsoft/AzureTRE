@@ -32,6 +32,7 @@ def main(msg: func.ServiceBusMessage,
             # If malware scanning is enabled, the fact that the blob was created can be dismissed.
             # It will be consumed by the malware scanning service
             logging.info('Malware scanning is enabled. no action to perform.')
+            return
         else:
             logging.info('Malware scanning is disabled. Completing the submitted stage (moving to in-review).')
             # Malware scanning is disabled, so we skip to the in_review stage
