@@ -122,7 +122,7 @@ async def test_multi_step_document_sends_first_step(
         operation_step=multi_step_operation.steps[0],
         resource_repo=resource_repo,
         resource_template_repo=resource_template_repo,
-        primary_resource_id="resource-id",
+        primary_resource=user_resource_multi,
         resource_to_update_id=basic_shared_service.id,
         primary_action="install",
         user=test_user,

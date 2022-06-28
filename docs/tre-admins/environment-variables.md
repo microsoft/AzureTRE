@@ -33,5 +33,6 @@
 | `DEPLOY_NEXUS` | If set to `false` disables deployment of the [Nexus shared service](../tre-templates/shared-services/nexus.md). |
 | `KEYVAULT_PURGE_PROTECTION_ENABLED` | If set to `false` disables purge protection of keyvault. A recommended setting for developers. |
 | `STATEFUL_RESOURCES_LOCKED` | If set to `false` locks on stateful resources won't be created. A recommended setting for developers. |
+| `ENABLE_AIRLOCK_MALWARE_SCANNING` | If False, Airlock requests will skip the malware scanning stage. If set to True, Setting up a scanner manually is required! |
 | `ENABLE_LOCAL_DEBUGGING` | Set to `false` by default. Setting this to `true` will ensure that Azure resources are accessible from your local development machine. (e.g. ServiceBus and Cosmos) |
 | `PUBLIC_DEPLOYMENT_IP_ADDRESS` | The public IP address of the machine that is deploying TRE. (Your desktop or the build agents). In certain locations a dynamic script to retrieve this from [https://ipecho.net/plain](https://ipecho.net/plain) does not work. If this is the case, then you can 'hardcode' your IP. |
