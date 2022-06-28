@@ -1,6 +1,5 @@
-from datetime import date, datetime
+from datetime import datetime
 from dateutil.relativedelta import relativedelta
-import pytz
 from fastapi import APIRouter, Depends, Query, HTTPException, status
 from typing import Optional
 
