@@ -2,6 +2,7 @@ import datetime
 import uuid
 import pytest
 from mock import patch, MagicMock
+import json
 
 from fastapi import HTTPException, status
 
@@ -11,7 +12,7 @@ from resources import strings
 
 from db.repositories.resources import ResourceRepository
 from db.repositories.operations import OperationRepository
-from models.domain.operation import Operation, Status
+from models.domain.operation import Status, Operation, OperationStep
 from models.domain.resource import RequestAction, ResourceType
 from models.domain.workspace import Workspace
 
@@ -80,7 +81,18 @@ def sample_resource_operation(resource_id: str, operation_id: str):
         Status=Status.Deployed,
         createdWhen=FAKE_CREATE_TIMESTAMP,
         updatedWhen=FAKE_CREATE_TIMESTAMP,
-        user=create_test_user()
+        user=create_test_user(),
+        steps=[
+            OperationStep(
+                stepId="main",
+                stepTitle="Main step for resource-id",
+                resourceAction="install",
+                resourceType=ResourceType.Workspace,
+                resourceTemplateName="template1",
+                resourceId=resource_id,
+                updatedWhen=FAKE_CREATE_TIMESTAMP
+            )
+        ]
     )
     return operation
 
@@ -228,10 +240,12 @@ class TestResourceHelpers:
         assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
     @patch("api.routes.workspaces.ResourceTemplateRepository")
-    @patch("api.routes.resource_helpers.send_resource_request_message")
-    async def test_save_and_deploy_masks_secrets(self, send_resource_request_mock, resource_template_repo, resource_repo, operations_repo, basic_resource_template):
+    @patch("service_bus.resource_request_sender.send_deployment_message")
+    async def test_save_and_deploy_masks_secrets(self, send_deployment_message_mock, resource_template_repo, resource_repo, operations_repo, basic_resource_template):
         resource = sample_resource_with_secret()
-        operation = sample_resource_operation(resource_id=resource.id, operation_id=str(uuid.uuid4()))
+        step_id = "main"
+        operation_id = str(uuid.uuid4())
+        operation = sample_resource_operation(resource_id=resource.id, operation_id=operation_id)
 
         resource_repo.save_item = MagicMock(return_value=None)
         operations_repo.create_operation_item = MagicMock(return_value=operation)
@@ -246,14 +260,11 @@ class TestResourceHelpers:
             resource_template=basic_resource_template)
 
         # Checking that the resource sent to ServiceBus was the same as the one created
-        send_resource_request_mock.assert_called_once_with(
-            resource=resource,
-            operations_repo=operations_repo,
-            resource_repo=resource_repo,
-            user=user,
-            resource_template_repo=resource_template_repo,
-            resource_template=basic_resource_template,
-            action=RequestAction.Install)
+        send_deployment_message_mock.assert_called_once_with(
+            content=json.dumps(resource.get_resource_request_message_payload(operation_id=operation_id, step_id=step_id, action="install")),
+            correlation_id=operation_id,
+            session_id=resource.id,
+            action="install")
 
         # Checking that the item saved had a secret redacted
         resource.properties["secret"] = strings.REDACTED_SENSITIVE_VALUE
