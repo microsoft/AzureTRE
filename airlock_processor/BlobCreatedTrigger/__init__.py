@@ -1,4 +1,4 @@
-from asyncio import constants
+from shared_code import constants
 import logging
 
 import azure.functions as func
@@ -34,7 +34,7 @@ def main(msg: func.ServiceBusMessage,
             logging.info('Malware scanning is enabled. no action to perform.')
             return
         else:
-            logging.info('Malware scanning is disabled. Completing the submitted stage (moving to in-review).')
+            logging.info('Malware scanning is disabled. Completing the submitted stage (moving to in_review).')
             # Malware scanning is disabled, so we skip to the in_review stage
             completed_step = constants.STAGE_SUBMITTED
             new_status = constants.STAGE_IN_REVIEW
