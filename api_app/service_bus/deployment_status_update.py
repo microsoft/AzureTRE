@@ -154,7 +154,9 @@ async def update_status_in_database(resource_repo: ResourceRepository, operation
         operations_repo.update_item(operation)
 
         # copy the step status to the resource item, for convenience
-        resource = resource_repo.get_resource_by_id(uuid.UUID(step_to_update.resourceId))
+        resource_id = uuid.UUID(step_to_update.resourceId)
+
+        resource = resource_repo.get_resource_by_id(resource_id)
         resource.deploymentStatus = step_to_update.status
         resource_repo.update_item(resource)
 
@@ -163,7 +165,7 @@ async def update_status_in_database(resource_repo: ResourceRepository, operation
             return True
 
         # update the resource doc to persist any outputs
-        resource = resource_repo.get_resource_dict_by_id(uuid.UUID(step_to_update.resourceId))
+        resource = resource_repo.get_resource_dict_by_id(resource_id)
         resource_to_persist = create_updated_resource_document(resource, message)
         resource_repo.update_item_dict(resource_to_persist)
 
@@ -176,7 +178,7 @@ async def update_status_in_database(resource_repo: ResourceRepository, operation
                 operation_step=next_step,
                 resource_repo=resource_repo,
                 resource_template_repo=resource_template_repo,
-                primary_resource_id=operation.resourceId,
+                primary_resource=resource_repo.get_resource_by_id(resource_id),  # need to get the resource again as it has been updated
                 resource_to_update_id=next_step.resourceId,
                 primary_action=operation.action,
                 user=operation.user)
