@@ -11,7 +11,7 @@ class AirlockReviewRepository(AirlockResourceRepository):
 
     def create_airlock_review_item(self, airlock_review_input: AirlockReviewInCreate, workspace_id: str, request_id: str) -> AirlockReview:
         full_airlock_review_id = str(uuid.uuid4())
-        airlock_review_decision_from_bool = AirlockReviewDecision.Approved if airlock_review_input.approval else AirlockReviewDecision.REJECTED
+        airlock_review_decision_from_bool = AirlockReviewDecision.Approved if airlock_review_input.approval else AirlockReviewDecision.Rejected
 
         airlock_review = AirlockReview(
             id=full_airlock_review_id,
