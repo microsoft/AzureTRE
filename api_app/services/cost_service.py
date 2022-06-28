@@ -1,7 +1,6 @@
 from datetime import datetime, date
-from dateutil.relativedelta import relativedelta
 from enum import Enum
-from typing import Dict
+from typing import Dict, Optional
 
 from azure.identity import DefaultAzureCredential
 from azure.mgmt.costmanagement import CostManagementClient
@@ -9,6 +8,7 @@ from azure.mgmt.costmanagement.models import QueryGrouping, QueryAggregation, Qu
     TimeframeType, ExportType, QueryTimePeriod, QueryFilter, QueryComparisonExpression, QueryResult
 
 from core import config
+from db.errors import EntityDoesNotExist
 from db.repositories.shared_services import SharedServiceRepository
 from db.repositories.user_resources import UserResourceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
@@ -29,6 +29,10 @@ class ResultColumn(Enum):
     Cost = 0
     Tag = 1
     Currency = 2
+
+
+class WorkspaceDoesNotExist(Exception):
+    """Raised when the workspace is not found by provided id"""
 
 
 class CostService:
@@ -69,8 +73,8 @@ class CostService:
 
         return cost_report
 
-    def query_tre_workspace_costs(self, workspace_id: str, granularity: GranularityEnum, from_date: datetime,
-                                  to_date: datetime,
+    def query_tre_workspace_costs(self, workspace_id: str, granularity: GranularityEnum, from_date: Optional[datetime],
+                                  to_date: Optional[datetime],
                                   workspace_repo: WorkspaceRepository,
                                   workspace_services_repo: WorkspaceServiceRepository,
                                   user_resource_repo) -> WorkspaceCostReport:
@@ -78,20 +82,23 @@ class CostService:
         query_result = self.query_costs(CostService.TRE_WORKSPACE_ID_TAG, workspace_id, granularity, from_date, to_date)
         query_result_dict = self.__query_result_to_dict(query_result, granularity)
 
-        workspace = workspace_repo.get_workspace_by_id(workspace_id)
+        try:
+            workspace = workspace_repo.get_workspace_by_id(workspace_id)
 
-        workspace_cost_report: WorkspaceCostReport = WorkspaceCostReport(**dict(
-            id=workspace_id,
-            name=self.__get_resource_name(workspace),
-            costs=self.__extract_cost_rows_by_tag(granularity, query_result_dict, CostService.TRE_WORKSPACE_ID_TAG,
-                                                  workspace_id),
-            workspace_services=self.__get_workspace_services_costs(granularity, query_result_dict,
-                                                                   workspace_services_repo,
-                                                                   user_resource_repo,
-                                                                   workspace_id)
-        ))
+            workspace_cost_report: WorkspaceCostReport = WorkspaceCostReport(**dict(
+                id=workspace_id,
+                name=self.__get_resource_name(workspace),
+                costs=self.__extract_cost_rows_by_tag(granularity, query_result_dict, CostService.TRE_WORKSPACE_ID_TAG,
+                                                      workspace_id),
+                workspace_services=self.__get_workspace_services_costs(granularity, query_result_dict,
+                                                                       workspace_services_repo,
+                                                                       user_resource_repo,
+                                                                       workspace_id)
+            ))
 
-        return workspace_cost_report
+            return workspace_cost_report
+        except EntityDoesNotExist:
+            raise WorkspaceDoesNotExist(f"workspace_id [{workspace_id}] does not exist")
 
     def __get_resource_name(self, resource: Resource):
         key = "display_name"
@@ -169,12 +176,14 @@ class CostService:
         return cost_rows
 
     def query_costs(self, tag_name: str, tag_value: str,
-                    granularity: GranularityEnum, from_date: datetime, to_date: datetime) -> QueryResult:
-        query_definition = self.build_query_definition(from_date, granularity, tag_name, tag_value, to_date)
+                    granularity: GranularityEnum, from_date: Optional[datetime],
+                    to_date: Optional[datetime]) -> QueryResult:
+        query_definition = self.build_query_definition(granularity, from_date, to_date, tag_name, tag_value)
 
         return self.client.query.usage(self.scope, query_definition)
 
-    def build_query_definition(self, from_date, granularity, tag_name, tag_value, to_date):
+    def build_query_definition(self, granularity: GranularityEnum, from_date: Optional[datetime],
+                               to_date: Optional[datetime], tag_name: str, tag_value: str):
         query_grouping: QueryGrouping = QueryGrouping(name=None, type="Tag")
         query_aggregation: QueryAggregation = QueryAggregation(name="PreTaxCost", function="Sum")
         query_aggregation_dict: Dict[str, QueryAggregation] = dict()
@@ -186,11 +195,15 @@ class CostService:
         query_dataset: QueryDataset = QueryDataset(
             granularity=granularity, aggregation=query_aggregation_dict,
             grouping=query_grouping_list, filter=query_filter)
-        query_time_period: QueryTimePeriod = QueryTimePeriod(
-            from_property=from_date, to=to_date - relativedelta(microseconds=1))
-        query_definition: QueryDefinition = QueryDefinition(
-            type=ExportType.actual_cost, timeframe=TimeframeType.CUSTOM,
-            time_period=query_time_period, dataset=query_dataset)
+        if from_date is None or to_date is None:
+            query_definition: QueryDefinition = QueryDefinition(
+                type=ExportType.actual_cost, timeframe=TimeframeType.MONTH_TO_DATE, dataset=query_dataset)
+        else:
+            query_time_period: QueryTimePeriod = QueryTimePeriod(
+                from_property=from_date, to=to_date)
+            query_definition: QueryDefinition = QueryDefinition(
+                type=ExportType.actual_cost, timeframe=TimeframeType.CUSTOM,
+                time_period=query_time_period, dataset=query_dataset)
         return query_definition
 
     def __query_result_to_dict(self, query_result: QueryResult, granularity: GranularityEnum):
