@@ -129,7 +129,9 @@ if [[ "${http_code}" != 200 ]]; then
   exit 1
 fi
 
-deployed_shared_service=$(echo "${get_shared_services_result}" | grep '{' | jq -r ".sharedServices[] | select(.templateName == \"${template_name}\")")
+deployed_shared_service=$(echo "${get_shared_services_result}" \
+  | grep '{' \
+  | jq -r ".sharedServices[] | select(.templateName == \"${template_name}\" and .deploymentStatus == \"deployed\")")
 
 if [[ -n "${deployed_shared_service}" ]]; then
   # Get template version of the service already deployed
@@ -139,7 +141,7 @@ if [[ -n "${deployed_shared_service}" ]]; then
     echo "Shared service ${template_name} of version ${template_version} has already been deployed"
     exit 0
   else
-    echo "Resource upgrade to a newer version isn't currently implemented. See https://github.com/microsoft/AzureTRE/issues/141"
+    echo "Resource upgrade isn't currently implemented. See https://github.com/microsoft/AzureTRE/issues/141"
     exit 0
   fi
 fi
