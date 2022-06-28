@@ -43,7 +43,7 @@ async def receive_message_from_step_result_queue():
                         logging.error(f"{strings.STEP_RESULT_MESSAGE_FORMAT_INCORRECT}: {e}")
 
                     if result:
-                        logging.info(f"Received deployment status update message with correlation ID {msg.correlation_id}: {message}")
+                        logging.info(f"Received step_result status update message with correlation ID {msg.correlation_id}: {message}")
                         await receiver.complete_message(msg)
 
 

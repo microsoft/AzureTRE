@@ -21,7 +21,7 @@ APPROVED = AirlockRequestStatus.Approved
 REJECTION_IN_PROGRESS = AirlockRequestStatus.RejectionInProgress
 REJECTED = AirlockRequestStatus.Rejected
 CANCELLED = AirlockRequestStatus.Cancelled
-BLOCKING_IN_PROGRESS = AirlockRequestStatus.Blocked
+BLOCKING_IN_PROGRESS = AirlockRequestStatus.BlockingInProgress
 BLOCKED = AirlockRequestStatus.Blocked
 
 
