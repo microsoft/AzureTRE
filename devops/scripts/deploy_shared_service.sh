@@ -3,7 +3,7 @@
 set -o errexit
 set -o pipefail
 # Uncomment this line to see each command for debugging (careful: this will show secrets!)
-# set -o xtrace
+#set -o xtrace
 
 function usage() {
     cat <<USAGE
@@ -14,6 +14,8 @@ function usage() {
         -u, --tre_url                 URL for the TRE (required for automatic registration)
         -a, --access-token            Azure access token to automatically post to the API (required for automatic registration)
         -i, --insecure                Bypass SSL certificate checks
+
+        Additional bundle properties to be passed to the bundle on install can be passed in the format --propertyName propertyValue
 USAGE
     exit 1
 }
@@ -31,9 +33,10 @@ while [ "$1" != "" ]; do
         shift
         access_token=$1
         ;;
-    *)
-        echo "Unexpected argument: '$1'"
-        usage
+    --*)
+        property_names+=("${1:2}")
+        shift
+        property_values+=("$1")
         ;;
     esac
 
@@ -126,7 +129,9 @@ if [[ "${http_code}" != 200 ]]; then
   exit 1
 fi
 
-deployed_shared_service=$(echo "${get_shared_services_result}" | grep '{' | jq -r ".sharedServices[] | select(.templateName == \"${template_name}\")")
+deployed_shared_service=$(echo "${get_shared_services_result}" \
+  | grep '{' \
+  | jq -r ".sharedServices[] | select(.templateName == \"${template_name}\" and .deploymentStatus == \"deployed\")")
 
 if [[ -n "${deployed_shared_service}" ]]; then
   # Get template version of the service already deployed
@@ -136,12 +141,20 @@ if [[ -n "${deployed_shared_service}" ]]; then
     echo "Shared service ${template_name} of version ${template_version} has already been deployed"
     exit 0
   else
-    echo "Resource upgrade to a newer version isn't currently implemented. See https://github.com/microsoft/AzureTRE/issues/141"
+    echo "Resource upgrade isn't currently implemented. See https://github.com/microsoft/AzureTRE/issues/141"
     exit 0
   fi
 fi
 
-payload="{ \"templateName\": \"""${template_name}""\", \"properties\": { \"display_name\": \"Shared service ""${template_name}""\", \"description\": \"Automatically deployed ""${template_name}""\" } }"
+# Add additional properties to the payload JSON string
+additional_props=""
+for index in "${!property_names[@]}"; do
+  name=${property_names[$index]}
+  value=${property_values[$index]}
+  additional_props="$additional_props, \"$name\": \"$value\""
+done
+
+payload="{ \"templateName\": \"""${template_name}""\", \"properties\": { \"display_name\": \"Shared service ""${template_name}""\", \"description\": \"Automatically deployed ""${template_name}""\"${additional_props} } }"
 deploy_result=$(curl -i "${curl_settings[@]}" -X "POST" "${tre_url}/api/shared-services" \
                 -H "accept: application/json" \
                 -H "Content-Type: application/json" \

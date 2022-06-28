@@ -14,7 +14,6 @@ def workspace_migrator():
 def get_sample_old_workspace(workspace_id: str = "7ab18f7e-ee8f-4202-8d46-747818ec76f4", spec_workspace_id: str = "0001") -> dict:
     return [{
         "id": workspace_id,
-        "isActive": True,
         "templateName": "tre-workspace-base",
         "templateVersion": "0.1.0",
         "properties": {

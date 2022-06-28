@@ -167,6 +167,31 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      # Unit Tests are executed by calling the 'test-results' target in the
+      # Dockerfile's. Test runner exit codes must be swallowed (and kept) so we
+      # can output the test results. This means we have to check for failure
+      # trigger files in later steps.
+      - name: "Test image: airlock_processor"
+        # test should be before build since its docker target
+        # is prior to runtime
+        if: |
+          (steps.filter.outputs.airlock_processor == 'true'
+          || github.event_name == 'workflow_dispatch')
+        uses: docker/build-push-action@v2
+        with:
+          context: ./airlock_processor/
+          file: ./airlock_processor/Dockerfile
+          outputs: type=local,dest=test-results
+          target: test-results
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: "Check pytest failure file existence"
+        id: check_airlock_processor_test_result
+        uses: andstor/file-existence-action@v1
+        with:
+          files: "test-results/pytest_airlock_processor_unit_failed"
+
       - name: "Build image: airlock_processor"
         if: |
           (steps.filter.outputs.airlock_processor == 'true'
