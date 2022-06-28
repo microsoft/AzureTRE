@@ -13,12 +13,12 @@ class Status(str, Enum):
     """
     Operation status
     """
-    Failed = strings.RESOURCE_STATUS_FAILED
-    Deleted = strings.RESOURCE_STATUS_DELETED
-    Deployed = strings.RESOURCE_STATUS_DEPLOYED
-    Deleting = strings.RESOURCE_STATUS_DELETING
-    Deploying = strings.RESOURCE_STATUS_DEPLOYING
     NotDeployed = strings.RESOURCE_STATUS_NOT_DEPLOYED  # Initial status of a resource
+    Deploying = strings.RESOURCE_STATUS_DEPLOYING
+    Deployed = strings.RESOURCE_STATUS_DEPLOYED
+    Failed = strings.RESOURCE_STATUS_FAILED
+    Deleting = strings.RESOURCE_STATUS_DELETING
+    Deleted = strings.RESOURCE_STATUS_DELETED
     DeletingFailed = strings.RESOURCE_STATUS_DELETING_FAILED
     InvokingAction = strings.RESOURCE_ACTION_STATUS_INVOKING
     ActionSucceeded = strings.RESOURCE_ACTION_STATUS_SUCCEEDED
