@@ -117,7 +117,7 @@ inputs:
     default: "true"
   TF_VAR_enable_airlock_malware_scanning:
     description: "If False, Airlock requests will skip the malware scanning stage."
-    required: true
+    required: false
     default: "false"
   CI_CACHE_ACR_NAME:
     description: "A secondary ACR used for caching in CI environments"
