@@ -1,6 +1,6 @@
 import copy
 import json
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, ANY
 import pytest
 import uuid
 
@@ -305,12 +305,13 @@ async def test_properties_dont_change_with_no_outputs(app, sb_client, logging_mo
     repo().update_item_dict.assert_called_once_with(expected_resource.dict())
 
 
+@patch('service_bus.deployment_status_update.update_resource_for_step')
 @patch('service_bus.deployment_status_update.OperationRepository')
 @patch('service_bus.deployment_status_update.ResourceRepository')
 @patch('service_bus.helpers.ServiceBusClient')
 @patch('service_bus.deployment_status_update.ServiceBusClient')
 @patch('fastapi.FastAPI')
-async def test_multi_step_operation_sends_next_step(app, sb_client, sb_sender_client, repo, operations_repo, multi_step_operation, user_resource_multi, basic_shared_service):
+async def test_multi_step_operation_sends_next_step(app, sb_client, sb_sender_client, repo, operations_repo, update_resource_for_step, multi_step_operation, user_resource_multi, basic_shared_service):
     received_message = test_sb_message_multi_step_1_complete
     received_message["status"] = Status.Deployed
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(received_message)
@@ -328,7 +329,19 @@ async def test_multi_step_operation_sends_next_step(app, sb_client, sb_sender_cl
 
     # get the multi-step operation and process it
     operations_repo().get_operation_by_id.return_value = multi_step_operation
+    update_resource_for_step.return_value = user_resource_multi
+
     await receive_message_and_update_deployment(app)
+
+    # check the resource is updated as expected
+    update_resource_for_step.assert_called_once_with(
+        operation_step=ANY,
+        resource_repo=ANY,
+        resource_template_repo=ANY,
+        primary_resource=user_resource_multi,
+        resource_to_update_id=multi_step_operation.steps[1].resourceId,
+        primary_action=ANY,
+        user=ANY)
 
     # check the operation is updated as expected
     expected_operation = copy.deepcopy(multi_step_operation)
