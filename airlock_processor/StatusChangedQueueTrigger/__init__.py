@@ -101,7 +101,7 @@ def extract_properties(body: str) -> RequestProperties:
 
 
 def is_require_data_copy(new_status: str):
-    if new_status.lower() in [constants.STAGE_SUBMITTED, constants.STAGE_APPROVAL_INPROGRESS, constants.STAGE_REJECTION_INPROGRESS]:
+    if new_status.lower() in [constants.STAGE_SUBMITTED, constants.STAGE_APPROVAL_INPROGRESS, constants.STAGE_REJECTION_INPROGRESS, constants.STAGE_BLOCKING_INPROGRESS]:
         return True
     return False
 

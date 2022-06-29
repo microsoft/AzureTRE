@@ -35,7 +35,7 @@ variable "api_image_repository" {
 
 variable "api_app_service_plan_sku_size" {
   type    = string
-  default = "P1v2"
+  default = "P1v3"
 }
 
 variable "resource_processor_vmss_porter_image_repository" {
