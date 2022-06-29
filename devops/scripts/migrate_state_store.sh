@@ -44,7 +44,7 @@ while [ "$1" != "" ]; do
         access_token=$1
         ;;
     -i| --insecure)
-        insecure=1
+        options="-k"
         ;;
     *)
         echo "Unexpected argument: '$1'"
@@ -68,10 +68,6 @@ if [[ -z ${tre_url:-} ]]; then
     usage
 fi
 
-if [[ -n ${insecure+x} ]]; then
-    options="-k"
-fi
-
 if [ -z "${access_token:-}" ]; then
   # If access token isn't set, try to obtain it
   if [ -z "${ACCESS_TOKEN:-}" ]
@@ -82,7 +78,7 @@ if [ -z "${access_token:-}" ]; then
   access_token=${ACCESS_TOKEN}
 fi
 
-migrate_result=$(curl -i -X "POST" "${tre_url}/api/migrations" -H "accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer ${access_token} ${options}")
+migrate_result=$(curl -i -X "POST" "${tre_url}/api/migrations" -H "accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer ${access_token}" ${options})
 get_http_code "${migrate_result}"
 echo "${migrate_result}"
 if [[ ${http_code} != 202 ]]; then
