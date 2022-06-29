@@ -8,7 +8,7 @@ resource "azurerm_user_assigned_identity" "guacamole_id" {
   resource_group_name = data.azurerm_resource_group.ws.name
   location            = data.azurerm_resource_group.ws.location
   name                = "id-guacamole-${var.workspace_id}"
-
+  tags                = local.workspace_service_tags
   lifecycle { ignore_changes = [tags] }
 }
 
@@ -20,6 +20,7 @@ resource "azurerm_app_service" "guacamole" {
   https_only                      = true
   key_vault_reference_identity_id = azurerm_user_assigned_identity.guacamole_id.id
   tags                            = local.workspace_service_tags
+  lifecycle { ignore_changes = [tags] }
 
   site_config {
     linux_fx_version                     = "DOCKER|${data.azurerm_container_registry.mgmt_acr.login_server}/microsoft/azuretre/${var.image_name}:${local.image_tag}"
@@ -28,6 +29,7 @@ resource "azurerm_app_service" "guacamole" {
     acr_user_managed_identity_client_id  = azurerm_user_assigned_identity.guacamole_id.client_id
     ftps_state                           = "Disabled"
     vnet_route_all_enabled               = true
+    min_tls_version                      = "1.2"
   }
 
   app_settings = {
@@ -60,9 +62,7 @@ resource "azurerm_app_service" "guacamole" {
     OAUTH2_PROXY_JWKS_ENDPOINT   = "https://login.microsoftonline.com/${local.aad_tenant_id}/discovery/v2.0/keys"
 
     # Solving the pulling from acr problem
-    DOCKER_REGISTRY_SERVER_URL      = "${data.azurerm_container_registry.mgmt_acr.login_server}"
-    DOCKER_REGISTRY_SERVER_USERNAME = "${data.azurerm_container_registry.mgmt_acr.admin_username}"
-    DOCKER_REGISTRY_SERVER_PASSWORD = "${data.azurerm_container_registry.mgmt_acr.admin_password}"
+    DOCKER_REGISTRY_SERVER_URL = "${data.azurerm_container_registry.mgmt_acr.login_server}"
   }
 
   logs {
@@ -82,6 +82,10 @@ resource "azurerm_app_service" "guacamole" {
     type         = "UserAssigned"
     identity_ids = [azurerm_user_assigned_identity.guacamole_id.id]
   }
+
+  depends_on = [
+    azurerm_role_assignment.guac_acr_pull
+  ]
 }
 
 resource "azurerm_monitor_diagnostic_setting" "guacamole" {
@@ -89,83 +93,17 @@ resource "azurerm_monitor_diagnostic_setting" "guacamole" {
   target_resource_id         = azurerm_app_service.guacamole.id
   log_analytics_workspace_id = data.azurerm_log_analytics_workspace.tre.id
 
-  log {
-    category = "AppServiceHTTPLogs"
-    enabled  = true
+  dynamic "log" {
+    for_each = toset(["AppServiceHTTPLogs", "AppServiceConsoleLogs", "AppServiceAppLogs", "AppServiceFileAuditLogs",
+    "AppServiceAuditLogs", "AppServiceIPSecAuditLogs", "AppServicePlatformLogs", "AppServiceAntivirusScanAuditLogs"])
+    content {
+      category = log.value
+      enabled  = true
 
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServiceConsoleLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServiceAppLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServiceFileAuditLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServiceAuditLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServiceIPSecAuditLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServicePlatformLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServiceAntivirusScanAuditLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
+      retention_policy {
+        enabled = true
+        days    = 365
+      }
     }
   }
 
@@ -178,7 +116,6 @@ resource "azurerm_monitor_diagnostic_setting" "guacamole" {
     }
   }
 }
-
 
 resource "azurerm_role_assignment" "guac_acr_pull" {
   scope                = data.azurerm_container_registry.mgmt_acr.id
@@ -199,6 +136,7 @@ resource "azurerm_private_endpoint" "guacamole" {
   resource_group_name = data.azurerm_resource_group.ws.name
   subnet_id           = data.azurerm_subnet.services.id
   tags                = local.workspace_service_tags
+  lifecycle { ignore_changes = [tags] }
 
   private_service_connection {
     private_connection_resource_id = azurerm_app_service.guacamole.id

@@ -44,7 +44,8 @@
       "$id": "#/properties/workspace_identifier_uri",
       "type": "string",
       "title": "Workspace Identifier URI (Scope)",
-      "description": "The audience/scope/identifier uri of the workspace in AAD"
+      "description": "The audience/scope/identifier uri of the workspace in AAD",
+      "pattern": "^api:\/\/[a-zA-Z0-9_.-]*"
     }
   },
   "pipeline": {

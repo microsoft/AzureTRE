@@ -16,4 +16,10 @@ variable "guac_drive_path" {}
 variable "guac_disable_download" {}
 variable "is_exposed_externally" {}
 variable "tre_resource_id" {}
-variable "workspace_identifier_uri" {}
+variable "workspace_identifier_uri" {
+  type = string
+  validation {
+    condition = can(regex("^api://[a-zA-Z0-9_.-]*", var.workspace_identifier_uri))
+    error_message = "Uri should be in the form of: api://some-chars-and-or-numbers."
+  }
+}
