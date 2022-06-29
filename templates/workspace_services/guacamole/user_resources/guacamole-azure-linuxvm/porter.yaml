@@ -1,6 +1,6 @@
 ---
 name: tre-service-guacamole-linuxvm
-version: 0.3.6
+version: 0.3.7
 description: "An Azure TRE User Resource Template for Guacamole (Linux)"
 registry: azuretre
 
@@ -79,6 +79,7 @@ outputs:
   - name: azure_resource_id
     type: string
     applyTo:
+      - install
       - start
       - stop
 
@@ -114,6 +115,7 @@ install:
         - name: ip
         - name: hostname
         - name: connection_uri
+        - name: azure_resource_id
 
 upgrade:
   - terraform:
@@ -141,6 +143,7 @@ upgrade:
         - name: ip
         - name: hostname
         - name: connection_uri
+        - name: azure_resource_id
 
 uninstall:
   - terraform:
@@ -196,7 +199,7 @@ stop:
   - terraform:
       arguments:
         - "output"
-      description: "Get VM hostname and rg from Terraform outputs"
+      description: "Get VM resource_id from Terraform outputs"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
