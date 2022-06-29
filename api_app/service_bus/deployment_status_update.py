@@ -171,7 +171,7 @@ async def update_status_in_database(resource_repo: ResourceRepository, operation
                 operation_step=next_step,
                 resource_repo=resource_repo,
                 resource_template_repo=resource_template_repo,
-                primary_resource=resource_repo.get_resource_by_id(resource_id),  # need to get the resource again as it has been updated
+                primary_resource=resource_repo.get_resource_by_id(operation.resourceId),  # need to get the resource again as it has been updated
                 resource_to_update_id=next_step.resourceId,
                 primary_action=operation.action,
                 user=operation.user)
