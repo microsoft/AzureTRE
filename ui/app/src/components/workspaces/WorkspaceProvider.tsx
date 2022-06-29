@@ -28,7 +28,7 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
         // get the workspace
         const ws = (await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get)).workspace;
         workspaceCtx.current.setWorkspace(ws);
-        const clientId = ws.properties.scope_id.replace("api://", "");
+        const clientId = ws.properties.client_id;
 
         // use the client ID to get a token against the workspace (tokenOnly), and set the workspace roles in the context
         let wsRoles: Array<string> = [];
