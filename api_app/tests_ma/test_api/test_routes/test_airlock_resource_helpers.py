@@ -1,8 +1,14 @@
+from azure.mgmt.storage import StorageManagementClient
+from azure.mgmt.storage.v2015_06_15.operations import StorageAccountsOperations
+from azure.mgmt.storage.v2016_01_01.models import StorageAccountListKeysResult, StorageAccountKey
 from fastapi import HTTPException, status
 import pytest
-from mock import AsyncMock, patch, MagicMock
+from mock import AsyncMock, patch, MagicMock, Mock
 
-from api.routes.airlock_resource_helpers import save_airlock_review, save_and_publish_event_airlock_request, update_status_and_publish_event_airlock_request
+from api.routes.airlock_resource_helpers import save_airlock_review, save_and_publish_event_airlock_request, \
+    update_status_and_publish_event_airlock_request, validate_user_is_allowed_to_access_sa, get_storage_account_key, \
+    get_airlock_request_container_sas_token, RequestAccountDetails
+from tests_ma.test_api.conftest import create_workspace_owner_user, create_workspace_researcher_user
 from db.repositories.airlock_reviews import AirlockReviewRepository
 from db.repositories.airlock_requests import AirlockRequestRepository
 from tests_ma.test_api.conftest import create_test_user
@@ -199,3 +205,54 @@ async def test_test_save_airlock_review_raises_503_if_save_to_db_fails(airlock_r
         )
 
     assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+
+
+def test_validate_user_is_allowed_to_access_sa_blocks_access_as_expected():
+    # Workspace owner can access only in review
+    ws_owner_user = create_workspace_owner_user()
+    draft_airlock_request = sample_airlock_request()
+    with pytest.raises(HTTPException) as ex:
+        validate_user_is_allowed_to_access_sa(
+            user=ws_owner_user,
+            airlock_request=draft_airlock_request
+        )
+
+    assert ex.value.status_code == status.HTTP_403_FORBIDDEN
+
+    researcher_user = create_workspace_researcher_user()
+    review_airlock_request = sample_airlock_request(AirlockRequestStatus.InReview)
+    with pytest.raises(HTTPException) as ex:
+        validate_user_is_allowed_to_access_sa(
+            user=researcher_user,
+            airlock_request=review_airlock_request
+        )
+
+    assert ex.value.status_code == status.HTTP_403_FORBIDDEN
+
+
+def test_validate_user_is_allowed_to_access_grants_access_to_user_with_a_valid_role():
+    # Workspace owner can access only in review
+    ws_owner_user = create_workspace_owner_user()
+    draft_airlock_request = sample_airlock_request(AirlockRequestStatus.InReview)
+
+    assert (validate_user_is_allowed_to_access_sa(
+            user=ws_owner_user,
+            airlock_request=draft_airlock_request) is None)
+
+    researcher_user = create_workspace_researcher_user()
+    review_airlock_request = sample_airlock_request(AirlockRequestStatus.Approved)
+    assert (
+        validate_user_is_allowed_to_access_sa(
+            user=researcher_user,
+            airlock_request=review_airlock_request
+        ) is None)
+
+
+@patch("api.routes.airlock_resource_helpers.get_storage_account_key", return_value="account_key")
+@patch("azure.storage.blob.generate_container_sas", return_value="sas_token")
+@patch("azure.mgmt.storage.StorageManagementClient", return_value=Mock(StorageManagementClient))
+def test_get_airlock_request_container_sas_token(storage_management_client, sas_token, account_key):
+    request_details = RequestAccountDetails("account_name", "account_rg")
+    airlock_request = sample_airlock_request()
+    assert ( get_airlock_request_container_sas_token(storage_management_client, request_details, airlock_request) == "dff")
+

@@ -1,6 +1,8 @@
 import logging
 
+from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
+from azure.storage.blob import generate_container_sas, ContainerSasPermissions
 
 from jsonschema.exceptions import ValidationError
 
@@ -9,6 +11,7 @@ from api.dependencies.workspaces import get_workspace_by_id_from_path, get_deplo
 from api.dependencies.airlock import get_airlock_request_by_id_from_path
 from models.domain.airlock_request import AirlockRequestStatus
 from db.repositories.airlock_reviews import AirlockReviewRepository
+from models.schemas.airlock_request_token import AirlockRequestTokenInResponse
 from models.schemas.airlock_review import AirlockReviewInCreate, AirlockReviewInResponse
 
 from db.repositories.airlock_requests import AirlockRequestRepository
@@ -16,9 +19,12 @@ from models.schemas.airlock_request import AirlockRequestInCreate, AirlockReques
 from resources import strings
 from services.authentication import get_current_workspace_owner_or_researcher_user, get_current_workspace_owner_user
 
-from .airlock_resource_helpers import save_airlock_review, save_and_publish_event_airlock_request, update_status_and_publish_event_airlock_request
+from .airlock_resource_helpers import save_airlock_review, save_and_publish_event_airlock_request, \
+    update_status_and_publish_event_airlock_request, get_storage_management_client, RequestAccountDetails, \
+    get_account_and_rg_by_request, validate_user_is_allowed_to_access_sa
 
 airlock_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user)])
+storage_client = get_storage_management_client()
 
 
 # airlock
@@ -57,3 +63,22 @@ async def create_airlock_review(airlock_review_input: AirlockReviewInCreate, air
     review_status = AirlockRequestStatus(airlock_review.reviewDecision.value)
     await update_status_and_publish_event_airlock_request(airlock_request, airlock_request_repo, user, review_status)
     return AirlockReviewInResponse(airlock_review=airlock_review)
+
+
+@airlock_workspace_router.get("/workspaces/{workspace_id}/requests/{airlock_request_id}/token",
+                              status_code=status.HTTP_200_OK, response_model=AirlockRequestTokenInResponse,
+                              name=strings.API_AIRLOCK_REQUEST_TOKEN,
+                              dependencies=[Depends(get_current_workspace_owner_or_researcher_user)])
+async def create_get_tokens(airlock_request=Depends(get_airlock_request_by_id_from_path),
+                            workspace=Depends(get_deployed_workspace_by_id_from_path),
+                            user=Depends(get_current_workspace_owner_or_researcher_user)) -> AirlockRequestTokenInResponse:
+    validate_user_is_allowed_to_access_sa(user, airlock_request)
+    request_account_details: RequestAccountDetails = get_account_and_rg_by_request(airlock_request, workspace)
+    account_key = storage_client.storage_accounts.list_keys(request_account_details.account_rg,
+                                                            request_account_details.account_name).keys[0].value
+    token = generate_container_sas(container_name=airlock_request.id, account_name=request_account_details.account_name,
+                                   account_key=account_key,
+                                   permission=ContainerSasPermissions(read=True),
+                                   expiry=datetime.utcnow() + timedelta(hours=1))
+    url = "https://{}.blob.core.windows.net/{}?{}".format(request_account_details.account_name, airlock_request.id, token)
+    return AirlockRequestTokenInResponse(container_url=url)
