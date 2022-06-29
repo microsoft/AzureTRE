@@ -16,9 +16,10 @@ class ResourceMigration(ResourceRepository):
         for op in operations_repository.query("SELECT * from c ORDER BY c._ts ASC"):
             try:
                 resource = self.get_resource_by_id(uuid.UUID(op['resourceId']))
-                resource.deploymentStatus = op['status']
-                self.update_item(resource)
-                i = i + 1
+                if resource.deploymentStatus != op['status']:
+                    resource.deploymentStatus = op['status']
+                    self.update_item(resource)
+                    i = i + 1
             except EntityDoesNotExist:
                 logging.info(f'Resource Id {op["resourceId"]} not found')
                 # ignore errors and try the next one
