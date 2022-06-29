@@ -27,7 +27,7 @@ class WorkspaceMigration(WorkspaceRepository):
                     updated = True
 
                 if "authInformation" in item:
-                    logging.INFO(f'Upgrading authInformation in workspace {item["id"]}')
+                    logging.info(f'Upgrading authInformation in workspace {item["id"]}')
 
                     # Copy authInformation into properties
                     item["properties"]["sp_id"] = item["authInformation"]["sp_id"]
@@ -39,7 +39,7 @@ class WorkspaceMigration(WorkspaceRepository):
 
                 if updated:
                     self.update_item_dict(item)
-                    logging.INFO(f'Upgraded authentication info for workspace id {item["id"]}')
+                    logging.info(f'Upgraded authentication info for workspace id {item["id"]}')
                     migrated = True
 
             return migrated
