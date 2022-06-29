@@ -4,7 +4,6 @@ import { User } from "./user";
 
 export interface Resource {
     id: string,
-    isActive: boolean,
     isEnabled: boolean,
     resourcePath: string,
     resourceVersion: number,
@@ -17,6 +16,7 @@ export interface Resource {
     history: Array<HistoryItem>,
     _etag: string,
     properties: any
+    azureStatus?: any
 }
 
 export interface HistoryItem {
@@ -38,6 +38,15 @@ export interface ResourceUpdate {
     resourceId: string,
     operation?: Operation,
     componentAction: ComponentAction
+}
+
+export enum VMPowerStates {
+  Running = "VM running",
+  Starting = "VM starting",
+  Stopping = "VM stopping",
+  Stopped = "VM stopped",
+  Deallocating = "VM deallocating",
+  Deallocated = "VM deallocated"
 }
 
 export const getResourceFromResult = (r: any) => {
