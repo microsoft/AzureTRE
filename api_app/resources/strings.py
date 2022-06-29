@@ -184,8 +184,8 @@ DEPLOYMENT_STATUS_MESSAGE_FORMAT_INCORRECT = "Service bus message is not formatt
 DEPLOYMENT_STATUS_ID_NOT_FOUND = "Service bus message refers to resource id = {} which does not exist"
 STEP_RESULT_MESSAGE_FORMAT_INCORRECT = "Service bus message of step result is not formatted correctly"
 STEP_RESULT_ID_NOT_FOUND = "Service bus message of step result refers to resource id = {} which does not exist"
-STEP_RESULT_MESSAGE_STATUS_DOES_NOT_MATCH = "Service bus message of step result current status does not match the one in state store"
-STEP_RESULT_MESSAGE_INVALID_STATUS = "Service bus message has invalid status change request"
+STEP_RESULT_MESSAGE_STATUS_DOES_NOT_MATCH = "Service bus message of step result current status does not match the one in state store for request id = {}, status in step result = {}, status in state store = {}"
+STEP_RESULT_MESSAGE_INVALID_STATUS = "Service bus message has invalid status change request for request id = {}, current status is = {}, new status is = {}"
 
 # Event grid
 EVENT_GRID_GENERAL_ERROR_MESSAGE = "Event grid failure"

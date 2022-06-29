@@ -13,7 +13,6 @@ from db.repositories.airlock_requests import AirlockRequestRepository
 from models.domain.airlock_operations import StepResultStatusUpdateMessage
 from service_bus.helpers import default_credentials
 from core import config
-from db.errors import EntityDoesNotExist
 from resources import strings
 
 
@@ -49,7 +48,8 @@ async def receive_message_from_step_result_queue():
 
 async def update_status_in_database(airlock_request_repo: AirlockRequestRepository, step_result_message: StepResultStatusUpdateMessage):
     """
-    If there is another step in the operation after this one, process the substitutions + patch, then enqueue a message to process it.
+    Updates an airlock request and with the new status from step_result message contents.
+
     """
     result = False
     try:
@@ -65,15 +65,20 @@ async def update_status_in_database(airlock_request_repo: AirlockRequestReposito
             await update_status_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=airlock_request_repo, user=airlock_request.user, new_status=new_status)
             result = True
         else:
-            logging.error(strings.STEP_RESULT_MESSAGE_INVALID_STATUS)
-    except EntityDoesNotExist:
-        # Marking as true as this message will never succeed anyways and should be removed from the queue.
-        result = True
-        error_string = strings.STEP_RESULT_ID_NOT_FOUND.format(step_result_message.id)
-        logging.error(error_string)
+            error_string = strings.STEP_RESULT_MESSAGE_STATUS_DOES_NOT_MATCH.format(airlock_request_id, current_status, airlock_request.status)
+            logging.error(error_string)
     except HTTPException as e:
+        if e.status_code == 404:
+            # Marking as true as this message will never succeed anyways and should be removed from the queue.
+            result = True
+            error_string = strings.STEP_RESULT_ID_NOT_FOUND.format(airlock_request_id)
+            logging.error(error_string)
         if e.status_code == 400:
-            logging.error(strings.AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE)
+            result = True
+            error_string = strings.STEP_RESULT_MESSAGE_INVALID_STATUS.format(airlock_request_id, current_status, new_status)
+            logging.error(error_string)
+        if e.status_code == 503:
+            logging.error(strings.STATE_STORE_ENDPOINT_NOT_RESPONDING + " " + str(e))
     except Exception as e:
         logging.error(strings.STATE_STORE_ENDPOINT_NOT_RESPONDING + " " + str(e))
 
@@ -92,7 +97,9 @@ async def receive_step_result_message_and_update_status(app) -> None:
     try:
         async for message in receive_message_gen:
             airlock_request_repo = AirlockRequestRepository(get_db_client(app))
+            logging.info("Fetched step_result message from queue, start updating airlock request")
             result = await update_status_in_database(airlock_request_repo, message)
             await receive_message_gen.asend(result)
+            logging.info("Finished updating airlock request")
     except StopAsyncIteration:  # the async generator when finished signals end with this exception.
         pass
