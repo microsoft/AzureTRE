@@ -342,6 +342,7 @@ async def test_multi_step_operation_sends_next_step(app, sb_client, sb_sender_cl
         resource_to_update_id=multi_step_operation.steps[1].resourceId,
         primary_action=ANY,
         user=ANY)
+    repo().get_resource_by_id.assert_called_with(multi_step_operation.resourceId)
 
     # check the operation is updated as expected
     expected_operation = copy.deepcopy(multi_step_operation)
