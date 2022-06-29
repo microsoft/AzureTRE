@@ -38,7 +38,7 @@ class TestDataCopyProperties(unittest.TestCase):
         self.assertEqual(is_require_data_copy("submit"), False)
 
         # Testing all values that should return true
-         self.assertEqual(is_require_data_copy("submITted"), True)
+        self.assertEqual(is_require_data_copy("submITted"), True)
         self.assertEqual(is_require_data_copy("submitted"), True)
         self.assertEqual(is_require_data_copy("approved"), False)
         self.assertEqual(is_require_data_copy("REJected"), False)
