@@ -229,26 +229,26 @@ resource "azurerm_role_assignment" "sa_export_rejected" {
   principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
 }
 
-resource "azurerm_role_assignment" "sa_import_approved" {
+resource "azurerm_role_assignment" "sa_import_approved_reader" {
   scope                = azurerm_storage_account.sa_import_approved.id
   role_definition_name = "Reader and Data Access"
   principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
 }
 
 
-resource "azurerm_role_assignment" "sa_export_internal" {
+resource "azurerm_role_assignment" "sa_export_internal_reader" {
   scope                = azurerm_storage_account.sa_export_internal.id
   role_definition_name = "Reader and Data Access"
   principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
 }
 
-resource "azurerm_role_assignment" "sa_export_inprogress" {
+resource "azurerm_role_assignment" "sa_export_inprogress_reader" {
   scope                = azurerm_storage_account.sa_export_inprogress.id
   role_definition_name = "Reader and Data Access"
   principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
 }
 
-resource "azurerm_role_assignment" "sa_export_rejected" {
+resource "azurerm_role_assignment" "sa_export_rejected_reader" {
   scope                = azurerm_storage_account.sa_export_rejected.id
   role_definition_name = "Reader and Data Access"
   principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
