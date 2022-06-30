@@ -57,7 +57,7 @@ class CostService:
         query_result = self.query_costs(CostService.TRE_ID_TAG, tre_id, granularity, from_date, to_date)
         query_result_dict = self.__query_result_to_dict(query_result, granularity)
 
-        cost_report = CostReport(core_services=[], shared_services=[],workspaces=[])
+        cost_report = CostReport(core_services=[], shared_services=[], workspaces=[])
 
         cost_report.core_services = self.__extract_cost_rows_by_tag(
             granularity, query_result_dict, CostService.TRE_CORE_SERVICE_ID_TAG, tre_id)
