@@ -1,5 +1,7 @@
 #!/bin/bash
-set -e
+set -euo pipefail
+# Use this for debug only
+# set -o xtrace
 
 function show_existing_app_usage()
 {

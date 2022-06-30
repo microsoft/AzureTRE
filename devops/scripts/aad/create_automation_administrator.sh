@@ -1,14 +1,14 @@
 #!/bin/bash
-
-# Setup Script
 set -euo pipefail
+# Use this for debug only
+# set -o xtrace
 # AZURE_CORE_OUTPUT=jsonc # force CLI output to JSON for the script (user can still change default for interactive usage in the dev container)
 
 function show_usage()
 {
     cat << USAGE
 
-Utility script for creating an automation administrator for TRE. This is optional and is used when you 
+Utility script for creating an automation administrator for TRE. This is optional and is used when you
 want to run the E2E tests locally or automatically register bundles in the TRE.
 You must be logged in using Azure CLI with sufficient privileges to modify Azure Active Directory to run this script.
 
@@ -64,7 +64,7 @@ appName="$appName Automation Admin"
 currentUserId=$(az ad signed-in-user show --query 'objectId' --output tsv --only-show-errors)
 tenant=$(az rest -m get -u "${msGraphUri}/domains" -o json | jq -r '.value[] | select(.isDefault == true) | .id')
 
-echo "You are about to create app registrations in the Azure AD tenant \"${tenant}\"."
+echo -e "\e[96mCreating the Automation Admin in the \"${tenant}\" Azure AD tenant.\e[0m"
 
 # Load in helper functions
 # shellcheck disable=SC1091
@@ -111,13 +111,7 @@ az ad app owner add --id "${appId}" --owner-object-id "$currentUserId" --only-sh
 # Create a Service Principal for the app.
 spPassword=$(create_or_update_service_principal "${appId}" "${appName}")
 
-cat << ENV_VARS
-
-AAD_TENANT_ID="$(az account show --output json | jq -r '.tenantId')"
-
-** Please copy the following variables to /templates/core/.env **
-
-TEST_ACCOUNT_CLIENT_ID="${appId}"
-TEST_ACCOUNT_CLIENT_SECRET="${spPassword}"
-
-ENV_VARS
+echo -e "\n\e[96mAAD_TENANT_ID=\"$(az account show --output json | jq -r '.tenantId')\""
+echo -e "** Please copy the following variables to /templates/core/.env **"
+echo -e "\n\e[33mTEST_ACCOUNT_CLIENT_ID=\"${appId}\""
+echo -e "TEST_ACCOUNT_CLIENT_SECRET=\"${spPassword}\"\e[0m"

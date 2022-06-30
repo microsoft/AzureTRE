@@ -1,5 +1,7 @@
 #!/bin/bash
-set -e
+set -euo pipefail
+# Use this for debug only
+# set -o xtrace
 
 # This script polls looking for an app registration with the given ID.
 # If after the number of retries no app registration is found, the function exits.
@@ -37,6 +39,7 @@ function create_or_update_service_principal()
   spId=$(az ad sp list --filter "appId eq '${applicationId}'" --query '[0].objectId' --output tsv --only-show-errors)
 
   resetPassword=0
+  REPLY=""
 
   # If not, create a new service principal
   if [[ -z "$spId" ]]; then
@@ -45,9 +48,8 @@ function create_or_update_service_principal()
       az ad app owner add --id "${applicationId}" --owner-object-id "${spId}" --only-show-errors
       resetPassword=1
   else
-      read -p "Service principal for \"${appName}\" already exists. Do you wish to reset the password (y/N)? " -n 1 -r
-
-      if [[ $REPLY =~ ^[Yy]$ ]]; then
+      read -p "Service principal for \"${appName}\" already exists. Do you wish to reset the password. DO NOT PRESS ENTER. (y/N)? " -rN1 
+      if [[ ${REPLY::1} == [Yy] ]]; then
           resetPassword=1
       fi
   fi

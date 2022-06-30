@@ -1,7 +1,6 @@
 #!/bin/bash
-set -o errexit
-set -o pipefail
-set -o nounset
+set -euo pipefail
+# Use this for debug only
 # set -o xtrace
 
 : "${AAD_TENANT_ID?'You have not set your AAD_TENANT_ID in ./templates/core/.env'}"
@@ -10,7 +9,7 @@ LOGGED_IN_TENANT_ID=$(az account show --query tenantId -o tsv)
 CHANGED_TENANT=0
 
 if [ "${LOGGED_IN_TENANT_ID}" != "${AAD_TENANT_ID}" ]; then
-  echo "Attempting to sign you onto ${AAD_TENANT_ID} to add an App Registration."
+  echo "Attempting to sign you onto ${AAD_TENANT_ID} to setup Azure Active Directory assets."
 
   # First we need to login to the AAD tenant (as it is different to the subscription tenant)
   az login --tenant "${AAD_TENANT_ID}" --allow-no-subscriptions --use-device-code
@@ -26,25 +25,23 @@ fi
 ./devops/scripts/aad/create_application_administrator.sh \
 --name "${TRE_ID}" --admin-consent --application-permission "${APPLICATION_PERMISSION}"
 
-echo "Please copy the values above into your /templates/core/.env."
-read -p "Please confirm you have done this? (y/N) " -n 1 -r
+read -p "Please confirm you have done this? DO NOT PRESS ENTER. (y/N) " -rN1
 echo
-if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+if [[ ${REPLY::1} != [Yy] ]]; then
   exit 0
 fi
 
 # Create the identity that is able to automate the testing
 ./devops/scripts/aad/create_automation_administrator.sh --name "${TRE_ID}"
 
-echo "Please copy the values above into your /templates/core/.env."
-read -p "Please confirm you have done this? (y/N) " -n 1 -r
+read -p "Please confirm you have done this? DO NOT PRESS ENTER. (y/N) " -rN1
 echo
-if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+if [[ ${REPLY::1} != [Yy] ]]; then
   exit 0
 fi
 
-# Load the new values back in
-# This is because we want the TEST_ACCOUNT_CLIENT_ID
+# Load the new values back in because 
+# we need TEST_ACCOUNT_CLIENT_ID
 set -a
 # shellcheck disable=SC1091
 . ./templates/core/.env
@@ -55,11 +52,9 @@ set -a
   --tre-url "https://${TRE_ID}.${LOCATION}.cloudapp.azure.com" \
   --admin-consent --automation-clientid "${TEST_ACCOUNT_CLIENT_ID}"
 
-echo "Please copy the values above into your /templates/core/.env."
-read -p "Please confirm you have done this? (y/N) " -n 1 -r
+read -p "Please confirm you have done this? DO NOT PRESS ENTER. (y/N) " -rN1
 echo
-if [[ ! $REPLY =~ ^[Yy]$ ]]
-then
+if [[ ${REPLY::1} != [Yy] ]]; then
     exit 0
 fi
 
@@ -70,8 +65,11 @@ if [ "${AUTO_WORKSPACE_APP_REGISTRATION:=false}" == false ]; then
   # shellcheck disable=SC1091
   . ./templates/core/.env
 
-  echo "Please check that the following value is the same as above to check you have copied your keys."
-  echo "API client id is : ${API_CLIENT_ID}"
+  read -p "Please check that your API_CLIENT_ID is \"${API_CLIENT_ID}\" is the same as above ? (y/N) " -rN2
+  echo
+  if [[ ${REPLY::1} != [Yy] ]]; then
+      exit 0
+  fi
 
   ./devops/scripts/aad/create_workspace_application.sh \
     --name "${TRE_ID} - workspace 1" \

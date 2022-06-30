@@ -1,7 +1,7 @@
 #!/bin/bash
-
-# Setup Script
 set -euo pipefail
+# Use this for debug only
+# set -o xtrace
 # AZURE_CORE_OUTPUT=jsonc # force CLI output to JSON for the script (user can still change default for interactive usage in the dev container)
 
 function show_usage()
@@ -79,7 +79,7 @@ appName="$appName Application Admin"
 currentUserId=$(az ad signed-in-user show --query 'objectId' --output tsv --only-show-errors)
 tenant=$(az rest -m get -u "${msGraphUri}/domains" -o json | jq -r '.value[] | select(.isDefault == true) | .id')
 
-echo "You are about to create app registrations in the Azure AD tenant \"${tenant}\"."
+echo -e "\e[96mCreating the Application Admin in the \"${tenant}\" Azure AD tenant.\e[0m"
 
 # Load in helper functions
 # shellcheck disable=SC1091
@@ -155,16 +155,10 @@ if [[ $grantAdminConsent -eq 1 ]]; then
     grant_admin_consent "${spId}" "$msGraphObjectId" "${applicationPermissionId}"
 fi
 
-cat << ENV_VARS
-
-AAD_TENANT_ID="$(az account show --output json | jq -r '.tenantId')"
-
-** Please copy the following variables to /templates/core/.env **
-
-APPLICATION_ADMIN_CLIENT_ID="${appId}"
-APPLICATION_ADMIN_CLIENT_SECRET="${spPassword}"
-
-ENV_VARS
+echo -e "\n\e[96mAAD_TENANT_ID=\"$(az account show --output json | jq -r '.tenantId')\""
+echo -e "** Please copy the following variables to /templates/core/.env **"
+echo -e "\n\e[33mAPPLICATION_ADMIN_CLIENT_ID=\"${appId}\""
+echo -e "APPLICATION_ADMIN_CLIENT_SECRET=\"${spPassword}\"\e[0m"
 
 if [[ $grantAdminConsent -eq 0 ]]; then
     echo "NOTE: Make sure the API permissions of the app registrations have admin consent granted."

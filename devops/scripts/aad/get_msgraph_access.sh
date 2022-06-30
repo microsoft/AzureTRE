@@ -1,7 +1,7 @@
 #!/bin/bash
-
-# Setup Script
 set -euo pipefail
+# Use this for debug only
+# set -o xtrace
 
 # Magic string for MSGraph
 msGraphAppId="00000003-0000-0000-c000-000000000000"
