@@ -65,18 +65,18 @@ if [ "${AUTO_WORKSPACE_APP_REGISTRATION:=false}" == false ]; then
   # shellcheck disable=SC1091
   . ./templates/core/.env
 
-  read -p "Please check that your API_CLIENT_ID is \"${API_CLIENT_ID}\" is the same as above ? (y/N) " -rN2
-  echo
-  if [[ ${REPLY::1} != [Yy] ]]; then
-      exit 0
-  fi
-
   ./devops/scripts/aad/create_workspace_application.sh \
     --name "${TRE_ID} - workspace 1" \
     --admin-consent \
     --ux-clientid "${SWAGGER_UI_CLIENT_ID}" \
     --automation-clientid "${TEST_ACCOUNT_CLIENT_ID}" \
     --application-admin-clientid "${APPLICATION_ADMIN_CLIENT_ID}"
+
+  read -p "Please confirm you have done this? DO NOT PRESS ENTER. (y/N) " -rN1
+  echo
+  if [[ ${REPLY::1} != [Yy] ]]; then
+    exit 0
+  fi
 fi
 
 if [ "${CHANGED_TENANT}" -ne 0 ]; then
