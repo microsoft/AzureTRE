@@ -1,11 +1,13 @@
 locals {
   # STorage AirLock EXternal
   import_external_storage_name = lower(replace("stalimex${var.tre_id}", "-", ""))
-  # STorage AirLock InProgress IMport
+  # STorage AirLock IMport InProgress
   import_in_progress_storage_name = lower(replace("stalimip${var.tre_id}", "-", ""))
-  # STorage AirLock REJected IMport
+  # STorage AirLock IMport REJected
   import_rejected_storage_name = lower(replace("stalimrej${var.tre_id}", "-", ""))
-  # STorage AirLock APProved EXPort
+  # STorage AirLock IMport BLOCKED
+  import_blocked_storage_name = lower(replace("stalimblocked${var.tre_id}", "-", ""))
+  # STorage AirLock EXPort APProved
   export_approved_storage_name = lower(replace("stalexapp${var.tre_id}", "-", ""))
 
   # Due to the following issue and Azure not liking delete and immediate recreate under the same name,
@@ -14,6 +16,7 @@ locals {
 
   import_inprogress_sys_topic_name = "evgt-airlock-import-in-progress-${local.topic_name_suffix}"
   import_rejected_sys_topic_name   = "evgt-airlock-import-rejected-${local.topic_name_suffix}"
+  import_blocked_sys_topic_name    = "evgt-airlock-import-blocked-${local.topic_name_suffix}"
   export_approved_sys_topic_name   = "evgt-airlock-export-approved-${local.topic_name_suffix}"
 
   scan_result_topic_name    = "evgt-airlock-scan-result-${local.topic_name_suffix}"
@@ -25,13 +28,14 @@ locals {
   scan_result_queue_name    = "airlock-scan-result"
   blob_created_topic_name   = "airlock-blob-created"
 
-  blob_created_malware_subscription_name      = "airlock-blob-created-malware-scanner"
   blob_created_al_processor_subscription_name = "airlock-blob-created-airlock-processor"
 
   step_result_eventgrid_subscription_name       = "evgs-airlock-update-status"
   status_changed_eventgrid_subscription_name    = "evgs-airlock-status-changed"
+  scan_result_eventgrid_subscription_name       = "evgs-airlock-scan-result"
   import_inprogress_eventgrid_subscription_name = "evgs-airlock-import-in-progress-blob-created"
   import_rejected_eventgrid_subscription_name   = "evgs-airlock-import-rejected-blob-created"
+  import_blocked_eventgrid_subscription_name    = "evgs-airlock-import-blocked-blob-created"
   export_approved_eventgrid_subscription_name   = "evgs-airlock-export-approved-blob-created"
 
   airlock_function_app_name = "func-airlock-processor-${var.tre_id}"
