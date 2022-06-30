@@ -317,6 +317,22 @@ resource "azurerm_eventgrid_event_subscription" "status_changed" {
   ]
 }
 
+resource "azurerm_eventgrid_event_subscription" "scan_result" {
+  name  = local.scan_result_eventgrid_subscription_name
+  scope = azurerm_eventgrid_topic.scan_result.id
+
+  service_bus_queue_endpoint_id = azurerm_servicebus_queue.scan_result.id
+
+  delivery_identity {
+    type = "SystemAssigned"
+  }
+
+  depends_on = [
+    azurerm_eventgrid_topic.scan_result,
+    azurerm_role_assignment.servicebus_sender_scan_result
+  ]
+}
+
 resource "azurerm_eventgrid_event_subscription" "import_inprogress_blob_created" {
   name  = local.import_inprogress_eventgrid_subscription_name
   scope = azurerm_storage_account.sa_import_in_progress.id
