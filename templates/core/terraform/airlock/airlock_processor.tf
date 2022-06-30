@@ -65,6 +65,7 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
     "AZURE_SUBSCRIPTION_ID"                    = var.arm_subscription_id
     "TRE_ID"                                   = var.tre_id
     "WEBSITE_CONTENTOVERVNET"                  = 1
+    "APPINSIGHTS_INSTRUMENTATIONKEY"           = var.applicationinsights_instrumentation_key
   }
 
   site_config {
@@ -90,3 +91,28 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
   lifecycle { ignore_changes = [tags] }
 }
 
+
+resource "azurerm_monitor_diagnostic_setting" "airlock_function_app" {
+  name                       = "diagnostics-airlock-function-${var.tre_id}"
+  target_resource_id         = azurerm_linux_function_app.airlock_function_app.id
+  log_analytics_workspace_id = var.log_analytics_workspace_id
+
+  log {
+    category = "FunctionAppLogs"
+
+    retention_policy {
+      enabled = true
+      days    = 365
+    }
+  }
+
+  metric {
+    category = "AllMetrics"
+    enabled  = true
+
+    retention_policy {
+      enabled = true
+      days    = 365
+    }
+  }
+}
