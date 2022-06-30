@@ -42,6 +42,10 @@ jq -r '
             "env_var": "SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE"
         },
         {
+            "path": "service_bus_step_result_queue",
+            "env_var": "SERVICE_BUS_STEP_RESULT_QUEUE"
+        },
+        {
             "path": "state_store_resource_id",
             "env_var": "STATE_STORE_RESOURCE_ID"
         },

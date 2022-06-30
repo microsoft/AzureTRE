@@ -168,3 +168,21 @@ input[readonly]{
   background-color: #006600;
   color: #fff;
 }
+
+// Classes for rendering power state badges
+.tre-power-badge {
+  text-align: center;
+
+  .tre-power-on, .tre-power-off {
+    height: 10px;
+    width: 10px;
+    background-color: #006600;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 5px;
+  }
+
+  .tre-power-off {
+    background-color: #990000;
+  }
+}
