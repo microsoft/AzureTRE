@@ -93,8 +93,8 @@ if [[ -z "$applicationAdminClientId" ]]; then
     echo "Please specify the client id of the Application Admin." 1>&2
     show_usage
 fi
-applicationAdminObjectId=$(az ad sp show --id "${applicationAdminClientId}" --query objectId -o tsv --only-show-errors)
-currentUserId=$(az ad signed-in-user show --query 'objectId' --output tsv --only-show-errors)
+applicationAdminObjectId=$(az ad sp show --id "${applicationAdminClientId}" --query id -o tsv --only-show-errors)
+currentUserId=$(az ad signed-in-user show --query 'id' --output tsv --only-show-errors)
 tenant=$(az rest -m get -u "${msGraphUri}/domains" -o json | jq -r '.value[] | select(.isDefault == true) | .id')
 
 echo -e "\e[96mCreating a Workspace Application in the \"${tenant}\" Azure AD tenant.\e[0m"
@@ -120,11 +120,11 @@ appObjectId=""
 # Get an existing object if it's been created before.
 existingApp=$(get_existing_app --name "${appName}") || null
 if [ -n "${existingApp}" ]; then
-    appObjectId=$(echo "${existingApp}" | jq -r '.objectId')
+    appObjectId=$(echo "${existingApp}" | jq -r '.id')
 
     researcherRoleId=$(echo "$existingApp" | jq -r '.appRoles[] | select(.value == "WorkspaceResearcher").id')
     ownerRoleId=$(echo "$existingApp" | jq -r '.appRoles[] | select(.value == "WorkspaceOwner").id')
-    userImpersonationScopeId=$(echo "$existingApp" | jq -r '.oauth2Permissions[] | select(.value == "user_impersonation").id')
+    userImpersonationScopeId=$(echo "$existingApp" | jq -r '.api.oauth2PermissionScopes[] | select(.value == "user_impersonation").id')
     if [[ -z "${researcherRoleId}" ]]; then researcherRoleId=$(cat /proc/sys/kernel/random/uuid); fi
     if [[ -z "${ownerRoleId}" ]]; then ownerRoleId=$(cat /proc/sys/kernel/random/uuid); fi
     if [[ -z "${userImpersonationScopeId}" ]]; then userImpersonationScopeId=$(cat /proc/sys/kernel/random/uuid); fi
@@ -132,7 +132,7 @@ fi
 
 # Get the Required Resource Scope/Role
 msGraphAppId="00000003-0000-0000-c000-000000000000"
-msGraphObjectId=$(az ad sp show --id ${msGraphAppId} --query "objectId" --output tsv --only-show-errors)
+msGraphObjectId=$(az ad sp show --id ${msGraphAppId} --query "id" --output tsv --only-show-errors)
 msGraphEmailScopeId="64a6cdd6-aab1-4aaf-94b8-3cc8405e90d0"
 msGraphOpenIdScopeId="37f7f235-527c-4136-accd-4a02d197296e"
 msGraphProfileScopeId="14dad69e-099b-42c9-810b-d002981feec1"
@@ -245,7 +245,7 @@ az ad app owner add --id "${workspaceAppId}" --owner-object-id "$applicationAdmi
 
 # Create a Service Principal for the app.
 spPassword=$(create_or_update_service_principal "${workspaceAppId}" "${appName}")
-workspaceSpId=$(az ad sp list --filter "appId eq '${workspaceAppId}'" --query '[0].objectId' --output tsv --only-show-errors)
+workspaceSpId=$(az ad sp list --filter "appId eq '${workspaceAppId}'" --query '[0].id' --output tsv --only-show-errors)
 
 # needed to make the API permissions change effective, this must be done after SP creation...
 echo
@@ -255,7 +255,7 @@ az ad app permission grant --id "$workspaceSpId" --api "$msGraphObjectId" --scop
 # The UX (which was created as part of the API) needs to also have access to this Workspace
 echo "Searching for existing UX application (${uxClientId})."
 existingUXApp=$(get_existing_app --id "${uxClientId}")
-uxObjectId=$(echo "${existingUXApp}" | jq -r .objectId)
+uxObjectId=$(echo "${existingUXApp}" | jq -r .id)
 
 # Get the existing required resource access from the UX app,
 # but remove the access that we are about to add for idempotency. We cant use
@@ -303,7 +303,7 @@ if [[ -n ${automationClientId} ]]; then
   echo "Searching for existing Automation application (${automationClientId})."
   existingAutomationApp=$(get_existing_app --id "${automationClientId}")
 
-  automationAppObjectId=$(echo "${existingAutomationApp}" | jq -r .objectId)
+  automationAppObjectId=$(echo "${existingAutomationApp}" | jq -r .id)
   automationAppName=$(echo "${existingAutomationApp}" | jq -r .displayName)
   echo "Found '${automationAppName}' with ObjectId: '${automationAppObjectId}'"
 
@@ -354,7 +354,7 @@ JSON
   # Grant admin consent for the delegated workspace scopes
   if [[ $grantAdminConsent -eq 1 ]]; then
       echo "Granting admin consent for \"${automationAppName}\" (Client ID ${automationClientId})"
-      automationSpId=$(az ad sp list --filter "appId eq '${automationClientId}'" --query '[0].objectId' --output tsv --only-show-errors)
+      automationSpId=$(az ad sp list --filter "appId eq '${automationClientId}'" --query '[0].id' --output tsv --only-show-errors)
       echo "Found Service Principal \"$automationSpId\" for \"${automationAppName}\"."
 
       grant_admin_consent "${automationSpId}" "${workspaceSpId}" "${ownerRoleId}"

@@ -76,7 +76,7 @@ if [[ -z "$appName" ]]; then
     show_usage
 fi
 appName="$appName Application Admin"
-currentUserId=$(az ad signed-in-user show --query 'objectId' --output tsv --only-show-errors)
+currentUserId=$(az ad signed-in-user show --query 'id' --output tsv --only-show-errors)
 tenant=$(az rest -m get -u "${msGraphUri}/domains" -o json | jq -r '.value[] | select(.isDefault == true) | .id')
 
 echo -e "\e[96mCreating the Application Admin in the \"${tenant}\" Azure AD tenant.\e[0m"
@@ -97,12 +97,12 @@ source "${DIR}/create_or_update_service_principal.sh"
 appObjectId=""
 existingApp=$(get_existing_app --name "${appName}") || null
 if [ -n "${existingApp}" ]; then
-    appObjectId=$(echo "${existingApp}" | jq -r '.objectId')
+    appObjectId=$(echo "${existingApp}" | jq -r '.id')
 fi
 
 # Get the Required Resource Scope/Role
 msGraphAppId="00000003-0000-0000-c000-000000000000"
-msGraphObjectId=$(az ad sp show --id ${msGraphAppId} --query "objectId" --output tsv --only-show-errors)
+msGraphObjectId=$(az ad sp show --id ${msGraphAppId} --query "id" --output tsv --only-show-errors)
 
 applicationPermissionId=$(az ad sp show --id ${msGraphAppId} --query "appRoles[?value=='${applicationPermission}'].id" --output tsv --only-show-errors)
 roleApplicationPermission=$(get_msgraph_role "${applicationPermission}")
@@ -141,12 +141,12 @@ az ad app owner add --id "${appId}" --owner-object-id "$currentUserId" --only-sh
 
 # Create a Service Principal for the app.
 spPassword=$(create_or_update_service_principal "${appId}" "${appName}")
-spId=$(az ad sp list --filter "appId eq '${appId}'" --query '[0].objectId' --output tsv --only-show-errors)
+spId=$(az ad sp list --filter "appId eq '${appId}'" --query '[0].id' --output tsv --only-show-errors)
 
 # needed to make the API permissions change effective, this must be done after SP creation...
 echo
-echo "Running 'az ad app permission grant' to make changes effective."
-az ad app permission grant --id "${appId}" --api "${msGraphAppId}" --only-show-errors
+# echo "Running 'az ad app permission grant' to make changes effective."
+# az ad app permission grant --id "${appId}" --api "${msGraphAppId}" --only-show-errors
 
 # Grant admin consent on the required resource accesses (Graph API)
 if [[ $grantAdminConsent -eq 1 ]]; then

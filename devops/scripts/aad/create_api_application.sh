@@ -96,7 +96,7 @@ if [[ -z "$appName" ]]; then
 fi
 uxAppName="$appName UX"
 appName="$appName API"
-currentUserId=$(az ad signed-in-user show --query 'objectId' --output tsv --only-show-errors)
+currentUserId=$(az ad signed-in-user show --query 'id' --output tsv --only-show-errors)
 tenant=$(az rest -m get -u "${msGraphUri}/domains" -o json | jq -r '.value[] | select(.isDefault == true) | .id')
 
 echo -e "\e[96mCreating the API/UX Application in the \"${tenant}\" Azure AD tenant.\e[0m"
@@ -122,17 +122,17 @@ appObjectId=""
 # Get an existing object if it's been created before.
 existingApp=$(get_existing_app --name "${appName}")
 if [[ -n ${existingApp} ]]; then
-    appObjectId=$(echo "${existingApp}" | jq -r '.objectId')
+    appObjectId=$(echo "${existingApp}" | jq -r '.id')
     userRoleId=$(echo "$existingApp" | jq -r '.appRoles[] | select(.value == "TREUser").id')
     adminRoleId=$(echo "$existingApp" | jq -r '.appRoles[] | select(.value == "TREAdmin").id')
-    userImpersonationScopeId=$(echo "$existingApp" | jq -r '.oauth2Permissions[] | select(.value == "user_impersonation").id')
+    userImpersonationScopeId=$(echo "$existingApp" | jq -r '.api.oauth2PermissionScopes[] | select(.value == "user_impersonation").id')
     if [[ -z "${userRoleId}" ]]; then userRoleId=$(cat /proc/sys/kernel/random/uuid); fi
     if [[ -z "${adminRoleId}" ]]; then adminRoleId=$(cat /proc/sys/kernel/random/uuid); fi
     if [[ -z "${userImpersonationScopeId}" ]]; then userImpersonationScopeId=$(cat /proc/sys/kernel/random/uuid); fi
 fi
 
 msGraphAppId="00000003-0000-0000-c000-000000000000"
-msGraphObjectId=$(az ad sp show --id ${msGraphAppId} --query "objectId" --output tsv --only-show-errors)
+msGraphObjectId=$(az ad sp show --id ${msGraphAppId} --query "id" --output tsv --only-show-errors)
 
 roleUserReadAll=$(get_msgraph_role "User.Read.All" )
 roleDirectoryReadAll=$(get_msgraph_role "Directory.Read.All" )
@@ -198,6 +198,7 @@ JSON
 
 # Is the app already registered?
 if [[ -n ${appObjectId} ]]; then
+  echo "${appDefinition}"
   echo "Updating \"${appName}\" app registration (ObjectId: \"${appObjectId}\")"
   az rest --method PATCH --uri "${msGraphUri}/applications/${appObjectId}" --headers Content-Type=application/json --body "${appDefinition}"
   appId=$(az ad app show --id "${appObjectId}" --query "appId" --output tsv --only-show-errors)
@@ -217,7 +218,7 @@ az ad app owner add --id "${appId}" --owner-object-id "$currentUserId" --only-sh
 
 # Create a Service Principal for the app.
 spPassword=$(create_or_update_service_principal "${appId}" "${appName}")
-spId=$(az ad sp list --filter "appId eq '${appId}'" --query '[0].objectId' --output tsv --only-show-errors)
+spId=$(az ad sp list --filter "appId eq '${appId}'" --query '[0].id' --output tsv --only-show-errors)
 
 # needed to make the API permissions change effective, this must be done after SP creation...
 echo
@@ -274,7 +275,7 @@ JSON
 # Is the UX app already registered?
 existingUXApp=$(get_existing_app --name "${uxAppName}")
 if [[ -n ${existingUXApp} ]]; then
-  uxObjectId=$(echo "${existingUXApp}" | jq -r '.objectId')
+  uxObjectId=$(echo "${existingUXApp}" | jq -r '.id')
   echo "Updating \"${uxAppName}\" with ObjectId \"${uxObjectId}\""
   az rest --method PATCH --uri "${msGraphUri}/applications/${uxObjectId}" --headers Content-Type=application/json --body "${uxAppDefinition}"
   uxAppId=$(az ad app show --id "${uxObjectId}" --query "appId" --output tsv --only-show-errors)
@@ -288,11 +289,11 @@ else
 fi
 
 # See if a service principal already exists
-uxSpId=$(az ad sp list --filter "appId eq '${uxAppId}'" --query '[0].objectId' --output tsv --only-show-errors)
+uxSpId=$(az ad sp list --filter "appId eq '${uxAppId}'" --query '[0].id' --output tsv --only-show-errors)
 
 # If not, create a new service principal
 if [[ -z "$uxSpId" ]]; then
-    uxSpId=$(az ad sp create --id "${uxAppId}" --query 'objectId' --output tsv --only-show-errors)
+    uxSpId=$(az ad sp create --id "${uxAppId}" --query 'id' --output tsv --only-show-errors)
     wait_for_new_service_principal "${uxSpId}"
 fi
 
@@ -307,7 +308,7 @@ az ad app permission grant --id "$uxSpId" --api "$appId" --scope "user_impersona
 if [[ -n ${automationAppId} ]]; then
   existingAutomationApp=$(get_existing_app --id "${automationAppId}")
 
-  automationAppObjectId=$(echo "${existingAutomationApp}" | jq -r .objectId)
+  automationAppObjectId=$(echo "${existingAutomationApp}" | jq -r .id)
   automationAppName=$(echo "${existingAutomationApp}" | jq -r .displayName)
   echo "Found '${automationAppName}' with ObjectId: '${automationAppObjectId}'"
 
@@ -358,7 +359,7 @@ JSON
   # Grant admin consent for the application scopes
   if [[ $grantAdminConsent -eq 1 ]]; then
       echo "Granting admin consent for \"${automationAppName}\" (App ID ${automationAppId})"
-      automationSpId=$(az ad sp list --filter "appId eq '${automationAppId}'" --query '[0].objectId' --output tsv --only-show-errors)
+      automationSpId=$(az ad sp list --filter "appId eq '${automationAppId}'" --query '[0].id' --output tsv --only-show-errors)
       echo "Found Service Principal \"$automationSpId\" for \"${automationAppName}\"."
 
       grant_admin_consent "${automationSpId}" "${spId}" "${adminRoleId}"
