@@ -49,7 +49,7 @@ test_sb_message_multi_step_1_complete = {
     "operationId": OPERATION_ID,
     "stepId": "pre-step-1",
     "id": "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76",
-    "status": Status.Deployed,
+    "status": Status.Updated,
     "message": "upgrade succeeded"
 }
 
@@ -57,7 +57,7 @@ test_sb_message_multi_step_3_complete = {
     "operationId": OPERATION_ID,
     "stepId": "post-step-1",
     "id": "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76",
-    "status": Status.Deployed,
+    "status": Status.Updated,
     "message": "upgrade succeeded"
 }
 
@@ -190,31 +190,6 @@ async def test_when_updating_and_state_store_exception(app, sb_client, logging_m
     sb_client().get_queue_receiver().complete_message.assert_not_called()
 
 
-@patch('service_bus.deployment_status_update.OperationRepository')
-@patch('service_bus.deployment_status_update.ResourceRepository')
-@patch('logging.error')
-@patch('service_bus.deployment_status_update.ServiceBusClient')
-@patch('fastapi.FastAPI')
-async def test_state_transitions_from_deployed_to_deploying_does_not_transition(app, sb_client, logging_mock, repo, operation_repo):
-    updated_message = test_sb_message
-    updated_message["status"] = Status.Deploying
-    service_bus_received_message_mock = ServiceBusReceivedMessageMock(updated_message)
-
-    sb_client().get_queue_receiver().receive_messages = AsyncMock(return_value=[service_bus_received_message_mock])
-    sb_client().get_queue_receiver().complete_message = AsyncMock()
-
-    expected_workspace = create_sample_workspace_object(test_sb_message["id"])
-    operation = create_sample_operation(test_sb_message["id"], RequestAction.Install)
-    operation.steps[0].status = Status.Deployed
-    operation_repo().get_operation_by_id.return_value = operation
-
-    repo().get_resource_dict_by_id.return_value = expected_workspace.dict()
-
-    await receive_message_and_update_deployment(app)
-
-    repo().update_item_dict.assert_called_once_with(expected_workspace)
-
-
 @patch("service_bus.deployment_status_update.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
 @patch('service_bus.deployment_status_update.OperationRepository')
 @patch('service_bus.deployment_status_update.ResourceRepository')
@@ -313,7 +288,7 @@ async def test_properties_dont_change_with_no_outputs(app, sb_client, logging_mo
 @patch('fastapi.FastAPI')
 async def test_multi_step_operation_sends_next_step(app, sb_client, sb_sender_client, repo, operations_repo, update_resource_for_step, multi_step_operation, user_resource_multi, basic_shared_service):
     received_message = test_sb_message_multi_step_1_complete
-    received_message["status"] = Status.Deployed
+    received_message["status"] = Status.Updated
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(received_message)
     sb_client().get_queue_receiver().receive_messages = AsyncMock(return_value=[service_bus_received_message_mock])
     sb_client().get_queue_receiver().complete_message = AsyncMock()
@@ -346,9 +321,9 @@ async def test_multi_step_operation_sends_next_step(app, sb_client, sb_sender_cl
 
     # check the operation is updated as expected
     expected_operation = copy.deepcopy(multi_step_operation)
-    expected_operation.status = Status.PipelineDeploying
-    expected_operation.message = "Multi step pipeline deploying. See steps for details."
-    expected_operation.steps[0].status = Status.Deployed
+    expected_operation.status = Status.PipelineRunning
+    expected_operation.message = "Multi step pipeline running. See steps for details."
+    expected_operation.steps[0].status = Status.Updated
     expected_operation.steps[0].message = "upgrade succeeded"
     operations_repo().update_item.assert_called_once_with(expected_operation)
 
@@ -363,7 +338,7 @@ async def test_multi_step_operation_sends_next_step(app, sb_client, sb_sender_cl
 @patch('fastapi.FastAPI')
 async def test_multi_step_operation_ends_at_last_step(app, sb_client, sb_sender_client, repo, operations_repo, multi_step_operation, user_resource_multi, basic_shared_service):
     received_message = test_sb_message_multi_step_3_complete
-    received_message["status"] = Status.Deployed
+    received_message["status"] = Status.Updated
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(received_message)
     sb_client().get_queue_receiver().receive_messages = AsyncMock(return_value=[service_bus_received_message_mock])
     sb_client().get_queue_receiver().complete_message = AsyncMock()
@@ -380,22 +355,22 @@ async def test_multi_step_operation_ends_at_last_step(app, sb_client, sb_sender_
     # get the multi-step operation and process it
     # simulate what the op would look like after step 2
     in_flight_op = copy.deepcopy(multi_step_operation)
-    in_flight_op.status = Status.PipelineDeploying
-    in_flight_op.message = "Multi step pipeline deploying. See steps for details."
-    in_flight_op.steps[0].status = Status.Deployed
+    in_flight_op.status = Status.PipelineRunning
+    in_flight_op.message = "Multi step pipeline running. See steps for details."
+    in_flight_op.steps[0].status = Status.Updated
     in_flight_op.steps[0].message = "upgrade succeeded"
     in_flight_op.steps[1].status = Status.Deployed
     in_flight_op.steps[1].message = "install succeeded"
-    in_flight_op.steps[2].status = Status.Deploying
+    in_flight_op.steps[2].status = Status.Updating
 
     operations_repo().get_operation_by_id.return_value = in_flight_op
     await receive_message_and_update_deployment(app)
 
     # check the operation is updated as expected - both step and overall status
     expected_operation = copy.deepcopy(in_flight_op)
-    expected_operation.status = Status.PipelineSucceeded
-    expected_operation.message = "Pipeline deployment completed successfully"
-    expected_operation.steps[2].status = Status.Deployed
+    expected_operation.status = Status.Deployed
+    expected_operation.message = "Multi step pipeline completed successfully"
+    expected_operation.steps[2].status = Status.Updated
     expected_operation.steps[2].message = "upgrade succeeded"
     operations_repo().update_item.assert_called_once_with(expected_operation)
 
