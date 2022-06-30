@@ -37,7 +37,7 @@ resource "azurerm_role_assignment" "servicebus_sender_import_approved_blob_creat
   ]
 }
 
-# TEMPRARY MITIGATION. Should be removed with https://github.com/microsoft/AzureTRE/issues/2164
+# TEMPPORARY MITIGATION. Should be removed with https://github.com/microsoft/AzureTRE/issues/2164
 resource "null_resource" "wait_for_import_approved_blob_created" {
   provisioner "local-exec" {
     command    = "bash -c \"sleep 60s\""
@@ -87,7 +87,7 @@ resource "azurerm_role_assignment" "servicebus_sender_export_inprogress_blob_cre
   ]
 }
 
-# TEMPRARY MITIGATION. Should be removed with https://github.com/microsoft/AzureTRE/issues/2164
+# TEMPPORARY MITIGATION. Should be removed with https://github.com/microsoft/AzureTRE/issues/2164
 resource "null_resource" "wait_for_export_inprogress_blob_created" {
   provisioner "local-exec" {
     command    = "bash -c \"sleep 60s\""
