@@ -135,6 +135,20 @@ resource "azurerm_role_assignment" "servicebus_sender_import_inprogress_blob_cre
   ]
 }
 
+# TEMPPORARY MITIGATION. Should be removed with https://github.com/microsoft/AzureTRE/issues/2164
+resource "null_resource" "wait_for_import_inprogress_blob_created" {
+  provisioner "local-exec" {
+    command    = "bash -c \"sleep 60s\""
+    on_failure = fail
+  }
+
+  triggers = {
+    always_run = timestamp()
+  }
+
+  depends_on = [azurerm_eventgrid_system_topic.import_inprogress_blob_created]
+}
+
 
 resource "azurerm_eventgrid_system_topic" "import_rejected_blob_created" {
   name                   = local.import_rejected_sys_topic_name
@@ -152,7 +166,8 @@ resource "azurerm_eventgrid_system_topic" "import_rejected_blob_created" {
   })
 
   depends_on = [
-    azurerm_storage_account.sa_import_rejected
+    azurerm_storage_account.sa_import_rejected,
+    null_resource.wait_for_import_inprogress_blob_created
   ]
 
   lifecycle { ignore_changes = [tags] }
@@ -166,6 +181,20 @@ resource "azurerm_role_assignment" "servicebus_sender_import_rejected_blob_creat
   depends_on = [
     azurerm_eventgrid_system_topic.import_rejected_blob_created
   ]
+}
+
+# TEMPPORARY MITIGATION. Should be removed with https://github.com/microsoft/AzureTRE/issues/2164
+resource "null_resource" "wait_for_import_rejected_blob_created" {
+  provisioner "local-exec" {
+    command    = "bash -c \"sleep 60s\""
+    on_failure = fail
+  }
+
+  triggers = {
+    always_run = timestamp()
+  }
+
+  depends_on = [azurerm_eventgrid_system_topic.import_rejected_blob_created]
 }
 
 resource "azurerm_eventgrid_system_topic" "import_blocked_blob_created" {
@@ -184,7 +213,8 @@ resource "azurerm_eventgrid_system_topic" "import_blocked_blob_created" {
   })
 
   depends_on = [
-    azurerm_storage_account.sa_import_blocked
+    azurerm_storage_account.sa_import_blocked,
+    null_resource.wait_for_import_rejected_blob_created
   ]
 
   lifecycle { ignore_changes = [tags] }
@@ -199,6 +229,21 @@ resource "azurerm_role_assignment" "servicebus_sender_import_blocked_blob_create
     azurerm_eventgrid_system_topic.import_blocked_blob_created
   ]
 }
+
+# TEMPPORARY MITIGATION. Should be removed with https://github.com/microsoft/AzureTRE/issues/2164
+resource "null_resource" "wait_for_import_blocked_blob_created" {
+  provisioner "local-exec" {
+    command    = "bash -c \"sleep 60s\""
+    on_failure = fail
+  }
+
+  triggers = {
+    always_run = timestamp()
+  }
+
+  depends_on = [azurerm_eventgrid_system_topic.import_blocked_blob_created]
+}
+
 
 resource "azurerm_eventgrid_system_topic" "export_approved_blob_created" {
   name                   = local.export_approved_sys_topic_name
@@ -216,7 +261,8 @@ resource "azurerm_eventgrid_system_topic" "export_approved_blob_created" {
   })
 
   depends_on = [
-    azurerm_storage_account.sa_export_approved
+    azurerm_storage_account.sa_export_approved,
+    null_resource.wait_for_import_blocked_blob_created
   ]
 
   lifecycle { ignore_changes = [tags] }
