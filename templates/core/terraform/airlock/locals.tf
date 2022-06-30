@@ -32,6 +32,7 @@ locals {
 
   step_result_eventgrid_subscription_name       = "evgs-airlock-update-status"
   status_changed_eventgrid_subscription_name    = "evgs-airlock-status-changed"
+  scan_result_eventgrid_subscription_name       = "evgs-airlock-scan-result"
   import_inprogress_eventgrid_subscription_name = "evgs-airlock-import-in-progress-blob-created"
   import_rejected_eventgrid_subscription_name   = "evgs-airlock-import-rejected-blob-created"
   import_blocked_eventgrid_subscription_name    = "evgs-airlock-import-blocked-blob-created"
