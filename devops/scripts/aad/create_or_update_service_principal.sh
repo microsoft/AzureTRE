@@ -33,7 +33,6 @@ function wait_for_new_service_principal()
 function create_or_update_service_principal()
 {
   applicationId=$1
-  appName=$2
 
   # See if a service principal already exists
   spId=$(az ad sp list --filter "appId eq '${applicationId}'" --query '[0].id' --output tsv --only-show-errors)
@@ -63,6 +62,6 @@ function create_or_update_service_principal()
   # This tag ensures the app is listed in "Enterprise applications"
   # az ad sp update --id "$spId" --set tags="['WindowsAzureActiveDirectoryIntegratedApp']" --only-show-errors
   # Doesn't work in AZ CLI 2.37 - do we still need it?
-  
+
   echo "${spPassword}"
 }

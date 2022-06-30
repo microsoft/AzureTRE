@@ -109,7 +109,7 @@ fi
 az ad app owner add --id "${appId}" --owner-object-id "$currentUserId" --only-show-errors
 
 # Create a Service Principal for the app.
-spPassword=$(create_or_update_service_principal "${appId}" "${appName}")
+spPassword=$(create_or_update_service_principal "${appId}")
 
 echo -e "\n\e[96mAAD_TENANT_ID=\"$(az account show --output json | jq -r '.tenantId')\""
 echo -e "** Please copy the following variables to /templates/core/.env **"

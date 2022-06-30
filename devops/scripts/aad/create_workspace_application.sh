@@ -244,7 +244,7 @@ az ad app owner add --id "${workspaceAppId}" --owner-object-id "$currentUserId" 
 az ad app owner add --id "${workspaceAppId}" --owner-object-id "$applicationAdminObjectId" --only-show-errors
 
 # Create a Service Principal for the app.
-spPassword=$(create_or_update_service_principal "${workspaceAppId}" "${appName}")
+spPassword=$(create_or_update_service_principal "${workspaceAppId}")
 workspaceSpId=$(az ad sp list --filter "appId eq '${workspaceAppId}'" --query '[0].id' --output tsv --only-show-errors)
 
 # needed to make the API permissions change effective, this must be done after SP creation...
