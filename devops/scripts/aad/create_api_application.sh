@@ -112,6 +112,8 @@ source "${DIR}/wait_for_new_app_registration.sh"
 source "${DIR}/create_or_update_service_principal.sh"
 # shellcheck disable=SC1091
 source "${DIR}/get_msgraph_access.sh"
+# shellcheck disable=SC1091
+source "${DIR}/update_resource_access.sh"
 
 # Generate GUIDS
 userRoleId=$(cat /proc/sys/kernel/random/uuid)
@@ -198,7 +200,6 @@ JSON
 
 # Is the app already registered?
 if [[ -n ${appObjectId} ]]; then
-  echo "${appDefinition}"
   echo "Updating \"${appName}\" app registration (ObjectId: \"${appObjectId}\")"
   az rest --method PATCH --uri "${msGraphUri}/applications/${appObjectId}" --headers Content-Type=application/json --body "${appDefinition}"
   appId=$(az ad app show --id "${appObjectId}" --query "appId" --output tsv --only-show-errors)
@@ -312,20 +313,8 @@ if [[ -n ${automationAppId} ]]; then
   automationAppName=$(echo "${existingAutomationApp}" | jq -r .displayName)
   echo "Found '${automationAppName}' with ObjectId: '${automationAppObjectId}'"
 
-  # Get the existing required resource access from the automation app,
-  # but remove the access that we are about to add for idempotency. We cant use
-  # the response from az cli as it returns an 'AdditionalProperties' element in
-  # the json
-  existingResourceAccess=$(az rest \
-    --method GET \
-    --uri "${msGraphUri}/applications/${automationAppObjectId}" \
-    --headers Content-Type=application/json -o json \
-    | jq -r --arg appId "${appId}" \
-    'del(.requiredResourceAccess[] | select(.resourceAppId==$appId)) | .requiredResourceAccess' \
-    )
-
-  # Add the existing resource access so we don't remove any existing permissions.
-  automationApiAccess=$(jq -c . << JSON
+  # This is the new API Access we require.
+  automationApiAccess=$(jq -c .requiredResourceAccess << JSON
 {
   "requiredResourceAccess": [
     {
@@ -341,20 +330,13 @@ if [[ -n ${automationAppId} ]]; then
         }
       ]
     }
-  ],
-  "existingAccess": ${existingResourceAccess}
+  ]
 }
 JSON
 )
 
-  # Manipulate the json (add existingAccess into requiredResourceAccess and then remove it)
-  requiredResourceAccess=$(echo "${automationApiAccess}" | \
-    jq '.requiredResourceAccess += .existingAccess | {requiredResourceAccess}')
-
-  az rest --method PATCH \
-    --uri "${msGraphUri}/applications/${automationAppObjectId}" \
-    --headers Content-Type=application/json \
-    --body "${requiredResourceAccess}"
+  # Utility function to add the required permissions.
+  update_resource_access "$msGraphUri" "${automationAppObjectId}" "${appId}" "${automationApiAccess}"
 
   # Grant admin consent for the application scopes
   if [[ $grantAdminConsent -eq 1 ]]; then

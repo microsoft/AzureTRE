@@ -110,6 +110,8 @@ source "${DIR}/wait_for_new_app_registration.sh"
 source "${DIR}/create_or_update_service_principal.sh"
 # shellcheck disable=SC1091
 source "${DIR}/get_msgraph_access.sh"
+# shellcheck disable=SC1091
+source "${DIR}/update_resource_access.sh"
 
 # Default of new UUIDs
 researcherRoleId=$(cat /proc/sys/kernel/random/uuid)
@@ -117,7 +119,7 @@ ownerRoleId=$(cat /proc/sys/kernel/random/uuid)
 userImpersonationScopeId=$(cat /proc/sys/kernel/random/uuid)
 appObjectId=""
 
-# Get an existing object if it's been created before.
+# Get an existing object if its been created before.
 existingApp=$(get_existing_app --name "${appName}") || null
 if [ -n "${existingApp}" ]; then
     appObjectId=$(echo "${existingApp}" | jq -r '.id')
@@ -257,44 +259,26 @@ echo "Searching for existing UX application (${uxClientId})."
 existingUXApp=$(get_existing_app --id "${uxClientId}")
 uxObjectId=$(echo "${existingUXApp}" | jq -r .id)
 
-# Get the existing required resource access from the UX app,
-# but remove the access that we are about to add for idempotency. We cant use
-# the response from az cli as it returns an 'AdditionalProperties' element in
-# the json
-existingResourceAccess=$(az rest \
-  --method GET \
-  --uri "${msGraphUri}/applications/${uxObjectId}" \
-  --headers Content-Type=application/json -o json \
-  | jq -r --arg workspaceAppId "${workspaceAppId}" \
-  'del(.requiredResourceAccess[] | select(.resourceAppId==$workspaceAppId)) | .requiredResourceAccess' \
-  )
-
-# Add the existing resource access so we don't remove any existing permissions.
-uxWorkspaceAccess=$(jq -c . << JSON
+# This is the new API Access we require.
+uxWorkspaceAccess=$(jq -c .requiredResourceAccess << JSON
 {
   "requiredResourceAccess": [
-  {
-    "resourceAccess": [
-        {
-            "id": "${userImpersonationScopeId}",
-            "type": "Scope"
-        }
-    ],
-    "resourceAppId": "${workspaceAppId}"
-  }],
-  "existingAccess": ${existingResourceAccess}
+    {
+      "resourceAccess": [
+          {
+              "id": "${userImpersonationScopeId}",
+              "type": "Scope"
+          }
+      ],
+      "resourceAppId": "${workspaceAppId}"
+    }
+  ]
 }
 JSON
 )
 
-# Manipulate the json (add existingAccess into requiredResourceAccess and then remove it)
-requiredResourceAccess=$(echo "${uxWorkspaceAccess}" | \
-  jq '.requiredResourceAccess += .existingAccess | {requiredResourceAccess}')
-
-az rest --method PATCH \
-  --uri "${msGraphUri}/applications/${uxObjectId}" \
-  --headers Content-Type=application/json \
-  --body "${requiredResourceAccess}"
+# Utility function to add the required permissions.
+update_resource_access "$msGraphUri" "${uxObjectId}" "${workspaceAppId}" "${uxWorkspaceAccess}"
 
 echo "Grant UX delegated access '${appName}' (Client ID ${uxClientId})"
 az ad app permission grant --id "${uxClientId}" --api "${workspaceAppId}" --scope "user_impersonation" --only-show-errors
@@ -307,20 +291,8 @@ if [[ -n ${automationClientId} ]]; then
   automationAppName=$(echo "${existingAutomationApp}" | jq -r .displayName)
   echo "Found '${automationAppName}' with ObjectId: '${automationAppObjectId}'"
 
-  # Get the existing required resource access from the automation app,
-  # but remove the access that we are about to add for idempotency. We cant use
-  # the response from az cli as it returns an 'AdditionalProperties' element in
-  # the json
-  existingResourceAccess=$(az rest \
-    --method GET \
-    --uri "${msGraphUri}/applications/${automationAppObjectId}" \
-    --headers Content-Type=application/json -o json \
-    | jq -r --arg workspaceAppId "${workspaceAppId}" \
-    'del(.requiredResourceAccess[] | select(.resourceAppId==$workspaceAppId)) | .requiredResourceAccess' \
-    )
-
-  # Add the existing resource access so we don't remove any existing permissions.
-  automationWorkspaceAccess=$(jq -c . << JSON
+  # This is the new API Access we require.
+  automationWorkspaceAccess=$(jq -c .requiredResourceAccess << JSON
 {
   "requiredResourceAccess": [
     {
@@ -336,20 +308,13 @@ if [[ -n ${automationClientId} ]]; then
         ],
         "resourceAppId": "${workspaceAppId}"
     }
-  ],
-  "existingAccess": ${existingResourceAccess}
+  ]
 }
 JSON
 )
 
-  # Manipulate the json (add existingAccess into requiredResourceAccess and then remove it)
-  requiredResourceAccess=$(echo "${automationWorkspaceAccess}" | \
-    jq '.requiredResourceAccess += .existingAccess | {requiredResourceAccess}')
-
-  az rest --method PATCH \
-    --uri "${msGraphUri}/applications/${automationAppObjectId}" \
-    --headers Content-Type=application/json \
-    --body "${requiredResourceAccess}"
+  # Utility function to add the required permissions.
+  update_resource_access "$msGraphUri" "${automationAppObjectId}" "${workspaceAppId}" "${automationWorkspaceAccess}"
 
   # Grant admin consent for the delegated workspace scopes
   if [[ $grantAdminConsent -eq 1 ]]; then
