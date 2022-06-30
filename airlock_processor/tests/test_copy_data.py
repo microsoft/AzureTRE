@@ -36,13 +36,16 @@ class TestDataCopyProperties(unittest.TestCase):
         self.assertEqual(is_require_data_copy("Mitzi"), False)
         self.assertEqual(is_require_data_copy(""), False)
         self.assertEqual(is_require_data_copy("submit"), False)
+        self.assertEqual(is_require_data_copy("approved"), False)
+        self.assertEqual(is_require_data_copy("REJected"), False)
+        self.assertEqual(is_require_data_copy("blocked"), False)
 
         # Testing all values that should return true
         self.assertEqual(is_require_data_copy("submITted"), True)
         self.assertEqual(is_require_data_copy("submitted"), True)
-        self.assertEqual(is_require_data_copy("approved"), True)
-        self.assertEqual(is_require_data_copy("REJected"), True)
-        self.assertEqual(is_require_data_copy("blocked"), True)
+        self.assertEqual(is_require_data_copy("approval_in_progress"), True)
+        self.assertEqual(is_require_data_copy("rejection_in_progress"), True)
+        self.assertEqual(is_require_data_copy("blocking_in_progress"), True)
 
     def test_wrong_status_raises_when_getting_storage_account_properties(self):
         self.assertRaises(Exception, get_source_dest_env_vars, "Miaow", "import")

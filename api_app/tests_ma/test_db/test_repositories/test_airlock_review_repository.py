@@ -18,7 +18,7 @@ def airlock_review_repo():
 
 @pytest.fixture
 def sample_airlock_review_input():
-    return AirlockReviewInCreate(reviewDecision=AirlockReviewDecision.Approved, decisionExplanation="some decision")
+    return AirlockReviewInCreate(approval=True, decisionExplanation="some decision")
 
 
 def test_create_airlock_review_item_with_the_right_values(sample_airlock_review_input, airlock_review_repo):
