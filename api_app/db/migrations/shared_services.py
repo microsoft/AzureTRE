@@ -15,8 +15,8 @@ class SharedServiceMigration(SharedServiceRepository):
         for template_name in template_names:
             for item in self.query(query=f'SELECT * FROM c WHERE c.resourceType = "shared-service" AND c.templateName = "{template_name}" \
                                                                 ORDER BY c.updatedWhen ASC OFFSET 1 LIMIT 10000'):
-                logging.INFO(f"Deleting element {item}")
-                self.delete_item(item, partition_key=item["id"])
+                logging.info(f'Deleting element {item["id"]}')
+                self.delete_item(item["id"])
                 migrated = True
 
         return migrated
