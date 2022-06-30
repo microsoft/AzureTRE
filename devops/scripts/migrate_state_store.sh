@@ -16,6 +16,7 @@ function usage() {
     Options:
         -u, --tre_url                 URL for the TRE
         -a, --access-token            Azure access token to automatically post to the API
+        -i, --insecure                Bypass SSL certificate checks
 USAGE
     exit 1
 }
@@ -24,6 +25,8 @@ function get_http_code() {
   curl_output="$1"
   http_code=$(echo "${curl_output}" | grep HTTP | sed 's/.*HTTP\/1\.1 \([0-9]\+\).*/\1/' | tail -n 1)
 }
+
+options=""
 
 # if no arguments are provided, return usage function
 if [ $# -eq 0 ]; then
@@ -39,6 +42,9 @@ while [ "$1" != "" ]; do
     -a | --access-token)
         shift
         access_token=$1
+        ;;
+    -i| --insecure)
+        options="-k"
         ;;
     *)
         echo "Unexpected argument: '$1'"
@@ -72,7 +78,7 @@ if [ -z "${access_token:-}" ]; then
   access_token=${ACCESS_TOKEN}
 fi
 
-migrate_result=$(curl -i -X "POST" "${tre_url}/api/migrations" -H "accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer ${access_token}")
+migrate_result=$(curl -i -X "POST" "${tre_url}/api/migrations" -H "accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer ${access_token}" ${options})
 get_http_code "${migrate_result}"
 echo "${migrate_result}"
 if [[ ${http_code} != 202 ]]; then
