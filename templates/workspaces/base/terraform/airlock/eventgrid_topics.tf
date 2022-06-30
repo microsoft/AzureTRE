@@ -101,7 +101,6 @@ resource "null_resource" "wait_for_export_inprogress_blob_created" {
   depends_on = [azurerm_eventgrid_system_topic.export_inprogress_blob_created]
 }
 
-
 resource "azurerm_eventgrid_system_topic" "export_rejected_blob_created" {
   name                   = local.export_rejected_sys_topic_name
   location               = var.location
@@ -135,6 +134,56 @@ resource "azurerm_role_assignment" "servicebus_sender_export_rejected_blob_creat
 
   depends_on = [
     azurerm_eventgrid_system_topic.export_rejected_blob_created
+  ]
+}
+
+# TEMPPORARY MITIGATION. Should be removed with https://github.com/microsoft/AzureTRE/issues/2164
+resource "null_resource" "wait_for_export_rejected_blob_created" {
+  provisioner "local-exec" {
+    command    = "bash -c \"sleep 60s\""
+    on_failure = fail
+  }
+
+  triggers = {
+    always_run = timestamp()
+  }
+
+  depends_on = [azurerm_eventgrid_system_topic.export_rejected_blob_created]
+}
+
+resource "azurerm_eventgrid_system_topic" "export_blocked_blob_created" {
+  name                   = local.export_blocked_sys_topic_name
+  location               = var.location
+  resource_group_name    = var.ws_resource_group_name
+  source_arm_resource_id = azurerm_storage_account.sa_export_blocked.id
+  topic_type             = "Microsoft.Storage.StorageAccounts"
+
+  tags = merge(
+    var.tre_workspace_tags,
+    {
+      Publishers = "airlock;export-blocked-sa"
+    }
+  )
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  depends_on = [
+    azurerm_storage_account.sa_export_blocked,
+    null_resource.wait_for_export_rejected_blob_created
+  ]
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_role_assignment" "servicebus_sender_export_blocked_blob_created" {
+  scope                = data.azurerm_servicebus_namespace.airlock_sb.id
+  role_definition_name = "Azure Service Bus Data Sender"
+  principal_id         = azurerm_eventgrid_system_topic.export_blocked_blob_created.identity.0.principal_id
+
+  depends_on = [
+    azurerm_eventgrid_system_topic.export_blocked_blob_created
   ]
 }
 
@@ -182,5 +231,20 @@ resource "azurerm_eventgrid_event_subscription" "export_rejected_blob_created" {
 
   depends_on = [
     azurerm_eventgrid_system_topic.export_rejected_blob_created
+  ]
+}
+
+resource "azurerm_eventgrid_event_subscription" "export_blocked_blob_created" {
+  name  = "export-blocked-blob-created-${var.short_workspace_id}"
+  scope = azurerm_storage_account.sa_export_blocked.id
+
+  service_bus_topic_endpoint_id = data.azurerm_servicebus_topic.blob_created.id
+
+  delivery_identity {
+    type = "SystemAssigned"
+  }
+
+  depends_on = [
+    azurerm_eventgrid_system_topic.export_blocked_blob_created
   ]
 }
