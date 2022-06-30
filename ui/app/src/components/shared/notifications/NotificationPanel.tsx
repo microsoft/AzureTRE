@@ -53,6 +53,7 @@ export const NotificationPanel: React.FunctionComponent = () => {
       for (let i=0;i<workspaceList.length;i++){
         let w = workspaceList[i];
         let appId = w.properties.client_id;
+        if (appId === "auto_create") continue; // skip getting stuff from the workspace if it's auto_create as it doesn't have auth setup yet
         let workspaceServicesList = (await apiCall(`${w.resourcePath}/${ApiEndpoint.WorkspaceServices}`, HttpMethod.Get, appId)).workspaceServices as Array<Resource>;
         if (workspaceServicesList && workspaceServicesList.length > 0) (opsToAdd = opsToAdd.concat(await getOpsFromResourceList(workspaceServicesList, appId)));
         for(let n=0;n<workspaceServicesList.length;n++){
