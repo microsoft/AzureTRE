@@ -350,9 +350,8 @@ JSON
 fi
 
 # Output the variables for .env files
-echo -e "\n\e[96mAAD_TENANT_ID=\"$(az account show --output json | jq -r '.tenantId')\""
-echo -e "** Please copy the following variables to /templates/core/.env **"
-echo -e "\n\e[33mAPI_CLIENT_ID=\"${appId}\""
+echo -e "\n\e[96m** Please copy the following variables to /templates/core/.env **"
+echo -e "\e[33mAPI_CLIENT_ID=\"${appId}\""
 echo -e "API_CLIENT_SECRET=\"${spPassword}\""
 echo -e "SWAGGER_UI_CLIENT_ID=\"${uxAppId}\"\e[0m"
 

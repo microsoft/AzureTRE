@@ -327,9 +327,8 @@ JSON
   fi
 fi
 
-echo -e "\n\e[96mAAD_TENANT_ID=\"$(az account show --output json | jq -r '.tenantId')\""
-echo -e "** Please copy the following variables to /templates/core/.env **"
-echo -e "\n\e[33mWORKSPACE_API_CLIENT_ID=\"${workspaceAppId}\""
+echo -e "\n\e[96m** Please copy the following variables to /templates/core/.env **"
+echo -e "\e[33mWORKSPACE_API_CLIENT_ID=\"${workspaceAppId}\""
 echo -e "WORKSPACE_API_CLIENT_SECRET=\"${spPassword}\"\e[0m"
 
 if [[ $grantAdminConsent -eq 0 ]]; then

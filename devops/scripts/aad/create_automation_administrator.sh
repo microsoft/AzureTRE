@@ -111,7 +111,6 @@ az ad app owner add --id "${appId}" --owner-object-id "$currentUserId" --only-sh
 # Create a Service Principal for the app.
 spPassword=$(create_or_update_service_principal "${appId}")
 
-echo -e "\n\e[96mAAD_TENANT_ID=\"$(az account show --output json | jq -r '.tenantId')\""
-echo -e "** Please copy the following variables to /templates/core/.env **"
-echo -e "\n\e[33mTEST_ACCOUNT_CLIENT_ID=\"${appId}\""
+echo -e "\n\e[96m** Please copy the following variables to /templates/core/.env **"
+echo -e "\e[33mTEST_ACCOUNT_CLIENT_ID=\"${appId}\""
 echo -e "TEST_ACCOUNT_CLIENT_SECRET=\"${spPassword}\"\e[0m"

@@ -155,9 +155,8 @@ if [[ $grantAdminConsent -eq 1 ]]; then
     grant_admin_consent "${spId}" "$msGraphObjectId" "${applicationPermissionId}"
 fi
 
-echo -e "\n\e[96mAAD_TENANT_ID=\"$(az account show --output json | jq -r '.tenantId')\""
-echo -e "** Please copy the following variables to /templates/core/.env **"
-echo -e "\n\e[33mAPPLICATION_ADMIN_CLIENT_ID=\"${appId}\""
+echo -e "\n\e[96m** Please copy the following variables to /templates/core/.env **"
+echo -e "\e[33mAPPLICATION_ADMIN_CLIENT_ID=\"${appId}\""
 echo -e "APPLICATION_ADMIN_CLIENT_SECRET=\"${spPassword}\"\e[0m"
 
 if [[ $grantAdminConsent -eq 0 ]]; then
