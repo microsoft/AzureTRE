@@ -33,7 +33,7 @@ class Status(str, Enum):
     ActionSucceeded = strings.RESOURCE_ACTION_STATUS_SUCCEEDED
     ActionFailed = strings.RESOURCE_ACTION_STATUS_FAILED
 
-    PipelineRunning = strings.RESOURCE_ACTION_STATUS_PIPELINE_RUNNING
+    PipelineRunning = strings.RESOURCE_ACTION_STATUS_PIPELINE_RUNNING  # set whilst a resource in a pipeline is running, as each step will have its own status
 
 
 class OperationStep(AzureTREModel):
