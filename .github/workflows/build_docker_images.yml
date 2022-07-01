@@ -204,7 +204,6 @@ jobs:
           (steps.filter.outputs.airlock_processor == 'true'
           || github.event_name == 'workflow_dispatch')
           && steps.check_airlock_processor_test_result.outputs.files_exists == 'false'
-
         uses: docker/build-push-action@v2
         with:
           context: ./airlock_processor/
@@ -217,4 +216,4 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: test-results
-          path: test-results/*.xml
+          path: test-results
