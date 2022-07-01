@@ -49,3 +49,6 @@ variable "enable_malware_scanning" {
   type        = bool
   description = "If False, Airlock requests will skip the malware scanning stage"
 }
+
+variable "log_analytics_workspace_id" {}
+variable "applicationinsights_instrumentation_key" {}

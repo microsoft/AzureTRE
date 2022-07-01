@@ -1,12 +1,13 @@
 from mock import patch
+import pytest
 from models.domain.costs import GranularityEnum
 from models.domain.shared_service import SharedService, ResourceType
 from models.domain.user_resource import UserResource
 from models.domain.workspace import Workspace
 from models.domain.workspace_service import WorkspaceService
 from services.cost_service import CostService
-from datetime import date, datetime
-from azure.mgmt.costmanagement.models import QueryResult
+from datetime import date, datetime, timedelta
+from azure.mgmt.costmanagement.models import QueryResult, TimeframeType, QueryDefinition
 
 
 @patch('db.repositories.workspaces.WorkspaceRepository')
@@ -232,6 +233,45 @@ def test_query_tre_costs_with_granularity_none_and_display_name_data_returns_tem
     assert cost_report.workspaces[1].costs[0].currency == "USD"
     assert cost_report.workspaces[1].costs[1].cost == 5.8
     assert cost_report.workspaces[1].costs[1].currency == "ILS"
+
+
+@pytest.mark.parametrize("from_date,to_date", [(None, datetime.now()), (datetime.now(), None), (None, None)])
+@patch('db.repositories.workspaces.WorkspaceRepository')
+@patch('db.repositories.shared_services.SharedServiceRepository')
+@patch('services.cost_service.CostManagementClient')
+def test_query_tre_costs_with_dates_set_as_none_calls_client_with_month_to_date(client_mock, shared_service_repo_mock,
+                                                                                workspace_repo_mock, from_date,
+                                                                                to_date):
+    __set_shared_service_repo_mock_return_value(shared_service_repo_mock)
+    __set_workspace_repo_mock_get_active_workspaces_return_value(workspace_repo_mock)
+
+    cost_service = CostService()
+    cost_service.query_tre_costs(
+        "guy22", GranularityEnum.none, from_date, to_date, workspace_repo_mock, shared_service_repo_mock)
+
+    query_definition: QueryDefinition = client_mock.return_value.query.usage.call_args_list[0][0][1]
+    assert query_definition.timeframe == TimeframeType.MONTH_TO_DATE
+
+
+@patch('db.repositories.workspaces.WorkspaceRepository')
+@patch('db.repositories.shared_services.SharedServiceRepository')
+@patch('services.cost_service.CostManagementClient')
+def test_query_tre_costs_with_dates_set_as_none_calls_client_with_custom_dates(client_mock, shared_service_repo_mock,
+                                                                               workspace_repo_mock):
+    __set_shared_service_repo_mock_return_value(shared_service_repo_mock)
+    __set_workspace_repo_mock_get_active_workspaces_return_value(workspace_repo_mock)
+
+    from_date = datetime.now() - timedelta(days=10)
+    to_date = datetime.now()
+
+    cost_service = CostService()
+    cost_service.query_tre_costs(
+        "guy22", GranularityEnum.none, from_date, to_date, workspace_repo_mock, shared_service_repo_mock)
+
+    query_definition: QueryDefinition = client_mock.return_value.query.usage.call_args_list[0][0][1]
+    assert query_definition.timeframe == TimeframeType.CUSTOM
+    assert query_definition.time_period.from_property == from_date
+    assert query_definition.time_period.to == to_date
 
 
 def __set_workspace_repo_mock_get_active_workspaces_return_value(workspace_repo_mock):
