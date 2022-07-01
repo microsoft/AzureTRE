@@ -33,11 +33,6 @@ resource "azurerm_servicebus_subscription" "airlock_processor" {
   max_delivery_count = 1
 }
 
-resource "azurerm_servicebus_subscription" "malware_scanner" {
-  name               = local.blob_created_malware_subscription_name
-  topic_id           = azurerm_servicebus_topic.blob_created.id
-  max_delivery_count = 1
-}
 
 
 
