@@ -329,6 +329,44 @@ resource "azurerm_private_endpoint" "eg_scan_result" {
   }
 }
 
+# Custom topic (for airlock notifications)
+resource "azurerm_eventgrid_topic" "airlock_notification" {
+  name                = local.notification_topic_name
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  public_network_access_enabled = false
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  tags = merge(var.tre_core_tags, {
+    Publishers = "airlock;custom notification service;"
+  })
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_private_endpoint" "eg_airlock_notification" {
+  name                = "pe-eg-airlock_notification-${var.tre_id}"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  subnet_id           = var.airlock_events_subnet_id
+  lifecycle { ignore_changes = [tags] }
+
+  private_dns_zone_group {
+    name                 = "private-dns-zone-group"
+    private_dns_zone_ids = [data.azurerm_private_dns_zone.eventgrid.id]
+  }
+
+  private_service_connection {
+    name                           = "psc-eg-${var.tre_id}"
+    private_connection_resource_id = azurerm_eventgrid_topic.airlock_notification.id
+    is_manual_connection           = false
+    subresource_names              = ["topic"]
+  }
+}
+
 ## Subscriptions
 
 resource "azurerm_eventgrid_event_subscription" "step_result" {
