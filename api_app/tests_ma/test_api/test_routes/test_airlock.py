@@ -6,6 +6,8 @@ from db.errors import EntityDoesNotExist, UnableToAccessDatabase
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus
 from azure.core.exceptions import HttpResponseError
+
+from models.domain.workspace import Workspace
 from resources import strings
 from services.authentication import get_current_workspace_owner_or_researcher_user_or_tre_admin, get_current_workspace_owner_or_researcher_user, get_current_workspace_owner_user
 pytestmark = pytest.mark.asyncio
@@ -50,6 +52,23 @@ def sample_airlock_review_object():
         decisionExplanation="test explaination"
     )
     return airlock_review
+
+
+def sample_workspace(workspace_id=WORKSPACE_ID, auth_info: dict = {}) -> Workspace:
+    workspace = Workspace(
+        id=workspace_id,
+        templateName="tre-workspace-base",
+        templateVersion="0.1.0",
+        etag="",
+        properties={
+            "client_id": "12345"
+        },
+        resourcePath=f'/workspaces/{workspace_id}'
+    )
+    if auth_info:
+        workspace.properties = {**auth_info}
+    return workspace
+
 
 
 class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
@@ -144,6 +163,32 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
     async def test_post_submit_airlock_request_with_illegal_status_change_returns_400(self, _, __, app, client):
         response = await client.post(app.url_path_for(strings.API_SUBMIT_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", side_effect=CosmosResourceNotFoundError)
+    @patch("api.routes.airlock.validate_user_is_allowed_to_access_sa")
+    async def test_get_airlock_container_link_no_airlock_request_found_returns_404(self, _, __, app, client):
+        response = await client.get(app.url_path_for(strings.API_AIRLOCK_REQUEST_LINK, workspace_id=WORKSPACE_ID,
+                                                     airlock_request_id=AIRLOCK_REQUEST_ID))
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", side_effect=CosmosResourceNotFoundError)
+    @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", side_effect=CosmosResourceNotFoundError)
+    @patch("api.routes.airlock.validate_user_is_allowed_to_access_sa")
+    async def test_get_airlock_container_link_no_workspace_request_found_returns_404(self, _, __, ___, app, client):
+        response = await client.get(app.url_path_for(strings.API_AIRLOCK_REQUEST_LINK, workspace_id=WORKSPACE_ID,
+                                                     airlock_request_id=AIRLOCK_REQUEST_ID))
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id",
+           return_value=sample_workspace(WORKSPACE_ID))
+    @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object(status=AirlockRequestStatus.Approved))
+    @patch("api.routes.airlock.validate_user_is_allowed_to_access_sa")
+    @patch("api.routes.airlock.get_airlock_request_container_sas_token", return_value="valid-sas-token")
+    async def test_get_airlock_container_link_returned_as_expected(self, get_airlock_request_container_sas_token_mock, __, ___, ____, app, client):
+        response = await client.get(app.url_path_for(strings.API_AIRLOCK_REQUEST_LINK, workspace_id=WORKSPACE_ID,
+                                                     airlock_request_id=AIRLOCK_REQUEST_ID))
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["container_url"] == get_airlock_request_container_sas_token_mock.return_value
 
 
 class TestAirlockRoutesThatRequireOwnerRights():

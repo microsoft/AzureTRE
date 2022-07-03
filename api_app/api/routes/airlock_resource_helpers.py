@@ -17,8 +17,6 @@ from models.domain.workspace import Workspace
 
 from resources import strings, constants
 
-from resources import strings
-
 
 class RequestAccountDetails:
     account_name: str
@@ -136,15 +134,26 @@ def get_storage_account_key(storage_client: StorageManagementClient, request_acc
                                                      request_account_details.account_name).keys[0].value
 
 
+def get_required_permission(airlock_request: AirlockRequest) -> ContainerSasPermissions:
+    if airlock_request.status == AirlockRequestStatus.Draft:
+        return ContainerSasPermissions(read=True, write=True)
+    else:
+        return ContainerSasPermissions(read=True)
+
+
 def get_airlock_request_container_sas_token(storage_client: StorageManagementClient,
                                             request_account_details: RequestAccountDetails,
                                             airlock_request: AirlockRequest):
     account_key = get_storage_account_key(storage_client, request_account_details)
+    required_permission = get_required_permission(airlock_request)
+    expiry = datetime.utcnow() + timedelta(hours=config.AIRLOCK_SAS_TOKEN_EXPIRY_PERIOD_IN_HOURS)
+
     token = generate_container_sas(container_name=airlock_request.id,
-                                   ccount_name=request_account_details.account_name,
+                                   account_name=request_account_details.account_name,
                                    account_key=account_key,
-                                   permission=ContainerSasPermissions(read=True),
-                                   expiry=datetime.utcnow() + timedelta(hours=1))
+                                   permission=required_permission,
+                                   expiry=expiry)
+
     return "https://{}.blob.core.windows.net/{}?{}"\
         .format(request_account_details.account_name, airlock_request.id, token)
 

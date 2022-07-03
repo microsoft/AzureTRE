@@ -51,3 +51,5 @@ AAD_TENANT_ID: str = config("AAD_TENANT_ID", default="")
 
 AAD_INSTANCE: str = config("AAD_INSTANCE", default="https://login.microsoftonline.com")
 API_AUDIENCE: str = config("API_AUDIENCE", default=API_CLIENT_ID)
+
+AIRLOCK_SAS_TOKEN_EXPIRY_PERIOD_IN_HOURS: int = config("AIRLOCK_SAS_TOKEN_EXPIRY_PERIOD_IN_HOURS", default=1)

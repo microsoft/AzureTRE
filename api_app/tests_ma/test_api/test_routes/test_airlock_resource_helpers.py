@@ -7,7 +7,7 @@ from mock import AsyncMock, patch, MagicMock, Mock
 
 from api.routes.airlock_resource_helpers import save_airlock_review, save_and_publish_event_airlock_request, \
     update_status_and_publish_event_airlock_request, validate_user_is_allowed_to_access_sa, get_storage_account_key, \
-    get_airlock_request_container_sas_token, RequestAccountDetails
+    get_airlock_request_container_sas_token, RequestAccountDetails, get_required_permission
 from tests_ma.test_api.conftest import create_workspace_owner_user, create_workspace_researcher_user
 from db.repositories.airlock_reviews import AirlockReviewRepository
 from db.repositories.airlock_requests import AirlockRequestRepository
@@ -18,7 +18,6 @@ from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, 
 from azure.eventgrid import EventGridEvent
 
 pytestmark = pytest.mark.asyncio
-
 
 WORKSPACE_ID = "abc000d3-82da-4bfc-b6e9-9a7853ef753e"
 AIRLOCK_REQUEST_ID = "5dbc15ae-40e1-49a5-834b-595f59d626b7"
@@ -78,7 +77,8 @@ def sample_airlock_review(review_decision=AirlockReviewDecision.Approved):
 
 
 @patch("event_grid.helpers.EventGridPublisherClient", return_value=AsyncMock())
-async def test_save_and_publish_event_airlock_request_saves_item(event_grid_publisher_client_mock, airlock_request_repo_mock):
+async def test_save_and_publish_event_airlock_request_saves_item(event_grid_publisher_client_mock,
+                                                                 airlock_request_repo_mock):
     airlock_request_mock = sample_airlock_request()
     airlock_request_repo_mock.save_item = MagicMock(return_value=None)
     status_changed_event_mock = sample_status_changed_event()
@@ -95,7 +95,7 @@ async def test_save_and_publish_event_airlock_request_saves_item(event_grid_publ
     event_grid_sender_client_mock.send.assert_awaited_once()
     # Since the eventgrid object has the update time attribute which differs, we only compare the data that was sent
     actual_status_changed_event = event_grid_sender_client_mock.send.await_args[0][0][0]
-    assert(actual_status_changed_event.data == status_changed_event_mock.data)
+    assert (actual_status_changed_event.data == status_changed_event_mock.data)
 
 
 async def test_save_and_publish_event_airlock_request_raises_503_if_save_to_db_fails(airlock_request_repo_mock):
@@ -111,7 +111,8 @@ async def test_save_and_publish_event_airlock_request_raises_503_if_save_to_db_f
 
 
 @patch("event_grid.helpers.EventGridPublisherClient", return_value=AsyncMock())
-async def test_save_and_publish_event_airlock_request_raises_503_if_publish_event_fails(event_grid_publisher_client_mock, airlock_request_repo_mock):
+async def test_save_and_publish_event_airlock_request_raises_503_if_publish_event_fails(
+    event_grid_publisher_client_mock, airlock_request_repo_mock):
     airlock_request_mock = sample_airlock_request()
     airlock_request_repo_mock.save_item = MagicMock(return_value=None)
     # When eventgrid fails, it deletes the saved request
@@ -128,7 +129,8 @@ async def test_save_and_publish_event_airlock_request_raises_503_if_publish_even
 
 
 @patch("event_grid.helpers.EventGridPublisherClient", return_value=AsyncMock())
-async def test_update_status_and_publish_event_airlock_request_updates_item(event_grid_publisher_client_mock, airlock_request_repo_mock):
+async def test_update_status_and_publish_event_airlock_request_updates_item(event_grid_publisher_client_mock,
+                                                                            airlock_request_repo_mock):
     airlock_request_mock = sample_airlock_request()
     updated_airlock_request_mock = sample_airlock_request(status=AirlockRequestStatus.Submitted)
     status_changed_event_mock = sample_status_changed_event(status="submitted")
@@ -143,15 +145,16 @@ async def test_update_status_and_publish_event_airlock_request_updates_item(even
         new_status=AirlockRequestStatus.Submitted)
 
     airlock_request_repo_mock.update_airlock_request_status.assert_called_once()
-    assert(actual_updated_airlock_request == updated_airlock_request_mock)
+    assert (actual_updated_airlock_request == updated_airlock_request_mock)
 
     event_grid_sender_client_mock.send.assert_awaited_once()
     # Since the eventgrid object has the update time attribute which differs, we only compare the data that was sent
     actual_status_changed_event = event_grid_sender_client_mock.send.await_args[0][0][0]
-    assert(actual_status_changed_event.data == status_changed_event_mock.data)
+    assert (actual_status_changed_event.data == status_changed_event_mock.data)
 
 
-async def test_update_status_and_publish_event_airlock_request_raises_400_if_status_update_invalid(airlock_request_repo_mock):
+async def test_update_status_and_publish_event_airlock_request_raises_400_if_status_update_invalid(
+    airlock_request_repo_mock):
     airlock_request_mock = sample_airlock_request()
 
     with pytest.raises(HTTPException) as ex:
@@ -165,7 +168,8 @@ async def test_update_status_and_publish_event_airlock_request_raises_400_if_sta
 
 
 @patch("event_grid.helpers.EventGridPublisherClient", return_value=AsyncMock())
-async def test_update_status_and_publish_event_airlock_requestt_raises_503_if_publish_event_fails(event_grid_publisher_client_mock, airlock_request_repo_mock):
+async def test_update_status_and_publish_event_airlock_requestt_raises_503_if_publish_event_fails(
+    event_grid_publisher_client_mock, airlock_request_repo_mock):
     airlock_request_mock = sample_airlock_request()
     updated_airlock_request_mock = sample_airlock_request(status=AirlockRequestStatus.Submitted)
     airlock_request_repo_mock.update_airlock_request_status = MagicMock(return_value=updated_airlock_request_mock)
@@ -236,8 +240,8 @@ def test_validate_user_is_allowed_to_access_grants_access_to_user_with_a_valid_r
     draft_airlock_request = sample_airlock_request(AirlockRequestStatus.InReview)
 
     assert (validate_user_is_allowed_to_access_sa(
-            user=ws_owner_user,
-            airlock_request=draft_airlock_request) is None)
+        user=ws_owner_user,
+        airlock_request=draft_airlock_request) is None)
 
     researcher_user = create_workspace_researcher_user()
     review_airlock_request = sample_airlock_request(AirlockRequestStatus.Approved)
@@ -248,11 +252,25 @@ def test_validate_user_is_allowed_to_access_grants_access_to_user_with_a_valid_r
         ) is None)
 
 
-# @patch("api.routes.airlock_resource_helpers.get_storage_account_key", return_value="account_key")
-# @patch("azure.storage.blob.generate_container_sas", return_value="sas_token")
-# @patch("azure.mgmt.storage.StorageManagementClient", return_value=Mock(StorageManagementClient))
-# def test_get_airlock_request_container_sas_token(storage_management_client, sas_token, account_key):
-#     request_details = RequestAccountDetails("account_name", "account_rg")
-#     airlock_request = sample_airlock_request()
-#     assert ( get_airlock_request_container_sas_token(storage_management_client, request_details, airlock_request) == "dff")
+@pytest.mark.parametrize('airlock_status',
+                         [AirlockRequestStatus.Submitted,
+                          AirlockRequestStatus.InReview,
+                          AirlockRequestStatus.ApprovalInProgress,
+                          AirlockRequestStatus.Approved,
+                          AirlockRequestStatus.RejectionInProgress,
+                          AirlockRequestStatus.Rejected,
+                          AirlockRequestStatus.Cancelled,
+                          AirlockRequestStatus.BlockingInProgress,
+                          AirlockRequestStatus.Blocked])
+def test_get_required_permission_return_read_only_permissions_for_non_draft_requests(airlock_status):
+    airlock_request = sample_airlock_request(airlock_status)
+    permissions = get_required_permission(airlock_request)
+    assert permissions.write is False
+    assert permissions.read is True
 
+
+def test_get_required_permission_return_read_and_write_permissions_for_draft_requests():
+    airlock_request = sample_airlock_request(AirlockRequestStatus.Draft)
+    permissions = get_required_permission(airlock_request)
+    assert permissions.write is False
+    assert permissions.read is True

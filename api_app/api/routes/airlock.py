@@ -65,11 +65,11 @@ async def create_airlock_review(airlock_review_input: AirlockReviewInCreate, air
     return AirlockReviewInResponse(airlock_review=airlock_review)
 
 
-@airlock_workspace_router.get("/workspaces/{workspace_id}/requests/{airlock_request_id}/token",
+@airlock_workspace_router.get("/workspaces/{workspace_id}/requests/{airlock_request_id}/link",
                               status_code=status.HTTP_200_OK, response_model=AirlockRequestTokenInResponse,
-                              name=strings.API_AIRLOCK_REQUEST_TOKEN,
+                              name=strings.API_AIRLOCK_REQUEST_LINK,
                               dependencies=[Depends(get_current_workspace_owner_or_researcher_user)])
-async def create_get_tokens(airlock_request=Depends(get_airlock_request_by_id_from_path),
+async def get_airlock_container_link(airlock_request=Depends(get_airlock_request_by_id_from_path),
                             workspace=Depends(get_deployed_workspace_by_id_from_path),
                             user=Depends(get_current_workspace_owner_or_researcher_user)) -> AirlockRequestTokenInResponse:
     validate_user_is_allowed_to_access_sa(user, airlock_request)
