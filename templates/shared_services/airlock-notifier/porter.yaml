@@ -3,7 +3,7 @@ name: tre-shared-service-airlock-notifier
 version: 0.0.1
 description: "A shared service notifying on Airlock Operations"
 registry: azuretre
-#dockerfile: Dockerfile.tmpl
+#dockerfile: Dockerfile.tmpl # Override and install az extension
 
 credentials:
   - name: azure_tenant_id
