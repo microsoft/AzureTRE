@@ -20,8 +20,6 @@ on:  # yamllint disable-line rule:truthy
         default: CICD
         required: true
 
-
-
 # This will prevent multiple runs of this entire workflow.
 # We should NOT cancel in progress runs as that can destabilize the environment.
 concurrency: "${{ github.workflow }}-${{ github.ref }}"
