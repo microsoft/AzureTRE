@@ -18,8 +18,10 @@ from resources import strings
 from services.authentication import get_current_workspace_owner_or_researcher_user, get_current_workspace_owner_user
 
 from .airlock_resource_helpers import save_airlock_review, save_and_publish_event_airlock_request, \
-    update_status_and_publish_event_airlock_request, get_storage_management_client, RequestAccountDetails, \
-    get_account_and_rg_by_request, validate_user_is_allowed_to_access_sa, get_airlock_request_container_sas_token
+    update_status_and_publish_event_airlock_request, RequestAccountDetails
+
+from services.airlock import get_storage_management_client, validate_user_is_allowed_to_access_sa, \
+    get_account_and_rg_by_request, get_airlock_request_container_sas_token
 
 airlock_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user)])
 storage_client = get_storage_management_client()

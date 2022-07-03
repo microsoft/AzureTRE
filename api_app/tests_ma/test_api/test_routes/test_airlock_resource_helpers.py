@@ -3,8 +3,7 @@ import pytest
 from mock import AsyncMock, patch, MagicMock
 
 from api.routes.airlock_resource_helpers import save_airlock_review, save_and_publish_event_airlock_request, \
-    update_status_and_publish_event_airlock_request, validate_user_is_allowed_to_access_sa, get_required_permission
-from tests_ma.test_api.conftest import create_workspace_owner_user, create_workspace_researcher_user
+    update_status_and_publish_event_airlock_request
 from db.repositories.airlock_reviews import AirlockReviewRepository
 from db.repositories.airlock_requests import AirlockRequestRepository
 from tests_ma.test_api.conftest import create_test_user
@@ -206,66 +205,4 @@ async def test_test_save_airlock_review_raises_503_if_save_to_db_fails(airlock_r
     assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
 
-def test_validate_user_is_allowed_to_access_sa_blocks_access_as_expected():
-    # Workspace owner can access only in review
-    ws_owner_user = create_workspace_owner_user()
-    draft_airlock_request = sample_airlock_request()
-    with pytest.raises(HTTPException) as ex:
-        validate_user_is_allowed_to_access_sa(
-            user=ws_owner_user,
-            airlock_request=draft_airlock_request
-        )
 
-    assert ex.value.status_code == status.HTTP_403_FORBIDDEN
-
-    researcher_user = create_workspace_researcher_user()
-    review_airlock_request = sample_airlock_request(AirlockRequestStatus.InReview)
-    with pytest.raises(HTTPException) as ex:
-        validate_user_is_allowed_to_access_sa(
-            user=researcher_user,
-            airlock_request=review_airlock_request
-        )
-
-    assert ex.value.status_code == status.HTTP_403_FORBIDDEN
-
-
-def test_validate_user_is_allowed_to_access_grants_access_to_user_with_a_valid_role():
-    # Workspace owner can access only in review
-    ws_owner_user = create_workspace_owner_user()
-    draft_airlock_request = sample_airlock_request(AirlockRequestStatus.InReview)
-
-    assert (validate_user_is_allowed_to_access_sa(
-        user=ws_owner_user,
-        airlock_request=draft_airlock_request) is None)
-
-    researcher_user = create_workspace_researcher_user()
-    review_airlock_request = sample_airlock_request(AirlockRequestStatus.Approved)
-    assert (
-        validate_user_is_allowed_to_access_sa(
-            user=researcher_user,
-            airlock_request=review_airlock_request
-        ) is None)
-
-
-@pytest.mark.parametrize('airlock_status',
-                         [AirlockRequestStatus.Submitted,
-                          AirlockRequestStatus.InReview,
-                          AirlockRequestStatus.ApprovalInProgress,
-                          AirlockRequestStatus.Approved,
-                          AirlockRequestStatus.RejectionInProgress,
-                          AirlockRequestStatus.Rejected,
-                          AirlockRequestStatus.Cancelled,
-                          AirlockRequestStatus.BlockingInProgress,
-                          AirlockRequestStatus.Blocked])
-def test_get_required_permission_return_read_only_permissions_for_non_draft_requests(airlock_status):
-    airlock_request = sample_airlock_request(airlock_status)
-    permissions = get_required_permission(airlock_request)
-    assert permissions.write is False
-    assert permissions.read is True
-
-
-def test_get_required_permission_return_read_and_write_permissions_for_draft_requests():
-    airlock_request = sample_airlock_request(AirlockRequestStatus.Draft)
-    permissions = get_required_permission(airlock_request)
-    assert permissions.write is True
-    assert permissions.read is True
