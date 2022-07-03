@@ -24,7 +24,7 @@ def main(msg: func.ServiceBusMessage,
         raise e
 
     # Sanity
-    if enable_malware_scanning:
+    if not enable_malware_scanning:
         # A scan result arrived despite the fact malware scanning should be disabled. This may result in unexpected behaviour.
         # Raise an exception and stop
         error_msg = "Malware scanning is disabled, however a malware scan result arrived. Ignoring it."
