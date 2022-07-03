@@ -15,7 +15,7 @@
       "type": "Microsoft.Web/connections/accessPolicies",
       "apiVersion": "2016-06-01",
       "name": "[concat('smtp/', parameters('servicePrincipalId'))]",
-      "location": "westeurope",
+      "location": "[resourceGroup().location]",
       "properties": {
         "principal": {
           "type": "ActiveDirectory",
