@@ -1,8 +1,6 @@
 import logging
 
-from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
-from azure.storage.blob import generate_container_sas, ContainerSasPermissions
 
 from jsonschema.exceptions import ValidationError
 
@@ -70,8 +68,8 @@ async def create_airlock_review(airlock_review_input: AirlockReviewInCreate, air
                               name=strings.API_AIRLOCK_REQUEST_LINK,
                               dependencies=[Depends(get_current_workspace_owner_or_researcher_user)])
 async def get_airlock_container_link(airlock_request=Depends(get_airlock_request_by_id_from_path),
-                            workspace=Depends(get_deployed_workspace_by_id_from_path),
-                            user=Depends(get_current_workspace_owner_or_researcher_user)) -> AirlockRequestTokenInResponse:
+                                     workspace=Depends(get_deployed_workspace_by_id_from_path),
+                                     user=Depends(get_current_workspace_owner_or_researcher_user)) -> AirlockRequestTokenInResponse:
     validate_user_is_allowed_to_access_sa(user, airlock_request)
     request_account_details: RequestAccountDetails = get_account_and_rg_by_request(airlock_request, workspace)
     container_url = get_airlock_request_container_sas_token(storage_client, request_account_details, airlock_request)
