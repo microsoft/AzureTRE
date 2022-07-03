@@ -25,8 +25,6 @@ function wait_for_new_service_principal()
       echo "Failed"
       exit 1
   fi
-
-  #echo "Service principal with ID ${servicePrincipalId} found"
 }
 
 # This script creates a new Service Principal or offers to update the password if it already exists.
@@ -48,7 +46,7 @@ function create_or_update_service_principal()
       az ad app owner add --id "${applicationId}" --owner-object-id "${spId}" --only-show-errors
       resetPassword=1
   else
-      read -p "Service principal for \"${appName}\" already exists. Do you wish to reset the password. DO NOT PRESS ENTER. (y/N)? " -rN1 
+      read -p "Service principal for \"${appName}\" already exists. Do you wish to reset the password. DO NOT PRESS ENTER. (y/N)? " -rN1
       if [[ ${REPLY::1} == [Yy] ]]; then
           resetPassword=1
       fi
