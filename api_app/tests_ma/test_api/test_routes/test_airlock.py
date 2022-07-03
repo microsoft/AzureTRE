@@ -70,7 +70,6 @@ def sample_workspace(workspace_id=WORKSPACE_ID, auth_info: dict = {}) -> Workspa
     return workspace
 
 
-
 class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
     @pytest.fixture(autouse=True, scope='class')
     def log_in_with_researcher_user(self, app, researcher_user):
