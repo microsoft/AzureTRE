@@ -2,6 +2,7 @@ from unittest.mock import MagicMock
 import uuid
 import pytest
 from mock import patch
+from models.domain.operation import Status
 from db.repositories.resources import ResourceRepository
 from db.repositories.operations import OperationRepository
 from tests_ma.test_api.test_routes.test_resource_helpers import FAKE_CREATE_TIMESTAMP
@@ -29,13 +30,14 @@ def test_create_operation_steps_from_multi_step_template(_, __, resource_repo, t
     expected_op = multi_step_operation
     expected_op.id = OPERATION_ID
 
+    expected_op.status = Status.AwaitingDeployment
+    expected_op.message = "This resource is waiting to be deployed"
+
     operations_repo.save_item = MagicMock()
     resource_repo.get_resource_by_template_name = MagicMock(return_value=basic_shared_service)
     operation = operations_repo.create_operation_item(
         resource_id="resource-id",
-        status="not_deployed",
         action="install",
-        message="",
         resource_path="/workspaces/resource-id",
         resource_version=0,
         user=test_user,

@@ -27,35 +27,44 @@ export interface OperationStep {
     updatedWhen: number
 }
 
+export const awaitingStates = [
+  "awaiting_deployment",
+  "awaiting_update",
+  "awaiting_deletion"
+]
+
 export const completedStates = [
-    "deployed",
-    "deleted",
-    "failed",
-    "deleting_failed",
-    "action_succeeded",
-    "action_failed",
-    "pipeline_failed",
-    "pipeline_succeeded"
+  "deployed",
+  "deleted",
+  "updated",
+  "failed",
+  "deleting_failed",
+  "updating_failed",
+  "action_succeeded",
+  "action_failed"
 ]
 
 export const inProgressStates = [
-    "not_deployed",
-    "deploying",
-    "deleting",
-    "invoking_action",
-    "pipeline_deploying"
+  "awaiting_deployment",
+  "awaiting_update",
+  "awaiting_deletion",
+  "deploying",
+  "updating",
+  "deleting",
+  "invoking_action",
+  "pipeline_running"
 ]
 
 export const failedStates = [
-    "failed",
-    "deleting_failed",
-    "action_failed",
-    "pipeline_failed",
+  "deployment_failed",
+  "deleting_failed",
+  "updating_failed",
+  "action_failed",
 ]
 
 export const successStates = [
   "deployed",
+  "updated",
   "deleted",
-  "action_succeeded",
-  "pipeline_succeeded"
+  "action_succeeded"
 ]

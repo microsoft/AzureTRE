@@ -36,7 +36,7 @@
             "resourceTemplateName": "tre-service-dev-vm",
             "resourceType": "user-resource",
             "resourceAction": "install",
-            "status": "failed",
+            "status": "deployment_failed",
             "message": "8b6e42a0-e236-46ae-9541-01b462e4b468: install action completed successfully.",
             "updatedWhen": 1650899841.316169
         },
@@ -47,7 +47,7 @@
             "resourceTemplateName": "tre-shared-service-firewall",
             "resourceType": "shared-service",
             "resourceAction": "upgrade",
-            "status": "not_deployed",
+            "status": "awaiting_deployment",
             "message": "ea079a34-ec53-43e0-9454-84531c96599e: upgrade action in progress",
             "updatedWhen": 1650899911.042068
         }

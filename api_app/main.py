@@ -6,6 +6,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi_utils.tasks import repeat_every
+from service_bus.airlock_request_status_update import receive_step_result_message_and_update_status
 
 from services.tracing import RequestTracerMiddleware
 from opencensus.trace.samplers import ProbabilitySampler
@@ -68,6 +69,11 @@ async def initialize_logging_on_startup():
 async def update_deployment_status() -> None:
     await receive_message_and_update_deployment(app)
 
+
+@app.on_event("startup")
+@repeat_every(seconds=20, wait_first=True, logger=logging.getLogger())
+async def update_airlock_request_status() -> None:
+    await receive_step_result_message_and_update_status(app)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

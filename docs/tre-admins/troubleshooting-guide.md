@@ -35,7 +35,7 @@ Initially the status is always reported as:
 ```json
 {
   "deployment": {
-    "status": "not_deployed",
+    "status": "awaiting_deployment",
     "message": "This resource has not yet been deployed"
   }
 }
