@@ -203,6 +203,3 @@ async def test_test_save_airlock_review_raises_503_if_save_to_db_fails(airlock_r
         )
 
     assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
-
-
-
