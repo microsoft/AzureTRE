@@ -86,11 +86,12 @@ def get_airlock_request_container_sas_token(storage_client: StorageManagementCli
     required_permission = get_required_permission(airlock_request)
     expiry = datetime.utcnow() + timedelta(hours=config.AIRLOCK_SAS_TOKEN_EXPIRY_PERIOD_IN_HOURS)
 
+    # TODO: use user delegated key  https://github.com/microsoft/AzureTRE/issues/2185
     token = generate_container_sas(container_name=airlock_request.id,
                                    account_name=request_account_details.account_name,
                                    account_key=account_key,
                                    permission=required_permission,
                                    expiry=expiry)
 
-    return "https://{}.blob.core.windows.net/{}?{}"\
+    return "https://{}.blob.core.windows.net/{}?{}" \
         .format(request_account_details.account_name, airlock_request.id, token)
