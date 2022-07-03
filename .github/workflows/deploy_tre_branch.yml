@@ -14,6 +14,12 @@ on:  # yamllint disable-line rule:truthy
         type: string
         default: ""
         required: false
+      environment:
+        description: The environment to run this workflow in
+        type: environment
+        default: CICD
+        required: true
+
 
 
 # This will prevent multiple runs of this entire workflow.
@@ -51,6 +57,7 @@ jobs:
     with:
       ciGitRef: ${{ github.ref }}
       e2eTestsCustomSelector: ${{ github.event.inputs.e2eTestsCustomSelector }}
+      environmentName: ${{ github.event.inputs.environment }}
     secrets:
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
       ACR_NAME: ${{ format('tre{0}', needs.prepare-not-main.outputs.refid) }}
