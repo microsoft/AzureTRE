@@ -143,11 +143,6 @@ az ad app owner add --id "${appId}" --owner-object-id "$currentUserId" --only-sh
 spPassword=$(create_or_update_service_principal "${appId}")
 spId=$(az ad sp list --filter "appId eq '${appId}'" --query '[0].id' --output tsv --only-show-errors)
 
-# needed to make the API permissions change effective, this must be done after SP creation...
-echo
-# echo "Running 'az ad app permission grant' to make changes effective."
-# az ad app permission grant --id "${appId}" --api "${msGraphAppId}" --only-show-errors
-
 # Grant admin consent on the required resource accesses (Graph API)
 if [[ $grantAdminConsent -eq 1 ]]; then
     echo "Granting admin consent for '${appName}' app (service principal ID ${spId}) - NOTE: Directory admin privileges required for this step"

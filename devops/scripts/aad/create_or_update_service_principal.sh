@@ -25,8 +25,6 @@ function wait_for_new_service_principal()
       echo "Failed"
       exit 1
   fi
-
-  #echo "Service principal with ID ${servicePrincipalId} found"
 }
 
 # This script creates a new Service Principal or offers to update the password if it already exists.

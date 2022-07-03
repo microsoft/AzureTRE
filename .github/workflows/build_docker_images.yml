@@ -17,6 +17,13 @@ jobs:
     name: Build images
     runs-on: ubuntu-latest
     steps:
+      - name: Upload Event File
+        # this step is required to publish test results from forks
+        uses: actions/upload-artifact@v2
+        with:
+          name: Event File
+          path: ${{ github.event_path }}
+
       - name: Checkout
         uses: actions/checkout@v2
         with:
@@ -196,6 +203,7 @@ jobs:
         if: |
           (steps.filter.outputs.airlock_processor == 'true'
           || github.event_name == 'workflow_dispatch')
+          && steps.check_airlock_processor_test_result.outputs.files_exists == 'false'
         uses: docker/build-push-action@v2
         with:
           context: ./airlock_processor/
@@ -209,9 +217,3 @@ jobs:
         with:
           name: test-results
           path: test-results
-
-      - name: Publish Unit Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v1
-        if: always()
-        with:
-          files: test-results/**/*.xml

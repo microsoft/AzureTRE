@@ -26,7 +26,7 @@ function get_http_code() {
   http_code=$(echo "${curl_output}" | grep HTTP | sed 's/.*HTTP\/1\.1 \([0-9]\+\).*/\1/' | tail -n 1)
 }
 
-options=""
+curl_options=(--retry 3 --retry-max-time 300 --max-time 90)
 
 # if no arguments are provided, return usage function
 if [ $# -eq 0 ]; then
@@ -44,7 +44,7 @@ while [ "$1" != "" ]; do
         access_token=$1
         ;;
     -i| --insecure)
-        options="-k"
+        curl_options+=("-k")
         ;;
     *)
         echo "Unexpected argument: '$1'"
@@ -78,7 +78,8 @@ if [ -z "${access_token:-}" ]; then
   access_token=${ACCESS_TOKEN}
 fi
 
-migrate_result=$(curl -i -X "POST" "${tre_url}/api/migrations" -H "accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer ${access_token}" ${options})
+migrate_result=$(curl -i -X "POST" "${tre_url}/api/migrations" "${curl_options[@]}" \
+                -H "accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer ${access_token}")
 get_http_code "${migrate_result}"
 echo "${migrate_result}"
 if [[ ${http_code} != 202 ]]; then
