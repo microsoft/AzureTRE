@@ -31,7 +31,7 @@
       },
       "name": "smtp",
       "type": "Microsoft.Web/connections",
-      "location": "westeurope",
+      "location": "[resourceGroup().location]",
       "apiVersion": "2016-06-01"
     }
   ],
