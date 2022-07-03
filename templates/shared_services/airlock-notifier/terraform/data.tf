@@ -1,8 +1,3 @@
-data "azurerm_log_analytics_workspace" "tre" {
-  name                = "log-${var.tre_id}"
-  resource_group_name = local.core_resource_group_name
-}
-
 data "azurerm_service_plan" "core" {
   name                = "plan-${var.tre_id}"
   resource_group_name = local.core_resource_group_name
