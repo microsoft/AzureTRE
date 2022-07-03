@@ -70,3 +70,9 @@ resource "azurerm_role_assignment" "sa_export_approved" {
   role_definition_name = "Contributor"
   principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
 }
+
+resource "azurerm_role_assignment" "sa_import_blocked" {
+  scope                = azurerm_storage_account.sa_import_blocked.id
+  role_definition_name = "Contributor"
+  principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
+}
