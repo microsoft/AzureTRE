@@ -1,0 +1,102 @@
+---
+name: tre-shared-service-airlock-notifier
+version: 0.0.1
+description: "A shared service notifying on Airlock Operations"
+registry: azuretre
+#dockerfile: Dockerfile.tmpl
+
+credentials:
+  - name: azure_tenant_id
+    env: ARM_TENANT_ID
+  - name: azure_subscription_id
+    env: ARM_SUBSCRIPTION_ID
+  - name: azure_client_id
+    env: ARM_CLIENT_ID
+  - name: azure_client_secret
+    env: ARM_CLIENT_SECRET
+
+parameters:
+  - name: tre_id
+    type: string
+    description: "The ID of the parent TRE instance e.g., mytre-dev-3142"
+  - name: id
+    type: string
+    description: "Resource ID"
+  - name: tfstate_resource_group_name
+    type: string
+    description: "Resource group containing the Terraform state storage account"
+  - name: tfstate_storage_account_name
+    type: string
+    description: "The name of the Terraform state storage account"
+  - name: tfstate_container_name
+    type: string
+    default: "tfstate"
+    description: "The name of the Terraform state storage container"
+  - name: smtp_server_address
+    env: SMTP_SERVER_ADDRESS
+    type: string
+  - name: smtp_username
+    env: SMTP_USERNAME
+    type: string
+  - name: smtp_password
+    env: SMTP_PASSWORD
+    type: string
+  - name: smtp_from_email
+    env: SMTP_FROM_EMAIL
+    type: string
+
+mixins:
+  - exec
+  - terraform:
+      clientVersion: 1.1.5
+
+install:
+  - terraform:
+      description: "Deploy shared service"
+      input: false
+      vars:
+        tre_id: "{{ bundle.parameters.tre_id }}"
+        tre_resource_id: "{{ bundle.parameters.id }}"
+        smtp_server_address: "{{ bundle.parameters.smtp_server_address }}"
+        smtp_username: "{{ bundle.parameters.smtp_username }}"
+        smtp_password: "{{ bundle.parameters.smtp_password }}"
+        smtp_from_email: "{{ bundle.parameters.smtp_from_email }}"
+      backendConfig:
+        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
+        container_name: "{{ bundle.parameters.tfstate_container_name }}"
+        key: "{{ bundle.parameters.tre_id }}-shared-airlock-notifier"
+
+upgrade:
+  - terraform:
+      description: "Upgrade shared service"
+      input: false
+      vars:
+        tre_id: "{{ bundle.parameters.tre_id }}"
+        tre_resource_id: "{{ bundle.parameters.id }}"
+        smtp_server_address: "{{ bundle.parameters.smtp_server_address }}"
+        smtp_username: "{{ bundle.parameters.smtp_username }}"
+        smtp_password: "{{ bundle.parameters.smtp_password }}"
+        smtp_from_email: "{{ bundle.parameters.smtp_from_email }}"
+      backendConfig:
+        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
+        container_name: "{{ bundle.parameters.tfstate_container_name }}"
+        key: "{{ bundle.parameters.tre_id }}-shared-airlock-notifier"
+
+uninstall:
+  - terraform:
+      description: "Tear down shared service"
+      input: false
+      vars:
+        tre_id: "{{ bundle.parameters.tre_id }}"
+        tre_resource_id: "{{ bundle.parameters.id }}"
+        smtp_server_address: "{{ bundle.parameters.smtp_server_address }}"
+        smtp_username: "{{ bundle.parameters.smtp_username }}"
+        smtp_password: "{{ bundle.parameters.smtp_password }}"
+        smtp_from_email: "{{ bundle.parameters.smtp_from_email }}"
+      backendConfig:
+        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
+        container_name: "{{ bundle.parameters.tfstate_container_name }}"
+        key: "{{ bundle.parameters.tre_id }}-shared-airlock-notifier"
