@@ -1,3 +1,4 @@
+from distutils.util import strtobool
 import logging
 
 import azure.functions as func
@@ -17,13 +18,13 @@ def main(msg: func.ServiceBusMessage,
     logging.info('Python ServiceBus queue trigger processed message: %s', body)
 
     try:
-        enable_malware_scanning = os.environ["ENABLE_MALWARE_SCANNING"]
+        enable_malware_scanning = strtobool(os.environ["ENABLE_MALWARE_SCANNING"])
     except KeyError as e:
         logging.error("environment variable 'ENABLE_MALWARE_SCANNING' does not exists. cannot continue.")
         raise e
 
     # Sanity
-    if enable_malware_scanning is False:
+    if not enable_malware_scanning:
         # A scan result arrived despite the fact malware scanning should be disabled. This may result in unexpected behaviour.
         # Raise an exception and stop
         error_msg = "Malware scanning is disabled, however a malware scan result arrived. Ignoring it."
