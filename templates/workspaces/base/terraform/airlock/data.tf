@@ -1,6 +1,10 @@
-
 data "azurerm_user_assigned_identity" "airlock_id" {
   name                = "id-airlock-${var.tre_id}"
+  resource_group_name = "rg-${var.tre_id}"
+}
+
+data "azurerm_user_assigned_identity" "api_id" {
+  name                = "id-api-${var.tre_id}"
   resource_group_name = "rg-${var.tre_id}"
 }
 

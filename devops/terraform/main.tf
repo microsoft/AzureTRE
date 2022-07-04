@@ -9,6 +9,11 @@ resource "azurerm_resource_group" "mgmt" {
   name     = var.mgmt_resource_group_name
   location = var.location
 
+  tags = {
+    project = "Azure Trusted Research Environment"
+    source  = "https://github.com/microsoft/AzureTRE/"
+  }
+
   lifecycle { ignore_changes = [tags] }
 }
 
