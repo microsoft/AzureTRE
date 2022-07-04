@@ -1,5 +1,7 @@
 #!/bin/bash
-set -e
+set -euo pipefail
+# Use this for debug only
+# set -o xtrace
 
 function show_existing_app_usage()
 {
@@ -37,10 +39,10 @@ function get_existing_app() {
 
     existingApiApps="[]"
     if [[ -n "$appName" ]]; then
-      existingApiApps=$(az ad app list --display-name "$appName" -o json)
+      existingApiApps=$(az ad app list --display-name "$appName" -o json --only-show-errors)
     else
       if [[ -n "$appId" ]]; then
-        existingApiApps=$(az ad app list --app-id "$appId" -o json)
+        existingApiApps=$(az ad app list --app-id "$appId" -o json --only-show-errors)
       fi
     fi
 

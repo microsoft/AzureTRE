@@ -33,21 +33,21 @@ There are two mechanisms for creating Workspace Applications
 Example on how to run the script:
 
 ```bash
-./devops/scripts/aad/aad-app-reg.sh \
-    --name '<TRE_ID> - Workspace 2' \
-    --workspace \
-    --swaggerui-clientid <SWAGGER_UI_CLIENT_ID> \
+  ./devops/scripts/aad/create_workspace_application.sh \
+    --name "${TRE_ID} - workspace 11" \
     --admin-consent \
-    --automation-clientid <TEST_ACCOUNT_CLIENT_ID>
+    --ux-clientid "${SWAGGER_UI_CLIENT_ID}" \
+    --automation-clientid "${TEST_ACCOUNT_CLIENT_ID}" \
+    --application-admin-clientid "${APPLICATION_ADMIN_CLIENT_ID}"
 ```
 
 | Argument | Description |
 | -------- | ----------- |
 | `--name` | The name of the application. This will be suffixed with 'API' by the script. |
-| `--workspace` | This tells the script to create you are creating a workspace app rather than the TRE API app. |
-| `--swaggerui-clientid` | This value is one of the outputs when you first ran the script. It is mandatory if you use admin-consent. |
+| `--ux-clientid` | This value is one of the outputs when you first ran the script. It is mandatory if you use admin-consent. |
 | `--admin-consent` | Grants admin consent for the app registrations. This is required for them to function properly, but requires AAD admin privileges. |
 | `--automation-clientid` | This is an optional parameter but will grant the Automation App (created in step 1) permission to the new workspace app. |
+| `--application-admin-clientid` | This is a required parameter , and should be a client id that will be added to the Owners of the AAD Application so that it can be administered within TRE. |
 
 !!! caution
     The script will create an app password (client secret) for the workspace and tell you to copy these to the `/templates/core/.env` file. These values are only shown once, if you lose them, the script will create new secrets if run again.
