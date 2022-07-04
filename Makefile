@@ -287,17 +287,6 @@ bundle-uninstall:
 		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
 		--allow-docker-host-access --debug
 
-bundle-custom-action:
-	$(call target_title, "Performing:${ACTION} ${DIR} with Porter") \
-	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter \
-	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
-	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
-	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
-	&& cd ${DIR} && porter invoke --action ${ACTION} -p ./parameters.json \
-		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
-		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
-		--allow-docker-host-access --debug
-
 bundle-publish:
 	$(call target_title, "Publishing ${DIR} bundle with Porter") \
 	&& ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter \
@@ -348,7 +337,6 @@ firewall-install:
 nexus-install:
 	$(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
 	DIR="${MAKEFILE_DIR}/templates/shared_services/certs" BUNDLE_TYPE=shared_service PROPS="--domain_prefix nexus --cert_name nexus-ssl" \
-	&& $(MAKE) bundle-custom-action DIR=${MAKEFILE_DIR}/templates/shared_services/certs/ ACTION=generate \
 	&& $(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
   DIR=${MAKEFILE_DIR}/templates/shared_services/sonatype-nexus-vm/ BUNDLE_TYPE=shared_service
 
