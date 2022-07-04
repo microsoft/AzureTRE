@@ -170,9 +170,9 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
                                                      airlock_request_id=AIRLOCK_REQUEST_ID))
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", side_effect=CosmosResourceNotFoundError)
-    @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", side_effect=CosmosResourceNotFoundError)
-    @patch("api.routes.airlock.validate_user_is_allowed_to_access_sa")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_deployed_workspace_by_id", side_effect=EntityDoesNotExist)
+    @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object())
+    @patch("api.routes.airlock.validate_user_allowed_to_access_storage_account")
     async def test_get_airlock_container_link_no_workspace_request_found_returns_404(self, _, __, ___, app, client):
         response = await client.get(app.url_path_for(strings.API_AIRLOCK_REQUEST_LINK, workspace_id=WORKSPACE_ID,
                                                      airlock_request_id=AIRLOCK_REQUEST_ID))
