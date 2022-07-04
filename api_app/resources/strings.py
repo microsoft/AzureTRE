@@ -31,6 +31,7 @@ API_CREATE_AIRLOCK_REQUEST = "Create an airlock request"
 API_GET_AIRLOCK_REQUEST = "Get an airlock request"
 API_SUBMIT_AIRLOCK_REQUEST = "Submit an airlock request"
 API_REVIEW_AIRLOCK_REQUEST = "Review an airlock request"
+API_AIRLOCK_REQUEST_LINK = "Get a token to access airlock request"
 
 API_CREATE_WORKSPACE_TEMPLATES = "Register workspace template"
 API_GET_WORKSPACE_TEMPLATES = "Get workspace templates"
@@ -182,6 +183,10 @@ AIRLOCK_REQUEST_TYPE_EXPORT = "export"
 # Airlock Messages
 AIRLOCK_REQUEST_DOES_NOT_EXIST = "Airlock request does not exist"
 AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE = "Airlock request status change was illegal"
+AIRLOCK_REQUEST_IN_PROGRESS = "Airlock request is being processed, please try again later."
+AIRLOCK_REQUEST_IS_CANCELED = "Airlock request was cancelled."
+AIRLOCK_REQUEST_INVALID_STATUS = "Airlock request status is unknown."
+AIRLOCK_UNAUTHORIZED_TO_SA = "User is unauthorized to access airlock request files in its current status."
 
 # Deployments
 RESOURCE_STATUS_AWAITING_DEPLOYMENT_MESSAGE = "This resource is waiting to be deployed"
