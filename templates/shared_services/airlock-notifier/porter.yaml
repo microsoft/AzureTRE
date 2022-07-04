@@ -47,6 +47,7 @@ parameters:
 
 mixins:
   - exec
+  - az
   - terraform:
       clientVersion: 1.1.5
 
@@ -66,25 +67,25 @@ install:
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.tre_id }}-shared-airlock-notifier"
-#  - az:
-#      description: "az login"
-#      arguments:
-#        - login
-#      flags:
-#        identity:
-#        username: "{{ bundle.credentials.azure_client_id}}"
-#  - az:
-#      description: "Deploy logic app"
-#      arguments:
-#        - logicapp
-#        - deployment
-#        - source
-#        - config-zip
-#      flags:
-#        - name: AirlockNotifier
-#        - resource-group: "{{ bundle.parameters.tfstate_resource_group_name }}"
-#        - subscription: "73a4ea93-d914-424d-9e64-28adf397e8e3"
-#        - src LogicApp.zip
+  - az:
+      description: "az login"
+      arguments:
+        - login
+      flags:
+        identity:
+        username: "{{ bundle.credentials.azure_client_id}}"
+  - az:
+      description: "Deploy logic app"
+      arguments:
+        - logicapp
+        - deployment
+        - source
+        - config-zip
+      flags:
+        - name: AirlockNotifier
+        - resource-group: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        - subscription: "73a4ea93-d914-424d-9e64-28adf397e8e3" # Fetch from vars
+        - src LogicApp.zip
 
 upgrade:
   - terraform:
