@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 import pytest
-from services.airlock import validate_user_is_allowed_to_access_sa, get_required_permission
+from services.airlock import validate_user_allowed_to_access_storage_account, get_required_permission
 from models.domain.airlock_resource import AirlockResourceType
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType
 from tests_ma.test_api.conftest import create_workspace_owner_user, create_workspace_researcher_user
@@ -24,7 +24,7 @@ def test_validate_user_is_allowed_to_access_sa_blocks_access_as_expected():
     ws_owner_user = create_workspace_owner_user()
     draft_airlock_request = sample_airlock_request()
     with pytest.raises(HTTPException) as ex:
-        validate_user_is_allowed_to_access_sa(
+        validate_user_allowed_to_access_storage_account(
             user=ws_owner_user,
             airlock_request=draft_airlock_request
         )
@@ -34,7 +34,7 @@ def test_validate_user_is_allowed_to_access_sa_blocks_access_as_expected():
     researcher_user = create_workspace_researcher_user()
     review_airlock_request = sample_airlock_request(AirlockRequestStatus.InReview)
     with pytest.raises(HTTPException) as ex:
-        validate_user_is_allowed_to_access_sa(
+        validate_user_allowed_to_access_storage_account(
             user=researcher_user,
             airlock_request=review_airlock_request
         )
@@ -47,14 +47,14 @@ def test_validate_user_is_allowed_to_access_grants_access_to_user_with_a_valid_r
     ws_owner_user = create_workspace_owner_user()
     draft_airlock_request = sample_airlock_request(AirlockRequestStatus.InReview)
 
-    assert (validate_user_is_allowed_to_access_sa(
+    assert (validate_user_allowed_to_access_storage_account(
         user=ws_owner_user,
         airlock_request=draft_airlock_request) is None)
 
     researcher_user = create_workspace_researcher_user()
     review_airlock_request = sample_airlock_request(AirlockRequestStatus.Approved)
     assert (
-        validate_user_is_allowed_to_access_sa(
+        validate_user_allowed_to_access_storage_account(
             user=researcher_user,
             airlock_request=review_airlock_request
         ) is None)

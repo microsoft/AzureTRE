@@ -20,8 +20,8 @@ from services.authentication import get_current_workspace_owner_or_researcher_us
 from .airlock_resource_helpers import save_airlock_review, save_and_publish_event_airlock_request, \
     update_status_and_publish_event_airlock_request, RequestAccountDetails
 
-from services.airlock import get_storage_management_client, validate_user_is_allowed_to_access_sa, \
-    get_account_and_rg_by_request, get_airlock_request_container_sas_token
+from services.airlock import get_storage_management_client, validate_user_allowed_to_access_storage_account, \
+    get_account_and_rg_by_request, get_airlock_request_container_sas_token, validate_request_status
 
 airlock_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user)])
 storage_client = get_storage_management_client()
@@ -72,7 +72,8 @@ async def create_airlock_review(airlock_review_input: AirlockReviewInCreate, air
 async def get_airlock_container_link(airlock_request=Depends(get_airlock_request_by_id_from_path),
                                      workspace=Depends(get_deployed_workspace_by_id_from_path),
                                      user=Depends(get_current_workspace_owner_or_researcher_user)) -> AirlockRequestTokenInResponse:
-    validate_user_is_allowed_to_access_sa(user, airlock_request)
+    validate_user_allowed_to_access_storage_account(user, airlock_request)
+    validate_request_status(airlock_request)
     request_account_details: RequestAccountDetails = get_account_and_rg_by_request(airlock_request, workspace)
     container_url = get_airlock_request_container_sas_token(storage_client, request_account_details, airlock_request)
     return AirlockRequestTokenInResponse(container_url=container_url)

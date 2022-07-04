@@ -178,6 +178,20 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
                                                      airlock_request_id=AIRLOCK_REQUEST_ID))
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
+    @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id",
+           return_value=sample_airlock_request_object(status=AirlockRequestStatus.ApprovalInProgress))
+    async def test_get_airlock_container_link_in_progress_request_returns_400(self, _, app, client):
+        response = await client.get(app.url_path_for(strings.API_AIRLOCK_REQUEST_LINK, workspace_id=WORKSPACE_ID,
+                                                     airlock_request_id=AIRLOCK_REQUEST_ID))
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id",
+           return_value=sample_airlock_request_object(status=AirlockRequestStatus.Cancelled))
+    async def test_get_airlock_container_link_cancelled_request_returns_400(self, _, app, client):
+        response = await client.get(app.url_path_for(strings.API_AIRLOCK_REQUEST_LINK, workspace_id=WORKSPACE_ID,
+                                                     airlock_request_id=AIRLOCK_REQUEST_ID))
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id",
            return_value=sample_workspace(WORKSPACE_ID))
     @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object(status=AirlockRequestStatus.Approved))
@@ -187,7 +201,7 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
         response = await client.get(app.url_path_for(strings.API_AIRLOCK_REQUEST_LINK, workspace_id=WORKSPACE_ID,
                                                      airlock_request_id=AIRLOCK_REQUEST_ID))
         assert response.status_code == status.HTTP_200_OK
-        assert response.json()["container_url"] == get_airlock_request_container_sas_token_mock.return_value
+        assert response.json()["containerUrl"] == get_airlock_request_container_sas_token_mock.return_value
 
 
 class TestAirlockRoutesThatRequireOwnerRights():

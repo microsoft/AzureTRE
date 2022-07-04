@@ -40,6 +40,9 @@ def get_account_and_rg_by_request(airlock_request: AirlockRequest, workspace: Wo
         elif airlock_request.status == AirlockRequestStatus.Rejected:
             return RequestAccountDetails(constants.STORAGE_ACCOUNT_NAME_IMPORT_REJECTED.format(tre_id),
                                          constants.CORE_RESOURCE_GROUP_NAME.format(tre_id))
+        elif airlock_request.status == AirlockRequestStatus.Blocked:
+            return RequestAccountDetails(constants.STORAGE_ACCOUNT_NAME_IMPORT_BLOCKED.format(tre_id),
+                                         constants.CORE_RESOURCE_GROUP_NAME.format(tre_id))
     else:
         if airlock_request.status == AirlockRequestStatus.Draft:
             return RequestAccountDetails(constants.STORAGE_ACCOUNT_NAME_EXPORT_INTERNAL.format(short_workspace_id),
@@ -56,15 +59,29 @@ def get_account_and_rg_by_request(airlock_request: AirlockRequest, workspace: Wo
         elif airlock_request.status == AirlockRequestStatus.Rejected:
             return RequestAccountDetails(constants.STORAGE_ACCOUNT_NAME_EXPORT_REJECTED.format(short_workspace_id),
                                          constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, short_workspace_id))
+        elif airlock_request.status == AirlockRequestStatus.Blocked:
+            return RequestAccountDetails(constants.STORAGE_ACCOUNT_NAME_EXPORT_BLOCKED.format(short_workspace_id),
+                                         constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, short_workspace_id))
 
 
-def validate_user_is_allowed_to_access_sa(user: User, airlock_request: AirlockRequest):
+def validate_user_allowed_to_access_storage_account(user: User, airlock_request: AirlockRequest):
     if "WorkspaceResearcher" not in user.roles and airlock_request.status != AirlockRequestStatus.InReview:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.AIRLOCK_OWNER_UNAUTHORIZED_TO_SA)
 
     if "WorkspaceOwner" not in user.roles and airlock_request.status == AirlockRequestStatus.InReview:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.AIRLOCK_RESEARCHER_UNAUTHORIZED_TO_SA)
     return
+
+
+def validate_request_status(airlock_request: AirlockRequest):
+    if airlock_request.status in [AirlockRequestStatus.ApprovalInProgress,
+                                  AirlockRequestStatus.RejectionInProgress,
+                                  AirlockRequestStatus.BlockingInProgress]:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_IN_PROGRESS)
+    elif airlock_request.status == AirlockRequestStatus.Cancelled:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_IS_CANCELED)
+    else:
+        return
 
 
 def get_storage_account_key(storage_client: StorageManagementClient, request_account_details: RequestAccountDetails):

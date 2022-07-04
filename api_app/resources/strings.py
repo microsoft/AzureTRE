@@ -183,6 +183,9 @@ AIRLOCK_REQUEST_TYPE_EXPORT = "export"
 # Airlock Messages
 AIRLOCK_REQUEST_DOES_NOT_EXIST = "Airlock request does not exist"
 AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE = "Airlock request status change was illegal"
+AIRLOCK_REQUEST_IN_PROGRESS = "Airlock request is being processed, please try again later."
+AIRLOCK_REQUEST_IS_CANCELED = "Airlock request was cancelled."
+AIRLOCK_REQUEST_INVALID_STATUS = "Airlock request status is unknown."
 AIRLOCK_OWNER_UNAUTHORIZED_TO_SA = "Workspace owner is unathorized to access airlock request files in its current status."
 AIRLOCK_RESEARCHER_UNAUTHORIZED_TO_SA = "Workspace researcher is unathorized to access airlock request files in its current status."
 
