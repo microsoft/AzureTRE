@@ -32,14 +32,17 @@ This identity should only be used by the API Application.
 Example on how to run the script:
 
 ```bash
-./devops/scripts/aad/aad-app-reg.sh \
+./devops/scripts/aad/create_api_application.sh \
     --name <TRE_ID> \
-    --admin-consent
+    --tre-url "https://<TRE_ID>.<LOCATION>.cloudapp.azure.com" \
+    --admin-consent \
+    --automation-clientid <TEST_ACCOUNT_CLIENT_ID>
 ```
 Below is a sample where `TRE_ID` has value `mytre`:
 
   ```bash
-  ./devops/scripts/aad/aad-app-reg.sh --name mytre --admin-consent
+  ./devops/scripts/aad/create_api_application.sh --name mytre --admin-consent \
+  --tre-url "https://mytre_6.westeurope.cloudapp.azure.com" --automation-clientid 176c2f5d-xxxx-xxxx-xxxx-68a5c30f354d
   ```
 
 | Argument | Description |
@@ -47,16 +50,14 @@ Below is a sample where `TRE_ID` has value `mytre`:
 | `--name` | The prefix of the name of the app registrations. `TRE` will give you `TRE API`. |
 | `--tre-url` | Used to construct auth redirection URLs for the UI and Swagger app. Use the values of the [environment variables](../environment-variables.md) `TRE_ID` and `LOCATION` in the URL. Reply URL for the localhost, `http://localhost:8000/api/docs/oauth2-redirect`, will be added by default. |
 | `--admin-consent` | Grants admin consent for the app registrations. This is required for them to function properly, but requires AAD admin privileges. |
-| `--automation-account` | This is an optional parameter but will create an application with test users with permission to use the `TRE API` and `TRE Swagger UI` |
+| `--automation-clientid` | This is an optional parameter but will grant TREAdmin permission to the Service Principal of the Automation Admin.|
 
 
 !!! caution
     The script will create an app password (client secret) for the **TRE API** app and the **Automation App** and tell you to copy these to the `/templates/core/.env` file. These values are only shown once, if you lose them, the script will create new secrets if run again.
 
 
-You can create an automation account which will aid your development flow, if you don't want to do this you can omit the `--automation-account` switch.
-
-If your AAD Admin is uncomfortable allowing an Application to have the permissions to create other applications then remove the `--read-write-all-permission` from the command.
+You can create an automation account which will aid your development flow, if you don't want to do this you can omit the `--automation-clientid` switch.
 
 You can run the script without the `--admin-consent` and ask your admin to grant consent. If you don't have permissions and just want to create a development environment then skip this step and see the steps in the "Using a separate Azure Active Directory tenant) below.
 

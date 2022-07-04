@@ -23,6 +23,10 @@ on:  # yamllint disable-line rule:truthy
         type: string
         default: ""
         required: false
+      environmentName:
+        description: The name of the Github Action's environment this will deploy into
+        type: string
+        required: true
     secrets:
       AAD_TENANT_ID:
         description: ""
@@ -123,15 +127,16 @@ jobs:
   deploy_management:
     name: Deploy Management
     runs-on: ubuntu-latest
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     steps:
       - name: Show inputs
         run: |
           echo "Inputs"
           echo "======"
-          echo "prRef     : ${{ inputs.prRef }}"
-          echo "prRHeadSha: ${{ inputs.prHeadSha }}"
-          echo "ciGitRef  : ${{ inputs.ciGitRef }}"
+          echo "prRef       : ${{ inputs.prRef }}"
+          echo "prRHeadSha  : ${{ inputs.prHeadSha }}"
+          echo "ciGitRef    : ${{ inputs.ciGitRef }}"
+          echo "environment : ${{ inputs.environmentName }}"
 
       - name: Checkout
         uses: actions/checkout@v2
@@ -211,7 +216,7 @@ jobs:
     name: Build Core Docker Images
     runs-on: ubuntu-latest
     needs: [deploy_management]
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     strategy:
       fail-fast: true
       matrix:
@@ -245,7 +250,7 @@ jobs:
     name: Start TRE
     runs-on: ubuntu-latest
     needs: [deploy_management]
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -292,7 +297,7 @@ jobs:
     name: Deploy TRE
     runs-on: ubuntu-latest
     needs: [build_core_images, start_tre]
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -397,7 +402,7 @@ jobs:
              BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm"}
           - {BUNDLE_TYPE: "user_resource",
              BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-linuxvm"}
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -435,7 +440,7 @@ jobs:
              BUNDLE_DIR: "./templates/shared_services/sonatype-nexus/"}
           - {BUNDLE_TYPE: "shared_service",
              BUNDLE_DIR: "./templates/shared_services/gitea/"}
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -465,7 +470,7 @@ jobs:
     name: Build Additional Docker Images
     runs-on: ubuntu-latest
     needs: [deploy_management]
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     strategy:
       fail-fast: true
       matrix:
@@ -508,7 +513,7 @@ jobs:
              BUNDLE_DIR: "./templates/shared_services/sonatype-nexus"}
           - {BUNDLE_TYPE: "shared_service",
              BUNDLE_DIR: "./templates/shared_services/gitea"}
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -564,7 +569,7 @@ jobs:
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/mlflow"}
 
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -609,7 +614,7 @@ jobs:
           - {BUNDLE_TYPE: "user_resource",
              BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-linuxvm",
              WORKSPACE_SERVICE_NAME: "tre-service-guacamole"}
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -645,7 +650,7 @@ jobs:
     name: Deploy shared services
     runs-on: ubuntu-latest
     needs: [register_shared_bundles, deploy_tre]
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -712,7 +717,7 @@ jobs:
   e2e_tests_smoke:
     name: "Run E2E Tests (Smoke)"
     runs-on: ubuntu-latest
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     needs: [deploy_shared_services, register_bundles, build_additional_images]
     timeout-minutes: 10
     steps:
@@ -778,7 +783,7 @@ jobs:
     name: "Run E2E Tests"
     if: ${{ inputs.e2eTestsCustomSelector != '' }}
     runs-on: ubuntu-latest
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     needs: [deploy_shared_services, register_bundles, register_user_resource_bundles, build_additional_images]
     timeout-minutes: 120
     steps:
@@ -831,7 +836,7 @@ jobs:
     needs: [e2e_tests_smoke, e2e_tests_custom]
     runs-on: ubuntu-latest
     if: ${{ always() && (github.ref == 'refs/heads/main' && inputs.prRef == '') }}
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     steps:
       - uses: technote-space/workflow-conclusion-action@v2
 
