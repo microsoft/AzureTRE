@@ -331,9 +331,9 @@ resource "azurerm_private_endpoint" "eg_scan_result" {
 
 # Custom topic (for airlock notifications)
 resource "azurerm_eventgrid_topic" "airlock_notification" {
-  name                = local.notification_topic_name
-  location            = var.location
-  resource_group_name = var.resource_group_name
+  name                          = local.notification_topic_name
+  location                      = var.location
+  resource_group_name           = var.resource_group_name
   public_network_access_enabled = false
 
   identity {
