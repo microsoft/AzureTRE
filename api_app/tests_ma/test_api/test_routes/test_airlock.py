@@ -164,7 +164,7 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", side_effect=CosmosResourceNotFoundError)
-    @patch("api.routes.airlock.validate_user_is_allowed_to_access_sa")
+    @patch("api.routes.airlock.validate_user_allowed_to_access_storage_account")
     async def test_get_airlock_container_link_no_airlock_request_found_returns_404(self, _, __, app, client):
         response = await client.get(app.url_path_for(strings.API_AIRLOCK_REQUEST_LINK, workspace_id=WORKSPACE_ID,
                                                      airlock_request_id=AIRLOCK_REQUEST_ID))
@@ -195,7 +195,7 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id",
            return_value=sample_workspace(WORKSPACE_ID))
     @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object(status=AirlockRequestStatus.Approved))
-    @patch("api.routes.airlock.validate_user_is_allowed_to_access_sa")
+    @patch("api.routes.airlock.validate_user_allowed_to_access_storage_account")
     @patch("api.routes.airlock.get_airlock_request_container_sas_token", return_value="valid-sas-token")
     async def test_get_airlock_container_link_returned_as_expected(self, get_airlock_request_container_sas_token_mock, __, ___, ____, app, client):
         response = await client.get(app.url_path_for(strings.API_AIRLOCK_REQUEST_LINK, workspace_id=WORKSPACE_ID,

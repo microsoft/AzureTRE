@@ -76,4 +76,4 @@ async def get_airlock_container_link(airlock_request=Depends(get_airlock_request
     validate_request_status(airlock_request)
     request_account_details: RequestAccountDetails = get_account_and_rg_by_request(airlock_request, workspace)
     container_url = get_airlock_request_container_sas_token(storage_client, request_account_details, airlock_request)
-    return AirlockRequestTokenInResponse(container_url=container_url)
+    return AirlockRequestTokenInResponse(containerUrl=container_url)
