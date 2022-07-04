@@ -87,6 +87,7 @@ async def test_receiving_good_message(app, sb_client, logging_mock, airlock_requ
     eg_client().send = AsyncMock()
     expected_airlock_request = sample_airlock_request()
     airlock_request_repo().get_airlock_request_by_id.return_value = expected_airlock_request
+    airlock_request_repo().update_airlock_request_status.return_value = sample_airlock_request(status=AirlockRequestStatus.InReview)
     await receive_step_result_message_and_update_status(app)
 
     airlock_request_repo().get_airlock_request_by_id.assert_called_once_with(test_sb_step_result_message["data"]["request_id"])
