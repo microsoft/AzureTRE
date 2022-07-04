@@ -3,7 +3,7 @@ name: tre-shared-service-airlock-notifier
 version: 0.0.1
 description: "A shared service notifying on Airlock Operations"
 registry: azuretre
-#dockerfile: Dockerfile.tmpl # Override and install az extension
+dockerfile: Dockerfile.tmpl
 
 credentials:
   - name: azure_tenant_id
@@ -66,6 +66,25 @@ install:
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.tre_id }}-shared-airlock-notifier"
+#  - az:
+#      description: "az login"
+#      arguments:
+#        - login
+#      flags:
+#        identity:
+#        username: "{{ bundle.credentials.azure_client_id}}"
+#  - az:
+#      description: "Deploy logic app"
+#      arguments:
+#        - logicapp
+#        - deployment
+#        - source
+#        - config-zip
+#      flags:
+#        - name: AirlockNotifier
+#        - resource-group: "{{ bundle.parameters.tfstate_resource_group_name }}"
+#        - subscription: "73a4ea93-d914-424d-9e64-28adf397e8e3"
+#        - src LogicApp.zip
 
 upgrade:
   - terraform:
