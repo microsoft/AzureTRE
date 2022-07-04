@@ -9,7 +9,7 @@ from api.dependencies.workspaces import get_workspace_by_id_from_path, get_deplo
 from api.dependencies.airlock import get_airlock_request_by_id_from_path
 from models.domain.airlock_request import AirlockRequestStatus
 from db.repositories.airlock_reviews import AirlockReviewRepository
-from models.schemas.airlock_request_token import AirlockRequestTokenInResponse
+from models.schemas.airlock_request_url import AirlockRequestTokenInResponse
 from models.schemas.airlock_review import AirlockReviewInCreate, AirlockReviewInResponse
 
 from db.repositories.airlock_requests import AirlockRequestRepository
@@ -69,8 +69,8 @@ async def create_airlock_review(airlock_review_input: AirlockReviewInCreate, air
                               status_code=status.HTTP_200_OK, response_model=AirlockRequestTokenInResponse,
                               name=strings.API_AIRLOCK_REQUEST_LINK,
                               dependencies=[Depends(get_current_workspace_owner_or_researcher_user)])
-async def get_airlock_container_link(airlock_request=Depends(get_airlock_request_by_id_from_path),
-                                     workspace=Depends(get_deployed_workspace_by_id_from_path),
+async def get_airlock_container_link(workspace=Depends(get_deployed_workspace_by_id_from_path),
+                                     airlock_request=Depends(get_airlock_request_by_id_from_path),
                                      user=Depends(get_current_workspace_owner_or_researcher_user)) -> AirlockRequestTokenInResponse:
     validate_user_allowed_to_access_storage_account(user, airlock_request)
     validate_request_status(airlock_request)

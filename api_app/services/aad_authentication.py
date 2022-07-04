@@ -211,12 +211,6 @@ class AzureADAuthorization(AccessService):
         graph_data = requests.get(user_endpoint, headers=self._get_auth_header(msgraph_token)).json()
         return graph_data
 
-    def _get_app_all_role_assignments_graph_data(self, app_obj_id: str) -> dict:
-        msgraph_token = self._get_msgraph_token()
-        user_endpoint = f"https://graph.microsoft.com/beta/servicePrincipals/{app_obj_id}/appRoleAssignedTo"
-        graph_data = requests.get(user_endpoint, headers=self._get_auth_header(msgraph_token)).json()
-        return graph_data
-
     def extract_workspace_auth_information(self, data: dict) -> dict:
         if "client_id" not in data:
             raise AuthConfigValidationError(strings.ACCESS_PLEASE_SUPPLY_CLIENT_ID)

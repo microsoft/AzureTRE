@@ -186,8 +186,7 @@ AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE = "Airlock request status change was illeg
 AIRLOCK_REQUEST_IN_PROGRESS = "Airlock request is being processed, please try again later."
 AIRLOCK_REQUEST_IS_CANCELED = "Airlock request was cancelled."
 AIRLOCK_REQUEST_INVALID_STATUS = "Airlock request status is unknown."
-AIRLOCK_OWNER_UNAUTHORIZED_TO_SA = "Workspace owner is unathorized to access airlock request files in its current status."
-AIRLOCK_RESEARCHER_UNAUTHORIZED_TO_SA = "Workspace researcher is unathorized to access airlock request files in its current status."
+AIRLOCK_UNAUTHORIZED_TO_SA = "User is unauthorized to access airlock request files in its current status."
 
 # Deployments
 RESOURCE_STATUS_AWAITING_DEPLOYMENT_MESSAGE = "This resource is waiting to be deployed"

@@ -66,10 +66,10 @@ def get_account_and_rg_by_request(airlock_request: AirlockRequest, workspace: Wo
 
 def validate_user_allowed_to_access_storage_account(user: User, airlock_request: AirlockRequest):
     if "WorkspaceResearcher" not in user.roles and airlock_request.status != AirlockRequestStatus.InReview:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.AIRLOCK_OWNER_UNAUTHORIZED_TO_SA)
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.AIRLOCK_UNAUTHORIZED_TO_SA)
 
     if "WorkspaceOwner" not in user.roles and airlock_request.status == AirlockRequestStatus.InReview:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.AIRLOCK_RESEARCHER_UNAUTHORIZED_TO_SA)
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.AIRLOCK_UNAUTHORIZED_TO_SA)
     return
 
 
@@ -91,9 +91,9 @@ def get_storage_account_key(storage_client: StorageManagementClient, request_acc
 
 def get_required_permission(airlock_request: AirlockRequest) -> ContainerSasPermissions:
     if airlock_request.status == AirlockRequestStatus.Draft:
-        return ContainerSasPermissions(read=True, write=True)
+        return ContainerSasPermissions(read=True, write=True, list=True)
     else:
-        return ContainerSasPermissions(read=True)
+        return ContainerSasPermissions(read=True, list=True)
 
 
 def get_airlock_request_container_sas_token(storage_client: StorageManagementClient,
