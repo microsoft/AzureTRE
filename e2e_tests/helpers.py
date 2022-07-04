@@ -58,13 +58,16 @@ async def get_shared_service_id_by_name(template_name: str, verify, token) -> Op
         assert (response.status_code == status.HTTP_200_OK), "Request to get shared services failed"
 
         shared_service_list = response.json()["sharedServices"]
-        matching_shared_services = [
-            service for service in shared_service_list
-            if service["templateName"] == template_name and service["deploymentStatus"] == "deployed"]
-        if len(matching_shared_services) == 0:
-            return None
-        assert len(matching_shared_services) == 1, f"There can be at most one deployed shared service with template name {template_name}"
-        return matching_shared_services[0]
+
+        # sort the list by most recently updated and pick the first one
+        shared_service_list.sort(reverse=True, key=lambda s: s['updatedWhen'])
+        matching_shared_service = None
+        for service in shared_service_list:
+            if service["templateName"] == template_name:
+                matching_shared_service = service
+                break
+
+        return matching_shared_service
 
 
 async def ping_guacamole_workspace_service(workspace_id, workspace_service_id, token, verify) -> None:
