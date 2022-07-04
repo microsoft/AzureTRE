@@ -7,6 +7,7 @@ from pydantic import ValidationError, parse_obj_as
 
 from api.dependencies.database import get_db_client
 from api.routes.resource_helpers import get_timestamp
+from models.domain.request_action import RequestAction
 from db.repositories.resource_templates import ResourceTemplateRepository
 from service_bus.helpers import default_credentials, send_deployment_message, update_resource_for_step
 from db.repositories.operations import OperationRepository
@@ -47,42 +48,6 @@ async def receive_message():
                         await receiver.complete_message(msg)
 
 
-def update_step_status(step: OperationStep, message: DeploymentStatusUpdateMessage) -> OperationStep:
-    """Take an operation step and updates it with the message contents
-
-    Args:
-        step ([OperationStep]): Operation step representing a document to update
-        message ([DeploymentStatusUpdateMessage]): Message which contains the updated information
-
-    Returns:
-        [OperationStep]: Updated step object to persist
-    """
-    previous_state = step.status
-    new_state = message.status
-
-    # Cannot change terminal states
-    terminal_states = set([Status.DeletingFailed, Status.Deleted, Status.ActionSucceeded, Status.ActionFailed])
-    if previous_state in terminal_states:
-        return step
-
-    # Can only transition from deployed(deleting, failed) to deleted or failed to delete.
-    states_that_can_only_transition_to_deleted = set([Status.Failed, Status.Deployed, Status.Deleting])
-    deletion_states = set([Status.Deleted, Status.DeletingFailed])
-    if previous_state in states_that_can_only_transition_to_deleted and new_state not in deletion_states:
-        return step
-
-    # can only transition from invoking_action to action_succeeded or action_failed
-    action_end_states = set([Status.ActionSucceeded, Status.ActionFailed])
-    if previous_state == Status.InvokingAction and new_state not in action_end_states:
-        return step
-
-    step.status = message.status
-    step.message = message.message
-    step.updatedWhen = get_timestamp()
-
-    return step
-
-
 def update_overall_operation_status(operation: Operation, step: OperationStep, is_last_step: bool):
 
     operation.updatedWhen = get_timestamp()
@@ -93,16 +58,42 @@ def update_overall_operation_status(operation: Operation, step: OperationStep, i
         operation.message = step.message
         return
 
-    operation.status = Status.PipelineDeploying
-    operation.message = "Multi step pipeline deploying. See steps for details."
+    operation.status = Status.PipelineRunning
+    operation.message = "Multi step pipeline running. See steps for details."
 
     if step.is_failure():
-        operation.status = Status.PipelineFailed
-        operation.message = f"Error completing step {step.stepId}"
+        operation.status = get_failure_status_for_action(operation.action)
+        operation.message = f"Multi step pipeline failed on step {step.stepId}"
 
     if step.is_success() and is_last_step:
-        operation.status = Status.PipelineSucceeded
-        operation.message = "Pipeline deployment completed successfully"
+        operation.status = get_success_status_for_action(operation.action)
+        operation.message = "Multi step pipeline completed successfully"
+
+
+def get_success_status_for_action(action: RequestAction):
+    status = Status.ActionSucceeded
+
+    if action == RequestAction.Install:
+        status = Status.Deployed
+    elif action == RequestAction.UnInstall:
+        status = Status.Deleted
+    elif action == RequestAction.Upgrade:
+        status = Status.Updated
+
+    return status
+
+
+def get_failure_status_for_action(action: RequestAction):
+    status = Status.ActionFailed
+
+    if action == RequestAction.Install:
+        status = Status.DeploymentFailed
+    elif action == RequestAction.UnInstall:
+        status = Status.DeletingFailed
+    elif action == RequestAction.Upgrade:
+        status = Status.UpdatingFailed
+
+    return status
 
 
 def create_updated_resource_document(resource: dict, message: DeploymentStatusUpdateMessage):
@@ -145,7 +136,9 @@ async def update_status_in_database(resource_repo: ResourceRepository, operation
             raise f"Error finding step {message.stepId} in operation {message.operationId}"
 
         # update the step status
-        update_step_status(step_to_update, message)
+        step_to_update.status = message.status
+        step_to_update.message = message.message
+        step_to_update.updatedWhen = get_timestamp()
 
         # update the overall headline operation status
         update_overall_operation_status(operation, step_to_update, is_last_step)
@@ -178,7 +171,7 @@ async def update_status_in_database(resource_repo: ResourceRepository, operation
                 operation_step=next_step,
                 resource_repo=resource_repo,
                 resource_template_repo=resource_template_repo,
-                primary_resource=resource_repo.get_resource_by_id(resource_id),  # need to get the resource again as it has been updated
+                primary_resource=resource_repo.get_resource_by_id(operation.resourceId),  # need to get the resource again as it has been updated
                 resource_to_update_id=next_step.resourceId,
                 primary_action=operation.action,
                 user=operation.user)

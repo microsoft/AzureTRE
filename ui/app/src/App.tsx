@@ -108,9 +108,8 @@ export const App: React.FunctionComponent = () => {
                               setRoles: (roles: Array<string>) => { console.warn("Workspace roles", roles); setWorkspaceRoles(roles) },
                               workspace: selectedWorkspace,
                               setWorkspace: (w: Workspace) => { console.warn("Workspace set", w); setSelectedWorkspace(w) },
-                              workspaceClientId: selectedWorkspace.properties?.scope_id.replace("api://", "")
+                              workspaceClientId: selectedWorkspace.properties?.client_id
                             }}>
-
                               <WorkspaceProvider />
                             </WorkspaceContext.Provider>
                           } />

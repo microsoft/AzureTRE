@@ -5,8 +5,8 @@ from resources import strings
 
 
 class AirlockReviewDecision(str, Enum):
-    Approved = strings.AIRLOCK_RESOURCE_STATUS_APPROVED
-    Rejected = strings.AIRLOCK_RESOURCE_STATUS_REJECTED
+    Approved = strings.AIRLOCK_RESOURCE_STATUS_APPROVAL_INPROGRESS
+    Rejected = strings.AIRLOCK_RESOURCE_STATUS_REJECTION_INPROGRESS
 
 
 class AirlockReview(AirlockResource):

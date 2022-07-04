@@ -267,7 +267,7 @@ bundle-install: bundle-check-params
 # We remove arm_use_msi on both sides since it shouldn't take effect locally anyway.
 bundle-check-params:
 	$(call target_title, "Checking bundle parameters in ${DIR}") \
-	&& . ./devops/scripts/check_dependencies.sh nodocker,porter \
+	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,porter \
 	&& cd ${DIR} \
 	&& if [ ! -f "parameters.json" ]; then echo "Error - please create a parameters.json file."; exit 1; fi \
 	&& if ! porter explain -ojson > /dev/null; then echo "Error - porter explain issue!"; exit 1; fi \
@@ -455,4 +455,4 @@ db-migrate: api-healthcheck
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/templates/core/private.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/get_access_token.sh \
-	&& . ${MAKEFILE_DIR}/devops/scripts/migrate_state_store.sh --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}"
+	&& . ${MAKEFILE_DIR}/devops/scripts/migrate_state_store.sh --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}" --insecure
