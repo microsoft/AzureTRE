@@ -1,8 +1,3 @@
-data "azurerm_cosmosdb_account" "tre-db-account" {
-  name                = "cosmos-${var.tre_id}"
-  resource_group_name = var.resource_group_name
-}
-
 data "azurerm_container_registry" "mgmt_acr" {
   name                = var.mgmt_acr_name
   resource_group_name = var.mgmt_resource_group_name
@@ -32,12 +27,6 @@ resource "azurerm_role_assignment" "servicebus_sender" {
 resource "azurerm_role_assignment" "servicebus_receiver" {
   scope                = var.airlock_servicebus.id
   role_definition_name = "Azure Service Bus Data Receiver"
-  principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
-}
-
-resource "azurerm_role_assignment" "cosmos_contributor" {
-  scope                = data.azurerm_cosmosdb_account.tre-db-account.id
-  role_definition_name = "Contributor"
   principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
 }
 
