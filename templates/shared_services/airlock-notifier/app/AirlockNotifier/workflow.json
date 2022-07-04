@@ -58,7 +58,7 @@
           "Send_Email_(V3)": {
               "inputs": {
                   "body": {
-                      "From": "notify@mysite1.com",
+                      "From": "@parameters('smtp_from_email')",
                       "Subject": "@variables('message')",
                       "To": "@variables('recipients')"
                   },
