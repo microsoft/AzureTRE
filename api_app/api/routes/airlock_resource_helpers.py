@@ -13,6 +13,15 @@ from models.domain.authentication import User
 from resources import strings
 
 
+class RequestAccountDetails:
+    account_name: str
+    account_rg: str
+
+    def __init__(self, account_name, account_rg):
+        self.account_name = account_name
+        self.account_rg = account_rg
+
+
 async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest, airlock_request_repo: AirlockRequestRepository, user: User):
     try:
         logging.debug(f"Saving airlock request item: {airlock_request.id}")
