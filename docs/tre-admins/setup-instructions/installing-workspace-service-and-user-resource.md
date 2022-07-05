@@ -66,7 +66,7 @@ Now that we have published and registered both workspace service and user resour
 
 4. Enter the workspace_id in the `workspace_id` field.
 
-5. Paste the following payload json into the `Request body` field. Update `<WORKSPACE_SCOPE_URI>` with the Workspace AAD Application URI for the base workspace you created previously, this will be in the format `api://<GUID>` or `api://<TRE_ID>_ws_<WORKSPACE_SHORT_ID>`. Then click `Execute`. Review the server response.
+5. Paste the following payload json into the `Request body` field. Then click `Execute`. Review the server response.
 
     ```json
     {
@@ -74,7 +74,6 @@ Now that we have published and registered both workspace service and user resour
       "properties": {
         "display_name": "Virtual Desktop",
         "description": "Create virtual desktops for running research workloads",
-        "workspace_identifier_uri": "<WORKSPACE_SCOPE_URI>",
         "is_exposed_externally": true,
         "guac_disable_copy": true,
         "guac_disable_paste": true

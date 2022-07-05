@@ -81,6 +81,10 @@ output "event_grid_status_changed_topic_endpoint" {
   value = module.airlock_resources.event_grid_status_changed_topic_endpoint
 }
 
+output "event_grid_airlock_notification_topic_endpoint" {
+  value = module.airlock_resources.event_grid_airlock_notification_topic_endpoint
+}
+
 output "event_grid_status_changed_topic_resource_id" {
   value = module.airlock_resources.event_grid_status_changed_topic_resource_id
 }
