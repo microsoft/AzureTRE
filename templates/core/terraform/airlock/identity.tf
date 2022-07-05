@@ -36,6 +36,12 @@ resource "azurerm_role_assignment" "eventgrid_data_sender" {
   principal_id         = var.api_principal_id
 }
 
+resource "azurerm_role_assignment" "eventgrid_data_sender_notification" {
+  scope                = azurerm_eventgrid_topic.airlock_notification.id
+  role_definition_name = "EventGrid Data Sender"
+  principal_id         = var.api_principal_id
+}
+
 resource "azurerm_role_assignment" "sa_import_external" {
   scope                = azurerm_storage_account.sa_import_external.id
   role_definition_name = "Contributor"
