@@ -15,7 +15,7 @@ import { HttpMethod, useAuthApiCall } from '../../../hooks/useAuthApiCall';
 interface CreateUpdateResourceProps {
   isOpen: boolean,
   onClose: () => void,
-  workspaceClientId?: string,
+  workspaceApplicationIdURI?: string,
   resourceType: ResourceType,
   parentResource?: Workspace | WorkspaceService,
   onAddResource?: (r: Resource) => void,
@@ -109,7 +109,7 @@ export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceP
 
     // if an onAdd callback has been given, get the resource we just created and pass it back
     if (props.onAddResource) {
-      let resource = getResourceFromResult(await apiCall(operation.resourcePath, HttpMethod.Get, props.workspaceClientId));
+      let resource = getResourceFromResult(await apiCall(operation.resourcePath, HttpMethod.Get, props.workspaceApplicationIdURI));
       props.onAddResource(resource);
     }
   }
@@ -125,7 +125,7 @@ export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceP
         templatePath={`${templatesPath}/${selectedTemplate}`}
         resourcePath={resourcePath}
         onCreateResource={resourceCreating}
-        workspaceClientId={props.workspaceClientId}
+        workspaceApplicationIdURI={props.workspaceApplicationIdURI}
         updateResource={props.updateResource}
       />; break;
     case 'creating':

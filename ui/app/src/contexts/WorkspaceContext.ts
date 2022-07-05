@@ -6,5 +6,5 @@ export const WorkspaceContext = React.createContext({
   setRoles: (roles: Array<string>) => { },
   setWorkspace: (w: Workspace) => { },
   workspace: {} as Workspace,
-  workspaceClientId: "" as string
+  workspaceApplicationIdURI: "" as string
 });
