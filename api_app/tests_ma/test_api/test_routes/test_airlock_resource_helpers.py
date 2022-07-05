@@ -2,7 +2,8 @@ from fastapi import HTTPException, status
 import pytest
 from mock import AsyncMock, patch, MagicMock
 
-from api.routes.airlock_resource_helpers import save_airlock_review, save_and_publish_event_airlock_request, update_status_and_publish_event_airlock_request
+from api.routes.airlock_resource_helpers import save_airlock_review, save_and_publish_event_airlock_request, \
+    update_status_and_publish_event_airlock_request
 from db.repositories.airlock_reviews import AirlockReviewRepository
 from db.repositories.airlock_requests import AirlockRequestRepository
 from tests_ma.test_api.conftest import create_test_user
@@ -12,7 +13,6 @@ from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, 
 from azure.eventgrid import EventGridEvent
 
 pytestmark = pytest.mark.asyncio
-
 
 WORKSPACE_ID = "abc000d3-82da-4bfc-b6e9-9a7853ef753e"
 AIRLOCK_REQUEST_ID = "5dbc15ae-40e1-49a5-834b-595f59d626b7"
@@ -72,7 +72,8 @@ def sample_airlock_review(review_decision=AirlockReviewDecision.Approved):
 
 
 @patch("event_grid.helpers.EventGridPublisherClient", return_value=AsyncMock())
-async def test_save_and_publish_event_airlock_request_saves_item(event_grid_publisher_client_mock, airlock_request_repo_mock):
+async def test_save_and_publish_event_airlock_request_saves_item(event_grid_publisher_client_mock,
+                                                                 airlock_request_repo_mock):
     airlock_request_mock = sample_airlock_request()
     airlock_request_repo_mock.save_item = MagicMock(return_value=None)
     status_changed_event_mock = sample_status_changed_event()
@@ -89,7 +90,7 @@ async def test_save_and_publish_event_airlock_request_saves_item(event_grid_publ
     event_grid_sender_client_mock.send.assert_awaited_once()
     # Since the eventgrid object has the update time attribute which differs, we only compare the data that was sent
     actual_status_changed_event = event_grid_sender_client_mock.send.await_args[0][0][0]
-    assert(actual_status_changed_event.data == status_changed_event_mock.data)
+    assert (actual_status_changed_event.data == status_changed_event_mock.data)
 
 
 async def test_save_and_publish_event_airlock_request_raises_503_if_save_to_db_fails(airlock_request_repo_mock):
@@ -105,7 +106,8 @@ async def test_save_and_publish_event_airlock_request_raises_503_if_save_to_db_f
 
 
 @patch("event_grid.helpers.EventGridPublisherClient", return_value=AsyncMock())
-async def test_save_and_publish_event_airlock_request_raises_503_if_publish_event_fails(event_grid_publisher_client_mock, airlock_request_repo_mock):
+async def test_save_and_publish_event_airlock_request_raises_503_if_publish_event_fails(event_grid_publisher_client_mock,
+                                                                                        airlock_request_repo_mock):
     airlock_request_mock = sample_airlock_request()
     airlock_request_repo_mock.save_item = MagicMock(return_value=None)
     # When eventgrid fails, it deletes the saved request
@@ -122,7 +124,8 @@ async def test_save_and_publish_event_airlock_request_raises_503_if_publish_even
 
 
 @patch("event_grid.helpers.EventGridPublisherClient", return_value=AsyncMock())
-async def test_update_status_and_publish_event_airlock_request_updates_item(event_grid_publisher_client_mock, airlock_request_repo_mock):
+async def test_update_status_and_publish_event_airlock_request_updates_item(event_grid_publisher_client_mock,
+                                                                            airlock_request_repo_mock):
     airlock_request_mock = sample_airlock_request()
     updated_airlock_request_mock = sample_airlock_request(status=AirlockRequestStatus.Submitted)
     status_changed_event_mock = sample_status_changed_event(status="submitted")
@@ -137,12 +140,12 @@ async def test_update_status_and_publish_event_airlock_request_updates_item(even
         new_status=AirlockRequestStatus.Submitted)
 
     airlock_request_repo_mock.update_airlock_request_status.assert_called_once()
-    assert(actual_updated_airlock_request == updated_airlock_request_mock)
+    assert (actual_updated_airlock_request == updated_airlock_request_mock)
 
     event_grid_sender_client_mock.send.assert_awaited_once()
     # Since the eventgrid object has the update time attribute which differs, we only compare the data that was sent
     actual_status_changed_event = event_grid_sender_client_mock.send.await_args[0][0][0]
-    assert(actual_status_changed_event.data == status_changed_event_mock.data)
+    assert (actual_status_changed_event.data == status_changed_event_mock.data)
 
 
 async def test_update_status_and_publish_event_airlock_request_raises_400_if_status_update_invalid(airlock_request_repo_mock):
@@ -159,7 +162,8 @@ async def test_update_status_and_publish_event_airlock_request_raises_400_if_sta
 
 
 @patch("event_grid.helpers.EventGridPublisherClient", return_value=AsyncMock())
-async def test_update_status_and_publish_event_airlock_requestt_raises_503_if_publish_event_fails(event_grid_publisher_client_mock, airlock_request_repo_mock):
+async def test_update_status_and_publish_event_airlock_request_raises_503_if_publish_event_fails(event_grid_publisher_client_mock,
+                                                                                                 airlock_request_repo_mock):
     airlock_request_mock = sample_airlock_request()
     updated_airlock_request_mock = sample_airlock_request(status=AirlockRequestStatus.Submitted)
     airlock_request_repo_mock.update_airlock_request_status = MagicMock(return_value=updated_airlock_request_mock)
