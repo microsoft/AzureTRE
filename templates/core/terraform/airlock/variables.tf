@@ -40,3 +40,15 @@ variable "airlock_app_service_plan_sku_size" {
 }
 
 variable "airlock_processor_subnet_id" {}
+
+variable "applicationinsights_connection_string" {}
+variable "airlock_servicebus" {}
+variable "tre_core_tags" {}
+
+variable "enable_malware_scanning" {
+  type        = bool
+  description = "If False, Airlock requests will skip the malware scanning stage"
+}
+
+variable "log_analytics_workspace_id" {}
+variable "applicationinsights_instrumentation_key" {}

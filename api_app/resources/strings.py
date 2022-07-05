@@ -28,8 +28,10 @@ API_UPDATE_USER_RESOURCE = "Update an existing user resource"
 API_INVOKE_ACTION_ON_USER_RESOURCE = "Invoke action on a user resource"
 
 API_CREATE_AIRLOCK_REQUEST = "Create an airlock request"
+API_GET_AIRLOCK_REQUEST = "Get an airlock request"
 API_SUBMIT_AIRLOCK_REQUEST = "Submit an airlock request"
 API_REVIEW_AIRLOCK_REQUEST = "Review an airlock request"
+API_AIRLOCK_REQUEST_LINK = "Get a token to access airlock request"
 
 API_CREATE_WORKSPACE_TEMPLATES = "Register workspace template"
 API_GET_WORKSPACE_TEMPLATES = "Get workspace templates"
@@ -54,8 +56,12 @@ API_CREATE_USER_RESOURCE_TEMPLATES = "Register user resource template"
 API_GET_USER_RESOURCE_TEMPLATES = "Get user resource templates applicable to the workspace service template"
 API_GET_USER_RESOURCE_TEMPLATE_BY_NAME = "Get user resource template by name and workspace service"
 
+# cost report
 API_GET_COSTS = "Get overall costs"
 API_GET_WORKSPACE_COSTS = "Get workspace costs"
+API_GET_COSTS_MAX_TIME_PERIOD = "The time period for pulling the data cannot exceed 1 year"
+API_GET_COSTS_TO_DATE_NEED_TO_BE_LATER_THEN_FROM_DATE = "to_date needs to be later than from_date"
+API_GET_COSTS_FROM_DATE_NEED_TO_BE_BEFORE_TO_DATE = "from_date needs to be before to_date"
 
 # State store status
 OK = "OK"
@@ -122,21 +128,29 @@ SHARED_SERVICE_TEMPLATE_VERSION_EXISTS = "A template with this version already e
 ETAG_CONFLICT = "This document has been modified by another user or process since you last retrieved it. Please get the document again and retry."
 
 # Resource Status
-RESOURCE_STATUS_NOT_DEPLOYED = "not_deployed"
+RESOURCE_STATUS_AWAITING_DEPLOYMENT = "awaiting_deployment"
 RESOURCE_STATUS_DEPLOYING = "deploying"
 RESOURCE_STATUS_DEPLOYED = "deployed"
+RESOURCE_STATUS_DEPLOYMENT_FAILED = "deployment_failed"
+
+RESOURCE_STATUS_AWAITING_DELETION = "awaiting_deletion"
 RESOURCE_STATUS_DELETING = "deleting"
 RESOURCE_STATUS_DELETED = "deleted"
-RESOURCE_STATUS_FAILED = "failed"
 RESOURCE_STATUS_DELETING_FAILED = "deleting_failed"
 
+RESOURCE_STATUS_AWAITING_UPDATE = "awaiting_update"
+RESOURCE_STATUS_UPDATING = "updating"
+RESOURCE_STATUS_UPDATED = "updated"
+RESOURCE_STATUS_UPDATING_FAILED = "updating_failed"
+
 # Resource Action Status
+RESOURCE_STATUS_AWAITING_ACTION = "awaiting_action"
 RESOURCE_ACTION_STATUS_INVOKING = "invoking_action"
 RESOURCE_ACTION_STATUS_SUCCEEDED = "action_succeeded"
 RESOURCE_ACTION_STATUS_FAILED = "action_failed"
 
 # Pipeline (multi-step) deployments
-RESOURCE_ACTION_STATUS_PIPELINE_DEPLOYING = "pipeline_deploying"
+RESOURCE_ACTION_STATUS_PIPELINE_RUNNING = "pipeline_running"
 RESOURCE_ACTION_STATUS_PIPELINE_FAILED = "pipeline_failed"
 RESOURCE_ACTION_STATUS_PIPELINE_SUCCEEDED = "pipeline_succeeded"
 
@@ -154,10 +168,13 @@ AIRLOCK_RESOURCE_TYPE_REVIEW = "airlock-review"
 AIRLOCK_RESOURCE_STATUS_DRAFT = "draft"
 AIRLOCK_RESOURCE_STATUS_SUBMITTED = "submitted"
 AIRLOCK_RESOURCE_STATUS_INREVIEW = "in_review"
+AIRLOCK_RESOURCE_STATUS_APPROVAL_INPROGRESS = "approval_in_progress"
 AIRLOCK_RESOURCE_STATUS_APPROVED = "approved"
+AIRLOCK_RESOURCE_STATUS_REJECTION_INPROGRESS = "rejection_in_progress"
 AIRLOCK_RESOURCE_STATUS_REJECTED = "rejected"
 AIRLOCK_RESOURCE_STATUS_CANCELLED = "cancelled"
-AIRLOCK_RESOURCE_STATUS_BLOCKED = "blocked"
+AIRLOCK_RESOURCE_STATUS_BLOCKING_INPROGRESS = "blocking_in_progress"
+AIRLOCK_RESOURCE_STATUS_BLOCKED = "blocked_by_scan"
 
 # Airlock Request Types
 AIRLOCK_REQUEST_TYPE_IMPORT = "import"
@@ -166,15 +183,25 @@ AIRLOCK_REQUEST_TYPE_EXPORT = "export"
 # Airlock Messages
 AIRLOCK_REQUEST_DOES_NOT_EXIST = "Airlock request does not exist"
 AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE = "Airlock request status change was illegal"
+AIRLOCK_REQUEST_IN_PROGRESS = "Airlock request is being processed, please try again later."
+AIRLOCK_REQUEST_IS_CANCELED = "Airlock request was cancelled."
+AIRLOCK_REQUEST_INVALID_STATUS = "Airlock request status is unknown."
+AIRLOCK_UNAUTHORIZED_TO_SA = "User is unauthorized to access airlock request files in its current status."
 
 # Deployments
-RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE = "This resource has not yet been deployed"
-RESOURCE_STATUS_UPGRADE_NOT_STARTED_MESSAGE = "The upgrade for this resource has not yet started"
+RESOURCE_STATUS_AWAITING_DEPLOYMENT_MESSAGE = "This resource is waiting to be deployed"
+RESOURCE_STATUS_AWAITING_UPDATE_MESSAGE = "This resource is waiting to be updated"
+RESOURCE_STATUS_AWAITING_DELETION_MESSAGE = "This resource is waiting to be deleted"
+RESOURCE_STATUS_AWAITING_ACTION_MESSAGE = "This resource is waiting for an action to be invoked"
 
 # Service bus
 SERVICE_BUS_GENERAL_ERROR_MESSAGE = "Service bus failure"
 DEPLOYMENT_STATUS_MESSAGE_FORMAT_INCORRECT = "Service bus message is not formatted correctly"
 DEPLOYMENT_STATUS_ID_NOT_FOUND = "Service bus message refers to resource id = {} which does not exist"
+STEP_RESULT_MESSAGE_FORMAT_INCORRECT = "Service bus message of step result is not formatted correctly"
+STEP_RESULT_ID_NOT_FOUND = "Service bus message of step result refers to resource id = {} which does not exist"
+STEP_RESULT_MESSAGE_STATUS_DOES_NOT_MATCH = "Service bus message of step result current status does not match the one in state store for request id = {}, status in step result = {}, status in state store = {}"
+STEP_RESULT_MESSAGE_INVALID_STATUS = "Service bus message has invalid status change request for request id = {}, current status is = {}, new status is = {}"
 
 # Event grid
 EVENT_GRID_GENERAL_ERROR_MESSAGE = "Event grid failure"

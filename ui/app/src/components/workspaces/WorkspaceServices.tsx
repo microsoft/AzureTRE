@@ -34,7 +34,7 @@ export const WorkspaceServices: React.FunctionComponent<WorkspaceServicesProps> 
                   resourceType: ResourceType.WorkspaceService,
                   resourceParent: workspaceCtx.workspace,
                   onAdd: (r: Resource) => props.addWorkspaceService(r as WorkspaceService),
-                  workspaceClientId: workspaceCtx.workspaceClientId
+                  workspaceApplicationIdURI: workspaceCtx.workspaceApplicationIdURI
                 });
               }} />
             } />

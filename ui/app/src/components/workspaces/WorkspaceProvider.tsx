@@ -28,18 +28,18 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
         // get the workspace
         const ws = (await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get)).workspace;
         workspaceCtx.current.setWorkspace(ws);
-        const clientId = ws.properties.scope_id.replace("api://", "");
+        const ws_application_id_uri = ws.properties.scope_id;
 
         // use the client ID to get a token against the workspace (tokenOnly), and set the workspace roles in the context
         let wsRoles: Array<string> = [];
-        await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get, clientId, undefined, ResultType.JSON, (roles: Array<string>) => {
+        await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get, ws_application_id_uri, undefined, ResultType.JSON, (roles: Array<string>) => {
           config.debug && console.log(`Workspace roles for ${workspaceId}`, roles);
           workspaceCtx.current.setRoles(roles);
           wsRoles = roles;
         }, true);
 
         // get workspace services to pass to nav + ws services page
-        const workspaceServices = await apiCall(`${ApiEndpoint.Workspaces}/${ws.id}/${ApiEndpoint.WorkspaceServices}`, HttpMethod.Get, clientId);
+        const workspaceServices = await apiCall(`${ApiEndpoint.Workspaces}/${ws.id}/${ApiEndpoint.WorkspaceServices}`, HttpMethod.Get, ws_application_id_uri);
         setWorkspaceServices(workspaceServices.workspaceServices);
         setLoadingState(wsRoles && wsRoles.length > 0 ? 'ok' : 'denied');
       } catch {

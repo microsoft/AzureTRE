@@ -32,7 +32,6 @@ variable "deploy_app_service_plan" {
 
 variable "app_service_plan_sku" {
   type        = string
-  default     = "P1v3"
   description = "App Service Plan SKU"
 }
 
@@ -46,6 +45,11 @@ variable "register_aad_application" {
   type        = bool
   default     = false
   description = "Create an AAD application automatically for the Workspace."
+}
+
+variable "aad_redirect_uris_b64" {
+  type    = string # B64 encoded list of objects like [{"name": "my uri 1", "value": "https://..."}, {}]
+  default = "W10=" #b64 for []
 }
 
 variable "auth_tenant_id" {

@@ -1,7 +1,7 @@
 # TRE Automation Admin Application
 
 ## Name
-The Automation Application is typically called `<TRE_ID> Automation Admin App` within the AAD Portal.
+The Automation Application is typically called `<TRE_ID> Automation Admin` within the AAD Portal.
 
 ## Purpose
 This application is used to authorize end-to-end test scenarios.
@@ -18,6 +18,9 @@ This application does not have any roles defined.
 | Name | Type* | Admin consent required |  TRE usage |
 | --- | -- | -----| --------- |
 |TRE API / TREAdmin|Application|Yes|This allows this application to authenticate as a TRE Admin for running the tests locally and the E2E in the build.|
+|TRE API / user_impersonation|Delegated|No|This allows the application to impersonate the logged in user.|
+|TRE - workspace x API / WorkspaceOwner|Application|Yes|This allows this application to authenticate as a Workspace Owner for running the tests locally and the E2E in the build.|
+|TRE - workspace x  API / user_impersonation|Delegated|No|This allows the application to impersonate the logged in user.|
 
 '*' See the difference between [delegated and application permission](https://docs.microsoft.com/graph/auth/auth-concepts#delegated-and-application-permissions) types. See [Microsoft Graph permissions reference](https://docs.microsoft.com/graph/permissions-reference) for more details.
 
@@ -34,18 +37,13 @@ This application is used locally to automatically register bundles against the A
 Example on how to run the script:
 
 ```bash
-./devops/scripts/aad/aad-app-reg.sh \
-  --name "${TRE_ID}" \
-  --tre-url "https://${TRE_ID}.${LOCATION}.cloudapp.azure.com" \
-  --admin-consent --automation-account
+./devops/scripts/aad/create_automation_administrator.sh \
+--name "${TRE_ID}"
 ```
 
 | Argument | Description |
 | -------- | ----------- |
-| `--name` | The prefix of the name of the app registrations. `TRE` will give you `TRE API`. |
-| `--tre-url` | Used to construct auth redirection URLs for the UI and Swagger app. Use the values of the [environment variables](./environment-variables.md) `TRE_ID` and `LOCATION` in the URL. Reply URL for the localhost, `http://localhost:8000/api/docs/oauth2-redirect`, will be added by default. |
-| `--admin-consent` | Grants admin consent for the app registrations. This is required for them to function properly, but requires AAD admin privileges. |
-| `--automation-account` | This is an optional parameter but will create an application with a test user with permission to use the `TRE API` and `TRE Swagger UI` |
+| `--name` | The prefix of the name of the app registrations. `TRE123` will give you `TRE123 Automation Admin`. |
 
 ### Create this application from the portal (optional)
 To create an application registration for automation, open the Azure Active Directory tenant for your TRE in the portal and navigate to "App Registrations".

@@ -17,6 +17,13 @@ jobs:
     name: Build images
     runs-on: ubuntu-latest
     steps:
+      - name: Upload Event File
+        # this step is required to publish test results from forks
+        uses: actions/upload-artifact@v2
+        with:
+          name: Event File
+          path: ${{ github.event_path }}
+
       - name: Checkout
         uses: actions/checkout@v2
         with:
@@ -167,10 +174,36 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      # Unit Tests are executed by calling the 'test-results' target in the
+      # Dockerfile's. Test runner exit codes must be swallowed (and kept) so we
+      # can output the test results. This means we have to check for failure
+      # trigger files in later steps.
+      - name: "Test image: airlock_processor"
+        # test should be before build since its docker target
+        # is prior to runtime
+        if: |
+          (steps.filter.outputs.airlock_processor == 'true'
+          || github.event_name == 'workflow_dispatch')
+        uses: docker/build-push-action@v2
+        with:
+          context: ./airlock_processor/
+          file: ./airlock_processor/Dockerfile
+          outputs: type=local,dest=test-results
+          target: test-results
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: "Check pytest failure file existence"
+        id: check_airlock_processor_test_result
+        uses: andstor/file-existence-action@v1
+        with:
+          files: "test-results/pytest_airlock_processor_unit_failed"
+
       - name: "Build image: airlock_processor"
         if: |
           (steps.filter.outputs.airlock_processor == 'true'
           || github.event_name == 'workflow_dispatch')
+          && steps.check_airlock_processor_test_result.outputs.files_exists == 'false'
         uses: docker/build-push-action@v2
         with:
           context: ./airlock_processor/
@@ -184,9 +217,3 @@ jobs:
         with:
           name: test-results
           path: test-results
-
-      - name: Publish Unit Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v1
-        if: always()
-        with:
-          files: test-results/**/*.xml

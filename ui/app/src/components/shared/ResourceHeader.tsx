@@ -3,6 +3,7 @@ import { ProgressIndicator, Stack } from '@fluentui/react';
 import { ResourceContextMenu } from '../shared/ResourceContextMenu';
 import { ComponentAction, Resource, ResourceUpdate } from '../../models/resource';
 import { StatusBadge } from './StatusBadge';
+import { PowerStateBadge } from './PowerStateBadge';
 
 interface ResourceHeaderProps {
   resource: Resource,
@@ -19,13 +20,19 @@ export const ResourceHeader: React.FunctionComponent<ResourceHeaderProps> = (pro
             <Stack.Item style={{ borderBottom: '1px #999 solid' }}>
               <Stack horizontal>
                 <Stack.Item grow={1}>
-                  <h1 style={{ margin: 0, paddingBottom: 10 }}>
-                    <span style={{ textTransform: 'capitalize' }}>{props.resource.resourceType.replace('-', ' ')}</span>: {props.resource.properties?.display_name}
-                  </h1>
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <h1 style={{ marginLeft: 5, marginTop: 5, marginRight: 15, marginBottom: 10 }}>
+                      <span style={{ textTransform: 'capitalize' }}>{props.resource.resourceType.replace('-', ' ')}</span>: {props.resource.properties?.display_name}
+                    </h1>
+                    {
+                      (props.resource.azureStatus?.powerState) &&
+                      <PowerStateBadge state={props.resource.azureStatus.powerState} />
+                    }
+                  </div>
                 </Stack.Item>
                 {
                   (props.latestUpdate.operation || props.resource.deploymentStatus) &&
-                  <Stack.Item>
+                  <Stack.Item align="center">
                     <StatusBadge status={props.latestUpdate.operation ? props.latestUpdate.operation?.status : props.resource.deploymentStatus} />
                   </Stack.Item>
                 }

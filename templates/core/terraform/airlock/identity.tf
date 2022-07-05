@@ -1,8 +1,3 @@
-data "azurerm_cosmosdb_account" "tre-db-account" {
-  name                = "cosmos-${var.tre_id}"
-  resource_group_name = var.resource_group_name
-}
-
 data "azurerm_container_registry" "mgmt_acr" {
   name                = var.mgmt_acr_name
   resource_group_name = var.mgmt_resource_group_name
@@ -11,9 +6,8 @@ data "azurerm_container_registry" "mgmt_acr" {
 resource "azurerm_user_assigned_identity" "airlock_id" {
   resource_group_name = var.resource_group_name
   location            = var.location
-  tags                = local.tre_core_tags
-
-  name = "id-airlock-${var.tre_id}"
+  name                = "id-airlock-${var.tre_id}"
+  tags                = var.tre_core_tags
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -25,20 +19,14 @@ resource "azurerm_role_assignment" "acrpull_role" {
 }
 
 resource "azurerm_role_assignment" "servicebus_sender" {
-  scope                = data.azurerm_servicebus_namespace.airlock_sb.id
+  scope                = var.airlock_servicebus.id
   role_definition_name = "Azure Service Bus Data Sender"
   principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
 }
 
 resource "azurerm_role_assignment" "servicebus_receiver" {
-  scope                = data.azurerm_servicebus_namespace.airlock_sb.id
+  scope                = var.airlock_servicebus.id
   role_definition_name = "Azure Service Bus Data Receiver"
-  principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
-}
-
-resource "azurerm_role_assignment" "cosmos_contributor" {
-  scope                = data.azurerm_cosmosdb_account.tre-db-account.id
-  role_definition_name = "Contributor"
   principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
 }
 
@@ -68,6 +56,12 @@ resource "azurerm_role_assignment" "sa_import_rejected" {
 
 resource "azurerm_role_assignment" "sa_export_approved" {
   scope                = azurerm_storage_account.sa_export_approved.id
+  role_definition_name = "Contributor"
+  principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
+}
+
+resource "azurerm_role_assignment" "sa_import_blocked" {
+  scope                = azurerm_storage_account.sa_import_blocked.id
   role_definition_name = "Contributor"
   principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
 }

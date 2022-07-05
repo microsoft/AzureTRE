@@ -68,7 +68,6 @@ export const ResourcePropertyPanel: React.FunctionComponent<ResourcePropertyPane
                     <ResourcePropertyPanelItem header={'Resource path'} val={props.resource.resourcePath} />
                     <ResourcePropertyPanelItem header={'Template name'} val={props.resource.templateName} />
                     <ResourcePropertyPanelItem header={'Template version'} val={props.resource.templateVersion} />
-                    <ResourcePropertyPanelItem header={'Is active'} val={props.resource.isActive.toString()} />
                     <ResourcePropertyPanelItem header={'Is enabled'} val={props.resource.isEnabled.toString()} />
                     <ResourcePropertyPanelItem header={'User'} val={props.resource.user.name} />
                     <ResourcePropertyPanelItem header={'Last updated'} val={moment.unix(props.resource.updatedWhen).toDate().toDateString()} />

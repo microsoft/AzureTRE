@@ -51,13 +51,13 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
         if (props.workspaceService && props.workspaceService.id && props.workspaceService.id === workspaceServiceId) {
           setWorkspaceService(props.workspaceService);
         } else {
-          let ws = await apiCall(`${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}/${workspaceServiceId}`, HttpMethod.Get, workspaceCtx.workspaceClientId);
+          let ws = await apiCall(`${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}/${workspaceServiceId}`, HttpMethod.Get, workspaceCtx.workspaceApplicationIdURI);
           setWorkspaceService(ws.workspaceService);
           svc = ws.workspaceService;
         }
 
         // get the user resources
-        const u = await apiCall(`${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}/${workspaceServiceId}/${ApiEndpoint.UserResources}`, HttpMethod.Get, workspaceCtx.workspaceClientId)
+        const u = await apiCall(`${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}/${workspaceServiceId}/${ApiEndpoint.UserResources}`, HttpMethod.Get, workspaceCtx.workspaceApplicationIdURI)
 
         // get user resource templates - to check
         const ut = await apiCall(`${ApiEndpoint.WorkspaceServiceTemplates}/${svc.templateName}/${ApiEndpoint.UserResourceTemplates}`, HttpMethod.Get);
@@ -69,7 +69,7 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
       }
     };
     getData();
-  }, [apiCall, props.workspaceService, workspaceCtx.workspace.id, workspaceCtx.workspaceClientId, workspaceServiceId]);
+  }, [apiCall, props.workspaceService, workspaceCtx.workspace.id, workspaceCtx.workspaceApplicationIdURI, workspaceServiceId]);
 
   const addUserResource = (u: UserResource) => {
     let ur = [...userResources];
@@ -114,7 +114,7 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
                                 resourceType: ResourceType.UserResource,
                                 resourceParent: workspaceService,
                                 onAdd: (r: Resource) => addUserResource(r as UserResource),
-                                workspaceClientId: workspaceCtx.workspaceClientId
+                                workspaceApplicationIdURI: workspaceCtx.workspaceApplicationIdURI
                               })
                             }} />
                         } />

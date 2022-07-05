@@ -105,6 +105,18 @@
       "source": {
         "env": "APP_ROLE_ID_WORKSPACE_RESEARCHER"
       }
+    },
+    {
+      "name": "aad_redirect_uris",
+      "source": {
+        "env": "AAD_REDIRECT_URIS"
+      }
+    },
+    {
+      "name": "app_service_plan_sku",
+      "source": {
+        "env": "APP_SERVICE_PLAN_SKU"
+      }
     }
   ]
 }

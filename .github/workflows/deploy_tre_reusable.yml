@@ -23,6 +23,10 @@ on:  # yamllint disable-line rule:truthy
         type: string
         default: ""
         required: false
+      environmentName:
+        description: The name of the Github Action's environment this will deploy into
+        type: string
+        required: true
     secrets:
       AAD_TENANT_ID:
         description: ""
@@ -123,15 +127,16 @@ jobs:
   deploy_management:
     name: Deploy Management
     runs-on: ubuntu-latest
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     steps:
       - name: Show inputs
         run: |
           echo "Inputs"
           echo "======"
-          echo "prRef     : ${{ inputs.prRef }}"
-          echo "prRHeadSha: ${{ inputs.prHeadSha }}"
-          echo "ciGitRef  : ${{ inputs.ciGitRef }}"
+          echo "prRef       : ${{ inputs.prRef }}"
+          echo "prRHeadSha  : ${{ inputs.prHeadSha }}"
+          echo "ciGitRef    : ${{ inputs.ciGitRef }}"
+          echo "environment : ${{ inputs.environmentName }}"
 
       - name: Checkout
         uses: actions/checkout@v2
@@ -211,11 +216,11 @@ jobs:
     name: Build Core Docker Images
     runs-on: ubuntu-latest
     needs: [deploy_management]
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     strategy:
       fail-fast: true
       matrix:
-        target: [build-and-push-api, build-and-push-resource-processor]
+        target: [build-and-push-api, build-and-push-resource-processor, build-and-push-airlock-processor]
 
     steps:
       - name: Checkout
@@ -245,7 +250,7 @@ jobs:
     name: Start TRE
     runs-on: ubuntu-latest
     needs: [deploy_management]
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -292,7 +297,7 @@ jobs:
     name: Deploy TRE
     runs-on: ubuntu-latest
     needs: [build_core_images, start_tre]
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -397,7 +402,7 @@ jobs:
              BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm"}
           - {BUNDLE_TYPE: "user_resource",
              BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-linuxvm"}
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -435,7 +440,7 @@ jobs:
              BUNDLE_DIR: "./templates/shared_services/sonatype-nexus/"}
           - {BUNDLE_TYPE: "shared_service",
              BUNDLE_DIR: "./templates/shared_services/gitea/"}
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -465,7 +470,7 @@ jobs:
     name: Build Additional Docker Images
     runs-on: ubuntu-latest
     needs: [deploy_management]
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     strategy:
       fail-fast: true
       matrix:
@@ -508,7 +513,7 @@ jobs:
              BUNDLE_DIR: "./templates/shared_services/sonatype-nexus"}
           - {BUNDLE_TYPE: "shared_service",
              BUNDLE_DIR: "./templates/shared_services/gitea"}
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -564,7 +569,7 @@ jobs:
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/mlflow"}
 
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -609,7 +614,7 @@ jobs:
           - {BUNDLE_TYPE: "user_resource",
              BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-linuxvm",
              WORKSPACE_SERVICE_NAME: "tre-service-guacamole"}
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -645,7 +650,7 @@ jobs:
     name: Deploy shared services
     runs-on: ubuntu-latest
     needs: [register_shared_bundles, deploy_tre]
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -676,7 +681,7 @@ jobs:
           TRE_ID: "${{ secrets.TRE_ID }}"
           LOCATION: "${{ secrets.LOCATION }}"
 
-      - name: Migrate State Store
+      - name: State Store Migrations
         uses: ./.github/actions/devcontainer_run_command
         with:
           COMMAND: "make db-migrate"
@@ -712,7 +717,7 @@ jobs:
   e2e_tests_smoke:
     name: "Run E2E Tests (Smoke)"
     runs-on: ubuntu-latest
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     needs: [deploy_shared_services, register_bundles, build_additional_images]
     timeout-minutes: 10
     steps:
@@ -778,7 +783,7 @@ jobs:
     name: "Run E2E Tests"
     if: ${{ inputs.e2eTestsCustomSelector != '' }}
     runs-on: ubuntu-latest
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     needs: [deploy_shared_services, register_bundles, register_user_resource_bundles, build_additional_images]
     timeout-minutes: 120
     steps:
@@ -826,63 +831,12 @@ jobs:
         with:
           files: "./e2e_tests/pytest_e2e_custom.xml"
 
-  e2e_tests_aad:
-    name: "Run E2E Tests (AAD)"
-    runs-on: ubuntu-latest
-    needs: [e2e_tests_custom]
-    environment: CICD
-    timeout-minutes: 60
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-        with:
-          persist-credentials: false
-          # if the following values are missing (i.e. not triggered via comment workflow)
-          # then the default checkout will apply
-          ref: ${{ inputs.prRef }}
-
-      - name: Run E2E Tests
-        uses: ./.github/actions/devcontainer_run_command
-        with:
-          COMMAND: "make test-e2e-extended-aad"
-          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
-          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
-          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
-          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
-          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
-          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
-          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          LOCATION: "${{ secrets.LOCATION }}"
-          API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
-          AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
-          TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
-          TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
-          TEST_WORKSPACE_APP_SECRET: "${{ secrets.TEST_WORKSPACE_APP_SECRET }}"
-          TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
-          TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
-          TRE_ID: "${{ secrets.TRE_ID }}"
-          IS_API_SECURED: false
-
-      - name: Upload Test Results
-        if: always()
-        uses: actions/upload-artifact@v2
-        with:
-          name: E2E Test Results
-          path: "./e2e_tests/pytest_e2e_extended_aad.xml"
-
-      - name: Publish Test Results
-        if: always()
-        uses: EnricoMi/publish-unit-test-result-action@v1
-        with:
-          files: "./e2e_tests/pytest_e2e_extended_aad.xml"
-
   summary:
     name: Summary Notification
-    needs: [e2e_tests_smoke, e2e_tests_custom, e2e_tests_aad]
+    needs: [e2e_tests_smoke, e2e_tests_custom]
     runs-on: ubuntu-latest
     if: ${{ always() && (github.ref == 'refs/heads/main' && inputs.prRef == '') }}
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     steps:
       - uses: technote-space/workflow-conclusion-action@v2
 

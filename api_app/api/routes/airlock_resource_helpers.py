@@ -13,6 +13,15 @@ from models.domain.authentication import User
 from resources import strings
 
 
+class RequestAccountDetails:
+    account_name: str
+    account_rg: str
+
+    def __init__(self, account_name, account_rg):
+        self.account_name = account_name
+        self.account_rg = account_rg
+
+
 async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest, airlock_request_repo: AirlockRequestRepository, user: User):
     try:
         logging.debug(f"Saving airlock request item: {airlock_request.id}")
@@ -28,7 +37,7 @@ async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest
         await send_status_changed_event(airlock_request)
     except Exception as e:
         airlock_request_repo.delete_item(airlock_request.id)
-        logging.error(f"Failed send airlock_request request message: {e}")
+        logging.error(f"Failed sending status_changed message: {e}")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.EVENT_GRID_GENERAL_ERROR_MESSAGE)
 
 
@@ -48,7 +57,7 @@ async def update_status_and_publish_event_airlock_request(airlock_request: Airlo
         await send_status_changed_event(updated_airlock_request)
         return updated_airlock_request
     except Exception as e:
-        logging.error(f"Failed send airlock_request request message: {e}")
+        logging.error(f"Failed sending status_changed message: {e}")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.EVENT_GRID_GENERAL_ERROR_MESSAGE)
 
 

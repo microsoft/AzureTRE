@@ -105,8 +105,6 @@ def test_create_shared_service_item_creates_a_shared_with_the_right_values(valid
 @patch('db.repositories.shared_services.SharedServiceRepository.validate_input_against_template')
 @patch('core.config.TRE_ID', "1234")
 def test_create_shared_service_item_with_the_same_name_twice_fails(validate_input_mock, shared_service_repo, basic_shared_service_request, basic_shared_service_template):
-    shared_service_to_create = basic_shared_service_request
-
     validate_input_mock.return_value = basic_shared_service_template
 
     shared_service, _ = shared_service_repo.create_shared_service_item(basic_shared_service_request)
@@ -116,7 +114,7 @@ def test_create_shared_service_item_with_the_same_name_twice_fails(validate_inpu
     shared_service_repo.query.return_value = [shared_service.__dict__]
 
     with pytest.raises(DuplicateEntity):
-        shared_service = shared_service_repo.create_shared_service_item(shared_service_to_create)
+        shared_service = shared_service_repo.create_shared_service_item(basic_shared_service_request)
 
 
 @patch('db.repositories.shared_services.SharedServiceRepository.validate_input_against_template', side_effect=ValueError)

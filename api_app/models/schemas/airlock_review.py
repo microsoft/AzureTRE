@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from models.domain.airlock_review import AirlockReview, AirlockReviewDecision
+from models.domain.airlock_review import AirlockReview
 from models.domain.airlock_resource import AirlockResourceType
 
 
@@ -26,13 +26,13 @@ class AirlockReviewInResponse(BaseModel):
 
 
 class AirlockReviewInCreate(BaseModel):
-    reviewDecision: AirlockReviewDecision = Field("", title="Airlock review decision", description="Airlock review decision")
+    approval: bool = Field("", title="Airlock review decision", description="Airlock review decision")
     decisionExplanation: str = Field("Decision Explanation", title="Explanation of the reviewer for the reviews decision")
 
     class Config:
         schema_extra = {
             "example": {
-                "reviewDecision": "approved",
+                "approval": "True",
                 "decisionExplanation": "the reason why this request was approved/rejected"
             }
         }
