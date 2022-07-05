@@ -50,7 +50,7 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
           const parentService = (await apiCall(
             `${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}/${ur.parentWorkspaceServiceId}`,
             HttpMethod.Get,
-            workspaceCtx.workspaceClientId))
+            workspaceCtx.workspaceApplicationIdURI))
             .workspaceService;
             setParentResource(parentService);
           templatesPath = `${ApiEndpoint.WorkspaceServiceTemplates}/${parentService.templateName}/${ApiEndpoint.UserResourceTemplates}`; break;
@@ -61,10 +61,10 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
       setResourceTemplate(template);
     };
     getTemplate();
-  }, [apiCall, props.resource, workspaceCtx.workspace.id, workspaceCtx.workspaceClientId]);
+  }, [apiCall, props.resource, workspaceCtx.workspace.id, workspaceCtx.workspaceApplicationIdURI]);
 
   const doAction = async (actionName: string) => {
-    const action = await apiCall(`${props.resource.resourcePath}/${ApiEndpoint.InvokeAction}?action=${actionName}`, HttpMethod.Post, workspaceCtx.workspaceClientId);
+    const action = await apiCall(`${props.resource.resourcePath}/${ApiEndpoint.InvokeAction}?action=${actionName}`, HttpMethod.Post, workspaceCtx.workspaceApplicationIdURI);
     action && action.operation && opsWriteContext.current.addOperations([action.operation]);
   }
 
@@ -82,7 +82,7 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
         resourceType: props.resource.resourceType,
         updateResource: props.resource,
         resourceParent: parentResource,
-        workspaceClientId: workspaceCtx.workspaceClientId,
+        workspaceApplicationIdURI: workspaceCtx.workspaceApplicationIdURI,
       }),
       disabled: (props.componentAction === ComponentAction.Lock)
     },

@@ -16,7 +16,7 @@ export const NotificationPoller: React.FunctionComponent<NotificationPollerProps
 
   useInterval(async () => {
     let op = (await apiCall(`${props.notification.operation.resourcePath}/${ApiEndpoint.Operations}/${props.notification.operation.id}`,
-      HttpMethod.Get, props.notification.workspace ? props.notification.workspace.properties.client_id: null)).operation as Operation;
+      HttpMethod.Get, props.notification.workspace ? props.notification.workspace.properties.scope_id: null)).operation as Operation;
 
     // check if any fields have changed - ie the json is any different. we don't care _what_ has changed, just that something has
     if (JSON.stringify(op) !== JSON.stringify(props.notification.operation)) {
