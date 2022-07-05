@@ -145,6 +145,20 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
         response = await client.post(app.url_path_for(strings.API_SUBMIT_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
+    # [POST] /workspaces/{workspace_id}/requests/{airlock_request_id}/cancel
+    @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object())
+    @patch("api.routes.airlock.update_status_and_publish_event_airlock_request", return_value=sample_airlock_request_object(status=AirlockRequestStatus.Cancelled))
+    async def test_post_cancel_airlock_request_canceles_request_returns_200(self, _, __, app, client):
+        response = await client.post(app.url_path_for(strings.API_CANCEL_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["airlockRequest"]["id"] == AIRLOCK_REQUEST_ID
+        assert response.json()["airlockRequest"]["status"] == AirlockRequestStatus.Cancelled
+
+    @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", side_effect=EntityDoesNotExist)
+    async def test_post_cancel_airlock_request_if_request_not_found_returns_404(self, _, app, client):
+        response = await client.post(app.url_path_for(strings.API_CANCEL_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
 
 class TestAirlockRoutesThatRequireOwnerRights():
     @pytest.fixture(autouse=True, scope='class')
