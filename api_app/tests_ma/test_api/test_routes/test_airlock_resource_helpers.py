@@ -2,6 +2,7 @@ from fastapi import HTTPException, status
 import pytest
 from mock import AsyncMock, patch, MagicMock
 
+from models.domain.events import AirlockNotificationData, StatusChangedData
 from api.routes.airlock_resource_helpers import save_airlock_review, save_and_publish_event_airlock_request, \
     update_status_and_publish_event_airlock_request
 from db.repositories.airlock_reviews import AirlockReviewRepository
@@ -47,13 +48,18 @@ def sample_airlock_request(status=AirlockRequestStatus.Draft):
 def sample_status_changed_event(status="draft"):
     status_changed_event = EventGridEvent(
         event_type="statusChanged",
-        data={
-            "request_id": AIRLOCK_REQUEST_ID,
-            "status": status,
-            "type": AirlockRequestType.Import,
-            "workspace_id": WORKSPACE_ID[-4:]
-        },
+        data=StatusChangedData(request_id=AIRLOCK_REQUEST_ID, status=status, type=AirlockRequestType.Import, workspace_id=WORKSPACE_ID[-4:]).__dict__,
         subject=f"{AIRLOCK_REQUEST_ID}/statusChanged",
+        data_version="2.0"
+    )
+    return status_changed_event
+
+
+def sample_airlock_notification_event(status="draft"):
+    status_changed_event = EventGridEvent(
+        event_type="airlockNotification",
+        data=AirlockNotificationData(request_id=AIRLOCK_REQUEST_ID, event_type="status_changed", event_value=status, researchers_emails=[], owners_emails=[], workspace_id=WORKSPACE_ID[-4:]).__dict__,
+        subject=f"{AIRLOCK_REQUEST_ID}/airlockNotification",
         data_version="2.0"
     )
     return status_changed_event
@@ -77,6 +83,7 @@ async def test_save_and_publish_event_airlock_request_saves_item(event_grid_publ
     airlock_request_mock = sample_airlock_request()
     airlock_request_repo_mock.save_item = MagicMock(return_value=None)
     status_changed_event_mock = sample_status_changed_event()
+    airlock_notification_event_mock = sample_airlock_notification_event()
     event_grid_sender_client_mock = event_grid_publisher_client_mock.return_value
     event_grid_sender_client_mock.send = AsyncMock()
 
@@ -87,10 +94,12 @@ async def test_save_and_publish_event_airlock_request_saves_item(event_grid_publ
 
     airlock_request_repo_mock.save_item.assert_called_once_with(airlock_request_mock)
 
-    event_grid_sender_client_mock.send.assert_awaited_once()
+    assert event_grid_sender_client_mock.send.call_count == 2
     # Since the eventgrid object has the update time attribute which differs, we only compare the data that was sent
-    actual_status_changed_event = event_grid_sender_client_mock.send.await_args[0][0][0]
-    assert (actual_status_changed_event.data == status_changed_event_mock.data)
+    actual_status_changed_event = event_grid_sender_client_mock.send.await_args_list[0].args[0][0]
+    assert actual_status_changed_event.data == status_changed_event_mock.data
+    actual_airlock_notification_event = event_grid_sender_client_mock.send.await_args_list[1].args[0][0]
+    assert actual_airlock_notification_event.data == airlock_notification_event_mock.data
 
 
 async def test_save_and_publish_event_airlock_request_raises_503_if_save_to_db_fails(airlock_request_repo_mock):
@@ -129,6 +138,7 @@ async def test_update_status_and_publish_event_airlock_request_updates_item(even
     airlock_request_mock = sample_airlock_request()
     updated_airlock_request_mock = sample_airlock_request(status=AirlockRequestStatus.Submitted)
     status_changed_event_mock = sample_status_changed_event(status="submitted")
+    airlock_notification_event_mock = sample_airlock_notification_event(status="submitted")
     airlock_request_repo_mock.update_airlock_request_status = MagicMock(return_value=updated_airlock_request_mock)
     event_grid_sender_client_mock = event_grid_publisher_client_mock.return_value
     event_grid_sender_client_mock.send = AsyncMock()
@@ -142,10 +152,12 @@ async def test_update_status_and_publish_event_airlock_request_updates_item(even
     airlock_request_repo_mock.update_airlock_request_status.assert_called_once()
     assert (actual_updated_airlock_request == updated_airlock_request_mock)
 
-    event_grid_sender_client_mock.send.assert_awaited_once()
+    assert event_grid_sender_client_mock.send.call_count == 2
     # Since the eventgrid object has the update time attribute which differs, we only compare the data that was sent
-    actual_status_changed_event = event_grid_sender_client_mock.send.await_args[0][0][0]
-    assert (actual_status_changed_event.data == status_changed_event_mock.data)
+    actual_status_changed_event = event_grid_sender_client_mock.send.await_args_list[0].args[0][0]
+    assert actual_status_changed_event.data == status_changed_event_mock.data
+    actual_airlock_notification_event = event_grid_sender_client_mock.send.await_args_list[1].args[0][0]
+    assert actual_airlock_notification_event.data == airlock_notification_event_mock.data
 
 
 async def test_update_status_and_publish_event_airlock_request_raises_400_if_status_update_invalid(airlock_request_repo_mock):
