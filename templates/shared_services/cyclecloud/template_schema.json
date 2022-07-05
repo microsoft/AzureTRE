@@ -1,0 +1,11 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/guacamole/user_resources/guacamole-azure-linuxvm/template_schema.json",
+  "type": "object",
+  "title": "Azure CycleCloud",
+  "description": "Azure CycleCloud is an enterprise-friendly tool for orchestrating and managing High Performance Computing (HPC) environments on Azure.",
+  "required": [
+  ],
+  "properties": {
+  }
+}
