@@ -49,7 +49,7 @@ resource "azurerm_app_service" "guacamole" {
     GUAC_DRIVE_NAME       = var.guac_drive_name
     GUAC_DRIVE_PATH       = var.guac_drive_path
     GUAC_DISABLE_DOWNLOAD = var.guac_disable_download
-    AUDIENCE              = var.workspace_identifier_uri
+    AUDIENCE              = "@Microsoft.KeyVault(SecretUri=${data.azurerm_key_vault_secret.workspace_client_id.id})"
     ISSUER                = local.issuer
 
     OAUTH2_PROXY_CLIENT_ID       = "@Microsoft.KeyVault(SecretUri=${data.azurerm_key_vault_secret.workspace_client_id.id})"
