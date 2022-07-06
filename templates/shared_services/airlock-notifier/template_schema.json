@@ -5,7 +5,36 @@
   "title": "Airlock Notifier Shared Service",
   "description": "A shared service notifying on Airlock Operations",
   "required": [],
-  "properties": {},
+  "properties": {
+    "smtp_server_address": {
+      "$id": "#/properties/smtp_server_address",
+      "type": "string",
+      "title": "smtp_server_address",
+      "description": "smtp_server_address",
+      "updateable": true
+    },
+    "smtp_username": {
+      "$id": "#/properties/smtp_username",
+      "type": "string",
+      "title": "smtp_username",
+      "description": "smtp_username",
+      "updateable": true
+    },
+    "smtp_password": {
+      "$id": "#/properties/smtp_password",
+      "type": "string",
+      "title": "smtp_password",
+      "description": "smtp_password",
+      "updateable": true
+    },
+    "smtp_from_email": {
+      "$id": "#/properties/smtp_from_email",
+      "type": "string",
+      "title": "smtp_from_email",
+      "description": "smtp_from_email",
+      "updateable": true
+    }
+  },
   "pipeline": {
     "install": [
     ],
