@@ -81,8 +81,7 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(admin_toke
             "templateName": "tre-service-guacamole",
             "properties": {
                 "display_name": "Workspace service test",
-                "description": "",
-                "workspace_identifier_uri": scope_uri
+                "description": ""
             }
         }
 

@@ -105,12 +105,6 @@
       "source": {
         "env": "IS_EXPOSED_EXTERNALLY"
       }
-    },
-    {
-      "name": "workspace_identifier_uri",
-      "source": {
-        "env": "WORKSPACE_IDENTIFIER_URI"
-      }
     }
   ]
 }
