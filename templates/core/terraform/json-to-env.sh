@@ -86,6 +86,10 @@ jq -r '
             "env_var": "EVENT_GRID_STATUS_CHANGED_TOPIC_ENDPOINT"
         },
         {
+            "path": "event_grid_airlock_notification_topic_endpoint",
+            "env_var": "EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_ENDPOINT"
+        },
+        {
             "path": "event_grid_status_changed_topic_resource_id",
             "env_var": "EVENT_GRID_STATUS_CHANGED_TOPIC_RESOURCE_ID"
         }

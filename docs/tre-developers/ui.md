@@ -28,10 +28,10 @@ ui
 For further details on the auth setup, see [Auth](../tre-admins/auth.md).
 
 As stated above, AAD is used for Authentication and Authorization. There are 3 AAD apps involved here:
-- **TRE Swagger UI**. This is the app that the user authenticates against. Once authenticated, the client will request an access token for the `TRE Api App`.
+- **TRE UX**. This is the app that the user authenticates against. Once authenticated, the client will request an access token for the `TRE Api`.
 - **TRE Api**. In the access token response from this app we get the user's role membership for TRE-level roles (`TREAdmin` / `TREUser`). Based on these role memberships, aspects of the UI will be made available. If the user is in a `TREAdmin` role, they will see buttons to create workspaces for instance.
 When the user navigates into a Workspace, the client will request an access token for that `Workspace App`.
-- **Workspace App(s)**. Each TRE workspace will have a workspace app registration. The ClientId for each workspace app is stored in the Workspace resource object in Cosmos, and the client uses this ID to gain an access token for that particular workspace.
+- **Workspace App(s)**. Each TRE workspace will have a workspace app registration. The Application Id URI for each workspace app is stored in the Workspace resource object in Cosmos, and the client uses this URI to gain an access token for that particular workspace.
 
 Workspace app registrations may be reused across multiple workspaces in development scenarios.
 From this access token we can find the Workspace-level roles the user is in (`WorkspaceOwner` / `WorkspaceResearcher`). These are in turn used to show/hide features of the UI.
@@ -39,7 +39,7 @@ From this access token we can find the Workspace-level roles the user is in (`Wo
 ### React Contexts
 The React Context API is a clean way to handle a limited amount of global state, and is used for a few scenarios in this project:
 - TRE Roles Context: A context provides details of the base TRE roles a user is in, which can be consumed anywhere throughout the app
-- Workspace Context: Tracks the currently selected Workspace, and the roles the user is in for that Workspace. This context is used for nested components to be able to authenicate against the correct AAD App via `workspaceCtx.workspaceClientId`.
+- Workspace Context: Tracks the currently selected Workspace, and the roles the user is in for that Workspace. This context is used for nested components to be able to authenticate against the correct AAD App via `workspaceCtx.workspaceApplicationIdURI`.
 - Create Form Context: A context to control the Create / Update form behaviour.
 - Notifications Context: Tracks all the in-progress operations currently running. For each operation, the Notifications panel also uses this context to broadcast Component 'actions' which are subscribed to by downstream components. This way, a resource component does not have to track it's own changes, and can be 'told' by the Notifications Context whether it should refresh / lock etc.
 
