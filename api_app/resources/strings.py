@@ -30,6 +30,7 @@ API_INVOKE_ACTION_ON_USER_RESOURCE = "Invoke action on a user resource"
 API_CREATE_AIRLOCK_REQUEST = "Create an airlock request"
 API_GET_AIRLOCK_REQUEST = "Get an airlock request"
 API_SUBMIT_AIRLOCK_REQUEST = "Submit an airlock request"
+API_CANCEL_AIRLOCK_REQUEST = "Cancel an airlock request"
 API_REVIEW_AIRLOCK_REQUEST = "Review an airlock request"
 API_AIRLOCK_REQUEST_LINK = "Get a token to access airlock request"
 
