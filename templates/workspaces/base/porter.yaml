@@ -150,6 +150,7 @@ install:
         app_role_id_workspace_researcher: "{{ bundle.parameters.app_role_id_workspace_researcher }}"
         aad_redirect_uris_b64: "{{ bundle.parameters.aad_redirect_uris }}"
         app_service_plan_sku: "{{ bundle.parameters.app_service_plan_sku }}"
+        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
