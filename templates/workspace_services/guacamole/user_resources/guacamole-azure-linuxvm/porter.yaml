@@ -1,6 +1,6 @@
 ---
 name: tre-service-guacamole-linuxvm
-version: 0.3.9
+version: 0.4.0
 description: "An Azure TRE User Resource Template for Guacamole (Linux)"
 registry: azuretre
 
@@ -82,6 +82,7 @@ outputs:
       - install
       - start
       - stop
+      - reset_password
   - name: vm_username
     type: string
     applyTo:
@@ -91,6 +92,10 @@ outputs:
     applyTo:
       - reset_password
   - name: keyvault_name
+    type: string
+    applyTo:
+      - reset_password
+  - name: new_password
     type: string
     applyTo:
       - reset_password
@@ -238,7 +243,7 @@ reset_password:
   - terraform:
       arguments:
         - "output"
-      description: "Get VM resource_id from Terraform outputs"
+      description: "Get VM details from Terraform outputs"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
@@ -259,9 +264,10 @@ reset_password:
   - exec:
       description: "Generate new random password"
       suppress-output: false
-      command: .
-      arguments:
-        - ./generate_password.sh
+      command: ./generate_password.sh
+      outputs:
+        - name: new_password
+          jsonPath: $.password
   - az:
       description: "Persist secret to Keyvault"
       arguments:
@@ -271,7 +277,7 @@ reset_password:
       flags:
         name: "{{ bundle.outputs.vm_password_secret_name }}"
         vault-name: "{{ bundle.outputs.keyvault_name }}"
-        value: $PASSWORD
+        value: "\"{{ bundle.outputs.vm_username }}\n{{ bundle.outputs.new_password }}\""
   - az:
       description: "Reset password"
       arguments:
@@ -281,4 +287,4 @@ reset_password:
       flags:
         ids: "{{ bundle.outputs.azure_resource_id }}"
         username: "{{ bundle.outputs.vm_username }}"
-        password: $PASSWORD
+        password: "{{ bundle.outputs.new_password }}"
