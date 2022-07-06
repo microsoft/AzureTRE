@@ -348,7 +348,6 @@ firewall-install:
 nexus-install:
 	$(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
 	DIR="${MAKEFILE_DIR}/templates/shared_services/certs" BUNDLE_TYPE=shared_service PROPS="--domain_prefix nexus --cert_name nexus-ssl" \
-	&& $(MAKE) bundle-custom-action DIR=${MAKEFILE_DIR}/templates/shared_services/certs/ ACTION=generate \
 	&& $(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
   DIR=${MAKEFILE_DIR}/templates/shared_services/sonatype-nexus-vm/ BUNDLE_TYPE=shared_service
 
