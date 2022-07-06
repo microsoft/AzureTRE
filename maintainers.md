@@ -35,7 +35,7 @@ Check for changes to anything that is run during the build/deploy/test cycle, in
 - modifications to scripts
 - new python packages being installed
 
-### `/test-extended [<sha>]` / `/test-shared-services [<sha>]`
+### `/test-extended [<sha>]` / `/test-extended-aad [<sha>]`/ `/test-shared-services [<sha>]`
 
 This command runs the build, deploy, and smoke & extended / shared services tests for a PR.
 
