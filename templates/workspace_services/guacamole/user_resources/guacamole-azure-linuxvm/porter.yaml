@@ -83,18 +83,6 @@ outputs:
       - start
       - stop
       - reset_password
-  - name: vm_username
-    type: string
-    applyTo:
-      - reset_password
-  - name: vm_password_secret_name
-    type: string
-    applyTo:
-      - reset_password
-  - name: keyvault_name
-    type: string
-    applyTo:
-      - reset_password
 
 mixins:
   - exec
