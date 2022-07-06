@@ -1,6 +1,6 @@
 ---
 name: tre-service-guacamole-linuxvm
-version: 0.3.8
+version: 0.3.9
 description: "An Azure TRE User Resource Template for Guacamole (Linux)"
 registry: azuretre
 
@@ -146,6 +146,15 @@ upgrade:
         - name: azure_resource_id
 
 uninstall:
+  - exec:
+      description: "Delete the Extensions from the Terraform state manually"
+      command: ./delete_vm_extensions.sh
+      arguments:
+        - "{{ bundle.parameters.tfstate_resource_group_name }}"
+        - "{{ bundle.parameters.tfstate_storage_account_name }}"
+        - "{{ bundle.parameters.tfstate_container_name }}"
+        - "{{ bundle.parameters.id }}"
+
   - terraform:
       description: "Delete the Guacamole User Resource Service"
       vars:
