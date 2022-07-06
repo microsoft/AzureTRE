@@ -2,7 +2,7 @@
 
 In a Trusted Research Environment (TRE) the workspaces represent a security boundary that enables researchers to access data, execute analysis, apply algorithms and collect reports. The airlock capability brings the only mechanisme that allows users to `import` or `export` data and tools in a secure fashion with a manual approval.
 This constitutes the mechanism focused in preventing malware inside TRE and/or TRE workspaces and preventing data exfiltration, while allowing researchers to execute their tasks.
-The airlock feature brings several actions: ingress/egress Mechanism; Data movement ; Security gates; Approval mechanism; Notifications. And as part of TRE's Safe settings all activity must be tracked for auditiing purpose.
+The airlock feature brings several actions: ingress/egress Mechanism; Data movement; Security gates; Approval mechanism and Notifications. As part of TRE's Safe settings all activity must be tracked for auditiing purpose.
 
 The Airlock feature aims to address these goals:
 * Prevent unauthorised data export (or import).
@@ -23,21 +23,25 @@ The Ingress/Egress Mechanism allows a TRE user to start `import` or `export` pro
 
 a. **Draft**: An import/export process has been created but has not yet started. The TRE User/Researcher has now access to a storage location and he must identify the data to be processed. At this point the airlock import/export processes allow a single file to be processed. However a compressed file may be used (zip).
 b. **Submitted**: The request was submitted by the ressearcher (not yet processed).
-b. **In-progress**: The import/export process has now started and is in-progress.
-c. **Approved**: The import/export process has been approved. At this state, data has been securely verified and manually reviewed. The data is now in its final location. For an import process the data is now available in the TRE workspace. It can be accessed by the requestor from within the workspace.
-d. **Rejected**: The import/export process has been rejected. The data in the process was rejected manually by the Airlock Manager.
-e. **Blocked**: The import/export process has been blocked. The security analysis found issues in the submitted data, and consequently quarantined the data.
-f. **Cancelled**: The import/export process was manually cancelled by the requestor TRE user, a Workspace owner or a TRE administrator.
+c. **In-Review**: The request was submitted is in review.
+d. **Approval In-progress**: The import/export process has been approved, however data movement is still ongoing.
+e. **Approved**: The import/export process has been approved. At this state, data has been securely verified and manually reviewed. The data is now in its final location. For an import process the data is now available in the TRE workspace. It can be accessed by the requestor from within the workspace.
+f. **Rejection In-progress**: The import/export process has been rejected, however data movement is still ongoing.
+g. **Rejected**: The import/export process has been rejected. The data in the process was rejected manually by the Airlock Manager.
+h. **Cancelled**: The import/export process was manually cancelled by the requestor TRE user, a Workspace owner or a TRE administrator. The cancelation is only allowed when the request is not actively changing (i.e. **Draft** or **In-Review** state).
+i. **Blocking In-progress**: The import/export process has been blocked, however data movement is still ongoing.
+j. **Blocked By Scan**: The import/export process has been blocked. The security analysis found issues in the submitted data, and consequently quarantined the data.
 
-When an airlock process is created the state is `Draft` and the user gets a storage location (storage account -> SAS token + URL) he can use to place the date to be processed (import or export). This storage location is external for import (`stalimex`) or internal for export (`stalexint`), however only accessible to the requestor (ex: a TRE user/researcher).
-The user will be able to upload a file to the provided storage location.
+When an airlock process is created the state is **Draft** and thre request infrastructure will get created providing a single container to centralize data in the request. Once the processThe user will get a link for this container inside the storage account (URL + SAS token) that he can use to upload the desired data to be processed (import or export). This storage location is external for import (`stalimex`) or internal for export (`stalexint`), however only accessible to the requestor (ex: a TRE user/researcher).
+The user will be able to upload a file to the provided storage location, using any tool of their preference: [Azure Storage Explorer](https://azure.microsoft.com/en-us/features/storage-explorer/) or [AzCopy](https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-v10) which is a command line. 
 
-The user Submits the request (TRE API call) starting the data movement (to the `stalimip` - import in-progress or `stalexip` - export in-progress). If enabled, the Security Scanning is started wither identifying security flaws or not.
-When the process is concluded, if no security flaws were identified, a notification is sent to the Data workspace Steward users providing the access to data (SAS token + URL with READ permission).
-In case security flaws are found, the data is moved to storage rejected (either rejected import `stalimrej` or rejected export `stalexrej`).
+The user Submits the request (TRE API call) starting the data movement (to the `stalimip` - import in-progress or `stalexip` - export in-progress). The airlock request is now in state **Submitted**. If enabled, the Security Scanning is started. In case security flaws are found, the request state becomes **Blocking In-progress** while the data is moved to storage rejected (either rejected import `stalimrej` or rejected export `stalexrej`). In this case, the request is finalized with the state **Blocked By Scan**.
+If the Security Scanning does not identify security flaws, the request state becomes **In-Review**. Simultaneously a  notification is sent to the Airlock Manager user providing the access to data (SAS token + URL with READ permission).
 
-The Data Stewards will manually review the data using the tools of their choice available in the TRE workspace. Once review is completed, the Data Stewards will have to **approve** or **reject** the airlock proces, though a TRE API call. This call will start the data movement to the final storage destination: `stalexapp` - external approved export or `stalimapp` - internal approved import.
-There is also a state update, which will trigger a notification to the requestor including a SAS token + URL for the containers holding the data.
+> The Security Scanning can be disabled, chaging the request state from **Submitted** straight to **In-Review**.
+
+The Airlock Manager will manually review the data using the tools of their choice available in the TRE workspace. Once review is completed, the Airlock Manager will have to *Approve* or *Reject* the airlock proces, though a TRE API call. At this point, the request will change state to either **Approval In-progress** or **Rejection In-progress**, while the data movement occurs moving afterwards to **Approved** or **Rejected** accordingly. The data will now be in the final storage destination: `stalexapp` - external approved export or `stalimapp` - internal approved import.
+With this state change a notification will be triggered to the requestor including the location for the processed data in the form of an URL + SAS token.
 
 ## Data movement
 
@@ -47,6 +51,8 @@ Also, the process guarantees that data is not tampered with through out the proc
 In an import process, data will transition from more public locations (yet confined to the requestor) to TRE workspace storage, after guaranteeding security automatically and by manual review.
 
 In an export process data will transition from internal locations (available to the requetor) to public locations in the TRE, after going through a manual review.
+
+Considering that the Airlock requests may require large data movements, the operations can have longer durations, hence becoming the operations asynchronous. This is why states like **Approval In-progress**, **Rejection In-progress** or **Blocking In-progress** will be set while there are data movement operations.
 
 > The data movement mechanism is data-driven, allowing an organization to extend how request data transitions between
 
@@ -60,58 +66,61 @@ The identified data in a airlock proces, will be submited to a security scan. If
 
 ## Approval mechanism
 
-The approval mechanism, is bundled with any airlock process, providing a specific way to `approve` or `reject` the data. This mechanism will allow the Data Stewards to explicitly approve/reject the process, after having acess to the data. The Data Steward users will be able to execute a manual review on the data using the tools available to him in the TRE Workspace. Once this manual review is executed
+The approval mechanism, is bundled with any airlock process, providing a specific way to `approve` or `reject` the data. This mechanism will allow the Airlock Managers to explicitly approve/reject the process, after having acess to the data. The Airlock Manager users will be able to execute a manual review on the data using the tools available to him in the TRE Workspace. Once this manual review is executed
 
 The only responsability of the Approval mechanism is to support a cycle of revision, approval or rejection, while tracking the decision.
 
-This mechanism will provice access to the data in the airlock process, and will be able to use a VM in TRE workspace. The data review will be the Data Steward responsability
+This mechanism will provice access to the data in the airlock process, and will be able to use a VM in TRE workspace. The data review will be the Airlock Manager responsability
 
 > * It is envisioned that this mechanism to be more flexible and extensible.
-> * The `Data Steward` is a role defined at workspace instance level and assigned to identities. Initially the `Owner` role will be used.
+> * The `Airlock Manager` is a role defined at workspace instance level and assigned to identities. Initially the `Owner` role will be used.
 
 ## Notifications
 
 Throughout the airlock process, the notification mechanism will notify the relevant people to the process. Both the requestor (TRE User/Researcher) and the Workspace Owner will be notified by email, of the relevant process events.
 
-Whenever the airlock process changes to a state of `Draft`, `Submitted`, `Approved`, `Rejected`, `Blocked`, the process requestor gets notified.
-When the state changes to `In-progress` the Workspace Onwer (Data Steward) gets notified.
+Whenever the airlock process changes to a state of **Draft**, **Submitted**, **Approved**, **Rejected** , **Blocked By Scan** or **Cancelled**, the process requestor gets notified.
+When the state changes to `In-progress` the Workspace Onwer (Airlock Manager) gets notified.
 
 > * The Notification mechanism is also data-driven, allowing an organization to extend the notifications behavior. The mechanism is exemplified with a Logic App determining the notifications logic.
 > * Notifications will work with All TRE users being AAD users (guests or not), with email defined – if not, notifications will not be sent.
 
 ### Architecture
 
-The Airlock feature is supported by infrastructure at the TRE and workspace level.
+The Airlock feature is supported by infrastructure at the TRE and workspace level, containing a set of storage accounts. Each Airlock request, will provision and use unique storage containers with the request id in it's name.
 
 TRE:
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> d70cc5eab995fcc4d732114ade292a624f529e93
-* `stalexapp` - storage (st) airlock (al) export (ex) approved (app)
 * `stalimex` - storage (st) airlock (al) import (im) external (ex)
 * `stalimip` - storage (st) airlock (al) import (im) in-progress (ip)
 * `stalimrej` - storage (st) airlock (al) import (im) rejected (rej)
-<<<<<<< HEAD
-=======
-* `stalexapp` - storage (st) airlock (al) approved (app) export (ex)
-* `stalimex` - storage (st) airlock (al) external (ex) import (im)
-* `stalimip` - storage (st) airlock (al) import (im) in-progress (ip)
-* `stalimrej` - storage (st) airlock (al) rejected (rej) import (im)
->>>>>>> Linter review + stg names
-=======
->>>>>>> d70cc5eab995fcc4d732114ade292a624f529e93
+* `stalimblocked` - storage (st) airlock (al) import (ex) approved (app)
+* `stalexapp` - storage (st) airlock (al) export (ex) approved (app)
 
 Workspace
+* `stalimapp` - workspace storage (st) airlock (al) import (im) approved (app)
 * `stalexint` - workspace storage (st) airlock (al) export (ex) internal (int)
 * `stalexip` - workspace storage (st) airlock (al) export (ex) in-progress (ip)
 * `stalexrej` - workspace storage (st) airlock (al) export (ex) rejected (rej)
-* `stalimapp` - workspace storage (st) airlock (al) import (im) approved (app)
+* `stalexblocked` - workspace storage (st) airlock (al) export (ex) rejected (rej)
 
 > * The external storage accounts (`stalimex`, `stalexapp`), are not bound to any vnet and accessible (with SAS token) via internet.
 > * The internal storage account (`stalexint`) is bound to the workspace vnet, so ONLY TRE Users/Researchers on that workspace can access it
-> * The (import) in-progress storage account (`stalimip`) is bound to the TRE CORE vnet
 > * The (export) in-progress storage account (`stalexip`) is bound to the workspace vnet
-> * The (import) rejected storage account (`stalimrej`) is bound to the TRE CORE vnet
+> * The (export) blocked storage account (`stalexblocked`) is bound to the workspace vnet
 > * The (export) rejected storage account (`stalexrej`) is bound to the TRE CORE vnet
+> * The (import) in-progress storage account (`stalimip`) is bound to the TRE CORE vnet
+> * The (import) blocked storage account (`stalimblocked`) is bound to the TRE CORE vnet
+> * The (import) rejected storage account (`stalimrej`) is bound to the TRE CORE vnet
 > * The (import) approved storage account (`stalimapp`) is bound to the workspace vnet
+
+In the TRE Core, the TRE API will provide the airlock API endpoints allowing to advance the process. The TRE API will expose the following methods:
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/api/workspaces/{workspace_id}/requests` | Create an Airlock request (in **Draft**) |
+| `POST` | `/api/workspaces/{workspace_id}/requests/{airlock_request_id}/link` | Get the url and token to acccess Airlock Request | `POST` | `/api/workspaces/{workspace_id}/requests/{airlock_request_id}/submit` | Submits an Airlock request |
+| `POST` | `/api/workspaces/{workspace_id}/requests/{airlock_request_id}/reviews` | Reviews an Airlock request |
+| `POST` | `/api/workspaces/{workspace_id}/requests/{airlock_request_id}/cancel` | Cancels an Airlock request |
+container |
+
+Also in the airlock feature we have the **Airlock Processor** which will handle the events that are created throughout the process, signalling state changes from blobs created, status changed or security scans finalized.
