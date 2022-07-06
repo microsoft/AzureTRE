@@ -92,7 +92,7 @@ install:
       flags:
         name: AirlockNotifier
         resource-group: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        subscription: "{{ bundle.credentials.azure_subscription_id }}" # Fetch from vars
+        subscription: "{{ bundle.credentials.azure_subscription_id }}"
         src: LogicApp.zip
 
 upgrade:
