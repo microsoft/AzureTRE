@@ -14,5 +14,5 @@ export interface CreateFormResource {
   resourceParent?: Workspace | WorkspaceService,
   updateResource?: Resource,
   onAdd?: (r: Resource) => void,
-  workspaceClientId?: string
+  workspaceApplicationIdURI?: string
 }
