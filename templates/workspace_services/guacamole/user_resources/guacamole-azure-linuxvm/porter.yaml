@@ -95,10 +95,6 @@ outputs:
     type: string
     applyTo:
       - reset_password
-  - name: new_password
-    type: string
-    applyTo:
-      - reset_password
 
 mixins:
   - exec
@@ -271,29 +267,11 @@ reset_password:
         identity:
         username: "{{ bundle.credentials.azure_client_id }}"
   - exec:
-      description: "Generate new random password"
-      suppress-output: false
-      command: ./generate_password.sh
-      outputs:
-        - name: new_password
-          jsonPath: $.password
-  - az:
-      description: "Persist secret to Keyvault"
+      description: "Reset password and persist to keyvault"
+      suppress-output: true
+      command: ./reset_password.sh
       arguments:
-        - keyvault
-        - secret
-        - set
-      flags:
-        name: "{{ bundle.outputs.vm_password_secret_name }}"
-        vault-name: "{{ bundle.outputs.keyvault_name }}"
-        value: "\"{{ bundle.outputs.vm_username }}\n{{ bundle.outputs.new_password }}\""
-  - az:
-      description: "Reset password"
-      arguments:
-        - vm
-        - user
-        - update
-      flags:
-        ids: "{{ bundle.outputs.azure_resource_id }}"
-        username: "{{ bundle.outputs.vm_username }}"
-        password: "{{ bundle.outputs.new_password }}"
+        - "{{ bundle.outputs.vm_password_secret_name }}"
+        - "{{ bundle.outputs.keyvault_name }}"
+        - "{{ bundle.outputs.vm_username }}"
+        - "{{ bundle.outputs.azure_resource_id }}"
