@@ -130,6 +130,12 @@ variable "deploy_nexus" {
   description = "Deploy the Nexus shared service"
 }
 
+variable "DEPLOY_AIRLOCK_NOTIFIER" {
+  type        = bool
+  default     = true
+  description = "Deploy the Airlock notifications shared service"
+}
+
 variable "resource_processor_type" {
   default     = "vmss_porter"
   description = "Which resource processor to deploy."

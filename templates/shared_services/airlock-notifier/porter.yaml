@@ -44,6 +44,10 @@ parameters:
   - name: smtp_from_email
     env: SMTP_FROM_EMAIL
     type: string
+  - name: arm_use_msi
+    env: ARM_USE_MSI
+    type: boolean
+    default: false
 
 mixins:
   - exec
@@ -62,18 +66,21 @@ install:
         smtp_username: "{{ bundle.parameters.smtp_username }}"
         smtp_password: "{{ bundle.parameters.smtp_password }}"
         smtp_from_email: "{{ bundle.parameters.smtp_from_email }}"
+        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.tre_id }}-shared-airlock-notifier"
+
   - az:
-      description: "az login"
+      description: "Login to Azure"
       arguments:
         - login
       flags:
         identity:
-        username: "{{ bundle.credentials.azure_client_id}}"
+        username: "{{ bundle.credentials.azure_client_id }}"
+
   - az:
       description: "Deploy logic app"
       arguments:
@@ -82,10 +89,10 @@ install:
         - source
         - config-zip
       flags:
-        - name: AirlockNotifier
-        - resource-group: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        - subscription: "73a4ea93-d914-424d-9e64-28adf397e8e3" # Fetch from vars
-        - src LogicApp.zip
+        name: AirlockNotifier
+        resource-group: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        subscription: "" # Fetch from vars
+        src: LogicApp.zip
 
 upgrade:
   - terraform:
@@ -98,6 +105,7 @@ upgrade:
         smtp_username: "{{ bundle.parameters.smtp_username }}"
         smtp_password: "{{ bundle.parameters.smtp_password }}"
         smtp_from_email: "{{ bundle.parameters.smtp_from_email }}"
+        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
@@ -115,6 +123,7 @@ uninstall:
         smtp_username: "{{ bundle.parameters.smtp_username }}"
         smtp_password: "{{ bundle.parameters.smtp_password }}"
         smtp_from_email: "{{ bundle.parameters.smtp_from_email }}"
+        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
