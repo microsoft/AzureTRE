@@ -130,7 +130,7 @@ variable "deploy_nexus" {
   description = "Deploy the Nexus shared service"
 }
 
-variable "DEPLOY_AIRLOCK_NOTIFIER" {
+variable "deploy_airlock_notifier" {
   type        = bool
   default     = true
   description = "Deploy the Airlock notifications shared service"
