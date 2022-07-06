@@ -37,6 +37,7 @@ SERVICE_BUS_STEP_RESULT_QUEUE = str = config("SERVICE_BUS_STEP_RESULT_QUEUE", de
 
 # Event grid configuration
 EVENT_GRID_STATUS_CHANGED_TOPIC_ENDPOINT: str = config("EVENT_GRID_STATUS_CHANGED_TOPIC_ENDPOINT", default="")
+EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_ENDPOINT: str = config("EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_ENDPOINT", default="")
 
 # Managed identity configuration
 MANAGED_IDENTITY_CLIENT_ID: str = config("MANAGED_IDENTITY_CLIENT_ID", default="")
@@ -52,3 +53,5 @@ AAD_TENANT_ID: str = config("AAD_TENANT_ID", default="")
 
 AAD_INSTANCE: str = config("AAD_INSTANCE", default="https://login.microsoftonline.com")
 API_AUDIENCE: str = config("API_AUDIENCE", default=API_CLIENT_ID)
+
+AIRLOCK_SAS_TOKEN_EXPIRY_PERIOD_IN_HOURS: int = config("AIRLOCK_SAS_TOKEN_EXPIRY_PERIOD_IN_HOURS", default=1)
