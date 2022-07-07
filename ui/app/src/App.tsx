@@ -91,7 +91,7 @@ export const App: React.FunctionComponent = () => {
                     resourceType={createFormResource.resourceType}
                     parentResource={createFormResource.resourceParent}
                     onAddResource={createFormResource.onAdd}
-                    workspaceClientId={createFormResource.workspaceClientId}
+                    workspaceApplicationIdURI={createFormResource.workspaceApplicationIdURI}
                     updateResource={createFormResource.updateResource}
                   />
                   <Stack styles={stackStyles} className='tre-root'>
@@ -108,7 +108,7 @@ export const App: React.FunctionComponent = () => {
                               setRoles: (roles: Array<string>) => { console.warn("Workspace roles", roles); setWorkspaceRoles(roles) },
                               workspace: selectedWorkspace,
                               setWorkspace: (w: Workspace) => { console.warn("Workspace set", w); setSelectedWorkspace(w) },
-                              workspaceClientId: selectedWorkspace.properties?.client_id
+                              workspaceApplicationIdURI: selectedWorkspace.properties?.scope_id
                             }}>
                               <WorkspaceProvider />
                             </WorkspaceContext.Provider>

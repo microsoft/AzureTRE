@@ -23,7 +23,7 @@ export const useComponentManager = (resource: Resource, onUpdate: (r: Resource) 
   useEffect(() => {
     const checkForReload = async () => {
       if (latestUpdate.componentAction === ComponentAction.Reload) {
-        let result = await apiCall(resource.resourcePath, HttpMethod.Get, workspaceCtx.workspaceClientId);
+        let result = await apiCall(resource.resourcePath, HttpMethod.Get, workspaceCtx.workspaceApplicationIdURI);
         opsWriteContext.current.clearUpdatesForResource(resource.id);
         onUpdate(getResourceFromResult(result));
       } else if (latestUpdate.componentAction === ComponentAction.Remove) {
@@ -32,7 +32,7 @@ export const useComponentManager = (resource: Resource, onUpdate: (r: Resource) 
       }
     }
     checkForReload();
-  }, [apiCall, latestUpdate, workspaceCtx.workspaceClientId, resource, onUpdate, onRemove, resource.resourcePath]);
+  }, [apiCall, latestUpdate, workspaceCtx.workspaceApplicationIdURI, resource, onUpdate, onRemove, resource.resourcePath]);
 
   return latestUpdate;
 }

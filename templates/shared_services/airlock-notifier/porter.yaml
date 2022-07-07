@@ -85,6 +85,7 @@ install:
         identity:
         username: "{{ bundle.credentials.azure_client_id }}"
 
+
   # - az:
   #     description: "Deploy logic app"
   #     arguments:
@@ -97,6 +98,7 @@ install:
   #       resource-group: "{{ bundle.outputs.airlock_notifier_logic_app_resource_group_name }}"
   #       subscription: "{{ bundle.credentials.azure_subscription_id }}"
   #       src: /tmp/LogicApp.zip
+
 
 upgrade:
   - terraform:
