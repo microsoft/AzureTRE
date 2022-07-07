@@ -14,6 +14,18 @@ resource "azurerm_servicebus_queue" "notifications_queue" {
   enable_partitioning = false
 }
 
+/* The notification queue needs to be subscribed to the notification event-grid */
+resource "azurerm_eventgrid_event_subscription" "airlock_notification" {
+  name  = local.airlock_notification_eventgrid_subscription_name
+  scope = data.azurerm_eventgrid_topic.airlock_notification.id
+
+  service_bus_queue_endpoint_id = azurerm_servicebus_queue.notifications_queue.id
+
+  delivery_identity {
+    type = "SystemAssigned"
+  }
+}
+
 // Using ARM as terraform's azurerm_api_connection creates a v1 api connection,
 // without connectionRuntimeUrl needed for SMTP https://github.com/hashicorp/terraform-provider-azurerm/issues/16195
 resource "azurerm_resource_group_template_deployment" "smtp-api-connection" {
@@ -49,11 +61,11 @@ resource "azurerm_logic_app_standard" "logic-app" {
   app_settings = {
     "FUNCTIONS_WORKER_RUNTIME"       = "node"
     "WEBSITE_NODE_DEFAULT_VERSION"   = "~12"
-    "serviceBus_connectionString"        = data.azurerm_servicebus_namespace.core.default_primary_connection_string
-    "subscription"        = data.azurerm_subscription.current.subscription_id
-    "resource_group"        = data.azurerm_resource_group.core.name
+    "serviceBus_connectionString"    = data.azurerm_servicebus_namespace.core.default_primary_connection_string
+    "subscription"                   = data.azurerm_subscription.current.subscription_id
+    "resource_group"                 = data.azurerm_resource_group.core.name
     "smtp_connection_runtime_url"    = jsondecode(azurerm_resource_group_template_deployment.smtp-api-connection.output_content).connectionRuntimeUrl.value
-    "smtp_from_email"    = var.smtp_from_email
+    "smtp_from_email"                = var.smtp_from_email
     "APPINSIGHTS_INSTRUMENTATIONKEY" = data.azurerm_application_insights.core.instrumentation_key
   }
 

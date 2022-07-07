@@ -33,3 +33,8 @@ data "local_file" "smtp-access-policy" {
 
 data "azurerm_subscription" "current" {
 }
+
+data "azurerm_eventgrid_topic" "airlock_notification" {
+  name                = local.notification_topic_name
+  resource_group_name = local.core_resource_group_name
+}
