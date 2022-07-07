@@ -108,3 +108,9 @@ resource "null_resource" "deploy_app" {
 
   depends_on = [azurerm_logic_app_standard.logic-app]
 }
+
+
+resource "azurerm_app_service_virtual_network_swift_connection" "gitea-integrated-vnet" {
+  app_service_id = azurerm_service_plan.notifier-plan.id
+  subnet_id      = data.azurerm_subnet.airlock_notification.id
+}
