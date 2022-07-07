@@ -12,8 +12,7 @@ pytestmark = pytest.mark.asyncio
 
 
 workspace_templates = [
-    (strings.BASE_WORKSPACE),
-    (strings.INNEREYE)
+    (strings.BASE_WORKSPACE)
 ]
 
 
