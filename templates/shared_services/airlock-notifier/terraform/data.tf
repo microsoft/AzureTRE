@@ -33,3 +33,6 @@ data "local_file" "smtp-access-policy" {
 
 data "azurerm_subscription" "current" {
 }
+
+data "azurerm_client_config" "current" {}
+
