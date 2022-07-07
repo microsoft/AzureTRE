@@ -32,15 +32,18 @@ h. **Cancelled**: The import/export process was manually cancelled by the reques
 i. **Blocking In-progress**: The import/export process has been blocked, however data movement is still ongoing.
 j. **Blocked By Scan**: The import/export process has been blocked. The security analysis found issues in the submitted data, and consequently quarantined the data.
 
-When an airlock process is created the state is **Draft** and thre request infrastructure will get created providing a single container to centralize data in the request. Once the processThe user will get a link for this container inside the storage account (URL + SAS token) that he can use to upload the desired data to be processed (import or export). This storage location is external for import (`stalimex`) or internal for export (`stalexint`), however only accessible to the requestor (ex: a TRE user/researcher).
-The user will be able to upload a file to the provided storage location, using any tool of their preference: [Azure Storage Explorer](https://azure.microsoft.com/en-us/features/storage-explorer/) or [AzCopy](https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-v10) which is a command line. 
+When an airlock process is created the state is **Draft** and thre request infrastructure will get created providing a single container to centralize data in the request. Once the processThe user will get a link for this container inside the storage account (URL + SAS token) that he can use to upload the desired data to be processed (import or export).
+This storage location is external for import (`stalimex`) or internal for export (`stalexint`), however only accessible to the requestor (ex: a TRE user/researcher).
+The user will be able to upload a file to the provided storage location, using any tool of their preference: [Azure Storage Explorer](https://azure.microsoft.com/en-us/features/storage-explorer/) or [AzCopy](https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-v10) which is a command line.
 
-The user Submits the request (TRE API call) starting the data movement (to the `stalimip` - import in-progress or `stalexip` - export in-progress). The airlock request is now in state **Submitted**. If enabled, the Security Scanning is started. In case security flaws are found, the request state becomes **Blocking In-progress** while the data is moved to storage rejected (either rejected import `stalimrej` or rejected export `stalexrej`). In this case, the request is finalized with the state **Blocked By Scan**.
+The user Submits the request (TRE API call) starting the data movement (to the `stalimip` - import in-progress or `stalexip` - export in-progress). The airlock request is now in state **Submitted**.
+If enabled, the Security Scanning is started. In case security flaws are found, the request state becomes **Blocking In-progress** while the data is moved to storage rejected (either rejected import `stalimrej` or rejected export `stalexrej`). In this case, the request is finalized with the state **Blocked By Scan**.
 If the Security Scanning does not identify security flaws, the request state becomes **In-Review**. Simultaneously a  notification is sent to the Airlock Manager user providing the access to data (SAS token + URL with READ permission).
 
 > The Security Scanning can be disabled, chaging the request state from **Submitted** straight to **In-Review**.
 
-The Airlock Manager will manually review the data using the tools of their choice available in the TRE workspace. Once review is completed, the Airlock Manager will have to *Approve* or *Reject* the airlock proces, though a TRE API call. At this point, the request will change state to either **Approval In-progress** or **Rejection In-progress**, while the data movement occurs moving afterwards to **Approved** or **Rejected** accordingly. The data will now be in the final storage destination: `stalexapp` - external approved export or `stalimapp` - internal approved import.
+The Airlock Manager will manually review the data using the tools of their choice available in the TRE workspace. Once review is completed, the Airlock Manager will have to *Approve* or *Reject* the airlock proces, though a TRE API call.
+At this point, the request will change state to either **Approval In-progress** or **Rejection In-progress**, while the data movement occurs moving afterwards to **Approved** or **Rejected** accordingly. The data will now be in the final storage destination: `stalexapp` - external approved export or `stalimapp` - internal approved import.
 With this state change a notification will be triggered to the requestor including the location for the processed data in the form of an URL + SAS token.
 
 ## Data movement
@@ -66,7 +69,8 @@ The identified data in a airlock proces, will be submited to a security scan. If
 
 ## Approval mechanism
 
-The approval mechanism, is bundled with any airlock process, providing a specific way to `approve` or `reject` the data. This mechanism will allow the Airlock Managers to explicitly approve/reject the process, after having acess to the data. The Airlock Manager users will be able to execute a manual review on the data using the tools available to him in the TRE Workspace. Once this manual review is executed
+The approval mechanism, is bundled with any airlock process, providing a specific way to `approve` or `reject` the data. This mechanism will allow the Airlock Managers to explicitly approve/reject the process, after having acess to the data. The Airlock Manager users will be able to execute a manual review on the data using the tools available to him in a reviewal TRE Workspace.
+Once this manual review is executed, Airlock Managers can proactivelly approve or reject the airlock request.
 
 The only responsability of the Approval mechanism is to support a cycle of revision, approval or rejection, while tracking the decision.
 
