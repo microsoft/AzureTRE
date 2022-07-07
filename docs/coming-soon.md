@@ -1,4 +1,4 @@
-# Coming Soon!
+# Coming Soon
 
 We're working to improve our documentation, and fill in some gaps. Unfortunately, this particular page is one of the gaps we're looking to fill and isn't yet available.
 
