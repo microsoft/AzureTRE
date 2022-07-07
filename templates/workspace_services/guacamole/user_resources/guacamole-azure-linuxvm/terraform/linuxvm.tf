@@ -114,7 +114,7 @@ data "template_file" "apt_sources_config" {
 }
 
 resource "azurerm_key_vault_secret" "linuxvm_password" {
-  name         = "${local.vm_name}-admin-credentials"
+  name         = local.vm_password_secret_name
   value        = "${random_string.username.result}\n${random_password.password.result}"
   key_vault_id = data.azurerm_key_vault.ws.id
 }
