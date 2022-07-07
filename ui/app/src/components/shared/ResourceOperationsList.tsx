@@ -26,7 +26,7 @@ export const ResourceOperationsList: React.FunctionComponent<ResourceOperationsL
     const getOperations = async () => {
       try {
         // get resource operations
-        const ops = await apiCall(`${props.resource.resourcePath}/${ApiEndpoint.Operations}`, HttpMethod.Get, workspaceCtx.workspaceClientId);
+        const ops = await apiCall(`${props.resource.resourcePath}/${ApiEndpoint.Operations}`, HttpMethod.Get, workspaceCtx.workspaceApplicationIdURI);
         config.debug && console.log(`Got resource operations, for resource:${props.resource.id}: ${ops.operations}`);
         setResourceOperations(ops.operations.reverse());
         setLoadingState(ops && ops.operations.length > 0 ? 'ok' : 'error');
@@ -35,7 +35,7 @@ export const ResourceOperationsList: React.FunctionComponent<ResourceOperationsL
       }
     };
     getOperations();
-  }, [apiCall, props.resource, resourceId, workspaceCtx.workspaceClientId]);
+  }, [apiCall, props.resource, resourceId, workspaceCtx.workspaceApplicationIdURI]);
 
 
   const stackStyles: IStackStyles = {

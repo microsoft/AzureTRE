@@ -13,7 +13,7 @@ interface ResourceFormProps {
   resourcePath: string,
   updateResource?: Resource,
   onCreateResource: (operation: Operation) => void,
-  workspaceClientId?: string
+  workspaceApplicationIdURI?: string
 }
 
 export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: ResourceFormProps) => {
@@ -64,11 +64,11 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
       }
       console.log("patching resource", d);
       let wsAuth = props.updateResource.resourceType === ResourceType.WorkspaceService || props.updateResource.resourceType === ResourceType.UserResource;
-      response = await apiCall(props.updateResource.resourcePath, HttpMethod.Patch, wsAuth ? props.workspaceClientId : undefined, { properties: d }, ResultType.JSON, undefined, undefined, props.updateResource._etag);
+      response = await apiCall(props.updateResource.resourcePath, HttpMethod.Patch, wsAuth ? props.workspaceApplicationIdURI : undefined, { properties: d }, ResultType.JSON, undefined, undefined, props.updateResource._etag);
     } else {
       const resource = { templateName: props.templateName, properties: formData };
       console.log(resource);
-      response = await apiCall(props.resourcePath, HttpMethod.Post, props.workspaceClientId, resource, ResultType.JSON);
+      response = await apiCall(props.resourcePath, HttpMethod.Post, props.workspaceApplicationIdURI, resource, ResultType.JSON);
     }
 
     setSendingData(false);

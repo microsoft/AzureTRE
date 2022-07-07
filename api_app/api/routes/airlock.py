@@ -9,6 +9,7 @@ from api.dependencies.workspaces import get_workspace_by_id_from_path, get_deplo
 from api.dependencies.airlock import get_airlock_request_by_id_from_path
 from models.domain.airlock_request import AirlockRequestStatus
 from db.repositories.airlock_reviews import AirlockReviewRepository
+from models.schemas.airlock_request_url import AirlockRequestTokenInResponse
 from models.schemas.airlock_review import AirlockReviewInCreate, AirlockReviewInResponse
 
 from db.repositories.airlock_requests import AirlockRequestRepository
@@ -16,9 +17,14 @@ from models.schemas.airlock_request import AirlockRequestInCreate, AirlockReques
 from resources import strings
 from services.authentication import get_current_workspace_owner_or_researcher_user, get_current_workspace_owner_user
 
-from .airlock_resource_helpers import save_airlock_review, save_and_publish_event_airlock_request, update_status_and_publish_event_airlock_request
+from .airlock_resource_helpers import save_airlock_review, save_and_publish_event_airlock_request, \
+    update_status_and_publish_event_airlock_request, RequestAccountDetails
+
+from services.airlock import get_storage_management_client, validate_user_allowed_to_access_storage_account, \
+    get_account_and_rg_by_request, get_airlock_request_container_sas_token, validate_request_status
 
 airlock_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user)])
+storage_client = get_storage_management_client()
 
 
 # airlock
@@ -44,6 +50,12 @@ async def create_submit_request(airlock_request=Depends(get_airlock_request_by_i
     return AirlockRequestInResponse(airlockRequest=updated_resource)
 
 
+@airlock_workspace_router.post("/workspaces/{workspace_id}/requests/{airlock_request_id}/cancel", status_code=status.HTTP_200_OK, response_model=AirlockRequestInResponse, name=strings.API_CANCEL_AIRLOCK_REQUEST, dependencies=[Depends(get_current_workspace_owner_or_researcher_user), Depends(get_workspace_by_id_from_path)])
+async def create_cancel_request(airlock_request=Depends(get_airlock_request_by_id_from_path), user=Depends(get_current_workspace_owner_or_researcher_user), airlock_request_repo=Depends(get_repository(AirlockRequestRepository))) -> AirlockRequestInResponse:
+    updated_resource = await update_status_and_publish_event_airlock_request(airlock_request, airlock_request_repo, user, AirlockRequestStatus.Cancelled)
+    return AirlockRequestInResponse(airlockRequest=updated_resource)
+
+
 @airlock_workspace_router.post("/workspaces/{workspace_id}/requests/{airlock_request_id}/reviews", status_code=status.HTTP_200_OK, response_model=AirlockReviewInResponse, name=strings.API_REVIEW_AIRLOCK_REQUEST, dependencies=[Depends(get_current_workspace_owner_user), Depends(get_workspace_by_id_from_path)])
 async def create_airlock_review(airlock_review_input: AirlockReviewInCreate, airlock_request=Depends(get_airlock_request_by_id_from_path), user=Depends(get_current_workspace_owner_user), airlock_request_repo=Depends(get_repository(AirlockRequestRepository)), airlock_review_repo=Depends(get_repository(AirlockReviewRepository)), workspace=Depends(get_deployed_workspace_by_id_from_path)) -> AirlockReviewInResponse:
     # Create the review model and save in cosmos
@@ -57,3 +69,17 @@ async def create_airlock_review(airlock_review_input: AirlockReviewInCreate, air
     review_status = AirlockRequestStatus(airlock_review.reviewDecision.value)
     await update_status_and_publish_event_airlock_request(airlock_request, airlock_request_repo, user, review_status)
     return AirlockReviewInResponse(airlock_review=airlock_review)
+
+
+@airlock_workspace_router.get("/workspaces/{workspace_id}/requests/{airlock_request_id}/link",
+                              status_code=status.HTTP_200_OK, response_model=AirlockRequestTokenInResponse,
+                              name=strings.API_AIRLOCK_REQUEST_LINK,
+                              dependencies=[Depends(get_current_workspace_owner_or_researcher_user)])
+async def get_airlock_container_link(workspace=Depends(get_deployed_workspace_by_id_from_path),
+                                     airlock_request=Depends(get_airlock_request_by_id_from_path),
+                                     user=Depends(get_current_workspace_owner_or_researcher_user)) -> AirlockRequestTokenInResponse:
+    validate_user_allowed_to_access_storage_account(user, airlock_request)
+    validate_request_status(airlock_request)
+    request_account_details: RequestAccountDetails = get_account_and_rg_by_request(airlock_request, workspace)
+    container_url = get_airlock_request_container_sas_token(storage_client, request_account_details, airlock_request)
+    return AirlockRequestTokenInResponse(containerUrl=container_url)

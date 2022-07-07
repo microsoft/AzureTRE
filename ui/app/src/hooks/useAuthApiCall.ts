@@ -33,7 +33,7 @@ export const useAuthApiCall = () => {
     return useCallback(async (
         endpoint: string,
         method: HttpMethod,
-        clientId?: string,
+        workspaceApplicationIdURI?: string,
         body?: any,
         resultType?: ResultType,
         setRoles?: (roles: Array<string>) => void,
@@ -45,10 +45,10 @@ export const useAuthApiCall = () => {
             return;
         }
 
-        const clientIdToCall = clientId || config.treApiClientId;
+        const applicationIdURI = workspaceApplicationIdURI || config.treApplicationId;
         let tokenResponse = {} as AuthenticationResult;
         let tokenRequest = {
-            scopes: [`api://${clientIdToCall}/user_impersonation`],
+            scopes: [`${applicationIdURI}/user_impersonation`],
             account: account
         }
 
