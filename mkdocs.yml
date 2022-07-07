@@ -44,6 +44,7 @@ nav:
           - System Architecture: "azure-tre-overview/architecture.md"
           - Network Architecture: "azure-tre-overview/networking.md"
           - Azure Resources: "azure-tre-overview/tre-resources-breakdown.md"
+      - Compliance Information: "coming-soon.md"
       - Getting Started: "coming-soon.md"
 
   - Using the TRE for Research: # Documentation for users of the TRE
@@ -121,9 +122,10 @@ nav:
                   - GitHub Actions: "tre-admins/setup-instructions/workflows.md"
                   - Azure DevOps: "coming-soon.md"
 
-      - Troubleshooting: # General Troubleshooting Section for Development
-          - Enabling Debugging for the API: "tre-admins/troubleshooting-guide.md" # needs splitting out into separate document
-          - API Logs using Development Center: "tre-admins/troubleshooting-guide.md" # needs splitting out into separate document
-          - Checking the Service Bus: "tre-admins/troubleshooting-guide.md" # needs splitting out into separate document
-          - Checking Logs in Application Insights: "tre-admins/troubleshooting-guide.md" # needs splitting out into separate document
-          - Troubleshooting the Resource Processor: "tre-admins/troubleshooting-guide.md" # needs splitting out into separate document
+      - Troubleshooting FAQ: # General Troubleshooting Section for Development
+          - Enabling Debugging for the API: "tre-admins/troubleshooting-guide.md" # needs splitting out into a separate document
+          - API Logs using Development Center: "tre-admins/troubleshooting-guide.md" # needs splitting out into a separate document
+          - Checking the Service Bus: "tre-admins/troubleshooting-guide.md" # needs splitting out into a separate document
+          - Checking Logs in Application Insights: "tre-admins/troubleshooting-guide.md" # needs splitting out into a separate document
+          - Troubleshooting the Resource Processor: "tre-admins/troubleshooting-guide.md" # needs splitting out into a separate document
+
