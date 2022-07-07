@@ -9,4 +9,3 @@ variable "arm_client_id" {}
 variable "arm_client_secret" {}
 variable "display_name" {}
 variable "description" {}
-variable "tre_workspace_service_tags" {}
