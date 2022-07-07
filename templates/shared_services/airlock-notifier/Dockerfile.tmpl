@@ -14,6 +14,9 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN apt-get update \
     && apt-get install -y zip
 
+#RUN apt-get update \
+#    && apt-get install -y zip
+
 ARG BUNDLE_DIR
 
 # This is a template Dockerfile for the bundle's invocation image
@@ -29,11 +32,14 @@ ARG BUNDLE_DIR
 # another location in this file. If you remove that line, the mixins generated content is appended to this file.
 # PORTER_MIXINS
 
-ADD "https://aka.ms/logicapp-latest-py2.py3-none-any.whl" "logicapp-latest-py2.py3-none-any.whl"
-RUN az extension add --yes --source "./logicapp-latest-py2.py3-none-any.whl"
+
+# ADD "https://aka.ms/logicapp-latest-py2.py3-none-any.whl" "logicapp-latest-py2.py3-none-any.whl"
 
 # Use the BUNDLE_DIR build argument to copy files into the bundle
-
 COPY . $BUNDLE_DIR
 
-RUN zip -r LogicApp.zip $BUNDLE_DIR/app
+# RUN az extension add --yes --source "$BUNDLE_DIR/customLogicapp.whl" --debug
+# RUN az extension add --yes --source "https://aka.ms/logicapp-latest-py2.py3-none-any.whl"
+ENV AZURE_CLI_DISABLE_CONNECTION_VERIFICATION=true
+ENV ADAL_PYTHON_SSL_NO_VERIFY=true
+RUN zip -jr /tmp/LogicApp.zip $BUNDLE_DIR/app

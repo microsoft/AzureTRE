@@ -96,3 +96,15 @@ resource "azurerm_resource_group_template_deployment" "smtp-api-connection-acces
 
 }
 
+resource "null_resource" "deploy_app" {
+  provisioner "local-exec" {
+    command    = "az login --identity -u '${data.azurerm_client_config.current.client_id}' && az functionapp deployment source config-zip --name ${azurerm_logic_app_standard.logic-app.name} --resource-group ${azurerm_logic_app_standard.logic-app.resource_group_name} --subscription 73a4ea93-d914-424d-9e64-28adf397e8e3 --src /tmp/LogicApp.zip"
+    on_failure = fail
+  }
+
+  triggers = {
+    always_run = timestamp()
+  }
+
+  depends_on = [azurerm_logic_app_standard.logic-app]
+}
