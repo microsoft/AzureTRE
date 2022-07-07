@@ -1,11 +1,14 @@
 # Configuring Shared Services
 
-## Deploy/configure Nexus
+## Deploy/configure Nexus manually
 
-If you're deploying a brand new environment you should deploy the VM-based (V2) service (read section `A`). If you wish to migrate from an existing App Service Nexus service (V1) to the VM-based service, first deploy the new service (section `A`) then proceed to section `B`.
+Setting `DEPLOY_NEXUS=true` in your `.env` and running `make all` will install and configure certs & Nexus automatically. You can also
+do this by running `make nexus-install`.
+
+If you're deploying a brand new environment and you didn't flag Nexus to be installed automatically, you should deploy the VM-based (V2) service manually (read section `A`). If you wish to migrate from an existing App Service Nexus service (V1) to the VM-based service, first manually deploy the new service (section `A`) then proceed to section `B`.
 
 !!! info
-    The Makefile commands for deploying shared services temporarily target the V1 service so that existing environments won't have a new V2 Nexus service deployed automatically by CICD and introduce breaking changes. The V2 Nexus service will need to be deployed manually using the steps below.
+    Guacamole user resources of version `0.3.6` or higher target Nexus V2 by default, but have the option to manually specify V1 as a `nexus_version` parameter if you have an instance of the Nexus V1 service that you wish to use. When you're readu to migrate to the new service, you can do so manually by following section `B`.
 
 ### A. Deploy & configure V2 Nexus service (hosted on VM)
 
@@ -43,11 +46,9 @@ You can use the Certs Shared Service to set one up by following these steps:
 !!! caution
     If you have KeyVault Purge Protection enabled and are re-deploying your environment using the same `cert_name`, you may encounter this: `Status=409 Code=\"Conflict\" Message=\"Certificate nexus-ssl is currently in a deleted but recoverable state`. You need to either manually recover the certificate or purge it before redeploying.
 
-1. Once the shared service has been deployed (which you can check by querying the `/api/shared-services/operations` method), copy its `resource_id`, then find the `POST` operation for `/api/shared-services/{shared_service_id}/invoke_action`, click `Try it out` and paste in the resource id into the `shared_service_id` field, and enter `generate` into the `action` field, then click `Execute`.
+Once deployed, the certs service will use Letsencrypt to generate a certificate for the specified domain prefix followed by `-{TRE_ID}.{LOCATION}.cloudapp.azure.com`, so in our case, having entered `nexus`, this will be `nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com`, which will be the public domain for our Nexus service.
 
-This will invoke the certs service to use Letsencrypt to generate a certificate for the specified domain prefix followed by `-{TRE_ID}.{LOCATION}.cloudapp.azure.com`, so in our case, having entered `nexus`, this will be `nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com`, which will be the public domain for our Nexus service.
-
-Once this has completed, you can verify its success either from the operation output, or by navigating to your core keyvault (`kv-{TRE_ID}`) and looking for a certificate called `nexus-ssl` (or whatever you called it).
+You can verify whether this has been successful by navigating to your core keyvault (`kv-{TRE_ID}`) and looking for a certificate called `nexus-ssl` (or whatever you called it).
 
 After verifying the certificate has been generated, you can deploy Nexus:
 
@@ -81,7 +82,7 @@ This will deploy the infrastructure required for Nexus, then start the service a
 
 You can optionally go to the Nexus web interface by visiting `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/` in the jumpbox and signing in with the username `admin` and the password secret located in your core keyvault, with the key `nexus-admin-password`. Here you should be able to see all of the configured repositories and you can use the UI to manage settings etc.
 
-Just bear in mind that if this service is redeployed any changes in the UI won't be persisted. If you wish to add new repositories or alter existing ones, use the JSON files within the `./nexus_repos_config` directory.
+Just bear in mind that if this service is redeployed any changes made in the Nexus UI won't be persisted. If you wish to permanently add new repositories or alter existing ones, modify the JSON files within the `./nexus_repos_config` directory and redeploy.
 
 ### B. Migrate from an existing V1 Nexus service (hosted on App Service)
 
@@ -102,6 +103,12 @@ The new V2 Nexus shared service can be located in the `./templates/shared_servic
 This has been created as a separate service as the domain name exposed for proxies will be different to the one used by the original Nexus service and thus will break any user resources configured with the old proxy URL.
 
 The original Nexus service that runs on App Service (located in `./templates/shared_services/sonatype-nexus`) has the bundle name `tre-shared-service-nexus` so can co-exist with the new VM-based shared service to enable smoother upgrading of existing resources.
+
+## Renewing certificates for Nexus
+
+The Nexus V2 service checks Keyvault regularly for the latest certificate matching the name you passed on deploy (`nexus-ssl` by default).
+
+When approaching expiry, you can either provide an updated certificate if you brought your own, or if you used the certs shared service to generate one, just call the `renew` custom action on that service. This will generate a new certificate and persist it to the Keyvault.
 
 ## Configure Gitea repositories
 

@@ -267,7 +267,7 @@ bundle-install: bundle-check-params
 # We remove arm_use_msi on both sides since it shouldn't take effect locally anyway.
 bundle-check-params:
 	$(call target_title, "Checking bundle parameters in ${DIR}") \
-	&& . ./devops/scripts/check_dependencies.sh nodocker,porter \
+	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,porter \
 	&& cd ${DIR} \
 	&& if [ ! -f "parameters.json" ]; then echo "Error - please create a parameters.json file."; exit 1; fi \
 	&& if ! porter explain -ojson > /dev/null; then echo "Error - porter explain issue!"; exit 1; fi \
@@ -288,15 +288,15 @@ bundle-uninstall:
 		--allow-docker-host-access --debug
 
 bundle-custom-action:
-	$(call target_title, "Performing:${ACTION} ${DIR} with Porter") \
-	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter \
-	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
-	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
-	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
-	&& cd ${DIR} && porter invoke --action ${ACTION} -p ./parameters.json \
-		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
-		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
-		--allow-docker-host-access --debug
+ 	$(call target_title, "Performing:${ACTION} ${DIR} with Porter") \
+ 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter \
+ 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
+ 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
+ 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
+ 	&& cd ${DIR} && porter invoke --action ${ACTION} -p ./parameters.json \
+ 		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
+ 		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
+ 		--allow-docker-host-access --debug
 
 bundle-publish:
 	$(call target_title, "Publishing ${DIR} bundle with Porter") \
@@ -319,21 +319,17 @@ bundle-register:
 	&& cd ${DIR} \
 	&& ${MAKEFILE_DIR}/devops/scripts/register_bundle_with_api.sh --acr-name "$${ACR_NAME}" --bundle-type "$${BUNDLE_TYPE}" --current --insecure --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}" --verify --workspace-service-name "$${WORKSPACE_SERVICE_NAME}"
 
-workspace_bundle = $(MAKE) bundle-build DIR=${MAKEFILE_DIR}/templates/workspaces/$(1)/ \
-	&& $(MAKE) bundle-publish DIR=${MAKEFILE_DIR}/templates/workspaces/$(1)/ \
-	&& $(MAKE) bundle-register DIR="${MAKEFILE_DIR}/templates/workspaces/$(1)" BUNDLE_TYPE=workspace
+workspace_bundle = $(MAKE) bundle-build bundle-publish bundle-register \
+	DIR="${MAKEFILE_DIR}/templates/workspaces/$(1)" BUNDLE_TYPE=workspace
 
-workspace_service_bundle = $(MAKE) bundle-build DIR=${MAKEFILE_DIR}/templates/workspace_services/$(1)/ \
-	&& $(MAKE) bundle-publish DIR=${MAKEFILE_DIR}/templates/workspace_services/$(1)/ \
-	&& $(MAKE) bundle-register DIR="${MAKEFILE_DIR}/templates/workspace_services/$(1)" BUNDLE_TYPE=workspace_service
+workspace_service_bundle = $(MAKE) bundle-build bundle-publish bundle-register \
+	DIR="${MAKEFILE_DIR}/templates/workspace_services/$(1)" BUNDLE_TYPE=workspace_service
 
-shared_service_bundle = $(MAKE) bundle-build DIR=${MAKEFILE_DIR}/templates/shared_services/$(1)/ \
-	&& $(MAKE) bundle-publish DIR=${MAKEFILE_DIR}/templates/shared_services/$(1)/ \
-	&& $(MAKE) bundle-register DIR="${MAKEFILE_DIR}/templates/shared_services/$(1)" BUNDLE_TYPE=shared_service
+shared_service_bundle = $(MAKE) bundle-build bundle-publish bundle-register \
+	DIR="${MAKEFILE_DIR}/templates/shared_services/$(1)" BUNDLE_TYPE=shared_service
 
-user_resource_bundle = $(MAKE) bundle-build DIR=${MAKEFILE_DIR}/templates/workspace_services/$(1)/user_resources/$(2)/ \
-	&& $(MAKE) bundle-publish DIR=${MAKEFILE_DIR}/templates/workspace_services/$(1)/user_resources/$(2) \
-	&& $(MAKE) bundle-register DIR="${MAKEFILE_DIR}/templates/workspace_services/$(1)/user_resources/$(2)" BUNDLE_TYPE=user_resource WORKSPACE_SERVICE_NAME=tre-service-$(1)
+user_resource_bundle = $(MAKE) bundle-build bundle-publish bundle-register \
+	DIR="${MAKEFILE_DIR}/templates/workspace_services/$(1)/user_resources/$(2)" BUNDLE_TYPE=user_resource WORKSPACE_SERVICE_NAME=tre-service-$(1)
 
 deploy-shared-service:
 	@# NOTE: ACR_NAME below comes from the env files, so needs the double '$$'. Others are set on command execution and don't
@@ -343,25 +339,20 @@ deploy-shared-service:
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/get_access_token.sh \
 	&& cd ${DIR} \
-	&& ${MAKEFILE_DIR}/devops/scripts/deploy_shared_service.sh --insecure --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}"
+	&& ${MAKEFILE_DIR}/devops/scripts/deploy_shared_service.sh --insecure --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}" $${PROPS}
 
 firewall-install:
-	$(MAKE) bundle-build DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ \
-	&& $(MAKE) bundle-publish DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ \
-	&& $(MAKE) bundle-register DIR="${MAKEFILE_DIR}/templates/shared_services/firewall" BUNDLE_TYPE=shared_service \
-	&& $(MAKE) deploy-shared-service DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ BUNDLE_TYPE=shared_service
+	$(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
+	DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ BUNDLE_TYPE=shared_service
 
 nexus-install:
-	$(MAKE) bundle-build DIR=${MAKEFILE_DIR}/templates/shared_services/sonatype-nexus/ \
-	&& $(MAKE) bundle-publish DIR=${MAKEFILE_DIR}/templates/shared_services/sonatype-nexus/ \
-	&& $(MAKE) bundle-register DIR="${MAKEFILE_DIR}/templates/shared_services/sonatype-nexus" BUNDLE_TYPE=shared_service \
-	&& $(MAKE) deploy-shared-service DIR=${MAKEFILE_DIR}/templates/shared_services/sonatype-nexus/ BUNDLE_TYPE=shared_service
+	$(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
+	DIR="${MAKEFILE_DIR}/templates/shared_services/certs" BUNDLE_TYPE=shared_service PROPS="--domain_prefix nexus --cert_name nexus-ssl" \
+	&& $(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
+  DIR=${MAKEFILE_DIR}/templates/shared_services/sonatype-nexus-vm/ BUNDLE_TYPE=shared_service
 
 gitea-install:
-	$(MAKE) bundle-build DIR=${MAKEFILE_DIR}/templates/shared_services/gitea/ \
-	&& $(MAKE) bundle-publish DIR=${MAKEFILE_DIR}/templates/shared_services/gitea/ \
-	&& $(MAKE) bundle-register DIR="${MAKEFILE_DIR}/templates/shared_services/gitea" BUNDLE_TYPE=shared_service \
-	&& $(MAKE) deploy-shared-service DIR=${MAKEFILE_DIR}/templates/shared_services/gitea/ BUNDLE_TYPE=shared_service
+	$(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service DIR=${MAKEFILE_DIR}/templates/shared_services/gitea/ BUNDLE_TYPE=shared_service
 
 temp-do-upload:
 	$(MAKE) static-web-upload DIR=${MAKEFILE_DIR}/dummy
@@ -390,15 +381,12 @@ build-and-deploy-ui:
 
 prepare-for-e2e:
 	$(call workspace_bundle,base) \
-	&& $(call workspace_bundle,innereye) \
 	&& $(call workspace_service_bundle,guacamole) \
 	&& $(call workspace_service_bundle,azureml) \
-	&& $(call workspace_service_bundle,devtestlabs) \
 	&& $(call workspace_service_bundle,gitea) \
 	&& $(call workspace_service_bundle,innereye) \
 	&& $(call shared_service_bundle,sonatype-nexus) \
 	&& $(call shared_service_bundle,gitea) \
-	&& $(call user_resource_bundle,guacamole,guacamole-dev-vm) \
 	&& $(call user_resource_bundle,guacamole,guacamole-azure-windowsvm) \
 	&& $(call user_resource_bundle,guacamole,guacamole-azure-linuxvm)
 
@@ -463,4 +451,4 @@ db-migrate: api-healthcheck
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/templates/core/private.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/get_access_token.sh \
-	&& . ${MAKEFILE_DIR}/devops/scripts/migrate_state_store.sh --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}"
+	&& . ${MAKEFILE_DIR}/devops/scripts/migrate_state_store.sh --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}" --insecure

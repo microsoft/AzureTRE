@@ -39,12 +39,6 @@
       "type": "boolean",
       "title": "Expose externally",
       "description": "Is the Guacamole service exposed outside of the vnet"
-    },
-    "workspace_identifier_uri": {
-      "$id": "#/properties/workspace_identifier_uri",
-      "type": "string",
-      "title": "Workspace Identifier URI (Scope)",
-      "description": "The audience/scope/identifier uri of the workspace in AAD"
     }
   },
   "pipeline": {
@@ -55,7 +49,6 @@
       {
         "stepId": "12ba0dad-ea6c-4d0d-9255-d316212f5ffa",
         "stepTitle": "Add Guacamole URI as AAD redirect URI",
-        "resourceTemplateName": "tre-workspace-base",
         "resourceType": "workspace",
         "resourceAction": "upgrade",
         "properties": [
@@ -66,7 +59,7 @@
             "arrayMatchField": "name",
             "value": {
               "name": "{{ resource.id }}",
-              "value": "{{ resource.properties.connection_uri }}"
+              "value": "{{ resource.properties.authentication_callback_uri }}"
             }
           }
         ]
@@ -79,7 +72,6 @@
       {
         "stepId": "741c7ff2-eff5-47b2-bf62-2b410d65c96b",
         "stepTitle": "Update Guacamole URI in AAD",
-        "resourceTemplateName": "tre-workspace-base",
         "resourceType": "workspace",
         "resourceAction": "upgrade",
         "properties": [
@@ -90,7 +82,7 @@
             "arrayMatchField": "name",
             "value": {
               "name": "{{ resource.id }}",
-              "value": "{{ resource.properties.connection_uri }}"
+              "value": "{{ resource.properties.authentication_callback_uri }}"
             }
           }
         ]
@@ -100,7 +92,6 @@
       {
         "stepId": "9a1d6b95-26c8-4165-8010-573dd4e2b45c",
         "stepTitle": "Update guacamole URI to AAD redirect URI",
-        "resourceTemplateName": "tre-workspace-base",
         "resourceType": "workspace",
         "resourceAction": "upgrade",
         "properties": [

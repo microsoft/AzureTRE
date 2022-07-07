@@ -4,6 +4,7 @@ from typing import List
 
 from azure.cosmos import CosmosClient
 from pydantic import parse_obj_as
+from resources import strings
 from models.domain.request_action import RequestAction
 from models.domain.resource import ResourceType
 from db.repositories.resources import ResourceRepository
@@ -44,9 +45,12 @@ class OperationRepository(BaseRepository):
             message=message,
             updatedWhen=self.get_timestamp())
 
-    def create_operation_item(self, resource_id: str, status: Status, action: str, message: str, resource_path: str, resource_version: int, user: User, resource_template: ResourceTemplate, resource_repo: ResourceRepository) -> Operation:
+    def create_operation_item(self, resource_id: str, action: str, resource_path: str, resource_version: int, user: User, resource_template: ResourceTemplate, resource_repo: ResourceRepository) -> Operation:
         operation_id = self.create_operation_id()
         resource_template_dict = resource_template.dict(exclude_none=True)
+
+        # get the right "awaiting" message based on the action
+        status, message = self.get_initial_status(action)
 
         # if the template has a pipeline defined for this action, copy over all the steps to the ops document
         steps = self.build_step_list(
@@ -111,16 +115,36 @@ class OperationRepository(BaseRepository):
                         if resource_for_step is None:
                             raise Exception(f"Error finding resource to update, triggered by resource ID {resource_id}")
 
+                        resource_for_step_status, resource_for_step_message = self.get_initial_status(step["resourceAction"])
+
                         steps.append(OperationStep(
                             stepId=step["stepId"],
                             stepTitle=step["stepTitle"],
                             resourceId=resource_for_step.id,
-                            resourceTemplateName=step["resourceTemplateName"],
-                            resourceType=step["resourceType"],
+                            resourceTemplateName=resource_for_step.templateName,
+                            resourceType=resource_for_step.resourceType,
                             resourceAction=step["resourceAction"],
+                            status=resource_for_step_status,
+                            message=resource_for_step_message,
                             updatedWhen=self.get_timestamp()
                         ))
         return steps
+
+    def get_initial_status(self, action: RequestAction):
+        status = Status.AwaitingAction
+        message = strings.RESOURCE_STATUS_AWAITING_ACTION_MESSAGE
+
+        if action == RequestAction.Install:
+            status = Status.AwaitingDeployment
+            message = strings.RESOURCE_STATUS_AWAITING_DEPLOYMENT_MESSAGE
+        elif action == RequestAction.UnInstall:
+            status = Status.AwaitingDeletion
+            message = strings.RESOURCE_STATUS_AWAITING_DELETION_MESSAGE
+        elif action == RequestAction.Upgrade:
+            status = Status.AwaitingUpdate
+            message = strings.RESOURCE_STATUS_AWAITING_UPDATE_MESSAGE
+
+        return status, message
 
     def update_operation_status(self, operation_id: str, status: Status, message: str) -> Operation:
         operation = self.get_operation_by_id(operation_id)
@@ -133,9 +157,6 @@ class OperationRepository(BaseRepository):
         return operation
 
     def get_operation_by_id(self, operation_id: str) -> Operation:
-        """
-        returns a single operation doc
-        """
         query = self.operations_query() + f' c.id = "{operation_id}"'
         operation = self.query(query=query)
         if not operation:
@@ -143,17 +164,11 @@ class OperationRepository(BaseRepository):
         return parse_obj_as(Operation, operation[0])
 
     def get_operations_by_resource_id(self, resource_id: str) -> List[Operation]:
-        """
-        returns a list of operations for this resource
-        """
         query = self.operations_query() + f' c.resourceId = "{resource_id}"'
         operations = self.query(query=query)
         return parse_obj_as(List[Operation], operations)
 
     def resource_has_deployed_operation(self, resource_id: str) -> bool:
-        """
-        checks whether this resource has a successful "deployed" operation
-        """
-        query = self.operations_query() + f' c.resourceId = "{resource_id}" AND c.action = "{RequestAction.Install}" AND c.status in ("{Status.Deployed}", "{Status.PipelineSucceeded}")'
+        query = self.operations_query() + f' c.resourceId = "{resource_id}" AND c.action = "{RequestAction.Install}" AND c.status = "{Status.Deployed}"'
         operations = self.query(query=query)
         return len(operations) > 0

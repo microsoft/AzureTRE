@@ -1,11 +1,12 @@
 import uuid
 import pytest
+from models.domain.request_action import RequestAction
 from models.domain.resource import Resource
 from models.domain.user_resource import UserResource
 from models.domain.shared_service import SharedService
 from tests_ma.test_api.test_routes.test_resource_helpers import FAKE_CREATE_TIMESTAMP
 from models.domain.authentication import User
-from models.domain.operation import Operation, OperationStep
+from models.domain.operation import Operation, OperationStep, Status
 
 from models.domain.resource_template import Pipeline, PipelineStep, PipelineStepProperty, ResourceTemplate, ResourceType
 from models.domain.user_resource_template import UserResourceTemplate
@@ -287,7 +288,7 @@ def multi_step_operation(test_user, basic_shared_service_template, basic_shared_
     return Operation(
         id="op-guid-here",
         resourceId="resource-id",
-        action="install",
+        action=RequestAction.Install,
         user=test_user,
         resourcePath="/workspaces/resource-id",
         createdWhen=FAKE_CREATE_TIMESTAMP,
@@ -300,6 +301,8 @@ def multi_step_operation(test_user, basic_shared_service_template, basic_shared_
                 resourceTemplateName=basic_shared_service_template.name,
                 resourceType=basic_shared_service_template.resourceType,
                 resourceId=basic_shared_service.id,
+                status=Status.AwaitingUpdate,
+                message="This resource is waiting to be updated",
                 updatedWhen=FAKE_CREATE_TIMESTAMP
             ),
             OperationStep(
@@ -309,6 +312,8 @@ def multi_step_operation(test_user, basic_shared_service_template, basic_shared_
                 resourceType=ResourceType.Workspace,
                 resourceTemplateName="template1",
                 resourceId="resource-id",
+                status=Status.AwaitingDeployment,
+                message="This resource is waiting to be deployed",
                 updatedWhen=FAKE_CREATE_TIMESTAMP
             ),
             OperationStep(
@@ -318,6 +323,8 @@ def multi_step_operation(test_user, basic_shared_service_template, basic_shared_
                 resourceType=basic_shared_service_template.resourceType,
                 resourceTemplateName=basic_shared_service_template.name,
                 resourceId=basic_shared_service.id,
+                status=Status.AwaitingUpdate,
+                message="This resource is waiting to be updated",
                 updatedWhen=FAKE_CREATE_TIMESTAMP
             )
         ]

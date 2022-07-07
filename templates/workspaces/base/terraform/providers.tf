@@ -34,9 +34,6 @@ provider "azurerm" {
   }
 }
 
-data "azurerm_subscription" "current" {}
-data "azurerm_client_config" "current" {}
-
 provider "azuread" {
   client_id     = var.auth_client_id
   client_secret = var.auth_client_secret

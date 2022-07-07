@@ -7,10 +7,19 @@ from db.repositories.airlock_reviews import AirlockReviewRepository
 from models.domain.airlock_review import AirlockReview
 from db.repositories.airlock_requests import AirlockRequestRepository
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus
-from event_grid.helpers import send_status_changed_event
+from event_grid.event_sender import send_status_changed_event, send_airlock_notification_event
 from models.domain.authentication import User
 
 from resources import strings
+
+
+class RequestAccountDetails:
+    account_name: str
+    account_rg: str
+
+    def __init__(self, account_name, account_rg):
+        self.account_name = account_name
+        self.account_rg = account_rg
 
 
 async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest, airlock_request_repo: AirlockRequestRepository, user: User):
@@ -26,9 +35,11 @@ async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest
     try:
         logging.debug(f"Sending status changed event for airlock request item: {airlock_request.id}")
         await send_status_changed_event(airlock_request)
+        # TODO - replace with the emails list
+        await send_airlock_notification_event(airlock_request, [], [])
     except Exception as e:
         airlock_request_repo.delete_item(airlock_request.id)
-        logging.error(f"Failed send airlock_request request message: {e}")
+        logging.error(f"Failed sending status_changed message: {e}")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.EVENT_GRID_GENERAL_ERROR_MESSAGE)
 
 
@@ -46,9 +57,11 @@ async def update_status_and_publish_event_airlock_request(airlock_request: Airlo
     try:
         logging.debug(f"Sending status changed event for airlock request item: {airlock_request.id}")
         await send_status_changed_event(updated_airlock_request)
+        # TODO - replace with the emails list
+        await send_airlock_notification_event(updated_airlock_request, [], [])
         return updated_airlock_request
     except Exception as e:
-        logging.error(f"Failed send airlock_request request message: {e}")
+        logging.error(f"Failed sending status_changed message: {e}")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.EVENT_GRID_GENERAL_ERROR_MESSAGE)
 
 

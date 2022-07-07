@@ -10,7 +10,6 @@ on:  # yamllint disable-line rule:truthy
 jobs:
   pr_comment:
     name: PR comment
-    environment: CICD
     # https://docs.github.com/en/graphql/reference/enums#commentauthorassociation
     # (and https://docs.github.com/en/rest/reference/issues#comments)
 
@@ -137,6 +136,7 @@ jobs:
     if: |
       needs.pr_comment.outputs.command == 'run-tests' ||
       needs.pr_comment.outputs.command == 'run-tests-extended' ||
+      needs.pr_comment.outputs.command == 'run-tests-extended-aad' ||
       needs.pr_comment.outputs.command == 'run-tests-shared-services'
     name: Deploy PR
     uses: ./.github/workflows/deploy_tre_reusable.yml
@@ -146,8 +146,10 @@ jobs:
       ciGitRef: ${{ needs.pr_comment.outputs.ciGitRef }}
       e2eTestsCustomSelector: >-
         ${{ (needs.pr_comment.outputs.command == 'run-tests-extended' && 'extended') ||
-        (needs.pr_comment.outputs.command == 'run-tests-shared-services' && 'shared_sevices') ||
+        (needs.pr_comment.outputs.command == 'run-tests-extended-aad' && 'extended-aad') ||
+        (needs.pr_comment.outputs.command == 'run-tests-shared-services' && 'shared_services') ||
         (needs.pr_comment.outputs.command == 'run-tests' && '') }}
+      environmentName: CICD
     secrets:
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
       ACR_NAME: ${{ format('tre{0}', needs.pr_comment.outputs.prRefId) }}

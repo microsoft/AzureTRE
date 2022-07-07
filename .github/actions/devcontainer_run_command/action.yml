@@ -115,6 +115,10 @@ inputs:
     description: "A value indicating if resources with state will be protected with locks."
     required: false
     default: "true"
+  TF_VAR_enable_airlock_malware_scanning:
+    description: "If False, Airlock requests will skip the malware scanning stage."
+    required: false
+    default: "false"
   CI_CACHE_ACR_NAME:
     description: "A secondary ACR used for caching in CI environments"
     required: false
@@ -210,6 +214,7 @@ runs:
           -e IS_API_SECURED \
           -e DOCKER_BUILDKIT=1 \
           -e TF_VAR_stateful_resources_locked=${{ inputs.TF_VAR_stateful_resources_locked }} \
+          -e TF_VAR_enable_airlock_malware_scanning=${{ inputs.TF_VAR_enable_airlock_malware_scanning }} \
           -e CI_CACHE_ACR_NAME="${{ inputs.CI_CACHE_ACR_NAME }}" \
           '${{ inputs.ACTIONS_ACR_URI }}tredev:${{ inputs.ACTIONS_DEVCONTAINER_TAG }}' \
         bash -c "${{ inputs.COMMAND }}"

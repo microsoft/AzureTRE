@@ -1,6 +1,6 @@
 ---
 name: tre-service-guacamole
-version: 0.3.7
+version: 0.3.9
 description: "An Azure TRE service for Guacamole"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -71,10 +71,6 @@ parameters:
     default: false
     env: IS_EXPOSED_EXTERNALLY
     description: "Determines if the web app will be available over public/internet or private networks"
-  - name: workspace_identifier_uri
-    type: string
-    env: WORKSPACE_IDENTIFIER_URI
-    description: "This is used to define the scope of the oauth2 redirection (e.g. api://treid_ws_wsid)"
   # the following are added automatically by the resource processor
   - name: id
     type: string
@@ -101,11 +97,16 @@ outputs:
     type: string
     applyTo:
       - install
+  - name: authentication_callback_uri
+    type: string
+    applyTo:
+      - install
 
 mixins:
   - exec
   - terraform:
       clientVersion: 1.1.7
+      initFile: providers.tf
 
 install:
   - terraform:
@@ -129,7 +130,6 @@ install:
         guac_disable_download: "{{ bundle.parameters.guac_disable_download }}"
         is_exposed_externally: "{{ bundle.parameters.is_exposed_externally }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
-        workspace_identifier_uri: "{{ bundle.parameters.workspace_identifier_uri }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
@@ -137,6 +137,7 @@ install:
         key: "tre-service-guacamole-{{ bundle.parameters.id }}"
       outputs:
         - name: connection_uri
+        - name: authentication_callback_uri
 
 upgrade:
   - exec:
@@ -167,7 +168,6 @@ uninstall:
         guac_disable_download: "{{ bundle.parameters.guac_disable_download }}"
         is_exposed_externally: "{{ bundle.parameters.is_exposed_externally }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
-        workspace_identifier_uri: "{{ bundle.parameters.workspace_identifier_uri }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"

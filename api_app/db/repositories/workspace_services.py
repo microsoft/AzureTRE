@@ -7,7 +7,7 @@ from models.domain.resource_template import ResourceTemplate
 from models.domain.authentication import User
 from db.repositories.resource_templates import ResourceTemplateRepository
 
-from db.repositories.resources import ResourceRepository, IS_ACTIVE_CLAUSE
+from db.repositories.resources import ResourceRepository, IS_NOT_DELETED_CLAUSE
 from db.repositories.operations import OperationRepository
 from models.domain.workspace_service import WorkspaceService
 from models.schemas.resource import ResourcePatch
@@ -26,7 +26,7 @@ class WorkspaceServiceRepository(ResourceRepository):
 
     @staticmethod
     def active_workspace_services_query(workspace_id: str):
-        return f'SELECT * FROM c WHERE {IS_ACTIVE_CLAUSE} AND c.resourceType = "{ResourceType.WorkspaceService}" AND c.workspaceId = "{workspace_id}"'
+        return f'SELECT * FROM c WHERE {IS_NOT_DELETED_CLAUSE} AND c.resourceType = "{ResourceType.WorkspaceService}" AND c.workspaceId = "{workspace_id}"'
 
     def get_active_workspace_services_for_workspace(self, workspace_id: str) -> List[WorkspaceService]:
         """

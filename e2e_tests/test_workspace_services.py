@@ -31,8 +31,7 @@ async def test_create_guacamole_service_into_base_workspace(admin_token, verify)
         "templateName": "tre-service-guacamole",
         "properties": {
             "display_name": "Workspace service test",
-            "description": "Workspace service for E2E test",
-            "workspace_identifier_uri": scope_uri
+            "description": "Workspace service for E2E test"
         }
     }
 
@@ -91,8 +90,7 @@ async def test_create_guacamole_service_into_aad_workspace(admin_token, verify) 
         "templateName": "tre-service-guacamole",
         "properties": {
             "display_name": "Workspace service test",
-            "description": "Workspace service for E2E test",
-            "workspace_identifier_uri": scope_uri
+            "description": "Workspace service for E2E test"
         }
     }
 

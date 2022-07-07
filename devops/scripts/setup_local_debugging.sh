@@ -9,6 +9,7 @@ set -e
 : "${AZURE_SUBSCRIPTION_ID?"Check AZURE_SUBSCRIPTION_ID is defined in ./templates/core/private.env"}"
 : "${EVENT_GRID_STATUS_CHANGED_TOPIC_RESOURCE_ID?"Check EVENT_GRID_STATUS_CHANGED_TOPIC_RESOURCE_ID is defined in ./templates/core/private.env"}"
 : "${EVENT_GRID_STATUS_CHANGED_TOPIC_ENDPOINT?"Check EVENT_GRID_STATUS_CHANGED_TOPIC_ENDPOINT is defined in ./templates/core/private.env"}"
+: "${EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_ENDPOINT?"Check EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_ENDPOINT is defined in ./templates/core/private.env"}"
 
 set -o pipefail
 set -o nounset
@@ -23,6 +24,7 @@ fi
 
 # extract eventgrid topic name from endpoint
 EVENT_GRID_STATUS_CHANGED_TOPIC_NAME=$(echo "$EVENT_GRID_STATUS_CHANGED_TOPIC_ENDPOINT" | sed 's/https\?:\/\///'| awk -F"." '{print $1}')
+EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_NAME=$(echo "$EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_ENDPOINT" | sed 's/https\?:\/\///'| awk -F"." '{print $1}')
 
 echo "Adding local IP Address to ${COSMOSDB_ACCOUNT_NAME}. This may take a while . . . "
 az cosmosdb update \
@@ -43,6 +45,15 @@ az eventgrid topic update \
   --name "${EVENT_GRID_STATUS_CHANGED_TOPIC_NAME}" \
   --public-network-access enabled \
   --inbound-ip-rules "${IPADDR}" allow
+
+
+echo "Adding local IP Address to ${EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_NAME}."
+az eventgrid topic update \
+  --resource-group "${RESOURCE_GROUP_NAME}" \
+  --name "${EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_NAME}" \
+  --public-network-access enabled \
+  --inbound-ip-rules "${IPADDR}" allow
+
 
 # Get the object id of the currently logged-in identity
 if [[ -n ${ARM_CLIENT_ID:-} ]]; then

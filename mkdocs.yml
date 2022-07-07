@@ -58,15 +58,13 @@ nav:
   - Templates and Services: # Docs to highlight and illustrate workspaces, workspace services etc
       - Introduction: "coming-soon.md"
       - Workspaces:
-          - Base Workspace Template: "tre-templates/workspaces/base.md"
-          - InnerEye: "tre-templates/workspaces/inner-eye.md"
+          - Base: 'tre-templates/workspaces/base.md'
       - Workspace Services:
-          - Azure ML: "tre-templates/workspace-services/azure-ml.md"
-          - DevTest Labs: "tre-templates/workspace-services/dev-test-labs.md"
-          - Gitea: "tre-templates/workspace-services/gitea.md"
-          - Guacamole: "tre-templates/workspace-services/guacamole.md"
-          - InnerEye: "tre-templates/workspace-services/inner-eye.md"
-          - MLFlow: "tre-templates/workspace-services/mlflow.md"
+          - Azure ML: 'tre-templates/workspace-services/azure-ml.md'
+          - Gitea: 'tre-templates/workspace-services/gitea.md'
+          - Guacamole: 'tre-templates/workspace-services/guacamole.md'
+          - InnerEye: 'tre-templates/workspace-services/inner-eye.md'
+          - MLFlow: 'tre-templates/workspace-services/mlflow.md'
       - Shared Services:
           - Gitea (Source Mirror): "tre-templates/shared-services/gitea.md"
           - Nexus (Package Mirror): "tre-templates/shared-services/nexus.md"

@@ -1,0 +1,2 @@
+# Dev requirements
+pytest==7.1.1

@@ -23,6 +23,10 @@ on:  # yamllint disable-line rule:truthy
         type: string
         default: ""
         required: false
+      environmentName:
+        description: The name of the Github Action's environment this will deploy into
+        type: string
+        required: true
     secrets:
       AAD_TENANT_ID:
         description: ""
@@ -123,15 +127,16 @@ jobs:
   deploy_management:
     name: Deploy Management
     runs-on: ubuntu-latest
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     steps:
       - name: Show inputs
         run: |
           echo "Inputs"
           echo "======"
-          echo "prRef     : ${{ inputs.prRef }}"
-          echo "prRHeadSha: ${{ inputs.prHeadSha }}"
-          echo "ciGitRef  : ${{ inputs.ciGitRef }}"
+          echo "prRef       : ${{ inputs.prRef }}"
+          echo "prRHeadSha  : ${{ inputs.prHeadSha }}"
+          echo "ciGitRef    : ${{ inputs.ciGitRef }}"
+          echo "environment : ${{ inputs.environmentName }}"
 
       - name: Checkout
         uses: actions/checkout@v2
@@ -211,7 +216,7 @@ jobs:
     name: Build Core Docker Images
     runs-on: ubuntu-latest
     needs: [deploy_management]
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     strategy:
       fail-fast: true
       matrix:
@@ -245,7 +250,7 @@ jobs:
     name: Start TRE
     runs-on: ubuntu-latest
     needs: [deploy_management]
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -292,7 +297,7 @@ jobs:
     name: Deploy TRE
     runs-on: ubuntu-latest
     needs: [build_core_images, start_tre]
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -379,14 +384,10 @@ jobs:
         include:
           - {BUNDLE_TYPE: "workspace",
              BUNDLE_DIR: "./templates/workspaces/base"}
-          - {BUNDLE_TYPE: "workspace",
-             BUNDLE_DIR: "./templates/workspaces/innereye"}
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/guacamole"}
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/azureml"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/devtestlabs"}
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/innereye"}
           - {BUNDLE_TYPE: "workspace_service",
@@ -397,7 +398,7 @@ jobs:
              BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm"}
           - {BUNDLE_TYPE: "user_resource",
              BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-linuxvm"}
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -411,7 +412,7 @@ jobs:
         uses: ./.github/actions/devcontainer_run_command
         with:
           # Although porter publish will build automatically, our makefile build target includes logic that should run
-          COMMAND: "make bundle-build DIR=${{ matrix.BUNDLE_DIR }} && make bundle-publish DIR=${{ matrix.BUNDLE_DIR }}"
+          COMMAND: "make bundle-build bundle-publish DIR=${{ matrix.BUNDLE_DIR }}"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
@@ -435,7 +436,7 @@ jobs:
              BUNDLE_DIR: "./templates/shared_services/sonatype-nexus/"}
           - {BUNDLE_TYPE: "shared_service",
              BUNDLE_DIR: "./templates/shared_services/gitea/"}
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -449,7 +450,7 @@ jobs:
         uses: ./.github/actions/devcontainer_run_command
         with:
           # Although porter publish will build automatically, our makefile build target includes logic that should run
-          COMMAND: "make bundle-build DIR=${{ matrix.BUNDLE_DIR }} && make bundle-publish DIR=${{ matrix.BUNDLE_DIR }}"
+          COMMAND: "make bundle-build bundle-publish DIR=${{ matrix.BUNDLE_DIR }}"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
@@ -465,7 +466,7 @@ jobs:
     name: Build Additional Docker Images
     runs-on: ubuntu-latest
     needs: [deploy_management]
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     strategy:
       fail-fast: true
       matrix:
@@ -508,7 +509,7 @@ jobs:
              BUNDLE_DIR: "./templates/shared_services/sonatype-nexus"}
           - {BUNDLE_TYPE: "shared_service",
              BUNDLE_DIR: "./templates/shared_services/gitea"}
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -549,14 +550,10 @@ jobs:
           # bundles type can be inferred from the bundle dir (but this is more explicit)
           - {BUNDLE_TYPE: "workspace",
              BUNDLE_DIR: "./templates/workspaces/base"}
-          - {BUNDLE_TYPE: "workspace",
-             BUNDLE_DIR: "./templates/workspaces/innereye"}
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/guacamole"}
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/azureml"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/devtestlabs"}
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/innereye"}
           - {BUNDLE_TYPE: "workspace_service",
@@ -564,7 +561,7 @@ jobs:
           - {BUNDLE_TYPE: "workspace_service",
              BUNDLE_DIR: "./templates/workspace_services/mlflow"}
 
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -609,7 +606,7 @@ jobs:
           - {BUNDLE_TYPE: "user_resource",
              BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-linuxvm",
              WORKSPACE_SERVICE_NAME: "tre-service-guacamole"}
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -645,7 +642,7 @@ jobs:
     name: Deploy shared services
     runs-on: ubuntu-latest
     needs: [register_shared_bundles, deploy_tre]
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -676,10 +673,10 @@ jobs:
           TRE_ID: "${{ secrets.TRE_ID }}"
           LOCATION: "${{ secrets.LOCATION }}"
 
-      - name: API HealthCheck
+      - name: State Store Migrations
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: "make api-healthcheck"
+          COMMAND: "make db-migrate"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
@@ -712,7 +709,7 @@ jobs:
   e2e_tests_smoke:
     name: "Run E2E Tests (Smoke)"
     runs-on: ubuntu-latest
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     needs: [deploy_shared_services, register_bundles, build_additional_images]
     timeout-minutes: 10
     steps:
@@ -778,9 +775,9 @@ jobs:
     name: "Run E2E Tests"
     if: ${{ inputs.e2eTestsCustomSelector != '' }}
     runs-on: ubuntu-latest
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     needs: [deploy_shared_services, register_bundles, register_user_resource_bundles, build_additional_images]
-    timeout-minutes: 120
+    timeout-minutes: 140
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -831,7 +828,7 @@ jobs:
     needs: [e2e_tests_smoke, e2e_tests_custom]
     runs-on: ubuntu-latest
     if: ${{ always() && (github.ref == 'refs/heads/main' && inputs.prRef == '') }}
-    environment: CICD
+    environment: ${{ inputs.environmentName }}
     steps:
       - uses: technote-space/workflow-conclusion-action@v2
 
