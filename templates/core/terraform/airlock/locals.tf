@@ -22,6 +22,7 @@ locals {
   scan_result_topic_name    = "evgt-airlock-scan-result-${local.topic_name_suffix}"
   step_result_topic_name    = "evgt-airlock-step-result-${local.topic_name_suffix}"
   status_changed_topic_name = "evgt-airlock-status-changed-${local.topic_name_suffix}"
+  notification_topic_name   = "evgt-airlock-notification-${local.topic_name_suffix}"
 
   step_result_queue_name    = "airlock-step-result"
   status_changed_queue_name = "airlock-status-changed"

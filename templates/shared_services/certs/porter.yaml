@@ -1,6 +1,6 @@
 ---
 name: tre-shared-service-certs
-version: 0.0.13
+version: 0.1.0
 description: "An Azure TRE shared service to generate certificates for a specified internal domain using Letsencrypt"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -63,6 +63,31 @@ install:
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.tre_id }}-shared-service-certs"
+      outputs:
+        - name: fqdn
+        - name: application_gateway_name
+        - name: storage_account_name
+        - name: resource_group_name
+        - name: keyvault_name
+  - az:
+      description: "Login to Azure"
+      arguments:
+        - login
+      flags:
+        identity:
+        username: "{{ bundle.credentials.azure_client_id }}"
+  - exec:
+      description: "Generate certificate"
+      command: bash
+      arguments:
+        - ./scripts/letsencrypt.sh
+      flags:
+        fqdn: "{{ bundle.outputs.fqdn }}"
+        application_gateway_name: "{{ bundle.outputs.application_gateway_name }}"
+        storage_account_name: "{{ bundle.outputs.storage_account_name }}"
+        resource_group_name: "{{ bundle.outputs.resource_group_name }}"
+        keyvault_name: "{{ bundle.outputs.keyvault_name }}"
+        cert_name: "{{ bundle.parameters.cert_name }}"
 
 upgrade:
   - exec:
@@ -89,7 +114,7 @@ uninstall:
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.tre_id }}-shared-service-certs"
 
-generate:
+renew:
   - terraform:
       arguments:
         - "output"
@@ -113,7 +138,7 @@ generate:
         identity:
         username: "{{ bundle.credentials.azure_client_id }}"
   - exec:
-      description: "Generate/renew certificate"
+      description: "Renew certificate"
       command: bash
       arguments:
         - ./scripts/letsencrypt.sh

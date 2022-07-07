@@ -1,6 +1,6 @@
 ---
 name: tre-service-guacamole-linuxvm
-version: 0.3.7
+version: 0.4.0
 description: "An Azure TRE User Resource Template for Guacamole (Linux)"
 registry: azuretre
 
@@ -82,6 +82,7 @@ outputs:
       - install
       - start
       - stop
+      - reset_password
 
 mixins:
   - exec
@@ -146,6 +147,15 @@ upgrade:
         - name: azure_resource_id
 
 uninstall:
+  - exec:
+      description: "Delete the Extensions from the Terraform state manually"
+      command: ./delete_vm_extensions.sh
+      arguments:
+        - "{{ bundle.parameters.tfstate_resource_group_name }}"
+        - "{{ bundle.parameters.tfstate_storage_account_name }}"
+        - "{{ bundle.parameters.tfstate_container_name }}"
+        - "{{ bundle.parameters.id }}"
+
   - terraform:
       description: "Delete the Guacamole User Resource Service"
       vars:
@@ -221,3 +231,35 @@ stop:
         - stop
       flags:
         ids: "{{ bundle.outputs.azure_resource_id }}"
+
+reset_password:
+  - terraform:
+      arguments:
+        - "output"
+      description: "Get VM details from Terraform outputs"
+      backendConfig:
+        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
+        container_name: "{{ bundle.parameters.tfstate_container_name }}"
+        key: "{{ bundle.parameters.id }}"
+      outputs:
+        - name: azure_resource_id
+        - name: vm_username
+        - name: vm_password_secret_name
+        - name: keyvault_name
+  - az:
+      description: "Login to Azure"
+      arguments:
+        - login
+      flags:
+        identity:
+        username: "{{ bundle.credentials.azure_client_id }}"
+  - exec:
+      description: "Reset password and persist to keyvault"
+      suppress-output: true
+      command: ./reset_password.sh
+      arguments:
+        - "{{ bundle.outputs.vm_password_secret_name }}"
+        - "{{ bundle.outputs.keyvault_name }}"
+        - "{{ bundle.outputs.vm_username }}"
+        - "{{ bundle.outputs.azure_resource_id }}"

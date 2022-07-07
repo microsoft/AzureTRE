@@ -12,7 +12,7 @@ locals {
   azureml_acr_name               = lower(replace("acr${substr(local.service_resource_name_suffix, -8, -1)}", "-", ""))
   tre_workspace_service_tags = {
     tre_id                   = var.tre_id
-    tre_workspace_id         = var.tre_resource_id
-    tre_workspace_service_id = var.workspace_id
+    tre_workspace_id         = var.workspace_id
+    tre_workspace_service_id = var.tre_resource_id
   }
 }
