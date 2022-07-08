@@ -154,10 +154,9 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, mess
     message_logger_adapter.info(f"{installation_id}: {action} action starting...")
     sb_sender = sb_client.get_queue_sender(queue_name=config["deployment_status_queue"])
 
-    # If the action is install/upgrade, post message on sb queue to start a deployment job
-    if action == "install" or action == "upgrade":
-        resource_request_message = service_bus_message_generator(msg_body, strings.RESOURCE_STATUS_DEPLOYING, "Deployment job starting")
-        await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"]))
+    # post an update message to set the status to an 'in progress' one
+    resource_request_message = service_bus_message_generator(msg_body, statuses.in_progress_status_string_for[action], "Job starting")
+    await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"]))
 
     # Build and run porter command (flagging if its a built-in action or custom so we can adapt porter command appropriately)
     is_custom_action = action not in ["install", "upgrade", "uninstall"]
@@ -202,6 +201,12 @@ async def get_porter_outputs(msg_body: dict, message_logger_adapter: logging.Log
         outputs_json = {}
         try:
             outputs_json = json.loads(stdout)
+
+            # loop props individually to try to deserialise to dict/list, as all TF outputs are strings, but we want the pure value
+            for i in range(0, len(outputs_json)):
+                if "{" in outputs_json[i]['Value'] or "[" in outputs_json[i]['Value']:
+                    outputs_json[i]['Value'] = json.loads(outputs_json[i]['Value'])
+
             message_logger_adapter.info(f"Got outputs as json: {outputs_json}")
         except ValueError:
             message_logger_adapter.error(f"Got outputs invalid json: {stdout}")

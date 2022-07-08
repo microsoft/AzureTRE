@@ -233,6 +233,26 @@ resource "azurerm_private_dns_zone" "postgres" {
 resource "azurerm_private_dns_zone" "nexus" {
   name                = "nexus-${var.tre_id}.${var.location}.cloudapp.azure.com"
   resource_group_name = var.resource_group_name
+  tags                = local.tre_core_tags
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_private_dns_zone" "eventgrid" {
+  name                = "privatelink.eventgrid.azure.net"
+  resource_group_name = var.resource_group_name
+  tags                = local.tre_core_tags
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+
+resource "azurerm_private_dns_zone_virtual_network_link" "eventgridlink" {
+  name                  = "eventgrid-link"
+  resource_group_name   = var.resource_group_name
+  private_dns_zone_name = azurerm_private_dns_zone.eventgrid.name
+  virtual_network_id    = azurerm_virtual_network.core.id
+  tags                  = local.tre_core_tags
 
   lifecycle { ignore_changes = [tags] }
 }

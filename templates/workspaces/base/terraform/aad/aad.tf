@@ -75,6 +75,10 @@ resource "azuread_application" "workspace" {
       type = "Scope"                                # Delegated
     }
   }
+
+  web {
+    redirect_uris = jsondecode(base64decode(var.aad_redirect_uris_b64))[*].value
+  }
 }
 
 resource "azuread_service_principal" "workspace" {
@@ -95,12 +99,14 @@ resource "azurerm_key_vault_secret" "client_id" {
   name         = "workspace-client-id"
   value        = azuread_application.workspace.application_id
   key_vault_id = var.key_vault_id
+  tags         = var.tre_workspace_tags
 }
 
 resource "azurerm_key_vault_secret" "client_secret" {
   name         = "workspace-client-secret"
   value        = azuread_service_principal_password.workspace.value
   key_vault_id = var.key_vault_id
+  tags         = var.tre_workspace_tags
 }
 
 resource "azuread_app_role_assignment" "workspace_owner" {

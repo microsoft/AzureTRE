@@ -3,6 +3,7 @@ resource "azurerm_route_table" "rt" {
   resource_group_name           = local.core_resource_group_name
   location                      = data.azurerm_resource_group.rg.location
   disable_bgp_route_propagation = false
+  tags                          = local.tre_shared_service_tags
 
   lifecycle { ignore_changes = [tags] }
 
@@ -31,5 +32,21 @@ resource "azurerm_subnet_route_table_association" "rt_resource_processor_subnet_
 
 resource "azurerm_subnet_route_table_association" "rt_web_app_subnet_association" {
   subnet_id      = data.azurerm_subnet.web_app.id
+  route_table_id = azurerm_route_table.rt.id
+}
+
+# Todo: Uncomment Issue: https://github.com/microsoft/AzureTRE/issues/2097
+# resource "azurerm_subnet_route_table_association" "rt_airlock_processor_subnet_association" {
+#   subnet_id      = data.azurerm_subnet.airlock_processor.id
+#   route_table_id = azurerm_route_table.rt.id
+# }
+
+resource "azurerm_subnet_route_table_association" "rt_airlock_storage_subnet_association" {
+  subnet_id      = data.azurerm_subnet.airlock_storage.id
+  route_table_id = azurerm_route_table.rt.id
+}
+
+resource "azurerm_subnet_route_table_association" "rt_airlock_events_subnet_association" {
+  subnet_id      = data.azurerm_subnet.airlock_events.id
   route_table_id = azurerm_route_table.rt.id
 }

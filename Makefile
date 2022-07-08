@@ -6,12 +6,14 @@ MAKEFILE_DIR := $(dir $(MAKEFILE_FULLPATH))
 IMAGE_NAME_PREFIX?="microsoft/azuretre"
 FULL_CONTAINER_REGISTRY_NAME?="$${ACR_NAME}.azurecr.io"
 FULL_IMAGE_NAME_PREFIX:=`echo "${FULL_CONTAINER_REGISTRY_NAME}/${IMAGE_NAME_PREFIX}" | tr A-Z a-z`
+LINTER_REGEX_INCLUDE?=all # regular expression used to specify which files to include in local linting (defaults to "all")
 
 target_title = @echo -e "\n\e[34m»»» 🧩 \e[96m$(1)\e[0m..."
 
 all: bootstrap mgmt-deploy images tre-deploy
-images: build-and-push-api build-and-push-resource-processor build-and-push-gitea build-and-push-guacamole build-and-push-mlflow build-and-push-airlock-processor build-and-push-ohdsi
+tre-deploy: deploy-core build-and-deploy-ui deploy-shared-services db-migrate show-core-output
 
+images: build-and-push-api build-and-push-resource-processor build-and-push-gitea build-and-push-guacamole build-and-push-mlflow build-and-push-airlock-processor
 build-and-push-api: build-api-image push-api-image
 build-and-push-resource-processor: build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image
 build-and-push-gitea: build-gitea-image push-gitea-image
@@ -20,10 +22,9 @@ build-and-push-mlflow: build-mlflow-image push-mlflow-image
 build-and-push-ohdsi: build-ohdsi-broadsea-methods build-ohdsi-broadsea-webtools push-ohdsi-methods push-ohdsi-webtools
 build-and-push-airlock-processor: build-airlock-processor push-airlock-processor
 
-tre-deploy: deploy-core deploy-shared-services db-migrate show-core-output
-deploy-shared-services:
-	$(MAKE) firewall-install \
-	&& . ./devops/scripts/load_env.sh ./templates/core/.env \
+
+deploy-shared-services: firewall-install
+	. ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
 	&& if [ "$${DEPLOY_GITEA}" == "true" ]; then $(MAKE) gitea-install; fi \
 	&& if [ "$${DEPLOY_NEXUS}" == "true" ]; then $(MAKE) nexus-install; fi
 
@@ -100,24 +101,6 @@ build-ohdsi-broadsea-webtools:
 build-airlock-processor:
 	$(call build_image,"airlock-processor","${MAKEFILE_DIR}/airlock_processor/_version.py","${MAKEFILE_DIR}/airlock_processor/Dockerfile","${MAKEFILE_DIR}/airlock_processor/")
 
-firewall-install:
-	$(MAKE) bundle-build DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ \
-	&& $(MAKE) bundle-publish DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ \
-	&& $(MAKE) bundle-register DIR="${MAKEFILE_DIR}/templates/shared_services/firewall" BUNDLE_TYPE=shared_service \
-	&& $(MAKE) deploy-shared-service DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ BUNDLE_TYPE=shared_service
-
-nexus-install:
-	$(MAKE) bundle-build DIR=${MAKEFILE_DIR}/templates/shared_services/sonatype-nexus/ \
-	&& $(MAKE) bundle-publish DIR=${MAKEFILE_DIR}/templates/shared_services/sonatype-nexus/ \
-	&& $(MAKE) bundle-register DIR="${MAKEFILE_DIR}/templates/shared_services/sonatype-nexus" BUNDLE_TYPE=shared_service \
-	&& $(MAKE) deploy-shared-service DIR=${MAKEFILE_DIR}/templates/shared_services/sonatype-nexus/ BUNDLE_TYPE=shared_service
-
-gitea-install:
-	$(MAKE) bundle-build DIR=${MAKEFILE_DIR}/templates/shared_services/gitea/ \
-	&& $(MAKE) bundle-publish DIR=${MAKEFILE_DIR}/templates/shared_services/gitea/ \
-	&& $(MAKE) bundle-register DIR="${MAKEFILE_DIR}/templates/shared_services/gitea" BUNDLE_TYPE=shared_service \
-	&& $(MAKE) deploy-shared-service DIR=${MAKEFILE_DIR}/templates/shared_services/gitea/ BUNDLE_TYPE=shared_service
-
 # A recipe for pushing images. Parameters:
 # 1. Image name suffix
 # 2. Version file path
@@ -190,7 +173,7 @@ letsencrypt:
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ./devops/.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ./templates/core/.env \
 	&& pushd ${MAKEFILE_DIR}/templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
-	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/private.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/templates/core/private.env \
 	&& ${MAKEFILE_DIR}/templates/core/terraform/scripts/letsencrypt.sh
 
 tre-start:
@@ -263,9 +246,15 @@ lint:
 		-e VALIDATE_BASH_EXEC=true \
 		-e VALIDATE_GITHUB_ACTIONS=true \
 		-e VALIDATE_DOCKERFILE_HADOLINT=true \
+		-e FILTER_REGEX_INCLUDE=${LINTER_REGEX_INCLUDE} \
 		-v $${LOCAL_WORKSPACE_FOLDER}:/tmp/lint \
 		github/super-linter:slim-v4.9.4
 
+lint-docs:
+	LINTER_REGEX_INCLUDE=.*docs/.* $(MAKE) lint
+
+# check-params is called at the end since it needs the bundle image,
+# so we build it first and then run the check.
 bundle-build:
 	$(call target_title, "Building ${DIR} bundle with Porter") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter \
@@ -274,8 +263,9 @@ bundle-build:
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/set_docker_sock_permission.sh \
 	&& cd ${DIR} && porter build --debug
+	$(MAKE) bundle-check-params
 
-bundle-install:
+bundle-install: bundle-check-params
 	$(call target_title, "Deploying ${DIR} with Porter") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
@@ -285,6 +275,20 @@ bundle-install:
 		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
 		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
 		--allow-docker-host-access --debug
+
+# Validates that the parameters file is synced with the bundle.
+# The file is used when installing the bundle from a local machine.
+# We remove arm_use_msi on both sides since it shouldn't take effect locally anyway.
+bundle-check-params:
+	$(call target_title, "Checking bundle parameters in ${DIR}") \
+	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,porter \
+	&& cd ${DIR} \
+	&& if [ ! -f "parameters.json" ]; then echo "Error - please create a parameters.json file."; exit 1; fi \
+	&& if ! porter explain -ojson > /dev/null; then echo "Error - porter explain issue!"; exit 1; fi \
+	&& comm_output=$$(set -o pipefail && comm -3 --output-delimiter=: <(porter explain -ojson | jq -r '.parameters[].name | select (. != "arm_use_msi")' | sort) <(jq -r '.parameters[].name | select(. != "arm_use_msi")' parameters.json | sort)) \
+	&& if [ ! -z "$${comm_output}" ]; \
+		then echo -e "*** Add to params ***:*** Remove from params ***\n$$comm_output" | column -t -s ":" -n; exit 1; \
+		else echo "parameters.json file up-to-date."; fi
 
 bundle-uninstall:
 	$(call target_title, "Uninstalling ${DIR} with Porter") \
@@ -298,15 +302,15 @@ bundle-uninstall:
 		--allow-docker-host-access --debug
 
 bundle-custom-action:
-	$(call target_title, "Performing:${ACTION} ${DIR} with Porter") \
-	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter \
-	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
-	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
-	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
-	&& cd ${DIR} && porter invoke --action ${ACTION} -p ./parameters.json \
-		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
-		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
-		--allow-docker-host-access --debug
+ 	$(call target_title, "Performing:${ACTION} ${DIR} with Porter") \
+ 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter \
+ 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
+ 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
+ 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
+ 	&& cd ${DIR} && porter invoke --action ${ACTION} -p ./parameters.json \
+ 		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/arm_auth_local_debugging.json \
+ 		--cred ${MAKEFILE_DIR}/resource_processor/vmss_porter/aad_auth_local_debugging.json \
+ 		--allow-docker-host-access --debug
 
 bundle-publish:
 	$(call target_title, "Publishing ${DIR} bundle with Porter") \
@@ -329,22 +333,17 @@ bundle-register:
 	&& cd ${DIR} \
 	&& ${MAKEFILE_DIR}/devops/scripts/register_bundle_with_api.sh --acr-name "$${ACR_NAME}" --bundle-type "$${BUNDLE_TYPE}" --current --insecure --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}" --verify --workspace-service-name "$${WORKSPACE_SERVICE_NAME}"
 
-workspace_bundle = $(MAKE) bundle-build DIR=./templates/workspaces/$(1)/ \
-	&& $(MAKE) bundle-publish DIR=./templates/workspaces/$(1)/ \
-	&& $(MAKE) bundle-register DIR="./templates/workspaces/$(1)" BUNDLE_TYPE=workspace
+workspace_bundle = $(MAKE) bundle-build bundle-publish bundle-register \
+	DIR="${MAKEFILE_DIR}/templates/workspaces/$(1)" BUNDLE_TYPE=workspace
 
-workspace_service_bundle = $(MAKE) bundle-build DIR=./templates/workspace_services/$(1)/ \
-	&& $(MAKE) bundle-publish DIR=./templates/workspace_services/$(1)/ \
-	&& $(MAKE) bundle-register DIR="./templates/workspace_services/$(1)" BUNDLE_TYPE=workspace_service
+workspace_service_bundle = $(MAKE) bundle-build bundle-publish bundle-register \
+	DIR="${MAKEFILE_DIR}/templates/workspace_services/$(1)" BUNDLE_TYPE=workspace_service
 
-shared_service_bundle = $(MAKE) bundle-build DIR=./templates/shared_services/$(1)/ \
-	&& $(MAKE) bundle-publish DIR=./templates/shared_services/$(1)/ \
-	&& $(MAKE) bundle-register DIR="./templates/shared_services/$(1)" BUNDLE_TYPE=shared_service
+shared_service_bundle = $(MAKE) bundle-build bundle-publish bundle-register \
+	DIR="${MAKEFILE_DIR}/templates/shared_services/$(1)" BUNDLE_TYPE=shared_service
 
-user_resource_bundle = $(MAKE) bundle-build DIR=./templates/workspace_services/$(1)/user_resources/$(2)/ \
-	&& $(MAKE) bundle-publish DIR=./templates/workspace_services/$(1)/user_resources/$(2) \
-	&& $(MAKE) bundle-register DIR="./templates/workspace_services/$(1)/user_resources/$(2)" BUNDLE_TYPE=user_resource WORKSPACE_SERVICE_NAME=tre-service-$(1)
-
+user_resource_bundle = $(MAKE) bundle-build bundle-publish bundle-register \
+	DIR="${MAKEFILE_DIR}/templates/workspace_services/$(1)/user_resources/$(2)" BUNDLE_TYPE=user_resource WORKSPACE_SERVICE_NAME=tre-service-$(1)
 
 deploy-shared-service:
 	@# NOTE: ACR_NAME below comes from the env files, so needs the double '$$'. Others are set on command execution and don't
@@ -354,7 +353,20 @@ deploy-shared-service:
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/get_access_token.sh \
 	&& cd ${DIR} \
-	&& ${MAKEFILE_DIR}/devops/scripts/deploy_shared_service.sh --insecure --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}"
+	&& ${MAKEFILE_DIR}/devops/scripts/deploy_shared_service.sh --insecure --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}" $${PROPS}
+
+firewall-install:
+	$(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
+	DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ BUNDLE_TYPE=shared_service
+
+nexus-install:
+	$(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
+	DIR="${MAKEFILE_DIR}/templates/shared_services/certs" BUNDLE_TYPE=shared_service PROPS="--domain_prefix nexus --cert_name nexus-ssl" \
+	&& $(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
+  DIR=${MAKEFILE_DIR}/templates/shared_services/sonatype-nexus-vm/ BUNDLE_TYPE=shared_service
+
+gitea-install:
+	$(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service DIR=${MAKEFILE_DIR}/templates/shared_services/gitea/ BUNDLE_TYPE=shared_service
 
 temp-do-upload:
 	$(MAKE) static-web-upload DIR=${MAKEFILE_DIR}/dummy
@@ -368,19 +380,29 @@ static-web-upload:
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ./templates/core/.env \
 	&& pushd ${MAKEFILE_DIR}/templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/templates/core/private.env \
-	&& ${MAKEFILE_DIR}/templates/core/terraform/scripts/upload_static_web.sh
+	&& ${MAKEFILE_DIR}/devops/scripts/upload_static_web.sh
+
+build-and-deploy-ui:
+	$(call target_title, "Build and deploy UI") \
+	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ./devops/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_terraform_env.sh ./templates/core/.env \
+	&& pushd ${MAKEFILE_DIR}/templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/templates/core/private.env \
+	&& if [ "$${DEPLOY_UI}" == "true" ]; then ${MAKEFILE_DIR}/devops/scripts/build_deploy_ui.sh; else echo "UI Deploy skipped as DEPLOY_UI not true"; fi \
 
 prepare-for-e2e:
 	$(call workspace_bundle,base) \
-	&& $(call workspace_bundle,innereye) \
 	&& $(call workspace_service_bundle,guacamole) \
 	&& $(call workspace_service_bundle,azureml) \
-	&& $(call workspace_service_bundle,devtestlabs) \
 	&& $(call workspace_service_bundle,gitea) \
 	&& $(call workspace_service_bundle,innereye) \
 	&& $(call shared_service_bundle,sonatype-nexus) \
 	&& $(call shared_service_bundle,gitea) \
-	&& $(call user_resource_bundle,guacamole,guacamole-dev-vm)
+	&& $(call user_resource_bundle,guacamole,guacamole-azure-windowsvm) \
+	&& $(call user_resource_bundle,guacamole,guacamole-azure-linuxvm)
 
 test-e2e-smoke:
 	$(call target_title, "Running E2E smoke tests") && \
@@ -391,6 +413,11 @@ test-e2e-extended:
 	$(call target_title, "Running E2E extended tests") && \
 	cd e2e_tests && \
 	python -m pytest -m extended --verify $${IS_API_SECURED:-true} --junit-xml pytest_e2e_extended.xml
+
+test-e2e-extended-aad:
+	$(call target_title, "Running E2E extended AAD tests") && \
+	cd e2e_tests && \
+	python -m pytest -m extended_aad --verify $${IS_API_SECURED:-true} --junit-xml pytest_e2e_extended_aad.xml
 
 test-e2e-shared-services:
 	$(call target_title, "Running E2E shared service tests") && \
@@ -408,15 +435,15 @@ setup-local-debugging:
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
 	&& pushd ${MAKEFILE_DIR}/templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
-	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/private.env \
-	&& . ${MAKEFILE_DIR}/scripts/setup_local_debugging.sh
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/templates/core/private.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/setup_local_debugging.sh
 
 auth:
 	$(call target_title,"Setting up Azure Active Directory") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
-	&& . ${MAKEFILE_DIR}/scripts/create_aad_assets.sh
+	&& . ${MAKEFILE_DIR}/devops/scripts/create_aad_assets.sh
 
 show-core-output:
 	$(call target_title,"Display TRE core output") \
@@ -427,13 +454,15 @@ api-healthcheck:
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
-	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/private.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/templates/core/private.env \
 	&& ${MAKEFILE_DIR}/devops/scripts/api_healthcheck.sh
 
-db-migrate:
+db-migrate: api-healthcheck
 	$(call target_title,"Migrating Cosmos Data") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker \
 	&& pushd ${MAKEFILE_DIR}/templates/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
-	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/private.env \
-	&& python ${MAKEFILE_DIR}/scripts/db_migrations.py
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./devops/.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/templates/core/private.env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/get_access_token.sh \
+	&& . ${MAKEFILE_DIR}/devops/scripts/migrate_state_store.sh --tre_url "$${TRE_URL:-https://$${TRE_ID}.$${LOCATION}.cloudapp.azure.com}" --insecure

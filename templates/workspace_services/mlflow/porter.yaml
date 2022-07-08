@@ -1,9 +1,8 @@
 ---
 name: tre-service-mlflow
-version: 0.3.1
+version: 0.3.3
 description: "An Azure TRE service for MLflow machine learning lifecycle"
 registry: azuretre
-dockerfile: Dockerfile.tmpl
 
 credentials:
   - name: azure_tenant_id

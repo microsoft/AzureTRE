@@ -1,11 +1,15 @@
 # API
-azure-core==1.23.0
+azure-core==1.23.1
 aiohttp==3.8.1
 azure-cosmos==4.2.0
 azure-identity==1.8.0
 azure-mgmt-cosmosdb==6.4.0
 azure-mgmt-compute==26.1.0
+azure-mgmt-costmanagement==3.0.0
+azure-mgmt-storage==20.0.0
+azure-storage-blob==12.12.0
 azure-servicebus==7.6.0
+azure-eventgrid==4.8.0
 fastapi[all]==0.75.0
 fastapi-utils==0.2.1
 gunicorn==20.1.0
@@ -16,3 +20,5 @@ opencensus-ext-logging==0.1.1
 PyJWT==2.4.0
 uvicorn[standard]==0.15.0
 semantic-version==2.9.0
+pytz~=2022.1
+python-dateutil~=2.8.2

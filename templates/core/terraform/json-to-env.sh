@@ -42,6 +42,10 @@ jq -r '
             "env_var": "SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE"
         },
         {
+            "path": "service_bus_step_result_queue",
+            "env_var": "SERVICE_BUS_STEP_RESULT_QUEUE"
+        },
+        {
             "path": "state_store_resource_id",
             "env_var": "STATE_STORE_RESOURCE_ID"
         },
@@ -76,6 +80,18 @@ jq -r '
         {
             "path": "registry_server",
             "env_var": "REGISTRY_SERVER"
+        },
+        {
+            "path": "event_grid_status_changed_topic_endpoint",
+            "env_var": "EVENT_GRID_STATUS_CHANGED_TOPIC_ENDPOINT"
+        },
+        {
+            "path": "event_grid_airlock_notification_topic_endpoint",
+            "env_var": "EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_ENDPOINT"
+        },
+        {
+            "path": "event_grid_status_changed_topic_resource_id",
+            "env_var": "EVENT_GRID_STATUS_CHANGED_TOPIC_RESOURCE_ID"
         }
     ]
         as $env_vars_to_extract

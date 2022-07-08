@@ -72,7 +72,7 @@ if [[ "$group_show_result" !=  "0" ]]; then
   exit 0
 fi
 
-locks=$(az group lock list -g "${core_tre_rg}" --query [].id -o tsv)
+locks=$(az group lock list -g "${core_tre_rg}" --query [].id -o tsv | tr -d \')
 if [ -n "${locks:-}" ]
 then
   echo "Deleting locks..."
@@ -111,17 +111,43 @@ if [[ -n ${SHOW_KEYVAULT_DEBUG_ON_DESTROY:-} ]]; then
 fi
 # DEBUG END
 
-if [[ $(az keyvault list --resource-group "${core_tre_rg}" --query "[?properties.enablePurgeProtection==``null``] | length (@)") != 0 ]]; then
-  tre_id=${core_tre_rg#"rg-"}
-  keyvault_name="kv-${tre_id}"
+tre_id=${core_tre_rg#"rg-"}
+keyvault_name="kv-${tre_id}"
+keyvault=$(az keyvault show --name "${keyvault_name}" --resource-group "${core_tre_rg}" || echo 0)
+if [ "${keyvault}" != "0" ]; then
+  secrets=$(az keyvault secret list --vault-name "${keyvault_name}" | jq -r '.[].id')
+  for secret_id in ${secrets}; do
+    az keyvault secret delete --id "${secret_id}"
+  done
 
+  keys=$(az keyvault key list --vault-name "${keyvault_name}" | jq -r '.[].id')
+  for key_id in ${keys}; do
+    az keyvault key delete --id "${key_id}"
+  done
+
+  certificates=$(az keyvault certificate list --vault-name "${keyvault_name}" | jq -r '.[].id')
+  for certificate_id in ${certificates}; do
+    az keyvault certificate delete --id "${certificate_id}"
+  done
+
+  echo "Removing access policies so if the vault is recovered there are not there"
+  access_policies=$(echo "$keyvault" | jq -r '.properties.accessPolicies[].objectId' )
+  for access_policy_id in ${access_policies}; do
+    echo "Attempting to delete access policy ${access_policy_id}"
+    az keyvault delete-policy --name "${keyvault_name}" --resource-group "${core_tre_rg}" --object-id "${access_policy_id}" || echo "Not deleting access policy for ${access_policy_id}."
+  done
+
+fi
+
+# Delete the vault if purge protection is not on.
+if [[ $(az keyvault list --resource-group "${core_tre_rg}" --query "[?properties.enablePurgeProtection==``null``] | length (@)") != 0 ]]; then
   echo "Deleting keyvault: ${keyvault_name}"
   az keyvault delete --name "${keyvault_name}" --resource-group "${core_tre_rg}"
 
   echo "Purging keyvault: ${keyvault_name}"
   az keyvault purge --name "${keyvault_name}" ${no_wait_option}
 else
-  echo "Resource group ${core_tre_rg} doesn't have a keyvault without pruge protection."
+  echo "Resource group ${core_tre_rg} doesn't have a keyvault without purge protection."
 fi
 
 # this will find the mgmt, core resource groups as well as any workspace ones

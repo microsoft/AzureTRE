@@ -1,23 +1,3 @@
-# Azure Provider source and version being used
-terraform {
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "=2.97.0"
-    }
-  }
-  backend "azurerm" {
-  }
-}
-
-
-provider "azurerm" {
-  features {}
-}
-
-data "azurerm_client_config" "current" {}
-
-
 data "azurerm_resource_group" "ws" {
   name = "rg-${var.tre_id}-ws-${local.short_workspace_id}"
 }
@@ -38,6 +18,7 @@ resource "azurerm_application_insights" "ai" {
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
   application_type    = "web"
+  tags                = local.tre_workspace_service_tags
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -47,23 +28,34 @@ data "azurerm_key_vault" "ws" {
   resource_group_name = data.azurerm_resource_group.ws.name
 }
 
-data "azurerm_storage_account" "ws" {
-  name                = local.storage_name
-  resource_group_name = data.azurerm_resource_group.ws.name
-}
+# Using AzAPI due to https://github.com/hashicorp/terraform-provider-azurerm/issues/16177
+resource "azapi_resource" "aml_workspace" {
+  name                      = local.workspace_name
+  parent_id                 = data.azurerm_resource_group.ws.id
+  type                      = "Microsoft.MachineLearningServices/workspaces@2022-05-01"
+  schema_validation_enabled = false
+  location                  = data.azurerm_resource_group.ws.location
 
-resource "azurerm_machine_learning_workspace" "ml" {
-  name                    = local.workspace_name
-  location                = data.azurerm_resource_group.ws.location
-  resource_group_name     = data.azurerm_resource_group.ws.name
-  application_insights_id = azurerm_application_insights.ai.id
-  key_vault_id            = data.azurerm_key_vault.ws.id
-  storage_account_id      = data.azurerm_storage_account.ws.id
-  identity {
-    type = "SystemAssigned"
-  }
+  body = jsonencode({
+    properties = {
+      allowRecoverSoftDeletedWorkspace = "True"
+      applicationInsights              = azurerm_application_insights.ai.id
+      containerRegistry                = azurerm_container_registry.acr.id
+      friendlyName                     = var.display_name
+      description                      = var.description
+      hbiWorkspace                     = true
+      keyVault                         = data.azurerm_key_vault.ws.id
+      publicNetworkAccess              = "Disabled"
+      storageAccount                   = azurerm_storage_account.aml.id
+      v1LegacyMode                     = false
+    }
+    identity = {
+      type = "SystemAssigned"
+    }
+  })
 
-  lifecycle { ignore_changes = [tags] }
+  response_export_values = ["*"]
+
 }
 
 data "azurerm_private_dns_zone" "azureml" {
@@ -86,6 +78,7 @@ resource "azurerm_private_endpoint" "mlpe" {
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
   subnet_id           = data.azurerm_subnet.services.id
+  tags                = local.tre_workspace_service_tags
 
   lifecycle { ignore_changes = [tags] }
 
@@ -96,7 +89,7 @@ resource "azurerm_private_endpoint" "mlpe" {
 
   private_service_connection {
     name                           = "mlpesc-${local.service_resource_name_suffix}"
-    private_connection_resource_id = azurerm_machine_learning_workspace.ml.id
+    private_connection_resource_id = azapi_resource.aml_workspace.id
     is_manual_connection           = false
     subresource_names              = ["amlworkspace"]
   }

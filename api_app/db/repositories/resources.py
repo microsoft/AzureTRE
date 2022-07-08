@@ -1,22 +1,23 @@
-from typing import Tuple
-from azure.cosmos import CosmosClient
-from datetime import datetime
-from jsonschema import validate
-from pydantic import UUID4, parse_obj_as
 import copy
-from models.domain.authentication import User
+from datetime import datetime
+from typing import Tuple
 
+from azure.cosmos import CosmosClient
+from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from core import config
 from db.errors import EntityDoesNotExist
 from db.repositories.base import BaseRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
+from jsonschema import validate
+from models.domain.authentication import User
 from models.domain.resource import Resource, ResourceHistoryItem, ResourceType
 from models.domain.resource_template import ResourceTemplate
-from models.schemas.resource import ResourcePatch
 from models.domain.shared_service import SharedService
+from models.domain.user_resource import UserResource
 from models.domain.workspace import Workspace
 from models.domain.workspace_service import WorkspaceService
-from models.domain.user_resource import UserResource
+from models.schemas.resource import ResourcePatch
+from pydantic import UUID4, parse_obj_as
 
 
 class ResourceRepository(BaseRepository):
@@ -26,7 +27,7 @@ class ResourceRepository(BaseRepository):
     @staticmethod
     def _active_resources_query():
         # get active docs (not deleted)
-        return f'SELECT * FROM c WHERE {IS_ACTIVE_CLAUSE}'
+        return f'SELECT * FROM c WHERE {IS_NOT_DELETED_CLAUSE}'
 
     def _active_resources_by_type_query(self, resource_type: ResourceType):
         return self._active_resources_query() + f' AND c.resourceType = "{resource_type}"'
@@ -48,19 +49,15 @@ class ResourceRepository(BaseRepository):
         return {"tre_id": config.TRE_ID}
 
     def get_resource_dict_by_id(self, resource_id: UUID4) -> dict:
-        query = self._active_resources_by_id_query(str(resource_id))
-        resources = self.query(query=query)
-        if not resources:
+        try:
+            resource = self.read_item_by_id(str(resource_id))
+        except CosmosResourceNotFoundError:
             raise EntityDoesNotExist
-        return resources[0]
+        return resource
 
     def get_resource_by_id(self, resource_id: UUID4) -> Resource:
-        query = self._active_resources_by_id_query(str(resource_id))
-        resources = self.query(query=query)
-        if not resources:
-            raise EntityDoesNotExist
+        resource = self.get_resource_dict_by_id(resource_id)
 
-        resource = resources[0]
         if resource["resourceType"] == ResourceType.SharedService:
             return parse_obj_as(SharedService, resource)
         if resource["resourceType"] == ResourceType.Workspace:
@@ -140,4 +137,5 @@ class ResourceRepository(BaseRepository):
 
 
 # Cosmos query consts
-IS_ACTIVE_CLAUSE = 'c.isActive != false'
+IS_NOT_DELETED_CLAUSE = 'c.deploymentStatus != "deleted"'
+IS_DEPLOYED_CLAUSE = 'c.deploymentStatus = "deployed"'

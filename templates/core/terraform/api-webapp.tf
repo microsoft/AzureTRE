@@ -27,29 +27,32 @@ resource "azurerm_app_service" "api" {
   tags                            = local.tre_core_tags
 
   app_settings = {
-    "APPLICATIONINSIGHTS_CONNECTION_STRING"      = module.azure_monitor.app_insights_connection_string
-    "APPINSIGHTS_INSTRUMENTATIONKEY"             = module.azure_monitor.app_insights_instrumentation_key
-    "APPLICATIONINSIGHTS_STATSBEAT_DISABLED_ALL" = "True"
-    "ApplicationInsightsAgent_EXTENSION_VERSION" = "~3"
-    "XDT_MicrosoftApplicationInsights_Mode"      = "default"
-    "WEBSITES_PORT"                              = "8000"
-    "DOCKER_REGISTRY_SERVER_URL"                 = "https://${var.docker_registry_server}"
-    "STATE_STORE_ENDPOINT"                       = azurerm_cosmosdb_account.tre-db-account.endpoint
-    "COSMOSDB_ACCOUNT_NAME"                      = azurerm_cosmosdb_account.tre-db-account.name
-    "SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE"      = "sb-${var.tre_id}.servicebus.windows.net"
-    "SERVICE_BUS_RESOURCE_REQUEST_QUEUE"         = azurerm_servicebus_queue.workspacequeue.name
-    "SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE" = azurerm_servicebus_queue.service_bus_deployment_status_update_queue.name
-    "MANAGED_IDENTITY_CLIENT_ID"                 = azurerm_user_assigned_identity.id.client_id
-    "TRE_ID"                                     = var.tre_id
-    "RESOURCE_LOCATION"                          = azurerm_resource_group.core.location
-    "SWAGGER_UI_CLIENT_ID"                       = var.swagger_ui_client_id
-    "AAD_TENANT_ID"                              = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.auth_tenant_id.id})"
-    "API_CLIENT_ID"                              = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.api_client_id.id})"
-    "API_CLIENT_SECRET"                          = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.api_client_secret.id})"
-    "RESOURCE_GROUP_NAME"                        = azurerm_resource_group.core.name
-    "SUBSCRIPTION_ID"                            = data.azurerm_subscription.current.subscription_id
-    CORE_ADDRESS_SPACE                           = var.core_address_space
-    TRE_ADDRESS_SPACE                            = var.tre_address_space
+    "APPLICATIONINSIGHTS_CONNECTION_STRING"          = module.azure_monitor.app_insights_connection_string
+    "APPINSIGHTS_INSTRUMENTATIONKEY"                 = module.azure_monitor.app_insights_instrumentation_key
+    "APPLICATIONINSIGHTS_STATSBEAT_DISABLED_ALL"     = "True"
+    "ApplicationInsightsAgent_EXTENSION_VERSION"     = "~3"
+    "XDT_MicrosoftApplicationInsights_Mode"          = "default"
+    "WEBSITES_PORT"                                  = "8000"
+    "DOCKER_REGISTRY_SERVER_URL"                     = "https://${var.docker_registry_server}"
+    "STATE_STORE_ENDPOINT"                           = azurerm_cosmosdb_account.tre-db-account.endpoint
+    "COSMOSDB_ACCOUNT_NAME"                          = azurerm_cosmosdb_account.tre-db-account.name
+    "SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE"          = "sb-${var.tre_id}.servicebus.windows.net"
+    "EVENT_GRID_STATUS_CHANGED_TOPIC_ENDPOINT"       = module.airlock_resources.event_grid_status_changed_topic_endpoint
+    "EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_ENDPOINT" = module.airlock_resources.event_grid_airlock_notification_topic_endpoint
+    "SERVICE_BUS_RESOURCE_REQUEST_QUEUE"             = azurerm_servicebus_queue.workspacequeue.name
+    "SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE"     = azurerm_servicebus_queue.service_bus_deployment_status_update_queue.name
+    "SERVICE_BUS_STEP_RESULT_QUEUE"                  = module.airlock_resources.service_bus_step_result_queue
+    "MANAGED_IDENTITY_CLIENT_ID"                     = azurerm_user_assigned_identity.id.client_id
+    "TRE_ID"                                         = var.tre_id
+    "RESOURCE_LOCATION"                              = azurerm_resource_group.core.location
+    "SWAGGER_UI_CLIENT_ID"                           = var.swagger_ui_client_id
+    "AAD_TENANT_ID"                                  = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.auth_tenant_id.id})"
+    "API_CLIENT_ID"                                  = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.api_client_id.id})"
+    "API_CLIENT_SECRET"                              = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.api_client_secret.id})"
+    "RESOURCE_GROUP_NAME"                            = azurerm_resource_group.core.name
+    "SUBSCRIPTION_ID"                                = data.azurerm_subscription.current.subscription_id
+    CORE_ADDRESS_SPACE                               = var.core_address_space
+    TRE_ADDRESS_SPACE                                = var.tre_address_space
   }
 
   identity {
@@ -72,7 +75,9 @@ resource "azurerm_app_service" "api" {
     websockets_enabled                   = false
 
     cors {
-      allowed_origins     = []
+      allowed_origins = [
+        var.enable_local_debugging ? "http://localhost:3000" : ""
+      ]
       support_credentials = false
     }
 
@@ -96,6 +101,9 @@ resource "azurerm_app_service" "api" {
       }
     }
   }
+  depends_on = [
+    module.airlock_resources
+  ]
 }
 
 resource "azurerm_private_endpoint" "api_private_endpoint" {

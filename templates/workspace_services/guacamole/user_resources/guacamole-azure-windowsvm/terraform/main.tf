@@ -10,9 +10,21 @@ terraform {
   }
 }
 
-
 provider "azurerm" {
-  features {}
+  features {
+    key_vault {
+      # Don't purge on destroy (this would fail due to purge protection being enabled on keyvault)
+      purge_soft_delete_on_destroy               = false
+      purge_soft_deleted_secrets_on_destroy      = false
+      purge_soft_deleted_certificates_on_destroy = false
+      purge_soft_deleted_keys_on_destroy         = false
+      # When recreating an environment, recover any previously soft deleted secrets - set to true by default
+      recover_soft_deleted_key_vaults   = true
+      recover_soft_deleted_secrets      = true
+      recover_soft_deleted_certificates = true
+      recover_soft_deleted_keys         = true
+    }
+  }
 }
 
 data "azurerm_client_config" "current" {}
@@ -65,4 +77,16 @@ output "azure_resource_id" {
 
 output "connection_uri" {
   value = "https://${data.azurerm_app_service.guacamole.default_site_hostname}/?/client/${textencodebase64("${azurerm_windows_virtual_machine.windowsvm.name}\u0000c\u0000azuretre", "UTF-8")}"
+}
+
+output "vm_username" {
+  value = random_string.username.result
+}
+
+output "vm_password_secret_name" {
+  value = local.vm_password_secret_name
+}
+
+output "keyvault_name" {
+  value = local.keyvault_name
 }

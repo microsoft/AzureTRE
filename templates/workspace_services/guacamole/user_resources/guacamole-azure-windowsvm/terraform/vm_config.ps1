@@ -32,3 +32,11 @@ if( ${CondaConfig} -eq 1 )
   conda config --remove channels defaults --system
   conda config --set channel_alias ${nexus_proxy_url}/repository/conda/  --system
 }
+
+# Docker proxy config
+$DaemonConfig = @"
+{
+"registry-mirrors": ["${nexus_proxy_url}:8083"]
+}
+"@
+$DaemonConfig | Out-File -Encoding Ascii ( New-Item -Path $env:ProgramData\docker\config\daemon.json -Force )

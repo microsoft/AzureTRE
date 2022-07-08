@@ -76,3 +76,19 @@ output "terraform_state_container_name" {
 output "registry_server" {
   value = var.docker_registry_server
 }
+
+output "event_grid_status_changed_topic_endpoint" {
+  value = module.airlock_resources.event_grid_status_changed_topic_endpoint
+}
+
+output "event_grid_airlock_notification_topic_endpoint" {
+  value = module.airlock_resources.event_grid_airlock_notification_topic_endpoint
+}
+
+output "event_grid_status_changed_topic_resource_id" {
+  value = module.airlock_resources.event_grid_status_changed_topic_resource_id
+}
+
+output "service_bus_step_result_queue" {
+  value = module.airlock_resources.service_bus_step_result_queue
+}

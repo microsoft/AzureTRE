@@ -24,6 +24,7 @@ resource "azurerm_container_registry" "acr" {
   resource_group_name = data.azurerm_resource_group.ws.name
   sku                 = "Premium"
   admin_enabled       = false
+  tags                = var.tre_workspace_service_tags
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -31,6 +32,7 @@ resource "azurerm_container_registry" "acr" {
 resource "azurerm_private_dns_zone" "azurecr" {
   name                = "privatelink.azurecr.io"
   resource_group_name = data.azurerm_resource_group.ws.name
+  tags                = var.tre_workspace_service_tags
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -40,6 +42,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "azurecrlink" {
   resource_group_name   = data.azurerm_resource_group.ws.name
   private_dns_zone_name = azurerm_private_dns_zone.azurecr.name
   virtual_network_id    = data.azurerm_virtual_network.ws.id
+  tags                  = var.tre_workspace_service_tags
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -49,6 +52,7 @@ resource "azurerm_private_endpoint" "acrpe" {
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
   subnet_id           = data.azurerm_subnet.services.id
+  tags                = var.tre_workspace_service_tags
 
   lifecycle { ignore_changes = [tags] }
 

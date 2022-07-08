@@ -32,15 +32,15 @@ Now that we have published and registered a base workspace bundle we can use the
 !!! info
     All routes are auth protected. Click the green **Authorize** button to receive a token for Swagger client.
 
-As explained in the [auth guide](../auth.md), every workspace has a corresponding app registration which if you haven't run `make auth`; can be created using the helper script `scripts/aad/aad-app-reg.sh`. For example:
+As explained in the [auth guide](../auth.md), every workspace has a corresponding app registration which if you haven't run `make auth`; can be created using the helper script `./devops/scripts/aad/create_workspace_application.sh`. For example:
 
 ```bash
-./scripts/aad/aad-app-reg.sh \
-    --name '<TRE_ID> - Workspace 1' \
-    --workspace \
-    --swaggerui-clientid <SWAGGER_UI_CLIENT_ID> \
+  ./devops/scripts/aad/create_workspace_application.sh \
+    --name "${TRE_ID} - workspace 1" \
     --admin-consent \
-    --automation-clientid <TEST_ACCOUNT_CLIENT_ID>
+    --ux-clientid "${SWAGGER_UI_CLIENT_ID}" \
+    --automation-clientid "${TEST_ACCOUNT_CLIENT_ID}" \
+    --application-admin-clientid "${APPLICATION_ADMIN_CLIENT_ID}"
 ```
 
 !!! caution

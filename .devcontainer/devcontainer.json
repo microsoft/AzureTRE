@@ -161,6 +161,20 @@
           "purpose": [
             "debug-test"
           ]
+        },
+        {
+          "name": "Launch Edge (localhost)",
+          "type": "pwa-msedge",
+          "request": "launch",
+          "url": "http://localhost:3000",
+          "webRoot": "${workspaceFolder}/ui/app"
+        },
+        {
+          "name": "Launch Chrome (localhost)",
+          "type": "pwa-chrome",
+          "request": "launch",
+          "url": "http://localhost:3000",
+          "webRoot": "${workspaceFolder}/ui/app"
         }
       ],
       "compounds": []
@@ -223,7 +237,8 @@
     "mikestead.dotenv",
     "humao.rest-client",
     "timonwong.shellcheck",
-    "ms-azuretools.vscode-bicep"
+    "ms-azuretools.vscode-bicep",
+    "ms-azuretools.vscode-azurefunctions"
   ],
   "forwardPorts": [
     8000

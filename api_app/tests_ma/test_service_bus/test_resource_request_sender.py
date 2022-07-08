@@ -1,3 +1,4 @@
+
 import json
 import pytest
 import uuid
@@ -5,13 +6,21 @@ import uuid
 from azure.servicebus import ServiceBusMessage
 from mock import AsyncMock, MagicMock, patch
 from models.schemas.resource import ResourcePatch
-from service_bus.helpers import try_upgrade_with_retries, update_resource_for_step
+from service_bus.helpers import (
+    try_upgrade_with_retries,
+    update_resource_for_step,
+)
 from models.schemas.workspace_template import get_sample_workspace_template_object
 from tests_ma.test_api.conftest import create_test_user
-from tests_ma.test_service_bus.test_deployment_status_update import create_sample_operation
+from tests_ma.test_service_bus.test_deployment_status_update import (
+    create_sample_operation,
+)
 from models.domain.workspace_service import WorkspaceService
 from models.domain.resource import Resource, ResourceType
-from service_bus.resource_request_sender import send_resource_request_message, RequestAction
+from service_bus.resource_request_sender import (
+    send_resource_request_message,
+    RequestAction,
+)
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 
 pytestmark = pytest.mark.asyncio
@@ -23,18 +32,26 @@ def create_test_resource():
         resourceType=ResourceType.Workspace,
         templateName="Test resource template name",
         templateVersion="2.718",
-        etag='',
+        etag="",
         properties={"testParameter": "testValue"},
-        resourcePath="test"
+        resourcePath="test",
     )
 
 
-@pytest.mark.parametrize('request_action', [RequestAction.Install, RequestAction.UnInstall])
-@patch('service_bus.resource_request_sender.OperationRepository')
-@patch('service_bus.helpers.ServiceBusClient')
-@patch('service_bus.resource_request_sender.ResourceRepository')
-@patch('service_bus.resource_request_sender.ResourceTemplateRepository')
-async def test_resource_request_message_generated_correctly(resource_template_repo, resource_repo, service_bus_client_mock, operations_repo_mock, request_action):
+@pytest.mark.parametrize(
+    "request_action", [RequestAction.Install, RequestAction.UnInstall]
+)
+@patch("service_bus.resource_request_sender.OperationRepository")
+@patch("service_bus.helpers.ServiceBusClient")
+@patch("service_bus.resource_request_sender.ResourceRepository")
+@patch("service_bus.resource_request_sender.ResourceTemplateRepository")
+async def test_resource_request_message_generated_correctly(
+    resource_template_repo,
+    resource_repo,
+    service_bus_client_mock,
+    operations_repo_mock,
+    request_action,
+):
     service_bus_client_mock().get_queue_sender().send_messages = AsyncMock()
     resource = create_test_resource()
     operation = create_sample_operation(resource.id, request_action)
@@ -49,7 +66,8 @@ async def test_resource_request_message_generated_correctly(resource_template_re
         user=create_test_user(),
         resource_template=template,
         resource_template_repo=resource_template_repo,
-        action=request_action)
+        action=request_action
+    )
 
     args = service_bus_client_mock().get_queue_sender().send_messages.call_args.args
     assert len(args) == 1
@@ -62,39 +80,55 @@ async def test_resource_request_message_generated_correctly(resource_template_re
     assert sent_message_as_json["action"] == request_action
 
 
-@patch('service_bus.resource_request_sender.OperationRepository.create_operation_item')
-@patch('service_bus.resource_request_sender.ResourceRepository')
-@patch('service_bus.resource_request_sender.ResourceTemplateRepository')
-async def test_multi_step_document_sends_first_step(resource_template_repo, resource_repo, create_op_item_mock, multi_step_operation, basic_shared_service, basic_shared_service_template, multi_step_resource_template, user_resource_multi, test_user):
+@patch("service_bus.resource_request_sender.OperationRepository.create_operation_item")
+@patch("service_bus.resource_request_sender.ResourceRepository")
+@patch("service_bus.resource_request_sender.ResourceTemplateRepository")
+async def test_multi_step_document_sends_first_step(
+    resource_template_repo,
+    resource_repo,
+    create_op_item_mock,
+    multi_step_operation,
+    basic_shared_service,
+    basic_shared_service_template,
+    multi_step_resource_template,
+    user_resource_multi,
+    test_user,
+):
     create_op_item_mock.return_value = multi_step_operation
     temp_workspace_service = WorkspaceService(
-        id="123",
-        templateName="template-name-here",
-        templateVersion="0.1.0",
-        etag=""
+        id="123", templateName="template-name-here", templateVersion="0.1.0", etag=""
     )
 
     # return the primary resource, a 'parent' workspace service, then the shared service to patch
-    resource_repo.get_resource_by_id.side_effect = [user_resource_multi, temp_workspace_service, basic_shared_service]
-    resource_template_repo.get_current_template.side_effect = [multi_step_resource_template, basic_shared_service_template]
+    resource_repo.get_resource_by_id.side_effect = [
+        user_resource_multi,
+        temp_workspace_service,
+        basic_shared_service,
+    ]
+    resource_template_repo.get_current_template.side_effect = [
+        multi_step_resource_template,
+        basic_shared_service_template,
+    ]
 
-    resource_repo.patch_resource = MagicMock(return_value=(basic_shared_service, basic_shared_service_template))
+    resource_repo.patch_resource = MagicMock(
+        return_value=(basic_shared_service, basic_shared_service_template)
+    )
+
+    resource_repo.get_resource_by_id = MagicMock(
+        return_value=basic_shared_service
+    )
 
     _ = update_resource_for_step(
         operation_step=multi_step_operation.steps[0],
         resource_repo=resource_repo,
         resource_template_repo=resource_template_repo,
-        primary_resource_id="resource-id",
+        primary_resource=user_resource_multi,
         resource_to_update_id=basic_shared_service.id,
         primary_action="install",
-        user=test_user
+        user=test_user,
     )
 
-    expected_patch = ResourcePatch(
-        properties={
-            "display_name": "new name"
-        }
-    )
+    expected_patch = ResourcePatch(properties={"display_name": "new name"})
 
     # expect the patch for step 1
     resource_repo.patch_resource.assert_called_once_with(
@@ -107,15 +141,27 @@ async def test_multi_step_document_sends_first_step(resource_template_repo, reso
     )
 
 
-@patch('service_bus.resource_request_sender.ResourceRepository')
-@patch('service_bus.resource_request_sender.ResourceTemplateRepository')
-async def test_multi_step_document_retries(resource_template_repo, resource_repo, basic_shared_service, basic_shared_service_template, test_user):
+@patch("service_bus.resource_request_sender.ResourceRepository")
+@patch("service_bus.resource_request_sender.ResourceTemplateRepository")
+async def test_multi_step_document_retries(
+    resource_template_repo,
+    resource_repo,
+    basic_shared_service,
+    basic_shared_service_template,
+    test_user,
+    multi_step_resource_template,
+    primary_resource
+):
 
     resource_repo.get_resource_by_id.return_value = basic_shared_service
-    resource_template_repo.get_current_template.return_value = basic_shared_service_template
+    resource_template_repo.get_current_template.return_value = (
+        basic_shared_service_template
+    )
 
     # simulate an etag mismatch
-    resource_repo.patch_resource = MagicMock(side_effect=CosmosAccessConditionFailedError)
+    resource_repo.patch_resource = MagicMock(
+        side_effect=CosmosAccessConditionFailedError
+    )
 
     num_retries = 5
     try:
@@ -124,9 +170,10 @@ async def test_multi_step_document_retries(resource_template_repo, resource_repo
             attempt_count=0,
             resource_repo=resource_repo,
             resource_template_repo=resource_template_repo,
-            properties={},
             user=test_user,
-            resource_to_update_id="resource-id"
+            resource_to_update_id="resource-id",
+            template_step=multi_step_resource_template.pipeline.install[0],
+            primary_resource=primary_resource
         )
     except CosmosAccessConditionFailedError:
         pass
