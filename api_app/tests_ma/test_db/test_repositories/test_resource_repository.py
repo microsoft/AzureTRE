@@ -8,7 +8,8 @@ from tests_ma.test_api.test_routes.test_resource_helpers import FAKE_CREATE_TIME
 from tests_ma.test_api.conftest import create_test_user
 
 from db.errors import EntityDoesNotExist
-from db.repositories.resources import ResourceRepository, IS_NOT_DELETED_CLAUSE
+from db.repositories.resources import ResourceRepository
+from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from models.domain.resource import Resource, ResourceHistoryItem
 from models.domain.resource_template import ResourceTemplate
 from models.domain.user_resource_template import UserResourceTemplate
@@ -237,18 +238,9 @@ def test_get_enriched_template_returns_the_enriched_template_for_user_resources(
     assert "display_name" in template["properties"]
 
 
-def test_get_resource_dict_by_id_queries_db(resource_repo):
-    item_id = "123"
-    resource_repo.query = MagicMock(return_value=[{"id": item_id}])
-
-    resource_repo.get_resource_dict_by_id(item_id)
-
-    resource_repo.query.assert_called_once_with(query=f'SELECT * FROM c WHERE {IS_NOT_DELETED_CLAUSE} AND c.id = "123"')
-
-
 def test_get_resource_dict_by_id_raises_entity_does_not_exist_if_no_resources_come_back(resource_repo):
     item_id = "123"
-    resource_repo.query = MagicMock(return_value=[])
+    resource_repo.read_item_by_id = MagicMock(side_effect=CosmosResourceNotFoundError)
 
     with pytest.raises(EntityDoesNotExist):
         resource_repo.get_resource_dict_by_id(item_id)

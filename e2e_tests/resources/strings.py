@@ -10,10 +10,8 @@ API_WORKSPACE_SERVICES = "workspace-services"
 API_USER_RESOURCES = "user-resources"
 
 BASE_WORKSPACE = "tre-workspace-base"
-INNEREYE = "tre-workspace-innereye"
 
 AZUREML_SERVICE = "tre-service-azureml"
-DEVTESTLABS_SERVICE = "tre-service-devtestlabs"
 INNEREYE_SERVICE = "tre-service-innereye"
 GUACAMOLE_SERVICE = "tre-service-guacamole"
 GITEA_SERVICE = "tre-workspace-service-gitea"
