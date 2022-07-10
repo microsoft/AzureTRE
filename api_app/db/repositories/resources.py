@@ -140,4 +140,4 @@ class ResourceRepository(BaseRepository):
 
 
 # Cosmos query consts
-IS_NOT_DELETED_CLAUSE = 'c.deploymentStatus != "deleted"'
+IS_NOT_DELETED_CLAUSE = 'c.deploymentStatus != "deleted" && c.deploymentStatus != "deploymentFailed"'
