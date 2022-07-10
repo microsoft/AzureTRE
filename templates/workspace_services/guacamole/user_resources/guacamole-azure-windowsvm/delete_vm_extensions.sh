@@ -24,6 +24,6 @@ terraform init -input=false -backend=true \
     -backend-config="key=${ID}"
 
 tf_state_list="$(terraform state list)"
-echo "${tf_state_list}" | grep "azurerm_virtual_machine_extension." | xargs terraform state rm
+echo "${tf_state_list}" | grep "azurerm_virtual_machine_extension." | xargs -r terraform state rm
 
 popd
