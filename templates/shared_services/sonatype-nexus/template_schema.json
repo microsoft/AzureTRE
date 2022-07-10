@@ -45,6 +45,10 @@
                 }
               ]
             }
+          },
+          {
+            "name": "stuff",
+            "sensitive": "true"
           }
         ]
       }
