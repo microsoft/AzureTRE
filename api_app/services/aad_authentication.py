@@ -1,5 +1,4 @@
 import base64
-import json
 import logging
 from collections import defaultdict
 from enum import Enum
@@ -230,7 +229,6 @@ class AzureADAuthorization(AccessService):
         sp_id = workspace.properties["sp_id"]
         roles_graph_data, users_graph_data = self._get_user_emails_with_role_asssignment(sp_id)
         user_emails = {}
-        #TODO: add support for groups
         for user_data in users_graph_data["responses"]:
             user_emails[user_data["body"]["id"]] = user_data["body"]["mail"]
 

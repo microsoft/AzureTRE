@@ -86,7 +86,7 @@ class ServiceBusReceivedMessageMock:
 @patch('logging.error')
 @patch('service_bus.airlock_request_status_update.ServiceBusClient')
 @patch('fastapi.FastAPI')
-@patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details", return_value= {"researcher_emails": ["researcher@outlook.com"], "owner_emails": ["owner@outlook.com"]})
+@patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details", return_value={"researcher_emails": ["researcher@outlook.com"], "owner_emails": ["owner@outlook.com"]})
 async def test_receiving_good_message(_, app, sb_client, logging_mock, workspace_repo, airlock_request_repo, eg_client):
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(test_sb_step_result_message)
 

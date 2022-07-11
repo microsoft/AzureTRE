@@ -69,6 +69,7 @@ def sample_airlock_notification_event(status="draft"):
     )
     return status_changed_event
 
+
 def sample_airlock_review(review_decision=AirlockReviewDecision.Approved):
     airlock_review = AirlockReview(
         id=AIRLOCK_REVIEW_ID,
@@ -82,7 +83,7 @@ def sample_airlock_review(review_decision=AirlockReviewDecision.Approved):
 
 
 @patch("event_grid.helpers.EventGridPublisherClient", return_value=AsyncMock())
-@patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details", return_value= {"researcher_emails": ["researcher@outlook.com"], "owner_emails": ["owner@outlook.com"]})
+@patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details", return_value={"researcher_emails": ["researcher@outlook.com"], "owner_emails": ["owner@outlook.com"]})
 async def test_save_and_publish_event_airlock_request_saves_item(_, event_grid_publisher_client_mock,
                                                                  airlock_request_repo_mock):
     airlock_request_mock = sample_airlock_request()
@@ -108,7 +109,7 @@ async def test_save_and_publish_event_airlock_request_saves_item(_, event_grid_p
     assert actual_airlock_notification_event.data == airlock_notification_event_mock.data
 
 
-@patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details", return_value= {"researcher_emails": ["researcher@outlook.com"], "owner_emails": ["owner@outlook.com"]})
+@patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details", return_value={"researcher_emails": ["researcher@outlook.com"], "owner_emails": ["owner@outlook.com"]})
 async def test_save_and_publish_event_airlock_request_raises_503_if_save_to_db_fails(_, airlock_request_repo_mock):
     airlock_request_mock = sample_airlock_request()
     airlock_request_repo_mock.save_item = MagicMock(side_effect=Exception)
@@ -123,7 +124,7 @@ async def test_save_and_publish_event_airlock_request_raises_503_if_save_to_db_f
 
 
 @patch("event_grid.helpers.EventGridPublisherClient", return_value=AsyncMock())
-@patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details", return_value= {"researcher_emails": ["researcher@outlook.com"], "owner_emails": ["owner@outlook.com"]})
+@patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details", return_value={"researcher_emails": ["researcher@outlook.com"], "owner_emails": ["owner@outlook.com"]})
 async def test_save_and_publish_event_airlock_request_raises_503_if_publish_event_fails(_, event_grid_publisher_client_mock,
                                                                                         airlock_request_repo_mock):
     airlock_request_mock = sample_airlock_request()
@@ -143,7 +144,7 @@ async def test_save_and_publish_event_airlock_request_raises_503_if_publish_even
 
 
 @patch("event_grid.helpers.EventGridPublisherClient", return_value=AsyncMock())
-@patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details", return_value= {"researcher_emails": ["researcher@outlook.com"], "owner_emails": ["owner@outlook.com"]})
+@patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details", return_value={"researcher_emails": ["researcher@outlook.com"], "owner_emails": ["owner@outlook.com"]})
 async def test_update_status_and_publish_event_airlock_request_updates_item(_, event_grid_publisher_client_mock,
                                                                             airlock_request_repo_mock):
     airlock_request_mock = sample_airlock_request()
@@ -172,7 +173,7 @@ async def test_update_status_and_publish_event_airlock_request_updates_item(_, e
     assert actual_airlock_notification_event.data == airlock_notification_event_mock.data
 
 
-@patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details", return_value= {"researcher_emails": ["researcher@outlook.com"], "owner_emails": ["owner@outlook.com"]})
+@patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details", return_value={"researcher_emails": ["researcher@outlook.com"], "owner_emails": ["owner@outlook.com"]})
 async def test_update_status_and_publish_event_airlock_request_raises_400_if_status_update_invalid(_, airlock_request_repo_mock):
     airlock_request_mock = sample_airlock_request()
 
@@ -188,7 +189,7 @@ async def test_update_status_and_publish_event_airlock_request_raises_400_if_sta
 
 
 @patch("event_grid.helpers.EventGridPublisherClient", return_value=AsyncMock())
-@patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details", return_value= {"researcher_emails": ["researcher@outlook.com"], "owner_emails": ["owner@outlook.com"]})
+@patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details", return_value={"researcher_emails": ["researcher@outlook.com"], "owner_emails": ["owner@outlook.com"]})
 async def test_update_status_and_publish_event_airlock_request_raises_503_if_publish_event_fails(_, event_grid_publisher_client_mock,
                                                                                                  airlock_request_repo_mock):
     airlock_request_mock = sample_airlock_request()
