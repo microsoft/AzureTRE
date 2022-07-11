@@ -13,6 +13,7 @@ from models.domain.authentication import User
 from models.domain.resource import Resource, ResourceHistoryItem, ResourceType
 from models.domain.resource_template import ResourceTemplate
 from models.domain.shared_service import SharedService
+from models.domain.operation import Status
 from models.domain.user_resource import UserResource
 from models.domain.workspace import Workspace
 from models.domain.workspace_service import WorkspaceService
@@ -137,5 +138,5 @@ class ResourceRepository(BaseRepository):
 
 
 # Cosmos query consts
-IS_NOT_DELETED_CLAUSE = 'c.deploymentStatus != "deleted"'
-IS_OPERATING_SHARED_SERVICE = 'c.deploymentStatus != "deleted" && c.deploymentStatus != "deploymentFailed"'
+IS_NOT_DELETED_CLAUSE = f'c.deploymentStatus != "{Status.Deleted}"'
+IS_OPERATING_SHARED_SERVICE = f'c.deploymentStatus != "{Status.Deleted}" && c.deploymentStatus != "{Status.DeploymentFailed}"'
