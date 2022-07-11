@@ -96,6 +96,16 @@ resource "azurerm_subnet" "airlock_notification" {
   address_prefixes     = [local.airlock_notifications_subnet_address_prefix]
   # notice that private endpoints do not adhere to NSG rules
   enforce_private_link_endpoint_network_policies = true
+
+  delegation {
+    name = "delegation"
+
+    service_delegation {
+      name    = "Microsoft.Web/serverFarms"
+      actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
+    }
+  }
+
 }
 
 resource "azurerm_subnet" "airlock_storage" {
