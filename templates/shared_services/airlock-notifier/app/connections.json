@@ -21,7 +21,7 @@
       "authentication": {
         "type": "ManagedServiceIdentity"
       },
-    "connectionRuntimeUrl": "@appsetting('smtp_connection_runtime_url')"
+      "connectionRuntimeUrl": "@appsetting('smtp_connection_runtime_url')"
     }
   }
 }

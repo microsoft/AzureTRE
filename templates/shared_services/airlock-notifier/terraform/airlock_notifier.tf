@@ -98,7 +98,7 @@ resource "azurerm_resource_group_template_deployment" "smtp-api-connection-acces
 
 resource "null_resource" "deploy_app" {
   provisioner "local-exec" {
-    command    = "az login --identity -u '${data.azurerm_client_config.current.client_id}' && az functionapp deployment source config-zip --name ${azurerm_logic_app_standard.logic-app.name} --resource-group ${azurerm_logic_app_standard.logic-app.resource_group_name} --subscription 73a4ea93-d914-424d-9e64-28adf397e8e3 --src /tmp/LogicApp.zip"
+    command    = "az login --identity -u '${data.azurerm_client_config.current.client_id}' && az functionapp deployment source config-zip --name ${azurerm_logic_app_standard.logic-app.name} --resource-group ${azurerm_logic_app_standard.logic-app.resource_group_name} --subscription ${data.azurerm_subscription.current.subscription_id} --src /tmp/LogicApp.zip"
     on_failure = fail
   }
 
@@ -110,7 +110,7 @@ resource "null_resource" "deploy_app" {
 }
 
 
-resource "azurerm_app_service_virtual_network_swift_connection" "gitea-integrated-vnet" {
-  app_service_id = azurerm_service_plan.notifier-plan.id
+resource "azurerm_app_service_virtual_network_swift_connection" "airlock-notifier-integrated-vnet" {
+  app_service_id = azurerm_logic_app_standard.logic-app.id
   subnet_id      = data.azurerm_subnet.airlock_notification.id
 }

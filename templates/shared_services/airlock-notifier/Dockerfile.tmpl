@@ -2,20 +2,9 @@ FROM debian:stretch-slim
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-# Install Azure CLI
-# RUN apt-get update \
-#     && apt-get install -y zip ca-certificates="20200601~deb9u2" jq="1.5+dfsg-1.3" curl="7.52.1-5+deb9u16" apt-transport-https="1.4.11" lsb-release="9.20161125" gnupg="2.1.18-8~deb9u4" \
-#     && curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null \
-#     && AZ_REPO=$(lsb_release -cs) \
-#     && echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | tee /etc/apt/sources.list.d/azure-cli.list \
-#     && apt-get update && apt-get -y install azure-cli="2.36.0-1~stretch" \
-#     && apt-get clean -y && rm -rf /var/lib/apt/lists/*
-
 RUN apt-get update \
     && apt-get install -y zip
 
-#RUN apt-get update \
-#    && apt-get install -y zip
 
 ARG BUNDLE_DIR
 
@@ -38,8 +27,4 @@ ARG BUNDLE_DIR
 # Use the BUNDLE_DIR build argument to copy files into the bundle
 COPY . $BUNDLE_DIR
 
-# RUN az extension add --yes --source "$BUNDLE_DIR/customLogicapp.whl" --debug
-# RUN az extension add --yes --source "https://aka.ms/logicapp-latest-py2.py3-none-any.whl"
-ENV AZURE_CLI_DISABLE_CONNECTION_VERIFICATION=true
-ENV ADAL_PYTHON_SSL_NO_VERIFY=true
-RUN zip -jr /tmp/LogicApp.zip $BUNDLE_DIR/app
+RUN cd $BUNDLE_DIR/app && zip -r /tmp/LogicApp.zip .

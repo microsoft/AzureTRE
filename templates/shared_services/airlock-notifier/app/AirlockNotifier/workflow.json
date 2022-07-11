@@ -1,185 +1,185 @@
 {
   "definition": {
-      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
-      "actions": {
-          "Initialize_variable": {
-              "inputs": {
-                  "variables": [
-                      {
-                          "name": "message",
-                          "type": "string"
-                      }
-                  ]
+    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+    "actions": {
+      "Initialize_variable": {
+        "inputs": {
+          "variables": [
+            {
+              "name": "message",
+              "type": "string"
+            }
+          ]
+        },
+        "runAfter": {
+          "Parse_JSON": [
+            "Succeeded"
+          ]
+        },
+        "type": "InitializeVariable"
+      },
+      "Initialize_variable_2": {
+        "inputs": {
+          "variables": [
+            {
+              "name": "recipients",
+              "type": "string"
+            }
+          ]
+        },
+        "runAfter": {
+          "Initialize_variable": [
+            "Succeeded"
+          ]
+        },
+        "type": "InitializeVariable"
+      },
+      "Parse_JSON": {
+        "inputs": {
+          "content": "@triggerOutputs()?['body']?['contentData']",
+          "schema": {
+            "properties": {
+              "event_value": {
+                "type": "string"
               },
-              "runAfter": {
-                  "Parse_JSON": [
-                      "Succeeded"
-                  ]
+              "owners_emails": {
+                "type": "string"
               },
-              "type": "InitializeVariable"
+              "researchers_emails": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "runAfter": {},
+        "type": "ParseJson"
+      },
+      "Send_Email_(V3)": {
+        "inputs": {
+          "body": {
+            "From": "@parameters('smtp_from_email')",
+            "Subject": "@variables('message')",
+            "To": "@variables('recipients')"
           },
-          "Initialize_variable_2": {
-              "inputs": {
-                  "variables": [
-                      {
-                          "name": "recipients",
-                          "type": "string"
-                      }
-                  ]
-              },
-              "runAfter": {
-                  "Initialize_variable": [
-                      "Succeeded"
-                  ]
-              },
-              "type": "InitializeVariable"
+          "host": {
+            "connection": {
+              "referenceName": "smtp"
+            }
           },
-          "Parse_JSON": {
+          "method": "post",
+          "path": "/SendEmailV3"
+        },
+        "runAfter": {
+          "Switch_2": [
+            "Succeeded"
+          ]
+        },
+        "type": "ApiConnection"
+      },
+      "Switch_2": {
+        "cases": {
+          "Case": {
+            "actions": {
+              "Set_variable_5": {
+                "inputs": {
+                  "name": "recipients",
+                  "value": "@body('Parse_JSON')?['owners_emails']"
+                },
+                "runAfter": {},
+                "type": "SetVariable"
+              },
+              "Set_variable_6": {
+                "inputs": {
+                  "name": "message",
+                  "value": "An Airlock request needs your review"
+                },
+                "runAfter": {
+                  "Set_variable_5": [
+                    "Succeeded"
+                  ]
+                },
+                "type": "SetVariable"
+              }
+            },
+            "case": "in_review"
+          },
+          "Case_2": {
+            "actions": {
+              "Set_variable_7": {
+                "inputs": {
+                  "name": "recipients",
+                  "value": "@body('Parse_JSON')?['researchers_emails']"
+                },
+                "runAfter": {},
+                "type": "SetVariable"
+              },
+              "Set_variable_8": {
+                "inputs": {
+                  "name": "message",
+                  "value": "Your Airlock request was approved"
+                },
+                "runAfter": {
+                  "Set_variable_7": [
+                    "Succeeded"
+                  ]
+                },
+                "type": "SetVariable"
+              }
+            },
+            "case": "approved"
+          }
+        },
+        "default": {
+          "actions": {
+            "Terminate": {
               "inputs": {
-                  "content": "@triggerOutputs()?['body']?['contentData']",
-                  "schema": {
-                      "properties": {
-                          "event_value": {
-                              "type": "string"
-                          },
-                          "owners_emails": {
-                              "type": "string"
-                          },
-                          "researchers_emails": {
-                              "type": "string"
-                          }
-                      },
-                      "type": "object"
-                  }
+                "runStatus": "Cancelled"
               },
               "runAfter": {},
-              "type": "ParseJson"
-          },
-          "Send_Email_(V3)": {
-              "inputs": {
-                  "body": {
-                      "From": "@parameters('smtp_from_email')",
-                      "Subject": "@variables('message')",
-                      "To": "@variables('recipients')"
-                  },
-                  "host": {
-                      "connection": {
-                          "referenceName": "smtp"
-                      }
-                  },
-                  "method": "post",
-                  "path": "/SendEmailV3"
-              },
-              "runAfter": {
-                  "Switch_2": [
-                      "Succeeded"
-                  ]
-              },
-              "type": "ApiConnection"
-          },
-          "Switch_2": {
-              "cases": {
-                  "Case": {
-                      "actions": {
-                          "Set_variable_5": {
-                              "inputs": {
-                                  "name": "recipients",
-                                  "value": "@body('Parse_JSON')?['owners_emails']"
-                              },
-                              "runAfter": {},
-                              "type": "SetVariable"
-                          },
-                          "Set_variable_6": {
-                              "inputs": {
-                                  "name": "message",
-                                  "value": "An Airlock request needs your review"
-                              },
-                              "runAfter": {
-                                  "Set_variable_5": [
-                                      "Succeeded"
-                                  ]
-                              },
-                              "type": "SetVariable"
-                          }
-                      },
-                      "case": "in_review"
-                  },
-                  "Case_2": {
-                      "actions": {
-                          "Set_variable_7": {
-                              "inputs": {
-                                  "name": "recipients",
-                                  "value": "@body('Parse_JSON')?['researchers_emails']"
-                              },
-                              "runAfter": {},
-                              "type": "SetVariable"
-                          },
-                          "Set_variable_8": {
-                              "inputs": {
-                                  "name": "message",
-                                  "value": "Your Airlock request was approved"
-                              },
-                              "runAfter": {
-                                  "Set_variable_7": [
-                                      "Succeeded"
-                                  ]
-                              },
-                              "type": "SetVariable"
-                          }
-                      },
-                      "case": "approved"
-                  }
-              },
-              "default": {
-                  "actions": {
-                      "Terminate": {
-                          "inputs": {
-                              "runStatus": "Cancelled"
-                          },
-                          "runAfter": {},
-                          "type": "Terminate"
-                      }
-                  }
-              },
-              "expression": "@body('Parse_JSON')?['event_value']",
-              "runAfter": {
-                  "Initialize_variable_2": [
-                      "Succeeded"
-                  ]
-              },
-              "type": "Switch"
-          },
-          "Terminate_2": {
-              "inputs": {
-                  "runStatus": "Succeeded"
-              },
-              "runAfter": {
-                  "Send_Email_(V3)": [
-                      "Succeeded"
-                  ]
-              },
               "type": "Terminate"
+            }
           }
+        },
+        "expression": "@body('Parse_JSON')?['event_value']",
+        "runAfter": {
+          "Initialize_variable_2": [
+            "Succeeded"
+          ]
+        },
+        "type": "Switch"
       },
-      "contentVersion": "1.0.0.0",
-      "outputs": {},
-      "triggers": {
-          "When_messages_are_available_in_a_queue": {
-              "inputs": {
-                  "parameters": {
-                      "isSessionsEnabled": false,
-                      "queueName": "notifications"
-                  },
-                  "serviceProviderConfiguration": {
-                      "connectionName": "serviceBus",
-                      "operationId": "receiveQueueMessages",
-                      "serviceProviderId": "/serviceProviders/serviceBus"
-                  }
-              },
-              "splitOn": "@triggerOutputs()?['body']",
-              "type": "ServiceProvider"
-          }
+      "Terminate_2": {
+        "inputs": {
+          "runStatus": "Succeeded"
+        },
+        "runAfter": {
+          "Send_Email_(V3)": [
+            "Succeeded"
+          ]
+        },
+        "type": "Terminate"
       }
+    },
+    "contentVersion": "1.0.0.0",
+    "outputs": {},
+    "triggers": {
+      "When_messages_are_available_in_a_queue": {
+        "inputs": {
+          "parameters": {
+            "isSessionsEnabled": false,
+            "queueName": "notifications"
+          },
+          "serviceProviderConfiguration": {
+            "connectionName": "serviceBus",
+            "operationId": "receiveQueueMessages",
+            "serviceProviderId": "/serviceProviders/serviceBus"
+          }
+        },
+        "splitOn": "@triggerOutputs()?['body']",
+        "type": "ServiceProvider"
+      }
+    }
   },
   "kind": "Stateful"
 }
