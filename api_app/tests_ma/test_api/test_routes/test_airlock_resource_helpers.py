@@ -7,6 +7,7 @@ from api.routes.airlock_resource_helpers import save_airlock_review, save_and_pu
     update_status_and_publish_event_airlock_request
 from db.repositories.airlock_reviews import AirlockReviewRepository
 from db.repositories.airlock_requests import AirlockRequestRepository
+from models.domain.workspace import Workspace
 from tests_ma.test_api.conftest import create_test_user
 from models.domain.airlock_review import AirlockReview, AirlockReviewDecision
 from models.domain.airlock_resource import AirlockResourceType
@@ -18,6 +19,9 @@ pytestmark = pytest.mark.asyncio
 WORKSPACE_ID = "abc000d3-82da-4bfc-b6e9-9a7853ef753e"
 AIRLOCK_REQUEST_ID = "5dbc15ae-40e1-49a5-834b-595f59d626b7"
 AIRLOCK_REVIEW_ID = "96d909c5-e913-4c05-ae53-668a702ba2e5"
+
+def sample_workspace():
+    return Workspace(id=WORKSPACE_ID, templateName='template name', templateVersion='1.0', etag='', properties={"client_id": "12345"}, resourcePath="test")
 
 
 @pytest.fixture
@@ -58,12 +62,11 @@ def sample_status_changed_event(status="draft"):
 def sample_airlock_notification_event(status="draft"):
     status_changed_event = EventGridEvent(
         event_type="airlockNotification",
-        data=AirlockNotificationData(request_id=AIRLOCK_REQUEST_ID, event_type="status_changed", event_value=status, researchers_emails=[], owners_emails=[], workspace_id=WORKSPACE_ID[-4:]).__dict__,
+        data=AirlockNotificationData(request_id=AIRLOCK_REQUEST_ID, event_type="status_changed", event_value=status, researchers_emails=['researcher@outlook.com'], owners_emails=['owner@outlook.com'], workspace_id=WORKSPACE_ID[-4:]).__dict__,
         subject=f"{AIRLOCK_REQUEST_ID}/airlockNotification",
         data_version="2.0"
     )
     return status_changed_event
-
 
 def sample_airlock_review(review_decision=AirlockReviewDecision.Approved):
     airlock_review = AirlockReview(
@@ -78,7 +81,8 @@ def sample_airlock_review(review_decision=AirlockReviewDecision.Approved):
 
 
 @patch("event_grid.helpers.EventGridPublisherClient", return_value=AsyncMock())
-async def test_save_and_publish_event_airlock_request_saves_item(event_grid_publisher_client_mock,
+@patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details", return_value= {"researcher_emails": ["researcher@outlook.com"], "owner_emails": ["owner@outlook.com"]})
+async def test_save_and_publish_event_airlock_request_saves_item(_, event_grid_publisher_client_mock,
                                                                  airlock_request_repo_mock):
     airlock_request_mock = sample_airlock_request()
     airlock_request_repo_mock.save_item = MagicMock(return_value=None)
@@ -90,7 +94,8 @@ async def test_save_and_publish_event_airlock_request_saves_item(event_grid_publ
     await save_and_publish_event_airlock_request(
         airlock_request=airlock_request_mock,
         airlock_request_repo=airlock_request_repo_mock,
-        user=create_test_user())
+        user=create_test_user(),
+        workspace=sample_workspace())
 
     airlock_request_repo_mock.save_item.assert_called_once_with(airlock_request_mock)
 

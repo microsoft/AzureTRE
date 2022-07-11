@@ -1,5 +1,8 @@
 import base64
+import json
 import logging
+from collections import defaultdict
+from enum import Enum
 from typing import List
 import jwt
 import requests
@@ -16,6 +19,12 @@ from models.domain.workspace import Workspace, WorkspaceRole
 from resources import strings
 from api.dependencies.database import get_db_client_from_request
 from db.repositories.workspaces import WorkspaceRepository
+
+
+class PrincipalType(Enum):
+    User = "User"
+    Group = "Group"
+    ServicePrincipal = "ServicePrincipal"
 
 
 class AzureADAuthorization(AccessService):
@@ -180,11 +189,80 @@ class AzureADAuthorization(AccessService):
     def _get_service_principal_endpoint(client_id) -> str:
         return f"https://graph.microsoft.com/v1.0/serviceprincipals?$filter=appid eq '{client_id}'"
 
+    @staticmethod
+    def _get_service_principal_assigned_roles_endpoint(client_id) -> str:
+        return f"https://graph.microsoft.com/v1.0/serviceprincipals/{client_id}/appRoleAssignedTo?$select=appRoleId,principalId,principalType"
+
+    @staticmethod
+    def _get_batch_endpoint() -> str:
+        return "https://graph.microsoft.com/v1.0/$batch"
+
+    @staticmethod
+    def _get_users_endpoint(user_object_id) -> str:
+        return "/users/" + user_object_id + "?$select=mail,id"
+
+    @staticmethod
+    def _get_group_members_endpoint(group_object_id) -> str:
+        return "/groups/" + group_object_id + "/transitiveMembers?$select=mail,id"
+
     def _get_app_sp_graph_data(self, client_id: str) -> dict:
         msgraph_token = self._get_msgraph_token()
         sp_endpoint = self._get_service_principal_endpoint(client_id)
         graph_data = requests.get(sp_endpoint, headers=self._get_auth_header(msgraph_token)).json()
         return graph_data
+
+    def _get_user_emails_with_role_asssignment(self, client_id):
+        msgraph_token = self._get_msgraph_token()
+        sp_roles_endpoint = self._get_service_principal_assigned_roles_endpoint(client_id)
+        roles_graph_data = requests.get(sp_roles_endpoint, headers=self._get_auth_header(msgraph_token)).json()
+
+        batch_endpoint = self._get_batch_endpoint()
+        batch_request_body = self._get_batch_users_by_role_assignments_body(roles_graph_data)
+        headers = self._get_auth_header(msgraph_token)
+        headers["Content-type"] = "application/json"
+        users_graph_data = requests.post(batch_endpoint, json=batch_request_body, headers=headers).json()
+
+        return roles_graph_data, users_graph_data
+
+    def get_workspace_role_assignment_details(self, workspace: Workspace):
+        researcher_app_role_id = workspace.properties["app_role_id_workspace_researcher"]
+        owner_app_role_id = workspace.properties["app_role_id_workspace_owner"]
+        sp_id = workspace.properties["sp_id"]
+        roles_graph_data, users_graph_data = self._get_user_emails_with_role_asssignment(sp_id)
+        user_emails = {}
+        #TODO: add support for groups
+        for user_data in users_graph_data["responses"]:
+            user_emails[user_data["body"]["id"]] = user_data["body"]["mail"]
+
+        workspace_role_assignments_details = defaultdict(list)
+        for role_assignment in roles_graph_data["value"]:
+            if role_assignment["principalType"] == "User":
+                if role_assignment["appRoleId"] == researcher_app_role_id:
+                    workspace_role_assignments_details["researcher_emails"].append(user_emails[role_assignment["principalId"]])
+                elif role_assignment["appRoleId"] == owner_app_role_id:
+                    workspace_role_assignments_details["owner_emails"].append(user_emails[role_assignment["principalId"]])
+
+        return workspace_role_assignments_details
+
+    def _get_batch_users_by_role_assignments_body(self, roles_graph_data):
+        request_body = {"requests": []}
+        met_principal_ids = set()
+        for role_assignment in roles_graph_data['value']:
+            if role_assignment["principalId"] not in met_principal_ids:
+                batch_url = ""
+                if role_assignment["principalType"] == "User":
+                    batch_url = self._get_users_endpoint(role_assignment["principalId"])
+                elif role_assignment["principalType"] == "Group":
+                    batch_url = self._get_group_members_endpoint(role_assignment["principalId"])
+                else:
+                    continue
+                request_body["requests"].append(
+                    {"method": "GET",
+                        "url": batch_url,
+                        "id": role_assignment["principalId"]})
+                met_principal_ids.add(role_assignment["principalId"])
+
+        return request_body
 
     # This method is called when you create a workspace and you already have an AAD App Registration
     # to link it to. You pass in the client_id and go and get the extra information you need from AAD
