@@ -12,6 +12,8 @@ locals {
 
   # STorage AirLock IMport APProved
   import_approved_storage_name = lower(replace("stalimapp${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
+  # STorage AirLock IMport InProgress
+  import_in_progress_storage_name = lower(replace("stalimip${var.tre_id}", "-", ""))
   # STorage AirLock EXport INTernal
   export_internal_storage_name = lower(replace("stalexint${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
   # STorage AirLock EXport InProgress

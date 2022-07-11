@@ -1,7 +1,7 @@
 ---
-name: tre-workspace-base
+name: tre-workspace-airlock-manager
 version: 0.3.16
-description: "A base Azure TRE workspace"
+description: "A airlock manager Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
 

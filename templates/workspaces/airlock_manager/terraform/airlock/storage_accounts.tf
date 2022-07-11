@@ -76,6 +76,28 @@ resource "azurerm_storage_account" "sa_export_internal" {
   lifecycle { ignore_changes = [tags] }
 }
 
+resource "azurerm_private_endpoint" "stg_import_inprogress_pe" {
+  name                = "stg-ip-import-blob-${var.tre_id}-ws-${var.short_workspace_id}"
+  location            = var.location
+  resource_group_name = var.ws_resource_group_name
+  subnet_id           = var.services_subnet_id
+
+  lifecycle { ignore_changes = [tags] }
+
+  private_dns_zone_group {
+    name                 = "private-dns-zone-group-stg-import-ip"
+    private_dns_zone_ids = [data.azurerm_private_dns_zone.blobcore.id]
+  }
+
+  private_service_connection {
+    name                           = "psc-stgipimport-${var.tre_id}"
+    private_connection_resource_id = data.azurerm_storage_account.sa_import_inprogress.id
+    is_manual_connection           = false
+    subresource_names              = ["Blob"]
+  }
+
+  tags = var.tre_workspace_tags
+}
 
 resource "azurerm_private_endpoint" "export_internal_pe" {
   name                = "pe-sa-export-int-blob-${var.short_workspace_id}"
