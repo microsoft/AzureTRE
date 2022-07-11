@@ -139,4 +139,4 @@ class ResourceRepository(BaseRepository):
 
 # Cosmos query consts
 IS_NOT_DELETED_CLAUSE = f'c.deploymentStatus != "{Status.Deleted}"'
-IS_OPERATING_SHARED_SERVICE = f'c.deploymentStatus != "{Status.Deleted}" && c.deploymentStatus != "{Status.DeploymentFailed}"'
+IS_OPERATING_SHARED_SERVICE = f'c.deploymentStatus != "{Status.Deleted}" and c.deploymentStatus != "{Status.DeploymentFailed}"'
