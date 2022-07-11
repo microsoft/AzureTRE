@@ -5,6 +5,7 @@ import pytest
 from mock import AsyncMock, patch
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType
 from models.domain.airlock_resource import AirlockResourceType
+from models.domain.workspace import Workspace
 from service_bus.airlock_request_status_update import receive_step_result_message_and_update_status
 from db.errors import EntityDoesNotExist
 from resources import strings
@@ -12,6 +13,11 @@ from resources import strings
 WORKSPACE_ID = "abc000d3-82da-4bfc-b6e9-9a7853ef753e"
 AIRLOCK_REQUEST_ID = "5dbc15ae-40e1-49a5-834b-595f59d626b7"
 EVENT_ID = "0000c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+
+
+def sample_workspace():
+    return Workspace(id=WORKSPACE_ID, templateName='template name', templateVersion='1.0', etag='', properties={"client_id": "12345"}, resourcePath="test")
+
 
 pytestmark = pytest.mark.asyncio
 
@@ -76,10 +82,12 @@ class ServiceBusReceivedMessageMock:
 
 @patch("event_grid.helpers.EventGridPublisherClient")
 @patch('service_bus.airlock_request_status_update.AirlockRequestRepository')
+@patch('service_bus.airlock_request_status_update.WorkspaceRepository')
 @patch('logging.error')
 @patch('service_bus.airlock_request_status_update.ServiceBusClient')
 @patch('fastapi.FastAPI')
-async def test_receiving_good_message(app, sb_client, logging_mock, airlock_request_repo, eg_client):
+@patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details", return_value= {"researcher_emails": ["researcher@outlook.com"], "owner_emails": ["owner@outlook.com"]})
+async def test_receiving_good_message(_, app, sb_client, logging_mock, workspace_repo, airlock_request_repo, eg_client):
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(test_sb_step_result_message)
 
     sb_client().get_queue_receiver().receive_messages = AsyncMock(return_value=[service_bus_received_message_mock])
@@ -88,6 +96,7 @@ async def test_receiving_good_message(app, sb_client, logging_mock, airlock_requ
     expected_airlock_request = sample_airlock_request()
     airlock_request_repo().get_airlock_request_by_id.return_value = expected_airlock_request
     airlock_request_repo().update_airlock_request_status.return_value = sample_airlock_request(status=AirlockRequestStatus.InReview)
+    workspace_repo().get_workspace_by_id.return_value = sample_workspace()
     await receive_step_result_message_and_update_status(app)
 
     airlock_request_repo().get_airlock_request_by_id.assert_called_once_with(test_sb_step_result_message["data"]["request_id"])
