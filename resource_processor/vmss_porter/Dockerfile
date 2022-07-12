@@ -1,5 +1,7 @@
 FROM python:3.8-slim-buster
 
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
 # Install Azure CLI
 ARG AZURE_CLI_VERSION=2.37.0-1~buster
 COPY scripts/azure-cli.sh /tmp/
@@ -41,7 +43,7 @@ RUN apt-get update && apt-get install -y jq="1.5+dfsg-2+b1" && apt-get clean -y 
 
 ENV PYTHONPATH .
 
-COPY ./vmss_porter/requirements.txt .
+COPY ./vmss_porter/requirements.txt ./requirements.txt
 RUN pip3 --no-cache-dir install -r requirements.txt
 
 COPY . /app
