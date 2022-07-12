@@ -6,7 +6,7 @@ import moment from 'moment';
 import { ResourceContextMenu } from './ResourceContextMenu';
 import { useComponentManager } from '../../hooks/useComponentManager';
 import { StatusBadge } from './StatusBadge';
-import { actionsDisabledStates, completedStates, successStates } from '../../models/operation';
+import { actionsDisabledStates } from '../../models/operation';
 import { PowerStateBadge } from './PowerStateBadge';
 
 interface ResourceCardProps {

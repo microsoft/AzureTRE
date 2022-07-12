@@ -15,7 +15,7 @@ import { ConfirmDisableEnableResource } from './ConfirmDisableEnableResource';
 import { CreateUpdateResourceContext } from '../../contexts/CreateUpdateResourceContext';
 import { Workspace } from '../../models/workspace';
 import { WorkspaceService } from '../../models/workspaceService';
-import { actionsDisabledStates, completedStates, successStates } from '../../models/operation';
+import { actionsDisabledStates } from '../../models/operation';
 
 interface ResourceContextMenuProps {
   resource: Resource,
