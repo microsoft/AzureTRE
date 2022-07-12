@@ -43,7 +43,8 @@ RUN apt-get update && apt-get install -y jq="1.5+dfsg-2+b1" && apt-get clean -y 
 
 ENV PYTHONPATH .
 
-COPY ./vmss_porter/requirements.txt ./requirements.txt
+WORKDIR .
+COPY ./vmss_porter/requirements.txt .
 RUN pip3 --no-cache-dir install -r requirements.txt
 
 COPY . /app
