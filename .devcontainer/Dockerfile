@@ -34,11 +34,11 @@ RUN /tmp/docker-client.sh $USERNAME
 
 # Install Docker
 # hadolint ignore=DL3008,DL3004
-RUN apt-get update && sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release \
+RUN apt-get update && sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release --no-install-recommends \
     && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
     && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" \
     | tee /etc/apt/sources.list.d/docker.list > /dev/null \
-    && apt-get update && apt-get install -y docker-ce docker-ce-cli containerd.io \
+    && apt-get update && apt-get install -y docker-ce docker-ce-cli containerd.io --no-install-recommends \
     && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 # Install nekos act - run GitHub workflows locally https://github.com/nektos/act
@@ -47,7 +47,7 @@ RUN if [ "${INTERACTIVE}" = "true" ]; then curl https://raw.githubusercontent.co
 
 # Install Certbot
 # hadolint ignore=DL3008
-RUN apt-get update && apt-get install -y python3 python3-venv libaugeas0 \
+RUN apt-get update && apt-get install -y python3 python3-venv libaugeas0 --no-install-recommends \
     && python3 -m venv /opt/certbot/ \
     && /opt/certbot/bin/pip install --no-cache-dir --upgrade pip \
     && /opt/certbot/bin/pip install --no-cache-dir certbot \
