@@ -67,6 +67,11 @@ def get_user_role_assignments(user):
     return access_service.get_user_role_assignments(user.id)
 
 
+def get_app_user_roles_assignments_emails(app_obj_id):
+    access_service = get_access_service()
+    return access_service.get_app_user_role_assignments_emails(app_obj_id)
+
+
 async def send_uninstall_message(resource: Resource, resource_repo: ResourceRepository, operations_repo: OperationRepository, resource_type: ResourceType, resource_template_repo: ResourceTemplateRepository, user: User, resource_template: ResourceTemplate) -> Operation:
     try:
         operation = await send_resource_request_message(
