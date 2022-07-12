@@ -3,6 +3,7 @@ import logging
 from azure.cosmos import CosmosClient
 from db.repositories.shared_services import SharedServiceRepository
 from db.repositories.resources import IS_OPERATING_SHARED_SERVICE
+import semantic_version
 
 
 class SharedServiceMigration(SharedServiceRepository):
@@ -16,10 +17,11 @@ class SharedServiceMigration(SharedServiceRepository):
         for template_name in template_names:
             for item in self.query(query=f'SELECT * FROM c WHERE c.resourceType = "shared-service" \
                                            AND c.templateName = "{template_name}" AND {IS_OPERATING_SHARED_SERVICE} \
-                                           AND c.templateVersion < 0.3.0 \
                                            ORDER BY c.updatedWhen ASC OFFSET 1 LIMIT 10000'):
-                logging.info(f'Deleting element {item["id"]}')
-                self.delete_item(item["id"])
-                migrated = True
+                template_version = semantic_version.Version(item["templateVersion"])
+                if (template_version < semantic_version.Version('0.3.0')):
+                    logging.info(f'Deleting element {item["id"]}')
+                    self.delete_item(item["id"])
+                    migrated = True
 
         return migrated
