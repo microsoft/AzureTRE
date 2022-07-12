@@ -52,7 +52,7 @@ resource "azurerm_resource_group_template_deployment" "smtp-api-connection" {
 }
 
 resource "azurerm_logic_app_standard" "logic-app" {
-  name                       = "airlock-notifier-app-1-${var.tre_id}"
+  name                       = "airlock-notifier-app-${var.tre_id}"
   location                   = data.azurerm_resource_group.core.location
   resource_group_name        = data.azurerm_resource_group.core.name
   app_service_plan_id        = azurerm_service_plan.notifier-plan.id
