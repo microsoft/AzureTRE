@@ -15,7 +15,7 @@ import { ConfirmDisableEnableResource } from './ConfirmDisableEnableResource';
 import { CreateUpdateResourceContext } from '../../contexts/CreateUpdateResourceContext';
 import { Workspace } from '../../models/workspace';
 import { WorkspaceService } from '../../models/workspaceService';
-import { successStates } from '../../models/operation';
+import { actionsDisabledStates, completedStates, successStates } from '../../models/operation';
 
 interface ResourceContextMenuProps {
   resource: Resource,
@@ -105,7 +105,7 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
 
   const shouldDisableConnect = () => {
     return props.componentAction === ComponentAction.Lock
-      || successStates.indexOf(props.resource.deploymentStatus) === -1
+      || actionsDisabledStates.includes(props.resource.deploymentStatus)
       || !props.resource.isEnabled
       || (props.resource.azureStatus?.powerState && props.resource.azureStatus.powerState !== VMPowerStates.Running);
   }
@@ -124,7 +124,7 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
 
   const shouldDisableActions = () => {
     return props.componentAction === ComponentAction.Lock
-      || successStates.indexOf(props.resource.deploymentStatus) === -1
+      || actionsDisabledStates.includes(props.resource.deploymentStatus)
       || !props.resource.isEnabled;
   }
 

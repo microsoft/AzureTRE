@@ -6,7 +6,7 @@ import moment from 'moment';
 import { ResourceContextMenu } from './ResourceContextMenu';
 import { useComponentManager } from '../../hooks/useComponentManager';
 import { StatusBadge } from './StatusBadge';
-import { successStates } from '../../models/operation';
+import { actionsDisabledStates, completedStates, successStates } from '../../models/operation';
 import { PowerStateBadge } from './PowerStateBadge';
 
 interface ResourceCardProps {
@@ -29,7 +29,7 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
   let connectUri = props.resource.properties && props.resource.properties.connection_uri;
   const shouldDisable = () => {
     return latestUpdate.componentAction === ComponentAction.Lock
-      || successStates.indexOf(props.resource.deploymentStatus) === -1
+      || actionsDisabledStates.includes(props.resource.deploymentStatus)
       || !props.resource.isEnabled
       || (props.resource.azureStatus?.powerState && props.resource.azureStatus.powerState !== VMPowerStates.Running)
   }
