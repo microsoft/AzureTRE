@@ -21,10 +21,7 @@ ARG BUNDLE_DIR
 # another location in this file. If you remove that line, the mixins generated content is appended to this file.
 # PORTER_MIXINS
 
-
-# ADD "https://aka.ms/logicapp-latest-py2.py3-none-any.whl" "logicapp-latest-py2.py3-none-any.whl"
-
 # Use the BUNDLE_DIR build argument to copy files into the bundle
 COPY . $BUNDLE_DIR
 
-RUN cd $BUNDLE_DIR/app && zip -r /tmp/LogicApp.zip .
+RUN cd $BUNDLE_DIR/app && zip -r /cnab/app/LogicApp.zip .

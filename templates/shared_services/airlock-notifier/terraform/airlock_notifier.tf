@@ -52,7 +52,7 @@ resource "azurerm_resource_group_template_deployment" "smtp-api-connection" {
 }
 
 resource "azurerm_logic_app_standard" "logic-app" {
-  name                       = "airlock-notifier-app-${var.tre_id}"
+  name                       = "airlock-notifier-app-1-${var.tre_id}"
   location                   = data.azurerm_resource_group.core.location
   resource_group_name        = data.azurerm_resource_group.core.name
   app_service_plan_id        = azurerm_service_plan.notifier-plan.id
@@ -94,19 +94,6 @@ resource "azurerm_resource_group_template_deployment" "smtp-api-connection-acces
 
   deployment_mode = "Incremental"
 
-}
-
-resource "null_resource" "deploy_app" {
-  provisioner "local-exec" {
-    command    = "az login --identity -u '${data.azurerm_client_config.current.client_id}' && az functionapp deployment source config-zip --name ${azurerm_logic_app_standard.logic-app.name} --resource-group ${azurerm_logic_app_standard.logic-app.resource_group_name} --subscription ${data.azurerm_subscription.current.subscription_id} --src /tmp/LogicApp.zip"
-    on_failure = fail
-  }
-
-  triggers = {
-    always_run = timestamp()
-  }
-
-  depends_on = [azurerm_logic_app_standard.logic-app]
 }
 
 

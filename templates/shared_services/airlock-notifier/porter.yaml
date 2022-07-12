@@ -1,6 +1,6 @@
 ---
 name: tre-shared-service-airlock-notifier
-version: 0.0.38
+version: 0.0.49
 description: "A shared service notifying on Airlock Operations"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -85,19 +85,18 @@ install:
         identity:
         username: "{{ bundle.credentials.azure_client_id }}"
 
-
-  # - az:
-  #     description: "Deploy logic app"
-  #     arguments:
-  #       - functionapp
-  #       - deployment
-  #       - source
-  #       - config-zip
-  #     flags:
-  #       name: "{{ bundle.outputs.airlock_notifier_logic_app_name }}"
-  #       resource-group: "{{ bundle.outputs.airlock_notifier_logic_app_resource_group_name }}"
-  #       subscription: "{{ bundle.credentials.azure_subscription_id }}"
-  #       src: /tmp/LogicApp.zip
+  - az:
+      description: "Deploy logic app"
+      arguments:
+        - functionapp
+        - deployment
+        - source
+        - config-zip
+      flags:
+        name: "{{ bundle.outputs.airlock_notifier_logic_app_name }}"
+        resource-group: "{{ bundle.outputs.airlock_notifier_logic_app_resource_group_name }}"
+        subscription: "{{ bundle.credentials.azure_subscription_id }}"
+        src: LogicApp.zip
 
 
 upgrade:
@@ -117,6 +116,28 @@ upgrade:
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.tre_id }}-shared-airlock-notifier"
+
+  - az:
+      description: "Login to Azure"
+      arguments:
+        - login
+      flags:
+        identity:
+        username: "{{ bundle.credentials.azure_client_id }}"
+
+
+  - az:
+      description: "Deploy logic app"
+      arguments:
+        - functionapp
+        - deployment
+        - source
+        - config-zip
+      flags:
+        name: "{{ bundle.outputs.airlock_notifier_logic_app_name }}"
+        resource-group: "{{ bundle.outputs.airlock_notifier_logic_app_resource_group_name }}"
+        subscription: "{{ bundle.credentials.azure_subscription_id }}"
+        src: LogicApp.zip
 
 uninstall:
   - terraform:
