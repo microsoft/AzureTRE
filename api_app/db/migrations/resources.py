@@ -11,17 +11,16 @@ class ResourceMigration(ResourceRepository):
         super().__init__(client)
 
     def add_deployment_status_field(self, operations_repository: OperationRepository) -> int:
+        num_updated = 0
+        for resource in self.query("SELECT * from c WHERE NOT IS_DEFINED(c.deploymentStatus)"):
+            # For each resource, find the last operation
+            id = resource['id']
+            # Getting the last operation, if it exists
+            op = operations_repository.query(f'SELECT * from c WHERE c.resourceId = "{id}" ORDER BY c._ts DESC OFFSET 0 LIMIT 1')
+            if op:
+                # Set the deploymentStatus of the resource to be the status fo its last operation
+                resource['deploymentStatus'] = op[0]['status']
+                self.update_item_dict(resource)
+                num_updated = num_updated + 1
 
-        i = 0
-        for op in operations_repository.query("SELECT * from c ORDER BY c._ts ASC"):
-            try:
-                resource = self.get_resource_by_id(uuid.UUID(op['resourceId']))
-                if resource.deploymentStatus != op['status']:
-                    resource.deploymentStatus = op['status']
-                    self.update_item(resource)
-                    i = i + 1
-            except EntityDoesNotExist:
-                logging.info(f'Resource Id {op["resourceId"]} not found')
-                # ignore errors and try the next one
-
-        return i
+        return num_updated
