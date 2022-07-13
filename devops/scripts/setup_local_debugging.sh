@@ -58,9 +58,9 @@ az eventgrid topic update \
 # Get the object id of the currently logged-in identity
 if [[ -n ${ARM_CLIENT_ID:-} ]]; then
   # if environment includes a SP with subscription access, then we should use that.
-  LOGGED_IN_OBJECT_ID=$(az ad sp show --id "${ARM_CLIENT_ID}" --query objectId -o tsv)
+  LOGGED_IN_OBJECT_ID=$(az ad sp show --id "${ARM_CLIENT_ID}" --query id -o tsv)
 else
-  LOGGED_IN_OBJECT_ID=$(az ad signed-in-user show --query objectId -o tsv)
+  LOGGED_IN_OBJECT_ID=$(az ad signed-in-user show --query id -o tsv)
 fi
 
 # Assign Role Permissions.
