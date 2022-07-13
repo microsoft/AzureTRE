@@ -1,6 +1,6 @@
 ---
 name: tre-workspace-base
-version: 0.3.18
+version: 0.3.16
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -96,7 +96,7 @@ parameters:
   - name: app_service_plan_sku
     type: string
     description: "The SKU used when deploying an Azure App Service Plan"
-    default: "P1v2"
+    default: "P1v3"
 
 outputs:
   - name: app_role_id_workspace_owner
