@@ -1,4 +1,4 @@
-# Resolves issue 
+# Resolves issue
 
 ## What is being addressed
 
