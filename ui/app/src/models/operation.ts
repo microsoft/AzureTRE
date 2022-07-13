@@ -45,9 +45,7 @@ export const completedStates = [
 ]
 
 export const inProgressStates = [
-  "awaiting_deployment",
-  "awaiting_update",
-  "awaiting_deletion",
+  ...awaitingStates,
   "deploying",
   "updating",
   "deleting",
@@ -67,4 +65,10 @@ export const successStates = [
   "updated",
   "deleted",
   "action_succeeded"
+]
+
+export const actionsDisabledStates = [
+  ...inProgressStates,
+  "deployment_failed",
+  "failed"
 ]
