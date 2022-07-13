@@ -30,8 +30,8 @@ This application is used locally to automatically register bundles against the A
 ## Environment Variables
 | Variable | Description | Location |
 | -------- | ----------- | -------- |
-|TEST_ACCOUNT_CLIENT_ID|The Client Id|`./templates/core/.env`|
-|TEST_ACCOUNT_CLIENT_SECRET|The client secret|`./templates/core/.env`|
+|TEST_ACCOUNT_CLIENT_ID|The Client Id|`./devops/auth.env`|
+|TEST_ACCOUNT_CLIENT_SECRET|The client secret|`./devops/auth.env`|
 
 ## How to create
 Example on how to run the script:
@@ -44,6 +44,8 @@ Example on how to run the script:
 | Argument | Description |
 | -------- | ----------- |
 | `--name` | The prefix of the name of the app registrations. `TRE123` will give you `TRE123 Automation Admin`. |
+| `--reset-password` | Optional, default is 0. When run in a headless fashion, 1 is passed in to always reset the password. |
+
 
 ### Create this application from the portal (optional)
 To create an application registration for automation, open the Azure Active Directory tenant for your TRE in the portal and navigate to "App Registrations".
