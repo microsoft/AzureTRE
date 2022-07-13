@@ -22,7 +22,7 @@ Options:
     -a,--admin-consent              Optional, but recommended. Grants admin consent for the app registrations, when this flag is set.
                                     Requires directory admin privileges to the Azure AD in question.
     -z,--automation-clientid        Optional, the client ID of the automation account can be added to the TRE workspace.
-    -r,--reset-password         Optional, switch to automatically reset the password. Default 0
+    -r,--reset-password             Optional, switch to automatically reset the password. Default 0
 
 USAGE
     exit 1
