@@ -57,7 +57,7 @@ export const RootLayout: React.FunctionComponent = () => {
     case LoadingState.Ok:
       return (
         <Stack horizontal className='tre-body-inner'>
-          <Stack.Item className='tre-left-nav' style={{paddingTop:2}}>
+          <Stack.Item className='tre-left-nav' style={{marginTop:2}}>
             <LeftNav />
           </Stack.Item><Stack.Item className='tre-body-content'>
             <Routes>

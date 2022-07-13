@@ -40,7 +40,7 @@ if [[ ${REPLY::1} != [Yy] ]]; then
   exit 0
 fi
 
-# Load the new values back in because 
+# Load the new values back in because
 # we need TEST_ACCOUNT_CLIENT_ID
 set -a
 # shellcheck disable=SC1091
