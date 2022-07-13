@@ -8,8 +8,8 @@ function show_usage()
 {
     cat << USAGE
 
-Utility script for creating an application administrator for TRE. This identity is mandatory and is used
-to manage AAD Applications within TRE. This script is called when you run "make auth" and
+Utility script for creating an application administrator for TRE. This is mandatory and is used
+to manage AAD Application creation within TRE. This script is called when you run "make auth" and
 the environment variable AUTO_WORKSPACE_APP_REGISTRATION determines the permission this identity has.
 You must be logged in using Azure CLI with sufficient privileges to modify Azure Active Directory to run this script.
 
@@ -76,7 +76,7 @@ if [[ -z "$appName" ]]; then
     show_usage
 fi
 appName="$appName Application Admin"
-currentUserId=$(az ad signed-in-user show --query 'objectId' --output tsv --only-show-errors)
+currentUserId=$(az ad signed-in-user show --query 'id' --output tsv --only-show-errors)
 tenant=$(az rest -m get -u "${msGraphUri}/domains" -o json | jq -r '.value[] | select(.isDefault == true) | .id')
 
 echo -e "\e[96mCreating the Application Admin in the \"${tenant}\" Azure AD tenant.\e[0m"
@@ -97,12 +97,12 @@ source "${DIR}/create_or_update_service_principal.sh"
 appObjectId=""
 existingApp=$(get_existing_app --name "${appName}") || null
 if [ -n "${existingApp}" ]; then
-    appObjectId=$(echo "${existingApp}" | jq -r '.objectId')
+    appObjectId=$(echo "${existingApp}" | jq -r '.id')
 fi
 
 # Get the Required Resource Scope/Role
 msGraphAppId="00000003-0000-0000-c000-000000000000"
-msGraphObjectId=$(az ad sp show --id ${msGraphAppId} --query "objectId" --output tsv --only-show-errors)
+msGraphObjectId=$(az ad sp show --id ${msGraphAppId} --query "id" --output tsv --only-show-errors)
 
 applicationPermissionId=$(az ad sp show --id ${msGraphAppId} --query "appRoles[?value=='${applicationPermission}'].id" --output tsv --only-show-errors)
 roleApplicationPermission=$(get_msgraph_role "${applicationPermission}")
@@ -140,13 +140,8 @@ fi
 az ad app owner add --id "${appId}" --owner-object-id "$currentUserId" --only-show-errors
 
 # Create a Service Principal for the app.
-spPassword=$(create_or_update_service_principal "${appId}" "${appName}")
-spId=$(az ad sp list --filter "appId eq '${appId}'" --query '[0].objectId' --output tsv --only-show-errors)
-
-# needed to make the API permissions change effective, this must be done after SP creation...
-echo
-echo "Running 'az ad app permission grant' to make changes effective."
-az ad app permission grant --id "${appId}" --api "${msGraphAppId}" --only-show-errors
+spPassword=$(create_or_update_service_principal "${appId}")
+spId=$(az ad sp list --filter "appId eq '${appId}'" --query '[0].id' --output tsv --only-show-errors)
 
 # Grant admin consent on the required resource accesses (Graph API)
 if [[ $grantAdminConsent -eq 1 ]]; then
@@ -155,9 +150,8 @@ if [[ $grantAdminConsent -eq 1 ]]; then
     grant_admin_consent "${spId}" "$msGraphObjectId" "${applicationPermissionId}"
 fi
 
-echo -e "\n\e[96mAAD_TENANT_ID=\"$(az account show --output json | jq -r '.tenantId')\""
-echo -e "** Please copy the following variables to /templates/core/.env **"
-echo -e "\n\e[33mAPPLICATION_ADMIN_CLIENT_ID=\"${appId}\""
+echo -e "\n\e[96m** Please copy the following variables to /templates/core/.env **"
+echo -e "\e[33mAPPLICATION_ADMIN_CLIENT_ID=\"${appId}\""
 echo -e "APPLICATION_ADMIN_CLIENT_SECRET=\"${spPassword}\"\e[0m"
 
 if [[ $grantAdminConsent -eq 0 ]]; then

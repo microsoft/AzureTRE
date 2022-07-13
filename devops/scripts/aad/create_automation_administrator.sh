@@ -61,7 +61,7 @@ if [[ -z "$appName" ]]; then
     show_usage
 fi
 appName="$appName Automation Admin"
-currentUserId=$(az ad signed-in-user show --query 'objectId' --output tsv --only-show-errors)
+currentUserId=$(az ad signed-in-user show --query 'id' --output tsv --only-show-errors)
 tenant=$(az rest -m get -u "${msGraphUri}/domains" -o json | jq -r '.value[] | select(.isDefault == true) | .id')
 
 echo -e "\e[96mCreating the Automation Admin in the \"${tenant}\" Azure AD tenant.\e[0m"
@@ -79,7 +79,7 @@ appObjectId=""
 appId=""
 existingApp=$(get_existing_app --name "${appName}") || null
 if [ -n "${existingApp}" ]; then
-    appObjectId=$(echo "${existingApp}" | jq -r '.objectId')
+    appObjectId=$(echo "${existingApp}" | jq -r '.id')
     appId=$(echo "${existingApp}" | jq -r .appId)
 fi
 
@@ -109,9 +109,8 @@ fi
 az ad app owner add --id "${appId}" --owner-object-id "$currentUserId" --only-show-errors
 
 # Create a Service Principal for the app.
-spPassword=$(create_or_update_service_principal "${appId}" "${appName}")
+spPassword=$(create_or_update_service_principal "${appId}")
 
-echo -e "\n\e[96mAAD_TENANT_ID=\"$(az account show --output json | jq -r '.tenantId')\""
-echo -e "** Please copy the following variables to /templates/core/.env **"
-echo -e "\n\e[33mTEST_ACCOUNT_CLIENT_ID=\"${appId}\""
+echo -e "\n\e[96m** Please copy the following variables to /templates/core/.env **"
+echo -e "\e[33mTEST_ACCOUNT_CLIENT_ID=\"${appId}\""
 echo -e "TEST_ACCOUNT_CLIENT_SECRET=\"${spPassword}\"\e[0m"

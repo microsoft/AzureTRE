@@ -34,11 +34,11 @@ RUN /tmp/docker-client.sh $USERNAME
 
 # Install Docker
 # hadolint ignore=DL3008,DL3004
-RUN apt-get update && sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release \
+RUN apt-get update && sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release --no-install-recommends \
     && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
     && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" \
     | tee /etc/apt/sources.list.d/docker.list > /dev/null \
-    && apt-get update && apt-get install -y docker-ce docker-ce-cli containerd.io \
+    && apt-get update && apt-get install -y docker-ce docker-ce-cli containerd.io --no-install-recommends \
     && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 # Install nekos act - run GitHub workflows locally https://github.com/nektos/act
@@ -47,7 +47,7 @@ RUN if [ "${INTERACTIVE}" = "true" ]; then curl https://raw.githubusercontent.co
 
 # Install Certbot
 # hadolint ignore=DL3008
-RUN apt-get update && apt-get install -y python3 python3-venv libaugeas0 \
+RUN apt-get update && apt-get install -y python3 python3-venv libaugeas0 --no-install-recommends \
     && python3 -m venv /opt/certbot/ \
     && /opt/certbot/bin/pip install --no-cache-dir --upgrade pip \
     && /opt/certbot/bin/pip install --no-cache-dir certbot \
@@ -79,7 +79,7 @@ COPY ["airlock_processor/requirements.txt", "/tmp/pip-tmp/airlock_processor/"]
 RUN pip3 --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requirements.txt && rm -rf /tmp/pip-tmp
 
 # Install azure-cli
-ARG AZURE_CLI_VERSION=2.36.0-1~buster
+ARG AZURE_CLI_VERSION=2.37.0-1~buster
 COPY .devcontainer/scripts/azure-cli.sh /tmp/
 RUN export AZURE_CLI_VERSION=${AZURE_CLI_VERSION} \
     && /tmp/azure-cli.sh
