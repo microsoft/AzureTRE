@@ -13,9 +13,8 @@ class ResourceMigration(ResourceRepository):
     def add_deployment_status_field(self, operations_repository: OperationRepository) -> int:
         num_updated = 0
         for resource in self.query("SELECT * from c WHERE NOT IS_DEFINED(c.deploymentStatus)"):
-            # For each resource, find the last operation
+            # For each resource, find the last operation, if it exists
             id = resource['id']
-            # Getting the last operation, if it exists
             op = operations_repository.query(f'SELECT * from c WHERE c.resourceId = "{id}" ORDER BY c._ts DESC OFFSET 0 LIMIT 1')
             if op:
                 # Set the deploymentStatus of the resource to be the status fo its last operation
