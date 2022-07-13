@@ -1,7 +1,4 @@
-import logging
-import uuid
 from azure.cosmos import CosmosClient
-from db.errors import EntityDoesNotExist
 from db.repositories.operations import OperationRepository
 from db.repositories.resources import ResourceRepository
 
