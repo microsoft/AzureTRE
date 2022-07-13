@@ -33,7 +33,6 @@ if [[ "${1:-?}" == *"auth"* ]]; then
     . "$DIR/load_env.sh" "$DIR/../auth.env"
     # shellcheck disable=SC1091
     . "$DIR/load_terraform_env.sh" "$DIR/../auth.env"
-    echo "$APPLICATION_ADMIN_CLIENT_ID"
   fi
 fi
 
