@@ -80,11 +80,9 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
 
 const navStyles: Partial<INavStyles> = {
   root: {
-    width: 208,
-    height: 350,
     boxSizing: 'border-box',
     border: '1px solid #eee',
-    overflowY: 'auto',
+    paddingBottom: 40
   },
   // these link styles override the default truncation behavior
   link: {
