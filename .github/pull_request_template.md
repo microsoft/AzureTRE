@@ -1,4 +1,4 @@
-# PR for issue
+# Resolves issue 
 
 ## What is being addressed
 
