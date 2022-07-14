@@ -76,6 +76,11 @@ resource "azurerm_resource_group_template_deployment" "app_insights_workspace" {
 resource "azurerm_monitor_private_link_scope" "ampls" {
   name                = "ampls-${var.tre_id}-ws-${local.short_workspace_id}"
   resource_group_name = var.resource_group_name
+  depends_on = [
+    azurerm_resource_group_template_deployment.app_insights_workspace,
+    azurerm_storage_account.app_insights,
+    azurerm_log_analytics_workspace.workspace
+  ]
 }
 resource "azurerm_monitor_private_link_scoped_service" "ampls_log_analytics" {
   name                = "${azurerm_log_analytics_workspace.workspace.name}-ws-${local.short_workspace_id}-connection"
