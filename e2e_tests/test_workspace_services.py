@@ -20,7 +20,8 @@ async def test_create_guacamole_service_into_base_workspace(admin_token, verify)
             "description": "workspace for E2E",
             "address_space_size": "small",
             "client_id": f"{config.TEST_WORKSPACE_APP_ID}",
-            "client_secret": f"{config.TEST_WORKSPACE_APP_SECRET}"
+            "client_secret": f"{config.TEST_WORKSPACE_APP_SECRET}",
+            "app_service_plan_sku": f"{config.TEST_WORKSPACE_APP_PLAN}"
         }
     }
 
@@ -79,6 +80,7 @@ async def test_create_guacamole_service_into_aad_workspace(admin_token, verify) 
             "display_name": "E2E test guacamole service",
             "description": "workspace for E2E AAD",
             "address_space_size": "small",
+            "app_service_plan_sku": f"{config.TEST_WORKSPACE_APP_PLAN}",
             "client_id": "auto_create"
         }
     }
