@@ -1,6 +1,6 @@
 ---
 name: tre-service-guacamole
-version: 0.3.9
+version: 0.3.10
 description: "An Azure TRE service for Guacamole"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -140,6 +140,8 @@ install:
         - name: authentication_callback_uri
 
 upgrade:
+  # When/if TF will be called here, there might be an issue caused by switching from azurerm_app_service to
+  # azurerm_linux_web_app. Since this template has no important state, it would be eaiser to recreate it.
   - exec:
       description: "Upgrade Guacamole Service"
       command: echo
