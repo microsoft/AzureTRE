@@ -17,19 +17,17 @@ Usage: $0 -n <app-name> [-r <reply-url>] [-a] [-s] [--automation-account]
 
 Options:
     -n,--name                   Required. The prefix for the app (registration) names e.g., "TRE", or "Workspace One".
-    -r,--tre-url                TRE URL, used to construct auth redirection URLs for the UI and Swagger app.
+    -u,--tre-url                TRE URL, used to construct auth redirection URLs for the UI and Swagger app.
     -a,--admin-consent          Optional, but recommended. Grants admin consent for the app registrations, when this flag is set.
                                 Requires directory admin privileges to the Azure AD in question.
     -t,--automation-clientid    Optional, when --workspace is specified the client ID of the automation account can be added to the TRE workspace.
+    -r,--reset-password         Optional, switch to automatically reset the password. Default 0
 
 Examples:
     1. $0 -n TRE -r https://mytre.region.cloudapp.azure.com -a
 
     Using an Automation account
     3. $0 --name 'TRE' --tre-url https://mytre.region.cloudapp.azure.com --admin-consent --automation-account
-    4. $0 --name 'TRE - workspace 1' --workspace --admin-consent --swaggerui-clientid 7xxxxx-ccd8-4740-xxxx-a6ec01e10ab8 --automation-clientid 4xxxx-7dc5-xxxxx-bcff-xxxxx
-
-    The GUIDS in example 4 are the outputs from example 3.
 
 USAGE
     exit 1
@@ -48,6 +46,7 @@ fi
 # Get the directory that this script is in
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
+declare resetPassword=0
 declare grantAdminConsent=0
 declare appName=""
 declare appId=""
@@ -71,12 +70,16 @@ while [[ $# -gt 0 ]]; do
             grantAdminConsent=1
             shift 1
         ;;
-        -r|--tre-url)
+        -u|--tre-url)
             treUrl=$2
             shift 2
         ;;
         -t|--automation-clientid)
             automationAppId=$2
+            shift 2
+        ;;
+        -r|--reset-password)
+            resetPassword=$2
             shift 2
         ;;
         *)
@@ -218,7 +221,7 @@ fi
 az ad app owner add --id "${appId}" --owner-object-id "$currentUserId" --only-show-errors
 
 # Create a Service Principal for the app.
-spPassword=$(create_or_update_service_principal "${appId}")
+spPassword=$(create_or_update_service_principal "${appId}" "${resetPassword}")
 spId=$(az ad sp list --filter "appId eq '${appId}'" --query '[0].id' --output tsv --only-show-errors)
 
 # needed to make the API permissions change effective, this must be done after SP creation...
@@ -349,14 +352,14 @@ JSON
   fi
 fi
 
-# Output the variables for .env files
-echo -e "\n\e[96m** Please copy the following variables to /templates/core/.env **"
-echo -e "\e[33mAPI_CLIENT_ID=\"${appId}\""
-echo -e "API_CLIENT_SECRET=\"${spPassword}\""
-echo -e "SWAGGER_UI_CLIENT_ID=\"${uxAppId}\"\e[0m"
+{
+  echo "API_CLIENT_ID=\"${appId}\""
+  echo "API_CLIENT_SECRET=\"${spPassword}\""
+  echo "SWAGGER_UI_CLIENT_ID=\"${uxAppId}\""
+} >> "$DIR"/../../auth.env
 
 if [[ $grantAdminConsent -eq 0 ]]; then
-    echo "NOTE: Make sure the API permissions of the app registrations have admin consent granted."
-    echo "Run this script with flag -a to grant admin consent or configure the registrations in Azure Portal."
-    echo "See APP REGISTRATIONS in documentation for more information."
+    echo -e "\e[96mNOTE: Make sure the API permissions of the app registrations have admin consent granted."
+    echo -e "Run this script with flag -a to grant admin consent or configure the registrations in Azure Portal."
+    echo -e "See APP REGISTRATIONS in documentation for more information.\e[0m"
 fi

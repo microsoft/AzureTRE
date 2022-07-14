@@ -16,6 +16,7 @@ Usage: $0 --name "mytre" [--admin-consent]
 
 Options:
     -n,--name                   Required. The prefix for the app (registration) names e.g., "TRE".
+    -r,--reset-password         Optional, switch to automatically reset the password. Default 0
 
 USAGE
     exit 1
@@ -29,6 +30,7 @@ fi
 # Get the directory that this script is in
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
+declare resetPassword=0
 declare currentUserId=""
 declare msGraphUri="https://graph.microsoft.com/v1.0"
 declare appName=""
@@ -38,6 +40,10 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         -n|--name)
             appName=$2
+            shift 2
+        ;;
+        -r|--reset-password)
+            resetPassword=$2
             shift 2
         ;;
         *)
@@ -109,8 +115,9 @@ fi
 az ad app owner add --id "${appId}" --owner-object-id "$currentUserId" --only-show-errors
 
 # Create a Service Principal for the app.
-spPassword=$(create_or_update_service_principal "${appId}")
+spPassword=$(create_or_update_service_principal "${appId}" "${resetPassword}")
 
-echo -e "\n\e[96m** Please copy the following variables to /templates/core/.env **"
-echo -e "\e[33mTEST_ACCOUNT_CLIENT_ID=\"${appId}\""
-echo -e "TEST_ACCOUNT_CLIENT_SECRET=\"${spPassword}\"\e[0m"
+{
+  echo "TEST_ACCOUNT_CLIENT_ID=\"${appId}\""
+  echo "TEST_ACCOUNT_CLIENT_SECRET=\"${spPassword}\""
+} >> "$DIR"/../../auth.env

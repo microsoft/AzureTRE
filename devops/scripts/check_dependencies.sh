@@ -5,6 +5,9 @@ set -o nounset
 # Uncomment this line to see each command for debugging (careful: this will show secrets!)
 # set -o xtrace
 
+# Get the directory that this script is in
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
 echo -e "\n\e[34m╔══════════════════════════════════════╗"
 echo -e "║          \e[33mAzure TRE Makefile\e[34m          ║"
 echo -e "╚══════════════════════════════════════╝"
@@ -15,6 +18,45 @@ echo -e "\n\e[96mChecking for Azure CLI\e[0m..."
 if ! command -v az &> /dev/null; then
   echo -e "\e[31m»»» ⚠️ Azure CLI is not installed! 😥 Please go to http://aka.ms/cli to set it up or rebuild your devcontainer"
   exit 1
+fi
+
+if [[ "${1:-?}" == *"auth"* ]]; then
+  if [ -z "${USE_ENV_VARS_NOT_FILES:-}" ]; then
+    # We only do this for local builds
+    echo -e "\n\e[96mChecking for Auth setup\e[0m..."
+    if [ ! -f "$DIR"/../auth.env ]; then
+      echo -e "\e[31m»»» ⚠️ Auth has not been setup! 😥 Please run make auth"
+      exit 1
+    fi
+    set -a
+    # shellcheck disable=SC1091
+    . "$DIR/load_env.sh" "$DIR/../auth.env"
+    # shellcheck disable=SC1091
+    . "$DIR/load_terraform_env.sh" "$DIR/../auth.env"
+  fi
+fi
+
+if [[ "${1:-?}" == *"env"* ]]; then
+  if [ -z "${USE_ENV_VARS_NOT_FILES:-}" ]; then
+    # We only do this for local builds
+    echo -e "\n\e[96mLoading local environment variables\e[0m..."
+    if [ ! -f "$DIR"/../.env ]; then
+      echo -e "\e[31m»»» ⚠️ Your devops environment has not been setup! 😥 Please create a ./devops/.env file."
+      exit 1
+    fi
+    if [ ! -f "$DIR"/../../templates/core/.env ]; then
+      echo -e "\e[31m»»» ⚠️ Your template environment has not been setup! 😥 Please create a ./templates/core/.env file."
+      exit 1
+    fi
+    # shellcheck disable=SC1091
+    . "$DIR/load_env.sh" "$DIR/../.env"
+    # shellcheck disable=SC1091
+    . "$DIR/load_terraform_env.sh" "$DIR/../.env"
+    # shellcheck disable=SC1091
+    . "$DIR/load_env.sh" "$DIR/../../templates/core/.env"
+    # shellcheck disable=SC1091
+    . "$DIR/load_terraform_env.sh" "$DIR/../../templates/core/.env"
+  fi
 fi
 
 if [[ "${1:-?}" != *"nodocker"* ]]; then
@@ -43,8 +85,7 @@ fi
 
 # This is called if we are in a CI system and we will login
 # with a Service Principal.
-if [ -n "${TF_IN_AUTOMATION:-}" ]
-then
+if [ -n "${TF_IN_AUTOMATION:-}" ]; then
     az login --service-principal -u "$ARM_CLIENT_ID" -p "$ARM_CLIENT_SECRET" --tenant "$ARM_TENANT_ID"
     az account set -s "$ARM_SUBSCRIPTION_ID"
 fi
