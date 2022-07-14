@@ -184,12 +184,12 @@
       "tasks": [
         {
           "label": "Copy_env_file_for_api_debug",
-          "command": "cp --force ${workspaceFolder}/templates/core/.env ${workspaceFolder}/api_app/.env",
+          "command": "cat ${workspaceFolder}/templates/core/.env ${workspaceFolder}/devops/auth.env > ${workspaceFolder}/api_app/.env",
           "type": "shell"
         },
         {
           "label": "Copy_env_file_for_e2e_debug",
-          "command": "cp --force ${workspaceFolder}/templates/core/.env ${workspaceFolder}/e2e_tests/.env",
+          "command": "cat ${workspaceFolder}/templates/core/.env ${workspaceFolder}/devops/auth.env > ${workspaceFolder}/e2e_tests/.env",
           "type": "shell"
         },
         {
