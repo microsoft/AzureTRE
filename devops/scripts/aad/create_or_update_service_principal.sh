@@ -31,6 +31,7 @@ function wait_for_new_service_principal()
 function create_or_update_service_principal()
 {
   applicationId=$1
+  autoResetPassword=$2
 
   # See if a service principal already exists
   spId=$(az ad sp list --filter "appId eq '${applicationId}'" --query '[0].id' --output tsv --only-show-errors)
@@ -44,6 +45,8 @@ function create_or_update_service_principal()
       wait_for_new_service_principal "${spId}"
       az ad app owner add --id "${applicationId}" --owner-object-id "${spId}" --only-show-errors
       resetPassword=1
+  elif [ "$autoResetPassword" == 1 ]; then
+    resetPassword=1
   else
       read -p "Service principal \"${spId}\" already exists. Do you wish to reset the password. DO NOT PRESS ENTER. (y/N)? " -rN1
       if [[ ${REPLY::1} == [Yy] ]]; then
