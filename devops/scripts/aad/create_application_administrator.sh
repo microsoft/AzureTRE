@@ -20,6 +20,7 @@ Options:
     -a,--admin-consent          Optional, but recommended. Grants admin consent for the app registrations, when this flag is set.
                                 Requires directory admin privileges to the Azure AD in question.
     -p,--application-permission The API Permission that this identity will be granted.
+    -r,--reset-password         Optional, switch to automatically reset the password. Default 0
 
 USAGE
     exit 1
@@ -34,6 +35,7 @@ fi
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 declare grantAdminConsent=0
+declare resetPassword=0
 declare currentUserId=""
 declare spId=""
 declare msGraphUri="https://graph.microsoft.com/v1.0"
@@ -53,6 +55,10 @@ while [[ $# -gt 0 ]]; do
         ;;
         -p|--application-permission)
             applicationPermission=$2
+            shift 2
+        ;;
+        -r|--reset-password)
+            resetPassword=$2
             shift 2
         ;;
         *)
@@ -140,7 +146,7 @@ fi
 az ad app owner add --id "${appId}" --owner-object-id "$currentUserId" --only-show-errors
 
 # Create a Service Principal for the app.
-spPassword=$(create_or_update_service_principal "${appId}")
+spPassword=$(create_or_update_service_principal "${appId}" "${resetPassword}")
 spId=$(az ad sp list --filter "appId eq '${appId}'" --query '[0].id' --output tsv --only-show-errors)
 
 # Grant admin consent on the required resource accesses (Graph API)
@@ -150,9 +156,8 @@ if [[ $grantAdminConsent -eq 1 ]]; then
     grant_admin_consent "${spId}" "$msGraphObjectId" "${applicationPermissionId}"
 fi
 
-echo -e "\n\e[96m** Please copy the following variables to /templates/core/.env **"
-echo -e "\e[33mAPPLICATION_ADMIN_CLIENT_ID=\"${appId}\""
-echo -e "APPLICATION_ADMIN_CLIENT_SECRET=\"${spPassword}\"\e[0m"
+echo "APPLICATION_ADMIN_CLIENT_ID=\"${appId}\"" > "$DIR"/../../auth.env
+echo "APPLICATION_ADMIN_CLIENT_SECRET=\"${spPassword}\"" >> "$DIR"/../../auth.env
 
 if [[ $grantAdminConsent -eq 0 ]]; then
     echo "NOTE: Make sure the API permissions of the app registrations have admin consent granted."
