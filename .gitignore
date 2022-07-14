@@ -112,6 +112,7 @@ ENV/
 env.bak/
 venv.bak/
 templates/core/tre.env
+devops/auth.env
 private.env
 
 # Spyder project settings

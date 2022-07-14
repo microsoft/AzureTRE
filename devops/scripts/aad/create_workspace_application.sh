@@ -22,6 +22,7 @@ Options:
     -a,--admin-consent              Optional, but recommended. Grants admin consent for the app registrations, when this flag is set.
                                     Requires directory admin privileges to the Azure AD in question.
     -z,--automation-clientid        Optional, the client ID of the automation account can be added to the TRE workspace.
+    -r,--reset-password             Optional, switch to automatically reset the password. Default 0
 
 USAGE
     exit 1
@@ -40,6 +41,7 @@ fi
 # Get the directory that this script is in
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
+declare resetPassword=0
 declare spPassword=""
 declare grantAdminConsent=0
 declare currentUserId=""
@@ -71,6 +73,10 @@ while [[ $# -gt 0 ]]; do
         ;;
         -z|--automation-clientid)
             automationClientId=$2
+            shift 2
+        ;;
+        -r|--reset-password)
+            resetPassword=$2
             shift 2
         ;;
         *)
@@ -246,7 +252,7 @@ az ad app owner add --id "${workspaceAppId}" --owner-object-id "$currentUserId" 
 az ad app owner add --id "${workspaceAppId}" --owner-object-id "$applicationAdminObjectId" --only-show-errors
 
 # Create a Service Principal for the app.
-spPassword=$(create_or_update_service_principal "${workspaceAppId}")
+spPassword=$(create_or_update_service_principal "${workspaceAppId}" "${resetPassword}")
 workspaceSpId=$(az ad sp list --filter "appId eq '${workspaceAppId}'" --query '[0].id' --output tsv --only-show-errors)
 
 # needed to make the API permissions change effective, this must be done after SP creation...
@@ -327,9 +333,10 @@ JSON
   fi
 fi
 
-echo -e "\n\e[96m** Please copy the following variables to /templates/core/.env **"
-echo -e "\e[33mWORKSPACE_API_CLIENT_ID=\"${workspaceAppId}\""
-echo -e "WORKSPACE_API_CLIENT_SECRET=\"${spPassword}\"\e[0m"
+{
+  echo "WORKSPACE_API_CLIENT_ID=\"${workspaceAppId}\""
+  echo "WORKSPACE_API_CLIENT_SECRET=\"${spPassword}\""
+} >> "$DIR"/../../auth.env
 
 if [[ $grantAdminConsent -eq 0 ]]; then
     echo "NOTE: Make sure the API permissions of the app registrations have admin consent granted."
