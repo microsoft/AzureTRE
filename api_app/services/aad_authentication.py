@@ -230,7 +230,8 @@ class AzureADAuthorization(AccessService):
         roles_graph_data, users_graph_data = self._get_user_emails_with_role_asssignment(sp_id)
         user_emails = {}
         for user_data in users_graph_data["responses"]:
-            user_emails[user_data["body"]["id"]] = user_data["body"]["mail"]
+            if user_data["body"]["mail"] is not None:
+                user_emails[user_data["body"]["id"]] = user_data["body"]["mail"]
 
         workspace_role_assignments_details = defaultdict(list)
         for role_assignment in roles_graph_data["value"]:
