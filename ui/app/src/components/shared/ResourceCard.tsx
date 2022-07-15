@@ -8,6 +8,7 @@ import { useComponentManager } from '../../hooks/useComponentManager';
 import { StatusBadge } from './StatusBadge';
 import { actionsDisabledStates } from '../../models/operation';
 import { PowerStateBadge } from './PowerStateBadge';
+import { ResourceType } from '../../models/resourceType';
 
 interface ResourceCardProps {
   resource: Resource,
@@ -57,7 +58,12 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
           <Stack style={cardStyles}>
             <Stack horizontal>
               <Stack.Item grow={5} style={headerStyles}>
-                <Link to={props.resource.resourcePath} onClick={() => { props.selectResource && props.selectResource(props.resource); return false }} style={headerLinkStyles}>{props.resource.properties.display_name}</Link>
+                {
+                  props.resource.resourceType === ResourceType.Workspace && props.resource.properties.client_id === "auto_create" ?
+                    <span title="Authentication has not yet been provisioned">{props.resource.properties.display_name}</span>
+                    :
+                    <Link to={props.resource.resourcePath} onClick={() => { props.selectResource && props.selectResource(props.resource); return false }} style={headerLinkStyles}>{props.resource.properties.display_name}</Link>
+                }
               </Stack.Item>
               <Stack.Item style={headerIconStyles}>
                 <Stack horizontal>
@@ -101,7 +107,7 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
                     </div>
                   }
                 </Stack.Item>
-                <Stack.Item style={{paddingTop: 5, paddingLeft:10}}>
+                <Stack.Item style={{ paddingTop: 5, paddingLeft: 10 }}>
                   <StatusBadge status={latestUpdate.operation ? latestUpdate.operation?.status : props.resource.deploymentStatus} />
                 </Stack.Item>
               </Stack>
