@@ -33,8 +33,8 @@ COPY .devcontainer/scripts/docker-client.sh /tmp/
 RUN /tmp/docker-client.sh $USERNAME
 
 # Install Docker
-# hadolint ignore=DL3008,DL3004
-RUN apt-get update && sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release --no-install-recommends \
+# hadolint ignore=DL3008
+RUN apt-get update && apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release --no-install-recommends \
     && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
     && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" \
     | tee /etc/apt/sources.list.d/docker.list > /dev/null \
@@ -42,8 +42,7 @@ RUN apt-get update && sudo apt-get install -y apt-transport-https ca-certificate
     && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 # Install nekos act - run GitHub workflows locally https://github.com/nektos/act
-# hadolint ignore=DL3004
-RUN if [ "${INTERACTIVE}" = "true" ]; then curl https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash; fi
+RUN if [ "${INTERACTIVE}" = "true" ]; then curl https://raw.githubusercontent.com/nektos/act/master/install.sh | bash; fi
 
 # Install Certbot
 # hadolint ignore=DL3008
@@ -93,8 +92,8 @@ USER $USERNAME
 # Save command line history
 RUN echo "export HISTFILE=$HOME/commandhistory/.bash_history" >> "$HOME/.bashrc" \
     && echo "export PROMPT_COMMAND='history -a'" >> "$HOME/.bashrc" \
-    && mkdir -p $HOME/commandhistory \
-    && touch $HOME/commandhistory/.bash_history
+    && mkdir -p "$HOME/commandhistory" \
+    && touch "$HOME/commandhistory/.bash_history"
 
 # Install github-cli
 COPY ./.devcontainer/scripts/gh.sh /tmp/
