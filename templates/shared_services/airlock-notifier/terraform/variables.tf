@@ -23,7 +23,8 @@ variable "smtp_username" {
 }
 
 variable "smtp_password" {
-  type = string
+  type      = string
+  sensitive = true
 }
 
 variable "smtp_from_email" {

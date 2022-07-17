@@ -133,6 +133,7 @@ Configure additional repository secrets used in the deployment pipeline
 | `TRE_ADDRESS_SPACE` | The address space for the whole TRE environment virtual network where workspaces networks will be created (can include the core network as well). E.g. `10.0.0.0/12`|
 | `DEPLOY_GITEA` | If set to `false` disables deployment of the Gitea shared service. |
 | `DEPLOY_NEXUS` | If set to `false` disables deployment of the Nexus shared service. |
+
 ### Deploy the TRE using the workflow
 
 With all the repository secrets set, you can trigger a workflow run by pushing to develop/main of your fork, or by dispatching the workflow manually.

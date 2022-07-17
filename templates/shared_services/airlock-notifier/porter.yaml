@@ -41,6 +41,7 @@ parameters:
   - name: smtp_password
     env: SMTP_PASSWORD
     type: string
+    sensitive: true
   - name: smtp_from_email
     env: SMTP_FROM_EMAIL
     type: string
