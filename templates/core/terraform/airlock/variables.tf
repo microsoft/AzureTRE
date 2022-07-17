@@ -50,4 +50,3 @@ variable "enable_malware_scanning" {
 }
 
 variable "log_analytics_workspace_id" {}
-variable "applicationinsights_instrumentation_key" {}

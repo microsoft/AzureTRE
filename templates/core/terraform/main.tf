@@ -112,7 +112,6 @@ module "airlock_resources" {
   airlock_processor_subnet_id             = module.network.airlock_processor_subnet_id
   airlock_servicebus                      = azurerm_servicebus_namespace.sb
   applicationinsights_connection_string   = module.azure_monitor.app_insights_connection_string
-  applicationinsights_instrumentation_key = module.azure_monitor.app_insights_instrumentation_key
   enable_malware_scanning                 = var.enable_airlock_malware_scanning
   tre_core_tags                           = local.tre_core_tags
   log_analytics_workspace_id              = module.azure_monitor.log_analytics_workspace_id
