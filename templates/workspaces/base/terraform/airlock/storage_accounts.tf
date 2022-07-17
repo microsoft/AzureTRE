@@ -82,6 +82,7 @@ resource "azurerm_private_endpoint" "export_internal_pe" {
   location            = var.location
   resource_group_name = var.ws_resource_group_name
   subnet_id           = var.services_subnet_id
+  tags                = var.tre_workspace_tags
 
   lifecycle { ignore_changes = [tags] }
 
@@ -138,6 +139,7 @@ resource "azurerm_private_endpoint" "export_inprogress_pe" {
   location            = var.location
   resource_group_name = var.ws_resource_group_name
   subnet_id           = var.services_subnet_id
+  tags                = var.tre_workspace_tags
 
   lifecycle { ignore_changes = [tags] }
 
@@ -188,6 +190,7 @@ resource "azurerm_private_endpoint" "export_rejected_pe" {
   location            = var.location
   resource_group_name = var.ws_resource_group_name
   subnet_id           = var.services_subnet_id
+  tags                = var.tre_workspace_tags
 
   lifecycle { ignore_changes = [tags] }
 
@@ -238,6 +241,7 @@ resource "azurerm_private_endpoint" "export_blocked_pe" {
   location            = var.location
   resource_group_name = var.ws_resource_group_name
   subnet_id           = var.services_subnet_id
+  tags                = var.tre_workspace_tags
 
   lifecycle { ignore_changes = [tags] }
 
