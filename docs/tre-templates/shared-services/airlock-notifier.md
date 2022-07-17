@@ -2,10 +2,6 @@
 
 This shared service connects to the Airlock's notification event grid and send emails to the researchers/ws owners upon Airlock requests changes.
 
-## Deploy
-
-To deploy set `DEPLOY_AIRLOCK_NOTIFIER=true` in `templates/core/.env`
-
 ## Development and modification
 
 This service was built with extensibility and modification in mind, since each organization might have different messaging platform and preferences.

@@ -24,8 +24,7 @@ build-and-push-airlock-processor: build-airlock-processor push-airlock-processor
 deploy-shared-services: firewall-install
 	. ${MAKEFILE_DIR}/devops/scripts/load_env.sh ./templates/core/.env \
 	&& if [ "$${DEPLOY_GITEA}" == "true" ]; then $(MAKE) gitea-install; fi \
-	&& if [ "$${DEPLOY_NEXUS}" == "true" ]; then $(MAKE) nexus-install; fi \
-	&& if [ "$${DEPLOY_AIRLOCK_NOTIFIER}" == "true" ]; then $(MAKE) airlock-notifier-install; fi
+	&& if [ "$${DEPLOY_NEXUS}" == "true" ]; then $(MAKE) nexus-install; fi
 
 # to move your environment from the single 'core' deployment (which includes the firewall)
 # toward the shared services model, where it is split out - run the following make target before a tre-deploy
@@ -303,9 +302,6 @@ nexus-install:
 
 gitea-install:
 	$(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service DIR=${MAKEFILE_DIR}/templates/shared_services/gitea/ BUNDLE_TYPE=shared_service
-
-airlock-notifier-install:
-	$(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service DIR=${MAKEFILE_DIR}/templates/shared_services/airlock-notifier/ BUNDLE_TYPE=shared_service
 
 temp-do-upload:
 	$(MAKE) static-web-upload DIR=${MAKEFILE_DIR}/dummy
