@@ -43,6 +43,5 @@ if command -v git &> /dev/null; then
 
 fi
 
+echo "Updated tags, new ones are:"
 az tag update --operation merge --tags coded_version="${coded_version}" git_origin="${git_origin}" git_commit="${git_commit}" --resource-id "${core_rg_rid}"
-echo "Updated tags:"
-az tag list --resource-id "${core_rg_rid}"
