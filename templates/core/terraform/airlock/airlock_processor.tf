@@ -18,9 +18,14 @@ resource "azurerm_service_plan" "airlock_plan" {
   lifecycle { ignore_changes = [tags] }
 }
 
-resource "azurerm_app_service_virtual_network_swift_connection" "airlock-integrated-vnet" {
+resource "azurerm_app_service_virtual_network_swift_connection" "airlock_integrated_vnet" {
   app_service_id = azurerm_linux_function_app.airlock_function_app.id
   subnet_id      = var.airlock_processor_subnet_id
+}
+
+moved {
+  from = azurerm_app_service_virtual_network_swift_connection.airlock-integrated-vnet
+  to   = azurerm_app_service_virtual_network_swift_connection.airlock_integrated_vnet
 }
 
 resource "azurerm_storage_account" "sa_airlock_processor_func_app" {

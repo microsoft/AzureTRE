@@ -33,8 +33,8 @@ resource "azurerm_linux_web_app" "api" {
     "ApplicationInsightsAgent_EXTENSION_VERSION"     = "~3"
     "XDT_MicrosoftApplicationInsights_Mode"          = "default"
     "WEBSITES_PORT"                                  = "8000"
-    "STATE_STORE_ENDPOINT"                           = azurerm_cosmosdb_account.tre-db-account.endpoint
-    "COSMOSDB_ACCOUNT_NAME"                          = azurerm_cosmosdb_account.tre-db-account.name
+    "STATE_STORE_ENDPOINT"                           = azurerm_cosmosdb_account.tre_db_account.endpoint
+    "COSMOSDB_ACCOUNT_NAME"                          = azurerm_cosmosdb_account.tre_db_account.name
     "SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE"          = "sb-${var.tre_id}.servicebus.windows.net"
     "EVENT_GRID_STATUS_CHANGED_TOPIC_ENDPOINT"       = module.airlock_resources.event_grid_status_changed_topic_endpoint
     "EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_ENDPOINT" = module.airlock_resources.event_grid_airlock_notification_topic_endpoint
@@ -129,9 +129,14 @@ resource "azurerm_private_endpoint" "api_private_endpoint" {
 
 # Kept to be backward compatible with existing deployments despite the ability
 # to set through azurerm_linux_web_app.virtual_network_subnet_id
-resource "azurerm_app_service_virtual_network_swift_connection" "api-integrated-vnet" {
+resource "azurerm_app_service_virtual_network_swift_connection" "api_integrated_vnet" {
   app_service_id = azurerm_linux_web_app.api.id
   subnet_id      = module.network.web_app_subnet_id
+}
+
+moved {
+  from = azurerm_app_service_virtual_network_swift_connection.api-integrated-vnet
+  to   = azurerm_app_service_virtual_network_swift_connection.api_integrated_vnet
 }
 
 resource "azurerm_monitor_diagnostic_setting" "webapp_api" {

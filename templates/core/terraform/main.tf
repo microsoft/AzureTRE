@@ -5,6 +5,22 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "=3.12.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.3"
+    }
+    template = {
+      source  = "hashicorp/template"
+      version = "~> 2.2"
+    }
+    local = {
+      source  = "hashicorp/local"
+      version = "~> 2.2"
+    }
+    http = {
+      source  = "hashicorp/http"
+      version = "~> 2.2"
+    }
   }
 
   backend "azurerm" {}
@@ -86,7 +102,6 @@ module "airlock_resources" {
   resource_group_name                     = azurerm_resource_group.core.name
   airlock_storage_subnet_id               = module.network.airlock_storage_subnet_id
   airlock_events_subnet_id                = module.network.airlock_events_subnet_id
-  virtual_network_id                      = module.network.core_vnet_id
   enable_local_debugging                  = var.enable_local_debugging
   docker_registry_server                  = var.docker_registry_server
   mgmt_resource_group_name                = var.mgmt_resource_group_name

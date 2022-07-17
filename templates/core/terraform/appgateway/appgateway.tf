@@ -189,11 +189,6 @@ resource "azurerm_application_gateway" "agw" {
 
 }
 
-data "azurerm_log_analytics_workspace" "tre" {
-  name                = "log-${var.tre_id}"
-  resource_group_name = var.resource_group_name
-}
-
 resource "azurerm_monitor_diagnostic_setting" "agw" {
   name                       = "diagnostics-agw-${var.tre_id}"
   target_resource_id         = azurerm_application_gateway.agw.id
