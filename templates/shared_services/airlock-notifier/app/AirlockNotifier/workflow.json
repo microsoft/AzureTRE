@@ -2,7 +2,7 @@
   "definition": {
     "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
     "actions": {
-      "Initialize_variable": {
+      "Initialize_message_variable": {
         "inputs": {
           "variables": [
             {
@@ -18,17 +18,17 @@
         },
         "type": "InitializeVariable"
       },
-      "Initialize_variable_2": {
+      "Initialize_recipients_variable": {
         "inputs": {
           "variables": [
             {
               "name": "recipients",
-              "type": "string"
+              "type": "array"
             }
           ]
         },
         "runAfter": {
-          "Initialize_variable": [
+          "Initialize_message_variable": [
             "Succeeded"
           ]
         },
@@ -39,14 +39,38 @@
           "content": "@triggerOutputs()?['body']?['contentData']",
           "schema": {
             "properties": {
-              "event_value": {
-                "type": "string"
-              },
-              "owners_emails": {
-                "type": "string"
-              },
-              "researchers_emails": {
-                "type": "string"
+              "data": {
+                "properties": {
+                  "event_type": {
+                    "type": "string"
+                  },
+                  "event_value": {
+                    "type": "string"
+                  },
+                  "owners_emails": {
+                    "items": [
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "type": "array"
+                  },
+                  "request_id": {
+                    "type": "string"
+                  },
+                  "researchers_emails": {
+                    "items": [
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "type": "array"
+                  },
+                  "workspace_id": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -55,12 +79,13 @@
         "runAfter": {},
         "type": "ParseJson"
       },
-      "Send_Email_(V3)": {
+      "Send_Email_with_SMTP": {
         "inputs": {
           "body": {
+            "Body": "<p>For airlock requst with id @{body('Parse_JSON')?['data']?['request_id']} in workspace @{body('Parse_JSON')?['data']?['workspace_id']}</p>",
             "From": "@parameters('smtp_from_email')",
             "Subject": "@variables('message')",
-            "To": "@variables('recipients')"
+            "To": "@{join(variables('recipients'), ';')}"
           },
           "host": {
             "connection": {
@@ -71,68 +96,79 @@
           "path": "/SendEmailV3"
         },
         "runAfter": {
-          "Switch_2": [
+          "Switch_on_event_value": [
             "Succeeded"
           ]
         },
         "type": "ApiConnection"
       },
-      "Switch_2": {
+      "Succeeded": {
+        "inputs": {
+          "runStatus": "Succeeded"
+        },
+        "runAfter": {
+          "Send_Email_with_SMTP": [
+            "Succeeded"
+          ]
+        },
+        "type": "Terminate"
+      },
+      "Switch_on_event_value": {
         "cases": {
-          "Case": {
+          "Case_approved": {
             "actions": {
-              "Set_variable_5": {
-                "inputs": {
-                  "name": "recipients",
-                  "value": "@body('Parse_JSON')?['owners_emails']"
-                },
-                "runAfter": {},
-                "type": "SetVariable"
-              },
-              "Set_variable_6": {
-                "inputs": {
-                  "name": "message",
-                  "value": "An Airlock request needs your review"
-                },
-                "runAfter": {
-                  "Set_variable_5": [
-                    "Succeeded"
-                  ]
-                },
-                "type": "SetVariable"
-              }
-            },
-            "case": "in_review"
-          },
-          "Case_2": {
-            "actions": {
-              "Set_variable_7": {
-                "inputs": {
-                  "name": "recipients",
-                  "value": "@body('Parse_JSON')?['researchers_emails']"
-                },
-                "runAfter": {},
-                "type": "SetVariable"
-              },
-              "Set_variable_8": {
+              "Set_approved_message": {
                 "inputs": {
                   "name": "message",
                   "value": "Your Airlock request was approved"
                 },
                 "runAfter": {
-                  "Set_variable_7": [
+                  "Set_recipients_as_researchers_emails": [
                     "Succeeded"
                   ]
                 },
                 "type": "SetVariable"
+              },
+              "Set_recipients_as_researchers_emails": {
+                "inputs": {
+                  "name": "recipients",
+                  "value": "@body('Parse_JSON')?['data']?['researchers_emails']"
+                },
+                "runAfter": {},
+                "type": "SetVariable"
               }
             },
             "case": "approved"
+          },
+          "Case_in_review": {
+            "actions": {
+              "Set_in_review_message": {
+                "inputs": {
+                  "name": "message",
+                  "value": "An Airlock request needs your review"
+                },
+                "runAfter": {
+                  "Set_recipients_as_owners_emails": [
+                    "Succeeded"
+                  ]
+                },
+                "type": "SetVariable"
+              },
+              "Set_recipients_as_owners_emails": {
+                "inputs": {
+                  "name": "recipients",
+                  "value": "@body('Parse_JSON')?['data']?['owners_emails']"
+                },
+                "runAfter": {},
+                "type": "SetVariable"
+              }
+            },
+            "case": "in_review"
           }
         },
         "default": {
           "actions": {
-            "Terminate": {
+            "Cancelled": {
               "inputs": {
                 "runStatus": "Cancelled"
               },
@@ -141,24 +177,13 @@
             }
           }
         },
-        "expression": "@body('Parse_JSON')?['event_value']",
+        "expression": "@body('Parse_JSON')?['data']?['event_value']",
         "runAfter": {
-          "Initialize_variable_2": [
+          "Initialize_recipients_variable": [
             "Succeeded"
           ]
         },
         "type": "Switch"
-      },
-      "Terminate_2": {
-        "inputs": {
-          "runStatus": "Succeeded"
-        },
-        "runAfter": {
-          "Send_Email_(V3)": [
-            "Succeeded"
-          ]
-        },
-        "type": "Terminate"
       }
     },
     "contentVersion": "1.0.0.0",
