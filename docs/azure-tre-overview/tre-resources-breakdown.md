@@ -73,4 +73,16 @@ A TRE Workspace will be provisioned in a separate Resource Group along with its 
 
 ## Running costs
 
-The exact running costs will depend on the number of workspaces you have deployed, the workspace services you have enabled within them and the Azure Data center region.  You can use the [Azure Pricing Calculator](https://azure.microsoft.com/en-gb/pricing/calculator/) on the above services to get an indicative idea of running costs, or contact your Microsoft representative for further guidance.
+The exact running costs will depend on the number of workspaces you have deployed, the workspace services you have enabled within them and the Azure Data center region. You can use the Azure TRE cost API to get a report of the running costs.
+
+Cost API is based on [Azure Cost Management](https://docs.microsoft.com/en-us/azure/cost-management-billing/) and [TRE Templates azure resource tagging](../tre-workspace-authors/authoring-workspace-templates.md#azure-resources-tagging).
+
+Cost and usage data is typically available in Cost Management within 8-24 hours.
+
+Tags aren't applied to historical data, template authors need to make sure all relavent [Azure resources of a TRE resource are tagged as instructed](../tre-workspace-authors/authoring-workspace-templates.md#azure-resources-tagging).
+
+Cost records might include [multiple currencies](https://azure.microsoft.com/en-us/blog/azure-cost-management-updates-july-2019/#currency) for the same date and TRE resource.
+
+Once cost data becomes available in Cost Management, it will be retained for at least seven years. Only the last 13 months is available from the TRE Cost API and Azure Portal. For historical data before 13 months, please use [Exports](https://docs.microsoft.com/en-us/azure/cost-management-billing/costs/tutorial-export-acm-data?tabs=azure-portal) or the [UsageDetails API](https://docs.microsoft.com/en-us/rest/api/consumption/usage-details/list?tabs=HTTP).
+
+For more information please refer to [Azure Cost Management](https://docs.microsoft.com/en-us/azure/cost-management-billing/costs/understand-cost-mgt-data) and Cost API swagger docs.
