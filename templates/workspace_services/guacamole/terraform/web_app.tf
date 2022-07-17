@@ -8,6 +8,7 @@ resource "azurerm_user_assigned_identity" "guacamole_id" {
   resource_group_name = data.azurerm_resource_group.ws.name
   location            = data.azurerm_resource_group.ws.location
   name                = local.identity_name
+  tags                = local.workspace_service_tags
 
   lifecycle { ignore_changes = [tags] }
 }
