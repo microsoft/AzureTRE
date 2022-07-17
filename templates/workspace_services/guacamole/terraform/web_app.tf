@@ -19,6 +19,7 @@ resource "azurerm_linux_web_app" "guacamole" {
   service_plan_id                 = data.azurerm_service_plan.workspace.id
   https_only                      = true
   key_vault_reference_identity_id = azurerm_user_assigned_identity.guacamole_id.id
+  virtual_network_subnet_id       = data.azurerm_subnet.web_apps.id
   tags                            = local.workspace_service_tags
 
   site_config {
@@ -117,16 +118,10 @@ resource "azurerm_monitor_diagnostic_setting" "guacamole" {
   }
 }
 
-
 resource "azurerm_role_assignment" "guac_acr_pull" {
   scope                = data.azurerm_container_registry.mgmt_acr.id
   role_definition_name = "AcrPull"
   principal_id         = azurerm_user_assigned_identity.guacamole_id.principal_id
-}
-
-resource "azurerm_app_service_virtual_network_swift_connection" "guacamole" {
-  app_service_id = azurerm_linux_web_app.guacamole.id
-  subnet_id      = data.azurerm_subnet.web_apps.id
 }
 
 resource "azurerm_private_endpoint" "guacamole" {

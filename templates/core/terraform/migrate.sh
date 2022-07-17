@@ -19,8 +19,10 @@ echo "*** Migrating TF Resources ***"
 # 3. Delete the old resource from state
 # 4. Import the new resource type in using the existing Azure Resource ID
 
+terraform_show_json=$(terraform show -json)
+
 # azurerm_app_service_plan -> azurerm_service_plan
-core_app_service_plan_id=$(terraform show -json \
+core_app_service_plan_id=$(echo "${terraform_show_json}" \
   | jq -r 'select(.values.root_module.resources != null) | .values.root_module.resources[] | select(.address=="azurerm_app_service_plan.core") | .values.id')
 if [ -n "${core_app_service_plan_id}" ]; then
   echo "Migrating ${core_app_service_plan_id}"
@@ -34,7 +36,7 @@ if [ -n "${core_app_service_plan_id}" ]; then
 fi
 
 # azurerm_app_service -> azurerm_linux_web_app
-api_app_service_id=$(terraform show -json \
+api_app_service_id=$(echo "${terraform_show_json}" \
   | jq -r 'select(.values.root_module.resources != null) | .values.root_module.resources[] | select(.address=="azurerm_app_service.api") | .values.id')
 if [ -n "${api_app_service_id}" ]; then
   echo "Migrating ${api_app_service_id}"
