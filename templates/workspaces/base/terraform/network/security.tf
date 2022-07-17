@@ -17,7 +17,7 @@ resource "azurerm_subnet_network_security_group_association" "webapps" {
   subnet_id                 = azurerm_subnet.webapps.id
 }
 
-resource "azurerm_network_security_rule" "deny-outbound-override" {
+resource "azurerm_network_security_rule" "deny_outbound_override" {
   access                      = "Deny"
   destination_address_prefix  = "*"
   destination_port_range      = "*"
@@ -31,7 +31,7 @@ resource "azurerm_network_security_rule" "deny-outbound-override" {
   source_port_range           = "*"
 }
 
-resource "azurerm_network_security_rule" "deny-all-inbound-override" {
+resource "azurerm_network_security_rule" "deny_all_inbound_override" {
   access                      = "Deny"
   destination_address_prefix  = "*"
   destination_port_range      = "*"
@@ -45,7 +45,7 @@ resource "azurerm_network_security_rule" "deny-all-inbound-override" {
   source_port_range           = "*"
 }
 
-resource "azurerm_network_security_rule" "allow-inbound-within-services-subnet" {
+resource "azurerm_network_security_rule" "allow_inbound_within_services_subnet" {
   access                       = "Allow"
   destination_port_range       = "*"
   destination_address_prefixes = azurerm_subnet.services.address_prefixes
@@ -59,7 +59,7 @@ resource "azurerm_network_security_rule" "allow-inbound-within-services-subnet" 
   source_port_range            = "*"
 }
 
-resource "azurerm_network_security_rule" "allow-outbound-within-services-subnet" {
+resource "azurerm_network_security_rule" "allow_outbound_within_services_subnet" {
   access                       = "Allow"
   destination_port_range       = "*"
   destination_address_prefixes = azurerm_subnet.services.address_prefixes
@@ -73,7 +73,7 @@ resource "azurerm_network_security_rule" "allow-outbound-within-services-subnet"
   source_port_range            = "*"
 }
 
-resource "azurerm_network_security_rule" "allow-outbound-to-shared-services" {
+resource "azurerm_network_security_rule" "allow_outbound_to_shared_services" {
   access                       = "Allow"
   destination_address_prefixes = data.azurerm_subnet.shared.address_prefixes
   destination_port_range       = "*"
@@ -88,7 +88,7 @@ resource "azurerm_network_security_rule" "allow-outbound-to-shared-services" {
 }
 
 
-resource "azurerm_network_security_rule" "allow-outbound-to-internet" {
+resource "azurerm_network_security_rule" "allow_outbound_to_internet" {
   access                      = "Allow"
   destination_address_prefix  = "INTERNET"
   destination_port_range      = "443"
@@ -103,7 +103,7 @@ resource "azurerm_network_security_rule" "allow-outbound-to-internet" {
 }
 
 
-resource "azurerm_network_security_rule" "allow-outbound-from-webapp-to-core-webapp" {
+resource "azurerm_network_security_rule" "allow_outbound_from_webapp_to_core_webapp" {
   access                       = "Allow"
   destination_port_range       = "443"
   destination_address_prefixes = data.azurerm_subnet.core_webapps.address_prefixes
@@ -117,7 +117,7 @@ resource "azurerm_network_security_rule" "allow-outbound-from-webapp-to-core-web
   source_port_range            = "*"
 }
 
-resource "azurerm_network_security_rule" "allow-outbound-webapps-to-services" {
+resource "azurerm_network_security_rule" "allow_outbound_webapps_to_services" {
   access = "Allow"
   destination_port_ranges = [
     "80",
@@ -138,7 +138,7 @@ resource "azurerm_network_security_rule" "allow-outbound-webapps-to-services" {
   source_port_range            = "*"
 }
 
-resource "azurerm_network_security_rule" "allow-inbound-from-bastion" {
+resource "azurerm_network_security_rule" "allow_inbound_from_bastion" {
   access                       = "Allow"
   destination_address_prefixes = azurerm_subnet.services.address_prefixes
   destination_port_ranges = [
@@ -157,7 +157,7 @@ resource "azurerm_network_security_rule" "allow-inbound-from-bastion" {
   source_port_range = "*"
 }
 
-resource "azurerm_network_security_rule" "allow-inbound-from-resourceprocessor" {
+resource "azurerm_network_security_rule" "allow_inbound_from_resourceprocessor" {
   access                       = "Allow"
   destination_address_prefixes = azurerm_subnet.services.address_prefixes
   destination_port_range       = "443"
@@ -174,7 +174,7 @@ resource "azurerm_network_security_rule" "allow-inbound-from-resourceprocessor" 
 }
 
 
-resource "azurerm_network_security_rule" "allow-inbound-from-airlockprocessor" {
+resource "azurerm_network_security_rule" "allow_inbound_from_airlockprocessor" {
   access                       = "Allow"
   destination_address_prefixes = azurerm_subnet.services.address_prefixes
   destination_port_range       = "443"
@@ -190,7 +190,7 @@ resource "azurerm_network_security_rule" "allow-inbound-from-airlockprocessor" {
   source_port_range = "*"
 }
 
-resource "azurerm_network_security_rule" "allow-inbound-from-webapp-to-services" {
+resource "azurerm_network_security_rule" "allow_inbound_from_webapp_to_services" {
   access = "Allow"
   destination_port_ranges = [
     "80",
@@ -209,4 +209,55 @@ resource "azurerm_network_security_rule" "allow-inbound-from-webapp-to-services"
   protocol                     = "Tcp"
   resource_group_name          = var.ws_resource_group_name
   source_port_range            = "*"
+}
+
+
+
+moved {
+  from = azurerm_network_security_rule.deny-outbound-overrid
+  to   = azurerm_network_security_rule.deny_outbound_overrid
+}
+moved {
+  from = azurerm_network_security_rule.deny-all-inbound-override
+  to   = azurerm_network_security_rule.deny_all_inbound_override
+}
+moved {
+  from = azurerm_network_security_rule.allow-inbound-within-services-subnet
+  to   = azurerm_network_security_rule.allow_inbound_within_services_subnet
+}
+moved {
+  from = azurerm_network_security_rule.allow-outbound-within-services-subnet
+  to   = azurerm_network_security_rule.allow_outbound_within_services_subnet
+}
+moved {
+  from = azurerm_network_security_rule.allow-outbound-to-shared-services
+  to   = azurerm_network_security_rule.allow_outbound_to_shared_services
+}
+moved {
+  from = azurerm_network_security_rule.allow-outbound-to-internet
+  to   = azurerm_network_security_rule.allow_outbound_to_internet
+}
+moved {
+  from = azurerm_network_security_rule.allow-outbound-from-webapp-to-core-webapp
+  to   = azurerm_network_security_rule.allow_outbound_from_webapp_to_core_webapp
+}
+moved {
+  from = azurerm_network_security_rule.allow-outbound-webapps-to-services
+  to   = azurerm_network_security_rule.allow_outbound_webapps_to_services
+}
+moved {
+  from = azurerm_network_security_rule.allow-inbound-from-bastion
+  to   = azurerm_network_security_rule.allow_inbound_from_bastion
+}
+moved {
+  from = azurerm_network_security_rule.allow-inbound-from-resourceprocessor
+  to   = azurerm_network_security_rule.allow_inbound_from_resourceprocessor
+}
+moved {
+  from = azurerm_network_security_rule.allow-inbound-from-airlockprocessor
+  to   = azurerm_network_security_rule.allow_inbound_from_airlockprocessor
+}
+moved {
+  from = azurerm_network_security_rule.allow-inbound-from-webapp-to-services
+  to   = azurerm_network_security_rule.allow_inbound_from_webapp_to_services
 }
