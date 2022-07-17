@@ -63,14 +63,12 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
     "EVENT_GRID_STEP_RESULT_TOPIC_KEY_SETTING" = azurerm_eventgrid_topic.step_result.primary_access_key
     "WEBSITES_ENABLE_APP_SERVICE_STORAGE"      = false
     "AIRLOCK_STATUS_CHANGED_QUEUE_NAME"        = local.status_changed_queue_name
-    "APPLICATIONINSIGHTS_CONNECTION_STRING"    = var.applicationinsights_connection_string
     "AIRLOCK_SCAN_RESULT_QUEUE_NAME"           = local.scan_result_queue_name
     "ENABLE_MALWARE_SCANNING"                  = var.enable_malware_scanning
     "MANAGED_IDENTITY_CLIENT_ID"               = azurerm_user_assigned_identity.airlock_id.client_id
     "AZURE_SUBSCRIPTION_ID"                    = var.arm_subscription_id
     "TRE_ID"                                   = var.tre_id
     "WEBSITE_CONTENTOVERVNET"                  = 1
-    "APPINSIGHTS_INSTRUMENTATIONKEY"           = var.applicationinsights_instrumentation_key
   }
 
   site_config {
