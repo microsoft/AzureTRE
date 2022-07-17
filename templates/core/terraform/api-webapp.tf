@@ -65,7 +65,7 @@ resource "azurerm_linux_web_app" "api" {
 
       # Required since we're setting with azurerm_app_service_virtual_network_swift_connection below.
       virtual_network_subnet_id,
-      ]
+    ]
   }
 
   site_config {
