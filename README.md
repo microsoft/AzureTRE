@@ -77,5 +77,3 @@ Any use of third-party trademarks or logos are subject to those third-party's po
     ├── workspace_services - Workspace services
     └── workspaces         - Workspace templates
 ```
-
-
