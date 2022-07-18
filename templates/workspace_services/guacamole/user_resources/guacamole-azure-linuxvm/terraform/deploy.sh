@@ -7,7 +7,7 @@ set -o nounset
 # set -o xtrace
 
 export TF_LOG=""
-# This variables are loaded in for us
+# These variables are loaded in for us
 # shellcheck disable=SC2154
 terraform init -input=false -backend=true -reconfigure \
     -backend-config="resource_group_name=$TF_VAR_mgmt_resource_group_name" \
