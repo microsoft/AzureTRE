@@ -83,8 +83,33 @@ foreach ($Group in $ResourceGroups)
   {
     # Invoke the REST API
     Write-Output "Stopping $($Server.Name)"
-        $restUri='https://management.azure.com/subscriptions/'+$azContext.Subscription.Id+'/resourceGroups/'+$Group.ResourceGroupName+'/providers/Microsoft.DBForMySQL/servers/'+$Server.Name+'/stop?api-version=2020-01-01'
-        $response = Invoke-RestMethod -Uri $restUri -Method POST -Headers $authHeader
+    $restUri='https://management.azure.com/subscriptions/'+$azContext.Subscription.Id+'/resourceGroups/'+$Group.ResourceGroupName+'/providers/Microsoft.DBForMySQL/servers/'+$Server.Name+'/stop?api-version=2020-01-01'
+    $response = Invoke-RestMethod -Uri $restUri -Method POST -Headers $authHeader
+  }
+
+  $VMSS = Get-AzVMSS -ResourceGroupName $Group.ResourceGroupName
+  foreach ($item in $VMSS)
+  {
+    Write-Output "Stopping $($item.Name)"
+    Stop-AzVmss -ResourceGroupName $item.ResourceGroupName -VMScaleSetName $item.Name
+  }
+
+  $VM = Get-AzVM -ResourceGroupName $Group.ResourceGroupName
+  foreach ($item in $VM)
+  {
+    Write-Output "Stopping $($item.Name)"
+    Stop-AzVm -ResourceGroupName $item.ResourceGroupName -Name $item.Name
+  }
+
+  $WorkspaceResourceGroups = Get-AzResourceGroup -Name "$($Group.ResourceGroupName)-ws-*"
+  foreach ($wsrg in $WorkspaceResourceGroups)
+  {
+    $VM = Get-AzVM -ResourceGroupName $wsrg.ResourceGroupName
+    foreach ($item in $VM)
+    {
+      Write-Output "Stopping $($item.Name)"
+      Stop-AzVm -ResourceGroupName $item.ResourceGroupName -Name $item.Name
+    }
   }
 }
 ```
