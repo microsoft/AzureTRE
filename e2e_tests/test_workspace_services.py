@@ -26,6 +26,8 @@ async def test_create_guacamole_service_into_base_workspace(admin_token, verify)
     if config.TEST_WORKSPACE_APP_PLAN != "":
         payload["properties"]["app_service_plan_sku"] = config.TEST_WORKSPACE_APP_PLAN
 
+    print("*** CREATE WORKSPACE...")
+
     workspace_path, workspace_id = await post_resource(payload, strings.API_WORKSPACES, access_token=admin_token, verify=verify)
     workspace_owner_token, scope_uri = await get_workspace_auth_details(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
 
@@ -37,6 +39,7 @@ async def test_create_guacamole_service_into_base_workspace(admin_token, verify)
         }
     }
 
+    print("*** CREATE WORKSPACE SERVICE...")
     workspace_service_path, workspace_service_id = await post_resource(service_payload, f'/api{workspace_path}/{strings.API_WORKSPACE_SERVICES}', workspace_owner_token, verify)
 
     # TODO: uncomment after fixing https://github.com/microsoft/AzureTRE/issues/1602

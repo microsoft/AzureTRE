@@ -96,6 +96,37 @@ resource "azurerm_monitor_private_link_scoped_service" "ampls_app_insights" {
 }
 
 
+# # Using a template for Private Link Scope as a workaround for
+# # "Root resource was present, but now absent" error with azurerm_monitor_private_link_scope
+# # Unable to repro locally/simply to write up a provider bug
+# resource "azurerm_resource_group_template_deployment" "ampls" {
+#   name                = "ampls-${var.tre_id}"
+#   resource_group_name = var.resource_group_name
+#   deployment_mode     = "Incremental"
+#   template_content    = data.local_file.ampls_arm_template.content
+
+
+#   parameters_content = jsonencode({
+#     "private_link_scope_name" = {
+#       value = "ampls-${var.tre_id}-ws-${local.short_workspace_id}"
+#     }
+#     "workspace_name" = {
+#       value = azurerm_log_analytics_workspace.workspace.name
+#     }
+#     "app_insights_name" = {
+#       value = local.app_insights_name
+#     }
+#     "tre_core_tags" = {
+#       value = local.tre_workspace_tags
+#     }
+#   })
+
+#   depends_on = [
+#     azurerm_log_analytics_workspace.workspace,
+#     azurerm_resource_group_template_deployment.app_insights_workspace
+#   ]
+# }
+
 resource "azurerm_private_endpoint" "azure_monitor_private_endpoint" {
   name                = "pe-ampls-${var.tre_id}-ws-${local.short_workspace_id}"
   resource_group_name = var.resource_group_name
