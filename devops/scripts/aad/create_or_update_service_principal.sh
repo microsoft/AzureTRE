@@ -31,22 +31,24 @@ function wait_for_new_service_principal()
 function create_or_update_service_principal()
 {
   applicationId=$1
-  appName=$2
+  autoResetPassword=$2
 
   # See if a service principal already exists
-  spId=$(az ad sp list --filter "appId eq '${applicationId}'" --query '[0].objectId' --output tsv --only-show-errors)
+  spId=$(az ad sp list --filter "appId eq '${applicationId}'" --query '[0].id' --output tsv --only-show-errors)
 
   resetPassword=0
   REPLY=""
 
   # If not, create a new service principal
   if [[ -z "$spId" ]]; then
-      spId=$(az ad sp create --id "${applicationId}" --query 'objectId' --output tsv --only-show-errors)
+      spId=$(az ad sp create --id "${applicationId}" --query 'id' --output tsv --only-show-errors)
       wait_for_new_service_principal "${spId}"
       az ad app owner add --id "${applicationId}" --owner-object-id "${spId}" --only-show-errors
       resetPassword=1
+  elif [ "$autoResetPassword" == 1 ]; then
+    resetPassword=1
   else
-      read -p "Service principal for \"${appName}\" already exists. Do you wish to reset the password. DO NOT PRESS ENTER. (y/N)? " -rN1
+      read -p "Service principal \"${spId}\" already exists. Do you wish to reset the password. DO NOT PRESS ENTER. (y/N)? " -rN1
       if [[ ${REPLY::1} == [Yy] ]]; then
           resetPassword=1
       fi
@@ -55,11 +57,12 @@ function create_or_update_service_principal()
   spPassword=""
 
   if [[ "$resetPassword" == 1 ]]; then
-      spPassword=$(az ad sp credential reset --name "${applicationId}" --query 'password' --output tsv --only-show-errors)
+      spPassword=$(az ad sp credential reset --id "${spId}" --query 'password' --output tsv --only-show-errors)
   fi
 
   # This tag ensures the app is listed in "Enterprise applications"
-  az ad sp update --id "$spId" --set tags="['WindowsAzureActiveDirectoryIntegratedApp']" --only-show-errors
+  # az ad sp update --id "$spId" --set tags="['WindowsAzureActiveDirectoryIntegratedApp']" --only-show-errors
+  # Doesn't work in AZ CLI 2.37 - do we still need it?
 
   echo "${spPassword}"
 }

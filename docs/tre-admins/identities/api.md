@@ -51,10 +51,11 @@ Below is a sample where `TRE_ID` has value `mytre`:
 | `--tre-url` | Used to construct auth redirection URLs for the UI and Swagger app. Use the values of the [environment variables](../environment-variables.md) `TRE_ID` and `LOCATION` in the URL. Reply URL for the localhost, `http://localhost:8000/api/docs/oauth2-redirect`, will be added by default. |
 | `--admin-consent` | Grants admin consent for the app registrations. This is required for them to function properly, but requires AAD admin privileges. |
 | `--automation-clientid` | This is an optional parameter but will grant TREAdmin permission to the Service Principal of the Automation Admin.|
+| `--reset-password` | Optional, default is 0. When run in a headless fashion, 1 is passed in to always reset the password. |
 
 
 !!! caution
-    The script will create an app password (client secret) for the **TRE API** app and the **Automation App** and tell you to copy these to the `/templates/core/.env` file. These values are only shown once, if you lose them, the script will create new secrets if run again.
+    The script will create an app password (client secret) for the **TRE API** app and the **Automation App** and write them to `/devops/auth.env` file. These values are only shown once, if you lose them, the script will create new secrets if run again.
 
 
 You can create an automation account which will aid your development flow, if you don't want to do this you can omit the `--automation-clientid` switch.
@@ -64,8 +65,8 @@ You can run the script without the `--admin-consent` and ask your admin to grant
 ## Environment Variables
 | Variable | Description | Location |
 | -------- | ----------- | -------- |
-|API_CLIENT_ID|The Client Id|`./templates/core/.env`|
-|API_CLIENT_SECRET|The client secret|`./templates/core/.env`|
+|API_CLIENT_ID|The Client Id|`./devops/auth.env`|
+|API_CLIENT_SECRET|The client secret|`./devops/auth.env`|
 
 ## Comments
 

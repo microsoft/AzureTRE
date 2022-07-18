@@ -7,7 +7,7 @@ set -euo pipefail
 msGraphAppId="00000003-0000-0000-c000-000000000000"
 
 function get_msgraph_scope() {
-    oauthScope=$(az ad sp show --id ${msGraphAppId} --query "oauth2Permissions[?value=='$1'].id | [0]" --output tsv --only-show-errors)
+    oauthScope=$(az ad sp show --id ${msGraphAppId} --query "oauth2PermissionScopes[?value=='$1'].id | [0]" --output tsv --only-show-errors)
     jq -c . <<- JSON
     {
         "id": "${oauthScope}",

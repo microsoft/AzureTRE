@@ -27,9 +27,10 @@ This user is currently only used from the Porter bundles hosted on the Resource 
 | `--name` | This is used to put a friendly name to the Application that can be seen in the portal. It is typical to use the name of your TRE instance. |
 | `--admin-consent` | If you have the appropriate permission to grant admin consent, then pass in this argument. If you do not, you will have to ask an AAD Admin to consent after you have created the identity. Consent is required for this permission.
 | `--application-permission` | This should be either `Application.ReadWrite.All` or `Application.ReadWrite.OwnedBy` |
+| `--reset-password` | Optional, default is 0. When run in a headless fashion, 1 is passed in to always reset the password. |
 
 ## Environment Variables
 | Variable | Description | Location |
 | -------- | ----------- | -------- |
-|APPLICATION_ADMIN_CLIENT_ID|The Client Id|`./templates/core/.env`|
-|APPLICATION_ADMIN_CLIENT_SECRET|The client secret|`./templates/core/.env`|
+|APPLICATION_ADMIN_CLIENT_ID|The Client Id|`./devops/auth.env`|
+|APPLICATION_ADMIN_CLIENT_SECRET|The client secret|`./devops/auth.env`|

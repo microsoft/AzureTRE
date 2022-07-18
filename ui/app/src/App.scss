@@ -109,7 +109,7 @@ ul.tre-notifications-steps-list li {
 
 .tre-left-nav {
   width: 200px;
-  overflow-y: scroll;
+  overflow-y: auto;
   box-shadow: 1px 0 8px 0px #ccc;
   z-index: 100;
 }
@@ -163,6 +163,9 @@ input[readonly]{
 .tre-badge-failed{
   background-color: #990000;
   color: #fff;
+  padding-top: 4px;
+  padding-left: 7px;
+  font-size: 16px;
 }
 .tre-badge-success{
   background-color: #006600;
@@ -185,4 +188,7 @@ input[readonly]{
   .tre-power-off {
     background-color: #990000;
   }
+}
+.tre-hidden{
+  display:none;
 }

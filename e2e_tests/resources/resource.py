@@ -11,7 +11,7 @@ LOGGER = logging.getLogger(__name__)
 TIMEOUT = Timeout(10, read=30)
 
 
-async def post_resource(payload, endpoint, access_token, verify, method="POST", wait=True):
+async def post_resource(payload, endpoint, access_token, verify, method="POST", wait=True, etag="*"):
     async with AsyncClient(verify=verify, timeout=30.0) as client:
 
         full_endpoint = get_full_endpoint(endpoint)
@@ -21,7 +21,7 @@ async def post_resource(payload, endpoint, access_token, verify, method="POST", 
             response = await client.post(full_endpoint, headers=auth_headers, json=payload, timeout=TIMEOUT)
             check_method = install_done
         else:
-            auth_headers["eTag"] = "*"  # * = force the update regardless. We have other tests to check the validity of the etag
+            auth_headers["eTag"] = etag  # defaulted as * to force the update.
             check_method = patch_done
             response = await client.patch(full_endpoint, headers=auth_headers, json=payload, timeout=TIMEOUT)
 
