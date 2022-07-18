@@ -52,7 +52,17 @@ class TestSharedServiceRoutesThatDontRequireAdminRigths:
             yield
             app.dependency_overrides = {}
 
-    # [GET] /shared-services
+
+class TestSharedServiceRoutesThatRequireAdminRights:
+    @pytest.fixture(autouse=True, scope='class')
+    def _prepare(self, app, admin_user):
+        with patch('services.aad_authentication.AzureADAuthorization._get_user_from_token', return_value=admin_user()):
+            app.dependency_overrides[get_current_tre_user_or_tre_admin] = admin_user
+            app.dependency_overrides[get_current_admin_user] = admin_user
+            yield
+            app.dependency_overrides = {}
+
+        # [GET] /shared-services
     @patch("api.routes.shared_services.SharedServiceRepository.get_active_shared_services",
            return_value=None)
     async def test_get_shared_services_returns_list_of_shared_services(self, get_active_shared_services_mock, app, client):
@@ -63,16 +73,6 @@ class TestSharedServiceRoutesThatDontRequireAdminRigths:
 
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["sharedServices"][0]["id"] == sample_shared_service().id
-
-
-class TestSharedServiceRoutesThatRequireAdminRights:
-    @pytest.fixture(autouse=True, scope='class')
-    def _prepare(self, app, admin_user):
-        with patch('services.aad_authentication.AzureADAuthorization._get_user_from_token', return_value=admin_user()):
-            app.dependency_overrides[get_current_tre_user_or_tre_admin] = admin_user
-            app.dependency_overrides[get_current_admin_user] = admin_user
-            yield
-            app.dependency_overrides = {}
 
     # [GET] /shared-services/{shared_service_id}
     @patch("api.dependencies.shared_services.SharedServiceRepository.get_shared_service_by_id", return_value=sample_shared_service())
