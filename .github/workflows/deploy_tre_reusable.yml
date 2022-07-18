@@ -831,9 +831,11 @@ jobs:
     environment: ${{ inputs.environmentName }}
     steps:
       - uses: technote-space/workflow-conclusion-action@v2
-
+      - name: Get the status of the last completed operation
+        run: echo "::set-output name STATUS::$(gh run list -w 'Deploy Azure TRE' -b main --json conclusion,status -q '[.[]|select(.status=="completed")][0].conclusion')"
+        id: last-completed-operation
       - name: Notify teams channel
-        if: env.WORKFLOW_CONCLUSION == 'failure'  # notify only if failure
+        if: env.WORKFLOW_CONCLUSION == 'failure' || ${{ last-completed-operation == 'failure' }} # notify only if failure, or if it's the first success after failure
         uses: sachinkundu/ms-teams-notification@1.4
         with:
           github-token: ${{ github.token }}

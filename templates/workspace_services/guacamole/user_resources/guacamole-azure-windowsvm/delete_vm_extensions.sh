@@ -4,7 +4,7 @@ set -o errexit
 set -o pipefail
 set -o nounset
 # Uncomment this line to see each command for debugging (careful: this will show secrets!)
-set -o xtrace
+# set -o xtrace
 
 
 # Delete any existing VM Extensions befroe a VM gets deleted.
@@ -23,7 +23,10 @@ terraform init -input=false -backend=true \
     -backend-config="container_name=${TF_STATE_CONTAINER_NAME}" \
     -backend-config="key=${ID}"
 
+echo "Running terraform state list"
 tf_state_list="$(terraform state list)"
+echo "State list result: ${tf_state_list}"
 echo "${tf_state_list}" | grep "azurerm_virtual_machine_extension." | xargs -r terraform state rm
+echo "Script finished"
 
 popd
