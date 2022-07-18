@@ -65,7 +65,7 @@ module "azure_monitor" {
   resource_group_name                      = azurerm_resource_group.ws.name
   tre_resource_id                          = var.tre_resource_id
   tre_workspace_tags                       = local.tre_workspace_tags
-  shared_subnet_id                         = module.network.services_subnet_id
+  workspace_subnet_id                      = module.network.services_subnet_id
   azure_monitor_dns_zone_id                = module.network.azure_monitor_dns_zone_id
   azure_monitor_oms_opinsights_dns_zone_id = module.network.azure_monitor_oms_opinsights_dns_zone_id
   azure_monitor_ods_opinsights_dns_zone_id = module.network.azure_monitor_ods_opinsights_dns_zone_id
