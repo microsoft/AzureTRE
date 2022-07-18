@@ -33,8 +33,8 @@ resource "azurerm_linux_web_app" "api" {
     "ApplicationInsightsAgent_EXTENSION_VERSION"     = "~3"
     "XDT_MicrosoftApplicationInsights_Mode"          = "default"
     "WEBSITES_PORT"                                  = "8000"
-    "STATE_STORE_ENDPOINT"                           = azurerm_cosmosdb_account.tre-db-account.endpoint
-    "COSMOSDB_ACCOUNT_NAME"                          = azurerm_cosmosdb_account.tre-db-account.name
+    "STATE_STORE_ENDPOINT"                           = azurerm_cosmosdb_account.tre_db_account.endpoint
+    "COSMOSDB_ACCOUNT_NAME"                          = azurerm_cosmosdb_account.tre_db_account.name
     "SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE"          = "sb-${var.tre_id}.servicebus.windows.net"
     "EVENT_GRID_STATUS_CHANGED_TOPIC_ENDPOINT"       = module.airlock_resources.event_grid_status_changed_topic_endpoint
     "EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_ENDPOINT" = module.airlock_resources.event_grid_airlock_notification_topic_endpoint
@@ -59,19 +59,31 @@ resource "azurerm_linux_web_app" "api" {
     identity_ids = [azurerm_user_assigned_identity.id.id]
   }
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle {
+    ignore_changes = [
+      tags,
+
+      # Required since we're setting with azurerm_app_service_virtual_network_swift_connection below.
+      virtual_network_subnet_id,
+    ]
+  }
 
   site_config {
     vnet_route_all_enabled                        = true
     container_registry_use_managed_identity       = true
     container_registry_managed_identity_client_id = azurerm_user_assigned_identity.id.client_id
-    # always_on                            = true
-    minimum_tls_version = "1.2"
-    ftps_state          = "Disabled"
+    minimum_tls_version                           = "1.2"
+    ftps_state                                    = "Disabled"
 
     application_stack {
       docker_image     = "${var.docker_registry_server}/${var.api_image_repository}"
       docker_image_tag = local.version
+    }
+
+    cors {
+      allowed_origins = [
+        var.enable_local_debugging ? "http://localhost:3000" : ""
+      ]
     }
   }
 
@@ -115,9 +127,16 @@ resource "azurerm_private_endpoint" "api_private_endpoint" {
   }
 }
 
-resource "azurerm_app_service_virtual_network_swift_connection" "api-integrated-vnet" {
+# Kept to be backward compatible with existing deployments despite the ability
+# to set through azurerm_linux_web_app.virtual_network_subnet_id
+resource "azurerm_app_service_virtual_network_swift_connection" "api_integrated_vnet" {
   app_service_id = azurerm_linux_web_app.api.id
   subnet_id      = module.network.web_app_subnet_id
+}
+
+moved {
+  from = azurerm_app_service_virtual_network_swift_connection.api-integrated-vnet
+  to   = azurerm_app_service_virtual_network_swift_connection.api_integrated_vnet
 }
 
 resource "azurerm_monitor_diagnostic_setting" "webapp_api" {
