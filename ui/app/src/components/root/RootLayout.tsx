@@ -10,6 +10,8 @@ import { LeftNav } from './LeftNav';
 import { LoadingState } from '../../models/loadingState';
 import { SharedServices } from '../shared/SharedServices';
 import { SharedServiceItem } from '../shared/SharedServiceItem';
+import { SecuredByRole } from '../shared/SecuredByRole';
+import { RoleName } from '../../models/roleNames';
 
 export const RootLayout: React.FunctionComponent = () => {
   const [workspaces, setWorkspaces] = useState([] as Array<Workspace>);
@@ -71,8 +73,8 @@ export const RootLayout: React.FunctionComponent = () => {
               <Route path="/admin" element={<Admin />} />
               <Route path="/shared-services/*" element={
                 <Routes>
-                  <Route path="/" element={<SharedServices />} />
-                  <Route path=":sharedServiceId" element={<SharedServiceItem />} />
+                  <Route path="/" element={<SecuredByRole element={<SharedServices />} allowedRoles={[RoleName.TREAdmin]} errorString={"You must be a TRE Admin to access this area"}/>} />
+                  <Route path=":sharedServiceId" element={<SecuredByRole element={<SharedServiceItem />} allowedRoles={[RoleName.TREAdmin]} errorString={"You must be a TRE Admin to access this area"}/>} />
                 </Routes>
               } />
             </Routes>
