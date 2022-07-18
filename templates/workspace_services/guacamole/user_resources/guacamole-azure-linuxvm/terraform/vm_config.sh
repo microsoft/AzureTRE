@@ -1,5 +1,11 @@
 #!/bin/bash
 
+set -o errexit
+set -o pipefail
+# set -o nounset
+# Uncomment this line to see each command for debugging (careful: this will show secrets!)
+# set -o xtrace
+
 # Remove apt sources not included in sources.list file
 sudo rm /etc/apt/sources.list.d/*
 
