@@ -24,7 +24,7 @@ from models.domain.request_action import RequestAction
 shared_services_router = APIRouter(dependencies=[Depends(get_current_tre_user_or_tre_admin)])
 
 
-@shared_services_router.get("/shared-services", response_model=SharedServicesInList, name=strings.API_GET_ALL_SHARED_SERVICES, dependencies=[Depends(get_current_tre_user_or_tre_admin)])
+@shared_services_router.get("/shared-services", response_model=SharedServicesInList, name=strings.API_GET_ALL_SHARED_SERVICES, dependencies=[Depends(get_current_admin_user)])
 async def retrieve_shared_services(shared_services_repo=Depends(get_repository(SharedServiceRepository))) -> SharedServicesInList:
     shared_services = shared_services_repo.get_active_shared_services()
     return SharedServicesInList(sharedServices=shared_services)
