@@ -32,7 +32,7 @@ h. **Cancelled**: The import/export process was manually cancelled by the reques
 i. **Blocking In-progress**: The import/export process has been blocked, however data movement is still ongoing.
 j. **Blocked By Scan**: The import/export process has been blocked. The security analysis found issues in the submitted data, and consequently quarantined the data.
 
-When an airlock process is created the state is **Draft** and thre request infrastructure will get created providing a single container to centralize data in the request. Once the processThe user will get a link for this container inside the storage account (URL + SAS token) that he can use to upload the desired data to be processed (import or export).
+When an airlock process is created the state is **Draft** and the request infrastructure will get created providing a single container to centralize data in the request. Once completed, the user user will be able to get a link for this container inside the storage account (URL + SAS token) that he can use to upload the desired data to be processed (import or export).
 This storage location is external for import (`stalimex`) or internal for export (`stalexint`), however only accessible to the requestor (ex: a TRE user/researcher).
 The user will be able to upload a file to the provided storage location, using any tool of their preference: [Azure Storage Explorer](https://azure.microsoft.com/en-us/features/storage-explorer/) or [AzCopy](https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-v10) which is a command line.
 
@@ -53,7 +53,7 @@ Also, the process guarantees that data is not tampered with through out the proc
 
 In an import process, data will transition from more public locations (yet confined to the requestor) to TRE workspace storage, after guaranteeding security automatically and by manual review.
 
-In an export process data will transition from internal locations (available to the requetor) to public locations in the TRE, after going through a manual review.
+In an export process data will transition from internal locations (available to the requestor) to public locations in the TRE, after going through a manual review.
 
 Considering that the Airlock requests may require large data movements, the operations can have longer durations, hence becoming the operations asynchronous. This is why states like **Approval In-progress**, **Rejection In-progress** or **Blocking In-progress** will be set while there are data movement operations.
 
@@ -61,7 +61,7 @@ Considering that the Airlock requests may require large data movements, the oper
 
 ## Security Scan
 
-The identified data in a airlock proces, will be submited to a security scan. If the security scan identifies issues the data is quarantine, and a report is added to the process metadata. Both the requestor and Workspace Owner are notified. For successful security scan, the data will remain in state **In-progress**, and accessible to the Workspace Owner.
+The identified data in a airlock proces, will be submited to a security scan. If the security scan identifies issues the data is quarantined, and a report is added to the process metadata. Both the requestor and Workspace Owner are notified. For successful security scan, the data will remain in state **In-progress**, and accessible to the Workspace Owner.
 
 > * The Security scan will be optional, behind a feature flag, enabled by script
 > * The outcome of security scan will be either the in-progress (`stalexip`) storage or rejected (`stalexrej`)
@@ -72,7 +72,7 @@ The identified data in a airlock proces, will be submited to a security scan. If
 The approval mechanism, is bundled with any airlock process, providing a specific way to `approve` or `reject` the data. This mechanism will allow the Airlock Managers to explicitly approve/reject the process, after having acess to the data. The Airlock Manager users will be able to execute a manual review on the data using the tools available to him in a reviewal TRE Workspace.
 Once this manual review is executed, Airlock Managers can proactivelly approve or reject the airlock request.
 
-The only responsability of the Approval mechanism is to support a cycle of revision, approval or rejection, while tracking the decision.
+The only goal of the Approval mechanism is to provide a cycle of revision, approval or rejection, while tracking the decision.
 
 This mechanism will provice access to the data in the airlock process, and will be able to use a VM in TRE workspace. The data review will be the Airlock Manager responsability
 
