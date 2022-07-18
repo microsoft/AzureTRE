@@ -108,9 +108,9 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
         assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace(workspace_properties={"enable_airlock": False}))
-    async def test_post_airlock_request_with_airlock_disabled_returns_404(self, _, app, client, sample_airlock_request_input_data):
+    async def test_post_airlock_request_with_airlock_disabled_returns_405(self, _, app, client, sample_airlock_request_input_data):
         response = await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID), json=sample_airlock_request_input_data)
-        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace(workspace_properties={}))
     @patch("api.routes.airlock.save_and_publish_event_airlock_request")
