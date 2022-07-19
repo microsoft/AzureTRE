@@ -59,7 +59,10 @@ def recurse_object(obj: dict, primary_resource_dict: dict) -> dict:
     for prop in obj:
         if isinstance(obj[prop], list):
             for i in range(0, len(obj[prop])):
-                obj[prop][i] = recurse_object(obj[prop][i], primary_resource_dict)
+                if isinstance(obj[prop][i], list) or isinstance(obj[prop][i], dict):
+                    obj[prop][i] = recurse_object(obj[prop][i], primary_resource_dict)
+                else:
+                    obj[prop][i] = substitute_value(obj[prop][i], primary_resource_dict)
         if isinstance(obj[prop], dict):
             obj[prop] = recurse_object(obj[prop])
         else:
