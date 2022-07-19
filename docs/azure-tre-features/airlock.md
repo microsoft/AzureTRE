@@ -51,7 +51,7 @@ graph TD
   H-->|Request Canceled| X
   classDef temporary stroke-dasharray: 5 5
 ```
-> Airlock state flow diagram
+> Airlock state flow diagram for an Airlock export request
 
 When an airlock process is created the initial state is **Draft** and the required infrastructure will get created providing a single container to isolate the data in the request. Once completed, the user user will be able to get a link for this container inside the storage account (URL + SAS token) that he can use to upload the desired data to be processed (import or export).
 This storage location is external for import (`stalimex`) or internal for export (`stalexint`), however only accessible to the requestor (ex: a TRE user/researcher).
