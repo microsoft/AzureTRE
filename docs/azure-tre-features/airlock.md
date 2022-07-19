@@ -114,11 +114,30 @@ When the state changes to `In-progress` the Workspace Onwer (Airlock Manager) ge
 
 The Airlock feature is supported by infrastructure at the TRE and workspace level, containing a set of storage accounts. Each Airlock request, will provision and use unique storage containers with the request id in it's name.
 
+```mermaid
+graph LR
+  subgraph TRE Workspace
+  E[(stalimapp</br>import approved)]
+  end
+  subgraph TRE
+  A[(stalimex</br>import external)]-->|Request Submitted| B
+  B[(stalimip</br>import in-progress)]-->|Security issues found| D[(stalimblocked</br>import blocked)] 
+  B-->|No security issues found| review{Manual</br>Approval} 
+  review-->|Rejected| C[(stalimrej</br>import rejected)]
+  review-->|Approved| E
+  end
+  subgraph External
+      data(Data to import)-->A
+  end
+```
+> Data movement in an Airlock import request
+
+
 TRE:
 * `stalimex` - storage (st) airlock (al) import (im) external (ex)
 * `stalimip` - storage (st) airlock (al) import (im) in-progress (ip)
 * `stalimrej` - storage (st) airlock (al) import (im) rejected (rej)
-* `stalimblocked` - storage (st) airlock (al) import (ex) approved (app)
+* `stalimblocked` - storage (st) airlock (al) import (im) blocked
 * `stalexapp` - storage (st) airlock (al) export (ex) approved (app)
 
 Workspace
@@ -126,7 +145,7 @@ Workspace
 * `stalexint` - workspace storage (st) airlock (al) export (ex) internal (int)
 * `stalexip` - workspace storage (st) airlock (al) export (ex) in-progress (ip)
 * `stalexrej` - workspace storage (st) airlock (al) export (ex) rejected (rej)
-* `stalexblocked` - workspace storage (st) airlock (al) export (ex) rejected (rej)
+* `stalexblocked` - workspace storage (st) airlock (al) export (ex) blocked
 
 > * The external storage accounts (`stalimex`, `stalexapp`), are not bound to any vnet and accessible (with SAS token) via internet.
 > * The internal storage account (`stalexint`) is bound to the workspace vnet, so ONLY TRE Users/Researchers on that workspace can access it
