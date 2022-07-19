@@ -117,7 +117,7 @@ def test_update_airlock_request_status_with_allowed_new_status_should_update_req
 
 
 @pytest.mark.parametrize("current_status, new_status", get_forbidden_status_changes())
-def test_update_airlock_request_status_with_frobidden_status_should_fail_on_validation(airlock_request_repo, current_status, new_status, verify_dictionary_contains_all_enum_values):
+def test_update_airlock_request_status_with_forbidden_status_should_fail_on_validation(airlock_request_repo, current_status, new_status, verify_dictionary_contains_all_enum_values):
     user = create_test_user()
     mock_existing_request = airlock_request_mock(status=current_status)
     with pytest.raises(HTTPException):
