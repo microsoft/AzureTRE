@@ -114,12 +114,10 @@ class TestSharedServiceRoutesThatRequireAdminRights:
         assert obj["properties"]["private_field_1"] == "value_1"
         assert obj["properties"]["private_field_2"] == "value_2"
 
-
     # [GET] /shared-services/{shared_service_id}
     @patch("api.routes.shared_services.SharedServiceRepository.get_active_shared_services")
     @patch("api.dependencies.shared_services.SharedServiceRepository.get_shared_service_by_id", side_effect=EntityDoesNotExist)
-    async def test_get_shared_service_raises_404_if_not_found(self, get_shared_service_mock, _,
-                                                              app, client):
+    async def test_get_shared_service_raises_404_if_not_found(self, get_shared_service_mock, _, app, client):
         get_shared_service_mock.return_value = sample_shared_service(SHARED_SERVICE_ID)
 
         response = await client.get(
