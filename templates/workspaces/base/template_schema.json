@@ -57,11 +57,6 @@
       "default": "P1v3",
       "title": "App Service Plan SKU",
       "description": "The SKU that will be used when deploying an Azure App Service Plan."
-    }
-  },
-  "uiSchema": {
-    "aad_redirect_uris": {
-      "classNames": "tre-hidden"
     },
     "enable_airlock": {
       "$id": "#/properties/enable_airlock",
@@ -69,6 +64,11 @@
       "default": true,
       "title": "Enable Airlock",
       "description": "If enabled, allows imports and exports for the workspace."
+    }
+  },
+  "uiSchema": {
+    "aad_redirect_uris": {
+      "classNames": "tre-hidden"
     }
   }
 }
