@@ -2,6 +2,7 @@
 from typing import List
 
 from pydantic import BaseModel, Field
+from models.domain.restricted_resource import RestrictedResource
 
 from models.domain.resource import ResourceType
 from models.domain.shared_service import SharedService
@@ -32,7 +33,7 @@ class SharedServiceInResponse(BaseModel):
 
 
 class SharedServicesInList(BaseModel):
-    sharedServices: List[SharedService] = Field([], title="shared services")
+    sharedServices: List[RestrictedResource] = Field([], title="shared services")
 
     class Config:
         schema_extra = {
