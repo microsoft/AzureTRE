@@ -47,6 +47,11 @@ variable "register_aad_application" {
   description = "Create an AAD application automatically for the Workspace."
 }
 
+variable "enable_airlock" {
+  type        = bool
+  description = "Controls the deployment of Airlock resources in the workspace."
+}
+
 variable "aad_redirect_uris_b64" {
   type    = string # B64 encoded list of objects like [{"name": "my uri 1", "value": "https://..."}, {}]
   default = "W10=" #b64 for []
