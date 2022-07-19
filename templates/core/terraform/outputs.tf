@@ -39,15 +39,15 @@ output "service_bus_deployment_status_queue" {
 }
 
 output "state_store_resource_id" {
-  value = azurerm_cosmosdb_account.tre-db-account.id
+  value = azurerm_cosmosdb_account.tre_db_account.id
 }
 
 output "state_store_endpoint" {
-  value = azurerm_cosmosdb_account.tre-db-account.endpoint
+  value = azurerm_cosmosdb_account.tre_db_account.endpoint
 }
 
 output "state_store_account_name" {
-  value = azurerm_cosmosdb_account.tre-db-account.name
+  value = azurerm_cosmosdb_account.tre_db_account.name
 }
 
 output "app_insights_instrumentation_key" {

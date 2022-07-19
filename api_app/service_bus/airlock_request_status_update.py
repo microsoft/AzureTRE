@@ -8,6 +8,7 @@ from pydantic import ValidationError, parse_obj_as
 from api.dependencies.database import get_db_client
 from api.dependencies.airlock import get_airlock_request_by_id_from_path
 from api.routes.airlock_resource_helpers import update_status_and_publish_event_airlock_request
+from db.repositories.workspaces import WorkspaceRepository
 from models.domain.airlock_request import AirlockRequestStatus
 from db.repositories.airlock_requests import AirlockRequestRepository
 from models.domain.airlock_operations import StepResultStatusUpdateMessage
@@ -46,7 +47,7 @@ async def receive_message_from_step_result_queue():
                         await receiver.complete_message(msg)
 
 
-async def update_status_in_database(airlock_request_repo: AirlockRequestRepository, step_result_message: StepResultStatusUpdateMessage):
+async def update_status_in_database(airlock_request_repo: AirlockRequestRepository, workspace_repo: WorkspaceRepository, step_result_message: StepResultStatusUpdateMessage):
     """
     Updates an airlock request and with the new status from step_result message contents.
 
@@ -61,8 +62,9 @@ async def update_status_in_database(airlock_request_repo: AirlockRequestReposito
         airlock_request = await get_airlock_request_by_id_from_path(airlock_request_id=airlock_request_id, airlock_request_repo=airlock_request_repo)
         # Validate that the airlock request status is the same as current status
         if airlock_request.status == current_status:
+            workspace = workspace_repo.get_workspace_by_id(airlock_request.workspaceId)
             # update to new status and send to event grid
-            await update_status_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=airlock_request_repo, user=airlock_request.user, new_status=new_status)
+            await update_status_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=airlock_request_repo, user=airlock_request.user, new_status=new_status, workspace=workspace)
             result = True
         else:
             error_string = strings.STEP_RESULT_MESSAGE_STATUS_DOES_NOT_MATCH.format(airlock_request_id, current_status, airlock_request.status)
@@ -97,8 +99,9 @@ async def receive_step_result_message_and_update_status(app) -> None:
     try:
         async for message in receive_message_gen:
             airlock_request_repo = AirlockRequestRepository(get_db_client(app))
+            workspace_repo = WorkspaceRepository(get_db_client(app))
             logging.info("Fetched step_result message from queue, start updating airlock request")
-            result = await update_status_in_database(airlock_request_repo, message)
+            result = await update_status_in_database(airlock_request_repo, workspace_repo, message)
             await receive_message_gen.asend(result)
             logging.info("Finished updating airlock request")
     except StopAsyncIteration:  # the async generator when finished signals end with this exception.

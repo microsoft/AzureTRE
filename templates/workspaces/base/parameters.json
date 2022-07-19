@@ -117,6 +117,12 @@
       "source": {
         "env": "APP_SERVICE_PLAN_SKU"
       }
+    },
+    {
+      "name": "enable_airlock",
+      "source": {
+        "env": "ENABLE_AIRLOCK"
+      }
     }
   ]
 }
