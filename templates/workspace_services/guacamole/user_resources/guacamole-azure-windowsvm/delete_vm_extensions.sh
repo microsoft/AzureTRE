@@ -26,8 +26,6 @@ terraform init -input=false -backend=true \
 echo "Running terraform state list"
 tf_state_list="$(terraform state list)"
 echo "State list result: ${tf_state_list}"
-
 echo "${tf_state_list}" | { grep "azurerm_virtual_machine_extension." || [[ $? == 1 ]]; } | xargs -r terraform state rm
-
 echo "Script finished"
 popd
