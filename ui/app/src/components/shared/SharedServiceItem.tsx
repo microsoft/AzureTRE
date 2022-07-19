@@ -10,7 +10,11 @@ import { useComponentManager } from '../../hooks/useComponentManager';
 import { Resource } from '../../models/resource';
 import { ResourceBody } from './ResourceBody';
 
-export const SharedServiceItem: React.FunctionComponent = () => {
+interface SharedServiceItemProps {
+  readonly?: boolean
+}
+
+export const SharedServiceItem: React.FunctionComponent<SharedServiceItemProps> = (props: SharedServiceItemProps) => {
   const { sharedServiceId } = useParams();
   const [sharedService, setSharedService] = useState({} as SharedService);
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
@@ -36,8 +40,8 @@ export const SharedServiceItem: React.FunctionComponent = () => {
     case LoadingState.Ok:
       return (
         <>
-          <ResourceHeader resource={sharedService} latestUpdate={latestUpdate} />
-          <ResourceBody resource={sharedService} />
+          <ResourceHeader resource={sharedService} latestUpdate={latestUpdate} readonly={props.readonly} />
+          <ResourceBody resource={sharedService} readonly={props.readonly} />
         </>
       );
     case LoadingState.Error:

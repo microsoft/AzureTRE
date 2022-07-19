@@ -7,7 +7,8 @@ import { PowerStateBadge } from './PowerStateBadge';
 
 interface ResourceHeaderProps {
   resource: Resource,
-  latestUpdate: ResourceUpdate
+  latestUpdate: ResourceUpdate,
+  readonly?: boolean
 }
 
 export const ResourceHeader: React.FunctionComponent<ResourceHeaderProps> = (props: ResourceHeaderProps) => {
@@ -17,12 +18,12 @@ export const ResourceHeader: React.FunctionComponent<ResourceHeaderProps> = (pro
       {props.resource && props.resource.id &&
         <div className="tre-panel">
           <Stack>
-            <Stack.Item style={{ borderBottom: '1px #999 solid' }}>
+            <Stack.Item style={!props.readonly ? { borderBottom: '1px #999 solid' } : {}}>
               <Stack horizontal>
                 <Stack.Item grow={1}>
                   <div style={{ display: 'flex', alignItems: 'center' }}>
                     <h1 style={{ marginLeft: 5, marginTop: 5, marginRight: 15, marginBottom: 10 }}>
-                      <span style={{ textTransform: 'capitalize' }}>{props.resource.resourceType.replace('-', ' ')}</span>: {props.resource.properties?.display_name}
+                      {props.resource.properties?.display_name}
                     </h1>
                     {
                       (props.resource.azureStatus?.powerState) &&
@@ -38,9 +39,13 @@ export const ResourceHeader: React.FunctionComponent<ResourceHeaderProps> = (pro
                 }
               </Stack>
             </Stack.Item>
-            <Stack.Item>
-              <ResourceContextMenu resource={props.resource} commandBar={true} componentAction={props.latestUpdate.componentAction} />
-            </Stack.Item>
+            {
+              !props.readonly &&
+              <Stack.Item>
+                <ResourceContextMenu resource={props.resource} commandBar={true} componentAction={props.latestUpdate.componentAction} />
+              </Stack.Item>
+            }
+
             {
               props.latestUpdate.componentAction === ComponentAction.Lock &&
               <Stack.Item>
