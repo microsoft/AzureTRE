@@ -32,6 +32,17 @@ class SharedServiceInResponse(BaseModel):
         }
 
 
+class RestrictedSharedServiceInResponse(BaseModel):
+    sharedService: RestrictedResource
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "shared_service": get_sample_shared_service("2fdc9fba-726e-4db6-a1b8-9018a2165748")
+            }
+        }
+
+
 class SharedServicesInList(BaseModel):
     sharedServices: List[RestrictedResource] = Field([], title="shared services")
 

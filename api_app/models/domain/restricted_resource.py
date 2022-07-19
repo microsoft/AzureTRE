@@ -21,6 +21,7 @@ class RestrictedResource(AzureTREModel):
     isEnabled: bool = True  # Must be set before a resource can be deleted
     resourceType: ResourceType
     deploymentStatus: Optional[str] = Field(title="Deployment Status", description="Overall deployment status of the resource")
+    etag: str = Field(title="_etag", description="eTag of the document", alias="_etag")
     resourcePath: str = ""
     resourceVersion: int = 0
     user: dict = {}
