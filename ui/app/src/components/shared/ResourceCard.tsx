@@ -107,8 +107,8 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
                     </div>
                   }
                 </Stack.Item>
-                <Stack.Item style={{ paddingTop: 5, paddingLeft: 10 }}>
-                  <StatusBadge status={latestUpdate.operation ? latestUpdate.operation?.status : props.resource.deploymentStatus} />
+                <Stack.Item style={{ paddingTop: 2, paddingLeft: 10 }}>
+                  <StatusBadge resourceId={props.resource.id} status={latestUpdate.operation ? latestUpdate.operation?.status : props.resource.deploymentStatus} />
                 </Stack.Item>
               </Stack>
             </Stack.Item>
@@ -181,7 +181,7 @@ const connectStyles: React.CSSProperties = {
 
 const footerStyles: React.CSSProperties = {
   backgroundColor: DefaultPalette.white,
-  padding: '5px 10px',
+  padding: '5px 7px',
   minHeight: '30px',
   borderTop: '1px #ccc solid',
 }
