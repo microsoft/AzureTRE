@@ -4,8 +4,6 @@ In a Trusted Research Environment (TRE) the workspaces represent a security boun
 This constitutes the mechanism focused in preventing data exfiltration and securing TRE and its workspaces from inappropriate data, while allowing researchers to work on their projects and execute their tasks.
 The airlock feature brings several actions: ingress/egress Mechanism; Data movement; Security gates; Approval mechanism and Notifications. As part of TRE's Safe settings all activity must be tracked for auditiing purpose.
 
-<image>
-
 The Airlock feature aims to address these goals:
 * Prevent unauthorised data import or export.
 * Provide a process to allow approved data into the security boundary of a TRE Workspace.
@@ -33,6 +31,27 @@ The Airlock allows a TRE user to start `import` or `export` process to a given w
 8. **Cancelled**: The Airlock request was manually cancelled by the requestor TRE user, a Workspace owner or a TRE administrator. The cancelation is only allowed when the request is not actively changing (i.e. **Draft** or **In-Review** state).
 9. **Blocking In-progress**: The Airlock request has been blocked, however data movement is still ongoing.
 10. **Blocked By Scan**: The Airlock request has been blocked. The security analysis found issues in the submitted data, and consequently quarantined the data.
+
+```mermaid
+graph TD 
+  A[Researcher wants to export data from TRE Workspace] -->|Request created| B[Request in state Draft] 
+  B-->|Researcher gets link to storage container and uploads data| B
+  B-->|Request submitted| C[Submitted]
+  C--> D{Security issues found?} 
+  D-->|Yes| E[Blocking In-progress]
+  D-->|No| G[In-Review]
+  E:::temporary--> F((Blocked By Scan))
+  G-->|Human Review| H{Is data appropriate to export?}
+  H-->|Approve| I[Approval In-progress]
+  H-->|Reject| J[Rejection In-progress]
+  I:::temporary-->K((Approved))
+  J:::temporary-->L((Rejected))
+  B-->|Request Canceled| X((Canceled))
+  G-->|Request Canceled| X
+  H-->|Request Canceled| X
+  classDef temporary stroke-dasharray: 5 5
+```
+> Airlock state flow diagram
 
 When an airlock process is created the initial state is **Draft** and the required infrastructure will get created providing a single container to isolate the data in the request. Once completed, the user user will be able to get a link for this container inside the storage account (URL + SAS token) that he can use to upload the desired data to be processed (import or export).
 This storage location is external for import (`stalimex`) or internal for export (`stalexint`), however only accessible to the requestor (ex: a TRE user/researcher).
