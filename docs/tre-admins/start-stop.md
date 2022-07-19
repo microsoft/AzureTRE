@@ -65,6 +65,11 @@ $authHeader = @{
 $ResourceGroups = Get-AzResourceGroup -Tag @{'project'='Azure Trusted Research Environment'}
 foreach ($Group in $ResourceGroups) 
 {
+    if ($Group.ResourceGroupName -like '*-ws-*') {
+      # we deal with the workspace resource groups separately.
+      continue
+    }
+
     $Firewall = Get-AzFirewall -ResourceGroupName $Group.ResourceGroupName
     if ($Firewall -ne $null) {
         $Firewall.Deallocate()
