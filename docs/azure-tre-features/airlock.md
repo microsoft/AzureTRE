@@ -6,14 +6,14 @@ The airlock feature brings several actions: ingress/egress Mechanism; Data movem
 
 The Airlock feature aims to address these goals:
 * Prevent unauthorised data import or export.
-* Provide a process to allow approved data into the security boundary of a TRE Workspace.
+* Provide a process to allow approved data to be imported through the security boundary of a TRE Workspace.
 * TRE provides functionality to track requests and decisions, supporting cycle of revision, approval or rejection.
-* Data being imported with an airlock import process must be automatically scanned for security purpose.
-* Data being exported or imported must be manually reviewed by the Workspace Owner.
-* Notify the involved users of the process progress and/or required actions
-* All airlock processes are audited and tracked
+* Data being imported with an airlock import process can be automatically scanned for security issues.
+* Data being exported or imported must be manually reviewed by the Airlock Manager.
+* Notify the requesting researcher of the process progress and/or required actions.
+* All steps within the airlock process are audited.
 
-Typically in a TRE, the Airlock feature would be used to allow a researcher to export patient identifiers for an exact cohort without the underlying data ever being exposed. With the airlock, data to export must go though a human review, typically done by senior researchers.
+Typically in a TRE, the Airlock feature would be used to allow a researcher to export outputs of a research project such as summary results. With the airlock, data to export must go though a human review, typically done by senior researchers.
 
 The Airlock feature will create events on every meaningful step of the processes. This will enable increased flexibility by allowing an organization to extend the notification mechanism.
 
