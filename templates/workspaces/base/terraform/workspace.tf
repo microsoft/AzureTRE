@@ -42,6 +42,7 @@ module "aad" {
 }
 
 module "airlock" {
+  count                       = var.enable_airlock ? 1 : 0
   source                      = "./airlock"
   location                    = var.location
   tre_id                      = var.tre_id
