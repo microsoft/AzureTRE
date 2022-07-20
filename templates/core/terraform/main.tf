@@ -7,19 +7,19 @@ terraform {
     }
     random = {
       source  = "hashicorp/random"
-      version = "~> 3.3"
+      version = "~> 3.3.0"
     }
     template = {
       source  = "hashicorp/template"
-      version = "~> 2.2"
+      version = "~> 2.2.0"
     }
     local = {
       source  = "hashicorp/local"
-      version = "~> 2.2"
+      version = "~> 2.2.0"
     }
     http = {
       source  = "hashicorp/http"
-      version = "~> 2.2"
+      version = "~> 2.2.0"
     }
   }
 
