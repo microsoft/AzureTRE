@@ -30,5 +30,3 @@ variable "smtp_password" {
 variable "smtp_from_email" {
   type = string
 }
-
-variable "arm_use_msi" {}

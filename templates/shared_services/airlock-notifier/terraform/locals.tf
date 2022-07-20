@@ -1,4 +1,5 @@
 locals {
+  core_vnet                                        = "vnet-${var.tre_id}"
   core_resource_group_name                         = "rg-${var.tre_id}"
   airlock_notifier_app_name                        = "airlock-notifier-${var.tre_id}"
   storage_account_name                             = lower(replace("stg-${var.tre_id}", "-", ""))

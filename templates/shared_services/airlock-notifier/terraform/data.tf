@@ -45,6 +45,17 @@ data "azurerm_eventgrid_topic" "airlock_notification" {
 
 data "azurerm_subnet" "airlock_notification" {
   name                 = "AirlockNotifiactionSubnet"
-  virtual_network_name = "vnet-${var.tre_id}"
+  virtual_network_name = local.core_vnet
   resource_group_name  = local.core_resource_group_name
+}
+
+data "azurerm_firewall" "fw" {
+  name                = "fw-${var.tre_id}"
+  resource_group_name = "rg-${var.tre_id}"
+}
+
+data "azurerm_subnet" "resource_processor" {
+  resource_group_name  = local.core_resource_group_name
+  virtual_network_name = local.core_vnet
+  name                 = "ResourceProcessorSubnet"
 }

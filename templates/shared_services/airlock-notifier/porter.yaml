@@ -68,7 +68,6 @@ install:
         smtp_username: "{{ bundle.parameters.smtp_username }}"
         smtp_password: "{{ bundle.parameters.smtp_password }}"
         smtp_from_email: "{{ bundle.parameters.smtp_from_email }}"
-        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
@@ -101,22 +100,11 @@ install:
 
 
 upgrade:
-  - terraform:
+  - exec:
       description: "Upgrade shared service"
-      input: false
-      vars:
-        tre_id: "{{ bundle.parameters.tre_id }}"
-        tre_resource_id: "{{ bundle.parameters.id }}"
-        smtp_server_address: "{{ bundle.parameters.smtp_server_address }}"
-        smtp_username: "{{ bundle.parameters.smtp_username }}"
-        smtp_password: "{{ bundle.parameters.smtp_password }}"
-        smtp_from_email: "{{ bundle.parameters.smtp_from_email }}"
-        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
-      backendConfig:
-        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
-        container_name: "{{ bundle.parameters.tfstate_container_name }}"
-        key: "{{ bundle.parameters.tre_id }}-shared-airlock-notifier"
+      command: echo
+      arguments:
+        - "This shared service does not implement upgrade action"
 
   - az:
       description: "Login to Azure"
@@ -151,7 +139,6 @@ uninstall:
         smtp_username: "{{ bundle.parameters.smtp_username }}"
         smtp_password: "{{ bundle.parameters.smtp_password }}"
         smtp_from_email: "{{ bundle.parameters.smtp_from_email }}"
-        arm_use_msi: "{{ bundle.parameters.arm_use_msi }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
         storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
