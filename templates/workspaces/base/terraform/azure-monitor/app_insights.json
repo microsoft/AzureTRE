@@ -24,7 +24,7 @@
   "variables": {},
   "resources": [
     {
-      "type": "Microsoft.Insights/components",
+      "type": "microsoft.insights/components",
       "apiVersion": "2020-02-02",
       "name": "[parameters('app_insights_name')]",
       "location": "[parameters('location')]",
