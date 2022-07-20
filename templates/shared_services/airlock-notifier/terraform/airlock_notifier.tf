@@ -2,7 +2,7 @@ resource "azurerm_firewall_network_rule_collection" "resource_processor_subnet_a
   name                = "nrc-resource_processor_allow_appservice_subnet"
   azure_firewall_name = data.azurerm_firewall.fw.name
   resource_group_name = data.azurerm_firewall.fw.resource_group_name
-  priority            = 103
+  priority            = 110
   action              = "Allow"
 
   rule {
