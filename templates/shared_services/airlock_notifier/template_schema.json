@@ -1,6 +1,6 @@
  {
   "$schema": "http://json-schema.org/draft-07/schema",
-  "$id": "https://github.com/microsoft/AzureTRE/templates/shared_services/airlock-notifier/template_schema.json",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/shared_services/airlock_notifier/template_schema.json",
   "type": "object",
   "title": "Airlock Notifier Shared Service",
   "description": "A shared service notifying on Airlock operations",
