@@ -48,6 +48,7 @@ nav:
           - System Architecture: "azure-tre-overview/architecture.md"
           - Network Architecture: "azure-tre-overview/networking.md"
           - Azure Resources: "azure-tre-overview/tre-resources-breakdown.md"
+          - Airlock Data Flow: "azure-tre-overview/airlock-data-flow.md"
       - Compliance Information: "coming-soon.md"
       - Getting Started: "coming-soon.md"
 
