@@ -23,7 +23,7 @@ resource "azurerm_firewall_network_rule_collection" "resource_processor_subnet_a
   }
 }
 
-resource "azurerm_service_plan" "notifier-plan" {
+resource "azurerm_service_plan" "notifier_plan" {
   name                = "airlock-notifier-plan-${var.tre_id}"
   resource_group_name = data.azurerm_resource_group.core.name
   location            = data.azurerm_resource_group.core.location
@@ -53,11 +53,11 @@ resource "azurerm_eventgrid_event_subscription" "airlock_notification" {
 
 // Using ARM as terraform's azurerm_api_connection creates a v1 api connection,
 // without connectionRuntimeUrl needed for SMTP https://github.com/hashicorp/terraform-provider-azurerm/issues/16195
-resource "azurerm_resource_group_template_deployment" "smtp-api-connection" {
+resource "azurerm_resource_group_template_deployment" "smtp_api_connection" {
   name                = "smtp-api-connection"
   resource_group_name = data.azurerm_resource_group.core.name
 
-  template_content = data.local_file.smtp-api-connection.content
+  template_content = data.local_file.smtp-api-smtp_api_connection.content
 
 
   parameters_content = jsonencode({
@@ -76,11 +76,11 @@ resource "azurerm_resource_group_template_deployment" "smtp-api-connection" {
 
 }
 
-resource "azurerm_logic_app_standard" "logic-app" {
+resource "azurerm_logic_app_standard" "logic_app" {
   name                       = "airlock-notifier-app-${var.tre_id}"
   location                   = data.azurerm_resource_group.core.location
   resource_group_name        = data.azurerm_resource_group.core.name
-  app_service_plan_id        = azurerm_service_plan.notifier-plan.id
+  app_service_plan_id        = azurerm_service_plan.notifier_plan.id
   storage_account_name       = data.azurerm_storage_account.storage.name
   storage_account_access_key = data.azurerm_storage_account.storage.primary_access_key
   app_settings = {
@@ -89,7 +89,7 @@ resource "azurerm_logic_app_standard" "logic-app" {
     "serviceBus_connectionString"    = data.azurerm_servicebus_namespace.core.default_primary_connection_string
     "subscription"                   = data.azurerm_subscription.current.subscription_id
     "resource_group"                 = data.azurerm_resource_group.core.name
-    "smtp_connection_runtime_url"    = jsondecode(azurerm_resource_group_template_deployment.smtp-api-connection.output_content).connectionRuntimeUrl.value
+    "smtp_connection_runtime_url"    = jsondecode(azurerm_resource_group_template_deployment.smtp_api_connection.output_content).connectionRuntimeUrl.value
     "smtp_from_email"                = var.smtp_from_email
     "APPINSIGHTS_INSTRUMENTATIONKEY" = data.azurerm_application_insights.core.instrumentation_key
   }
@@ -101,19 +101,19 @@ resource "azurerm_logic_app_standard" "logic-app" {
 }
 
 
-resource "azurerm_resource_group_template_deployment" "smtp-api-connection-access-policy" {
+resource "azurerm_resource_group_template_deployment" "smtp_api_connection_access_policy" {
   name                = "smtp-api-connection-access-policy"
   resource_group_name = data.azurerm_resource_group.core.name
 
-  template_content = data.local_file.smtp-access-policy.content
+  template_content = data.local_file.smtp_access_policy.content
 
 
   parameters_content = jsonencode({
     "servicePrincipalId" = {
-      value = azurerm_logic_app_standard.logic-app.identity.0.principal_id
+      value = azurerm_logic_app_standard.logic_app.identity.0.principal_id
     },
     "servicePrincipalTenantId" = {
-      value = azurerm_logic_app_standard.logic-app.identity.0.tenant_id
+      value = azurerm_logic_app_standard.logic_app.identity.0.tenant_id
     }
   })
 
@@ -122,7 +122,7 @@ resource "azurerm_resource_group_template_deployment" "smtp-api-connection-acces
 }
 
 
-resource "azurerm_app_service_virtual_network_swift_connection" "airlock-notifier-integrated-vnet" {
-  app_service_id = azurerm_logic_app_standard.logic-app.id
+resource "azurerm_app_service_virtual_network_swift_connection" "airlock_notifier_integrated_vnet" {
+  app_service_id = azurerm_logic_app_standard.logic_app.id
   subnet_id      = data.azurerm_subnet.airlock_notification.id
 }

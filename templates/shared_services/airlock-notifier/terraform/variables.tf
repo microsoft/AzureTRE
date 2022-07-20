@@ -8,12 +8,6 @@ variable "tre_resource_id" {
   description = "Resource ID"
 }
 
-variable "arm_subscription_id" {
-  description = "The TRE subscription id."
-  type        = string
-  default     = ""
-}
-
 variable "smtp_server_address" {
   type = string
 }

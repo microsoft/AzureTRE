@@ -18,20 +18,16 @@ data "azurerm_resource_group" "core" {
   name = local.core_resource_group_name
 }
 
-data "local_file" "smtp-api-connection" {
+data "local_file" "smtp_api_connection" {
   filename = "${path.module}/smtp-api-connection.json"
 }
 
-data "local_file" "smtp-access-policy" {
+data "local_file" "smtp_access_policy" {
   filename = "${path.module}/smtp-access-policy.json"
 }
 
 data "azurerm_subscription" "current" {
 }
-
-
-data "azurerm_client_config" "current" {}
-
 
 data "azurerm_eventgrid_topic" "airlock_notification" {
   name                = local.notification_topic_name

@@ -1,4 +1,4 @@
-# Airlock notifications Shared Service
+# Airlock Notifications Shared Service
 
 This shared service connects to the Airlock's notification event grid and send emails to the researchers/ws owners upon Airlock requests changes.
 
