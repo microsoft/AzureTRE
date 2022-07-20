@@ -10,7 +10,8 @@ export interface ResourceTemplate {
     properties: any,
     system_properties: any,
     actions: Array<TemplateAction>,
-    customActions: Array<TemplateAction>
+    customActions: Array<TemplateAction>,
+    uiSchema: any
 }
 
 export interface TemplateAction {
@@ -25,7 +26,7 @@ export const getActionIcon = (actionName: string) => {
             return 'Play';
         case 'stop':
             return 'Stop';
-        default: 
+        default:
             return 'Asterisk'
     }
 }

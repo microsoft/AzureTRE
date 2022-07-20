@@ -3,7 +3,7 @@
 set -o errexit
 set -o pipefail
 set -o nounset
-# Uncomment this line to see each command for debugging (careful: this will show secrets!)
+# Uncomment this line to see each command for debugging
 # set -o xtrace
 
 
@@ -23,7 +23,12 @@ terraform init -input=false -backend=true \
     -backend-config="container_name=${TF_STATE_CONTAINER_NAME}" \
     -backend-config="key=${ID}"
 
+echo "Running terraform state list"
 tf_state_list="$(terraform state list)"
-echo "${tf_state_list}" | grep "azurerm_virtual_machine_extension." | xargs -r terraform state rm
+echo "State list result: ${tf_state_list}"
 
+# The [[ $? == 1 ]] part is here because grep will exit with code 1 if there are no matches,
+# which will fail the script because of set -o errexit setting.
+echo "${tf_state_list}" | { grep "azurerm_virtual_machine_extension." || [[ $? == 1 ]]; } | xargs -r terraform state rm
+echo "Script finished"
 popd

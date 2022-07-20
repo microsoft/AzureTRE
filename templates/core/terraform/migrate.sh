@@ -19,22 +19,32 @@ echo "*** Migrating TF Resources ***"
 # 3. Delete the old resource from state
 # 4. Import the new resource type in using the existing Azure Resource ID
 
+terraform_show_json=$(terraform show -json)
+
 # azurerm_app_service_plan -> azurerm_service_plan
-core_app_service_plan_id=$(terraform show -json \
-  | jq -r 'select(.values.root_module) | .values.root_module.resources[] | select(.address=="azurerm_app_service_plan.core") | .values.id' \
-  || null)
+core_app_service_plan_id=$(echo "${terraform_show_json}" \
+  | jq -r 'select(.values.root_module.resources != null) | .values.root_module.resources[] | select(.address=="azurerm_app_service_plan.core") | .values.id')
 if [ -n "${core_app_service_plan_id}" ]; then
   echo "Migrating ${core_app_service_plan_id}"
   terraform state rm azurerm_app_service_plan.core
-  terraform import azurerm_service_plan.core "${core_app_service_plan_id}"
+  if [[ $(az resource list --query "[?id=='${core_app_service_plan_id}'] | length(@)") == 0 ]];
+  then
+    echo "The resource doesn't exist on Azure. Skipping importing it back to state."
+  else
+    terraform import azurerm_service_plan.core "${core_app_service_plan_id}"
+  fi
 fi
 
 # azurerm_app_service -> azurerm_linux_web_app
-api_app_service_id=$(terraform show -json \
-  | jq -r 'select(.values.root_module) | .values.root_module.resources[] | select(.address=="azurerm_app_service.api") | .values.id' \
-  || null)
+api_app_service_id=$(echo "${terraform_show_json}" \
+  | jq -r 'select(.values.root_module.resources != null) | .values.root_module.resources[] | select(.address=="azurerm_app_service.api") | .values.id')
 if [ -n "${api_app_service_id}" ]; then
-  echo "Migrating ${api_app_service_id}. (Phase 2)"
-  #terraform state rm azurerm_app_service.api
-  #terraform import azurerm_linux_web_app.api "${api_app_service_id}"
+  echo "Migrating ${api_app_service_id}"
+  terraform state rm azurerm_app_service.api
+  if [[ $(az resource list --query "[?id=='${api_app_service_id}'] | length(@)") == 0 ]];
+  then
+    echo "The resource doesn't exist on Azure. Skipping importing it back to state."
+  else
+    terraform import azurerm_linux_web_app.api "${api_app_service_id}"
+  fi
 fi

@@ -3,7 +3,23 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=3.5.0"
+      version = "=3.12.0"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.3.0"
+    }
+    template = {
+      source  = "hashicorp/template"
+      version = "~> 2.2.0"
+    }
+    local = {
+      source  = "hashicorp/local"
+      version = "~> 2.2.0"
+    }
+    http = {
+      source  = "hashicorp/http"
+      version = "~> 2.2.0"
     }
   }
 
@@ -68,7 +84,7 @@ module "appgateway" {
   resource_group_name        = azurerm_resource_group.core.name
   app_gw_subnet              = module.network.app_gw_subnet_id
   shared_subnet              = module.network.shared_subnet_id
-  api_fqdn                   = azurerm_app_service.api.default_site_hostname
+  api_fqdn                   = azurerm_linux_web_app.api.default_hostname
   keyvault_id                = azurerm_key_vault.kv.id
   static_web_dns_zone_id     = module.network.static_web_dns_zone_id
   log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
@@ -80,27 +96,25 @@ module "appgateway" {
 }
 
 module "airlock_resources" {
-  source                                  = "./airlock"
-  tre_id                                  = var.tre_id
-  location                                = var.location
-  resource_group_name                     = azurerm_resource_group.core.name
-  airlock_storage_subnet_id               = module.network.airlock_storage_subnet_id
-  airlock_events_subnet_id                = module.network.airlock_events_subnet_id
-  virtual_network_id                      = module.network.core_vnet_id
-  enable_local_debugging                  = var.enable_local_debugging
-  docker_registry_server                  = var.docker_registry_server
-  mgmt_resource_group_name                = var.mgmt_resource_group_name
-  mgmt_acr_name                           = var.acr_name
-  api_principal_id                        = azurerm_user_assigned_identity.id.principal_id
-  arm_subscription_id                     = var.arm_subscription_id
-  airlock_app_service_plan_sku_size       = var.api_app_service_plan_sku_size
-  airlock_processor_subnet_id             = module.network.airlock_processor_subnet_id
-  airlock_servicebus                      = azurerm_servicebus_namespace.sb
-  applicationinsights_connection_string   = module.azure_monitor.app_insights_connection_string
-  applicationinsights_instrumentation_key = module.azure_monitor.app_insights_instrumentation_key
-  enable_malware_scanning                 = var.enable_airlock_malware_scanning
-  tre_core_tags                           = local.tre_core_tags
-  log_analytics_workspace_id              = module.azure_monitor.log_analytics_workspace_id
+  source                                = "./airlock"
+  tre_id                                = var.tre_id
+  location                              = var.location
+  resource_group_name                   = azurerm_resource_group.core.name
+  airlock_storage_subnet_id             = module.network.airlock_storage_subnet_id
+  airlock_events_subnet_id              = module.network.airlock_events_subnet_id
+  enable_local_debugging                = var.enable_local_debugging
+  docker_registry_server                = var.docker_registry_server
+  mgmt_resource_group_name              = var.mgmt_resource_group_name
+  mgmt_acr_name                         = var.acr_name
+  api_principal_id                      = azurerm_user_assigned_identity.id.principal_id
+  arm_subscription_id                   = var.arm_subscription_id
+  airlock_app_service_plan_sku_size     = var.api_app_service_plan_sku_size
+  airlock_processor_subnet_id           = module.network.airlock_processor_subnet_id
+  airlock_servicebus                    = azurerm_servicebus_namespace.sb
+  applicationinsights_connection_string = module.azure_monitor.app_insights_connection_string
+  enable_malware_scanning               = var.enable_airlock_malware_scanning
+  tre_core_tags                         = local.tre_core_tags
+  log_analytics_workspace_id            = module.azure_monitor.log_analytics_workspace_id
 
   depends_on = [
     azurerm_servicebus_namespace.sb,

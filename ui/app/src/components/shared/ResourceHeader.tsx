@@ -33,7 +33,7 @@ export const ResourceHeader: React.FunctionComponent<ResourceHeaderProps> = (pro
                 {
                   (props.latestUpdate.operation || props.resource.deploymentStatus) &&
                   <Stack.Item align="center">
-                    <StatusBadge status={props.latestUpdate.operation ? props.latestUpdate.operation?.status : props.resource.deploymentStatus} />
+                    <StatusBadge resourceId={props.resource.id} status={props.latestUpdate.operation ? props.latestUpdate.operation?.status : props.resource.deploymentStatus} />
                   </Stack.Item>
                 }
               </Stack>
