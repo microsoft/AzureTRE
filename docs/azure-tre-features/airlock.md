@@ -1,6 +1,6 @@
 # Airlock
 
-In a Trusted Research Environment (TRE) the workspaces represent a security boundary that enables researchers to access data, execute analysis, apply algorithms and collect reports. The airlock capability brings the only mechanisme that allows users to `import` or `export` data, tools or other file based artefacts in a secure fashion with a human approval.
+In a Trusted Research Environment (TRE) the workspaces represent a security boundary that enables researchers to access data, execute analysis, apply algorithms and collect reports. The airlock capability brings the only mechanism that allows users to `import` or `export` data, tools or other file based artefacts in a secure fashion with a human approval.
 This constitutes the mechanism focused in preventing data exfiltration and securing TRE and its workspaces from inappropriate data, while allowing researchers to work on their projects and execute their tasks.
 The airlock feature brings several actions: ingress/egress Mechanism; Data movement; Security gates; Approval mechanism and Notifications. As part of TRE's Safe settings all activity must be tracked for auditiing purpose.
 
@@ -13,7 +13,7 @@ The Airlock feature aims to address these goals:
 * Notify the requesting researcher of the process progress and/or required actions.
 * All steps within the airlock process are audited.
 
-Typically in a TRE, the Airlock feature would be used to allow a researcher to export outputs of a research project such as summary results. With the airlock, data to export must go though a human review, typically done by senior researchers.
+Typically in a TRE, the Airlock feature would be used to allow a researcher to export outputs of a research project such as summary results. With the airlock, data to export must go though a human review, typically done by a data governance team.
 
 The Airlock feature will create events on every meaningful step of the processes. This will enable increased flexibility by allowing an organization to extend the notification mechanism.
 
