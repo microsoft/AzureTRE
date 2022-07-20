@@ -57,7 +57,7 @@ resource "azurerm_resource_group_template_deployment" "smtp_api_connection" {
   name                = "smtp-api-connection"
   resource_group_name = data.azurerm_resource_group.core.name
 
-  template_content = data.local_file.smtp-api-smtp_api_connection.content
+  template_content = data.local_file.smtp_api_connection.content
 
 
   parameters_content = jsonencode({
