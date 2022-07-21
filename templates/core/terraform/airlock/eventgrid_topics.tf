@@ -305,6 +305,16 @@ resource "azurerm_eventgrid_topic" "airlock_notification" {
   lifecycle { ignore_changes = [tags] }
 }
 
+resource "azurerm_role_assignment" "servicebus_sender_airlock_notification" {
+  scope                = var.airlock_servicebus.id
+  role_definition_name = "Azure Service Bus Data Sender"
+  principal_id         = azurerm_eventgrid_topic.airlock_notification.identity.0.principal_id
+
+  depends_on = [
+    azurerm_eventgrid_topic.airlock_notification
+  ]
+}
+
 resource "azurerm_private_endpoint" "eg_airlock_notification" {
   name                = "pe-eg-airlock_notification-${var.tre_id}"
   location            = var.location
