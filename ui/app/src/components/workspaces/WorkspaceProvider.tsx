@@ -12,11 +12,15 @@ import config from '../../config.json';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 import { WorkspaceServices } from './WorkspaceServices';
 import { Workspace } from '../../models/workspace';
+import { SharedService } from '../../models/sharedService';
+import { SharedServices } from '../shared/SharedServices';
+import { SharedServiceItem } from '../shared/SharedServiceItem';
 
 export const WorkspaceProvider: React.FunctionComponent = () => {
   const apiCall = useAuthApiCall();
   const [selectedWorkspaceService, setSelectedWorkspaceService] = useState({} as WorkspaceService);
   const [workspaceServices, setWorkspaceServices] = useState([] as Array<WorkspaceService>)
+  const [sharedServices, setSharedServices] = useState([] as Array<SharedService>)
   const workspaceCtx = useRef(useContext(WorkspaceContext));
   const [loadingState, setLoadingState] = useState('loading');
   const { workspaceId } = useParams();
@@ -42,6 +46,11 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
         const workspaceServices = await apiCall(`${ApiEndpoint.Workspaces}/${ws.id}/${ApiEndpoint.WorkspaceServices}`, HttpMethod.Get, ws_application_id_uri);
         setWorkspaceServices(workspaceServices.workspaceServices);
         setLoadingState(wsRoles && wsRoles.length > 0 ? 'ok' : 'denied');
+
+        // get shared services to pass to nav shared services pages
+        const sharedServices = await apiCall(ApiEndpoint.SharedServices, HttpMethod.Get);
+        setSharedServices(sharedServices.sharedServices);
+
       } catch {
         setLoadingState('error');
       }
@@ -87,6 +96,7 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
             <Stack.Item className='tre-left-nav'>
               <WorkspaceLeftNav
                 workspaceServices={workspaceServices}
+                sharedServices={sharedServices}
                 setWorkspaceService={(ws: WorkspaceService) => setSelectedWorkspaceService(ws)}
                 addWorkspaceService={(ws: WorkspaceService) => addWorkspaceService(ws)} />
             </Stack.Item><Stack.Item className='tre-body-content'>
@@ -114,6 +124,12 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
                         workspaceService={selectedWorkspaceService}
                         updateWorkspaceService={(ws: WorkspaceService) => updateWorkspaceService(ws)}
                         removeWorkspaceService={(ws: WorkspaceService) => removeWorkspaceService(ws)} />
+                    } />
+                    <Route path="shared-services" element={
+                      <SharedServices readonly={true} />
+                    } />
+                    <Route path="shared-services/:sharedServiceId/*" element={
+                      <SharedServiceItem readonly={true} />
                     } />
                   </Routes>
                 </Stack.Item>

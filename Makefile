@@ -200,7 +200,7 @@ lint:
 		github/super-linter:slim-v4.9.4
 
 lint-docs:
-	LINTER_REGEX_INCLUDE=.*docs/.* $(MAKE) lint
+	LINTER_REGEX_INCLUDE='./docs/.*\|./mkdocs.yml' $(MAKE) lint
 
 # check-params is called at the end since it needs the bundle image,
 # so we build it first and then run the check.
