@@ -20,9 +20,11 @@ async def test_create_guacamole_service_into_base_workspace(admin_token, verify)
             "description": "workspace for E2E",
             "address_space_size": "small",
             "client_id": f"{config.TEST_WORKSPACE_APP_ID}",
-            "client_secret": f"{config.TEST_WORKSPACE_APP_SECRET}"
+            "client_secret": f"{config.TEST_WORKSPACE_APP_SECRET}",
         }
     }
+    if config.TEST_WORKSPACE_APP_PLAN != "":
+        payload["properties"]["app_service_plan_sku"] = config.TEST_WORKSPACE_APP_PLAN
 
     workspace_path, workspace_id = await post_resource(payload, strings.API_WORKSPACES, access_token=admin_token, verify=verify)
     workspace_owner_token, scope_uri = await get_workspace_auth_details(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
@@ -82,6 +84,8 @@ async def test_create_guacamole_service_into_aad_workspace(admin_token, verify) 
             "client_id": "auto_create"
         }
     }
+    if config.TEST_WORKSPACE_APP_PLAN != "":
+        payload["properties"]["app_service_plan_sku"] = config.TEST_WORKSPACE_APP_PLAN
 
     workspace_path, workspace_id = await post_resource(payload, strings.API_WORKSPACES, access_token=admin_token, verify=verify)
     workspace_owner_token, scope_uri = await get_workspace_auth_details(admin_token=admin_token, workspace_id=workspace_id, verify=verify)

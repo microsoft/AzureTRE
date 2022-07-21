@@ -81,6 +81,7 @@ async def test_patch_firewall(admin_token, verify):
         access_token=admin_token,
         verify=verify,
         method="PATCH",
+        etag=shared_service_firewall['_etag'],
     )
 
 

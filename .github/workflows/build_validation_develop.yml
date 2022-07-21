@@ -31,6 +31,10 @@ jobs:
             terraform:
               # our Terraform uses more than just *.tf files, so need to check changes in the folder
               - '**/terraform/**/*'
+            core:
+              - 'templates/core/**/*'
+            core_version:
+              - 'templates/core/version.txt'
 
       - name: Terraform format check
         if: ${{ steps.filter.outputs.terraform == 'true' }}
@@ -44,6 +48,11 @@ jobs:
           find . -type d -name 'terraform' -not -path '*cnab*' -print0 \
           | xargs -0 -I{} sh -c 'echo "***** Validating: {} *****"; \
           terraform -chdir={} init -backend=false; terraform -chdir={} validate'
+
+      - name: "Stale version: core"
+        if: ${{ steps.filter.outputs.core == 'true' &&
+          steps.filter.outputs.core_version == 'false' }}
+        run: echo "::error::Code update without version change" && exit 1
 
       - name: Lint code base
         # the slim image is 2GB smaller and we don't use the extra stuff

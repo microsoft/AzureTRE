@@ -79,11 +79,20 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
     }
   }
 
-  // TODO - proper UI schema json to be fed from API
-  const uiSchema = {
-    overview: {
-      "ui:widget": "textarea"
-    }
+  // use the supplied uiSchema or create a blank one, and set the overview field to textarea manually.
+  const uiSchema = (template && template.uiSchema) || {};
+  uiSchema.overview = {
+    "ui:widget": "textarea"
+  }
+
+  // if no specific order has been set, set a generic one with the primary fields at the top
+  if (!uiSchema["ui:order"] || uiSchema["ui:order"].length === 0){
+    uiSchema["ui:order"] = [
+      "display_name",
+      "description",
+      "overview",
+      "*"
+    ]
   }
 
   switch (loading) {
