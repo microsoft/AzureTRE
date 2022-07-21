@@ -1,9 +1,3 @@
-resource "azurerm_role_assignment" "servicebus_sender_airlock_notification" {
-  scope                = data.azurerm_servicebus_namespace.core.id
-  role_definition_name = "Azure Service Bus Data Sender"
-  principal_id         = data.azurerm_eventgrid_topic.airlock_notification.identity.0.principal_id
-}
-
 resource "azurerm_firewall_network_rule_collection" "resource_processor_subnet_allow_appservice" {
   name                = "nrc-resource_processor_allow_appservice_subnet"
   azure_firewall_name = data.azurerm_firewall.fw.name
