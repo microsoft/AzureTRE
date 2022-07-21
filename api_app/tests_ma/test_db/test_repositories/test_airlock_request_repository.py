@@ -24,6 +24,21 @@ CANCELLED = AirlockRequestStatus.Cancelled
 BLOCKING_IN_PROGRESS = AirlockRequestStatus.BlockingInProgress
 BLOCKED = AirlockRequestStatus.Blocked
 
+ALL_STATUSES = [enum.value for enum in AirlockRequestStatus]
+
+ALLOWED_STATUS_CHANGES = {
+    DRAFT: [SUBMITTED, CANCELLED],
+    SUBMITTED: [IN_REVIEW, BLOCKING_IN_PROGRESS],
+    IN_REVIEW: [APPROVED_IN_PROGRESS, REJECTION_IN_PROGRESS, CANCELLED],
+    APPROVED_IN_PROGRESS: [APPROVED],
+    APPROVED: [],
+    REJECTION_IN_PROGRESS: [REJECTED],
+    REJECTED: [],
+    CANCELLED: [],
+    BLOCKING_IN_PROGRESS: [BLOCKED],
+    BLOCKED: [],
+}
+
 
 @pytest.fixture
 def airlock_request_repo():
@@ -34,6 +49,13 @@ def airlock_request_repo():
 @pytest.fixture
 def sample_airlock_request_input():
     return AirlockRequestInCreate(requestType=AirlockRequestType.Import, businessJustification="Some business justification")
+
+
+@pytest.fixture
+def verify_dictionary_contains_all_enum_values():
+    for status in ALL_STATUSES:
+        if status not in ALLOWED_STATUS_CHANGES:
+            raise Exception(f"Status '{status}' was not added to the ALLOWED_STATUS_CHANGES dictionary")
 
 
 def airlock_request_mock(status=AirlockRequestStatus.Draft):
@@ -47,6 +69,19 @@ def airlock_request_mock(status=AirlockRequestStatus.Draft):
         status=status
     )
     return airlock_request
+
+
+def get_allowed_status_changes():
+    for current_status, allowed_new_statuses in ALLOWED_STATUS_CHANGES.items():
+        for new_status in allowed_new_statuses:
+            yield current_status, new_status
+
+
+def get_forbidden_status_changes():
+    for current_status, allowed_new_statuses in ALLOWED_STATUS_CHANGES.items():
+        forbidden_new_statuses = list(set(ALL_STATUSES) - set(allowed_new_statuses))
+        for new_status in forbidden_new_statuses:
+            yield current_status, new_status
 
 
 def test_get_airlock_request_by_id(airlock_request_repo):
@@ -73,20 +108,17 @@ def test_create_airlock_request_item_creates_an_airlock_request_with_the_right_v
     assert airlock_request.workspaceId == WORKSPACE_ID
 
 
-@pytest.mark.parametrize("airlock_request_repo, current_status, new_status", [(airlock_request_repo, DRAFT, SUBMITTED), (airlock_request_repo, SUBMITTED, IN_REVIEW), (airlock_request_repo, SUBMITTED, BLOCKING_IN_PROGRESS), (airlock_request_repo, IN_REVIEW, APPROVED_IN_PROGRESS), (airlock_request_repo, IN_REVIEW, REJECTION_IN_PROGRESS), (airlock_request_repo, REJECTION_IN_PROGRESS, REJECTED), (airlock_request_repo, APPROVED_IN_PROGRESS, APPROVED), (airlock_request_repo, BLOCKING_IN_PROGRESS, BLOCKED), (airlock_request_repo, DRAFT, CANCELLED), (airlock_request_repo, IN_REVIEW, CANCELLED)], indirect=['airlock_request_repo'])
-def test_update_airlock_request_status_updates_airlock_request_with_the_right_status(airlock_request_repo, current_status, new_status):
-    airlock_request_item_to_create = airlock_request_mock(status=current_status)
+@pytest.mark.parametrize("current_status, new_status", get_allowed_status_changes())
+def test_update_airlock_request_status_with_allowed_new_status_should_update_request_status(airlock_request_repo, current_status, new_status, verify_dictionary_contains_all_enum_values):
     user = create_test_user()
-    airlock_request = airlock_request_repo.update_airlock_request_status(airlock_request_item_to_create, new_status, user)
-
+    mock_existing_request = airlock_request_mock(status=current_status)
+    airlock_request = airlock_request_repo.update_airlock_request_status(mock_existing_request, new_status, user)
     assert airlock_request.status == new_status
 
-# Todo: Create the matrix of all forbidden status changes...
 
-
-@pytest.mark.parametrize("airlock_request_repo, current_status, new_status", [(airlock_request_repo, BLOCKED, APPROVED), (airlock_request_repo, APPROVED, IN_REVIEW), (airlock_request_repo, REJECTED, APPROVED), (airlock_request_repo, APPROVED, REJECTED), (airlock_request_repo, DRAFT, IN_REVIEW), (airlock_request_repo, SUBMITTED, APPROVED), (airlock_request_repo, IN_REVIEW, SUBMITTED), (airlock_request_repo, BLOCKED, APPROVED)], indirect=['airlock_request_repo'])
-def test_update_airlock_request_status_fails_on_validation_wrong_status(airlock_request_repo, current_status, new_status):
-    airlock_request_item_to_create = airlock_request_mock(status=current_status)
+@pytest.mark.parametrize("current_status, new_status", get_forbidden_status_changes())
+def test_update_airlock_request_status_with_forbidden_status_should_fail_on_validation(airlock_request_repo, current_status, new_status, verify_dictionary_contains_all_enum_values):
     user = create_test_user()
+    mock_existing_request = airlock_request_mock(status=current_status)
     with pytest.raises(HTTPException):
-        airlock_request_repo.update_airlock_request_status(airlock_request_item_to_create, new_status, user)
+        airlock_request_repo.update_airlock_request_status(mock_existing_request, new_status, user)

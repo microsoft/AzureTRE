@@ -10,7 +10,11 @@ import { CreateUpdateResourceContext } from '../../contexts/CreateUpdateResource
 import { RoleName } from '../../models/roleNames';
 import { SecuredByRole } from './SecuredByRole';
 
-export const SharedServices: React.FunctionComponent = () => {
+interface SharedServiceProps{
+  readonly?: boolean
+}
+
+export const SharedServices: React.FunctionComponent<SharedServiceProps> = (props: SharedServiceProps) => {
   const createFormCtx = useContext(CreateUpdateResourceContext);
   const [sharedServices, setSharedServices] = useState([] as Array<SharedService>);
   const apiCall = useAuthApiCall();
@@ -49,14 +53,17 @@ export const SharedServices: React.FunctionComponent = () => {
         <Stack.Item>
           <Stack horizontal horizontalAlign="space-between">
             <h1>Shared Services</h1>
-            <SecuredByRole allowedRoles={[RoleName.TREAdmin]} workspaceAuth={false} element={
-              <PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new" onClick={() => {
-                createFormCtx.openCreateForm({
-                  resourceType: ResourceType.SharedService,
-                  onAdd: (r: Resource) => addSharedService(r as SharedService)
-                })
-              }} />
-            } />
+            {
+              !props.readonly &&
+              <SecuredByRole allowedRoles={[RoleName.TREAdmin]} workspaceAuth={false} element={
+                <PrimaryButton iconProps={{ iconName: 'Add' }} text="Create new" onClick={() => {
+                  createFormCtx.openCreateForm({
+                    resourceType: ResourceType.SharedService,
+                    onAdd: (r: Resource) => addSharedService(r as SharedService)
+                  })
+                }} />
+              } />
+            }
           </Stack>
         </Stack.Item>
         <Stack.Item>
@@ -64,7 +71,8 @@ export const SharedServices: React.FunctionComponent = () => {
             resources={sharedServices}
             updateResource={(r: Resource) => updateSharedService(r as SharedService)}
             removeResource={(r: Resource) => removeSharedService(r as SharedService)}
-            emptyText="This TRE has no shared services." />
+            emptyText="This TRE has no shared services."
+            readonly={props.readonly} />
         </Stack.Item>
       </Stack>
     </>

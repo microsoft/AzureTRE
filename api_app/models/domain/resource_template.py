@@ -69,6 +69,7 @@ class ResourceTemplate(AzureTREModel):
     actions: List[CustomAction] = Field(default=[], title="Template actions")
     customActions: List[CustomAction] = Field(default=[], title="Template custom actions")
     pipeline: Optional[Pipeline] = Field(default=None, title="Template pipeline to define updates to other resources")
+    uiSchema: Optional[dict] = Field(default={}, title="Dict containing a uiSchema object, if any")
 
     # setting this to false means if extra, unexpected fields are supplied, the request is invalidated
     additionalProperties: bool = Field(default=False, title="Prevent unspecified properties being applied")

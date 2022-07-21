@@ -54,19 +54,15 @@ def sample_airlock_review_object():
     return airlock_review
 
 
-def sample_workspace(workspace_id=WORKSPACE_ID, auth_info: dict = {}) -> Workspace:
+def sample_workspace(workspace_id=WORKSPACE_ID, workspace_properties: dict = {}) -> Workspace:
     workspace = Workspace(
         id=workspace_id,
         templateName="tre-workspace-base",
         templateVersion="0.1.0",
         etag="",
-        properties={
-            "client_id": "12345"
-        },
+        properties=workspace_properties,
         resourcePath=f'/workspaces/{workspace_id}'
     )
-    if auth_info:
-        workspace.properties = {**auth_info}
     return workspace
 
 
@@ -106,10 +102,21 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
         assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
     @patch("api.routes.airlock.AirlockRequestRepository.delete_item")
-    @patch("event_grid.helpers.send_status_changed_event", side_effect=HttpResponseError)
+    @patch("event_grid.event_sender.send_status_changed_event", side_effect=HttpResponseError)
     async def test_post_airlock_request_with_event_grid_not_responding_returns_503(self, _, __, app, client, sample_airlock_request_input_data):
         response = await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID), json=sample_airlock_request_input_data)
         assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace(workspace_properties={"enable_airlock": False}))
+    async def test_post_airlock_request_with_airlock_disabled_returns_405(self, _, app, client, sample_airlock_request_input_data):
+        response = await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID), json=sample_airlock_request_input_data)
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace(workspace_properties={}))
+    @patch("api.routes.airlock.save_and_publish_event_airlock_request")
+    async def test_post_airlock_request_with_enable_airlock_property_missing_returns_201(self, _, __, app, client, sample_airlock_request_input_data):
+        response = await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID), json=sample_airlock_request_input_data)
+        assert response.status_code == status.HTTP_201_CREATED
 
     # [GET] /workspaces/{workspace_id}/requests/{airock_request_id}
     @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object())
@@ -152,7 +159,7 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
     @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object())
     @patch("api.routes.airlock.AirlockRequestRepository.update_airlock_request_status")
     @patch("api.routes.airlock.AirlockRequestRepository.delete_item")
-    @patch("event_grid.helpers.send_status_changed_event", side_effect=HttpResponseError)
+    @patch("event_grid.event_sender.send_status_changed_event", side_effect=HttpResponseError)
     async def test_post_submit_airlock_request_with_event_grid_not_responding_returns_503(self, _, __, ___, ____, app, client):
         response = await client.post(app.url_path_for(strings.API_SUBMIT_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
         assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
@@ -162,6 +169,20 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
     async def test_post_submit_airlock_request_with_illegal_status_change_returns_400(self, _, __, app, client):
         response = await client.post(app.url_path_for(strings.API_SUBMIT_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    # [POST] /workspaces/{workspace_id}/requests/{airlock_request_id}/cancel
+    @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object())
+    @patch("api.routes.airlock.update_status_and_publish_event_airlock_request", return_value=sample_airlock_request_object(status=AirlockRequestStatus.Cancelled))
+    async def test_post_cancel_airlock_request_canceles_request_returns_200(self, _, __, app, client):
+        response = await client.post(app.url_path_for(strings.API_CANCEL_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["airlockRequest"]["id"] == AIRLOCK_REQUEST_ID
+        assert response.json()["airlockRequest"]["status"] == AirlockRequestStatus.Cancelled
+
+    @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", side_effect=EntityDoesNotExist)
+    async def test_post_cancel_airlock_request_if_request_not_found_returns_404(self, _, app, client):
+        response = await client.post(app.url_path_for(strings.API_CANCEL_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
     @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", side_effect=CosmosResourceNotFoundError)
     @patch("api.routes.airlock.validate_user_allowed_to_access_storage_account")
@@ -246,7 +267,7 @@ class TestAirlockRoutesThatRequireOwnerRights():
     @patch("api.routes.airlock.AirlockReviewRepository.create_airlock_review_item", return_value=sample_airlock_review_object())
     @patch("api.routes.airlock.AirlockReviewRepository.save_item")
     @patch("api.routes.airlock.AirlockRequestRepository.update_airlock_request_status")
-    @patch("event_grid.helpers.send_status_changed_event", side_effect=HttpResponseError)
+    @patch("event_grid.event_sender.send_status_changed_event", side_effect=HttpResponseError)
     async def test_post_create_airlock_review_with_event_grid_not_responding_returns_503(self, _, __, ___, ____, _____, app, client, sample_airlock_review_input_data):
         response = await client.post(app.url_path_for(strings.API_REVIEW_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID), json=sample_airlock_review_input_data)
         assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE

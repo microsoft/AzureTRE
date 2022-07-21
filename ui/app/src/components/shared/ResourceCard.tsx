@@ -6,15 +6,17 @@ import moment from 'moment';
 import { ResourceContextMenu } from './ResourceContextMenu';
 import { useComponentManager } from '../../hooks/useComponentManager';
 import { StatusBadge } from './StatusBadge';
-import { successStates } from '../../models/operation';
+import { actionsDisabledStates } from '../../models/operation';
 import { PowerStateBadge } from './PowerStateBadge';
+import { ResourceType } from '../../models/resourceType';
 
 interface ResourceCardProps {
   resource: Resource,
   itemId: number,
   selectResource?: (resource: Resource) => void,
   onUpdate: (resource: Resource) => void,
-  onDelete: (resource: Resource) => void
+  onDelete: (resource: Resource) => void,
+  readonly?: boolean
 }
 
 export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: ResourceCardProps) => {
@@ -29,7 +31,7 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
   let connectUri = props.resource.properties && props.resource.properties.connection_uri;
   const shouldDisable = () => {
     return latestUpdate.componentAction === ComponentAction.Lock
-      || successStates.indexOf(props.resource.deploymentStatus) === -1
+      || actionsDisabledStates.includes(props.resource.deploymentStatus)
       || !props.resource.isEnabled
       || (props.resource.azureStatus?.powerState && props.resource.azureStatus.powerState !== VMPowerStates.Running)
   }
@@ -57,16 +59,24 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
           <Stack style={cardStyles}>
             <Stack horizontal>
               <Stack.Item grow={5} style={headerStyles}>
-                <Link to={props.resource.resourcePath} onClick={() => { props.selectResource && props.selectResource(props.resource); return false }} style={headerLinkStyles}>{props.resource.properties.display_name}</Link>
+                {
+                  props.resource.resourceType === ResourceType.Workspace && props.resource.properties.client_id === "auto_create" ?
+                    <span title="Authentication has not yet been provisioned">{props.resource.properties.display_name}</span>
+                    :
+                    <Link to={props.resource.resourceType === ResourceType.Workspace ? props.resource.resourcePath : props.resource.id} onClick={() => { props.selectResource && props.selectResource(props.resource); return false }} style={headerLinkStyles}>{props.resource.properties.display_name}</Link>
+                }
               </Stack.Item>
               <Stack.Item style={headerIconStyles}>
                 <Stack horizontal>
                   <Stack.Item>
                     <IconButton iconProps={{ iconName: 'Info' }} id={`item-${props.itemId}`} onClick={() => setShowInfo(!showInfo)} /></Stack.Item>
                   <Stack.Item>
-                    <ResourceContextMenu
-                      resource={props.resource}
-                      componentAction={latestUpdate.componentAction} />
+                    {
+                      !props.readonly &&
+                      <ResourceContextMenu
+                        resource={props.resource}
+                        componentAction={latestUpdate.componentAction} />
+                    }
                   </Stack.Item>
                 </Stack>
               </Stack.Item>
@@ -101,8 +111,8 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
                     </div>
                   }
                 </Stack.Item>
-                <Stack.Item style={{paddingTop: 5, paddingLeft:10}}>
-                  <StatusBadge status={latestUpdate.operation ? latestUpdate.operation?.status : props.resource.deploymentStatus} />
+                <Stack.Item style={{ paddingTop: 2, paddingLeft: 10 }}>
+                  <StatusBadge resourceId={props.resource.id} status={latestUpdate.operation ? latestUpdate.operation?.status : props.resource.deploymentStatus} />
                 </Stack.Item>
               </Stack>
             </Stack.Item>
@@ -175,7 +185,7 @@ const connectStyles: React.CSSProperties = {
 
 const footerStyles: React.CSSProperties = {
   backgroundColor: DefaultPalette.white,
-  padding: '5px 10px',
+  padding: '5px 7px',
   minHeight: '30px',
   borderTop: '1px #ccc solid',
 }

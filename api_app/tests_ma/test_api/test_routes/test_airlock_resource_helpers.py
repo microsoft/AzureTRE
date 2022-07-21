@@ -2,10 +2,12 @@ from fastapi import HTTPException, status
 import pytest
 from mock import AsyncMock, patch, MagicMock
 
+from models.domain.events import AirlockNotificationData, StatusChangedData
 from api.routes.airlock_resource_helpers import save_airlock_review, save_and_publish_event_airlock_request, \
     update_status_and_publish_event_airlock_request
 from db.repositories.airlock_reviews import AirlockReviewRepository
 from db.repositories.airlock_requests import AirlockRequestRepository
+from models.domain.workspace import Workspace
 from tests_ma.test_api.conftest import create_test_user
 from models.domain.airlock_review import AirlockReview, AirlockReviewDecision
 from models.domain.airlock_resource import AirlockResourceType
@@ -17,6 +19,10 @@ pytestmark = pytest.mark.asyncio
 WORKSPACE_ID = "abc000d3-82da-4bfc-b6e9-9a7853ef753e"
 AIRLOCK_REQUEST_ID = "5dbc15ae-40e1-49a5-834b-595f59d626b7"
 AIRLOCK_REVIEW_ID = "96d909c5-e913-4c05-ae53-668a702ba2e5"
+
+
+def sample_workspace():
+    return Workspace(id=WORKSPACE_ID, templateName='template name', templateVersion='1.0', etag='', properties={"client_id": "12345"}, resourcePath="test")
 
 
 @pytest.fixture
@@ -47,13 +53,18 @@ def sample_airlock_request(status=AirlockRequestStatus.Draft):
 def sample_status_changed_event(status="draft"):
     status_changed_event = EventGridEvent(
         event_type="statusChanged",
-        data={
-            "request_id": AIRLOCK_REQUEST_ID,
-            "status": status,
-            "type": AirlockRequestType.Import,
-            "workspace_id": WORKSPACE_ID[-4:]
-        },
+        data=StatusChangedData(request_id=AIRLOCK_REQUEST_ID, status=status, type=AirlockRequestType.Import, workspace_id=WORKSPACE_ID[-4:]).__dict__,
         subject=f"{AIRLOCK_REQUEST_ID}/statusChanged",
+        data_version="2.0"
+    )
+    return status_changed_event
+
+
+def sample_airlock_notification_event(status="draft"):
+    status_changed_event = EventGridEvent(
+        event_type="airlockNotification",
+        data=AirlockNotificationData(request_id=AIRLOCK_REQUEST_ID, event_type="status_changed", event_value=status, researchers_emails=['researcher@outlook.com'], owners_emails=['owner@outlook.com'], workspace_id=WORKSPACE_ID[-4:]).__dict__,
+        subject=f"{AIRLOCK_REQUEST_ID}/airlockNotification",
         data_version="2.0"
     )
     return status_changed_event
@@ -72,28 +83,34 @@ def sample_airlock_review(review_decision=AirlockReviewDecision.Approved):
 
 
 @patch("event_grid.helpers.EventGridPublisherClient", return_value=AsyncMock())
-async def test_save_and_publish_event_airlock_request_saves_item(event_grid_publisher_client_mock,
+@patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details", return_value={"researcher_emails": ["researcher@outlook.com"], "owner_emails": ["owner@outlook.com"]})
+async def test_save_and_publish_event_airlock_request_saves_item(_, event_grid_publisher_client_mock,
                                                                  airlock_request_repo_mock):
     airlock_request_mock = sample_airlock_request()
     airlock_request_repo_mock.save_item = MagicMock(return_value=None)
     status_changed_event_mock = sample_status_changed_event()
+    airlock_notification_event_mock = sample_airlock_notification_event()
     event_grid_sender_client_mock = event_grid_publisher_client_mock.return_value
     event_grid_sender_client_mock.send = AsyncMock()
 
     await save_and_publish_event_airlock_request(
         airlock_request=airlock_request_mock,
         airlock_request_repo=airlock_request_repo_mock,
-        user=create_test_user())
+        user=create_test_user(),
+        workspace=sample_workspace())
 
     airlock_request_repo_mock.save_item.assert_called_once_with(airlock_request_mock)
 
-    event_grid_sender_client_mock.send.assert_awaited_once()
+    assert event_grid_sender_client_mock.send.call_count == 2
     # Since the eventgrid object has the update time attribute which differs, we only compare the data that was sent
-    actual_status_changed_event = event_grid_sender_client_mock.send.await_args[0][0][0]
-    assert (actual_status_changed_event.data == status_changed_event_mock.data)
+    actual_status_changed_event = event_grid_sender_client_mock.send.await_args_list[0].args[0][0]
+    assert actual_status_changed_event.data == status_changed_event_mock.data
+    actual_airlock_notification_event = event_grid_sender_client_mock.send.await_args_list[1].args[0][0]
+    assert actual_airlock_notification_event.data == airlock_notification_event_mock.data
 
 
-async def test_save_and_publish_event_airlock_request_raises_503_if_save_to_db_fails(airlock_request_repo_mock):
+@patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details", return_value={"researcher_emails": ["researcher@outlook.com"], "owner_emails": ["owner@outlook.com"]})
+async def test_save_and_publish_event_airlock_request_raises_503_if_save_to_db_fails(_, airlock_request_repo_mock):
     airlock_request_mock = sample_airlock_request()
     airlock_request_repo_mock.save_item = MagicMock(side_effect=Exception)
 
@@ -101,12 +118,14 @@ async def test_save_and_publish_event_airlock_request_raises_503_if_save_to_db_f
         await save_and_publish_event_airlock_request(
             airlock_request=airlock_request_mock,
             airlock_request_repo=airlock_request_repo_mock,
-            user=create_test_user())
+            user=create_test_user(),
+            workspace=sample_workspace())
     assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
 
 @patch("event_grid.helpers.EventGridPublisherClient", return_value=AsyncMock())
-async def test_save_and_publish_event_airlock_request_raises_503_if_publish_event_fails(event_grid_publisher_client_mock,
+@patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details", return_value={"researcher_emails": ["researcher@outlook.com"], "owner_emails": ["owner@outlook.com"]})
+async def test_save_and_publish_event_airlock_request_raises_503_if_publish_event_fails(_, event_grid_publisher_client_mock,
                                                                                         airlock_request_repo_mock):
     airlock_request_mock = sample_airlock_request()
     airlock_request_repo_mock.save_item = MagicMock(return_value=None)
@@ -119,16 +138,19 @@ async def test_save_and_publish_event_airlock_request_raises_503_if_publish_even
         await save_and_publish_event_airlock_request(
             airlock_request=airlock_request_mock,
             airlock_request_repo=airlock_request_repo_mock,
-            user=create_test_user())
+            user=create_test_user(),
+            workspace=sample_workspace())
     assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
 
 @patch("event_grid.helpers.EventGridPublisherClient", return_value=AsyncMock())
-async def test_update_status_and_publish_event_airlock_request_updates_item(event_grid_publisher_client_mock,
+@patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details", return_value={"researcher_emails": ["researcher@outlook.com"], "owner_emails": ["owner@outlook.com"]})
+async def test_update_status_and_publish_event_airlock_request_updates_item(_, event_grid_publisher_client_mock,
                                                                             airlock_request_repo_mock):
     airlock_request_mock = sample_airlock_request()
     updated_airlock_request_mock = sample_airlock_request(status=AirlockRequestStatus.Submitted)
     status_changed_event_mock = sample_status_changed_event(status="submitted")
+    airlock_notification_event_mock = sample_airlock_notification_event(status="submitted")
     airlock_request_repo_mock.update_airlock_request_status = MagicMock(return_value=updated_airlock_request_mock)
     event_grid_sender_client_mock = event_grid_publisher_client_mock.return_value
     event_grid_sender_client_mock.send = AsyncMock()
@@ -137,18 +159,22 @@ async def test_update_status_and_publish_event_airlock_request_updates_item(even
         airlock_request=airlock_request_mock,
         airlock_request_repo=airlock_request_repo_mock,
         user=create_test_user(),
-        new_status=AirlockRequestStatus.Submitted)
+        new_status=AirlockRequestStatus.Submitted,
+        workspace=sample_workspace())
 
     airlock_request_repo_mock.update_airlock_request_status.assert_called_once()
     assert (actual_updated_airlock_request == updated_airlock_request_mock)
 
-    event_grid_sender_client_mock.send.assert_awaited_once()
+    assert event_grid_sender_client_mock.send.call_count == 2
     # Since the eventgrid object has the update time attribute which differs, we only compare the data that was sent
-    actual_status_changed_event = event_grid_sender_client_mock.send.await_args[0][0][0]
-    assert (actual_status_changed_event.data == status_changed_event_mock.data)
+    actual_status_changed_event = event_grid_sender_client_mock.send.await_args_list[0].args[0][0]
+    assert actual_status_changed_event.data == status_changed_event_mock.data
+    actual_airlock_notification_event = event_grid_sender_client_mock.send.await_args_list[1].args[0][0]
+    assert actual_airlock_notification_event.data == airlock_notification_event_mock.data
 
 
-async def test_update_status_and_publish_event_airlock_request_raises_400_if_status_update_invalid(airlock_request_repo_mock):
+@patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details", return_value={"researcher_emails": ["researcher@outlook.com"], "owner_emails": ["owner@outlook.com"]})
+async def test_update_status_and_publish_event_airlock_request_raises_400_if_status_update_invalid(_, airlock_request_repo_mock):
     airlock_request_mock = sample_airlock_request()
 
     with pytest.raises(HTTPException) as ex:
@@ -156,13 +182,15 @@ async def test_update_status_and_publish_event_airlock_request_raises_400_if_sta
             airlock_request=airlock_request_mock,
             airlock_request_repo=airlock_request_repo_mock,
             user=create_test_user(),
-            new_status=AirlockRequestStatus.Approved)
+            new_status=AirlockRequestStatus.Approved,
+            workspace=sample_workspace())
 
     assert ex.value.status_code == status.HTTP_400_BAD_REQUEST
 
 
 @patch("event_grid.helpers.EventGridPublisherClient", return_value=AsyncMock())
-async def test_update_status_and_publish_event_airlock_request_raises_503_if_publish_event_fails(event_grid_publisher_client_mock,
+@patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details", return_value={"researcher_emails": ["researcher@outlook.com"], "owner_emails": ["owner@outlook.com"]})
+async def test_update_status_and_publish_event_airlock_request_raises_503_if_publish_event_fails(_, event_grid_publisher_client_mock,
                                                                                                  airlock_request_repo_mock):
     airlock_request_mock = sample_airlock_request()
     updated_airlock_request_mock = sample_airlock_request(status=AirlockRequestStatus.Submitted)
@@ -175,7 +203,8 @@ async def test_update_status_and_publish_event_airlock_request_raises_503_if_pub
             airlock_request=airlock_request_mock,
             airlock_request_repo=airlock_request_repo_mock,
             user=create_test_user(),
-            new_status=AirlockRequestStatus.Submitted)
+            new_status=AirlockRequestStatus.Submitted,
+            workspace=sample_workspace())
     assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
 

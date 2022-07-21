@@ -77,6 +77,7 @@ resource "azurerm_private_endpoint" "stg_import_inprogress_pe" {
   location            = var.location
   resource_group_name = var.resource_group_name
   subnet_id           = var.airlock_storage_subnet_id
+  tags                = var.tre_core_tags
 
   lifecycle { ignore_changes = [tags] }
 

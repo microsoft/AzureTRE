@@ -59,18 +59,6 @@ variable "terraform_state_container_name" {
   description = "Name of the storage container for Terraform state"
 }
 
-variable "resource_processor_client_id" {
-  type        = string
-  default     = ""
-  description = "The client (app) ID of a service principal with Owner role to the subscription."
-}
-
-variable "resource_processor_client_secret" {
-  type        = string
-  default     = ""
-  description = "The client secret (app password) of a service principal with Owner role to the subscription."
-}
-
 variable "resource_processor_number_processes_per_instance" {
   type        = string
   default     = "2"
@@ -116,18 +104,6 @@ variable "application_admin_client_secret" {
   type        = string
   description = "A client secret used by the Resource Processor to authenticate with Azure AD to create AAD Applications."
   sensitive   = true
-}
-
-variable "deploy_gitea" {
-  type        = bool
-  default     = true
-  description = "Deploy the Gitea shared service"
-}
-
-variable "deploy_nexus" {
-  type        = bool
-  default     = true
-  description = "Deploy the Nexus shared service"
 }
 
 variable "resource_processor_type" {

@@ -38,6 +38,7 @@ resource "azurerm_private_endpoint" "eg_step_result" {
   location            = var.location
   resource_group_name = var.resource_group_name
   subnet_id           = var.airlock_events_subnet_id
+  tags                = var.tre_core_tags
   lifecycle { ignore_changes = [tags] }
 
   private_dns_zone_group {
@@ -86,6 +87,7 @@ resource "azurerm_private_endpoint" "eg_status_changed" {
   location            = var.location
   resource_group_name = var.resource_group_name
   subnet_id           = var.airlock_events_subnet_id
+  tags                = var.tre_core_tags
   lifecycle { ignore_changes = [tags] }
 
   private_dns_zone_group {
@@ -135,20 +137,6 @@ resource "azurerm_role_assignment" "servicebus_sender_import_inprogress_blob_cre
   ]
 }
 
-# TEMPPORARY MITIGATION. Should be removed with https://github.com/microsoft/AzureTRE/issues/2164
-resource "null_resource" "wait_for_import_inprogress_blob_created" {
-  provisioner "local-exec" {
-    command    = "bash -c \"sleep 60s\""
-    on_failure = fail
-  }
-
-  triggers = {
-    always_run = timestamp()
-  }
-
-  depends_on = [azurerm_eventgrid_system_topic.import_inprogress_blob_created]
-}
-
 
 resource "azurerm_eventgrid_system_topic" "import_rejected_blob_created" {
   name                   = local.import_rejected_sys_topic_name
@@ -167,7 +155,6 @@ resource "azurerm_eventgrid_system_topic" "import_rejected_blob_created" {
 
   depends_on = [
     azurerm_storage_account.sa_import_rejected,
-    null_resource.wait_for_import_inprogress_blob_created
   ]
 
   lifecycle { ignore_changes = [tags] }
@@ -181,20 +168,6 @@ resource "azurerm_role_assignment" "servicebus_sender_import_rejected_blob_creat
   depends_on = [
     azurerm_eventgrid_system_topic.import_rejected_blob_created
   ]
-}
-
-# TEMPPORARY MITIGATION. Should be removed with https://github.com/microsoft/AzureTRE/issues/2164
-resource "null_resource" "wait_for_import_rejected_blob_created" {
-  provisioner "local-exec" {
-    command    = "bash -c \"sleep 60s\""
-    on_failure = fail
-  }
-
-  triggers = {
-    always_run = timestamp()
-  }
-
-  depends_on = [azurerm_eventgrid_system_topic.import_rejected_blob_created]
 }
 
 resource "azurerm_eventgrid_system_topic" "import_blocked_blob_created" {
@@ -214,7 +187,6 @@ resource "azurerm_eventgrid_system_topic" "import_blocked_blob_created" {
 
   depends_on = [
     azurerm_storage_account.sa_import_blocked,
-    null_resource.wait_for_import_rejected_blob_created
   ]
 
   lifecycle { ignore_changes = [tags] }
@@ -228,20 +200,6 @@ resource "azurerm_role_assignment" "servicebus_sender_import_blocked_blob_create
   depends_on = [
     azurerm_eventgrid_system_topic.import_blocked_blob_created
   ]
-}
-
-# TEMPPORARY MITIGATION. Should be removed with https://github.com/microsoft/AzureTRE/issues/2164
-resource "null_resource" "wait_for_import_blocked_blob_created" {
-  provisioner "local-exec" {
-    command    = "bash -c \"sleep 60s\""
-    on_failure = fail
-  }
-
-  triggers = {
-    always_run = timestamp()
-  }
-
-  depends_on = [azurerm_eventgrid_system_topic.import_blocked_blob_created]
 }
 
 
@@ -262,7 +220,6 @@ resource "azurerm_eventgrid_system_topic" "export_approved_blob_created" {
 
   depends_on = [
     azurerm_storage_account.sa_export_approved,
-    null_resource.wait_for_import_blocked_blob_created
   ]
 
   lifecycle { ignore_changes = [tags] }
@@ -314,6 +271,7 @@ resource "azurerm_private_endpoint" "eg_scan_result" {
   location            = var.location
   resource_group_name = var.resource_group_name
   subnet_id           = var.airlock_events_subnet_id
+  tags                = var.tre_core_tags
   lifecycle { ignore_changes = [tags] }
 
   private_dns_zone_group {
@@ -324,6 +282,45 @@ resource "azurerm_private_endpoint" "eg_scan_result" {
   private_service_connection {
     name                           = "psc-eg-${var.tre_id}"
     private_connection_resource_id = azurerm_eventgrid_topic.scan_result.id
+    is_manual_connection           = false
+    subresource_names              = ["topic"]
+  }
+}
+
+# Custom topic (for airlock notifications)
+resource "azurerm_eventgrid_topic" "airlock_notification" {
+  name                          = local.notification_topic_name
+  location                      = var.location
+  resource_group_name           = var.resource_group_name
+  public_network_access_enabled = false
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  tags = merge(var.tre_core_tags, {
+    Publishers = "airlock;custom notification service;"
+  })
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_private_endpoint" "eg_airlock_notification" {
+  name                = "pe-eg-airlock_notification-${var.tre_id}"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  subnet_id           = var.airlock_events_subnet_id
+  tags                = var.tre_core_tags
+  lifecycle { ignore_changes = [tags] }
+
+  private_dns_zone_group {
+    name                 = "private-dns-zone-group"
+    private_dns_zone_ids = [data.azurerm_private_dns_zone.eventgrid.id]
+  }
+
+  private_service_connection {
+    name                           = "psc-eg-${var.tre_id}"
+    private_connection_resource_id = azurerm_eventgrid_topic.airlock_notification.id
     is_manual_connection           = false
     subresource_names              = ["topic"]
   }

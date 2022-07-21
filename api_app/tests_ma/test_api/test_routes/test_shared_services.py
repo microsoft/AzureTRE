@@ -1,3 +1,4 @@
+import copy
 import uuid
 import pytest
 from mock import patch
@@ -37,7 +38,13 @@ def sample_shared_service(shared_service_id=SHARED_SERVICE_ID):
         templateName="tre-shared-service-base",
         templateVersion="0.1.0",
         etag="",
-        properties={},
+        properties={
+            'display_name': 'A display name',
+            'description': 'desc here',
+            'overview': 'overview here',
+            'private_field_1': 'value_1',
+            'private_field_2': 'value_2'
+        },
         resourcePath=f'/shared-services/{shared_service_id}',
         updatedWhen=FAKE_CREATE_TIMESTAMP,
         user=create_admin_user()
@@ -53,8 +60,7 @@ class TestSharedServiceRoutesThatDontRequireAdminRigths:
             app.dependency_overrides = {}
 
     # [GET] /shared-services
-    @patch("api.routes.shared_services.SharedServiceRepository.get_active_shared_services",
-           return_value=None)
+    @patch("api.routes.shared_services.SharedServiceRepository.get_active_shared_services", return_value=None)
     async def test_get_shared_services_returns_list_of_shared_services(self, get_active_shared_services_mock, app, client):
         shared_services = [sample_shared_service()]
         get_active_shared_services_mock.return_value = shared_services
@@ -63,6 +69,23 @@ class TestSharedServiceRoutesThatDontRequireAdminRigths:
 
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["sharedServices"][0]["id"] == sample_shared_service().id
+
+    # [GET] /shared-services/<shared-service-id>
+    @patch("api.dependencies.shared_services.SharedServiceRepository.get_shared_service_by_id", return_value=sample_shared_service())
+    async def test_get_shared_service_returns_shared_service_result_for_user(self, get_shared_service_mock, app, client):
+        shared_service = sample_shared_service(shared_service_id=str(uuid.uuid4()))
+        get_shared_service_mock.return_value = shared_service
+
+        response = await client.get(
+            app.url_path_for(strings.API_GET_SHARED_SERVICE_BY_ID, shared_service_id=SHARED_SERVICE_ID))
+
+        assert response.status_code == status.HTTP_200_OK
+        obj = response.json()["sharedService"]
+        assert obj["id"] == shared_service.id
+
+        # check that as a user we only get the restricted resource model
+        assert 'private_field_1' not in obj["properties"]
+        assert 'private_field_2' not in obj["properties"]
 
 
 class TestSharedServiceRoutesThatRequireAdminRights:
@@ -84,13 +107,17 @@ class TestSharedServiceRoutesThatRequireAdminRights:
             app.url_path_for(strings.API_GET_SHARED_SERVICE_BY_ID, shared_service_id=SHARED_SERVICE_ID))
 
         assert response.status_code == status.HTTP_200_OK
-        assert response.json()["sharedService"]["id"] == shared_service.id
+        obj = response.json()["sharedService"]
+        assert obj["id"] == shared_service.id
+
+        # check that as admin we DO get the full model
+        assert obj["properties"]["private_field_1"] == "value_1"
+        assert obj["properties"]["private_field_2"] == "value_2"
 
     # [GET] /shared-services/{shared_service_id}
     @patch("api.routes.shared_services.SharedServiceRepository.get_active_shared_services")
     @patch("api.dependencies.shared_services.SharedServiceRepository.get_shared_service_by_id", side_effect=EntityDoesNotExist)
-    async def test_get_shared_service_raises_404_if_not_found(self, get_shared_service_mock, _,
-                                                              app, client):
+    async def test_get_shared_service_raises_404_if_not_found(self, get_shared_service_mock, _, app, client):
         get_shared_service_mock.return_value = sample_shared_service(SHARED_SERVICE_ID)
 
         response = await client.get(
@@ -136,7 +163,7 @@ class TestSharedServiceRoutesThatRequireAdminRights:
 
         modified_shared_service = sample_shared_service()
         modified_shared_service.isEnabled = False
-        modified_shared_service.history = [ResourceHistoryItem(properties={}, isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_admin_user())]
+        modified_shared_service.history = [ResourceHistoryItem(properties=copy.deepcopy(modified_shared_service.properties), isEnabled=True, resourceVersion=0, updatedWhen=FAKE_CREATE_TIMESTAMP, user=create_admin_user())]
         modified_shared_service.resourceVersion = 1
         modified_shared_service.updatedWhen = FAKE_UPDATE_TIMESTAMP
         modified_shared_service.user = create_admin_user()

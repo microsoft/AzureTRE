@@ -101,6 +101,9 @@ class ResourceTemplateRepository(BaseRepository):
             "customActions": template_input.customActions
         }
 
+        if "uiSchema" in template_input.json_schema:
+            template["uiSchema"] = template_input.json_schema["uiSchema"]
+
         if "pipeline" in template_input.json_schema:
             template["pipeline"] = template_input.json_schema["pipeline"]
 

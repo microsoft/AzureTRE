@@ -9,6 +9,8 @@ function show_existing_app_usage()
 
 Utility script for retrieve applications in AD; either by name or ID.
 
+Notes: Before Az CLI 2.37 this would return a json document with .objectId; that is now .id
+
 Usage: $0 --name <app-name>
        $0 --id <app-id>
 USAGE
