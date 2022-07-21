@@ -10,6 +10,7 @@ interface ResourceCardListProps {
   updateResource: (resource: Resource) => void,
   removeResource: (resource: Resource) => void
   emptyText: string,
+  readonly?: boolean
 }
 
 export const ResourceCardList: React.FunctionComponent<ResourceCardListProps> = (props: ResourceCardListProps) => {
@@ -23,12 +24,13 @@ export const ResourceCardList: React.FunctionComponent<ResourceCardListProps> = 
               props.resources.map((r:Resource, i:number) => {
                 return (
                   <Stack.Item key={i} style={gridItemStyles} >
-                    <ResourceCard 
-                      resource={r} 
-                      selectResource={(resource: Resource) => props.selectResource && props.selectResource(resource)} 
-                      onUpdate={(resource: Resource) => props.updateResource(resource)} 
-                      onDelete={(resource: Resource) => props.removeResource(resource)} 
-                      itemId={i} />
+                    <ResourceCard
+                      resource={r}
+                      selectResource={(resource: Resource) => props.selectResource && props.selectResource(resource)}
+                      onUpdate={(resource: Resource) => props.updateResource(resource)}
+                      onDelete={(resource: Resource) => props.removeResource(resource)}
+                      itemId={i}
+                      readonly={props.readonly} />
                   </Stack.Item>
                 )
               })
