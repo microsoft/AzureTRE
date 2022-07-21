@@ -7,6 +7,8 @@ from opencensus.trace import config_integration
 from opencensus.trace.samplers import AlwaysOnSampler
 from opencensus.trace.tracer import Tracer
 
+from shared.config import VERSION
+
 UNWANTED_LOGGERS = [
     "azure.core.pipeline.policies.http_logging_policy",
     "azure.eventhub._eventprocessor.event_processor",
@@ -46,6 +48,11 @@ def disable_unwanted_loggers():
         logging.getLogger(logger_name).disabled = True
 
 
+def telemetry_processor_callback_function(envelope):
+    envelope.tags['ai.cloud.role'] = 'resource_processor'
+    envelope.tags['ai.application.ver'] = VERSION
+
+
 def initialize_logging(logging_level: int, correlation_id: str, add_console_handler: bool = False) -> logging.LoggerAdapter:
     """
     Adds the Application Insights handler for the root logger and sets the given logging level.
@@ -73,9 +80,10 @@ def initialize_logging(logging_level: int, correlation_id: str, add_console_hand
         logger.addHandler(console_handler)
 
     try:
-        azurelog_formatter = AzureLogFormatter()
         # picks up APPLICATIONINSIGHTS_CONNECTION_STRING automatically
         azurelog_handler = AzureLogHandler()
+        azurelog_handler.add_telemetry_processor(telemetry_processor_callback_function)
+        azurelog_formatter = AzureLogFormatter()
         azurelog_handler.setFormatter(azurelog_formatter)
         logger.addHandler(azurelog_handler)
     except ValueError as e:

@@ -41,7 +41,7 @@ jobs:
             resource_processor:
               - 'resource_processor/**/*'
             resource_processor_version:
-              - 'resource_processor/version.txt'
+              - 'resource_processor/_version.py'
             guacamole_server:
               - 'templates/workspace_services/guacamole/guacamole-server/**/*'
             guacamole_server_version:
