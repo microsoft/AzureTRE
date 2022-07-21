@@ -4,19 +4,21 @@ import { useNavigate } from 'react-router-dom';
 import { ApiEndpoint } from '../../models/apiEndpoints';
 import { WorkspaceService } from '../../models/workspaceService';
 import { WorkspaceContext } from '../../contexts/WorkspaceContext';
+import { SharedService } from '../../models/sharedService';
 
 // TODO:
 // - active item is sometimes lost
 
 interface WorkspaceLeftNavProps {
   workspaceServices: Array<WorkspaceService>,
+  sharedServices: Array<SharedService>,
   setWorkspaceService: (workspaceService: WorkspaceService) => void,
   addWorkspaceService: (w: WorkspaceService) => void
 }
 
-export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = (props:WorkspaceLeftNavProps) => {
+export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = (props: WorkspaceLeftNavProps) => {
   const navigate = useNavigate();
-  const emptyLinks: INavLinkGroup[] = [{links:[]}];
+  const emptyLinks: INavLinkGroup[] = [{ links: [] }];
   const [serviceLinks, setServiceLinks] = useState(emptyLinks);
   const workspaceCtx = useContext(WorkspaceContext);
 
@@ -30,7 +32,17 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
           {
             name: service.properties.display_name,
             url: `${ApiEndpoint.WorkspaceServices}/${service.id}`,
-            key: service.id
+            key: `${ApiEndpoint.WorkspaceServices}/${service.id}`
+          });
+      });
+
+      let sharedServiceLinkArray: Array<any> = [];
+      props.sharedServices.forEach((service: SharedService) => {
+        sharedServiceLinkArray.push(
+          {
+            name: service.properties.display_name,
+            url: `${ApiEndpoint.SharedServices}/${service.id}`,
+            key: `${ApiEndpoint.SharedServices}/${service.id}`
           });
       });
 
@@ -39,16 +51,23 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
           links: [
             {
               name: 'Overview',
-              key: 'overview',
+              key: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}`,
               url: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}`,
               isExpanded: true
             },
             {
               name: 'Services',
-              key: 'services',
+              key: ApiEndpoint.WorkspaceServices,
               url: ApiEndpoint.WorkspaceServices,
               isExpanded: true,
               links: serviceLinkArray
+            },
+            {
+              name: 'Shared Services',
+              key: ApiEndpoint.SharedServices,
+              url: ApiEndpoint.SharedServices,
+              isExpanded: true,
+              links: sharedServiceLinkArray
             }
           ]
         }
@@ -57,7 +76,7 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
       setServiceLinks(seviceNavLinks);
     };
     getWorkspaceServices();
-  }, [props.workspaceServices, workspaceCtx.workspace]);
+  }, [props.workspaceServices, props.sharedServices, workspaceCtx.workspace]);
 
   return (
     <>
@@ -69,7 +88,8 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
           if (selectedService) {
             props.setWorkspaceService(selectedService);
           }
-          navigate(item.url)}}
+          navigate(item.url)
+        }}
         ariaLabel="TRE Workspace Left Navigation"
         groups={serviceLinks}
         styles={navStyles}
