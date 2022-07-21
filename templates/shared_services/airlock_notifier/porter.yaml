@@ -106,27 +106,6 @@ upgrade:
       arguments:
         - "This shared service does not implement upgrade action"
 
-  - az:
-      description: "Login to Azure"
-      arguments:
-        - login
-      flags:
-        identity:
-        username: "{{ bundle.credentials.azure_client_id }}"
-
-
-  - az:
-      description: "Deploy logic app"
-      arguments:
-        - functionapp
-        - deployment
-        - source
-        - config-zip
-      flags:
-        name: "{{ bundle.outputs.airlock_notifier_logic_app_name }}"
-        resource-group: "{{ bundle.outputs.airlock_notifier_logic_app_resource_group_name }}"
-        subscription: "{{ bundle.credentials.azure_subscription_id }}"
-        src: LogicApp.zip
 
 uninstall:
   - terraform:

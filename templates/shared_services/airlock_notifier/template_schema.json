@@ -11,28 +11,28 @@
       "type": "string",
       "title": "SMTP Server Address",
       "description": "SMTP Server Address",
-      "updateable": true
+      "updateable": false
     },
     "smtp_username": {
       "$id": "#/properties/smtp_username",
       "type": "string",
       "title": "SMTP Username",
       "description": "SMTP Username",
-      "updateable": true
+      "updateable": false
     },
     "smtp_password": {
       "$id": "#/properties/smtp_password",
       "type": "string",
       "title": "SMTP Password",
       "description": "SMTP Password",
-      "updateable": true
+      "updateable": false
     },
     "smtp_from_email": {
       "$id": "#/properties/smtp_from_email",
       "type": "string",
       "title": "SMTP From Email",
       "description": "SMTP From Email",
-      "updateable": true
+      "updateable": false
     }
   },
   "pipeline": {
