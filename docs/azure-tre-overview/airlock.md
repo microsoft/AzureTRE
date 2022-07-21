@@ -110,7 +110,7 @@ When the state changes to `In-progress` the Workspace Onwer (Airlock Manager) ge
 > * The Notification mechanism is also data-driven, allowing an organization to extend the notifications behavior. The mechanism is exemplified with a Logic App determining the notifications logic.
 > * Notifications will work with All TRE users being AAD users (guests or not), with email defined – if not, notifications will not be sent.
 
-### Architecture
+## Architecture
 
 The Airlock feature is supported by infrastructure at the TRE and workspace level, containing a set of storage accounts. Each Airlock request, will provision and use unique storage containers with the request id in it's name.
 
@@ -168,3 +168,9 @@ In the TRE Core, the TRE API will provide the airlock API endpoints allowing to 
 container |
 
 Also in the airlock feature we have the **Airlock Processor** which will handle the events that are created throughout the process, signalling state changes from blobs created, status changed or security scans finalized.
+
+## Airlock flow
+
+The following sequence diagram detailing the Airlock feature and its event driven behaviour:
+
+[![Airlock flow](../assets/airlock-swimlanes.png)](../assets/airlock-swimlanes.png)
