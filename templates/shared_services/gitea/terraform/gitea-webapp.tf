@@ -27,7 +27,6 @@ resource "azurerm_app_service" "gitea" {
   tags                            = local.tre_shared_service_tags
 
   app_settings = {
-    APPINSIGHTS_INSTRUMENTATIONKEY      = data.azurerm_application_insights.core.instrumentation_key
     WEBSITES_PORT                       = "3000"
     WEBSITES_ENABLE_APP_SERVICE_STORAGE = false
 

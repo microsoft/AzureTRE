@@ -8,11 +8,6 @@ data "azurerm_app_service_plan" "core" {
   resource_group_name = local.core_resource_group_name
 }
 
-data "azurerm_application_insights" "core" {
-  name                = "appi-${var.tre_id}"
-  resource_group_name = local.core_resource_group_name
-}
-
 data "azurerm_virtual_network" "core" {
   name                = local.core_vnet
   resource_group_name = local.core_resource_group_name
