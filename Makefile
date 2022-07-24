@@ -13,12 +13,9 @@ target_title = @echo -e "\n\e[34m»»» 🧩 \e[96m$(1)\e[0m..."
 all: bootstrap mgmt-deploy images tre-deploy
 tre-deploy: deploy-core build-and-deploy-ui deploy-shared-services db-migrate show-core-output
 
-images: build-and-push-api build-and-push-resource-processor build-and-push-gitea build-and-push-guacamole build-and-push-mlflow build-and-push-airlock-processor
+images: build-and-push-api build-and-push-resource-processor build-and-push-airlock-processor
 build-and-push-api: build-api-image push-api-image
 build-and-push-resource-processor: build-resource-processor-vm-porter-image push-resource-processor-vm-porter-image
-build-and-push-gitea: build-gitea-image push-gitea-image
-build-and-push-guacamole: build-guacamole-image push-guacamole-image
-build-and-push-mlflow: build-mlflow-image push-mlflow-image
 build-and-push-airlock-processor: build-airlock-processor push-airlock-processor
 
 deploy-shared-services: firewall-install
@@ -72,18 +69,6 @@ build-api-image:
 build-resource-processor-vm-porter-image:
 	$(call build_image,"resource-processor-vm-porter","${MAKEFILE_DIR}/resource_processor/version.txt","${MAKEFILE_DIR}/resource_processor/vmss_porter/Dockerfile","${MAKEFILE_DIR}/resource_processor/")
 
-build-gitea-image:
-	$(call build_image,"gitea","${MAKEFILE_DIR}/templates/shared_services/gitea/version.txt","${MAKEFILE_DIR}/templates/shared_services/gitea/Dockerfile","${MAKEFILE_DIR}/templates/shared_services/gitea/")
-
-build-gitea-workspace-service-image:
-	$(call build_image,"gitea-workspace-service","${MAKEFILE_DIR}/templates/workspace_services/gitea/version.txt","${MAKEFILE_DIR}/templates/workspace_services/gitea/docker/Dockerfile","${MAKEFILE_DIR}/templates/workspace_services/gitea/docker/")
-
-build-guacamole-image:
-	$(call build_image,"guac-server","${MAKEFILE_DIR}/templates/workspace_services/guacamole/version.txt","${MAKEFILE_DIR}/templates/workspace_services/guacamole/guacamole-server/docker/Dockerfile","${MAKEFILE_DIR}/templates/workspace_services/guacamole/guacamole-server")
-
-build-mlflow-image:
-	$(call build_image,"mlflow-server","${MAKEFILE_DIR}/templates/workspace_services/mlflow/mlflow-server/version.txt","${MAKEFILE_DIR}/templates/workspace_services/mlflow/mlflow-server/docker/Dockerfile","${MAKEFILE_DIR}/templates/workspace_services/mlflow/mlflow-server")
-
 build-airlock-processor:
 	$(call build_image,"airlock-processor","${MAKEFILE_DIR}/airlock_processor/_version.py","${MAKEFILE_DIR}/airlock_processor/Dockerfile","${MAKEFILE_DIR}/airlock_processor/")
 
@@ -105,18 +90,6 @@ push-api-image:
 
 push-resource-processor-vm-porter-image:
 	$(call push_image,"resource-processor-vm-porter","${MAKEFILE_DIR}/resource_processor/version.txt")
-
-push-gitea-image:
-	$(call push_image,"gitea","${MAKEFILE_DIR}/templates/shared_services/gitea/version.txt")
-
-push-gitea-workspace-service-image:
-	$(call push_image,"gitea-workspace-service","${MAKEFILE_DIR}/templates/workspace_services/gitea/version.txt")
-
-push-guacamole-image:
-	$(call push_image,"guac-server","${MAKEFILE_DIR}/templates/workspace_services/guacamole/version.txt")
-
-push-mlflow-image:
-	$(call push_image,"mlflow-server","${MAKEFILE_DIR}/templates/workspace_services/mlflow/mlflow-server/version.txt")
 
 push-airlock-processor:
 	$(call push_image,"airlock-processor","${MAKEFILE_DIR}/airlock_processor/_version.py")
@@ -209,7 +182,10 @@ bundle-build:
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env,auth \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/set_docker_sock_permission.sh \
-	&& cd ${DIR} && porter build --debug
+	&& cd ${DIR} \
+	&& FULL_IMAGE_NAME_PREFIX=${FULL_IMAGE_NAME_PREFIX} IMAGE_NAME_PREFIX=${IMAGE_NAME_PREFIX} \
+		${MAKEFILE_DIR}/devops/scripts/bundle_runtime_image_build.sh \
+	&& porter build --debug
 	$(MAKE) bundle-check-params
 
 bundle-install: bundle-check-params
@@ -259,6 +235,8 @@ bundle-publish:
 	&& . ${MAKEFILE_DIR}/devops/scripts/set_docker_sock_permission.sh \
 	&& az acr login --name $${ACR_NAME}	\
 	&& cd ${DIR} \
+	&& FULL_IMAGE_NAME_PREFIX=${FULL_IMAGE_NAME_PREFIX} \
+		${MAKEFILE_DIR}/devops/scripts/bundle_runtime_image_push.sh \
 	&& porter publish --registry "$${ACR_NAME}.azurecr.io" --debug
 
 bundle-register:
