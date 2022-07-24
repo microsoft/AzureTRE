@@ -50,11 +50,6 @@ output "state_store_account_name" {
   value = azurerm_cosmosdb_account.tre_db_account.name
 }
 
-output "app_insights_instrumentation_key" {
-  value     = module.azure_monitor.app_insights_instrumentation_key
-  sensitive = true
-}
-
 output "app_insights_connection_string" {
   value     = module.azure_monitor.app_insights_connection_string
   sensitive = true
