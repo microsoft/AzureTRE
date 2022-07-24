@@ -1,4 +1,3 @@
-import threading
 from typing import Optional
 from multiprocessing import Process
 import json
@@ -224,25 +223,39 @@ async def runner(logger_adapter: logging.LoggerAdapter, config: dict):
 def start_runner_process(config: dict):
     # Set up logger adapter copy for this process
     logger_adapter = set_up_logger(enable_console_logging=False)
+    asyncio.run(runner(logger_adapter, config))
 
-    asyncio.ensure_future(runner(logger_adapter, config))
-    event_loop = asyncio.get_event_loop()
-    event_loop.run_forever()
 
-    logger_adapter.info(f"Started resource processor (version: {VERSION})")
+async def check_runners(processes: list, httpserver: Process, logger_adapter: logging.LoggerAdapter):
+    logger_adapter.info("Starting runners check...")
+
+    while True:
+        await asyncio.sleep(30)
+
+        if all(not process.is_alive() for process in processes):
+            logger_adapter.error("All runner processes have failed!")
+            httpserver.kill()
 
 
 if __name__ == "__main__":
-    httpserver_thread = threading.Thread(target=start_server)
-    httpserver_thread.start()
-
     logger_adapter: logging.LoggerAdapter = set_up_logger(enable_console_logging=True)
     config = set_up_config(logger_adapter)
 
+    httpserver = Process(target=start_server)
+    httpserver.start()
     logger_adapter.info("Started http server")
 
-    logger_adapter.info(f'Starting {str(config["number_processes_int"])} processes...')
-    for i in range(config["number_processes_int"]):
-        logger_adapter.info(f'Starting process {str(i)}')
+    processes = []
+    num = config["number_processes_int"]
+    logger_adapter.info(f"Starting {num} processes...")
+    for i in range(num):
+        logger_adapter.info(f"Starting process {str(i)}")
         process = Process(target=lambda: start_runner_process(config))
+        processes.append(process)
         process.start()
+
+    logger_adapter.info("All proceesses have been started. Version is: %s", VERSION)
+
+    asyncio.run(check_runners(processes, httpserver, logger_adapter))
+
+    logger_adapter.warn("Exiting main...")
