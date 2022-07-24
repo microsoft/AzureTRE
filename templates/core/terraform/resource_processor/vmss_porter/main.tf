@@ -97,7 +97,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "vm_linux" {
 
   automatic_instance_repair {
     enabled      = true
-    grace_period = "P10M"
+    grace_period = "PT10M"
   }
 
   identity {
