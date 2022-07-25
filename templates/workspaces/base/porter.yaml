@@ -89,6 +89,10 @@ parameters:
     type: string
     default: ""
     description: "The id of the application role WorkspaceResearcher in the identity provider"
+  - name: app_role_id_airlock_manager
+    type: string
+    default: ""
+    description: "The id of the application role AirlockManager in the identity provider"
   - name: aad_redirect_uris
     type: string
     description: "List of redirect URIs in {name:value} format"

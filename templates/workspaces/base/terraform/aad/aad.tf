@@ -3,6 +3,7 @@ data "azuread_client_config" "current" {}
 resource "random_uuid" "oauth2_user_impersonation_id" {}
 resource "random_uuid" "app_role_workspace_owner_id" {}
 resource "random_uuid" "app_role_workspace_researcher_id" {}
+resource "random_uuid" "app_role_airlock_manager_id" {}
 
 resource "azuread_application" "workspace" {
   display_name    = var.workspace_resource_name_suffix
@@ -41,6 +42,15 @@ resource "azuread_application" "workspace" {
     enabled              = true
     id                   = random_uuid.app_role_workspace_researcher_id.result
     value                = "WorkspaceResearcher"
+  }
+
+  app_role {
+    allowed_member_types = ["User", "Application"]
+    description          = "Provides airlock managers access to the Workspace and ability to review airlock requests."
+    display_name         = "Airlock Manager"
+    enabled              = true
+    id                   = random_uuid.app_role_airlock_manager_id.result
+    value                = "AirlockManager"
   }
 
   feature_tags {
