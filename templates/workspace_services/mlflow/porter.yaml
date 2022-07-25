@@ -10,7 +10,7 @@ custom:
     build:
       version_file: mlflow-server/version.txt
       docker_file: mlflow-server/docker/Dockerfile
-      docker_context: mlflow-server/docker
+      docker_context: mlflow-server
 
 credentials:
   - name: azure_tenant_id
