@@ -39,6 +39,9 @@ resource "azurerm_storage_account" "app_insights" {
   lifecycle { ignore_changes = [tags] }
 }
 
+data "azurerm_resource_group" "resource_group" {
+  name       = var.resource_group_name
+}
 data "local_file" "app_insights_arm_template" {
   filename = "${path.module}/app_insights.json"
 }
@@ -69,6 +72,15 @@ resource "azurerm_resource_group_template_deployment" "app_insights_workspace" {
     }
     "tre_core_tags" = {
       value = var.tre_workspace_tags
+    }
+    "smartdetectoralertrules_failure_anomalies_name" = {
+      value = "failure anomalies - ${local.app_insights_name}"
+    }
+    "smartdetectoralertrules_failure_anomalies_scope" = {
+      value = "${data.azurerm_resource_group.resource_group.id}/providers/microsoft.insights/components/${local.app_insights_name}"
+    }
+    "smartdetectoralertrules_failure_anomalies_group_id" = {
+      value = "${data.azurerm_resource_group.resource_group.id}/providers/microsoft.insights/actiongroups/application insights smart detection"
     }
   })
 }

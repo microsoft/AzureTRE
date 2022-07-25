@@ -19,6 +19,15 @@
     },
     "tre_core_tags": {
       "type": "Object"
+    },
+    "smartdetectoralertrules_failure_anomalies_name": {
+      "type": "String"
+    },
+    "smartdetectoralertrules_failure_anomalies_scope": {
+      "type": "String"
+    },
+    "smartdetectoralertrules_failure_anomalies_group_id": {
+      "type": "String"
     }
   },
   "variables": {},
@@ -31,15 +40,15 @@
       "kind": "web",
       "tags": "[parameters('tre_core_tags')]",
       "properties": {
-          "Application_Type": "[parameters('application_type')]",
-          "SamplingPercentage": 100,
-          "RetentionInDays": 90,
-          "DisableIpMasking": false,
-          "WorkspaceResourceId": "[parameters('log_analytics_workspace_id')]",
-          "IngestionMode": "LogAnalytics",
-          "publicNetworkAccessForIngestion": "Enabled",
-          "publicNetworkAccessForQuery": "Enabled",
-          "DisableLocalAuth": false
+        "Application_Type": "[parameters('application_type')]",
+        "SamplingPercentage": 100,
+        "RetentionInDays": 90,
+        "DisableIpMasking": false,
+        "WorkspaceResourceId": "[parameters('log_analytics_workspace_id')]",
+        "IngestionMode": "LogAnalytics",
+        "publicNetworkAccessForIngestion": "Enabled",
+        "publicNetworkAccessForQuery": "Enabled",
+        "DisableLocalAuth": false
       }
     },
     {
@@ -52,6 +61,29 @@
       "dependsOn": [
         "[resourceId('microsoft.insights/components', parameters('app_insights_name'))]"
       ]
+    },
+    {
+      "type": "microsoft.alertsmanagement/smartdetectoralertrules",
+      "apiVersion": "2021-04-01",
+      "name": "[parameters('smartdetectoralertrules_failure_anomalies_name')]",
+      "location": "global",
+      "properties": {
+        "description": "Failure Anomalies notifies you of an unusual rise in the rate of failed HTTP requests or dependency calls.",
+        "state": "Enabled",
+        "severity": "Sev3",
+        "frequency": "PT1M",
+        "detector": {
+          "id": "FailureAnomaliesDetector"
+        },
+        "scope": [
+          "[parameters('smartdetectoralertrules_failure_anomalies_scope')]"
+        ],
+        "actionGroups": {
+          "groupIds": [
+            "[parameters('smartdetectoralertrules_failure_anomalies_group_id')]"
+          ]
+        }
+      }
     }
   ],
   "outputs": {
@@ -59,7 +91,7 @@
       "value": "[reference(resourceId('microsoft.insights/components', parameters('app_insights_name')), '2020-02-02').ConnectionString]",
       "type": "String"
     },
-    "appInsightsId" : {
+    "appInsightsId": {
       "value": "[resourceId('microsoft.insights/components', parameters('app_insights_name'))]",
       "type": "String"
     }
