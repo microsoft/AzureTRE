@@ -1,5 +1,9 @@
 import os
 
+from _version import __version__
+
+VERSION = __version__
+
 
 def get_config(logger_adapter) -> dict:
     config = {}
