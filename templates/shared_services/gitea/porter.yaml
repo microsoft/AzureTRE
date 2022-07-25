@@ -4,6 +4,14 @@ version: 0.3.9
 description: "A Gitea shared service"
 registry: azuretre
 
+custom:
+  runtime_image:
+    name: gitea
+    build:
+      version_file: version.txt
+      docker_file: Dockerfile
+      docker_context: .
+
 credentials:
   - name: azure_tenant_id
     env: ARM_TENANT_ID
