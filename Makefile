@@ -70,7 +70,7 @@ build-api-image:
 	$(call build_image,"api","${MAKEFILE_DIR}/api_app/_version.py","${MAKEFILE_DIR}/api_app/Dockerfile","${MAKEFILE_DIR}/api_app/")
 
 build-resource-processor-vm-porter-image:
-	$(call build_image,"resource-processor-vm-porter","${MAKEFILE_DIR}/resource_processor/version.txt","${MAKEFILE_DIR}/resource_processor/vmss_porter/Dockerfile","${MAKEFILE_DIR}/resource_processor/")
+	$(call build_image,"resource-processor-vm-porter","${MAKEFILE_DIR}/resource_processor/_version.py","${MAKEFILE_DIR}/resource_processor/vmss_porter/Dockerfile","${MAKEFILE_DIR}/resource_processor/")
 
 build-gitea-image:
 	$(call build_image,"gitea","${MAKEFILE_DIR}/templates/shared_services/gitea/version.txt","${MAKEFILE_DIR}/templates/shared_services/gitea/Dockerfile","${MAKEFILE_DIR}/templates/shared_services/gitea/")
@@ -104,7 +104,7 @@ push-api-image:
 	$(call push_image,"api","${MAKEFILE_DIR}/api_app/_version.py")
 
 push-resource-processor-vm-porter-image:
-	$(call push_image,"resource-processor-vm-porter","${MAKEFILE_DIR}/resource_processor/version.txt")
+	$(call push_image,"resource-processor-vm-porter","${MAKEFILE_DIR}/resource_processor/_version.py")
 
 push-gitea-image:
 	$(call push_image,"gitea","${MAKEFILE_DIR}/templates/shared_services/gitea/version.txt")

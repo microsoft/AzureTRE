@@ -1,0 +1,6 @@
+{
+  "smtp_from_email": {
+    "type": "String",
+    "value": "@appsetting('smtp_from_email')"
+  }
+}
