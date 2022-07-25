@@ -85,28 +85,6 @@ resource "azurerm_resource_group_template_deployment" "app_insights_workspace" {
   })
 }
 
-# resource "azurerm_monitor_private_link_scope" "ampls" {
-#   name                = "ampls-${var.tre_id}-ws-${local.short_workspace_id}"
-#   resource_group_name = var.resource_group_name
-#   depends_on = [
-#     azurerm_resource_group_template_deployment.app_insights_workspace,
-#     azurerm_storage_account.app_insights,
-#     azurerm_log_analytics_workspace.workspace
-#   ]
-# }
-# resource "azurerm_monitor_private_link_scoped_service" "ampls_log_analytics" {
-#   name                = "${azurerm_log_analytics_workspace.workspace.name}-ws-${local.short_workspace_id}-connection"
-#   resource_group_name = var.resource_group_name
-#   scope_name          = azurerm_monitor_private_link_scope.ampls.name
-#   linked_resource_id  = azurerm_log_analytics_workspace.workspace.id
-# }
-# resource "azurerm_monitor_private_link_scoped_service" "ampls_app_insights" {
-#   name                = "${local.app_insights_name}-ws-${local.short_workspace_id}-connection"
-#   resource_group_name = var.resource_group_name
-#   scope_name          = azurerm_monitor_private_link_scope.ampls.name
-#   linked_resource_id  = jsondecode(azurerm_resource_group_template_deployment.app_insights_workspace.output_content).appInsightsId.value
-# }
-
 data "local_file" "ampls_arm_template" {
   filename = "${path.module}/ampls.json"
 }
@@ -148,7 +126,6 @@ resource "azurerm_private_endpoint" "azure_monitor_private_endpoint" {
   lifecycle { ignore_changes = [tags] }
 
   private_service_connection {
-    # private_connection_resource_id = azurerm_monitor_private_link_scope.ampls.id
     private_connection_resource_id = jsondecode(azurerm_resource_group_template_deployment.ampls.output_content).resourceId.value
     name                           = "psc-ampls-${var.tre_id}-ws-${local.short_workspace_id}"
     subresource_names              = ["azuremonitor"]
@@ -169,6 +146,5 @@ resource "azurerm_private_endpoint" "azure_monitor_private_endpoint" {
 
   depends_on = [
     azurerm_resource_group_template_deployment.ampls
-    # azurerm_monitor_private_link_scope.ampls
   ]
 }
