@@ -1,5 +1,4 @@
 import logging
-import os
 from opencensus.ext.azure.trace_exporter import AzureExporter
 import uvicorn
 
@@ -20,7 +19,7 @@ from api.errors.validation_error import http422_error_handler
 from api.errors.generic_error import generic_error_handler
 from core import config
 from core.events import create_start_app_handler, create_stop_app_handler
-from services.logging import disable_unwanted_loggers, initialize_logging
+from services.logging import disable_unwanted_loggers, initialize_logging, telemetry_processor_callback_function
 from service_bus.deployment_status_update import receive_message_and_update_deployment
 
 
@@ -39,7 +38,9 @@ def get_application() -> FastAPI:
     application.add_event_handler("shutdown", create_stop_app_handler(application))
 
     try:
-        application.add_middleware(RequestTracerMiddleware, exporter=AzureExporter(connection_string=f'InstrumentationKey={os.getenv("APPINSIGHTS_INSTRUMENTATIONKEY")}', sampler=ProbabilitySampler(1.0)))
+        exporter = AzureExporter(sampler=ProbabilitySampler(1.0))
+        exporter.add_telemetry_processor(telemetry_processor_callback_function)
+        application.add_middleware(RequestTracerMiddleware, exporter=exporter)
     except Exception as e:
         logging.error(f"Failed to add RequestTracerMiddleware: {e}")
 

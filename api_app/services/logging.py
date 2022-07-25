@@ -1,10 +1,11 @@
 import logging
-import os
 
 from opencensus.ext.azure.log_exporter import AzureLogHandler
 from opencensus.trace import config_integration
 from opencensus.trace.samplers import AlwaysOnSampler
 from opencensus.trace.tracer import Tracer
+
+from core.config import VERSION
 
 
 UNWANTED_LOGGERS = [
@@ -37,6 +38,11 @@ def disable_unwanted_loggers():
         logging.getLogger(logger_name).disabled = True
 
 
+def telemetry_processor_callback_function(envelope):
+    envelope.tags['ai.cloud.role'] = 'api'
+    envelope.tags['ai.application.ver'] = VERSION
+
+
 def initialize_logging(logging_level: int, correlation_id: str = None) -> logging.LoggerAdapter:
     """
     Adds the Application Insights handler for the root logger and sets the given logging level.
@@ -48,10 +54,12 @@ def initialize_logging(logging_level: int, correlation_id: str = None) -> loggin
     """
     logger = logging.getLogger()
     logger.addHandler(logging.StreamHandler())  # For logging into console
-    app_insights_connection_string = os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING")
 
     try:
-        logger.addHandler(AzureLogHandler(connection_string=app_insights_connection_string))
+        # picks up APPLICATIONINSIGHTS_CONNECTION_STRING automatically
+        azurelog_handler = AzureLogHandler()
+        azurelog_handler.add_telemetry_processor(telemetry_processor_callback_function)
+        logger.addHandler(azurelog_handler)
     except ValueError as e:
         logger.error(f"Failed to set Application Insights logger handler: {e}")
 

@@ -95,6 +95,11 @@ resource "azurerm_linux_virtual_machine_scale_set" "vm_linux" {
 
   }
 
+  automatic_instance_repair {
+    enabled      = true
+    grace_period = "PT10M"
+  }
+
   identity {
     type         = "UserAssigned"
     identity_ids = [azurerm_user_assigned_identity.vmss_msi.id]

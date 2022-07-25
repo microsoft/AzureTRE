@@ -345,6 +345,7 @@ JSON
       echo "Found Service Principal \"$automationSpId\" for \"${automationAppName}\"."
 
       grant_admin_consent "${automationSpId}" "${workspaceSpId}" "${ownerRoleId}"
+      grant_admin_consent "${automationSpId}" "${workspaceSpId}" "${airlockManagerRoleId}"
       az ad app permission grant --id "$automationSpId" --api "$workspaceAppId" --scope "user_impersonation" --only-show-errors
   fi
 fi
