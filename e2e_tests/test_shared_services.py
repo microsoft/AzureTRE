@@ -92,7 +92,7 @@ shared_service_templates_to_create = [
 
 
 @pytest.mark.shared_services
-@pytest.mark.timeout(30 * 60)
+@pytest.mark.timeout(45 * 60)
 @pytest.mark.parametrize("template_name", shared_service_templates_to_create)
 async def test_create_shared_service(template_name, admin_token, verify) -> None:
     # Check that the shared service hasn't already been created

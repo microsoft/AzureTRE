@@ -178,7 +178,7 @@ jobs:
       - name: Deploy management
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: "make bootstrap && make mgmt-deploy"
+          COMMAND: "make bootstrap mgmt-deploy"
           ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
           ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
           ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
@@ -192,11 +192,9 @@ jobs:
           LOCATION: ${{ secrets.LOCATION }}
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           ACR_NAME: ${{ secrets.ACR_NAME }}
-          TF_VAR_terraform_state_container_name:
-            ${{ secrets.TF_STATE_CONTAINER }}
+          TF_VAR_terraform_state_container_name: ${{ secrets.TF_STATE_CONTAINER }}
           TF_VAR_mgmt_resource_group_name: "${{ secrets.MGMT_RESOURCE_GROUP }}"
-          TF_VAR_mgmt_storage_account_name:
-            ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
+          TF_VAR_mgmt_storage_account_name: ${{ secrets.STATE_STORAGE_ACCOUNT_NAME }}
           TF_VAR_core_address_space: ${{ secrets.CORE_ADDRESS_SPACE }}
           TF_VAR_tre_address_space: ${{ secrets.TRE_ADDRESS_SPACE }}
           TF_VAR_swagger_ui_client_id: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
@@ -461,41 +459,6 @@ jobs:
           ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
           ACR_NAME: ${{ secrets.ACR_NAME }}
 
-  build_additional_images:
-    # used to build images NOT used by core infrastructure
-    name: Build Additional Docker Images
-    runs-on: ubuntu-latest
-    needs: [deploy_management]
-    environment: ${{ inputs.environmentName }}
-    strategy:
-      fail-fast: true
-      matrix:
-        target: [build-and-push-gitea, build-and-push-guacamole]
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-        with:
-          persist-credentials: false
-          # if the following values are missing (i.e. not triggered via comment workflow)
-          # then the default checkout will apply
-          ref: ${{ inputs.prRef }}
-
-      - name: Docker build
-        uses: ./.github/actions/devcontainer_run_command
-        with:
-          COMMAND: "make ${{ matrix.target }}"
-          ACTIONS_ACR_NAME: ${{ secrets.ACTIONS_ACR_NAME }}
-          ACTIONS_ACR_URI: ${{ secrets.ACTIONS_ACR_URI }}
-          ACTIONS_ACR_PASSWORD: ${{ secrets.ACTIONS_ACR_PASSWORD }}
-          ACTIONS_DEVCONTAINER_TAG: ${{ secrets.ACTIONS_DEVCONTAINER_TAG }}
-          ARM_TENANT_ID: "${{ secrets.ARM_TENANT_ID }}"
-          ARM_CLIENT_ID: "${{ secrets.ARM_CLIENT_ID }}"
-          ARM_CLIENT_SECRET: "${{ secrets.ARM_CLIENT_SECRET }}"
-          ARM_SUBSCRIPTION_ID: "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          ACR_NAME: ${{ secrets.ACR_NAME }}
-          CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
-
   register_shared_bundles:
     name: Register Shared Bundles
     runs-on: ubuntu-latest
@@ -710,7 +673,7 @@ jobs:
     name: "Run E2E Tests (Smoke)"
     runs-on: ubuntu-latest
     environment: ${{ inputs.environmentName }}
-    needs: [deploy_shared_services, register_bundles, build_additional_images]
+    needs: [deploy_shared_services, register_bundles]
     timeout-minutes: 10
     steps:
       - name: Checkout
@@ -776,8 +739,8 @@ jobs:
     if: ${{ inputs.e2eTestsCustomSelector != '' }}
     runs-on: ubuntu-latest
     environment: ${{ inputs.environmentName }}
-    needs: [deploy_shared_services, register_bundles, register_user_resource_bundles, build_additional_images]
-    timeout-minutes: 140
+    needs: [deploy_shared_services, register_bundles, register_user_resource_bundles]
+    timeout-minutes: 180
     steps:
       - name: Checkout
         uses: actions/checkout@v2
