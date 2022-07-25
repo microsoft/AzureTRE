@@ -1,7 +1,8 @@
 ---
 name: tre-workspace-base
-version: 0.3.5
+version: 0.3.19
 description: "A base Azure TRE workspace"
+dockerfile: Dockerfile.tmpl
 registry: azuretre
 
 credentials:
@@ -63,12 +64,14 @@ parameters:
     description: "The object id of the user that will be granted WorkspaceOwner after it is created."
   - name: client_id
     type: string
-    description: "The client id of the workspace in the identity provider. This value is typically provided to you
-       when you create the ws application"
+    description:
+      "The client id of the workspace in the identity provider. This value is typically provided to you
+      when you create the ws application"
   - name: client_secret
     type: string
-    description: "The client secret of the workspace in the identity provider. This value is typically provided to you
-       when you create the ws application"
+    description:
+      "The client secret of the workspace in the identity provider. This value is typically provided to you
+      when you create the ws application"
     default: ""
   - name: scope_id
     type: string
@@ -86,30 +89,36 @@ parameters:
     type: string
     default: ""
     description: "The id of the application role WorkspaceResearcher in the identity provider"
+  - name: aad_redirect_uris
+    type: string
+    description: "List of redirect URIs in {name:value} format"
+    default: "W10=" # b64 for []
+  - name: app_service_plan_sku
+    type: string
+    description: "The SKU used when deploying an Azure App Service Plan"
+    default: "P1v3"
+  - name: enable_airlock
+    type: boolean
+    default: true
 
 outputs:
   - name: app_role_id_workspace_owner
     type: string
-    default: "{{ bundle.parameters.app_role_id_workspace_owner }}"
     applyTo:
       - install
   - name: app_role_id_workspace_researcher
     type: string
-    default: "{{ bundle.parameters.app_role_id_workspace_researcher }}"
     applyTo:
       - install
   - name: client_id
     type: string
-    default: "{{ bundle.parameters.client_id }}"
     applyTo:
       - install
   - name: scope_id
     type: string
-    default: "{{ bundle.parameters.scope_id }}"
     applyTo:
       - install
   - name: sp_id
-    default: "{{ bundle.parameters.sp_id }}"
     type: string
     applyTo:
       - install
@@ -118,6 +127,8 @@ mixins:
   - exec
   - terraform:
       clientVersion: 1.1.7
+      initFile: providers.tf
+  - az
 
 install:
   - terraform:
@@ -128,10 +139,8 @@ install:
         location: "{{ bundle.parameters.azure_location }}"
         address_space: "{{ bundle.parameters.address_space }}"
         shared_storage_quota: "{{ bundle.parameters.shared_storage_quota }}"
-        enable_local_debugging:
-          "{{ bundle.parameters.enable_local_debugging }}"
-        register_aad_application:
-          "{{ bundle.parameters.register_aad_application }}"
+        enable_local_debugging: "{{ bundle.parameters.enable_local_debugging }}"
+        register_aad_application: "{{ bundle.parameters.register_aad_application }}"
         auth_client_id: "{{ bundle.credentials.auth_client_id }}"
         auth_client_secret: "{{ bundle.credentials.auth_client_secret }}"
         auth_tenant_id: "{{ bundle.credentials.auth_tenant_id }}"
@@ -142,11 +151,12 @@ install:
         sp_id: "{{ bundle.parameters.sp_id }}"
         app_role_id_workspace_owner: "{{ bundle.parameters.app_role_id_workspace_owner }}"
         app_role_id_workspace_researcher: "{{ bundle.parameters.app_role_id_workspace_researcher }}"
+        aad_redirect_uris_b64: "{{ bundle.parameters.aad_redirect_uris }}"
+        app_service_plan_sku: "{{ bundle.parameters.app_service_plan_sku }}"
+        enable_airlock: "{{ bundle.parameters.enable_airlock }}"
       backendConfig:
-        resource_group_name:
-          "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name:
-          "{{ bundle.parameters.tfstate_storage_account_name }}"
+        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.id }}"
       outputs:
@@ -157,11 +167,59 @@ install:
         - name: sp_id
 
 upgrade:
-  - exec:
-      description: "Upgrade workspace"
-      command: echo
+  # TODO: fix with https://github.com/microsoft/AzureTRE/issues/2114
+  # - terraform:
+  #     description: "Upgrade workspace"
+  #     vars:
+  #       tre_id: "{{ bundle.parameters.tre_id }}"
+  #       tre_resource_id: "{{ bundle.parameters.id }}"
+  #       location: "{{ bundle.parameters.azure_location }}"
+  #       address_space: "{{ bundle.parameters.address_space }}"
+  #       shared_storage_quota: "{{ bundle.parameters.shared_storage_quota }}"
+  #       enable_local_debugging: "{{ bundle.parameters.enable_local_debugging }}"
+  #       register_aad_application: "{{ bundle.parameters.register_aad_application }}"
+  #       auth_client_id: "{{ bundle.credentials.auth_client_id }}"
+  #       auth_client_secret: "{{ bundle.credentials.auth_client_secret }}"
+  #       auth_tenant_id: "{{ bundle.credentials.auth_tenant_id }}"
+  #       workspace_owner_object_id: "{{ bundle.parameters.workspace_owner_object_id }}"
+  #       client_id: "{{ bundle.parameters.client_id }}"
+  #       client_secret: "{{ bundle.parameters.client_secret }}"
+  #       scope_id: "{{ bundle.parameters.scope_id }}"
+  #       sp_id: "{{ bundle.parameters.sp_id }}"
+  #       app_role_id_workspace_owner: "{{ bundle.parameters.app_role_id_workspace_owner }}"
+  #       app_role_id_workspace_researcher: "{{ bundle.parameters.app_role_id_workspace_researcher }}"
+  #       aad_redirect_uris_b64: "{{ bundle.parameters.aad_redirect_uris }}"
+  #     backendConfig:
+  #       resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
+  #       storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
+  #       container_name: "{{ bundle.parameters.tfstate_container_name }}"
+  #       key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.id }}"
+  #     outputs:
+  #       - name: app_role_id_workspace_owner
+  #       - name: app_role_id_workspace_researcher
+  #       - name: client_id
+  #       - name: scope_id
+  #       - name: sp_id
+  - az:
+      description: "AAD Application Admin Login"
       arguments:
-        - "This workspace does not implement upgrade action"
+        - login
+      flags:
+        service-principal: ""
+        username: "'{{bundle.credentials.auth_client_id}}'"
+        password: "'{{bundle.credentials.auth_client_secret}}'"
+        tenant: "'{{bundle.credentials.auth_tenant_id}}'"
+        allow-no-subscriptions: ""
+  - exec:
+      description: "Update workspace app redirect urls"
+      command: ./update_redirect_urls.sh
+      flags:
+        workspace-api-client-id: "{{ bundle.parameters.client_id }}"
+        aad-redirect-uris-b64: "{{ bundle.parameters.aad_redirect_uris }}"
+        # always update with the script since we don't run TF for upgrade
+        # might need to change when https://github.com/microsoft/AzureTRE/issues/2114 is resolved.
+        register-aad-application: "false"
+        # register-aad-application: "{{ bundle.parameters.register_aad_application }}"
 
 uninstall:
   - terraform:
@@ -172,10 +230,8 @@ uninstall:
         location: "{{ bundle.parameters.azure_location }}"
         address_space: "{{ bundle.parameters.address_space }}"
         shared_storage_quota: "{{ bundle.parameters.shared_storage_quota }}"
-        enable_local_debugging:
-          "{{ bundle.parameters.enable_local_debugging }}"
-        register_aad_application:
-          "{{ bundle.parameters.register_aad_application }}"
+        enable_local_debugging: "{{ bundle.parameters.enable_local_debugging }}"
+        register_aad_application: "{{ bundle.parameters.register_aad_application }}"
         auth_client_id: "{{ bundle.credentials.auth_client_id }}"
         auth_client_secret: "{{ bundle.credentials.auth_client_secret }}"
         auth_tenant_id: "{{ bundle.credentials.auth_tenant_id }}"
@@ -185,16 +241,11 @@ uninstall:
         sp_id: "{{ bundle.parameters.sp_id }}"
         app_role_id_workspace_owner: "{{ bundle.parameters.app_role_id_workspace_owner }}"
         app_role_id_workspace_researcher: "{{ bundle.parameters.app_role_id_workspace_researcher }}"
+        aad_redirect_uris_b64: "{{ bundle.parameters.aad_redirect_uris }}"
+        app_service_plan_sku: "{{ bundle.parameters.app_service_plan_sku }}"
+        enable_airlock: "{{ bundle.parameters.enable_airlock }}"
       backendConfig:
-        resource_group_name:
-          "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name:
-          "{{ bundle.parameters.tfstate_storage_account_name }}"
+        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.tre_id }}-ws-{{ bundle.parameters.id }}"
-      outputs:
-        - name: app_role_id_workspace_owner
-        - name: app_role_id_workspace_researcher
-        - name: client_id
-        - name: scope_id
-        - name: sp_id

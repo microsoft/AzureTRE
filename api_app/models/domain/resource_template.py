@@ -1,4 +1,4 @@
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Union
 
 from pydantic import Field
 
@@ -22,6 +22,7 @@ class Property(AzureTREModel):
     minLength: Optional[int] = Field(None, title="Minimum length")
     pattern: Optional[str] = Field(None, title="Pattern")
     updateable: Optional[bool] = Field(None, title="Indicates that the field can be updated")
+    sensitive: Optional[bool] = Field(None, title="Indicates that the field is a sensitive value")
     readOnly: Optional[bool] = Field(None, title="Indicates the field is read-only")
     items: Optional[dict] = None  # items can contain sub-properties
 
@@ -34,7 +35,9 @@ class CustomAction(AzureTREModel):
 class PipelineStepProperty(AzureTREModel):
     name: str = Field(title="name", description="name of the property to update")
     type: str = Field(title="type", description="data type of the property to update")
-    value: str = Field(title="value", description="value to use in substitution for the property to update")
+    value: Union[dict, str] = Field(None, title="value", description="value to use in substitution for the property to update")
+    arraySubstitutionAction: Optional[str] = Field("", title="Array Substitution Action", description="How to treat existing values of this property in an array [overwrite | append | replace | remove]")
+    arrayMatchField: Optional[str] = Field("", title="Array match field", description="Name of the field to use for finding an item in an array - to replace/remove it")
 
 
 class PipelineStep(AzureTREModel):
@@ -66,6 +69,7 @@ class ResourceTemplate(AzureTREModel):
     actions: List[CustomAction] = Field(default=[], title="Template actions")
     customActions: List[CustomAction] = Field(default=[], title="Template custom actions")
     pipeline: Optional[Pipeline] = Field(default=None, title="Template pipeline to define updates to other resources")
+    uiSchema: Optional[dict] = Field(default={}, title="Dict containing a uiSchema object, if any")
 
     # setting this to false means if extra, unexpected fields are supplied, the request is invalidated
     additionalProperties: bool = Field(default=False, title="Prevent unspecified properties being applied")

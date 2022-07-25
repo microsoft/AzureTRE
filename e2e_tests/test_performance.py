@@ -1,7 +1,8 @@
 import asyncio
 import pytest
 import config
-from helpers import disable_and_delete_resource, get_workspace_auth_details, post_resource
+from resources.workspace import get_workspace_auth_details
+from resources.resource import disable_and_delete_resource, post_resource
 from resources import strings
 
 pytestmark = pytest.mark.asyncio
@@ -80,8 +81,7 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(admin_toke
             "templateName": "tre-service-guacamole",
             "properties": {
                 "display_name": "Workspace service test",
-                "description": "",
-                "workspace_identifier_uri": scope_uri
+                "description": ""
             }
         }
 

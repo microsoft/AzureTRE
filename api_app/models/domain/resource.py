@@ -1,6 +1,6 @@
 from enum import Enum
-from typing import List
-from pydantic import Field
+from typing import List, Optional, Union
+from pydantic import Field, validator
 from models.domain.azuretremodel import AzureTREModel
 from models.domain.request_action import RequestAction
 from resources import strings
@@ -35,9 +35,9 @@ class Resource(AzureTREModel):
     templateName: str = Field(title="Resource template name", description="The resource template (bundle) to deploy")
     templateVersion: str = Field(title="Resource template version", description="The version of the resource template (bundle) to deploy")
     properties: dict = Field({}, title="Resource template parameters", description="Parameters for the deployment")
-    isActive: bool = True  # When False, hides resource document from list views
     isEnabled: bool = True  # Must be set before a resource can be deleted
     resourceType: ResourceType
+    deploymentStatus: Optional[str] = Field(title="Deployment Status", description="Overall deployment status of the resource")
     etag: str = Field(title="_etag", description="eTag of the document", alias="_etag")
     resourcePath: str = ""
     resourceVersion: int = 0
@@ -66,7 +66,13 @@ class Resource(AzureTREModel):
 
         return payload
 
+    # SQL API CosmosDB saves etag as an escaped string by default, with no apparent way to change it.
+    # Removing escaped quotes on pydantic deserialization. https://github.com/microsoft/AzureTRE/issues/1931
+    @validator("etag", pre=True)
+    def parse_etag_to_remove_escaped_quotes(cls, value):
+        return value.replace('\"', '')
+
 
 class Output(AzureTREModel):
     Name: str = Field(title="", description="")
-    Value: str = Field(title="", description="")
+    Value: Union[list, dict, str] = Field(None, title="", description="")

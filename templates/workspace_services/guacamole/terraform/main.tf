@@ -1,23 +1,3 @@
-# Azure Provider source and version being used
-terraform {
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "=3.5.0"
-    }
-  }
-  backend "azurerm" {
-  }
-}
-
-provider "azurerm" {
-  features {
-    key_vault {
-      purge_soft_delete_on_destroy = false
-    }
-  }
-}
-
 data "azurerm_client_config" "current" {}
 
 data "azurerm_resource_group" "ws" {
@@ -86,11 +66,6 @@ data "azurerm_network_security_group" "ws" {
   resource_group_name = data.azurerm_virtual_network.ws.resource_group_name
 }
 
-data "azurerm_app_service" "api_core" {
-  name                = "api-${var.tre_id}"
-  resource_group_name = "rg-${var.tre_id}"
-}
-
 data "azurerm_private_dns_zone" "filecore" {
   name                = "privatelink.file.core.windows.net"
   resource_group_name = local.core_resource_group_name
@@ -101,5 +76,9 @@ data "local_file" "version" {
 }
 
 output "connection_uri" {
-  value = "https://${azurerm_app_service.guacamole.default_site_hostname}/guacamole"
+  value = "https://${azurerm_linux_web_app.guacamole.default_hostname}/guacamole"
+}
+
+output "authentication_callback_uri" {
+  value = "https://${azurerm_linux_web_app.guacamole.default_hostname}/oauth2/callback"
 }

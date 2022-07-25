@@ -8,11 +8,9 @@ from models.domain.resource_template import ResourceTemplate
 
 from models.domain.authentication import User
 
-from resources import strings
-
 from models.domain.request_action import RequestAction
 from models.domain.resource import Resource
-from models.domain.operation import Status, Operation
+from models.domain.operation import Operation
 
 from db.repositories.operations import OperationRepository
 
@@ -26,25 +24,10 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
     :param action: install, uninstall etc.
     """
 
-    status = Status.InvokingAction
-    message = strings.RESOURCE_ACTION_STATUS_INVOKING
-
-    if action == RequestAction.Install:
-        status = Status.NotDeployed
-        message = strings.RESOURCE_STATUS_NOT_DEPLOYED_MESSAGE
-    elif action == RequestAction.UnInstall:
-        status = Status.Deleting
-        message = strings.RESOURCE_STATUS_DELETING
-    elif action == RequestAction.Upgrade:
-        status = Status.NotDeployed
-        message = strings.RESOURCE_STATUS_UPGRADE_NOT_STARTED_MESSAGE
-
     # add the operation to the db - this will create all the steps needed (if any are defined in the template)
     operation = operations_repo.create_operation_item(
         resource_id=resource.id,
-        status=status,
         action=action,
-        message=message,
         resource_path=resource.resourcePath,
         resource_version=resource.resourceVersion,
         user=user,
@@ -57,7 +40,7 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
         operation_step=first_step,
         resource_repo=resource_repo,
         resource_template_repo=resource_template_repo,
-        primary_resource_id=resource.id,
+        primary_resource=resource,
         resource_to_update_id=first_step.resourceId,
         primary_action=action,
         user=user)

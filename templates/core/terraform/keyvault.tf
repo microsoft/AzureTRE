@@ -4,7 +4,7 @@ resource "azurerm_key_vault" "kv" {
   location                 = azurerm_resource_group.core.location
   resource_group_name      = azurerm_resource_group.core.name
   sku_name                 = "standard"
-  purge_protection_enabled = var.keyvault_purge_protection_enabled
+  purge_protection_enabled = true
   tags                     = local.tre_core_tags
 
   lifecycle { ignore_changes = [access_policy, tags] }
@@ -83,6 +83,24 @@ resource "azurerm_key_vault_secret" "api_client_secret" {
 resource "azurerm_key_vault_secret" "auth_tenant_id" {
   name         = "auth-tenant-id"
   value        = var.aad_tenant_id
+  key_vault_id = azurerm_key_vault.kv.id
+  depends_on = [
+    azurerm_key_vault_access_policy.deployer
+  ]
+}
+
+resource "azurerm_key_vault_secret" "application_admin_client_id" {
+  name         = "application-admin-client-id"
+  value        = var.application_admin_client_id
+  key_vault_id = azurerm_key_vault.kv.id
+  depends_on = [
+    azurerm_key_vault_access_policy.deployer
+  ]
+}
+
+resource "azurerm_key_vault_secret" "application_admin_client_secret" {
+  name         = "application-admin-client-secret"
+  value        = var.application_admin_client_secret
   key_vault_id = azurerm_key_vault.kv.id
   depends_on = [
     azurerm_key_vault_access_policy.deployer

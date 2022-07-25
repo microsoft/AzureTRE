@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "1.0.0-DRAFT+TODO",
+  "name": "base",
+  "created": "2021-06-04T13:37:29.5071039+03:00",
+  "modified": "2021-06-04T13:37:29.5071039+03:00",
+  "parameters": [
+    {
+      "name": "tre_id",
+      "source": {
+        "env": "TRE_ID"
+      }
+    },
+    {
+      "name": "id",
+      "source": {
+        "env": "ID"
+      }
+    },
+    {
+      "name": "tfstate_container_name",
+      "source": {
+        "env": "TERRAFORM_STATE_CONTAINER_NAME"
+      }
+    },
+    {
+      "name": "tfstate_resource_group_name",
+      "source": {
+        "env": "MGMT_RESOURCE_GROUP_NAME"
+      }
+    },
+    {
+      "name": "tfstate_storage_account_name",
+      "source": {
+        "env": "MGMT_STORAGE_ACCOUNT_NAME"
+      }
+    },
+    {
+      "name": "smtp_server_address",
+      "source": {
+        "env": "SMTP_SERVER_ADDRESS"
+      }
+    },
+    {
+      "name": "smtp_username",
+      "source": {
+        "env": "SMTP_USERNAME"
+      }
+    },
+    {
+      "name": "smtp_password",
+      "source": {
+        "env": "SMTP_PASSWORD"
+      }
+    },
+    {
+      "name": "smtp_from_email",
+      "source": {
+        "env": "SMTP_FROM_EMAIL"
+      }
+    }
+  ]
+}

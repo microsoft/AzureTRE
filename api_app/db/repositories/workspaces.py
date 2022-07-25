@@ -9,7 +9,7 @@ from models.domain.authentication import User
 from core import config
 from db.errors import EntityDoesNotExist, InvalidInput, ResourceIsNotDeployed
 from db.repositories.resource_templates import ResourceTemplateRepository
-from db.repositories.resources import ResourceRepository, IS_ACTIVE_CLAUSE
+from db.repositories.resources import ResourceRepository, IS_NOT_DELETED_CLAUSE
 from db.repositories.operations import OperationRepository
 from models.domain.resource import ResourceType
 from models.domain.workspace import Workspace
@@ -35,7 +35,7 @@ class WorkspaceRepository(ResourceRepository):
 
     @staticmethod
     def active_workspaces_query_string():
-        return f'SELECT * FROM c WHERE c.resourceType = "{ResourceType.Workspace}" AND {IS_ACTIVE_CLAUSE}'
+        return f'SELECT * FROM c WHERE c.resourceType = "{ResourceType.Workspace}" AND {IS_NOT_DELETED_CLAUSE}'
 
     def get_workspaces(self) -> List[Workspace]:
         query = WorkspaceRepository.workspaces_query_string()

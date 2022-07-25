@@ -71,6 +71,24 @@
       }
     },
     {
+      "name": "client_secret",
+      "source": {
+        "env": "CLIENT_SECRET"
+      }
+    },
+    {
+      "name": "scope_id",
+      "source": {
+        "env": "SCOPE_ID"
+      }
+    },
+    {
+      "name": "workspace_owner_object_id",
+      "source": {
+        "env": "WORKSPACE_OWNER_OBJECT_ID"
+      }
+    },
+    {
       "name": "sp_id",
       "source": {
         "env": "SP_ID"
@@ -86,6 +104,24 @@
       "name": "app_role_id_workspace_researcher",
       "source": {
         "env": "APP_ROLE_ID_WORKSPACE_RESEARCHER"
+      }
+    },
+    {
+      "name": "aad_redirect_uris",
+      "source": {
+        "env": "AAD_REDIRECT_URIS"
+      }
+    },
+    {
+      "name": "app_service_plan_sku",
+      "source": {
+        "env": "APP_SERVICE_PLAN_SKU"
+      }
+    },
+    {
+      "name": "enable_airlock",
+      "source": {
+        "env": "ENABLE_AIRLOCK"
       }
     }
   ]

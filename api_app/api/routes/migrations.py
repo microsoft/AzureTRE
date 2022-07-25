@@ -1,6 +1,8 @@
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from db.migrations.resources import ResourceMigration
+from db.repositories.operations import OperationRepository
 from services.authentication import get_current_admin_user
 from resources import strings
 from api.dependencies.database import get_repository
@@ -19,8 +21,10 @@ migrations_core_router = APIRouter(dependencies=[Depends(get_current_admin_user)
                              response_model=MigrationOutList,
                              dependencies=[Depends(get_current_admin_user)])
 async def migrate_database(resources_repo=Depends(get_repository(ResourceRepository)),
+                           operations_repo=Depends(get_repository(OperationRepository)),
                            shared_services_migration=Depends(get_repository(SharedServiceMigration)),
-                           workspace_migration=Depends(get_repository(WorkspaceMigration))):
+                           workspace_migration=Depends(get_repository(WorkspaceMigration)),
+                           resource_migration=Depends(get_repository(ResourceMigration))):
     try:
         migrations = list()
         logging.info("PR 1030.")
@@ -42,6 +46,10 @@ async def migrate_database(resources_repo=Depends(get_repository(ResourceReposit
         logging.info("PR 1726. - Authentication needs to be in properties so we can update them")
         migration_status = "Executed" if workspace_migration.moveAuthInformationToProperties() else "Skipped"
         migrations.append(Migration(issueNumber="PR 1726", status=migration_status))
+
+        logging.info("#1406 - Extra field to support UI")
+        num_rows = resource_migration.add_deployment_status_field(operations_repo)
+        migrations.append(Migration(issueNumber="1406", status=f'Updated {num_rows} resource objects'))
 
         return MigrationOutList(migrations=migrations)
     except Exception as e:

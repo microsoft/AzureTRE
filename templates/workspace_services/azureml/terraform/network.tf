@@ -5,13 +5,13 @@ data "azurerm_network_security_group" "ws" {
 }
 
 
-data "external" "nsg_batch_rule_priorities_inbound" {
+data "external" "nsg_rule_priorities_inbound" {
   program = ["bash", "-c", "./get_nsg_priorities.sh"]
 
   query = {
     nsg_name            = data.azurerm_network_security_group.ws.name
     resource_group_name = data.azurerm_resource_group.ws.name
-    nsg_rule_name       = "${local.short_service_id}-Batch-inbound"
+    nsg_rule_name       = "${local.short_service_id}-aml-inbound"
     direction           = "Inbound"
   }
   depends_on = [
@@ -20,21 +20,7 @@ data "external" "nsg_batch_rule_priorities_inbound" {
   ]
 }
 
-data "external" "nsg_AML_rule_priorities_inbound" {
-  program = ["bash", "-c", "./get_nsg_priorities.sh"]
 
-  query = {
-    nsg_name            = data.azurerm_network_security_group.ws.name
-    resource_group_name = data.azurerm_resource_group.ws.name
-    nsg_rule_name       = "${local.short_service_id}-AzureML-inbound"
-    direction           = "Inbound"
-  }
-  depends_on = [
-    null_resource.az_login_sp,
-    null_resource.az_login_msi,
-    azurerm_network_security_rule.allow-batch-inbound
-  ]
-}
 
 data "external" "nsg_rule_priorities_outbound" {
   program = ["bash", "-c", "./get_nsg_priorities.sh"]
@@ -51,33 +37,21 @@ data "external" "nsg_rule_priorities_outbound" {
   ]
 }
 
-resource "azurerm_network_security_rule" "allow-batch-inbound" {
+
+resource "azurerm_network_security_rule" "allow-aml-inbound" {
   access                      = "Allow"
-  destination_port_ranges     = ["29876", "29877"]
+  destination_port_ranges     = ["29877", "29876", "44224"]
   destination_address_prefix  = "VirtualNetwork"
-  source_address_prefix       = "BatchNodeManagement"
+  source_address_prefix       = "VirtualNetwork"
   direction                   = "Inbound"
-  name                        = "${local.short_service_id}-Batch-inbound"
+  name                        = "${local.short_service_id}-aml-inbound"
   network_security_group_name = data.azurerm_network_security_group.ws.name
-  priority                    = tonumber(data.external.nsg_batch_rule_priorities_inbound.result.nsg_rule_priority)
-  protocol                    = "TCP"
+  priority                    = tonumber(data.external.nsg_rule_priorities_inbound.result.nsg_rule_priority)
+  protocol                    = "Tcp"
   resource_group_name         = data.azurerm_resource_group.ws.name
   source_port_range           = "*"
 }
 
-resource "azurerm_network_security_rule" "allow-aml-inbound" {
-  access                      = "Allow"
-  destination_port_ranges     = ["44224"]
-  destination_address_prefix  = "VirtualNetwork"
-  source_address_prefix       = "Internet"
-  direction                   = "Inbound"
-  name                        = "${local.short_service_id}-AzureML-inbound"
-  network_security_group_name = data.azurerm_network_security_group.ws.name
-  priority                    = tonumber(data.external.nsg_AML_rule_priorities_inbound.result.nsg_rule_priority)
-  protocol                    = "TCP"
-  resource_group_name         = data.azurerm_resource_group.ws.name
-  source_port_range           = "*"
-}
 
 resource "azurerm_network_security_rule" "allow-Outbound_Storage_445" {
   access                      = "Allow"
@@ -87,8 +61,8 @@ resource "azurerm_network_security_rule" "allow-Outbound_Storage_445" {
   direction                   = "Outbound"
   name                        = "${local.short_service_id}-allow-Outbound_Storage_445"
   network_security_group_name = data.azurerm_network_security_group.ws.name
-  priority                    = data.external.nsg_rule_priorities_outbound.result.nsg_rule_priority
-  protocol                    = "TCP"
+  priority                    = tonumber(data.external.nsg_rule_priorities_outbound.result.nsg_rule_priority)
+  protocol                    = "Tcp"
   resource_group_name         = data.azurerm_resource_group.ws.name
   source_port_range           = "*"
 }

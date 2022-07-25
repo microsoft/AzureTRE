@@ -2,7 +2,7 @@ resource "azurerm_network_interface" "internal" {
   name                = "internal-nic-${local.service_resource_name_suffix}"
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
-
+  tags                = local.tre_user_resources_tags
   ip_configuration {
     name                          = "primary"
     subnet_id                     = data.azurerm_subnet.services.id
@@ -62,9 +62,7 @@ resource "azurerm_linux_virtual_machine" "linuxvm" {
     type = "SystemAssigned"
   }
 
-  tags = {
-    parent_service_id = var.parent_service_id
-  }
+  tags = local.tre_user_resources_tags
 }
 
 data "template_cloudinit_config" "config" {
@@ -90,15 +88,14 @@ data "template_cloudinit_config" "config" {
 data "template_file" "vm_config" {
   template = file("${path.module}/vm_config.sh")
   vars = {
-    install_ui            = local.image_ref[var.image].install_ui ? 1 : 0
-    shared_storage_access = tobool(var.shared_storage_access) ? 1 : 0
-    resource_group_name   = data.azurerm_storage_account.stg.resource_group_name
-    storage_account_name  = data.azurerm_storage_account.stg.name
-    storage_account_key   = data.azurerm_storage_account.stg.primary_access_key
-    http_endpoint         = data.azurerm_storage_account.stg.primary_file_endpoint
-    fileshare_name        = data.azurerm_storage_share.shared_storage.name
-    nexus_proxy_url       = local.nexus_proxy_url[var.nexus_version]
-    conda_config          = local.image_ref[var.image].conda_config ? 1 : 0
+    INSTALL_UI            = local.image_ref[var.image].install_ui ? 1 : 0
+    SHARED_STORAGE_ACCESS = tobool(var.shared_storage_access) ? 1 : 0
+    STORAGE_ACCOUNT_NAME  = data.azurerm_storage_account.stg.name
+    STORAGE_ACCOUNT_KEY   = data.azurerm_storage_account.stg.primary_access_key
+    HTTP_ENDPOINT         = data.azurerm_storage_account.stg.primary_file_endpoint
+    FILESHARE_NAME        = data.azurerm_storage_share.shared_storage.name
+    NEXUS_PROXY_URL       = local.nexus_proxy_url[var.nexus_version]
+    CONDA_CONFIG          = local.image_ref[var.image].conda_config ? 1 : 0
   }
 }
 
@@ -117,10 +114,11 @@ data "template_file" "apt_sources_config" {
 }
 
 resource "azurerm_key_vault_secret" "linuxvm_password" {
-  name         = "${local.vm_name}-admin-credentials"
+  name         = local.vm_password_secret_name
   value        = "${random_string.username.result}\n${random_password.password.result}"
   key_vault_id = data.azurerm_key_vault.ws.id
 }
+
 data "azurerm_storage_account" "stg" {
   name                = local.storage_name
   resource_group_name = data.azurerm_resource_group.ws.name

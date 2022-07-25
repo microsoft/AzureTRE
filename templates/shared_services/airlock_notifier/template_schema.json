@@ -1,0 +1,46 @@
+ {
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/shared_services/airlock_notifier/template_schema.json",
+  "type": "object",
+  "title": "Airlock Notifier Shared Service",
+  "description": "A shared service notifying on Airlock operations",
+  "required": ["smtp_server_address", "smtp_username", "smtp_password", "smtp_from_email"],
+  "properties": {
+    "smtp_server_address": {
+      "$id": "#/properties/smtp_server_address",
+      "type": "string",
+      "title": "SMTP Server Address",
+      "description": "SMTP Server Address",
+      "updateable": false
+    },
+    "smtp_username": {
+      "$id": "#/properties/smtp_username",
+      "type": "string",
+      "title": "SMTP Username",
+      "description": "SMTP Username",
+      "updateable": false
+    },
+    "smtp_password": {
+      "$id": "#/properties/smtp_password",
+      "type": "string",
+      "title": "SMTP Password",
+      "description": "SMTP Password",
+      "updateable": false
+    },
+    "smtp_from_email": {
+      "$id": "#/properties/smtp_from_email",
+      "type": "string",
+      "title": "SMTP From Email",
+      "description": "SMTP From Email",
+      "updateable": false
+    }
+  },
+  "pipeline": {
+    "install": [
+    ],
+    "upgrade": [
+    ],
+    "uninstall": [
+    ]
+  }
+}

@@ -9,7 +9,6 @@ from models.domain.user_resource import UserResource
 def get_sample_user_resource(user_resource_id: str) -> dict:
     return {
         "id": user_resource_id,
-        "isActive": True,
         "ownerId": "abc9ru33-7265-4b5f-9eae-a1a62928772e",
         "workspaceId": "7289ru33-7265-4b5f-9eae-a1a62928772e",
         "parentWorkspaceServiceId": "e75f1ee1-9f55-414c-83da-aff677669249",

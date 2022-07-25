@@ -59,18 +59,6 @@ variable "terraform_state_container_name" {
   description = "Name of the storage container for Terraform state"
 }
 
-variable "resource_processor_client_id" {
-  type        = string
-  default     = ""
-  description = "The client (app) ID of a service principal with Owner role to the subscription."
-}
-
-variable "resource_processor_client_secret" {
-  type        = string
-  default     = ""
-  description = "The client secret (app password) of a service principal with Owner role to the subscription."
-}
-
 variable "resource_processor_number_processes_per_instance" {
   type        = string
   default     = "2"
@@ -102,32 +90,26 @@ variable "api_client_id" {
 
 variable "api_client_secret" {
   type        = string
-  description = "A client secret use by the API to authenticate with Azure AD for access to Microsoft Graph."
+  description = "A client secret used by the API to authenticate with Azure AD for access to Microsoft Graph."
   sensitive   = true
 }
 
-variable "deploy_gitea" {
-  type        = bool
-  default     = true
-  description = "Deploy the Gitea shared service"
+variable "application_admin_client_id" {
+  type        = string
+  description = "The client id (app id) of the registration in Azure AD for creating AAD Applications."
+  sensitive   = true
 }
 
-variable "deploy_nexus" {
-  type        = bool
-  default     = true
-  description = "Deploy the Nexus shared service"
+variable "application_admin_client_secret" {
+  type        = string
+  description = "A client secret used by the Resource Processor to authenticate with Azure AD to create AAD Applications."
+  sensitive   = true
 }
 
 variable "resource_processor_type" {
   default     = "vmss_porter"
   description = "Which resource processor to deploy."
   type        = string
-}
-
-variable "keyvault_purge_protection_enabled" {
-  type        = bool
-  default     = true
-  description = "Used to turn Keyvault purge protection"
 }
 
 variable "stateful_resources_locked" {
@@ -159,4 +141,13 @@ variable "public_deployment_ip_address" {
   description = "Your local IP address if https://ipecho.net/plain is blocked."
   type        = string
   default     = ""
+}
+
+# Important note: it is NOT enough to simply enable the malware scanning on. Further, manual, steps are required
+# in order to actually set up the scanner. Setting this property to True without supplying a scanner will result
+# in airlock requests being stuck in the in-progress stage.
+variable "enable_airlock_malware_scanning" {
+  type        = bool
+  default     = false
+  description = "If False, Airlock requests will skip the malware scanning stage"
 }

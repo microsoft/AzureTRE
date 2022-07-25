@@ -39,15 +39,15 @@ output "service_bus_deployment_status_queue" {
 }
 
 output "state_store_resource_id" {
-  value = azurerm_cosmosdb_account.tre-db-account.id
+  value = azurerm_cosmosdb_account.tre_db_account.id
 }
 
 output "state_store_endpoint" {
-  value = azurerm_cosmosdb_account.tre-db-account.endpoint
+  value = azurerm_cosmosdb_account.tre_db_account.endpoint
 }
 
 output "state_store_account_name" {
-  value = azurerm_cosmosdb_account.tre-db-account.name
+  value = azurerm_cosmosdb_account.tre_db_account.name
 }
 
 output "app_insights_instrumentation_key" {
@@ -75,4 +75,20 @@ output "terraform_state_container_name" {
 
 output "registry_server" {
   value = var.docker_registry_server
+}
+
+output "event_grid_status_changed_topic_endpoint" {
+  value = module.airlock_resources.event_grid_status_changed_topic_endpoint
+}
+
+output "event_grid_airlock_notification_topic_endpoint" {
+  value = module.airlock_resources.event_grid_airlock_notification_topic_endpoint
+}
+
+output "event_grid_status_changed_topic_resource_id" {
+  value = module.airlock_resources.event_grid_status_changed_topic_resource_id
+}
+
+output "service_bus_step_result_queue" {
+  value = module.airlock_resources.service_bus_step_result_queue
 }

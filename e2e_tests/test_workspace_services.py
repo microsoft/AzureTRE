@@ -1,7 +1,8 @@
 import pytest
 
 import config
-from helpers import disable_and_delete_resource, get_workspace_auth_details, post_resource
+from resources.workspace import get_workspace_auth_details
+from resources.resource import disable_and_delete_resource, post_resource
 from resources import strings
 
 
@@ -9,7 +10,7 @@ pytestmark = pytest.mark.asyncio
 
 
 @pytest.mark.extended
-@pytest.mark.timeout(3000)
+@pytest.mark.timeout(3300)
 async def test_create_guacamole_service_into_base_workspace(admin_token, verify) -> None:
 
     payload = {
@@ -19,9 +20,11 @@ async def test_create_guacamole_service_into_base_workspace(admin_token, verify)
             "description": "workspace for E2E",
             "address_space_size": "small",
             "client_id": f"{config.TEST_WORKSPACE_APP_ID}",
-            "client_secret": f"{config.TEST_WORKSPACE_APP_SECRET}"
+            "client_secret": f"{config.TEST_WORKSPACE_APP_SECRET}",
         }
     }
+    if config.TEST_WORKSPACE_APP_PLAN != "":
+        payload["properties"]["app_service_plan_sku"] = config.TEST_WORKSPACE_APP_PLAN
 
     workspace_path, workspace_id = await post_resource(payload, strings.API_WORKSPACES, access_token=admin_token, verify=verify)
     workspace_owner_token, scope_uri = await get_workspace_auth_details(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
@@ -30,8 +33,7 @@ async def test_create_guacamole_service_into_base_workspace(admin_token, verify)
         "templateName": "tre-service-guacamole",
         "properties": {
             "display_name": "Workspace service test",
-            "description": "Workspace service for E2E test",
-            "workspace_identifier_uri": scope_uri
+            "description": "Workspace service for E2E test"
         }
     }
 
@@ -50,13 +52,26 @@ async def test_create_guacamole_service_into_base_workspace(admin_token, verify)
 
     await post_resource(patch_payload, f'/api{workspace_service_path}', workspace_owner_token, verify, method="PATCH")
 
+    user_resource_payload = {
+        "templateName": "tre-service-guacamole-windowsvm",
+        "properties": {
+            "display_name": "My VM",
+            "description": "Will be using this VM for my research",
+            "os_image": "Windows 10"
+        }
+    }
+
+    user_resource_path, user_resource_id = await post_resource(user_resource_payload, f'/api{workspace_service_path}/{strings.API_USER_RESOURCES}', workspace_owner_token, verify, method="POST")
+
+    await disable_and_delete_resource(f'/api{user_resource_path}', workspace_owner_token, verify)
+
     await disable_and_delete_resource(f'/api{workspace_service_path}', workspace_owner_token, verify)
 
     await disable_and_delete_resource(f'/api{workspace_path}', admin_token, verify)
 
 
 @pytest.mark.extended_aad
-@pytest.mark.timeout(3000)
+@pytest.mark.timeout(3300)
 async def test_create_guacamole_service_into_aad_workspace(admin_token, verify) -> None:
     """This test will create a Guacamole service but will create a workspace and automatically register the AAD Application"""
 
@@ -69,6 +84,8 @@ async def test_create_guacamole_service_into_aad_workspace(admin_token, verify) 
             "client_id": "auto_create"
         }
     }
+    if config.TEST_WORKSPACE_APP_PLAN != "":
+        payload["properties"]["app_service_plan_sku"] = config.TEST_WORKSPACE_APP_PLAN
 
     workspace_path, workspace_id = await post_resource(payload, strings.API_WORKSPACES, access_token=admin_token, verify=verify)
     workspace_owner_token, scope_uri = await get_workspace_auth_details(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
@@ -77,8 +94,7 @@ async def test_create_guacamole_service_into_aad_workspace(admin_token, verify) 
         "templateName": "tre-service-guacamole",
         "properties": {
             "display_name": "Workspace service test",
-            "description": "Workspace service for E2E test",
-            "workspace_identifier_uri": scope_uri
+            "description": "Workspace service for E2E test"
         }
     }
 
@@ -96,6 +112,19 @@ async def test_create_guacamole_service_into_aad_workspace(admin_token, verify) 
     }
 
     await post_resource(patch_payload, f'/api{workspace_service_path}', workspace_owner_token, verify, method="PATCH")
+
+    user_resource_payload = {
+        "templateName": "tre-service-guacamole-linuxvm",
+        "properties": {
+            "display_name": "Linux VM",
+            "description": "Extended Tests for Linux",
+            "os_image": "Ubuntu 18.04"
+        }
+    }
+
+    user_resource_path, user_resource_id = await post_resource(user_resource_payload, f'/api{workspace_service_path}/{strings.API_USER_RESOURCES}', workspace_owner_token, verify, method="POST")
+
+    await disable_and_delete_resource(f'/api{user_resource_path}', workspace_owner_token, verify)
 
     await disable_and_delete_resource(f'/api{workspace_service_path}', workspace_owner_token, verify)
 
