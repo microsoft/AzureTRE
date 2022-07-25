@@ -171,6 +171,24 @@ input[readonly]{
   background-color: #006600;
   color: #fff;
 }
+.tre-complex-list{
+  list-style: none;
+  padding:0 0 0 20px;
+  margin:0;
+}
+.tre-complex-list-border{
+  border-bottom: 1px #ccc solid;
+  margin-left:-15px;
+}
+.tre-complex-list-string{
+  padding-left:20px;
+}
+.tre-complex-list .ms-Icon{
+  font-size:12px!important;
+  font-weight: bold;
+  position: relative;
+  top:2px;
+}
 
 // Classes for rendering power state badges
 .tre-power-badge {
