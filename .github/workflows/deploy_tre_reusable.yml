@@ -707,20 +707,6 @@ jobs:
           TRE_ID: "${{ secrets.TRE_ID }}"
           IS_API_SECURED: false
 
-      # For PR builds triggered from comment builds, the GITHUB_REF is set to main
-      # so the checks aren't automatically associated with the PR
-      # If prHeadSha is specified then explicity mark the checks for that SHA
-      - name: Report check status
-        if: ${{ inputs.prHeadSha }}
-        uses: LouisBrunner/checks-action@v1.1.1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          # the name must be identical to the one received by the real job
-          sha: ${{ inputs.prHeadSha }}
-          name: "Deploy PR / Run E2E Tests (Smoke)"
-          status: "completed"
-          conclusion: "success"
-
       - name: Upload Test Results
         if: always()
         uses: actions/upload-artifact@v2
@@ -787,16 +773,31 @@ jobs:
           files: "./e2e_tests/pytest_e2e_custom.xml"
 
   summary:
-    name: Summary Notification
+    name: Summary
     needs: [e2e_tests_smoke, e2e_tests_custom]
     runs-on: ubuntu-latest
-    if: ${{ always() && (github.ref == 'refs/heads/main' && inputs.prRef == '') }}
+    if: always()
     environment: ${{ inputs.environmentName }}
     steps:
       - uses: technote-space/workflow-conclusion-action@v2
 
+      # For PR builds triggered from comment builds, the GITHUB_REF is set to main
+      # so the checks aren't automatically associated with the PR
+      # If prHeadSha is specified then explicity mark the checks for that SHA
+      - name: Report check status
+        if: env.WORKFLOW_CONCLUSION == 'success' && inputs.prHeadSha != ''
+        uses: LouisBrunner/checks-action@v1.1.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # the name must be identical to the one received by the real job
+          sha: ${{ inputs.prHeadSha }}
+          name: "Deploy PR / Run E2E Tests (Smoke)"
+          status: "completed"
+          conclusion: "success"
+
       - name: Notify teams channel
-        if: env.WORKFLOW_CONCLUSION == 'failure'  # notify only if failure
+        # notify only if failure
+        if: env.WORKFLOW_CONCLUSION == 'failure' && (github.ref == 'refs/heads/main' && inputs.prRef == '')
         uses: sachinkundu/ms-teams-notification@1.4
         with:
           github-token: ${{ github.token }}
