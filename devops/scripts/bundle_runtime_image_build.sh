@@ -12,8 +12,8 @@ fi
 
 image_name=$(yq eval ".custom.runtime_image.name" porter.yaml)
 version_file=$(yq eval ".custom.runtime_image.build.version_file" porter.yaml)
-docker_file=$(yq eval '.custom.runtime_image.build.docker_file' porter.yaml)
-docker_context=$(yq eval '.custom.runtime_image.build.docker_context' porter.yaml)
+docker_file=$(yq eval ".custom.runtime_image.build.docker_file" porter.yaml)
+docker_context=$(yq eval ".custom.runtime_image.build.docker_context" porter.yaml)
 
 version_line=$(cat "${version_file}")
 
