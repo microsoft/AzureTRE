@@ -42,9 +42,6 @@ EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_ENDPOINT: str = config("EVENT_GRID_AIRLOCK
 # Managed identity configuration
 MANAGED_IDENTITY_CLIENT_ID: str = config("MANAGED_IDENTITY_CLIENT_ID", default="")
 
-# Logging and monitoring
-APP_INSIGHTS_INSTRUMENTATION_KEY: str = config("APPINSIGHTS_INSTRUMENTATIONKEY", default="")
-
 # Authentication
 API_CLIENT_ID: str = config("API_CLIENT_ID", default="")
 API_CLIENT_SECRET: str = config("API_CLIENT_SECRET", default="")
