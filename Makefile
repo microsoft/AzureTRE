@@ -67,7 +67,7 @@ build-api-image:
 	$(call build_image,"api","${MAKEFILE_DIR}/api_app/_version.py","${MAKEFILE_DIR}/api_app/Dockerfile","${MAKEFILE_DIR}/api_app/")
 
 build-resource-processor-vm-porter-image:
-	$(call build_image,"resource-processor-vm-porter","${MAKEFILE_DIR}/resource_processor/version.txt","${MAKEFILE_DIR}/resource_processor/vmss_porter/Dockerfile","${MAKEFILE_DIR}/resource_processor/")
+	$(call build_image,"resource-processor-vm-porter","${MAKEFILE_DIR}/resource_processor/_version.py","${MAKEFILE_DIR}/resource_processor/vmss_porter/Dockerfile","${MAKEFILE_DIR}/resource_processor/")
 
 build-airlock-processor:
 	$(call build_image,"airlock-processor","${MAKEFILE_DIR}/airlock_processor/_version.py","${MAKEFILE_DIR}/airlock_processor/Dockerfile","${MAKEFILE_DIR}/airlock_processor/")
@@ -89,7 +89,7 @@ push-api-image:
 	$(call push_image,"api","${MAKEFILE_DIR}/api_app/_version.py")
 
 push-resource-processor-vm-porter-image:
-	$(call push_image,"resource-processor-vm-porter","${MAKEFILE_DIR}/resource_processor/version.txt")
+	$(call push_image,"resource-processor-vm-porter","${MAKEFILE_DIR}/resource_processor/_version.py")
 
 push-airlock-processor:
 	$(call push_image,"airlock-processor","${MAKEFILE_DIR}/airlock_processor/_version.py")

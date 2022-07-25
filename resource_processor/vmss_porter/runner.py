@@ -12,6 +12,7 @@ from resources.helpers import get_installation_id
 from resources.httpserver import start_server
 
 from shared.logging import disable_unwanted_loggers, initialize_logging, get_message_id_logger, shell_output_logger  # pylint: disable=import-error # noqa
+from shared.config import VERSION
 from resources import strings, statuses  # pylint: disable=import-error # noqa
 from contextlib import asynccontextmanager
 from azure.servicebus import ServiceBusMessage, NEXT_AVAILABLE_SESSION
@@ -228,7 +229,7 @@ def start_runner_process(config: dict):
     event_loop = asyncio.get_event_loop()
     event_loop.run_forever()
 
-    logger_adapter.info("Started resource processor")
+    logger_adapter.info(f"Started resource processor (version: {VERSION})")
 
 
 if __name__ == "__main__":
