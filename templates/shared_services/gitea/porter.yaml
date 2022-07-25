@@ -45,8 +45,8 @@ parameters:
     env: ARM_USE_MSI
     type: boolean
     default: false
+
 mixins:
-  - exec
   - terraform:
       clientVersion: 1.1.5
 
