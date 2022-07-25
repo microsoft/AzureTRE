@@ -85,7 +85,7 @@ resource "azurerm_private_endpoint" "nexus_private_endpoint" {
   lifecycle { ignore_changes = [tags] }
 }
 
-resource "azurerm_app_service_virtual_network_swift_connection" "nexus-integrated-vnet" {
+resource "azurerm_app_service_virtual_network_swift_connection" "nexus_integrated_vnet" {
   app_service_id = azurerm_app_service.nexus.id
   subnet_id      = data.azurerm_subnet.web_app.id
 }

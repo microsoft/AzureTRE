@@ -134,7 +134,7 @@ resource "azurerm_private_endpoint" "gitea_private_endpoint" {
   lifecycle { ignore_changes = [tags] }
 }
 
-resource "azurerm_app_service_virtual_network_swift_connection" "gitea-integrated-vnet" {
+resource "azurerm_app_service_virtual_network_swift_connection" "gitea_integrated_vnet" {
   app_service_id = azurerm_app_service.gitea.id
   subnet_id      = data.azurerm_subnet.web_app.id
 }
@@ -144,83 +144,17 @@ resource "azurerm_monitor_diagnostic_setting" "webapp_gitea" {
   target_resource_id         = azurerm_app_service.gitea.id
   log_analytics_workspace_id = data.azurerm_log_analytics_workspace.tre.id
 
-  log {
-    category = "AppServiceHTTPLogs"
-    enabled  = true
+  dynamic "log" {
+    for_each = toset(["AppServiceHTTPLogs", "AppServiceConsoleLogs", "AppServiceAppLogs", "AppServiceFileAuditLogs",
+    "AppServiceAuditLogs", "AppServiceIPSecAuditLogs", "AppServicePlatformLogs", "AppServiceAntivirusScanAuditLogs"])
+    content {
+      category = log.value
+      enabled  = true
 
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServiceConsoleLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServiceAppLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServiceFileAuditLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServiceAuditLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServiceIPSecAuditLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServicePlatformLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
-    }
-  }
-
-  log {
-    category = "AppServiceAntivirusScanAuditLogs"
-    enabled  = true
-
-    retention_policy {
-      days    = 1
-      enabled = false
+      retention_policy {
+        enabled = true
+        days    = 365
+      }
     }
   }
 
@@ -229,7 +163,8 @@ resource "azurerm_monitor_diagnostic_setting" "webapp_gitea" {
     enabled  = true
 
     retention_policy {
-      enabled = false
+      enabled = true
+      days    = 365
     }
   }
 }
