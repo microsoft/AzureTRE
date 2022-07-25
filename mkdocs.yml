@@ -27,22 +27,110 @@ plugins:
   - search
 
 markdown_extensions:
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - meta
   - admonition
   - pymdownx.highlight
-  - pymdownx.superfences
   - pymdownx.pathconverter
-  - pymdownx.tabbed
   - mdx_truly_sane_lists
+  - pymdownx.tabbed
   - pymdownx.tasklist
 
 nav:
-  - Azure TRE Overview:
-      - Concepts: 'index.md'
-      - User Roles: 'azure-tre-overview/user-roles.md'
-      - Architecture: 'azure-tre-overview/architecture.md'
-      - Network Architecture: 'azure-tre-overview/networking.md'
-      - Azure Resource Breakdown: 'azure-tre-overview/tre-resources-breakdown.md'
+  - Overview: # Pages to explain what the Azure TRE
+      - Introducing the AzureTRE: "index.md" # Introduction to the concept of a TRE, and the AzureTRE
+      - User Roles: "azure-tre-overview/user-roles.md" # The users and roles within an Azure TRE
+      - Architecture: # Pages to help understand the components, infra, and networking
+          - System Architecture: "azure-tre-overview/architecture.md"
+          - Network Architecture: "azure-tre-overview/networking.md"
+          - Azure Resources: "azure-tre-overview/tre-resources-breakdown.md"
+          - Airlock: "azure-tre-overview/airlock.md"
+      - Compliance Information: "coming-soon.md"
+      - Getting Started: "coming-soon.md"
+
+  - Using the TRE for Research: # Documentation for users of the TRE
+      - Introduction: "coming-soon.md"
+      - Terms and Definitions: "coming-soon.md"
+      - Workspaces: # Documentation describing what a workspace is
+          - Using Workspaces: "coming-soon.md" # Interacting with workspaces (via the UI)
+          - The Workspace Owner: "coming-soon.md" # Workspace Owners. The concept, and tasks
+      - FAQ: "coming-soon.md" # FAQ section (to allow easy contribution)
+
+  - Templates and Services: # Docs to highlight and illustrate workspaces, workspace services etc
+      - Introduction: "coming-soon.md"
+      - Workspaces:
+          - Base: 'tre-templates/workspaces/base.md'
+      - Workspace Services:
+          - Azure ML: 'tre-templates/workspace-services/azure-ml.md'
+          - Gitea: 'tre-templates/workspace-services/gitea.md'
+          - Guacamole: 'tre-templates/workspace-services/guacamole.md'
+          - InnerEye: 'tre-templates/workspace-services/inner-eye.md'
+          - MLFlow: 'tre-templates/workspace-services/mlflow.md'
+      - Shared Services:
+          - Gitea (Source Mirror): "tre-templates/shared-services/gitea.md"
+          - Nexus (Package Mirror): "tre-templates/shared-services/nexus.md"
+      - User Resources:
+          - Guacamole Windows VM: "tre-templates/user-resources/guacamole-windows-vm.md"
+          - Guacamole Linux VM: "tre-templates/user-resources/guacamole-linux-vm.md"
+
+  - Technical Guide: # All Technical Documentation (Admin, Development)
+      - Setup: # Setup steps for anyone performing an initial deployment of the AzureTRE for eval purposes
+          - Introduction: "coming-soon.md"
+          - 1. Getting Started: "tre-admins/setup-instructions/getting-started.md"
+          - 2. Pre-deployment Steps: "tre-admins/setup-instructions/pre-deployment-steps.md"
+          - 3. Deploying Azure TRE: "tre-admins/setup-instructions/deploying-azure-tre.md"
+          - 4. Configuring Shared Services: "tre-admins/setup-instructions/configuring-shared-services.md"
+          - 5. Installing Base Workspace: "tre-admins/setup-instructions/installing-base-workspace.md"
+          - 6. Installing Workspace Service and User Resource: "tre-admins/setup-instructions/installing-workspace-service-and-user-resource.md"
+
+      - Administration: # Docs related to the deployment and operation of AzureTRE infrastructure
+          - Starting and Stopping Azure TRE Services: "tre-admins/start-stop.md"
+          - Environment Variables: "tre-admins/environment-variables.md"
+          - Tear-down: "tre-admins/tear-down.md"
+          - Authentication and Authorization:
+              - Introduction: "tre-admins/auth.md"
+              - Manual Setup: tre-admins/identities/auth-manual.md
+              - Identities:
+                  - Application Admin: tre-admins/identities/application_admin.md
+                  - API: tre-admins/identities/api.md
+                  - Client: tre-admins/identities/client.md
+                  - Automation Test Account: tre-admins/identities/test-account.md
+                  - Workspaces: tre-admins/identities/workspace.md
+          - Registring Templates: "tre-admins/registering-templates.md"
+
+      - Development: # Docs related to the developing code for the AzureTRE
+          - Contributing to AzureTRE: # Docs aimed at OSS developers, committing code to the AzureTRE repo
+              - Introduction: "tre-developers/index.md"
+              - API: "tre-developers/api.md"
+              - UI: "tre-developers/ui.md"
+              - Resource Processor: "tre-developers/resource-processor.md"
+              - End to End Tests: "tre-developers/end-to-end-tests.md"
+              - Letsencrypt: "tre-developers/letsencrypt.md"
+
+          - Developing Workspace Templates: # Docs aimed at developers creating workspace templates
+              - Authoring Workspace Templates: "tre-workspace-authors/authoring-workspace-templates.md"
+              - Firewall Rules: "tre-workspace-authors/firewall-rules.md"
+              - Pipeline Templates:
+                  - Overview: "tre-templates/pipeline-templates/overview.md"
+                  - Pipeline Schema: "tre-templates/pipeline-templates/pipeline-schema.md"
+
+          - Deploying the AzureTRE using CI/CD: # Docs related to DevOps engineers deploying the AzureTRE
+              - Using the DevContainer in your Build Pipeline: "coming-soon.md"
+              - Setting up Secrets: "coming-soon.md"
+              - Build Runners:
+                  - GitHub Actions: "tre-admins/setup-instructions/workflows.md"
+                  - Azure DevOps: "coming-soon.md"
+
+      - Troubleshooting FAQ: # General Troubleshooting Section for Development
+          - Enabling Debugging for the API: "tre-admins/troubleshooting-guide.md" # needs splitting out into a separate document
+          - API Logs using Development Center: "tre-admins/troubleshooting-guide.md" # needs splitting out into a separate document
+          - Checking the Service Bus: "tre-admins/troubleshooting-guide.md" # needs splitting out into a separate document
+          - Checking Logs in Application Insights: "tre-admins/troubleshooting-guide.md" # needs splitting out into a separate document
+          - Troubleshooting the Resource Processor: "tre-admins/troubleshooting-guide.md" # needs splitting out into a separate document
   - TRE Admins:
       - Setup Instructions:
           - 1. Getting Started: 'tre-admins/setup-instructions/getting-started.md'

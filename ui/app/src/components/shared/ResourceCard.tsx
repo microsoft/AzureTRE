@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { ComponentAction, VMPowerStates, Resource } from '../../models/resource';
 import { Callout, DefaultPalette, FontWeights, IconButton, mergeStyleSets, PrimaryButton, ProgressIndicator, Shimmer, Stack, Text } from '@fluentui/react';
 import { Link } from 'react-router-dom';
@@ -9,18 +9,22 @@ import { StatusBadge } from './StatusBadge';
 import { actionsDisabledStates } from '../../models/operation';
 import { PowerStateBadge } from './PowerStateBadge';
 import { ResourceType } from '../../models/resourceType';
+import { WorkspaceContext } from '../../contexts/WorkspaceContext';
 
 interface ResourceCardProps {
   resource: Resource,
   itemId: number,
   selectResource?: (resource: Resource) => void,
   onUpdate: (resource: Resource) => void,
-  onDelete: (resource: Resource) => void
+  onDelete: (resource: Resource) => void,
+  readonly?: boolean
 }
 
 export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: ResourceCardProps) => {
   const [loading] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  const workspaceCtx = useContext(WorkspaceContext);
+
   const latestUpdate = useComponentManager(
     props.resource,
     (r: Resource) => { props.onUpdate(r) },
@@ -33,6 +37,18 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
       || actionsDisabledStates.includes(props.resource.deploymentStatus)
       || !props.resource.isEnabled
       || (props.resource.azureStatus?.powerState && props.resource.azureStatus.powerState !== VMPowerStates.Running)
+  }
+
+  let resourceUrl = ""
+  switch(props.resource.resourceType) {
+    case ResourceType.Workspace:
+    case ResourceType.WorkspaceService:
+    case ResourceType.UserResource:
+      resourceUrl = props.resource.resourcePath;
+      break;
+    case ResourceType.SharedService: // shared services are accessed from the root and the workspace, have to handle the URL differently
+      resourceUrl = workspaceCtx.workspace ? props.resource.id : props.resource.resourcePath;
+      break;
   }
 
   return (
@@ -62,7 +78,7 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
                   props.resource.resourceType === ResourceType.Workspace && props.resource.properties.client_id === "auto_create" ?
                     <span title="Authentication has not yet been provisioned">{props.resource.properties.display_name}</span>
                     :
-                    <Link to={props.resource.resourcePath} onClick={() => { props.selectResource && props.selectResource(props.resource); return false }} style={headerLinkStyles}>{props.resource.properties.display_name}</Link>
+                    <Link to={resourceUrl} onClick={() => { props.selectResource && props.selectResource(props.resource); return false }} style={headerLinkStyles}>{props.resource.properties.display_name}</Link>
                 }
               </Stack.Item>
               <Stack.Item style={headerIconStyles}>
@@ -70,9 +86,12 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
                   <Stack.Item>
                     <IconButton iconProps={{ iconName: 'Info' }} id={`item-${props.itemId}`} onClick={() => setShowInfo(!showInfo)} /></Stack.Item>
                   <Stack.Item>
-                    <ResourceContextMenu
-                      resource={props.resource}
-                      componentAction={latestUpdate.componentAction} />
+                    {
+                      !props.readonly &&
+                      <ResourceContextMenu
+                        resource={props.resource}
+                        componentAction={latestUpdate.componentAction} />
+                    }
                   </Stack.Item>
                 </Stack>
               </Stack.Item>
