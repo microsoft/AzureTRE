@@ -40,7 +40,7 @@ resource "azurerm_storage_account" "app_insights" {
 }
 
 data "azurerm_resource_group" "resource_group" {
-  name       = var.resource_group_name
+  name = var.resource_group_name
 }
 data "local_file" "app_insights_arm_template" {
   filename = "${path.module}/app_insights.json"
