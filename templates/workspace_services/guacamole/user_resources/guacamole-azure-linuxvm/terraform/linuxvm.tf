@@ -70,6 +70,11 @@ data "template_cloudinit_config" "config" {
   base64_encode = true
 
   part {
+    content_type = "text/x-shellscript"
+    content      = data.template_file.get_apt_keys.rendered
+  }
+
+  part {
     content_type = "text/cloud-config"
     content      = data.template_file.apt_sources_config.rendered
   }
@@ -96,6 +101,13 @@ data "template_file" "vm_config" {
     FILESHARE_NAME        = data.azurerm_storage_share.shared_storage.name
     NEXUS_PROXY_URL       = local.nexus_proxy_url[var.nexus_version]
     CONDA_CONFIG          = local.image_ref[var.image].conda_config ? 1 : 0
+  }
+}
+
+data "template_file" "get_apt_keys" {
+  template = file("${path.module}/get_apt_keys.sh")
+  vars = {
+    NEXUS_PROXY_URL       = local.nexus_proxy_url[var.nexus_version]
   }
 }
 
