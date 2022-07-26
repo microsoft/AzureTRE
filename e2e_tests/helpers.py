@@ -99,7 +99,7 @@ async def ping_guacamole_workspace_service(workspace_id, workspace_service_id, v
         assert response.has_redirect_location
 
         location = response.headers["Location"]
-        logging.info("Return redirect URL: %s", location)
+        LOGGER.info("Returned redirect URL: %s", location)
 
         valid_redirection_contains = ["login", "microsoftonline", "oauth2", "authorize"]
         assert all(word in location for word in valid_redirection_contains), "Redirect URL doesn't apper to be valid"
