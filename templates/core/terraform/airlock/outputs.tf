@@ -13,3 +13,7 @@ output "service_bus_step_result_queue" {
 output "event_grid_status_changed_topic_resource_id" {
   value = azurerm_eventgrid_topic.status_changed.id
 }
+
+output "event_grid_airlock_notification_topic_resource_id" {
+  value = azurerm_eventgrid_topic.airlock_notification.id
+}
