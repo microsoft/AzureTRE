@@ -70,21 +70,21 @@ async def get_shared_service_id_by_name(template_name: str, verify, token) -> Op
         return matching_shared_service
 
 
-async def ping_guacamole_workspace_service(workspace_id, workspace_service_id, token, verify) -> None:
+async def ping_guacamole_workspace_service(workspace_id, workspace_service_id, verify) -> None:
     short_workspace_id = workspace_id[-4:]
     short_workspace_service_id = workspace_service_id[-4:]
     endpoint = f"https://guacamole-{config.TRE_ID}-ws-{short_workspace_id}-svc-{short_workspace_service_id}.azurewebsites.net/guacamole"
-    headers = {'x-access-token': f'{token}'}
+
     terminal_http_status = [status.HTTP_200_OK,
                             status.HTTP_401_UNAUTHORIZED,
                             status.HTTP_403_FORBIDDEN,
-                            status.HTTP_302_FOUND  # usually means auth header wasn't accepted
+                            status.HTTP_302_FOUND
                             ]
 
     async with AsyncClient(verify=verify) as client:
         while (True):
             try:
-                response = await client.get(url=endpoint, headers=headers, timeout=TIMEOUT)
+                response = await client.get(url=endpoint, timeout=TIMEOUT)
                 LOGGER.info(f"GUAC RESPONSE: {response}")
 
                 if response.status_code in terminal_http_status:
@@ -95,4 +95,11 @@ async def ping_guacamole_workspace_service(workspace_id, workspace_service_id, t
             except Exception:
                 LOGGER.exception("Generic execption in ping.")
 
-        assert (response.status_code == status.HTTP_200_OK), "Guacamole cannot be reached"
+        assert (response.status_code == status.HTTP_302_FOUND)
+        assert response.has_redirect_location
+
+        location = response.headers["Location"]
+        logging.info("Return redirect URL: %s", location)
+
+        valid_redirection_contains = ["login", "microsoftonline", "oauth2", "authorize"]
+        assert all(word in location for word in valid_redirection_contains), "Redirect URL doesn't apper to be valid"
