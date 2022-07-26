@@ -107,7 +107,7 @@ data "template_file" "vm_config" {
 data "template_file" "get_apt_keys" {
   template = file("${path.module}/get_apt_keys.sh")
   vars = {
-    NEXUS_PROXY_URL       = local.nexus_proxy_url[var.nexus_version]
+    NEXUS_PROXY_URL = local.nexus_proxy_url[var.nexus_version]
   }
 }
 
