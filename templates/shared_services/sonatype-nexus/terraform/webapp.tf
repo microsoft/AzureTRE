@@ -7,7 +7,6 @@ resource "azurerm_app_service" "nexus" {
   tags                = local.tre_shared_service_tags
 
   app_settings = {
-    APPINSIGHTS_INSTRUMENTATIONKEY      = data.azurerm_application_insights.core.instrumentation_key
     WEBSITES_PORT                       = "8081"          # nexus web-ui listens here
     WEBSITES_CONTAINER_START_TIME_LIMIT = "900"           # nexus takes a while to start-up
     WEBSITE_DNS_SERVER                  = "168.63.129.16" # required to access storage over private endpoints
@@ -86,7 +85,7 @@ resource "azurerm_private_endpoint" "nexus_private_endpoint" {
   lifecycle { ignore_changes = [tags] }
 }
 
-resource "azurerm_app_service_virtual_network_swift_connection" "nexus-integrated-vnet" {
+resource "azurerm_app_service_virtual_network_swift_connection" "nexus_integrated_vnet" {
   app_service_id = azurerm_app_service.nexus.id
   subnet_id      = data.azurerm_subnet.web_app.id
 }
