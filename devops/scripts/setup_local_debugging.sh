@@ -10,6 +10,7 @@ set -e
 : "${EVENT_GRID_STATUS_CHANGED_TOPIC_RESOURCE_ID?"Check EVENT_GRID_STATUS_CHANGED_TOPIC_RESOURCE_ID is defined in ./templates/core/private.env"}"
 : "${EVENT_GRID_STATUS_CHANGED_TOPIC_ENDPOINT?"Check EVENT_GRID_STATUS_CHANGED_TOPIC_ENDPOINT is defined in ./templates/core/private.env"}"
 : "${EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_ENDPOINT?"Check EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_ENDPOINT is defined in ./templates/core/private.env"}"
+: "${EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_RESOURCE_ID?"Check EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_RESOURCE_ID is defined in ./templates/core/private.env"}"
 
 set -o pipefail
 set -o nounset
@@ -79,6 +80,19 @@ az role assignment create \
     --assignee "${LOGGED_IN_OBJECT_ID}" \
     --scope "${STATE_STORE_RESOURCE_ID}"
 
+
+az role assignment create \
+    --role "EventGrid Data Sender" \
+    --assignee "${LOGGED_IN_OBJECT_ID}" \
+    --scope "${EVENT_GRID_STATUS_CHANGED_TOPIC_RESOURCE_ID}"
+
+
+az role assignment create \
+    --role "EventGrid Data Sender" \
+    --assignee "${LOGGED_IN_OBJECT_ID}" \
+    --scope "${EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_RESOURCE_ID}"
+
+
 if [[ -z ${ARM_CLIENT_ID:-} ]]; then
   # Configure SP for local resource processor debugging (Porter can't use local creds)
   echo "Configuring Service Principal for Resource Processor debugging..."
@@ -101,11 +115,6 @@ az role assignment create \
     --role "Azure Service Bus Data Receiver" \
     --assignee "${RP_TESTING_SP_APP_ID}" \
     --scope "${SERVICE_BUS_RESOURCE_ID}"
-
-az role assignment create \
-    --role "EventGrid Data Sender" \
-    --assignee "${RP_TESTING_SP_APP_ID}" \
-    --scope "${EVENT_GRID_STATUS_CHANGED_TOPIC_RESOURCE_ID}"
 
 # Write the appId and secret to the private.env file which is used for RP debugging
 # First check if the env vars are there already and delete them
