@@ -17,9 +17,6 @@ LOGGER = logging.getLogger(__name__)
 @pytest.mark.timeout(3300)
 async def test_airlock_import_flow(admin_token, verify) -> None:
 
-    # workspace_id = "75c9b57e-48ae-44a7-98c2-38c012fba096"
-    # workspace_path = f"/workspaces/{workspace_id}"
-
     # 1. create workspace
     payload = {
         "templateName": "tre-workspace-base",
@@ -57,7 +54,7 @@ async def test_airlock_import_flow(admin_token, verify) -> None:
     containerUrl = request_result["containerUrl"]
 
     # 4. upload blob
-    upload_blob_using_sas('./test_airlock_sample.txt', containerUrl)
+    await upload_blob_using_sas('./test_airlock_sample.txt', containerUrl)
 
     # 5. submit request
     request_result = await post_request(None, f'/api{workspace_path}/requests/{request_id}/submit', workspace_owner_token, verify, 200)
