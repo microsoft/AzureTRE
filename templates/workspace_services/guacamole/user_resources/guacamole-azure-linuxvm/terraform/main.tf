@@ -9,6 +9,10 @@ terraform {
       source  = "hashicorp/template"
       version = "~> 2.2.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "3.3.2"
+    }
   }
   backend "azurerm" {
   }
@@ -32,8 +36,6 @@ provider "azurerm" {
   }
 }
 
-data "azurerm_client_config" "current" {}
-
 data "azurerm_resource_group" "ws" {
   name = "rg-${var.tre_id}-ws-${local.short_workspace_id}"
 }
@@ -45,11 +47,6 @@ data "azurerm_resource_group" "core" {
 data "azurerm_virtual_network" "ws" {
   name                = "vnet-${var.tre_id}-ws-${local.short_workspace_id}"
   resource_group_name = data.azurerm_resource_group.ws.name
-}
-
-data "azurerm_network_security_group" "ws" {
-  name                = "nsg-ws"
-  resource_group_name = data.azurerm_virtual_network.ws.resource_group_name
 }
 
 data "azurerm_subnet" "services" {
@@ -66,32 +63,4 @@ data "azurerm_key_vault" "ws" {
 data "azurerm_app_service" "guacamole" {
   name                = "guacamole-${var.tre_id}-ws-${local.short_workspace_id}-svc-${local.short_parent_id}"
   resource_group_name = data.azurerm_resource_group.ws.name
-}
-
-output "ip" {
-  value = azurerm_network_interface.internal.private_ip_address
-}
-
-output "hostname" {
-  value = azurerm_linux_virtual_machine.linuxvm.name
-}
-
-output "azure_resource_id" {
-  value = azurerm_linux_virtual_machine.linuxvm.id
-}
-
-output "connection_uri" {
-  value = "https://${data.azurerm_app_service.guacamole.default_site_hostname}/?/client/${textencodebase64("${azurerm_linux_virtual_machine.linuxvm.name}\u0000c\u0000azuretre", "UTF-8")}"
-}
-
-output "vm_username" {
-  value = random_string.username.result
-}
-
-output "vm_password_secret_name" {
-  value = local.vm_password_secret_name
-}
-
-output "keyvault_name" {
-  value = local.keyvault_name
 }
