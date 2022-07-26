@@ -58,10 +58,6 @@ jq -r '
             "env_var": "STATE_STORE_ENDPOINT"
         },
         {
-            "path": "app_insights_instrumentation_key",
-            "env_var": "APPINSIGHTS_INSTRUMENTATIONKEY"
-        },
-        {
             "path": "app_insights_connection_string",
             "env_var": "APPLICATIONINSIGHTS_CONNECTION_STRING"
         },
