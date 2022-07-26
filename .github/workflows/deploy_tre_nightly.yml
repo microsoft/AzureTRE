@@ -4,8 +4,9 @@ name: Deploy Azure TRE
 # It also runs on a schedule, serving as the nightly build
 
 on:  # yamllint disable-line rule:truthy
-  push:
-    branches: [main]
+  schedule:
+    # 1am each night https://crontab.guru/#0_1_*_*_*
+    - cron: "0 1 * * *"
   workflow_dispatch:
 
 # This will prevent multiple runs of this entire workflow.
@@ -19,7 +20,7 @@ jobs:
     uses: ./.github/workflows/deploy_tre_reusable.yml
     with:
       ciGitRef: ${{ github.ref }}
-      e2eTestsCustomSelector: "extended or extended_aad"
+      e2eTestsCustomSelector: "extended or shared_services or extended_aad"
       environmentName: CICD
     secrets:
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
