@@ -28,7 +28,6 @@ resource "azurerm_linux_web_app" "api" {
 
   app_settings = {
     "APPLICATIONINSIGHTS_CONNECTION_STRING"          = module.azure_monitor.app_insights_connection_string
-    "APPINSIGHTS_INSTRUMENTATIONKEY"                 = module.azure_monitor.app_insights_instrumentation_key
     "APPLICATIONINSIGHTS_STATSBEAT_DISABLED_ALL"     = "True"
     "ApplicationInsightsAgent_EXTENSION_VERSION"     = "~3"
     "XDT_MicrosoftApplicationInsights_Mode"          = "default"
