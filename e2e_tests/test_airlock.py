@@ -14,7 +14,7 @@ LOGGER = logging.getLogger(__name__)
 
 @pytest.mark.airlock
 @pytest.mark.extended
-@pytest.mark.timeout(3300)
+@pytest.mark.timeout(600)
 async def test_airlock_import_flow(admin_token, verify) -> None:
 
     # 1. create workspace
