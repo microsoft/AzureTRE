@@ -28,7 +28,7 @@ jobs:
         name: "Get e2e tests selector"
         with:
           script: |
-            if (context.eventName === "push" && context.ref === "refs/heads/main") {
+            if (context.eventName === "push") {
               console.log("Setting selector='extended or extended_aad'");
               core.setOutput("selector", "extended or extended_aad");
               return;
