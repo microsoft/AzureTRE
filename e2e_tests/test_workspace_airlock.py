@@ -14,7 +14,7 @@ LOGGER = logging.getLogger(__name__)
 
 @pytest.mark.airlock
 @pytest.mark.extended
-@pytest.mark.timeout(1200)
+@pytest.mark.timeout(2000)
 async def test_workspace_airlock_import_flow(admin_token, verify) -> None:
 
     # 1. create workspace
@@ -54,7 +54,7 @@ async def test_workspace_airlock_import_flow(admin_token, verify) -> None:
     containerUrl = request_result["containerUrl"]
 
     # 4. upload blob
-    await upload_blob_using_sas('./test_airlock_sample.txt', containerUrl)
+    await upload_blob_using_sas('./test_airlock_sample.txt', containerUrl, 201)
 
     # 5. submit request
     request_result = await post_request(None, f'/api{workspace_path}/requests/{request_id}/submit', workspace_owner_token, verify, 200)

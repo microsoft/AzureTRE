@@ -23,7 +23,7 @@ async def post_request(payload, endpoint, access_token, verify, assert_status):
             full_endpoint, headers=auth_headers, json=payload, timeout=TIMEOUT
         )
 
-        LOGGER.debug(
+        LOGGER.info(
             f"Response Status code: {response.status_code} Content: {response.content}"
         )
         assert response.status_code == assert_status
@@ -41,7 +41,7 @@ async def get_request(endpoint, access_token, verify, assert_status):
         response = await client.get(
             full_endpoint, headers=auth_headers, timeout=TIMEOUT
         )
-        LOGGER.debug(
+        LOGGER.info(
             f"Response Status code: {response.status_code} Content: {response.content}"
         )
 
@@ -50,7 +50,7 @@ async def get_request(endpoint, access_token, verify, assert_status):
         return response.json()
 
 
-async def upload_blob_using_sas(file_path: str, sas_url: str):
+async def upload_blob_using_sas(file_path: str, sas_url: str, assert_status):
     async with AsyncClient(timeout=30.0) as client:
         parsed_sas_url = urlparse(sas_url)
         # Remove first / from path
@@ -79,7 +79,8 @@ async def upload_blob_using_sas(file_path: str, sas_url: str):
                 headers=headers
             )
             LOGGER.info(f"response code: {response.status_code}")
-            return response.status_code
+            assert response.status_code == assert_status
+            return response
 
 
 async def wait_for_status(
