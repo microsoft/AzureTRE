@@ -1,6 +1,7 @@
 import pytest
 
 import config
+from helpers import ping_guacamole_workspace_service
 from resources.workspace import get_workspace_auth_details
 from resources.resource import disable_and_delete_resource, post_resource
 from resources import strings
@@ -39,8 +40,7 @@ async def test_create_guacamole_service_into_base_workspace(admin_token, verify)
 
     workspace_service_path, workspace_service_id = await post_resource(service_payload, f'/api{workspace_path}/{strings.API_WORKSPACE_SERVICES}', workspace_owner_token, verify)
 
-    # TODO: uncomment after fixing https://github.com/microsoft/AzureTRE/issues/1602
-    # await ping_guacamole_workspace_service(workspace_id, workspace_service_id, workspace_owner_token, verify)
+    await ping_guacamole_workspace_service(workspace_id, workspace_service_id, verify)
 
     # patch the guac service. we'll just update the display_name but this will still force a full deployment run
     # and essentially terraform no-op
@@ -100,8 +100,7 @@ async def test_create_guacamole_service_into_aad_workspace(admin_token, verify) 
 
     workspace_service_path, workspace_service_id = await post_resource(service_payload, f'/api{workspace_path}/{strings.API_WORKSPACE_SERVICES}', workspace_owner_token, verify)
 
-    # TODO: uncomment after fixing https://github.com/microsoft/AzureTRE/issues/1602
-    # await ping_guacamole_workspace_service(workspace_id, workspace_service_id, workspace_owner_token, verify)
+    await ping_guacamole_workspace_service(workspace_id, workspace_service_id, verify)
 
     # patch the guac service. we'll just update the display_name but this will still force a full deployment run
     # and essentially terraform no-op
