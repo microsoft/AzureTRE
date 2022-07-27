@@ -1,13 +1,13 @@
 ---
 name: tre-service-guacamole
-version: 0.3.13
+version: 0.3.14
 description: "An Azure TRE service for Guacamole"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
 
 custom:
   runtime_image:
-    name: guac_server
+    name: guac-server
     build:
       version_file: version.txt
       docker_file: guacamole-server/docker/Dockerfile
@@ -28,10 +28,6 @@ parameters:
     type: string
   - name: tre_id
     type: string
-  - name: image_name
-    type: string
-    default: "guac-server"
-    description: "The name of the guacamole image"
   - name: image_tag
     type: string
     default: ""   # will use the value in the version.txt file unless provided
@@ -122,7 +118,7 @@ install:
       vars:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
-        image_name: "{{ bundle.parameters.image_name }}"
+        image_name: "{{ bundle.custom.runtime_image.name }}"
         image_tag: "{{ bundle.parameters.image_tag }}"
         mgmt_acr_name: "{{ bundle.parameters.mgmt_acr_name }}"
         mgmt_resource_group_name: "{{ bundle.parameters.mgmt_resource_group_name }}"
@@ -162,7 +158,7 @@ uninstall:
       vars:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
-        image_name: "{{ bundle.parameters.image_name }}"
+        image_name: "{{ bundle.custom.runtime_image.name }}"
         image_tag: "{{ bundle.parameters.image_tag }}"
         mgmt_acr_name: "{{ bundle.parameters.mgmt_acr_name }}"
         mgmt_resource_group_name: "{{ bundle.parameters.mgmt_resource_group_name }}"

@@ -89,12 +89,6 @@
       }
     },
     {
-      "name": "image_name",
-      "source": {
-        "env": "IMAGE_NAME"
-      }
-    },
-    {
       "name": "image_tag",
       "source": {
         "env": "IMAGE_TAG"
