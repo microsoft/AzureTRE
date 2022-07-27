@@ -62,7 +62,7 @@ Next, you will set the configuration variables for the specific Azure TRE instan
       The full functionality of the script requires directory admin privileges. You may need to contact your friendly Azure Active Directory admin to complete this step. The app registrations can be created manually in Azure Portal too. For more information, see [Authentication and authorization](../auth.md).
   
 
-All other variables can have their default values for now. 
+All other variables can have their default values for now.
 
 ## Add admin user
 
