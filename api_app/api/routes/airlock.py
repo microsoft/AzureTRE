@@ -49,8 +49,6 @@ async def create_draft_request(airlock_request_input: AirlockRequestInCreate, us
 async def get_all_airlock_requests_by_workspace(
         airlock_request_repo=Depends(get_repository(AirlockRequestRepository)),
         workspace=Depends(get_deployed_workspace_by_id_from_path)) -> AirlockRequestInList:
-    if workspace.properties.get("enable_airlock") is False:
-        raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED, detail=strings.AIRLOCK_NOT_ENABLED_IN_WORKSPACE)
     try:
         airlock_requests = airlock_request_repo.get_airlock_requests_by_workspace_id(workspace.id)
     except (ValidationError, ValueError) as e:

@@ -91,8 +91,8 @@ def get_timestamp() -> float:
 
 def check_email_exists(role_assignment_details: defaultdict(list)):
     if "researcher_emails" not in role_assignment_details or not role_assignment_details["researcher_emails"]:
-        logging.error('Creating and airlock request but the researcher does not have an email address.')
+        logging.error('Creating an airlock request but the researcher does not have an email address.')
         raise HTTPException(status_code=status.HTTP_417_EXPECTATION_FAILED, detail=strings.AIRLOCK_NO_RESEARCHER_EMAIL)
     if "owner_emails" not in role_assignment_details or not role_assignment_details["owner_emails"]:
-        logging.error('Creating and airlock request but the workspace owner does not have an email address.')
+        logging.error('Creating an airlock request but the workspace owner does not have an email address.')
         raise HTTPException(status_code=status.HTTP_417_EXPECTATION_FAILED, detail=strings.AIRLOCK_NO_OWNER_EMAIL)

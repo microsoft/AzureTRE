@@ -281,3 +281,9 @@ class TestAirlockRoutesThatRequireOwnerRights():
     async def test_post_create_airlock_review_with_illegal_status_change_returns_400(self, _, __, ___, ____, app, client, sample_airlock_review_input_data):
         response = await client.post(app.url_path_for(strings.API_REVIEW_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID), json=sample_airlock_review_input_data)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    # [GET] /workspaces/{workspace_id}/requests}
+    @patch("api.routes.airlock.AirlockRequestRepository.get_airlock_requests_by_workspace_id", return_value=[])
+    async def test_get_all_airlock_requests_by_workspace_returns_200(self, _, app, client):
+        response = await client.get(app.url_path_for(strings.API_LIST_AIRLOCK_REQUESTS, workspace_id=WORKSPACE_ID))
+        assert response.status_code == status.HTTP_200_OK
