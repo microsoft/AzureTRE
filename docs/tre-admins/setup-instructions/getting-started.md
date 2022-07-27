@@ -49,4 +49,4 @@ When you start the development container for the first time, the container will 
 
 ## Next steps
 
-* [Pre-deployment steps](./pre-deployment-steps.md)
+* [AD Tenant Choices](./ad-tenant-choices.md)
