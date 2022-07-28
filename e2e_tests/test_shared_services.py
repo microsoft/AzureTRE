@@ -10,7 +10,6 @@ LOGGER = logging.getLogger(__name__)
 
 
 @pytest.mark.shared_services
-@pytest.mark.depends(name='test_patch_firewall')
 async def test_patch_firewall(admin_token, verify):
     template_name = strings.FIREWALL_SHARED_SERVICE
 
