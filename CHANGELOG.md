@@ -1,16 +1,18 @@
+<!-- markdownlint-disable MD041 -->
+<!-- line format short be: change short description (#pr_numer) -->
 ## 0.5.0 (Unreleased)
 
 FEATURES:
 
-* 
+*
 
 ENHANCEMENTS:
 
-* 
+*
 
 BUG FIXES:
 
-* 
+*
 
 ## 0.4.0 (July 27, 2022)
 
