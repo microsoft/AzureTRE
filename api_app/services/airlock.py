@@ -91,7 +91,7 @@ def get_storage_account_key(storage_client: StorageManagementClient, request_acc
 
 def get_required_permission(airlock_request: AirlockRequest) -> ContainerSasPermissions:
     if airlock_request.status == AirlockRequestStatus.Draft:
-        return ContainerSasPermissions(read=True, write=True, list=True)
+        return ContainerSasPermissions(read=True, write=True, list=True, delete=True)
     else:
         return ContainerSasPermissions(read=True, list=True)
 
