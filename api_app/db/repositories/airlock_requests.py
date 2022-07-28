@@ -41,8 +41,15 @@ class AirlockRequestRepository(AirlockResourceRepository):
         in_review_condition = current_status == AirlockRequestStatus.InReview and (new_status == AirlockRequestStatus.ApprovalInProgress or new_status == AirlockRequestStatus.RejectionInProgress)
         # Cancel is allowed only if the request is not actively changing, i.e. it is currently in draft or in review
         cancel_condition = (current_status == AirlockRequestStatus.Draft or current_status == AirlockRequestStatus.InReview) and new_status == AirlockRequestStatus.Cancelled
+        # Failed is allowed from any non-final status
+        failed_condition = (current_status == AirlockRequestStatus.Draft
+                            or current_status == AirlockRequestStatus.Submitted
+                            or current_status == AirlockRequestStatus.InReview
+                            or current_status == AirlockRequestStatus.ApprovalInProgress
+                            or current_status == AirlockRequestStatus.RejectionInProgress
+                            or current_status == AirlockRequestStatus.BlockingInProgress) and new_status == AirlockRequestStatus.Failed
 
-        return approved_condition and rejected_condition and blocked_condition and (approved_in_progress_condition or rejected_in_progress_condition or blocking_in_progress_condition or draft_condition or submit_condition or in_review_condition or cancel_condition)
+        return approved_condition and rejected_condition and blocked_condition and (approved_in_progress_condition or rejected_in_progress_condition or blocking_in_progress_condition or draft_condition or submit_condition or in_review_condition or cancel_condition or failed_condition)
 
     def create_airlock_request_item(self, airlock_request_input: AirlockRequestInCreate, workspace_id: str) -> AirlockRequest:
         full_airlock_request_id = str(uuid.uuid4())

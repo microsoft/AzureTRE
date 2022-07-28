@@ -20,6 +20,7 @@ class AirlockRequestStatus(str, Enum):
 
     Blocked = strings.AIRLOCK_RESOURCE_STATUS_BLOCKED
     BlockingInProgress = strings.AIRLOCK_RESOURCE_STATUS_BLOCKING_INPROGRESS
+    Failed = strings.AIRLOCK_RESOURCE_STATUS_FAILED
 
 
 class AirlockRequestType(str, Enum):

@@ -29,5 +29,6 @@ STAGE_REJECTED = "rejected"
 STAGE_CANCELLED = "cancelled"
 STAGE_BLOCKING_INPROGRESS = "blocking_in_progress"
 STAGE_BLOCKED_BY_SCAN = "blocked_by_scan"
+STAGE_FAILED = "failed"
 
 NO_THREATS = "No threats found"
