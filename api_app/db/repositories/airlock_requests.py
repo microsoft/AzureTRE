@@ -22,7 +22,7 @@ class AirlockRequestRepository(AirlockResourceRepository):
 
     @staticmethod
     def airlock_requests_query():
-        return 'SELECT * FROM c WHERE'
+        return 'SELECT * FROM c WHERE c.resourceType = "airlock-request"'
 
     def _validate_status_update(self, current_status: AirlockRequestStatus, new_status: AirlockRequestStatus):
         # Cannot change status from approved
@@ -66,7 +66,7 @@ class AirlockRequestRepository(AirlockResourceRepository):
         return airlock_request
 
     def get_airlock_requests_by_workspace_id(self, workspace_id: str) -> List[AirlockRequest]:
-        query = self.airlock_requests_query() + f' c.workspaceId = "{workspace_id}"'
+        query = self.airlock_requests_query() + f' AND c.workspaceId = "{workspace_id}"'
         airlock_requests = self.query(query=query)
         return parse_obj_as(List[AirlockRequest], airlock_requests)
 
