@@ -29,6 +29,7 @@ API_INVOKE_ACTION_ON_USER_RESOURCE = "Invoke action on a user resource"
 
 API_CREATE_AIRLOCK_REQUEST = "Create an airlock request"
 API_GET_AIRLOCK_REQUEST = "Get an airlock request"
+API_LIST_AIRLOCK_REQUESTS = "Get all airlock requests for a workspace"
 API_SUBMIT_AIRLOCK_REQUEST = "Submit an airlock request"
 API_CANCEL_AIRLOCK_REQUEST = "Cancel an airlock request"
 API_REVIEW_AIRLOCK_REQUEST = "Review an airlock request"
@@ -189,6 +190,8 @@ AIRLOCK_REQUEST_IS_CANCELED = "Airlock request was cancelled."
 AIRLOCK_REQUEST_INVALID_STATUS = "Airlock request status is unknown."
 AIRLOCK_UNAUTHORIZED_TO_SA = "User is unauthorized to access airlock request files in its current status."
 AIRLOCK_NOT_ENABLED_IN_WORKSPACE = "Airlock is not enabled in this workspace."
+AIRLOCK_NO_RESEARCHER_EMAIL = "There are no Workspace Researchers with an email address."
+AIRLOCK_NO_OWNER_EMAIL = "There are no Workspace Owners with an email address."
 
 # Deployments
 RESOURCE_STATUS_AWAITING_DEPLOYMENT_MESSAGE = "This resource is waiting to be deployed"
