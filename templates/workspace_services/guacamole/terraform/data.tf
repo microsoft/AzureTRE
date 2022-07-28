@@ -75,10 +75,3 @@ data "local_file" "version" {
   filename = "${path.module}/../version.txt"
 }
 
-output "connection_uri" {
-  value = "https://${azurerm_linux_web_app.guacamole.default_hostname}/guacamole"
-}
-
-output "authentication_callback_uri" {
-  value = "https://${azurerm_linux_web_app.guacamole.default_hostname}/oauth2/callback"
-}
