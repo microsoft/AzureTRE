@@ -16,38 +16,13 @@ on:  # yamllint disable-line rule:truthy
 concurrency: "${{ github.workflow }}-${{ github.ref }}"
 
 jobs:
-  prepare-deploy-tre-main:
-    name: Preparation
-    runs-on: ubuntu-latest
-    if: |
-      github.ref != 'refs/heads/main'
-    outputs:
-      selector: ${{ steps.get_e2e_tests_selector.outputs.selector }}
-    steps:
-      - id: get_e2e_tests_selector
-        name: "Get e2e tests selector"
-        with:
-          script: |
-            if (context.eventName === "push") {
-              console.log("Setting selector='extended or extended_aad'");
-              core.setOutput("selector", "extended or extended_aad");
-              return;
-            }
-            if (context.eventName === "schedule") {
-              console.log("Setting selector='extended or shared_services or extended_aad'");
-              core.setOutput("selector", "extended or shared_services or extended_aad");
-              return;
-            }
-            core.error('Failed to set selector');
-
   run-deploy-tre-main:
     name: "Deploy main"
     if: github.ref == 'refs/heads/main'
-    needs: [prepare-deploy-tre-main]
     uses: ./.github/workflows/deploy_tre_reusable.yml
     with:
       ciGitRef: ${{ github.ref }}
-      e2eTestsCustomSelector: ${{ needs.prepare-deploy-tre-main.outputs.selector }}
+      e2eTestsCustomSelector: "extended or shared_services or extended_aad"
       environmentName: CICD
     secrets:
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
