@@ -1,3 +1,4 @@
+from typing import List
 from pydantic import BaseModel, Field
 from models.domain.airlock_resource import AirlockResourceType
 from models.domain.airlock_request import AirlockRequest, AirlockRequestType
@@ -22,6 +23,20 @@ class AirlockRequestInResponse(BaseModel):
         schema_extra = {
             "example": {
                 "airlock_request": get_sample_airlock_request("933ad738-7265-4b5f-9eae-a1a62928772e", "121e921f-a4aa-44b3-90a9-e8da030495ef")
+            }
+        }
+
+
+class AirlockRequestInList(BaseModel):
+    airlockRequests: List[AirlockRequest] = Field([], title="Airlock Requests")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "airlock_requests": [
+                    get_sample_airlock_request("933ad738-7265-4b5f-9eae-a1a62928772e", "121e921f-a4aa-44b3-90a9-e8da030495ef"),
+                    get_sample_airlock_request("123ad738-1234-4b5f-9eae-a1a62928772e", "457e921f-a4aa-44b3-90a9-e8da030412ac"),
+                ]
             }
         }
 
