@@ -235,7 +235,7 @@ class AzureADAuthorization(AccessService):
 
         workspace_role_assignments_details = defaultdict(list)
         for role_assignment in roles_graph_data["value"]:
-            if role_assignment["principalType"] == "User":
+            if role_assignment["principalType"] == "User" and role_assignment["principalId"] in user_emails:
                 if role_assignment["appRoleId"] == researcher_app_role_id:
                     workspace_role_assignments_details["researcher_emails"].append(user_emails[role_assignment["principalId"]])
                 elif role_assignment["appRoleId"] == owner_app_role_id:

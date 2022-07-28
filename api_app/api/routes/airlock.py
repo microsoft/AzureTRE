@@ -13,7 +13,7 @@ from models.schemas.airlock_request_url import AirlockRequestTokenInResponse
 from models.schemas.airlock_review import AirlockReviewInCreate, AirlockReviewInResponse
 
 from db.repositories.airlock_requests import AirlockRequestRepository
-from models.schemas.airlock_request import AirlockRequestInCreate, AirlockRequestInResponse
+from models.schemas.airlock_request import AirlockRequestInCreate, AirlockRequestInResponse, AirlockRequestInList
 from resources import strings
 from services.authentication import get_current_workspace_owner_or_researcher_user_or_airlock_manager, get_current_workspace_owner_or_researcher_user, get_current_airlock_manager_user
 
@@ -39,6 +39,22 @@ async def create_draft_request(airlock_request_input: AirlockRequestInCreate, us
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     await save_and_publish_event_airlock_request(airlock_request, airlock_request_repo, user, workspace)
     return AirlockRequestInResponse(airlockRequest=airlock_request)
+
+
+@airlock_workspace_router.get("/workspaces/{workspace_id}/requests",
+                              status_code=status.HTTP_200_OK,
+                              response_model=AirlockRequestInList,
+                              name=strings.API_LIST_AIRLOCK_REQUESTS,
+                              dependencies=[Depends(get_current_workspace_owner_user), Depends(get_workspace_by_id_from_path)])
+async def get_all_airlock_requests_by_workspace(
+        airlock_request_repo=Depends(get_repository(AirlockRequestRepository)),
+        workspace=Depends(get_deployed_workspace_by_id_from_path)) -> AirlockRequestInList:
+    try:
+        airlock_requests = airlock_request_repo.get_airlock_requests_by_workspace_id(workspace.id)
+    except (ValidationError, ValueError) as e:
+        logging.error(f"Failed retrieving all the airlock requests for a workspace: {e}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    return AirlockRequestInList(airlockRequests=airlock_requests)
 
 
 @airlock_workspace_router.get("/workspaces/{workspace_id}/requests/{airlock_request_id}", status_code=status.HTTP_200_OK, response_model=AirlockRequestInResponse, name=strings.API_GET_AIRLOCK_REQUEST, dependencies=[Depends(get_current_workspace_owner_or_researcher_user), Depends(get_workspace_by_id_from_path)])

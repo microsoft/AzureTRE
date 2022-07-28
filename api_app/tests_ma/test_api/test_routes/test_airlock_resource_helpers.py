@@ -143,6 +143,26 @@ async def test_save_and_publish_event_airlock_request_raises_503_if_publish_even
     assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
 
+@pytest.mark.parametrize('email_mock_return', [{},
+                                               {"owner_emails": ["owner@outlook.com"]},
+                                               {"researcher_emails": [], "owner_emails": ["owner@outlook.com"]},
+                                               {"researcher_emails": ["researcher@outlook.com"], "owner_emails": []},
+                                               {"researcher_emails": ["researcher@outlook.com"]}])
+@patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details")
+async def test_save_and_publish_event_airlock_request_raises_417_if_email_not_present(get_workspace_role_assignment_details_patched, email_mock_return):
+
+    get_workspace_role_assignment_details_patched.return_value = email_mock_return
+    airlock_request_mock = sample_airlock_request()
+
+    with pytest.raises(HTTPException) as ex:
+        await save_and_publish_event_airlock_request(
+            airlock_request=airlock_request_mock,
+            airlock_request_repo=None,
+            user=create_test_user(),
+            workspace=sample_workspace())
+    assert ex.value.status_code == status.HTTP_417_EXPECTATION_FAILED
+
+
 @patch("event_grid.helpers.EventGridPublisherClient", return_value=AsyncMock())
 @patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details", return_value={"researcher_emails": ["researcher@outlook.com"], "owner_emails": ["owner@outlook.com"]})
 async def test_update_status_and_publish_event_airlock_request_updates_item(_, event_grid_publisher_client_mock,
@@ -221,7 +241,7 @@ async def test_save_airlock_review_saves_item(airlock_review_repo_mock):
     airlock_review_repo_mock.save_item.assert_called_once_with(airlock_review_mock)
 
 
-async def test_test_save_airlock_review_raises_503_if_save_to_db_fails(airlock_review_repo_mock):
+async def test_save_airlock_review_raises_503_if_save_to_db_fails(airlock_review_repo_mock):
     airlock_review_mock = sample_airlock_review()
     airlock_review_repo_mock.save_item = MagicMock(side_effect=Exception)
     with pytest.raises(HTTPException) as ex:
