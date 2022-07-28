@@ -22,7 +22,9 @@ jobs:
     uses: ./.github/workflows/deploy_tre_reusable.yml
     with:
       ciGitRef: ${{ github.ref }}
-      e2eTestsCustomSelector: "extended or shared_services or extended_aad"
+      e2eTestsCustomSelector: >-
+        ${{ (context.eventName == 'schedule' && 'extended or shared_services or extended_aad') ||
+        (context.eventName == 'push' && 'extended or extended_aad') }}
       environmentName: CICD
     secrets:
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
