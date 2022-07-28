@@ -1,7 +1,9 @@
 import logging
 
 import azure.functions as func
+import datetime
 import os
+import uuid
 import json
 
 from azure.mgmt.storage import StorageManagementClient
@@ -35,23 +37,32 @@ class ContainersCopyMetadata:
         self.sa_dest_resource_group = sa_dest_resource_group
 
 
-def main(msg: func.ServiceBusMessage):
-    body = msg.get_body().decode('utf-8')
-    logging.info('Python ServiceBus queue trigger processed message: %s', body)
-    storage_client = blob_operations.get_storage_management_client()
-
+def main(msg: func.ServiceBusMessage, outputEvent: func.Out[func.EventGridOutputEvent]):
     try:
-        request_properties = extract_properties(body)
-
-        new_status = request_properties.status
-        req_id = request_properties.request_id
-        ws_id = request_properties.workspace_id
-        request_type = request_properties.type
-    except Exception as e:
-        logging.error(f'Failed processing request - invalid message: {body}, exc: {e}')
+        request_properties = extract_properties(msg)
+        handle_status_changed(request_properties)
+    except Exception:
+        logging.error(f"Failed processing Airlock request with ID: '{request_properties.request_id}', changing reqeust status to '{constants.STAGE_FAILED}'.")
+        outputEvent.set(
+            func.EventGridOutputEvent(
+                id=str(uuid.uuid4()),
+                data={"completed_step": request_properties.status, "new_status": constants.STAGE_FAILED, "request_id": request_properties.request_id},
+                subject=request_properties.request_id,
+                event_type="Airlock.StepResult",
+                event_time=datetime.datetime.utcnow(),
+                data_version="1.0"))
         raise
 
-    logging.info('Processing request with id %s. new status is "%s", type is "%s"', req_id, new_status, type)
+
+def handle_status_changed(request_properties: RequestProperties):
+    storage_client = blob_operations.get_storage_management_client()
+
+    new_status = request_properties.status
+    req_id = request_properties.request_id
+    ws_id = request_properties.workspace_id
+    request_type = request_properties.type
+
+    logging.info('Processing request with id %s. new status is "%s", type is "%s"', req_id, new_status, request_type)
 
     try:
         tre_id = os.environ["TRE_ID"]
@@ -84,8 +95,10 @@ def main(msg: func.ServiceBusMessage):
     # Other statuses which do not require data copy are dismissed as we don't need to do anything...
 
 
-def extract_properties(body: str) -> RequestProperties:
+def extract_properties(msg: func.ServiceBusMessage) -> RequestProperties:
     try:
+        body = msg.get_body().decode('utf-8')
+        logging.info('Python ServiceBus queue trigger processed message: %s', body)
         json_body = json.loads(body)
         result = parse_obj_as(RequestProperties, json_body["data"])
         if not result:
