@@ -15,7 +15,8 @@ LOGGER = logging.getLogger(__name__)
 @pytest.mark.airlock
 @pytest.mark.extended
 @pytest.mark.timeout(2000)
-async def test_workspace_airlock_import_flow(admin_token, verify) -> None:
+@pytest.mark.depends(on=['test_patch_firewall'])
+async def test_airlock_import_flow(admin_token, verify) -> None:
 
     # 1. create workspace
     payload = {
