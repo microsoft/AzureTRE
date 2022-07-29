@@ -32,8 +32,7 @@ data "azurerm_client_config" "current" {}
 data "azurerm_subnet" "shared" {
   name                 = "SharedSubnet"
   virtual_network_name = "vnet-${var.tre_id}"
-
-  resource_group_name = local.core_resource_group_name
+  resource_group_name  = local.core_resource_group_name
 }
 
 data "azurerm_resource_group" "rg" {

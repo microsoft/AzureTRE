@@ -70,7 +70,6 @@ resource "azurerm_virtual_machine" "cyclecloud" {
 
   tags = local.tre_shared_service_tags
 
-
   lifecycle { ignore_changes = [tags] }
 }
 
