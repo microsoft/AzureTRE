@@ -47,9 +47,9 @@ jobs:
             guacamole_server_version:
               - 'templates/workspace_services/guacamole/version.txt'
             gitea:
-              - 'templates/shared_services/gitea/**/*'
+              - 'templates/shared_services/gitea/docker/**/*'
             gitea_version:
-              - 'templates/shared_services/gitea/version.txt'
+              - 'templates/shared_services/gitea/docker/version.txt'
             airlock_processor:
               - 'airlock_processor/**/*'
             airlock_processor_version:
