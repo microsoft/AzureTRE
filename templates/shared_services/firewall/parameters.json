@@ -41,6 +41,12 @@
       }
     },
     {
+      "name": "network_rule_collections",
+      "source": {
+        "env": "NETWORK_RULE_COLLECTIONS"
+      }
+    },
+    {
       "name": "stateful_resources_locked",
       "source": {
         "env": "STATEFUL_RESOURCES_LOCKED"

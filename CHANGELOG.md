@@ -4,7 +4,7 @@
 
 **BREAKING CHANGES & MIGRATIONS**:
 
-*
+* Guacamole workspace service configures firewall requirements with deployment pipeline ([#2371](https://github.com/microsoft/AzureTRE/pull/2371)). **Migration** is manual - update the templateVersion of `tre-shared-service-firewall` in Cosmos to `0.4.0` in order to use this capability.
 
 FEATURES:
 
@@ -12,7 +12,7 @@ FEATURES:
 
 ENHANCEMENTS:
 
-*
+* Guacamole logs are sent to Application Insights ([#2376](https://github.com/microsoft/AzureTRE/pull/2376))
 
 BUG FIXES:
 
