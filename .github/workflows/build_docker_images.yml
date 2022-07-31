@@ -45,7 +45,7 @@ jobs:
             guacamole_server:
               - 'templates/workspace_services/guacamole/guacamole-server/**/*'
             guacamole_server_version:
-              - 'templates/workspace_services/guacamole/version.txt'
+              - 'templates/workspace_services/guacamole/guacamole-server/docker/version.txt'
             gitea:
               - 'templates/shared_services/gitea/docker/**/*'
             gitea_version:
