@@ -1,9 +1,8 @@
 ---
 name: tre-shared-service-firewall
-version: 0.3.2
+version: 0.4.0
 description: "An Azure TRE Firewall shared service"
 registry: azuretre
-dockerfile: Dockerfile.tmpl
 
 credentials:
   - name: azure_tenant_id
@@ -39,15 +38,20 @@ parameters:
   - name: rule_collections
     type: string
     default: "W10=" # b64 for []
+    description: "Application rule collection array"
+  - name: network_rule_collections
+    type: string
+    default: "W10=" # b64 for []
+    description: "Network rule collection array"
   - name: stateful_resources_locked
     env: STATEFUL_RESOURCES_LOCKED
     type: boolean
     default: true
 
 mixins:
-  - exec
   - terraform:
-      clientVersion: 1.1.5
+      initFile: providers.tf
+      clientVersion: 1.2.5
 
 install:
   - terraform:
@@ -57,6 +61,7 @@ install:
         tre_id: "{{ bundle.parameters.tre_id }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
         api_driven_rule_collections_b64: "{{ bundle.parameters.rule_collections }}"
+        api_driven_network_rule_collections_b64: "{{ bundle.parameters.network_rule_collections }}"
         stateful_resources_locked: "{{ bundle.parameters.stateful_resources_locked }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
@@ -72,6 +77,7 @@ upgrade:
         tre_id: "{{ bundle.parameters.tre_id }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
         api_driven_rule_collections_b64: "{{ bundle.parameters.rule_collections }}"
+        api_driven_network_rule_collections_b64: "{{ bundle.parameters.network_rule_collections }}"
         stateful_resources_locked: "{{ bundle.parameters.stateful_resources_locked }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
@@ -87,6 +93,7 @@ uninstall:
         tre_id: "{{ bundle.parameters.tre_id }}"
         tre_resource_id: "{{ bundle.parameters.id }}"
         api_driven_rule_collections_b64: "{{ bundle.parameters.rule_collections }}"
+        api_driven_network_rule_collections_b64: "{{ bundle.parameters.network_rule_collections }}"
         stateful_resources_locked: "{{ bundle.parameters.stateful_resources_locked }}"
       backendConfig:
         resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
