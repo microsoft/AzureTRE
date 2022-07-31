@@ -259,59 +259,42 @@ resource "azurerm_private_endpoint" "export_blocked_pe" {
   }
 }
 
-resource "azurerm_role_assignment" "sa_import_approved" {
-  scope                = azurerm_storage_account.sa_import_approved.id
+resource "azurerm_role_assignment" "airlock_blob_data_contributor" {
+  for_each = toset([
+    azurerm_storage_account.sa_import_approved.id,
+    azurerm_storage_account.sa_export_internal.id,
+    azurerm_storage_account.sa_export_inprogress.id,
+    azurerm_storage_account.sa_export_rejected.id,
+    azurerm_storage_account.sa_export_blocked.id
+  ])
+  scope                = each.key
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
+}
+
+# This should be removed
+resource "azurerm_role_assignment" "airlock_blob_data_contributor" {
+  for_each = toset([
+    azurerm_storage_account.sa_import_approved.id,
+    azurerm_storage_account.sa_export_internal.id,
+    azurerm_storage_account.sa_export_inprogress.id,
+    azurerm_storage_account.sa_export_rejected.id,
+    azurerm_storage_account.sa_export_blocked.id
+  ])
+  scope                = each.key
   role_definition_name = "Contributor"
   principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
 }
 
 
-resource "azurerm_role_assignment" "sa_export_internal" {
-  scope                = azurerm_storage_account.sa_export_internal.id
-  role_definition_name = "Contributor"
-  principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
-}
-
-resource "azurerm_role_assignment" "sa_export_inprogress" {
-  scope                = azurerm_storage_account.sa_export_inprogress.id
-  role_definition_name = "Contributor"
-  principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
-}
-
-resource "azurerm_role_assignment" "sa_export_rejected" {
-  scope                = azurerm_storage_account.sa_export_rejected.id
-  role_definition_name = "Contributor"
-  principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
-}
-
-resource "azurerm_role_assignment" "sa_export_blocked" {
-  scope                = azurerm_storage_account.sa_export_blocked.id
-  role_definition_name = "Contributor"
-  principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
-}
-
-
-resource "azurerm_role_assignment" "sa_import_approved_reader" {
-  scope                = azurerm_storage_account.sa_import_approved.id
+resource "azurerm_role_assignment" "airlock_reader_data_access" {
+  for_each = toset([
+    azurerm_storage_account.sa_import_approved.id,
+    azurerm_storage_account.sa_export_internal.id,
+    azurerm_storage_account.sa_export_inprogress.id,
+    azurerm_storage_account.sa_export_rejected.id
+  ])
+  scope                = each.key
   role_definition_name = "Reader and Data Access"
-  principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
-}
-
-
-resource "azurerm_role_assignment" "sa_export_internal_reader" {
-  scope                = azurerm_storage_account.sa_export_internal.id
-  role_definition_name = "Reader and Data Access"
-  principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
-}
-
-resource "azurerm_role_assignment" "sa_export_inprogress_reader" {
-  scope                = azurerm_storage_account.sa_export_inprogress.id
-  role_definition_name = "Reader and Data Access"
-  principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
-}
-
-resource "azurerm_role_assignment" "sa_export_rejected_reader" {
-  scope                = azurerm_storage_account.sa_export_rejected.id
-  role_definition_name = "Reader and Data Access"
-  principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
+  principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
 }

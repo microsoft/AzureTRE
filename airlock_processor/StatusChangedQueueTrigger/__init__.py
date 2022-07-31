@@ -76,9 +76,8 @@ def main(msg: func.ServiceBusMessage):
         containers_metadata = get_source_dest_env_vars(new_status, request_type, ws_id, storage_client)
         blob_operations.create_container(containers_metadata.sa_dest_resource_group,
                                          containers_metadata.sa_dest_account_name, req_id, storage_client)
-        blob_operations.copy_data(containers_metadata.source_account_name, containers_metadata.source_account_key,
-                                  containers_metadata.sa_source_connection_string,
-                                  containers_metadata.sa_dest_connection_string, req_id)
+        blob_operations.copy_data(containers_metadata.source_account_name,
+                                  containers_metadata.sa_dest_account_name, req_id)
         return
 
     # Other statuses which do not require data copy are dismissed as we don't need to do anything...

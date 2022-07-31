@@ -42,32 +42,29 @@ resource "azurerm_role_assignment" "eventgrid_data_sender_notification" {
   principal_id         = var.api_principal_id
 }
 
-resource "azurerm_role_assignment" "sa_import_external" {
-  scope                = azurerm_storage_account.sa_import_external.id
-  role_definition_name = "Contributor"
+resource "azurerm_role_assignment" "airlock_blob_data_contributor" {
+  for_each = toset([
+    azurerm_storage_account.sa_import_external.id,
+    azurerm_storage_account.sa_import_in_progress.id,
+    azurerm_storage_account.sa_import_rejected.id,
+    azurerm_storage_account.sa_export_approved.id,
+    azurerm_storage_account.sa_import_blocked.id
+  ])
+  scope                = each.key
+  role_definition_name = "Storage Blob Data Contributor"
   principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
 }
 
-resource "azurerm_role_assignment" "sa_import_in_progress" {
-  scope                = azurerm_storage_account.sa_import_in_progress.id
-  role_definition_name = "Contributor"
-  principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
-}
-
-resource "azurerm_role_assignment" "sa_import_rejected" {
-  scope                = azurerm_storage_account.sa_import_rejected.id
-  role_definition_name = "Contributor"
-  principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
-}
-
-resource "azurerm_role_assignment" "sa_export_approved" {
-  scope                = azurerm_storage_account.sa_export_approved.id
-  role_definition_name = "Contributor"
-  principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
-}
-
-resource "azurerm_role_assignment" "sa_import_blocked" {
-  scope                = azurerm_storage_account.sa_import_blocked.id
+# This should be removed
+resource "azurerm_role_assignment" "airlock_contributor" {
+  for_each = toset([
+    azurerm_storage_account.sa_import_external.id,
+    azurerm_storage_account.sa_import_in_progress.id,
+    azurerm_storage_account.sa_import_rejected.id,
+    azurerm_storage_account.sa_export_approved.id,
+    azurerm_storage_account.sa_import_blocked.id
+  ])
+  scope                = each.key
   role_definition_name = "Contributor"
   principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
 }

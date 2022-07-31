@@ -49,6 +49,14 @@ def get_storage_connection_string(sa_name: str, resource_group: str, storage_cli
     return StorageConnectionMetadata(sa_name, storage_account_key, sa_connection_string)
 
 
+def get_azure_credentials() -> DefaultAzureCredential:
+    managed_identity = os.environ.get("MANAGED_IDENTITY_CLIENT_ID")
+    if managed_identity:
+        logging.info("using the Airlock processor's managed identity to get storage management client")
+    return DefaultAzureCredential(managed_identity_client_id=os.environ["MANAGED_IDENTITY_CLIENT_ID"],
+                                  exclude_shared_token_cache_credential=True) if managed_identity else DefaultAzureCredential()
+
+
 def get_storage_management_client():
     try:
         subscription_id = os.environ["AZURE_SUBSCRIPTION_ID"]
@@ -56,31 +64,14 @@ def get_storage_management_client():
         logging.error(f'Missing environment variable: {e}')
         raise
 
-    managed_identity = os.environ.get("MANAGED_IDENTITY_CLIENT_ID")
-    if managed_identity:
-        logging.info("using the Airlock processor's managed identity to get storage management client")
-    credential = DefaultAzureCredential(managed_identity_client_id=os.environ["MANAGED_IDENTITY_CLIENT_ID"],
-                                        exclude_shared_token_cache_credential=True) if managed_identity else DefaultAzureCredential()
-
-    return StorageManagementClient(credential, subscription_id)
+    return StorageManagementClient(get_azure_credentials(), subscription_id)
 
 
-def copy_data(source_account_name: str, source_account_key: str, sa_source_connection_string: str,
-              sa_dest_connection_string: str, request_id: str):
+def copy_data(source_account_name: str, destination_account_name: str, request_id: str):
     container_name = request_id
 
-    # token geneation with expiry of 1 hour. since its not shared, we can leave it to expire (no need to track/delete)
-    # Remove sas token if not needed: https://github.com/microsoft/AzureTRE/issues/2034
-    sas_token = generate_container_sas(account_name=source_account_name,
-                                       container_name=container_name,
-                                       account_key=source_account_key,
-                                       permission=ContainerSasPermissions(read=True),
-                                       expiry=datetime.datetime.utcnow() + datetime.timedelta(hours=1))
-
-    # Copy files
-    source_blob_service_client = BlobServiceClient.from_connection_string(sa_source_connection_string)
-    dest_blob_service_client = BlobServiceClient.from_connection_string(sa_dest_connection_string)
-
+    source_blob_service_client = BlobServiceClient(account_url=f"https://{source_account_name}.blob.core.windows.net/",
+                                                   credential=get_azure_credentials())
     source_container_client = source_blob_service_client.get_container_client(container_name)
 
     try:
@@ -101,11 +92,23 @@ def copy_data(source_account_name: str, source_account_key: str, sa_source_conne
         logging.error('Request with id %s failed.', request_id)
         raise ()
 
+    udk = source_blob_service_client.get_user_delegation_key(datetime.datetime.utcnow() - datetime.timedelta(hours=1),
+                                                             datetime.datetime.utcnow() + datetime.timedelta(hours=1))
+
+    # token geneation with expiry of 1 hour. since its not shared, we can leave it to expire (no need to track/delete)
+    # Remove sas token if not needed: https://github.com/microsoft/AzureTRE/issues/2034
+    sas_token = generate_container_sas(account_name=source_account_name,
+                                       container_name=container_name,
+                                       user_delegation_key=udk,
+                                       permission=ContainerSasPermissions(read=True),
+                                       expiry=datetime.datetime.utcnow() + datetime.timedelta(hours=1))
+
     source_blob = source_container_client.get_blob_client(blob_name)
-
     source_url = f'{source_blob.url}?{sas_token}'
-    # source_url = source_blob.url
 
+    # Copy files
+    dest_blob_service_client = BlobServiceClient(f"https://{destination_account_name}.blob.core.windows.net/",
+                                                 credential=get_azure_credentials())
     copied_blob = dest_blob_service_client.get_blob_client(container_name, source_blob.blob_name)
     copy = copied_blob.start_copy_from_url(source_url)
 
