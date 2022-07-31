@@ -5,6 +5,7 @@
 **BREAKING CHANGES & MIGRATIONS**:
 
 * Guacamole workspace service configures firewall requirements with deployment pipeline ([#2371](https://github.com/microsoft/AzureTRE/pull/2371)). **Migration** is manual - update the templateVersion of `tre-shared-service-firewall` in Cosmos to `0.4.0` in order to use this capability.
+* Workspace now has an AirlockManager role that has the permissions to review airlock requests  ([#2349](https://github.com/microsoft/AzureTRE/pull/2349)).
 
 FEATURES:
 
