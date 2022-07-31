@@ -1,7 +1,7 @@
 from json import JSONDecodeError
 import unittest
 
-from StatusChangedQueueTrigger import extract_properties, get_source_dest_env_vars, is_require_data_copy
+from StatusChangedQueueTrigger import extract_properties, get_source_dest_for_copy, is_require_data_copy
 
 
 class TestPropertiesExtraction(unittest.TestCase):
@@ -48,7 +48,7 @@ class TestDataCopyProperties(unittest.TestCase):
         self.assertEqual(is_require_data_copy("blocking_in_progress"), True)
 
     def test_wrong_status_raises_when_getting_storage_account_properties(self):
-        self.assertRaises(Exception, get_source_dest_env_vars, "Miaow", "import")
+        self.assertRaises(Exception, get_source_dest_for_copy, "Miaow", "import")
 
     def test_wrong_type_raises_when_getting_storage_account_properties(self):
-        self.assertRaises(Exception, get_source_dest_env_vars, "accepted", "somethingelse")
+        self.assertRaises(Exception, get_source_dest_for_copy, "accepted", "somethingelse")

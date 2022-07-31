@@ -55,16 +55,15 @@ resource "azurerm_role_assignment" "airlock_blob_data_contributor" {
   principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
 }
 
-# This should be removed
-resource "azurerm_role_assignment" "airlock_contributor" {
+# This might be considered redundent since we give Virtual Machine Contributor
+# at the subscription level, but best to be explicit.
+resource "azurerm_role_assignment" "api_reader_data_access" {
   for_each = toset([
     azurerm_storage_account.sa_import_external.id,
     azurerm_storage_account.sa_import_in_progress.id,
-    azurerm_storage_account.sa_import_rejected.id,
-    azurerm_storage_account.sa_export_approved.id,
-    azurerm_storage_account.sa_import_blocked.id
+    azurerm_storage_account.sa_export_approved.id
   ])
   scope                = each.key
-  role_definition_name = "Contributor"
-  principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
+  role_definition_name = "Reader and Data Access"
+  principal_id         = var.api_principal_id
 }
