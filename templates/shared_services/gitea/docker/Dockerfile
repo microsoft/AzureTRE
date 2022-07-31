@@ -4,5 +4,5 @@ ARG CERTIFICATE_URL=https://www.digicert.com/CACerts/BaltimoreCyberTrustRoot.crt
 FROM gitea/gitea:${GITEA_TAG}
 # need to pass args to stage
 ARG CERTIFICATE_URL
-RUN wget -O /usr/local/share/ca-certificates/mysql.crt.pem ${CERTIFICATE_URL} && update-ca-certificates
+RUN wget -O /usr/local/share/ca-certificates/mysql.crt.pem ${CERTIFICATE_URL} --progress=dot:giga && update-ca-certificates
 ENTRYPOINT ["/bin/bash", "-c", "sleep 120 && gitea admin user create --admin --access-token --username=${GITEA_USERNAME} --password=${GITEA_PASSWD} --email=${GITEA_EMAIL} --must-change-password=false & /usr/bin/entrypoint"]
