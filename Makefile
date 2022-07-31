@@ -170,7 +170,7 @@ lint:
 		-e VALIDATE_DOCKERFILE_HADOLINT=true \
 		-e FILTER_REGEX_INCLUDE=${LINTER_REGEX_INCLUDE} \
 		-v $${LOCAL_WORKSPACE_FOLDER}:/tmp/lint \
-		github/super-linter:slim-v4.9.4
+		github/super-linter:slim-v4.9.5
 
 lint-docs:
 	LINTER_REGEX_INCLUDE='./docs/.*\|./mkdocs.yml' $(MAKE) lint

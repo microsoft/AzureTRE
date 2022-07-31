@@ -13,7 +13,7 @@ FEATURES:
 
 ENHANCEMENTS:
 
-*
+* Guacamole logs are sent to Application Insights ([#2376](https://github.com/microsoft/AzureTRE/pull/2376))
 
 BUG FIXES:
 

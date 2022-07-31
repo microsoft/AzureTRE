@@ -57,6 +57,10 @@ data "azurerm_log_analytics_workspace" "tre" {
 }
 
 data "local_file" "version" {
-  filename = "${path.module}/../version.txt"
+  filename = "${path.module}/../guacamole-server/docker/version.txt"
 }
 
+data "azurerm_application_insights" "ws" {
+  name                = "appi-${var.tre_id}-ws-${local.short_workspace_id}"
+  resource_group_name = data.azurerm_resource_group.ws.name
+}
