@@ -6,4 +6,4 @@
 Dockerfile.tmpl
 
 docker/
-!docker/verion.txt
+!docker/version.txt
