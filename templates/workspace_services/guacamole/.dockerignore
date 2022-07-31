@@ -10,4 +10,5 @@ Dockerfile.tmpl
 terraform/deploy.sh
 terraform/destroy.sh
 guacamole-server/
+!guacamole-server/docker/version.txt
 user_resources/
