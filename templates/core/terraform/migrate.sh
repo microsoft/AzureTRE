@@ -48,3 +48,27 @@ if [ -n "${api_app_service_id}" ]; then
     terraform import azurerm_linux_web_app.api "${api_app_service_id}"
   fi
 fi
+
+# app insights via -> native tf resource
+app_insights_via_arm=$(echo "${terraform_show_json}" \
+  | jq -r 'select(.values.root_module.child_modules != null) .values.root_module.child_modules[] | select (.address=="module.azure_monitor") | .resources[] | select(.address=="module.azure_monitor.azurerm_resource_group_template_deployment.app_insights_core") | .values.id')
+if [ -n "${app_insights_via_arm}" ]; then
+  echo "Migrating ${app_insights_via_arm}"
+
+  PLAN_FILE="tfplan$$"
+  TS=$(date +"%s")
+  LOG_FILE="${TS}-tre-core-migrate.log"
+
+  # This variables are loaded in for us
+  # shellcheck disable=SC2154
+  ../../../devops/scripts/terraform_wrapper.sh \
+    -g "${TF_VAR_mgmt_resource_group_name}" \
+    -s "${TF_VAR_mgmt_storage_account_name}" \
+    -n "${TF_VAR_terraform_state_container_name}" \
+    -k "${TRE_ID}" \
+    -l "${LOG_FILE}" \
+    -c "terraform plan -target module.azure_monitor.azurerm_resource_group_template_deployment.app_insights_core -target module.azure_monitor.azurerm_resource_group_template_deployment.ampls_core -out ${PLAN_FILE} && \
+    terraform apply -input=false -auto-approve ${PLAN_FILE}"
+fi
+
+echo "Migration is done."
