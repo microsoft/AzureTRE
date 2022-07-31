@@ -1,6 +1,6 @@
 ---
 name: tre-shared-service-gitea
-version: 0.3.9
+version: 0.3.10
 description: "A Gitea shared service"
 registry: azuretre
 
@@ -8,9 +8,9 @@ custom:
   runtime_image:
     name: gitea
     build:
-      version_file: version.txt
-      docker_file: Dockerfile
-      docker_context: .
+      version_file: docker/version.txt
+      docker_file: docker/Dockerfile
+      docker_context: docker
 
 credentials:
   - name: azure_tenant_id
