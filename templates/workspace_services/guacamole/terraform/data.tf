@@ -46,11 +46,6 @@ data "azurerm_private_dns_zone" "azurewebsites" {
   resource_group_name = local.core_resource_group_name
 }
 
-data "azurerm_private_dns_zone" "vaultcore" {
-  name                = "privatelink.vaultcore.azure.net"
-  resource_group_name = local.core_resource_group_name
-}
-
 data "azurerm_container_registry" "mgmt_acr" {
   name                = var.mgmt_acr_name
   resource_group_name = var.mgmt_resource_group_name
@@ -61,24 +56,7 @@ data "azurerm_log_analytics_workspace" "tre" {
   resource_group_name = local.core_resource_group_name
 }
 
-data "azurerm_network_security_group" "ws" {
-  name                = "nsg-ws"
-  resource_group_name = data.azurerm_virtual_network.ws.resource_group_name
-}
-
-data "azurerm_private_dns_zone" "filecore" {
-  name                = "privatelink.file.core.windows.net"
-  resource_group_name = local.core_resource_group_name
-}
-
 data "local_file" "version" {
   filename = "${path.module}/../version.txt"
 }
 
-output "connection_uri" {
-  value = "https://${azurerm_linux_web_app.guacamole.default_hostname}/guacamole"
-}
-
-output "authentication_callback_uri" {
-  value = "https://${azurerm_linux_web_app.guacamole.default_hostname}/oauth2/callback"
-}
