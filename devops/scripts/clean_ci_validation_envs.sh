@@ -29,7 +29,7 @@ open_prs=$(gh pr list --state open --json number,title,headRefName,updatedAt)
 # Resource groups that start with a specific string and have the ci_git_ref tag whose value starts with "ref"
 az group list --query "[?starts_with(name, 'rg-tre') && tags.ci_git_ref != null && starts_with(tags.ci_git_ref, 'refs')].[name, tags.ci_git_ref]" -o tsv |
 while read -r rg_name rg_ref_name; do
-  if [[ "${rg_ref_name}" == "refs/pull*" ]]
+  if [[ "${rg_ref_name}" == refs/pull* ]]
   then
     # this rg originated from an external PR (i.e. a fork)
     pr_num=${rg_ref_name//[!0-9]/}
@@ -37,7 +37,7 @@ while read -r rg_name rg_ref_name; do
     if [ "${is_open_pr}" == "0" ]
     then
       echo "PR ${pr_num} (derived from ref ${rg_ref_name}) is not open. Environment in ${rg_name} will be deleted."
-      # devops/scripts/destroy_env_no_terraform.sh --core-tre-rg "${rg_name}" --no-wait
+      devops/scripts/destroy_env_no_terraform.sh --core-tre-rg "${rg_name}" --no-wait
       continue
     fi
 
@@ -62,10 +62,10 @@ while read -r rg_name rg_ref_name; do
 
     if (( diff_in_hours > BRANCH_LAST_ACTIVITY_IN_HOURS_FOR_DESTROY )); then
       echo "No recent activity on ${head_ref}. Environment in ${rg_name} will be destroyed."
-      # devops/scripts/destroy_env_no_terraform.sh --core-tre-rg "${rg_name}" --no-wait
+      devops/scripts/destroy_env_no_terraform.sh --core-tre-rg "${rg_name}" --no-wait
     elif (( diff_in_hours > BRANCH_LAST_ACTIVITY_IN_HOURS_FOR_STOP )); then
       echo "No recent activity on ${head_ref}. Environment in ${rg_name} will be stopped."
-      # stopEnv "${rg_name}"
+      stopEnv "${rg_name}"
     fi
   else
     # this rg originated from an internal branch on this repo
@@ -82,10 +82,10 @@ while read -r rg_name rg_ref_name; do
 
       if (( diff_in_hours > BRANCH_LAST_ACTIVITY_IN_HOURS_FOR_DESTROY )); then
         echo "No recent activity on ${rg_ref_name}. Environment in ${rg_name} will be destroyed."
-        # devops/scripts/destroy_env_no_terraform.sh --core-tre-rg "${rg_name}" --no-wait
+        devops/scripts/destroy_env_no_terraform.sh --core-tre-rg "${rg_name}" --no-wait
       elif (( diff_in_hours > BRANCH_LAST_ACTIVITY_IN_HOURS_FOR_STOP )); then
         echo "No recent activity on ${rg_ref_name}. Environment in ${rg_name} will be stopped."
-        # stopEnv "${rg_name}"
+        stopEnv "${rg_name}"
       fi
     fi
   fi
