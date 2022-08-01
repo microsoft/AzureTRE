@@ -6,7 +6,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Install Git
 RUN apt-get update \
-    && apt-get install -y git \
+    && apt-get install -y git=1:2.20.1-2+deb10u3 \
     && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 # This is a template Dockerfile for the bundle's invocation image
