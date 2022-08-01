@@ -46,6 +46,9 @@ resource "azurerm_linux_web_app" "guacamole" {
     WORKSPACE_ID               = var.workspace_id
     MANAGED_IDENTITY_CLIENT_ID = azurerm_user_assigned_identity.guacamole_id.client_id
 
+    APPLICATIONINSIGHTS_CONNECTION_STRING             = data.azurerm_application_insights.ws.connection_string
+    APPLICATIONINSIGHTS_INSTRUMENTATION_LOGGING_LEVEL = "INFO"
+
     # Guacmole configuration
     GUAC_DISABLE_COPY     = var.guac_disable_copy
     GUAC_DISABLE_PASTE    = var.guac_disable_paste
