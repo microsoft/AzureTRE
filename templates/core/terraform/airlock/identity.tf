@@ -43,14 +43,8 @@ resource "azurerm_role_assignment" "eventgrid_data_sender_notification" {
 }
 
 resource "azurerm_role_assignment" "airlock_blob_data_contributor" {
-  for_each = toset([
-    azurerm_storage_account.sa_import_external.id,
-    azurerm_storage_account.sa_import_in_progress.id,
-    azurerm_storage_account.sa_import_rejected.id,
-    azurerm_storage_account.sa_export_approved.id,
-    azurerm_storage_account.sa_import_blocked.id
-  ])
-  scope                = each.key
+  count                = length(local.airlock_sa_blob_data_contributor)
+  scope                = local.airlock_sa_blob_data_contributor[count.index]
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
 }
@@ -58,12 +52,8 @@ resource "azurerm_role_assignment" "airlock_blob_data_contributor" {
 # This might be considered redundent since we give Virtual Machine Contributor
 # at the subscription level, but best to be explicit.
 resource "azurerm_role_assignment" "api_reader_data_access" {
-  for_each = toset([
-    azurerm_storage_account.sa_import_external.id,
-    azurerm_storage_account.sa_import_in_progress.id,
-    azurerm_storage_account.sa_export_approved.id
-  ])
-  scope                = each.key
+  count                = length(local.api_sa_reader_data_access)
+  scope                = local.api_sa_reader_data_access[count.index]
   role_definition_name = "Reader and Data Access"
   principal_id         = var.api_principal_id
 }
