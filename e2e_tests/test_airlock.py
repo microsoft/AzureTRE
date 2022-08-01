@@ -1,4 +1,5 @@
 import pytest
+import asyncio
 import logging
 import config
 from resources.workspace import get_workspace_auth_details
@@ -54,6 +55,11 @@ async def test_airlock_import_flow(admin_token, verify) -> None:
     containerUrl = request_result["containerUrl"]
 
     # 4. upload blob
+
+    # currenly there's no elagant way to check if the container was created yet becasue its an asyc process
+    # it would be better to create another draft_improgress step and wait for the request to change to draft state before
+    # uploading the blob
+    await asyncio.sleep(10)
     await upload_blob_using_sas('./test_airlock_sample.txt', containerUrl, 201)
 
     # 5. submit request
