@@ -1,7 +1,6 @@
 #!/bin/bash
-set -euo pipefail
-# Use this for debug only
-# set -o xtrace
+
+# This script is designed to be `source`d to create reusable helper functions
 
 # Magic string for MSGraph
 msGraphAppId="00000003-0000-0000-c000-000000000000"
