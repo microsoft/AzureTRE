@@ -42,7 +42,7 @@ def main(msg: func.ServiceBusMessage, outputEvent: func.Out[func.EventGridOutput
         request_properties = extract_properties(msg)
         handle_status_changed(request_properties)
     except Exception:
-        logging.error(f"Failed processing Airlock request with ID: '{request_properties.request_id}', changing reqeust status to '{constants.STAGE_FAILED}'.")
+        logging.error(f"Failed processing Airlock request with ID: '{request_properties.request_id}', changing request status to '{constants.STAGE_FAILED}'.")
         outputEvent.set(
             func.EventGridOutputEvent(
                 id=str(uuid.uuid4()),
