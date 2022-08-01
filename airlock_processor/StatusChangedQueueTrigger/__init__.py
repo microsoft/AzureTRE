@@ -51,7 +51,6 @@ def main(msg: func.ServiceBusMessage, outputEvent: func.Out[func.EventGridOutput
                 event_type="Airlock.StepResult",
                 event_time=datetime.datetime.utcnow(),
                 data_version="1.0"))
-        raise
 
 
 def handle_status_changed(request_properties: RequestProperties):
