@@ -7,7 +7,7 @@ Used  "as is", this shared service is only appropriate for proof of concept work
 
 Using the CycleCloud cluster properties the TRE Administrator can choose which virtual network the cluster will be deployed into, and hence the workspace the cluster can be accessed from.
 
-At present there is no self service cluster creation for research teams, and as such costs are not attributed to individual workspace however this could be added in the future, and is tracked in this issue <https://github.com/microsoft/AzureTRE/issues/2230>. 
+At present there is no self service cluster creation for research teams, and as such costs are not attributed to individual workspace however this could be added in the future, and is tracked in this issue <https://github.com/microsoft/AzureTRE/issues/2230>.
 
 
 ## Deployment and Configuration
