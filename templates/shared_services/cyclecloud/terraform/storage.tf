@@ -4,6 +4,7 @@ resource "azurerm_storage_account" "cyclecloud" {
   resource_group_name      = data.azurerm_resource_group.rg.name
   account_tier             = "Standard"
   account_replication_type = "GRS"
+  tags                     = local.tre_shared_service_tags
 }
 
 data "azurerm_private_dns_zone" "blobcore" {
@@ -15,7 +16,8 @@ resource "azurerm_private_endpoint" "stgblobpe" {
   name                = "pe-${local.storage_name}"
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
-  subnet_id           = data.azurerm_subnet.services.id
+  subnet_id           = data.azurerm_subnet.shared.id
+  tags                = local.tre_shared_service_tags
 
   lifecycle { ignore_changes = [tags] }
 
@@ -26,7 +28,7 @@ resource "azurerm_private_endpoint" "stgblobpe" {
 
   private_service_connection {
     name                           = "pesc-${local.storage_name}"
-    private_connection_resource_id = azurerm_storage_account.aml.id
+    private_connection_resource_id = azurerm_storage_account.cyclecloud.id
     is_manual_connection           = false
     subresource_names              = ["Blob"]
   }
