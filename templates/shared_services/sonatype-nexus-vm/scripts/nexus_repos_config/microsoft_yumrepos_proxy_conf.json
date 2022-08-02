@@ -1,5 +1,5 @@
 {
-    "name": "pypi",
+    "name": "microsoft-yumrepos",
     "online": true,
     "storage": {
         "blobStoreName": "default",
@@ -7,7 +7,7 @@
         "write_policy": "ALLOW"
     },
     "proxy": {
-        "remoteUrl": "https://pypi.org",
+        "remoteUrl": "https://packages.microsoft.com/yumrepos",
         "contentMaxAge": 1440,
         "metadataMaxAge": 1440
     },
@@ -27,6 +27,6 @@
             "useTrustStore": false
         }
     },
-    "baseType": "pypi",
+    "baseType": "yum",
     "repoType": "proxy"
 }
