@@ -7,7 +7,8 @@ from azure.identity import DefaultAzureCredential
 from azure.mgmt.storage import StorageManagementClient
 from azure.storage.blob import ContainerSasPermissions, generate_container_sas, BlobServiceClient
 
-from exceptions.AirlockInvalidContainerException import AirlockInvalidContainerException
+from exceptions.TooManyFilesInRequestException import TooManyFilesInRequestException
+from exceptions.NoFilesInRequestException import NoFilesInRequestException
 
 
 class StorageConnectionMetadata:
@@ -90,12 +91,14 @@ def copy_data(source_account_name: str, source_account_key: str, sa_source_conne
             if found_blobs > 0:
                 msg = "Request with id {} contains more than 1 file. flow aborted.".format(request_id)
                 logging.error(msg)
-                raise AirlockInvalidContainerException(msg)
+                raise TooManyFilesInRequestException(msg)
             blob_name = blob.name
             found_blobs += 1
 
         if found_blobs == 0:
-            logging.info('Request with id %s did not contain any files. flow aborted.', request_id)
+            msg = "Request with id {} did not contain any files. flow aborted.".format(request_id)
+            logging.error(msg)
+            raise NoFilesInRequestException(msg)
 
     except Exception:
         logging.error('Request with id %s failed.', request_id)

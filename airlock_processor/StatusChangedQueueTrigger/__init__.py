@@ -7,6 +7,8 @@ import uuid
 import json
 
 from azure.mgmt.storage import StorageManagementClient
+from exceptions.NoFilesInRequestException import NoFilesInRequestException
+from exceptions.TooManyFilesInRequestException import TooManyFilesInRequestException
 
 from shared_code import blob_operations, constants
 from pydantic import BaseModel, parse_obj_as
@@ -41,16 +43,13 @@ def main(msg: func.ServiceBusMessage, outputEvent: func.Out[func.EventGridOutput
     try:
         request_properties = extract_properties(msg)
         handle_status_changed(request_properties)
+
+    except NoFilesInRequestException:
+        report_failure(outputEvent, request_properties, failed_reason="Request did not contain any files.")
+    except TooManyFilesInRequestException:
+        report_failure(outputEvent, request_properties, failed_reason="Request contained more than 1 file.")
     except Exception:
-        logging.exception(f"Failed processing Airlock request with ID: '{request_properties.request_id}', changing request status to '{constants.STAGE_FAILED}'.")
-        outputEvent.set(
-            func.EventGridOutputEvent(
-                id=str(uuid.uuid4()),
-                data={"completed_step": request_properties.status, "new_status": constants.STAGE_FAILED, "request_id": request_properties.request_id},
-                subject=request_properties.request_id,
-                event_type="Airlock.StepResult",
-                event_time=datetime.datetime.utcnow(),
-                data_version="1.0"))
+        report_failure(outputEvent, request_properties, failed_reason="Unknown reason.")
 
 
 def handle_status_changed(request_properties: RequestProperties):
@@ -192,3 +191,15 @@ def get_source_dest_env_vars(new_status: str, request_type: str, short_workspace
                                   sa_dest.connection_string,
                                   sa_dest.account_name,
                                   dest_account_rg)
+
+
+def report_failure(outputEvent, request_properties, failed_reason):
+    logging.exception(f"Failed processing Airlock request with ID: '{request_properties.request_id}', changing request status to '{constants.STAGE_FAILED}'.")
+    outputEvent.set(
+        func.EventGridOutputEvent(
+            id=str(uuid.uuid4()),
+            data={"completed_step": request_properties.status, "new_status": constants.STAGE_FAILED, "request_id": request_properties.request_id, "error_message": failed_reason},
+            subject=request_properties.request_id,
+            event_type="Airlock.StepResult",
+            event_time=datetime.datetime.utcnow(),
+            data_version="1.0"))
