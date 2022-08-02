@@ -9,6 +9,7 @@ Access to workspaces is also controlled using app registrations - one per worksp
 | ------------ | ----------- | -------------------- | ----- |
 | Workspace Owner | Provides workspace owners access to the Workspace. | Users/Groups,Applications | `WorkspaceOwner` |
 | Workspace Researcher | Provides researchers access to the Workspace. | Users/Groups,Applications | `WorkspaceResearcher` |
+| Airlock Manager | Provides airlock managers access to the Workspace and ability to review airlock requests. | Users/Groups,Applications | `AirlockManager` |
 
 ## Microsoft Graph Permissions
 | Name | Type* | Admin consent required |  TRE usage |
