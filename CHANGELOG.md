@@ -14,6 +14,7 @@ FEATURES:
 ENHANCEMENTS:
 
 * Guacamole logs are sent to Application Insights ([#2376](https://github.com/microsoft/AzureTRE/pull/2376))
+* `make tre-start / stop` run in parallel which saves ~5 minutes ([#2394](https://github.com/microsoft/AzureTRE/pull/2394))
 
 BUG FIXES:
 
