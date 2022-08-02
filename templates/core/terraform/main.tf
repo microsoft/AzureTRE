@@ -102,7 +102,6 @@ module "airlock_resources" {
   resource_group_name                   = azurerm_resource_group.core.name
   airlock_storage_subnet_id             = module.network.airlock_storage_subnet_id
   airlock_events_subnet_id              = module.network.airlock_events_subnet_id
-  enable_local_debugging                = var.enable_local_debugging
   docker_registry_server                = var.docker_registry_server
   mgmt_resource_group_name              = var.mgmt_resource_group_name
   mgmt_acr_name                         = var.acr_name
@@ -115,6 +114,9 @@ module "airlock_resources" {
   enable_malware_scanning               = var.enable_airlock_malware_scanning
   tre_core_tags                         = local.tre_core_tags
   log_analytics_workspace_id            = module.azure_monitor.log_analytics_workspace_id
+
+  enable_local_debugging = var.enable_local_debugging
+  myip                   = local.myip
 
   depends_on = [
     azurerm_servicebus_namespace.sb,
