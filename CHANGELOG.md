@@ -14,6 +14,7 @@ FEATURES:
 ENHANCEMENTS:
 
 * Guacamole logs are sent to Application Insights ([#2376](https://github.com/microsoft/AzureTRE/pull/2376))
+* Airlock requests that fail move to status "Failed" ([#2268](https://github.com/microsoft/AzureTRE/pull/2395))
 
 BUG FIXES:
 
