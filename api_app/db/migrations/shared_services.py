@@ -36,6 +36,7 @@ class SharedServiceMigration(SharedServiceRepository):
         template_version = semantic_version.Version(resource[0]["templateVersion"])
 
         if (template_version < min_template_version):
-            raise ValueError(f"{template_name} deployed version ({template_version}) is below minimum ({min_template_version})! Check the docs and upgrade.")
+            raise ValueError(f"{template_name} deployed version ({template_version}) is below minimum ({min_template_version})!",
+                             " Go to https://github.com/microsoft/AzureTRE/blob/main/CHANGELOG.md#050 for more info.")
 
         return True
