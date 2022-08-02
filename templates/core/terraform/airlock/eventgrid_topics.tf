@@ -20,6 +20,11 @@ resource "azurerm_eventgrid_topic" "step_result" {
     Publishers = "Airlock Processor;"
   })
 
+  inbound_ip_rule = var.enable_local_debugging ? [{
+    ip_mask = "${var.myip}"
+    action  = "Allow"
+  }] : null
+
   lifecycle { ignore_changes = [tags] }
 }
 
@@ -68,6 +73,11 @@ resource "azurerm_eventgrid_topic" "status_changed" {
   tags = merge(var.tre_core_tags, {
     Publishers = "TRE API;"
   })
+
+  inbound_ip_rule = var.enable_local_debugging ? [{
+    ip_mask = "${var.myip}"
+    action  = "Allow"
+  }] : null
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -253,6 +263,11 @@ resource "azurerm_eventgrid_topic" "scan_result" {
     Publishers = "airlock;custom scanning service;"
   })
 
+  inbound_ip_rule = var.enable_local_debugging ? [{
+    ip_mask = "${var.myip}"
+    action  = "Allow"
+  }] : null
+
   lifecycle { ignore_changes = [tags] }
 }
 
@@ -301,6 +316,11 @@ resource "azurerm_eventgrid_topic" "airlock_notification" {
   tags = merge(var.tre_core_tags, {
     Publishers = "airlock;custom notification service;"
   })
+
+  inbound_ip_rule = var.enable_local_debugging ? [{
+    ip_mask = "${var.myip}"
+    action  = "Allow"
+  }] : null
 
   lifecycle { ignore_changes = [tags] }
 }
