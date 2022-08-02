@@ -1,0 +1,2 @@
+class TooManyFilesInRequestException(Exception):
+    pass
