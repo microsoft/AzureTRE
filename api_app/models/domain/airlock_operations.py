@@ -1,5 +1,6 @@
 from pydantic import Field
 from pydantic.types import UUID4
+from pydantic.schema import Optional
 from models.domain.azuretremodel import AzureTREModel
 
 
@@ -7,6 +8,7 @@ class EventGridMessageData(AzureTREModel):
     completed_step: str = Field(title="", description="")
     new_status: str = Field(title="", description="")
     request_id: str = Field(title="", description="")
+    error_message: Optional[str] = Field(title="", description="")
 
 
 class StepResultStatusUpdateMessage(AzureTREModel):

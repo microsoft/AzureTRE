@@ -84,11 +84,13 @@ class AirlockRequestRepository(AirlockResourceRepository):
             raise EntityDoesNotExist
         return parse_obj_as(AirlockRequest, airlock_requests)
 
-    def update_airlock_request_status(self, airlock_request: AirlockRequest, new_status: AirlockRequestStatus, user: User) -> AirlockRequest:
+    def update_airlock_request_status(self, airlock_request: AirlockRequest, new_status: AirlockRequestStatus, user: User, error_message: str = None) -> AirlockRequest:
         current_status = airlock_request.status
         if self._validate_status_update(current_status, new_status):
             updated_request = copy.deepcopy(airlock_request)
             updated_request.status = new_status
+            if new_status == AirlockRequestStatus.Failed:
+                updated_request.errorMessage = error_message
             return self.update_airlock_resource_item(airlock_request, updated_request, user, {"previousStatus": current_status})
         else:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE)
