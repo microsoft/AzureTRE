@@ -25,3 +25,17 @@ class SharedServiceMigration(SharedServiceRepository):
                     migrated = True
 
         return migrated
+
+    def checkMinFirewallVersion(self) -> bool:
+        template_name = 'tre-shared-service-firewall'
+        min_template_version = semantic_version.Version('0.4.0')
+
+        resource = self.query(query=f'SELECT * FROM c WHERE c.resourceType = "shared-service" \
+                                      AND c.templateName = "{template_name}" AND {IS_OPERATING_SHARED_SERVICE}')
+
+        template_version = semantic_version.Version(resource[0]["templateVersion"])
+
+        if (template_version < min_template_version):
+            raise ValueError(f"{template_name} deployed version ({template_version}) is below minimum ({min_template_version})! Check the docs and upgrade.")
+
+        return True
