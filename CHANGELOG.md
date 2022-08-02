@@ -18,6 +18,8 @@ ENHANCEMENTS:
 BUG FIXES:
 
 * Azure monitor resourced provided by Terraform and don't allow ingestion over internet ([#2375](https://github.com/microsoft/AzureTRE/pull/2375)).
+* Enable route table on the Airlock Processor subnet (TBD)
+
 
 ## 0.4.1 (August 03, 2022)
 
