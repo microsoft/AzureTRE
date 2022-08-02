@@ -7,6 +7,7 @@ class WorkspaceRole(Enum):
     NoRole = 0
     Researcher = 1
     Owner = 2
+    AirlockManager = 3
 
 
 class Workspace(Resource):

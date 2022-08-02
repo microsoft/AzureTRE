@@ -122,6 +122,7 @@ source "${DIR}/update_resource_access.sh"
 # Default of new UUIDs
 researcherRoleId=$(cat /proc/sys/kernel/random/uuid)
 ownerRoleId=$(cat /proc/sys/kernel/random/uuid)
+airlockManagerRoleId=$(cat /proc/sys/kernel/random/uuid)
 userImpersonationScopeId=$(cat /proc/sys/kernel/random/uuid)
 appObjectId=""
 
@@ -132,9 +133,11 @@ if [ -n "${existingApp}" ]; then
 
     researcherRoleId=$(echo "$existingApp" | jq -r '.appRoles[] | select(.value == "WorkspaceResearcher").id')
     ownerRoleId=$(echo "$existingApp" | jq -r '.appRoles[] | select(.value == "WorkspaceOwner").id')
+    airlockManagerRoleId=$(echo "$existingApp" | jq -r '.appRoles[] | select(.value == "AirlockManager").id')
     userImpersonationScopeId=$(echo "$existingApp" | jq -r '.api.oauth2PermissionScopes[] | select(.value == "user_impersonation").id')
     if [[ -z "${researcherRoleId}" ]]; then researcherRoleId=$(cat /proc/sys/kernel/random/uuid); fi
     if [[ -z "${ownerRoleId}" ]]; then ownerRoleId=$(cat /proc/sys/kernel/random/uuid); fi
+    if [[ -z "${airlockManagerRoleId}" ]]; then airlockManagerRoleId=$(cat /proc/sys/kernel/random/uuid); fi
     if [[ -z "${userImpersonationScopeId}" ]]; then userImpersonationScopeId=$(cat /proc/sys/kernel/random/uuid); fi
 fi
 
@@ -181,6 +184,15 @@ appDefinition=$(jq -c . << JSON
         "isEnabled": true,
         "origin": "Application",
         "value": "WorkspaceResearcher"
+    },
+    {
+        "id": "${airlockManagerRoleId}",
+        "allowedMemberTypes": [ "User", "Application" ],
+        "description": "Provides airlock managers access to the Workspace and ability to review airlock requests",
+        "displayName": "Airlock Manager",
+        "isEnabled": true,
+        "origin": "Application",
+        "value": "AirlockManager"
     }],
     "signInAudience": "AzureADMyOrg",
     "requiredResourceAccess": [
@@ -311,8 +323,12 @@ if [[ -n ${automationClientId} ]]; then
                 "id": "${ownerRoleId}",
                 "type": "Role"
             },
-             {
+            {
                 "id": "${researcherRoleId}",
+                "type": "Role"
+            },
+            {
+                "id": "${airlockManagerRoleId}",
                 "type": "Role"
             }
         ],
@@ -333,6 +349,7 @@ JSON
       echo "Found Service Principal \"$automationSpId\" for \"${automationAppName}\"."
 
       grant_admin_consent "${automationSpId}" "${workspaceSpId}" "${ownerRoleId}"
+      grant_admin_consent "${automationSpId}" "${workspaceSpId}" "${airlockManagerRoleId}"
       grant_admin_consent "${automationSpId}" "${workspaceSpId}" "${researcherRoleId}"
       az ad app permission grant --id "$automationSpId" --api "$workspaceAppId" --scope "user_impersonation" --only-show-errors
   fi
