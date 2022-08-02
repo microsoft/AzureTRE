@@ -23,14 +23,14 @@ echo "Waiting for network rule to take effect"
 sleep 30s
 echo "Created network rule on storage account"
 
-echo "Uploading ${DIR} to static web storage"
+echo "Uploading ${CONTENT_DIR} to static web storage"
 
 # shellcheck disable=SC2016
 az storage blob upload-batch \
     --account-name "${STORAGE_ACCOUNT}" \
     --auth-mode login \
     --destination '$web' \
-    --source "${DIR}" \
+    --source "${CONTENT_DIR}" \
     --no-progress \
     --only-show-errors \
     --overwrite
