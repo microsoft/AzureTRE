@@ -12,27 +12,20 @@ from exceptions.AirlockInvalidContainerException import AirlockInvalidContainerE
 def create_container(account_name: str, request_id: str):
     try:
         container_name = request_id
-        blob_service_client = BlobServiceClient(account_url=f"https://{account_name}.blob.core.windows.net/",
-                                                credential=get_azure_credentials())
+        blob_service_client = BlobServiceClient(account_url=get_account_url(account_name),
+                                                credential=get_credential())
         blob_service_client.create_container(container_name)
         logging.info(f'Container created for request id: {request_id}.')
     except ResourceExistsError:
         logging.info(f'Did not create a new container. Container already exists for request id: {request_id}.')
 
 
-def get_azure_credentials() -> DefaultAzureCredential:
-    managed_identity = os.environ.get("MANAGED_IDENTITY_CLIENT_ID")
-    if managed_identity:
-        logging.info("using the Airlock processor's managed identity to get storage management client")
-    return DefaultAzureCredential(managed_identity_client_id=os.environ["MANAGED_IDENTITY_CLIENT_ID"],
-                                  exclude_shared_token_cache_credential=True) if managed_identity else DefaultAzureCredential()
-
-
 def copy_data(source_account_name: str, destination_account_name: str, request_id: str):
+    credential = get_credential()
     container_name = request_id
 
-    source_blob_service_client = BlobServiceClient(account_url=f"https://{source_account_name}.blob.core.windows.net/",
-                                                   credential=get_azure_credentials())
+    source_blob_service_client = BlobServiceClient(account_url=get_account_url(source_account_name),
+                                                   credential=credential)
     source_container_client = source_blob_service_client.get_container_client(container_name)
 
     try:
@@ -68,8 +61,8 @@ def copy_data(source_account_name: str, destination_account_name: str, request_i
     source_url = f'{source_blob.url}?{sas_token}'
 
     # Copy files
-    dest_blob_service_client = BlobServiceClient(f"https://{destination_account_name}.blob.core.windows.net/",
-                                                 credential=get_azure_credentials())
+    dest_blob_service_client = BlobServiceClient(account_url=get_account_url(destination_account_name),
+                                                 credential=credential)
     copied_blob = dest_blob_service_client.get_blob_client(container_name, source_blob.blob_name)
     copy = copied_blob.start_copy_from_url(source_url)
 
@@ -78,3 +71,15 @@ def copy_data(source_account_name: str, destination_account_name: str, request_i
                      copy["copy_status"])
     except KeyError as e:
         logging.error(f"Failed getting operation id and status {e}")
+
+
+def get_credential() -> DefaultAzureCredential:
+    managed_identity = os.environ.get("MANAGED_IDENTITY_CLIENT_ID")
+    if managed_identity:
+        logging.info("using the Airlock processor's managed identity to get storage management client")
+    return DefaultAzureCredential(managed_identity_client_id=os.environ["MANAGED_IDENTITY_CLIENT_ID"],
+                                  exclude_shared_token_cache_credential=True) if managed_identity else DefaultAzureCredential()
+
+
+def get_account_url(account_name: str) -> str:
+    return f"https://{account_name}.blob.core.windows.net/"
