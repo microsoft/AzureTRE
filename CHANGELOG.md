@@ -17,7 +17,7 @@ ENHANCEMENTS:
 
 BUG FIXES:
 
-*
+* Airlock processor creates SAS tokens with _user delegated key_ ([#2382](https://github.com/microsoft/AzureTRE/pull/2376))
 
 ## 0.4.0 (July 27, 2022)
 
