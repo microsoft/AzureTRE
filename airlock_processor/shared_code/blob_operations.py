@@ -99,7 +99,7 @@ def copy_data(source_account_name: str, source_account_key: str, sa_source_conne
 
     except Exception:
         logging.error('Request with id %s failed.', request_id)
-        raise ()
+        raise
 
     source_blob = source_container_client.get_blob_client(blob_name)
 
