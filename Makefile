@@ -344,7 +344,7 @@ setup-local-debugging:
 auth:
 	$(call target_title,"Setting up Azure Active Directory") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
-	&& . ${MAKEFILE_DIR}/devops/scripts/create_aad_assets.sh
+	&& ${MAKEFILE_DIR}/devops/scripts/create_aad_assets.sh
 
 show-core-output:
 	$(call target_title,"Display TRE core output") \
