@@ -4,6 +4,24 @@
 
 **BREAKING CHANGES & MIGRATIONS**:
 
+*
+
+FEATURES:
+
+*
+
+ENHANCEMENTS:
+
+*
+
+BUG FIXES:
+
+*
+
+## 0.4.1 (August 03, 2022)
+
+**BREAKING CHANGES & MIGRATIONS**:
+
 * Guacamole workspace service configures firewall requirements with deployment pipeline ([#2371](https://github.com/microsoft/AzureTRE/pull/2371)). **Migration** is manual - update the templateVersion of `tre-shared-service-firewall` in Cosmos to `0.4.0` in order to use this capability.
 * Workspace now has an AirlockManager role that has the permissions to review airlock requests ([#2349](https://github.com/microsoft/AzureTRE/pull/2349)).
 * API identity is only assigned Virtual Machine Contributor on the workspace level ([#2398](https://github.com/microsoft/AzureTRE/pull/2398)). Review the PR for migration steps.
@@ -19,7 +37,8 @@ ENHANCEMENTS:
 
 BUG FIXES:
 
-* Airlock processor creates SAS tokens with _user delegated key_ ([#2382](https://github.com/microsoft/AzureTRE/pull/2376))
+* Airlock processor creates SAS tokens with _user delegated key_ ([#2382](https://github.com/microsoft/AzureTRE/pull/2382))
+* Script updates to work with deployment repo structure ([#2385](https://github.com/microsoft/AzureTRE/pull/2385))
 
 ## 0.4.0 (July 27, 2022)
 
