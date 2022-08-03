@@ -66,7 +66,8 @@ def sample_airlock_request(status=AirlockRequestStatus.Submitted):
         requestType=AirlockRequestType.Import,
         files=[],
         businessJustification="some test reason",
-        status=status
+        status=status,
+        errorMessage=None
     )
     return airlock_request
 
