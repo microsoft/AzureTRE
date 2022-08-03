@@ -4,19 +4,19 @@
 
 **BREAKING CHANGES & MIGRATIONS**:
 
-* 
+*
 
 FEATURES:
 
-* 
+*
 
 ENHANCEMENTS:
 
-* 
+*
 
 BUG FIXES:
 
-* 
+*
 
 ## 0.4.1 (August 03, 2022)
 
@@ -27,7 +27,7 @@ BUG FIXES:
 
 FEATURES:
 
-* 
+*
 
 ENHANCEMENTS:
 
