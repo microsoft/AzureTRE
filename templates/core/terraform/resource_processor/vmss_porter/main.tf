@@ -55,7 +55,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "vm_linux" {
   name                            = "vmss-rp-porter-${var.tre_id}"
   location                        = var.location
   resource_group_name             = var.resource_group_name
-  sku                             = "Standard_B2s"
+  sku                             = var.resource_processor_vmss_sku
   instances                       = 1
   admin_username                  = "adminuser"
   disable_password_authentication = false
