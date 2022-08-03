@@ -19,6 +19,7 @@ LOGGER = logging.getLogger(__name__)
 async def test_airlock_import_flow(admin_token, verify) -> None:
 
     # 1. create workspace
+    LOGGER.info("Creating workspace")
     payload = {
         "templateName": "tre-workspace-base",
         "properties": {
@@ -37,6 +38,7 @@ async def test_airlock_import_flow(admin_token, verify) -> None:
     workspace_owner_token, scope_uri = await get_workspace_auth_details(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
 
     # 2. create airlock request
+    LOGGER.info("Creating airlock request")
     payload = {
         "requestType": airlock_strings.IMPORT,
         "businessJustification": "some business justification"
@@ -51,6 +53,7 @@ async def test_airlock_import_flow(admin_token, verify) -> None:
     request_id = request_result["airlockRequest"]["id"]
 
     # 3. get container link
+    LOGGER.info("Getting airlock request container URL")
     request_result = await get_request(f'/api{workspace_path}/requests/{request_id}/link', workspace_owner_token, verify, 200)
     containerUrl = request_result["containerUrl"]
 
@@ -77,12 +80,14 @@ async def test_airlock_import_flow(admin_token, verify) -> None:
             blob_uploaded = True
 
     # 5. submit request
+    LOGGER.info("Submitting airlock request")
     request_result = await post_request(None, f'/api{workspace_path}/requests/{request_id}/submit', workspace_owner_token, verify, 200)
     assert request_result["airlockRequest"]["status"] == airlock_strings.SUBMITTED_STATUS
 
     await wait_for_status(airlock_strings.IN_REVIEW_STATUS, workspace_owner_token, workspace_path, request_id, verify)
 
     # 6. approve request
+    LOGGER.info("Approving airlock request")
     payload = {
         "approval": "True",
         "decisionExplanation": "the reason why this request was approved/rejected"
@@ -93,4 +98,5 @@ async def test_airlock_import_flow(admin_token, verify) -> None:
     await wait_for_status(airlock_strings.APPROVED_STATUS, workspace_owner_token, workspace_path, request_id, verify)
 
     # 7. delete workspace
+    LOGGER.info("Deleting workspace")
     await disable_and_delete_resource(f'/api{workspace_path}', admin_token, verify)
