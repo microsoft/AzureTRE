@@ -120,4 +120,4 @@ spPassword=$(create_or_update_service_principal "${appId}" "${resetPassword}")
 {
   echo "TEST_ACCOUNT_CLIENT_ID=\"${appId}\""
   echo "TEST_ACCOUNT_CLIENT_SECRET=\"${spPassword}\""
-} >> "$DIR"/../../auth.env
+} >> "devops/auth.env"
