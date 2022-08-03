@@ -41,4 +41,18 @@ locals {
 
   airlock_function_app_name = "func-airlock-processor-${var.tre_id}"
   airlock_function_sa_name  = "saairlockp${var.tre_id}"
+
+  airlock_sa_blob_data_contributor = [
+    azurerm_storage_account.sa_import_external.id,
+    azurerm_storage_account.sa_import_in_progress.id,
+    azurerm_storage_account.sa_import_rejected.id,
+    azurerm_storage_account.sa_export_approved.id,
+    azurerm_storage_account.sa_import_blocked.id
+  ]
+
+  api_sa_reader_data_access = [
+    azurerm_storage_account.sa_import_external.id,
+    azurerm_storage_account.sa_import_in_progress.id,
+    azurerm_storage_account.sa_export_approved.id
+  ]
 }

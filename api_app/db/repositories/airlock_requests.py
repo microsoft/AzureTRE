@@ -1,5 +1,7 @@
 import copy
 import uuid
+
+from typing import List
 from pydantic import UUID4
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from azure.cosmos import CosmosClient
@@ -17,6 +19,10 @@ from resources import strings
 class AirlockRequestRepository(AirlockResourceRepository):
     def __init__(self, client: CosmosClient):
         super().__init__(client)
+
+    @staticmethod
+    def airlock_requests_query():
+        return 'SELECT * FROM c WHERE c.resourceType = "airlock-request"'
 
     def _validate_status_update(self, current_status: AirlockRequestStatus, new_status: AirlockRequestStatus):
         # Cannot change status from approved
@@ -58,6 +64,11 @@ class AirlockRequestRepository(AirlockResourceRepository):
         )
 
         return airlock_request
+
+    def get_airlock_requests_by_workspace_id(self, workspace_id: str) -> List[AirlockRequest]:
+        query = self.airlock_requests_query() + f' AND c.workspaceId = "{workspace_id}"'
+        airlock_requests = self.query(query=query)
+        return parse_obj_as(List[AirlockRequest], airlock_requests)
 
     def get_airlock_request_by_id(self, airlock_request_id: UUID4) -> AirlockRequest:
         try:

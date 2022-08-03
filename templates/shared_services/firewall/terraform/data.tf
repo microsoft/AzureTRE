@@ -26,13 +26,6 @@ data "azurerm_subnet" "web_app" {
   resource_group_name = local.core_resource_group_name
 }
 
-data "azurerm_subnet" "airlock_processor" {
-  name                 = "AirlockProcessorSubnet"
-  virtual_network_name = "vnet-${var.tre_id}"
-
-  resource_group_name = local.core_resource_group_name
-}
-
 data "azurerm_subnet" "airlock_storage" {
   name                 = "AirlockStorageSubnet"
   virtual_network_name = "vnet-${var.tre_id}"

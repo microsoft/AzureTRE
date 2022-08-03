@@ -73,6 +73,7 @@ nav:
       - Shared Services:
           - Gitea (Source Mirror): "tre-templates/shared-services/gitea.md"
           - Nexus (Package Mirror): "tre-templates/shared-services/nexus.md"
+          - Azure CycleCloud (HPC Compute): "tre-templates/shared-services/cyclecloud.md"
       - User Resources:
           - Guacamole Windows VM: "tre-templates/user-resources/guacamole-windows-vm.md"
           - Guacamole Linux VM: "tre-templates/user-resources/guacamole-linux-vm.md"

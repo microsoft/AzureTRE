@@ -36,7 +36,13 @@ get_current_workspace_owner_user = AzureADAuthorization(require_one_of_roles=['W
 get_current_workspace_researcher_user = AzureADAuthorization(require_one_of_roles=['WorkspaceResearcher'])
 
 
+get_current_airlock_manager_user = AzureADAuthorization(require_one_of_roles=['AirlockManager'])
+
+
 get_current_workspace_owner_or_researcher_user = AzureADAuthorization(require_one_of_roles=['WorkspaceOwner', 'WorkspaceResearcher'])
+
+
+get_current_workspace_owner_or_researcher_user_or_airlock_manager = AzureADAuthorization(require_one_of_roles=['WorkspaceOwner', 'WorkspaceResearcher', 'AirlockManager'])
 
 
 get_current_workspace_owner_or_researcher_user_or_tre_admin = AzureADAuthorization(require_one_of_roles=["TREAdmin", "WorkspaceOwner", "WorkspaceResearcher"])

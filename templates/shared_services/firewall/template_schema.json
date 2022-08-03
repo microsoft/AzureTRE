@@ -165,6 +165,180 @@
 					}
 				}
 			}
+    },
+    "network_rule_collections": {
+			"$id": "#properties/network_rule_collections",
+			"title": "network_rule_collections",
+			"type": "array",
+			"default": [],
+      "updateable": true,
+			"items":{
+				"title": "items",
+				"type": "object",
+				"required": [
+					"name",
+					"action",
+					"rules"
+				],
+				"properties": {
+					"name": {
+						"title": "name",
+						"type": "string",
+						"examples": [
+							"my-rule"
+						],
+						"pattern": "^.*$"
+					},
+					"priority": {
+						"title": "priority",
+						"type": "integer",
+            "description": "Numeric priority for rule collection - leave blank for auto numbering",
+						"examples": [
+							110
+						]
+					},
+					"action": {
+						"title": "action",
+						"type": "string",
+						"examples": [
+							"Allow"
+						],
+            "enum": [
+              "Allow",
+              "Deny"
+            ]
+          },
+					"rules": {
+						"title": "rules",
+						"type": "array",
+						"default": [],
+						"items":{
+							"title": "Items",
+							"type": "object",
+							"required": [
+								"name"
+							],
+							"properties": {
+								"name": {
+									"title": "name",
+									"type": "string",
+									"examples": [
+										"rule 1"
+									],
+									"pattern": "^.{5,80}$"
+								},
+								"description": {
+									"title": "description",
+									"type": "string",
+									"default": "",
+									"examples": [
+										"My rule description here"
+									],
+									"pattern": "^.*$"
+								},
+								"source_addresses": {
+									"title": "Source_addresses",
+									"type": "array",
+									"default": [],
+									"items":{
+										"title": "Items",
+										"type": "string",
+										"default": "",
+										"examples": [
+											"172.196.0.0"
+										]
+									}
+								},
+                "source_ip_groups": {
+									"title": "Source_ip_groups",
+									"type": "array",
+									"default": [],
+									"items":{
+										"title": "Items",
+										"type": "string",
+										"default": "",
+										"examples": [
+											"some_ip_group_name"
+										]
+									}
+								},
+								"destination_addresses": {
+									"title": "Destination_addresses",
+									"type": "array",
+									"default": [],
+									"items":{
+										"title": "Items",
+										"type": "string",
+										"default": "",
+										"examples": [
+											"172.196.0.0"
+										]
+									}
+								},
+                "destination_ip_groups": {
+									"title": "Destination_ip_groups",
+									"type": "array",
+									"default": [],
+									"items":{
+										"title": "Items",
+										"type": "string",
+										"default": "",
+										"examples": [
+											"some_ip_group_name"
+										]
+									}
+								},
+                "destination_fqdns": {
+									"title": "Destination_fqdns",
+									"type": "array",
+									"default": [],
+									"items":{
+										"title": "Items",
+										"type": "string",
+										"default": "",
+										"examples": [
+											"one.two.three.com"
+										]
+									}
+								},
+                "destination_ports": {
+									"title": "Destination_ports",
+									"type": "array",
+									"default": [],
+									"items":{
+										"title": "Items",
+										"type": "string",
+										"default": "",
+										"examples": [
+											"80",
+                      "443",
+                      "*"
+										]
+									}
+								},
+								"protocols": {
+									"title": "protocols",
+									"type": "array",
+									"default": [],
+									"items":{
+										"title": "Items",
+										"type": "string",
+                    "enum": [
+                      "Any",
+                      "ICMP",
+                      "TCP",
+                      "UDP"
+                    ],
+										"examples": [
+											"TCP"
+										]
+									}
+								}
+							}
+						}
+					}
+				}
+			}
     }
   }
 }

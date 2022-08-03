@@ -107,6 +107,12 @@
       }
     },
     {
+      "name": "app_role_id_workspace_airlock_manager",
+      "source": {
+        "env": "APP_ROLE_ID_WORKSPACE_AIRLOCK_MANAGER"
+      }
+    },
+    {
       "name": "aad_redirect_uris",
       "source": {
         "env": "AAD_REDIRECT_URIS"
