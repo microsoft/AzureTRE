@@ -50,7 +50,7 @@ async def get_request(endpoint, access_token, verify, assert_status):
         return response.json()
 
 
-async def upload_blob_using_sas(file_path: str, sas_url: str, assert_status):
+async def upload_blob_using_sas(file_path: str, sas_url: str):
     async with AsyncClient(timeout=30.0) as client:
         parsed_sas_url = urlparse(sas_url)
         # Remove first / from path
@@ -80,7 +80,6 @@ async def upload_blob_using_sas(file_path: str, sas_url: str, assert_status):
                 headers=headers
             )
             LOGGER.info(f"response code: {response.status_code}")
-            assert response.status_code == assert_status
             return response
 
 
