@@ -21,10 +21,21 @@ You can build all of the Identity assets by running the following at the command
 ```bash
 make auth
 ```
-Follow the instructions and prompts in the script. This script will require manual confirmations at various stages, and cannot be run unattended. This will create the five identities outlined below, and if succesful you will not need to do anything apart from copy credential values into `/templates/core/.env` when told to do so.
+This will create five identities, and if successful will write a new file; `/devops/auth.env`. If you are building locally, these values will be used when building your TRE. If you are setting this up for CI/CD, then these values will be needed by your Build Orchestrator.
 
-!!! note
-    Please note that if you do not copy values to the .env when instructed, the creation process could fail. The details below are for your understanding.
+The contents of your `/devops/auth.env` file should contain : -
+
+  | Variable | Description |
+  | -------- | ----------- |
+  | `APPLICATION_ADMIN_CLIENT_ID`| This client will administer AAD Applications for TRE |
+  | `APPLICATION_ADMIN_CLIENT_SECRET`| This client will administer AAD Applications for TRE |
+  | `TEST_ACCOUNT_CLIENT_ID`| This will be created by default, but can be disabled by editing `/devops/scripts/create_aad_assets.sh`. This is the user that will run the tests for you |
+  | `TEST_ACCOUNT_CLIENT_SECRET` | This will be created by default, but can be disabled by editing `/devops/scripts/create_aad_assets.sh`. This is the user that will run the tests for you |
+  | `API_CLIENT_ID` | API application (client) ID. |
+  | `API_CLIENT_SECRET` | API application client secret. |
+  | `SWAGGER_UI_CLIENT_ID` | Swagger (OpenAPI) UI application (client) ID. |
+  | `WORKSPACE_API_CLIENT_ID` | Each workspace is secured behind it's own AD Application|
+  | `WORKSPACE_API_CLIENT_SECRET` | Each workspace is secured behind it's own AD Application. This is the secret for that application.|
 
 ### Using a separate Azure Active Directory tenant
 
@@ -46,8 +57,8 @@ App registrations (represented by service principals) define the various access 
 
 | AAD Application | Description |
 | ----------- | ----------- |
-| TRE API application | This is the main application and used to auhtorize access to the [TRE API](../tre-developers/api.md). |
-| TRE Swagger UI | This is used to authenticate identities who wish to use the Swagger UI or other clients. |
+| TRE API application | This is the main application and used to secure access to the [TRE API](../tre-developers/api.md). |
+| TRE UX | This is the client application that will authenticate to the TRE/Workspace APIs. |
 | Application Admin | There are times when workspace services need to update the AAD Application. For example, Guacamole needs to add a redirect URI to the Workspace AAD Application. This identity is used to manage AAD Applications.
 | Automation App | This application is created so that you can run the tests or any CI/CD capability without the need to divulge a user password. This is particularly important if your tenant is MFA enabled. |
 | Workspace API | Typically you would have an application securing one or more workspaces that are created by TRE. |

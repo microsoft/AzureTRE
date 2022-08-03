@@ -43,6 +43,7 @@ def test_extract_workspace__returns_sp_id_and_roles(get_app_sp_graph_data_mock):
                 'appRoles': [
                     {'id': '1abc3', 'value': 'WorkspaceResearcher'},
                     {'id': '1abc4', 'value': 'WorkspaceOwner'},
+                    {'id': '1abc5', 'value': 'AirlockManager'},
                 ],
                 'servicePrincipalNames': [
                     "api://tre_ws_1234"
@@ -54,7 +55,8 @@ def test_extract_workspace__returns_sp_id_and_roles(get_app_sp_graph_data_mock):
         "sp_id": "12345",
         "scope_id": "api://tre_ws_1234",
         "app_role_id_workspace_owner": "1abc4",
-        "app_role_id_workspace_researcher": "1abc3"
+        "app_role_id_workspace_researcher": "1abc3",
+        "app_role_id_workspace_airlock_manager": "1abc5",
     }
 
     access_service = AzureADAuthorization()
@@ -68,23 +70,28 @@ def test_extract_workspace__returns_sp_id_and_roles(get_app_sp_graph_data_mock):
                              # user not a member of the workspace app
                              (User(roleAssignments=[RoleAssignment(resource_id="ab123", role_id="ab124")], id='123', name="test", email="t@t.com"),
                               Workspace(id='abc', etag="", templateName='template-name', templateVersion='0.1.0', resourcePath="test",
-                                        properties={'client_id': '1234', 'sp_id': 'abc127', 'app_role_id_workspace_owner': 'abc128', 'app_role_id_workspace_researcher': 'abc129'}),
+                                        properties={'client_id': '1234', 'sp_id': 'abc127', 'app_role_id_workspace_owner': 'abc128', 'app_role_id_workspace_researcher': 'abc129', 'app_role_id_workspace_airlock_manager': 'abc130'}),
                               WorkspaceRole.NoRole),
                              # user is member of the workspace app but not in role
                              (User(roleAssignments=[RoleAssignment(resource_id="ab127", role_id="ab124")], id='123', name="test", email="t@t.com"),
                               Workspace(id='abc', etag="", templateName='template-name', templateVersion='0.1.0', resourcePath="test",
-                                        properties={'client_id': '1234', 'sp_id': 'abc127', 'app_role_id_workspace_owner': 'abc128', 'app_role_id_workspace_researcher': 'abc129'}),
+                                        properties={'client_id': '1234', 'sp_id': 'abc127', 'app_role_id_workspace_owner': 'abc128', 'app_role_id_workspace_researcher': 'abc129', 'app_role_id_workspace_airlock_manager': 'abc130'}),
                               WorkspaceRole.NoRole),
                              # user has owner role in workspace
                              (User(roleAssignments=[RoleAssignment(resource_id="abc127", role_id="abc128")], id='123', name="test", email="t@t.com"),
                               Workspace(id='abc', etag="", templateName='template-name', templateVersion='0.1.0', resourcePath="test",
-                                        properties={'client_id': '1234', 'sp_id': 'abc127', 'app_role_id_workspace_owner': 'abc128', 'app_role_id_workspace_researcher': 'abc129'}),
+                                        properties={'client_id': '1234', 'sp_id': 'abc127', 'app_role_id_workspace_owner': 'abc128', 'app_role_id_workspace_researcher': 'abc129', 'app_role_id_workspace_airlock_manager': 'abc130'}),
                               WorkspaceRole.Owner),
                              # user has researcher role in workspace
                              (User(roleAssignments=[RoleAssignment(resource_id="abc127", role_id="abc129")], id='123', name="test", email="t@t.com"),
                               Workspace(id='abc', etag="", templateName='template-name', templateVersion='0.1.0', resourcePath="test",
-                                        properties={'client_id': '1234', 'sp_id': 'abc127', 'app_role_id_workspace_owner': 'abc128', 'app_role_id_workspace_researcher': 'abc129'}),
-                              WorkspaceRole.Researcher)
+                                        properties={'client_id': '1234', 'sp_id': 'abc127', 'app_role_id_workspace_owner': 'abc128', 'app_role_id_workspace_researcher': 'abc129', 'app_role_id_workspace_airlock_manager': 'abc130'}),
+                              WorkspaceRole.Researcher),
+                             # user has airlock manager role in workspace
+                             (User(roleAssignments=[RoleAssignment(resource_id="abc127", role_id="abc130")], id='123', name="test", email="t@t.com"),
+                              Workspace(id='abc', etag="", templateName='template-name', templateVersion='0.1.0', resourcePath="test",
+                                        properties={'client_id': '1234', 'sp_id': 'abc127', 'app_role_id_workspace_owner': 'abc128', 'app_role_id_workspace_researcher': 'abc129', 'app_role_id_workspace_airlock_manager': 'abc130'}),
+                              WorkspaceRole.AirlockManager)
                          ])
 @patch("services.aad_authentication.AzureADAuthorization.get_user_role_assignments")
 def test_get_workspace_role_returns_correct_owner(get_user_role_assignments_mock, user: User, workspace: Workspace, expected_role: WorkspaceRole):

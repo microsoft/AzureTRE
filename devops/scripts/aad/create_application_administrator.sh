@@ -156,8 +156,8 @@ if [[ $grantAdminConsent -eq 1 ]]; then
     grant_admin_consent "${spId}" "$msGraphObjectId" "${applicationPermissionId}"
 fi
 
-echo "APPLICATION_ADMIN_CLIENT_ID=\"${appId}\"" > "$DIR"/../../auth.env
-echo "APPLICATION_ADMIN_CLIENT_SECRET=\"${spPassword}\"" >> "$DIR"/../../auth.env
+echo "APPLICATION_ADMIN_CLIENT_ID=\"${appId}\"" > "devops/auth.env"
+echo "APPLICATION_ADMIN_CLIENT_SECRET=\"${spPassword}\"" >> "devops/auth.env"
 
 if [[ $grantAdminConsent -eq 0 ]]; then
     echo "NOTE: Make sure the API permissions of the app registrations have admin consent granted."
