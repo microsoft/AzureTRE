@@ -18,6 +18,7 @@ TRE_ADDRESS_SPACE: str = config("TRE_ADDRESS_SPACE", default="")
 
 # State store configuration
 STATE_STORE_ENDPOINT: str = config("STATE_STORE_ENDPOINT", default="")      # Cosmos DB endpoint
+STATE_STORE_SSL_VERIFY: bool = config("STATE_STORE_SSL_VERIFY", cast=bool, default=True)
 STATE_STORE_KEY: str = config("STATE_STORE_KEY", default="")                # Cosmos DB access key
 COSMOSDB_ACCOUNT_NAME: str = config("COSMOSDB_ACCOUNT_NAME", default="")                # Cosmos DB account name
 STATE_STORE_DATABASE = "AzureTRE"
