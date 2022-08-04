@@ -19,11 +19,11 @@ def connect_to_db() -> CosmosClient:
 
     try:
         primary_master_key = get_store_key()
-        if config.DEBUG:
-            # ignore TLS(setup is pain) when on dev container and connecting to cosmosdb on windows host.
-            cosmos_client = CosmosClient(config.STATE_STORE_ENDPOINT, primary_master_key, connection_verify=False)
-        else:
+        if config.STATE_STORE_SSL_VERIFY:
             cosmos_client = CosmosClient(config.STATE_STORE_ENDPOINT, primary_master_key)
+        else:
+            # ignore TLS (setup is a pain) when using local SSL emulator.
+            cosmos_client = CosmosClient(config.STATE_STORE_ENDPOINT, primary_master_key, connection_verify=False)
         logging.debug("Connection established")
         return cosmos_client
     except Exception as e:
