@@ -4,7 +4,8 @@
 
 **BREAKING CHANGES & MIGRATIONS**:
 
-*
+* API identity is only assigned Virtual Machine Contributor on the workspace level ([#2398](https://github.com/microsoft/AzureTRE/pull/2398)). Review the PR for migration steps.
+
 
 FEATURES:
 
