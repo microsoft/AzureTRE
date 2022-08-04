@@ -112,6 +112,18 @@ variable "resource_processor_type" {
   type        = string
 }
 
+variable "resource_processor_vmss_sku" {
+  type        = string
+  default     = "Standard_B2s"
+  description = "The SKU of the resource processor VMSS."
+}
+
+variable "admin_jumpbox_vm_sku" {
+  type        = string
+  default     = "Standard_B2s"
+  description = "The SKU of the admin jumpbox VM."
+}
+
 variable "stateful_resources_locked" {
   type        = bool
   default     = true

@@ -1,8 +1,13 @@
 import logging
 
 import azure.functions as func
+import datetime
 import os
+import uuid
 import json
+
+from exceptions.NoFilesInRequestException import NoFilesInRequestException
+from exceptions.TooManyFilesInRequestException import TooManyFilesInRequestException
 
 from shared_code import blob_operations, constants
 from pydantic import BaseModel, parse_obj_as
@@ -24,22 +29,26 @@ class ContainersCopyMetadata:
         self.dest_account_name = dest_account_name
 
 
-def main(msg: func.ServiceBusMessage):
-    body = msg.get_body().decode('utf-8')
-    logging.info('Python ServiceBus queue trigger processed message: %s', body)
-
+def main(msg: func.ServiceBusMessage, outputEvent: func.Out[func.EventGridOutputEvent]):
     try:
-        request_properties = extract_properties(body)
+        request_properties = extract_properties(msg)
+        handle_status_changed(request_properties)
 
-        new_status = request_properties.status
-        req_id = request_properties.request_id
-        ws_id = request_properties.workspace_id
-        request_type = request_properties.type
-    except Exception as e:
-        logging.error(f'Failed processing request - invalid message: {body}, exc: {e}')
-        raise
+    except NoFilesInRequestException:
+        report_failure(outputEvent, request_properties, failure_reason=constants.NO_FILES_IN_REQUEST_MESSAGE)
+    except TooManyFilesInRequestException:
+        report_failure(outputEvent, request_properties, failure_reason=constants.TOO_MANY_FILES_IN_REQUEST_MESSAGE)
+    except Exception:
+        report_failure(outputEvent, request_properties, failure_reason=constants.UNKNOWN_REASON_MESSAGE)
 
-    logging.info('Processing request with id %s. new status is "%s", type is "%s"', req_id, new_status, type)
+
+def handle_status_changed(request_properties: RequestProperties):
+    new_status = request_properties.status
+    req_id = request_properties.request_id
+    ws_id = request_properties.workspace_id
+    request_type = request_properties.type
+
+    logging.info('Processing request with id %s. new status is "%s", type is "%s"', req_id, new_status, request_type)
 
     try:
         tre_id = os.environ["TRE_ID"]
@@ -68,8 +77,10 @@ def main(msg: func.ServiceBusMessage):
     # Other statuses which do not require data copy are dismissed as we don't need to do anything...
 
 
-def extract_properties(body: str) -> RequestProperties:
+def extract_properties(msg: func.ServiceBusMessage) -> RequestProperties:
     try:
+        body = msg.get_body().decode('utf-8')
+        logging.info('Python ServiceBus queue trigger processed message: %s', body)
         json_body = json.loads(body)
         result = parse_obj_as(RequestProperties, json_body["data"])
         if not result:
@@ -136,3 +147,15 @@ def get_source_dest_for_copy(new_status: str, request_type: str, short_workspace
             dest_account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_BLOCKED + short_workspace_id
 
     return ContainersCopyMetadata(source_account_name, dest_account_name)
+
+
+def report_failure(outputEvent, request_properties, failure_reason):
+    logging.exception(f"Failed processing Airlock request with ID: '{request_properties.request_id}', changing request status to '{constants.STAGE_FAILED}'.")
+    outputEvent.set(
+        func.EventGridOutputEvent(
+            id=str(uuid.uuid4()),
+            data={"completed_step": request_properties.status, "new_status": constants.STAGE_FAILED, "request_id": request_properties.request_id, "error_message": failure_reason},
+            subject=request_properties.request_id,
+            event_type="Airlock.StepResult",
+            event_time=datetime.datetime.utcnow(),
+            data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
