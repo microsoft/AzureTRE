@@ -31,4 +31,12 @@ STAGE_BLOCKING_INPROGRESS = "blocking_in_progress"
 STAGE_BLOCKED_BY_SCAN = "blocked_by_scan"
 STAGE_FAILED = "failed"
 
+# Messages
+NO_FILES_IN_REQUEST_MESSAGE = "Request did not contain any files."
+TOO_MANY_FILES_IN_REQUEST_MESSAGE = "Request contained more than 1 file."
+UNKNOWN_REASON_MESSAGE = "Unknown reason."
+
+# Event Grid
+STEP_RESULT_EVENT_DATA_VERSION = "1.0"
+
 NO_THREATS = "No threats found"

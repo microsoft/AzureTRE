@@ -35,11 +35,11 @@ def main(msg: func.ServiceBusMessage, outputEvent: func.Out[func.EventGridOutput
         handle_status_changed(request_properties)
 
     except NoFilesInRequestException:
-        report_failure(outputEvent, request_properties, failed_reason="Request did not contain any files.")
+        report_failure(outputEvent, request_properties, failure_reason=constants.NO_FILES_IN_REQUEST_MESSAGE)
     except TooManyFilesInRequestException:
-        report_failure(outputEvent, request_properties, failed_reason="Request contained more than 1 file.")
+        report_failure(outputEvent, request_properties, failure_reason=constants.TOO_MANY_FILES_IN_REQUEST_MESSAGE)
     except Exception:
-        report_failure(outputEvent, request_properties, failed_reason="Unknown reason.")
+        report_failure(outputEvent, request_properties, failure_reason=constants.UNKNOWN_REASON_MESSAGE)
 
 
 def handle_status_changed(request_properties: RequestProperties):
@@ -149,13 +149,13 @@ def get_source_dest_for_copy(new_status: str, request_type: str, short_workspace
     return ContainersCopyMetadata(source_account_name, dest_account_name)
 
 
-def report_failure(outputEvent, request_properties, failed_reason):
+def report_failure(outputEvent, request_properties, failure_reason):
     logging.exception(f"Failed processing Airlock request with ID: '{request_properties.request_id}', changing request status to '{constants.STAGE_FAILED}'.")
     outputEvent.set(
         func.EventGridOutputEvent(
             id=str(uuid.uuid4()),
-            data={"completed_step": request_properties.status, "new_status": constants.STAGE_FAILED, "request_id": request_properties.request_id, "error_message": failed_reason},
+            data={"completed_step": request_properties.status, "new_status": constants.STAGE_FAILED, "request_id": request_properties.request_id, "error_message": failure_reason},
             subject=request_properties.request_id,
             event_type="Airlock.StepResult",
             event_time=datetime.datetime.utcnow(),
-            data_version="1.0"))
+            data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
