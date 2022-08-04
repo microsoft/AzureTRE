@@ -356,7 +356,7 @@ fi
   echo "API_CLIENT_ID=\"${appId}\""
   echo "API_CLIENT_SECRET=\"${spPassword}\""
   echo "SWAGGER_UI_CLIENT_ID=\"${uxAppId}\""
-} >> "$DIR"/../../auth.env
+} >> "devops/auth.env"
 
 if [[ $grantAdminConsent -eq 0 ]]; then
     echo -e "\e[96mNOTE: Make sure the API permissions of the app registrations have admin consent granted."
