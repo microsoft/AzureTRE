@@ -4,7 +4,7 @@ This document will cover how to extend AzureTRE with your custom images and depl
 
 ## AzureTRE deployment repo
 
-AzureTRE has an OSS deployment repository which you can find [here.](https://github.com/LizaShak/AzureTRE-Deployment)
+AzureTRE has an OSS deployment repository which you can find [here.](https://github.com/microsoft/AzureTRE-Deployment)
 It contains all the required tooling to develop your custom templates and deploy the Azure TRE.
 
 ### Contents
@@ -24,7 +24,7 @@ AzureTRE deployment repository allows you to reference AzureTRE as a folder, but
 
 AzureTRE deployment repository has directories setup for: workspace, workspace service and user resource template definitions.
 
-*To add your custom templates follow the next steps:*
+**To add your custom templates follow the next steps:**
 - Deployment requirements
     1. Add your template under relevant folder (For example: if you are adding a new workspace template then place it under /templates/workspaces folder).
     1. Use existing templates in AzureTRE as a reference.
@@ -43,6 +43,7 @@ The AzureTRE deployment repository contains the following github workflows:
 1. Deploy Azure TRE - This workflow is the integration build run for pushes to the main branch. It also runs on a schedule, serving as the nightly build to keep the main AzureTRE env in sync.
 1. Deploy Azure TRE Reusable - responsible to deploy AzureTRE. It is referenced in other Azure TRE deployment workflows.
 
+The workflows are using github environment 
 ## Make commands
 
 The Makefile in the AzureTRE deployment repository sources the make commands from AzureTRE that it references. This allows you to add your commands and also use the same make commands used in the AzureTRE.
