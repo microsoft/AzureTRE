@@ -11,23 +11,13 @@ resource "azurerm_network_interface" "jumpbox_nic" {
   }
 }
 
-resource "random_string" "username" {
-  length      = 4
-  upper       = true
-  lower       = true
-  number      = true
-  min_numeric = 1
-  min_lower   = 1
-  special     = false
-}
-
 resource "random_password" "password" {
   length           = 16
   lower            = true
   min_lower        = 1
   upper            = true
   min_upper        = 1
-  number           = true
+  numeric          = true
   min_numeric      = 1
   special          = true
   min_special      = 1
@@ -39,19 +29,18 @@ resource "azurerm_windows_virtual_machine" "jumpbox" {
   resource_group_name        = azurerm_resource_group.core.name
   location                   = azurerm_resource_group.core.location
   network_interface_ids      = [azurerm_network_interface.jumpbox_nic.id]
-  size                       = "Standard_B2s"
+  size                       = var.admin_jumpbox_vm_sku
   allow_extension_operations = true
-  admin_username             = random_string.username.result
+  admin_username             = "adminuser"
   admin_password             = random_password.password.result
   tags                       = local.tre_core_tags
-
 
   custom_data = base64encode(data.template_file.vm_config.rendered)
 
   source_image_reference {
     publisher = "MicrosoftWindowsDesktop"
     offer     = "windows-10"
-    sku       = "20h2-pro-g2"
+    sku       = "win10-21h2-pro-g2"
     version   = "latest"
   }
   os_disk {
@@ -63,13 +52,11 @@ resource "azurerm_windows_virtual_machine" "jumpbox" {
   identity {
     type = "SystemAssigned"
   }
-
-
 }
 
 resource "azurerm_key_vault_secret" "jumpbox_credentials" {
-  name         = "${azurerm_windows_virtual_machine.jumpbox.name}-jumpbox-admin-credentials"
-  value        = "${random_string.username.result}\n${random_password.password.result}"
+  name         = "${azurerm_windows_virtual_machine.jumpbox.name}-jumpbox-password"
+  value        = random_password.password.result
   key_vault_id = azurerm_key_vault.kv.id
   depends_on = [
     azurerm_key_vault_access_policy.deployer

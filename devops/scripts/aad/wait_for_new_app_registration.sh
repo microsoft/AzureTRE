@@ -1,7 +1,6 @@
 #!/bin/bash
-set -euo pipefail
-# Use this for debug only
-# set -o xtrace
+
+# This script is designed to be `source`d to create reusable helper functions
 
 # Notes: Before Az CLI 2.37 this would return a json document with .objectId; that is now .id
 

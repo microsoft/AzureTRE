@@ -45,11 +45,11 @@ jobs:
             guacamole_server:
               - 'templates/workspace_services/guacamole/guacamole-server/**/*'
             guacamole_server_version:
-              - 'templates/workspace_services/guacamole/version.txt'
+              - 'templates/workspace_services/guacamole/guacamole-server/docker/version.txt'
             gitea:
-              - 'templates/shared_services/gitea/**/*'
+              - 'templates/shared_services/gitea/docker/**/*'
             gitea_version:
-              - 'templates/shared_services/gitea/version.txt'
+              - 'templates/shared_services/gitea/docker/version.txt'
             airlock_processor:
               - 'airlock_processor/**/*'
             airlock_processor_version:
@@ -169,8 +169,8 @@ jobs:
           || github.event_name == 'workflow_dispatch')
         uses: docker/build-push-action@v2
         with:
-          context: ./templates/shared_services/gitea
-          file: ./templates/shared_services/gitea/Dockerfile
+          context: ./templates/shared_services/gitea/docker
+          file: ./templates/shared_services/gitea/docker/Dockerfile
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

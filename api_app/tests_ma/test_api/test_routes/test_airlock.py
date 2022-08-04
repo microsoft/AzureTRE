@@ -9,7 +9,7 @@ from azure.core.exceptions import HttpResponseError
 
 from models.domain.workspace import Workspace
 from resources import strings
-from services.authentication import get_current_workspace_owner_or_researcher_user_or_tre_admin, get_current_workspace_owner_or_researcher_user, get_current_workspace_owner_user
+from services.authentication import get_current_workspace_owner_or_researcher_user, get_current_workspace_owner_or_researcher_user_or_airlock_manager, get_current_airlock_manager_user
 pytestmark = pytest.mark.asyncio
 WORKSPACE_ID = "abc000d3-82da-4bfc-b6e9-9a7853ef753e"
 AIRLOCK_REQUEST_ID = "af89dccd-cdf8-4e47-8cfe-995faeac0f09"
@@ -69,15 +69,21 @@ def sample_workspace(workspace_id=WORKSPACE_ID, workspace_properties: dict = {})
 class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
     @pytest.fixture(autouse=True, scope='class')
     def log_in_with_researcher_user(self, app, researcher_user):
-        # The following ws services requires the WS app registration
-        app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_tre_admin] = researcher_user
         app.dependency_overrides[get_current_workspace_owner_or_researcher_user] = researcher_user
+        app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_airlock_manager] = researcher_user
         with patch("api.routes.airlock.AirlockRequestRepository.create_airlock_request_item", return_value=sample_airlock_request_object()), \
                 patch("api.routes.workspaces.OperationRepository.resource_has_deployed_operation"), \
                 patch("api.routes.airlock.AirlockRequestRepository.save_item"), \
-                patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id"):
+                patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id"), \
+                patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details", return_value={"researcher_emails": ["researcher@outlook.com"], "owner_emails": ["owner@outlook.com"]}):
             yield
         app.dependency_overrides = {}
+
+    # [GET] /workspaces/{workspace_id}/requests}
+    @patch("api.routes.airlock.AirlockRequestRepository.get_airlock_requests_by_workspace_id", return_value=[])
+    async def test_get_all_airlock_requests_by_workspace_returns_200(self, _, app, client):
+        response = await client.get(app.url_path_for(strings.API_LIST_AIRLOCK_REQUESTS, workspace_id=WORKSPACE_ID))
+        assert response.status_code == status.HTTP_200_OK
 
     # [POST] /workspaces/{workspace_id}/requests
     @patch("api.routes.airlock.save_and_publish_event_airlock_request")
@@ -225,12 +231,11 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
         assert response.json()["containerUrl"] == get_airlock_request_container_sas_token_mock.return_value
 
 
-class TestAirlockRoutesThatRequireOwnerRights():
+class TestAirlockRoutesThatRequireAirlockManagerRights():
     @pytest.fixture(autouse=True, scope='class')
-    def log_in_with_researcher_user(self, app, owner_user):
-        # The following ws services requires the WS app registration
-        app.dependency_overrides[get_current_workspace_owner_user] = owner_user
-        app.dependency_overrides[get_current_workspace_owner_or_researcher_user] = owner_user
+    def log_in_with_airlock_manager_user(self, app, airlock_manager_user):
+        app.dependency_overrides[get_current_airlock_manager_user] = airlock_manager_user
+        app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_airlock_manager] = airlock_manager_user
         with patch("api.routes.airlock.AirlockRequestRepository.create_airlock_request_item", return_value=sample_airlock_request_object()), \
                 patch("api.routes.workspaces.OperationRepository.resource_has_deployed_operation"), \
                 patch("api.routes.airlock.AirlockRequestRepository.save_item"), \

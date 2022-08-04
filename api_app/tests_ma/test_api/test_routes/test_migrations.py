@@ -39,9 +39,13 @@ class TestMigrationRoutesThatRequireAdminRights:
     @ patch("api.routes.migrations.ResourceRepository.rename_field_name")
     @ patch("api.routes.migrations.SharedServiceMigration.deleteDuplicatedSharedServices")
     @ patch("api.routes.migrations.WorkspaceMigration.moveAuthInformationToProperties")
-    async def test_post_migrations_returns_202_on_successful(self, workspace_migration, shared_services_migration, rename_field, add_deployment_field, _, logging, client, app):
+    @ patch("api.routes.migrations.SharedServiceMigration.checkMinFirewallVersion")
+    async def test_post_migrations_returns_202_on_successful(self, check_min_firewall_version, workspace_migration,
+                                                             shared_services_migration, rename_field,
+                                                             add_deployment_field, _, logging, client, app):
         response = await client.post(app.url_path_for(strings.API_MIGRATE_DATABASE))
 
+        check_min_firewall_version.assert_called_once()
         shared_services_migration.assert_called_once()
         workspace_migration.assert_called_once()
         rename_field.assert_called()

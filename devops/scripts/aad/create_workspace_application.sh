@@ -324,6 +324,10 @@ if [[ -n ${automationClientId} ]]; then
                 "type": "Role"
             },
             {
+                "id": "${researcherRoleId}",
+                "type": "Role"
+            },
+            {
                 "id": "${airlockManagerRoleId}",
                 "type": "Role"
             }
@@ -345,6 +349,8 @@ JSON
       echo "Found Service Principal \"$automationSpId\" for \"${automationAppName}\"."
 
       grant_admin_consent "${automationSpId}" "${workspaceSpId}" "${ownerRoleId}"
+      grant_admin_consent "${automationSpId}" "${workspaceSpId}" "${airlockManagerRoleId}"
+      grant_admin_consent "${automationSpId}" "${workspaceSpId}" "${researcherRoleId}"
       az ad app permission grant --id "$automationSpId" --api "$workspaceAppId" --scope "user_impersonation" --only-show-errors
   fi
 fi

@@ -72,7 +72,7 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
   }
 
   site_config {
-    always_on                                     = var.enable_local_debugging ? true : false
+    always_on                                     = true
     container_registry_managed_identity_client_id = azurerm_user_assigned_identity.airlock_id.client_id
     container_registry_use_managed_identity       = true
     vnet_route_all_enabled                        = true

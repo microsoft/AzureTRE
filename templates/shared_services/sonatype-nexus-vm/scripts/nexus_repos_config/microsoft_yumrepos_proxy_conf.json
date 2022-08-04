@@ -1,5 +1,5 @@
 {
-    "name": "apt-pypi",
+    "name": "microsoft-yumrepos",
     "online": true,
     "storage": {
         "blobStoreName": "default",
@@ -7,7 +7,7 @@
         "write_policy": "ALLOW"
     },
     "proxy": {
-        "remoteUrl": "https://pypi.org",
+        "remoteUrl": "https://packages.microsoft.com/yumrepos",
         "contentMaxAge": 1440,
         "metadataMaxAge": 1440
     },
@@ -17,7 +17,7 @@
     },
     "httpClient": {
         "blocked": false,
-        "autoBlock": true,
+        "autoBlock": false,
         "connection": {
             "retries": 0,
             "userAgentSuffix": "string",
@@ -27,10 +27,6 @@
             "useTrustStore": false
         }
     },
-    "apt": {
-        "distribution": "bionic",
-        "flat": false
-    },
-    "baseType": "apt",
+    "baseType": "yum",
     "repoType": "proxy"
 }

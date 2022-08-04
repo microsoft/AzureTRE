@@ -1,8 +1,16 @@
 ---
 name: tre-workspace-service-gitea
-version: 0.3.3
+version: 0.3.5
 description: "A Gitea workspace service"
 registry: azuretre
+
+custom:
+  runtime_image:
+    name: gitea-workspace-service
+    build:
+      version_file: version.txt
+      docker_file: docker/Dockerfile
+      docker_context: docker
 
 credentials:
   - name: azure_tenant_id

@@ -58,10 +58,6 @@ jq -r '
             "env_var": "STATE_STORE_ENDPOINT"
         },
         {
-            "path": "app_insights_instrumentation_key",
-            "env_var": "APPINSIGHTS_INSTRUMENTATIONKEY"
-        },
-        {
             "path": "app_insights_connection_string",
             "env_var": "APPLICATIONINSIGHTS_CONNECTION_STRING"
         },
@@ -92,6 +88,10 @@ jq -r '
         {
             "path": "event_grid_status_changed_topic_resource_id",
             "env_var": "EVENT_GRID_STATUS_CHANGED_TOPIC_RESOURCE_ID"
+        },
+        {
+            "path": "event_grid_airlock_notification_topic_resource_id",
+            "env_var": "EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_RESOURCE_ID"
         }
     ]
         as $env_vars_to_extract

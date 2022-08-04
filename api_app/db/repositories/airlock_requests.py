@@ -1,5 +1,7 @@
 import copy
 import uuid
+
+from typing import List
 from pydantic import UUID4
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from azure.cosmos import CosmosClient
@@ -17,6 +19,10 @@ from resources import strings
 class AirlockRequestRepository(AirlockResourceRepository):
     def __init__(self, client: CosmosClient):
         super().__init__(client)
+
+    @staticmethod
+    def airlock_requests_query():
+        return 'SELECT * FROM c WHERE c.resourceType = "airlock-request"'
 
     def _validate_status_update(self, current_status: AirlockRequestStatus, new_status: AirlockRequestStatus):
         # Cannot change status from approved
@@ -41,8 +47,15 @@ class AirlockRequestRepository(AirlockResourceRepository):
         in_review_condition = current_status == AirlockRequestStatus.InReview and (new_status == AirlockRequestStatus.ApprovalInProgress or new_status == AirlockRequestStatus.RejectionInProgress)
         # Cancel is allowed only if the request is not actively changing, i.e. it is currently in draft or in review
         cancel_condition = (current_status == AirlockRequestStatus.Draft or current_status == AirlockRequestStatus.InReview) and new_status == AirlockRequestStatus.Cancelled
+        # Failed is allowed from any non-final status
+        failed_condition = (current_status == AirlockRequestStatus.Draft
+                            or current_status == AirlockRequestStatus.Submitted
+                            or current_status == AirlockRequestStatus.InReview
+                            or current_status == AirlockRequestStatus.ApprovalInProgress
+                            or current_status == AirlockRequestStatus.RejectionInProgress
+                            or current_status == AirlockRequestStatus.BlockingInProgress) and new_status == AirlockRequestStatus.Failed
 
-        return approved_condition and rejected_condition and blocked_condition and (approved_in_progress_condition or rejected_in_progress_condition or blocking_in_progress_condition or draft_condition or submit_condition or in_review_condition or cancel_condition)
+        return approved_condition and rejected_condition and blocked_condition and (approved_in_progress_condition or rejected_in_progress_condition or blocking_in_progress_condition or draft_condition or submit_condition or in_review_condition or cancel_condition or failed_condition)
 
     def create_airlock_request_item(self, airlock_request_input: AirlockRequestInCreate, workspace_id: str) -> AirlockRequest:
         full_airlock_request_id = str(uuid.uuid4())
@@ -59,6 +72,11 @@ class AirlockRequestRepository(AirlockResourceRepository):
 
         return airlock_request
 
+    def get_airlock_requests_by_workspace_id(self, workspace_id: str) -> List[AirlockRequest]:
+        query = self.airlock_requests_query() + f' AND c.workspaceId = "{workspace_id}"'
+        airlock_requests = self.query(query=query)
+        return parse_obj_as(List[AirlockRequest], airlock_requests)
+
     def get_airlock_request_by_id(self, airlock_request_id: UUID4) -> AirlockRequest:
         try:
             airlock_requests = self.read_item_by_id(str(airlock_request_id))
@@ -66,11 +84,13 @@ class AirlockRequestRepository(AirlockResourceRepository):
             raise EntityDoesNotExist
         return parse_obj_as(AirlockRequest, airlock_requests)
 
-    def update_airlock_request_status(self, airlock_request: AirlockRequest, new_status: AirlockRequestStatus, user: User) -> AirlockRequest:
+    def update_airlock_request_status(self, airlock_request: AirlockRequest, new_status: AirlockRequestStatus, user: User, error_message: str = None) -> AirlockRequest:
         current_status = airlock_request.status
         if self._validate_status_update(current_status, new_status):
             updated_request = copy.deepcopy(airlock_request)
             updated_request.status = new_status
+            if new_status == AirlockRequestStatus.Failed:
+                updated_request.errorMessage = error_message
             return self.update_airlock_resource_item(airlock_request, updated_request, user, {"previousStatus": current_status})
         else:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE)

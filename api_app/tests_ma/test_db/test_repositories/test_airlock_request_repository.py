@@ -23,20 +23,22 @@ REJECTED = AirlockRequestStatus.Rejected
 CANCELLED = AirlockRequestStatus.Cancelled
 BLOCKING_IN_PROGRESS = AirlockRequestStatus.BlockingInProgress
 BLOCKED = AirlockRequestStatus.Blocked
+FAILED = AirlockRequestStatus.Failed
 
 ALL_STATUSES = [enum.value for enum in AirlockRequestStatus]
 
 ALLOWED_STATUS_CHANGES = {
-    DRAFT: [SUBMITTED, CANCELLED],
-    SUBMITTED: [IN_REVIEW, BLOCKING_IN_PROGRESS],
-    IN_REVIEW: [APPROVED_IN_PROGRESS, REJECTION_IN_PROGRESS, CANCELLED],
-    APPROVED_IN_PROGRESS: [APPROVED],
+    DRAFT: [SUBMITTED, CANCELLED, FAILED],
+    SUBMITTED: [IN_REVIEW, BLOCKING_IN_PROGRESS, FAILED],
+    IN_REVIEW: [APPROVED_IN_PROGRESS, REJECTION_IN_PROGRESS, CANCELLED, FAILED],
+    APPROVED_IN_PROGRESS: [APPROVED, FAILED],
     APPROVED: [],
-    REJECTION_IN_PROGRESS: [REJECTED],
+    REJECTION_IN_PROGRESS: [REJECTED, FAILED],
     REJECTED: [],
     CANCELLED: [],
-    BLOCKING_IN_PROGRESS: [BLOCKED],
+    BLOCKING_IN_PROGRESS: [BLOCKED, FAILED],
     BLOCKED: [],
+    FAILED: [],
 }
 
 
@@ -122,3 +124,11 @@ def test_update_airlock_request_status_with_forbidden_status_should_fail_on_vali
     mock_existing_request = airlock_request_mock(status=current_status)
     with pytest.raises(HTTPException):
         airlock_request_repo.update_airlock_request_status(mock_existing_request, new_status, user)
+
+
+def test_get_airlock_requests_by_workspace_id_queries_db(airlock_request_repo):
+    airlock_request_repo.container.query_items = MagicMock()
+    expected_query = airlock_request_repo.airlock_requests_query() + f' AND c.workspaceId = "{WORKSPACE_ID}"'
+
+    airlock_request_repo.get_airlock_requests_by_workspace_id(WORKSPACE_ID)
+    airlock_request_repo.container.query_items.assert_called_once_with(query=expected_query, enable_cross_partition_query=True)
