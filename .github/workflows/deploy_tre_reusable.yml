@@ -433,8 +433,6 @@ jobs:
           - {BUNDLE_TYPE: "shared_service",
              BUNDLE_DIR: "./templates/shared_services/firewall/"}
           - {BUNDLE_TYPE: "shared_service",
-             BUNDLE_DIR: "./templates/shared_services/sonatype-nexus/"}
-          - {BUNDLE_TYPE: "shared_service",
              BUNDLE_DIR: "./templates/shared_services/gitea/"}
     environment: ${{ inputs.environmentName }}
     steps:
@@ -472,8 +470,6 @@ jobs:
         include:
           - {BUNDLE_TYPE: "shared_service",
              BUNDLE_DIR: "./templates/shared_services/firewall"}
-          - {BUNDLE_TYPE: "shared_service",
-             BUNDLE_DIR: "./templates/shared_services/sonatype-nexus"}
           - {BUNDLE_TYPE: "shared_service",
              BUNDLE_DIR: "./templates/shared_services/gitea"}
     environment: ${{ inputs.environmentName }}
