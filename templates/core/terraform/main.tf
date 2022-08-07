@@ -67,6 +67,7 @@ module "azure_monitor" {
   azure_monitor_ods_opinsights_dns_zone_id = module.network.azure_monitor_ods_opinsights_dns_zone_id
   azure_monitor_agentsvc_dns_zone_id       = module.network.azure_monitor_agentsvc_dns_zone_id
   blob_core_dns_zone_id                    = module.network.blob_core_dns_zone_id
+  tre_core_tags                            = local.tre_core_tags
 }
 
 module "network" {
