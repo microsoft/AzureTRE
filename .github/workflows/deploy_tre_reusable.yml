@@ -795,7 +795,7 @@ jobs:
       # so the checks aren't automatically associated with the PR
       # If prHeadSha is specified then explicity mark the checks for that SHA
       - name: Report check status
-        if: inputs.prHeadSha != ''
+        # if: inputs.prHeadSha != ''
         uses: LouisBrunner/checks-action@v1.1.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
