@@ -14,3 +14,5 @@ else
   # shellcheck disable=SC2046
   export $(grep -v -e '^[[:space:]]*$' -e '^#' "$1"  | sed 's/.*=/TF_VAR_\L&/' | xargs)
 fi
+
+set +o nounset
