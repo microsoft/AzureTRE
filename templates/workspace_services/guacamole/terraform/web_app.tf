@@ -99,14 +99,13 @@ resource "azurerm_monitor_diagnostic_setting" "guacamole" {
   log_analytics_workspace_id = data.azurerm_log_analytics_workspace.tre.id
 
   dynamic "log" {
-    for_each = toset(["AppServiceHTTPLogs", "AppServiceConsoleLogs", "AppServiceAppLogs", "AppServiceFileAuditLogs",
-    "AppServiceAuditLogs", "AppServiceIPSecAuditLogs", "AppServicePlatformLogs", "AppServiceAntivirusScanAuditLogs"])
+    for_each = data.azurerm_monitor_diagnostic_categories.guacamole.logs
     content {
       category = log.value
-      enabled  = true
+      enabled  = contains(local.guacamole_diagnostic_categories_enabled, log.value) ? true : false
 
       retention_policy {
-        enabled = true
+        enabled = contains(local.guacamole_diagnostic_categories_enabled, log.value) ? true : false
         days    = 365
       }
     }
