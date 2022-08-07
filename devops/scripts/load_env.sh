@@ -1,11 +1,16 @@
 #!/bin/bash
-set -e
+set -o errexit
+set -o pipefail
+set -o nounset
+# set -o xtrace
 
-if [ ! -f $1 ]; then
-  if [ -z $USE_ENV_VARS_NOT_FILES ]; then
-    echo -e "\e[31m»»» 💥 Unable to find $1 file, please create file and try again!"
+if [ ! -f "$1" ]; then
+  if [ -z "${USE_ENV_VARS_NOT_FILES:-}" ]; then
+    echo -e "\e[31m»»» 💥 Unable to find $1 file, please create file and try again!\e[0m"
     #exit
   fi
 else
-  export $(egrep -v '^#' $1 | xargs)
+  # doesn't work with quotes
+  # shellcheck disable=SC2046
+  export $(grep -v -e '^[[:space:]]*$' -e '^#' "$1" | xargs)
 fi
