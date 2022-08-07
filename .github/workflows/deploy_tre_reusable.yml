@@ -795,7 +795,7 @@ jobs:
       # so the checks aren't automatically associated with the PR
       # If prHeadSha is specified then explicity mark the checks for that SHA
       - name: Report check status
-        if: env.WORKFLOW_CONCLUSION == 'success' && inputs.prHeadSha != ''
+        if: inputs.prHeadSha != ''
         uses: LouisBrunner/checks-action@v1.1.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -803,7 +803,7 @@ jobs:
           sha: ${{ inputs.prHeadSha }}
           name: "Deploy PR / Run E2E Tests (Smoke)"
           status: "completed"
-          conclusion: "success"
+          conclusion: ${{ env.WORKFLOW_CONCLUSION }}
 
       - name: Notify teams channel
         # notify only if failure
