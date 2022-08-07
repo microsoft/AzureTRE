@@ -152,7 +152,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           # the name must be identical to the one received by the real job
-          sha: 581921dddbb7ffaf5ddaf6a46c6e1fa10522646b
+          # sha: ${{ inputs.prHeadSha }}
           name: "Deploy PR / Run E2E Tests (Smoke)"
           status: "in_progress"
 
