@@ -100,19 +100,19 @@ tre_id=${core_tre_rg#"rg-"}
 # purge keyvault if possible (makes it possible to reuse the same tre_id later)
 # this has to be done before we delete the resource group since we might not wait for it to complete
 keyvault_name="kv-${tre_id}"
-keyvault=$(az keyvault show --name "${keyvault_name}" --resource-group "${core_tre_rg}" || echo 0)
+keyvault=$(az keyvault show --name "${keyvault_name}" --resource-group "${core_tre_rg}" -o json || echo 0)
 if [ "${keyvault}" != "0" ]; then
-  secrets=$(az keyvault secret list --vault-name "${keyvault_name}" | jq -r '.[].id')
+  secrets=$(az keyvault secret list --vault-name "${keyvault_name}" -o json | jq -r '.[].id')
   for secret_id in ${secrets}; do
     az keyvault secret delete --id "${secret_id}"
   done
 
-  keys=$(az keyvault key list --vault-name "${keyvault_name}" | jq -r '.[].id')
+  keys=$(az keyvault key list --vault-name "${keyvault_name}" -o json | jq -r '.[].id')
   for key_id in ${keys}; do
     az keyvault key delete --id "${key_id}"
   done
 
-  certificates=$(az keyvault certificate list --vault-name "${keyvault_name}" | jq -r '.[].id')
+  certificates=$(az keyvault certificate list --vault-name "${keyvault_name}" -o json | jq -r '.[].id')
   for certificate_id in ${certificates}; do
     az keyvault certificate delete --id "${certificate_id}"
   done
@@ -127,7 +127,7 @@ if [ "${keyvault}" != "0" ]; then
 fi
 
 # Delete the vault if purge protection is not on.
-if [[ $(az keyvault list --resource-group "${core_tre_rg}" --query "[?properties.enablePurgeProtection==``null``] | length (@)") != 0 ]]; then
+if [[ $(az keyvault list --resource-group "${core_tre_rg}" --query "[?properties.enablePurgeProtection==``null``] | length (@)" -o tsv) != 0 ]]; then
   echo "Deleting keyvault: ${keyvault_name}"
   az keyvault delete --name "${keyvault_name}" --resource-group "${core_tre_rg}"
 
