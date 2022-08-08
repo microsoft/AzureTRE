@@ -49,7 +49,7 @@ if [[ "$1" == *"start"* ]]; then
 
   az vmss list --resource-group "${core_rg_name}" --query "[].name" -o tsv |
   while read -r vmss_name; do
-    if [[ "$(az vmss list-instances --resource-group "${core_rg_name}" --name "${vmss_name}" --expand instanceView | \
+    if [[ "$(az vmss list-instances --resource-group "${core_rg_name}" --name "${vmss_name}" --expand instanceView --output json | \
       jq 'select(.[].instanceView.statuses[].code=="PowerState/deallocated") | length')" -gt 0 ]]; then
       echo "Starting VMSS ${vmss_name}"
       az vmss start --resource-group "${core_rg_name}" --name "${vmss_name}" &
@@ -91,7 +91,7 @@ elif [[ "$1" == *"stop"* ]]; then
 
   az vmss list --resource-group "${core_rg_name}" --query "[].name" -o tsv |
   while read -r vmss_name; do
-    if [[ "$(az vmss list-instances --resource-group "${core_rg_name}" --name "${vmss_name}" --expand instanceView | \
+    if [[ "$(az vmss list-instances --resource-group "${core_rg_name}" --name "${vmss_name}" --expand instanceView --output json | \
       jq 'select(.[].instanceView.statuses[].code=="PowerState/running") | length')" -gt 0 ]]; then
       echo "Deallocating VMSS ${vmss_name}"
       az vmss deallocate --resource-group "${core_rg_name}" --name "${vmss_name}" &
