@@ -804,6 +804,7 @@ jobs:
           name: "Deploy PR / Run E2E Tests (Smoke)"
           status: "completed"
           conclusion: ${{ env.WORKFLOW_CONCLUSION }}
+          details_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
       - name: Notify teams channel
         # notify only if failure
