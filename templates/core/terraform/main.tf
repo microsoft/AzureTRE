@@ -67,6 +67,11 @@ module "azure_monitor" {
   azure_monitor_ods_opinsights_dns_zone_id = module.network.azure_monitor_ods_opinsights_dns_zone_id
   azure_monitor_agentsvc_dns_zone_id       = module.network.azure_monitor_agentsvc_dns_zone_id
   blob_core_dns_zone_id                    = module.network.blob_core_dns_zone_id
+  tre_core_tags                            = local.tre_core_tags
+
+  depends_on = [
+    module.network
+  ]
 }
 
 module "network" {
@@ -90,6 +95,7 @@ module "appgateway" {
   log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
 
   depends_on = [
+    module.network,
     azurerm_key_vault.kv,
     azurerm_key_vault_access_policy.deployer
   ]
@@ -145,8 +151,10 @@ module "resource_processor_vmss_porter" {
   key_vault_id                                     = azurerm_key_vault.kv.id
   subscription_id                                  = var.arm_subscription_id
   resource_processor_number_processes_per_instance = var.resource_processor_number_processes_per_instance
+  resource_processor_vmss_sku                      = var.resource_processor_vmss_sku
 
   depends_on = [
+    module.network,
     module.azure_monitor,
     azurerm_key_vault.kv,
     azurerm_key_vault_access_policy.deployer
