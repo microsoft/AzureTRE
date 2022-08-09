@@ -1,7 +1,7 @@
 from typing import List
 from pydantic import BaseModel, Field
 from models.domain.airlock_resource import AirlockResourceType
-from models.domain.airlock_request import AirlockRequest, AirlockRequestType
+from models.domain.airlock_request import AirlockActions, AirlockRequest, AirlockRequestType
 
 
 def get_sample_airlock_request(workspace_id: str, airlock_request_id: str) -> dict:
@@ -27,15 +27,33 @@ class AirlockRequestInResponse(BaseModel):
         }
 
 
+class AirlockRequestWithAllowedUserActions(BaseModel):
+    airlockRequest: AirlockRequest = Field([], title="Airlock Request")
+    allowed_user_actions: List[str] = Field([], title="actions that the requesting user can do on the request")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "allowed_user_actions": [AirlockActions.Review]
+            }
+        }
+
+
 class AirlockRequestInList(BaseModel):
-    airlockRequests: List[AirlockRequest] = Field([], title="Airlock Requests")
+    airlockRequests: List[AirlockRequestWithAllowedUserActions] = Field([], title="Airlock Requests")
 
     class Config:
         schema_extra = {
             "example": {
                 "airlock_requests": [
-                    get_sample_airlock_request("933ad738-7265-4b5f-9eae-a1a62928772e", "121e921f-a4aa-44b3-90a9-e8da030495ef"),
-                    get_sample_airlock_request("123ad738-1234-4b5f-9eae-a1a62928772e", "457e921f-a4aa-44b3-90a9-e8da030412ac"),
+                    {
+                        "airlockRequest": get_sample_airlock_request("933ad738-7265-4b5f-9eae-a1a62928772e", "121e921f-a4aa-44b3-90a9-e8da030495ef"),
+                        "allowed_user_actions": [AirlockActions.Cancel, AirlockActions.Review],
+                    },
+                    {
+                        "airlockRequest": get_sample_airlock_request("123ad738-1234-4b5f-9eae-a1a62928772e", "457e921f-a4aa-44b3-90a9-e8da030412ac"),
+                        "allowed_user_actions": [AirlockActions.Cancel, AirlockActions.Review],
+                    },
                 ]
             }
         }
