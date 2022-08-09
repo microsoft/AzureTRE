@@ -301,10 +301,6 @@ build-and-deploy-ui:
 prepare-for-e2e:
 	$(call workspace_bundle,base) \
 	&& $(call workspace_service_bundle,guacamole) \
-	&& $(call workspace_service_bundle,azureml) \
-	&& $(call workspace_service_bundle,gitea) \
-	&& $(call workspace_service_bundle,innereye) \
-	&& $(call shared_service_bundle,sonatype-nexus) \
 	&& $(call shared_service_bundle,gitea) \
 	&& $(call user_resource_bundle,guacamole,guacamole-azure-windowsvm) \
 	&& $(call user_resource_bundle,guacamole,guacamole-azure-linuxvm)
