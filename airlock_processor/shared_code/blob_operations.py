@@ -63,11 +63,16 @@ def copy_data(source_account_name: str, destination_account_name: str, request_i
     source_blob = source_container_client.get_blob_client(blob_name)
     source_url = f'{source_blob.url}?{sas_token}'
 
+    # Set metadata to include the blob url that it is copied from
+    metadata = source_blob.get_blob_properties()["metadata"]
+    copied_from = json.loads(metadata["copied_from"]) if "copied_from" in metadata else []
+    metadata["copied_from"] = json.dumps(copied_from.append(source_blob.url))
+
     # Copy files
     dest_blob_service_client = BlobServiceClient(account_url=get_account_url(destination_account_name),
                                                  credential=credential)
     copied_blob = dest_blob_service_client.get_blob_client(container_name, source_blob.blob_name)
-    copy = copied_blob.start_copy_from_url(source_url)
+    copy = copied_blob.start_copy_from_url(source_url, metadata=metadata)
 
     try:
         logging.info("Copy operation returned 'copy_id': '%s', 'copy_status': '%s'", copy["copy_id"],
