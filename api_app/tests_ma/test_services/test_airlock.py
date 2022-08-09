@@ -62,6 +62,7 @@ def test_validate_user_is_allowed_to_access_grants_access_to_user_with_a_valid_r
             airlock_request=review_airlock_request
         ) is None)
 
+
 @pytest.mark.parametrize('airlock_status',
                          [AirlockRequestStatus.ApprovalInProgress,
                           AirlockRequestStatus.RejectionInProgress,
@@ -88,7 +89,7 @@ def test_validate_request_status_raises_error_for_canceled_request():
                          [AirlockRequestStatus.Failed,
                           AirlockRequestStatus.Rejected,
                           AirlockRequestStatus.Blocked])
-def test_validate_request_status_raises_error_for_in_progress_request(airlock_status):
+def test_validate_request_status_raises_error_for_unaccessible_request(airlock_status):
     airlock_request = sample_airlock_request(airlock_status)
     with pytest.raises(HTTPException) as ex:
         validate_request_status(airlock_request)
