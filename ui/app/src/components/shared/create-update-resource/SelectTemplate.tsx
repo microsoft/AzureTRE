@@ -34,7 +34,7 @@ export const SelectTemplate: React.FunctionComponent<SelectTemplateProps> = (pro
     switch (loading) {
         case LoadingState.Ok:
             return (
-                templates && templates.length > 0 ? <Stack style={{ marginTop: 20 }}>
+                templates && templates.length > 0 ? <Stack>
                 {
                     templates.map((template: any, i) => {
                         return (
