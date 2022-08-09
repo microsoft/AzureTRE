@@ -1,5 +1,5 @@
 from distutils.util import strtobool
-from shared_code import constants
+from shared_code import constants, storage_accounts
 import logging
 
 import azure.functions as func
@@ -11,13 +11,16 @@ import os
 
 
 def main(msg: func.ServiceBusMessage,
-         outputEvent: func.Out[func.EventGridOutputEvent]):
+         stepResultEvent: func.Out[func.EventGridOutputEvent],
+         toDeleteEvent: func.Out[func.EventGridOutputEvent]):
 
     logging.info("Python ServiceBus topic trigger processed message - A new blob was created!.")
     body = msg.get_body().decode('utf-8')
     logging.info('Python ServiceBus queue trigger processed message: %s', body)
 
     json_body = json.loads(body)
+
+    # Example of a topic: "/subscriptions/<subscription_id>/resourceGroups/rg-tanyaair1/providers/Microsoft.Storage/storageAccounts/stalimiptanyaair1"
     topic = json_body["topic"]
     request_id = re.search(r'/blobServices/default/containers/(.*?)/blobs', json_body["subject"]).group(1)
 
@@ -53,11 +56,32 @@ def main(msg: func.ServiceBusMessage,
         completed_step = constants.STAGE_BLOCKING_INPROGRESS
         new_status = constants.STAGE_BLOCKED_BY_SCAN
 
-    # Todo: Once the copy process is done, we can delete the old container here
-    # https://github.com/microsoft/AzureTRE/issues/1963
+    if constants.STORAGE_ACCOUNT_NAME_EXPORT_PREFIX in topic:
+        request_type = constants.IMPORT_TYPE
+    elif constants.STORAGE_ACCOUNT_NAME_IMPORT_PREFIX in topic:
+        request_type = constants.EXPORT_TYPE
+    else:
+        logging.error(f"Can't determine type of request from topic {topic}")
+        raise
+
+    src = storage_accounts.source_storage_account_from_dest(
+        request_type=request_type,
+        # TODO: other arguments?????
+    )
+
+    toDeleteEvent.set(
+        func.EventGridOutputEvent(
+            id=str(uuid.uuid4()),
+            data={},  # TODO(tanya): what information do we need? # request_id, account_name, account_rg
+            subject=request_id,
+            event_type="Airlock.ToDelete",
+            event_time=datetime.datetime.utcnow(),
+            data_version="1.0"
+        )
+    )
 
     # reply with a step completed event
-    outputEvent.set(
+    stepResultEvent.set(
         func.EventGridOutputEvent(
             id=str(uuid.uuid4()),
             data={"completed_step": completed_step, "new_status": new_status, "request_id": request_id},
