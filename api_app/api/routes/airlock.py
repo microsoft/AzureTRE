@@ -7,7 +7,7 @@ from jsonschema.exceptions import ValidationError
 from api.dependencies.database import get_repository
 from api.dependencies.workspaces import get_workspace_by_id_from_path, get_deployed_workspace_by_id_from_path
 from api.dependencies.airlock import get_airlock_request_by_id_from_path
-from models.domain.airlock_request import AirlockRequestStatus
+from models.domain.airlock_request import AirlockRequestStatus, AirlockRequestType
 from db.repositories.airlock_reviews import AirlockReviewRepository
 from models.schemas.airlock_request_url import AirlockRequestTokenInResponse
 from models.schemas.airlock_review import AirlockReviewInCreate, AirlockReviewInResponse
@@ -48,9 +48,18 @@ async def create_draft_request(airlock_request_input: AirlockRequestInCreate, us
                               dependencies=[Depends(get_current_workspace_owner_or_researcher_user), Depends(get_workspace_by_id_from_path)])
 async def get_all_airlock_requests_by_workspace(
         airlock_request_repo=Depends(get_repository(AirlockRequestRepository)),
-        workspace=Depends(get_deployed_workspace_by_id_from_path)) -> AirlockRequestInList:
+        workspace=Depends(get_deployed_workspace_by_id_from_path),
+        user=Depends(get_current_workspace_owner_or_researcher_user),
+        initiator: str = None,
+        type: AirlockRequestType = None,
+        status: AirlockRequestStatus = None,
+        awaiting_my_review: bool = None) -> AirlockRequestInList:
     try:
-        airlock_requests = airlock_request_repo.get_airlock_requests_by_workspace_id(workspace.id)
+        if awaiting_my_review:
+            if "AirlockManager" not in user.roles:
+                return []
+            status = AirlockRequestStatus.InReview
+        airlock_requests = airlock_request_repo.get_airlock_requests_by_workspace_id(workspace.id, initiator, type, status)
     except (ValidationError, ValueError) as e:
         logging.error(f"Failed retrieving all the airlock requests for a workspace: {e}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

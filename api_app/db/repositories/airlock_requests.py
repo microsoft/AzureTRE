@@ -11,7 +11,7 @@ from pydantic import parse_obj_as
 from models.domain.authentication import User
 from db.errors import EntityDoesNotExist
 from db.repositories.airlock_resources import AirlockResourceRepository
-from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus
+from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType
 from models.schemas.airlock_request import AirlockRequestInCreate
 from resources import strings
 
@@ -72,9 +72,23 @@ class AirlockRequestRepository(AirlockResourceRepository):
 
         return airlock_request
 
-    def get_airlock_requests_by_workspace_id(self, workspace_id: str) -> List[AirlockRequest]:
+    def get_airlock_requests_by_workspace_id(self, workspace_id: str, user_id: str = None, type: AirlockRequestType = None, status: AirlockRequestStatus = None) -> List[AirlockRequest]:
         query = self.airlock_requests_query() + f' AND c.workspaceId = "{workspace_id}"'
-        airlock_requests = self.query(query=query)
+
+        # optional filters
+        if user_id:
+            query += ' AND c.user.id=@user_id'
+        if status:
+            query += ' AND c.status=@status'
+        if type:
+            query += ' AND c.requestType=@type'
+
+        parameters = [
+            {"name": "@user_id", "value": user_id},
+            {"name": "@status", "value": status},
+            {"name": "@type", "value": type},
+        ]
+        airlock_requests = self.query(query=query, parameters=parameters)
         return parse_obj_as(List[AirlockRequest], airlock_requests)
 
     def get_airlock_request_by_id(self, airlock_request_id: UUID4) -> AirlockRequest:
