@@ -1,6 +1,4 @@
-# Getting started
-
-## Prerequisites
+# Prerequisites
 
 To deploy an Azure TRE instance, the following assets and tools are required:
 
