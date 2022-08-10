@@ -129,6 +129,11 @@ def test_update_airlock_request_status_with_forbidden_status_should_fail_on_vali
 def test_get_airlock_requests_by_workspace_id_queries_db(airlock_request_repo):
     airlock_request_repo.container.query_items = MagicMock()
     expected_query = airlock_request_repo.airlock_requests_query() + f' AND c.workspaceId = "{WORKSPACE_ID}"'
+    expected_parameters = [
+        {"name": "@user_id", "value": None},
+        {"name": "@status", "value": None},
+        {"name": "@type", "value": None},
+    ]
 
     airlock_request_repo.get_airlock_requests_by_workspace_id(WORKSPACE_ID)
-    airlock_request_repo.container.query_items.assert_called_once_with(query=expected_query, enable_cross_partition_query=True)
+    airlock_request_repo.container.query_items.assert_called_once_with(query=expected_query, parameters=expected_parameters, enable_cross_partition_query=True)
