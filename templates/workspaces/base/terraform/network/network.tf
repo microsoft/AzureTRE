@@ -40,6 +40,11 @@ resource "azurerm_subnet" "webapps" {
       actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
     }
   }
+
+  depends_on = [
+    # meant to resolve AnotherOperation errors with one operation in the vnet at a time
+    azurerm_subnet.services
+  ]
 }
 
 resource "azurerm_virtual_network_peering" "ws_core_peer" {
@@ -69,9 +74,17 @@ moved {
 resource "azurerm_subnet_route_table_association" "rt_services_subnet_association" {
   route_table_id = data.azurerm_route_table.rt.id
   subnet_id      = azurerm_subnet.services.id
+  depends_on = [
+    # meant to resolve AnotherOperation errors with one operation in the vnet at a time
+    azurerm_subnet.webapps
+  ]
 }
 
 resource "azurerm_subnet_route_table_association" "rt_webapps_subnet_association" {
   route_table_id = data.azurerm_route_table.rt.id
   subnet_id      = azurerm_subnet.webapps.id
+  depends_on = [
+    # meant to resolve AnotherOperation errors with one operation in the vnet at a time
+    azurerm_subnet_route_table_association.rt_services_subnet_association
+  ]
 }
