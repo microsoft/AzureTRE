@@ -101,4 +101,12 @@ if [ -n "${core_plan}" ] && [ -n "${api_diag}" ]; then
   fi
 fi
 
+# remove app insights profiler storage account
+app_insights_byo_storage=$(echo "${terraform_show_json}" \
+  | jq -r 'select(.values.root_module.child_modules != null) .values.root_module.child_modules[] | select (.address=="module.azure_monitor") | .resources[] | select(.address=="module.azure_monitor.azurerm_resource_group_template_deployment.app_insights_byo_storage") | .values.id')
+if [ -n "${app_insights_byo_storage}" ]; then
+  echo "Removing state of app_insights_byo_storage"
+  terraform state rm module.azure_monitor.azurerm_resource_group_template_deployment.app_insights_byo_storage
+fi
+
 echo "Migration is done."
