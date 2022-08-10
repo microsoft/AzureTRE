@@ -1,6 +1,7 @@
 import os
 import datetime
 import logging
+import json
 
 from azure.core.exceptions import ResourceExistsError
 from azure.identity import DefaultAzureCredential
@@ -66,7 +67,7 @@ def copy_data(source_account_name: str, destination_account_name: str, request_i
     # Set metadata to include the blob url that it is copied from
     metadata = source_blob.get_blob_properties()["metadata"]
     copied_from = json.loads(metadata["copied_from"]) if "copied_from" in metadata else []
-    metadata["copied_from"] = json.dumps(copied_from.append(source_blob.url))
+    metadata["copied_from"] = json.dumps(copied_from + [source_blob.url])
 
     # Copy files
     dest_blob_service_client = BlobServiceClient(account_url=get_account_url(destination_account_name),

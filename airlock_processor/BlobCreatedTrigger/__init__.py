@@ -1,6 +1,8 @@
 from distutils.util import strtobool
 from shared_code import constants, blob_operations
 import logging
+from azure.storage.blob import BlobServiceClient
+from typing import Dict, Any
 
 import azure.functions as func
 import datetime
@@ -68,9 +70,11 @@ def main(msg: func.ServiceBusMessage,
             data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
 
     # create blob client
-    blob_container = get_container_client(json_body)
-    blob_metadata = source_blob.get_blob_properties()["metadata"]
+    blob_client = get_blob_client_from_request_data(json_body)
+    blob_metadata = blob_client.get_blob_properties()["metadata"]
     copied_from = json.loads(blob_metadata["copied_from"])
+    # TODO: remove when ready
+    logging.info(f"blob metadata: {blob_metadata}")
 
     # signal that the container where we copied from can now be deleted
     toDeleteEvent.set(
@@ -84,14 +88,12 @@ def main(msg: func.ServiceBusMessage,
         )
     )
 
-
-def get_blob_client_from_request_data(json_body: str):
-    storage_account_name = re.search(r'providers/Microsoft.Storage/storageAccounts/(.*?)"', json_body["topic"]).group(1)
+def get_blob_client_from_request_data(json_body: Dict[str, Any]):
+    storage_account_name = re.search(r'providers/Microsoft.Storage/storageAccounts/(.*?)$', json_body["topic"]).group(1)
     container_name = re.search(r'/blobServices/default/containers/(.*?)/blobs', json_body["subject"]).group(1)
     source_blob_service_client = BlobServiceClient(account_url=f"https://{storage_account_name}.blob.core.windows.net/",
                                                    credential=blob_operations.get_credential())
     source_container_client = source_blob_service_client.get_container_client(container_name)
-    blob_name = re.search(r'blobs/(.*?)', json_body["subject"]).group(1)
-
-    return get_blob_client(source_container_client.get_blob_client(blob_name))
+    blob_name = re.search(r'blobs/(.*?)$', json_body["subject"]).group(1)
+    return source_container_client.get_blob_client(blob_name)
 
