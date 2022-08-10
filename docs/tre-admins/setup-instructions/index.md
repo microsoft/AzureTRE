@@ -2,7 +2,7 @@
 
 This section provide the guidelines for any engineer to deploy AzureTRE. This how-to will enable one to get familiar with a TRE deployment and its conceps.
 
-1. [Getting Started](getting-started.md)
+1. [Prerequisites](prerequisites.md)
 
 1. [AD Tenant](ad-tenant-choices.md)
 
