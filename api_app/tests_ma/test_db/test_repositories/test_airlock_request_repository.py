@@ -106,7 +106,6 @@ def test_create_airlock_request_item_creates_an_airlock_request_with_the_right_v
     airlock_request_item_to_create = sample_airlock_request_input
     airlock_request = airlock_request_repo.create_airlock_request_item(airlock_request_item_to_create, WORKSPACE_ID)
 
-    assert airlock_request.resourceType == AirlockResourceType.AirlockRequest
     assert airlock_request.workspaceId == WORKSPACE_ID
 
 

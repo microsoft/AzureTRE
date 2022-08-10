@@ -3,7 +3,8 @@ from enum import Enum
 from pydantic import Field
 from pydantic.schema import Optional
 from resources import strings
-from models.domain.airlock_resource import AirlockResource, AirlockResourceType
+from models.domain.azuretremodel import AzureTREModel
+from models.domain.authentication import User
 
 
 class AirlockRequestStatus(str, Enum):
@@ -29,14 +30,44 @@ class AirlockRequestType(str, Enum):
     Export = strings.AIRLOCK_REQUEST_TYPE_EXPORT
 
 
-class AirlockRequest(AirlockResource):
+class AirlockReviewDecision(str, Enum):
+    Approved = strings.AIRLOCK_RESOURCE_STATUS_APPROVAL_INPROGRESS
+    Rejected = strings.AIRLOCK_RESOURCE_STATUS_REJECTION_INPROGRESS
+
+
+class AirlockReview(AzureTREModel):
+    """
+    Airlock review
+    """
+    reviewer: User
+    dateCreated: float = 0
+    reviewDecision: AirlockReviewDecision = Field("", title="Airlock review decision")
+    decisionExplanation: str = Field(False, title="Explanation why the request was approved/rejected")
+
+
+class AirlockRequestHistoryItem(AzureTREModel):
+    """
+    Resource History Item - to preserve history of resource properties
+    """
+    resourceVersion: int
+    updatedWhen: float
+    user: dict = {}
+    properties: dict = {}
+
+
+class AirlockRequest(AzureTREModel):
     """
     Airlock request
     """
+    id: str = Field(title="Id", description="GUID identifying the resource")
+    resourceVersion: int = 0
+    user: dict = {}
+    updatedWhen: float = 0
+    history: List[AirlockRequestHistoryItem] = []
     workspaceId: str = Field("", title="Workspace ID", description="Service target Workspace id")
-    resourceType = AirlockResourceType.AirlockRequest
     requestType: AirlockRequestType = Field("", title="Airlock request type")
     files: List[str] = Field([], title="Files of the request")
     businessJustification: str = Field("Business Justifications", title="Explanation that will be provided to the request reviewer")
     status = AirlockRequestStatus.Draft
     errorMessage: Optional[str] = Field(title="Present only if the request have failed, provides the reason of the failure.")
+    reviews: Optional[List[AirlockReview]]

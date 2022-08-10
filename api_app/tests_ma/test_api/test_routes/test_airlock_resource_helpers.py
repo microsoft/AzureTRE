@@ -3,15 +3,12 @@ import pytest
 from mock import AsyncMock, patch, MagicMock
 
 from models.domain.events import AirlockNotificationData, StatusChangedData
-from api.routes.airlock_resource_helpers import save_airlock_review, save_and_publish_event_airlock_request, \
+from api.routes.airlock_resource_helpers import save_and_publish_event_airlock_request, \
     update_status_and_publish_event_airlock_request
-from db.repositories.airlock_reviews import AirlockReviewRepository
 from db.repositories.airlock_requests import AirlockRequestRepository
 from models.domain.workspace import Workspace
 from tests_ma.test_api.conftest import create_test_user
-from models.domain.airlock_review import AirlockReview, AirlockReviewDecision
-from models.domain.airlock_resource import AirlockResourceType
-from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType
+from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType, AirlockReview, AirlockReviewDecision
 from azure.eventgrid import EventGridEvent
 
 pytestmark = pytest.mark.asyncio
@@ -31,16 +28,9 @@ def airlock_request_repo_mock():
         yield AirlockRequestRepository(cosmos_client_mock)
 
 
-@pytest.fixture
-def airlock_review_repo_mock():
-    with patch('azure.cosmos.CosmosClient') as cosmos_client_mock:
-        yield AirlockReviewRepository(cosmos_client_mock)
-
-
 def sample_airlock_request(status=AirlockRequestStatus.Draft):
     airlock_request = AirlockRequest(
         id=AIRLOCK_REQUEST_ID,
-        resourceType=AirlockResourceType.AirlockRequest,
         workspaceId=WORKSPACE_ID,
         requestType=AirlockRequestType.Import,
         files=[],
@@ -73,9 +63,6 @@ def sample_airlock_notification_event(status="draft"):
 def sample_airlock_review(review_decision=AirlockReviewDecision.Approved):
     airlock_review = AirlockReview(
         id=AIRLOCK_REVIEW_ID,
-        resourceType=AirlockResourceType.AirlockReview,
-        workspaceId=WORKSPACE_ID,
-        requestId=AIRLOCK_REQUEST_ID,
         reviewDecision=review_decision,
         decisionExplanation="test explaination"
     )
@@ -228,27 +215,4 @@ async def test_update_status_and_publish_event_airlock_request_raises_503_if_pub
     assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
 
-async def test_save_airlock_review_saves_item(airlock_review_repo_mock):
-    airlock_review_mock = sample_airlock_review()
-    airlock_review_repo_mock.save_item = MagicMock(return_value=None)
 
-    await save_airlock_review(
-        airlock_review=airlock_review_mock,
-        airlock_review_repo=airlock_review_repo_mock,
-        user=create_test_user()
-    )
-
-    airlock_review_repo_mock.save_item.assert_called_once_with(airlock_review_mock)
-
-
-async def test_save_airlock_review_raises_503_if_save_to_db_fails(airlock_review_repo_mock):
-    airlock_review_mock = sample_airlock_review()
-    airlock_review_repo_mock.save_item = MagicMock(side_effect=Exception)
-    with pytest.raises(HTTPException) as ex:
-        await save_airlock_review(
-            airlock_review=airlock_review_mock,
-            airlock_review_repo=airlock_review_repo_mock,
-            user=create_test_user()
-        )
-
-    assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
