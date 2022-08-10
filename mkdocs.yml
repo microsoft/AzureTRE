@@ -74,6 +74,7 @@ nav:
           - Gitea (Source Mirror): tre-templates/shared-services/gitea.md
           - Nexus (Package Mirror): tre-templates/shared-services/nexus.md
           - Azure CycleCloud (HPC Compute): tre-templates/shared-services/cyclecloud.md
+          - Airlock Notifier: tre-templates/shared-services/airlock-notifier.md
       - User Resources:
           - Guacamole Windows VM: tre-templates/user-resources/guacamole-windows-vm.md
           - Guacamole Linux VM: tre-templates/user-resources/guacamole-linux-vm.md
@@ -128,11 +129,12 @@ nav:
                   - Azure DevOps: coming-soon.md
 
       - Troubleshooting FAQ: # General Troubleshooting Section for Development
-          - Enabling Debugging for the API: tre-admins/troubleshooting-guide.md # needs splitting out into a separate document
-          - API Logs using Development Center: tre-admins/troubleshooting-guide.md # needs splitting out into a separate document
-          - Checking the Service Bus: tre-admins/troubleshooting-guide.md # needs splitting out into a separate document
-          - Checking Logs in Application Insights: tre-admins/troubleshooting-guide.md # needs splitting out into a separate document
-          - Troubleshooting the Resource Processor: tre-admins/troubleshooting-guide.md # needs splitting out into a separate document
+          - Overview: troubleshooting-faq/troubleshooting-overview.md
+          - Enabling Debugging for the API: troubleshooting-faq/debug-api.md
+          - API logs using deployment center: troubleshooting-faq/api-logs-deployment-center.md
+          - Checking the Service Bus: troubleshooting-faq/troubleshooting-sb.md
+          - Checking Logs in Application Insights: troubleshooting-faq/app-insights-logs.md
+          - Troubleshooting the Resource Processor: troubleshooting-faq/troubleshooting-rp.md
   - TRE Admins:
       - Setup Instructions:
           - 1. Getting Started: tre-admins/setup-instructions/getting-started.md
