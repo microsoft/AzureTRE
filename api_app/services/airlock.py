@@ -80,6 +80,10 @@ def validate_request_status(airlock_request: AirlockRequest):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_IN_PROGRESS)
     elif airlock_request.status == AirlockRequestStatus.Cancelled:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_IS_CANCELED)
+    elif airlock_request.status in [AirlockRequestStatus.Failed,
+                                    AirlockRequestStatus.Rejected,
+                                    AirlockRequestStatus.Blocked]:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_UNACCESSIBLE)
     else:
         return
 

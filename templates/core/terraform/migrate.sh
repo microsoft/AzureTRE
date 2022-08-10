@@ -71,4 +71,34 @@ if [ -n "${app_insights_via_arm}" ]; then
     terraform apply -input=false -auto-approve ${PLAN_FILE}"
 fi
 
+# support downgrading core app service plan
+core_plan=$(echo "${terraform_show_json}" \
+  | jq -r 'select(.values.root_module.resources != null) | .values.root_module.resources[] | select(.address=="azurerm_service_plan.core") | .values.id')
+api_diag=$(echo "${terraform_show_json}" \
+  | jq -r 'select(.values.root_module.resources != null) | .values.root_module.resources[] | select(.address=="azurerm_monitor_diagnostic_setting.webapp_api") | .values.id')
+if [ -n "${core_plan}" ] && [ -n "${api_diag}" ]; then
+  set +o errexit
+  terraform plan -target "azurerm_service_plan.core" -detailed-exitcode
+  plan_exit_code=$?
+  set -o errexit
+
+  if [ "${plan_exit_code}" == "2" ]; then
+    echo "Migrating ${api_diag}"
+    PLAN_FILE="tfplan$$"
+    TS=$(date +"%s")
+    LOG_FILE="${TS}-tre-core-migrate.log"
+
+    # This variables are loaded in for us
+    # shellcheck disable=SC2154
+    ../../../devops/scripts/terraform_wrapper.sh \
+      -g "${TF_VAR_mgmt_resource_group_name}" \
+      -s "${TF_VAR_mgmt_storage_account_name}" \
+      -n "${TF_VAR_terraform_state_container_name}" \
+      -k "${TRE_ID}" \
+      -l "${LOG_FILE}" \
+      -c "terraform plan -destroy -target azurerm_monitor_diagnostic_setting.webapp_api -out ${PLAN_FILE} && \
+      terraform apply -input=false -auto-approve ${PLAN_FILE}"
+  fi
+fi
+
 echo "Migration is done."
