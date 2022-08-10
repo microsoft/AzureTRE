@@ -13,6 +13,7 @@ from models.domain.airlock_review import AirlockReview, AirlockReviewDecision
 from models.domain.airlock_resource import AirlockResourceType
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType
 from azure.eventgrid import EventGridEvent
+from api.routes.airlock import create_airlock_review
 
 pytestmark = pytest.mark.asyncio
 
@@ -80,6 +81,12 @@ def sample_airlock_review(review_decision=AirlockReviewDecision.Approved):
         decisionExplanation="test explaination"
     )
     return airlock_review
+
+
+def get_required_roles_for_endpoint(endpoint):
+    dependencies = list(filter(lambda x: hasattr(x.dependency, 'require_one_of_roles'), endpoint.__defaults__))
+    required_roles = dependencies[0].dependency.require_one_of_roles
+    return required_roles
 
 
 @patch("event_grid.helpers.EventGridPublisherClient", return_value=AsyncMock())
@@ -269,3 +276,12 @@ async def test_get_airlock_requests_by_user_and_workspace_with_awaiting_my_revie
     user = create_test_user()
     airlock_requests = get_airlock_requests_by_user_and_workspace(user=user, workspace=sample_workspace(), airlock_request_repo=airlock_review_repo_mock, awaiting_my_review=True)
     assert airlock_requests == []
+
+
+@pytest.mark.parametrize("role", get_required_roles_for_endpoint(endpoint=create_airlock_review))
+async def test_get_airlock_requests_by_user_and_workspace_with_awaiting_my_review_argument_requires_same_roles_as_review_endpoint(role, airlock_review_repo_mock):
+    airlock_review_repo_mock.get_airlock_requests_by_workspace_id = MagicMock()
+    user = create_test_user()
+    user.roles = [role]
+    get_airlock_requests_by_user_and_workspace(user=user, workspace=sample_workspace(), airlock_request_repo=airlock_review_repo_mock, awaiting_my_review=True)
+    airlock_review_repo_mock.get_airlock_requests_by_workspace_id.assert_called_once()
