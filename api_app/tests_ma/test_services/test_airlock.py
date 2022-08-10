@@ -112,11 +112,15 @@ def test_get_required_permission_return_read_only_permissions_for_non_draft_requ
     airlock_request = sample_airlock_request(airlock_status)
     permissions = get_required_permission(airlock_request)
     assert permissions.write is False
+    assert permissions.delete is False
     assert permissions.read is True
+    assert permissions.list is True
 
 
 def test_get_required_permission_return_read_and_write_permissions_for_draft_requests():
     airlock_request = sample_airlock_request(AirlockRequestStatus.Draft)
     permissions = get_required_permission(airlock_request)
     assert permissions.write is True
+    assert permissions.delete is True
+    assert permissions.list is True
     assert permissions.read is True
