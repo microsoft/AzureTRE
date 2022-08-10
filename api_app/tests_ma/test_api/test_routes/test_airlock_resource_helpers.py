@@ -83,7 +83,7 @@ def sample_airlock_review(review_decision=AirlockReviewDecision.Approved):
     return airlock_review
 
 
-def get_required_roles_for_endpoint(endpoint):
+def get_required_roles(endpoint):
     dependencies = list(filter(lambda x: hasattr(x.dependency, 'require_one_of_roles'), endpoint.__defaults__))
     required_roles = dependencies[0].dependency.require_one_of_roles
     return required_roles
@@ -278,7 +278,7 @@ async def test_get_airlock_requests_by_user_and_workspace_with_awaiting_my_revie
     assert airlock_requests == []
 
 
-@pytest.mark.parametrize("role", get_required_roles_for_endpoint(endpoint=create_airlock_review))
+@pytest.mark.parametrize("role", get_required_roles(endpoint=create_airlock_review))
 async def test_get_airlock_requests_by_user_and_workspace_with_awaiting_my_review_argument_requires_same_roles_as_review_endpoint(role, airlock_review_repo_mock):
     airlock_review_repo_mock.get_airlock_requests_by_workspace_id = MagicMock()
     user = create_test_user()
@@ -287,7 +287,7 @@ async def test_get_airlock_requests_by_user_and_workspace_with_awaiting_my_revie
     airlock_review_repo_mock.get_airlock_requests_by_workspace_id.assert_called_once()
 
 
-@pytest.mark.parametrize("role", get_required_roles_for_endpoint(endpoint=create_airlock_review))
+@pytest.mark.parametrize("role", get_required_roles(endpoint=create_airlock_review))
 async def test_get_allowed_actions_requires_same_roles_as_review_endpoint(role, airlock_review_repo_mock):
     airlock_review_repo_mock.validate_status_update = MagicMock(return_value=True)
     user = create_test_user()
@@ -296,7 +296,7 @@ async def test_get_allowed_actions_requires_same_roles_as_review_endpoint(role, 
     assert allowed_actions == [AirlockActions.Review]
 
 
-@pytest.mark.parametrize("role", get_required_roles_for_endpoint(endpoint=create_cancel_request))
+@pytest.mark.parametrize("role", get_required_roles(endpoint=create_cancel_request))
 async def test_get_allowed_actions_requires_same_roles_as_cancel_endpoint(role, airlock_review_repo_mock):
     airlock_review_repo_mock.validate_status_update = MagicMock(return_value=True)
     user = create_test_user()

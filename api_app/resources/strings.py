@@ -195,7 +195,7 @@ AIRLOCK_NOT_ENABLED_IN_WORKSPACE = "Airlock is not enabled in this workspace."
 AIRLOCK_NO_RESEARCHER_EMAIL = "There are no Workspace Researchers with an email address."
 AIRLOCK_NO_OWNER_EMAIL = "There are no Workspace Owners with an email address."
 
-# Airlock Messages
+# Airlock Actions
 AIRLOCK_ACTION_REVIEW = "review"
 AIRLOCK_ACTION_CANCEL = "cancel"
 
