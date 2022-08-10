@@ -52,7 +52,8 @@
       "type": "string",
       "enum": [
         "P1v3",
-        "P1v2"
+        "P1v2",
+        "S1"
       ],
       "default": "P1v3",
       "title": "App Service Plan SKU",
