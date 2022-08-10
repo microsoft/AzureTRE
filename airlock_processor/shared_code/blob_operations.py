@@ -11,6 +11,18 @@ from exceptions.TooManyFilesInRequestException import TooManyFilesInRequestExcep
 from exceptions.NoFilesInRequestException import NoFilesInRequestException
 
 
+def get_account_url(account_name: str) -> str:
+    return f"https://{account_name}.blob.core.windows.net/"
+
+
+# TODO: create a blob info dataclass
+def get_blob_client_from_blob_info(storage_account_name: str, container_name: str, blob_name: str):
+    source_blob_service_client = BlobServiceClient(account_url=f"https://{storage_account_name}.blob.core.windows.net/",
+                                                   credential=get_credential())
+    source_container_client = source_blob_service_client.get_container_client(container_name)
+    return source_container_client.get_blob_client(blob_name)
+
+
 def create_container(account_name: str, request_id: str):
     try:
         container_name = request_id
@@ -90,5 +102,10 @@ def get_credential() -> DefaultAzureCredential:
                                   exclude_shared_token_cache_credential=True) if managed_identity else DefaultAzureCredential()
 
 
-def get_account_url(account_name: str) -> str:
-    return f"https://{account_name}.blob.core.windows.net/"
+def get_blob_info_from_topic_and_subject(topic: str, subject: str):
+    # Example of a topic: "/subscriptions/<subscription_id>/resourceGroups/<reosurce_group_name>/providers/Microsoft.Storage/storageAccounts/<storage_account_name>"
+    storage_account_name = re.search(r'providers/Microsoft.Storage/storageAccounts/(.*?)$', topic).group(1)
+    # Example of a subject: "/blobServices/default/containers/<container_guid>/blobs/<blob_name>"
+    container_name, blob_name = re.search(r'/blobServices/default/containers/(.*?)/blobs/(.*?)$', subject).groups()
+
+    return storage_account_name, container_name, blob_name

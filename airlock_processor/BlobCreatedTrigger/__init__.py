@@ -1,5 +1,6 @@
 from distutils.util import strtobool
-from shared_code import constants, blob_operations
+from shared_code import constants
+from shared_code.blob_operations import get_blob_info_from_topic_and_subject, get_blob_client_from_blob_info
 import logging
 from azure.storage.blob import BlobServiceClient
 from typing import Dict, Any
@@ -22,8 +23,6 @@ def main(msg: func.ServiceBusMessage,
 
     json_body = json.loads(body)
 
-    # Example of a topic: "/subscriptions/<subscription_id>/resourceGroups/rg-tanyaair1/providers/Microsoft.Storage/storageAccounts/stalimiptanyaair1"
-    # Example of a subject: "/blobServices/default/containers/67824d82-b62c-4ab8-88c3-a5ffd20a012f/blobs/new_model.txt"
     topic = json_body["topic"]
     request_id = re.search(r'/blobServices/default/containers/(.*?)/blobs', json_body["subject"]).group(1)
 
@@ -70,11 +69,11 @@ def main(msg: func.ServiceBusMessage,
             data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
 
     # create blob client
-    blob_client = get_blob_client_from_request_data(json_body)
+    blob_client = get_blob_client_from_blob_info(
+        *get_blob_info_from_topic_and_subject(topic=json_body["topic"], subject=json_body["subject"]))
     blob_metadata = blob_client.get_blob_properties()["metadata"]
-    copied_from = json.loads(blob_metadata["copied_from"])
-    # TODO: remove when ready
     logging.info(f"blob metadata: {blob_metadata}")
+    copied_from = json.loads(blob_metadata["copied_from"])
 
     # signal that the container where we copied from can now be deleted
     toDeleteEvent.set(
@@ -87,13 +86,3 @@ def main(msg: func.ServiceBusMessage,
             data_version="1.0"
         )
     )
-
-def get_blob_client_from_request_data(json_body: Dict[str, Any]):
-    storage_account_name = re.search(r'providers/Microsoft.Storage/storageAccounts/(.*?)$', json_body["topic"]).group(1)
-    container_name = re.search(r'/blobServices/default/containers/(.*?)/blobs', json_body["subject"]).group(1)
-    source_blob_service_client = BlobServiceClient(account_url=f"https://{storage_account_name}.blob.core.windows.net/",
-                                                   credential=blob_operations.get_credential())
-    source_container_client = source_blob_service_client.get_container_client(container_name)
-    blob_name = re.search(r'blobs/(.*?)$', json_body["subject"]).group(1)
-    return source_container_client.get_blob_client(blob_name)
-
