@@ -157,7 +157,7 @@ resource "azurerm_firewall_application_rule_collection" "resource_processor_subn
   }
 
   # TODO: remove this rule when all bundles have mirrored their plugins
-  # ADD issue link
+  # https://github.com/microsoft/AzureTRE/issues/2445
   rule {
     name = "terraform-sources"
     protocol {
