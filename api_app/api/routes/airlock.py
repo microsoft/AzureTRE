@@ -18,7 +18,7 @@ from resources import strings
 from services.authentication import get_current_workspace_owner_or_researcher_user_or_airlock_manager, get_current_workspace_owner_or_researcher_user, get_current_airlock_manager_user
 
 from .airlock_resource_helpers import save_airlock_review, save_and_publish_event_airlock_request, \
-    update_status_and_publish_event_airlock_request, RequestAccountDetails, enrich_requests_with_allowed_actions
+    update_status_and_publish_event_airlock_request, RequestAccountDetails, enrich_requests_with_allowed_actions, get_airlock_requests_by_user_and_workspace
 
 from services.airlock import get_storage_management_client, validate_user_allowed_to_access_storage_account, \
     get_account_and_rg_by_request, get_airlock_request_container_sas_token, validate_request_status
@@ -52,12 +52,8 @@ async def get_all_airlock_requests_by_workspace(
         user=Depends(get_current_workspace_owner_or_researcher_user),
         initiator: str = None, type: AirlockRequestType = None, status: AirlockRequestStatus = None, awaiting_my_review: bool = None) -> AirlockRequestInList:
     try:
-        if awaiting_my_review:
-            if "AirlockManager" not in user.roles:
-                return []
-            status = AirlockRequestStatus.InReview
-
-        airlock_requests = airlock_request_repo.get_airlock_requests_by_workspace_id(workspace.id, initiator, type, status)
+        airlock_requests = get_airlock_requests_by_user_and_workspace(user=user, workspace=workspace, airlock_request_repo=airlock_request_repo,
+                                                                      initiator=initiator, type=type, status=status, awaiting_my_review=awaiting_my_review)
         airlock_requests_with_allowed_user_actions = enrich_requests_with_allowed_actions(airlock_requests, user, airlock_request_repo)
     except (ValidationError, ValueError) as e:
         logging.error(f"Failed retrieving all the airlock requests for a workspace: {e}")

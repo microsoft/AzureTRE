@@ -8,7 +8,7 @@ from starlette import status
 from db.repositories.airlock_reviews import AirlockReviewRepository
 from models.domain.airlock_review import AirlockReview
 from db.repositories.airlock_requests import AirlockRequestRepository
-from models.domain.airlock_request import AirlockActions, AirlockRequest, AirlockRequestStatus
+from models.domain.airlock_request import AirlockActions, AirlockRequest, AirlockRequestStatus, AirlockRequestType
 from event_grid.event_sender import send_status_changed_event, send_airlock_notification_event
 from models.domain.authentication import User
 from models.domain.workspace import Workspace
@@ -98,6 +98,16 @@ def check_email_exists(role_assignment_details: defaultdict(list)):
     if "owner_emails" not in role_assignment_details or not role_assignment_details["owner_emails"]:
         logging.error('Creating an airlock request but the workspace owner does not have an email address.')
         raise HTTPException(status_code=status.HTTP_417_EXPECTATION_FAILED, detail=strings.AIRLOCK_NO_OWNER_EMAIL)
+
+
+def get_airlock_requests_by_user_and_workspace(user: User, workspace: Workspace, airlock_request_repo: AirlockRequestRepository,
+                                               initiator: str = None, type: AirlockRequestType = None, status: AirlockRequestStatus = None, awaiting_my_review: bool = None) -> List[AirlockRequest]:
+    if awaiting_my_review:
+        if "AirlockManager" not in user.roles:
+            return []
+        status = AirlockRequestStatus.InReview
+
+    return airlock_request_repo.get_airlock_requests_by_workspace_id(workspace_id=workspace.id, user_id=initiator, type=type, status=status)
 
 
 def get_allowed_actions(request: AirlockRequest, user: User, airlock_request_repo: AirlockRequestRepository) -> AirlockRequestWithAllowedUserActions:
