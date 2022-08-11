@@ -17,7 +17,7 @@ import { Operation } from './models/operation';
 import { ResourceUpdate } from './models/resource';
 import { HttpMethod, ResultType, useAuthApiCall } from './hooks/useAuthApiCall';
 import { ApiEndpoint } from './models/apiEndpoints';
-import { CreateUpdateResource } from './components/shared/CreateUpdateResource/CreateUpdateResource';
+import { CreateUpdateResource } from './components/shared/create-update-resource/CreateUpdateResource';
 import { CreateUpdateResourceContext } from './contexts/CreateUpdateResourceContext';
 import { CreateFormResource, ResourceType } from './models/resourceType';
 
