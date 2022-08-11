@@ -63,9 +63,14 @@ async def retrieve_users_active_workspaces(request: Request, user=Depends(get_cu
         return WorkspacesInList(workspaces=user_workspaces)
 
 
-@workspaces_shared_router.get("/workspaces/{workspace_id}", response_model=WorkspaceInResponse, name=strings.API_GET_WORKSPACE_BY_ID, dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_tre_admin)])
-async def retrieve_workspace_by_workspace_id(workspace=Depends(get_workspace_by_id_from_path)) -> WorkspaceInResponse:
-    return WorkspaceInResponse(workspace=workspace)
+@workspaces_shared_router.get("/workspaces/{workspace_id}", response_model=WorkspaceInResponse, name=strings.API_GET_WORKSPACE_BY_ID, dependencies=[Depends(get_current_tre_user_or_tre_admin)])
+async def retrieve_workspace_by_workspace_id(workspace=Depends(get_workspace_by_id_from_path), user=Depends(get_current_tre_user_or_tre_admin)) -> WorkspaceInResponse:
+    access_service = get_access_service()
+    user_role_assignments = get_user_role_assignments(user)
+    if access_service.get_workspace_role(user, workspace, user_role_assignments) != WorkspaceRole.NoRole:
+        return WorkspaceInResponse(workspace=workspace)
+    else:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.ACCESS_USER_IS_NOT_OWNER_OR_RESEARCHER)
 
 
 @workspaces_core_router.post("/workspaces", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_CREATE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
