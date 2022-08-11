@@ -3,13 +3,13 @@ import datetime
 import logging
 import json
 import re
+from typing import Tuple
 
 from azure.core.exceptions import ResourceExistsError
 from azure.identity import DefaultAzureCredential
 from azure.storage.blob import ContainerSasPermissions, generate_container_sas, BlobServiceClient
 
-from exceptions.TooManyFilesInRequestException import TooManyFilesInRequestException
-from exceptions.NoFilesInRequestException import NoFilesInRequestException
+from exceptions import NoFilesInRequestException, TooManyFilesInRequestException
 
 
 def get_account_url(account_name: str) -> str:
@@ -45,7 +45,9 @@ def copy_data(source_account_name: str, destination_account_name: str, request_i
 
     # Check that we are copying exactly one blob
     found_blobs = 0
+    blob_name = ""
     for blob in source_container_client.list_blobs():
+        blob_name = blob.name
         if found_blobs > 0:
             msg = "Request with id {} contains more than 1 file. flow aborted.".format(request_id)
             logging.error(msg)
@@ -105,7 +107,7 @@ def get_blob_info_from_topic_and_subject(topic: str, subject: str):
 
     return storage_account_name, container_name, blob_name
 
-def get_blob_info_from_blob_url(blob_url: str) -> (str, str, str):
+def get_blob_info_from_blob_url(blob_url: str) -> Tuple[str, str, str]:
     # If it's the only blob in the container, we need to delete the container too
     # Check how many blobs are in the container
     return re.search(r'https://(.*?).blob.core.windows.net/(.*?)/(.*?)$', blob_url).groups()

@@ -6,8 +6,7 @@ import os
 import uuid
 import json
 
-from exceptions.NoFilesInRequestException import NoFilesInRequestException
-from exceptions.TooManyFilesInRequestException import TooManyFilesInRequestException
+from exceptions import NoFilesInRequestException, TooManyFilesInRequestException
 
 from shared_code import blob_operations, constants
 from pydantic import BaseModel, parse_obj_as
