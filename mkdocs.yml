@@ -62,12 +62,13 @@ nav:
       - 7. Installing Workspace Service and User Resource: tre-admins/setup-instructions/installing-workspace-service-and-user-resource.md
 
   - Using the TRE for Research: # Documentation for users of the TRE
-      - Introduction: coming-soon.md
-      - Terms and Definitions: coming-soon.md
-      - Workspaces: # Documentation describing what a workspace is
-          - Using Workspaces: coming-soon.md # Interacting with workspaces (via the UI)
-          - The Workspace Owner: coming-soon.md # Workspace Owners. The concept, and tasks
-      - FAQ: coming-soon.md # FAQ section (to allow easy contribution)
+      - Introduction: using-tre/index.md
+      - Terms and Definitions: using-tre/terms-definitions.md
+      - Workspaces: 
+          - using-tre/wks/index.md # Documentation describing what a workspace is
+          - Using Workspaces: using-tre/wks/using-wks.md # Interacting with workspaces (via the UI)
+          - The Workspace Owner: using-tre/wks/wks-owner.md # Workspace Owners. The concept, and tasks
+      - FAQ: using-tre/faq.md # FAQ section (to allow easy contribution)
 
   - Templates and Services: # Docs to highlight and illustrate workspaces, workspace services etc
       - tre-templates/index.md
