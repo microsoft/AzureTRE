@@ -1,45 +1,40 @@
 import logging
 
+
 import azure.functions as func
 import json
 
 from shared_code import blob_operations
 from pydantic import BaseModel, parse_obj_as
 
-
-class ToDeleteProperties(BaseModel):
-    account_rg: str
-    account_name: str
-    request_id: str
-
+from azure.storage.blob import BlobServiceClient, BlobClient
 
 def main(msg: func.ServiceBusMessage):
     body = msg.get_body().decode('utf-8')
     logging.info(f'Python ServiceBus queue trigger processed mesage: {body}')
 
-    storage_client = blob_operations.get_storage_management_client()
-
     json_body = json.loads(body)
-    blob_url = json_body["blob_to_delete"]
-    logging.info(f'Deleting the blob {blob_url} (not actually deleting yet)')
+    blob_url = json_body["data"]["blob_to_delete"]
+    logging.info(f'Blob to delete is {blob_url}')
 
-    # TODO: this doesn't support / in blob name. Are we going to have blobs like this?
-    # Maybe there are directories?
-    blob_client = BlobClient.from_blob_url(blob_url)
-
-    # Checking permissions for now
-    logging.info(f'Blob properties: {blob_client.get_blob_properties()}'
-
-    # blob_client.delete_blob()
-    # Example of URL: "https://stalimextanyademo.blob.core.windows.net/c144728c-3c69-4a58-afec-48c2ec8bfd45/test_dataset.txt"
+    storage_account_name, container_name, blob_name = blob_operations.get_blob_info_from_blob_url(blob_url=blob_url)
+    credential = blob_operations.get_credential()
+    blob_service_client = BlobServiceClient(
+        account_url=f'https://{storage_account_name}.blob.core.windows.net/',
+        credential=credential)
+    container_client = blob_service_client.get_container_client(container_name)
 
     # If it's the only blob in the container, we need to delete the container too
-    # Check how many blobs are in the container
-    storage_account_name, container_name = re.search(r'https://(.*?).blob.core.windows.net/(.*?)/', blob_url).groups()
+    # Check how many blobs are in the container (note: this exausts the generator)
+    blobs_num = sum(1 for _ in container_client.list_blobs())
+    logging.info(f'Found {blobs_num} blobs in the container')
 
-    source_blob_service_client = BlobServiceClient(account_url=f"https://{storage_account_name}.blob.core.windows.net/",
-                                                   credential=blob_operations.get_credential())
-    source_container_client = source_blob_service_client.get_container_client(container_name)
+    # Deleting blob
+    logging.info(f'Deleting blob {blob_name}...')
+    blob_client = container_client.get_blob_client(blob_name)
+    blob_client.delete_blob()
 
-    for blob in source_container_client.list_blobs():
-        logging.info(f'found blob {blob.name}')
+    if blobs_num == 1:
+        # Need to delete the container too
+        logging.info(f'There was one blob in the container. Deleting container {container_name}...')
+        container_client.delete_container()

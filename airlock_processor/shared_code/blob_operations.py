@@ -2,6 +2,7 @@ import os
 import datetime
 import logging
 import json
+import re
 
 from azure.core.exceptions import ResourceExistsError
 from azure.identity import DefaultAzureCredential
@@ -109,3 +110,9 @@ def get_blob_info_from_topic_and_subject(topic: str, subject: str):
     container_name, blob_name = re.search(r'/blobServices/default/containers/(.*?)/blobs/(.*?)$', subject).groups()
 
     return storage_account_name, container_name, blob_name
+
+def get_blob_info_from_blob_url(blob_url: str) -> (str, str, str):
+    # If it's the only blob in the container, we need to delete the container too
+    # Check how many blobs are in the container
+    return re.search(r'https://(.*?).blob.core.windows.net/(.*?)/(.*?)$', blob_url).groups()
+

@@ -7,7 +7,7 @@ from azure.mgmt.storage.v2021_09_01.aio.operations import StorageAccountsOperati
 from azure.mgmt.storage.v2021_09_01.models import StorageAccountListKeysResult, StorageAccountKey
 from azure.storage.blob import BlobServiceClient
 
-from shared_code.blob_operations import create_container, get_blob_info_from_topic_and_subject
+from shared_code.blob_operations import create_container, get_blob_info_from_topic_and_subject,get_blob_info_from_blob_url
 
 class TestBlobOperations(unittest.TestCase):
     def test_get_blob_info_from_topic_and_subject(self):
@@ -19,6 +19,15 @@ class TestBlobOperations(unittest.TestCase):
         self.assertEqual(storage_account_name, "ST_ACC_NAME")
         self.assertEqual(container_name, "CONTAINER_GUID")
         self.assertEqual(blob_name, "BLOB")
+
+    def test_get_blob_info_from_url(self):
+        url = "https://stalimextest.blob.core.windows.net/c144728c-3c69-4a58-afec-48c2ec8bfd45/test_dataset.txt"
+
+        storage_account_name, container_name, blob_name = get_blob_info_from_blob_url(blob_url=url)
+
+        self.assertEqual(storage_account_name, "stalimextest")
+        self.assertEqual(container_name, "c144728c-3c69-4a58-afec-48c2ec8bfd45")
+        self.assertEqual(blob_name, "test_dataset.txt")
 
 
     # TODO: fix this test
