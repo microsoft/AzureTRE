@@ -1,4 +1,4 @@
-## Checking the Service Bus
+# Checking the Service Bus
 
 If the message payload is accepted by the API, and a **workspace_id** is generated, you should be able to track the progress of the deployment using `GET /api/workspaces/{workspace_id}`
 

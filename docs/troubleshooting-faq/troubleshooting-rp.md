@@ -1,4 +1,4 @@
-## Checking the Virtual Machine Scale Set (VMSS) instance running resource processor
+# Checking the Virtual Machine Scale Set (VMSS) instance running resource processor
 
 If you see messages hanging in the service bus queue then the resource processor is not up and running.
 
@@ -43,7 +43,7 @@ To start a processor container manually:
 !!! info
     All logs from the resource processor should also be transferred to the App Insights instance, so it is not necessary to follow the progress by logging into the instance. Logging into the instance and starting a container manually however, is helpful in live debugging.
 
-### Updating the running container
+## Updating the running container
 
 If you start a container manually you will probably want to install software, for example, an editor. However, the firewall blocks all ingress traffic, so you cannot run `sudo apt update`. You need to add an override rule in the firewall to allow the traffic.
 

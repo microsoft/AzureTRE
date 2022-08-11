@@ -1,4 +1,4 @@
-## API logs using deployment center
+# API logs using deployment center
 
 Check that the version you are debugging/troubleshooting is the same one deployed on the App Service.
 

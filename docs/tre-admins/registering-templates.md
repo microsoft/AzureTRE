@@ -3,11 +3,11 @@
 To enable users to deploy Workspaces, Workspace Services or User Resources, we need to register their Templates. This can be done wither by running `make` commands; using the API or devops scripts. In this article both approaches are described.
 
 !!! info
-    Templates are encapsulated in [Porter](https://porter.sh) bundles. 
+    Templates are encapsulated in [Porter](https://porter.sh) bundles.
 
-### Registration with make commands
+## Registration with make commands
 
-Porter bundles can be registered with `make` commands which can be useful for CI/CD scenarios. To start on should build the Porter bundle running the command `make bundle-build`. Once built a Template must be published so it can the registered. For this the commands `make bundle publish` and `make bundle-register` can be used Here we use the workspace service Azure ML bundle as an example: 
+Porter bundles can be registered with `make` commands which can be useful for CI/CD scenarios. To start on should build the Porter bundle running the command `make bundle-build`. Once built a Template must be published so it can the registered. For this the commands `make bundle publish` and `make bundle-register` can be used Here we use the workspace service Azure ML bundle as an example:
 
 ```cmd
 make bundle-build DIR=templates/workspace_services/azureml
@@ -15,7 +15,7 @@ make bundle-publish DIR=templates/workspace_services/azureml
 make bundle-register DIR=templates/workspace_services/azureml BUNDLE_TYPE=workspace_service
 ```
 
-### Registration using Swagger UI
+## Registration using Swagger UI
 
 Porter bundles can also be registered interactively using the Swagger UI. For that we need to build and publish the porter bundle  
 
@@ -43,7 +43,7 @@ Porter bundles can also be registered interactively using the Swagger UI. For th
 1. Paste the payload json generated earlier into the `Request body` field, then click `Execute`. Review the server response.
 1. Verify the template registration using the `GET` operation on `/api/workspace-templates`. The name of the template should now be listed.
 
-### Registration using script
+## Registration using script
 
 To use the script to automatically register the template, you must create a user that does not require an interactive login per the [e2e test user documentation here](../tre-admins/auth.md#tre-e2e-test).
 

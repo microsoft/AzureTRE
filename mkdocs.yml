@@ -50,7 +50,7 @@ nav:
           - Azure Resources: azure-tre-overview/tre-resources-breakdown.md
           - Airlock: azure-tre-overview/airlock.md
       - Compliance: azure-tre-overview/compliance-info.md
-  
+
   - QuickStart: # Setup steps for anyone performing an initial deployment of the AzureTRE for eval purposes
       - tre-admins/setup-instructions/index.md
       - 1. Prerequisites: tre-admins/setup-instructions/prerequisites.md
@@ -64,7 +64,7 @@ nav:
   - Using the TRE for Research: # Documentation for users of the TRE
       - Introduction: using-tre/index.md
       - Terms and Definitions: using-tre/terms-definitions.md
-      - Workspaces: 
+      - Workspaces:
           - using-tre/wks/index.md # Documentation describing what a workspace is
           - Using Workspaces: using-tre/wks/using-wks.md # Interacting with workspaces (via the UI)
           - The Workspace Owner: using-tre/wks/wks-owner.md # Workspace Owners. The concept, and tasks

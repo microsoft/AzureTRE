@@ -1,4 +1,4 @@
-## Checking the logs in App Insights
+# Checking the logs in App Insights
 
 Every component of TRE should send their trace logs to App Insights logging backend, and you should be able to see the process flow by using a suitable query.
 
