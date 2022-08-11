@@ -169,6 +169,22 @@
           }
         },
         {
+          "name": "Airlock Processor Unit Tests",
+          "type": "python",
+          "request": "launch",
+          "module": "pytest",
+          "console": "integratedTerminal",
+          "justMyCode": true,
+          "cwd": "${workspaceFolder}/airlock_processor",
+          "args": [
+            "--ignore",
+            "e2e_tests"
+          ],
+          "env": {
+            "PYTHONPATH": "."
+          }
+        },
+        {
           "name": "Debug Python file",
           "type": "python",
           "request": "launch",
