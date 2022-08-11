@@ -1,6 +1,6 @@
 ---
 name: tre-service-guacamole-linuxvm
-version: 0.4.7
+version: 0.4.10
 description: "An Azure TRE User Resource Template for Guacamole (Linux)"
 registry: azuretre
 
@@ -228,7 +228,7 @@ stop:
       description: "Stop the VM"
       arguments:
         - vm
-        - stop
+        - deallocate
       flags:
         ids: "{{ bundle.outputs.azure_resource_id }}"
 
