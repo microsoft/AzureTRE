@@ -16,7 +16,6 @@ def get_account_url(account_name: str) -> str:
     return f"https://{account_name}.blob.core.windows.net/"
 
 
-# TODO: create a blob info dataclass
 def get_blob_client_from_blob_info(storage_account_name: str, container_name: str, blob_name: str):
     source_blob_service_client = BlobServiceClient(account_url=get_account_url(storage_account_name),
                                                    credential=get_credential())
