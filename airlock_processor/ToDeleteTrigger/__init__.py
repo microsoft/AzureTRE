@@ -5,22 +5,15 @@ import azure.functions as func
 import json
 
 from shared_code import blob_operations
-from pydantic import BaseModel, parse_obj_as
 
-from azure.storage.blob import BlobServiceClient, BlobClient
+from azure.storage.blob import BlobServiceClient
 
-def main(msg: func.ServiceBusMessage):
-    body = msg.get_body().decode('utf-8')
-    logging.info(f'Python ServiceBus queue trigger processed mesage: {body}')
 
-    json_body = json.loads(body)
-    blob_url = json_body["data"]["blob_to_delete"]
-    logging.info(f'Blob to delete is {blob_url}')
-
+def delete_blob_and_container_if_last_blob(blob_url: str):
     storage_account_name, container_name, blob_name = blob_operations.get_blob_info_from_blob_url(blob_url=blob_url)
     credential = blob_operations.get_credential()
     blob_service_client = BlobServiceClient(
-        account_url=f'https://{storage_account_name}.blob.core.windows.net/',
+        account_url=blob_operations.get_account_url(storage_account_name),
         credential=credential)
     container_client = blob_service_client.get_container_client(container_name)
 
@@ -38,3 +31,14 @@ def main(msg: func.ServiceBusMessage):
         # Need to delete the container too
         logging.info(f'There was one blob in the container. Deleting container {container_name}...')
         container_client.delete_container()
+
+
+def main(msg: func.ServiceBusMessage):
+    body = msg.get_body().decode('utf-8')
+    logging.info(f'Python ServiceBus queue trigger processed mesage: {body}')
+    json_body = json.loads(body)
+
+    blob_url = json_body["data"]["blob_to_delete"]
+    logging.info(f'Blob to delete is {blob_url}')
+
+    delete_blob_and_container_if_last_blob(blob_url)

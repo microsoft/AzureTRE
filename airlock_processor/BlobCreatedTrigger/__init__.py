@@ -68,12 +68,12 @@ def main(msg: func.ServiceBusMessage,
             event_time=datetime.datetime.utcnow(),
             data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
 
-    # create blob client
+    # check blob metadata to find the blob it was copied from
     blob_client = get_blob_client_from_blob_info(
         *get_blob_info_from_topic_and_subject(topic=json_body["topic"], subject=json_body["subject"]))
     blob_metadata = blob_client.get_blob_properties()["metadata"]
-    logging.info(f"blob metadata: {blob_metadata}")
     copied_from = json.loads(blob_metadata["copied_from"])
+    logging.info(f"copied from history: {copied_from}")
 
     # signal that the container where we copied from can now be deleted
     toDeleteEvent.set(

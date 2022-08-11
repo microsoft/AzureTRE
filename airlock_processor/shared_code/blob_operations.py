@@ -18,7 +18,7 @@ def get_account_url(account_name: str) -> str:
 
 # TODO: create a blob info dataclass
 def get_blob_client_from_blob_info(storage_account_name: str, container_name: str, blob_name: str):
-    source_blob_service_client = BlobServiceClient(account_url=f"https://{storage_account_name}.blob.core.windows.net/",
+    source_blob_service_client = BlobServiceClient(account_url=get_account_url(storage_account_name),
                                                    credential=get_credential())
     source_container_client = source_blob_service_client.get_container_client(container_name)
     return source_container_client.get_blob_client(blob_name)
@@ -43,25 +43,19 @@ def copy_data(source_account_name: str, destination_account_name: str, request_i
                                                    credential=credential)
     source_container_client = source_blob_service_client.get_container_client(container_name)
 
-    try:
-        found_blobs = 0
-        blob_name = ""
-        for blob in source_container_client.list_blobs():
-            if found_blobs > 0:
-                msg = "Request with id {} contains more than 1 file. flow aborted.".format(request_id)
-                logging.error(msg)
-                raise TooManyFilesInRequestException(msg)
-            blob_name = blob.name
-            found_blobs += 1
-
-        if found_blobs == 0:
-            msg = "Request with id {} did not contain any files. flow aborted.".format(request_id)
+    # Check that we are copying exactly one blob
+    found_blobs = 0
+    for blob in source_container_client.list_blobs():
+        if found_blobs > 0:
+            msg = "Request with id {} contains more than 1 file. flow aborted.".format(request_id)
             logging.error(msg)
-            raise NoFilesInRequestException(msg)
+            raise TooManyFilesInRequestException(msg)
+        found_blobs += 1
 
-    except Exception:
-        logging.error('Request with id %s failed.', request_id)
-        raise
+    if found_blobs == 0:
+        msg = "Request with id {} did not contain any files. flow aborted.".format(request_id)
+        logging.error(msg)
+        raise NoFilesInRequestException(msg)
 
     udk = source_blob_service_client.get_user_delegation_key(datetime.datetime.utcnow() - datetime.timedelta(hours=1),
                                                              datetime.datetime.utcnow() + datetime.timedelta(hours=1))
