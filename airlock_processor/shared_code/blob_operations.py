@@ -3,31 +3,25 @@ import datetime
 import logging
 import json
 import re
-from dataclasses import dataclass
+from typing import Tuple
 
 from azure.core.exceptions import ResourceExistsError
 from azure.identity import DefaultAzureCredential
-from azure.storage.blob import ContainerSasPermissions, generate_container_sas, BlobServiceClient, BlobClient
+from azure.storage.blob import ContainerSasPermissions, generate_container_sas, BlobServiceClient
 
 from exceptions import NoFilesInRequestException, TooManyFilesInRequestException
-
-
-@dataclass
-class BlobInfo:
-    storage_account_name: str
-    container_name: str
-    blob_name: str
 
 
 def get_account_url(account_name: str) -> str:
     return f"https://{account_name}.blob.core.windows.net/"
 
 
-def get_blob_client_from_blob_info(blob_info: BlobInfo) -> BlobClient:
-    source_blob_service_client = BlobServiceClient(account_url=get_account_url(blob_info.storage_account_name),
+# TODO: create a blob info dataclass
+def get_blob_client_from_blob_info(storage_account_name: str, container_name: str, blob_name: str):
+    source_blob_service_client = BlobServiceClient(account_url=get_account_url(storage_account_name),
                                                    credential=get_credential())
-    source_container_client = source_blob_service_client.get_container_client(blob_info.container_name)
-    return source_container_client.get_blob_client(blob_info.blob_name)
+    source_container_client = source_blob_service_client.get_container_client(container_name)
+    return source_container_client.get_blob_client(blob_name)
 
 
 def create_container(account_name: str, request_id: str):
@@ -105,17 +99,16 @@ def get_credential() -> DefaultAzureCredential:
                                   exclude_shared_token_cache_credential=True) if managed_identity else DefaultAzureCredential()
 
 
-def get_blob_info_from_topic_and_subject(topic: str, subject: str) -> BlobInfo:
+def get_blob_info_from_topic_and_subject(topic: str, subject: str):
     # Example of a topic: "/subscriptions/<subscription_id>/resourceGroups/<reosurce_group_name>/providers/Microsoft.Storage/storageAccounts/<storage_account_name>"
     storage_account_name = re.search(r'providers/Microsoft.Storage/storageAccounts/(.*?)$', topic).group(1)
     # Example of a subject: "/blobServices/default/containers/<container_guid>/blobs/<blob_name>"
     container_name, blob_name = re.search(r'/blobServices/default/containers/(.*?)/blobs/(.*?)$', subject).groups()
 
-    return BlobInfo(storage_account_name, container_name, blob_name)
+    return storage_account_name, container_name, blob_name
 
-
-def get_blob_info_from_blob_url(blob_url: str) -> BlobInfo:
+def get_blob_info_from_blob_url(blob_url: str) -> Tuple[str, str, str]:
     # If it's the only blob in the container, we need to delete the container too
     # Check how many blobs are in the container
-    return BlobInfo(*re.search(r'https://(.*?).blob.core.windows.net/(.*?)/(.*?)$', blob_url).groups())
+    return re.search(r'https://(.*?).blob.core.windows.net/(.*?)/(.*?)$', blob_url).groups()
 
