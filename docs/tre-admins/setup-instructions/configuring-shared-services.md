@@ -137,3 +137,8 @@ Make sure you run the following commands using git bash and set your current dir
 From a virtual machine within a workspace:
 - Command line: ```git clone https://gitea-<TRE_ID>.azurewebsites.net/giteaadmin/<NameOfrepository>```
 - Gitea Web Interface: ```https://gitea-<TRE_ID>.azurewebsites.net/```
+
+
+## Next steps
+
+* [Install Base Workspace](installing-base-workspace.md)

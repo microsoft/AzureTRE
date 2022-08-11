@@ -34,7 +34,7 @@ export const SelectTemplate: React.FunctionComponent<SelectTemplateProps> = (pro
     switch (loading) {
         case LoadingState.Ok:
             return (
-                templates ? <Stack style={{ marginTop: 20 }}>
+                templates && templates.length > 0 ? <Stack>
                 {
                     templates.map((template: any, i) => {
                         return (
@@ -46,7 +46,13 @@ export const SelectTemplate: React.FunctionComponent<SelectTemplateProps> = (pro
                         )
                     })
                 }
-                </Stack> : null
+                </Stack> : <MessageBar
+                    messageBarType={MessageBarType.info}
+                    isMultiline={true}
+                >
+                    <h3>No templates found</h3>
+                    <p>Looks like there aren't any templates registered for this resource type.</p>
+                </MessageBar>
             )
         case LoadingState.Error:
             return (
