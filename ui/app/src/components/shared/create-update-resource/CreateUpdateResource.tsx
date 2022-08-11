@@ -147,7 +147,9 @@ export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceP
         closeButtonAriaLabel="Close"
         isLightDismiss
       >
-        {currentPage}
+        <div style={{ paddingTop: 30 }}>
+          {currentPage}
+        </div>
       </Panel>
     </>
   );
