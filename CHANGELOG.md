@@ -13,7 +13,7 @@ FEATURES:
 
 ENHANCEMENTS:
 
-*
+* 'CreationTime' field was added to Airlock requests ([#2432](https://github.com/microsoft/AzureTRE/issues/2432))
 
 BUG FIXES:
 
