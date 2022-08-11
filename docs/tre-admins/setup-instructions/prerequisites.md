@@ -21,7 +21,8 @@ The files for the dev container are located in `/.devcontainer/` folder.
 
 ## Clone the Azure TRE Git repository
 
-1. Clone the Azure TRE Git repository on GitHub to your local computer.
+!!! tip
+    If using Windows please clone the repository to a Linux file system, i.e. to `/xxx` rather than `c:\`, for example within Windows Subsytem for Linux. If you clone the repository to a Windows file system you will likely hit issues with file permissions as described in this issue: <https://github.com/microsoft/AzureTRE/issues/1395>
 
   ```cmd
   git clone https://github.com/microsoft/AzureTRE.git
