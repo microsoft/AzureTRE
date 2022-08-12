@@ -1,6 +1,5 @@
 from unittest import TestCase
-from unittest.mock import MagicMock
-from mock import patch
+from unittest.mock import MagicMock, patch
 
 from ToDeleteTrigger import delete_blob_and_container_if_last_blob
 
