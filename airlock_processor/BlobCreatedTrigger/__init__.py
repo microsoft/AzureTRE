@@ -1,16 +1,15 @@
 from distutils.util import strtobool
-from shared_code import constants
-from shared_code.blob_operations import get_blob_info_from_topic_and_subject, get_blob_client_from_blob_info
 import logging
-from azure.storage.blob import BlobServiceClient
-from typing import Dict, Any
-
-import azure.functions as func
 import datetime
 import uuid
 import json
 import re
 import os
+
+import azure.functions as func
+
+from shared_code import constants
+from shared_code.blob_operations import get_blob_info_from_topic_and_subject, get_blob_client_from_blob_info
 
 
 def main(msg: func.ServiceBusMessage,
@@ -22,7 +21,6 @@ def main(msg: func.ServiceBusMessage,
     logging.info('Python ServiceBus queue trigger processed message: %s', body)
 
     json_body = json.loads(body)
-
     topic = json_body["topic"]
     request_id = re.search(r'/blobServices/default/containers/(.*?)/blobs', json_body["subject"]).group(1)
 

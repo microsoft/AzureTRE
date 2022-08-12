@@ -1,12 +1,10 @@
 import logging
-
-
-import azure.functions as func
 import json
 
-from shared_code import blob_operations
-
+import azure.functions as func
 from azure.storage.blob import BlobServiceClient
+
+from shared_code import blob_operations
 
 
 def delete_blob_and_container_if_last_blob(blob_url: str):
