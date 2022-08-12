@@ -1,15 +1,15 @@
-import unittest
-from mock import Mock, patch
+from unittest import TestCase
+from mock import patch, MagicMock
 
 from ToDeleteTrigger import delete_blob_and_container_if_last_blob
 
 
-class TestToDeleteTrigger(unittest.TestCase):
+class TestToDeleteTrigger(TestCase):
     @patch("ToDeleteTrigger.BlobServiceClient")
     def test_delete_blob_and_container_if_last_blob_deletes_container(self, mock_blob_service_client):
         blob_url = "https://stalimextest.blob.core.windows.net/c144728c-3c69-4a58-afec-48c2ec8bfd45/test_dataset.txt"
 
-        mock_blob_service_client().get_container_client().list_blobs = Mock(return_value=["blob"])
+        mock_blob_service_client().get_container_client().list_blobs = MagicMock(return_value=["blob"])
 
         delete_blob_and_container_if_last_blob(blob_url)
 
@@ -19,7 +19,7 @@ class TestToDeleteTrigger(unittest.TestCase):
     def test_delete_blob_and_container_if_last_blob_doesnt_delete_container(self, mock_blob_service_client):
         blob_url = "https://stalimextest.blob.core.windows.net/c144728c-3c69-4a58-afec-48c2ec8bfd45/test_dataset.txt"
 
-        mock_blob_service_client().get_container_client().list_blobs = Mock(return_value=["blob1", "blob2"])
+        mock_blob_service_client().get_container_client().list_blobs = MagicMock(return_value=["blob1", "blob2"])
 
         delete_blob_and_container_if_last_blob(blob_url)
 
