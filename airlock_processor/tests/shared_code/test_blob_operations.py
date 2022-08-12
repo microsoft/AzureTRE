@@ -49,25 +49,30 @@ class TestBlobOperations(unittest.TestCase):
     @patch("shared_code.blob_operations.generate_container_sas", return_value="sas")
     def test_copy_data_adds_copied_from_metadata(self, _, mock_blob_service_client):
         source_url = "http://storageacct.blob.core.windows.net/container/blob"
-        source_blob_client_mock = Mock()
-        source_blob_client_mock.url = source_url
-        source_blob_client_mock.get_blob_properties = Mock(return_value={"metadata": {"a": "b"}})
 
-        dest_blob_client_mock = Mock()
-        dest_blob_client_mock.bla = "bla"
-        dest_blob_client_mock.start_copy_from_url = Mock(return_value={"copy_id": "123", "copy_status": "status"})
+        # Check for two scenarios: when there's no copied_from history in metadata, and when there is some
+        for source_metadata, dest_metadata in [
+            ({"a": "b"}, {"a": "b", "copied_from": json.dumps([source_url])}),
+            ({"a": "b", "copied_from": json.dumps(["old_url"])}, {"a": "b", "copied_from": json.dumps(["old_url", source_url])})
+        ]:
+            source_blob_client_mock = Mock()
+            source_blob_client_mock.url = source_url
+            source_blob_client_mock.get_blob_properties = Mock(return_value={"metadata": source_metadata})
 
-        # Set source blob mock
-        mock_blob_service_client().get_container_client().get_blob_client = Mock(return_value=source_blob_client_mock)
-        # Set dest blob mock
-        mock_blob_service_client().get_blob_client = Mock(return_value=dest_blob_client_mock)
+            dest_blob_client_mock = Mock()
+            dest_blob_client_mock.bla = "bla"
+            dest_blob_client_mock.start_copy_from_url = Mock(return_value={"copy_id": "123", "copy_status": "status"})
 
-        # Any additional mocks for the copy_data method to work
-        mock_blob_service_client().get_user_delegation_key = Mock(return_value="key")
-        mock_blob_service_client().get_container_client().list_blobs = Mock(return_value=[TestBlob("a")])
+            # Set source blob mock
+            mock_blob_service_client().get_container_client().get_blob_client = Mock(return_value=source_blob_client_mock)
+            # Set dest blob mock
+            mock_blob_service_client().get_blob_client = Mock(return_value=dest_blob_client_mock)
 
-        copy_data("source_acc", "dest_acc", "req_id")
+            # Any additional mocks for the copy_data method to work
+            mock_blob_service_client().get_user_delegation_key = Mock(return_value="key")
+            mock_blob_service_client().get_container_client().list_blobs = Mock(return_value=[TestBlob("a")])
 
-        # Check that copied_from field was set correctly in the metadata
-        dest_blob_client_mock.start_copy_from_url.assert_called_with(f"{source_url}?sas",
-            metadata={"a": "b", "copied_from": json.dumps([source_url])})
+            copy_data("source_acc", "dest_acc", "req_id")
+
+            # Check that copied_from field was set correctly in the metadata
+            dest_blob_client_mock.start_copy_from_url.assert_called_with(f"{source_url}?sas", metadata=dest_metadata)
