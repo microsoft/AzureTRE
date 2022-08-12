@@ -249,6 +249,16 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
         assert workspaces_from_response[0]["id"] == valid_ws_1.id
         assert workspaces_from_response[1]["id"] == valid_ws_2.id
 
+    # [GET] /workspaces/{workspace_id}
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    async def test_get_workspace_by_id_get_returns_workspace_if_found(self, get_workspace_mock, app, client):
+        workspace = sample_workspace()
+        get_workspace_mock.return_value = sample_workspace()
+
+        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id=WORKSPACE_ID))
+        actual_resource = response.json()["workspace"]
+        assert actual_resource["id"] == workspace.id
+
 
 class TestWorkspaceRoutesThatRequireAdminRights:
     @pytest.fixture(autouse=True, scope='class')
@@ -279,16 +289,6 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         assert workspaces_from_response[0]["id"] == valid_ws_1.id
         assert workspaces_from_response[1]["id"] == valid_ws_2.id
         assert workspaces_from_response[2]["id"] == valid_ws_3.id
-
-    # [GET] /workspaces/{workspace_id}
-    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
-    async def test_get_workspace_by_id_get_returns_workspace_if_found(self, get_workspace_mock, app, client):
-        workspace = sample_workspace()
-        get_workspace_mock.return_value = sample_workspace()
-
-        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id=WORKSPACE_ID))
-        actual_resource = response.json()["workspace"]
-        assert actual_resource["id"] == workspace.id
 
     # [POST] /workspaces/
     @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version")
