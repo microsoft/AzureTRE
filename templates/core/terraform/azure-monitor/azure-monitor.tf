@@ -79,39 +79,6 @@ resource "azurerm_monitor_private_link_scoped_service" "ampls_app_insights" {
   linked_resource_id  = azurerm_application_insights.core.id
 }
 
-data "local_file" "app_insights_byo_storage_arm_template" {
-  filename = "${path.module}/app_insights_byo_storage.json"
-}
-
-# Deployed using ARM template, because Terraform's azurerm_application_insights does not support linked storage account
-# https://docs.microsoft.com/en-us/azure/azure-monitor/app/profiler-bring-your-own-storage
-resource "azurerm_resource_group_template_deployment" "app_insights_byo_storage" {
-  name                = azurerm_application_insights.core.name
-  resource_group_name = var.resource_group_name
-  deployment_mode     = "Incremental"
-  template_content    = data.local_file.app_insights_byo_storage_arm_template.content
-
-  parameters_content = jsonencode({
-    "app_insights_name" = {
-      value = azurerm_application_insights.core.name
-    }
-    "storage_account_resource_id" = {
-      value = azurerm_storage_account.az_monitor.id
-    }
-  })
-
-  depends_on = [
-    azurerm_application_insights.core
-  ]
-}
-
-# Per https://docs.microsoft.com/en-us/azure/azure-monitor/profiler/profiler-bring-your-own-storage#grant-access-to-diagnostic-services-to-your-storage-account
-resource "azurerm_role_assignment" "appinsights_storage_permission" {
-  scope                = azurerm_storage_account.az_monitor.id
-  role_definition_name = "Storage Blob Data Contributor"
-  principal_id         = "6243488d-10d8-4ea0-884e-c2d5d1b7462d" # id of: Diagnostic Services Trusted Storage Access
-}
-
 resource "azurerm_private_endpoint" "azure_monitor_private_endpoint" {
   name                = "pe-ampls-${var.tre_id}"
   resource_group_name = var.resource_group_name

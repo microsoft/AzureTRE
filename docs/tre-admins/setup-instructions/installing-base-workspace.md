@@ -71,5 +71,4 @@ Workspace level operations can now be carried out using the workspace API, at `/
 
 ## Next steps
 
-* [Configuring shared services](./configuring-shared-services.md)
 * [Installing a workspace service & user resources](./installing-workspace-service-and-user-resource.md)

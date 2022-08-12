@@ -64,3 +64,10 @@ data "azurerm_application_insights" "ws" {
   name                = "appi-${var.tre_id}-ws-${local.short_workspace_id}"
   resource_group_name = data.azurerm_resource_group.ws.name
 }
+
+data "azurerm_monitor_diagnostic_categories" "guacamole" {
+  resource_id = azurerm_linux_web_app.guacamole.id
+  depends_on = [
+    azurerm_linux_web_app.guacamole,
+  ]
+}
