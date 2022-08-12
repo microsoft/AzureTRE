@@ -106,8 +106,8 @@ def get_blob_info_from_topic_and_subject(topic: str, subject: str):
 
     return storage_account_name, container_name, blob_name
 
+
 def get_blob_info_from_blob_url(blob_url: str) -> Tuple[str, str, str]:
-    # If it's the only blob in the container, we need to delete the container too
-    # Check how many blobs are in the container
+    # Example of blob url: https://stalimappws663d.blob.core.windows.net/50866a82-d13a-4fd5-936f-deafdf1022ce/test_blob.txt
     return re.search(r'https://(.*?).blob.core.windows.net/(.*?)/(.*?)$', blob_url).groups()
 
