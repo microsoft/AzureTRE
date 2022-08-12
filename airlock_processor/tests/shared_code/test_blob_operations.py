@@ -1,8 +1,8 @@
 from collections import namedtuple
-from unittest import TestCase
 import json
-from mock import patch, MagicMock
-
+from unittest import TestCase
+from unittest.mock import MagicMock
+from mock import patch
 
 from shared_code.blob_operations import get_blob_info_from_topic_and_subject, get_blob_info_from_blob_url, copy_data
 from exceptions import TooManyFilesInRequestException, NoFilesInRequestException

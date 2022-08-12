@@ -5,7 +5,6 @@ import azure.functions as func
 import datetime
 import uuid
 import json
-import re
 import os
 from shared_code import constants, blob_operations
 
