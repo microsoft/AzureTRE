@@ -16,9 +16,6 @@ sudo apt-get update
 sudo apt-get install xrdp -y
 sudo adduser xrdp ssl-cert
 
-# Required packages for Docker installation
-sudo apt-get install ca-certificates curl gnupg lsb-release
-
 # Install desktop environment if image doesn't have one already
 if [ "${INSTALL_UI}" -eq 1 ]; then
   sudo apt-get install xorg xfce4 xfce4-goodies dbus-x11 x11-xserver-utils -y
@@ -33,7 +30,7 @@ sudo systemctl enable xrdp
 
 if [ "${SHARED_STORAGE_ACCESS}" -eq 1 ]; then
   # Install required packages
-  sudo apt-get install autofs
+  sudo apt-get install autofs -y
 
   # Pass in required variables
   storageAccountName="${STORAGE_ACCOUNT_NAME}"
@@ -87,7 +84,9 @@ if [ "${CONDA_CONFIG}" -eq 1 ]; then
   conda config --set channel_alias "${NEXUS_PROXY_URL}"/repository/conda/  --system
 fi
 
-# Docker proxy config
+# Docker install and config
+sudo apt-get install -y ca-certificates curl gnupg lsb-release
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin jq
 jq -n --arg proxy "${NEXUS_PROXY_URL}:8083" '{"registry-mirrors": [$proxy]}' > /etc/docker/daemon.json
 sudo systemctl daemon-reload
 sudo systemctl restart docker

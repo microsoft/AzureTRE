@@ -144,14 +144,13 @@ resource "azurerm_monitor_diagnostic_setting" "webapp_api" {
   log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
 
   dynamic "log" {
-    for_each = toset(["AppServiceHTTPLogs", "AppServiceConsoleLogs", "AppServiceAppLogs", "AppServiceFileAuditLogs",
-    "AppServiceAuditLogs", "AppServiceIPSecAuditLogs", "AppServicePlatformLogs", "AppServiceAntivirusScanAuditLogs"])
+    for_each = data.azurerm_monitor_diagnostic_categories.api.logs
     content {
       category = log.value
-      enabled  = true
+      enabled  = contains(local.api_diagnostic_categories_enabled, log.value) ? true : false
 
       retention_policy {
-        enabled = true
+        enabled = contains(local.api_diagnostic_categories_enabled, log.value) ? true : false
         days    = 365
       }
     }

@@ -292,63 +292,6 @@ resource "azurerm_role_assignment" "servicebus_sender_export_approved_blob_creat
   ]
 }
 
-
-# Custom topic (for scanning)
-resource "azurerm_eventgrid_topic" "scan_result" {
-  name                = local.scan_result_topic_name
-  location            = var.location
-  resource_group_name = var.resource_group_name
-
-  # Must enable public access so the malware scanning service can report back
-  public_network_access_enabled = true
-
-  identity {
-    type = "SystemAssigned"
-  }
-
-  tags = merge(var.tre_core_tags, {
-    Publishers = "airlock;custom scanning service;"
-  })
-
-  inbound_ip_rule = var.enable_local_debugging ? [{
-    ip_mask = "${var.myip}"
-    action  = "Allow"
-  }] : null
-
-  lifecycle { ignore_changes = [tags] }
-}
-
-resource "azurerm_role_assignment" "servicebus_sender_scan_result" {
-  scope                = var.airlock_servicebus.id
-  role_definition_name = "Azure Service Bus Data Sender"
-  principal_id         = azurerm_eventgrid_topic.scan_result.identity.0.principal_id
-
-  depends_on = [
-    azurerm_eventgrid_topic.scan_result
-  ]
-}
-
-resource "azurerm_private_endpoint" "eg_scan_result" {
-  name                = "pe-eg-scan-result-${var.tre_id}"
-  location            = var.location
-  resource_group_name = var.resource_group_name
-  subnet_id           = var.airlock_events_subnet_id
-  tags                = var.tre_core_tags
-  lifecycle { ignore_changes = [tags] }
-
-  private_dns_zone_group {
-    name                 = "private-dns-zone-group"
-    private_dns_zone_ids = [data.azurerm_private_dns_zone.eventgrid.id]
-  }
-
-  private_service_connection {
-    name                           = "psc-eg-${var.tre_id}"
-    private_connection_resource_id = azurerm_eventgrid_topic.scan_result.id
-    is_manual_connection           = false
-    subresource_names              = ["topic"]
-  }
-}
-
 # Custom topic (for airlock notifications)
 resource "azurerm_eventgrid_topic" "airlock_notification" {
   name                          = local.notification_topic_name
@@ -449,22 +392,6 @@ resource "azurerm_eventgrid_event_subscription" "to_delete" {
   depends_on = [
     azurerm_eventgrid_topic.to_delete,
     azurerm_role_assignment.servicebus_sender_to_delete
-  ]
-}
-
-resource "azurerm_eventgrid_event_subscription" "scan_result" {
-  name  = local.scan_result_eventgrid_subscription_name
-  scope = azurerm_eventgrid_topic.scan_result.id
-
-  service_bus_queue_endpoint_id = azurerm_servicebus_queue.scan_result.id
-
-  delivery_identity {
-    type = "SystemAssigned"
-  }
-
-  depends_on = [
-    azurerm_eventgrid_topic.scan_result,
-    azurerm_role_assignment.servicebus_sender_scan_result
   ]
 }
 
