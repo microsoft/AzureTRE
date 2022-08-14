@@ -5,7 +5,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG BUNDLE_DIR
 
 RUN apt-get update \
-    && apt-get install -y zip="3.0-11+b1" \
+    && apt-get install --no-install-recommends -y zip \
     && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 # This is a template Dockerfile for the bundle's invocation image
