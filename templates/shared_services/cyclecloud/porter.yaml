@@ -1,9 +1,10 @@
 ---
 name: tre-shared-service-cyclecloud
-version: 0.2.3
+version: 0.2.4
 description: "An Azure TRE Shared Service Template for Azure Cyclecloud"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
+
 credentials:
   - name: azure_tenant_id
     env: ARM_TENANT_ID
@@ -47,7 +48,7 @@ outputs:
 mixins:
   - exec
   - terraform:
-      clientVersion: 1.2.4
+      clientVersion: 1.2.6
   - az
 
 install:
