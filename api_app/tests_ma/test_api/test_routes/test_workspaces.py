@@ -231,9 +231,9 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
     @patch("api.routes.workspaces.WorkspaceRepository.get_active_workspaces")
     @patch("api.routes.workspaces.get_user_role_assignments")
     async def test_get_workspaces_returns_correct_data_when_resources_exist(self, access_service_mock, get_workspaces_mock, app, client) -> None:
-        auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'app_role_id_workspace_owner': 'ab124', 'app_role_id_workspace_researcher': 'ab125'}
-        auth_info_user_in_workspace_researcher_role = {'sp_id': 'ab123', 'app_role_id_workspace_owner': 'ab127', 'app_role_id_workspace_researcher': 'ab126'}
-        auth_info_user_not_in_workspace_role = {'sp_id': 'ab127', 'app_role_id_workspace_owner': 'ab128', 'app_role_id_workspace_researcher': 'ab129'}
+        auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'app_role_id_workspace_owner': 'ab124', 'app_role_id_workspace_researcher': 'ab125', 'app_role_id_workspace_airlock_manager': 'ab130'}
+        auth_info_user_in_workspace_researcher_role = {'sp_id': 'ab123', 'app_role_id_workspace_owner': 'ab127', 'app_role_id_workspace_researcher': 'ab126', 'app_role_id_workspace_airlock_manager': 'ab130'}
+        auth_info_user_not_in_workspace_role = {'sp_id': 'ab127', 'app_role_id_workspace_owner': 'ab128', 'app_role_id_workspace_researcher': 'ab129', 'app_role_id_workspace_airlock_manager': 'ab130'}
 
         valid_ws_1 = sample_workspace(workspace_id=str(uuid.uuid4()), auth_info=auth_info_user_in_workspace_owner_role)
         valid_ws_2 = sample_workspace(workspace_id=str(uuid.uuid4()), auth_info=auth_info_user_in_workspace_researcher_role)
@@ -248,6 +248,35 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
         assert len(workspaces_from_response) == 2
         assert workspaces_from_response[0]["id"] == valid_ws_1.id
         assert workspaces_from_response[1]["id"] == valid_ws_2.id
+
+    # [GET] /workspaces/{workspace_id}
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    @patch("api.routes.workspaces.get_user_role_assignments")
+    async def test_get_workspace_by_id_get_returns_workspace_if_found(self, access_service_mock, get_workspace_mock, app, client):
+        auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'app_role_id_workspace_owner': 'ab124', 'app_role_id_workspace_researcher': 'ab125', 'app_role_id_workspace_airlock_manager': 'ab130'}
+        workspace = sample_workspace(auth_info=auth_info_user_in_workspace_owner_role)
+        get_workspace_mock.return_value = sample_workspace(auth_info=auth_info_user_in_workspace_owner_role)
+        access_service_mock.return_value = [RoleAssignment('ab123', 'ab124')]
+
+        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id=WORKSPACE_ID))
+        actual_resource = response.json()["workspace"]
+        assert actual_resource["id"] == workspace.id
+
+    # [GET] /workspaces/{workspace_id}
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", side_effect=EntityDoesNotExist)
+    @patch("api.routes.workspaces.get_user_role_assignments")
+    async def test_get_workspace_by_id_get_returns_404_if_resource_is_not_found(self, access_service_mock, _, app, client):
+        access_service_mock.return_value = [RoleAssignment('ab123', 'ab124')]
+        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id=WORKSPACE_ID))
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    # [GET] /workspaces/{workspace_id}
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    @patch("api.routes.workspaces.get_user_role_assignments")
+    async def test_get_workspace_by_id_get_returns_422_if_workspace_id_is_not_a_uuid(self, access_service_mock, _, app, client):
+        access_service_mock.return_value = [RoleAssignment('ab123', 'ab124')]
+        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id="not_valid"))
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
 class TestWorkspaceRoutesThatRequireAdminRights:
@@ -279,16 +308,6 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         assert workspaces_from_response[0]["id"] == valid_ws_1.id
         assert workspaces_from_response[1]["id"] == valid_ws_2.id
         assert workspaces_from_response[2]["id"] == valid_ws_3.id
-
-    # [GET] /workspaces/{workspace_id}
-    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
-    async def test_get_workspace_by_id_get_returns_workspace_if_found(self, get_workspace_mock, app, client):
-        workspace = sample_workspace()
-        get_workspace_mock.return_value = sample_workspace()
-
-        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id=WORKSPACE_ID))
-        actual_resource = response.json()["workspace"]
-        assert actual_resource["id"] == workspace.id
 
     # [POST] /workspaces/
     @ patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version")
@@ -697,28 +716,6 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
         app.dependency_overrides[get_current_workspace_owner_or_researcher_user] = researcher_user
         yield
         app.dependency_overrides = {}
-
-    # [GET] /workspaces/{workspace_id}
-    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", side_effect=EntityDoesNotExist)
-    async def test_get_workspace_by_id_get_returns_404_if_resource_is_not_found(self, _, app, client):
-        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id=WORKSPACE_ID))
-        assert response.status_code == status.HTTP_404_NOT_FOUND
-
-    # [GET] /workspaces/{workspace_id}
-    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
-    async def test_get_workspace_by_id_get_returns_422_if_workspace_id_is_not_a_uuid(self, _, app, client):
-        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id="not_valid"))
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-
-    # [GET] /workspaces/{workspace_id}
-    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
-    async def test_get_workspace_by_id_get_returns_workspace_if_found(self, get_workspace_mock, app, client):
-        workspace = sample_workspace()
-        get_workspace_mock.return_value = sample_workspace()
-
-        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id=WORKSPACE_ID))
-        actual_resource = response.json()["workspace"]
-        assert actual_resource["id"] == workspace.id
 
     # [GET] /workspaces/{workspace_id}/workspace-services
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())

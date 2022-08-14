@@ -276,7 +276,7 @@ nexus-install:
 	$(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
 	DIR="${MAKEFILE_DIR}/templates/shared_services/certs" BUNDLE_TYPE=shared_service PROPS="--domain_prefix nexus --cert_name nexus-ssl" \
 	&& $(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
-  DIR=${MAKEFILE_DIR}/templates/shared_services/sonatype-nexus-vm/ BUNDLE_TYPE=shared_service
+	DIR=${MAKEFILE_DIR}/templates/shared_services/sonatype-nexus-vm/ BUNDLE_TYPE=shared_service PROPS="--ssl_cert_name nexus-ssl"
 
 gitea-install:
 	$(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service DIR=${MAKEFILE_DIR}/templates/shared_services/gitea/ BUNDLE_TYPE=shared_service
@@ -301,10 +301,6 @@ build-and-deploy-ui:
 prepare-for-e2e:
 	$(call workspace_bundle,base) \
 	&& $(call workspace_service_bundle,guacamole) \
-	&& $(call workspace_service_bundle,azureml) \
-	&& $(call workspace_service_bundle,gitea) \
-	&& $(call workspace_service_bundle,innereye) \
-	&& $(call shared_service_bundle,sonatype-nexus) \
 	&& $(call shared_service_bundle,gitea) \
 	&& $(call user_resource_bundle,guacamole,guacamole-azure-windowsvm) \
 	&& $(call user_resource_bundle,guacamole,guacamole-azure-linuxvm)
@@ -344,7 +340,7 @@ setup-local-debugging:
 auth:
 	$(call target_title,"Setting up Azure Active Directory") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
-	&& . ${MAKEFILE_DIR}/devops/scripts/create_aad_assets.sh
+	&& ${MAKEFILE_DIR}/devops/scripts/create_aad_assets.sh
 
 show-core-output:
 	$(call target_title,"Display TRE core output") \

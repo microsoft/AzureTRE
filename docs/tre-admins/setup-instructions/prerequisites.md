@@ -1,6 +1,4 @@
-# Getting started
-
-## Prerequisites
+# Prerequisites
 
 To deploy an Azure TRE instance, the following assets and tools are required:
 
@@ -23,7 +21,8 @@ The files for the dev container are located in `/.devcontainer/` folder.
 
 ## Clone the Azure TRE Git repository
 
-1. Clone the Azure TRE Git repository on GitHub to your local computer.
+!!! tip
+    If using Windows please clone the repository to a Linux file system, i.e. to `/xxx` rather than `c:\`, for example within Windows Subsytem for Linux. If you clone the repository to a Windows file system you will likely hit issues with file permissions as described in this issue: <https://github.com/microsoft/AzureTRE/issues/1395>
 
   ```cmd
   git clone https://github.com/microsoft/AzureTRE.git
@@ -49,4 +48,4 @@ When you start the development container for the first time, the container will 
 
 ## Next steps
 
-* [Pre-deployment steps](./pre-deployment-steps.md)
+* [AD Tenant Choices](./ad-tenant-choices.md)

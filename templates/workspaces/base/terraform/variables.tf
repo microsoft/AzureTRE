@@ -82,6 +82,11 @@ variable "app_role_id_workspace_researcher" {
   default     = ""
   description = "The id of the application role WorkspaceResearcher in the identity provider, this is passed in so that we may return it as an output."
 }
+variable "app_role_id_workspace_airlock_manager" {
+  type        = string
+  default     = ""
+  description = "The id of the application role AirlockManager in the identity provider, this is passed in so that we may return it as an output."
+}
 variable "client_id" {
   type        = string
   default     = ""

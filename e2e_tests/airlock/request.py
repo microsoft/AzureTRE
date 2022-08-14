@@ -64,7 +64,8 @@ async def upload_blob_using_sas(file_path: str, sas_url: str, assert_status):
         file_name = os.path.basename(file_path)
         _, file_ext = os.path.splitext(file_name)
 
-        LOGGER.info(f"uploading {file_name} to container")
+        blob_url = f"{storage_account_url}{container_name}/{file_name}?{parsed_sas_url.query}"
+        LOGGER.info(f"uploading [{file_name}] to container [{blob_url}]")
         with open(file_path, "rb") as fh:
             headers = {"x-ms-blob-type": "BlockBlob"}
             content_type = ""
@@ -74,12 +75,11 @@ async def upload_blob_using_sas(file_path: str, sas_url: str, assert_status):
                 ).content_type
 
             response = await client.put(
-                url=f"{storage_account_url}{container_name}/{file_name}?{parsed_sas_url.query}",
+                url=blob_url,
                 files={'upload-file': (file_name, fh, content_type)},
                 headers=headers
             )
             LOGGER.info(f"response code: {response.status_code}")
-            assert response.status_code == assert_status
             return response
 
 

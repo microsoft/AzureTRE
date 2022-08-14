@@ -1,0 +1,2 @@
+class NoFilesInRequestException(Exception):
+    pass

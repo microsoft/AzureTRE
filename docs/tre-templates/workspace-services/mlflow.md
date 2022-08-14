@@ -6,10 +6,6 @@ See: <https://www.mlflow.org>
 
 - [A base workspace deployed](https://microsoft.github.io/AzureTRE/tre-templates/workspaces/base/)
 
-- The MLflow workspace service container image needs building and pushing:
-
-  `make build-and-push-mlflow`
-
 ## MLflow Workspace VM Configuration
 
 Each MLflow server deployment creates a PowerShell (for Windows) and a shell script (for Linux) with the same name as the MLflow server, in the shared storage mounted on the researcher VMs.

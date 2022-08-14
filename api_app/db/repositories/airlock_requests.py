@@ -1,6 +1,7 @@
 import copy
 import uuid
 
+from datetime import datetime
 from typing import List
 from pydantic import UUID4
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
@@ -47,8 +48,15 @@ class AirlockRequestRepository(AirlockResourceRepository):
         in_review_condition = current_status == AirlockRequestStatus.InReview and (new_status == AirlockRequestStatus.ApprovalInProgress or new_status == AirlockRequestStatus.RejectionInProgress)
         # Cancel is allowed only if the request is not actively changing, i.e. it is currently in draft or in review
         cancel_condition = (current_status == AirlockRequestStatus.Draft or current_status == AirlockRequestStatus.InReview) and new_status == AirlockRequestStatus.Cancelled
+        # Failed is allowed from any non-final status
+        failed_condition = (current_status == AirlockRequestStatus.Draft
+                            or current_status == AirlockRequestStatus.Submitted
+                            or current_status == AirlockRequestStatus.InReview
+                            or current_status == AirlockRequestStatus.ApprovalInProgress
+                            or current_status == AirlockRequestStatus.RejectionInProgress
+                            or current_status == AirlockRequestStatus.BlockingInProgress) and new_status == AirlockRequestStatus.Failed
 
-        return approved_condition and rejected_condition and blocked_condition and (approved_in_progress_condition or rejected_in_progress_condition or blocking_in_progress_condition or draft_condition or submit_condition or in_review_condition or cancel_condition)
+        return approved_condition and rejected_condition and blocked_condition and (approved_in_progress_condition or rejected_in_progress_condition or blocking_in_progress_condition or draft_condition or submit_condition or in_review_condition or cancel_condition or failed_condition)
 
     def create_airlock_request_item(self, airlock_request_input: AirlockRequestInCreate, workspace_id: str) -> AirlockRequest:
         full_airlock_request_id = str(uuid.uuid4())
@@ -60,6 +68,7 @@ class AirlockRequestRepository(AirlockResourceRepository):
             workspaceId=workspace_id,
             businessJustification=airlock_request_input.businessJustification,
             requestType=airlock_request_input.requestType,
+            creationTime=datetime.utcnow().timestamp(),
             properties=resource_spec_parameters
         )
 
@@ -77,11 +86,13 @@ class AirlockRequestRepository(AirlockResourceRepository):
             raise EntityDoesNotExist
         return parse_obj_as(AirlockRequest, airlock_requests)
 
-    def update_airlock_request_status(self, airlock_request: AirlockRequest, new_status: AirlockRequestStatus, user: User) -> AirlockRequest:
+    def update_airlock_request_status(self, airlock_request: AirlockRequest, new_status: AirlockRequestStatus, user: User, error_message: str = None) -> AirlockRequest:
         current_status = airlock_request.status
         if self._validate_status_update(current_status, new_status):
             updated_request = copy.deepcopy(airlock_request)
             updated_request.status = new_status
+            if new_status == AirlockRequestStatus.Failed:
+                updated_request.errorMessage = error_message
             return self.update_airlock_resource_item(airlock_request, updated_request, user, {"previousStatus": current_status})
         else:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE)

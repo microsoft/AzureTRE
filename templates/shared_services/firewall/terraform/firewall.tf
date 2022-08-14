@@ -115,9 +115,8 @@ resource "azurerm_firewall_application_rule_collection" "resource_processor_subn
   priority            = 101
   action              = "Allow"
 
-
   rule {
-    name = "package-sources"
+    name = "os-package-sources"
     protocol {
       port = "443"
       type = "Https"
@@ -134,11 +133,45 @@ resource "azurerm_firewall_application_rule_collection" "resource_processor_subn
       "azure.archive.ubuntu.com",
       "security.ubuntu.com",
       "entropy.ubuntu.com",
+    ]
+    source_addresses = data.azurerm_subnet.resource_processor.address_prefixes
+  }
+
+  rule {
+    name = "docker-sources"
+    protocol {
+      port = "443"
+      type = "Https"
+    }
+    protocol {
+      port = "80"
+      type = "Http"
+    }
+
+    target_fqdns = [
       "download.docker.com",
       "registry-1.docker.io",
       "auth.docker.io",
+    ]
+    source_addresses = data.azurerm_subnet.resource_processor.address_prefixes
+  }
+
+  # TODO: remove this rule when all bundles have mirrored their plugins
+  # https://github.com/microsoft/AzureTRE/issues/2445
+  rule {
+    name = "terraform-sources"
+    protocol {
+      port = "443"
+      type = "Https"
+    }
+    protocol {
+      port = "80"
+      type = "Http"
+    }
+
+    target_fqdns = [
       "registry.terraform.io",
-      "releases.hashicorp.com"
+      "releases.hashicorp.com",
     ]
     source_addresses = data.azurerm_subnet.resource_processor.address_prefixes
   }

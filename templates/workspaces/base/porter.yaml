@@ -1,6 +1,6 @@
 ---
 name: tre-workspace-base
-version: 0.3.19
+version: 0.3.23
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -89,6 +89,10 @@ parameters:
     type: string
     default: ""
     description: "The id of the application role WorkspaceResearcher in the identity provider"
+  - name: app_role_id_workspace_airlock_manager
+    type: string
+    default: ""
+    description: "The id of the application role AirlockManager in the identity provider"
   - name: aad_redirect_uris
     type: string
     description: "List of redirect URIs in {name:value} format"
@@ -110,6 +114,10 @@ outputs:
     type: string
     applyTo:
       - install
+  - name: app_role_id_workspace_airlock_manager
+    type: string
+    applyTo:
+      - install
   - name: client_id
     type: string
     applyTo:
@@ -126,8 +134,7 @@ outputs:
 mixins:
   - exec
   - terraform:
-      clientVersion: 1.1.7
-      initFile: providers.tf
+      clientVersion: 1.2.6
   - az
 
 install:
@@ -151,6 +158,7 @@ install:
         sp_id: "{{ bundle.parameters.sp_id }}"
         app_role_id_workspace_owner: "{{ bundle.parameters.app_role_id_workspace_owner }}"
         app_role_id_workspace_researcher: "{{ bundle.parameters.app_role_id_workspace_researcher }}"
+        app_role_id_workspace_airlock_manager: "{{ bundle.parameters.app_role_id_workspace_airlock_manager }}"
         aad_redirect_uris_b64: "{{ bundle.parameters.aad_redirect_uris }}"
         app_service_plan_sku: "{{ bundle.parameters.app_service_plan_sku }}"
         enable_airlock: "{{ bundle.parameters.enable_airlock }}"
@@ -162,6 +170,7 @@ install:
       outputs:
         - name: app_role_id_workspace_owner
         - name: app_role_id_workspace_researcher
+        - name: app_role_id_workspace_airlock_manager
         - name: client_id
         - name: scope_id
         - name: sp_id
@@ -241,6 +250,7 @@ uninstall:
         sp_id: "{{ bundle.parameters.sp_id }}"
         app_role_id_workspace_owner: "{{ bundle.parameters.app_role_id_workspace_owner }}"
         app_role_id_workspace_researcher: "{{ bundle.parameters.app_role_id_workspace_researcher }}"
+        app_role_id_workspace_airlock_manager: "{{ bundle.parameters.app_role_id_workspace_airlock_manager }}"
         aad_redirect_uris_b64: "{{ bundle.parameters.aad_redirect_uris }}"
         app_service_plan_sku: "{{ bundle.parameters.app_service_plan_sku }}"
         enable_airlock: "{{ bundle.parameters.enable_airlock }}"

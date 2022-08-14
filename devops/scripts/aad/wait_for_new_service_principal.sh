@@ -1,7 +1,6 @@
 #!/bin/bash
-set -euo pipefail
-# Use this for debug only
-# set -o xtrace
+
+# This script is designed to be `source`d to create reusable helper functions
 
 # This script polls looking for an app registration with the given ID.
 # If after the number of retries no app registration is found, the function exits.

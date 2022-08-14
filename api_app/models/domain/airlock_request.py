@@ -1,6 +1,7 @@
 from typing import List
 from enum import Enum
 from pydantic import Field
+from pydantic.schema import Optional
 from resources import strings
 from models.domain.airlock_resource import AirlockResource, AirlockResourceType
 
@@ -20,6 +21,7 @@ class AirlockRequestStatus(str, Enum):
 
     Blocked = strings.AIRLOCK_RESOURCE_STATUS_BLOCKED
     BlockingInProgress = strings.AIRLOCK_RESOURCE_STATUS_BLOCKING_INPROGRESS
+    Failed = strings.AIRLOCK_RESOURCE_STATUS_FAILED
 
 
 class AirlockRequestType(str, Enum):
@@ -37,3 +39,5 @@ class AirlockRequest(AirlockResource):
     files: List[str] = Field([], title="Files of the request")
     businessJustification: str = Field("Business Justifications", title="Explanation that will be provided to the request reviewer")
     status = AirlockRequestStatus.Draft
+    creationTime: float = Field(None, title="Creation time of the request")
+    errorMessage: Optional[str] = Field(title="Present only if the request have failed, provides the reason of the failure.")
