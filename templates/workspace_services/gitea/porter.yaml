@@ -1,7 +1,8 @@
 ---
 name: tre-workspace-service-gitea
-version: 0.3.5
+version: 0.3.6
 description: "A Gitea workspace service"
+dockerfile: Dockerfile.tmpl
 registry: azuretre
 
 custom:
@@ -70,7 +71,7 @@ parameters:
 mixins:
   - exec
   - terraform:
-      clientVersion: 1.1.5
+      clientVersion: 1.2.6
 
 outputs:
   - name: connection_uri

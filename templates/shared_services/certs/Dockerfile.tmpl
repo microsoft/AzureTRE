@@ -6,9 +6,8 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Install Azure CLI
 # It's useless to specify azcli version since the mixin installs the latest anyway
-# hadolint ignore=DL3008
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates="20200601~deb10u2" jq="1.5+dfsg-2+b1" curl="7.64.0-4+deb10u2" apt-transport-https="1.8.2.3" lsb-release="10.2019051400" gnupg="2.2.12-1+deb10u2" \
+    && apt-get install -y --no-install-recommends ca-certificates jq curl apt-transport-https lsb-release gnupg \
     && curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null \
     && AZ_REPO=$(lsb_release -cs) \
     && echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | tee /etc/apt/sources.list.d/azure-cli.list \
@@ -17,13 +16,31 @@ RUN apt-get update \
 
 # Install Certbot
 # Some of the tools' versions seem to depend on the base image so proboably best not to specify them.
-# hadolint ignore=DL3008
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends python3 python3-venv libaugeas0="1.11.0-3" \
+    && apt-get install -y --no-install-recommends python3 python3-venv libaugeas0 \
     && python3 -m venv /opt/certbot/ \
     && /opt/certbot/bin/pip install --no-cache-dir --upgrade pip \
     && /opt/certbot/bin/pip install --no-cache-dir certbot \
     && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
+# This is a template Dockerfile for the bundle's invocation image
+# You can customize it to use different base images, install tools and copy configuration files.
+#
+# Porter will use it as a template and append lines to it for the mixins
+# and to set the CMD appropriately for the CNAB specification.
+#
+# Add the following line to porter.yaml to instruct Porter to use this template
+# dockerfile: Dockerfile.tmpl
+
+# You can control where the mixin's Dockerfile lines are inserted into this file by moving "# PORTER_MIXINS" line
+# another location in this file. If you remove that line, the mixins generated content is appended to this file.
+# PORTER_MIXINS
+
 # Use the BUNDLE_DIR build argument to copy files into the bundle
 COPY . $BUNDLE_DIR
+
+# Mirror plugins to prevent network access at runtime
+# Remove when available from https://github.com/getporter/terraform-mixin/issues/90
+WORKDIR $BUNDLE_DIR/terraform
+RUN terraform init -backend=false \
+  && terraform providers mirror /usr/local/share/terraform/plugins
