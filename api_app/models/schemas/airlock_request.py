@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 from typing import List
 from pydantic import BaseModel, Field
@@ -18,6 +19,13 @@ def get_sample_airlock_request(workspace_id: str, airlock_request_id: str) -> di
     }
 
 
+def get_sample_airlock_request_with_allowed_user_actions(workspace_id: str) -> dict:
+    return {
+        "airlockRequest": get_sample_airlock_request(workspace_id, str(uuid.uuid4())),
+        "allowed_user_actions": [AirlockActions.Cancel, AirlockActions.Review],
+    }
+
+
 class AirlockRequestInResponse(BaseModel):
     airlockRequest: AirlockRequest
 
@@ -35,9 +43,7 @@ class AirlockRequestWithAllowedUserActions(BaseModel):
 
     class Config:
         schema_extra = {
-            "example": {
-                "allowed_user_actions": [AirlockActions.Review]
-            }
+            "example": get_sample_airlock_request_with_allowed_user_actions("933ad738-7265-4b5f-9eae-a1a62928772e"),
         }
 
 
@@ -48,14 +54,8 @@ class AirlockRequestWithAllowedUserActionsInList(BaseModel):
         schema_extra = {
             "example": {
                 "airlock_requests": [
-                    {
-                        "airlockRequest": get_sample_airlock_request("933ad738-7265-4b5f-9eae-a1a62928772e", "121e921f-a4aa-44b3-90a9-e8da030495ef"),
-                        "allowed_user_actions": [AirlockActions.Cancel, AirlockActions.Review],
-                    },
-                    {
-                        "airlockRequest": get_sample_airlock_request("123ad738-1234-4b5f-9eae-a1a62928772e", "457e921f-a4aa-44b3-90a9-e8da030412ac"),
-                        "allowed_user_actions": [AirlockActions.Cancel, AirlockActions.Review],
-                    },
+                    get_sample_airlock_request_with_allowed_user_actions("933ad738-7265-4b5f-9eae-a1a62928772e"),
+                    get_sample_airlock_request_with_allowed_user_actions("933ad738-7265-4b5f-9eae-a1a62928772e")
                 ]
             }
         }
