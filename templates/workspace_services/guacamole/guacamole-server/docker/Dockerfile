@@ -19,7 +19,6 @@ ENV DEBIAN_FRONTEND=noninteractive
 USER root
 
 # dependencies
-# hadolint ignore=DL3008
 RUN apt-get update && apt-get install wget curl openssh-server apt-transport-https gnupg -y --no-install-recommends && \
     apt-get autoclean && apt-get autoremove && rm -rf /var/lib/apt/lists/*
 
