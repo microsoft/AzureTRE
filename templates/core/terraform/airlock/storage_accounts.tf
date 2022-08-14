@@ -4,7 +4,7 @@ resource "azurerm_storage_account" "sa_import_external" {
   location                 = var.location
   resource_group_name      = var.resource_group_name
   account_tier             = "Standard"
-  account_replication_type = "GRS"
+  account_replication_type = "LRS"
 
   # Don't allow anonymous access (unrelated to the 'public' networking rules)
   allow_nested_items_to_be_public = false
@@ -26,7 +26,7 @@ resource "azurerm_storage_account" "sa_export_approved" {
   location                 = var.location
   resource_group_name      = var.resource_group_name
   account_tier             = "Standard"
-  account_replication_type = "GRS"
+  account_replication_type = "LRS"
 
   # Don't allow anonymous access (unrelated to the 'public' networking rules)
   allow_nested_items_to_be_public = false
@@ -48,7 +48,7 @@ resource "azurerm_storage_account" "sa_import_in_progress" {
   location                        = var.location
   resource_group_name             = var.resource_group_name
   account_tier                    = "Standard"
-  account_replication_type        = "GRS"
+  account_replication_type        = "LRS"
   allow_nested_items_to_be_public = false
 
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
@@ -101,7 +101,7 @@ resource "azurerm_storage_account" "sa_import_rejected" {
   location                        = var.location
   resource_group_name             = var.resource_group_name
   account_tier                    = "Standard"
-  account_replication_type        = "GRS"
+  account_replication_type        = "LRS"
   allow_nested_items_to_be_public = false
 
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
@@ -149,7 +149,7 @@ resource "azurerm_storage_account" "sa_import_blocked" {
   location                        = var.location
   resource_group_name             = var.resource_group_name
   account_tier                    = "Standard"
-  account_replication_type        = "GRS"
+  account_replication_type        = "LRS"
   allow_nested_items_to_be_public = false
 
   # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.

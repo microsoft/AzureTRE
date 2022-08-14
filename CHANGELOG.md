@@ -13,6 +13,7 @@ FEATURES:
 
 ENHANCEMENTS:
 
+* 'CreationTime' field was added to Airlock requests ([#2432](https://github.com/microsoft/AzureTRE/issues/2432))
 * 'Get all Airlock requests' endpoint supports filtering ([#2433](https://github.com/microsoft/AzureTRE/pull/2433)).
 
 BUG FIXES:

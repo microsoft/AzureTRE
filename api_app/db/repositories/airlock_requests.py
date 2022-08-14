@@ -1,6 +1,7 @@
 import copy
 import uuid
 
+from datetime import datetime
 from typing import List
 from pydantic import UUID4
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
@@ -67,6 +68,7 @@ class AirlockRequestRepository(AirlockResourceRepository):
             workspaceId=workspace_id,
             businessJustification=airlock_request_input.businessJustification,
             requestType=airlock_request_input.requestType,
+            creationTime=datetime.utcnow().timestamp(),
             properties=resource_spec_parameters
         )
 

@@ -152,6 +152,6 @@ stop:
       description: "Stop the VM"
       arguments:
         - vm
-        - stop
+        - deallocate
       flags:
         ids: "{{ bundle.outputs.azure_resource_id }}"
