@@ -1,12 +1,6 @@
-# We need azurecli 2.37+ which doesn't exist for strech so the minimum is buster
 FROM debian:buster-slim
 
 ARG BUNDLE_DIR
-
-# Install jq
-RUN apt-get update && \
-    apt-get install -y jq="1.5+dfsg-2+b1" --no-install-recommends && \
-    apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 # This is a template Dockerfile for the bundle's invocation image
 # You can customize it to use different base images, install tools and copy configuration files.
