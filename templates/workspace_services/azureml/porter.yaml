@@ -1,6 +1,6 @@
 ---
 name: tre-service-azureml
-version: 0.4.2
+version: 0.4.3
 description: "An Azure TRE service for Azure Machine Learning"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -54,9 +54,8 @@ outputs:
     type: string
 
 mixins:
-  - exec
   - terraform:
-      clientVersion: 1.0.5
+      clientVersion: 1.2.6
 
 install:
   - terraform:

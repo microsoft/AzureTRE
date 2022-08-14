@@ -1,6 +1,6 @@
 ---
 name: tre-shared-service-airlock-notifier
-version: 0.0.1
+version: 0.1.0
 description: "A shared service notifying on Airlock Operations"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -54,8 +54,7 @@ mixins:
   - exec
   - az
   - terraform:
-      clientVersion: 1.1.5
-      initFile: providers.tf
+      clientVersion: 1.2.6
 
 install:
   - terraform:
