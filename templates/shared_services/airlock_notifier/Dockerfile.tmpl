@@ -1,12 +1,12 @@
-FROM debian:stretch-slim
+FROM debian:buster-slim
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-RUN apt-get update \
-    && apt-get install -y zip="3.0-11+b1" \
-    && apt-get clean -y && rm -rf /var/lib/apt/lists/*
-
 ARG BUNDLE_DIR
+
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y zip \
+    && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 # This is a template Dockerfile for the bundle's invocation image
 # You can customize it to use different base images, install tools and copy configuration files.
@@ -23,6 +23,12 @@ ARG BUNDLE_DIR
 
 # Use the BUNDLE_DIR build argument to copy files into the bundle
 COPY . $BUNDLE_DIR
+
+# Mirror plugins to prevent network access at runtime
+# Remove when available from https://github.com/getporter/terraform-mixin/issues/90
+WORKDIR $BUNDLE_DIR/terraform
+RUN terraform init -backend=false \
+  && terraform providers mirror /usr/local/share/terraform/plugins
 
 WORKDIR $BUNDLE_DIR/app
 RUN zip -r /cnab/app/LogicApp.zip .

@@ -66,9 +66,8 @@ outputs:
       - upgrade
 
 mixins:
-  - exec
   - terraform:
-      clientVersion: 1.0.5
+      clientVersion: 1.2.6
 
 install:
   - terraform:
