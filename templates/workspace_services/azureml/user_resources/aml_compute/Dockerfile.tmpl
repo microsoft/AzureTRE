@@ -6,4 +6,10 @@ COPY . $BUNDLE_DIR
 
 # PORTER_MIXINS
 
+# Mirror plugins to prevent network access at runtime
+# Remove when available from https://github.com/getporter/terraform-mixin/issues/90
+WORKDIR $BUNDLE_DIR/terraform
+RUN terraform init -backend=false \
+  && terraform providers mirror /usr/local/share/terraform/plugins
+
 WORKDIR $BUNDLE_DIR

@@ -41,8 +41,8 @@ RUN apt-get update \
 # Use the BUNDLE_DIR build argument to copy files into the bundle
 COPY . $BUNDLE_DIR
 
-# Mirror plugins prevets network access in runtime
+# Mirror plugins to prevent network access at runtime
 # Remove when available from https://github.com/getporter/terraform-mixin/issues/90
-RUN cd $BUNDLE_DIR/terraform \
-  && terraform init -backend=false \
+WORKDIR $BUNDLE_DIR/terraform
+RUN terraform init -backend=false \
   && terraform providers mirror /usr/local/share/terraform/plugins
