@@ -33,7 +33,6 @@ COPY .devcontainer/scripts/docker-client.sh /tmp/
 RUN /tmp/docker-client.sh $USERNAME
 
 # Install Docker
-# hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y ca-certificates curl gnupg lsb-release --no-install-recommends \
     && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
     && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" \
@@ -45,7 +44,6 @@ RUN apt-get update && apt-get install -y ca-certificates curl gnupg lsb-release 
 RUN if [ "${INTERACTIVE}" = "true" ]; then curl https://raw.githubusercontent.com/nektos/act/master/install.sh | bash; fi
 
 # Install Certbot
-# hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y python3 python3-venv libaugeas0 --no-install-recommends \
     && python3 -m venv /opt/certbot/ \
     && /opt/certbot/bin/pip install --no-cache-dir --upgrade pip \

@@ -42,6 +42,7 @@ jobs:
           # Debug output for checking SHA used in checks-action
           echo "git SHA:    $(git rev-parse --abbrev-ref HEAD)"
           echo "git ref:    $(git rev-parse HEAD)"
+          echo "github sha: ${GITHUB_SHA}"
           echo "github ref: ${GITHUB_REF}"
           REFID=$(echo "${GITHUB_REF}" | shasum | cut -c1-8)
           echo "using id of: ${REFID} for GitHub Ref: ${GITHUB_REF}"
@@ -54,6 +55,7 @@ jobs:
     uses: ./.github/workflows/deploy_tre_reusable.yml
     with:
       ciGitRef: ${{ github.ref }}
+      prHeadSha: ${{ github.sha }}
       e2eTestsCustomSelector: ${{ github.event.inputs.e2eTestsCustomSelector }}
       environmentName: ${{ github.event.inputs.environment }}
     secrets:

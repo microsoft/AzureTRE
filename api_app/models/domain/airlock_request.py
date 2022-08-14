@@ -70,5 +70,6 @@ class AirlockRequest(AzureTREModel):
     files: List[str] = Field([], title="Files of the request")
     businessJustification: str = Field("Business Justifications", title="Explanation that will be provided to the request reviewer")
     status = AirlockRequestStatus.Draft
+    creationTime: float = Field(None, title="Creation time of the request")
     errorMessage: Optional[str] = Field(title="Present only if the request have failed, provides the reason of the failure.")
     reviews: Optional[List[AirlockReview]]

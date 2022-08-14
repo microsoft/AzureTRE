@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List
 from pydantic import BaseModel, Field
 from models.domain.airlock_request import AirlockRequest, AirlockRequestType
@@ -19,6 +20,7 @@ def get_sample_airlock_request(workspace_id: str, airlock_request_id: str) -> di
         "requestType": "import",
         "files": [],
         "businessJustification": "some business justification",
+        "creationTime": datetime.utcnow().timestamp(),
         "reviews": [
             get_sample_airlock_review("29990431-5451-40e7-a58a-02e2b7c3d7c8"),
             get_sample_airlock_review("02dc0f29-351a-43ec-87e7-3dd2b5177b7f")]
