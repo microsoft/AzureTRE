@@ -45,7 +45,7 @@ async def create_draft_request(airlock_request_input: AirlockRequestInCreate, us
                               status_code=status.HTTP_200_OK,
                               response_model=AirlockRequestWithAllowedUserActionsInList,
                               name=strings.API_LIST_AIRLOCK_REQUESTS,
-                              dependencies=[Depends(get_current_workspace_owner_or_researcher_user), Depends(get_workspace_by_id_from_path)])
+                              dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager), Depends(get_workspace_by_id_from_path)])
 async def get_all_airlock_requests_by_workspace(
         airlock_request_repo=Depends(get_repository(AirlockRequestRepository)),
         workspace=Depends(get_deployed_workspace_by_id_from_path),
