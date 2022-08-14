@@ -21,7 +21,7 @@ async def test_airlock_import_flow(admin_token, verify) -> None:
     # 1. create workspace
     LOGGER.info("Creating workspace")
     payload = {
-        "templateName": "tre-workspace-base",
+        "templateName": resource_strings.BASE_WORKSPACE,
         "properties": {
             "display_name": "E2E test airlock flow",
             "description": "workspace for E2E airlock flow",

@@ -3,6 +3,11 @@ FROM debian:buster-slim
 
 ARG BUNDLE_DIR
 
+# Install jq
+RUN apt-get update && \
+    apt-get install -y jq="1.5+dfsg-2+b1" --no-install-recommends && \
+    apt-get clean -y && rm -rf /var/lib/apt/lists/*
+
 # This is a template Dockerfile for the bundle's invocation image
 # You can customize it to use different base images, install tools and copy configuration files.
 #
@@ -19,5 +24,8 @@ ARG BUNDLE_DIR
 # Use the BUNDLE_DIR build argument to copy files into the bundle
 COPY . $BUNDLE_DIR
 
-# Install jq
-RUN apt-get update && apt-get install -y jq="1.5+dfsg-2+b1" && apt-get clean -y && rm -rf /var/lib/apt/lists/*
+# Mirror plugins to prevent network access at runtime
+# Remove when available from https://github.com/getporter/terraform-mixin/issues/90
+WORKDIR $BUNDLE_DIR/terraform
+RUN terraform init -backend=false \
+  && terraform providers mirror /usr/local/share/terraform/plugins

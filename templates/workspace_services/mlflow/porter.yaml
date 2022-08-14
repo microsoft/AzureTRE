@@ -1,7 +1,8 @@
 ---
 name: tre-service-mlflow
-version: 0.3.4
+version: 0.3.5
 description: "An Azure TRE service for MLflow machine learning lifecycle"
+dockerfile: Dockerfile.tmpl
 registry: azuretre
 
 custom:
@@ -57,7 +58,7 @@ parameters:
 mixins:
   - exec
   - terraform:
-      clientVersion: 1.1.5
+      clientVersion: 1.2.6
 
 install:
   - terraform:
