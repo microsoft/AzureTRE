@@ -1,4 +1,3 @@
-from datetime import datetime
 import pytest
 from mock import patch
 from fastapi import status
@@ -6,7 +5,6 @@ from db.errors import EntityDoesNotExist, UnableToAccessDatabase
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockReview, AirlockReviewDecision
 from azure.core.exceptions import HttpResponseError
-from models.domain.authentication import User
 from models.domain.workspace import Workspace
 from resources import strings
 from services.authentication import get_current_workspace_owner_or_researcher_user, get_current_workspace_owner_or_researcher_user_or_airlock_manager, get_current_airlock_manager_user

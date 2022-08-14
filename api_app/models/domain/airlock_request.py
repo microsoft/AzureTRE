@@ -4,7 +4,6 @@ from pydantic import Field
 from pydantic.schema import Optional
 from resources import strings
 from models.domain.azuretremodel import AzureTREModel
-from models.domain.authentication import User
 
 
 class AirlockRequestStatus(str, Enum):

@@ -153,7 +153,7 @@ async def test_save_and_publish_event_airlock_request_raises_417_if_email_not_pr
 @patch("event_grid.helpers.EventGridPublisherClient", return_value=AsyncMock())
 @patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details", return_value={"researcher_emails": ["researcher@outlook.com"], "owner_emails": ["owner@outlook.com"]})
 async def test_update_and_publish_event_airlock_request_updates_item(_, event_grid_publisher_client_mock,
-                                                                            airlock_request_repo_mock):
+                                                                     airlock_request_repo_mock):
     airlock_request_mock = sample_airlock_request()
     updated_airlock_request_mock = sample_airlock_request(status=AirlockRequestStatus.Submitted)
     status_changed_event_mock = sample_status_changed_event(status="submitted")
@@ -198,7 +198,7 @@ async def test_update_and_publish_event_airlock_request_raises_400_if_status_upd
 @patch("event_grid.helpers.EventGridPublisherClient", return_value=AsyncMock())
 @patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details", return_value={"researcher_emails": ["researcher@outlook.com"], "owner_emails": ["owner@outlook.com"]})
 async def test_update_and_publish_event_airlock_request_raises_503_if_publish_event_fails(_, event_grid_publisher_client_mock,
-                                                                                                 airlock_request_repo_mock):
+                                                                                          airlock_request_repo_mock):
     airlock_request_mock = sample_airlock_request()
     updated_airlock_request_mock = sample_airlock_request(status=AirlockRequestStatus.Submitted)
     airlock_request_repo_mock.update_airlock_request = MagicMock(return_value=updated_airlock_request_mock)
@@ -213,6 +213,3 @@ async def test_update_and_publish_event_airlock_request_raises_503_if_publish_ev
             new_status=AirlockRequestStatus.Submitted,
             workspace=sample_workspace())
     assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
-
-
-
