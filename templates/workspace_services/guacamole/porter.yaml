@@ -1,7 +1,8 @@
 ---
 name: tre-service-guacamole
-version: 0.4.2
+version: 0.4.3
 description: "An Azure TRE service for Guacamole"
+dockerfile: Dockerfile.tmpl
 registry: azuretre
 
 custom:
@@ -112,8 +113,7 @@ outputs:
 mixins:
   - exec
   - terraform:
-      clientVersion: 1.2.5
-      initFile: providers.tf
+      clientVersion: 1.2.6
 
 install:
   - terraform:

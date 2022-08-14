@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List
 from pydantic import BaseModel, Field
 from models.domain.airlock_resource import AirlockResourceType
@@ -12,6 +13,7 @@ def get_sample_airlock_request(workspace_id: str, airlock_request_id: str) -> di
         "requestType": "import",
         "files": [],
         "businessJustification": "some business justification",
+        "creationTime": datetime.utcnow().timestamp(),
         "resourceType": AirlockResourceType.AirlockRequest
     }
 

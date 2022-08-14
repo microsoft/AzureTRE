@@ -1,7 +1,8 @@
 ---
 name: tre-shared-service-gitea
-version: 0.3.10
+version: 0.3.11
 description: "A Gitea shared service"
+dockerfile: Dockerfile.tmpl
 registry: azuretre
 
 custom:
@@ -48,7 +49,7 @@ parameters:
 
 mixins:
   - terraform:
-      clientVersion: 1.1.5
+      clientVersion: 1.2.6
 
 outputs:
   - name: gitea_allowed_fqdns_list

@@ -1,7 +1,8 @@
 ---
 name: tre-shared-service-firewall
-version: 0.4.1
+version: 0.4.2
 description: "An Azure TRE Firewall shared service"
+dockerfile: Dockerfile.tmpl
 registry: azuretre
 
 credentials:
@@ -50,8 +51,7 @@ parameters:
 
 mixins:
   - terraform:
-      initFile: providers.tf
-      clientVersion: 1.2.5
+      clientVersion: 1.2.6
 
 install:
   - terraform:
