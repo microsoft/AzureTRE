@@ -41,7 +41,7 @@ class AirlockRequestWithAllowedUserActions(BaseModel):
         }
 
 
-class AirlockRequestInList(BaseModel):
+class AirlockRequestWithAllowedUserActionsInList(BaseModel):
     airlockRequests: List[AirlockRequestWithAllowedUserActions] = Field([], title="Airlock Requests")
 
     class Config:
