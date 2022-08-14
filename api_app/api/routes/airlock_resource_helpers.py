@@ -107,7 +107,7 @@ def get_airlock_requests_by_user_and_workspace(user: User, workspace: Workspace,
             return []
         status = AirlockRequestStatus.InReview
 
-    return airlock_request_repo.get_airlock_requests_by_workspace_id(workspace_id=workspace.id, user_id=initiator, type=type, status=status)
+    return airlock_request_repo.get_airlock_requests(workspace_id=workspace.id, user_id=initiator, type=type, status=status)
 
 
 def get_allowed_actions(request: AirlockRequest, user: User, airlock_request_repo: AirlockRequestRepository) -> AirlockRequestWithAllowedUserActions:

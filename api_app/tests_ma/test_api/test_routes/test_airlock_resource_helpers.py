@@ -264,12 +264,12 @@ async def test_save_airlock_review_raises_503_if_save_to_db_fails(airlock_review
 async def test_get_airlock_requests_by_user_and_workspace_with_awaiting_my_review_and_status_arguments_should_ignore_status(airlock_review_repo_mock):
     workspace = sample_workspace()
     user = create_workspace_airlock_manager_user()
-    airlock_review_repo_mock.get_airlock_requests_by_workspace_id = MagicMock()
+    airlock_review_repo_mock.get_airlock_requests = MagicMock()
 
     get_airlock_requests_by_user_and_workspace(user=user, workspace=workspace, airlock_request_repo=airlock_review_repo_mock,
                                                status=AirlockRequestStatus.Approved, awaiting_my_review=True)
 
-    airlock_review_repo_mock.get_airlock_requests_by_workspace_id.assert_called_once_with(workspace_id=workspace.id, user_id=None, type=None, status=AirlockRequestStatus.InReview)
+    airlock_review_repo_mock.get_airlock_requests.assert_called_once_with(workspace_id=workspace.id, user_id=None, type=None, status=AirlockRequestStatus.InReview)
 
 
 async def test_get_airlock_requests_by_user_and_workspace_with_awaiting_my_review_argument_by_non_airlock_manger_should_return_empty_list(airlock_review_repo_mock):
@@ -280,11 +280,11 @@ async def test_get_airlock_requests_by_user_and_workspace_with_awaiting_my_revie
 
 @pytest.mark.parametrize("role", get_required_roles(endpoint=create_airlock_review))
 async def test_get_airlock_requests_by_user_and_workspace_with_awaiting_my_review_argument_requires_same_roles_as_review_endpoint(role, airlock_review_repo_mock):
-    airlock_review_repo_mock.get_airlock_requests_by_workspace_id = MagicMock()
+    airlock_review_repo_mock.get_airlock_requests = MagicMock()
     user = create_test_user()
     user.roles = [role]
     get_airlock_requests_by_user_and_workspace(user=user, workspace=sample_workspace(), airlock_request_repo=airlock_review_repo_mock, awaiting_my_review=True)
-    airlock_review_repo_mock.get_airlock_requests_by_workspace_id.assert_called_once()
+    airlock_review_repo_mock.get_airlock_requests.assert_called_once()
 
 
 @pytest.mark.parametrize("role", get_required_roles(endpoint=create_airlock_review))

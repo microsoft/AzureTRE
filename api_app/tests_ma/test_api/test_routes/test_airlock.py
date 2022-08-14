@@ -80,7 +80,7 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
         app.dependency_overrides = {}
 
     # [GET] /workspaces/{workspace_id}/requests}
-    @patch("api.routes.airlock.AirlockRequestRepository.get_airlock_requests_by_workspace_id", return_value=[])
+    @patch("api.routes.airlock.AirlockRequestRepository.get_airlock_requests", return_value=[])
     async def test_get_all_airlock_requests_by_workspace_returns_200(self, _, app, client):
         response = await client.get(app.url_path_for(strings.API_LIST_AIRLOCK_REQUESTS, workspace_id=WORKSPACE_ID))
         assert response.status_code == status.HTTP_200_OK

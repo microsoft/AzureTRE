@@ -74,7 +74,7 @@ class AirlockRequestRepository(AirlockResourceRepository):
 
         return airlock_request
 
-    def get_airlock_requests_by_workspace_id(self, workspace_id: str, user_id: str = None, type: AirlockRequestType = None, status: AirlockRequestStatus = None) -> List[AirlockRequest]:
+    def get_airlock_requests(self, workspace_id: str, user_id: str = None, type: AirlockRequestType = None, status: AirlockRequestStatus = None) -> List[AirlockRequest]:
         query = self.airlock_requests_query() + f' AND c.workspaceId = "{workspace_id}"'
 
         # optional filters
