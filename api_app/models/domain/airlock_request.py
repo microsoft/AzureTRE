@@ -39,7 +39,8 @@ class AirlockReview(AzureTREModel):
     """
     Airlock review
     """
-    reviewer: User
+    id: str = Field(title="Id", description="GUID identifying the review")
+    reviewer: dict = {}
     dateCreated: float = 0
     reviewDecision: AirlockReviewDecision = Field("", title="Airlock review decision")
     decisionExplanation: str = Field(False, title="Explanation why the request was approved/rejected")

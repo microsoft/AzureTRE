@@ -74,7 +74,12 @@ async def create_cancel_request(airlock_request=Depends(get_airlock_request_by_i
 
 @airlock_workspace_router.post("/workspaces/{workspace_id}/requests/{airlock_request_id}/reviews", status_code=status.HTTP_200_OK, response_model=AirlockRequestInResponse, name=strings.API_REVIEW_AIRLOCK_REQUEST, dependencies=[Depends(get_current_airlock_manager_user), Depends(get_workspace_by_id_from_path)])
 async def create_airlock_review(airlock_review_input: AirlockReviewInCreate, airlock_request=Depends(get_airlock_request_by_id_from_path), user=Depends(get_current_airlock_manager_user), airlock_request_repo=Depends(get_repository(AirlockRequestRepository)), workspace=Depends(get_deployed_workspace_by_id_from_path)) -> AirlockRequestInResponse:
-    airlock_review = airlock_request_repo.create_airlock_review_item(airlock_review_input, user)
+    try:
+        airlock_review = airlock_request_repo.create_airlock_review_item(airlock_review_input, user)
+    except (ValidationError, ValueError) as e:
+        logging.error(f"Failed creating airlock review model instance: {e}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    # Store review with new status in cosmos, and send status_changed event
     review_status = AirlockRequestStatus(airlock_review.reviewDecision.value)
     updated_airlock_request = await update_status_and_publish_event_airlock_request(airlock_request, airlock_request_repo, user, review_status, workspace, airlock_review=airlock_review)
     return AirlockRequestInResponse(airlockRequest=updated_airlock_request)

@@ -1,3 +1,4 @@
+from datetime import datetime
 import pytest
 from mock import patch
 from fastapi import status
@@ -5,7 +6,7 @@ from db.errors import EntityDoesNotExist, UnableToAccessDatabase
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockReview, AirlockReviewDecision
 from azure.core.exceptions import HttpResponseError
-
+from models.domain.authentication import User
 from models.domain.workspace import Workspace
 from resources import strings
 from services.authentication import get_current_workspace_owner_or_researcher_user, get_current_workspace_owner_or_researcher_user_or_airlock_manager, get_current_airlock_manager_user
@@ -42,11 +43,22 @@ def sample_airlock_request_object(status=AirlockRequestStatus.Draft, airlock_req
     return airlock_request
 
 
+def sample_airlock_request_object_with_review(status=AirlockRequestStatus.Draft, airlock_request_id=AIRLOCK_REQUEST_ID, workspace_id=WORKSPACE_ID):
+    airlock_request = AirlockRequest(
+        id=airlock_request_id,
+        workspaceId=workspace_id,
+        businessJustification="test business justification",
+        requestType="import",
+        status=status,
+        reviews=[sample_airlock_review_object()]
+    )
+    return airlock_request
+
+
 def sample_airlock_review_object():
     airlock_review = AirlockReview(
         id=AIRLOCK_REVIEW_ID,
-        workspaceId=WORKSPACE_ID,
-        requestId=AIRLOCK_REQUEST_ID,
+        dateCreated=1660231576.328734,
         reviewDecision=AirlockReviewDecision.Approved,
         decisionExplanation="test explaination"
     )
@@ -242,16 +254,16 @@ class TestAirlockRoutesThatRequireAirlockManagerRights():
             yield
         app.dependency_overrides = {}
 
-    # # [POST] /workspaces/{workspace_id}/requests/{airlock_request_id}/review
-    # @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object(status=AirlockRequestStatus.InReview))
-    # @patch("api.routes.airlock.AirlockReviewRepository.create_airlock_review_item", return_value=sample_airlock_review_object())
-    # @patch("api.routes.airlock.update_status_and_publish_event_airlock_request", return_value=sample_airlock_request_object(status=AirlockRequestStatus.Approved))
-    # @patch("api.routes.airlock.AirlockReviewRepository.save_item")
-    # async def test_post_create_airlock_review_approves_airlock_request_returns_200(self, _, __, ___, ____, app, client, sample_airlock_review_input_data):
-    #     response = await client.post(app.url_path_for(strings.API_REVIEW_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID), json=sample_airlock_review_input_data)
-    #     assert response.status_code == status.HTTP_200_OK
-    #     assert response.json()["airlock_review"]["id"] == AIRLOCK_REVIEW_ID
-    #     assert response.json()["airlock_review"]["reviewDecision"] == AirlockReviewDecision.Approved
+    # [POST] /workspaces/{workspace_id}/requests/{airlock_request_id}/review
+    @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object(status=AirlockRequestStatus.InReview))
+    @patch("api.routes.airlock.AirlockRequestRepository.create_airlock_review_item", return_value=sample_airlock_review_object())
+    @patch("api.routes.airlock.update_status_and_publish_event_airlock_request", return_value=sample_airlock_request_object_with_review(status=AirlockRequestStatus.Approved))
+    @patch("api.routes.airlock.AirlockRequestRepository.save_item")
+    async def test_post_create_airlock_review_approves_airlock_request_returns_200(self, _, __, ___, ____, app, client, sample_airlock_review_input_data):
+        response = await client.post(app.url_path_for(strings.API_REVIEW_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID), json=sample_airlock_review_input_data)
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["airlockRequest"]["reviews"][0]["id"] == AIRLOCK_REVIEW_ID
+        assert response.json()["airlockRequest"]["reviews"][0]["reviewDecision"] == AirlockReviewDecision.Approved
 
     @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object(status=AirlockRequestStatus.InReview))
     @patch("api.routes.airlock.AirlockRequestRepository.create_airlock_review_item", side_effect=ValueError)
@@ -259,26 +271,19 @@ class TestAirlockRoutesThatRequireAirlockManagerRights():
         response = await client.post(app.url_path_for(strings.API_REVIEW_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID), json=sample_airlock_review_input_data)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    # @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object(status=AirlockRequestStatus.InReview))
-    # @patch("api.routes.airlock.AirlockReviewRepository.create_airlock_review_item", return_value=sample_airlock_review_object())
-    # @patch("api.routes.airlock.AirlockReviewRepository.save_item", side_effect=UnableToAccessDatabase)
-    # async def test_post_create_airlock_review_with_state_store_endpoint_not_responding_returns_503(self, _, __, ___, app, client, sample_airlock_review_input_data):
-    #     response = await client.post(app.url_path_for(strings.API_REVIEW_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID), json=sample_airlock_review_input_data)
-    #     assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+    @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object(status=AirlockRequestStatus.InReview))
+    @patch("api.routes.airlock.AirlockRequestRepository.create_airlock_review_item", return_value=sample_airlock_review_object())
+    @patch("api.routes.airlock.AirlockRequestRepository.save_item")
+    @patch("api.routes.airlock.AirlockRequestRepository.update_airlock_request_status")
+    @patch("event_grid.event_sender.send_status_changed_event", side_effect=HttpResponseError)
+    async def test_post_create_airlock_review_with_event_grid_not_responding_returns_503(self, _, __, ___, ____, _____, app, client, sample_airlock_review_input_data):
+        response = await client.post(app.url_path_for(strings.API_REVIEW_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID), json=sample_airlock_review_input_data)
+        assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
-    # @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object(status=AirlockRequestStatus.InReview))
-    # @patch("api.routes.airlock.AirlockReviewRepository.create_airlock_review_item", return_value=sample_airlock_review_object())
-    # @patch("api.routes.airlock.AirlockReviewRepository.save_item")
-    # @patch("api.routes.airlock.AirlockRequestRepository.update_airlock_request_status")
-    # @patch("event_grid.event_sender.send_status_changed_event", side_effect=HttpResponseError)
-    # async def test_post_create_airlock_review_with_event_grid_not_responding_returns_503(self, _, __, ___, ____, _____, app, client, sample_airlock_review_input_data):
-    #     response = await client.post(app.url_path_for(strings.API_REVIEW_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID), json=sample_airlock_review_input_data)
-    #     assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
-
-    # @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object(status=AirlockRequestStatus.InReview))
-    # @patch("api.routes.airlock.AirlockReviewRepository.create_airlock_review_item", return_value=sample_airlock_review_object())
-    # @patch("api.routes.airlock.AirlockReviewRepository.save_item")
-    # @patch("api.routes.airlock.AirlockRequestRepository._validate_status_update", return_value=False)
-    # async def test_post_create_airlock_review_with_illegal_status_change_returns_400(self, _, __, ___, ____, app, client, sample_airlock_review_input_data):
-    #     response = await client.post(app.url_path_for(strings.API_REVIEW_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID), json=sample_airlock_review_input_data)
-    #     assert response.status_code == status.HTTP_400_BAD_REQUEST
+    @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object(status=AirlockRequestStatus.InReview))
+    @patch("api.routes.airlock.AirlockRequestRepository.create_airlock_review_item", return_value=sample_airlock_review_object())
+    @patch("api.routes.airlock.AirlockRequestRepository.save_item")
+    @patch("api.routes.airlock.AirlockRequestRepository._validate_status_update", return_value=False)
+    async def test_post_create_airlock_review_with_illegal_status_change_returns_400(self, _, __, ___, ____, app, client, sample_airlock_review_input_data):
+        response = await client.post(app.url_path_for(strings.API_REVIEW_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID), json=sample_airlock_review_input_data)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
