@@ -155,7 +155,7 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
 
     # [POST] /workspaces/{workspace_id}/requests/{airlock_request_id}/submit
     @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object())
-    @patch("api.routes.airlock.update_status_and_publish_event_airlock_request", return_value=sample_airlock_request_object(status=AirlockRequestStatus.Submitted))
+    @patch("api.routes.airlock.update_and_publish_event_airlock_request", return_value=sample_airlock_request_object(status=AirlockRequestStatus.Submitted))
     async def test_post_submit_airlock_request_submitts_airlock_request_returns_200(self, _, __, app, client):
         response = await client.post(app.url_path_for(strings.API_SUBMIT_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
         assert response.status_code == status.HTTP_200_OK
@@ -168,13 +168,13 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", side_effect=UnableToAccessDatabase)
-    @patch("api.routes.airlock.update_status_and_publish_event_airlock_request", side_effect=UnableToAccessDatabase)
+    @patch("api.routes.airlock.update_and_publish_event_airlock_request", side_effect=UnableToAccessDatabase)
     async def test_post_submit_airlock_request_with_state_store_endpoint_not_responding_returns_503(self, _, __, app, client):
         response = await client.post(app.url_path_for(strings.API_SUBMIT_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
         assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
     @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object())
-    @patch("api.routes.airlock.AirlockRequestRepository.update_airlock_request_status")
+    @patch("api.routes.airlock.AirlockRequestRepository.update_airlock_request")
     @patch("api.routes.airlock.AirlockRequestRepository.delete_item")
     @patch("event_grid.event_sender.send_status_changed_event", side_effect=HttpResponseError)
     async def test_post_submit_airlock_request_with_event_grid_not_responding_returns_503(self, _, __, ___, ____, app, client):
@@ -189,7 +189,7 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
 
     # [POST] /workspaces/{workspace_id}/requests/{airlock_request_id}/cancel
     @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object())
-    @patch("api.routes.airlock.update_status_and_publish_event_airlock_request", return_value=sample_airlock_request_object(status=AirlockRequestStatus.Cancelled))
+    @patch("api.routes.airlock.update_and_publish_event_airlock_request", return_value=sample_airlock_request_object(status=AirlockRequestStatus.Cancelled))
     async def test_post_cancel_airlock_request_canceles_request_returns_200(self, _, __, app, client):
         response = await client.post(app.url_path_for(strings.API_CANCEL_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
         assert response.status_code == status.HTTP_200_OK
@@ -257,7 +257,7 @@ class TestAirlockRoutesThatRequireAirlockManagerRights():
     # [POST] /workspaces/{workspace_id}/requests/{airlock_request_id}/review
     @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object(status=AirlockRequestStatus.InReview))
     @patch("api.routes.airlock.AirlockRequestRepository.create_airlock_review_item", return_value=sample_airlock_review_object())
-    @patch("api.routes.airlock.update_status_and_publish_event_airlock_request", return_value=sample_airlock_request_object_with_review(status=AirlockRequestStatus.Approved))
+    @patch("api.routes.airlock.update_and_publish_event_airlock_request", return_value=sample_airlock_request_object_with_review(status=AirlockRequestStatus.Approved))
     @patch("api.routes.airlock.AirlockRequestRepository.save_item")
     async def test_post_create_airlock_review_approves_airlock_request_returns_200(self, _, __, ___, ____, app, client, sample_airlock_review_input_data):
         response = await client.post(app.url_path_for(strings.API_REVIEW_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID), json=sample_airlock_review_input_data)
@@ -274,7 +274,7 @@ class TestAirlockRoutesThatRequireAirlockManagerRights():
     @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object(status=AirlockRequestStatus.InReview))
     @patch("api.routes.airlock.AirlockRequestRepository.create_airlock_review_item", return_value=sample_airlock_review_object())
     @patch("api.routes.airlock.AirlockRequestRepository.save_item")
-    @patch("api.routes.airlock.AirlockRequestRepository.update_airlock_request_status")
+    @patch("api.routes.airlock.AirlockRequestRepository.update_airlock_request")
     @patch("event_grid.event_sender.send_status_changed_event", side_effect=HttpResponseError)
     async def test_post_create_airlock_review_with_event_grid_not_responding_returns_503(self, _, __, ___, ____, _____, app, client, sample_airlock_review_input_data):
         response = await client.post(app.url_path_for(strings.API_REVIEW_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID), json=sample_airlock_review_input_data)

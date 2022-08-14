@@ -20,7 +20,7 @@ from db.repositories.base import BaseRepository
 
 class AirlockRequestRepository(BaseRepository):
     def __init__(self, client: CosmosClient):
-        super().__init__(client, config.STATE_STORE_AIRLOCK_RESOURCES_CONTAINER)
+        super().__init__(client, config.STATE_STORE_AIRLOCK_REQUESTS_CONTAINER)
 
     @staticmethod
     def get_resource_base_spec_params():
@@ -48,7 +48,7 @@ class AirlockRequestRepository(BaseRepository):
 
     @staticmethod
     def airlock_requests_query():
-        return 'SELECT * FROM c WHERE c.resourceType = "airlock-request"'
+        return 'SELECT * FROM c'
 
     def _validate_status_update(self, current_status: AirlockRequestStatus, new_status: AirlockRequestStatus):
         # Cannot change status from approved
@@ -100,7 +100,7 @@ class AirlockRequestRepository(BaseRepository):
         return airlock_request
 
     def get_airlock_requests_by_workspace_id(self, workspace_id: str) -> List[AirlockRequest]:
-        query = self.airlock_requests_query() + f' AND c.workspaceId = "{workspace_id}"'
+        query = self.airlock_requests_query() + f' where c.workspaceId = "{workspace_id}"'
         airlock_requests = self.query(query=query)
         return parse_obj_as(List[AirlockRequest], airlock_requests)
 
@@ -111,7 +111,7 @@ class AirlockRequestRepository(BaseRepository):
             raise EntityDoesNotExist
         return parse_obj_as(AirlockRequest, airlock_requests)
 
-    def update_airlock_request_status(self, airlock_request: AirlockRequest, new_status: AirlockRequestStatus, user: User, error_message: str = None, airlock_review: AirlockReview = None) -> AirlockRequest:
+    def update_airlock_request(self, airlock_request: AirlockRequest, new_status: AirlockRequestStatus, user: User, error_message: str = None, airlock_review: AirlockReview = None) -> AirlockRequest:
         current_status = airlock_request.status
         if self._validate_status_update(current_status, new_status):
             updated_request = copy.deepcopy(airlock_request)

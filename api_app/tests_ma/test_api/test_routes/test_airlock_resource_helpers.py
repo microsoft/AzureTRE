@@ -4,7 +4,7 @@ from mock import AsyncMock, patch, MagicMock
 
 from models.domain.events import AirlockNotificationData, StatusChangedData
 from api.routes.airlock_resource_helpers import save_and_publish_event_airlock_request, \
-    update_status_and_publish_event_airlock_request
+    update_and_publish_event_airlock_request
 from db.repositories.airlock_requests import AirlockRequestRepository
 from models.domain.workspace import Workspace
 from tests_ma.test_api.conftest import create_test_user
@@ -152,24 +152,24 @@ async def test_save_and_publish_event_airlock_request_raises_417_if_email_not_pr
 
 @patch("event_grid.helpers.EventGridPublisherClient", return_value=AsyncMock())
 @patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details", return_value={"researcher_emails": ["researcher@outlook.com"], "owner_emails": ["owner@outlook.com"]})
-async def test_update_status_and_publish_event_airlock_request_updates_item(_, event_grid_publisher_client_mock,
+async def test_update_and_publish_event_airlock_request_updates_item(_, event_grid_publisher_client_mock,
                                                                             airlock_request_repo_mock):
     airlock_request_mock = sample_airlock_request()
     updated_airlock_request_mock = sample_airlock_request(status=AirlockRequestStatus.Submitted)
     status_changed_event_mock = sample_status_changed_event(status="submitted")
     airlock_notification_event_mock = sample_airlock_notification_event(status="submitted")
-    airlock_request_repo_mock.update_airlock_request_status = MagicMock(return_value=updated_airlock_request_mock)
+    airlock_request_repo_mock.update_airlock_request = MagicMock(return_value=updated_airlock_request_mock)
     event_grid_sender_client_mock = event_grid_publisher_client_mock.return_value
     event_grid_sender_client_mock.send = AsyncMock()
 
-    actual_updated_airlock_request = await update_status_and_publish_event_airlock_request(
+    actual_updated_airlock_request = await update_and_publish_event_airlock_request(
         airlock_request=airlock_request_mock,
         airlock_request_repo=airlock_request_repo_mock,
         user=create_test_user(),
         new_status=AirlockRequestStatus.Submitted,
         workspace=sample_workspace())
 
-    airlock_request_repo_mock.update_airlock_request_status.assert_called_once()
+    airlock_request_repo_mock.update_airlock_request.assert_called_once()
     assert (actual_updated_airlock_request == updated_airlock_request_mock)
 
     assert event_grid_sender_client_mock.send.call_count == 2
@@ -181,11 +181,11 @@ async def test_update_status_and_publish_event_airlock_request_updates_item(_, e
 
 
 @patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details", return_value={"researcher_emails": ["researcher@outlook.com"], "owner_emails": ["owner@outlook.com"]})
-async def test_update_status_and_publish_event_airlock_request_raises_400_if_status_update_invalid(_, airlock_request_repo_mock):
+async def test_update_and_publish_event_airlock_request_raises_400_if_status_update_invalid(_, airlock_request_repo_mock):
     airlock_request_mock = sample_airlock_request()
 
     with pytest.raises(HTTPException) as ex:
-        await update_status_and_publish_event_airlock_request(
+        await update_and_publish_event_airlock_request(
             airlock_request=airlock_request_mock,
             airlock_request_repo=airlock_request_repo_mock,
             user=create_test_user(),
@@ -197,16 +197,16 @@ async def test_update_status_and_publish_event_airlock_request_raises_400_if_sta
 
 @patch("event_grid.helpers.EventGridPublisherClient", return_value=AsyncMock())
 @patch("services.aad_authentication.AzureADAuthorization.get_workspace_role_assignment_details", return_value={"researcher_emails": ["researcher@outlook.com"], "owner_emails": ["owner@outlook.com"]})
-async def test_update_status_and_publish_event_airlock_request_raises_503_if_publish_event_fails(_, event_grid_publisher_client_mock,
+async def test_update_and_publish_event_airlock_request_raises_503_if_publish_event_fails(_, event_grid_publisher_client_mock,
                                                                                                  airlock_request_repo_mock):
     airlock_request_mock = sample_airlock_request()
     updated_airlock_request_mock = sample_airlock_request(status=AirlockRequestStatus.Submitted)
-    airlock_request_repo_mock.update_airlock_request_status = MagicMock(return_value=updated_airlock_request_mock)
+    airlock_request_repo_mock.update_airlock_request = MagicMock(return_value=updated_airlock_request_mock)
     event_grid_sender_client_mock = event_grid_publisher_client_mock.return_value
     event_grid_sender_client_mock.send = AsyncMock(side_effect=Exception)
 
     with pytest.raises(HTTPException) as ex:
-        await update_status_and_publish_event_airlock_request(
+        await update_and_publish_event_airlock_request(
             airlock_request=airlock_request_mock,
             airlock_request_repo=airlock_request_repo_mock,
             user=create_test_user(),

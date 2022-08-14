@@ -110,24 +110,24 @@ def test_create_airlock_request_item_creates_an_airlock_request_with_the_right_v
 
 
 @pytest.mark.parametrize("current_status, new_status", get_allowed_status_changes())
-def test_update_airlock_request_status_with_allowed_new_status_should_update_request_status(airlock_request_repo, current_status, new_status, verify_dictionary_contains_all_enum_values):
+def test_update_airlock_request_with_allowed_new_status_should_update_request_status(airlock_request_repo, current_status, new_status, verify_dictionary_contains_all_enum_values):
     user = create_test_user()
     mock_existing_request = airlock_request_mock(status=current_status)
-    airlock_request = airlock_request_repo.update_airlock_request_status(mock_existing_request, new_status, user)
+    airlock_request = airlock_request_repo.update_airlock_request(mock_existing_request, new_status, user)
     assert airlock_request.status == new_status
 
 
 @pytest.mark.parametrize("current_status, new_status", get_forbidden_status_changes())
-def test_update_airlock_request_status_with_forbidden_status_should_fail_on_validation(airlock_request_repo, current_status, new_status, verify_dictionary_contains_all_enum_values):
+def test_update_airlock_request_with_forbidden_status_should_fail_on_validation(airlock_request_repo, current_status, new_status, verify_dictionary_contains_all_enum_values):
     user = create_test_user()
     mock_existing_request = airlock_request_mock(status=current_status)
     with pytest.raises(HTTPException):
-        airlock_request_repo.update_airlock_request_status(mock_existing_request, new_status, user)
+        airlock_request_repo.update_airlock_request(mock_existing_request, new_status, user)
 
 
 def test_get_airlock_requests_by_workspace_id_queries_db(airlock_request_repo):
     airlock_request_repo.container.query_items = MagicMock()
-    expected_query = airlock_request_repo.airlock_requests_query() + f' AND c.workspaceId = "{WORKSPACE_ID}"'
+    expected_query = airlock_request_repo.airlock_requests_query() + f' where c.workspaceId = "{WORKSPACE_ID}"'
 
     airlock_request_repo.get_airlock_requests_by_workspace_id(WORKSPACE_ID)
     airlock_request_repo.container.query_items.assert_called_once_with(query=expected_query, enable_cross_partition_query=True)
