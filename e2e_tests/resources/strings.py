@@ -20,6 +20,9 @@ FIREWALL_SHARED_SERVICE = "tre-shared-service-firewall"
 GITEA_SHARED_SERVICE = "tre-shared-service-gitea"
 NEXUS_SHARED_SERVICE = "tre-shared-service-nexus"
 
+GUACAMOLE_WINDOWS_USER_RESOURCE = "tre-service-guacamole-windowsvm"
+GUACAMOLE_LINUX_USER_RESOURCE = "tre-service-guacamole-linuxvm"
+
 TEST_WORKSPACE_SERVICE_TEMPLATE = "e2e-test-workspace-service"
 
 # Resource Status
