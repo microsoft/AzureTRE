@@ -15,7 +15,7 @@ pytestmark = pytest.mark.asyncio
 async def test_create_guacamole_service_into_base_workspace(admin_token, verify) -> None:
 
     payload = {
-        "templateName": "tre-workspace-base",
+        "templateName": strings.BASE_WORKSPACE,
         "properties": {
             "display_name": "E2E test guacamole service",
             "description": "workspace for E2E",
@@ -31,7 +31,7 @@ async def test_create_guacamole_service_into_base_workspace(admin_token, verify)
     workspace_owner_token, scope_uri = await get_workspace_auth_details(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
 
     service_payload = {
-        "templateName": "tre-service-guacamole",
+        "templateName": strings.GUACAMOLE_SERVICE,
         "properties": {
             "display_name": "Workspace service test",
             "description": "Workspace service for E2E test"
@@ -53,7 +53,7 @@ async def test_create_guacamole_service_into_base_workspace(admin_token, verify)
     await post_resource(patch_payload, f'/api{workspace_service_path}', workspace_owner_token, verify, method="PATCH")
 
     user_resource_payload = {
-        "templateName": "tre-service-guacamole-windowsvm",
+        "templateName": strings.GUACAMOLE_WINDOWS_USER_RESOURCE,
         "properties": {
             "display_name": "My VM",
             "description": "Will be using this VM for my research",
@@ -76,7 +76,7 @@ async def test_create_guacamole_service_into_aad_workspace(admin_token, verify) 
     """This test will create a Guacamole service but will create a workspace and automatically register the AAD Application"""
 
     payload = {
-        "templateName": "tre-workspace-base",
+        "templateName": strings.BASE_WORKSPACE,
         "properties": {
             "display_name": "E2E test guacamole service",
             "description": "workspace for E2E AAD",
@@ -91,7 +91,7 @@ async def test_create_guacamole_service_into_aad_workspace(admin_token, verify) 
     workspace_owner_token, scope_uri = await get_workspace_auth_details(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
 
     service_payload = {
-        "templateName": "tre-service-guacamole",
+        "templateName": strings.GUACAMOLE_SERVICE,
         "properties": {
             "display_name": "Workspace service test",
             "description": "Workspace service for E2E test"
@@ -113,7 +113,7 @@ async def test_create_guacamole_service_into_aad_workspace(admin_token, verify) 
     await post_resource(patch_payload, f'/api{workspace_service_path}', workspace_owner_token, verify, method="PATCH")
 
     user_resource_payload = {
-        "templateName": "tre-service-guacamole-linuxvm",
+        "templateName": strings.GUACAMOLE_LINUX_USER_RESOURCE,
         "properties": {
             "display_name": "Linux VM",
             "description": "Extended Tests for Linux",
