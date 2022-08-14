@@ -10,11 +10,19 @@ resource "azurerm_network_security_group" "ws" {
 resource "azurerm_subnet_network_security_group_association" "services" {
   network_security_group_id = azurerm_network_security_group.ws.id
   subnet_id                 = azurerm_subnet.services.id
+  depends_on = [
+    # meant to resolve AnotherOperation errors with one operation in the vnet at a time
+    azurerm_subnet_route_table_association.rt_webapps_subnet_association
+  ]
 }
 
 resource "azurerm_subnet_network_security_group_association" "webapps" {
   network_security_group_id = azurerm_network_security_group.ws.id
   subnet_id                 = azurerm_subnet.webapps.id
+  depends_on = [
+    # meant to resolve AnotherOperation errors with one operation in the vnet at a time
+    azurerm_subnet_network_security_group_association.webapps
+  ]
 }
 
 resource "azurerm_network_security_rule" "deny_outbound_override" {
