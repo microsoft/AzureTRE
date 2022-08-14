@@ -1,7 +1,7 @@
+import logging
 from datetime import datetime, timedelta
 
-from azure.mgmt.storage import StorageManagementClient
-from azure.storage.blob import generate_container_sas, ContainerSasPermissions
+from azure.storage.blob import generate_container_sas, ContainerSasPermissions, BlobServiceClient
 from fastapi import HTTPException
 from starlette import status
 
@@ -15,10 +15,12 @@ from models.domain.workspace import Workspace
 from resources import strings, constants
 
 
-def get_storage_management_client():
-    token_credential = DefaultAzureCredential(managed_identity_client_id=config.MANAGED_IDENTITY_CLIENT_ID,
-                                              exclude_shared_token_cache_credential=True)
-    return StorageManagementClient(credential=token_credential, subscription_id=config.SUBSCRIPTION_ID)
+def get_credential() -> DefaultAzureCredential:
+    managed_identity = config.MANAGED_IDENTITY_CLIENT_ID
+    if managed_identity:
+        logging.info("Using managed identity credentials.")
+    return DefaultAzureCredential(managed_identity_client_id=config.MANAGED_IDENTITY_CLIENT_ID,
+                                  exclude_shared_token_cache_credential=True) if managed_identity else DefaultAzureCredential()
 
 
 def get_account_and_rg_by_request(airlock_request: AirlockRequest, workspace: Workspace) -> RequestAccountDetails:
@@ -88,11 +90,6 @@ def validate_request_status(airlock_request: AirlockRequest):
         return
 
 
-def get_storage_account_key(storage_client: StorageManagementClient, request_account_details: RequestAccountDetails):
-    return storage_client.storage_accounts.list_keys(request_account_details.account_rg,
-                                                     request_account_details.account_name).keys[0].value
-
-
 def get_required_permission(airlock_request: AirlockRequest) -> ContainerSasPermissions:
     if airlock_request.status == AirlockRequestStatus.Draft:
         return ContainerSasPermissions(read=True, write=True, list=True, delete=True)
@@ -100,19 +97,23 @@ def get_required_permission(airlock_request: AirlockRequest) -> ContainerSasPerm
         return ContainerSasPermissions(read=True, list=True)
 
 
-def get_airlock_request_container_sas_token(storage_client: StorageManagementClient,
-                                            request_account_details: RequestAccountDetails,
-                                            airlock_request: AirlockRequest):
-    account_key = get_storage_account_key(storage_client, request_account_details)
-    required_permission = get_required_permission(airlock_request)
-    expiry = datetime.utcnow() + timedelta(hours=config.AIRLOCK_SAS_TOKEN_EXPIRY_PERIOD_IN_HOURS)
+def get_airlock_request_container_sas_token(request_account_details: RequestAccountDetails, airlock_request: AirlockRequest):
 
-    # TODO: use user delegated key  https://github.com/microsoft/AzureTRE/issues/2185
+    source_blob_service_client = BlobServiceClient(account_url=get_account_url(request_account_details.account_name),
+                                                   credential=get_credential())
+    expiry = datetime.utcnow() + timedelta(hours=config.AIRLOCK_SAS_TOKEN_EXPIRY_PERIOD_IN_HOURS)
+    udk = source_blob_service_client.get_user_delegation_key(datetime.utcnow(), expiry)
+    required_permission = get_required_permission(airlock_request)
+
     token = generate_container_sas(container_name=airlock_request.id,
                                    account_name=request_account_details.account_name,
-                                   account_key=account_key,
+                                   user_delegation_key=udk,
                                    permission=required_permission,
                                    expiry=expiry)
 
     return "https://{}.blob.core.windows.net/{}?{}" \
         .format(request_account_details.account_name, airlock_request.id, token)
+
+
+def get_account_url(account_name: str) -> str:
+    return f"https://{account_name}.blob.core.windows.net/"

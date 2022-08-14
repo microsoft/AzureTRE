@@ -54,6 +54,6 @@ resource "azurerm_role_assignment" "airlock_blob_data_contributor" {
 resource "azurerm_role_assignment" "api_reader_data_access" {
   count                = length(local.api_sa_reader_data_access)
   scope                = local.api_sa_reader_data_access[count.index]
-  role_definition_name = "Reader and Data Access"
+  role_definition_name = "Storage Blob Data Contributor"
   principal_id         = var.api_principal_id
 }
