@@ -49,7 +49,7 @@ async def create_draft_request(airlock_request_input: AirlockRequestInCreate, us
 async def get_all_airlock_requests_by_workspace(
         airlock_request_repo=Depends(get_repository(AirlockRequestRepository)),
         workspace=Depends(get_deployed_workspace_by_id_from_path),
-        user=Depends(get_current_workspace_owner_or_researcher_user),
+        user=Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager),
         creator_user_id: str = None, type: AirlockRequestType = None, status: AirlockRequestStatus = None, awaiting_current_user_review: bool = None) -> AirlockRequestWithAllowedUserActionsInList:
     try:
         airlock_requests = get_airlock_requests_by_user_and_workspace(user=user, workspace=workspace, airlock_request_repo=airlock_request_repo,
