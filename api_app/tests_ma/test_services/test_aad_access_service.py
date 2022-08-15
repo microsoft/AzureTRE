@@ -93,18 +93,18 @@ def test_extract_workspace__returns_sp_id_and_roles(get_app_sp_graph_data_mock):
                                         properties={'client_id': '1234', 'sp_id': 'abc127', 'app_role_id_workspace_owner': 'abc128', 'app_role_id_workspace_researcher': 'abc129', 'app_role_id_workspace_airlock_manager': 'abc130'}),
                               WorkspaceRole.AirlockManager)
                          ])
-@patch("services.aad_authentication.AzureADAuthorization.get_user_role_assignments")
-def test_get_workspace_role_returns_correct_owner(get_user_role_assignments_mock, user: User, workspace: Workspace, expected_role: WorkspaceRole):
+@patch("services.aad_authentication.AzureADAuthorization.get_identity_role_assignments")
+def test_get_workspace_role_returns_correct_owner(get_identity_role_assignments_mock, user: User, workspace: Workspace, expected_role: WorkspaceRole):
 
-    get_user_role_assignments_mock.return_value = user.roleAssignments
+    get_identity_role_assignments_mock.return_value = user.roleAssignments
 
     access_service = AzureADAuthorization()
-    actual_role = access_service.get_workspace_role(user, workspace, access_service.get_user_role_assignments(user.id))
+    actual_role = access_service.get_workspace_role(user, workspace, access_service.get_identity_role_assignments(user.id))
 
     assert actual_role == expected_role
 
 
-@patch("services.aad_authentication.AzureADAuthorization.get_user_role_assignments", return_value=[("ab123", "ab124")])
+@patch("services.aad_authentication.AzureADAuthorization.get_identity_role_assignments", return_value=[("ab123", "ab124")])
 def test_raises_auth_config_error_if_workspace_auth_config_is_not_set(_):
     access_service = AzureADAuthorization()
 
@@ -112,10 +112,10 @@ def test_raises_auth_config_error_if_workspace_auth_config_is_not_set(_):
     workspace_with_no_auth_config = Workspace(id='abc', etag='', templateName='template-name', templateVersion='0.1.0', resourcePath="test")
 
     with pytest.raises(AuthConfigValidationError):
-        _ = access_service.get_workspace_role(user, workspace_with_no_auth_config, access_service.get_user_role_assignments(user.id))
+        _ = access_service.get_workspace_role(user, workspace_with_no_auth_config, access_service.get_identity_role_assignments(user.id))
 
 
-@patch("services.aad_authentication.AzureADAuthorization.get_user_role_assignments", return_value=[("ab123", "ab124")])
+@patch("services.aad_authentication.AzureADAuthorization.get_identity_role_assignments", return_value=[("ab123", "ab124")])
 def test_raises_auth_config_error_if_auth_info_has_incorrect_roles(_):
     access_service = AzureADAuthorization()
 
@@ -129,4 +129,4 @@ def test_raises_auth_config_error_if_auth_info_has_incorrect_roles(_):
         resourcePath="test")
 
     with pytest.raises(AuthConfigValidationError):
-        _ = access_service.get_workspace_role(user, workspace_with_auth_info_but_no_roles, access_service.get_user_role_assignments())
+        _ = access_service.get_workspace_role(user, workspace_with_auth_info_but_no_roles, access_service.get_identity_role_assignments())

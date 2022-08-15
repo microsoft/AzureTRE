@@ -16,7 +16,7 @@ class AccessService(OAuth2AuthorizationCodeBearer):
         pass
 
     @abstractmethod
-    def get_user_role_assignments(self, user_id: str) -> dict:
+    def get_identity_role_assignments(self, user_id: str) -> dict:
         pass
 
     @abstractmethod
