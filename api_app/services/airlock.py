@@ -97,12 +97,12 @@ def get_required_permission(airlock_request: AirlockRequest) -> ContainerSasPerm
         return ContainerSasPermissions(read=True, list=True)
 
 
-def get_airlock_request_container_sas_token(request_account_details: RequestAccountDetails, airlock_request: AirlockRequest):
-
-    source_blob_service_client = BlobServiceClient(account_url=get_account_url(request_account_details.account_name),
-                                                   credential=get_credential())
+def get_airlock_request_container_sas_token(request_account_details: RequestAccountDetails,
+                                            airlock_request: AirlockRequest):
+    blob_service_client = BlobServiceClient(account_url=get_account_url(request_account_details.account_name),
+                                            credential=get_credential())
     expiry = datetime.utcnow() + timedelta(hours=config.AIRLOCK_SAS_TOKEN_EXPIRY_PERIOD_IN_HOURS)
-    udk = source_blob_service_client.get_user_delegation_key(datetime.utcnow(), expiry)
+    udk = blob_service_client.get_user_delegation_key(datetime.utcnow(), expiry)
     required_permission = get_required_permission(airlock_request)
 
     token = generate_container_sas(container_name=airlock_request.id,
