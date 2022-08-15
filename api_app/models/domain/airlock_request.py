@@ -29,6 +29,12 @@ class AirlockRequestType(str, Enum):
     Export = strings.AIRLOCK_REQUEST_TYPE_EXPORT
 
 
+class AirlockActions(str, Enum):
+    Review = strings.AIRLOCK_ACTION_REVIEW
+    Cancel = strings.AIRLOCK_ACTION_CANCEL
+    Submit = strings.AIRLOCK_ACTION_SUBMIT
+
+
 class AirlockRequest(AirlockResource):
     """
     Airlock request
