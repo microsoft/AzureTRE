@@ -4,8 +4,6 @@ from datetime import datetime, timedelta
 from azure.storage.blob import generate_container_sas, ContainerSasPermissions, BlobServiceClient
 from fastapi import HTTPException
 from starlette import status
-
-from api.routes.airlock_resource_helpers import RequestAccountDetails
 from core import config
 from azure.identity import DefaultAzureCredential
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus
@@ -85,22 +83,22 @@ def get_required_permission(airlock_request: AirlockRequest) -> ContainerSasPerm
         return ContainerSasPermissions(read=True, list=True)
 
 
-def get_airlock_request_container_sas_token(request_account_details: RequestAccountDetails,
+def get_airlock_request_container_sas_token(account_name: str,
                                             airlock_request: AirlockRequest):
-    blob_service_client = BlobServiceClient(account_url=get_account_url(request_account_details.account_name),
+    blob_service_client = BlobServiceClient(account_url=get_account_url(account_name),
                                             credential=get_credential())
     expiry = datetime.utcnow() + timedelta(hours=config.AIRLOCK_SAS_TOKEN_EXPIRY_PERIOD_IN_HOURS)
     udk = blob_service_client.get_user_delegation_key(datetime.utcnow(), expiry)
     required_permission = get_required_permission(airlock_request)
 
     token = generate_container_sas(container_name=airlock_request.id,
-                                   account_name=request_account_details.account_name,
+                                   account_name=account_name,
                                    user_delegation_key=udk,
                                    permission=required_permission,
                                    expiry=expiry)
 
     return "https://{}.blob.core.windows.net/{}?{}" \
-        .format(request_account_details.account_name, airlock_request.id, token)
+        .format(account_name, airlock_request.id, token)
 
 
 def get_account_url(account_name: str) -> str:
