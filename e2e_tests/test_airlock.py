@@ -15,7 +15,7 @@ LOGGER = logging.getLogger(__name__)
 
 @pytest.mark.airlock
 @pytest.mark.extended
-@pytest.mark.timeout(1600)
+@pytest.mark.timeout(2000)
 async def test_airlock_import_flow(admin_token, verify) -> None:
 
     # 1. create workspace
@@ -59,7 +59,7 @@ async def test_airlock_import_flow(admin_token, verify) -> None:
 
     # 4. upload blob
 
-    # currenly there's no elagant way to check if the container was created yet becasue its an asyc process
+    # currenly there's no elegant way to check if the container was created yet becasue its an asyc process
     # it would be better to create another draft_improgress step and wait for the request to change to draft state before
     # uploading the blob
 
