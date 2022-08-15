@@ -287,28 +287,14 @@ async def test_get_airlock_requests_by_user_and_workspace_with_awaiting_current_
     airlock_review_repo_mock.get_airlock_requests.assert_called_once()
 
 
-@pytest.mark.parametrize("role", get_required_roles(endpoint=create_airlock_review))
-async def test_get_allowed_actions_requires_same_roles_as_review_endpoint(role, airlock_review_repo_mock):
+@pytest.mark.parametrize("action, required_roles, airlock_review_repo_mock", [
+    (AirlockActions.Review, get_required_roles(endpoint=create_airlock_review), airlock_review_repo_mock),
+    (AirlockActions.Cancel, get_required_roles(endpoint=create_cancel_request), airlock_review_repo_mock),
+    (AirlockActions.Submit, get_required_roles(endpoint=create_submit_request), airlock_review_repo_mock)])
+async def test_get_allowed_actions_requires_same_roles_as_endpoint(action, required_roles, airlock_review_repo_mock):
     airlock_review_repo_mock.validate_status_update = MagicMock(return_value=True)
     user = create_test_user()
-    user.roles = [role]
-    allowed_actions = get_allowed_actions(request=sample_airlock_request(), user=user, airlock_request_repo=airlock_review_repo_mock)
-    assert AirlockActions.Review in allowed_actions
-
-
-@pytest.mark.parametrize("role", get_required_roles(endpoint=create_cancel_request))
-async def test_get_allowed_actions_requires_same_roles_as_cancel_endpoint(role, airlock_review_repo_mock):
-    airlock_review_repo_mock.validate_status_update = MagicMock(return_value=True)
-    user = create_test_user()
-    user.roles = [role]
-    allowed_actions = get_allowed_actions(request=sample_airlock_request(), user=user, airlock_request_repo=airlock_review_repo_mock)
-    assert AirlockActions.Cancel in allowed_actions
-
-
-@pytest.mark.parametrize("role", get_required_roles(endpoint=create_submit_request))
-async def test_get_allowed_actions_requires_same_roles_as_submit_endpoint(role, airlock_review_repo_mock):
-    airlock_review_repo_mock.validate_status_update = MagicMock(return_value=True)
-    user = create_test_user()
-    user.roles = [role]
-    allowed_actions = get_allowed_actions(request=sample_airlock_request(), user=user, airlock_request_repo=airlock_review_repo_mock)
-    assert AirlockActions.Submit in allowed_actions
+    for role in required_roles:
+        user.roles = [role]
+        allowed_actions = get_allowed_actions(request=sample_airlock_request(), user=user, airlock_request_repo=airlock_review_repo_mock)
+        assert action in allowed_actions
