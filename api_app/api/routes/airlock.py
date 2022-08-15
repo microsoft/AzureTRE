@@ -19,7 +19,7 @@ from services.authentication import get_current_workspace_owner_or_researcher_us
 
 from .airlock_resource_helpers import save_airlock_review, save_and_publish_event_airlock_request, \
     update_status_and_publish_event_airlock_request
-from services.airlock import  validate_user_allowed_to_access_storage_account, \
+from services.airlock import validate_user_allowed_to_access_storage_account, \
     get_account_by_request, get_airlock_request_container_sas_token, validate_request_status
 
 airlock_workspace_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager)])
