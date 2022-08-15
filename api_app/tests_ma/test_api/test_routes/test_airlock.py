@@ -80,7 +80,7 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
         app.dependency_overrides = {}
 
     # [GET] /workspaces/{workspace_id}/requests}
-    @patch("api.routes.airlock.AirlockRequestRepository.get_airlock_requests_by_workspace_id", return_value=[])
+    @patch("api.routes.airlock.AirlockRequestRepository.get_airlock_requests", return_value=[])
     async def test_get_all_airlock_requests_by_workspace_returns_200(self, _, app, client):
         response = await client.get(app.url_path_for(strings.API_LIST_AIRLOCK_REQUESTS, workspace_id=WORKSPACE_ID))
         assert response.status_code == status.HTTP_200_OK
@@ -171,7 +171,7 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
         assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
     @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object())
-    @patch("api.routes.airlock.AirlockRequestRepository._validate_status_update", return_value=False)
+    @patch("api.routes.airlock.AirlockRequestRepository.validate_status_update", return_value=False)
     async def test_post_submit_airlock_request_with_illegal_status_change_returns_400(self, _, __, app, client):
         response = await client.post(app.url_path_for(strings.API_SUBMIT_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
         assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -280,7 +280,7 @@ class TestAirlockRoutesThatRequireAirlockManagerRights():
     @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object(status=AirlockRequestStatus.InReview))
     @patch("api.routes.airlock.AirlockReviewRepository.create_airlock_review_item", return_value=sample_airlock_review_object())
     @patch("api.routes.airlock.AirlockReviewRepository.save_item")
-    @patch("api.routes.airlock.AirlockRequestRepository._validate_status_update", return_value=False)
+    @patch("api.routes.airlock.AirlockRequestRepository.validate_status_update", return_value=False)
     async def test_post_create_airlock_review_with_illegal_status_change_returns_400(self, _, __, ___, ____, app, client, sample_airlock_review_input_data):
         response = await client.post(app.url_path_for(strings.API_REVIEW_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID), json=sample_airlock_review_input_data)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
