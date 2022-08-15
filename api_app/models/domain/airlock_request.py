@@ -32,6 +32,7 @@ class AirlockRequestType(str, Enum):
 class AirlockActions(str, Enum):
     Review = strings.AIRLOCK_ACTION_REVIEW
     Cancel = strings.AIRLOCK_ACTION_CANCEL
+    Submit = strings.AIRLOCK_ACTION_SUBMIT
 
 
 class AirlockRequest(AirlockResource):

@@ -22,7 +22,7 @@ def get_sample_airlock_request(workspace_id: str, airlock_request_id: str) -> di
 def get_sample_airlock_request_with_allowed_user_actions(workspace_id: str) -> dict:
     return {
         "airlockRequest": get_sample_airlock_request(workspace_id, str(uuid.uuid4())),
-        "allowed_user_actions": [AirlockActions.Cancel, AirlockActions.Review],
+        "allowed_user_actions": [AirlockActions.Cancel, AirlockActions.Review, AirlockActions.Submit],
     }
 
 

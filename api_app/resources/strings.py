@@ -198,6 +198,7 @@ AIRLOCK_NO_OWNER_EMAIL = "There are no Workspace Owners with an email address."
 # Airlock Actions
 AIRLOCK_ACTION_REVIEW = "review"
 AIRLOCK_ACTION_CANCEL = "cancel"
+AIRLOCK_ACTION_SUBMIT = "submit"
 
 # Deployments
 RESOURCE_STATUS_AWAITING_DEPLOYMENT_MESSAGE = "This resource is waiting to be deployed"

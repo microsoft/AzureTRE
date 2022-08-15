@@ -13,7 +13,7 @@ from models.domain.airlock_review import AirlockReview, AirlockReviewDecision
 from models.domain.airlock_resource import AirlockResourceType
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType, AirlockActions
 from azure.eventgrid import EventGridEvent
-from api.routes.airlock import create_airlock_review, create_cancel_request
+from api.routes.airlock import create_airlock_review, create_cancel_request, create_submit_request
 
 pytestmark = pytest.mark.asyncio
 
@@ -293,7 +293,7 @@ async def test_get_allowed_actions_requires_same_roles_as_review_endpoint(role, 
     user = create_test_user()
     user.roles = [role]
     allowed_actions = get_allowed_actions(request=sample_airlock_request(), user=user, airlock_request_repo=airlock_review_repo_mock)
-    assert allowed_actions == [AirlockActions.Review]
+    assert AirlockActions.Review in allowed_actions
 
 
 @pytest.mark.parametrize("role", get_required_roles(endpoint=create_cancel_request))
@@ -302,4 +302,13 @@ async def test_get_allowed_actions_requires_same_roles_as_cancel_endpoint(role, 
     user = create_test_user()
     user.roles = [role]
     allowed_actions = get_allowed_actions(request=sample_airlock_request(), user=user, airlock_request_repo=airlock_review_repo_mock)
-    assert allowed_actions == [AirlockActions.Cancel]
+    assert AirlockActions.Cancel in allowed_actions
+
+
+@pytest.mark.parametrize("role", get_required_roles(endpoint=create_submit_request))
+async def test_get_allowed_actions_requires_same_roles_as_submit_endpoint(role, airlock_review_repo_mock):
+    airlock_review_repo_mock.validate_status_update = MagicMock(return_value=True)
+    user = create_test_user()
+    user.roles = [role]
+    allowed_actions = get_allowed_actions(request=sample_airlock_request(), user=user, airlock_request_repo=airlock_review_repo_mock)
+    assert AirlockActions.Submit in allowed_actions

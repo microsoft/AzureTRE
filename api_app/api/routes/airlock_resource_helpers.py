@@ -115,12 +115,16 @@ def get_allowed_actions(request: AirlockRequest, user: User, airlock_request_rep
 
     can_review_request = airlock_request_repo.validate_status_update(request.status, AirlockRequestStatus.ApprovalInProgress)
     can_cancel_request = airlock_request_repo.validate_status_update(request.status, AirlockRequestStatus.Cancelled)
+    can_submit_request = airlock_request_repo.validate_status_update(request.status, AirlockRequestStatus.Submitted)
 
     if can_review_request and "AirlockManager" in user.roles:
         allowed_actions.append(AirlockActions.Review)
 
     if can_cancel_request and ("WorkspaceOwner" in user.roles or "WorkspaceResearcher" in user.roles):
         allowed_actions.append(AirlockActions.Cancel)
+
+    if can_submit_request and ("WorkspaceOwner" in user.roles or "WorkspaceResearcher" in user.roles):
+        allowed_actions.append(AirlockActions.Submit)
 
     return allowed_actions
 
