@@ -65,8 +65,6 @@ async def retrieve_users_active_workspaces(request: Request, user=Depends(get_cu
 
 @workspaces_core_router.get("/workspaces/{workspace_id}", response_model=WorkspaceInResponse, name=strings.API_GET_WORKSPACE_BY_ID)
 async def retrieve_workspace_by_workspace_id(user=Depends(get_current_tre_user_or_tre_admin), workspace=Depends(get_workspace_by_id_from_path)) -> WorkspaceInResponse:
-    # TODO: remove this line after bug fix!!!
-    return WorkspaceInResponse(workspace=workspace)
     access_service = get_access_service()
     user_role_assignments = get_user_role_assignments(user)
     if access_service.get_workspace_role(user, workspace, user_role_assignments) != WorkspaceRole.NoRole:
