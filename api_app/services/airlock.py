@@ -23,47 +23,35 @@ def get_credential() -> DefaultAzureCredential:
                                   exclude_shared_token_cache_credential=True) if managed_identity else DefaultAzureCredential()
 
 
-def get_account_and_rg_by_request(airlock_request: AirlockRequest, workspace: Workspace) -> RequestAccountDetails:
+def get_account_by_request(airlock_request: AirlockRequest, workspace: Workspace) -> str:
     tre_id = config.TRE_ID
     short_workspace_id = workspace.id[-4:]
     if airlock_request.requestType == constants.IMPORT_TYPE:
         if airlock_request.status == AirlockRequestStatus.Draft:
-            return RequestAccountDetails(constants.STORAGE_ACCOUNT_NAME_IMPORT_EXTERNAL.format(tre_id),
-                                         constants.CORE_RESOURCE_GROUP_NAME.format(tre_id))
+            return constants.STORAGE_ACCOUNT_NAME_IMPORT_EXTERNAL.format(tre_id)
         elif airlock_request.status == AirlockRequestStatus.Submitted:
-            return RequestAccountDetails(constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS.format(tre_id),
-                                         constants.CORE_RESOURCE_GROUP_NAME.format(tre_id))
+            return constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS.format(tre_id)
         elif airlock_request.status == AirlockRequestStatus.InReview:
-            return RequestAccountDetails(constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS.format(tre_id),
-                                         constants.CORE_RESOURCE_GROUP_NAME.format(tre_id))
+            return constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS.format(tre_id)
         elif airlock_request.status == AirlockRequestStatus.Approved:
-            return RequestAccountDetails(constants.STORAGE_ACCOUNT_NAME_IMPORT_APPROVED.format(short_workspace_id),
-                                         constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, short_workspace_id))
+            return constants.STORAGE_ACCOUNT_NAME_IMPORT_APPROVED.format(short_workspace_id)
         elif airlock_request.status == AirlockRequestStatus.Rejected:
-            return RequestAccountDetails(constants.STORAGE_ACCOUNT_NAME_IMPORT_REJECTED.format(tre_id),
-                                         constants.CORE_RESOURCE_GROUP_NAME.format(tre_id))
+            return constants.STORAGE_ACCOUNT_NAME_IMPORT_REJECTED.format(tre_id)
         elif airlock_request.status == AirlockRequestStatus.Blocked:
-            return RequestAccountDetails(constants.STORAGE_ACCOUNT_NAME_IMPORT_BLOCKED.format(tre_id),
-                                         constants.CORE_RESOURCE_GROUP_NAME.format(tre_id))
+            return constants.STORAGE_ACCOUNT_NAME_IMPORT_BLOCKED.format(tre_id)
     else:
         if airlock_request.status == AirlockRequestStatus.Draft:
-            return RequestAccountDetails(constants.STORAGE_ACCOUNT_NAME_EXPORT_INTERNAL.format(short_workspace_id),
-                                         constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, short_workspace_id))
+            return constants.STORAGE_ACCOUNT_NAME_EXPORT_INTERNAL.format(short_workspace_id)
         elif airlock_request.status in AirlockRequestStatus.Submitted:
-            return RequestAccountDetails(constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS.format(short_workspace_id),
-                                         constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, short_workspace_id))
+            return constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS.format(short_workspace_id)
         elif airlock_request.status == AirlockRequestStatus.InReview:
-            return RequestAccountDetails(constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS.format(short_workspace_id),
-                                         constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, short_workspace_id))
+            return constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS.format(short_workspace_id)
         elif airlock_request.status == AirlockRequestStatus.Approved:
-            return RequestAccountDetails(constants.STORAGE_ACCOUNT_NAME_EXPORT_APPROVED.format(tre_id),
-                                         constants.CORE_RESOURCE_GROUP_NAME.format(tre_id))
+            return constants.STORAGE_ACCOUNT_NAME_EXPORT_APPROVED.format(tre_id)
         elif airlock_request.status == AirlockRequestStatus.Rejected:
-            return RequestAccountDetails(constants.STORAGE_ACCOUNT_NAME_EXPORT_REJECTED.format(short_workspace_id),
-                                         constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, short_workspace_id))
+            return constants.STORAGE_ACCOUNT_NAME_EXPORT_REJECTED.format(short_workspace_id)
         elif airlock_request.status == AirlockRequestStatus.Blocked:
-            return RequestAccountDetails(constants.STORAGE_ACCOUNT_NAME_EXPORT_BLOCKED.format(short_workspace_id),
-                                         constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, short_workspace_id))
+            return constants.STORAGE_ACCOUNT_NAME_EXPORT_BLOCKED.format(short_workspace_id)
 
 
 def validate_user_allowed_to_access_storage_account(user: User, airlock_request: AirlockRequest):
