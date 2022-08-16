@@ -28,7 +28,7 @@ locals {
     azurerm_storage_account.sa_export_blocked.id
   ]
 
-  api_reader_data_access = [
+  api_sa_data_contributor = [
     azurerm_storage_account.sa_import_approved.id,
     azurerm_storage_account.sa_export_internal.id,
     azurerm_storage_account.sa_export_inprogress.id
