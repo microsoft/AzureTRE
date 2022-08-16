@@ -270,3 +270,25 @@ resource "azurerm_role_assignment" "api_sa_data_contributor" {
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
 }
+
+resource "azurerm_private_endpoint" "export_approved_pe" {
+  name                = "pe-sa-export-approved-blob-${var.tre_id}"
+  location            = var.location
+  resource_group_name = var.ws_resource_group_name
+  subnet_id           = var.services_subnet_id
+  tags                = var.tre_workspace_tags
+
+  lifecycle { ignore_changes = [tags] }
+
+  private_dns_zone_group {
+    name                 = "private-dns-zone-group-sa-export-approved"
+    private_dns_zone_ids = [data.azurerm_private_dns_zone.blobcore.id]
+  }
+
+  private_service_connection {
+    name                           = "psc-sa-export-approved-${var.short_workspace_id}"
+    private_connection_resource_id = data.azurerm_storage_account.export_approved.id
+    is_manual_connection           = false
+    subresource_names              = ["Blob"]
+  }
+}
