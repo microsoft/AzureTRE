@@ -11,7 +11,7 @@ from fastapi import HTTPException
 from pydantic import parse_obj_as
 from models.domain.authentication import User
 from db.errors import EntityDoesNotExist
-from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockReview, AirlockReviewDecision, AirlockRequestHistoryItem
+from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockReview, AirlockReviewDecision, AirlockRequestHistoryItem, AirlockRequestType
 from models.schemas.airlock_request import AirlockRequestInCreate, AirlockReviewInCreate
 from core import config
 from resources import strings
@@ -50,7 +50,7 @@ class AirlockRequestRepository(BaseRepository):
     def airlock_requests_query():
         return 'SELECT * FROM c'
 
-    def _validate_status_update(self, current_status: AirlockRequestStatus, new_status: AirlockRequestStatus):
+    def validate_status_update(self, current_status: AirlockRequestStatus, new_status: AirlockRequestStatus):
         # Cannot change status from approved
         approved_condition = current_status != AirlockRequestStatus.Approved
         # Cannot change status from rejected
@@ -100,9 +100,23 @@ class AirlockRequestRepository(BaseRepository):
 
         return airlock_request
 
-    def get_airlock_requests_by_workspace_id(self, workspace_id: str) -> List[AirlockRequest]:
+    def get_airlock_requests(self, workspace_id: str, user_id: str = None, type: AirlockRequestType = None, status: AirlockRequestStatus = None) -> List[AirlockRequest]:
         query = self.airlock_requests_query() + f' where c.workspaceId = "{workspace_id}"'
-        airlock_requests = self.query(query=query)
+
+        # optional filters
+        if user_id:
+            query += ' AND c.user.id=@user_id'
+        if status:
+            query += ' AND c.status=@status'
+        if type:
+            query += ' AND c.requestType=@type'
+
+        parameters = [
+            {"name": "@user_id", "value": user_id},
+            {"name": "@status", "value": status},
+            {"name": "@type", "value": type},
+        ]
+        airlock_requests = self.query(query=query, parameters=parameters)
         return parse_obj_as(List[AirlockRequest], airlock_requests)
 
     def get_airlock_request_by_id(self, airlock_request_id: UUID4) -> AirlockRequest:
@@ -114,7 +128,7 @@ class AirlockRequestRepository(BaseRepository):
 
     def update_airlock_request(self, airlock_request: AirlockRequest, new_status: AirlockRequestStatus, user: User, error_message: str = None, airlock_review: AirlockReview = None) -> AirlockRequest:
         current_status = airlock_request.status
-        if self._validate_status_update(current_status, new_status):
+        if self.validate_status_update(current_status, new_status):
             updated_request = copy.deepcopy(airlock_request)
             updated_request.status = new_status
             if new_status == AirlockRequestStatus.Failed:

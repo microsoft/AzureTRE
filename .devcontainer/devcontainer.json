@@ -71,7 +71,6 @@
           "jinja": true,
           "justMyCode": false,
           "console": "integratedTerminal",
-          "envFile": "${workspaceFolder}/templates/core/private.env",
           "preLaunchTask": "Copy_env_file_for_api_debug",
           "cwd": "${workspaceFolder}/api_app"
         },
@@ -83,7 +82,6 @@
           "justMyCode": true,
           "cwd": "${workspaceFolder}/e2e_tests/",
           "preLaunchTask": "Copy_env_file_for_e2e_debug",
-          "envFile": "${workspaceFolder}/templates/core/private.env",
           "args": [
             "-m",
             "extended",
@@ -99,7 +97,6 @@
           "justMyCode": true,
           "cwd": "${workspaceFolder}/e2e_tests/",
           "preLaunchTask": "Copy_env_file_for_e2e_debug",
-          "envFile": "${workspaceFolder}/templates/core/private.env",
           "args": [
             "-m",
             "shared_services",
@@ -115,7 +112,6 @@
           "justMyCode": true,
           "cwd": "${workspaceFolder}/e2e_tests/",
           "preLaunchTask": "Copy_env_file_for_e2e_debug",
-          "envFile": "${workspaceFolder}/templates/core/private.env",
           "args": [
             "-m",
             "performance",
@@ -131,7 +127,6 @@
           "justMyCode": true,
           "cwd": "${workspaceFolder}/e2e_tests/",
           "preLaunchTask": "Copy_env_file_for_e2e_debug",
-          "envFile": "${workspaceFolder}/templates/core/private.env",
           "args": [
             "-m",
             "smoke",
@@ -147,7 +142,6 @@
           "justMyCode": true,
           "cwd": "${workspaceFolder}/e2e_tests/",
           "preLaunchTask": "Copy_env_file_for_e2e_debug",
-          "envFile": "${workspaceFolder}/templates/core/private.env",
           "args": [
             "-m",
             "airlock",
@@ -200,12 +194,12 @@
       "tasks": [
         {
           "label": "Copy_env_file_for_api_debug",
-          "command": "cat ${workspaceFolder}/templates/core/.env ${workspaceFolder}/devops/auth.env > ${workspaceFolder}/api_app/.env",
+          "command": "cat ${workspaceFolder}/templates/core/.env ${workspaceFolder}/devops/auth.env ${workspaceFolder}/templates/core/private.env > ${workspaceFolder}/api_app/.env",
           "type": "shell"
         },
         {
           "label": "Copy_env_file_for_e2e_debug",
-          "command": "cat ${workspaceFolder}/templates/core/.env ${workspaceFolder}/devops/auth.env > ${workspaceFolder}/e2e_tests/.env",
+          "command": "cat ${workspaceFolder}/templates/core/.env ${workspaceFolder}/devops/auth.env ${workspaceFolder}/templates/core/private.env > ${workspaceFolder}/e2e_tests/.env",
           "type": "shell"
         },
         {
