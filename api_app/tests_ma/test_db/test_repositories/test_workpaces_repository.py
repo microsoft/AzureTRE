@@ -45,7 +45,7 @@ def test_get_workspaces_queries_db(workspace_repo):
     expected_query = workspace_repo.workspaces_query_string()
 
     workspace_repo.get_workspaces()
-    workspace_repo.container.query_items.assert_called_once_with(query=expected_query, enable_cross_partition_query=True)
+    workspace_repo.container.query_items.assert_called_once_with(query=expected_query, parameters=None, enable_cross_partition_query=True)
 
 
 def test_get_active_workspaces_queries_db(workspace_repo):
@@ -53,7 +53,7 @@ def test_get_active_workspaces_queries_db(workspace_repo):
     expected_query = workspace_repo.active_workspaces_query_string()
 
     workspace_repo.get_active_workspaces()
-    workspace_repo.container.query_items.assert_called_once_with(query=expected_query, enable_cross_partition_query=True)
+    workspace_repo.container.query_items.assert_called_once_with(query=expected_query, parameters=None, enable_cross_partition_query=True)
 
 
 def test_get_deployed_workspace_by_id_raises_resource_is_not_deployed_if_not_deployed(workspace_repo, workspace, operations_repo):
@@ -80,7 +80,7 @@ def test_get_workspace_by_id_queries_db(workspace_repo, workspace):
     expected_query = f'SELECT * FROM c WHERE c.resourceType = "workspace" AND c.id = "{workspace.id}"'
 
     workspace_repo.get_workspace_by_id(workspace.id)
-    workspace_repo.container.query_items.assert_called_once_with(query=expected_query, enable_cross_partition_query=True)
+    workspace_repo.container.query_items.assert_called_once_with(query=expected_query, parameters=None, enable_cross_partition_query=True)
 
 
 @patch('db.repositories.workspaces.generate_new_cidr')

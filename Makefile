@@ -276,7 +276,7 @@ nexus-install:
 	$(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
 	DIR="${MAKEFILE_DIR}/templates/shared_services/certs" BUNDLE_TYPE=shared_service PROPS="--domain_prefix nexus --cert_name nexus-ssl" \
 	&& $(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
-  DIR=${MAKEFILE_DIR}/templates/shared_services/sonatype-nexus-vm/ BUNDLE_TYPE=shared_service
+	DIR=${MAKEFILE_DIR}/templates/shared_services/sonatype-nexus-vm/ BUNDLE_TYPE=shared_service PROPS="--ssl_cert_name nexus-ssl"
 
 gitea-install:
 	$(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service DIR=${MAKEFILE_DIR}/templates/shared_services/gitea/ BUNDLE_TYPE=shared_service
