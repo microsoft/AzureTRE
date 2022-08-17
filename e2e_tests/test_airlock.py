@@ -96,7 +96,7 @@ async def test_airlock_import_flow(admin_token, verify) -> None:
         "approval": "True",
         "decisionExplanation": "the reason why this request was approved/rejected"
     }
-    request_result = await post_request(payload, f'/api{workspace_path}/requests/{request_id}/reviews', workspace_owner_token, verify, 200)
+    request_result = await post_request(payload, f'/api{workspace_path}/requests/{request_id}/review', workspace_owner_token, verify, 200)
     assert request_result["airlockRequest"]["reviews"][0]["decisionExplanation"] == "the reason why this request was approved/rejected"
 
     await wait_for_status(airlock_strings.APPROVED_STATUS, workspace_owner_token, workspace_path, request_id, verify)
