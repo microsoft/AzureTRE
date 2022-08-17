@@ -4,7 +4,6 @@ import pytest
 
 from mock import AsyncMock, patch
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType
-from models.domain.airlock_resource import AirlockResourceType
 from models.domain.workspace import Workspace
 from service_bus.airlock_request_status_update import receive_step_result_message_and_update_status
 from db.errors import EntityDoesNotExist
@@ -61,13 +60,12 @@ test_sb_step_result_message_with_invalid_status = {
 def sample_airlock_request(status=AirlockRequestStatus.Submitted):
     airlock_request = AirlockRequest(
         id=AIRLOCK_REQUEST_ID,
-        resourceType=AirlockResourceType.AirlockRequest,
         workspaceId=WORKSPACE_ID,
         requestType=AirlockRequestType.Import,
         files=[],
         businessJustification="some test reason",
         status=status,
-        errorMessage=None
+        reviews=[]
     )
     return airlock_request
 
@@ -96,12 +94,12 @@ async def test_receiving_good_message(_, app, sb_client, logging_mock, workspace
     eg_client().send = AsyncMock()
     expected_airlock_request = sample_airlock_request()
     airlock_request_repo().get_airlock_request_by_id.return_value = expected_airlock_request
-    airlock_request_repo().update_airlock_request_status.return_value = sample_airlock_request(status=AirlockRequestStatus.InReview)
+    airlock_request_repo().update_airlock_request.return_value = sample_airlock_request(status=AirlockRequestStatus.InReview)
     workspace_repo().get_workspace_by_id.return_value = sample_workspace()
     await receive_step_result_message_and_update_status(app)
 
     airlock_request_repo().get_airlock_request_by_id.assert_called_once_with(test_sb_step_result_message["data"]["request_id"])
-    airlock_request_repo().update_airlock_request_status.assert_called_once_with(expected_airlock_request, test_sb_step_result_message["data"]["new_status"], expected_airlock_request.user, None)
+    airlock_request_repo().update_airlock_request.assert_called_once_with(airlock_request=expected_airlock_request, new_status=test_sb_step_result_message["data"]["new_status"], user=expected_airlock_request.user, error_message=None, airlock_review=None)
     assert eg_client().send.call_count == 2
     logging_mock.assert_not_called()
     sb_client().get_queue_receiver().complete_message.assert_called_once_with(service_bus_received_message_mock)
