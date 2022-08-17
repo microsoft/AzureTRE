@@ -48,7 +48,7 @@ async def receive_message():
                         await receiver.complete_message(msg)
 
 
-def update_overall_operation_status(operation: Operation, step: OperationStep, is_last_step: bool):
+def update_overall_operation_status(operation: Operation, step: OperationStep, is_last_step: bool, resource_repo: ResourceRepository):
 
     operation.updatedWhen = get_timestamp()
 
@@ -64,6 +64,18 @@ def update_overall_operation_status(operation: Operation, step: OperationStep, i
     if step.is_failure():
         operation.status = get_failure_status_for_action(operation.action)
         operation.message = f"Multi step pipeline failed on step {step.stepId}"
+
+        # pipeline failed - update the primary resource (from the main step) as failed too
+        main_step = None
+        for i, step in enumerate(operation.steps):
+            if step.stepId == "main":
+                main_step = step
+                break
+
+        if main_step:
+            primary_resource = resource_repo.get_resource_by_id(uuid.UUID(main_step.resourceId))
+            primary_resource.deploymentStatus = operation.status
+            resource_repo.update_item(primary_resource)
 
     if step.is_success() and is_last_step:
         operation.status = get_success_status_for_action(operation.action)
@@ -141,7 +153,7 @@ async def update_status_in_database(resource_repo: ResourceRepository, operation
         step_to_update.updatedWhen = get_timestamp()
 
         # update the overall headline operation status
-        update_overall_operation_status(operation, step_to_update, is_last_step)
+        update_overall_operation_status(operation, step_to_update, is_last_step, resource_repo)
 
         # save the operation
         operations_repo.update_item(operation)
@@ -186,7 +198,7 @@ async def update_status_in_database(resource_repo: ResourceRepository, operation
                 logging.error(f"Unable to send update for resource in pipeline step: {e}")
                 next_step.message = repr(e)
                 next_step.status = Status.UpdatingFailed
-                update_overall_operation_status(operation, next_step, is_last_step)
+                update_overall_operation_status(operation, next_step, is_last_step, resource_repo)
                 operations_repo.update_item(operation)
 
         result = True
