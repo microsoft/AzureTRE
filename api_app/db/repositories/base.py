@@ -28,8 +28,8 @@ class BaseRepository:
         except Exception:
             raise UnableToAccessDatabase
 
-    def query(self, query: str):
-        return list(self.container.query_items(query=query, enable_cross_partition_query=True))
+    def query(self, query: str, parameters: dict = None):
+        return list(self.container.query_items(query=query, parameters=parameters, enable_cross_partition_query=True))
 
     def read_item_by_id(self, item_id: str) -> dict:
         return self.container.read_item(item=item_id, partition_key=item_id)

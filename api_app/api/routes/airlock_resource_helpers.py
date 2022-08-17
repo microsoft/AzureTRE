@@ -1,28 +1,21 @@
 from datetime import datetime
 from collections import defaultdict
 import logging
+from typing import List
 
 from fastapi import HTTPException
 from starlette import status
 from db.repositories.airlock_reviews import AirlockReviewRepository
 from models.domain.airlock_review import AirlockReview
 from db.repositories.airlock_requests import AirlockRequestRepository
-from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus
+from models.domain.airlock_request import AirlockActions, AirlockRequest, AirlockRequestStatus, AirlockRequestType
 from event_grid.event_sender import send_status_changed_event, send_airlock_notification_event
 from models.domain.authentication import User
 from models.domain.workspace import Workspace
+from models.schemas.airlock_request import AirlockRequestWithAllowedUserActions
 
 from resources import strings
 from services.authentication import get_access_service
-
-
-class RequestAccountDetails:
-    account_name: str
-    account_rg: str
-
-    def __init__(self, account_name, account_rg):
-        self.account_name = account_name
-        self.account_rg = account_rg
 
 
 async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest, airlock_request_repo: AirlockRequestRepository, user: User, workspace: Workspace):
@@ -96,3 +89,40 @@ def check_email_exists(role_assignment_details: defaultdict(list)):
     if "owner_emails" not in role_assignment_details or not role_assignment_details["owner_emails"]:
         logging.error('Creating an airlock request but the workspace owner does not have an email address.')
         raise HTTPException(status_code=status.HTTP_417_EXPECTATION_FAILED, detail=strings.AIRLOCK_NO_OWNER_EMAIL)
+
+
+def get_airlock_requests_by_user_and_workspace(user: User, workspace: Workspace, airlock_request_repo: AirlockRequestRepository,
+                                               creator_user_id: str = None, type: AirlockRequestType = None, status: AirlockRequestStatus = None, awaiting_current_user_review: bool = None) -> List[AirlockRequest]:
+    if awaiting_current_user_review:
+        if "AirlockManager" not in user.roles:
+            return []
+        status = AirlockRequestStatus.InReview
+
+    return airlock_request_repo.get_airlock_requests(workspace_id=workspace.id, user_id=creator_user_id, type=type, status=status)
+
+
+def get_allowed_actions(request: AirlockRequest, user: User, airlock_request_repo: AirlockRequestRepository) -> AirlockRequestWithAllowedUserActions:
+    allowed_actions = []
+
+    can_review_request = airlock_request_repo.validate_status_update(request.status, AirlockRequestStatus.ApprovalInProgress)
+    can_cancel_request = airlock_request_repo.validate_status_update(request.status, AirlockRequestStatus.Cancelled)
+    can_submit_request = airlock_request_repo.validate_status_update(request.status, AirlockRequestStatus.Submitted)
+
+    if can_review_request and "AirlockManager" in user.roles:
+        allowed_actions.append(AirlockActions.Review)
+
+    if can_cancel_request and ("WorkspaceOwner" in user.roles or "WorkspaceResearcher" in user.roles):
+        allowed_actions.append(AirlockActions.Cancel)
+
+    if can_submit_request and ("WorkspaceOwner" in user.roles or "WorkspaceResearcher" in user.roles):
+        allowed_actions.append(AirlockActions.Submit)
+
+    return allowed_actions
+
+
+def enrich_requests_with_allowed_actions(requests: List[AirlockRequest], user: User, airlock_request_repo: AirlockRequestRepository) -> List[AirlockRequestWithAllowedUserActions]:
+    enriched_requests = []
+    for request in requests:
+        allowed_actions = get_allowed_actions(request, user, airlock_request_repo)
+        enriched_requests.append(AirlockRequestWithAllowedUserActions(airlockRequest=request, allowed_user_actions=allowed_actions))
+    return enriched_requests
