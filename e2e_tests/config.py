@@ -22,3 +22,6 @@ TEST_WORKSPACE_APP_PLAN: str = config("APP_SERVICE_PLAN_SKU", default="")
 # workspace + workspace service for quicker execution. If they're blank the perf test will create + delete them.
 PERF_TEST_WORKSPACE_ID: str = config("PERF_TEST_WORKSPACE_ID", default="")
 PERF_TEST_WORKSPACE_SERVICE_ID: str = config("PERF_TEST_WORKSPACE_SERVICE_ID", default="")
+
+# Set workspace id of an existing workspace to skip creation of a workspace during E2E tests
+TEST_AIRLOCK_WORKSPACE_ID: str = config("TEST_AIRLOCK_WORKSPACE_ID", default="")

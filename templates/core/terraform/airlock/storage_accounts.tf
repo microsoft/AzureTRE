@@ -20,6 +20,33 @@ resource "azurerm_storage_account" "sa_import_external" {
   lifecycle { ignore_changes = [tags] }
 }
 
+data "azurerm_private_dns_zone" "blobcore" {
+  name                = "privatelink.blob.core.windows.net"
+  resource_group_name = var.resource_group_name
+}
+
+resource "azurerm_private_endpoint" "stg_import_external_pe" {
+  name                = "stg-ex-import-blob-${var.tre_id}"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  subnet_id           = var.airlock_storage_subnet_id
+  tags                = var.tre_core_tags
+
+  lifecycle { ignore_changes = [tags] }
+
+  private_dns_zone_group {
+    name                 = "private-dns-zone-group-stg-export-app"
+    private_dns_zone_ids = [data.azurerm_private_dns_zone.blobcore.id]
+  }
+
+  private_service_connection {
+    name                           = "psc-stgeximport-${var.tre_id}"
+    private_connection_resource_id = azurerm_storage_account.sa_import_external.id
+    is_manual_connection           = false
+    subresource_names              = ["Blob"]
+  }
+}
+
 # 'Approved' export
 resource "azurerm_storage_account" "sa_export_approved" {
   name                     = local.export_approved_storage_name
@@ -40,6 +67,28 @@ resource "azurerm_storage_account" "sa_export_approved" {
   })
 
   lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_private_endpoint" "stg_export_approved_pe" {
+  name                = "stg-app-export-blob-${var.tre_id}"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  subnet_id           = var.airlock_storage_subnet_id
+  tags                = var.tre_core_tags
+
+  lifecycle { ignore_changes = [tags] }
+
+  private_dns_zone_group {
+    name                 = "private-dns-zone-group-stg-export-app"
+    private_dns_zone_ids = [data.azurerm_private_dns_zone.blobcore.id]
+  }
+
+  private_service_connection {
+    name                           = "psc-stgappexport-${var.tre_id}"
+    private_connection_resource_id = azurerm_storage_account.sa_export_approved.id
+    is_manual_connection           = false
+    subresource_names              = ["Blob"]
+  }
 }
 
 # 'In-Progress' storage account
@@ -65,11 +114,6 @@ resource "azurerm_storage_account" "sa_import_in_progress" {
   }
 
   lifecycle { ignore_changes = [tags] }
-}
-
-data "azurerm_private_dns_zone" "blobcore" {
-  name                = "privatelink.blob.core.windows.net"
-  resource_group_name = var.resource_group_name
 }
 
 resource "azurerm_private_endpoint" "stg_import_inprogress_pe" {
