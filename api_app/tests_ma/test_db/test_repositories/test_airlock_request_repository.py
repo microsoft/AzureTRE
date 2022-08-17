@@ -3,7 +3,6 @@ from mock import patch, MagicMock
 import pytest
 from tests_ma.test_api.conftest import create_test_user
 from models.schemas.airlock_request import AirlockRequestInCreate
-from models.domain.airlock_resource import AirlockResourceType
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType
 from db.repositories.airlock_requests import AirlockRequestRepository
 
@@ -63,12 +62,13 @@ def verify_dictionary_contains_all_enum_values():
 def airlock_request_mock(status=AirlockRequestStatus.Draft):
     airlock_request = AirlockRequest(
         id=AIRLOCK_REQUEST_ID,
-        resourceType=AirlockResourceType.AirlockRequest,
         workspaceId=WORKSPACE_ID,
         requestType=AirlockRequestType.Import,
         files=[],
         businessJustification="some test reason",
-        status=status
+        status=status,
+        reviews=[]
+
     )
     return airlock_request
 
@@ -106,29 +106,28 @@ def test_create_airlock_request_item_creates_an_airlock_request_with_the_right_v
     airlock_request_item_to_create = sample_airlock_request_input
     airlock_request = airlock_request_repo.create_airlock_request_item(airlock_request_item_to_create, WORKSPACE_ID)
 
-    assert airlock_request.resourceType == AirlockResourceType.AirlockRequest
     assert airlock_request.workspaceId == WORKSPACE_ID
 
 
 @pytest.mark.parametrize("current_status, new_status", get_allowed_status_changes())
-def test_update_airlock_request_status_with_allowed_new_status_should_update_request_status(airlock_request_repo, current_status, new_status, verify_dictionary_contains_all_enum_values):
+def test_update_airlock_request_with_allowed_new_status_should_update_request_status(airlock_request_repo, current_status, new_status, verify_dictionary_contains_all_enum_values):
     user = create_test_user()
     mock_existing_request = airlock_request_mock(status=current_status)
-    airlock_request = airlock_request_repo.update_airlock_request_status(mock_existing_request, new_status, user)
+    airlock_request = airlock_request_repo.update_airlock_request(mock_existing_request, new_status, user)
     assert airlock_request.status == new_status
 
 
 @pytest.mark.parametrize("current_status, new_status", get_forbidden_status_changes())
-def test_update_airlock_request_status_with_forbidden_status_should_fail_on_validation(airlock_request_repo, current_status, new_status, verify_dictionary_contains_all_enum_values):
+def test_update_airlock_request_with_forbidden_status_should_fail_on_validation(airlock_request_repo, current_status, new_status, verify_dictionary_contains_all_enum_values):
     user = create_test_user()
     mock_existing_request = airlock_request_mock(status=current_status)
     with pytest.raises(HTTPException):
-        airlock_request_repo.update_airlock_request_status(mock_existing_request, new_status, user)
+        airlock_request_repo.update_airlock_request(mock_existing_request, new_status, user)
 
 
 def test_get_airlock_requests_queries_db(airlock_request_repo):
     airlock_request_repo.container.query_items = MagicMock()
-    expected_query = airlock_request_repo.airlock_requests_query() + f' AND c.workspaceId = "{WORKSPACE_ID}"'
+    expected_query = airlock_request_repo.airlock_requests_query() + f' where c.workspaceId = "{WORKSPACE_ID}"'
     expected_parameters = [
         {"name": "@user_id", "value": None},
         {"name": "@status", "value": None},

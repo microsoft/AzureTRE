@@ -170,7 +170,7 @@ In the TRE Core, the TRE API will provide the airlock API endpoints allowing to 
 |---|---|---|
 | `POST` | `/api/workspaces/{workspace_id}/requests` | Create an Airlock request (in **Draft**) |
 | `POST` | `/api/workspaces/{workspace_id}/requests/{airlock_request_id}/link` | Get the url and token to acccess Airlock Request | `POST` | `/api/workspaces/{workspace_id}/requests/{airlock_request_id}/submit` | Submits an Airlock request |
-| `POST` | `/api/workspaces/{workspace_id}/requests/{airlock_request_id}/reviews` | Reviews an Airlock request |
+| `POST` | `/api/workspaces/{workspace_id}/requests/{airlock_request_id}/review` | Reviews an Airlock request |
 | `POST` | `/api/workspaces/{workspace_id}/requests/{airlock_request_id}/cancel` | Cancels an Airlock request |
 container |
 

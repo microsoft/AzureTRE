@@ -11,19 +11,44 @@ from fastapi import HTTPException
 from pydantic import parse_obj_as
 from models.domain.authentication import User
 from db.errors import EntityDoesNotExist
-from db.repositories.airlock_resources import AirlockResourceRepository
-from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType
-from models.schemas.airlock_request import AirlockRequestInCreate
+from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockReview, AirlockReviewDecision, AirlockRequestHistoryItem, AirlockRequestType
+from models.schemas.airlock_request import AirlockRequestInCreate, AirlockReviewInCreate
+from core import config
 from resources import strings
+from db.repositories.base import BaseRepository
 
 
-class AirlockRequestRepository(AirlockResourceRepository):
+class AirlockRequestRepository(BaseRepository):
     def __init__(self, client: CosmosClient):
-        super().__init__(client)
+        super().__init__(client, config.STATE_STORE_AIRLOCK_REQUESTS_CONTAINER)
+
+    @staticmethod
+    def get_resource_base_spec_params():
+        return {"tre_id": config.TRE_ID}
+
+    def get_timestamp(self) -> float:
+        return datetime.utcnow().timestamp()
+
+    def update_airlock_request_item(self, original_request: AirlockRequest, new_request: AirlockRequest, user: User, request_properties: dict) -> AirlockRequest:
+        history_item = AirlockRequestHistoryItem(
+            resourceVersion=original_request.resourceVersion,
+            updatedWhen=original_request.updatedWhen,
+            user=original_request.user,
+            properties=request_properties
+        )
+        new_request.history.append(history_item)
+
+        # now update the request props
+        new_request.resourceVersion = new_request.resourceVersion + 1
+        new_request.user = user
+        new_request.updatedWhen = self.get_timestamp()
+
+        self.update_item(new_request)
+        return new_request
 
     @staticmethod
     def airlock_requests_query():
-        return 'SELECT * FROM c WHERE c.resourceType = "airlock-request"'
+        return 'SELECT * FROM c'
 
     def validate_status_update(self, current_status: AirlockRequestStatus, new_status: AirlockRequestStatus):
         # Cannot change status from approved
@@ -69,13 +94,14 @@ class AirlockRequestRepository(AirlockResourceRepository):
             businessJustification=airlock_request_input.businessJustification,
             requestType=airlock_request_input.requestType,
             creationTime=datetime.utcnow().timestamp(),
-            properties=resource_spec_parameters
+            properties=resource_spec_parameters,
+            reviews=[]
         )
 
         return airlock_request
 
     def get_airlock_requests(self, workspace_id: str, user_id: str = None, type: AirlockRequestType = None, status: AirlockRequestStatus = None) -> List[AirlockRequest]:
-        query = self.airlock_requests_query() + f' AND c.workspaceId = "{workspace_id}"'
+        query = self.airlock_requests_query() + f' where c.workspaceId = "{workspace_id}"'
 
         # optional filters
         if user_id:
@@ -100,16 +126,35 @@ class AirlockRequestRepository(AirlockResourceRepository):
             raise EntityDoesNotExist
         return parse_obj_as(AirlockRequest, airlock_requests)
 
-    def update_airlock_request_status(self, airlock_request: AirlockRequest, new_status: AirlockRequestStatus, user: User, error_message: str = None) -> AirlockRequest:
+    def update_airlock_request(self, airlock_request: AirlockRequest, new_status: AirlockRequestStatus, user: User, error_message: str = None, airlock_review: AirlockReview = None) -> AirlockRequest:
         current_status = airlock_request.status
         if self.validate_status_update(current_status, new_status):
             updated_request = copy.deepcopy(airlock_request)
             updated_request.status = new_status
             if new_status == AirlockRequestStatus.Failed:
                 updated_request.errorMessage = error_message
-            return self.update_airlock_resource_item(airlock_request, updated_request, user, {"previousStatus": current_status})
+            if airlock_review is not None:
+                if updated_request.reviews is None:
+                    updated_request.reviews = [airlock_review]
+                else:
+                    updated_request.reviews.append(airlock_review)
+            return self.update_airlock_request_item(airlock_request, updated_request, user, {"previousStatus": current_status})
         else:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE)
 
     def get_airlock_request_spec_params(self):
         return self.get_resource_base_spec_params()
+
+    def create_airlock_review_item(self, airlock_review_input: AirlockReviewInCreate, reviewer: User) -> AirlockReview:
+        full_airlock_review_id = str(uuid.uuid4())
+        airlock_review_decision_from_bool = AirlockReviewDecision.Approved if airlock_review_input.approval else AirlockReviewDecision.Rejected
+
+        airlock_review = AirlockReview(
+            id=full_airlock_review_id,
+            dateCreated=self.get_timestamp(),
+            reviewDecision=airlock_review_decision_from_bool,
+            decisionExplanation=airlock_review_input.decisionExplanation,
+            reviewer=reviewer
+        )
+
+        return airlock_review
