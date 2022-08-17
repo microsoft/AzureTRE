@@ -16,6 +16,7 @@ ENHANCEMENTS:
 * 'CreationTime' field was added to Airlock requests ([#2432](https://github.com/microsoft/AzureTRE/issues/2432))
 * Bundles mirror Terraform plugins when built ([#2446](https://github.com/microsoft/AzureTRE/pull/2446))
 * 'Get all Airlock requests' endpoint supports filtering ([#2433](https://github.com/microsoft/AzureTRE/pull/2433)).
+* API uses user delagation key when generating SAS token for airlock requests. ([#2390](https://github.com/microsoft/AzureTRE/issues/2390))
 
 BUG FIXES:
 
