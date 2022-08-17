@@ -167,19 +167,27 @@ async def update_status_in_database(resource_repo: ResourceRepository, operation
             assert current_step_index < (len(operation.steps) - 1)
             next_step = operation.steps[current_step_index + 1]
 
-            resource_to_send = update_resource_for_step(
-                operation_step=next_step,
-                resource_repo=resource_repo,
-                resource_template_repo=resource_template_repo,
-                primary_resource=resource_repo.get_resource_by_id(operation.resourceId),  # need to get the resource again as it has been updated
-                resource_to_update_id=next_step.resourceId,
-                primary_action=operation.action,
-                user=operation.user)
+            # catch any errors in updating the resource - maybe Cosmos / schema invalid etc, and report them back to the op
+            try:
+                resource_to_send = update_resource_for_step(
+                    operation_step=next_step,
+                    resource_repo=resource_repo,
+                    resource_template_repo=resource_template_repo,
+                    primary_resource=resource_repo.get_resource_by_id(operation.resourceId),  # need to get the resource again as it has been updated
+                    resource_to_update_id=next_step.resourceId,
+                    primary_action=operation.action,
+                    user=operation.user)
 
-            # create + send the message
-            logging.info(f"Sending next step in operation to deployment queue -> step_id: {next_step.stepId}, action: {next_step.resourceAction}")
-            content = json.dumps(resource_to_send.get_resource_request_message_payload(operation_id=operation.id, step_id=next_step.stepId, action=next_step.resourceAction))
-            await send_deployment_message(content=content, correlation_id=operation.id, session_id=resource_to_send.id, action=next_step.resourceAction)
+                # create + send the message
+                logging.info(f"Sending next step in operation to deployment queue -> step_id: {next_step.stepId}, action: {next_step.resourceAction}")
+                content = json.dumps(resource_to_send.get_resource_request_message_payload(operation_id=operation.id, step_id=next_step.stepId, action=next_step.resourceAction))
+                await send_deployment_message(content=content, correlation_id=operation.id, session_id=resource_to_send.id, action=next_step.resourceAction)
+            except Exception as e:
+                logging.error(f"Unable to send update for resource in pipeline step: {e}")
+                next_step.message = repr(e)
+                next_step.status = Status.UpdatingFailed
+                update_overall_operation_status(operation, next_step, is_last_step)
+                operations_repo.update_item(operation)
 
         result = True
 
