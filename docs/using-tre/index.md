@@ -1,9 +1,20 @@
 # Using TRE for Research
 
-!!! info
-    Coming soon
+This documentation part will cover how to use AzureTRE, extend it with your custom images and deploy it.
 
-We're working to improve our documentation, and fill in some gaps. Unfortunately, this particular page is one of the gaps we're looking to fill and isn't yet available.
+## AzureTRE deployment repo
+
+AzureTRE has an OSS deployment repository which you can find [here.](https://github.com/microsoft/AzureTRE-Deployment)
+It contains all the required tooling to develop your custom templates and deploy the Azure TRE:
+
+- Github Actions implementing AzureTRE automation, including running deployments to Azure
+- Configuration specific to deployment
+- Directories setup for: workspace, workspace service and user resource template definitions
+- Devcontainer setup
+
+### AzureTRE Reference
+
+AzureTRE deployment repository allows you to reference AzureTRE as a folder, but also uses it in its deployment. See [AzureTRE deployment readme](https://github.com/microsoft/AzureTRE-Deployment/blob/main/README.md) to learn more on how to setup and upgrade AzureTRE version.
 
 ## How to Contribute to our Documentation
 
