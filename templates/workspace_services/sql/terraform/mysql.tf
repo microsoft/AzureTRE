@@ -34,7 +34,7 @@ resource "azurerm_mysql_database" "db" {
   collation           = "utf8_unicode_ci"
 }
 
-resource "azurerm_private_endpoint" "private-endpoint" {
+resource "azurerm_private_endpoint" "mysql_private_endpoint" {
   name                = "pe-${azurerm_mysql_server.mysql.name}"
   location            = data.azurerm_resource_group.ws.location
   resource_group_name = data.azurerm_resource_group.ws.name
