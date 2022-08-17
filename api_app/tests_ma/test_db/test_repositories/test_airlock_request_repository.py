@@ -3,7 +3,6 @@ from mock import patch, MagicMock
 import pytest
 from tests_ma.test_api.conftest import create_test_user
 from models.schemas.airlock_request import AirlockRequestInCreate
-from models.domain.airlock_resource import AirlockResourceType
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType
 from db.repositories.airlock_requests import AirlockRequestRepository
 
@@ -63,12 +62,13 @@ def verify_dictionary_contains_all_enum_values():
 def airlock_request_mock(status=AirlockRequestStatus.Draft):
     airlock_request = AirlockRequest(
         id=AIRLOCK_REQUEST_ID,
-        resourceType=AirlockResourceType.AirlockRequest,
         workspaceId=WORKSPACE_ID,
         requestType=AirlockRequestType.Import,
         files=[],
         businessJustification="some test reason",
-        status=status
+        status=status,
+        reviews=[]
+
     )
     return airlock_request
 

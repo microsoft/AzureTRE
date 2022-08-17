@@ -4,7 +4,6 @@ import pytest
 
 from mock import AsyncMock, patch
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType
-from models.domain.airlock_resource import AirlockResourceType
 from models.domain.workspace import Workspace
 from service_bus.airlock_request_status_update import receive_step_result_message_and_update_status
 from db.errors import EntityDoesNotExist
@@ -61,13 +60,12 @@ test_sb_step_result_message_with_invalid_status = {
 def sample_airlock_request(status=AirlockRequestStatus.Submitted):
     airlock_request = AirlockRequest(
         id=AIRLOCK_REQUEST_ID,
-        resourceType=AirlockResourceType.AirlockRequest,
         workspaceId=WORKSPACE_ID,
         requestType=AirlockRequestType.Import,
         files=[],
         businessJustification="some test reason",
         status=status,
-        errorMessage=None
+        reviews=[]
     )
     return airlock_request
 
