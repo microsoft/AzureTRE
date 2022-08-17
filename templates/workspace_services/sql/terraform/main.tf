@@ -9,10 +9,6 @@ terraform {
       source  = "hashicorp/random"
       version = ">= 3.0"
     }
-    local = {
-      source  = "hashicorp/local"
-      version = "~> 2.2.0"
-    }
   }
 
   backend "azurerm" {}
@@ -34,8 +30,6 @@ provider "azurerm" {
     }
   }
 }
-
-data "azurerm_client_config" "current" {}
 
 data "azurerm_resource_group" "ws" {
   name = "rg-${var.tre_id}-ws-${local.short_workspace_id}"
