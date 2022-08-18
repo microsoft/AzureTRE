@@ -9,7 +9,7 @@
 
 FEATURES:
 
-* Adding a new MySql workspace service ([#1844](https://github.com/microsoft/AzureTRE/issues/1844))
+* MySql workspace service ([#2476](https://github.com/microsoft/AzureTRE/issues/2476))
 
 ENHANCEMENTS:
 

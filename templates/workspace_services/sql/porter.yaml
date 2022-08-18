@@ -67,7 +67,7 @@ install:
       vars:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
-        id: "{{ bundle.parameters.id }}"
+        tre_resource_id: "{{ bundle.parameters.id }}"
         sql_sku: "{{ bundle.parameters.sql_sku }}"
         storage_mb: "{{ bundle.parameters.storage_mb }}"
         db_name: "{{ bundle.parameters.db_name }}"
@@ -91,7 +91,7 @@ uninstall:
       vars:
         workspace_id: "{{ bundle.parameters.workspace_id }}"
         tre_id: "{{ bundle.parameters.tre_id }}"
-        id: "{{ bundle.parameters.id }}"
+        tre_resource_id: "{{ bundle.parameters.id }}"
         sql_sku: "{{ bundle.parameters.sql_sku }}"
         storage_mb: "{{ bundle.parameters.storage_mb }}"
         db_name: "{{ bundle.parameters.db_name }}"
