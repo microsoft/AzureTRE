@@ -358,7 +358,7 @@ fi
 {
   echo "WORKSPACE_API_CLIENT_ID=\"${workspaceAppId}\""
   echo "WORKSPACE_API_CLIENT_SECRET=\"${spPassword}\""
-} >> "$DIR"/../../auth.env
+} >> "devops/auth.env"
 
 if [[ $grantAdminConsent -eq 0 ]]; then
     echo "NOTE: Make sure the API permissions of the app registrations have admin consent granted."
