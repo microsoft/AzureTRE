@@ -6,7 +6,7 @@ resource "azurerm_log_analytics_workspace" "core" {
   retention_in_days          = 30
   sku                        = "PerGB2018"
   tags                       = var.tre_core_tags
-  internet_ingestion_enabled = false
+  internet_ingestion_enabled = var.enable_local_debugging ? true : false
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -65,7 +65,7 @@ resource "azurerm_application_insights" "core" {
   resource_group_name                 = var.resource_group_name
   workspace_id                        = azurerm_log_analytics_workspace.core.id
   application_type                    = "web"
-  internet_ingestion_enabled          = false
+  internet_ingestion_enabled          = var.enable_local_debugging ? true : false
   force_customer_storage_for_profiler = true
   tags                                = var.tre_core_tags
 
