@@ -62,9 +62,9 @@ def construct_location_header(operation: Operation) -> str:
     return f'/api{operation.resourcePath}/operations/{operation.id}'
 
 
-def get_user_role_assignments(user):
+def get_identity_role_assignments(user):
     access_service = get_access_service()
-    return access_service.get_user_role_assignments(user.id)
+    return access_service.get_identity_role_assignments(user.id)
 
 
 def get_app_user_roles_assignments_emails(app_obj_id):

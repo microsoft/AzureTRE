@@ -219,7 +219,7 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
 
     # [GET] /workspaces
     @patch("api.routes.workspaces.WorkspaceRepository.get_active_workspaces")
-    @patch("api.routes.workspaces.get_user_role_assignments", return_value=[])
+    @patch("api.routes.workspaces.get_identity_role_assignments", return_value=[])
     async def test_get_workspaces_returns_empty_list_when_no_resources_exist(self, access_service_mock, get_workspaces_mock, app, client) -> None:
         get_workspaces_mock.return_value = []
         access_service_mock.get_workspace_role.return_value = [WorkspaceRole.Owner]
@@ -229,7 +229,7 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
 
     # [GET] /workspaces
     @patch("api.routes.workspaces.WorkspaceRepository.get_active_workspaces")
-    @patch("api.routes.workspaces.get_user_role_assignments")
+    @patch("api.routes.workspaces.get_identity_role_assignments")
     async def test_get_workspaces_returns_correct_data_when_resources_exist(self, access_service_mock, get_workspaces_mock, app, client) -> None:
         auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'app_role_id_workspace_owner': 'ab124', 'app_role_id_workspace_researcher': 'ab125', 'app_role_id_workspace_airlock_manager': 'ab130'}
         auth_info_user_in_workspace_researcher_role = {'sp_id': 'ab123', 'app_role_id_workspace_owner': 'ab127', 'app_role_id_workspace_researcher': 'ab126', 'app_role_id_workspace_airlock_manager': 'ab130'}
@@ -251,7 +251,7 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
 
     # [GET] /workspaces/{workspace_id}
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
-    @patch("api.routes.workspaces.get_user_role_assignments")
+    @patch("api.routes.workspaces.get_identity_role_assignments")
     async def test_get_workspace_by_id_get_returns_workspace_if_found(self, access_service_mock, get_workspace_mock, app, client):
         auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'app_role_id_workspace_owner': 'ab124', 'app_role_id_workspace_researcher': 'ab125', 'app_role_id_workspace_airlock_manager': 'ab130'}
         workspace = sample_workspace(auth_info=auth_info_user_in_workspace_owner_role)
@@ -264,7 +264,7 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
 
     # [GET] /workspaces/{workspace_id}
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", side_effect=EntityDoesNotExist)
-    @patch("api.routes.workspaces.get_user_role_assignments")
+    @patch("api.routes.workspaces.get_identity_role_assignments")
     async def test_get_workspace_by_id_get_returns_404_if_resource_is_not_found(self, access_service_mock, _, app, client):
         access_service_mock.return_value = [RoleAssignment('ab123', 'ab124')]
         response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id=WORKSPACE_ID))
@@ -272,7 +272,7 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
 
     # [GET] /workspaces/{workspace_id}
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
-    @patch("api.routes.workspaces.get_user_role_assignments")
+    @patch("api.routes.workspaces.get_identity_role_assignments")
     async def test_get_workspace_by_id_get_returns_422_if_workspace_id_is_not_a_uuid(self, access_service_mock, _, app, client):
         access_service_mock.return_value = [RoleAssignment('ab123', 'ab124')]
         response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id="not_valid"))
