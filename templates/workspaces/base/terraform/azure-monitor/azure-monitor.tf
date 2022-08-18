@@ -1,10 +1,26 @@
 resource "azurerm_log_analytics_workspace" "workspace" {
-  name                = "log-${var.tre_id}-ws-${local.short_workspace_id}"
-  resource_group_name = var.resource_group_name
-  location            = var.location
-  retention_in_days   = 30
-  sku                 = "PerGB2018"
-  tags                = var.tre_workspace_tags
+  name                       = "log-${var.tre_id}-ws-${local.short_workspace_id}"
+  resource_group_name        = var.resource_group_name
+  location                   = var.location
+  retention_in_days          = 30
+  sku                        = "PerGB2018"
+  tags                       = var.tre_workspace_tags
+  internet_ingestion_enabled = var.enable_local_debugging ? true : false
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+# Storage account for Application Insights
+# Because Private Link is enabled on Application Performance Management (APM), Bring Your Own Storage (BYOS) approach is required
+resource "azurerm_storage_account" "app_insights" {
+  name                            = lower(replace("stai${var.tre_id}ws${local.short_workspace_id}", "-", ""))
+  resource_group_name             = var.resource_group_name
+  location                        = var.location
+  account_kind                    = "StorageV2"
+  account_tier                    = "Standard"
+  account_replication_type        = "LRS"
+  allow_nested_items_to_be_public = false
+  tags                            = var.tre_workspace_tags
 
   lifecycle { ignore_changes = [tags] }
 }
@@ -23,97 +39,43 @@ resource "azurerm_log_analytics_linked_storage_account" "workspace_storage_custo
   storage_account_ids   = [azurerm_storage_account.app_insights.id]
 }
 
-
-# Storage account for Application Insights
-# Because Private Link is enabled on Application Performance Management (APM), Bring Your Own Storage (BYOS) approach is required
-resource "azurerm_storage_account" "app_insights" {
-  name                            = lower(replace("stai${var.tre_id}ws${local.short_workspace_id}", "-", ""))
-  resource_group_name             = var.resource_group_name
-  location                        = var.location
-  account_kind                    = "StorageV2"
-  account_tier                    = "Standard"
-  account_replication_type        = "LRS"
-  allow_nested_items_to_be_public = false
-  tags                            = var.tre_workspace_tags
+resource "azurerm_monitor_private_link_scope" "workspace" {
+  name                = "ampls-${var.tre_id}-ws-${local.short_workspace_id}"
+  resource_group_name = var.resource_group_name
+  tags                = var.tre_workspace_tags
 
   lifecycle { ignore_changes = [tags] }
 }
 
-data "azurerm_resource_group" "resource_group" {
-  name = var.resource_group_name
+resource "azurerm_monitor_private_link_scoped_service" "ampls_log_anaytics" {
+  name                = "ampls-log-anaytics-service"
+  resource_group_name = var.resource_group_name
+  scope_name          = azurerm_monitor_private_link_scope.workspace.name
+  linked_resource_id  = azurerm_log_analytics_workspace.workspace.id
 }
-data "local_file" "app_insights_arm_template" {
-  filename = "${path.module}/app_insights.json"
-}
+
+
 
 # Application Insights
-# Deployed using ARM template, because Terraform's azurerm_application_insights does not support linked storage account
-resource "azurerm_resource_group_template_deployment" "app_insights_workspace" {
-  name                = local.app_insights_name
-  resource_group_name = var.resource_group_name
-  deployment_mode     = "Incremental"
-  template_content    = data.local_file.app_insights_arm_template.content
 
-  parameters_content = jsonencode({
-    "app_insights_name" = {
-      value = local.app_insights_name
-    }
-    "location" = {
-      value = var.location
-    }
-    "log_analytics_workspace_id" = {
-      value = azurerm_log_analytics_workspace.workspace.id
-    }
-    "application_type" = {
-      value = "web"
-    }
-    "storage_account_name" = {
-      value = azurerm_storage_account.app_insights.name
-    }
-    "tre_core_tags" = {
-      value = var.tre_workspace_tags
-    }
-    "smartdetectoralertrules_failure_anomalies_name" = {
-      value = "failure anomalies - ${local.app_insights_name}"
-    }
-    "smartdetectoralertrules_failure_anomalies_scope" = {
-      value = "${data.azurerm_resource_group.resource_group.id}/providers/microsoft.insights/components/${local.app_insights_name}"
-    }
-    "smartdetectoralertrules_failure_anomalies_group_id" = {
-      value = "${data.azurerm_resource_group.resource_group.id}/providers/microsoft.insights/actiongroups/application insights smart detection"
-    }
-  })
+resource "azurerm_application_insights" "workspace" {
+  name                                = "appi-${var.tre_id}-ws-${local.short_workspace_id}"
+  location                            = var.location
+  resource_group_name                 = var.resource_group_name
+  workspace_id                        = azurerm_log_analytics_workspace.workspace.id
+  application_type                    = "web"
+  internet_ingestion_enabled          = var.enable_local_debugging ? true : false
+  force_customer_storage_for_profiler = true
+  tags                                = var.tre_workspace_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
 
-data "local_file" "ampls_arm_template" {
-  filename = "${path.module}/ampls.json"
-}
-resource "azurerm_resource_group_template_deployment" "ampls" {
-  name                = "ampls-${var.tre_id}"
+resource "azurerm_monitor_private_link_scoped_service" "ampls_app_insights" {
+  name                = "ampls-app-insights-service"
   resource_group_name = var.resource_group_name
-  deployment_mode     = "Incremental"
-  template_content    = data.local_file.ampls_arm_template.content
-
-
-  parameters_content = jsonencode({
-    "private_link_scope_name" = {
-      value = "ampls-${var.tre_id}-ws-${local.short_workspace_id}"
-    }
-    "workspace_name" = {
-      value = azurerm_log_analytics_workspace.workspace.name
-    }
-    "app_insights_name" = {
-      value = local.app_insights_name
-    }
-    "tre_workspace_tags" = {
-      value = var.tre_workspace_tags
-    }
-  })
-
-  depends_on = [
-    azurerm_log_analytics_workspace.workspace,
-    azurerm_resource_group_template_deployment.app_insights_workspace
-  ]
+  scope_name          = azurerm_monitor_private_link_scope.workspace.name
+  linked_resource_id  = azurerm_application_insights.workspace.id
 }
 
 resource "azurerm_private_endpoint" "azure_monitor_private_endpoint" {
@@ -126,7 +88,7 @@ resource "azurerm_private_endpoint" "azure_monitor_private_endpoint" {
   lifecycle { ignore_changes = [tags] }
 
   private_service_connection {
-    private_connection_resource_id = jsondecode(azurerm_resource_group_template_deployment.ampls.output_content).resourceId.value
+    private_connection_resource_id = azurerm_monitor_private_link_scope.workspace.id
     name                           = "psc-ampls-${var.tre_id}-ws-${local.short_workspace_id}"
     subresource_names              = ["azuremonitor"]
     is_manual_connection           = false
@@ -145,6 +107,6 @@ resource "azurerm_private_endpoint" "azure_monitor_private_endpoint" {
   }
 
   depends_on = [
-    azurerm_resource_group_template_deployment.ampls
+    azurerm_monitor_private_link_scoped_service.ampls_app_insights,
   ]
 }
