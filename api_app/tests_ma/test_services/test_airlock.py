@@ -4,7 +4,6 @@ import pytest
 from resources import strings
 from services.airlock import validate_user_allowed_to_access_storage_account, get_required_permission, \
     validate_request_status
-from models.domain.airlock_resource import AirlockResourceType
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType
 from tests_ma.test_api.conftest import create_workspace_owner_user, create_workspace_researcher_user
 
@@ -12,12 +11,12 @@ from tests_ma.test_api.conftest import create_workspace_owner_user, create_works
 def sample_airlock_request(status=AirlockRequestStatus.Draft):
     airlock_request = AirlockRequest(
         id="AIRLOCK_REQUEST_ID",
-        resourceType=AirlockResourceType.AirlockRequest,
         workspaceId="WORKSPACE_ID",
         requestType=AirlockRequestType.Import,
         files=[],
         businessJustification="some test reason",
-        status=status
+        status=status,
+        reviews=[]
     )
     return airlock_request
 
@@ -112,11 +111,15 @@ def test_get_required_permission_return_read_only_permissions_for_non_draft_requ
     airlock_request = sample_airlock_request(airlock_status)
     permissions = get_required_permission(airlock_request)
     assert permissions.write is False
+    assert permissions.delete is False
     assert permissions.read is True
+    assert permissions.list is True
 
 
 def test_get_required_permission_return_read_and_write_permissions_for_draft_requests():
     airlock_request = sample_airlock_request(AirlockRequestStatus.Draft)
     permissions = get_required_permission(airlock_request)
     assert permissions.write is True
+    assert permissions.delete is True
+    assert permissions.list is True
     assert permissions.read is True

@@ -79,7 +79,7 @@ def copy_data(source_account_name: str, destination_account_name: str, request_i
 def get_credential() -> DefaultAzureCredential:
     managed_identity = os.environ.get("MANAGED_IDENTITY_CLIENT_ID")
     if managed_identity:
-        logging.info("using the Airlock processor's managed identity to get storage management client")
+        logging.info("using the Airlock processor's managed identity to get credentials.")
     return DefaultAzureCredential(managed_identity_client_id=os.environ["MANAGED_IDENTITY_CLIENT_ID"],
                                   exclude_shared_token_cache_credential=True) if managed_identity else DefaultAzureCredential()
 

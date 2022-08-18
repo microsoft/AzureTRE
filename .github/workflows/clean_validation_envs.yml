@@ -14,7 +14,7 @@ jobs:
     environment: CICD
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           # This is CRITICAL since we're making decisions based on branch existence
           fetch-depth: 0

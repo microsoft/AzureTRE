@@ -1,6 +1,6 @@
 ---
 name: tre-shared-service-sonatype-nexus
-version: 2.1.3
+version: 2.1.4
 description: "A Sonatype Nexus shared service"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -43,7 +43,9 @@ parameters:
 mixins:
   - exec
   - terraform:
-      clientVersion: 1.1.5
+      clientVersion: 1.2.6
+  - az
+
 install:
   - terraform:
       description: "Deploy shared service"
@@ -53,10 +55,8 @@ install:
         tre_resource_id: "{{ bundle.parameters.id }}"
         ssl_cert_name: "{{ bundle.parameters.ssl_cert_name }}"
       backendConfig:
-        resource_group_name:
-          "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name:
-          "{{ bundle.parameters.tfstate_storage_account_name }}"
+        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.tre_id }}-shared-service-sonatype-nexus-vm"
 upgrade:
@@ -74,9 +74,7 @@ uninstall:
         tre_resource_id: "{{ bundle.parameters.id }}"
         ssl_cert_name: "{{ bundle.parameters.ssl_cert_name }}"
       backendConfig:
-        resource_group_name:
-          "{{ bundle.parameters.tfstate_resource_group_name }}"
-        storage_account_name:
-          "{{ bundle.parameters.tfstate_storage_account_name }}"
+        resource_group_name: "{{ bundle.parameters.tfstate_resource_group_name }}"
+        storage_account_name: "{{ bundle.parameters.tfstate_storage_account_name }}"
         container_name: "{{ bundle.parameters.tfstate_container_name }}"
         key: "{{ bundle.parameters.tre_id }}-shared-service-sonatype-nexus-vm"

@@ -15,26 +15,30 @@ LOGGER = logging.getLogger(__name__)
 
 @pytest.mark.airlock
 @pytest.mark.extended
-@pytest.mark.timeout(1600)
+@pytest.mark.timeout(2000)
 async def test_airlock_import_flow(admin_token, verify) -> None:
 
-    # 1. create workspace
-    LOGGER.info("Creating workspace")
-    payload = {
-        "templateName": "tre-workspace-base",
-        "properties": {
-            "display_name": "E2E test airlock flow",
-            "description": "workspace for E2E airlock flow",
-            "address_space_size": "small",
-            "client_id": f"{config.TEST_WORKSPACE_APP_ID}",
-            "client_secret": f"{config.TEST_WORKSPACE_APP_SECRET}",
+    if config.TEST_AIRLOCK_WORKSPACE_ID != "":
+        workspace_id = config.TEST_AIRLOCK_WORKSPACE_ID
+        workspace_path = f"/workspaces/{workspace_id}"
+    else:
+        # 1. create workspace
+        LOGGER.info("Creating workspace")
+        payload = {
+            "templateName": resource_strings.BASE_WORKSPACE,
+            "properties": {
+                "display_name": "E2E test airlock flow",
+                "description": "workspace for E2E airlock flow",
+                "address_space_size": "small",
+                "client_id": f"{config.TEST_WORKSPACE_APP_ID}",
+                "client_secret": f"{config.TEST_WORKSPACE_APP_SECRET}",
+            }
         }
-    }
 
-    if config.TEST_WORKSPACE_APP_PLAN != "":
-        payload["properties"]["app_service_plan_sku"] = config.TEST_WORKSPACE_APP_PLAN
+        if config.TEST_WORKSPACE_APP_PLAN != "":
+            payload["properties"]["app_service_plan_sku"] = config.TEST_WORKSPACE_APP_PLAN
 
-    workspace_path, workspace_id = await post_resource(payload, resource_strings.API_WORKSPACES, access_token=admin_token, verify=verify)
+        workspace_path, workspace_id = await post_resource(payload, resource_strings.API_WORKSPACES, access_token=admin_token, verify=verify)
     workspace_owner_token, scope_uri = await get_workspace_auth_details(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
 
     # 2. create airlock request
@@ -59,7 +63,7 @@ async def test_airlock_import_flow(admin_token, verify) -> None:
 
     # 4. upload blob
 
-    # currenly there's no elagant way to check if the container was created yet becasue its an asyc process
+    # currenly there's no elegant way to check if the container was created yet becasue its an asyc process
     # it would be better to create another draft_improgress step and wait for the request to change to draft state before
     # uploading the blob
 
@@ -92,11 +96,12 @@ async def test_airlock_import_flow(admin_token, verify) -> None:
         "approval": "True",
         "decisionExplanation": "the reason why this request was approved/rejected"
     }
-    request_result = await post_request(payload, f'/api{workspace_path}/requests/{request_id}/reviews', workspace_owner_token, verify, 200)
-    assert request_result["airlock_review"]["decisionExplanation"] == "the reason why this request was approved/rejected"
+    request_result = await post_request(payload, f'/api{workspace_path}/requests/{request_id}/review', workspace_owner_token, verify, 200)
+    assert request_result["airlockRequest"]["reviews"][0]["decisionExplanation"] == "the reason why this request was approved/rejected"
 
     await wait_for_status(airlock_strings.APPROVED_STATUS, workspace_owner_token, workspace_path, request_id, verify)
 
-    # 7. delete workspace
-    LOGGER.info("Deleting workspace")
-    await disable_and_delete_resource(f'/api{workspace_path}', admin_token, verify)
+    if config.TEST_AIRLOCK_WORKSPACE_ID == "":
+        # 7. delete workspace
+        LOGGER.info("Deleting workspace")
+        await disable_and_delete_resource(f'/api{workspace_path}', admin_token, verify)

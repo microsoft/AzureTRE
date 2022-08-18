@@ -1,24 +1,4 @@
-FROM debian:stretch-slim
-
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-
-# Install Azure CLI
-# It's useless to specify azcli version since the mixin installs the latest anyway
-RUN apt-get update \
-    && apt-get install --no-install-recommends -y ca-certificates jq curl apt-transport-https lsb-release gnupg \
-    && curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null \
-    && AZ_REPO=$(lsb_release -cs) \
-    && echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | tee /etc/apt/sources.list.d/azure-cli.list \
-    && apt-get update && apt-get --no-install-recommends -y install azure-cli \
-    && apt-get clean -y && rm -rf /var/lib/apt/lists/*
-
-RUN az extension add --name azure-firewall
-
-RUN export PORTER_HOME=/home/"${USER}"/.porter \
-    && curl -L https://cdn.porter.sh/latest/install-linux.sh | bash \
-    && "${PORTER_HOME}"/porter mixin install docker
-
-ENV PATH /home/$USER/.porter/:$PATH
+FROM debian:buster-slim
 
 ARG BUNDLE_DIR
 
@@ -36,7 +16,6 @@ ARG BUNDLE_DIR
 # PORTER_MIXINS
 
 # Use the BUNDLE_DIR build argument to copy files into the bundle
-
 COPY . $BUNDLE_DIR
 
 # Mirror plugins to prevent network access at runtime

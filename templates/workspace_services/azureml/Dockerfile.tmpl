@@ -6,11 +6,11 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Install Azure CLI and Git
 RUN apt-get update \
-    && apt-get install --no-install-recommends -y ca-certificates jq curl apt-transport-https lsb-release gnupg git \
+    && apt-get install --no-install-recommends -y ca-certificates jq curl apt-transport-https lsb-release gnupg \
     && curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null \
     && AZ_REPO=$(lsb_release -cs) \
     && echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | tee /etc/apt/sources.list.d/azure-cli.list \
-    && apt-get update && apt-get -y install azure-cli="2.36.0-1~stretch" \
+    && apt-get update && apt-get install --no-install-recommends -y azure-cli \
     && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 RUN az extension add --name azure-firewall
@@ -33,3 +33,9 @@ ARG BUNDLE_DIR
 # Use the BUNDLE_DIR build argument to copy files into the bundle
 
 COPY . $BUNDLE_DIR
+
+# Mirror plugins to prevent network access at runtime
+# Remove when available from https://github.com/getporter/terraform-mixin/issues/90
+WORKDIR $BUNDLE_DIR/terraform
+RUN terraform init -backend=false \
+  && terraform providers mirror /usr/local/share/terraform/plugins

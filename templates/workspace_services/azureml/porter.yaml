@@ -46,6 +46,9 @@ parameters:
 outputs:
   - name: azureml_workspace_name
     type: string
+    applyTo:
+      - install
+      - upgrade
   - name: azureml_acr_id
     type: string
     applyTo:
@@ -63,9 +66,8 @@ outputs:
       - upgrade
 
 mixins:
-  - exec
   - terraform:
-      clientVersion: 1.0.5
+      clientVersion: 1.2.6
 
 install:
   - terraform:
