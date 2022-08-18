@@ -1,6 +1,6 @@
 ---
 name: tre-service-azureml
-version: 0.4.18
+version: 0.4.23
 description: "An Azure TRE service for Azure Machine Learning"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -60,6 +60,16 @@ outputs:
       - install
       - upgrade
   - name: connection_uri
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: workspace_services_subnet_address_prefix
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: storage_tag
     type: string
     applyTo:
       - install

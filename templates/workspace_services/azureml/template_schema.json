@@ -69,10 +69,12 @@
                     "aadcdn.msftauth.net",
                     "ml.azure.com"
                   ],
-                  "protocol": {
-                    "port": "443",
-                    "type": "Https"
-                  }
+                  "protocols": [
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    }
+                  ]
                 }
               ]
             }
