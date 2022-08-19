@@ -63,7 +63,7 @@ data "external" "nsg_rule_priorities_outbound" {
 }
 
 
-resource "azurerm_network_security_rule" "allow-aml-inbound" {
+resource "azurerm_network_security_rule" "allow_aml_inbound" {
   access                      = "Allow"
   destination_port_ranges     = ["29877", "29876", "44224"]
   destination_address_prefix  = "VirtualNetwork"
@@ -78,7 +78,7 @@ resource "azurerm_network_security_rule" "allow-aml-inbound" {
 }
 
 
-resource "azurerm_network_security_rule" "allow-Outbound_Storage_445" {
+resource "azurerm_network_security_rule" "allow_outbound_storage_445" {
   access                      = "Allow"
   destination_port_range      = "445"
   destination_address_prefix  = "Storage"
