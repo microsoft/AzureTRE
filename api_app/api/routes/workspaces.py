@@ -20,12 +20,13 @@ from models.schemas.workspace import WorkspaceInCreate, WorkspacesInList, Worksp
 from models.schemas.workspace_service import WorkspaceServiceInCreate, WorkspaceServicesInList, WorkspaceServiceInResponse
 from models.schemas.resource import ResourcePatch
 from resources import strings
+from services.access_service import AuthConfigValidationError
 from services.authentication import get_current_admin_user, \
     get_access_service, get_current_workspace_owner_user, get_current_workspace_owner_or_researcher_user, get_current_tre_user_or_tre_admin, get_current_workspace_owner_or_researcher_user_or_tre_admin, get_current_workspace_owner_or_tre_admin
 from services.authentication import extract_auth_information
 from services.azure_resource_status import get_azure_resource_status
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
-from .resource_helpers import get_user_role_assignments, save_and_deploy_resource, construct_location_header, send_uninstall_message, \
+from .resource_helpers import get_identity_role_assignments, save_and_deploy_resource, construct_location_header, send_uninstall_message, \
     send_custom_action_message, send_resource_request_message
 from models.domain.request_action import RequestAction
 
@@ -58,15 +59,23 @@ async def retrieve_users_active_workspaces(request: Request, user=Depends(get_cu
         workspaces = workspace_repo.get_active_workspaces()
 
         access_service = get_access_service()
-        user_role_assignments = get_user_role_assignments(user)
-        user_workspaces = [workspace for workspace in workspaces if access_service.get_workspace_role(user, workspace, user_role_assignments) != WorkspaceRole.NoRole]
+        user_role_assignments = get_identity_role_assignments(user)
+
+        def _safe_get_workspace_role(user, workspace, user_role_assignments):
+            # provide graceful failure if there is a workspace without auth info
+            # to prevent it blocking listing other workspaces
+            try:
+                return access_service.get_workspace_role(user, workspace, user_role_assignments)
+            except AuthConfigValidationError:
+                return WorkspaceRole.NoRole
+        user_workspaces = [workspace for workspace in workspaces if _safe_get_workspace_role(user, workspace, user_role_assignments) != WorkspaceRole.NoRole]
         return WorkspacesInList(workspaces=user_workspaces)
 
 
 @workspaces_core_router.get("/workspaces/{workspace_id}", response_model=WorkspaceInResponse, name=strings.API_GET_WORKSPACE_BY_ID)
 async def retrieve_workspace_by_workspace_id(user=Depends(get_current_tre_user_or_tre_admin), workspace=Depends(get_workspace_by_id_from_path)) -> WorkspaceInResponse:
     access_service = get_access_service()
-    user_role_assignments = get_user_role_assignments(user)
+    user_role_assignments = get_identity_role_assignments(user)
     if access_service.get_workspace_role(user, workspace, user_role_assignments) != WorkspaceRole.NoRole:
         return WorkspaceInResponse(workspace=workspace)
     else:
