@@ -71,11 +71,27 @@
                   "destination_addresses": [
                     "AzureActiveDirectory",
                     "AzureResourceManager",
-                    "{{ resource.properties.storage_tag }}",
                     "MicrosoftContainerRegistry"
                   ],
                   "destination_ports": [
                     "443"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
+                },
+                {
+                  "name": "AzureML_Storage",
+                  "description": "AzureML Storage",
+                  "source_addresses": [
+                    "{{ resource.properties.workspace_services_subnet_address_prefix }}"
+                  ],
+                  "destination_addresses": [
+                    "{{ resource.properties.storage_tag }}"
+                  ],
+                  "destination_ports": [
+                    "443",
+                    "445"
                   ],
                   "protocols": [
                     "TCP"
