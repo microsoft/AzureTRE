@@ -2,9 +2,7 @@ FROM debian:stretch-slim
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-
-
-# Install Azure CLI and Git
+# Install Azure CLI
 RUN apt-get update \
     && apt-get install --no-install-recommends -y ca-certificates jq curl apt-transport-https lsb-release gnupg \
     && curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null \
