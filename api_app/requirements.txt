@@ -1,9 +1,9 @@
 # API
 azure-core==1.23.1
 aiohttp==3.8.1
-azure-cosmos==4.2.0
+azure-cosmos==4.3.0
 azure-identity==1.8.0
-azure-mgmt-cosmosdb==6.4.0
+azure-mgmt-cosmosdb==7.0.0
 azure-mgmt-compute==26.1.0
 azure-mgmt-costmanagement==3.0.0
 azure-mgmt-storage==20.0.0
