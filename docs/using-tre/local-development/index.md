@@ -37,8 +37,8 @@ To run AzureTRE  deploy locally:
 1. Open your project in VScode devcontainer.
 2. Fill in all the required configuration. Follow [this guide](https://github.com/microsoft/AzureTRE-Deployment#congiguration-setup) to set it up.
 3. run `make all`
-   
-!!! tip   
+
+!!! tip
     The Makefile in the AzureTRE deployment repository sources the make commands from AzureTRE that it references. This allows you to add your commands and also use the same make commands used in the AzureTRE.
 
 
