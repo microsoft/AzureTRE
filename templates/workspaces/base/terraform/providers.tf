@@ -31,11 +31,6 @@ provider "azurerm" {
       recover_soft_deleted_certificates = true
       recover_soft_deleted_keys         = true
     }
-
-    # TODO: remove when this is resolved: https://github.com/hashicorp/terraform-provider-azurerm/issues/18026
-    # resource_group {
-    #   prevent_deletion_if_contains_resources = false
-    # }
   }
 }
 
