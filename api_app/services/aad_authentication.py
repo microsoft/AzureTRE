@@ -171,7 +171,7 @@ class AzureADAuthorization(AccessService):
         app = ConfidentialClientApplication(client_id=config.API_CLIENT_ID, client_credential=config.API_CLIENT_SECRET, authority=f"{config.AAD_INSTANCE}/{config.AAD_TENANT_ID}")
         result = app.acquire_token_silent(scopes=scopes, account=None)
         if not result:
-            logging.info('No suitable token exists in cache, getting a new one from AAD')
+            logging.debug('No suitable token exists in cache, getting a new one from AAD')
             result = app.acquire_token_for_client(scopes=scopes)
         if "access_token" not in result:
             logging.debug(result.get('error'))
