@@ -7,7 +7,7 @@ from pydantic import ValidationError, parse_obj_as
 
 from api.dependencies.database import get_db_client
 from api.dependencies.airlock import get_airlock_request_by_id_from_path
-from api.routes.airlock_resource_helpers import update_status_and_publish_event_airlock_request
+from api.routes.airlock_resource_helpers import update_and_publish_event_airlock_request
 from db.repositories.workspaces import WorkspaceRepository
 from models.domain.airlock_request import AirlockRequestStatus
 from db.repositories.airlock_requests import AirlockRequestRepository
@@ -65,7 +65,7 @@ async def update_status_in_database(airlock_request_repo: AirlockRequestReposito
         if airlock_request.status == current_status:
             workspace = workspace_repo.get_workspace_by_id(airlock_request.workspaceId)
             # update to new status and send to event grid
-            await update_status_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=airlock_request_repo, user=airlock_request.user, new_status=new_status, workspace=workspace, error_message=error_message)
+            await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=airlock_request_repo, user=airlock_request.user, new_status=new_status, workspace=workspace, error_message=error_message)
             result = True
         else:
             error_string = strings.STEP_RESULT_MESSAGE_STATUS_DOES_NOT_MATCH.format(airlock_request_id, current_status, airlock_request.status)
