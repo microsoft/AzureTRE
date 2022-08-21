@@ -71,6 +71,25 @@ resource "azurerm_application_insights" "workspace" {
   lifecycle { ignore_changes = [tags] }
 }
 
+resource "azurerm_monitor_action_group" "failure_anomalies" {
+  name                = "${azurerm_application_insights.workspace.name}-failure-anomalies-action-group"
+  resource_group_name = var.resource_group_name
+  short_name          = "Failures"
+}
+
+resource "azurerm_monitor_smart_detector_alert_rule" "example" {
+  name                = "Failure Anomalies - ${local.app_insights_name}"
+  resource_group_name = var.resource_group_name
+  severity            = "Sev3"
+  scope_resource_ids  = [azurerm_application_insights.workspace.id]
+  frequency           = "PT1M"
+  detector_type       = "FailureAnomaliesDetector"
+
+  action_group {
+    ids = [azurerm_monitor_action_group.failure_anomalies.id]
+  }
+}
+
 resource "azurerm_monitor_private_link_scoped_service" "ampls_app_insights" {
   name                = "ampls-app-insights-service"
   resource_group_name = var.resource_group_name

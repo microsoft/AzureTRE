@@ -33,9 +33,9 @@ provider "azurerm" {
     }
 
     # TODO: remove when this is resolved: https://github.com/hashicorp/terraform-provider-azurerm/issues/18026
-    resource_group {
-      prevent_deletion_if_contains_resources = false
-    }
+    # resource_group {
+    #   prevent_deletion_if_contains_resources = false
+    # }
   }
 }
 
