@@ -1,7 +1,10 @@
 # Local Development
 
 This guide will cover how to setup local development environment to add custom templates to AzureTRE and deploy AzureTRE from the local machine.
-# Prerequisites
+
+## Local Development Setup
+
+### Prerequisites
 
 To deploy an Azure TRE instance, the following assets and tools are required:
 
@@ -10,7 +13,7 @@ To deploy an Azure TRE instance, the following assets and tools are required:
 * Git client such as [Git](https://git-scm.com/) or [GitHub Desktop](https://desktop.github.com/)
 * [Docker Desktop](https://www.docker.com/products/docker-desktop)
 
-## Development container
+### Development container
 
 The AzureTRE Deployment solution contains a [development container](https://code.visualstudio.com/docs/remote/containers) with all the required tooling to develop and deploy the AzureTRE and your custom templates to it. To deploy and extend an AzureTRE instance using the provided development container you will also need:
 
@@ -19,8 +22,6 @@ The AzureTRE Deployment solution contains a [development container](https://code
 
 The files in AzureTRE Deployment repo for the dev container are located in `/.devcontainer/` folder.
 
-## Local Development
-
 Having the prerequisites and the development container, to start local development follow the next steps:
 
 1. Clone the project you have created from the AzureTRE Deployment template `git clone <your_project>`
@@ -28,7 +29,7 @@ Having the prerequisites and the development container, to start local developme
 1. VSCode will recognize the devcontainer is set up in and will ask to reopen in Devcontainer:
     ![Open in devcontainer](../../assets/using-tre/reopen_in_devcontainer.png)
 
-After the devcontainer is built, you will see the AzureTRE folder which you can use as a reference for your templates. In addition the sample.env files will be added. 
+After the devcontainer is built, you will see the AzureTRE folder which you can use as a reference for your templates. In addition the sample.env files will be added.
 ## Local Deployment
 
 To run AzureTRE  deploy locally:

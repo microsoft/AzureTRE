@@ -16,7 +16,7 @@ Read more about them [here](../../index.md#workspace)
 
 AzureTRE deployment repository has directories setup for: workspace, workspace service and user resource template definitions.
 
-See [template authoring guide](../../tre-workspace-authors/authoring-workspace-templates.md) to learn more about how to author templates. 
+See [template authoring guide](../../tre-workspace-authors/authoring-workspace-templates.md) to learn more about how to author templates.
 
 **To add your custom templates follow the next steps:**
 - Deployment requirements

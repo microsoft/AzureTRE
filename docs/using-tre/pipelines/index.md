@@ -1,6 +1,6 @@
 # Pipelines
 
-The [AzureTRE deployment repository](https://github.com/microsoft/AzureTRE-Deployment) contains the following github workflows: 
+The [AzureTRE deployment repository](https://github.com/microsoft/AzureTRE-Deployment) contains the following github workflows:
 
 1. Build Validation - validates the code by running linter and terraform validation.
 1. Clean Validation Environments - a periodical workflow to clean unused AzureTRE environments.
@@ -22,12 +22,12 @@ The following environment variables should be defined in your github environment
     1. [Enable Admin Account](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-authentication?tabs=azure-cli#admin-account)
     1. Having setup the previous steps, add the created ACR info to your Github Actions environment:
 
-    | <div style="width: 330px">Environment variable name</div> | Description |
-    | ------------------------- | ----------- |
-    | `ACTIONS_ACR_NAME` | The Azure Container registry name that the devcontainer is stored in.|
-    | `ACTIONS_ACR_URI`  | The full uri of the Azure Container Registry where the devcontainer is stored in. |
-    | `ACTIONS_ACR_PASSWORD` | The Azure Container registry password for the devcontainer.|
-    | `ACTIONS_DEVCONTAINER_TAG` | The container label to use when running the command.|
+    | <div style="width: 330px">Environment variable name</div> | Description                                                                       |
+    | --------------------------------------------------------- | --------------------------------------------------------------------------------- |
+    | `ACTIONS_ACR_NAME`                                        | The Azure Container registry name that the devcontainer is stored in.             |
+    | `ACTIONS_ACR_URI`                                         | The full uri of the Azure Container Registry where the devcontainer is stored in. |
+    | `ACTIONS_ACR_PASSWORD`                                    | The Azure Container registry password for the devcontainer.                       |
+    | `ACTIONS_DEVCONTAINER_TAG`                                | The container label to use when running the command.                              |
 
 
 Having all the environment variables set in the Github environment the next step will be to use it in your pipelines:
@@ -46,7 +46,7 @@ If you have created custom AzureTRE templates you can publish and register them 
     - register_bundles:
         ![Register bundle](../../assets/using-tre/register_bundles.png)
     - If it is a user resource add it also under register_user_resource_bundles:
-        ![Register user resource step](../../assets/using-tre/register_user_resource.png)    
+        ![Register user resource step](../../assets/using-tre/register_user_resource.png)
 
 ## How to Contribute to our Documentation
 
