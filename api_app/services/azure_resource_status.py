@@ -1,7 +1,6 @@
-from core import config
+from core import config, credentials
 import logging
 
-from azure.identity import DefaultAzureCredential
 from azure.mgmt.compute import ComputeManagementClient, models
 from azure.core.exceptions import ResourceNotFoundError
 
@@ -24,7 +23,5 @@ def get_azure_resource_status(resource_id):
 
 
 def get_azure_vm_instance_view(vm_name, resource_group_name) -> models.VirtualMachineInstanceView:
-
-    credential = DefaultAzureCredential(managed_identity_client_id=config.MANAGED_IDENTITY_CLIENT_ID)
-    compute_client = ComputeManagementClient(credential, config.SUBSCRIPTION_ID)
+    compute_client = ComputeManagementClient(credentials.get_credential(), config.SUBSCRIPTION_ID)
     return compute_client.virtual_machines.instance_view(resource_group_name, vm_name)
