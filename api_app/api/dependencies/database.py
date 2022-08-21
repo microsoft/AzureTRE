@@ -2,13 +2,12 @@ import logging
 from typing import Callable, Type
 
 from azure.cosmos import CosmosClient
-from azure.identity import DefaultAzureCredential
 from azure.mgmt.cosmosdb import CosmosDBManagementClient
 from fastapi import Depends, FastAPI, HTTPException
 from starlette.requests import Request
 from starlette.status import HTTP_503_SERVICE_UNAVAILABLE
 
-from core import config
+from core import config, credentials
 from db.errors import UnableToAccessDatabase
 from db.repositories.base import BaseRepository
 from resources import strings
@@ -19,23 +18,23 @@ def connect_to_db() -> CosmosClient:
 
     try:
         primary_master_key = get_store_key()
+
         if config.STATE_STORE_SSL_VERIFY:
-            cosmos_client = CosmosClient(config.STATE_STORE_ENDPOINT, primary_master_key)
+            cosmos_client = CosmosClient(url=config.STATE_STORE_ENDPOINT, credential=primary_master_key, consistency_level='Session')
         else:
-            # ignore TLS (setup is a pain) when using local SSL emulator.
-            cosmos_client = CosmosClient(config.STATE_STORE_ENDPOINT, primary_master_key, connection_verify=False)
+            # ignore TLS (setup is a pain) when using local Cosmos emulator.
+            cosmos_client = CosmosClient(config.STATE_STORE_ENDPOINT, primary_master_key, consistency_level='Session', connection_verify=False)
         logging.debug("Connection established")
         return cosmos_client
-    except Exception as e:
-        logging.debug(f"Connection to state store could not be established: {e}")
+    except Exception:
+        logging.exception("Connection to state store could not be established.")
 
 
 def get_store_key() -> str:
     if config.STATE_STORE_KEY:
         primary_master_key = config.STATE_STORE_KEY
     else:
-        credential = DefaultAzureCredential(managed_identity_client_id=config.MANAGED_IDENTITY_CLIENT_ID, exclude_shared_token_cache_credential=True)
-        cosmosdb_client = CosmosDBManagementClient(credential, subscription_id=config.SUBSCRIPTION_ID)
+        cosmosdb_client = CosmosDBManagementClient(credentials.get_credential(), subscription_id=config.SUBSCRIPTION_ID)
         database_keys = cosmosdb_client.database_accounts.list_keys(resource_group_name=config.RESOURCE_GROUP_NAME, account_name=config.COSMOSDB_ACCOUNT_NAME)
         primary_master_key = database_keys.primary_master_key
 
@@ -57,6 +56,7 @@ def get_repository(repo_type: Type[BaseRepository]) -> Callable[[CosmosClient], 
         try:
             return repo_type(client)
         except UnableToAccessDatabase:
+            logging.exception(strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
             raise HTTPException(status_code=HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
 
     return _get_repo

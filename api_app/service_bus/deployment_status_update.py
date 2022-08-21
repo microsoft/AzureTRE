@@ -9,9 +9,9 @@ from api.dependencies.database import get_db_client
 from api.routes.resource_helpers import get_timestamp
 from models.domain.request_action import RequestAction
 from db.repositories.resource_templates import ResourceTemplateRepository
-from service_bus.helpers import default_credentials, send_deployment_message, update_resource_for_step
+from service_bus.helpers import send_deployment_message, update_resource_for_step
 from db.repositories.operations import OperationRepository
-from core import config
+from core import config, credentials
 from db.errors import EntityDoesNotExist
 from db.repositories.resources import ResourceRepository
 from models.domain.operation import DeploymentStatusUpdateMessage, Operation, OperationStep, Status
@@ -24,7 +24,7 @@ async def receive_message():
     and yields those messages. If the yielded function return True the message is
     marked complete.
     """
-    async with default_credentials() as credential:
+    async with credentials.get_credential_async() as credential:
         service_bus_client = ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential)
 
         async with service_bus_client:
