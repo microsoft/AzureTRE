@@ -1,8 +1,22 @@
 # Creating Custom templates
 
+This document will show how to create custom templates, integrate them into your CI/CD pipelines.
+
+## Templates types
+
+There are 3 types of templates:
+
+1. Workspace
+1. Workspace Service
+1. User Resource
+
+Read more about them [here](../../index.md#workspace)
+
 ## How to add custom templates
 
 AzureTRE deployment repository has directories setup for: workspace, workspace service and user resource template definitions.
+
+See [template authoring guide](../../tre-workspace-authors/authoring-workspace-templates.md) to learn more about how to author templates. 
 
 **To add your custom templates follow the next steps:**
 - Deployment requirements
@@ -14,7 +28,9 @@ AzureTRE deployment repository has directories setup for: workspace, workspace s
 - Use the [AzureTRE UI](https://microsoft.github.io/AzureTRE/tre-developers/ui/) to deploy your resources
 - Add your custom templates to CI/CD workflows - in Deploy Azure TRE Reusable workflow make sure to add your bundles under register_bundles and publish_bundles steps.
 
+## Publish and Register Custom templates in the CI/CD
 
+See the [pipelines documentation](../pipelines/index.md) to learn more about publishing and registering your custom templates as part of the CI/CD/
 ## How to Contribute to our Documentation
 
 If you have any comments or suggestions about our documentation then you can visit our GitHub project and either raise a new issue, or comment on one of the existing ones.

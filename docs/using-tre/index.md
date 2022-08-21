@@ -14,7 +14,22 @@ It contains all the required tooling to develop your custom templates and deploy
 
 ### AzureTRE Reference
 
-AzureTRE deployment repository allows you to reference AzureTRE as a folder, but also uses it in its deployment. See [AzureTRE deployment readme](https://github.com/microsoft/AzureTRE-Deployment/blob/main/README.md) to learn more on how to setup and upgrade AzureTRE version.
+AzureTRE deployment repository allows you to reference AzureTRE as a folder, but also uses it in its deployment. See [AzureTRE deployment readme](https://github.com/microsoft/AzureTRE-Deployment/blob/main/README.md) to learn more about it.
+
+## Getting Started
+
+To get started with AzureTRE follow the next steps:
+
+1. Go to [AzureTRE Deployment repository]((https://github.com/microsoft/AzureTRE-Deployment))
+1. Click on use this template to set up your project from this template:
+
+[![Use AzureTRE Deployment template](../assets/using-tre/use_template.png)](../assets/using-tre/use_template.png)
+
+1. Follow the steps in this [Github templates guide](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template) to set up the repo.
+1. Having the project setup in your account, follow the next steps and guides to setup and extend AzureTRE in your environment:
+    - [Local development](docs/using-tre/local-development/index.md) 
+    - Setup [CI/CD pipelines](docs/using-tre/pipelines/index.md)
+    - Add your [custom templates](docs/using-tre/templates/index.md)
 
 ## How to Contribute to our Documentation
 
