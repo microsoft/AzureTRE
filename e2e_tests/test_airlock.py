@@ -4,6 +4,7 @@ import asyncio
 import logging
 import config
 
+from azure.core.exceptions import ResourceNotFoundError
 from azure.storage.blob import ContainerClient
 
 from resources.workspace import get_workspace_auth_details
@@ -110,10 +111,12 @@ async def test_airlock_import_flow(admin_token, verify) -> None:
     # 7. check the file has been deleted from the source
     # NOTE: We should really be checking that the file is deleted from in progress location too,
     # but doing that will require setting up network access to in-progress storage account
-    container_client = ContainerClient.from_container_url(container_url=container_url)
-    for _ in container_client.list_blobs():
-        container_url_without_sas = container_url.split("?")[0]
-        assert False, f"The source blob in container {container_url_without_sas} should be deleted"
+    try:
+        _ = ContainerClient.from_container_url(container_url=container_url)
+        # Expecting ResourceNotFoundError to be thrown here
+        assert False, "Data in import external storage account should be deleted"
+    except ResourceNotFoundError:
+        pass
 
     if config.TEST_AIRLOCK_WORKSPACE_ID == "":
         # 8. delete workspace
