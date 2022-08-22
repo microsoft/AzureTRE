@@ -12,8 +12,7 @@ from db.repositories.workspaces import WorkspaceRepository
 from models.domain.airlock_request import AirlockRequestStatus
 from db.repositories.airlock_requests import AirlockRequestRepository
 from models.domain.airlock_operations import StepResultStatusUpdateMessage
-from service_bus.helpers import default_credentials
-from core import config
+from core import config, credentials
 from resources import strings
 
 
@@ -23,7 +22,7 @@ async def receive_message_from_step_result_queue():
     and yields those messages. If the yielded function return True the message is
     marked complete.
     """
-    async with default_credentials() as credential:
+    async with credentials.get_credential_async() as credential:
         service_bus_client = ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential)
 
         async with service_bus_client:
