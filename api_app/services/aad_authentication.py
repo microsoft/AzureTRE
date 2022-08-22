@@ -224,9 +224,8 @@ class AzureADAuthorization(AccessService):
         return roles_graph_data, users_graph_data
 
     def get_workspace_role_assignment_details(self, workspace: Workspace):
-        app_role_ids = {}
-        for role_name, role_id_name in self.WORKSPACE_ROLES_DICT.items():
-            app_role_ids[role_name] = workspace.properties[role_id_name]
+        app_role_ids = {role_name: workspace.properties[role_id] for role_name, role_id in self.WORKSPACE_ROLES_DICT.items()}
+        inverted_app_role_ids = {v: k for k, v in app_role_ids.items()}
 
         sp_id = workspace.properties["sp_id"]
         roles_graph_data, users_graph_data = self._get_user_emails_with_role_asssignment(sp_id)
@@ -237,10 +236,13 @@ class AzureADAuthorization(AccessService):
 
         workspace_role_assignments_details = defaultdict(list)
         for role_assignment in roles_graph_data["value"]:
-            if role_assignment["principalType"] == "User" and role_assignment["principalId"] in user_emails:
-                if role_assignment["appRoleId"] in app_role_ids.values():
-                    app_role_name = list(app_role_ids.keys())[list(app_role_ids.values()).index(role_assignment["appRoleId"])]
-                    workspace_role_assignments_details[app_role_name].append(user_emails[role_assignment["principalId"]])
+            principal_id = role_assignment["principalId"]
+
+            if role_assignment["principalType"] == "User" and principal_id in user_emails:
+                app_role_id = role_assignment["appRoleId"]
+                app_role_name = inverted_app_role_ids[app_role_id]
+                if app_role_name:
+                    workspace_role_assignments_details[app_role_name].append(user_emails[principal_id])
         return workspace_role_assignments_details
 
     def _get_batch_users_by_role_assignments_body(self, roles_graph_data):
