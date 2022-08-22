@@ -47,25 +47,32 @@
                   "event_value": {
                     "type": "string"
                   },
-                  "owners_emails": {
-                    "items": [
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "type": "array"
-                  },
                   "request_id": {
                     "type": "string"
                   },
-                  "researchers_emails": {
-                    "items": [
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "type": "array"
-                  },
+                  "notification_emails": {
+                    "type": "object",
+                    "properties": {
+                        "WorkspaceResearcher": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "WorkspaceOwner": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "AirlockManager": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
                   "workspace_id": {
                     "type": "string"
                   }
@@ -132,7 +139,7 @@
               "Set_recipients_as_researchers_emails": {
                 "inputs": {
                   "name": "recipients",
-                  "value": "@body('Parse_JSON')?['data']?['researchers_emails']"
+                  "value": "@body('Parse_JSON')?['data']?['notification_emails']?['WorkspaceResearcher']"
                 },
                 "runAfter": {},
                 "type": "SetVariable"
@@ -157,7 +164,7 @@
               "Set_recipients_as_owners_emails": {
                 "inputs": {
                   "name": "recipients",
-                  "value": "@body('Parse_JSON')?['data']?['owners_emails']"
+                  "value": "@body('Parse_JSON')?['data']?['notification_emails']?['AirlockManager']"
                 },
                 "runAfter": {},
                 "type": "SetVariable"
