@@ -130,10 +130,21 @@ ul.tre-notifications-steps-list li {
 }
 
 .tre-panel {
-  box-shadow: 1px 0px 5px 0px #ccc;
   margin: 10px 15px 10px 10px;
   padding: 10px;
+}
+
+.tre-resource-panel {
+  box-shadow: 1px 0px 5px 0px #ccc;
+  margin: 10px 0px;
+  padding: 10px;
   background-color: #fff;
+}
+
+.tre-table-rows-align-centre {
+  .ms-DetailsRow-cell {
+    align-self: baseline;
+  }
 }
 
 .ms-CommandBar {
