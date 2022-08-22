@@ -9,14 +9,16 @@
 
 FEATURES:
 
-* MySql workspace service ([#2476](https://github.com/microsoft/AzureTRE/issues/2476))
+* MySql workspace service ([#2476](https://github.com/microsoft/AzureTRE/pull/2476))
 
 ENHANCEMENTS:
 
-* 'CreationTime' field was added to Airlock requests ([#2432](https://github.com/microsoft/AzureTRE/issues/2432))
+* 'CreationTime' field was added to Airlock requests ([#2432](https://github.com/microsoft/AzureTRE/pull/2432))
 * Bundles mirror Terraform plugins when built ([#2446](https://github.com/microsoft/AzureTRE/pull/2446))
-* 'Get all Airlock requests' endpoint supports filtering ([#2433](https://github.com/microsoft/AzureTRE/pull/2433)).
-* API uses user delagation key when generating SAS token for airlock requests. ([#2390](https://github.com/microsoft/AzureTRE/issues/2390))
+* 'Get all Airlock requests' endpoint supports filtering ([#2433](https://github.com/microsoft/AzureTRE/pull/2433))
+* API uses user delagation key when generating SAS token for airlock requests ([#2460](https://github.com/microsoft/AzureTRE/pull/2460))
+* Longer docker caching in Resource Processor ([#2486](https://github.com/microsoft/AzureTRE/pull/2486))
+* Remove AppInsights Profiler support in base workspace bundle and deploy with native Terraform resources ([#2478](https://github.com/microsoft/AzureTRE/pull/2478))
 
 BUG FIXES:
 
