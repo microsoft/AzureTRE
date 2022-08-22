@@ -171,7 +171,7 @@ class AzureADAuthorization(AccessService):
         app = ConfidentialClientApplication(client_id=config.API_CLIENT_ID, client_credential=config.API_CLIENT_SECRET, authority=f"{config.AAD_INSTANCE}/{config.AAD_TENANT_ID}")
         result = app.acquire_token_silent(scopes=scopes, account=None)
         if not result:
-            logging.info('No suitable token exists in cache, getting a new one from AAD')
+            logging.debug('No suitable token exists in cache, getting a new one from AAD')
             result = app.acquire_token_for_client(scopes=scopes)
         if "access_token" not in result:
             logging.debug(result.get('error'))
@@ -282,11 +282,38 @@ class AzureADAuthorization(AccessService):
 
         return authInfo
 
-    def _get_role_assignment_graph_data(self, user_id: str) -> dict:
+    def _get_role_assignment_graph_data_for_user(self, user_id: str) -> dict:
         msgraph_token = self._get_msgraph_token()
         user_endpoint = f"https://graph.microsoft.com/v1.0/users/{user_id}/appRoleAssignments"
         graph_data = requests.get(user_endpoint, headers=self._get_auth_header(msgraph_token)).json()
         return graph_data
+
+    def _get_role_assignment_graph_data_for_service_principal(self, principal_id: str) -> dict:
+        msgraph_token = self._get_msgraph_token()
+        user_endpoint = f"https://graph.microsoft.com/v1.0/servicePrincipals/{principal_id}/appRoleAssignments"
+        graph_data = requests.get(user_endpoint, headers=self._get_auth_header(msgraph_token)).json()
+        return graph_data
+
+    def _get_identity_type(self, id: str) -> str:
+        msgraph_token = self._get_msgraph_token()
+        objects_endpoint = "https://graph.microsoft.com/v1.0/directoryObjects/getByIds"
+        request_body = {"ids": [id], "types": ["user", "servicePrincipal"]}
+        graph_data = requests.post(
+            objects_endpoint,
+            headers=self._get_auth_header(msgraph_token),
+            json=request_body
+        ).json()
+
+        if "value" not in graph_data or len(graph_data["value"]) != 1:
+            logging.debug(graph_data)
+            raise AuthConfigValidationError(f"{strings.ACCESS_UNABLE_TO_GET_ACCOUNT_TYPE} {id}")
+
+        object_info = graph_data["value"][0]
+        if "@odata.type" not in object_info:
+            logging.debug(object_info)
+            raise AuthConfigValidationError(f"{strings.ACCESS_UNABLE_TO_GET_ACCOUNT_TYPE} {id}")
+
+        return object_info["@odata.type"]
 
     def extract_workspace_auth_information(self, data: dict) -> dict:
         if "client_id" not in data:
@@ -305,8 +332,15 @@ class AzureADAuthorization(AccessService):
 
         return auth_info
 
-    def get_user_role_assignments(self, user_id: str) -> List[RoleAssignment]:
-        graph_data = self._get_role_assignment_graph_data(user_id)
+    def get_identity_role_assignments(self, user_id: str) -> List[RoleAssignment]:
+        identity_type = self._get_identity_type(user_id)
+        if identity_type == "#microsoft.graph.user":
+            graph_data = self._get_role_assignment_graph_data_for_user(user_id)
+        elif identity_type == "#microsoft.graph.servicePrincipal":
+            graph_data = self._get_role_assignment_graph_data_for_service_principal(user_id)
+        else:
+            logging.debug(graph_data)
+            raise AuthConfigValidationError(f"{strings.ACCESS_UNHANDLED_ACCOUNT_TYPE} {identity_type}")
 
         if 'value' not in graph_data:
             logging.debug(graph_data)
