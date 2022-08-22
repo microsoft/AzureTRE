@@ -112,10 +112,14 @@ async def test_airlock_import_flow(admin_token, verify) -> None:
     # NOTE: We should really be checking that the file is deleted from in progress location too,
     # but doing that will require setting up network access to in-progress storage account
     try:
-        _ = ContainerClient.from_container_url(container_url=container_url)
-        # Expecting ResourceNotFoundError to be thrown here
-        assert False, "Data in import external storage account should be deleted"
+        container_client = ContainerClient.from_container_url(container_url=container_url)
+        # We expect the container to eventually be deleted too, but sometimes this async operation takes some time.
+        # Checking that at least there are no blobs within the container
+        for _ in container_client.list_blobs():
+            container_url_without_sas = container_url.split("?")[0]
+            assert False, f"The source blob in container {container_url_without_sas} should be deleted"
     except ResourceNotFoundError:
+        # Expecting this exception
         pass
 
     if config.TEST_AIRLOCK_WORKSPACE_ID == "":
