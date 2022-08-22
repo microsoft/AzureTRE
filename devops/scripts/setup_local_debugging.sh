@@ -80,7 +80,6 @@ az role assignment create \
     --assignee "${LOGGED_IN_OBJECT_ID}" \
     --scope "${STATE_STORE_RESOURCE_ID}"
 
-
 az role assignment create \
     --role "EventGrid Data Sender" \
     --assignee "${LOGGED_IN_OBJECT_ID}" \

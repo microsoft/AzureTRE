@@ -2,12 +2,11 @@ from datetime import datetime, date
 from enum import Enum
 from typing import Dict, Optional
 
-from azure.identity import DefaultAzureCredential
 from azure.mgmt.costmanagement import CostManagementClient
 from azure.mgmt.costmanagement.models import QueryGrouping, QueryAggregation, QueryDataset, QueryDefinition, \
     TimeframeType, ExportType, QueryTimePeriod, QueryFilter, QueryComparisonExpression, QueryResult
 
-from core import config
+from core import config, credentials
 from db.errors import EntityDoesNotExist
 from db.repositories.shared_services import SharedServiceRepository
 from db.repositories.user_resources import UserResourceRepository
@@ -47,8 +46,7 @@ class CostService:
 
     def __init__(self):
         self.scope = "/subscriptions/{}".format(config.SUBSCRIPTION_ID)
-        self.client = CostManagementClient(
-            DefaultAzureCredential(managed_identity_client_id=config.MANAGED_IDENTITY_CLIENT_ID))
+        self.client = CostManagementClient(credential=credentials.get_credential())
 
     def query_tre_costs(self, tre_id, granularity: GranularityEnum, from_date: datetime, to_date: datetime,
                         workspace_repo: WorkspaceRepository,
