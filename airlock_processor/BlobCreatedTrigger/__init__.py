@@ -3,6 +3,7 @@ from shared_code import constants
 import logging
 
 import azure.functions as func
+from shared_code import blob_operations
 import datetime
 import uuid
 import json
@@ -20,6 +21,8 @@ def main(msg: func.ServiceBusMessage,
     json_body = json.loads(body)
     topic = json_body["topic"]
     request_id = re.search(r'/blobServices/default/containers/(.*?)/blobs', json_body["subject"]).group(1)
+    storage_account = re.search(r'/storageAccounts/(.*)', topic).group(1)
+    request_files = None
 
     # message originated from in-progress blob creation
     if constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS in topic or constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS in topic:
@@ -39,6 +42,12 @@ def main(msg: func.ServiceBusMessage,
             # Malware scanning is disabled, so we skip to the in_review stage
             completed_step = constants.STAGE_SUBMITTED
             new_status = constants.STAGE_IN_REVIEW
+            # enumerate the files only once - right after request submission
+            try:
+                request_files = blob_operations.get_request_files(account_name=storage_account, request_id=request_id)
+            except Exception:
+                logging.exception("Failed enumerating the files in the request.")
+                new_status = constants.STAGE_FAILED
 
     # blob created in the approved storage, meaning its ready (success)
     elif constants.STORAGE_ACCOUNT_NAME_IMPORT_APPROVED in topic or constants.STORAGE_ACCOUNT_NAME_EXPORT_APPROVED in topic:
@@ -60,7 +69,7 @@ def main(msg: func.ServiceBusMessage,
     outputEvent.set(
         func.EventGridOutputEvent(
             id=str(uuid.uuid4()),
-            data={"completed_step": completed_step, "new_status": new_status, "request_id": request_id},
+            data={"completed_step": completed_step, "new_status": new_status, "request_id": request_id, "request_files": request_files},
             subject=request_id,
             event_type="Airlock.StepResult",
             event_time=datetime.datetime.utcnow(),
