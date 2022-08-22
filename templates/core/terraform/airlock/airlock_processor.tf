@@ -61,9 +61,12 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
     "TOPIC_SUBSCRIPTION_NAME"                  = azurerm_servicebus_subscription.airlock_processor.name
     "EVENT_GRID_STEP_RESULT_TOPIC_URI_SETTING" = azurerm_eventgrid_topic.step_result.endpoint
     "EVENT_GRID_STEP_RESULT_TOPIC_KEY_SETTING" = azurerm_eventgrid_topic.step_result.primary_access_key
+    "EVENT_GRID_TO_DELETE_TOPIC_URI_SETTING"   = azurerm_eventgrid_topic.to_delete.endpoint
+    "EVENT_GRID_TO_DELETE_TOPIC_KEY_SETTING"   = azurerm_eventgrid_topic.to_delete.primary_access_key
     "WEBSITES_ENABLE_APP_SERVICE_STORAGE"      = false
     "AIRLOCK_STATUS_CHANGED_QUEUE_NAME"        = local.status_changed_queue_name
     "AIRLOCK_SCAN_RESULT_QUEUE_NAME"           = local.scan_result_queue_name
+    "AIRLOCK_TO_DELETE_QUEUE_NAME"             = local.to_delete_queue_name
     "ENABLE_MALWARE_SCANNING"                  = var.enable_malware_scanning
     "MANAGED_IDENTITY_CLIENT_ID"               = azurerm_user_assigned_identity.airlock_id.client_id
     "AZURE_SUBSCRIPTION_ID"                    = var.arm_subscription_id
