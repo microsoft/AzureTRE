@@ -289,7 +289,7 @@ class AzureADAuthorization(AccessService):
         while True:
             if not url:
                 break
-            logging.debug(f"making request to: {url}")
+            logging.debug(f"Making request to: {url}")
             if json:
                 response = requests.request(method=http_method, url=url, json=json, headers=auth_headers)
             else:
@@ -352,17 +352,14 @@ class AzureADAuthorization(AccessService):
         if identity_type == "#microsoft.graph.user":
             graph_data = self._get_role_assignment_graph_data_for_user(user_id)
         elif identity_type == "#microsoft.graph.servicePrincipal":
-            logging.debug("before _get_role_assignment_graph_data_for_service_principal call")
             graph_data = self._get_role_assignment_graph_data_for_service_principal(user_id)
         else:
-            logging.debug("about to raise: AuthConfigValidationError")
             raise AuthConfigValidationError(f"{strings.ACCESS_UNHANDLED_ACCOUNT_TYPE} {identity_type}")
 
         if 'value' not in graph_data:
             logging.debug(graph_data)
             raise AuthConfigValidationError(f"{strings.ACCESS_UNABLE_TO_GET_ROLE_ASSIGNMENTS_FOR_USER} {user_id}")
 
-        logging.debug("about to log: graph_data")
         logging.debug(graph_data)
 
         return [RoleAssignment(role_assignment['resourceId'], role_assignment['appRoleId']) for role_assignment in graph_data['value']]
