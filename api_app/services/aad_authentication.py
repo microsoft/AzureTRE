@@ -297,7 +297,7 @@ class AzureADAuthorization(AccessService):
             url = ""
             if response.status_code == 200:
                 json_response = response.json()
-                graph_data.update(json_response)
+                graph_data = merge_dict(graph_data, json_response)
                 if '@odata.nextLink' in json_response:
                     url = json_response['@odata.nextLink']
         return graph_data
@@ -381,3 +381,15 @@ class AzureADAuthorization(AccessService):
         if RoleAssignment(resource_id=workspace_sp_id, role_id=workspace.properties['app_role_id_workspace_airlock_manager']) in user_role_assignments:
             return WorkspaceRole.AirlockManager
         return WorkspaceRole.NoRole
+
+
+def merge_dict(d1, d2):
+    dd = defaultdict(list)
+
+    for d in (d1, d2):
+        for key, value in d.items():
+            if isinstance(value, list):
+                dd[key].extend(value)
+            else:
+                dd[key].append(value)
+    return dict(dd)
