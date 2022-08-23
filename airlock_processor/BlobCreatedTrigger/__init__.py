@@ -25,6 +25,7 @@ def main(msg: func.ServiceBusMessage,
     request_id = re.search(r'/blobServices/default/containers/(.*?)/blobs', json_body["subject"]).group(1)
     storage_account = re.search(r'/storageAccounts/(.*)', topic).group(1)
     request_files = None
+    logging.info(f"Parsed properties from Service Bus message: request_id:'{request_id}', storage_account:'{storage_account}'")
 
     # message originated from in-progress blob creation
     if constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS in topic or constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS in topic:
@@ -46,7 +47,7 @@ def main(msg: func.ServiceBusMessage,
             new_status = constants.STAGE_IN_REVIEW
             # enumerate the files only once - right after request submission
             try:
-                request_files = blob_operations.get_request_files(account_name=storage_account, request_id=request_id)
+                request_files = get_request_files(account_name=storage_account, request_id=request_id)
             except Exception:
                 logging.exception("Failed enumerating the files in the request.")
                 new_status = constants.STAGE_FAILED
