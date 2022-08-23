@@ -2,6 +2,7 @@ import base64
 import logging
 from collections import defaultdict
 from enum import Enum
+import re
 from typing import List
 import jwt
 import requests
@@ -225,7 +226,7 @@ class AzureADAuthorization(AccessService):
 
     def get_workspace_role_assignment_details(self, workspace: Workspace):
         app_role_ids = {role_name: workspace.properties[role_id] for role_name, role_id in self.WORKSPACE_ROLES_DICT.items()}
-        inverted_app_role_ids = {v: k for k, v in app_role_ids.items()}
+        inverted_app_role_ids = {role_id: role_name for role_name, role_id in app_role_ids.items()}
 
         sp_id = workspace.properties["sp_id"]
         roles_graph_data, users_graph_data = self._get_user_emails_with_role_asssignment(sp_id)
@@ -237,12 +238,16 @@ class AzureADAuthorization(AccessService):
         workspace_role_assignments_details = defaultdict(list)
         for role_assignment in roles_graph_data["value"]:
             principal_id = role_assignment["principalId"]
+            principal_type = role_assignment["principalType"]
 
-            if role_assignment["principalType"] == "User" and principal_id in user_emails:
+            if principal_type == "User" and principal_id in user_emails:
                 app_role_id = role_assignment["appRoleId"]
                 app_role_name = inverted_app_role_ids[app_role_id]
+
                 if app_role_name:
-                    workspace_role_assignments_details[app_role_name].append(user_emails[principal_id])
+                    snake_case_app_role_name = re.sub(r'(?<!^)(?=[A-Z])', '_', app_role_name).lower()
+                    workspace_role_assignments_details[snake_case_app_role_name].append(user_emails[principal_id])
+
         return workspace_role_assignments_details
 
     def _get_batch_users_by_role_assignments_body(self, roles_graph_data):
