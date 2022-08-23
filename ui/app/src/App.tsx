@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { DefaultPalette, IStackStyles, MessageBar, MessageBarType, Stack } from '@fluentui/react';
 import './App.scss';
 import { TopNav } from './components/shared/TopNav';
-import { Footer } from './components/shared/Footer';
 import { Routes, Route } from 'react-router-dom';
 import { RootLayout } from './components/root/RootLayout';
 import { WorkspaceProvider } from './components/workspaces/WorkspaceProvider';
@@ -115,9 +114,6 @@ export const App: React.FunctionComponent = () => {
                           } />
                         </Routes>
                       </GenericErrorBoundary>
-                    </Stack.Item>
-                    <Stack.Item grow>
-                      <Footer />
                     </Stack.Item>
                   </Stack>
                 </AppRolesContext.Provider>
