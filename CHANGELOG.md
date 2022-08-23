@@ -26,6 +26,7 @@ BUG FIXES:
 * Enable route table on the Airlock Processor subnet ([#2414](https://github.com/microsoft/AzureTRE/pull/2414))
 * Support for _Standard_ app service plan SKUs ([#2415](https://github.com/microsoft/AzureTRE/pull/2415))
 * Fix Azure ML Workspace deletion ([#2452](https://github.com/microsoft/AzureTRE/pull/2452))
+* Get all pages in MS Graph queries ([#2492](https://github.com/microsoft/AzureTRE/pull/2492))
 
 ## 0.4.1 (August 03, 2022)
 

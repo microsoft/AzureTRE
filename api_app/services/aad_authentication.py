@@ -287,27 +287,45 @@ class AzureADAuthorization(AccessService):
 
         return authInfo
 
-    def _get_role_assignment_graph_data_for_user(self, user_id: str) -> dict:
+    def _ms_graph_query(self, url: str, http_method: str, json=None) -> dict:
         msgraph_token = self._get_msgraph_token()
+        auth_headers = self._get_auth_header(msgraph_token)
+        graph_data = {}
+        while True:
+            if not url:
+                break
+            logging.debug(f"Making request to: {url}")
+            if json:
+                response = requests.request(method=http_method, url=url, json=json, headers=auth_headers)
+            else:
+                response = requests.request(method=http_method, url=url, headers=auth_headers)
+            url = ""
+            if response.status_code == 200:
+                json_response = response.json()
+                graph_data = merge_dict(graph_data, json_response)
+                if '@odata.nextLink' in json_response:
+                    url = json_response['@odata.nextLink']
+            else:
+                logging.error(f"MS Graph query to: {url} failed with status code {response.status_code}")
+                logging.error(f"Full response: {response}")
+        return graph_data
+
+    def _get_role_assignment_graph_data_for_user(self, user_id: str) -> dict:
         user_endpoint = f"https://graph.microsoft.com/v1.0/users/{user_id}/appRoleAssignments"
-        graph_data = requests.get(user_endpoint, headers=self._get_auth_header(msgraph_token)).json()
+        graph_data = self._ms_graph_query(user_endpoint, "GET")
         return graph_data
 
     def _get_role_assignment_graph_data_for_service_principal(self, principal_id: str) -> dict:
-        msgraph_token = self._get_msgraph_token()
-        user_endpoint = f"https://graph.microsoft.com/v1.0/servicePrincipals/{principal_id}/appRoleAssignments"
-        graph_data = requests.get(user_endpoint, headers=self._get_auth_header(msgraph_token)).json()
+        svc_principal_endpoint = f"https://graph.microsoft.com/v1.0/servicePrincipals/{principal_id}/appRoleAssignments"
+        graph_data = self._ms_graph_query(svc_principal_endpoint, "GET")
         return graph_data
 
     def _get_identity_type(self, id: str) -> str:
-        msgraph_token = self._get_msgraph_token()
         objects_endpoint = "https://graph.microsoft.com/v1.0/directoryObjects/getByIds"
         request_body = {"ids": [id], "types": ["user", "servicePrincipal"]}
-        graph_data = requests.post(
-            objects_endpoint,
-            headers=self._get_auth_header(msgraph_token),
-            json=request_body
-        ).json()
+        graph_data = self._ms_graph_query(objects_endpoint, "POST", json=request_body)
+
+        logging.debug(graph_data)
 
         if "value" not in graph_data or len(graph_data["value"]) != 1:
             logging.debug(graph_data)
@@ -344,12 +362,13 @@ class AzureADAuthorization(AccessService):
         elif identity_type == "#microsoft.graph.servicePrincipal":
             graph_data = self._get_role_assignment_graph_data_for_service_principal(user_id)
         else:
-            logging.debug(graph_data)
             raise AuthConfigValidationError(f"{strings.ACCESS_UNHANDLED_ACCOUNT_TYPE} {identity_type}")
 
         if 'value' not in graph_data:
             logging.debug(graph_data)
             raise AuthConfigValidationError(f"{strings.ACCESS_UNABLE_TO_GET_ROLE_ASSIGNMENTS_FOR_USER} {user_id}")
+
+        logging.debug(graph_data)
 
         return [RoleAssignment(role_assignment['resourceId'], role_assignment['appRoleId']) for role_assignment in graph_data['value']]
 
@@ -370,3 +389,15 @@ class AzureADAuthorization(AccessService):
         if RoleAssignment(resource_id=workspace_sp_id, role_id=workspace.properties['app_role_id_workspace_airlock_manager']) in user_role_assignments:
             return WorkspaceRole.AirlockManager
         return WorkspaceRole.NoRole
+
+
+def merge_dict(d1, d2):
+    dd = defaultdict(list)
+
+    for d in (d1, d2):
+        for key, value in d.items():
+            if isinstance(value, list):
+                dd[key].extend(value)
+            else:
+                dd[key].append(value)
+    return dict(dd)
