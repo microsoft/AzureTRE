@@ -2,7 +2,6 @@ import base64
 import logging
 from collections import defaultdict
 from enum import Enum
-import re
 from typing import List
 import jwt
 import requests
@@ -245,8 +244,7 @@ class AzureADAuthorization(AccessService):
                 app_role_name = inverted_app_role_ids[app_role_id]
 
                 if app_role_name:
-                    snake_case_app_role_name = re.sub(r'(?<!^)(?=[A-Z])', '_', app_role_name).lower()
-                    workspace_role_assignments_details[snake_case_app_role_name].append(user_emails[principal_id])
+                    workspace_role_assignments_details[app_role_name].append(user_emails[principal_id])
 
         return workspace_role_assignments_details
 
