@@ -302,6 +302,7 @@ class AzureADAuthorization(AccessService):
                     url = json_response['@odata.nextLink']
             else:
                 logging.error(f"MS Graph query to: {url} failed with status code {response.status_code}")
+                logging.error(f"Full response: {response}")
         return graph_data
 
     def _get_role_assignment_graph_data_for_user(self, user_id: str) -> dict:
