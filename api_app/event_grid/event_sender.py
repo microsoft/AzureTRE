@@ -1,4 +1,6 @@
 import logging
+import re
+from typing import Dict
 from azure.eventgrid import EventGridEvent
 from models.domain.events import StatusChangedData, AirlockNotificationData
 from event_grid.helpers import publish_event
@@ -22,14 +24,15 @@ async def send_status_changed_event(airlock_request: AirlockRequest):
     await publish_event(status_changed_event, config.EVENT_GRID_STATUS_CHANGED_TOPIC_ENDPOINT)
 
 
-async def send_airlock_notification_event(airlock_request: AirlockRequest, researchers_emails, owners_emails):
+async def send_airlock_notification_event(airlock_request: AirlockRequest, emails: Dict):
     request_id = airlock_request.id
     status = airlock_request.status.value
     short_workspace_id = airlock_request.workspaceId[-4:]
+    snake_case_emails = {re.sub(r'(?<!^)(?=[A-Z])', '_', role_name).lower(): role_id for role_name, role_id in emails.items()}
 
     airlock_notification = EventGridEvent(
         event_type="airlockNotification",
-        data=AirlockNotificationData(request_id=request_id, event_type="status_changed", event_value=status, researchers_emails=researchers_emails, owners_emails=owners_emails, workspace_id=short_workspace_id).__dict__,
+        data=AirlockNotificationData(request_id=request_id, event_type="status_changed", event_value=status, emails=snake_case_emails, workspace_id=short_workspace_id).__dict__,
         subject=f"{request_id}/airlockNotification",
         data_version="2.0"
     )
