@@ -54,7 +54,7 @@ def sample_status_changed_event(status="draft"):
 def sample_airlock_notification_event(status="draft"):
     status_changed_event = EventGridEvent(
         event_type="airlockNotification",
-        data=AirlockNotificationData(request_id=AIRLOCK_REQUEST_ID, event_type="status_changed", event_value=status, emails={"WorkspaceResearcher": ["researcher@outlook.com"], "WorkspaceOwner": ["owner@outlook.com"], "AirlockManager": ["manager@outlook.com"]}, workspace_id=WORKSPACE_ID[-4:]).__dict__,
+        data=AirlockNotificationData(request_id=AIRLOCK_REQUEST_ID, event_type="status_changed", event_value=status, emails={"workspace_researcher": ["researcher@outlook.com"], "workspace_owner": ["owner@outlook.com"], "airlock_manager": ["manager@outlook.com"]}, workspace_id=WORKSPACE_ID[-4:]).__dict__,
         subject=f"{AIRLOCK_REQUEST_ID}/airlockNotification",
         data_version="2.0"
     )
