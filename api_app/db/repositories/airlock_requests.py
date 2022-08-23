@@ -11,7 +11,7 @@ from fastapi import HTTPException
 from pydantic import parse_obj_as
 from models.domain.authentication import User
 from db.errors import EntityDoesNotExist
-from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockReview, AirlockReviewDecision, AirlockRequestHistoryItem, AirlockRequestType
+from models.domain.airlock_request import AirlockFile, AirlockRequest, AirlockRequestStatus, AirlockReview, AirlockReviewDecision, AirlockRequestHistoryItem, AirlockRequestType
 from models.schemas.airlock_request import AirlockRequestInCreate, AirlockReviewInCreate
 from core import config
 from resources import strings
@@ -126,13 +126,15 @@ class AirlockRequestRepository(BaseRepository):
             raise EntityDoesNotExist
         return parse_obj_as(AirlockRequest, airlock_requests)
 
-    def update_airlock_request(self, airlock_request: AirlockRequest, new_status: AirlockRequestStatus, user: User, error_message: str = None, airlock_review: AirlockReview = None) -> AirlockRequest:
+    def update_airlock_request(self, airlock_request: AirlockRequest, new_status: AirlockRequestStatus, user: User, request_files: List[AirlockFile] = None, error_message: str = None, airlock_review: AirlockReview = None) -> AirlockRequest:
         current_status = airlock_request.status
         if self.validate_status_update(current_status, new_status):
             updated_request = copy.deepcopy(airlock_request)
             updated_request.status = new_status
             if new_status == AirlockRequestStatus.Failed:
                 updated_request.errorMessage = error_message
+            if request_files is not None:
+                updated_request.files = request_files
             if airlock_review is not None:
                 if updated_request.reviews is None:
                     updated_request.reviews = [airlock_review]

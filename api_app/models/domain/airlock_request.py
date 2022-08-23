@@ -35,6 +35,11 @@ class AirlockActions(str, Enum):
     Submit = strings.AIRLOCK_ACTION_SUBMIT
 
 
+class AirlockFile(AzureTREModel):
+    name: str = Field(title="name", description="name of the file")
+    size: float = Field(title="size", description="size of the file in bytes")
+
+
 class AirlockReviewDecision(str, Enum):
     Approved = strings.AIRLOCK_RESOURCE_STATUS_APPROVAL_INPROGRESS
     Rejected = strings.AIRLOCK_RESOURCE_STATUS_REJECTION_INPROGRESS
@@ -72,7 +77,7 @@ class AirlockRequest(AzureTREModel):
     history: List[AirlockRequestHistoryItem] = []
     workspaceId: str = Field("", title="Workspace ID", description="Service target Workspace id")
     requestType: AirlockRequestType = Field("", title="Airlock request type")
-    files: List[str] = Field([], title="Files of the request")
+    files: List[AirlockFile] = Field([], title="Files of the request")
     businessJustification: str = Field("Business Justifications", title="Explanation that will be provided to the request reviewer")
     status = AirlockRequestStatus.Draft
     creationTime: float = Field(None, title="Creation time of the request")
