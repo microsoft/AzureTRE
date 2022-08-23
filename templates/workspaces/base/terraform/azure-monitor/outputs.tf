@@ -1,5 +1,5 @@
 output "app_insights_connection_string" {
-  value = jsondecode(azurerm_resource_group_template_deployment.app_insights_workspace.output_content).connectionString.value
+  value = azurerm_application_insights.workspace.connection_string
 }
 
 output "log_analytics_workspace_id" {

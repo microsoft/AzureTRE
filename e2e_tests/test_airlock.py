@@ -1,7 +1,12 @@
+import os
 import pytest
 import asyncio
 import logging
 import config
+
+from azure.core.exceptions import ResourceNotFoundError
+from azure.storage.blob import ContainerClient
+
 from resources.workspace import get_workspace_auth_details
 from resources.resource import disable_and_delete_resource, post_resource
 from resources import strings as resource_strings
@@ -11,6 +16,8 @@ from airlock import strings as airlock_strings
 
 pytestmark = pytest.mark.asyncio
 LOGGER = logging.getLogger(__name__)
+BLOB_FILE_PATH = "./test_airlock_sample.txt"
+BLOB_NAME = os.path.basename(BLOB_FILE_PATH)
 
 
 @pytest.mark.airlock
@@ -59,7 +66,7 @@ async def test_airlock_import_flow(admin_token, verify) -> None:
     # 3. get container link
     LOGGER.info("Getting airlock request container URL")
     request_result = await get_request(f'/api{workspace_path}/requests/{request_id}/link', workspace_owner_token, verify, 200)
-    containerUrl = request_result["containerUrl"]
+    container_url = request_result["containerUrl"]
 
     # 4. upload blob
 
@@ -71,8 +78,8 @@ async def test_airlock_import_flow(admin_token, verify) -> None:
     blob_uploaded = False
     wait_time = 30
     while not blob_uploaded:
-        LOGGER.info(f"try #{i} to upload a blob to container [{containerUrl}]")
-        upload_response = await upload_blob_using_sas('./test_airlock_sample.txt', containerUrl)
+        LOGGER.info(f"try #{i} to upload a blob to container [{container_url}]")
+        upload_response = await upload_blob_using_sas(BLOB_FILE_PATH, container_url)
 
         if upload_response.status_code == 404:
             i += 1
@@ -101,7 +108,21 @@ async def test_airlock_import_flow(admin_token, verify) -> None:
 
     await wait_for_status(airlock_strings.APPROVED_STATUS, workspace_owner_token, workspace_path, request_id, verify)
 
+    # 7. check the file has been deleted from the source
+    # NOTE: We should really be checking that the file is deleted from in progress location too,
+    # but doing that will require setting up network access to in-progress storage account
+    try:
+        container_client = ContainerClient.from_container_url(container_url=container_url)
+        # We expect the container to eventually be deleted too, but sometimes this async operation takes some time.
+        # Checking that at least there are no blobs within the container
+        for _ in container_client.list_blobs():
+            container_url_without_sas = container_url.split("?")[0]
+            assert False, f"The source blob in container {container_url_without_sas} should be deleted"
+    except ResourceNotFoundError:
+        # Expecting this exception
+        pass
+
     if config.TEST_AIRLOCK_WORKSPACE_ID == "":
-        # 7. delete workspace
+        # 8. delete workspace
         LOGGER.info("Deleting workspace")
         await disable_and_delete_resource(f'/api{workspace_path}', admin_token, verify)

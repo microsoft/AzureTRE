@@ -79,6 +79,7 @@ async def retrieve_workspace_by_workspace_id(user=Depends(get_current_tre_user_o
     if access_service.get_workspace_role(user, workspace, user_role_assignments) != WorkspaceRole.NoRole:
         return WorkspaceInResponse(workspace=workspace)
     else:
+        logging.debug("User doesn't have roles in workspace.")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.ACCESS_USER_IS_NOT_OWNER_OR_RESEARCHER)
 
 
