@@ -19,7 +19,7 @@ export const Airlock: React.FunctionComponent<AirlockProps> = (props: AirlockPro
 
   useEffect(() => {
     const getAirlockRequests = async () => {
-      let requests;
+      let requests: AirlockRequest[];
 
       try {
         if (workspaceCtx.workspace) {
@@ -30,8 +30,11 @@ export const Airlock: React.FunctionComponent<AirlockProps> = (props: AirlockPro
           );
           requests = result.airlockRequests;
         } else {
-          // Get all requests across workspaces
+          // TODO: Get all requests across workspaces
+          requests = [];
         }
+        // Order by updatedWhen descending for initial view
+        requests.sort((a, b) => a.updatedWhen < b.updatedWhen ? 1 : -1);
         setAirlockRequests(requests);
         setLoadingState('ok');
       } catch (error) {
@@ -118,7 +121,6 @@ export const Airlock: React.FunctionComponent<AirlockProps> = (props: AirlockPro
         data: 'number',
         isResizable: true,
         isSorted: true,
-        isSortedDescending: true,
         fieldName: 'updatedWhen',
         onRender: (request: AirlockRequest) => {
           return <span>{ moment.unix(request.updatedWhen).fromNow() }</span>;
