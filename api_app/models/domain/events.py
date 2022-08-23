@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict
 from models.domain.azuretremodel import AzureTREModel
 
 
@@ -6,8 +6,7 @@ class AirlockNotificationData(AzureTREModel):
     request_id: str
     event_type: str
     event_value: str
-    researchers_emails: List[str]
-    owners_emails: List[str]
+    emails: Dict
     workspace_id: str
 
 
