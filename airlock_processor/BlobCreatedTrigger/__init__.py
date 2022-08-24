@@ -23,6 +23,7 @@ def main(msg: func.ServiceBusMessage,
     topic = json_body["topic"]
     storage_account_name, request_id, blob_name = get_blob_info_from_topic_and_subject(topic=topic, subject=json_body["subject"])
     request_files = None
+    failure_reason = None
 
     # message originated from in-progress blob creation
     if constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS in topic or constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS in topic:
@@ -42,12 +43,12 @@ def main(msg: func.ServiceBusMessage,
             # Malware scanning is disabled, so we skip to the in_review stage
             completed_step = constants.STAGE_SUBMITTED
             new_status = constants.STAGE_IN_REVIEW
-            # no need to enumeratee the request files on every status update - do it only once
             try:
                 request_files = get_request_files(account_name=storage_account_name, request_id=request_id)
             except Exception:
                 logging.exception("Failed enumerating the files in the request.")
                 new_status = constants.STAGE_FAILED
+                failure_reason = constants.FAILED_ENUMERATING_REQUEST_FILES_MESSAGE
 
     # blob created in the approved storage, meaning its ready (success)
     elif constants.STORAGE_ACCOUNT_NAME_IMPORT_APPROVED in topic or constants.STORAGE_ACCOUNT_NAME_EXPORT_APPROVED in topic:
@@ -66,7 +67,7 @@ def main(msg: func.ServiceBusMessage,
     stepResultEvent.set(
         func.EventGridOutputEvent(
             id=str(uuid.uuid4()),
-            data={"completed_step": completed_step, "new_status": new_status, "request_id": request_id, "request_files": request_files},
+            data={"completed_step": completed_step, "new_status": new_status, "request_id": request_id, "request_files": request_files, "error_message": failure_reason},
             subject=request_id,
             event_type="Airlock.StepResult",
             event_time=datetime.datetime.utcnow(),

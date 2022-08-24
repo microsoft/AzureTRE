@@ -150,11 +150,26 @@ def get_source_dest_for_copy(new_status: str, request_type: str, short_workspace
 
 def report_failure(outputEvent, request_properties, failure_reason):
     logging.exception(f"Failed processing Airlock request with ID: '{request_properties.request_id}', changing request status to '{constants.STAGE_FAILED}'.")
+
+    request_files = None
+    if request_properties.status == constants.STAGE_SUBMITTED:
+        # if the request failed during submission, the request files have not been enumerated yet
+        try:
+            request_files = get_request_files(request_properties)
+        except Exception:
+            logging.exception("Failed enumerating the files in the request.")
+
     outputEvent.set(
         func.EventGridOutputEvent(
             id=str(uuid.uuid4()),
-            data={"completed_step": request_properties.status, "new_status": constants.STAGE_FAILED, "request_id": request_properties.request_id, "error_message": failure_reason},
+            data={"completed_step": request_properties.status, "new_status": constants.STAGE_FAILED, "request_id": request_properties.request_id, "request_files": request_files, "error_message": failure_reason},
             subject=request_properties.request_id,
             event_type="Airlock.StepResult",
             event_time=datetime.datetime.utcnow(),
             data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
+
+
+def get_request_files(request_properties):
+    containers_metadata = get_source_dest_for_copy(request_properties.status, request_properties.type, request_properties.workspace_id)
+    storage_account_name = containers_metadata.source_account_name
+    return blob_operations.get_request_files(account_name=storage_account_name, request_id=request_properties.request_id)
