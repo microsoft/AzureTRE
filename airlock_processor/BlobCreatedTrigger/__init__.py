@@ -42,7 +42,7 @@ def main(msg: func.ServiceBusMessage,
             # Malware scanning is disabled, so we skip to the in_review stage
             completed_step = constants.STAGE_SUBMITTED
             new_status = constants.STAGE_IN_REVIEW
-            # enumerate the files only once - right after request submission
+            # no need to enumeratee the request files on every status update - do it only once
             try:
                 request_files = get_request_files(account_name=storage_account_name, request_id=request_id)
             except Exception:
