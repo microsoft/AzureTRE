@@ -10,7 +10,7 @@ resource "azurerm_eventgrid_topic" "step_result" {
   name                          = local.step_result_topic_name
   location                      = var.location
   resource_group_name           = var.resource_group_name
-  public_network_access_enabled = false
+  public_network_access_enabled = var.enable_local_debugging
 
   identity {
     type = "SystemAssigned"
@@ -64,7 +64,7 @@ resource "azurerm_eventgrid_topic" "status_changed" {
   name                          = local.status_changed_topic_name
   location                      = var.location
   resource_group_name           = var.resource_group_name
-  public_network_access_enabled = false
+  public_network_access_enabled = var.enable_local_debugging
 
   identity {
     type = "SystemAssigned"
@@ -117,7 +117,7 @@ resource "azurerm_eventgrid_topic" "to_delete" {
   name                          = local.to_delete_topic_name
   location                      = var.location
   resource_group_name           = var.resource_group_name
-  public_network_access_enabled = false
+  public_network_access_enabled = var.enable_local_debugging
 
   identity {
     type = "SystemAssigned"
@@ -297,7 +297,7 @@ resource "azurerm_eventgrid_topic" "airlock_notification" {
   name                          = local.notification_topic_name
   location                      = var.location
   resource_group_name           = var.resource_group_name
-  public_network_access_enabled = false
+  public_network_access_enabled = var.enable_local_debugging
 
   identity {
     type = "SystemAssigned"
