@@ -153,11 +153,11 @@ def report_failure(outputEvent, request_properties, failure_reason):
 
     request_files = None
     if request_properties.status == constants.STAGE_SUBMITTED:
-        # if the request failed during submission, the request files have not been enumerated yet
+        # request failed in submit stage so the request files have not been enumerated yet
         try:
             request_files = get_request_files(request_properties)
         except Exception:
-            logging.exception("Failed enumerating the files in the request.")
+            logging.exception("Failed enumerating the request files during failure report.")
 
     outputEvent.set(
         func.EventGridOutputEvent(
