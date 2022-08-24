@@ -1,8 +1,9 @@
 from json import JSONDecodeError
 import unittest
+from unittest.mock import MagicMock, patch
 
 from pydantic import ValidationError
-from StatusChangedQueueTrigger import extract_properties, get_source_dest_for_copy, is_require_data_copy
+from StatusChangedQueueTrigger import main, extract_properties, get_source_dest_for_copy, is_require_data_copy
 from azure.functions.servicebus import ServiceBusMessage
 
 
@@ -60,6 +61,16 @@ class TestDataCopyProperties(unittest.TestCase):
 
     def test_wrong_type_raises_when_getting_storage_account_properties(self):
         self.assertRaises(Exception, get_source_dest_for_copy, "accepted", "somethingelse")
+
+
+class TestFileEnumeration(unittest.TestCase):
+    @patch("StatusChangedQueueTrigger.get_request_files")
+    @patch("StatusChangedQueueTrigger.handle_status_changed", side_effect=Exception)
+    def test_get_request_files_called_when_failing_during_submit_stage(self, _, mock_get_request_files):
+        message_body = "{ \"data\": { \"request_id\":\"123\",\"status\":\"submitted\" , \"type\":\"import\", \"workspace_id\":\"ws1\"  }}"
+        message = _mock_service_bus_message(body=message_body)
+        main(msg=message, outputEvent=MagicMock())
+        self.assertTrue(mock_get_request_files.called)
 
 
 def _mock_service_bus_message(body: str):
