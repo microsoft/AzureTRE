@@ -13,7 +13,7 @@ FEATURES:
 
 ENHANCEMENTS:
 
-*
+* Airlock requests contain a field with information about the files that were submitted ([#2504](https://github.com/microsoft/AzureTRE/pull/2504))
 
 BUG FIXES:
 
