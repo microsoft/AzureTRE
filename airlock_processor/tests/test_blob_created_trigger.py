@@ -19,7 +19,6 @@ def _mock_service_bus_message(body: str):
 
 
 class TestFileEnumeration(unittest.TestCase):
-
     @patch("BlobCreatedTrigger.get_request_files")
     @patch("BlobCreatedTrigger.get_blob_info_from_topic_and_subject", return_value=(None, None, None))
     @patch("BlobCreatedTrigger.get_blob_client_from_blob_info", return_value=_get_blob_client_mock())
@@ -27,6 +26,5 @@ class TestFileEnumeration(unittest.TestCase):
     def test_get_request_files_called_during_submit_stage(self, _, __, get_request_files_mock):
         message_body = "{\"topic\":\"\/subscriptions\/<subscription_id>\/resourceGroups\/<resource_group_name>\/providers\/Microsoft.Storage\/storageAccounts\/stalimip\", \"subject\":\"\" }"
         message = _mock_service_bus_message(body=message_body)
-
         main(msg=message, stepResultEvent=MagicMock(), toDeleteEvent=MagicMock())
         self.assertTrue(get_request_files_mock.called)
