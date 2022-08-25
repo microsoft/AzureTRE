@@ -12,8 +12,8 @@ import { Workspace } from './models/workspace';
 import { AppRolesContext } from './contexts/AppRolesContext';
 import { WorkspaceContext } from './contexts/WorkspaceContext';
 import { GenericErrorBoundary } from './components/shared/GenericErrorBoundary';
-import { NotificationsContext } from './contexts/NotificationsContext';
-import { Operation } from './models/operation';
+import { OperationsContext } from './contexts/OperationsContext';
+import { completedStates, Operation } from './models/operation';
 import { ResourceUpdate } from './models/resource';
 import { HttpMethod, ResultType, useAuthApiCall } from './hooks/useAuthApiCall';
 import { ApiEndpoint } from './models/apiEndpoints';
@@ -54,18 +54,29 @@ export const App: React.FunctionComponent = () => {
                 setCreateFormOpen(true);
               }
             }} >
-              <NotificationsContext.Provider value={{
+              <OperationsContext.Provider value={{
                 operations: operations,
                 addOperations: (ops: Array<Operation>) => {
                   let stateOps = [...operations];
                   ops.forEach((op: Operation) => {
                     let i = stateOps.findIndex((f: Operation) => f.id === op.id);
-                    if (i > 0) {
+                    if (i !== -1) {
+                      console.log("Updating Op in CTX", op);
                       stateOps.splice(i, 1, op);
                     } else {
+                      console.log("Adding Op in CTX", op);
                       stateOps.push(op);
                     }
                   });
+                  setOperations(stateOps);
+                },
+                dismissCompleted: () => {
+                  let stateOps = [...operations];
+                  stateOps.forEach((o:Operation) => {
+                    if(completedStates.includes(o.status)) {
+                      o.dismiss = true;
+                    }
+                  })
                   setOperations(stateOps);
                 },
                 resourceUpdates: resourceUpdates,
@@ -121,7 +132,7 @@ export const App: React.FunctionComponent = () => {
                     </Stack.Item>
                   </Stack>
                 </AppRolesContext.Provider>
-              </NotificationsContext.Provider>
+              </OperationsContext.Provider>
             </CreateUpdateResourceContext.Provider>
           </MsalAuthenticationTemplate>
         } />

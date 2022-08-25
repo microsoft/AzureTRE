@@ -1,12 +1,12 @@
 import { useContext, useEffect, useRef, useState } from "react";
-import { NotificationsContext } from "../contexts/NotificationsContext";
+import { OperationsContext } from "../contexts/OperationsContext";
 import { WorkspaceContext } from "../contexts/WorkspaceContext";
 import { ResourceUpdate, ComponentAction, getResourceFromResult, Resource } from "../models/resource";
 import { HttpMethod, useAuthApiCall } from "./useAuthApiCall";
 
 export const useComponentManager = (resource: Resource, onUpdate: (r: Resource) => void, onRemove: (r: Resource) => void) => {
-  const opsReadContext = useContext(NotificationsContext);
-  const opsWriteContext = useRef(useContext(NotificationsContext));
+  const opsReadContext = useContext(OperationsContext);
+  const opsWriteContext = useRef(useContext(OperationsContext));
   const [latestUpdate, setLatestUpdate] = useState({} as ResourceUpdate);
   const workspaceCtx = useContext(WorkspaceContext);
   const apiCall = useAuthApiCall();

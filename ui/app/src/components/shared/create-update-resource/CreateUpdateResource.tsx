@@ -6,7 +6,7 @@ import { Operation } from '../../../models/operation';
 import { ResourceType } from '../../../models/resourceType';
 import { Workspace } from '../../../models/workspace';
 import { WorkspaceService } from '../../../models/workspaceService';
-import { NotificationsContext } from '../../../contexts/NotificationsContext';
+import { OperationsContext } from '../../../contexts/OperationsContext';
 import { ResourceForm } from './ResourceForm';
 import { SelectTemplate } from './SelectTemplate';
 import { getResourceFromResult, Resource } from '../../../models/resource';
@@ -41,7 +41,7 @@ export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceP
   const [page, setPage] = useState('selectTemplate' as keyof PageTitle);
   const [selectedTemplate, setTemplate] = useState(props.updateResource?.templateName || '');
   const [deployOperation, setDeployOperation] = useState({} as Operation);
-  const opsContext = useContext(NotificationsContext);
+  const opsContext = useContext(OperationsContext);
   const navigate = useNavigate();
   const apiCall = useAuthApiCall();
 

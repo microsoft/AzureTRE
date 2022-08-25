@@ -12,7 +12,8 @@ export interface Operation {
     createdWhen: number,
     updatedWhen: number,
     user: User,
-    steps?: Array<OperationStep>
+    steps?: Array<OperationStep>,
+    dismiss?: Boolean // virtual prop
 }
 
 export interface OperationStep {

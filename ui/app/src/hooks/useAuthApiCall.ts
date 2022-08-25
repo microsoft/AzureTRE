@@ -101,8 +101,8 @@ export const useAuthApiCall = () => {
             let resp = await fetch(`${config.treUrl}/${endpoint}`, opts);
 
             if (!resp.ok) {
-                console.error(`Error calling ${endpoint}: ${resp.status} - ${resp.statusText}`);
-                return;
+                let message = `Error calling ${endpoint}: ${resp.status} - ${resp.statusText}`
+                throw(message);
             }
 
             switch (resultType) {
@@ -121,6 +121,7 @@ export const useAuthApiCall = () => {
             // TODO: this is currently hiding errors, we should either rethrow to be handled in components
             // or hook this up to user-facing alerts
             console.error("Error calling API", err);
+            throw err;
         }
     }, [account, instance]);
 }
