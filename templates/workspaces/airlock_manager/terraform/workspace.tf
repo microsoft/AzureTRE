@@ -42,6 +42,7 @@ module "aad" {
 }
 
 module "airlock" {
+  count                       = var.enable_airlock ? 1 : 0
   source                      = "./airlock"
   location                    = var.location
   tre_id                      = var.tre_id
@@ -51,6 +52,26 @@ module "airlock" {
   services_subnet_id          = module.network.services_subnet_id
   short_workspace_id          = local.short_workspace_id
   airlock_processor_subnet_id = module.network.airlock_processor_subnet_id
+  depends_on = [
+    module.network,
+  ]
+}
+
+
+module "azure_monitor" {
+  source                                   = "./azure-monitor"
+  tre_id                                   = var.tre_id
+  location                                 = var.location
+  resource_group_name                      = azurerm_resource_group.ws.name
+  tre_resource_id                          = var.tre_resource_id
+  tre_workspace_tags                       = local.tre_workspace_tags
+  workspace_subnet_id                      = module.network.services_subnet_id
+  azure_monitor_dns_zone_id                = module.network.azure_monitor_dns_zone_id
+  azure_monitor_oms_opinsights_dns_zone_id = module.network.azure_monitor_oms_opinsights_dns_zone_id
+  azure_monitor_ods_opinsights_dns_zone_id = module.network.azure_monitor_ods_opinsights_dns_zone_id
+  azure_monitor_agentsvc_dns_zone_id       = module.network.azure_monitor_agentsvc_dns_zone_id
+  blob_core_dns_zone_id                    = module.network.blobcore_zone_id
+  enable_local_debugging                   = var.enable_local_debugging
   depends_on = [
     module.network,
   ]
