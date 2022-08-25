@@ -34,7 +34,6 @@ STAGE_FAILED = "failed"
 # Messages
 NO_FILES_IN_REQUEST_MESSAGE = "Request did not contain any files."
 TOO_MANY_FILES_IN_REQUEST_MESSAGE = "Request contained more than 1 file."
-FAILED_ENUMERATING_REQUEST_FILES_MESSAGE = "Failed enumerating request files."
 UNKNOWN_REASON_MESSAGE = "Unknown reason."
 
 # Event Grid

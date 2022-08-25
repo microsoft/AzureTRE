@@ -3,12 +3,13 @@ import logging
 import datetime
 import uuid
 import json
+import re
 import os
 
 import azure.functions as func
 
 from shared_code import constants
-from shared_code.blob_operations import get_blob_info_from_topic_and_subject, get_blob_client_from_blob_info, get_request_files
+from shared_code.blob_operations import get_blob_info_from_topic_and_subject, get_blob_client_from_blob_info
 
 
 def main(msg: func.ServiceBusMessage,
@@ -21,9 +22,7 @@ def main(msg: func.ServiceBusMessage,
 
     json_body = json.loads(body)
     topic = json_body["topic"]
-    storage_account_name, request_id, blob_name = get_blob_info_from_topic_and_subject(topic=topic, subject=json_body["subject"])
-    request_files = None
-    failure_reason = None
+    request_id = re.search(r'/blobServices/default/containers/(.*?)/blobs', json_body["subject"]).group(1)
 
     # message originated from in-progress blob creation
     if constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS in topic or constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS in topic:
@@ -43,12 +42,6 @@ def main(msg: func.ServiceBusMessage,
             # Malware scanning is disabled, so we skip to the in_review stage
             completed_step = constants.STAGE_SUBMITTED
             new_status = constants.STAGE_IN_REVIEW
-            try:
-                request_files = get_request_files(account_name=storage_account_name, request_id=request_id)
-            except Exception:
-                logging.exception("Failed enumerating the files in the request.")
-                new_status = constants.STAGE_FAILED
-                failure_reason = constants.FAILED_ENUMERATING_REQUEST_FILES_MESSAGE
 
     # blob created in the approved storage, meaning its ready (success)
     elif constants.STORAGE_ACCOUNT_NAME_IMPORT_APPROVED in topic or constants.STORAGE_ACCOUNT_NAME_EXPORT_APPROVED in topic:
@@ -67,14 +60,15 @@ def main(msg: func.ServiceBusMessage,
     stepResultEvent.set(
         func.EventGridOutputEvent(
             id=str(uuid.uuid4()),
-            data={"completed_step": completed_step, "new_status": new_status, "request_id": request_id, "request_files": request_files, "error_message": failure_reason},
+            data={"completed_step": completed_step, "new_status": new_status, "request_id": request_id},
             subject=request_id,
             event_type="Airlock.StepResult",
             event_time=datetime.datetime.utcnow(),
             data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
 
     # check blob metadata to find the blob it was copied from
-    blob_client = get_blob_client_from_blob_info(storage_account_name=storage_account_name, container_name=request_id, blob_name=blob_name)
+    blob_client = get_blob_client_from_blob_info(
+        *get_blob_info_from_topic_and_subject(topic=json_body["topic"], subject=json_body["subject"]))
     blob_metadata = blob_client.get_blob_properties()["metadata"]
     copied_from = json.loads(blob_metadata["copied_from"])
     logging.info(f"copied from history: {copied_from}")
