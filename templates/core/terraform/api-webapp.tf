@@ -24,6 +24,7 @@ resource "azurerm_linux_web_app" "api" {
   service_plan_id                 = azurerm_service_plan.core.id
   https_only                      = true
   key_vault_reference_identity_id = azurerm_user_assigned_identity.id.id
+  virtual_network_subnet_id       = module.network.web_app_subnet_id
   tags                            = local.tre_core_tags
 
   app_settings = {
@@ -61,9 +62,6 @@ resource "azurerm_linux_web_app" "api" {
   lifecycle {
     ignore_changes = [
       tags,
-
-      # Required since we're setting with azurerm_app_service_virtual_network_swift_connection below.
-      virtual_network_subnet_id,
     ]
   }
 
@@ -124,18 +122,6 @@ resource "azurerm_private_endpoint" "api_private_endpoint" {
     name                 = "privatelink.azurewebsites.net"
     private_dns_zone_ids = [module.network.azurewebsites_dns_zone_id]
   }
-}
-
-# Kept to be backward compatible with existing deployments despite the ability
-# to set through azurerm_linux_web_app.virtual_network_subnet_id
-resource "azurerm_app_service_virtual_network_swift_connection" "api_integrated_vnet" {
-  app_service_id = azurerm_linux_web_app.api.id
-  subnet_id      = module.network.web_app_subnet_id
-}
-
-moved {
-  from = azurerm_app_service_virtual_network_swift_connection.api-integrated-vnet
-  to   = azurerm_app_service_virtual_network_swift_connection.api_integrated_vnet
 }
 
 resource "azurerm_monitor_diagnostic_setting" "webapp_api" {

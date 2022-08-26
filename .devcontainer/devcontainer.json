@@ -90,6 +90,21 @@
           ]
         },
         {
+          "name": "E2E Extended AAD",
+          "type": "python",
+          "request": "launch",
+          "module": "pytest",
+          "justMyCode": true,
+          "cwd": "${workspaceFolder}/e2e_tests/",
+          "preLaunchTask": "Copy_env_file_for_e2e_debug",
+          "args": [
+            "-m",
+            "extended_aad",
+            "--verify",
+            "false"
+          ]
+        },
+        {
           "name": "E2E Shared Services",
           "type": "python",
           "request": "launch",
