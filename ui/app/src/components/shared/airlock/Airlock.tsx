@@ -5,6 +5,8 @@ import { ApiEndpoint } from '../../../models/apiEndpoints';
 import { WorkspaceContext } from '../../../contexts/WorkspaceContext';
 import { AirlockRequest } from '../../../models/airlock';
 import moment from 'moment';
+import { Route, Routes, useNavigate } from 'react-router-dom';
+import { AirlockViewRequest } from './AirlockViewRequest';
 
 interface AirlockProps {
 }
@@ -16,6 +18,7 @@ export const Airlock: React.FunctionComponent<AirlockProps> = (props: AirlockPro
   const workspaceCtx = useContext(WorkspaceContext);
   const apiCall = useAuthApiCall();
   const theme = getTheme();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const getAirlockRequests = async () => {
@@ -33,7 +36,7 @@ export const Airlock: React.FunctionComponent<AirlockProps> = (props: AirlockPro
           // TODO: Get all requests across workspaces
           requests = [];
         }
-        // Order by updatedWhen descending for initial view
+        // Order by updatedWhen for initial view
         requests.sort((a, b) => a.updatedWhen < b.updatedWhen ? 1 : -1);
         setAirlockRequests(requests);
         setLoadingState('ok');
@@ -140,7 +143,7 @@ export const Airlock: React.FunctionComponent<AirlockProps> = (props: AirlockPro
           columns={requestColumns}
           selectionMode={SelectionMode.none}
           getKey={(item) => item.id}
-          onItemInvoked={() => console.log('Item pressed')}
+          onItemInvoked={(item) => navigate(item.id)}
           className="tre-table-rows-align-centre"
         />
       ); break;
@@ -162,26 +165,40 @@ export const Airlock: React.FunctionComponent<AirlockProps> = (props: AirlockPro
       ); break;
   }
 
+  const updateRequest = (updatedRequest: AirlockRequest) => {
+    setAirlockRequests(requests => {
+      const i = requests.findIndex(r => r.id === updatedRequest.id);
+      const updatedRequests = [...requests];
+      updatedRequests[i] = updatedRequest;
+      return updatedRequests;
+    });
+  };
+
   return (
     <>
       <Stack className="tre-panel">
         <Stack.Item>
           <Stack horizontal horizontalAlign="space-between">
             <h1>Airlock</h1>
-            {
-              <CommandBarButton
-                iconProps={{ iconName: 'add' }}
-                text="New request"
-                style={{ background: 'none', marginBottom: '10px', color: theme.palette.themePrimary }}
-              />
-            }
+            <CommandBarButton
+              iconProps={{ iconName: 'add' }}
+              text="New request"
+              style={{ background: 'none', marginBottom: '10px', color: theme.palette.themePrimary }}
+            />
           </Stack>
         </Stack.Item>
         <Stack.Item className="tre-resource-panel">
           { requestsList }
         </Stack.Item>
       </Stack>
+
+      <Routes>
+        <Route path=":requestId" element={
+          <AirlockViewRequest requests={airlockRequests} updateRequest={updateRequest}/>
+        } />
+      </Routes>
     </>
   );
 
 };
+

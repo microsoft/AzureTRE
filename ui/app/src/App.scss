@@ -33,6 +33,10 @@ code {
   position: relative;
   top: 7px;
   color: #fff;
+
+  i {
+    font-size: 20px !important;
+  }
 }
 
 .tre-notifications-button i {
@@ -77,12 +81,20 @@ ul.tre-notifications-steps-list li {
   font-size:1.2rem;
 }
 
-.tre-user-menu .ms-Persona-primaryText:hover {
-  color: #fff;
-}
+.tre-user-menu {
+  margin-top: 2px;
 
-.ms-Persona-primaryText {
-  color: #fff;
+  .ms-Persona-primaryText:hover {
+    color: #fff;
+  }
+
+  .ms-Persona-primaryText {
+    color: #fff;
+  }
+
+  .ms-Icon {
+    margin-top: 3px;
+  }
 }
 
 .tre-hide-chevron i[data-icon-name=ChevronDown] {

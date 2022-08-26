@@ -16,8 +16,9 @@ export enum AirlockRequestType {
 
 export enum AirlockRequestStatus {
   Draft = 'draft',
-  InReview = 'in-review',
-  InProgress = 'in-progress',
+  InReview = 'in_review',
+  InProgress = 'in_progress',
   Approved = 'approved',
-  Rejected = 'rejected'
+  Rejected = 'rejected',
+  Submitted = 'submitted'
 }

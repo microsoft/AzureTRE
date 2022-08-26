@@ -12,7 +12,7 @@ export const TopNav: React.FunctionComponent = () => {
           <Stack.Item grow={100}>
             <Link to='/' className='tre-home-link'>
               <Icon iconName="TestBeakerSolid" style={{ marginLeft: '10px', marginRight: '10px', verticalAlign: 'middle' }} />
-              Azure TRE
+              <h5 style={{display: 'inline'}}>Azure TRE</h5>
             </Link>
           </Stack.Item>
           <Stack.Item>

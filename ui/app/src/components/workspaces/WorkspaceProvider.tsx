@@ -132,7 +132,7 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
                     <Route path="shared-services/:sharedServiceId/*" element={
                       <SharedServiceItem readonly={true} />
                     } />
-                    <Route path="requests" element={
+                    <Route path="requests/*" element={
                       <Airlock/>
                     } />
                   </Routes>
