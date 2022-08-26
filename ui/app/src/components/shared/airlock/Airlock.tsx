@@ -31,7 +31,7 @@ export const Airlock: React.FunctionComponent<AirlockProps> = (props: AirlockPro
             HttpMethod.Get,
             workspaceCtx.workspaceApplicationIdURI
           );
-          requests = result.airlockRequests;
+          requests = result.airlockRequests.map((r: { airlockRequest: AirlockRequest }) => r.airlockRequest);
         } else {
           // TODO: Get all requests across workspaces
           requests = [];
@@ -84,7 +84,7 @@ export const Airlock: React.FunctionComponent<AirlockProps> = (props: AirlockPro
         maxWidth: 16,
         isIconOnly: true,
         onRender: (request: AirlockRequest) => {
-          return <Persona size={ PersonaSize.size24 } text={ request.user.name } />
+          return <Persona size={ PersonaSize.size24 } text={ request.user?.name } />
         }
       },
       {
@@ -94,7 +94,7 @@ export const Airlock: React.FunctionComponent<AirlockProps> = (props: AirlockPro
         minWidth: 150,
         maxWidth: 200,
         isResizable: true,
-        onRender: (request: AirlockRequest) => request.user.name,
+        onRender: (request: AirlockRequest) => request.user?.name,
         onColumnClick: reorderColumn
       },
       {
