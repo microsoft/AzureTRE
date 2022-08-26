@@ -137,16 +137,26 @@ export const Airlock: React.FunctionComponent<AirlockProps> = (props: AirlockPro
   let requestsList;
   switch (loadingState) {
     case 'ok':
-      requestsList = (
-        <DetailsList
-          items={airlockRequests}
-          columns={requestColumns}
-          selectionMode={SelectionMode.none}
-          getKey={(item) => item.id}
-          onItemInvoked={(item) => navigate(item.id)}
-          className="tre-table-rows-align-centre"
-        />
-      ); break;
+      if (airlockRequests.length > 0) {
+        requestsList = (
+          <DetailsList
+            items={airlockRequests}
+            columns={requestColumns}
+            selectionMode={SelectionMode.none}
+            getKey={(item) => item.id}
+            onItemInvoked={(item) => navigate(item.id)}
+            className="tre-table-rows-align-centre"
+          />
+        );
+      } else {
+        requestsList = (
+          <div style={{textAlign: 'center', padding: '50px'}}>
+            <h4>No requests found</h4>
+            <small>Looks like there are no airlock requests yet. Create a new request to get started.</small>
+          </div>
+        )
+      }
+      break;
     case 'error':
       requestsList = (
         <MessageBar
