@@ -7,6 +7,7 @@ export interface AirlockRequest extends Resource {
   businessJustification: string;
   errorMessage: null | string;
   status: AirlockRequestStatus;
+  creationTime: number;
 }
 
 export enum AirlockRequestType {

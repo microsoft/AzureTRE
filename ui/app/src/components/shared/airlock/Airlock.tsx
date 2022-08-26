@@ -117,6 +117,19 @@ export const Airlock: React.FunctionComponent<AirlockProps> = (props: AirlockPro
         onColumnClick: reorderColumn
       },
       {
+        key: 'created',
+        name: 'Created',
+        ariaLabel: 'When the request was created',
+        minWidth: 120,
+        data: 'number',
+        isResizable: true,
+        fieldName: 'createdTime',
+        onRender: (request: AirlockRequest) => {
+          return <span>{ moment.unix(request.creationTime).format('DD/MM/YYYY') }</span>;
+        },
+        onColumnClick: reorderColumn
+      },
+      {
         key: 'updated',
         name: 'Updated',
         ariaLabel: 'When the request was last updated',
