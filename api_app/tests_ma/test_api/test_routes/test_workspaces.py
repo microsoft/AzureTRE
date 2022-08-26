@@ -19,7 +19,9 @@ from models.domain.user_resource import UserResource
 from models.domain.workspace import Workspace, WorkspaceRole
 from models.domain.workspace_service import WorkspaceService
 from resources import strings
-from services.authentication import get_current_admin_user, get_current_tre_user_or_tre_admin, get_current_workspace_owner_user, get_current_workspace_owner_or_researcher_user, get_current_workspace_owner_or_researcher_user_or_tre_admin
+from services.authentication import get_current_admin_user, \
+    get_current_tre_user_or_tre_admin, get_current_workspace_owner_user, get_current_workspace_owner_or_researcher_user, \
+    get_current_workspace_owner_or_researcher_user_or_tre_admin, get_current_workspace_owner_or_researcher_user_or_airlock_manager
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 
 
@@ -214,6 +216,7 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
     def log_in_with_non_admin_user(self, app, non_admin_user):
         with patch('services.aad_authentication.AzureADAuthorization._get_user_from_token', return_value=non_admin_user()):
             app.dependency_overrides[get_current_tre_user_or_tre_admin] = non_admin_user
+            app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_airlock_manager] = non_admin_user
             yield
             app.dependency_overrides = {}
 
@@ -284,6 +287,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     def _prepare(self, app, admin_user):
         with patch('services.aad_authentication.AzureADAuthorization._get_user_from_token', return_value=admin_user()):
             app.dependency_overrides[get_current_tre_user_or_tre_admin] = admin_user
+            app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_airlock_manager] = admin_user
             app.dependency_overrides[get_current_admin_user] = admin_user
             yield
             app.dependency_overrides = {}
@@ -489,6 +493,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     def log_in_with_owner_user(self, app, owner_user):
         # The following ws services requires the WS app registration
         app.dependency_overrides[get_current_workspace_owner_user] = owner_user
+        app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_airlock_manager] = owner_user
         app.dependency_overrides[get_current_workspace_owner_or_researcher_user] = owner_user
         yield
         app.dependency_overrides = {}
@@ -713,6 +718,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
     def log_in_with_researcher_user(self, app, researcher_user):
         # The following ws services requires the WS app registration
         app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_tre_admin] = researcher_user
+        app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_airlock_manager] = researcher_user
         app.dependency_overrides[get_current_workspace_owner_or_researcher_user] = researcher_user
         yield
         app.dependency_overrides = {}
