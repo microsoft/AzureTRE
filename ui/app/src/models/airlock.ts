@@ -20,5 +20,6 @@ export enum AirlockRequestStatus {
   InProgress = 'in_progress',
   Approved = 'approved',
   Rejected = 'rejected',
-  Submitted = 'submitted'
+  Submitted = 'submitted',
+  Cancelled = 'cancelled'
 }

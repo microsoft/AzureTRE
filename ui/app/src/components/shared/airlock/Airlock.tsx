@@ -159,7 +159,7 @@ export const Airlock: React.FunctionComponent<AirlockProps> = (props: AirlockPro
       ); break;
     default:
       requestsList = (
-        <div style={{ marginTop: '20px' }}>
+        <div style={{ padding: '50px' }}>
           <Spinner label="Loading airlock requests" ariaLive="assertive" labelPosition="top" size={SpinnerSize.large} />
         </div>
       ); break;
@@ -179,18 +179,19 @@ export const Airlock: React.FunctionComponent<AirlockProps> = (props: AirlockPro
       <Stack className="tre-panel">
         <Stack.Item>
           <Stack horizontal horizontalAlign="space-between">
-            <h1>Airlock</h1>
+            <h1 style={{marginBottom: '0px'}}>Airlock</h1>
             <CommandBarButton
               iconProps={{ iconName: 'add' }}
               text="New request"
-              style={{ background: 'none', marginBottom: '10px', color: theme.palette.themePrimary }}
+              style={{ background: 'none', color: theme.palette.themePrimary }}
             />
           </Stack>
         </Stack.Item>
-        <Stack.Item className="tre-resource-panel">
-          { requestsList }
-        </Stack.Item>
       </Stack>
+
+      <div className="tre-resource-panel" style={{padding: '0px'}}>
+        { requestsList }
+      </div>
 
       <Routes>
         <Route path=":requestId" element={

@@ -1,4 +1,4 @@
-import { DefaultButton, Dialog, DialogContent, DialogFooter, DialogType, IStackItemStyles, IStackStyles, MessageBar, MessageBarType, Panel, PanelType, Persona, PersonaSize, PrimaryButton, Spinner, SpinnerSize, Stack, TextField, useTheme } from "@fluentui/react";
+import { DefaultButton, Dialog, DialogContent, DialogFooter, IStackItemStyles, IStackStyles, MessageBar, MessageBarType, Panel, PanelType, Persona, PersonaSize, PrimaryButton, Spinner, SpinnerSize, Stack, TextField, useTheme } from "@fluentui/react";
 import moment from "moment";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -128,7 +128,9 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
           </div>
         }
         <div style={{textAlign: 'end'}}>
-          <DefaultButton onClick={() => setHideCancelDialog(false)} styles={cancelButtonStyles}>Cancel</DefaultButton>
+          {
+            request.status !== AirlockRequestStatus.Cancelled && <DefaultButton onClick={() => setHideCancelDialog(false)} styles={cancelButtonStyles}>Cancel</DefaultButton>
+          }
           {
             request.status === AirlockRequestStatus.Draft && <PrimaryButton onClick={() => setHideSubmitDialog(false)}>Submit</PrimaryButton>
           }
@@ -136,7 +138,7 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
       </>
     }
     return footer;
-  }, [dismissPanel, request, cancelButtonStyles]);
+  }, [request, cancelButtonStyles]);
 
   return (
     <>
@@ -183,7 +185,7 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
               <b>Workspace</b>
             </Stack.Item>
             <Stack.Item styles={stackItemStyles}>
-              <p>{request.workspaceId}</p>
+              <p>{workspaceCtx.workspace?.properties?.display_name}</p>
             </Stack.Item>
           </Stack>
 
@@ -248,19 +250,16 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
           }}
         >
           {
-            submitting && <DialogContent>
-              <Spinner label="Submitting..." ariaLive="assertive" labelPosition="top" size={SpinnerSize.large} />
-            </DialogContent>
+            submitError && <MessageBar messageBarType={MessageBarType.error}>Error submitting request. Check the console for details.</MessageBar>
           }
           {
-            submitError && <DialogContent>
-              <MessageBar messageBarType={MessageBarType.error}>Error submitting request. Check the console for details.</MessageBar>
-            </DialogContent>
+            submitting
+            ? <Spinner label="Submitting..." ariaLive="assertive" labelPosition="top" size={SpinnerSize.large} />
+            : <DialogFooter>
+              <PrimaryButton onClick={submitRequest} text="Submit" />
+              <DefaultButton onClick={() => setHideSubmitDialog(true)} text="Cancel" />
+            </DialogFooter>
           }
-          <DialogFooter>
-            <PrimaryButton onClick={submitRequest} text="Submit" />
-            <DefaultButton onClick={() => setHideSubmitDialog(true)} text="Cancel" />
-          </DialogFooter>
         </Dialog>
 
         <Dialog
