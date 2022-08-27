@@ -191,6 +191,15 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
 
           <Stack horizontal horizontalAlign="space-between" styles={underlineStackStyles}>
             <Stack.Item styles={stackItemStyles}>
+              <b>Created</b>
+            </Stack.Item>
+            <Stack.Item styles={stackItemStyles}>
+              <p>{moment.unix(request.creationTime).format('DD/MM/YYYY')}</p>
+            </Stack.Item>
+          </Stack>
+
+          <Stack horizontal horizontalAlign="space-between" styles={underlineStackStyles}>
+            <Stack.Item styles={stackItemStyles}>
               <b>Updated</b>
             </Stack.Item>
             <Stack.Item styles={stackItemStyles}>
