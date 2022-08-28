@@ -14,6 +14,7 @@ FEATURES:
 ENHANCEMENTS:
 
 * Adding Log Analytics & Antimalware VM extensions ([#2520](https://github.com/microsoft/AzureTRE/pull/2520))
+* Block anonymous access to 2 storage accounts ([#2524](https://github.com/microsoft/AzureTRE/pull/2524))
 
 BUG FIXES:
 
