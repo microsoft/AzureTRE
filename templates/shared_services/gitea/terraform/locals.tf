@@ -11,4 +11,8 @@ locals {
     tre_id                = var.tre_id
     tre_shared_service_id = var.tre_resource_id
   }
+  webapp_diagnostic_categories_enabled = [
+    "AppServiceHTTPLogs", "AppServiceConsoleLogs", "AppServiceAppLogs", "AppServiceFileAuditLogs",
+    "AppServiceAuditLogs", "AppServiceIPSecAuditLogs", "AppServicePlatformLogs", "AppServiceAntivirusScanAuditLogs"
+  ]
 }
