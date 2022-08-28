@@ -18,7 +18,7 @@ ENHANCEMENTS:
 
 BUG FIXES:
 
-*
+* API health check is also returned by accessing the root path at / ([#2469](https://github.com/microsoft/AzureTRE/pull/2469))
 
 ## 0.4.2 (August 23, 2022)
 
