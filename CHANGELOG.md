@@ -14,6 +14,7 @@ FEATURES:
 ENHANCEMENTS:
 
 * Adding Log Analytics & Antimalware VM extensions ([#2520](https://github.com/microsoft/AzureTRE/pull/2520))
+* Gitea shared service support app-service standard SKUs ([#2523](https://github.com/microsoft/AzureTRE/pull/2523))
 
 BUG FIXES:
 
