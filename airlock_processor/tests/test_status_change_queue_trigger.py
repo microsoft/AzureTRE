@@ -1,10 +1,13 @@
 from json import JSONDecodeError
+import os
 import unittest
+from unittest import mock
 from unittest.mock import MagicMock, patch
 
 from pydantic import ValidationError
-from StatusChangedQueueTrigger import main, extract_properties, get_source_dest_for_copy, is_require_data_copy
+from StatusChangedQueueTrigger import get_request_files, main, extract_properties, get_source_dest_for_copy, is_require_data_copy
 from azure.functions.servicebus import ServiceBusMessage
+from shared_code import constants
 
 
 class TestPropertiesExtraction(unittest.TestCase):
@@ -64,13 +67,46 @@ class TestDataCopyProperties(unittest.TestCase):
 
 
 class TestFileEnumeration(unittest.TestCase):
+    @patch("StatusChangedQueueTrigger.set_output_event_to_report_request_files")
     @patch("StatusChangedQueueTrigger.get_request_files")
-    @patch("StatusChangedQueueTrigger.handle_status_changed", side_effect=Exception)
-    def test_get_request_files_called_when_failing_during_submit_stage(self, _, mock_get_request_files):
+    @patch("StatusChangedQueueTrigger.is_require_data_copy", return_value=False)
+    @mock.patch.dict(os.environ, {"TRE_ID": "tre-id"}, clear=True)
+    def test_get_request_files_should_be_called_on_submit_stage(self, _, mock_get_request_files, mock_set_output_event_to_report_request_files):
         message_body = "{ \"data\": { \"request_id\":\"123\",\"status\":\"submitted\" , \"type\":\"import\", \"workspace_id\":\"ws1\"  }}"
         message = _mock_service_bus_message(body=message_body)
         main(msg=message, outputEvent=MagicMock())
         self.assertTrue(mock_get_request_files.called)
+        self.assertTrue(mock_set_output_event_to_report_request_files.called)
+
+    @patch("StatusChangedQueueTrigger.set_output_event_to_report_failure")
+    @patch("StatusChangedQueueTrigger.get_request_files")
+    @patch("StatusChangedQueueTrigger.handle_status_changed")
+    def test_get_request_files_should_not_be_called_if_new_status_is_not_submit(self, _, mock_get_request_files, mock_set_output_event_to_report_failure):
+        message_body = "{ \"data\": { \"request_id\":\"123\",\"status\":\"fake-status\" , \"type\":\"import\", \"workspace_id\":\"ws1\"  }}"
+        message = _mock_service_bus_message(body=message_body)
+        main(msg=message, outputEvent=MagicMock())
+        self.assertFalse(mock_get_request_files.called)
+        self.assertFalse(mock_set_output_event_to_report_failure.called)
+
+    @patch("StatusChangedQueueTrigger.set_output_event_to_report_failure")
+    @patch("StatusChangedQueueTrigger.get_request_files")
+    @patch("StatusChangedQueueTrigger.handle_status_changed", side_effect=Exception)
+    def test_get_request_files_should_be_called_when_failing_during_submit_stage(self, _, mock_get_request_files, mock_set_output_event_to_report_failure):
+        message_body = "{ \"data\": { \"request_id\":\"123\",\"status\":\"submitted\" , \"type\":\"import\", \"workspace_id\":\"ws1\"  }}"
+        message = _mock_service_bus_message(body=message_body)
+        main(msg=message, outputEvent=MagicMock())
+        self.assertTrue(mock_get_request_files.called)
+        self.assertTrue(mock_set_output_event_to_report_failure.called)
+
+    @patch("StatusChangedQueueTrigger.blob_operations.get_request_files")
+    @mock.patch.dict(os.environ, {"TRE_ID": "tre-id"}, clear=True)
+    def test_get_request_files_called_with_correct_storage_account(self, mock_get_request_files):
+        source_storage_account_for_submitted_stage = constants.STORAGE_ACCOUNT_NAME_EXPORT_INTERNAL + 'ws1'
+        message_body = "{ \"data\": { \"request_id\":\"123\",\"status\":\"submitted\" , \"type\":\"export\", \"workspace_id\":\"ws1\"  }}"
+        message = _mock_service_bus_message(body=message_body)
+        request_properties = extract_properties(message)
+        get_request_files(request_properties)
+        mock_get_request_files.assert_called_with(account_name=source_storage_account_for_submitted_stage, request_id=request_properties.request_id)
 
 
 def _mock_service_bus_message(body: str):
