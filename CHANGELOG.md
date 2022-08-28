@@ -13,11 +13,13 @@ FEATURES:
 
 ENHANCEMENTS:
 
+* Adding Log Analytics & Antimalware VM extensions ([#2520](https://github.com/microsoft/AzureTRE/pull/2520))
+* Gitea shared service support app-service standard SKUs ([#2523](https://github.com/microsoft/AzureTRE/pull/2523))
 * Airlock requests contain a field with information about the files that were submitted ([#2504](https://github.com/microsoft/AzureTRE/pull/2504))
 
 BUG FIXES:
 
-*
+* API health check is also returned by accessing the root path at / ([#2469](https://github.com/microsoft/AzureTRE/pull/2469))
 
 ## 0.4.2 (August 23, 2022)
 

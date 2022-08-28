@@ -131,6 +131,8 @@ def shell_output_logger(console_output: str, prefix_item: str, logger: logging.L
         logging.debug("shell console output is empty.")
         return
 
+    console_output = console_output.strip()
+
     if (logging_level != logging.INFO
             and len(console_output) < 200
             and console_output.startswith("Unable to find image '")
