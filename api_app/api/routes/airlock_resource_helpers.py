@@ -45,7 +45,7 @@ async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest
 async def update_and_publish_event_airlock_request(airlock_request: AirlockRequest, airlock_request_repo: AirlockRequestRepository, user: User, new_status: AirlockRequestStatus, workspace: Workspace, request_files: List[AirlockFile] = None, error_message: str = None, airlock_review: AirlockReview = None):
     try:
         logging.debug(f"Updating airlock request item: {airlock_request.id}")
-        updated_airlock_request = airlock_request_repo.update_airlock_request(airlock_request=airlock_request, new_status=new_status, user=user, request_files=request_files, error_message=error_message, airlock_review=airlock_review)
+        updated_airlock_request = airlock_request_repo.update_airlock_request(original_request=airlock_request, user=user, new_status=new_status, request_files=request_files, error_message=error_message, airlock_review=airlock_review)
     except Exception as e:
         logging.error(f'Failed updating airlock_request item {airlock_request}: {e}')
         # If the validation failed, the error was not related to the saving itself

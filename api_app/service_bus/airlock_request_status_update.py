@@ -56,7 +56,7 @@ async def update_status_in_database(airlock_request_repo: AirlockRequestReposito
         step_result_data = step_result_message.data
         airlock_request_id = step_result_data.request_id
         current_status = step_result_data.completed_step
-        new_status = AirlockRequestStatus(step_result_data.new_status)
+        new_status = AirlockRequestStatus(step_result_data.new_status) if step_result_data.new_status else None
         error_message = step_result_data.error_message
         request_files = step_result_data.request_files
         # Find the airlock request by id
