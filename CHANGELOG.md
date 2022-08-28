@@ -13,7 +13,7 @@ FEATURES:
 
 ENHANCEMENTS:
 
-*
+* Adding Log Analytics & Antimalware VM extensions ([#2520](https://github.com/microsoft/AzureTRE/pull/2520))
 
 BUG FIXES:
 
