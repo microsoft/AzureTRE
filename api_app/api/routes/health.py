@@ -8,6 +8,7 @@ router = APIRouter()
 
 
 @router.get("/health", name=strings.API_GET_HEALTH_STATUS)
+@router.get("/", name=strings.API_GET_HEALTH_STATUS)
 async def health_check() -> HealthCheck:
     # TEMP: #2048
     # cosmos_status, cosmos_message = create_state_store_status()
