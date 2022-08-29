@@ -128,6 +128,8 @@ nav:
                   - GitHub Actions: tre-admins/setup-instructions/workflows.md
                   - Azure DevOps: coming-soon.md
 
+          - Releases: tre-developers/release.md
+
       - Troubleshooting FAQ: # General Troubleshooting Section for Development
           - troubleshooting-faq/index.md
           - Enabling Debugging for the API: troubleshooting-faq/debug-api.md

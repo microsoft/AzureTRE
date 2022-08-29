@@ -79,3 +79,16 @@ SETTINGS
 data "template_file" "vm_config" {
   template = file("${path.module}/admin-jumpbox-configure.ps1")
 }
+
+resource "azurerm_virtual_machine_extension" "antimalware" {
+  virtual_machine_id         = azurerm_windows_virtual_machine.jumpbox.id
+  name                       = "${azurerm_windows_virtual_machine.jumpbox.name}-AntimalwareExtension"
+  publisher                  = "Microsoft.Azure.Security"
+  type                       = "IaaSAntimalware"
+  type_handler_version       = "1.3"
+  auto_upgrade_minor_version = true
+
+  settings = jsonencode({
+    "AntimalwareEnabled" = true
+  })
+}

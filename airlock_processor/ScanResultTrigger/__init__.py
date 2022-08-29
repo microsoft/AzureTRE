@@ -5,9 +5,8 @@ import azure.functions as func
 import datetime
 import uuid
 import json
-import re
 import os
-from shared_code import constants
+from shared_code import constants, blob_operations
 
 
 def main(msg: func.ServiceBusMessage,
@@ -40,8 +39,7 @@ def main(msg: func.ServiceBusMessage,
         raise e
 
     # Extract request id
-    regex = re.search(r'https://(.*?).blob.core.windows.net/(.*?)/(.*?)', blob_uri)
-    request_id = regex.group(2)
+    _, request_id, _ = blob_operations.get_blob_info_from_blob_url(blob_url=blob_uri)
 
     # If clean, we can continue and move the request to the review stage
     # Otherwise, move the request to the blocked stage

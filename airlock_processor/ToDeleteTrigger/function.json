@@ -1,0 +1,13 @@
+{
+  "scriptFile": "__init__.py",
+  "entryPoint": "main",
+  "bindings": [
+    {
+      "name": "msg",
+      "type": "serviceBusTrigger",
+      "direction": "in",
+      "queueName": "%AIRLOCK_TO_DELETE_QUEUE_NAME%",
+      "connection": "SB_CONNECTION_STRING"
+    }
+  ]
+}

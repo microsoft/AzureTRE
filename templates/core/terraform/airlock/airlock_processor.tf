@@ -18,35 +18,26 @@ resource "azurerm_service_plan" "airlock_plan" {
   lifecycle { ignore_changes = [tags] }
 }
 
-resource "azurerm_app_service_virtual_network_swift_connection" "airlock_integrated_vnet" {
-  app_service_id = azurerm_linux_function_app.airlock_function_app.id
-  subnet_id      = var.airlock_processor_subnet_id
-}
-
-moved {
-  from = azurerm_app_service_virtual_network_swift_connection.airlock-integrated-vnet
-  to   = azurerm_app_service_virtual_network_swift_connection.airlock_integrated_vnet
-}
-
 resource "azurerm_storage_account" "sa_airlock_processor_func_app" {
-  name                     = local.airlock_function_sa_name
-  resource_group_name      = var.resource_group_name
-  location                 = var.location
-  account_tier             = "Standard"
-  account_replication_type = "LRS"
-  tags                     = var.tre_core_tags
+  name                            = local.airlock_function_sa_name
+  resource_group_name             = var.resource_group_name
+  location                        = var.location
+  account_tier                    = "Standard"
+  account_replication_type        = "LRS"
+  allow_nested_items_to_be_public = false
+  tags                            = var.tre_core_tags
 
   lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_linux_function_app" "airlock_function_app" {
-  name                = local.airlock_function_app_name
-  resource_group_name = var.resource_group_name
-  location            = var.location
-
-  storage_account_name = azurerm_storage_account.sa_airlock_processor_func_app.name
-  service_plan_id      = azurerm_service_plan.airlock_plan.id
-
+  name                       = local.airlock_function_app_name
+  resource_group_name        = var.resource_group_name
+  location                   = var.location
+  https_only                 = true
+  virtual_network_subnet_id  = var.airlock_processor_subnet_id
+  service_plan_id            = azurerm_service_plan.airlock_plan.id
+  storage_account_name       = azurerm_storage_account.sa_airlock_processor_func_app.name
   storage_account_access_key = azurerm_storage_account.sa_airlock_processor_func_app.primary_access_key
   tags                       = var.tre_core_tags
 
@@ -61,12 +52,14 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
     "TOPIC_SUBSCRIPTION_NAME"                  = azurerm_servicebus_subscription.airlock_processor.name
     "EVENT_GRID_STEP_RESULT_TOPIC_URI_SETTING" = azurerm_eventgrid_topic.step_result.endpoint
     "EVENT_GRID_STEP_RESULT_TOPIC_KEY_SETTING" = azurerm_eventgrid_topic.step_result.primary_access_key
+    "EVENT_GRID_TO_DELETE_TOPIC_URI_SETTING"   = azurerm_eventgrid_topic.to_delete.endpoint
+    "EVENT_GRID_TO_DELETE_TOPIC_KEY_SETTING"   = azurerm_eventgrid_topic.to_delete.primary_access_key
     "WEBSITES_ENABLE_APP_SERVICE_STORAGE"      = false
     "AIRLOCK_STATUS_CHANGED_QUEUE_NAME"        = local.status_changed_queue_name
     "AIRLOCK_SCAN_RESULT_QUEUE_NAME"           = local.scan_result_queue_name
+    "AIRLOCK_TO_DELETE_QUEUE_NAME"             = local.to_delete_queue_name
     "ENABLE_MALWARE_SCANNING"                  = var.enable_malware_scanning
     "MANAGED_IDENTITY_CLIENT_ID"               = azurerm_user_assigned_identity.airlock_id.client_id
-    "AZURE_SUBSCRIPTION_ID"                    = var.arm_subscription_id
     "TRE_ID"                                   = var.tre_id
     "WEBSITE_CONTENTOVERVNET"                  = 1
   }

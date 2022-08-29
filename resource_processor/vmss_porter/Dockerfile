@@ -8,17 +8,9 @@ COPY scripts/azure-cli.sh /tmp/
 RUN export AZURE_CLI_VERSION=${AZURE_CLI_VERSION} \
     && /tmp/azure-cli.sh
 
-# Install Terraform
-ARG TERRAFORM_VERSION="1.1.5"
-COPY ./scripts/terraform.sh /tmp/
-RUN apt-get update \
-    && apt-get -y install unzip="6.0-23+deb10u2" --no-install-recommends \
-    && bash /tmp/terraform.sh "${TERRAFORM_VERSION}" /usr/bin \
-    && apt-get clean -y && rm -rf /var/lib/apt/lists/*
-
 # Install Porter
 ARG PORTER_MIRROR=https://cdn.porter.sh
-ARG PORTER_PERMALINK=v0.38.11
+ARG PORTER_PERMALINK=v0.38.12
 ARG PORTER_PKG_PERMALINK=latest
 ARG PORTER_HOME=/root/.porter/
 COPY scripts/porter.sh /tmp/
