@@ -7,7 +7,7 @@ import moment from 'moment';
 import { useInterval } from './useInterval';
 import { HttpMethod, useAuthApiCall } from '../../../hooks/useAuthApiCall';
 import { ApiEndpoint } from '../../../models/apiEndpoints';
-import { ComponentAction, getResourceFromResult } from '../../../models/resource';
+import { getResourceFromResult } from '../../../models/resource';
 import { NotificationPoller } from './NotificationPoller';
 import { OperationsContext } from '../../../contexts/OperationsContext';
 
@@ -32,6 +32,9 @@ export const NotificationItem: React.FunctionComponent<NotificationItemProps> = 
 
   useEffect(() => {
     const setupNotification = async (op: Operation) => {
+      // ignore if we've already set this operation up
+      if (notification.resource) return;
+
       let isWs = false;
       let ws = null;
       let resource = null;
@@ -64,9 +67,9 @@ export const NotificationItem: React.FunctionComponent<NotificationItemProps> = 
 
     setupNotification(props.operation);
 
-  }, [props.operation, apiCall]);
+  }, [props.operation, apiCall, notification.resource]);
 
-  // update the 'now' time for comparison - only while the item is rendered (panel is open)
+  // update the 'now' time for comparison
   useInterval(() => {
     setNow(moment.utc());
   }, 10000);
@@ -80,15 +83,7 @@ export const NotificationItem: React.FunctionComponent<NotificationItemProps> = 
 
   const updateOperation = (operation: Operation) => {
     opsCtx.addOperations([operation]);
-    opsCtx.addResourceUpdate({
-      resourceId: notification.resource.id,
-      operation: notification.operation,
-      componentAction: completedStates.includes(notification.operation.status) ?
-        (notification.operation.status === "deleted" ? ComponentAction.Remove : ComponentAction.Reload)
-        : ComponentAction.Lock
-    });
-
-    if (completedStates.includes(operation.status)){
+    if (completedStates.includes(operation.status)) {
       props.showCallout();
     }
   }
@@ -97,75 +92,75 @@ export const NotificationItem: React.FunctionComponent<NotificationItemProps> = 
     <>
       {
         props.operation.dismiss ? <></> :
-        loadingNotification ?
-          <li>
-            <Shimmer shimmerElements={[{ type: ShimmerElementType.gap, width: '100%' }]} />
-            <Shimmer width="50%" />
-            <Shimmer shimmerElements={[{ type: ShimmerElementType.gap, width: '100%' }]} />
-            <Shimmer />
-            <Shimmer shimmerElements={[{ type: ShimmerElementType.gap, width: '100%' }]} />
-            <Shimmer />
-          </li>
-          :
-          errorNotification ?
+          loadingNotification ?
             <li>
-              <MessageBar
-                messageBarType={MessageBarType.error}
-                isMultiline={true}
-              >
-                <h3>Error retrieving operation details</h3>
-                <p>We were unable to get more information about the operation {props.operation.id}. This might be because the associated resource has been deleted. Please investigate with your administrators to get the data cleaned up.</p>
-              </MessageBar>
+              <Shimmer shimmerElements={[{ type: ShimmerElementType.gap, width: '100%' }]} />
+              <Shimmer width="50%" />
+              <Shimmer shimmerElements={[{ type: ShimmerElementType.gap, width: '100%' }]} />
+              <Shimmer />
+              <Shimmer shimmerElements={[{ type: ShimmerElementType.gap, width: '100%' }]} />
+              <Shimmer />
             </li>
             :
-            <li className="tre-notification-item">
+            errorNotification ?
+              <li>
+                <MessageBar
+                  messageBarType={MessageBarType.error}
+                  isMultiline={true}
+                >
+                  <h3>Error retrieving operation details</h3>
+                  <p>We were unable to get more information about the operation {props.operation.id}. This might be because the associated resource has been deleted. Please investigate with your administrators to get the data cleaned up.</p>
+                </MessageBar>
+              </li>
+              :
+              <li className="tre-notification-item">
 
-              {
-                inProgressStates.indexOf(props.operation.status) !== -1 &&
-                <NotificationPoller notification={notification} updateOperation={(operation: Operation) => updateOperation(operation)} />
-              }
+                {
+                  inProgressStates.indexOf(props.operation.status) !== -1 &&
+                  <NotificationPoller notification={notification} updateOperation={(operation: Operation) => updateOperation(operation)} />
+                }
 
-              <ProgressIndicator
-                barHeight={4}
-                percentComplete={awaitingStates.includes(props.operation.status) ? 0 : completedStates.includes(props.operation.status) ? 100 : undefined}
-                label={<Link style={{ textDecoration: 'none', fontWeight: 'bold', color: DefaultPalette.themePrimary }} to={props.operation.resourcePath}>
-                  <Icon iconName={getIconAndColourForStatus(props.operation.status)[0]} style={{ color: getIconAndColourForStatus(props.operation.status)[1], position: 'relative', top: '2px', marginRight: '10px' }} />
-                  {notification.resource.properties.display_name}: {props.operation.action}
-                </Link>}
-                description={`${notification.resource.resourceType} is ${props.operation.status}`} />
+                <ProgressIndicator
+                  barHeight={4}
+                  percentComplete={awaitingStates.includes(props.operation.status) ? 0 : completedStates.includes(props.operation.status) ? 100 : undefined}
+                  label={<Link style={{ textDecoration: 'none', fontWeight: 'bold', color: DefaultPalette.themePrimary }} to={props.operation.resourcePath}>
+                    <Icon iconName={getIconAndColourForStatus(props.operation.status)[0]} style={{ color: getIconAndColourForStatus(props.operation.status)[1], position: 'relative', top: '2px', marginRight: '10px' }} />
+                    {notification.resource.properties.display_name}: {props.operation.action}
+                  </Link>}
+                  description={`${notification.resource.resourceType} is ${props.operation.status}`} />
 
-              <Stack horizontal style={{ marginTop: '10px' }}>
-                <Stack.Item grow={5}>
-                  {
-                    props.operation.steps && props.operation.steps.length > 0 && !(props.operation.steps.length === 1 && props.operation.steps[0].stepId === 'main') ?
-                      <FluentLink title={isExpanded ? 'Show less' : 'Show more'} href="#" onClick={() => { setIsExpanded(!isExpanded) }} style={{ position: 'relative', top: '2px' }}>{isExpanded ? <Icon iconName='ChevronUp' aria-label='Expand Steps' /> : <Icon iconName='ChevronDown' aria-label='Collapse Steps' />}</FluentLink>
-                      :
-                      ' '
-                  }
-                </Stack.Item>
-                <Stack.Item> <div className="tre-notification-time">{getRelativeTime(props.operation.createdWhen)}</div></Stack.Item>
-              </Stack>
-
-              {
-                isExpanded &&
-                <>
-                  <ul className="tre-notifications-steps-list">
-                    {props.operation.steps && props.operation.steps.map((s: OperationStep, i: number) => {
-                      return (
-                        <li key={i}>
-                          <Icon iconName={getIconAndColourForStatus(s.status)[0]} style={{ color: getIconAndColourForStatus(s.status)[1], position: 'relative', top: '2px', marginRight: '10px' }} />
-                          {
-                            s.stepId === "main" ?
-                              <>{notification.resource.properties.display_name}: {props.operation.action}</> :
-                              s.stepTitle
-                          }
-                        </li>)
-                    })
+                <Stack horizontal style={{ marginTop: '10px' }}>
+                  <Stack.Item grow={5}>
+                    {
+                      props.operation.steps && props.operation.steps.length > 0 && !(props.operation.steps.length === 1 && props.operation.steps[0].stepId === 'main') ?
+                        <FluentLink title={isExpanded ? 'Show less' : 'Show more'} href="#" onClick={() => { setIsExpanded(!isExpanded) }} style={{ position: 'relative', top: '2px' }}>{isExpanded ? <Icon iconName='ChevronUp' aria-label='Expand Steps' /> : <Icon iconName='ChevronDown' aria-label='Collapse Steps' />}</FluentLink>
+                        :
+                        ' '
                     }
-                  </ul>
-                </>
-              }
-            </li>
+                  </Stack.Item>
+                  <Stack.Item> <div className="tre-notification-time">{getRelativeTime(props.operation.createdWhen)}</div></Stack.Item>
+                </Stack>
+
+                {
+                  isExpanded &&
+                  <>
+                    <ul className="tre-notifications-steps-list">
+                      {props.operation.steps && props.operation.steps.map((s: OperationStep, i: number) => {
+                        return (
+                          <li key={i}>
+                            <Icon iconName={getIconAndColourForStatus(s.status)[0]} style={{ color: getIconAndColourForStatus(s.status)[1], position: 'relative', top: '2px', marginRight: '10px' }} />
+                            {
+                              s.stepId === "main" ?
+                                <>{notification.resource.properties.display_name}: {props.operation.action}</> :
+                                s.stepTitle
+                            }
+                          </li>)
+                      })
+                      }
+                    </ul>
+                  </>
+                }
+              </li>
       }
     </>);
 };

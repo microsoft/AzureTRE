@@ -24,7 +24,6 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
   const [loading] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const workspaceCtx = useContext(WorkspaceContext);
-
   const latestUpdate = useComponentManager(
     props.resource,
     (r: Resource) => { props.onUpdate(r) },

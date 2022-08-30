@@ -1,4 +1,4 @@
-import { Callout, DirectionalHint, FontWeights, Link, mergeStyleSets, MessageBar, MessageBarType, Panel, Text } from '@fluentui/react';
+import { Callout, DirectionalHint, FontWeights, Link, mergeStyleSets, MessageBar, MessageBarType, Panel, ProgressIndicator, Text } from '@fluentui/react';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { completedStates, Operation } from '../../../models/operation';
 import { OperationsContext } from '../../../contexts/OperationsContext';
@@ -9,6 +9,7 @@ import { ApiEndpoint } from '../../../models/apiEndpoints';
 
 export const NotificationPanel: React.FunctionComponent = () => {
   const opsContext = useContext(OperationsContext);
+  const opsWriteContext = useRef(useContext(OperationsContext));
   const [isOpen, setIsOpen] = useState(false);
   const [showCallout, setShowCallout] = useState(false);
   const apiCall = useAuthApiCall();
@@ -16,7 +17,7 @@ export const NotificationPanel: React.FunctionComponent = () => {
   useEffect(() => {
     const loadAllOps = async () => {
       let opsToAdd = (await apiCall(`${ApiEndpoint.Operations}/my`, HttpMethod.Get)).operations as Array<Operation>;
-      opsContext.addOperations(opsToAdd);
+      opsWriteContext.current.addOperations(opsToAdd);
     };
 
     loadAllOps();
@@ -24,7 +25,12 @@ export const NotificationPanel: React.FunctionComponent = () => {
 
   return (
     <>
-      <IconButton id="tre-notification-btn" className='tre-notifications-button' iconProps={{ iconName: opsContext.operations.length > 0 ? 'RingerSolid' : 'Ringer' }} onClick={() => setIsOpen(true)} title="Notifications" ariaLabel="Notifications" />
+      <IconButton id="tre-notification-btn" className='tre-notifications-button' iconProps={{ iconName: opsContext.operations.length > 0 ? 'Ringer' : 'Ringer' }} onClick={() => setIsOpen(true)} title="Notifications" ariaLabel="Notifications">
+
+      </IconButton>
+      <span style={{ marginTop: -15, display:'block'}}>
+        <ProgressIndicator barHeight={2} />
+      </span>
       {
         showCallout &&
         <Callout
