@@ -55,6 +55,7 @@ async def disable_and_delete_resource(endpoint, access_token, verify):
 
         # delete
         response = await client.delete(full_endpoint, headers=auth_headers, timeout=TIMEOUT)
+        LOGGER.info(f'RESPONSE Status code: {response.status_code} Content: {response.content}')
         assert (response.status_code == status.HTTP_200_OK), "The resource couldn't be deleted"
 
         resource_id = response.json()["operation"]["resourceId"]
