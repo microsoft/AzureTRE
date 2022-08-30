@@ -124,3 +124,25 @@ resource "azuread_app_role_assignment" "workspace_owner" {
   principal_object_id = var.workspace_owner_object_id
   resource_object_id  = azuread_service_principal.workspace.object_id
 }
+
+resource "azuread_group" "workspace_owners" {
+  count        = var.create_aad_groups ? 1 : 0
+  display_name = "${var.workspace_resource_name_suffix} Workspace Owners"
+  owners       = [var.workspace_owner_object_id]
+}
+
+resource "azuread_group" "workspace_researchers" {
+  count        = var.create_aad_groups ? 1 : 0
+  display_name = "${var.workspace_resource_name_suffix} Workspace Researchers"
+  owners       = [var.workspace_owner_object_id]
+}
+resource "azuread_group" "workspace_researchers" {
+  count        = var.create_aad_groups ? 1 : 0
+  display_name = "${var.workspace_resource_name_suffix} Airlock Managers"
+  owners       = [var.workspace_owner_object_id]
+}
+resource "azuread_group_member" "workspace_owner" {
+  count            = var.create_aad_groups ? 1 : 0
+  group_object_id  = azuread_group.workspace_owners.id
+  member_object_id = var.workspace_owner_object_id
+}
