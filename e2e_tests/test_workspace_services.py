@@ -11,7 +11,7 @@ pytestmark = pytest.mark.asyncio
 
 
 @pytest.mark.extended
-@pytest.mark.timeout(3300)
+@pytest.mark.timeout(75 * 60)
 async def test_create_guacamole_service_into_base_workspace(admin_token, verify) -> None:
 
     payload = {
@@ -71,7 +71,7 @@ async def test_create_guacamole_service_into_base_workspace(admin_token, verify)
 
 
 @pytest.mark.extended_aad
-@pytest.mark.timeout(3300)
+@pytest.mark.timeout(75 * 60)
 async def test_create_guacamole_service_into_aad_workspace(admin_token, verify) -> None:
     """This test will create a Guacamole service but will create a workspace and automatically register the AAD Application"""
 
