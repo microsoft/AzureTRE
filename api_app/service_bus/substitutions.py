@@ -64,7 +64,7 @@ def recurse_object(obj: dict, primary_resource_dict: dict) -> dict:
                 else:
                     obj[prop][i] = substitute_value(obj[prop][i], primary_resource_dict)
         if isinstance(obj[prop], dict):
-            obj[prop] = recurse_object(obj[prop])
+            obj[prop] = recurse_object(obj[prop], primary_resource_dict)
         else:
             obj[prop] = substitute_value(obj[prop], primary_resource_dict)
 

@@ -7,7 +7,7 @@ from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, 
 from db.repositories.airlock_requests import AirlockRequestRepository
 
 from db.errors import EntityDoesNotExist
-from azure.cosmos.exceptions import CosmosResourceNotFoundError
+from azure.cosmos.exceptions import CosmosResourceNotFoundError, CosmosAccessConditionFailedError
 
 
 WORKSPACE_ID = "abc000d3-82da-4bfc-b6e9-9a7853ef753e"
@@ -113,7 +113,7 @@ def test_create_airlock_request_item_creates_an_airlock_request_with_the_right_v
 def test_update_airlock_request_with_allowed_new_status_should_update_request_status(airlock_request_repo, current_status, new_status, verify_dictionary_contains_all_enum_values):
     user = create_test_user()
     mock_existing_request = airlock_request_mock(status=current_status)
-    airlock_request = airlock_request_repo.update_airlock_request(mock_existing_request, new_status, user)
+    airlock_request = airlock_request_repo.update_airlock_request(mock_existing_request, user, new_status)
     assert airlock_request.status == new_status
 
 
@@ -122,7 +122,17 @@ def test_update_airlock_request_with_forbidden_status_should_fail_on_validation(
     user = create_test_user()
     mock_existing_request = airlock_request_mock(status=current_status)
     with pytest.raises(HTTPException):
-        airlock_request_repo.update_airlock_request(mock_existing_request, new_status, user)
+        airlock_request_repo.update_airlock_request(mock_existing_request, user, new_status)
+
+
+@patch("db.repositories.airlock_requests.AirlockRequestRepository.update_airlock_request_item", side_effect=[CosmosAccessConditionFailedError, None])
+@patch("db.repositories.airlock_requests.AirlockRequestRepository.get_airlock_request_by_id", return_value=airlock_request_mock(status=DRAFT))
+def test_update_airlock_request_should_retry_update_when_etag_is_not_up_to_date(_, update_airlock_request_item_mock, airlock_request_repo):
+    expected_update_attempts = 2
+    user = create_test_user()
+    mock_existing_request = airlock_request_mock(status=DRAFT)
+    airlock_request_repo.update_airlock_request(original_request=mock_existing_request, user=user, new_status=SUBMITTED)
+    assert update_airlock_request_item_mock.call_count == expected_update_attempts
 
 
 def test_get_airlock_requests_queries_db(airlock_request_repo):

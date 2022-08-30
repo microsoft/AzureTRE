@@ -4,18 +4,19 @@ import uuid
 from datetime import datetime
 from typing import List
 from pydantic import UUID4
-from azure.cosmos.exceptions import CosmosResourceNotFoundError
+from azure.cosmos.exceptions import CosmosResourceNotFoundError, CosmosAccessConditionFailedError
 from azure.cosmos import CosmosClient
 from starlette import status
 from fastapi import HTTPException
 from pydantic import parse_obj_as
 from models.domain.authentication import User
 from db.errors import EntityDoesNotExist
-from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockReview, AirlockReviewDecision, AirlockRequestHistoryItem, AirlockRequestType
+from models.domain.airlock_request import AirlockFile, AirlockRequest, AirlockRequestStatus, AirlockReview, AirlockReviewDecision, AirlockRequestHistoryItem, AirlockRequestType
 from models.schemas.airlock_request import AirlockRequestInCreate, AirlockReviewInCreate
 from core import config
 from resources import strings
 from db.repositories.base import BaseRepository
+import logging
 
 
 class AirlockRequestRepository(BaseRepository):
@@ -43,7 +44,7 @@ class AirlockRequestRepository(BaseRepository):
         new_request.user = user
         new_request.updatedWhen = self.get_timestamp()
 
-        self.update_item(new_request)
+        self.upsert_item_with_etag(new_request, new_request.etag)
         return new_request
 
     @staticmethod
@@ -126,21 +127,17 @@ class AirlockRequestRepository(BaseRepository):
             raise EntityDoesNotExist
         return parse_obj_as(AirlockRequest, airlock_requests)
 
-    def update_airlock_request(self, airlock_request: AirlockRequest, new_status: AirlockRequestStatus, user: User, error_message: str = None, airlock_review: AirlockReview = None) -> AirlockRequest:
-        current_status = airlock_request.status
-        if self.validate_status_update(current_status, new_status):
-            updated_request = copy.deepcopy(airlock_request)
-            updated_request.status = new_status
-            if new_status == AirlockRequestStatus.Failed:
-                updated_request.errorMessage = error_message
-            if airlock_review is not None:
-                if updated_request.reviews is None:
-                    updated_request.reviews = [airlock_review]
-                else:
-                    updated_request.reviews.append(airlock_review)
-            return self.update_airlock_request_item(airlock_request, updated_request, user, {"previousStatus": current_status})
-        else:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE)
+    def update_airlock_request(self, original_request: AirlockRequest, user: User, new_status: AirlockRequestStatus = None, request_files: List[AirlockFile] = None, error_message: str = None, airlock_review: AirlockReview = None) -> AirlockRequest:
+        updated_request = self._build_updated_request(original_request=original_request, new_status=new_status, request_files=request_files, error_message=error_message, airlock_review=airlock_review)
+        try:
+            db_response = self.update_airlock_request_item(original_request, updated_request, user, {"previousStatus": original_request.status})
+        except CosmosAccessConditionFailedError:
+            logging.warning(f"ETag mismatch for request ID: '{original_request.id}'. Retrying.")
+            original_request = self.get_airlock_request_by_id(original_request.id)
+            updated_request = self._build_updated_request(original_request=original_request, new_status=new_status, request_files=request_files, error_message=error_message, airlock_review=airlock_review)
+            db_response = self.update_airlock_request_item(original_request, updated_request, user, {"previousStatus": original_request.status})
+
+        return db_response
 
     def get_airlock_request_spec_params(self):
         return self.get_resource_base_spec_params()
@@ -158,3 +155,28 @@ class AirlockRequestRepository(BaseRepository):
         )
 
         return airlock_review
+
+    def _build_updated_request(self, original_request: AirlockRequest, new_status: AirlockRequestStatus = None, request_files: List[AirlockFile] = None, error_message: str = None, airlock_review: AirlockReview = None) -> AirlockRequest:
+        updated_request = copy.deepcopy(original_request)
+
+        if new_status is not None:
+            self._validate_status_update(current_status=original_request.status, new_status=new_status)
+            updated_request.status = new_status
+
+        if error_message is not None:
+            updated_request.errorMessage = error_message
+
+        if request_files is not None:
+            updated_request.files = request_files
+
+        if airlock_review is not None:
+            if updated_request.reviews is None:
+                updated_request.reviews = [airlock_review]
+            else:
+                updated_request.reviews.append(airlock_review)
+
+        return updated_request
+
+    def _validate_status_update(self, current_status, new_status):
+        if not self.validate_status_update(current_status=current_status, new_status=new_status):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE)

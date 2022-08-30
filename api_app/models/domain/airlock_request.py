@@ -1,6 +1,6 @@
 from typing import List
 from enum import Enum
-from pydantic import Field
+from pydantic import Field, validator
 from pydantic.schema import Optional
 from resources import strings
 from models.domain.azuretremodel import AzureTREModel
@@ -33,6 +33,11 @@ class AirlockActions(str, Enum):
     Review = strings.AIRLOCK_ACTION_REVIEW
     Cancel = strings.AIRLOCK_ACTION_CANCEL
     Submit = strings.AIRLOCK_ACTION_SUBMIT
+
+
+class AirlockFile(AzureTREModel):
+    name: str = Field(title="name", description="name of the file")
+    size: float = Field(title="size", description="size of the file in bytes")
 
 
 class AirlockReviewDecision(str, Enum):
@@ -72,9 +77,16 @@ class AirlockRequest(AzureTREModel):
     history: List[AirlockRequestHistoryItem] = []
     workspaceId: str = Field("", title="Workspace ID", description="Service target Workspace id")
     requestType: AirlockRequestType = Field("", title="Airlock request type")
-    files: List[str] = Field([], title="Files of the request")
+    files: List[AirlockFile] = Field([], title="Files of the request")
     businessJustification: str = Field("Business Justifications", title="Explanation that will be provided to the request reviewer")
     status = AirlockRequestStatus.Draft
     creationTime: float = Field(None, title="Creation time of the request")
     errorMessage: Optional[str] = Field(title="Present only if the request have failed, provides the reason of the failure.")
     reviews: Optional[List[AirlockReview]]
+    etag: Optional[str] = Field(title="_etag", alias="_etag")
+
+    # SQL API CosmosDB saves ETag as an escaped string: https://github.com/microsoft/AzureTRE/issues/1931
+    @validator("etag", pre=True)
+    def parse_etag_to_remove_escaped_quotes(cls, value):
+        if value:
+            return value.replace('\"', '')
