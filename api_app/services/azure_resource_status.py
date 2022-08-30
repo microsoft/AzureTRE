@@ -1,4 +1,4 @@
-from core import config
+from core import config, credentials
 import logging
 
 from azure.mgmt.compute import ComputeManagementClient, models
