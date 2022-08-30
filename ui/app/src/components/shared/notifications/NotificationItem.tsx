@@ -7,13 +7,13 @@ import moment from 'moment';
 import { useInterval } from './useInterval';
 import { HttpMethod, useAuthApiCall } from '../../../hooks/useAuthApiCall';
 import { ApiEndpoint } from '../../../models/apiEndpoints';
-import { getResourceFromResult } from '../../../models/resource';
+import { getResourceFromResult, Resource } from '../../../models/resource';
 import { NotificationPoller } from './NotificationPoller';
 import { OperationsContext } from '../../../contexts/OperationsContext';
 
 interface NotificationItemProps {
   operation: Operation,
-  showCallout: () => void
+  showCallout: (o: Operation, r: Resource) => void
 }
 
 export const NotificationItem: React.FunctionComponent<NotificationItemProps> = (props: NotificationItemProps) => {
@@ -84,7 +84,7 @@ export const NotificationItem: React.FunctionComponent<NotificationItemProps> = 
   const updateOperation = (operation: Operation) => {
     opsCtx.addOperations([operation]);
     if (completedStates.includes(operation.status)) {
-      props.showCallout();
+      props.showCallout(operation, notification.resource);
     }
   }
 

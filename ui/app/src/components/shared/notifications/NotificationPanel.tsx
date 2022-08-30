@@ -1,17 +1,19 @@
-import { Callout, DirectionalHint, FontWeights, Link, mergeStyleSets, MessageBar, MessageBarType, Panel, ProgressIndicator, Text } from '@fluentui/react';
+import { Callout, DirectionalHint, FontWeights, Icon, Link, mergeStyleSets, MessageBar, MessageBarType, Panel, ProgressIndicator, Text } from '@fluentui/react';
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import { completedStates, inProgressStates, Operation } from '../../../models/operation';
+import { completedStates, inProgressStates, Operation, successStates } from '../../../models/operation';
 import { OperationsContext } from '../../../contexts/OperationsContext';
 import { NotificationItem } from './NotificationItem';
 import { IconButton } from '@fluentui/react/lib/Button';
 import { HttpMethod, useAuthApiCall } from '../../../hooks/useAuthApiCall';
 import { ApiEndpoint } from '../../../models/apiEndpoints';
+import { Resource } from '../../../models/resource';
 
 export const NotificationPanel: React.FunctionComponent = () => {
   const opsContext = useContext(OperationsContext);
   const opsWriteContext = useRef(useContext(OperationsContext));
   const [isOpen, setIsOpen] = useState(false);
   const [showCallout, setShowCallout] = useState(false);
+  const [calloutDetails, setCalloutDetails] = useState({ title: '', text: '', success: true });
   const apiCall = useAuthApiCall();
 
   useEffect(() => {
@@ -23,19 +25,37 @@ export const NotificationPanel: React.FunctionComponent = () => {
     loadAllOps();
   }, [apiCall])
 
+  const callout = (o: Operation, r: Resource) => {
+    if (successStates.includes(o.status)) {
+      setCalloutDetails({
+        title: "Operation Succeeded",
+        text: `${o.action} for ${r.properties.display_name} completed successfully`,
+        success: true
+      });
+    } else {
+      setCalloutDetails({
+        title: "Operation Failed",
+        text: `${o.action} for ${r.properties.display_name} completed with status ${o.status}`,
+        success: false
+      });
+    }
+
+    setShowCallout(true);
+  }
+
   return (
     <>
-      <IconButton id="tre-notification-btn" className='tre-notifications-button' iconProps={{ iconName: opsContext.operations.length > 0 ? 'Ringer' : 'Ringer' }} onClick={() => setIsOpen(true)} title="Notifications" ariaLabel="Notifications" />
+      <IconButton id="tre-notification-btn" className='tre-notifications-button' iconProps={{ iconName: 'Ringer' }} onClick={() => setIsOpen(true)} title="Notifications" ariaLabel="Notifications" />
 
       {
-        opsContext.operations && opsContext.operations.filter((o:Operation) => inProgressStates.includes(o.status)).length > 0 &&
-        <span style={{ marginTop: -15, display:'block'}}>
-        <ProgressIndicator barHeight={2} />
-      </span>
+        opsContext.operations && opsContext.operations.filter((o: Operation) => inProgressStates.includes(o.status)).length > 0 &&
+        <span style={{ marginTop: -15, display: 'block' }}>
+          <ProgressIndicator barHeight={2} />
+        </span>
       }
 
       {
-        showCallout &&
+        showCallout && !isOpen &&
         <Callout
           ariaLabelledBy={'labelId'}
           ariaDescribedBy={'descriptionId'}
@@ -50,11 +70,16 @@ export const NotificationPanel: React.FunctionComponent = () => {
           setInitialFocus
         >
           <Text block variant="xLarge" id={'labelId'}>
-            Resource operation completed
+            {calloutDetails.success ?
+              <Icon iconName="CheckMark" style={{ color: '#009900', position: 'relative', top: 4, marginRight: 10 }} />
+              :
+              <Icon iconName="Error" style={{ color: '#990000', position: 'relative', top: 4, marginRight: 10 }} />
+            }
+            {calloutDetails.title}
           </Text>
           <br />
           <Text block variant="medium" id={'descriptionId'}>
-            See notifications panel for detail
+            {calloutDetails.text}
           </Text>
         </Callout>
       }
@@ -86,7 +111,7 @@ export const NotificationPanel: React.FunctionComponent = () => {
           {
             opsContext.operations.map((o: Operation, i: number) => {
               return (
-                <NotificationItem operation={o} key={i} showCallout={() => setShowCallout(true)} />
+                <NotificationItem operation={o} key={i} showCallout={(o: Operation, r: Resource) => callout(o, r)} />
               )
             })
           }
