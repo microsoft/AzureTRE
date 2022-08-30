@@ -1,6 +1,6 @@
 ---
 name: tre-service-azureml
-version: 0.4.3
+version: 0.4.4
 description: "An Azure TRE service for Azure Machine Learning"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -64,6 +64,16 @@ outputs:
     applyTo:
       - install
       - upgrade
+  - name: workspace_services_subnet_address_prefix
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: storage_tag
+    type: string
+    applyTo:
+      - install
+      - upgrade
 
 mixins:
   - terraform:
@@ -92,6 +102,8 @@ install:
         - name: azureml_acr_id
         - name: azureml_storage_account_id
         - name: connection_uri
+        - name: workspace_services_subnet_address_prefix
+        - name: storage_tag
 
 upgrade:
   - terraform:
@@ -116,6 +128,8 @@ upgrade:
         - name: azureml_acr_id
         - name: azureml_storage_account_id
         - name: connection_uri
+        - name: workspace_services_subnet_address_prefix
+        - name: storage_tag
 
 uninstall:
   - terraform:
