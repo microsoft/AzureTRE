@@ -99,7 +99,7 @@ async def test_receiving_good_message(_, app, sb_client, logging_mock, workspace
     await receive_step_result_message_and_update_status(app)
 
     airlock_request_repo().get_airlock_request_by_id.assert_called_once_with(test_sb_step_result_message["data"]["request_id"])
-    airlock_request_repo().update_airlock_request.assert_called_once_with(airlock_request=expected_airlock_request, new_status=test_sb_step_result_message["data"]["new_status"], user=expected_airlock_request.user, error_message=None, airlock_review=None)
+    airlock_request_repo().update_airlock_request.assert_called_once_with(original_request=expected_airlock_request, user=expected_airlock_request.user, new_status=test_sb_step_result_message["data"]["new_status"], request_files=None, error_message=None, airlock_review=None)
     assert eg_client().send.call_count == 2
     logging_mock.assert_not_called()
     sb_client().get_queue_receiver().complete_message.assert_called_once_with(service_bus_received_message_mock)
