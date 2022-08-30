@@ -34,6 +34,17 @@ def create_container(account_name: str, request_id: str):
         logging.info(f'Did not create a new container. Container already exists for request id: {request_id}.')
 
 
+def get_request_files(account_name: str, request_id: str) -> list:
+    files = []
+    blob_service_client = BlobServiceClient(account_url=get_account_url(account_name), credential=get_credential())
+    container_client = blob_service_client.get_container_client(container=request_id)
+
+    for blob in container_client.list_blobs():
+        files.append({"name": blob.name, "size": blob.size})
+
+    return files
+
+
 def copy_data(source_account_name: str, destination_account_name: str, request_id: str):
     credential = get_credential()
     container_name = request_id
