@@ -3,6 +3,7 @@ import { OperationsContext } from "../contexts/OperationsContext";
 import { WorkspaceContext } from "../contexts/WorkspaceContext";
 import { completedStates, inProgressStates, Operation } from "../models/operation";
 import { ResourceUpdate, ComponentAction, getResourceFromResult, Resource } from "../models/resource";
+import { ResourceType } from "../models/resourceType";
 import { HttpMethod, useAuthApiCall } from "./useAuthApiCall";
 
 export const useComponentManager = (resource: Resource, onUpdate: (r: Resource) => void, onRemove: (r: Resource) => void) => {
@@ -27,9 +28,13 @@ export const useComponentManager = (resource: Resource, onUpdate: (r: Resource) 
           if (latestOp.status === "deleted"){
             onRemove(resource);
           } else {
-            let result = await apiCall(resource.resourcePath, HttpMethod.Get, workspaceCtx.workspaceApplicationIdURI);
-            onUpdate(getResourceFromResult(result));
             setLatestUpdate({componentAction:ComponentAction.Reload, operation: latestOp});
+
+            // if it's transitioned from an in-progress to a completed state, we need to reload it
+            if (inProgressStates.includes(latestUpdate.operation.status)) {
+              let result = await apiCall(resource.resourcePath, HttpMethod.Get, resource.resourceType === ResourceType.Workspace ? undefined : workspaceCtx.workspaceApplicationIdURI);
+              onUpdate(getResourceFromResult(result));
+            }
           }
         } else {
           setLatestUpdate({componentAction:ComponentAction.None, operation: latestOp});

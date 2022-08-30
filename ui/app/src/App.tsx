@@ -100,9 +100,9 @@ export const App: React.FunctionComponent = () => {
                           <Route path="/workspaces/:workspaceId//*" element={
                             <WorkspaceContext.Provider value={{
                               roles: workspaceRoles,
-                              setRoles: (roles: Array<string>) => { console.warn("Workspace roles", roles); setWorkspaceRoles(roles) },
+                              setRoles: (roles: Array<string>) => { console.info("Workspace roles", roles); setWorkspaceRoles(roles) },
                               workspace: selectedWorkspace,
-                              setWorkspace: (w: Workspace) => { console.warn("Workspace set", w); setSelectedWorkspace(w) },
+                              setWorkspace: (w: Workspace) => { console.info("Workspace set", w); setSelectedWorkspace(w) },
                               workspaceApplicationIdURI: selectedWorkspace.properties?.scope_id
                             }}>
                               <WorkspaceProvider />
