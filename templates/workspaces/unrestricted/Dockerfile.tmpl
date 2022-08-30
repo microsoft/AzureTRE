@@ -5,8 +5,8 @@ ARG BUNDLE_DIR
 
 ARG AZURE_TRE_VERSION="0.4.2"
 
-RUN  apt update \
-  && apt install jq ca-certificates curl -y \
+RUN  apt-get update \
+  && apt-get install jq ca-certificates curl -y \
   && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 # This is a template Dockerfile for the bundle's invocation image
@@ -26,7 +26,9 @@ RUN  apt update \
 
 COPY . $BUNDLE_DIR
 
-RUN cd $BUNDLE_DIR && curl -o azuretre.tar.gz -L "https://github.com/microsoft/AzureTRE/archive/refs/tags/v${AZURE_TRE_VERSION}.tar.gz" \
+WORKDIR $BUNDLE_DIR
+
+RUN  curl -o azuretre.tar.gz -L "https://github.com/microsoft/AzureTRE/archive/refs/tags/v${AZURE_TRE_VERSION}.tar.gz" \
   && tar -xzf azuretre.tar.gz "AzureTRE-${AZURE_TRE_VERSION}/templates/workspaces/base"  --strip-components=4 --skip-old-files \
   && tar -xzf azuretre.tar.gz "AzureTRE-${AZURE_TRE_VERSION}/templates/workspaces/base/terraform/providers.tf" --strip-components=4 --overwrite \
   && rm -rf azuretre.tar.gz
