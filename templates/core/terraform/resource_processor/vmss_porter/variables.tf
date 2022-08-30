@@ -21,3 +21,6 @@ variable "subscription_id" {
   type        = string
   default     = ""
 }
+
+variable "log_analytics_workspace_workspace_id" {}
+variable "log_analytics_workspace_primary_key" {}

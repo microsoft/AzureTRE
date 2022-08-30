@@ -12,9 +12,16 @@
     },
     {
       "type": "eventGrid",
-      "name": "outputEvent",
+      "name": "stepResultEvent",
       "topicEndpointUri": "EVENT_GRID_STEP_RESULT_TOPIC_URI_SETTING",
       "topicKeySetting": "EVENT_GRID_STEP_RESULT_TOPIC_KEY_SETTING",
+      "direction": "out"
+    },
+    {
+      "type": "eventGrid",
+      "name": "toDeleteEvent",
+      "topicEndpointUri": "EVENT_GRID_TO_DELETE_TOPIC_URI_SETTING",
+      "topicKeySetting": "EVENT_GRID_TO_DELETE_TOPIC_KEY_SETTING",
       "direction": "out"
     }
   ]

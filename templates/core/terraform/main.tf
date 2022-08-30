@@ -3,7 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=3.12.0"
+      version = "=3.19.1"
     }
     random = {
       source  = "hashicorp/random"
@@ -19,7 +19,7 @@ terraform {
     }
     http = {
       source  = "hashicorp/http"
-      version = "~> 2.2.0"
+      version = "~> 3.0.0"
     }
   }
 
@@ -68,6 +68,7 @@ module "azure_monitor" {
   azure_monitor_agentsvc_dns_zone_id       = module.network.azure_monitor_agentsvc_dns_zone_id
   blob_core_dns_zone_id                    = module.network.blob_core_dns_zone_id
   tre_core_tags                            = local.tre_core_tags
+  enable_local_debugging                   = var.enable_local_debugging
 
   depends_on = [
     module.network
@@ -112,7 +113,6 @@ module "airlock_resources" {
   mgmt_resource_group_name              = var.mgmt_resource_group_name
   mgmt_acr_name                         = var.acr_name
   api_principal_id                      = azurerm_user_assigned_identity.id.principal_id
-  arm_subscription_id                   = var.arm_subscription_id
   airlock_app_service_plan_sku_size     = var.api_app_service_plan_sku_size
   airlock_processor_subnet_id           = module.network.airlock_processor_subnet_id
   airlock_servicebus                    = azurerm_servicebus_namespace.sb
@@ -152,6 +152,8 @@ module "resource_processor_vmss_porter" {
   subscription_id                                  = var.arm_subscription_id
   resource_processor_number_processes_per_instance = var.resource_processor_number_processes_per_instance
   resource_processor_vmss_sku                      = var.resource_processor_vmss_sku
+  log_analytics_workspace_workspace_id             = module.azure_monitor.log_analytics_workspace_workspace_id
+  log_analytics_workspace_primary_key              = module.azure_monitor.log_analytics_workspace_primary_key
 
   depends_on = [
     module.network,

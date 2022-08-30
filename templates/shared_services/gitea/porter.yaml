@@ -1,6 +1,6 @@
 ---
 name: tre-shared-service-gitea
-version: 0.3.11
+version: 0.3.12
 description: "A Gitea shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre

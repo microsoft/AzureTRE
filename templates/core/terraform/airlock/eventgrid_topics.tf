@@ -10,7 +10,7 @@ resource "azurerm_eventgrid_topic" "step_result" {
   name                          = local.step_result_topic_name
   location                      = var.location
   resource_group_name           = var.resource_group_name
-  public_network_access_enabled = false
+  public_network_access_enabled = var.enable_local_debugging
 
   identity {
     type = "SystemAssigned"
@@ -64,7 +64,7 @@ resource "azurerm_eventgrid_topic" "status_changed" {
   name                          = local.status_changed_topic_name
   location                      = var.location
   resource_group_name           = var.resource_group_name
-  public_network_access_enabled = false
+  public_network_access_enabled = var.enable_local_debugging
 
   identity {
     type = "SystemAssigned"
@@ -113,6 +113,53 @@ resource "azurerm_private_endpoint" "eg_status_changed" {
   }
 }
 
+resource "azurerm_eventgrid_topic" "to_delete" {
+  name                          = local.to_delete_topic_name
+  location                      = var.location
+  resource_group_name           = var.resource_group_name
+  public_network_access_enabled = var.enable_local_debugging
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  tags = merge(var.tre_core_tags, {
+    Publishers = "Airlock Processor;"
+  })
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_role_assignment" "servicebus_sender_to_delete" {
+  scope                = var.airlock_servicebus.id
+  role_definition_name = "Azure Service Bus Data Sender"
+  principal_id         = azurerm_eventgrid_topic.to_delete.identity.0.principal_id
+
+  depends_on = [
+    azurerm_eventgrid_topic.to_delete
+  ]
+}
+
+resource "azurerm_private_endpoint" "eg_to_delete" {
+  name                = "pe-eg-to-delete-${var.tre_id}"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  subnet_id           = var.airlock_events_subnet_id
+  tags                = var.tre_core_tags
+  lifecycle { ignore_changes = [tags] }
+
+  private_dns_zone_group {
+    name                 = "private-dns-zone-group"
+    private_dns_zone_ids = [data.azurerm_private_dns_zone.eventgrid.id]
+  }
+
+  private_service_connection {
+    name                           = "psc-eg-${var.tre_id}"
+    private_connection_resource_id = azurerm_eventgrid_topic.to_delete.id
+    is_manual_connection           = false
+    subresource_names              = ["topic"]
+  }
+}
 
 # System topic
 resource "azurerm_eventgrid_system_topic" "import_inprogress_blob_created" {
@@ -250,7 +297,7 @@ resource "azurerm_eventgrid_topic" "airlock_notification" {
   name                          = local.notification_topic_name
   location                      = var.location
   resource_group_name           = var.resource_group_name
-  public_network_access_enabled = false
+  public_network_access_enabled = var.enable_local_debugging
 
   identity {
     type = "SystemAssigned"
@@ -316,7 +363,6 @@ resource "azurerm_eventgrid_event_subscription" "step_result" {
     azurerm_role_assignment.servicebus_sender_step_result
   ]
 }
-
 resource "azurerm_eventgrid_event_subscription" "status_changed" {
   name  = local.status_changed_eventgrid_subscription_name
   scope = azurerm_eventgrid_topic.status_changed.id
@@ -330,6 +376,22 @@ resource "azurerm_eventgrid_event_subscription" "status_changed" {
   depends_on = [
     azurerm_eventgrid_topic.status_changed,
     azurerm_role_assignment.servicebus_sender_status_changed
+  ]
+}
+
+resource "azurerm_eventgrid_event_subscription" "to_delete" {
+  name  = local.to_delete_eventgrid_subscription_name
+  scope = azurerm_eventgrid_topic.to_delete.id
+
+  service_bus_queue_endpoint_id = azurerm_servicebus_queue.to_delete.id
+
+  delivery_identity {
+    type = "SystemAssigned"
+  }
+
+  depends_on = [
+    azurerm_eventgrid_topic.to_delete,
+    azurerm_role_assignment.servicebus_sender_to_delete
   ]
 }
 

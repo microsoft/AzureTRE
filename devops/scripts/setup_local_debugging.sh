@@ -8,8 +8,6 @@ set -e
 : "${COSMOSDB_ACCOUNT_NAME?"Check COSMOSDB_ACCOUNT_NAME is defined in ./templates/core/private.env"}"
 : "${AZURE_SUBSCRIPTION_ID?"Check AZURE_SUBSCRIPTION_ID is defined in ./templates/core/private.env"}"
 : "${EVENT_GRID_STATUS_CHANGED_TOPIC_RESOURCE_ID?"Check EVENT_GRID_STATUS_CHANGED_TOPIC_RESOURCE_ID is defined in ./templates/core/private.env"}"
-: "${EVENT_GRID_STATUS_CHANGED_TOPIC_ENDPOINT?"Check EVENT_GRID_STATUS_CHANGED_TOPIC_ENDPOINT is defined in ./templates/core/private.env"}"
-: "${EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_ENDPOINT?"Check EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_ENDPOINT is defined in ./templates/core/private.env"}"
 : "${EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_RESOURCE_ID?"Check EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_RESOURCE_ID is defined in ./templates/core/private.env"}"
 
 set -o pipefail
@@ -17,15 +15,12 @@ set -o nounset
 # set -o xtrace
 
 SERVICE_BUS_NAMESPACE="sb-${TRE_ID}"
+
 if [[ -z ${PUBLIC_DEPLOYMENT_IP_ADDRESS:-} ]]; then
   IPADDR=$(curl ipecho.net/plain; echo)
 else
   IPADDR=${PUBLIC_DEPLOYMENT_IP_ADDRESS}
 fi
-
-# extract eventgrid topic name from endpoint
-EVENT_GRID_STATUS_CHANGED_TOPIC_NAME=$(echo "$EVENT_GRID_STATUS_CHANGED_TOPIC_ENDPOINT" | sed 's/https\?:\/\///'| awk -F"." '{print $1}')
-EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_NAME=$(echo "$EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_ENDPOINT" | sed 's/https\?:\/\///'| awk -F"." '{print $1}')
 
 echo "Adding local IP Address to ${COSMOSDB_ACCOUNT_NAME}. This may take a while . . . "
 az cosmosdb update \
@@ -40,20 +35,11 @@ az servicebus namespace network-rule add \
   --ip-address "${IPADDR}" \
   --action Allow
 
-echo "Adding local IP Address to ${EVENT_GRID_STATUS_CHANGED_TOPIC_NAME}."
+echo "Adding local IP Address to Event Grid Topics."
 az eventgrid topic update \
-  --resource-group "${RESOURCE_GROUP_NAME}" \
-  --name "${EVENT_GRID_STATUS_CHANGED_TOPIC_NAME}" \
   --public-network-access enabled \
-  --inbound-ip-rules "${IPADDR}" allow
-
-
-echo "Adding local IP Address to ${EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_NAME}."
-az eventgrid topic update \
-  --resource-group "${RESOURCE_GROUP_NAME}" \
-  --name "${EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_NAME}" \
-  --public-network-access enabled \
-  --inbound-ip-rules "${IPADDR}" allow
+  --inbound-ip-rules "${IPADDR}" allow \
+  --ids "${EVENT_GRID_STATUS_CHANGED_TOPIC_RESOURCE_ID}" "${EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_RESOURCE_ID}"
 
 
 # Get the object id of the currently logged-in identity
@@ -84,7 +70,6 @@ az role assignment create \
     --role "EventGrid Data Sender" \
     --assignee "${LOGGED_IN_OBJECT_ID}" \
     --scope "${EVENT_GRID_STATUS_CHANGED_TOPIC_RESOURCE_ID}"
-
 
 az role assignment create \
     --role "EventGrid Data Sender" \

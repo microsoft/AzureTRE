@@ -43,6 +43,35 @@ resource "azurerm_private_endpoint" "kvpe" {
   }
 }
 
+resource "azurerm_monitor_diagnostic_setting" "kv" {
+  name                       = "diag-${local.keyvault_name}"
+  target_resource_id         = azurerm_key_vault.kv.id
+  log_analytics_workspace_id = module.azure_monitor.log_analytics_workspace_id
+
+  dynamic "log" {
+    for_each = toset(["AuditEvent", "AzurePolicyEvaluationDetails"])
+    content {
+      category = log.value
+      enabled  = true
+
+      retention_policy {
+        enabled = true
+        days    = 365
+      }
+    }
+  }
+
+  metric {
+    category = "AllMetrics"
+    enabled  = true
+
+    retention_policy {
+      enabled = true
+      days    = 365
+    }
+  }
+}
+
 data "azurerm_user_assigned_identity" "resource_processor_vmss_id" {
   name                = "id-vmss-${var.tre_id}"
   resource_group_name = "rg-${var.tre_id}"

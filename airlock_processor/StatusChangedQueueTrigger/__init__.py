@@ -6,8 +6,7 @@ import os
 import uuid
 import json
 
-from exceptions.NoFilesInRequestException import NoFilesInRequestException
-from exceptions.TooManyFilesInRequestException import TooManyFilesInRequestException
+from exceptions import NoFilesInRequestException, TooManyFilesInRequestException
 
 from shared_code import blob_operations, constants
 from pydantic import BaseModel, parse_obj_as
@@ -32,17 +31,18 @@ class ContainersCopyMetadata:
 def main(msg: func.ServiceBusMessage, outputEvent: func.Out[func.EventGridOutputEvent]):
     try:
         request_properties = extract_properties(msg)
-        handle_status_changed(request_properties)
+        request_files = get_request_files(request_properties) if request_properties.status == constants.STAGE_SUBMITTED else None
+        handle_status_changed(request_properties, outputEvent, request_files)
 
     except NoFilesInRequestException:
-        report_failure(outputEvent, request_properties, failure_reason=constants.NO_FILES_IN_REQUEST_MESSAGE)
+        set_output_event_to_report_failure(outputEvent, request_properties, failure_reason=constants.NO_FILES_IN_REQUEST_MESSAGE, request_files=request_files)
     except TooManyFilesInRequestException:
-        report_failure(outputEvent, request_properties, failure_reason=constants.TOO_MANY_FILES_IN_REQUEST_MESSAGE)
+        set_output_event_to_report_failure(outputEvent, request_properties, failure_reason=constants.TOO_MANY_FILES_IN_REQUEST_MESSAGE, request_files=request_files)
     except Exception:
-        report_failure(outputEvent, request_properties, failure_reason=constants.UNKNOWN_REASON_MESSAGE)
+        set_output_event_to_report_failure(outputEvent, request_properties, failure_reason=constants.UNKNOWN_REASON_MESSAGE, request_files=request_files)
 
 
-def handle_status_changed(request_properties: RequestProperties):
+def handle_status_changed(request_properties: RequestProperties, outputEvent: func.Out[func.EventGridOutputEvent], request_files):
     new_status = request_properties.status
     req_id = request_properties.request_id
     ws_id = request_properties.workspace_id
@@ -65,6 +65,9 @@ def handle_status_changed(request_properties: RequestProperties):
         account_name = constants.STORAGE_ACCOUNT_NAME_EXPORT_INTERNAL + ws_id
         blob_operations.create_container(account_name, req_id)
         return
+
+    if new_status == constants.STAGE_SUBMITTED:
+        set_output_event_to_report_request_files(outputEvent, request_properties, request_files)
 
     if (is_require_data_copy(new_status)):
         logging.info('Request with id %s. requires data copy between storage accounts', req_id)
@@ -149,13 +152,30 @@ def get_source_dest_for_copy(new_status: str, request_type: str, short_workspace
     return ContainersCopyMetadata(source_account_name, dest_account_name)
 
 
-def report_failure(outputEvent, request_properties, failure_reason):
+def set_output_event_to_report_failure(outputEvent, request_properties, failure_reason, request_files):
     logging.exception(f"Failed processing Airlock request with ID: '{request_properties.request_id}', changing request status to '{constants.STAGE_FAILED}'.")
     outputEvent.set(
         func.EventGridOutputEvent(
             id=str(uuid.uuid4()),
-            data={"completed_step": request_properties.status, "new_status": constants.STAGE_FAILED, "request_id": request_properties.request_id, "error_message": failure_reason},
+            data={"completed_step": request_properties.status, "new_status": constants.STAGE_FAILED, "request_id": request_properties.request_id, "request_files": request_files, "error_message": failure_reason},
             subject=request_properties.request_id,
             event_type="Airlock.StepResult",
             event_time=datetime.datetime.utcnow(),
             data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
+
+
+def set_output_event_to_report_request_files(outputEvent, request_properties, request_files):
+    outputEvent.set(
+        func.EventGridOutputEvent(
+            id=str(uuid.uuid4()),
+            data={"completed_step": request_properties.status, "request_id": request_properties.request_id, "request_files": request_files},
+            subject=request_properties.request_id,
+            event_type="Airlock.StepResult",
+            event_time=datetime.datetime.utcnow(),
+            data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
+
+
+def get_request_files(request_properties):
+    containers_metadata = get_source_dest_for_copy(request_properties.status, request_properties.type, request_properties.workspace_id)
+    storage_account_name = containers_metadata.source_account_name
+    return blob_operations.get_request_files(account_name=storage_account_name, request_id=request_properties.request_id)

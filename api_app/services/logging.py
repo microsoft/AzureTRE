@@ -53,7 +53,6 @@ def initialize_logging(logging_level: int, correlation_id: str = None) -> loggin
     :returns: A newly created logger adapter.
     """
     logger = logging.getLogger()
-    logger.addHandler(logging.StreamHandler())  # For logging into console
 
     try:
         # picks up APPLICATIONINSIGHTS_CONNECTION_STRING automatically

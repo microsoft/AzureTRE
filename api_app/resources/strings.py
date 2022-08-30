@@ -196,7 +196,7 @@ AIRLOCK_REQUEST_INVALID_STATUS = "Airlock request status is unknown."
 AIRLOCK_UNAUTHORIZED_TO_SA = "User is unauthorized to access airlock request files in its current status."
 AIRLOCK_NOT_ENABLED_IN_WORKSPACE = "Airlock is not enabled in this workspace."
 AIRLOCK_NO_RESEARCHER_EMAIL = "There are no Workspace Researchers with an email address."
-AIRLOCK_NO_OWNER_EMAIL = "There are no Workspace Owners with an email address."
+AIRLOCK_NO_AIRLOCK_MANAGER_EMAIL = "There are no Airlock Managers with an email address."
 
 # Airlock Actions
 AIRLOCK_ACTION_REVIEW = "review"

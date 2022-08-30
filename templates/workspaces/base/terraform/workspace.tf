@@ -71,7 +71,9 @@ module "azure_monitor" {
   azure_monitor_ods_opinsights_dns_zone_id = module.network.azure_monitor_ods_opinsights_dns_zone_id
   azure_monitor_agentsvc_dns_zone_id       = module.network.azure_monitor_agentsvc_dns_zone_id
   blob_core_dns_zone_id                    = module.network.blobcore_zone_id
+  enable_local_debugging                   = var.enable_local_debugging
   depends_on = [
     module.network,
+    module.airlock, # shouldn't be required, related to: https://github.com/microsoft/AzureTRE/issues/2357
   ]
 }

@@ -1,17 +1,20 @@
 from distutils.util import strtobool
-from shared_code import constants
 import logging
-
-import azure.functions as func
 import datetime
 import uuid
 import json
 import re
 import os
 
+import azure.functions as func
+
+from shared_code import constants
+from shared_code.blob_operations import get_blob_info_from_topic_and_subject, get_blob_client_from_blob_info
+
 
 def main(msg: func.ServiceBusMessage,
-         outputEvent: func.Out[func.EventGridOutputEvent]):
+         stepResultEvent: func.Out[func.EventGridOutputEvent],
+         toDeleteEvent: func.Out[func.EventGridOutputEvent]):
 
     logging.info("Python ServiceBus topic trigger processed message - A new blob was created!.")
     body = msg.get_body().decode('utf-8')
@@ -53,11 +56,8 @@ def main(msg: func.ServiceBusMessage,
         completed_step = constants.STAGE_BLOCKING_INPROGRESS
         new_status = constants.STAGE_BLOCKED_BY_SCAN
 
-    # Todo: Once the copy process is done, we can delete the old container here
-    # https://github.com/microsoft/AzureTRE/issues/1963
-
     # reply with a step completed event
-    outputEvent.set(
+    stepResultEvent.set(
         func.EventGridOutputEvent(
             id=str(uuid.uuid4()),
             data={"completed_step": completed_step, "new_status": new_status, "request_id": request_id},
@@ -65,3 +65,22 @@ def main(msg: func.ServiceBusMessage,
             event_type="Airlock.StepResult",
             event_time=datetime.datetime.utcnow(),
             data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
+
+    # check blob metadata to find the blob it was copied from
+    blob_client = get_blob_client_from_blob_info(
+        *get_blob_info_from_topic_and_subject(topic=json_body["topic"], subject=json_body["subject"]))
+    blob_metadata = blob_client.get_blob_properties()["metadata"]
+    copied_from = json.loads(blob_metadata["copied_from"])
+    logging.info(f"copied from history: {copied_from}")
+
+    # signal that the container where we copied from can now be deleted
+    toDeleteEvent.set(
+        func.EventGridOutputEvent(
+            id=str(uuid.uuid4()),
+            data={"blob_to_delete": copied_from[-1]},  # last container in copied_from is the one we just copied from
+            subject=request_id,
+            event_type="Airlock.ToDelete",
+            event_time=datetime.datetime.utcnow(),
+            data_version="1.0"
+        )
+    )

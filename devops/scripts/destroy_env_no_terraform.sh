@@ -75,8 +75,11 @@ fi
 locks=$(az group lock list -g "${core_tre_rg}" --query [].id -o tsv | tr -d \')
 if [ -n "${locks:-}" ]
 then
-  echo "Deleting locks..."
-  az resource lock delete --ids "${locks}"
+  for lock in $locks
+  do
+    echo "Deleting lock ${lock}..."
+    az resource lock delete --ids "${lock}"
+  done
 fi
 
 delete_resource_diagnostic() {

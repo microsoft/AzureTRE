@@ -44,6 +44,9 @@ class BaseRepository:
         self.container.replace_item(item=item.id, body=item.dict(), etag=etag, match_condition=MatchConditions.IfNotModified)
         return self.read_item_by_id(item.id)
 
+    def upsert_item_with_etag(self, item: BaseModel, etag: str) -> BaseModel:
+        return self.container.upsert_item(body=item.dict(), etag=etag, match_condition=MatchConditions.IfNotModified)
+
     def update_item_dict(self, item_dict: dict):
         self.container.upsert_item(body=item_dict)
 

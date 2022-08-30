@@ -26,7 +26,9 @@ workspace_tags_metadata = [
     {"name": "shared services", "description": "**TRE administratiors** administer shared services"},
 ]
 
+# Root
 router = APIRouter()
+router.include_router(health.router, tags=["health"])
 
 # Core API
 core_router = APIRouter(prefix=config.API_PREFIX)

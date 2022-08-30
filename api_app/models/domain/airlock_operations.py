@@ -2,12 +2,15 @@ from pydantic import Field
 from pydantic.types import UUID4
 from pydantic.schema import Optional
 from models.domain.azuretremodel import AzureTREModel
+from typing import List
+from models.domain.airlock_request import AirlockFile
 
 
 class EventGridMessageData(AzureTREModel):
     completed_step: str = Field(title="", description="")
-    new_status: str = Field(title="", description="")
+    new_status: Optional[str] = Field(title="", description="")
     request_id: str = Field(title="", description="")
+    request_files: Optional[List[AirlockFile]] = Field(title="", description="")
     error_message: Optional[str] = Field(title="", description="")
 
 

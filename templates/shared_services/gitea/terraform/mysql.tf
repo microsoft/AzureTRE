@@ -24,7 +24,7 @@ resource "azurerm_mysql_server" "gitea" {
   ssl_minimal_tls_version_enforced  = "TLS1_2"
   tags                              = local.tre_shared_service_tags
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle { ignore_changes = [tags, threat_detection_policy] }
 }
 
 resource "azurerm_mysql_database" "gitea" {
